@@ -1,3 +1,4 @@
+// LANGUAGE_VERSION: 1.6
 // EXTRACTION_TARGET: property with initializer
 val a = 1
 

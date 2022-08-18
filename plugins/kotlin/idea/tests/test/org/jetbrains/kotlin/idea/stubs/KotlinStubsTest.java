@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.stubs;
 
@@ -23,7 +23,6 @@ import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener;
 import org.jetbrains.kotlin.idea.caches.trackers.PureKotlinCodeBlockModificationListener;
-import org.jetbrains.kotlin.idea.stubindex.KotlinFileStubForIde;
 import org.jetbrains.kotlin.idea.stubindex.KotlinFunctionShortNameIndex;
 import org.jetbrains.kotlin.idea.test.AstAccessControl;
 import org.jetbrains.kotlin.idea.test.KotlinJdkAndMultiplatformStdlibDescriptor;
@@ -31,6 +30,7 @@ import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor;
 import org.jetbrains.kotlin.psi.*;
 import org.jetbrains.kotlin.psi.stubs.KotlinClassStub;
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes;
+import org.jetbrains.kotlin.psi.stubs.impl.KotlinFileStubImpl;
 import org.junit.internal.runners.JUnit38ClassRunner;
 import org.junit.runner.RunWith;
 
@@ -88,9 +88,8 @@ public class KotlinStubsTest extends LightJavaCodeInsightFixtureTestCase {
         Project project = myFixture.getProject();
         PsiFile file = myFixture.configureByText("foo.kts", "val q = UByteArray(1).<caret>asList()");
 
-        KotlinFunctionShortNameIndex shortNameIndex = KotlinFunctionShortNameIndex.getInstance();
         CommonProcessors.CollectUniquesProcessor<KtNamedFunction> processor = new CommonProcessors.CollectUniquesProcessor<>();
-        shortNameIndex.processElements("asULongArray", project, GlobalSearchScope.allScope(project), processor);
+        KotlinFunctionShortNameIndex.INSTANCE.processElements("asULongArray", project, GlobalSearchScope.allScope(project), processor);
         Collection<KtNamedFunction> asULongArrayFunctions =
                 ContainerUtil.filter(
                         processor.getResults(),
@@ -105,7 +104,7 @@ public class KotlinStubsTest extends LightJavaCodeInsightFixtureTestCase {
                         @Override
                         public Unit invoke() {
 
-                            KotlinFileStubForIde stub = (KotlinFileStubForIde) ktFile.getStub();
+                            KotlinFileStubImpl stub = (KotlinFileStubImpl) ktFile.getStub();
                             assertNotNull(stub);
 
                             assertEquals("kotlin.collections.UArraysKt", stub.getFacadeFqName().asString());

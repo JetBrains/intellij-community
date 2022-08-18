@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.Disposable;
@@ -150,7 +150,7 @@ public final class EventDispatcher<T extends EventListener> {
     return exceptions;
   }
 
-  public static void throwExceptions(@NotNull List<? extends Throwable> exceptions) {
+  private static void throwExceptions(@NotNull List<? extends Throwable> exceptions) {
     if (exceptions.size() == 1) {
       ExceptionUtil.rethrow(exceptions.get(0));
     }

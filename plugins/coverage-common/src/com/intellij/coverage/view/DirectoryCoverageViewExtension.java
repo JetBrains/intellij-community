@@ -7,6 +7,9 @@ import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -16,6 +19,7 @@ import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -76,7 +80,11 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
   @NotNull
   @Override
   public AbstractTreeNode createRootNode() {
-    final VirtualFile baseDir = myProject.getBaseDir();
+    VirtualFile baseDir = ProjectUtil.guessProjectDir(myProject);
+    if (baseDir == null) {
+      final VirtualFile[] roots = ProjectRootManager.getInstance(myProject).getContentRoots();
+      baseDir = VfsUtil.getCommonAncestor(Arrays.asList(roots));
+    }
     return new CoverageListRootNode(myProject, PsiManager.getInstance(myProject).findDirectory(baseDir), mySuitesBundle, myStateBean);
   }
 

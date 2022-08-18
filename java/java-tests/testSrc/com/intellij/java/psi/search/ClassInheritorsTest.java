@@ -38,11 +38,11 @@ public class ClassInheritorsTest extends JavaCodeInsightFixtureTestCase {
     PsiClass n2 = (PsiClass)numberClass.getNavigationElement();
     assertTrue(String.valueOf(n2), n2 instanceof PsiClassImpl);
     Collection<PsiClass> subClasses = DirectClassInheritorsSearch.search(n2, GlobalSearchScope.allScope(getProject())).findAll();
-    List<String> fqn = subClasses.stream().map(PsiClass::getQualifiedName).sorted().collect(Collectors.toList());
+    List<String> fqn = subClasses.stream().map(PsiClass::getQualifiedName).sorted().toList();
     assertEquals(fqn.toString(), fqn.size(), new HashSet<>(fqn).size()); // no dups mean no Cls/Psi mixed
 
     Collection<PsiClass> allSubClasses = ClassInheritorsSearch.search(n2, GlobalSearchScope.allScope(getProject()), true).findAll();
-    List<String> allFqn = allSubClasses.stream().map(PsiClass::getQualifiedName).sorted().collect(Collectors.toList());
+    List<String> allFqn = allSubClasses.stream().map(PsiClass::getQualifiedName).sorted().toList();
     assertEquals(allFqn.toString(), allFqn.size(), new HashSet<>(allFqn).size());
   }
 

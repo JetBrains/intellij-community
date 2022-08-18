@@ -1,4 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages
 
 import com.intellij.ide.ui.AntialiasingType
@@ -17,16 +31,16 @@ import javax.swing.JLabel
 @Suppress("MagicNumber") // Swing dimension constants
 class TagComponent(@Nls name: String) : JLabel() {
 
-  init {
-    foreground = JBColor.namedColor("Plugins.tagForeground", JBColor(0x808080, 0x808080))
-    background = JBColor.namedColor("Plugins.tagBackground", JBColor(0xE8E8E8, 0xE8E8E8))
-    isOpaque = false
-    border = emptyBorder(vSize = 1, hSize = 8)
-    RelativeFont.TINY.install(this)
-    text = name
-    toolTipText = PackageSearchBundle.message("packagesearch.terminology.kotlinMultiplatform.tooltip")
-    GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent())
-  }
+    init {
+        foreground = JBColor.namedColor("Plugins.tagForeground", JBColor(0x808080, 0x808080))
+        background = JBColor.namedColor("Plugins.tagBackground", JBColor(0xE8E8E8, 0xE8E8E8))
+        isOpaque = false
+        border = emptyBorder(vSize = 1, hSize = 8)
+        RelativeFont.TINY.install(this)
+        text = name
+        toolTipText = PackageSearchBundle.message("packagesearch.terminology.kotlinMultiplatform.tooltip")
+        GraphicsUtil.setAntialiasingType(this, AntialiasingType.getAAHintForSwingComponent())
+    }
 
     @ScaledPixels
     var tagDiameterPx: Int = 4.scaled()

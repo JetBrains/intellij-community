@@ -4,9 +4,9 @@ class NestedTryFinallyInEndlessLoop {
     while (true) {
       try {
         try {
-          <warning descr="The value 1 assigned to 'n' is never used">n</warning> = 1;
+          <warning descr="The value '1' assigned to 'n' is never used">n</warning> = 1;
         } finally {
-          <warning descr="The value 2 assigned to 'n' is never used">n</warning> = 2;
+          <warning descr="The value '2' assigned to 'n' is never used">n</warning> = 2;
         }
       } catch (Throwable t) {
         System.out.println(t);
@@ -19,12 +19,12 @@ class NestedTryFinallyInEndlessLoop {
     while (true) {
       try {
         try {
-          <warning descr="The value 1 assigned to 'n' is never used">n</warning> = 1;
+          <warning descr="The value '1' assigned to 'n' is never used">n</warning> = 1;
         } finally {
           try {
-            <warning descr="The value 2 assigned to 'n' is never used">n</warning> = 2;
+            <warning descr="The value '2' assigned to 'n' is never used">n</warning> = 2;
           } finally {
-            <warning descr="The value 3 assigned to 'n' is never used">n</warning> = 3;
+            <warning descr="The value '3' assigned to 'n' is never used">n</warning> = 3;
           }
         }
       } catch (Throwable t) {
@@ -38,15 +38,15 @@ class NestedTryFinallyInEndlessLoop {
     while (true) {
       try {
         try {
-          <warning descr="The value 1 assigned to 'n' is never used">n</warning> = 1;
+          <warning descr="The value '1' assigned to 'n' is never used">n</warning> = 1;
         } finally {
           try {
-            <warning descr="The value 2 assigned to 'n' is never used">n</warning> = 2;
+            <warning descr="The value '2' assigned to 'n' is never used">n</warning> = 2;
           } finally {
             try {
-              <warning descr="The value 3 assigned to 'n' is never used">n</warning> = 3;
+              <warning descr="The value '3' assigned to 'n' is never used">n</warning> = 3;
             } finally {
-              <warning descr="The value 4 assigned to 'n' is never used">n</warning> = 4;
+              <warning descr="The value '4' assigned to 'n' is never used">n</warning> = 4;
             }
           }
         }
@@ -61,18 +61,18 @@ class NestedTryFinallyInEndlessLoop {
     while (true) {
       try {
         try {
-          <warning descr="The value 1 assigned to 'n' is never used">n</warning> = 1;
+          <warning descr="The value '1' assigned to 'n' is never used">n</warning> = 1;
         } finally {
           try {
-            <warning descr="The value 2 assigned to 'n' is never used">n</warning> = 2;
+            <warning descr="The value '2' assigned to 'n' is never used">n</warning> = 2;
           } finally {
             try {
-              <warning descr="The value 3 assigned to 'n' is never used">n</warning> = 3;
+              <warning descr="The value '3' assigned to 'n' is never used">n</warning> = 3;
             } finally {
               try {
-                <warning descr="The value 4 assigned to 'n' is never used">n</warning> = 4;
+                <warning descr="The value '4' assigned to 'n' is never used">n</warning> = 4;
               } finally {
-                <warning descr="The value 5 assigned to 'n' is never used">n</warning> = 5;
+                <warning descr="The value '5' assigned to 'n' is never used">n</warning> = 5;
               }
             }
           }
@@ -88,21 +88,21 @@ class NestedTryFinallyInEndlessLoop {
     while (true) {
       try {
         try {
-          <warning descr="The value 1 assigned to 'n' is never used">n</warning> = 1;
+          <warning descr="The value '1' assigned to 'n' is never used">n</warning> = 1;
         } finally {
           try {
-            <warning descr="The value 2 assigned to 'n' is never used">n</warning> = 2;
+            <warning descr="The value '2' assigned to 'n' is never used">n</warning> = 2;
           } finally {
             try {
-              <warning descr="The value 3 assigned to 'n' is never used">n</warning> = 3;
+              <warning descr="The value '3' assigned to 'n' is never used">n</warning> = 3;
             } finally {
               try {
-                <warning descr="The value 4 assigned to 'n' is never used">n</warning> = 4;
+                <warning descr="The value '4' assigned to 'n' is never used">n</warning> = 4;
               } finally {
                 try {
-                  <warning descr="The value 5 assigned to 'n' is never used">n</warning> = 5;
+                  <warning descr="The value '5' assigned to 'n' is never used">n</warning> = 5;
                 } finally {
-                  <warning descr="The value 6 assigned to 'n' is never used">n</warning> = 6;
+                  <warning descr="The value '6' assigned to 'n' is never used">n</warning> = 6;
                 }
               }
             }

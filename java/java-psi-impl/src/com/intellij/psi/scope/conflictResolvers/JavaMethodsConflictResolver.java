@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.scope.conflictResolvers;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -680,7 +680,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
                                                            PsiType @NotNull [] types1,
                                                            PsiType @NotNull [] types2,
                                                            @NotNull LanguageLevel languageLevel) {
-    PsiSubstitutor substitutor = PsiResolveHelper.SERVICE.getInstance(method.getProject())
+    PsiSubstitutor substitutor = PsiResolveHelper.getInstance(method.getProject())
       .inferTypeArguments(typeParameters, types1, types2, languageLevel);
     for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(method)) {
       ProgressManager.checkCanceled();

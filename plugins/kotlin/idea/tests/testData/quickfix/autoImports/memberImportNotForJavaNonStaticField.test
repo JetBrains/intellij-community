@@ -1,10 +1,10 @@
 // FILE: main.before.kt
 // "class org.jetbrains.kotlin.idea.quickfix.ImportMemberFix" "false"
 // ERROR: Unresolved reference: foobar
+// ACTION: Converts the assignment statement to an expression
 // ACTION: Create local variable 'foobar'
 // ACTION: Create property 'foobar'
 // ACTION: Rename reference
-// ACTION: Converts the assignment statement to an expression
 
 
 //KT-9009

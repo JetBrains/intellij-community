@@ -5,6 +5,7 @@ import com.intellij.ide.dnd.DnDAware;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -16,12 +17,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcs.commit.EditedCommitNode;
 import com.intellij.vcsUtil.VcsUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,11 +32,10 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
-import java.util.*;
-import java.util.stream.Stream;
+import java.util.Objects;
+import java.util.Set;
 
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
-import static com.intellij.openapi.vcs.changes.ChangesUtil.getPathsCaseSensitive;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.*;
 import static com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.findTagNode;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -46,17 +44,25 @@ import static com.intellij.vcs.commit.ChangesViewCommitPanelKt.subtreeRootObject
 // TODO: Check if we could extend DnDAwareTree here instead of directly implementing DnDAware
 public class ChangesListView extends HoverChangesTree implements DataProvider, DnDAware {
   @NonNls public static final String HELP_ID = "ideaInterface.changes";
-  @NonNls public static final DataKey<ChangesListView> DATA_KEY = DataKey.create("ChangeListView");
-  @NonNls public static final DataKey<Iterable<FilePath>> UNVERSIONED_FILE_PATHS_DATA_KEY = DataKey.create("ChangeListView.UnversionedFiles");
-  @NonNls public static final DataKey<Iterable<VirtualFile>> EXACTLY_SELECTED_FILES_DATA_KEY = DataKey.create("ChangeListView.ExactlySelectedFiles");
-  @NonNls public static final DataKey<Iterable<FilePath>> IGNORED_FILE_PATHS_DATA_KEY = DataKey.create("ChangeListView.IgnoredFiles");
-  @NonNls public static final DataKey<List<FilePath>> MISSING_FILES_DATA_KEY = DataKey.create("ChangeListView.MissingFiles");
-  @NonNls public static final DataKey<List<LocallyDeletedChange>> LOCALLY_DELETED_CHANGES = DataKey.create("ChangeListView.LocallyDeletedChanges");
+  @NonNls public static final DataKey<ChangesListView> DATA_KEY
+    = DataKey.create("ChangeListView");
+  @NonNls public static final DataKey<Iterable<FilePath>> UNVERSIONED_FILE_PATHS_DATA_KEY
+    = DataKey.create("ChangeListView.UnversionedFiles");
+  @NonNls public static final DataKey<Iterable<VirtualFile>> EXACTLY_SELECTED_FILES_DATA_KEY
+    = DataKey.create("ChangeListView.ExactlySelectedFiles");
+  @NonNls public static final DataKey<Iterable<FilePath>> IGNORED_FILE_PATHS_DATA_KEY
+    = DataKey.create("ChangeListView.IgnoredFiles");
+  @NonNls public static final DataKey<List<FilePath>> MISSING_FILES_DATA_KEY
+    = DataKey.create("ChangeListView.MissingFiles");
+  @NonNls public static final DataKey<List<LocallyDeletedChange>> LOCALLY_DELETED_CHANGES
+    = DataKey.create("ChangeListView.LocallyDeletedChanges");
 
   public ChangesListView(@NotNull Project project, boolean showCheckboxes) {
     super(project, showCheckboxes, true);
-
-    setDragEnabled(true);
+    // setDragEnabled throws an exception in headless mode which leads to a memory leak
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      setDragEnabled(true);
+    }
   }
 
   @NotNull
@@ -121,10 +127,7 @@ public class ChangesListView extends HoverChangesTree implements DataProvider, D
 
   @Nullable
   private static ChangesBrowserNode<?> getDefaultChangelistNode(@NotNull ChangesBrowserNode<?> root) {
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    Enumeration<ChangesBrowserNode<?>> children = (Enumeration)root.children();
-    Iterator<ChangesBrowserNode<?>> nodes = ContainerUtil.iterate(children);
-    return ContainerUtil.find(nodes, node -> {
+    return root.iterateNodeChildren().find(node -> {
       if (node instanceof ChangesBrowserChangeListNode) {
         ChangeList list = ((ChangesBrowserChangeListNode)node).getUserObject();
         return list instanceof LocalChangeList && ((LocalChangeList)list).isDefault();
@@ -159,11 +162,12 @@ public class ChangesListView extends HoverChangesTree implements DataProvider, D
     }
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       VirtualFile file = getNavigatableFiles().single();
-      return file != null && !file.isDirectory() ? PsiNavigationSupport.getInstance()
-                                                                       .createNavigatable(myProject, file, 0) : null;
+      return file != null && !file.isDirectory()
+             ? PsiNavigationSupport.getInstance().createNavigatable(myProject, file, 0)
+             : null;
     }
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-      return getNavigatableArray(myProject, StreamEx.of(getNavigatableFiles().iterator()));
+      return getNavigatableArray(myProject, getNavigatableFiles());
     }
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return getSelectionObjects().find(userObject -> !(userObject instanceof ChangeList)) != null
@@ -204,11 +208,11 @@ public class ChangesListView extends HoverChangesTree implements DataProvider, D
   }
 
   @NotNull
-  public Stream<FilePath> getUnversionedFiles() {
+  public JBIterable<FilePath> getUnversionedFiles() {
     ChangesBrowserUnversionedFilesNode node = TreeUtil.nodeChildren(getRoot())
       .filter(ChangesBrowserUnversionedFilesNode.class).first();
-    if (node == null) return StreamEx.empty();
-    return node.getFilePathsUnderStream();
+    if (node == null) return JBIterable.empty();
+    return node.iterateFilePathsUnder();
   }
 
   @NotNull
@@ -234,7 +238,7 @@ public class ChangesListView extends HoverChangesTree implements DataProvider, D
   @NotNull
   protected JBIterable<VirtualFile> getSelectedVirtualFiles(@Nullable Object tag) {
     return getSelectionNodes(this, tag)
-      .flatMap(node -> JBIterable.create(() -> node.getFilesUnderStream().iterator()))
+      .flatMap(node -> node.iterateFilesUnder())
       .unique();
   }
 
@@ -246,7 +250,7 @@ public class ChangesListView extends HoverChangesTree implements DataProvider, D
   @NotNull
   private static JBIterable<FilePath> getSelectedFilePaths(@NotNull JTree tree, @Nullable Object tag) {
     return getSelectionNodes(tree, tag)
-      .flatMap(node -> JBIterable.create(() -> node.getFilePathsUnderStream().iterator()))
+      .flatMap(node -> node.iterateFilePathsUnder())
       .unique();
   }
 
@@ -254,7 +258,7 @@ public class ChangesListView extends HoverChangesTree implements DataProvider, D
   static JBIterable<VirtualFile> getExactlySelectedVirtualFiles(@NotNull JTree tree) {
     VcsTreeModelData exactlySelected = VcsTreeModelData.exactlySelected(tree);
 
-    return JBIterable.create(() -> exactlySelected.rawUserObjectsStream().iterator()).map(object -> {
+    return exactlySelected.iterateRawUserObjects().map(object -> {
       if (object instanceof VirtualFile) return (VirtualFile)object;
       if (object instanceof FilePath) return ((FilePath)object).getVirtualFile();
       return null;
@@ -285,7 +289,7 @@ public class ChangesListView extends HoverChangesTree implements DataProvider, D
       .filter(path -> isUnderTag(path, tag))
       .map(TreePath::getLastPathComponent)
       .map(node -> ((ChangesBrowserNode<?>)node))
-      .flatMap(node -> JBIterable.create(() -> node.getFilesUnderStream().iterator()))
+      .flatMap(node -> node.iterateFilesUnder())
       .unique();
   }
 
@@ -295,7 +299,7 @@ public class ChangesListView extends HoverChangesTree implements DataProvider, D
       .filter(path -> isUnderTag(path, tag))
       .map(TreePath::getLastPathComponent)
       .map(node -> ((ChangesBrowserNode<?>)node))
-      .flatMap(node -> JBIterable.create(() -> node.getFilePathsUnderStream().iterator()))
+      .flatMap(node -> node.iterateFilePathsUnder())
       .unique();
   }
 
@@ -377,7 +381,7 @@ public class ChangesListView extends HoverChangesTree implements DataProvider, D
   @NotNull
   private JBIterable<VirtualFile> getNavigatableFiles() {
     return JBIterable.<VirtualFile>empty()
-      .append(getSelectedChanges().flatMap(o -> JBIterable.create(() -> getPathsCaseSensitive(o).iterator())).filterMap(FilePath::getVirtualFile))
+      .append(getSelectedChanges().flatMap(ChangesUtil::iteratePathsCaseSensitive).filterMap(FilePath::getVirtualFile))
       .append(getSelectedVirtualFiles(null))
       .append(getSelectedFilePaths(null).filterMap(FilePath::getVirtualFile))
       .unique();

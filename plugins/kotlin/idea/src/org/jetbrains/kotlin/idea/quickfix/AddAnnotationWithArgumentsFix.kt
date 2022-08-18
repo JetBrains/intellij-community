@@ -11,7 +11,8 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.util.addAnnotation
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -132,7 +133,7 @@ class AddAnnotationWithArgumentsFix(
             if (replaceWith != null) {
                 val expression = replaceWith.allValueArguments[EXPRESSION_ARGUMENT]?.safeAs<StringValue>()?.toString()
                 val imports = replaceWith.allValueArguments[IMPORTS_ARGUMENT]?.safeAs<ArrayValue>()?.value
-                val importsArg = if (imports == null || imports.isEmpty()) "" else (", " + imports.joinToString { it.toString() })
+                val importsArg = if (imports.isNullOrEmpty()) "" else (", " + imports.joinToString { it.toString() })
                 if (expression != null) {
                     arguments.add("replaceWith = ReplaceWith(${expression}${importsArg})")
                 }

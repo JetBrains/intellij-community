@@ -7,7 +7,6 @@ import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
 
 class MarkdownParagraph(node: ASTNode): MarkdownParagraphImpl(node) {
   override fun accept(visitor: PsiElementVisitor) {
-    @Suppress("DEPRECATION")
     when (visitor) {
       is MarkdownElementVisitor -> visitor.visitParagraph(this)
       else -> super.accept(visitor)

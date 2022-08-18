@@ -13,3 +13,9 @@ baz -> USimpleNameReferenceExpression (identifier = baz) from KtSimpleNameString
 baz -> USimpleNameReferenceExpression (identifier = baz) from KtNameReferenceExpression
 simpleForTemplate -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from KtNameReferenceExpression
 simpleForTemplate -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from KtNameReferenceExpression
+trimIndent -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from KtDotQualifiedExpression
+trimIndent -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from KtNameReferenceExpression
+trimMargin -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from KtDotQualifiedExpression
+trimMargin -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from KtNameReferenceExpression
+trimIndent -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from KtDotQualifiedExpression
+trimIndent -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) from KtNameReferenceExpression

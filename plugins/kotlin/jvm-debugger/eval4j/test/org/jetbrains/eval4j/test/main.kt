@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.eval4j.test
 
@@ -253,7 +253,6 @@ object REFLECTION_EVAL : Eval {
         if (invokeSpecial) {
             if (methodDesc.name == "<init>") {
                 // Constructor call
-                @Suppress("UNCHECKED_CAST")
                 val _class = findClass((instance as NewObjectValue).asmType)
                 val ctor = _class.findConstructor(methodDesc)
                 assertNotNull("Constructor not found: $methodDesc", ctor)
@@ -283,7 +282,6 @@ object REFLECTION_EVAL : Eval {
 }
 
 class ReflectionLookup(val classLoader: ClassLoader) {
-    @Suppress("UNCHECKED_CAST")
     fun findClass(asmType: Type): Class<*>? {
         return when (asmType.sort) {
             Type.BOOLEAN -> java.lang.Boolean.TYPE

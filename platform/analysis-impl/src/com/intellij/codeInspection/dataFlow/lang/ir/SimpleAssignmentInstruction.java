@@ -29,9 +29,7 @@ public class SimpleAssignmentInstruction extends ExpressionPushingInstruction {
 
   @Override
   public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
-    var instruction = new SimpleAssignmentInstruction(getDfaAnchor(), myDestination.bindToFactory(factory));
-    instruction.setIndex(getIndex());
-    return instruction;
+    return new SimpleAssignmentInstruction(getDfaAnchor(), myDestination.bindToFactory(factory));
   }
 
   @Override

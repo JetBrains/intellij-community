@@ -5,6 +5,9 @@ import com.intellij.CommonBundle;
 import com.intellij.featureStatistics.*;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.nls.NlsMessages;
+import com.intellij.ide.ui.text.StyledTextPane;
+import com.intellij.ide.ui.text.paragraph.TextParagraph;
+import com.intellij.ide.util.TipAndTrickBean;
 import com.intellij.ide.util.TipUIUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.TableViewSpeedSearch;
@@ -21,6 +25,7 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.ListTableModel;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,10 +34,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Date;
+import java.util.List;
+import java.util.*;
 
 public final class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
   private static final Comparator<FeatureDescriptor> DISPLAY_NAME_COMPARATOR = Comparator.comparing(FeatureDescriptor::getDisplayName);
@@ -175,8 +178,10 @@ public final class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
 
     splitter.setFirstComponent(topPanel);
 
-    final TipUIUtil.Browser browser = TipUIUtil.createBrowser();
-    splitter.setSecondComponent(ScrollPaneFactory.createScrollPane(browser.getComponent()));
+    final StyledTextPane textPane = new StyledTextPane();
+    textPane.setBackground(UIUtil.getTextFieldBackground());
+    Disposer.register(getDisposable(), textPane);
+    splitter.setSecondComponent(ScrollPaneFactory.createScrollPane(textPane));
 
     table.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -184,10 +189,12 @@ public final class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
       public void valueChanged(ListSelectionEvent e) {
         Collection<FeatureDescriptor> selection = table.getSelection();
         if (selection.isEmpty()) {
-          browser.setText("");
+          textPane.clear();
         }
         else {
-          TipUIUtil.openTipInBrowser(TipUIUtil.getTip(selection.iterator().next()), browser);
+          TipAndTrickBean tip = TipUIUtil.getTip(selection.iterator().next());
+          List<TextParagraph> paragraphs = TipUIUtil.loadAndParseTip(tip);
+          textPane.setParagraphs(paragraphs);
         }
       }
     });

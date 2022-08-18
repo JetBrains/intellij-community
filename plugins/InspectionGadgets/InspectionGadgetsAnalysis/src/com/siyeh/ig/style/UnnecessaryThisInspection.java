@@ -18,7 +18,6 @@ package com.siyeh.ig.style;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -93,13 +92,13 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
   private class UnnecessaryThisVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitThisExpression(PsiThisExpression expression) {
+    public void visitThisExpression(@NotNull PsiThisExpression expression) {
       super.visitThisExpression(expression);
       PsiElement parenthesizedThis = findBiggestParenthesizedExpr(expression);
       if (parenthesizedThis.getParent() instanceof PsiNewExpression) {
         final PsiReference qualifier = expression.getQualifier();
         if (qualifier == null || qualifier.resolve() == PsiTreeUtil.getParentOfType(expression, PsiClass.class)) {
-          registerError(expression, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+          registerError(expression);
         }
       }
     }
@@ -135,7 +134,7 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
         }
         if (parent instanceof PsiCallExpression) {
           // method calls are always in error
-          registerError(qualifierExpression, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+          registerError(qualifierExpression);
           return;
         }
         final PsiElement target = expression.resolve();
@@ -149,7 +148,7 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
         if (variable instanceof PsiField && HighlightUtil.isIllegalForwardReferenceToField(expression, (PsiField)variable, true) != null) {
           return;
         }
-        registerError(thisExpression, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+        registerError(thisExpression);
       }
       else {
         final String qualifierName = qualifier.getReferenceName();
@@ -169,7 +168,7 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
           final PsiResolveHelper resolveHelper = psiFacade.getResolveHelper();
           while (parentClass != null) {
             if (qualifierName.equals(parentClass.getName())) {
-              registerError(thisExpression, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+              registerError(thisExpression);
             }
             final PsiMethod[] methods = parentClass.findMethodsByName(methodName, true);
             for (PsiMethod method : methods) {
@@ -196,7 +195,7 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
           PsiClass parentClass = ClassUtils.getContainingClass(expression);
           while (parentClass != null) {
             if (qualifierName.equals(parentClass.getName())) {
-              registerError(thisExpression, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+              registerError(thisExpression);
             }
             final PsiField field = parentClass.findFieldByName(referenceName, true);
             if (field != null) {

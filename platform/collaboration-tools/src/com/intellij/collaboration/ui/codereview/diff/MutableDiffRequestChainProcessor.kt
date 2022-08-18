@@ -14,7 +14,7 @@ import com.intellij.openapi.vcs.changes.actions.diff.PresentableGoToChangePopupA
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import kotlin.properties.Delegates
 
-open class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequestChain?) : CacheDiffRequestProcessor.Simple(project) {
+abstract class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequestChain?) : CacheDiffRequestProcessor.Simple(project) {
 
   private val asyncChangeListener = AsyncDiffRequestChain.Listener {
     dropCaches()
@@ -85,7 +85,7 @@ open class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequest
     return MyGoToChangePopupAction()
   }
 
-  open fun selectFilePath(filePath: FilePath) = Unit
+  abstract fun selectFilePath(filePath: FilePath)
 
   private fun selectCurrentChange() {
     val producer = currentRequestProvider as? ChangeDiffRequestChain.Producer ?: return

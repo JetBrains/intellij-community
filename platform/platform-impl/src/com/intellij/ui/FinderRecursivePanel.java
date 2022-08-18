@@ -80,6 +80,11 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
 
   private final CopyProvider myCopyProvider = new CopyProvider() {
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void performCopy(@NotNull DataContext dataContext) {
       final T value = getSelectedValue();
       if (value != null) {
@@ -269,6 +274,11 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         assert myParent != null;
         myParent.handleGotoPrevious();
@@ -286,6 +296,11 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         FinderRecursivePanel<?> finderRecursivePanel = (FinderRecursivePanel<?>)getSecondComponent();
         finderRecursivePanel.handleGotoNext();
@@ -298,6 +313,11 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(isEditable());
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
 
       @Override

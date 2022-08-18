@@ -1,4 +1,4 @@
-// "Introduce new StringBuilder to update variable 's'" "true"
+// "Introduce new StringBuilder to update variable 's'" "true-preview"
 
 public class Main {
     void test(String s) {

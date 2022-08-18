@@ -18,10 +18,7 @@ package com.intellij.ide.projectView.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.impl.ModuleGroup;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.containers.ContainerUtil;
@@ -44,6 +41,11 @@ public class MoveModulesToSubGroupAction extends MoveModulesToGroupAction {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Module[] modules = e.getRequiredData(LangDataKeys.MODULE_CONTEXT_ARRAY);
@@ -51,13 +53,13 @@ public class MoveModulesToSubGroupAction extends MoveModulesToGroupAction {
     if (myModuleGroup != null) {
       String message = IdeBundle.message("prompt.specify.name.of.module.subgroup", myModuleGroup.presentableText(), whatToMove(modules));
       String subgroup = Messages.showInputDialog(message, IdeBundle.message("title.module.sub.group"), Messages.getQuestionIcon());
-      if (subgroup == null || "".equals(subgroup.trim())) return;
+      if (subgroup == null || subgroup.trim().isEmpty()) return;
       newGroup = ContainerUtil.append(myModuleGroup.getGroupPathList(), subgroup);
     }
     else {
       String message = IdeBundle.message("prompt.specify.module.group.name", whatToMove(modules));
       String group = Messages.showInputDialog(message, IdeBundle.message("title.module.group"), Messages.getQuestionIcon());
-      if (group == null || "".equals(group.trim())) return;
+      if (group == null || group.trim().isEmpty()) return;
       newGroup = Collections.singletonList(group);
     }
 

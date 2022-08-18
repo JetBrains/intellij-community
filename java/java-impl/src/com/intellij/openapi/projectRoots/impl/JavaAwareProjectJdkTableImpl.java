@@ -2,13 +2,19 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.lang.JavaVersion;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 
@@ -25,27 +31,38 @@ public final class JavaAwareProjectJdkTableImpl extends ProjectJdkTableImpl {
 
   private Sdk myInternalJdk;
 
+  @RequiresEdt
   @Override
   public void preconfigure() {
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
-    if (propertiesComponent.getBoolean(DEFAULT_JDK_CONFIGURED, false) ||
-        ApplicationManager.getApplication().isUnitTestMode()) {
-      return;
-    }
+    Application application = ApplicationManager.getApplication();
+    if (propertiesComponent.getBoolean(DEFAULT_JDK_CONFIGURED, false) || application.isUnitTestMode()) return;
 
-    JavaSdk javaSdk = JavaSdk.getInstance();
-    List<Sdk> jdks = getSdksOfType(javaSdk);
-    if (jdks.isEmpty()) {
-      String homePath = ApplicationManager.getApplication().getService(DefaultJdkConfigurator.class).guessJavaHome();
-      if (homePath != null && javaSdk.isValidSdkHome(homePath)) {
-        String suggestedName = JdkUtil.suggestJdkName(javaSdk.getVersionString(homePath));
-        if (suggestedName != null) {
-          Sdk jdk = javaSdk.createJdk(suggestedName, homePath, false);
-          ApplicationManager.getApplication().runWriteAction(() -> addJdk(jdk));
-        }
+    try {
+      Sdk jdk = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        this::guessJdk, JavaBundle.message("progress.title.detecting.jdk"), true, null);
+      if (jdk != null) {
+        application.runWriteAction(() -> addJdk(jdk));
       }
     }
+    catch (ProcessCanceledException ignored) {
+    }
+    // If cancelled once, let's avoid subsequent attempts
+    // While this detection is usually fast, on some machines it could be slow for strange reasons.
+    // e.g., JAVA_HOME points to unreachable network drive. In this case, give up further attempts.
     propertiesComponent.setValue(DEFAULT_JDK_CONFIGURED, true);
+  }
+
+  private @Nullable Sdk guessJdk() {
+    JavaSdk javaSdk = JavaSdk.getInstance();
+    List<Sdk> jdks = getSdksOfType(javaSdk);
+    if (!jdks.isEmpty()) return null;
+    String homePath = ApplicationManager.getApplication().getService(DefaultJdkConfigurator.class).guessJavaHome();
+    if (homePath == null || !javaSdk.isValidSdkHome(homePath)) return null;
+    String suggestedName = JdkUtil.suggestJdkName(javaSdk.getVersionString(homePath));
+    if (suggestedName == null) return null;
+    ProgressManager.checkCanceled();
+    return javaSdk.createJdk(suggestedName, homePath, false);
   }
 
   /**

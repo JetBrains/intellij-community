@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.uast.kotlin
 
+import com.intellij.lang.Language
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
@@ -12,13 +13,14 @@ import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.getAccessorLightMethods
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightElements
-import org.jetbrains.kotlin.idea.references.readWriteAccess
+import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.ArrayFqNames
+import org.jetbrains.kotlin.resolve.references.ReferenceAccess
+import org.jetbrains.kotlin.utils.addToStdlib.constant
 import org.jetbrains.uast.*
 
 @Suppress("NOTHING_TO_INLINE")
@@ -35,7 +37,7 @@ inline fun <reified T : UDeclaration, reified P : PsiElement> unwrap(element: P)
 
 fun unwrapFakeFileForLightClass(file: PsiFile): PsiFile = (file as? FakeFileForLightClass)?.ktFile ?: file
 
-internal fun getContainingLightClass(original: KtDeclaration): KtLightClass? =
+fun getContainingLightClass(original: KtDeclaration): KtLightClass? =
     (original.containingClassOrObject?.toLightClass() ?: original.containingKtFile.findFacadeClass())
 
 fun getKotlinMemberOrigin(element: PsiElement?): KtDeclaration? {
@@ -53,6 +55,29 @@ fun KtExpression.unwrapBlockOrParenthesis(): KtExpression {
     return innerExpression
 }
 
+fun KtExpression.readWriteAccess(): ReferenceAccess {
+    var expression = getQualifiedExpressionForSelectorOrThis()
+    loop@ while (true) {
+        when (val parent = expression.parent) {
+            is KtParenthesizedExpression, is KtAnnotatedExpression, is KtLabeledExpression -> expression = parent as KtExpression
+            else -> break@loop
+        }
+    }
+
+    val assignment = expression.getAssignmentByLHS()
+    if (assignment != null) {
+        return when (assignment.operationToken) {
+            KtTokens.EQ -> ReferenceAccess.WRITE
+            else -> ReferenceAccess.READ_WRITE
+        }
+    }
+
+    return if ((expression.parent as? KtUnaryExpression)?.operationToken in constant { setOf(KtTokens.PLUSPLUS, KtTokens.MINUSMINUS) })
+        ReferenceAccess.READ_WRITE
+    else
+        ReferenceAccess.READ
+}
+
 fun KtElement.canAnalyze(): Boolean {
     if (!isValid) return false
     val containingFile = containingFile as? KtFile ?: return false // EA-114080, EA-113475, EA-134193
@@ -68,16 +93,13 @@ val KtTypeReference.nameElement: PsiElement?
         (it as? KtUserType)?.referenceExpression?.getReferencedNameElement() ?: it.navigationElement
     }
 
-fun KtClassOrObject.toPsiType(): PsiType {
+internal fun KtClassOrObject.toPsiType(): PsiType {
     val lightClass = toLightClass() ?: return UastErrorType
-    return if (lightClass is PsiAnonymousClass)
-        lightClass.baseClassType
-    else
-        PsiTypesUtil.getClassType(lightClass)
+    return PsiTypesUtil.getClassType(lightClass)
 }
 
 fun PsiElement.getMaybeLightElement(sourcePsi: KtExpression? = null): PsiElement? {
-    if (this is KtProperty && sourcePsi?.readWriteAccess(useResolveForReadWrite = false)?.isWrite == true) {
+    if (this is KtProperty && sourcePsi?.readWriteAccess()?.isWrite == true) {
         with(getAccessorLightMethods()) {
             (setter ?: backingField)?.let { return it } // backingField is for val property assignments in init blocks
         }
@@ -116,6 +138,11 @@ fun isAnnotationArgumentArrayInitializer(ktCallElement: KtCallElement, fqNameOfC
     return ktCallElement.isAnnotationArgument && fqNameOfCallee in ArrayFqNames.ARRAY_CALL_FQ_NAMES
 }
 
+private val KtBlockExpression.isFunctionBody: Boolean
+    get() {
+        return (parent as? KtNamedFunction)?.bodyBlockExpression == this
+    }
+
 /**
  * Depending on type owner kind, type conversion to [PsiType] would vary. For example, we need to convert `Unit` to `void` only if the given
  * type is used as a return type of a function. Usually, the "context" of type conversion would be the owner of the type to be converted,
@@ -137,3 +164,28 @@ val KtElement.typeOwnerKind: TypeOwnerKind
         is KtExpression -> TypeOwnerKind.EXPRESSION
         else -> TypeOwnerKind.UNKNOWN
     }
+
+fun convertUnitToVoidIfNeeded(
+    context: KtElement,
+    typeOwnerKind: TypeOwnerKind,
+    boxed: Boolean
+): PsiType? {
+    fun PsiPrimitiveType.orBoxed() = if (boxed) getBoxedType(context) else this
+    return when {
+        typeOwnerKind == TypeOwnerKind.DECLARATION && context is KtNamedFunction ->
+            PsiType.VOID.orBoxed()
+        typeOwnerKind == TypeOwnerKind.EXPRESSION && context is KtBlockExpression && context.isFunctionBody ->
+            PsiType.VOID.orBoxed()
+        else -> null
+    }
+}
+
+/** Returns true if the given element is written in Kotlin. */
+fun isKotlin(element: PsiElement?): Boolean {
+    return element != null && isKotlin(element.language)
+}
+
+/** Returns true if the given language is Kotlin. */
+fun isKotlin(language: Language?): Boolean {
+    return language == KotlinLanguage.INSTANCE
+}

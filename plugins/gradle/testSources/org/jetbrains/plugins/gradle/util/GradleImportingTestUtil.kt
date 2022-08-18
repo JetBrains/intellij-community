@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GradleImportingTestUtil")
 
 package org.jetbrains.plugins.gradle.util
@@ -15,14 +15,13 @@ import java.util.concurrent.TimeUnit
  *  for example invokeLater { refreshProject(project, spec) }
  * @throws java.lang.AssertionError if import is failed or isn't started
  */
-fun <R> waitForMultipleProjectsReload(expectedProjects: List<Path>, action: ThrowableComputable<R, Throwable>): R =
-  waitForTask(getProjectDataLoadPromise(expectedProjects), action)
+fun <R> waitForMultipleProjectsReload(expectedProjects: List<Path>, action: ThrowableComputable<R, Throwable>): R {
+  return waitForTask(getProjectDataLoadPromise(expectedProjects), action)
+}
 
-fun <R> waitForProjectReload(action: ThrowableComputable<R, Throwable>): R =
-  waitForTask(getProjectDataLoadPromise(), action)
+fun <R> waitForProjectReload(action: ThrowableComputable<R, Throwable>): R = waitForTask(getProjectDataLoadPromise(), action)
 
-fun <R> waitForTaskExecution(action: ThrowableComputable<R, Throwable>): R =
-  waitForTask(getExecutionTaskFinishPromise(), action)
+fun <R> waitForTaskExecution(action: ThrowableComputable<R, Throwable>): R = waitForTask(getExecutionTaskFinishPromise(), action)
 
 private fun <R> waitForTask(finishTaskPromise: Promise<*>, action: ThrowableComputable<R, Throwable>): R {
   val result = action.compute()

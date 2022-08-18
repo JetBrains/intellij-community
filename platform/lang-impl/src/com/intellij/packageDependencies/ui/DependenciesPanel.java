@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.CommonBundle;
@@ -133,7 +133,10 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     splitter.setFirstComponent(treeSplitter);
     splitter.setSecondComponent(myUsagesPanel);
     add(splitter, BorderLayout.CENTER);
-    add(createToolbar(), BorderLayout.NORTH);
+
+    ActionToolbar toolbar = createToolbar();
+    toolbar.setTargetComponent(treeSplitter);
+    add(toolbar.getComponent(), BorderLayout.NORTH);
 
     myRightTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myRightTree, myProject);
     myLeftTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myLeftTree, myProject);
@@ -277,7 +280,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     }
   }
 
-  private JComponent createToolbar() {
+  private @NotNull ActionToolbar createToolbar() {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new CloseAction());
     group.add(new RerunAction(this));
@@ -298,8 +301,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     group.add(new EditDependencyRulesAction());
     group.add(CommonActionsManager.getInstance().createExportToTextFileAction(new DependenciesExporterToTextFile()));
 
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("PackageDependencies", group, true);
-    return toolbar.getComponent();
+    return ActionManager.getInstance().createActionToolbar("PackageDependencies", group, true);
   }
 
   @NotNull

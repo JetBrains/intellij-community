@@ -45,7 +45,7 @@ object GrazieReplaceTypoQuickFix {
     @NlsSafe private val suggestion: String,
     private val replacements: List<Pair<SmartPsiFileRange, String>>,
     private val underlineRanges: List<SmartPsiFileRange>,
-    private val toHighlight: SmartPsiFileRange,
+    private val toHighlight: List<SmartPsiFileRange>,
   )
     : ChoiceVariantIntentionAction(), HighPriorityAction {
     override fun getName(): String {
@@ -86,9 +86,11 @@ object GrazieReplaceTypoQuickFix {
     }
 
     override fun getRangesToHighlight(editor: Editor, _file: PsiFile): List<RangeToHighlight> {
-      val range = toHighlight.range ?: return listOf()
-      val file = toHighlight.containingFile ?: return listOf()
-      return listOf(RangeToHighlight(file, TextRange.create(range), EditorColors.SEARCH_RESULT_ATTRIBUTES))
+      return toHighlight.mapNotNull {
+        val range = it.range ?: return@mapNotNull null
+        val file = it.containingFile ?: return@mapNotNull null
+        RangeToHighlight(file, TextRange.create(range), EditorColors.SEARCH_RESULT_ATTRIBUTES)
+      }
     }
   }
 
@@ -102,33 +104,45 @@ object GrazieReplaceTypoQuickFix {
   fun getReplacementFixes(problem: TextProblem, underlineRanges: List<SmartPsiFileRange>): List<LocalQuickFix> {
     val file = problem.text.containingFile
     val spm = SmartPointerManager.getInstance(file.project)
-    @Suppress("HardCodedStringLiteral") val familyName: @IntentionFamilyName String = familyName(problem)
+    val familyName: @IntentionFamilyName String = familyName(problem)
     val result = arrayListOf<LocalQuickFix>(ReplaceTypoTitleAction(familyName, problem.shortMessage))
-    val toHighlight = spm.createSmartPsiFileRangePointer(file, makeNonEmpty(problem.text.textRangeToFile(problem.replacementRange), file))
-    problem.corrections.forEachIndexed { index, suggestion ->
-      val replacements = toFileReplacements(problem.replacementRange, suggestion, problem.text)
-      result.add(ChangeToVariantAction(problem.rule, index, familyName, suggestion, replacements, underlineRanges, toHighlight))
+    problem.suggestions.forEachIndexed { index, suggestion ->
+      val changes = suggestion.changes
+      val replacements = changes.flatMap { toFileReplacements(it.range, it.replacement, problem.text) }
+      val presentable = suggestion.presentableText
+      val toHighlight = changes.map { spm.createSmartPsiFileRangePointer(file, makeNonEmpty(problem.text.textRangeToFile(it.range), file)) }
+      result.add(ChangeToVariantAction(problem.rule, index, familyName, presentable, replacements, underlineRanges, toHighlight))
     }
     return result
   }
 
   @VisibleForTesting
   @JvmStatic
-  fun toFileReplacements(replacementRange: TextRange, suggestion: String, text: TextContent): List<Pair<SmartPsiFileRange, String>> {
+  fun toFileReplacements(replacementRange: TextRange, suggestion: CharSequence, text: TextContent): List<Pair<SmartPsiFileRange, String>> {
     val replacedText = replacementRange.subSequence(text)
     val commonPrefix = commonPrefixLength(suggestion, replacedText)
     val commonSuffix =
       min(commonSuffixLength(suggestion, replacedText), min(suggestion.length, replacementRange.length) - commonPrefix)
     val localRange = TextRange(replacementRange.startOffset + commonPrefix, replacementRange.endOffset - commonSuffix)
-    val replacement = suggestion.substring(commonPrefix, suggestion.length - commonSuffix)
+    var replacement = suggestion.substring(commonPrefix, suggestion.length - commonSuffix)
 
     val file = text.containingFile
     val spm = SmartPointerManager.getInstance(file.project)
     val shreds = text.intersection(text.textRangeToFile(localRange))
     if (shreds.isEmpty()) return emptyList()
 
+    if (replacement.isEmpty() && removalWouldGlueUnrelatedTokens(localRange, text)) {
+      replacement = " ";
+    }
+
     val best = if (isWordMiddle(text, localRange.endOffset)) shreds.last() else shreds.first()
     return shreds.map { spm.createSmartPsiFileRangePointer(file, it) to (if (it === best) replacement else "") }
+  }
+
+  private fun removalWouldGlueUnrelatedTokens(removedRange: TextRange, text: TextContent): Boolean {
+    val prevFileIndex = text.textOffsetToFile(0) - 1
+    return removedRange.endOffset < text.length && text[removedRange.endOffset].isLetterOrDigit() &&
+           prevFileIndex > 0 && text.containingFile.viewProvider.contents[prevFileIndex].isLetterOrDigit()
   }
 
   private fun isWordMiddle(text: CharSequence, index: Int) =

@@ -20,15 +20,22 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
   private final boolean myIsTest;
   private final DataCollectorSystemEventLogger myEventLogger;
   private final EventLogAppConnectionSettings myConnectionSettings;
-  private final String myRecorderId;
 
+  /**
+   * @deprecated EventLogApplicationInfo should not depend on recorderId
+   * use {@link EventLogInternalApplicationInfo#EventLogInternalApplicationInfo(boolean)}
+   */
+  @Deprecated(forRemoval = true)
   public EventLogInternalApplicationInfo(@NotNull String recorderId, boolean isTest) {
+    this(isTest);
+  }
+
+  public EventLogInternalApplicationInfo(boolean isTest) {
     myIsTest = isTest;
-    myRecorderId = recorderId;
     myConnectionSettings = new EventLogAppConnectionSettings();
     myEventLogger = new DataCollectorSystemEventLogger() {
       @Override
-      public void logErrorEvent(@NotNull String eventId, @NotNull Throwable exception) {
+      public void logErrorEvent(@NotNull String recorderId, @NotNull String eventId, @NotNull Throwable exception) {
         EventLogSystemLogger.logSystemError(recorderId, eventId, exception.getClass().getName(), -1);
       }
     };
@@ -36,18 +43,18 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
 
   @NotNull
   @Override
-  @SuppressWarnings("deprecation") // remove together with EventLogEndpointSubstitutor
   public String getTemplateUrl() {
     ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
     if (externalEventLogSettings != null) {
-      String result = externalEventLogSettings.getTemplateUrl(myRecorderId);
+      String result = externalEventLogSettings.getTemplateUrl();
       return result == null ? getDefaultTemplateUrl() : result;
-    } else if (ApplicationManager.getApplication().getExtensionArea().hasExtensionPoint(EventLogEndpointSubstitutor.EP_NAME.getName())) {
+    }
+    else if (ApplicationManager.getApplication().getExtensionArea().hasExtensionPoint(EventLogEndpointSubstitutor.EP_NAME.getName())) {
       EventLogEndpointSubstitutor validSubstitutor = EventLogEndpointSubstitutor.EP_NAME.findFirstSafe(substitutor -> {
         return PluginInfoDetectorKt.getPluginInfo(substitutor.getClass()).isAllowedToInjectIntoFUS();
       });
 
-      String result = validSubstitutor == null ? null : validSubstitutor.getTemplateUrl(myRecorderId);
+      String result = validSubstitutor == null ? null : validSubstitutor.getTemplateUrl();
       return result == null ? getDefaultTemplateUrl() : result;
     }
     return getDefaultTemplateUrl();

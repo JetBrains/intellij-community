@@ -16,10 +16,9 @@ import org.jetbrains.annotations.NotNull;
  */
 @IntellijInternalApi
 public interface IsUpToDateCheckConsumer {
-  ExtensionPointName<IsUpToDateCheckConsumer> EP_NAME = ExtensionPointName.create("com.intellij.compiler.isUpToDateCheckConsumer");
+  ExtensionPointName<IsUpToDateCheckConsumer> EP_NAME = new ExtensionPointName<>("com.intellij.compiler.isUpToDateCheckConsumer");
 
   /**
-   * @param project
    * @return true if {@link CompilerManager#isUpToDate(CompileScope)} should be called
    */
   boolean isApplicable(@NotNull Project project);
@@ -27,8 +26,7 @@ public interface IsUpToDateCheckConsumer {
   /**
    * Called if {@link IsUpToDateCheckConsumer#isApplicable(Project)}
    *
-   * @param project
-   * @param isUpToDate the result of {@link CompilerManager#isUpToDate(CompileScope)}
+   * @param isUpToDate the result of {@link CompilerManager#isUpToDateAsync(CompileScope)}
    */
   void isUpToDate(@NotNull Project project, boolean isUpToDate);
 }

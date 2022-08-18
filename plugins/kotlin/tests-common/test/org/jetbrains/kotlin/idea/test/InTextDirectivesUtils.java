@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.test;
 
@@ -199,6 +199,11 @@ public final class InTextDirectivesUtils {
                     line = line.trim();
                     if (line.startsWith("//") || line.startsWith("##")) {
                         String uncommentedLine = line.substring(2).trim();
+                        if (!uncommentedLine.isEmpty()) {
+                            result.add(uncommentedLine);
+                        }
+                    } else if (line.startsWith("<!--")) {
+                        String uncommentedLine = StringsKt.substringBefore(line.substring(4), "-->", "").trim();
                         if (!uncommentedLine.isEmpty()) {
                             result.add(uncommentedLine);
                         }

@@ -17,9 +17,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
+import org.jetbrains.plugins.groovy.ext.spock.SpecificationKt;
 import org.jetbrains.plugins.groovy.formatter.FormattingContext;
 import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
 import org.jetbrains.plugins.groovy.formatter.blocks.GroovyBlock;
+import org.jetbrains.plugins.groovy.formatter.blocks.GroovyBlockGenerator;
 import org.jetbrains.plugins.groovy.formatter.blocks.SyntheticGroovyBlock;
 import org.jetbrains.plugins.groovy.formatter.models.spacing.SpacingTokens;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
@@ -65,6 +67,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrArrayTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+
+import java.util.Iterator;
 
 import static org.jetbrains.plugins.groovy.formatter.blocks.BlocksKt.shouldHandleAsSimpleClosure;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
@@ -305,6 +309,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitIndexProperty(@NotNull GrIndexProperty expression) {
+    if (myType2 == GroovyTokenTypes.mQUESTION) createSpaceInCode(false);
     if (myType2 == GroovyElementTypes.ARGUMENTS) manageSpaceBeforeCallLParenth();
   }
 
@@ -895,12 +900,38 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
                           isLeftOrRight(SHIFT_OPERATORS) ? mySettings.SPACE_AROUND_SHIFT_OPERATORS :
                           isLeftOrRight(REGEX_OPERATORS) ? myGroovySettings.SPACE_AROUND_REGEX_OPERATORS :
                           isLeftOrRight(KW_IN) || isLeftOrRight(T_NOT_IN);
-    if (BINARY_OPERATORS.contains(myType2)) {
+    if ((myType2 == GroovyTokenTypes.mBOR || myType2 == GroovyTokenTypes.mLOR) && GroovyBlockGenerator.isTablePart(expression) &&
+        SpecificationKt.isInsideSpecification(expression)) {
+      createSpaceBeforeSpockDelimiter(spaceAround);
+    }
+    else if (BINARY_OPERATORS.contains(myType2)) {
       createDependentLFSpacing(mySettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE, spaceAround, expression.getTextRange());
     }
     else {
       createSpaceInCode(spaceAround);
     }
+  }
+
+  private void createSpaceBeforeSpockDelimiter(boolean spaceAround) {
+    if (!myChild1.textContains('\n')) {
+      createSpaceInCode(spaceAround);
+      return;
+    }
+    String text = myChild1.getText();
+    int maxLength = 0;
+    int lastLength = 0;
+    for (Iterator<String> line = text.lines().iterator(); line.hasNext();) {
+      String currentLine = line.next();
+      int length = currentLine.length();
+      if (!line.hasNext()) {
+        lastLength = length;
+      }
+      if (length > maxLength) {
+        maxLength = length;
+      }
+    }
+    int spaces = maxLength + (spaceAround ? 1 : 0) - lastLength;
+    myResult = Spacing.createSpacing(spaces, spaces, 0, mySettings.KEEP_LINE_BREAKS, keepBlankLines());
   }
 
   private boolean isLeftOrRight(TokenSet operators) {

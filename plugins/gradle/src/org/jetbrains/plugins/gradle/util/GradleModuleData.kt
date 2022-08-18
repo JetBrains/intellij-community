@@ -10,7 +10,7 @@ import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 
 @ApiStatus.Experimental
 class GradleModuleData(private val dataNode: DataNode<out ModuleData>) {
-  private val moduleData = dataNode.data
+  val moduleData = dataNode.data
 
   init {
     val systemId = moduleData.owner

@@ -52,7 +52,7 @@ public class BitsUtil {
     if ( strValue.length() > size ){
       strValue = strValue.substring( strValue.length() - size );
     }
-    StringBuffer buffer = new StringBuffer( strValue.length() + 1 + size );
+    StringBuilder buffer = new StringBuilder(strValue.length() + 1 + size );
     buffer.append( "0x" );
     int dif = size - strValue.length();
     for ( int i = 0; i < dif; ++i ){

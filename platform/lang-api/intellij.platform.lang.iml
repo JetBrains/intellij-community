@@ -15,7 +15,7 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel" exported="" />
     <orderEntry type="module" module-name="intellij.platform.analysis" exported="" />
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
-    <orderEntry type="library" name="JDOM" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="library" scope="TEST" name="jmock" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" scope="TEST" name="hamcrest" level="project" />
@@ -29,5 +29,6 @@
     <orderEntry type="library" name="miglayout-swing" level="project" />
     <orderEntry type="module" module-name="intellij.platform.execution" exported="" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.ml" />
   </component>
 </module>

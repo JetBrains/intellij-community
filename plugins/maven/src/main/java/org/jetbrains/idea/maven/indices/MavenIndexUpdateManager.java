@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices;
 
+import com.intellij.model.SideEffectGuard;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
@@ -71,6 +72,7 @@ public final class MavenIndexUpdateManager implements Disposable {
   }
 
   CompletableFuture<?> scheduleUpdateContent(@NotNull Project project, List<String> indicesUrls, final boolean fullUpdate) {
+    SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.PROJECT_MODEL);
     final List<String> toSchedule = new ArrayList<>();
 
     synchronized (myUpdatingIndicesLock) {

@@ -10,7 +10,7 @@ import java.util.Collections;
 import java.util.concurrent.Future;
 
 /**
- * @author: db
+ * @author db
  */
 public final class Callbacks {
 

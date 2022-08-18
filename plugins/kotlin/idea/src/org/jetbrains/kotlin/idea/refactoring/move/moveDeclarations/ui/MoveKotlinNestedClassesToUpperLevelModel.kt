@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ui
 
@@ -17,17 +17,17 @@ import com.intellij.refactoring.PackageWrapper
 import com.intellij.refactoring.util.RefactoringMessageUtil
 import com.intellij.util.CommonJavaRefactoringUtil
 import com.intellij.util.IncorrectOperationException
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.refactoring.createKotlinFile
 import org.jetbrains.kotlin.idea.refactoring.move.getTargetPackageFqName
 import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.*
 import org.jetbrains.kotlin.idea.roots.getSuitableDestinationSourceRoots
 import org.jetbrains.kotlin.idea.statistics.KotlinMoveRefactoringFUSCollector.MoveRefactoringDestination
 import org.jetbrains.kotlin.idea.statistics.KotlinMoveRefactoringFUSCollector.MovedEntity
-import org.jetbrains.kotlin.idea.util.projectStructure.module
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -165,7 +165,7 @@ internal abstract class MoveKotlinNestedClassesToUpperLevelModel(
             val targetPackageFqName = getTargetPackageFqName(target)
                 ?: throw ConfigurationException(KotlinBundle.message("text.cannot.find.target.package.name"))
 
-            val suggestedName = KotlinNameSuggester.suggestNameByName(className) {
+            val suggestedName = Fe10KotlinNameSuggester.suggestNameByName(className) {
                 target.findFile(it + "." + KotlinFileType.EXTENSION) == null
             }
 

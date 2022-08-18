@@ -2,6 +2,8 @@
 package com.intellij.ide.wizard
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Companion.logLocationChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Companion.logNameChanged
 import com.intellij.ide.util.installNameGenerators
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -27,13 +29,14 @@ import org.jetbrains.annotations.NonNls
 import java.io.File
 import java.nio.file.Path
 
-
 class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjectWizardStep(parent), NewProjectWizardBaseData {
   override val nameProperty = propertyGraph.lazyProperty(::suggestName)
   override val pathProperty = propertyGraph.lazyProperty(::suggestLocation)
 
   override var name by nameProperty
   override var path by pathProperty
+
+  internal var bottomGap: Boolean = true
 
   private fun suggestLocation(): String {
     val location = context.projectFileDirectory
@@ -86,17 +89,19 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
       row(UIBundle.message("label.project.wizard.new.project.name")) {
         val locationProperty = pathProperty.joinCanonicalPath(nameProperty)
         textField()
-          .bindText(nameProperty)
+          .bindText(nameProperty.trim())
           .columns(COLUMNS_MEDIUM)
           .validationRequestor(AFTER_GRAPH_PROPAGATION(propertyGraph))
-          .textValidation(CHECK_NON_EMPTY, CHECK_MODULE_NAME(context.project))
+          .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_MODULE_NAME(context.project))
           .applyIf(context.isCreatingNewProject) { validation(CHECK_PROJECT_PATH(context.project, locationProperty)) }
           .applyIf(!context.isCreatingNewProject) { validation(CHECK_MODULE_PATH(context.project, locationProperty)) }
           .focused()
           .gap(RightGap.SMALL)
+          .whenTextChangedFromUi { logNameChanged() }
         installNameGenerators(getBuilderId(), nameProperty)
       }.bottomGap(BottomGap.SMALL)
-      row(UIBundle.message("label.project.wizard.new.project.location")) {
+
+      val locationRow = row(UIBundle.message("label.project.wizard.new.project.location")) {
         val commentProperty = pathProperty.joinCanonicalPath(nameProperty)
           .transform { getPathComment(it) }
         val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().withFileFilter { it.isDirectory }
@@ -105,10 +110,15 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
         textFieldWithBrowseButton(title, context.project, fileChooserDescriptor, fileChosen)
           .bindText(pathProperty.toUiPathProperty())
           .horizontalAlign(HorizontalAlign.FILL)
-          .textValidation(CHECK_NON_EMPTY, CHECK_DIRECTORY)
+          .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_DIRECTORY)
           .comment(commentProperty.get(), 100)
           .apply { commentProperty.afterChange { comment?.text = it } }
-      }.bottomGap(BottomGap.SMALL)
+          .whenTextChangedFromUi { logLocationChanged() }
+      }
+
+      if (bottomGap) {
+        locationRow.bottomGap(BottomGap.SMALL)
+      }
 
       onApply {
         context.projectName = name
@@ -144,4 +154,8 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
   init {
     data.putUserData(NewProjectWizardBaseData.KEY, this)
   }
+}
+
+fun newProjectWizardBaseStepWithoutGap(parent: NewProjectWizardStep): NewProjectWizardBaseStep {
+  return NewProjectWizardBaseStep(parent).apply { bottomGap = false }
 }

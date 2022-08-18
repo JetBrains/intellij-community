@@ -1,4 +1,4 @@
-// "Replace with findFirst()" "true"
+// "Replace with findFirst()" "true-preview"
 
 class Lookup {
   boolean matches(char[] lookup) {}

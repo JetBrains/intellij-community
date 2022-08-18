@@ -4,6 +4,7 @@
 package com.intellij.execution.target.value
 
 import com.intellij.execution.target.*
+import com.intellij.execution.target.local.LocalTargetEnvironment
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
@@ -82,58 +83,80 @@ private class Constant<T>(private val value: T) : TraceableTargetEnvironmentFunc
   override fun applyInner(t: TargetEnvironment): T = value
 }
 
-fun <T> Iterable<TargetEnvironmentFunction<T>>.joinToStringFunction(separator: CharSequence): TargetEnvironmentFunction<String> =
-  JoinedStringTargetEnvironmentFunction(iterable = this, separator = separator)
+@JvmOverloads
+fun <T> Iterable<TargetEnvironmentFunction<T>>.joinToStringFunction(separator: CharSequence,
+                                                                    transform: ((T) -> CharSequence)? = null): TargetEnvironmentFunction<String> =
+  JoinedStringTargetEnvironmentFunction(iterable = this, separator = separator, transform = transform)
 
-fun TargetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath: String): TargetEnvironmentFunction<String> {
-  if (this is LocalTargetEnvironmentRequest) return constant(localPath)
+@Deprecated("Do not use strings for local path",
+            ReplaceWith("getTargetEnvironmentForLocalPath(Paths.get(localPath))", "java.nio.file.Paths"))
+fun TargetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath: String): TargetEnvironmentFunction<String> = getTargetEnvironmentValueForLocalPath(
+  Path.of(localPath))
+
+fun TargetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath: Path): TargetEnvironmentFunction<String> {
+  if (this is LocalTargetEnvironmentRequest) return constant(localPath.toString())
+  return TraceableTargetEnvironmentFunction { targetEnvironment -> targetEnvironment.resolveLocalPath(localPath) }
+}
+
+@Deprecated("Do not use strings for local path",
+            ReplaceWith("getTargetEnvironmentValueForLocalPath(Paths.get(localPath))", "java.nio.file.Paths"))
+fun getTargetEnvironmentValueForLocalPath(localPath: String): TargetEnvironmentFunction<String> =
+  getTargetEnvironmentValueForLocalPath(Path.of(localPath))
+
+/**
+ * Returns function [target,targetPath] that converts [localPath] to the targetPath on certain target
+ */
+fun getTargetEnvironmentValueForLocalPath(localPath: Path): TargetEnvironmentFunction<String> {
   return TraceableTargetEnvironmentFunction { targetEnvironment ->
-    if (targetEnvironment is ExternallySynchronized) {
-      val pathForSynchronizedVolume = targetEnvironment.tryMapToSynchronizedVolume(localPath)
-      if (pathForSynchronizedVolume != null) return@TraceableTargetEnvironmentFunction pathForSynchronizedVolume
+    when (targetEnvironment) {
+      is LocalTargetEnvironment -> localPath.toString()
+      else -> targetEnvironment.resolveLocalPath(localPath)
     }
-    val (uploadRoot, relativePath) = getUploadRootForLocalPath(localPath) ?: throw IllegalArgumentException(
-      "Local path \"$localPath\" is not registered within uploads in the request")
-    val volume = targetEnvironment.uploadVolumes[uploadRoot]
-                 ?: throw IllegalStateException("Upload root \"$uploadRoot\" is expected to be created in the target environment")
-    joinPaths(volume.targetRoot, relativePath, targetEnvironment.targetPlatform)
   }
 }
 
-private fun ExternallySynchronized.tryMapToSynchronizedVolume(localPath: String): String? {
+private fun TargetEnvironment.resolveLocalPath(localPath: Path): String {
+  if (this is ExternallySynchronized) {
+    val pathForSynchronizedVolume = tryMapToSynchronizedVolume(localPath)
+    if (pathForSynchronizedVolume != null) return pathForSynchronizedVolume
+  }
+  val (uploadRoot, relativePath) = request.getUploadRootForLocalPath(localPath) ?: throw IllegalArgumentException(
+    "Local path \"$localPath\" is not registered within uploads in the request")
+  val volume = uploadVolumes[uploadRoot]
+               ?: throw IllegalStateException("Upload root \"$uploadRoot\" is expected to be created in the target environment")
+  return joinPaths(volume.targetRoot, relativePath, targetPlatform)
+}
+
+private fun ExternallySynchronized.tryMapToSynchronizedVolume(localPath: Path): String? {
   // TODO [targets] Does not look nice
   this as TargetEnvironment
-  val targetFileSeparator = targetPlatform.platform.fileSeparator
-  val (volume, relativePath) = synchronizedVolumes.firstNotNullOfOrNull { volume ->
-    getRelativePathIfAncestor(ancestor = volume.localPath, file = localPath)?.let { relativePath ->
-      volume to if (File.separatorChar != targetFileSeparator) {
-        relativePath.replace(File.separatorChar, targetFileSeparator)
-      }
-      else {
-        relativePath
-      }
-    }
-  } ?: return null
+  val (volume, relativePath) = findRemotePathByMapping(synchronizedVolumes, localPath, targetPlatform) ?: return null
   return joinPaths(volume.targetPath, relativePath, targetPlatform)
 }
 
-fun TargetEnvironmentRequest.getUploadRootForLocalPath(localPath: String): Pair<TargetEnvironment.UploadRoot, String>? {
-  val targetFileSeparator = targetPlatform.platform.fileSeparator
-  return uploadVolumes.mapNotNull { uploadRoot ->
-    getRelativePathIfAncestor(ancestor = uploadRoot.localRootPath, file = localPath)?.let { relativePath ->
-      uploadRoot to if (File.separatorChar != targetFileSeparator) {
-        relativePath.replace(File.separatorChar, targetFileSeparator)
-      }
-      else {
-        relativePath
-      }
-    }
-  }.firstOrNull()
+@Deprecated("Do not use strings for local path", ReplaceWith("getUploadRootForLocalPath(Paths.get(localPath))", "java.nio.file.Paths"))
+fun TargetEnvironmentRequest.getUploadRootForLocalPath(localPath: String): Pair<TargetEnvironment.UploadRoot, String>? =
+  getUploadRootForLocalPath(Paths.get(localPath))
+
+fun TargetEnvironmentRequest.getUploadRootForLocalPath(localPath: Path): Pair<TargetEnvironment.UploadRoot, String>? =
+  findRemotePathByMapping(uploadVolumes, localPath, targetPlatform)
+
+/**
+ * If [localPath] could be mapped to the remote system by one of the [mappings], return
+ * both: mapping and mapped path
+ */
+private fun <T> findRemotePathByMapping(mappings: Collection<T>, localPath: Path, target: TargetPlatform): Pair<T, String>?
+  where T : TargetEnvironment.MappingWithLocalPath = mappings.firstNotNullOfOrNull { uploadRoot ->
+  val targetFileSep = target.platform.fileSeparator
+  getRelativePathIfAncestor(ancestor = uploadRoot.localRootPath, file = localPath)?.let { relativePath ->
+    uploadRoot to if (File.separatorChar != targetFileSep) relativePath.replace(File.separatorChar, targetFileSep) else relativePath
+  }
 }
 
-private fun getRelativePathIfAncestor(ancestor: Path, file: String): String? =
+
+private fun getRelativePathIfAncestor(ancestor: Path, file: Path): String? =
   try {
-    ancestor.relativize(Paths.get(file)).takeIf { !it.startsWith("..") }?.toString()
+    ancestor.relativize(file).takeIf { !it.startsWith("..") }?.toString()
   }
   catch (ignored: InvalidPathException) {
     null
@@ -192,11 +215,14 @@ fun TargetEnvironment.downloadFromTarget(localPath: Path, progressIndicator: Pro
 }
 
 private class JoinedStringTargetEnvironmentFunction<T>(private val iterable: Iterable<TargetEnvironmentFunction<T>>,
-                                                       private val separator: CharSequence) : TraceableTargetEnvironmentFunction<String>() {
-  override fun applyInner(t: TargetEnvironment): String = iterable.map { it.apply(t) }.joinToString(separator = separator)
+                                                       private val separator: CharSequence,
+                                                       private val transform: ((T) -> CharSequence)?)
+  : TraceableTargetEnvironmentFunction<String>() {
+  override fun applyInner(t: TargetEnvironment): String = iterable.map { it.apply(t) }.joinToString(separator = separator,
+                                                                                                    transform = transform)
 
   override fun toString(): String {
-    return "JoinedStringTargetEnvironmentValue(iterable=$iterable, separator=$separator)"
+    return "JoinedStringTargetEnvironmentValue(iterable=$iterable, separator=$separator, transform=$transform)"
   }
 }
 

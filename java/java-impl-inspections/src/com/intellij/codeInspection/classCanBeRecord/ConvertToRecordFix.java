@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.classCanBeRecord;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.java.JavaBundle;
@@ -16,6 +17,7 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -56,22 +58,36 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
 
   @Override
   protected void doFix(Project project, ProblemDescriptor descriptor) {
-    PsiElement psiElement = descriptor.getPsiElement();
-    if (psiElement == null) return;
-    PsiClass psiClass = ObjectUtils.tryCast(psiElement.getParent(), PsiClass.class);
-    if (psiClass == null) return;
-
-    RecordCandidate recordCandidate = getClassDefinition(psiClass, mySuggestAccessorsRenaming, myIgnoredAnnotations);
-    if (recordCandidate == null) return;
-
-    ConvertToRecordProcessor processor = new ConvertToRecordProcessor(recordCandidate, myShowAffectedMembers);
+    final ConvertToRecordProcessor processor = getRecordProcessor(descriptor);
+    if (processor == null) return;
     processor.setPrepareSuccessfulSwingThreadCallback(() -> {});
     processor.run();
   }
 
+  @Nullable
+  private ConvertToRecordProcessor getRecordProcessor(ProblemDescriptor descriptor) {
+    PsiElement psiElement = descriptor.getPsiElement();
+    if (psiElement == null) return null;
+    PsiClass psiClass = ObjectUtils.tryCast(psiElement.getParent(), PsiClass.class);
+    if (psiClass == null) return null;
+
+    RecordCandidate recordCandidate = getClassDefinition(psiClass, mySuggestAccessorsRenaming, myIgnoredAnnotations);
+    if (recordCandidate == null) return null;
+
+    return new ConvertToRecordProcessor(recordCandidate, myShowAffectedMembers);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    final ConvertToRecordProcessor processor = getRecordProcessor(previewDescriptor);
+    if (processor == null) return IntentionPreviewInfo.EMPTY;
+    processor.performRefactoring(UsageInfo.EMPTY_ARRAY);
+    return IntentionPreviewInfo.DIFF;
+  }
+
   /**
    * There are some restrictions for records:
-   * https://docs.oracle.com/javase/specs/jls/se15/preview/specs/records-jls.html.
+   * <a href="https://docs.oracle.com/javase/specs/jls/se15/preview/specs/records-jls.html">see the specification</a>.
    */
   public static RecordCandidate getClassDefinition(@NotNull PsiClass psiClass,
                                                    boolean suggestAccessorsRenaming,
@@ -239,7 +255,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
         boolean existsSuperMethodCalls;
 
         @Override
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
           super.visitMethodCallExpression(expression);
           if (hasSuperQualifier(expression.getMethodExpression()) && OBJECT_METHOD_CALLS.test(expression)) {
             existsSuperMethodCalls = true;
@@ -248,7 +264,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
         }
 
         @Override
-        public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+        public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
           super.visitMethodReferenceExpression(expression);
           if (hasSuperQualifier(expression) && OBJECT_METHOD_CALLS.methodReferenceMatches(expression)) {
             existsSuperMethodCalls = true;

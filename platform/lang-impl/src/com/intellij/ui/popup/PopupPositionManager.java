@@ -181,7 +181,6 @@ public final class PopupPositionManager {
      * 3. above
      * 4. under
      *
-     * @param popup
      */
     public void adjust(final JBPopup popup) {
       adjust(popup, DEFAULT_POSITION_ORDER);

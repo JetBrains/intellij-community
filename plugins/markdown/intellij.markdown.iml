@@ -10,5 +10,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.markdown.core" exported="" />
     <orderEntry type="module" module-name="intellij.markdown.fenceInjection" />
+    <orderEntry type="module" module-name="intellij.markdown.frontmatter" />
   </component>
 </module>

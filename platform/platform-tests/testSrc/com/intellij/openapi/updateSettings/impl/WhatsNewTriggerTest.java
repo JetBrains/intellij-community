@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -19,14 +19,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class WhatsNewTriggerTest extends BareTestFixtureTestCase {
-  private static final String WHATS_NEW_SHOWN_FOR_PROPERTY = "ide.updates.whats.new.shown.for";
-
   @Rule public TempDirectory tempDir = new TempDirectory();
 
   @Before
   public void setUp() throws Exception {
-    assertTrue(UpdateSettings.getInstance().isShowWhatsNewEditor());  // if the default changes, the test must be updated accordingly
-
     Path tempUpdateData = tempDir.newFile("updates.xml").toPath();
     Files.writeString(
       tempUpdateData,
@@ -44,7 +40,7 @@ public class WhatsNewTriggerTest extends BareTestFixtureTestCase {
 
   @After
   public void tearDown() {
-    PropertiesComponent.getInstance().unsetValue(WHATS_NEW_SHOWN_FOR_PROPERTY);
+    UpdateSettings.getInstance().setWhatsNewShownFor(0);
     System.clearProperty("idea.updates.url");
   }
 
@@ -79,5 +75,19 @@ public class WhatsNewTriggerTest extends BareTestFixtureTestCase {
     assertFalse(UpdateCheckerService.shouldShowWhatsNew(beta, true));  // EAP 1st launch
     assertTrue(UpdateCheckerService.shouldShowWhatsNew(release, false));  // release 1st launch
     assertFalse(UpdateCheckerService.shouldShowWhatsNew(release, false));  // release 2nd launch
+  }
+
+  @Test
+  public void whatsNewSettingsMigration() {
+    BuildNumber previous = fromString("211.7628.21"), release = fromString("212.4746.92");
+    String historicProperty = "ide.updates.whats.new.shown.for";
+    PropertiesComponent properties = PropertiesComponent.getInstance();
+    try {
+      properties.setValue(historicProperty, previous.getBaselineVersion(), 0);
+      assertTrue(UpdateCheckerService.shouldShowWhatsNew(release, false));  // release 1st launch
+    }
+    finally {
+      properties.unsetValue(historicProperty);
+    }
   }
 }

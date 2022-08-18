@@ -24,13 +24,9 @@ import javax.swing.JFrame
 
 internal open class CustomDecorationPath(val frame: JFrame) : SelectedEditorFilePath(), CustomHeaderTitle {
   companion object {
-    fun createInstance(frame: JFrame): CustomDecorationPath {
-      return CustomDecorationPath(frame)
-    }
+    fun createInstance(frame: JFrame): CustomDecorationPath = CustomDecorationPath(frame)
 
-    fun createMainInstance(frame: JFrame): CustomDecorationPath {
-      return MainCustomDecorationPath(frame)
-    }
+    fun createMainInstance(frame: JFrame): CustomDecorationPath = MainCustomDecorationPath(frame)
   }
 
   private val projectManagerListener = object : ProjectManagerListener {

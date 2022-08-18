@@ -8,6 +8,7 @@ import com.intellij.util.ui.tree.TreeUtil
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import training.learn.LearnBundle
+import training.statistic.LearningInternalProblems
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiManager
 import java.awt.Component
@@ -76,6 +77,7 @@ abstract class TaskContext : LearningDslBase {
 
   open fun showWarning(@Language("HTML") @Nls text: String,
                        restoreTaskWhenResolved: Boolean = false,
+                       problem: LearningInternalProblems? = null,
                        warningRequired: TaskRuntimeContext.() -> Boolean) = Unit
 
   /**
@@ -134,6 +136,7 @@ abstract class TaskContext : LearningDslBase {
 
   open fun addFutureStep(p: DoneStepContext.() -> Unit) = Unit
 
+  /* The step should be used only inside one task to preserve problems on restore */
   open fun addStep(step: CompletableFuture<Boolean>) = Unit
 
   /** [action] What should be done to pass the current task */

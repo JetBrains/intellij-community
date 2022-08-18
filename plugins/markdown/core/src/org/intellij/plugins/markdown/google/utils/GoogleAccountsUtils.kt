@@ -6,7 +6,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.api.client.auth.oauth2.Credential
 import com.google.api.client.auth.oauth2.TokenResponse
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
-import com.intellij.collaboration.auth.ui.AccountsPanelFactory.accountsPanel
+import com.intellij.collaboration.auth.ui.AccountsPanelFactory
 import com.intellij.collaboration.util.ProgressIndicatorsProvider
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
@@ -23,10 +23,13 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.alsoIfNull
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.google.GoogleAppCredentialsException
 import org.intellij.plugins.markdown.google.accounts.GoogleAccountManager
-import org.intellij.plugins.markdown.google.accounts.GoogleAccountsDetailsProvider
+import org.intellij.plugins.markdown.google.accounts.GoogleAccountsDetailsLoader
 import org.intellij.plugins.markdown.google.accounts.GoogleAccountsListModel
 import org.intellij.plugins.markdown.google.accounts.GoogleUserInfoService
 import org.intellij.plugins.markdown.google.accounts.data.GoogleAccount
@@ -131,20 +134,20 @@ internal object GoogleAccountsUtils {
     val oAuthService = service<GoogleOAuthService>()
     val userInfoService = service<GoogleUserInfoService>()
 
-    val indicatorsProvider = ProgressIndicatorsProvider().also {
-      Disposer.register(disposable, it)
-    }
-    val detailsProvider = GoogleAccountsDetailsProvider(
-      indicatorsProvider,
+    val scope = CoroutineScope(SupervisorJob()).also { Disposer.register(disposable) { it.cancel() } }
+    val detailsLoader = GoogleAccountsDetailsLoader(
+      scope,
       accountManager,
       accountsListModel,
       oAuthService,
       userInfoService
     )
 
+    val panelFactory = AccountsPanelFactory(accountManager, accountsListModel, detailsLoader, disposable)
+
     return panel {
       row {
-        accountsPanel(accountManager, accountsListModel, detailsProvider, disposable, false)
+        panelFactory.accountsPanelCell(this, false)
           .horizontalAlign(HorizontalAlign.FILL)
           .verticalAlign(VerticalAlign.FILL)
       }.resizableRow()

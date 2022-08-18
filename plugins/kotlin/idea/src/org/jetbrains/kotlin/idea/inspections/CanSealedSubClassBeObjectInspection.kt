@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
@@ -6,23 +6,27 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.getModalityFromDescriptor
-import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.idea.quickfix.sealedSubClassToObject.ConvertSealedSubClassToObjectFix
 import org.jetbrains.kotlin.idea.quickfix.sealedSubClassToObject.GenerateIdentityEqualsFix
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.isEffectivelyActual
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
-import org.jetbrains.kotlin.idea.util.module
+import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.inspections.CanSealedSubClassBeObjectInspection.Holder.matchesCanBeObjectCriteria
+import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
 import org.jetbrains.kotlin.util.OperatorNameConventions
+
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class CanSealedSubClassBeObjectInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
@@ -51,12 +55,12 @@ class CanSealedSubClassBeObjectInspection : AbstractKotlinInspection() {
         }
     }
 
-    companion object {
-        private val EQUALS = OperatorNameConventions.EQUALS.asString()
+    private object Holder {
+        val EQUALS: String = OperatorNameConventions.EQUALS.asString()
 
-        private const val HASH_CODE = "hashCode"
+        const val HASH_CODE: String = "hashCode"
 
-        private val CLASS_MODIFIERS = listOf(
+        val CLASS_MODIFIERS: List<KtModifierKeywordToken> = listOf(
             KtTokens.ANNOTATION_KEYWORD,
             KtTokens.DATA_KEYWORD,
             KtTokens.ENUM_KEYWORD,
@@ -64,7 +68,7 @@ class CanSealedSubClassBeObjectInspection : AbstractKotlinInspection() {
             KtTokens.SEALED_KEYWORD,
         )
 
-        private fun KtClass.matchesCanBeObjectCriteria(): Boolean {
+        fun KtClass.matchesCanBeObjectCriteria(): Boolean {
             return isSubclassOfStatelessSealed()
                     && withEmptyConstructors()
                     && hasNoClassModifiers()
@@ -75,24 +79,24 @@ class CanSealedSubClassBeObjectInspection : AbstractKotlinInspection() {
                     && hasNoStateOrEquals()
         }
 
-        private fun KtClass.isSubclassOfStatelessSealed(): Boolean {
+        fun KtClass.isSubclassOfStatelessSealed(): Boolean {
             fun KtSuperTypeListEntry.asKtClass(): KtClass? = typeAsUserType?.referenceExpression?.mainReference?.resolve() as? KtClass
             return superTypeListEntries.asSequence().mapNotNull { it.asKtClass() }.any {
                 it.isSealed() && it.hasNoStateOrEquals() && it.baseClassHasNoStateOrEquals()
             }
         }
 
-        private fun KtClass.withEmptyConstructors(): Boolean =
+        fun KtClass.withEmptyConstructors(): Boolean =
             primaryConstructorParameters.isEmpty() && secondaryConstructors.all { it.valueParameters.isEmpty() }
 
-        private fun KtClass.hasNoClassModifiers(): Boolean {
+        fun KtClass.hasNoClassModifiers(): Boolean {
             val modifierList = modifierList ?: return true
             return CLASS_MODIFIERS.none { modifierList.hasModifier(it) }
         }
 
-        private fun KtClass.isFinal(): Boolean = getModalityFromDescriptor() == KtTokens.FINAL_KEYWORD
+        fun KtClass.isFinal(): Boolean = getModalityFromDescriptor() == KtTokens.FINAL_KEYWORD
 
-        private tailrec fun KtClass.baseClassHasNoStateOrEquals(): Boolean {
+        tailrec fun KtClass.baseClassHasNoStateOrEquals(): Boolean {
             val descriptor = resolveToDescriptorIfAny() ?: return false
             val superDescriptor = descriptor.getSuperClassNotAny() ?: return true // No super class -- no state
             val superClass = DescriptorToSourceUtils.descriptorToDeclaration(superDescriptor) as? KtClass ?: return false
@@ -100,7 +104,7 @@ class CanSealedSubClassBeObjectInspection : AbstractKotlinInspection() {
             return superClass.baseClassHasNoStateOrEquals()
         }
 
-        private fun KtClass.hasNoStateOrEquals(): Boolean {
+        fun KtClass.hasNoStateOrEquals(): Boolean {
             if (primaryConstructor?.valueParameters?.isNotEmpty() == true) return false
             val body = body
             return body == null || run {
@@ -123,7 +127,7 @@ class CanSealedSubClassBeObjectInspection : AbstractKotlinInspection() {
             }
         }
 
-        private fun KtClass.hasNoInnerClass(): Boolean {
+        fun KtClass.hasNoInnerClass(): Boolean {
             val internalClasses = body
                 ?.declarations
                 ?.filterIsInstance<KtClass>() ?: return true

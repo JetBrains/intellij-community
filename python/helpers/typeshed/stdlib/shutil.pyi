@@ -3,6 +3,35 @@ import sys
 from _typeshed import BytesPath, StrOrBytesPath, StrPath, SupportsRead, SupportsWrite
 from typing import Any, AnyStr, Callable, Iterable, NamedTuple, Sequence, TypeVar, Union, overload
 
+__all__ = [
+    "copyfileobj",
+    "copyfile",
+    "copymode",
+    "copystat",
+    "copy",
+    "copy2",
+    "copytree",
+    "move",
+    "rmtree",
+    "Error",
+    "SpecialFileError",
+    "ExecError",
+    "make_archive",
+    "get_archive_formats",
+    "register_archive_format",
+    "unregister_archive_format",
+    "get_unpack_formats",
+    "register_unpack_format",
+    "unregister_unpack_format",
+    "unpack_archive",
+    "ignore_patterns",
+    "chown",
+    "which",
+    "get_terminal_size",
+    "SameFileError",
+    "disk_usage",
+]
+
 _StrOrBytesPathT = TypeVar("_StrOrBytesPathT", bound=StrOrBytesPath)
 _StrPathT = TypeVar("_StrPathT", bound=StrPath)
 # Return value of some functions that may either return a path-like object that was passed in or
@@ -71,6 +100,10 @@ class _ntuple_diskusage(NamedTuple):
     free: int
 
 def disk_usage(path: int | StrOrBytesPath) -> _ntuple_diskusage: ...
+
+# While chown can be imported on Windows, it doesn't actually work;
+# see https://bugs.python.org/issue33140. We keep it here because it's
+# in __all__.
 @overload
 def chown(path: StrOrBytesPath, user: str | int, group: None = ...) -> None: ...
 @overload

@@ -48,19 +48,19 @@ public abstract class AbstractBaseJavaLocalInspectionTool extends LocalInspectio
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethod(PsiMethod method) {
+      public void visitMethod(@NotNull PsiMethod method) {
         super.visitMethod(method);
         addDescriptors(checkMethod(method, holder.getManager(), isOnTheFly));
       }
 
       @Override
-      public void visitClass(PsiClass aClass) {
+      public void visitClass(@NotNull PsiClass aClass) {
         super.visitClass(aClass);
         addDescriptors(checkClass(aClass, holder.getManager(), isOnTheFly));
       }
 
       @Override
-      public void visitField(PsiField field) {
+      public void visitField(@NotNull PsiField field) {
         super.visitField(field);
         addDescriptors(checkField(field, holder.getManager(), isOnTheFly));
       }

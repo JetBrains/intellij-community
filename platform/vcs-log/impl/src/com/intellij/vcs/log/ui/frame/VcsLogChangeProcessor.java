@@ -13,11 +13,8 @@ import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserChangeNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.stream.Stream;
 
 public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
   @NotNull private final VcsLogChangesBrowser myBrowser;
@@ -47,20 +44,26 @@ public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
 
   @NotNull
   @Override
-  public Stream<Wrapper> getSelectedChanges() {
+  public Iterable<Wrapper> iterateSelectedChanges() {
     return wrap(VcsTreeModelData.selected(myBrowser.getViewer()));
   }
 
   @NotNull
   @Override
-  public Stream<Wrapper> getAllChanges() {
+  public Iterable<Wrapper> iterateAllChanges() {
     return wrap(VcsTreeModelData.all(myBrowser.getViewer()));
   }
 
   @NotNull
-  private Stream<Wrapper> wrap(@NotNull VcsTreeModelData modelData) {
-    return StreamEx.of(modelData.nodesStream()).select(ChangesBrowserChangeNode.class)
-      .map(n -> new MyChangeWrapper(n.getUserObject(), myBrowser.getTag(n.getUserObject())));
+  private Iterable<Wrapper> wrap(@NotNull VcsTreeModelData modelData) {
+    return wrap(myBrowser, modelData);
+  }
+
+  @NotNull
+  static Iterable<Wrapper> wrap(@NotNull VcsLogChangesBrowser browser, @NotNull VcsTreeModelData modelData) {
+    return modelData.iterateNodes()
+      .filter(ChangesBrowserChangeNode.class)
+      .map(n -> new MyChangeWrapper(browser, n.getUserObject(), browser.getTag(n.getUserObject())));
   }
 
   @Override
@@ -84,9 +87,12 @@ public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
                         : VcsTreeModelData.all(changesBrowser.getViewer());
   }
 
-  private class MyChangeWrapper extends ChangeWrapper {
-    MyChangeWrapper(@NotNull Change change, @Nullable ChangesBrowserNode.Tag tag) {
+  private static class MyChangeWrapper extends ChangeWrapper {
+    @NotNull private final VcsLogChangesBrowser myBrowser;
+
+    MyChangeWrapper(@NotNull VcsLogChangesBrowser browser, @NotNull Change change, @Nullable ChangesBrowserNode.Tag tag) {
       super(change, tag);
+      myBrowser = browser;
     }
 
     @Nullable

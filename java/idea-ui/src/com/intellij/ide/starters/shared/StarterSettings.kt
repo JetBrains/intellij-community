@@ -7,6 +7,7 @@ import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.openapi.util.NlsContexts.Label
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolderBase
+import org.jetbrains.annotations.Nls
 
 data class StarterLanguage(
   val id: String,
@@ -127,3 +128,14 @@ open class CommonStarterContext : UserDataHolderBase() {
 
 const val ARTIFACT_ID_PROPERTY: String = "artifactId"
 const val GROUP_ID_PROPERTY: String = "groupId"
+
+sealed class DependencyState
+
+class DependencyUnavailable(
+  @Nls(capitalization = Nls.Capitalization.Sentence)
+  val message: String?,
+  @NlsSafe
+  val hint: String? = null
+) : DependencyState()
+
+object DependencyAvailable : DependencyState()

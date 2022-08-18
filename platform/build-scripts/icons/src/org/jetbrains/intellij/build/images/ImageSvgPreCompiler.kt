@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.images
@@ -354,10 +354,7 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
 
   private fun checkCollision(imageKey: Int, file: Path, fileNormalizedData: ByteArray,
                              collisionGuard: ConcurrentHashMap<Int, FileInfo>): Boolean {
-    val duplicate = collisionGuard.putIfAbsent(imageKey, FileInfo(file))
-    if (duplicate == null) {
-      return false
-    }
+    val duplicate = collisionGuard.putIfAbsent(imageKey, FileInfo(file)) ?: return false
 
     if (duplicate.checksum.contentEquals(FileInfo.digest(fileNormalizedData))) {
       assert(duplicate.file !== file)

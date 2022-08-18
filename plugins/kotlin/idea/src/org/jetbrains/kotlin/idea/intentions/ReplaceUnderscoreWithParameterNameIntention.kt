@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -6,12 +6,14 @@ import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.builtins.extractParameterNameFromFunctionTypeArgument
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.core.CollectingNameValidator
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
-import org.jetbrains.kotlin.idea.core.NewDeclarationNameValidator
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -32,14 +34,14 @@ class ReplaceUnderscoreWithParameterNameIntention : SelfTargetingOffsetIndepende
     override fun applyTo(element: KtCallableDeclaration, editor: Editor?) {
         val suggestedParameterName = suggestedParameterName(element)
         val validator = CollectingNameValidator(
-            filter = NewDeclarationNameValidator(element.parent.parent, null, NewDeclarationNameValidator.Target.VARIABLES)
+            filter = Fe10KotlinNewDeclarationNameValidator(element.parent.parent, null, KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER)
         )
 
         val name = suggestedParameterName?.let {
-            KotlinNameSuggester.suggestNameByName(it, validator)
+            Fe10KotlinNameSuggester.suggestNameByName(it, validator)
         } ?: run {
             val elementDescriptor = element.resolveToDescriptorIfAny() as? CallableDescriptor
-            elementDescriptor?.returnType?.let { KotlinNameSuggester.suggestNamesByType(it, validator).firstOrNull() }
+            elementDescriptor?.returnType?.let { Fe10KotlinNameSuggester.suggestNamesByType(it, validator).firstOrNull() }
         } ?: return
 
         element.setName(name)

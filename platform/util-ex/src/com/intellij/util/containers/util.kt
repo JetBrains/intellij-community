@@ -26,6 +26,11 @@ fun <K, V> MutableMap<K, MutableList<V>>.putValue(key: K, value: V) {
   }
 }
 
+@Deprecated(
+  message = "Use 'isNullOrEmpty()' from Kotlin standard library.",
+  level = DeprecationLevel.WARNING,
+  replaceWith = ReplaceWith("isNullOrEmpty()", imports = ["kotlin.collections.isNullOrEmpty"])
+)
 fun Collection<*>?.isNullOrEmpty(): Boolean = this == null || isEmpty()
 
 @Deprecated("use tail()", ReplaceWith("tail()"), DeprecationLevel.ERROR)
@@ -66,7 +71,13 @@ fun <T> List<T>.init(): List<T> {
   return subList(0, size - 1)
 }
 
-fun <T> List<T>?.nullize(): List<T>? = if (isNullOrEmpty()) null else this
+fun <T> List<T>?.nullize(): List<T>? {
+  return if (this == null || this.isEmpty()) null else this
+}
+
+fun <T> Array<T>?.nullize(): Array<T>? {
+  return if (this == null || this.isEmpty()) null else this
+}
 
 inline fun <T> Array<out T>.forEachGuaranteed(operation: (T) -> Unit) {
   return iterator().forEachGuaranteed(operation)
@@ -131,7 +142,7 @@ fun <T> Stream<T>?.getIfSingle(): T? {
 
 /**
  * There probably could be some performance issues if there is lots of streams to concat. See
- * http://mail.openjdk.java.net/pipermail/lambda-dev/2013-July/010659.html for some details.
+ * http://mail.openjdk.org/pipermail/lambda-dev/2013-July/010659.html for some details.
  *
  * See also [Stream.concat] documentation for other possible issues of concatenating large number of streams.
  */
@@ -164,8 +175,8 @@ inline fun <T, R> Array<out T>.mapSmart(transform: (T) -> R): List<R> {
 
 inline fun <T, reified R> Array<out T>.map2Array(transform: (T) -> R): Array<R> = Array(this.size) { i -> transform(this[i]) }
 
-@Suppress("UNCHECKED_CAST")
 inline fun <T, reified R> Collection<T>.map2Array(transform: (T) -> R): Array<R> {
+  @Suppress("UNCHECKED_CAST")
   return arrayOfNulls<R>(this.size).also { array ->
     this.forEachIndexed { index, t -> array[index] = transform(t) }
   } as Array<R>

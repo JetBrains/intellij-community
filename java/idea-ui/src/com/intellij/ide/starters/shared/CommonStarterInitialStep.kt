@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.starters.shared
 
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.starters.local.StarterModuleBuilder
@@ -10,17 +11,23 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
+import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.observable.util.joinCanonicalPath
+import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.observable.util.trim
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.JdkComboBox
 import com.intellij.openapi.roots.ui.configuration.sdkComboBox
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
@@ -57,7 +64,8 @@ abstract class CommonStarterInitialStep(
     starterContext.applicationType ?: StarterAppType("unknown", "")
   }
   protected val exampleCodeProperty: GraphProperty<Boolean> = propertyGraph.lazyProperty { starterContext.includeExamples }
-  protected val gitProperty: GraphProperty<Boolean> = propertyGraph.lazyProperty { false }
+  protected val gitProperty: GraphProperty<Boolean> = propertyGraph.property(false)
+    .bindBooleanStorage("NewProjectWizard.gitState")
 
   protected var entityName: String by entityNameProperty.trim()
   protected var location: String by locationProperty
@@ -76,6 +84,7 @@ abstract class CommonStarterInitialStep(
         .withSpecialValidation(listOf(CHECK_NOT_EMPTY, CHECK_SIMPLE_NAME_FORMAT),
                                createLocationWarningValidator(locationProperty))
         .columns(COLUMNS_MEDIUM)
+        .gap(RightGap.SMALL)
         .focused()
 
       installNameGenerators(moduleBuilder.builderId, entityNameProperty)
@@ -180,5 +189,15 @@ abstract class CommonStarterInitialStep(
     warningValidationUnit: TextValidationFunction?
   ): Cell<T> {
     return withValidation(this, errorValidationUnits, warningValidationUnit, validatedTextComponents, parentDisposable)
+  }
+
+  private fun Row.projectLocationField(locationProperty: GraphProperty<String>,
+                                       wizardContext: WizardContext): Cell<TextFieldWithBrowseButton> {
+    val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().withFileFilter { it.isDirectory }
+    val fileChosen = { file: VirtualFile -> getPresentablePath(file.path) }
+    val title = IdeBundle.message("title.select.project.file.directory", wizardContext.presentationName)
+    val property = locationProperty.transform(::getPresentablePath, ::getCanonicalPath)
+    return this.textFieldWithBrowseButton(title, wizardContext.project, fileChooserDescriptor, fileChosen)
+      .bindText(property)
   }
 }

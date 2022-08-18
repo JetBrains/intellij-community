@@ -22,7 +22,7 @@ public interface UsagePresentation {
    * re-calculating it synchronously on EDT and return the possibly obsolete data.
    * <p>
    * The component using this presentation might call {@link UsagePresentation#updateCachedPresentation()} in a background
-   * thread and then use {@link UsagePresentation#getCachedPresentation()} to draw the text.
+   * thread and then use {@code getCachedPresentation()} to draw the text.
    */
   default UsageNodePresentation getCachedPresentation() {
     return new UsageNodePresentation(getIcon(), getText());

@@ -22,10 +22,8 @@ internal val File.children: List<File>
 internal fun isImage(file: Path, iconsOnly: Boolean): Boolean {
   return if (iconsOnly) isIcon(file) else isImage(file)
 }
-
-private val androidIcons by lazy {
-  Paths.get(PathManager.getCommunityHomePath(), "android/artwork/resources")
-}
+// allow other project path setups to generate Android Icons
+var androidIcons: Path = Paths.get(PathManager.getCommunityHomePath(), "android/artwork/resources")
 
 internal fun isIcon(file: Path): Boolean {
   if (!isImage(file)) {

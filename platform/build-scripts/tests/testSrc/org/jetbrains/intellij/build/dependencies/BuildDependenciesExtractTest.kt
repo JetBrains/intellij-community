@@ -1,7 +1,18 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dependencies
 
-import com.intellij.util.io.Compressor
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.io.exists
+import com.intellij.util.io.readText
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream
+import org.apache.commons.compress.archivers.tar.TarConstants
+import org.apache.commons.compress.archivers.zip.UnixStat
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
+import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream
+import org.hamcrest.BaseMatcher
+import org.hamcrest.Description
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
@@ -10,7 +21,9 @@ import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import java.nio.file.Files
+import java.nio.file.LinkOption
 import java.nio.file.Path
+import java.nio.file.attribute.PosixFilePermission
 
 @RunWith(Parameterized::class)
 class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
@@ -19,6 +32,8 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
     @JvmStatic
     fun data(): Collection<Array<Any>> =
       listOf(arrayOf(TestArchiveType.ZIP), arrayOf(TestArchiveType.TAR_GZ))
+
+    private val isWindows = System.getProperty("os.name").lowercase().startsWith("windows")
   }
 
   @Rule
@@ -58,13 +73,115 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
   }
 
   @Test
+  fun `extractFileToCacheLocation - symlinks`() {
+    val testArchive = createTestFile(archiveType, listOf(
+      TestFile("top-level/test.txt"),
+      TestFile("top-level/dir/test.symlink", symlinkTarget = "../test.txt"),
+    ))
+
+    val root = BuildDependenciesDownloader.extractFileToCacheLocation(
+      BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive)
+
+    val symlinkFile = root.resolve("top-level/dir/test.symlink")
+    if (SystemInfo.isWindows) {
+      Assert.assertTrue(Files.isRegularFile(symlinkFile, LinkOption.NOFOLLOW_LINKS))
+      Assert.assertEquals("top-level/test.txt", symlinkFile.readText())
+    }
+    else {
+      val target = Files.readSymbolicLink(symlinkFile)
+      Assert.assertEquals("../test.txt", target.toString())
+    }
+  }
+
+  @Test
+  fun `extractFileToCacheLocation - symlinks missing target`() {
+    val testArchive = createTestFile(archiveType, listOf(
+      TestFile("top-level/dir/test.symlink", symlinkTarget = "test.txt"),
+    ))
+
+    val root = BuildDependenciesDownloader.extractFileToCacheLocation(
+      BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive)
+
+    val symlinkFile = root.resolve("top-level/dir/test.symlink")
+    if (SystemInfo.isWindows) {
+      Assert.assertFalse(Files.exists(symlinkFile, LinkOption.NOFOLLOW_LINKS))
+    }
+    else {
+      val target = Files.readSymbolicLink(symlinkFile)
+      Assert.assertEquals("test.txt", target.toString())
+    }
+  }
+
+  @Test
+  fun `extractFileToCacheLocation - executable bit`() {
+    val testArchive = createTestFile(archiveType, listOf(
+      TestFile("exec", executable = true),
+      TestFile("no-exec", executable = false),
+    ))
+
+    val root = BuildDependenciesDownloader.extractFileToCacheLocation(
+      BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive)
+
+    Assert.assertTrue(Files.getPosixFilePermissions(root.resolve("exec")).contains(PosixFilePermission.OWNER_EXECUTE))
+    Assert.assertFalse(Files.getPosixFilePermissions(root.resolve("no-exec")).contains(PosixFilePermission.OWNER_EXECUTE))
+  }
+
+  @Test
+  fun `extractFileToCacheLocation - symlink pointing to outside location`() {
+    val testArchive = createTestFile(archiveType, listOf(
+      TestFile("dir/test.symlink", symlinkTarget = "../dir/.///../../test.txt"),
+      TestFile("dir/test.symlink2"),
+    ))
+
+    val root = BuildDependenciesDownloader.extractFileToCacheLocation(
+      BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive)
+
+    // will be skipped
+    Assert.assertFalse(root.resolve("dir/test.symlink").exists())
+    Assert.assertTrue(root.resolve("dir/test.symlink2").exists())
+  }
+
+  @Test
+  fun `extractFileToCacheLocation - symlink pointing to directory`() {
+    val testArchive = createTestFile(archiveType, listOf(
+      TestFile("dir/test.symlink", symlinkTarget = "sub"),
+      TestFile("dir/sub/test.file"),
+    ))
+
+    val root = BuildDependenciesDownloader.extractFileToCacheLocation(
+      BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive)
+
+    val target = root.resolve("dir/test.symlink/test.file")
+
+    if (isWindows) {
+      // On Windows directory symlinks are not supported
+      Assert.assertFalse(target.exists())
+    }
+    else {
+      Assert.assertTrue(target.exists())
+    }
+  }
+
+  @Test
   fun `extractFileToCacheLocation - strip root with different leading components`() {
     val testArchive = createTestFile(archiveType, listOf(TestFile("top-level1/test1.txt"), TestFile("top-level2/test2.txt")))
 
     BuildDependenciesDownloader.extractFileToCacheLocation(
       BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive)
 
-    thrown.expectMessage("$testArchive: entry name 'top-level2' should start with previously found prefix 'top-level1/'")
+    thrown.expectMessage(object : BaseMatcher<String>() {
+      val prefix = "should start with previously found prefix"
+
+      override fun describeTo(description: Description) {
+        description.appendText(prefix)
+      }
+
+      override fun matches(item: Any?): Boolean {
+        val str = (item as String)
+        return str.contains(prefix)
+      }
+    })
+
     BuildDependenciesDownloader.extractFileToCacheLocation(
       BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive,
       BuildDependenciesExtractOptions.STRIP_ROOT)
@@ -116,6 +233,30 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
   }
 
   @Test
+  fun `extractFile - normalize path`() {
+    val testArchive = createTestFile(archiveType, listOf(TestFile("a"), TestFile("b")))
+    val extractRoot = temp.newFolder().toPath()
+
+    BuildDependenciesDownloader.extractFile(testArchive, extractRoot, BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory())
+    Assert.assertEquals("a", Files.readString(extractRoot.resolve("a")))
+    Assert.assertEquals("b", Files.readString(extractRoot.resolve("b")))
+
+    assertUpToDate {
+      val otherPresentation = testArchive.parent.resolve(".").resolve(testArchive.fileName)
+      Assert.assertNotEquals(testArchive, otherPresentation)
+      BuildDependenciesDownloader.extractFile(otherPresentation, extractRoot,
+                                              BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory())
+    }
+
+    assertUpToDate {
+      val otherPresentation2 = testArchive.resolve("..").resolve("..").resolve(testArchive.parent.fileName).resolve(testArchive.fileName)
+      Assert.assertNotEquals(testArchive, otherPresentation2)
+      BuildDependenciesDownloader.extractFile(otherPresentation2, extractRoot,
+                                              BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory())
+    }
+  }
+
+  @Test
   fun `extractFile - extract again on adding top level file`() {
     val testArchive = createTestFile(archiveType, emptyList())
     val extractRoot = temp.newFolder().toPath()
@@ -155,25 +296,81 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
   private fun createTestFile(type: TestArchiveType, files: List<TestFile>): Path {
     val archiveFile = temp.newFile().also { Files.delete(it.toPath()) }
 
-    val testFilesRoot = temp.newFolder().toPath()
-    for (testFile in files) {
-      val path = testFilesRoot.resolve(testFile.path)
-      Files.createDirectories(path.parent)
-      Files.writeString(path, testFile.path)
-    }
-
     when (type) {
-      TestArchiveType.ZIP -> Compressor.Zip(archiveFile)
-      TestArchiveType.TAR_GZ -> Compressor.Tar(archiveFile, Compressor.Tar.Compression.GZIP)
-    }.use { compressor ->
-      compressor.addDirectory(testFilesRoot)
-    }
+      TestArchiveType.TAR_GZ -> TarArchiveOutputStream(GzipCompressorOutputStream(archiveFile.outputStream())).use { tarStream ->
+        val createdDirs = mutableSetOf<Path>()
 
-    Assert.assertTrue(Files.exists(archiveFile.toPath()))
+        for (file in files) {
+          val path = Path.of(file.path)
+          val parent = path.parent
+
+          if (parent != null && createdDirs.add(parent)) {
+            val dirEntry = TarArchiveEntry("$parent/")
+            tarStream.putArchiveEntry(dirEntry)
+            tarStream.closeArchiveEntry()
+          }
+
+          if (file.symlinkTarget != null) {
+            val entry = TarArchiveEntry(file.path, TarConstants.LF_SYMLINK)
+            entry.linkName = file.symlinkTarget
+            tarStream.putArchiveEntry(entry)
+            tarStream.closeArchiveEntry()
+          }
+          else {
+            val bytes = file.path.toByteArray()
+
+            val entry = TarArchiveEntry(file.path)
+            entry.mode = if (file.executable) "755".toInt(radix = 8) else "644".toInt(radix = 8)
+            entry.size = bytes.size.toLong()
+            tarStream.putArchiveEntry(entry)
+            tarStream.write(bytes)
+            tarStream.closeArchiveEntry()
+          }
+        }
+      }
+
+      TestArchiveType.ZIP -> ZipArchiveOutputStream(archiveFile.outputStream()).use { zipStream ->
+        val createdDirs = mutableSetOf<Path>()
+
+        for (file in files) {
+          val path = Path.of(file.path)
+          val parent = path.parent
+
+          if (parent != null && createdDirs.add(parent)) {
+            val dirEntry = ZipArchiveEntry("$parent/")
+            zipStream.putArchiveEntry(dirEntry)
+            zipStream.closeArchiveEntry()
+          }
+
+          if (file.symlinkTarget != null) {
+            val bytes = file.symlinkTarget.toByteArray()
+
+            val entry = ZipArchiveEntry(file.path)
+            entry.unixMode = UnixStat.LINK_FLAG
+            entry.size = bytes.size.toLong()
+            zipStream.putArchiveEntry(entry)
+            zipStream.write(bytes)
+            zipStream.closeArchiveEntry()
+          }
+          else {
+            val bytes = file.path.toByteArray()
+
+            val entry = ZipArchiveEntry(file.path)
+            val unixMode = if (file.executable) "755".toInt(radix = 8) else "644".toInt(radix = 8)
+            entry.unixMode = unixMode
+            entry.size = bytes.size.toLong()
+            zipStream.putArchiveEntry(entry)
+            zipStream.write(bytes)
+            zipStream.closeArchiveEntry()
+          }
+        }
+      }
+    }.let {  } // exhaustive when
+
     return archiveFile.toPath()
   }
 
-  private data class TestFile(val path: String)
+  private data class TestFile(val path: String, val symlinkTarget: String? = null, val executable: Boolean = false)
   enum class TestArchiveType {
     ZIP,
     TAR_GZ,

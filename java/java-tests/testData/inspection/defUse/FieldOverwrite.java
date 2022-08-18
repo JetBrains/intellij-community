@@ -4,7 +4,7 @@ public class FieldOverwrite {
   int[] data;
 
   public FieldOverwrite(int field) {
-    <warning descr="The value 123 assigned to 'this.val' is never used">this.val</warning> = 123;
+    <warning descr="The value '123' assigned to 'this.val' is never used">this.val</warning> = 123;
     this.val = field;
   }
 
@@ -15,7 +15,7 @@ public class FieldOverwrite {
   void increment() {
     <warning descr="The value changed at 'val++' is never used">val++</warning>;
     val=2;
-    <warning descr="The value 3 assigned to 'val' is never used">val</warning>+=3;
+    <warning descr="The value '3' assigned to 'val' is never used">val</warning>+=3;
     val=4;
   }
 
@@ -33,14 +33,14 @@ public class FieldOverwrite {
   }
 
   void noUseInlining() {
-    <warning descr="The value 1 assigned to 'val2' is never used">val2</warning> = 1;
+    <warning descr="The value '1' assigned to 'val2' is never used">val2</warning> = 1;
     val2 = getVal();
   }
 
   void test(FieldOverwrite fo) {
-    <warning descr="The value 1 assigned to 'val' is never used">val</warning> = 1;
+    <warning descr="The value '1' assigned to 'val' is never used">val</warning> = 1;
     val = 2;
-    <warning descr="The value 3 assigned to 'fo.val' is never used">fo.val</warning> = 3;
+    <warning descr="The value '3' assigned to 'fo.val' is never used">fo.val</warning> = 3;
     fo.val = 4;
   }
 

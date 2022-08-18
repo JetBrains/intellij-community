@@ -1,0 +1,24 @@
+<html>
+<body>
+Reports JUnit test classes that can't be constructed by a standard JUnit test runner.
+<p>
+  JUnit 4 test classes need to be <code>public</code> and have a <code>public</code> no-arg constructor or no constructor at all
+  (implicit default constructor) and no other <code>public</code> constructors.
+  JUnit 3 test classes need to be <code>public</code> and need either a <code>public</code> no-arg constructor
+  or a <code>public</code> constructor with a single parameter of <code>String</code> type, which calls the matching super constructor.
+  Otherwise the test classes cannot be run by standard JUnit test runners.
+<p><b>Example:</b></p>
+<pre><code>
+public class MyTest {
+
+  private MyTest() {} // no-arg constructor is private
+
+  @Test
+  public void testSomething() {
+    assertEquals(1, 1);
+  }
+}
+</code></pre>
+<!-- tooltip end -->
+</body>
+</html>

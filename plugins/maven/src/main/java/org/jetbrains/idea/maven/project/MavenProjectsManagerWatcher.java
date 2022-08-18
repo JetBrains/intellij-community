@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.ProjectTopics;
@@ -20,11 +20,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
+import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -35,12 +35,12 @@ import java.util.concurrent.ExecutorService;
 
 import static org.jetbrains.idea.maven.project.MavenGeneralSettingsWatcher.registerGeneralSettingsWatcher;
 
-public class MavenProjectsManagerWatcher {
+public final class MavenProjectsManagerWatcher {
 
   private static final Logger LOG = Logger.getInstance(MavenProjectsManagerWatcher.class);
 
   private final Project myProject;
-  private final MavenProjectsTree myProjectsTree;
+  private MavenProjectsTree myProjectsTree;
   private final MavenGeneralSettings myGeneralSettings;
   private final MavenProjectsProcessor myReadingProcessor;
   private final MavenProjectsAware myProjectsAware;
@@ -57,7 +57,7 @@ public class MavenProjectsManagerWatcher {
     myGeneralSettings = generalSettings;
     myReadingProcessor = readingProcessor;
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-    myProjectsAware = new MavenProjectsAware(project, projectsTree, projectsManager, this, myBackgroundExecutor);
+    myProjectsAware = new MavenProjectsAware(project, projectsManager, this, myBackgroundExecutor);
     myDisposable = Disposer.newDisposable(projectsManager, MavenProjectsManagerWatcher.class.toString());
   }
 
@@ -86,6 +86,11 @@ public class MavenProjectsManagerWatcher {
     scheduleUpdateAll(new MavenImportSpec(false, true, true));
   }
 
+
+  public void setProjectsTree(MavenProjectsTree tree) {
+    myProjectsTree = tree;
+  }
+
   @TestOnly
   public synchronized void resetManagedFilesAndProfilesInTests(List<VirtualFile> files, MavenExplicitProfiles explicitProfiles) {
     myProjectsTree.resetManagedFilesAndProfiles(files, explicitProfiles);
@@ -108,7 +113,7 @@ public class MavenProjectsManagerWatcher {
    */
   public Promise<Void> scheduleUpdateAll(MavenImportSpec spec) {
     if (MavenUtil.isLinearImportEnabled()) {
-      return Promises.resolvedPromise();
+      return MavenImportingManager.getInstance(myProject).scheduleImportAll(spec).getFinishPromise().then(it -> null);
     }
 
     final AsyncPromise<Void> promise = new AsyncPromise<>();
@@ -131,7 +136,7 @@ public class MavenProjectsManagerWatcher {
                                       MavenImportSpec spec) {
 
     if (MavenUtil.isLinearImportEnabled()) {
-      return Promises.resolvedPromise();
+      return MavenImportingManager.getInstance(myProject).scheduleUpdate(filesToUpdate, filesToDelete, spec).getFinishPromise().then(it -> null);
     }
     final AsyncPromise<Void> promise = new AsyncPromise<>();
     // display all import activities using the same build progress
@@ -210,7 +215,11 @@ public class MavenProjectsManagerWatcher {
     @Override
     public void moduleRemoved(@NotNull Project project, @NotNull Module module) {
       if (Registry.is("maven.modules.do.not.ignore.on.delete")) return;
-      if (MavenProjectImporter.isImportToTreeStructureEnabled()) return;
+
+      //  (most likely) removed by the importer, so we should not mark the project as ignored
+      if (MavenProjectImporter.isImportingInProgress()) {
+        return;
+      }
 
       MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
       MavenProject mavenProject = projectsManager.findProject(module);
@@ -233,13 +242,19 @@ public class MavenProjectsManagerWatcher {
     }
 
     @Override
-    public void moduleAdded(@NotNull final Project project, @NotNull final Module module) {
-      if (Registry.is("maven.modules.do.not.ignore.on.delete")) return;
-      // this method is needed to return non-ignored status for modules that were deleted (and thus ignored) and then created again with a different module type
+    public void modulesAdded(@NotNull Project project, @NotNull List<Module> modules) {
+      if (Registry.is("maven.modules.do.not.ignore.on.delete")) {
+        return;
+      }
 
+      // this method is needed to return non-ignored status for modules that were deleted (and thus ignored) and then created again with a different module type
       MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
-      MavenProject mavenProject = projectsManager.findProject(module);
-      if (mavenProject != null) projectsManager.setIgnoredState(Collections.singletonList(mavenProject), false);
+      for (Module module : modules) {
+        MavenProject mavenProject = projectsManager.findProject(module);
+        if (mavenProject != null) {
+          projectsManager.setIgnoredState(Collections.singletonList(mavenProject), false);
+        }
+      }
     }
   }
 }

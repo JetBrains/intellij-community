@@ -8,10 +8,10 @@ internal class A(d: Double) {
 }
 
 internal class B {
-    constructor(i: Int) {}
-    constructor(s: String?) {}
-    constructor(i: Int, s: String?) {}
-    constructor(i: Int, d: Double) {}
+    constructor(i: Int)
+    constructor(s: String?)
+    constructor(i: Int, s: String?)
+    constructor(i: Int, d: Double)
 
     fun testSecondary(i: Int) {
         println(B(1, 1.0))

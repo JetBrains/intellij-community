@@ -1,10 +1,11 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.lw;
 
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import org.jdom.Element;
 
 public final class LwIntroCharProperty extends LwIntrospectedProperty {
-  public LwIntroCharProperty(final String name){
+  LwIntroCharProperty(final String name){
     super(name, Character.class.getName());
   }
 

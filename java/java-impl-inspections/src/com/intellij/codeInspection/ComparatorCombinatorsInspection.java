@@ -39,7 +39,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitLambdaExpression(PsiLambdaExpression lambda) {
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression lambda) {
         super.visitLambdaExpression(lambda);
         PsiType type = lambda.getFunctionalInterfaceType();
         PsiElement parent = PsiUtil.skipParenthesizedExprUp(lambda.getParent());
@@ -56,7 +56,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
           String qualifiedName = Objects.requireNonNull(StringUtil.substringBefore(replacementText, "("));
           @NonNls String methodName = "Comparator." + StringUtil.getShortName(qualifiedName);
           final String problemMessage = InspectionGadgetsBundle.message("inspection.comparator.combinators.description2", methodName);
-          holder.registerProblem(lambda, problemMessage, ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithComparatorFix(CommonQuickFixBundle.message("fix.replace.with.x", methodName)));
+          holder.registerProblem(lambda, problemMessage, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new ReplaceWithComparatorFix(CommonQuickFixBundle.message("fix.replace.with.x", methodName)));
           return;
         }
         if (lambda.getBody() instanceof PsiCodeBlock) {
@@ -67,7 +67,7 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
           if (chainCombinator == null) return;
           if (!LambdaUtil.isSafeLambdaReplacement(lambda, chainCombinator)) return;
           final String problemMessage = InspectionGadgetsBundle.message("inspection.comparator.combinators.description");
-          holder.registerProblem(lambda, problemMessage, ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithComparatorFix(InspectionGadgetsBundle.message("inspection.comparator.combinators.fix.chain")));
+          holder.registerProblem(lambda, problemMessage, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new ReplaceWithComparatorFix(InspectionGadgetsBundle.message("inspection.comparator.combinators.fix.chain")));
         }
       }
     };
@@ -291,7 +291,8 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
                                            @NotNull PsiExpression expression,
                                            @NotNull PsiVariable exprVariable) {
     String lambdaExpr = getExpressionReplacingReferences(expression, varName, exprVariable);
-    String parameter = type == null ? varName : "(" + type.getCanonicalText() + " " + varName + ")";
+    String parameter =
+      type == null ? varName : "(" + GenericsUtil.getVariableTypeByExpressionType(type).getCanonicalText() + " " + varName + ")";
     return methodName + "(" + parameter + "->" + lambdaExpr + ")";
   }
 

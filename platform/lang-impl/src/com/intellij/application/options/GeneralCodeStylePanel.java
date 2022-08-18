@@ -190,7 +190,7 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
 
   @Override
-  public void apply(CodeStyleSettings settings) throws ConfigurationException {
+  public void apply(@NotNull CodeStyleSettings settings) throws ConfigurationException {
     myVisualGuides.validateContent();
     myRightMarginField.validateContent();
     settings.setDefaultSoftMargins(myVisualGuides.getValue());
@@ -306,7 +306,7 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   }
 
   @Override
-  protected void resetImpl(final CodeStyleSettings settings) {
+  protected void resetImpl(final @NotNull CodeStyleSettings settings) {
     myVisualGuides.setValue(settings.getDefaultSoftMargins());
 
     myExcludedScopesPanel.reset(settings);
@@ -355,7 +355,7 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   }
 
   @Override
-  protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
+  protected EditorHighlighter createHighlighter(final @NotNull EditorColorsScheme scheme) {
     return EditorHighlighterFactory.getInstance().createEditorHighlighter(getFileType(), scheme, null);
   }
 

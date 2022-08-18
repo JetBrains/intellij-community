@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
@@ -363,16 +364,20 @@ public final class JBUI {
         return insets("ActionsList.mnemonicsBorderInsets", insets(0, 8, 1, 6));
       }
 
+      public static @NotNull Insets mnemonicInsets() {
+        return insets("ActionsList.mnemonicsInsets", insets(0, 0, 0, 8));
+      }
+
       public static @NotNull Insets cellPadding() {
         return insets("ActionsList.cellBorderInsets", insets(1, 12, 1, 12));
       }
 
       public static int elementIconGap() {
-        return new JBValue.UIInteger("ActionsList.icon.gap", scale(6)).get();
+        return new JBValue.UIInteger("ActionsList.icon.gap", 6).get();
       }
 
       public static int mnemonicIconGap() {
-        return new JBValue.UIInteger("ActionsList.mnemonic.icon.gap", scale(6)).get();
+        return new JBValue.UIInteger("ActionsList.mnemonic.icon.gap", 6).get();
       }
 
       public static @NotNull Font applyStylesForNumberMnemonic(Font font) {
@@ -383,6 +388,22 @@ public final class JBUI {
         }
         return font;
       }
+    }
+
+    public static final class Banner {
+      public static final Color INFO_BACKGROUND = JBColor.namedColor("Banner.infoBackground", 0xF5F8FE, 0x25324D);
+      public static final Color INFO_BORDER_COLOR = JBColor.namedColor("Banner.infoBorderColor", 0xCFDEFC, 0x35538F);
+
+      public static final Color SUCCESS_BACKGROUND = JBColor.namedColor("Banner.successBackground", 0xF2FCF3, 0x253627);
+      public static final Color SUCCESS_BORDER_COLOR = JBColor.namedColor("Banner.successBorderColor", 0xC1E5C3, 0x375239);
+
+      public static final Color WARNING_BACKGROUND = JBColor.namedColor("Banner.warningBackground", 0xfff8e3, 0x3d3223);
+      public static final Color WARNING_BORDER_COLOR = JBColor.namedColor("Banner.warningBorderColor", 0xFCDB8D, 0x5E4D33);
+
+      public static final Color ERROR_BACKGROUND = JBColor.namedColor("Banner.errorBackground", 0xFFF5F5, 0x402929);
+      public static final Color ERROR_BORDER_COLOR = JBColor.namedColor("Banner.errorBorderColor", 0xFCD4D4, 0x5E3838);
+
+      public static final Color FOREGROUND = JBColor.namedColor("Banner.foreground", 0x0, 0xDFE1E5);
     }
 
     public static final class Button {
@@ -476,6 +497,10 @@ public final class JBUI {
 
       public static @NotNull Color paneBackground() {
         return JBColor.namedColor("Panel.background", Gray.xCD);
+      }
+
+      public static int menuPopupMinWidth() {
+        return scale(180);
       }
     }
 
@@ -819,19 +844,41 @@ public final class JBUI {
       }
     }
 
+    public static final class CompletionPopup {
+
+      public static final class Advertiser {
+
+        public static @NotNull Color background() {
+          return JBColor.namedColor("CompletionPopup.Advertiser.background", CurrentTheme.Advertiser.background());
+        }
+
+        public static @NotNull Color foreground() {
+          return JBColor.namedColor("CompletionPopup.Advertiser.foreground", CurrentTheme.Advertiser.foreground());
+        }
+
+        public static int fontSizeOffset() {
+          return getInt("CompletionPopup.Advertiser.fontSizeOffset", CurrentTheme.Advertiser.FONT_SIZE_OFFSET.get());
+        }
+
+        public static @NotNull Border border() {
+          return new EmptyBorder(insets("CompletionPopup.Advertiser.borderInsets", CurrentTheme.Advertiser.borderInsets()));
+        }
+      }
+    }
+
     public static final class ComplexPopup {
 
       public static final Color HEADER_BACKGROUND = JBColor.namedColor("ComplexPopup.Header.background", Popup.BACKGROUND);
 
-      public static JBInsets headerInsets() {
-        return insets("ComplexPopup.Header.insets", insets(9, 20, 8, 15));
+      public static Insets headerInsets() {
+        return insets("ComplexPopup.Header.insets", insets(13, 20, 11, 15));
       }
 
-      public static JBInsets textFieldBorderInsets() {
+      public static Insets textFieldBorderInsets() {
         return insets("ComplexPopup.TextField.borderInsets", insets(0, 12));
       }
 
-      public static JBInsets textFieldInputInsets() {
+      public static Insets textFieldInputInsets() {
         return insets("ComplexPopup.TextField.inputInsets", insets(6, 2));
       }
 
@@ -864,7 +911,7 @@ public final class JBUI {
       }
 
       @NotNull
-      public static JBInsets headerInsets() {
+      public static Insets headerInsets() {
         return insets("Popup.Header.insets", insets(12, 10, 10, 10));
       }
 
@@ -908,7 +955,7 @@ public final class JBUI {
         return JBColor.namedColor("Popup.separatorColor", new JBColor(Color.gray.brighter(), Gray.x51));
       }
 
-      public static JBInsets separatorInsets() {
+      public static Insets separatorInsets() {
         return insets("Popup.separatorInsets", insets(4, 12, 4, 12));
       }
 
@@ -922,6 +969,54 @@ public final class JBUI {
 
       public static int minimumHintWidth() {
         return JBUIScale.scale(170);
+      }
+
+      public static Color mnemonicForeground() {
+        return JBColor.namedColor("Popup.mnemonicForeground", ActionsList.MNEMONIC_FOREGROUND);
+      }
+
+      public static class Selection {
+        public static final JBValue ARC = new JBValue.UIInteger("Popup.Selection.arc", 8);
+        public static final JBValue LEFT_RIGHT_INSET = new JBValue.UIInteger("Popup.Selection.leftRightInset", 12);
+
+        @NotNull
+        public static Insets innerInsets() {
+          JBInsets result = insets("Popup.Selection.innerInsets", insets(0, 8));
+          // Top and bottom values are ignored now
+          result.top = 0;
+          result.bottom = 0;
+          return result;
+        }
+      }
+    }
+
+    public static final class Menu {
+
+      public static final class Selection {
+        public static @NotNull JBInsets innerInsets() {
+          return insets("Menu.Selection.innerInsets", insets(2, 2));
+        }
+
+        public static @NotNull JBInsets outerInsets() {
+          return insets("Menu.Selection.outerInsets", insets(1, 4));
+        }
+
+        public static final JBValue ARC = new JBValue.UIInteger("Menu.Selection.arc", 8);
+      }
+    }
+
+    public static final class PopupMenu {
+
+      public static final class Selection {
+        public static @NotNull JBInsets innerInsets() {
+          return insets("PopupMenu.Selection.innerInsets", insets(2, 10));
+        }
+
+        public static @NotNull JBInsets outerInsets() {
+          return insets("PopupMenu.Selection.outerInsets", insets(1, 4));
+        }
+
+        public static final JBValue ARC = new JBValue.UIInteger("PopupMenu.Selection.arc", 8);
       }
     }
 
@@ -996,7 +1091,7 @@ public final class JBUI {
         return JBColor.namedColor("SearchEverywhere.List.separatorColor", Gray.xDC);
       }
 
-      public static @NotNull Color LIST_SETTINGS_BACKGROUND =
+      public static final @NotNull Color LIST_SETTINGS_BACKGROUND =
         JBColor.namedColor("SearchEverywhere.List.settingsBackground", LightColors.SLIGHTLY_GRAY);
 
       public static @NotNull Color listTitleLabelForeground() {
@@ -1032,12 +1127,18 @@ public final class JBUI {
       }
 
       public static @NotNull Border border() {
-        return new JBEmptyBorder(insets("Popup.Advertiser.borderInsets", insets(5, 10, 5, 15)));
+        return new EmptyBorder(borderInsets());
+      }
+
+      private static @NotNull JBInsets borderInsets() {
+        return insets("Popup.Advertiser.borderInsets", insets(5, 10, 5, 15));
       }
 
       public static @NotNull Color borderColor() {
         return JBColor.namedColor("Popup.Advertiser.borderColor", Gray._135);
       }
+
+      public static final JBValue FONT_SIZE_OFFSET = new JBValue.UIInteger("Popup.Advertiser.fontSizeOffset", -2);
     }
 
     public static final class Validator {
@@ -1104,10 +1205,15 @@ public final class JBUI {
     }
 
     public static final class Tooltip {
+      public static final JBValue CORNER_RADIUS = new JBValue.UIInteger("ToolTip.borderCornerRadius", 4);
+
       public static @NotNull Color shortcutForeground () {
         return JBColor.namedColor("ToolTip.shortcutForeground", new JBColor(0x787878, 0x999999));
       }
 
+      /**
+       * Border color for tooltips except information/question/error tooltips (see {@link com.intellij.codeInsight.hint.HintUtil#HINT_BORDER_COLOR_KEY})
+       */
       public static @NotNull Color borderColor() {
         return JBColor.namedColor("ToolTip.borderColor", new JBColor(0xadadad, 0x636569));
       }
@@ -1259,6 +1365,29 @@ public final class JBUI {
         return selected ? Selection.foreground(focused) : FOREGROUND;
       }
 
+      static int rowHeight() {
+        int defaultHeight = JBUIScale.scale(24);
+        int result = getInt("List.rowHeight", defaultHeight);
+        // Linux doesn't support rowHeight now, use default value. See IDEA-234112
+        return result <= 0 ? defaultHeight : result;
+      }
+
+      static int buttonLeftRightInsets() {
+        return getInt("List.Button.leftRightInset", 8);
+      }
+
+      static Color buttonHoverBackground() {
+        return JBColor.namedColor("List.Button.hoverBackground");
+      }
+
+      static Color buttonSeparatorColor() {
+        return JBColor.namedColor("List.Button.separatorColor", Popup.BACKGROUND);
+      }
+
+      static Color lineHoverBackground(boolean focused) {
+        return JBColor.namedColor("List.Line.hoverBackground", Selection.background(focused));
+      }
+
       final class Selection {
         private static final Color BACKGROUND = JBColor.namedColor("List.selectionBackground", DEFAULT_RENDERER_SELECTION_BACKGROUND);
         private static final Color FOREGROUND = JBColor.namedColor("List.selectionForeground", Label.foreground(true));
@@ -1348,6 +1477,13 @@ public final class JBUI {
 
       static @NotNull Color foreground(boolean selected, boolean focused) {
         return selected ? Selection.foreground(focused) : FOREGROUND;
+      }
+
+      static int rowHeight() {
+        int defaultHeight = JBUIScale.scale(24);
+        int result = getInt("Tree.rowHeight", defaultHeight);
+        // Linux doesn't support rowHeight now, use default value. See IDEA-234112
+        return result <= 0 ? defaultHeight : result;
       }
 
       final class Selection {

@@ -5,8 +5,11 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -23,8 +26,6 @@ import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
@@ -32,6 +33,7 @@ import java.awt.*;
 import java.util.Enumeration;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * @author Konstantin Bulenkov
@@ -40,12 +42,18 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
   private static final Map<Object, Object> ourSavedValues = new LinkedHashMap<>();
   private static float ourSavedScaleFactor = JBUIScale.scale(1f);
   private static float ourSavedConsoleFontSize;
+  private static final Logger LOG = Logger.getInstance(TogglePresentationModeAction.class);
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     boolean selected = UISettings.getInstance().getPresentationMode();
     e.getPresentation().setText(selected ? ActionsBundle.message("action.TogglePresentationMode.exit")
                                          : ActionsBundle.message("action.TogglePresentationMode.enter"));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -64,8 +72,10 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
 
     tweakUIDefaults(settings, inPresentation);
 
-    Promise<?> callback = project == null ? Promises.resolvedPromise() : tweakFrameFullScreen(project, inPresentation);
-    callback.onProcessed(o -> {
+    log(String.format("Will tweak full screen mode for presentation=%b", inPresentation));
+
+    CompletableFuture<?> callback = project == null ? CompletableFuture.completedFuture(null) : tweakFrameFullScreen(project, inPresentation);
+    callback.whenComplete((o, throwable) -> {
       tweakEditorAndFireUpdateUI(settings, inPresentation);
 
       if (layoutStored) {
@@ -74,11 +84,10 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
     });
   }
 
-  @NotNull
-  private static Promise<?> tweakFrameFullScreen(Project project, boolean inPresentation) {
+  private static CompletableFuture<?> tweakFrameFullScreen(Project project, boolean inPresentation) {
     ProjectFrameHelper frame = ProjectFrameHelper.getFrameHelper(IdeFrameImpl.getActiveFrame());
     if (frame == null) {
-      return Promises.resolvedPromise();
+      return CompletableFuture.completedFuture(null);
     }
 
     PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(project);
@@ -90,7 +99,7 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
       final String value = propertiesComponent.getValue("full.screen.before.presentation.mode");
       return frame.toggleFullScreen("true".equalsIgnoreCase(value));
     }
-    return Promises.resolvedPromise();
+    return CompletableFuture.completedFuture(null);
   }
 
   private static void tweakEditorAndFireUpdateUI(UISettings settings, boolean inPresentation) {
@@ -103,6 +112,9 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
     else {
       globalScheme.setConsoleFontSize(ourSavedConsoleFontSize);
     }
+
+    log(String.format("Will set editor font size %.1f for presentation=%b", fontSize, inPresentation));
+
     for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
       if (editor instanceof EditorEx) {
         ((EditorEx)editor).setFontSize(fontSize);
@@ -180,10 +192,17 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
   }
 
   static void restoreToolWindows(@NotNull Project project, boolean inPresentation) {
+    log(String.format("Will restore tool windows for presentation=%b", inPresentation));
+
     ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(project);
     DesktopLayout restoreLayout = manager.getLayoutToRestoreLater();
     if (!inPresentation && restoreLayout != null) {
       manager.setLayout(restoreLayout);
     }
+  }
+
+  private static void log(String message) {
+    if (ApplicationManager.getApplication().isEAP()) LOG.info(message);
+    else LOG.debug(message);
   }
 }

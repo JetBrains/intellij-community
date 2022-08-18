@@ -2,6 +2,7 @@
 package com.intellij.ide.bookmark.actions
 
 import com.intellij.ide.bookmark.BookmarkBundle.messagePointer
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareToggleAction
 
@@ -11,5 +12,9 @@ internal class RewriteBookmarkTypeToggleAction : DumbAwareToggleAction(messagePo
 
   override fun setSelected(event: AnActionEvent, isSelected: Boolean) {
     event.bookmarksViewState?.rewriteBookmarkType = !isSelected
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }

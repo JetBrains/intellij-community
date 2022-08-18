@@ -746,7 +746,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     forEachComponent(container, child -> child.setBackground(background));
   }
 
-  private static void forEachComponent(@NotNull Container container, @NotNull Consumer<Component> consumer) {
+  private static void forEachComponent(@NotNull Container container, @NotNull Consumer<? super Component> consumer) {
     consumer.accept(container);
     for (Component component : container.getComponents()) {
       consumer.accept(component);

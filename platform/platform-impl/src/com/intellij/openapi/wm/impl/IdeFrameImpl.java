@@ -27,14 +27,11 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
   //When this client property is used (Boolean.TRUE is set for the key) we have to ignore 'resizing' events and not spoil 'normal bounds' value for frame
   public static final String TOGGLING_FULL_SCREEN_IN_PROGRESS = "togglingFullScreenInProgress";
 
-  @Nullable
-  private FrameHelper myFrameHelper;
-  @Nullable
-  private FrameDecorator myFrameDecorator;
+  private @Nullable FrameHelper myFrameHelper;
+  private @Nullable FrameDecorator myFrameDecorator;
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
+  public @Nullable Object getData(@NotNull String dataId) {
     return myFrameHelper == null ? null : myFrameHelper.getData(dataId);
   }
 
@@ -65,6 +62,9 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
     }
 
     default void frameShow() {
+    }
+
+    default void appClosing() {
     }
   }
 
@@ -139,9 +139,8 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
     });
   }
 
-  @NotNull
   @Override
-  public Insets getInsets() {
+  public @NotNull Insets getInsets() {
     return SystemInfoRt.isMac && isInFullScreen() ? JBInsets.emptyInsets() : super.getInsets();
   }
 
@@ -171,8 +170,7 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
     }
   }
 
-  @Nullable
-  public static Window getActiveFrame() {
+  public static @Nullable Window getActiveFrame() {
     for (Frame frame : Frame.getFrames()) {
       if (frame.isActive()) {
         return frame;
@@ -192,15 +190,13 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
 
   // deprecated stuff - as IdeFrame must be implemented (a lot of instanceof checks for JFrame)
 
-  @Nullable
   @Override
-  public StatusBar getStatusBar() {
+  public @Nullable StatusBar getStatusBar() {
     return myFrameHelper == null ? null : myFrameHelper.getHelper().getStatusBar();
   }
 
-  @NotNull
   @Override
-  public Rectangle suggestChildFrameBounds() {
+  public @NotNull Rectangle suggestChildFrameBounds() {
     return Objects.requireNonNull(myFrameHelper).getHelper().suggestChildFrameBounds();
   }
 
@@ -216,9 +212,8 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
     return getRootPane();
   }
 
-  @Nullable
   @Override
-  public BalloonLayout getBalloonLayout() {
+  public @Nullable BalloonLayout getBalloonLayout() {
     return myFrameHelper == null ? null : myFrameHelper.getHelper().getBalloonLayout();
   }
 

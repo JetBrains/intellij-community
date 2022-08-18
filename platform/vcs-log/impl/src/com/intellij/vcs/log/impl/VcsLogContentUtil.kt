@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
 import com.intellij.openapi.project.Project
@@ -37,7 +37,7 @@ object VcsLogContentUtil {
     return uis.singleOrNull()
   }
 
-  internal fun selectLogUi(project: Project, logUi: VcsLogUi): Boolean {
+  internal fun selectLogUi(project: Project, logUi: VcsLogUi, requestFocus: Boolean = true): Boolean {
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID) ?: return false
     val manager = toolWindow.contentManager
     val component = ContentUtilEx.findContentComponent(manager) { c -> getLogUi(c)?.id == logUi.id } ?: return false
@@ -45,7 +45,7 @@ object VcsLogContentUtil {
     if (!toolWindow.isVisible) {
       toolWindow.activate(null)
     }
-    return ContentUtilEx.selectContent(manager, component, true)
+    return ContentUtilEx.selectContent(manager, component, requestFocus)
   }
 
   fun getId(content: Content): String? {
@@ -104,7 +104,7 @@ object VcsLogContentUtil {
     return cm.contents.find { VcsLogContentProvider.TAB_NAME == it.tabName }
   }
 
-  internal fun selectMainLog(cm: ContentManager): Boolean {
+  private fun selectMainLog(cm: ContentManager): Boolean {
     val mainContent = findMainLog(cm) ?: return false
     cm.setSelectedContent(mainContent)
     return true

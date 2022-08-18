@@ -9,18 +9,22 @@ import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.content.Content
 import com.intellij.util.ui.update.UiNotifyConnector.doWhenFirstShown
 
-open class CommitTabTitleUpdater(val tree: ChangesTree, val tabName: String, val defaultTitle: () -> String?) : Disposable {
-  private val branchComponent = CurrentBranchComponent(tree).also { Disposer.register(this, it) }
+open class CommitTabTitleUpdater(val tree: ChangesTree,
+                                 val tabName: String,
+                                 val defaultTitle: () -> String?,
+                                 pathsProvider: () -> Iterable<FilePath>) : Disposable {
+  private val branchComponent = CurrentBranchComponent(tree, pathsProvider).also {
+    Disposer.register(this, it)
+  }
 
   val project: Project get() = tree.project
 
-  var pathsProvider: () -> Iterable<FilePath> by branchComponent::pathsProvider
-
   open fun start() {
-    doWhenFirstShown(tree) { updateTab() } // as UI components could be created before tool window `Content`
+    doWhenFirstShown(tree, { updateTab() }, this)  // as UI components could be created before tool window `Content`
 
     branchComponent.addChangeListener(this::updateTab, this)
     Disposer.register(this) { setDefaultTitle() }
@@ -30,7 +34,12 @@ open class CommitTabTitleUpdater(val tree: ChangesTree, val tabName: String, val
     val tab = getTab() ?: return
 
     val branch = branchComponent.text
-    tab.displayName = if (branch?.isNotBlank() == true) message("tab.title.commit.to.branch", branch) else message("tab.title.commit")
+    tab.displayName = when {
+      ExperimentalUI.isNewUI() -> message("tab.title.commit")
+      branch?.isNotBlank() == true -> message("tab.title.commit.to.branch", branch)
+      else -> message("tab.title.commit")
+    }
+
     tab.description = branchComponent.toolTipText
   }
 

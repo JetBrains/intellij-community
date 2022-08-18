@@ -434,7 +434,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
               try {
                 val snapshot = editor.snapshot.configuration as LocatableConfiguration
                 val generatedName = snapshot.suggestedName()
-                if (generatedName != null && generatedName.isNotEmpty()) {
+                if (!generatedName.isNullOrEmpty()) {
                   info.nameText = generatedName
                   changed = false
                 }
@@ -723,8 +723,10 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       }
     }
 
-    return allSettings.size != currentSettingCount || storedComponents.values.any { it.isModified }
+    return allSettings.size != currentSettingCount || isConfigurableModified()
   }
+
+  protected fun isConfigurableModified() = storedComponents.values.any { it.isModified }
 
   override fun disposeUIResources() {
     Disposer.dispose(this)
@@ -904,7 +906,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
   private fun suggestName(configuration: RunConfiguration): String? {
     if (configuration is LocatableConfiguration) {
       val name = configuration.suggestedName()
-      if (name != null && name.isNotEmpty()) {
+      if (!name.isNullOrEmpty()) {
         return name
       }
     }

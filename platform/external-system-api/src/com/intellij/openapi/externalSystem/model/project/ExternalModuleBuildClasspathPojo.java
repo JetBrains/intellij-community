@@ -11,8 +11,8 @@ import java.util.List;
  */
 public class ExternalModuleBuildClasspathPojo {
 
-  @NotNull private final List<String> myEntries;
   @NotNull private String myPath;
+  @NotNull private List<String> myEntries;
 
   @SuppressWarnings("UnusedDeclaration")
   public ExternalModuleBuildClasspathPojo() {
@@ -37,6 +37,10 @@ public class ExternalModuleBuildClasspathPojo {
   @NotNull
   public List<String> getEntries() {
     return myEntries;
+  }
+
+  public void setEntries(@NotNull List<String> entries) {
+    myEntries = entries;
   }
 
   @Override

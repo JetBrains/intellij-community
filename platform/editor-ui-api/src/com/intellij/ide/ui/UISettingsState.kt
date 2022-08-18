@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
 import com.intellij.openapi.components.BaseState
@@ -85,10 +85,10 @@ class UISettingsState : BaseState() {
   var showMainMenu by property(true)
   @get:OptionTag("SHOW_NAVIGATION_BAR")
   var showNavigationBar by property(true)
+  @get:OptionTag("NAVIGATION_BAR_LOCATION")
+  var navigationBarLocation by enum(NavBarLocation.BOTTOM)
   @get:OptionTag("SHOW_NAVIGATION_BAR_MEMBERS")
   var showMembersInNavigationBar by property(true)
-  @get:OptionTag("SELECTED_TABS_LAYOUT_INFO_ID")
-  var selectedTabsLayoutInfoId by string(null)
   @get:OptionTag("SCROLL_TAB_LAYOUT_IN_EDITOR")
   var scrollTabLayoutInEditor by property(true)
   @get:OptionTag("HIDE_TABS_IF_NEED")
@@ -100,6 +100,7 @@ class UISettingsState : BaseState() {
   @get:OptionTag("CLOSE_TAB_BUTTON_ON_THE_RIGHT")
   var closeTabButtonOnTheRight by property(true)
   @get:OptionTag("EDITOR_TAB_PLACEMENT")
+  @get:ReportValue
   var editorTabPlacement: Int by property(SwingConstants.TOP)
   @get:OptionTag("SHOW_FILE_ICONS_IN_TABS")
   var showFileIconInTabs by property(true)
@@ -110,6 +111,8 @@ class UISettingsState : BaseState() {
 
   @get:OptionTag("SORT_TABS_ALPHABETICALLY")
   var sortTabsAlphabetically by property(false)
+  @get:OptionTag("KEEP_TABS_ALPHABETICALLY_SORTED")
+  var alwaysKeepTabsAlphabeticallySorted by property(false)
   @get:OptionTag("OPEN_TABS_AT_THE_END")
   var openTabsAtTheEnd by property(false)
 

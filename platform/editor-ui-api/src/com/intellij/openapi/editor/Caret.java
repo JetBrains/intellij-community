@@ -3,6 +3,7 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +28,7 @@ public interface Caret extends UserDataHolderEx, Disposable {
   CaretModel getCaretModel();
 
   /**
-   * Tells whether this caret is valid, i.e. recognized by the caret model currently. Caret is valid since its creation till its
+   * Tells whether this caret is valid, i.e., recognized by the caret model currently. Caret is valid since its creation till its
    * removal from caret model.
    *
    * @see CaretModel#addCaret(VisualPosition)
@@ -64,7 +65,7 @@ public interface Caret extends UserDataHolderEx, Disposable {
   void moveToVisualPosition(@NotNull VisualPosition pos);
 
   /**
-   * Short hand for calling {@link #moveToOffset(int, boolean)} with {@code 'false'} as a second argument.
+   * Shorthand for calling {@link #moveToOffset(int, boolean)} with {@code 'false'} as a second argument.
    *
    * @param offset      the offset to move to
    */
@@ -184,6 +185,14 @@ public interface Caret extends UserDataHolderEx, Disposable {
   boolean hasSelection();
 
   /**
+   * Returns current selection, or empty range at caret offset if no selection exists.
+   * @see #getSelectionStart()
+   * @see #getSelectionEnd()
+   */
+  @NotNull
+  TextRange getSelectionRange();
+
+  /**
    * Selects the specified range of text.
    * <p>
    * System selection will be updated, if such feature is supported by current editor.
@@ -293,7 +302,7 @@ public interface Caret extends UserDataHolderEx, Disposable {
   /**
    * Returns {@code true} if caret is located at a boundary between different runs of bidirectional text.
    * This means that text fragments at different sides of the boundary are non-adjacent in logical order.
-   * Caret can located at any side of the boundary,
+   * Caret can be located at any side of the boundary,
    * exact location can be determined from directionality flags of caret's logical and visual position
    * ({@link LogicalPosition#leansForward} and {@link VisualPosition#leansRight}).
    */

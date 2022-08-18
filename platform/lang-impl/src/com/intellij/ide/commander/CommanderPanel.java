@@ -4,7 +4,6 @@ package com.intellij.ide.commander;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
-import com.intellij.ide.CopyPasteDelegator;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
@@ -14,7 +13,6 @@ import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.structureView.StructureViewTreeElement;
-import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.ide.util.EditSourceUtil;
@@ -23,7 +21,6 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -57,20 +54,17 @@ import java.util.List;
  * @author Eugene Belyaev
  */
 public class CommanderPanel extends JPanel {
-  private static final Logger LOG = Logger.getInstance(CommanderPanel.class);
-
   private static final Color DARK_BLUE = new Color(55, 85, 134);
   private static final Color DARK_BLUE_BRIGHTER = new Color(58, 92, 149);
   private static final Color DARK_BLUE_DARKER = new Color(38, 64, 106);
 
   private Project myProject;
-  private AbstractListBuilder myBuilder;
+  protected AbstractListBuilder myBuilder;
   private JPanel myTitlePanel;
   private JLabel myParentTitle;
   protected final JBList myList;
   private final MyModel myModel;
 
-  private CopyPasteDelegator myCopyPasteDelegator;
   protected final ListSpeedSearch myListSpeedSearch;
   private final IdeView myIdeView = new MyIdeView();
   private final MyDeleteElementProvider myDeleteElementProvider = new MyDeleteElementProvider();
@@ -84,17 +78,13 @@ public class CommanderPanel extends JPanel {
   private boolean myMoveFocus = false;
   private final boolean myEnableSearchHighlighting;
 
-  public CommanderPanel(final Project project, final boolean enablePopupMenu, final boolean enableSearchHighlighting) {
+  public CommanderPanel(final Project project, final boolean enableSearchHighlighting) {
     super(new BorderLayout());
     myProject = project;
     myEnableSearchHighlighting = enableSearchHighlighting;
     myModel = new MyModel();
     myList = new JBList(myModel);
     myList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-
-    if (enablePopupMenu) {
-      myCopyPasteDelegator = new CopyPasteDelegator(myProject, myList);
-    }
 
     myListSpeedSearch = new ListSpeedSearch(myList);
     myListSpeedSearch.setClearSearchOnNavigateNoMatch(true);
@@ -144,15 +134,6 @@ public class CommanderPanel extends JPanel {
       }
     });
 
-
-    if (enablePopupMenu) {
-      myList.addMouseListener(new PopupHandler() {
-        @Override
-        public void invokePopup(final Component comp, final int x, final int y) {
-          CommanderPanel.this.invokePopup(comp, x, y);
-        }
-      });
-    }
 
     myList.addFocusListener(new FocusAdapter() {
       @Override
@@ -394,22 +375,6 @@ public class CommanderPanel extends JPanel {
     return myActive;
   }
 
-  private void invokePopup(final Component c, final int x, final int y) {
-    if (myBuilder == null) return;
-
-    if (myList.getSelectedIndices().length <= 1) {
-      final int popupIndex = myList.locationToIndex(new Point(x, y));
-      if (popupIndex >= 0) {
-        myList.setSelectedIndex(popupIndex);
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myList, true));
-      }
-    }
-
-    final ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_COMMANDER_POPUP);
-    final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.COMMANDER_POPUP, group);
-    popupMenu.getComponent().show(c, x, y);
-  }
-
   public final void dispose() {
     if (myBuilder != null) {
       Disposer.dispose(myBuilder);
@@ -422,7 +387,7 @@ public class CommanderPanel extends JPanel {
     myTitlePanel.setVisible(flag);
   }
 
-  public final Object getDataImpl(final String dataId) {
+  public Object getDataImpl(final String dataId) {
     if (myBuilder == null) return null;
     final Object selectedValue = getSelectedValue();
     if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
@@ -439,15 +404,6 @@ public class CommanderPanel extends JPanel {
     }
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       return getNavigatables();
-    }
-    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-      return myCopyPasteDelegator != null ? myCopyPasteDelegator.getCopyProvider() : null;
-    }
-    if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
-      return myCopyPasteDelegator != null ? myCopyPasteDelegator.getCutProvider() : null;
-    }
-    if (PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
-      return myCopyPasteDelegator != null ? myCopyPasteDelegator.getPasteProvider() : null;
     }
     if (LangDataKeys.IDE_VIEW.is(dataId)) {
       return myIdeView;
@@ -532,6 +488,11 @@ public class CommanderPanel extends JPanel {
   }
 
   private final class MyDeleteElementProvider implements DeleteProvider {
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
     @Override
     public void deleteElement(@NotNull final DataContext dataContext) {
       LocalHistoryAction a = LocalHistory.getInstance().startAction(IdeBundle.message("progress.deleting"));

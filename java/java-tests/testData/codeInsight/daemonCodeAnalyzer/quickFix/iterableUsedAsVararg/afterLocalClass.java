@@ -1,4 +1,4 @@
-// "Call 'toArray(new X[0])'" "true"
+// "Call 'toArray(new X[0])'" "true-preview"
 import java.util.List;
 import java.util.Objects;
 

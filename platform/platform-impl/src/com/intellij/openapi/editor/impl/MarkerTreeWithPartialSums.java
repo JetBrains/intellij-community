@@ -102,7 +102,7 @@ class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> extends
 
     private int getLocalSum() {
       int sum = 0;
-      for (Supplier<T> g : intervals) {
+      for (Supplier<? extends T> g : intervals) {
         sum += g.get().getAsInt();
       }
       return sum;

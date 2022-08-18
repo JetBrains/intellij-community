@@ -23,7 +23,6 @@ import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
 import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPOSITORY_GROUPING
-import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ExpandableItemsHandler
@@ -38,9 +37,12 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.Processor
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.*
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Panels.simplePanel
+import com.intellij.util.ui.ProportionKey
+import com.intellij.util.ui.ThreeStateCheckBox
+import com.intellij.util.ui.TwoKeySplitter
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.commit.CommitStatusPanel
 import com.intellij.vcs.commit.CommitWorkflowListener
@@ -71,7 +73,6 @@ import java.awt.BorderLayout
 import java.awt.event.InputEvent
 import java.beans.PropertyChangeListener
 import java.util.*
-import java.util.stream.Collectors
 import javax.swing.JPanel
 
 internal class GitStagePanel(private val tracker: GitStageTracker,
@@ -85,13 +86,15 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
   private val _tree: MyChangesTree
   val tree: ChangesTree get() = _tree
-  private val treeMessageSplitter: Splitter
-  private val commitPanel: GitStageCommitPanel
-  private val commitWorkflowHandler: GitStageCommitWorkflowHandler
   private val progressStripe: ProgressStripe
-  private val commitDiffSplitter: OnePixelSplitter
   private val toolbar: ActionToolbar
+  private val commitPanel: GitStageCommitPanel
   private val changesStatusPanel: Wrapper
+
+  private val treeMessageSplitter: Splitter
+  private val commitDiffSplitter: OnePixelSplitter
+
+  private val commitWorkflowHandler: GitStageCommitWorkflowHandler
 
   private var diffPreviewProcessor: GitStageDiffPreview? = null
   private var editorTabPreview: GitStageEditorDiffPreview? = null
@@ -111,7 +114,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
       !commitPanel.commitProgressUi.isDumbMode &&
       IdeFocusManager.getInstance(project).getFocusedDescendantFor(this) != null
     }
-    commitPanel.commitActionsPanel.setupShortcuts(this, this)
+    commitPanel.commitActionsPanel.createActions().forEach { it.registerCustomShortcutSet(this, this) }
     commitPanel.addEditedCommitListener(_tree::editedCommitChanged, this)
     commitPanel.setIncludedRoots(_tree.getIncludedRoots())
     _tree.addIncludedRootsListener(object : IncludedRootsListener {
@@ -245,7 +248,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
     installSelectionHandler(tree, false)
     installNextDiffActionOn(this@GitStagePanel)
-    UIUtil.putClientProperty(tree, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true)
+    tree.putClientProperty(ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true)
   }
 
   override fun dispose() {
@@ -370,10 +373,10 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
     override fun getIncludableUserObjects(treeModelData: VcsTreeModelData): List<Any> {
       return treeModelData
-        .rawNodesStream()
+        .iterateRawNodes()
         .filter { node -> isIncludable(node) }
         .map { node -> node.userObject }
-        .collect(Collectors.toList())
+        .toList()
     }
 
     override fun getNodeStatus(node: ChangesBrowserNode<*>): ThreeStateCheckBox.State {
@@ -472,11 +475,6 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
         update()
       }
     }
-
-    override fun vcsesChanged() = Unit
-    override fun executionStarted() = Unit
-    override fun beforeCommitChecksStarted() = Unit
-    override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CheckinHandler.ReturnResult) = Unit
   }
 
   companion object {

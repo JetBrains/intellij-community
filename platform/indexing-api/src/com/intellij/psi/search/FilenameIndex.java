@@ -28,7 +28,7 @@ import java.util.Set;
 
 public final class FilenameIndex {
   /** @deprecated Use {@link FilenameIndex} methods instead **/
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @ApiStatus.Internal
   public static final ID<String, Void> NAME = ID.create("FilenameIndex");
 
@@ -42,6 +42,12 @@ public final class FilenameIndex {
   }
 
   public static void processAllFileNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+    processAllFileNameCharSequences((CharSequence s) -> {
+      return processor.process(s.toString());
+    }, scope, filter);
+  }
+
+  private static void processAllFileNameCharSequences(@NotNull Processor<? super CharSequence> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     FileBasedIndex.getInstance().processAllKeys(NAME, processor, scope, filter);
   }
 

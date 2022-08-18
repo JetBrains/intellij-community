@@ -38,7 +38,7 @@ public class CommitAnnotator implements Annotator {
     CheckerRunner runner = new CheckerRunner(text);
     runner.run(checkers, problem -> {
       if (problem.fitsGroup(RuleGroup.UNDECORATED_SINGLE_SENTENCE) &&
-          Text.isSingleSentence(Text.findParagraphRange(text, problem.getReplacementRange()).subSequence(text))) {
+          Text.isSingleSentence(Text.findParagraphRange(text, problem.getHighlightRanges().get(0)).subSequence(text))) {
         return null;
       }
 

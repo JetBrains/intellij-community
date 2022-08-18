@@ -12,6 +12,7 @@ create_default_context: Any
 OP_NO_SSLv2: Any
 OP_NO_SSLv3: Any
 OP_NO_COMPRESSION: Any
+DEFAULT_CIPHERS: str
 
 def assert_fingerprint(cert, fingerprint): ...
 def resolve_cert_reqs(candidate): ...

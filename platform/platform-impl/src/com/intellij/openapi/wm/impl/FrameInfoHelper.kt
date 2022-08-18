@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.openapi.wm.impl
 
@@ -54,7 +54,7 @@ internal class FrameInfoHelper {
 
   fun update(project: Project, lastNormalFrameBounds: Rectangle?, windowManager: WindowManagerImpl) {
     val frameHelper = windowManager.getFrameHelper(project) ?: return
-    updateAndGetInfo(frameHelper, frameHelper.frame ?: return, lastNormalFrameBounds, windowManager)
+    updateAndGetInfo(frameHelper, frameHelper.frameOrNull ?: return, lastNormalFrameBounds, windowManager)
   }
 
   fun updateAndGetInfo(frameHelper: ProjectFrameHelper,
@@ -81,7 +81,6 @@ internal fun updateFrameInfo(frameHelper: ProjectFrameHelper, frame: JFrame, las
   var extendedState = frame.extendedState
   if (SystemInfoRt.isMac) {
     // java 11
-    @Suppress("USELESS_CAST")
     val peer = AWTAccessor.getComponentAccessor().getPeer(frame) as ComponentPeer?
     if (peer is FramePeer) {
       // frame.state is not updated by jdk so get it directly from peer

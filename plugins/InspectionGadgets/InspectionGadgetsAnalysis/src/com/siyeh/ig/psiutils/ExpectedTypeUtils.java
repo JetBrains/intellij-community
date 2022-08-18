@@ -21,17 +21,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
-import java.util.Set;
 
 public final class ExpectedTypeUtils {
 
@@ -59,37 +58,16 @@ public final class ExpectedTypeUtils {
 
   private static class ExpectedTypeVisitor extends JavaElementVisitor {
 
-    private static final Set<IElementType> arithmeticOps = new THashSet<>(5);
+    private static final TokenSet arithmeticOps =
+      TokenSet.create(JavaTokenType.PLUS, JavaTokenType.MINUS, JavaTokenType.ASTERISK, JavaTokenType.DIV, JavaTokenType.PERC);
 
-    private static final Set<IElementType> booleanOps = new THashSet<>(5);
+    private static final TokenSet booleanOps =
+      TokenSet.create(JavaTokenType.ANDAND, JavaTokenType.AND, JavaTokenType.XOR, JavaTokenType.OROR, JavaTokenType.OR);
 
-    private static final Set<IElementType> operatorAssignmentOps = new THashSet<>(11);
-
-    static {
-      arithmeticOps.add(JavaTokenType.PLUS);
-      arithmeticOps.add(JavaTokenType.MINUS);
-      arithmeticOps.add(JavaTokenType.ASTERISK);
-      arithmeticOps.add(JavaTokenType.DIV);
-      arithmeticOps.add(JavaTokenType.PERC);
-
-      booleanOps.add(JavaTokenType.ANDAND);
-      booleanOps.add(JavaTokenType.AND);
-      booleanOps.add(JavaTokenType.XOR);
-      booleanOps.add(JavaTokenType.OROR);
-      booleanOps.add(JavaTokenType.OR);
-
-      operatorAssignmentOps.add(JavaTokenType.PLUSEQ);
-      operatorAssignmentOps.add(JavaTokenType.MINUSEQ);
-      operatorAssignmentOps.add(JavaTokenType.ASTERISKEQ);
-      operatorAssignmentOps.add(JavaTokenType.DIVEQ);
-      operatorAssignmentOps.add(JavaTokenType.ANDEQ);
-      operatorAssignmentOps.add(JavaTokenType.OREQ);
-      operatorAssignmentOps.add(JavaTokenType.XOREQ);
-      operatorAssignmentOps.add(JavaTokenType.PERCEQ);
-      operatorAssignmentOps.add(JavaTokenType.LTLTEQ);
-      operatorAssignmentOps.add(JavaTokenType.GTGTEQ);
-      operatorAssignmentOps.add(JavaTokenType.GTGTGTEQ);
-    }
+    private static final TokenSet operatorAssignmentOps =
+      TokenSet.create(JavaTokenType.PLUSEQ, JavaTokenType.MINUSEQ, JavaTokenType.ASTERISKEQ, JavaTokenType.DIVEQ, JavaTokenType.ANDEQ,
+                      JavaTokenType.OREQ, JavaTokenType.XOREQ, JavaTokenType.PERCEQ, JavaTokenType.LTLTEQ, JavaTokenType.GTGTEQ,
+                      JavaTokenType.GTGTGTEQ);
 
     @NotNull private final PsiExpression wrappedExpression;
     private final boolean calculateTypeForComplexReferences;
@@ -107,7 +85,7 @@ public final class ExpectedTypeUtils {
     }
 
     @Override
-    public void visitNameValuePair(PsiNameValuePair pair) {
+    public void visitNameValuePair(@NotNull PsiNameValuePair pair) {
       if (!wrappedExpression.equals(pair.getValue())) {
         return;
       }
@@ -138,7 +116,7 @@ public final class ExpectedTypeUtils {
     }
 
     @Override
-    public void visitAssertStatement(PsiAssertStatement statement) {
+    public void visitAssertStatement(@NotNull PsiAssertStatement statement) {
       final PsiExpression condition = statement.getAssertCondition();
       if (wrappedExpression == condition) {
         expectedType = PsiType.BOOLEAN;
@@ -149,7 +127,7 @@ public final class ExpectedTypeUtils {
     }
 
     @Override
-    public void visitArrayInitializerExpression(PsiArrayInitializerExpression initializer) {
+    public void visitArrayInitializerExpression(@NotNull PsiArrayInitializerExpression initializer) {
       final PsiType type = initializer.getType();
       if (!(type instanceof PsiArrayType)) {
         expectedType = null;
@@ -160,7 +138,7 @@ public final class ExpectedTypeUtils {
     }
 
     @Override
-    public void visitArrayAccessExpression(PsiArrayAccessExpression accessExpression) {
+    public void visitArrayAccessExpression(@NotNull PsiArrayAccessExpression accessExpression) {
       final PsiExpression indexExpression = accessExpression.getIndexExpression();
       if (wrappedExpression.equals(indexExpression)) {
         expectedType = PsiType.INT;
@@ -255,12 +233,12 @@ public final class ExpectedTypeUtils {
     }
 
     @Override
-    public void visitSwitchExpression(PsiSwitchExpression expression) {
+    public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
       visitSwitchBlock(expression);
     }
 
     @Override
-    public void visitSwitchStatement(PsiSwitchStatement statement) {
+    public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
       visitSwitchBlock(statement);
     }
 
@@ -280,7 +258,7 @@ public final class ExpectedTypeUtils {
     }
 
     @Override
-    public void visitExpressionStatement(PsiExpressionStatement statement) {
+    public void visitExpressionStatement(@NotNull PsiExpressionStatement statement) {
       final PsiElement parent = statement.getParent();
       if (!(parent instanceof PsiSwitchLabeledRuleStatement)) {
         return;
@@ -295,7 +273,7 @@ public final class ExpectedTypeUtils {
     }
 
     @Override
-    public void visitYieldStatement(PsiYieldStatement statement) {
+    public void visitYieldStatement(@NotNull PsiYieldStatement statement) {
       PsiSwitchExpression expression = statement.findEnclosingExpression();
       if (expression != null) {
         expectedType = expression.getType();
@@ -303,7 +281,7 @@ public final class ExpectedTypeUtils {
     }
 
     @Override
-    public void visitTypeCastExpression(PsiTypeCastExpression expression) {
+    public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
       if (reportCasts) {
         expectedType = expression.getType();
       }
@@ -320,7 +298,7 @@ public final class ExpectedTypeUtils {
     }
 
     @Override
-    public void visitForeachStatement(PsiForeachStatement statement) {
+    public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
       final PsiExpression iteratedValue = statement.getIteratedValue();
       if (iteratedValue == null) {
         expectedType = null;
@@ -399,7 +377,7 @@ public final class ExpectedTypeUtils {
     }
 
     @Override
-    public void visitConditionalExpression(PsiConditionalExpression conditional) {
+    public void visitConditionalExpression(@NotNull PsiConditionalExpression conditional) {
       final PsiExpression condition = conditional.getCondition();
       if (condition.equals(wrappedExpression)) {
         expectedType = PsiType.BOOLEAN;
@@ -415,17 +393,17 @@ public final class ExpectedTypeUtils {
     }
 
     @Override
-    public void visitLambdaExpression(PsiLambdaExpression expression) {
+    public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
       expectedType = LambdaUtil.getFunctionalInterfaceReturnType(expression);
     }
 
     @Override
-    public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
+    public void visitInstanceOfExpression(@NotNull PsiInstanceOfExpression expression) {
       expectedType = TypeUtils.getObjectType(expression);
     }
 
     @Override
-    public void visitDeclarationStatement(PsiDeclarationStatement declaration) {
+    public void visitDeclarationStatement(@NotNull PsiDeclarationStatement declaration) {
       final PsiElement[] declaredElements = declaration.getDeclaredElements();
       for (PsiElement declaredElement : declaredElements) {
         if (declaredElement instanceof PsiVariable) {
@@ -440,7 +418,7 @@ public final class ExpectedTypeUtils {
     }
 
     @Override
-    public void visitExpressionList(PsiExpressionList expressionList) {
+    public void visitExpressionList(@NotNull PsiExpressionList expressionList) {
       final JavaResolveResult result = findCalledMethod(expressionList);
       final PsiMethod method = (PsiMethod)result.getElement();
       if (method == null) {
@@ -453,7 +431,7 @@ public final class ExpectedTypeUtils {
     }
 
     @Override
-    public void visitNewExpression(PsiNewExpression expression) {
+    public void visitNewExpression(@NotNull PsiNewExpression expression) {
       final PsiExpression[] arrayDimensions = expression.getArrayDimensions();
       for (PsiExpression arrayDimension : arrayDimensions) {
         if (wrappedExpression.equals(arrayDimension)) {

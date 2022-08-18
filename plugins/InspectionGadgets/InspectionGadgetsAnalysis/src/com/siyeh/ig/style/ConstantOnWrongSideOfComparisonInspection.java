@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.ItemEvent;
 
-public class ConstantOnWrongSideOfComparisonInspection extends BaseInspection {
+public class ConstantOnWrongSideOfComparisonInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   public boolean myConstantShouldGoLeft = true;
   public boolean myIgnoreNull = false;
@@ -47,7 +48,7 @@ public class ConstantOnWrongSideOfComparisonInspection extends BaseInspection {
     comboBox.setSelectedIndex(myConstantShouldGoLeft ? 0 : 1);
     comboBox.addItemListener(e -> {
       if (e.getStateChange() == ItemEvent.SELECTED) {
-        myConstantShouldGoLeft = (e.getItem() == left);
+        myConstantShouldGoLeft = e.getItem() == left;
       }
     });
     final InspectionOptionsPanel panel = new InspectionOptionsPanel(this);

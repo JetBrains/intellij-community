@@ -69,6 +69,7 @@ public class GotoImplementationAction extends BaseCodeInsightAction implements C
            : null;
   }
 
+  @Deprecated
   @Override
   public @Nullable CtrlMouseInfo getCtrlMouseInfo(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
     PsiElement elementAtPointer = file.findElementAt(offset);

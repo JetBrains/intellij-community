@@ -51,7 +51,7 @@ public final class JBUIScale {
 
   private static volatile Map.Entry<String, Integer> systemFontData;
 
-  private synchronized static @NotNull Map.Entry<String, Integer> computeSystemFontData(@Nullable Supplier<UIDefaults> uiDefaults) {
+  private synchronized static @NotNull Map.Entry<String, Integer> computeSystemFontData(@Nullable Supplier<? extends UIDefaults> uiDefaults) {
     Map.Entry<String, Integer > result = systemFontData;
     if (result != null) {
       return result;
@@ -338,7 +338,11 @@ public final class JBUIScale {
   }
 
   public static int scaleFontSize(float fontSize) {
-    float userScaleFactor = getOrComputeUserScaleFactor();
+    return scaleFontSize(fontSize, getOrComputeUserScaleFactor());
+  }
+
+  @ApiStatus.Internal
+  public static int scaleFontSize(float fontSize, float userScaleFactor) {
     if (userScaleFactor == 1.25f) {
       return (int)(fontSize * 1.34f);
     }
@@ -346,7 +350,7 @@ public final class JBUIScale {
       return (int)(fontSize * 1.67f);
     }
     else {
-      return (int)scale(fontSize);
+      return (int)(fontSize * userScaleFactor);
     }
   }
 
@@ -360,7 +364,7 @@ public final class JBUIScale {
     return discreteScale(dpi / 96f);
   }
 
-  public static @NotNull Map.Entry<String, Integer> getSystemFontData(@Nullable Supplier<UIDefaults> uiDefaults) {
+  public static @NotNull Map.Entry<String, Integer> getSystemFontData(@Nullable Supplier<? extends UIDefaults> uiDefaults) {
     Map.Entry<String, Integer> result = systemFontData;
     return result == null ? computeSystemFontData(uiDefaults) : result;
   }

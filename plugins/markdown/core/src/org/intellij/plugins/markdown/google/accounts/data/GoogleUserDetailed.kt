@@ -8,5 +8,6 @@ data class GoogleUserDetailed(
   val id: String,
   val givenName: String,
   val familyName: String,
-  val locale: String
+  val locale: String,
+  override val avatarUrl: String?
 ) : AccountDetails

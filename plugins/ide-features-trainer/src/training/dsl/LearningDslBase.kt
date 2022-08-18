@@ -30,6 +30,6 @@ interface LearningDslBase {
   }
 
   fun shortcut(key: String): String {
-    return "<shortcut>${key}</shortcut>"
+    return " <shortcut>${key}</shortcut> "
   }
 }

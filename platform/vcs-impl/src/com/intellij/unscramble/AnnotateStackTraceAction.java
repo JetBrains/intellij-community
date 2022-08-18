@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.unscramble;
 
 import com.intellij.execution.filters.FileHyperlinkInfo;
@@ -6,6 +6,7 @@ import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.impl.EditorHyperlinkSupport;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -60,6 +61,11 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(AnnotateStackTraceAction.class);
 
   private boolean myIsLoading = false;
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -164,7 +170,7 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
           VcsHistoryProvider historyProvider = vcs.getVcsHistoryProvider();
           if (historyProvider == null) return null;
 
-          FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
+          FilePath filePath = VcsContextFactory.getInstance().createFilePathOn(file);
 
           if (historyProvider instanceof VcsHistoryProviderEx) {
             VcsFileRevision revision = ((VcsHistoryProviderEx)historyProvider).getLastRevision(filePath);
@@ -254,8 +260,8 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
     private int myMaxDateLength = 0;
 
     MyActiveAnnotationGutter(@NotNull Project project,
-                                    @NotNull EditorHyperlinkSupport hyperlinks,
-                                    @NotNull ProgressIndicator indicator) {
+                             @NotNull EditorHyperlinkSupport hyperlinks,
+                             @NotNull ProgressIndicator indicator) {
       myProject = project;
       myHyperlinks = hyperlinks;
       myIndicator = indicator;

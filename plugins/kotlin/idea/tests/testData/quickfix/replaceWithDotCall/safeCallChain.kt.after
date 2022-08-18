@@ -4,6 +4,5 @@ class Bar(val baz: Baz)
 class Baz(val qux: Int)
 
 fun test(foo: Foo) {
-    foo.bar.baz.qux
+    foo.bar?.baz?.qux
 }
-/* IGNORE_FIR */

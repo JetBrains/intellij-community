@@ -15,6 +15,7 @@ import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
+import com.jetbrains.python.inspections.PyInterpreterInspection
 import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
@@ -22,9 +23,16 @@ import com.jetbrains.python.sdk.add.addBaseInterpretersAsync
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setReadyToUseSdk
 import com.jetbrains.python.sdk.configuration.PyProjectVirtualEnvConfiguration
 import com.jetbrains.python.statistics.modules
+import training.dsl.LessonContext
 import training.lang.AbstractLangSupport
+import training.learn.CourseManager
+import training.learn.course.KLesson
 import training.project.ProjectUtils
 import training.project.ReadMeCreator
+import training.statistic.LearningInternalProblems
+import training.statistic.LessonStartingWay
+import training.ui.LearningUiManager
+import training.util.isLearningProject
 import java.awt.Dimension
 import java.nio.file.Path
 import javax.swing.JComponent
@@ -37,9 +45,12 @@ abstract class PythonBasedLangSupport : AbstractLangSupport() {
   override fun installAndOpenLearningProject(contentRoot: Path,
                                              projectToClose: Project?,
                                              postInitCallback: (learnProject: Project) -> Unit) {
-    // if we open project with isProjectCreatedFromWizard flag as true, PythonSdkConfigurator will not run and configure our sdks
+    // if we open project with isProjectCreatedFromWizard flag as true, PythonSdkConfigurator will not run and configure our sdks,
     // and we will configure it individually without any race conditions
-    val openProjectTask = OpenProjectTask(projectToClose = projectToClose, isProjectCreatedWithWizard = true)
+    val openProjectTask = OpenProjectTask {
+      this.projectToClose = projectToClose
+      isProjectCreatedWithWizard = true
+    }
     ProjectUtils.simpleInstallAndOpenLearningProject(contentRoot, this, openProjectTask, postInitCallback)
   }
 
@@ -124,12 +135,41 @@ abstract class PythonBasedLangSupport : AbstractLangSupport() {
 
       dialog.title = PythonLessonsBundle.message("choose.python.sdk.to.start.learning.header")
       if (dialog.showAndGet()) {
-        val selectedSdk = baseSdkField.selectedSdk
-        if (selectedSdk == null) return
+        val selectedSdk = baseSdkField.selectedSdk ?: return
         startCallback(selectedSdk)
       }
     } else {
       startCallback(null)
+    }
+  }
+
+  override fun isSdkConfigured(project: Project): Boolean = project.pythonSdk != null
+
+  override val sdkConfigurationTasks: LessonContext.(lesson: KLesson) -> Unit = { lesson ->
+    task {
+      stateCheck {
+        isSdkConfigured(project)
+      }
+      val configureCallbackId = LearningUiManager.addCallback {
+        val module = project.modules.singleOrNull() ?: return@addCallback
+        PyInterpreterInspection.InterpreterSettingsQuickFix.showPythonInterpreterSettings(project, module)
+      }
+      if (useUserProjects || isLearningProject(project, this@PythonBasedLangSupport)) {
+        showWarning(PythonLessonsBundle.message("no.interpreter.in.learning.project", configureCallbackId),
+                    problem = LearningInternalProblems.NO_SDK_CONFIGURED) {
+          !isSdkConfigured(project)
+        }
+      } else {
+        // for Scratch lessons in the non-learning project
+        val openCallbackId = LearningUiManager.addCallback {
+          CourseManager.instance.openLesson(project, lesson, LessonStartingWay.NO_SDK_RESTART,
+                                            forceStartLesson = true,
+                                            forceOpenLearningProject = true)
+        }
+        showWarning(PythonLessonsBundle.message("no.interpreter.in.user.project", openCallbackId, configureCallbackId)) {
+          !isSdkConfigured(project)
+        }
+      }
     }
   }
 }

@@ -70,10 +70,7 @@ import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
-import org.jetbrains.idea.maven.server.MavenServerEmbedder;
-import org.jetbrains.idea.maven.server.MavenServerManager;
-import org.jetbrains.idea.maven.server.MavenServerUtil;
+import org.jetbrains.idea.maven.server.*;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -92,6 +89,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -155,7 +153,6 @@ public class MavenUtil {
     }
     return Collections.emptyMap();
   }
-
 
 
   public static void invokeLater(Project p, Runnable r) {
@@ -602,7 +599,7 @@ public class MavenUtil {
                                                  final boolean cancellable,
                                                  @NotNull final MavenTask task,
                                                  @Nullable("null means application pooled thread")
-                                                   ExecutorService executorService) {
+                                                 ExecutorService executorService) {
     MavenProjectsManager manager = MavenProjectsManager.getInstanceIfCreated(project);
     Supplier<MavenSyncConsole> syncConsoleSupplier = manager == null ? null : () -> manager.getSyncConsole();
     final MavenProgressIndicator indicator = new MavenProgressIndicator(project, syncConsoleSupplier);
@@ -901,8 +898,8 @@ public class MavenUtil {
     }
   }
 
-  @Nullable
-  public static VirtualFile getRepositoryFile(@NotNull Project project,
+  @NotNull
+  public static File getRepositoryFile(@NotNull Project project,
                                               @NotNull MavenId id,
                                               @NotNull String extension,
                                               @Nullable String classifier) {
@@ -910,10 +907,10 @@ public class MavenUtil {
       return null;
     }
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-    File file = makeLocalRepositoryFile(id, projectsManager.getLocalRepository(), extension, classifier);
-    return LocalFileSystem.getInstance().findFileByIoFile(file);
+    return makeLocalRepositoryFile(id, projectsManager.getLocalRepository(), extension, classifier);
   }
 
+  @NotNull
   private static File makeLocalRepositoryFile(MavenId id,
                                               File localRepository,
                                               @NotNull String extension,
@@ -1186,15 +1183,25 @@ public class MavenUtil {
     return ExternalSystemUtil.confirmLoadingUntrustedProject(project, SYSTEM_ID);
   }
 
-  public static void restartMavenConnectors(Project project) {
+  /**
+   *
+   * @param project Project required to restart connectors
+   * @param wait if true, then maven server(s) restarted synchronously
+   * @param condition only connectors satisfied for this predicate will be restarted
+   */
+  public static void restartMavenConnectors(@NotNull Project project, boolean wait, Predicate<MavenServerConnector> condition) {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       MavenServerManager.getInstance().getAllConnectors().forEach(it -> {
-        if (it.getProject().equals(project)) {
-          it.shutdown(true);
+        if (it.getProject().equals(project) && condition.test(it)) {
+          MavenServerManager.getInstance().shutdownConnector(it, wait);
         }
       });
       MavenProjectsManager.getInstance(project).getEmbeddersManager().reset();
     }, SyncBundle.message("maven.sync.restarting"), false, project);
+  }
+
+  public static void restartMavenConnectors(@NotNull Project project, boolean wait) {
+    restartMavenConnectors(project, wait, c -> Boolean.TRUE);
   }
 
   public interface MavenTaskHandler {
@@ -1437,7 +1444,7 @@ public class MavenUtil {
 
   public static void restartConfigHighlightning(Project project, Collection<MavenProject> projects) {
     VirtualFile[] configFiles = getConfigFiles(projects);
-    ApplicationManager.getApplication().invokeLater(()-> {
+    ApplicationManager.getApplication().invokeLater(() -> {
       FileContentUtilCore.reparseFiles(configFiles);
     });
   }
@@ -1486,7 +1493,7 @@ public class MavenUtil {
       Sdk res = ProjectRootManager.getInstance(project).getProjectSdk();
 
       if (res == null) {
-        res =  suggestProjectSdk(project);
+        res = suggestProjectSdk(project);
       }
 
       if (res != null && res.getSdkType() instanceof JavaSdkType) {
@@ -1579,19 +1586,28 @@ public class MavenUtil {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
     Set<MavenRemoteRepository> repositories = projectsManager.getRemoteRepositories();
     MavenEmbeddersManager embeddersManager = projectsManager.getEmbeddersManager();
-    MavenEmbedderWrapper embedderWrapper = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, EMPTY, EMPTY);
+
+    String baseDir = EMPTY;
+    List<MavenProject> projects = projectsManager.getRootProjects();
+    if (!projects.isEmpty()) {
+      baseDir = getBaseDir(projects.get(0).getDirectoryFile()).toString();
+    }
+
+    MavenEmbedderWrapper embedderWrapper = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, baseDir, baseDir);
     try {
       Set<MavenRemoteRepository> resolvedRepositories = embedderWrapper.resolveRepositories(repositories);
       return resolvedRepositories.isEmpty() ? repositories : resolvedRepositories;
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       MavenLog.LOG.warn("resolve remote repo error", e);
-    } finally {
+    }
+    finally {
       embeddersManager.release(embedderWrapper);
     }
     return repositories;
   }
 
-  public static boolean isLinearImportEnabled(){
-    return Registry.is("maven.new.import");
+  public static boolean isLinearImportEnabled() {
+    return Registry.is("maven.linear.import");
   }
 }

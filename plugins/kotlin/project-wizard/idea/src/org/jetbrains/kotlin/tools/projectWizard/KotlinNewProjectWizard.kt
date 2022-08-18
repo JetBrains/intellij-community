@@ -1,16 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard
 
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logBuildSystemChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logBuildSystemFinished
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.KOTLIN
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.*
-import com.intellij.ide.wizard.util.LinkNewProjectWizardStep
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.SystemProperties
-import org.jetbrains.kotlin.idea.KotlinBundle
+import com.intellij.util.ui.JBUI
 import org.jetbrains.kotlin.tools.projectWizard.core.asPath
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.reference
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
@@ -19,10 +20,14 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemP
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.projectTemplates.applyProjectTemplate
 import org.jetbrains.kotlin.tools.projectWizard.projectTemplates.*
+import org.jetbrains.kotlin.tools.projectWizard.wizard.KotlinNewProjectWizardUIBundle
 import org.jetbrains.kotlin.tools.projectWizard.wizard.NewProjectWizardModuleBuilder
 import java.util.*
 
 class KotlinNewProjectWizard : LanguageNewProjectWizard {
+
+    override val name = KOTLIN
+
     override val ordinal = 100
 
     companion object {
@@ -66,24 +71,11 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
         }
     }
 
-    override val name: String = "Kotlin"
-
     override fun isEnabled(context: WizardContext): Boolean = context.isCreatingNewProject
 
-    override fun createStep(parent: NewProjectWizardLanguageStep) =
-        CommentStep(parent)
-            .chain(::Step)
+    override fun createStep(parent: NewProjectWizardLanguageStep) = Step(parent)
 
-    class CommentStep(parent: NewProjectWizardLanguageStep) : LinkNewProjectWizardStep(parent), LanguageNewProjectWizardData by parent {
-
-        override val isFullWidth: Boolean = false
-
-        override val builderId: String = NewProjectWizardModuleBuilder.MODULE_BUILDER_ID
-
-        override val comment: String = KotlinBundle.message("project.wizard.new.project.kotlin.comment")
-    }
-
-    class Step(parent: CommentStep) :
+    class Step(parent: NewProjectWizardLanguageStep) :
         AbstractNewProjectWizardMultiStep<Step, BuildSystemKotlinNewProjectWizard>(parent, BuildSystemKotlinNewProjectWizard.EP_NAME),
         LanguageNewProjectWizardData by parent,
         BuildSystemKotlinNewProjectWizardData {
@@ -93,6 +85,11 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
         override val buildSystemProperty by ::stepProperty
         override var buildSystem by ::step
 
+        override fun createAndSetupSwitcher(builder: Row): SegmentedButton<String> {
+            return super.createAndSetupSwitcher(builder)
+                .whenItemSelectedFromUi { logBuildSystemChanged() }
+        }
+
         override fun setupProject(project: Project) {
             super.setupProject(project)
 
@@ -101,8 +98,19 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
 
         init {
             data.putUserData(BuildSystemKotlinNewProjectWizardData.KEY, this)
-
-            buildSystemProperty.afterChange { logBuildSystemChanged() }
         }
+    }
+}
+
+fun Panel.kmpWizardLink(context: WizardContext) {
+    this.row {
+        text(KotlinNewProjectWizardUIBundle.message("project.wizard.new.project.kotlin.comment"),
+             action = HyperlinkEventAction {
+                 context.requestSwitchTo(NewProjectWizardModuleBuilder.MODULE_BUILDER_ID) { }
+             })
+            .applyToComponent { foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND }
+
+        topGap(TopGap.SMALL)
+        bottomGap(BottomGap.SMALL)
     }
 }

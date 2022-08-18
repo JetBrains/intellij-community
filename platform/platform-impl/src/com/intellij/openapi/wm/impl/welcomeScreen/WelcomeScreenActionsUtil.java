@@ -75,6 +75,11 @@ public class WelcomeScreenActionsUtil {
       UIUtil.setEnabled(myButton, e.getPresentation().isEnabled(), true);
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
     public static ToolbarTextButtonWrapper wrapAsTextButton(@NotNull AnAction action) {
       return new ToolbarTextButtonWrapper(Collections.singletonList(action));
     }
@@ -157,6 +162,11 @@ public class WelcomeScreenActionsUtil {
       UIUtil.setEnabled(myPanel, e.getPresentation().isEnabled(), true);
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
     public static @NotNull LargeIconWithTextWrapper wrapAsBigIconWithText(AnAction action) {
       return new LargeIconWithTextWrapper(action);
     }
@@ -170,12 +180,8 @@ public class WelcomeScreenActionsUtil {
     AnAction[] actions = group.getChildren(null);
 
     DefaultActionGroup main = new DefaultActionGroup();
-    DefaultActionGroup more = new DefaultActionGroup(IdeBundle.message("welcome.screen.more.actions.link.text"), true) {
-      @Override
-      public boolean hideIfNoVisibleChildren() {
-        return true;
-      }
-    };
+    DefaultActionGroup more = new DefaultActionGroup(IdeBundle.message("welcome.screen.more.actions.link.text"), true);
+    more.getTemplatePresentation().setHideGroupIfEmpty(true);
     for (AnAction child : actions) {
       if (!isActionAvailable(child)) continue;
       if (main.getChildrenCount() < mainButtonsNum) {

@@ -1,17 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.maven.testFramework.MavenImportingTestCase
+import com.intellij.maven.testFramework.xml.MavenBuildFileBuilder
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.externalSystem.importing.ExternalSystemSetupProjectTest
 import com.intellij.openapi.externalSystem.importing.ExternalSystemSetupProjectTestCase
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.PlatformTestUtil
 import junit.framework.TestCase
-import com.intellij.maven.testFramework.MavenImportingTestCase
-import com.intellij.maven.testFramework.xml.MavenBuildFileBuilder
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import org.jetbrains.concurrency.asDeferred
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.project.actions.AddFileAsMavenProjectAction
@@ -23,12 +28,14 @@ import org.junit.Test
 class MavenSetupProjectTest : ExternalSystemSetupProjectTest, MavenImportingTestCase() {
   override fun getSystemId(): ProjectSystemId = SYSTEM_ID
 
+  override fun runInDispatchThread() = false
+
   @Test
-  fun `test settings are not reset`() {
+  fun `test settings are not reset`() = runBlocking {
     val projectInfo = generateProject("A")
     val linkedProjectInfo = generateProject("L")
     waitForImport {
-      openProjectFrom(projectInfo.projectFile)
+        openProjectFrom(projectInfo.projectFile)
     }.use {
       assertModules(it, projectInfo)
       MavenWorkspaceSettingsComponent.getInstance(it).settings.getGeneralSettings().isWorkOffline = true
@@ -53,38 +60,43 @@ class MavenSetupProjectTest : ExternalSystemSetupProjectTest, MavenImportingTest
     return ExternalSystemSetupProjectTestCase.ProjectInfo(projectFile, "$name-project", "$name-module", "$name-external-module")
   }
 
-  override fun attachProject(project: Project, projectFile: VirtualFile): Project {
-    AddManagedFilesAction().perform(project, selectedFile = projectFile)
+  override suspend fun attachProject(project: Project, projectFile: VirtualFile): Project {
+    performAction(AddManagedFilesAction(), project, selectedFile = projectFile)
     waitForImportCompletion(project)
     return project
   }
 
-  override fun attachProjectFromScript(project: Project, projectFile: VirtualFile): Project {
-    AddFileAsMavenProjectAction().perform(project, selectedFile = projectFile)
+  override suspend fun attachProjectFromScript(project: Project, projectFile: VirtualFile): Project {
+    performAction(AddFileAsMavenProjectAction(), project, selectedFile = projectFile)
     waitForImportCompletion(project)
     return project
   }
 
-  override fun waitForImport(action: () -> Project): Project {
+  override suspend fun waitForImport(action: suspend () -> Project): Project {
     val p = action()
     waitForImportCompletion(p)
     return p
   }
 
-  private fun waitForImportCompletion(project: Project) {
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+  private suspend fun waitForImportCompletion(project: Project) {
+    withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+    }
+
     val projectManager = MavenProjectsManager.getInstance(project)
     projectManager.initForTests()
     if (isNewImportingProcess) {
-      val promise = MavenImportingManager.getInstance(project).getImportFinishPromise()
-      PlatformTestUtil.waitForPromise(promise)
+      val deferred = withContext(Dispatchers.EDT) {
+        MavenImportingManager.getInstance(project).getImportFinishPromise()
+      }.asDeferred()
+      val importFinishedContext = deferred.await()
+      importFinishedContext.error?.let { throw it }
     }
     else {
-      ApplicationManager.getApplication().invokeAndWait {
+      withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
         projectManager.waitForResolvingCompletion()
         projectManager.performScheduledImportInTests()
       }
     }
-
   }
 }

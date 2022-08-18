@@ -3,10 +3,10 @@
 package com.intellij.uiDesigner.palette;
 
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.JavaPsiFacade;
@@ -27,7 +27,13 @@ import java.awt.*;
 import java.util.HashMap;
 
 
-public class AddComponentAction extends AnAction implements UpdateInBackground {
+public class AddComponentAction extends AnAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);

@@ -3,7 +3,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-// "Extract Set from comparison chain" "true"
+// "Extract Set from comparison chain" "true-preview"
 public class Test {
     private static final Set S = Collections.unmodifiableSet(new HashSet(Arrays.asList(new String[]{"foo", "bar", "baz"})));
 

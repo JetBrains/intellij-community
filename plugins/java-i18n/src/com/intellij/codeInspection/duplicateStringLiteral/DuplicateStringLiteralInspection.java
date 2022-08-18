@@ -55,12 +55,12 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitReferenceExpression(final PsiReferenceExpression expression) {
+      public void visitReferenceExpression(final @NotNull PsiReferenceExpression expression) {
         visitExpression(expression);
       }
 
       @Override
-      public void visitLiteralExpression(PsiLiteralExpression expression) {
+      public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
         checkStringLiteralExpression(expression, holder, isOnTheFly);
       }
     };

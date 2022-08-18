@@ -3,6 +3,8 @@
 // ERROR: Unresolved reference: setVariable
 // ACTION: Create method 'foobar'
 // WITH_STDLIB
+/* IGNORE_FIR */
+
 package bar;
 
 public class Foo {
@@ -30,6 +32,8 @@ class Bar {
 // ERROR: Unresolved reference: setVariable
 // ACTION: Create method 'foobar'
 // WITH_STDLIB
+/* IGNORE_FIR */
+
 package bar;
 
 import static foo.Bar.setVariable;
@@ -40,5 +44,3 @@ public class Foo {
         setVariable<caret>("foobar");
     }
 }
-
-

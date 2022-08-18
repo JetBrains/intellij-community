@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.templates;
 
 import com.intellij.CommonBundle;
@@ -14,6 +14,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -45,7 +46,7 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Compressor;
 import com.intellij.util.io.PathKt;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.EdtInvocationManager;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -164,11 +165,13 @@ public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
       }
     }
     catch (ProcessCanceledException ignored) { }
-    catch (Exception ex) {
-      LOG.error(ex);
-      UIUtil.invokeLaterIfNeeded(() -> Messages.showErrorDialog(project,
-                                                                LangBundle.message("dialog.message.can.t.save.project.as.template"),
-                                                                LangBundle.message("dialog.message.internal.error")));
+    catch (Exception e) {
+      LOG.error(e);
+      EdtInvocationManager.invokeLaterIfNeeded(() -> {
+        Messages.showErrorDialog(project,
+                                 LangBundle.message("dialog.message.can.t.save.project.as.template"),
+                                 LangBundle.message("dialog.message.internal.error"));
+      });
     }
   }
 
@@ -379,6 +382,11 @@ public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
     e.getPresentation().setEnabled(project != null && !project.isDefault());
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   private static class MyContentIterator implements ContentIterator {
     private static final Set<String> ALLOWED_FILES = ContainerUtil.newHashSet(
       "description.html", PROJECT_TEMPLATE_XML, LocalArchivedTemplate.TEMPLATE_META_XML, "misc.xml", "modules.xml", "workspace.xml");
@@ -408,18 +416,26 @@ public class SaveProjectAsTemplateAction extends AnAction implements DumbAware {
     public boolean processFile(@NotNull VirtualFile virtualFile) {
       myIndicator.checkCanceled();
 
-      if (!virtualFile.isDirectory()) {
+      String relativePath = VfsUtilCore.getRelativePath(virtualFile, myRootDir, '/');
+      if (relativePath == null) {
+        throw new RuntimeException("Can't find relative path for " + virtualFile + " in " + myRootDir);
+      }
+      String entryName = myPrefix + '/' + relativePath;
+
+      if (virtualFile.isDirectory()) {
+        try {
+          myStream.addDirectory(entryName);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
+      else {
         String fileName = virtualFile.getName();
         myIndicator.setText2(fileName);
 
-        String relativePath = VfsUtilCore.getRelativePath(virtualFile, myRootDir, '/');
-        if (relativePath == null) {
-          throw new RuntimeException("Can't find relative path for " + virtualFile + " in " + myRootDir);
-        }
-
         boolean system = Project.DIRECTORY_STORE_FOLDER.equals(virtualFile.getParent().getName());
         if (!system || ALLOWED_FILES.contains(fileName) || fileName.endsWith(".iml")) {
-          String entryName = myPrefix + '/' + relativePath;
           try {
             if (virtualFile.getFileType().isBinary() || PROJECT_TEMPLATE_XML.equals(virtualFile.getName())) {
               myStream.addFile(entryName, new File(virtualFile.getPath()));

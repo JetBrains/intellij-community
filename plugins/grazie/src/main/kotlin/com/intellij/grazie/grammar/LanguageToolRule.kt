@@ -15,7 +15,7 @@ import org.languagetool.rules.ITSIssueType
 import java.net.URL
 import java.util.*
 
-internal class LanguageToolRule(
+class LanguageToolRule(
   private val lang: Lang, private val ltRule: org.languagetool.rules.Rule
 ) : Rule(LangTool.globalIdPrefix(lang) + ltRule.id, ltRule.description, categories(ltRule, lang)) {
 
@@ -62,7 +62,7 @@ internal class LanguageToolRule(
 
   override fun getSearchableDescription(): String = "LanguageTool"
 
-  private companion object {
+  companion object {
     private fun categoryName(kind: Categories, lang: Lang, orElse: String): String {
       try {
         return kind.getCategory(JLanguageTool.getMessageBundle(lang.jLanguage!!)).name
@@ -74,12 +74,20 @@ internal class LanguageToolRule(
 
     private fun categories(ltRule: org.languagetool.rules.Rule, lang: Lang): List<String> {
       val ltCat = ltRule.category
-      val isStyleCat = ltCat.id == Categories.STYLE.id
-      if (ltRule.locQualityIssueType == ITSIssueType.Style || isStyleCat || ltCat.id == Categories.TYPOGRAPHY.id) {
-        val subCat = if (isStyleCat || ltCat.id == Categories.MISC.id) categoryName(Categories.MISC, lang, "Other") else ltCat.name
+      if (isStyleLike(ltRule)) {
+        val subCat = when (ltCat.id) {
+          Categories.STYLE.id, Categories.MISC.id -> categoryName(Categories.MISC, lang, "Other")
+          else -> ltCat.name
+        }
         return listOf(categoryName(Categories.STYLE, lang, "Style"), subCat)
       }
       return listOf(ltCat.name)
     }
+
+    @JvmStatic
+    fun isStyleLike(ltRule: org.languagetool.rules.Rule): Boolean =
+      ltRule.locQualityIssueType == ITSIssueType.Style ||
+      ltRule.category.id == Categories.STYLE.id ||
+      ltRule.category.id == Categories.TYPOGRAPHY.id
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("JetTestUtils")
 package org.jetbrains.kotlin.idea.test.util
 
@@ -30,8 +30,7 @@ fun PsiFile.findElementsByCommentPrefix(prefix: String): Map<PsiElement, String>
                 override fun visitComment(comment: PsiComment) {
                     val commentText = comment.text
                     if (commentText.startsWith(prefix)) {
-                        val parent = comment.parent
-                        val elementToAdd = when (parent) {
+                        val elementToAdd = when (val parent = comment.parent) {
                             is KtDeclaration -> parent
                             is PsiMember -> parent
                             else -> PsiTreeUtil.skipSiblingsForward(

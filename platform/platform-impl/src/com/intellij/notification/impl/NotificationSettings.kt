@@ -16,13 +16,10 @@
 package com.intellij.notification.impl
 
 import com.intellij.notification.NotificationDisplayType
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.Strings
 import org.jdom.Element
 
 /**
- * @author spleaner
  * @author Konstantin Bulenkov
  */
 data class NotificationSettings @JvmOverloads constructor(var groupId: String,
@@ -62,7 +59,7 @@ data class NotificationSettings @JvmOverloads constructor(var groupId: String,
       }
       else if (displayTypeString != null) {
         try {
-          displayType = NotificationDisplayType.valueOf(StringUtil.toUpperCase(displayTypeString))
+          displayType = NotificationDisplayType.valueOf(Strings.toUpperCase(displayTypeString))
         }
         catch (ignored: IllegalArgumentException) {
         }
@@ -73,5 +70,4 @@ data class NotificationSettings @JvmOverloads constructor(var groupId: String,
   }
 }
 
-fun isReadAloudEnabled() = SystemInfo.isMac
-fun isSoundEnabled() = true
+internal fun isSoundEnabled() = true

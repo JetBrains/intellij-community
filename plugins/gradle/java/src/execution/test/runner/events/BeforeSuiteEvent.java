@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.execution.testframework.JavaTestLocator;
@@ -28,7 +28,7 @@ public class BeforeSuiteEvent extends AbstractTestEvent {
   public void process(@NotNull final TestEventXmlView eventXml) throws TestEventXmlView.XmlParserException {
     final String testId = eventXml.getTestId();
     final String parentTestId = eventXml.getTestParentId();
-    final String name = eventXml.getTestName();
+    final String name = eventXml.getTestDisplayName();
     final String fqClassName = eventXml.getTestClassName();
 
     doProcess(testId, parentTestId, name, fqClassName);
@@ -69,7 +69,7 @@ public class BeforeSuiteEvent extends AbstractTestEvent {
           }
         }
 
-        String locationUrl = findLocationUrl(null, fqClassName);
+        String locationUrl = computeLocationUrl(parentTest, fqClassName, null, name);
         final GradleSMTestProxy testProxy = new GradleSMTestProxy(name, true, locationUrl, null);
         testProxy.setLocator(getExecutionConsole().getUrlProvider());
         testProxy.setParentId(parentTestId);

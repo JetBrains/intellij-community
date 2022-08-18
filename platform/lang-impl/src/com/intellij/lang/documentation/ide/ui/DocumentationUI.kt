@@ -1,12 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("TestOnlyProblems") // KTIJ-19938
 
 package com.intellij.lang.documentation.ide.ui
 
 import com.intellij.codeInsight.CodeInsightBundle
-import com.intellij.codeInsight.documentation.*
+import com.intellij.codeInsight.documentation.DocumentationHintEditorPane
+import com.intellij.codeInsight.documentation.DocumentationLinkHandler
 import com.intellij.codeInsight.documentation.DocumentationManager.SELECTED_QUICK_DOC_TEXT
 import com.intellij.codeInsight.documentation.DocumentationManager.decorate
+import com.intellij.codeInsight.documentation.DocumentationScrollPane
 import com.intellij.ide.DataManager
 import com.intellij.lang.documentation.DocumentationImageResolver
 import com.intellij.lang.documentation.ide.actions.DOCUMENTATION_BROWSER
@@ -22,19 +23,23 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.ui.FontSizeModel
 import com.intellij.ui.PopupHandler
-import com.intellij.util.SmartList
+import com.intellij.util.flow.collectLatestUndispatched
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.collect
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Rectangle
 import javax.swing.Icon
 import javax.swing.JScrollPane
-import kotlin.coroutines.EmptyCoroutineContext
 
 internal class DocumentationUI(
   project: Project,
@@ -43,35 +48,23 @@ internal class DocumentationUI(
 
   val scrollPane: JScrollPane
   val editorPane: DocumentationHintEditorPane
+  val fontSize: FontSizeModel = DocumentationFontSizeModel()
 
   private val icons = mutableMapOf<String, Icon>()
   private var imageResolver: DocumentationImageResolver? = null
   private val linkHandler: DocumentationLinkHandler
-  private val cs = CoroutineScope(EmptyCoroutineContext)
-  private val contentListeners: MutableList<() -> Unit> = SmartList()
-
-  init {
-    cs.launch(Dispatchers.EDT + CoroutineName("DocumentationUI content update")) {
-      browser.pageFlow.collectLatest { page ->
-        handlePage(page)
-      }
-    }
-  }
-
-  override fun dispose() {
-    cs.cancel("DocumentationUI disposal")
-    clearImages()
-  }
+  private val cs = CoroutineScope(Dispatchers.EDT)
+  private val myContentUpdates = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  val contentUpdates: SharedFlow<Unit> = myContentUpdates.asSharedFlow()
 
   init {
     scrollPane = DocumentationScrollPane()
     editorPane = DocumentationHintEditorPane(project, DocumentationScrollPane.keyboardActions(scrollPane), {
       imageResolver?.resolveImage(it)
     }, { icons[it] })
-    editorPane.applyFontProps(DocumentationComponent.getQuickDocFontSize())
     scrollPane.setViewportView(editorPane)
-    scrollPane.addMouseWheelListener(FontSizeMouseWheelListener(editorPane::applyFontProps))
-    linkHandler = DocumentationLinkHandler.createAndRegister(editorPane, this, browser::navigateByLink)
+    scrollPane.addMouseWheelListener(FontSizeMouseWheelListener(fontSize))
+    linkHandler = DocumentationLinkHandler.createAndRegister(editorPane, this, ::linkActivated)
 
     browser.ui = this
     Disposer.register(this, browser)
@@ -89,6 +82,23 @@ internal class DocumentationUI(
     Disposer.register(this) { editorPane.removeMouseListener(contextMenu) }
 
     DataManager.registerDataProvider(editorPane, this)
+
+    fetchingMessage()
+    cs.launch(CoroutineName("DocumentationUI content update"), start = CoroutineStart.UNDISPATCHED) {
+      browser.pageFlow.collectLatestUndispatched { page ->
+        handlePage(page)
+      }
+    }
+    cs.launch(CoroutineName("DocumentationUI font size update"), start = CoroutineStart.UNDISPATCHED) {
+      fontSize.updates.collect {
+        editorPane.applyFontProps(it)
+      }
+    }
+  }
+
+  override fun dispose() {
+    cs.cancel("DocumentationUI disposal")
+    clearImages()
   }
 
   override fun getData(dataId: String): Any? {
@@ -107,21 +117,6 @@ internal class DocumentationUI(
     }
   }
 
-  fun addContentListener(listener: () -> Unit): Disposable {
-    EDT.assertIsEdt()
-    contentListeners.add(listener)
-    return Disposable {
-      EDT.assertIsEdt()
-      contentListeners.remove(listener)
-    }
-  }
-
-  private fun fireContentChanged() {
-    for (listener in contentListeners) {
-      listener.invoke()
-    }
-  }
-
   private fun clearImages() {
     icons.clear()
     imageResolver = null
@@ -129,7 +124,7 @@ internal class DocumentationUI(
 
   private suspend fun handlePage(page: DocumentationPage) {
     val presentation = page.request.presentation
-    page.contentFlow.collectLatest {
+    page.contentFlow.collectLatestUndispatched {
       handleContent(presentation, it)
     }
   }
@@ -140,11 +135,13 @@ internal class DocumentationUI(
         // to avoid flickering: don't show ""Fetching..." message right away, give a chance for documentation to load
         delay(DEFAULT_UI_RESPONSE_TIMEOUT) // this call will be immediately cancelled once a new emission happens
         clearImages()
-        showMessage(CodeInsightBundle.message("javadoc.fetching.progress"))
+        fetchingMessage()
+        applyUIState(UIState.Reset)
       }
       DocumentationPageContent.Empty -> {
         clearImages()
-        showMessage(CodeInsightBundle.message("no.documentation.found"))
+        noDocumentationMessage()
+        applyUIState(UIState.Reset)
       }
       is DocumentationPageContent.Content -> {
         clearImages()
@@ -159,7 +156,14 @@ internal class DocumentationUI(
     val locationChunk = getDefaultLocationChunk(presentation)
     val linkChunk = linkChunk(presentation.presentableText, pageContent.links)
     val decorated = decorate(content.html, locationChunk, linkChunk)
-    update(decorated, pageContent.uiState)
+    if (!updateContent(decorated)) {
+      return
+    }
+    val uiState = pageContent.uiState
+    if (uiState != null) {
+      yield()
+      applyUIState(uiState)
+    }
   }
 
   private fun getDefaultLocationChunk(presentation: TargetPresentation): HtmlChunk? {
@@ -181,27 +185,31 @@ internal class DocumentationUI(
     return key
   }
 
-  private suspend fun showMessage(message: @Nls String) {
-    val element = HtmlChunk.div()
+  private fun fetchingMessage() {
+    updateContent(message(CodeInsightBundle.message("javadoc.fetching.progress")))
+  }
+
+  private fun noDocumentationMessage() {
+    updateContent(message(CodeInsightBundle.message("no.documentation.found")))
+  }
+
+  private fun message(message: @Nls String): @Nls String {
+    return HtmlChunk.div()
       .setClass("content-only")
       .addText(message)
       .wrapWith("body")
       .wrapWith("html")
-    update(element.toString(), UIState.Reset)
+      .toString()
   }
 
-  private suspend fun update(text: @Nls String, uiState: UIState?) {
+  private fun updateContent(text: @Nls String): Boolean {
     EDT.assertIsEdt()
     if (editorPane.text == text) {
-      return
+      return false
     }
     editorPane.text = text
-    fireContentChanged()
-    if (uiState == null) {
-      return
-    }
-    yield()
-    applyUIState(uiState)
+    check(myContentUpdates.tryEmit(Unit))
+    return true
   }
 
   private fun applyUIState(uiState: UIState) {
@@ -218,6 +226,15 @@ internal class DocumentationUI(
       is UIState.RestoreFromSnapshot -> {
         uiState.snapshot.invoke()
       }
+    }
+  }
+
+  private fun linkActivated(href: String) {
+    if (href.startsWith("#")) {
+      UIUtil.scrollToReference(editorPane, href.removePrefix("#"))
+    }
+    else {
+      browser.navigateByLink(href)
     }
   }
 

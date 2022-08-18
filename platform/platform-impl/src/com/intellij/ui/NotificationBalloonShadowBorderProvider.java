@@ -6,7 +6,6 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +31,7 @@ public class NotificationBalloonShadowBorderProvider implements BalloonImpl.Shad
   @NotNull
   @Override
   public Insets getInsets() {
-    return JBUI.insets("Notification.borderInsets", INSETS);
+    return INSETS;
   }
 
   @Override

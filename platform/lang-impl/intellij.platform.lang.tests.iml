@@ -28,6 +28,8 @@
     <orderEntry type="library" name="commons-logging" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="jmock" level="project" />
+    <orderEntry type="library" scope="TEST" name="jmock.legacy" level="project" />
+    <orderEntry type="library" scope="TEST" name="jmock.junit4" level="project" />
     <orderEntry type="library" scope="TEST" name="flexmark" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
     <orderEntry type="library" name="jackson" level="project" />
@@ -42,5 +44,6 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.jps" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
   </component>
 </module>

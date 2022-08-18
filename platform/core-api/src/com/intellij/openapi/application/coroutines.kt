@@ -1,12 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:ApiStatus.Experimental
-
 package com.intellij.openapi.application
 
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.asContextElement
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.openapi.util.Computable
+import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus.Experimental
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -43,6 +42,8 @@ suspend fun <T> smartReadAction(project: Project, action: () -> T): T {
  * Since the [action] might me executed several times, it must be idempotent.
  * The function returns when given [action] was completed fully.
  * To support cancellation, the [action] must regularly invoke [com.intellij.openapi.progress.ProgressManager.checkCanceled].
+ *
+ * The [action] is dispatched to [Dispatchers.Default], because a read action is expected to be a CPU-bound task.
  *
  * @see constrainedReadActionBlocking
  */
@@ -84,24 +85,54 @@ suspend fun <T> smartReadActionBlocking(project: Project, action: () -> T): T {
  * The function returns when given [action] was completed fully.
  * To support cancellation, the [action] must regularly invoke [com.intellij.openapi.progress.ProgressManager.checkCanceled].
  *
+ * The [action] is dispatched to [Dispatchers.Default], because a read action is expected to be a CPU-bound task.
+ *
  * @see constrainedReadAction
  */
 suspend fun <T> constrainedReadActionBlocking(vararg constraints: ReadConstraint, action: () -> T): T {
   return readActionSupport().executeReadAction(constraints.toList(), blocking = true, action)
 }
 
+/**
+ * Runs given [action] under [write lock][com.intellij.openapi.application.Application.runWriteAction].
+ *
+ * Currently, the [action] is dispatched by [Dispatchers.EDT] within the [context modality state][asContextElement].
+ * If the calling coroutine is already executed by [Dispatchers.EDT], then no re-dispatch happens.
+ * Acquiring the write-lock happens in blocking manner,
+ * i.e. [runWriteAction][com.intellij.openapi.application.Application.runWriteAction] call will block
+ * until all currently running read actions are finished.
+ *
+ * NB This function is an API stub.
+ * The implementation will change once running write actions would be allowed on other threads.
+ * This function exists to make it possible to use it in suspending contexts
+ * before the platform is ready to handle write actions differently.
+ */
+@Experimental
+suspend fun <T> writeAction(action: () -> T): T {
+  return withContext(Dispatchers.EDT) {
+    blockingContext {
+      ApplicationManager.getApplication().runWriteAction(Computable(action))
+    }
+  }
+}
+
 private fun readActionSupport() = ApplicationManager.getApplication().getService(ReadActionSupport::class.java)
 
 /**
- * The code [without][ModalityState.any] context modality state must only perform pure UI operations,
- * it must not access any PSI, VFS, project model, or indexes.
+ * The code within [ModalityState.any] context modality state must only perform pure UI operations,
+ * it must not access any PSI, VFS, project model, or indexes. It also must not show any modal dialogs.
  */
 fun ModalityState.asContextElement(): CoroutineContext = coroutineSupport().asContextElement(this)
 
 /**
- * @return UI dispatcher which dispatches within the [context modality state][asContextElement].
+ * UI dispatcher which dispatches onto Swing event dispatching thread within the [context modality state][asContextElement].
+ * If no context modality state is specified, then the coroutine is dispatched within [ModalityState.NON_MODAL] modality state.
+ *
+ * This dispatcher is also installed as [Dispatchers.Main].
+ * Use [Dispatchers.EDT] when in doubt, use [Dispatchers.Main] if the coroutine doesn't care about IJ model,
+ * e.g. when it is also able to be executed outside of IJ process.
  */
-@Suppress("unused") // unused receiver
+@Suppress("UnusedReceiverParameter")
 val Dispatchers.EDT: CoroutineContext get() = coroutineSupport().edtDispatcher()
 
 private fun coroutineSupport() = ApplicationManager.getApplication().getService(CoroutineSupport::class.java)

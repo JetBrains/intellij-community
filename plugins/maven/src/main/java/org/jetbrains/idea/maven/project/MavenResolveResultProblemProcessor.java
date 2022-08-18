@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
+import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.RepositoryBlockedSyncIssue;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenProjectProblem;
@@ -21,7 +22,7 @@ public class MavenResolveResultProblemProcessor {
   private static final String BLOCKED_MIRROR_FOR_REPOSITORIES = "Blocked mirror for repositories:";
 
   public static void notifySyncForProblem(@NotNull Project project,
-                                          @NotNull MavenResolveResultProblemProcessor.MavenResolveProblemHolder problem) {
+                                          @NotNull MavenResolveProblemHolder problem) {
     if (problem.isEmpty()) return;
 
     MavenSyncConsole syncConsole = MavenProjectsManager.getInstance(project).getSyncConsole();
@@ -39,6 +40,26 @@ public class MavenResolveResultProblemProcessor {
     }
   }
 
+  public static void notifySyncForProblem(@NotNull Project project, @NotNull MavenProjectProblem problem) {
+    MavenSyncConsole syncConsole = MavenProjectsManager.getInstance(project).getSyncConsole();
+    String message = problem.getDescription();
+    if (message == null) return;
+
+    if (message.contains(BLOCKED_MIRROR_FOR_REPOSITORIES)) {
+      BuildIssue buildIssue = RepositoryBlockedSyncIssue.getIssue(project, problem.getDescription());
+      syncConsole.getListener(MavenServerProgressIndicator.ResolveType.DEPENDENCY)
+        .showBuildIssue(buildIssue.getTitle(), buildIssue);
+    } else if (problem.getMavenArtifact() == null) {
+      MavenProjectsManager.getInstance(project).getSyncConsole()
+        .addWarning(SyncBundle.message("maven.sync.annotation.processor.problem"), message);
+    }
+
+    if (problem.getMavenArtifact() != null) {
+      syncConsole.getListener(MavenServerProgressIndicator.ResolveType.DEPENDENCY)
+        .showArtifactBuildIssue(problem.getMavenArtifact().getMavenId().getKey(), message);
+    }
+  }
+
   public static void notifyMavenProblems(@NotNull Project project) {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
     MavenSyncConsole syncConsole = projectsManager.getSyncConsole();
@@ -50,7 +71,7 @@ public class MavenResolveResultProblemProcessor {
   }
 
   @NotNull
-  public static MavenResolveResultProblemProcessor.MavenResolveProblemHolder getProblems(@NotNull Collection<MavenProjectReaderResult> results) {
+  public static MavenResolveProblemHolder getProblems(@NotNull Collection<MavenProjectReaderResult> results) {
     Set<MavenProjectProblem> repositoryBlockedProblems = new HashSet<>();
     Set<MavenProjectProblem> unresolvedArtifactProblems = new HashSet<>();
     Set<MavenArtifact> unresolvedArtifacts = new HashSet<>();

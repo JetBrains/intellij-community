@@ -11,7 +11,6 @@ import com.intellij.testFramework.rules.InMemoryFsRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.Verifier
-import java.nio.file.Files
 
 @RunsInEdt
 class PerProjectPluginsTest {
@@ -31,6 +30,7 @@ class PerProjectPluginsTest {
   }
 
   private val inMemoryFsRule = InMemoryFsRule()
+  private val rootPath get() = inMemoryFsRule.fs.getPath("/")
 
   @Rule
   @JvmField
@@ -44,8 +44,9 @@ class PerProjectPluginsTest {
   @Test
   fun enabledAndDisablePerProject() {
     val descriptor = loadDescriptorInTest(
-      PluginBuilder().randomId("enabledAndDisablePerProject"),
-      Files.createTempDirectory(inMemoryFsRule.fs.getPath("/"), null),
+      pluginBuilder = PluginBuilder().randomId("enabledAndDisablePerProject"),
+      rootPath = rootPath,
+      useTempDir = true,
     )
     assertThat(descriptor).isNotNull
     val pluginId = descriptor.pluginId

@@ -47,6 +47,13 @@ public abstract class AbstractRepositoryManager<T extends Repository>
   }
 
   @Override
+  @Nullable
+  @CalledInAny
+  public T getRepositoryForRootQuick(@Nullable FilePath rootPath) {
+    return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForRootQuick(rootPath));
+  }
+
+  @Override
   public void addExternalRepository(@NotNull VirtualFile root, @NotNull T repository) {
     myGlobalRepositoryManager.addExternalRepository(root, repository);
   }
@@ -64,27 +71,27 @@ public abstract class AbstractRepositoryManager<T extends Repository>
   @Override
   @Nullable
   @RequiresBackgroundThread
-  public T getRepositoryForFile(@NotNull VirtualFile file) {
+  public T getRepositoryForFile(@Nullable VirtualFile file) {
     return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForFile(file));
   }
 
   @Nullable
   @CalledInAny
-  public T getRepositoryForFileQuick(@NotNull VirtualFile file) {
+  public T getRepositoryForFileQuick(@Nullable VirtualFile file) {
     return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForFileQuick(file));
   }
 
   @Override
   @Nullable
   @RequiresBackgroundThread
-  public T getRepositoryForFile(@NotNull FilePath file) {
+  public T getRepositoryForFile(@Nullable FilePath file) {
     return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForFile(file, false));
   }
 
   @Override
   @Nullable
   @CalledInAny
-  public T getRepositoryForFileQuick(@NotNull FilePath file) {
+  public T getRepositoryForFileQuick(@Nullable FilePath file) {
     return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForFile(file, true));
   }
 
@@ -146,5 +153,4 @@ public abstract class AbstractRepositoryManager<T extends Repository>
   public boolean shouldProposeSyncControl() {
     return !MultiRootBranches.diverged(getRepositories());
   }
-
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
@@ -19,7 +19,7 @@ public class LightSealedTypesHighlightingTest extends LightJavaCodeInsightFixtur
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_16;
+    return JAVA_LATEST_WITH_LATEST_JDK;
   }
 
   public void testSealedTypesBasics() { doTest(); }

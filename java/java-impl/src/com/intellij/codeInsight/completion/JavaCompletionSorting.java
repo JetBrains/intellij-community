@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -31,7 +31,10 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public final class JavaCompletionSorting {
   private JavaCompletionSorting() {
@@ -753,7 +756,7 @@ public final class JavaCompletionSorting {
       return candidate.hasModifierProperty(PsiModifier.STATIC) == original.hasModifierProperty(PsiModifier.STATIC) &&
              candidate.isVarArgs() &&
              candidate.getParameterList().getParametersCount() == 1 &&
-             PsiResolveHelper.SERVICE.getInstance(candidate.getProject()).isAccessible(candidate, myPlace, null);
+             PsiResolveHelper.getInstance(candidate.getProject()).isAccessible(candidate, myPlace, null);
     }
   }
 

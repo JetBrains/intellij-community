@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions
 
-import com.intellij.icons.AllIcons
 import com.intellij.ide.TextCopyProvider
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys.COPY_PROVIDER
 import com.intellij.openapi.application.ApplicationManager.getApplication
@@ -29,7 +29,6 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil.applySpeedSearchHighlighting
 import com.intellij.util.ObjectUtils.sentinel
 import com.intellij.util.containers.nullize
 import com.intellij.util.ui.JBUI.scale
-import com.intellij.vcs.commit.NonModalCommitPanel
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile.getSubjectRightMargin
 import org.jetbrains.annotations.Nls
 import java.awt.Point
@@ -50,13 +49,12 @@ class ShowMessageHistoryAction : DumbAwareAction() {
     val project = e.project
     val commitMessage = getCommitMessage(e)
 
-    if (e.place == NonModalCommitPanel.COMMIT_TOOLBAR_PLACE) {
-      e.presentation.icon = AllIcons.Vcs.HistoryInline
-      e.presentation.hoveredIcon = AllIcons.Vcs.HistoryInlineHovered
-    }
-
     e.presentation.isVisible = project != null && commitMessage != null
     e.presentation.isEnabled = e.presentation.isVisible && !VcsConfiguration.getInstance(project!!).recentMessages.isEmpty()
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -111,8 +109,9 @@ class ShowMessageHistoryAction : DumbAwareAction() {
       .apply {
         setDataProvider { dataId ->
           when (dataId) {
-          // default list action does not work as "CopyAction" is invoked first, but with other copy provider
+            // default list action does not work as "CopyAction" is invoked first, but with other copy provider
             COPY_PROVIDER.name -> object : TextCopyProvider() {
+              override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
               override fun getTextLinesToCopy() = listOfNotNull(selectedMessage).nullize()
             }
             else -> null

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runners;
 
 import com.intellij.execution.ExecutionBundle;
@@ -20,14 +20,20 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class FakeRerunAction extends AnAction  {
+public class FakeRerunAction extends AnAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   @Override
   public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     ExecutionEnvironment environment = getEnvironment(event);
     if (environment != null) {
       presentation.setText(ExecutionBundle.messagePointer("rerun.configuration.action.name",
-                                                   StringUtil.escapeMnemonics(environment.getRunProfile().getName())));
+                                                          StringUtil.escapeMnemonics(environment.getRunProfile().getName())));
       presentation.setIcon(
         ActionPlaces.TOUCHBAR_GENERAL.equals(event.getPlace()) || ExecutionManagerImpl.isProcessRunning(getDescriptor(event)) ?
         AllIcons.Actions.Restart : environment.getExecutor().getIcon());
@@ -47,13 +53,11 @@ public class FakeRerunAction extends AnAction  {
     }
   }
 
-  @Nullable
-  protected RunContentDescriptor getDescriptor(AnActionEvent event) {
+  protected @Nullable RunContentDescriptor getDescriptor(AnActionEvent event) {
     return event.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
   }
 
-  @Nullable
-  protected ExecutionEnvironment getEnvironment(@NotNull AnActionEvent event) {
+  protected @Nullable ExecutionEnvironment getEnvironment(@NotNull AnActionEvent event) {
     ExecutionEnvironment environment = event.getData(ExecutionDataKeys.EXECUTION_ENVIRONMENT);
     if (environment == null) {
       Project project = event.getProject();
@@ -69,7 +73,7 @@ public class FakeRerunAction extends AnAction  {
     return environment;
   }
 
-  protected boolean isEnabled(AnActionEvent event) {
+  protected boolean isEnabled(@NotNull AnActionEvent event) {
     RunContentDescriptor descriptor = getDescriptor(event);
     ProcessHandler processHandler = descriptor == null ? null : descriptor.getProcessHandler();
     ExecutionEnvironment environment = getEnvironment(event);

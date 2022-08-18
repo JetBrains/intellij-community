@@ -28,7 +28,7 @@ import com.intellij.vcs.AnnotationProviderEx;
 import com.intellij.vcs.log.VcsUserRegistry;
 import git4idea.annotate.GitAdvancedSettingsListener;
 import git4idea.annotate.GitAnnotationProvider;
-import git4idea.annotate.GitRepositoryForAnnotationsListener;
+import git4idea.annotate.GitAnnotationsListener;
 import git4idea.branch.GitBranchIncomingOutgoingManager;
 import git4idea.changes.GitCommittedChangeListProvider;
 import git4idea.changes.GitOutgoingChangesProvider;
@@ -206,19 +206,18 @@ public final class GitVcs extends AbstractVcs {
 
   @Override
   protected void activate() {
-    myDisposable = Disposer.newDisposable();
+    Disposable disposable = Disposer.newDisposable();
+    myDisposable = disposable;
 
-    BackgroundTaskUtil.executeOnPooledThread(myDisposable, ()
+    BackgroundTaskUtil.executeOnPooledThread(disposable, ()
       -> GitExecutableManager.getInstance().testGitExecutableVersionValid(myProject));
 
-    if (myVFSListener == null) {
-      myVFSListener = GitVFSListener.createInstance(this);
-    }
+    myVFSListener = GitVFSListener.createInstance(this, disposable);
     // make sure to read the registry before opening commit dialog
     myProject.getService(VcsUserRegistry.class);
 
-    GitRepositoryForAnnotationsListener.registerListener(myProject, myDisposable);
-    GitAdvancedSettingsListener.registerListener(myProject, myDisposable);
+    GitAnnotationsListener.registerListener(myProject, disposable);
+    GitAdvancedSettingsListener.registerListener(myProject, disposable);
 
     GitUserRegistry.getInstance(myProject).activate();
     GitBranchIncomingOutgoingManager.getInstance(myProject).activate();
@@ -226,10 +225,7 @@ public final class GitVcs extends AbstractVcs {
 
   @Override
   protected void deactivate() {
-    if (myVFSListener != null) {
-      Disposer.dispose(myVFSListener);
-      myVFSListener = null;
-    }
+    myVFSListener = null;
     if (myDisposable != null) {
       Disposer.dispose(myDisposable);
       myDisposable = null;
@@ -314,12 +310,6 @@ public final class GitVcs extends AbstractVcs {
   @Override
   public boolean fileListenerIsSynchronous() {
     return false;
-  }
-
-  @Override
-  @RequiresEdt
-  public void enableIntegration() {
-    enableIntegration(null);
   }
 
   @Override

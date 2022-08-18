@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.openapi.vcs.changes.actions.diff.PresentableGoToChangePopupAction
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
+import com.intellij.util.containers.JBIterable
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.log.runInEdtAsync
 import git4idea.index.GitStageTracker
@@ -22,7 +23,6 @@ import git4idea.index.GitStageTrackerListener
 import git4idea.index.KindTag
 import git4idea.index.createTwoSidesDiffRequestProducer
 import java.util.*
-import java.util.stream.Stream
 
 class GitStageDiffPreview(project: Project,
                           private val tree: GitStageTree,
@@ -58,9 +58,9 @@ class GitStageDiffPreview(project: Project,
     TreeUtil.selectPath(tree, TreeUtil.getPathFromRoot(node), false)
   }
 
-  override fun getSelectedChanges(): Stream<Wrapper> = wrap(VcsTreeModelData.selected(tree))
+  override fun iterateSelectedChanges(): Iterable<Wrapper> = wrap(VcsTreeModelData.selected(tree))
 
-  override fun getAllChanges(): Stream<Wrapper> = wrap(VcsTreeModelData.all(tree))
+  override fun iterateAllChanges(): Iterable<Wrapper> = wrap(VcsTreeModelData.all(tree))
 
   override fun createGoToChangeAction(): AnAction {
     return MyGoToChangePopupAction()
@@ -72,14 +72,19 @@ class GitStageDiffPreview(project: Project,
         .map(::GitFileStatusNodeWrapper)
     }
 
-    override fun onSelected(change: Wrapper) = selectChange(change)
+    override fun onSelected(change: Wrapper) {
+      currentChange = change
+      selectChange(change)
+    }
   }
 
-  private fun wrap(modelData: VcsTreeModelData): Stream<Wrapper> =
-    Stream.concat(
-      modelData.userObjectsStream(GitFileStatusNode::class.java).filter { it.kind != NodeKind.IGNORED }.map { GitFileStatusNodeWrapper(it) },
-      modelData.userObjectsStream(Change::class.java).map { ChangeWrapper(it) }
-    )
+  private fun wrap(modelData: VcsTreeModelData): Iterable<Wrapper> =
+    JBIterable.empty<Wrapper>()
+      .append(modelData.iterateUserObjects(GitFileStatusNode::class.java)
+                .filter { it.kind != NodeKind.IGNORED }
+                .map { GitFileStatusNodeWrapper(it) })
+      .append(modelData.iterateUserObjects(Change::class.java)
+                .map { ChangeWrapper(it) })
 
   private class GitFileStatusNodeWrapper(val node: GitFileStatusNode) : Wrapper() {
     override fun getPresentableName(): String = node.filePath.name

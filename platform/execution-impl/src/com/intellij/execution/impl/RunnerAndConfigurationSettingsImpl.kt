@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl
 
 import com.intellij.configurationStore.SerializableScheme
@@ -69,7 +69,6 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
         }
       }
       // we cannot use here configuration.type.id because it will break previously stored list of stored settings
-      @Suppress("DEPRECATION")
       return "${configuration.type.displayName}.${configuration.name}${(configuration as? UnknownRunConfiguration)?.uniqueID ?: ""}"
     }
   }
@@ -89,6 +88,8 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
   private var folderName: String? = null
 
   private var uniqueId: String? = null
+
+  var filePathIfRunningCurrentFile: String? = null
 
   override fun getFactory() = _configuration?.factory ?: UnknownConfigurationType.getInstance()
 
@@ -135,7 +136,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
   override fun createFactory(): Factory<RunnerAndConfigurationSettings> {
     return Factory {
       val configuration = configuration
-      RunnerAndConfigurationSettingsImpl(manager, configuration.factory!!.createConfiguration(ExecutionBundle.message("default.run.configuration.name"), configuration))
+      RunnerAndConfigurationSettingsImpl(manager, configuration.factory!!.createConfiguration("", configuration), isTemplate)
     }
   }
 
@@ -161,7 +162,6 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
     // check name if configuration name was changed not using our setName
     if (result == null || !result.contains(configuration.name)) {
       val configuration = configuration
-      @Suppress("DEPRECATION")
       result = getUniqueIdFor(configuration)
       uniqueId = result
     }
@@ -198,7 +198,6 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
 
     isEditBeforeRun = (element.getAttributeBooleanValue(EDIT_BEFORE_RUN))
     val value = element.getAttributeValue(ACTIVATE_TOOLWINDOW_BEFORE_RUN)
-    @Suppress("PlatformExtensionReceiverOfInline")
     isActivateToolWindowBeforeRun = value == null || value.toBoolean()
     folderName = element.getAttributeValue(FOLDER_NAME)
     val factory = manager.getFactory(element.getAttributeValue(CONFIGURATION_TYPE_ATTRIBUTE), element.getAttributeValue(FACTORY_NAME_ATTRIBUTE), !isTemplate) ?: return
@@ -233,7 +232,6 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
     }
     else {
       wasSingletonSpecifiedExplicitly = true
-      @Suppress("PlatformExtensionReceiverOfInline")
       configuration.isAllowRunningInParallel = !singletonStr.toBoolean()
     }
 
@@ -491,7 +489,6 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
         if (runner == null) {
           iterator.remove()
         }
-        @Suppress("IfThenToSafeAccess")
         add(state, runner, if (runner == null) null else createSettings(runner))
       }
     }

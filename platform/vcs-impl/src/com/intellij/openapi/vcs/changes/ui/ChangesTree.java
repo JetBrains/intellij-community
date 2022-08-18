@@ -16,6 +16,7 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -29,6 +30,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.SmartExpander;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.ui.tree.ui.DefaultTreeUI;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.TreeTraversal;
@@ -57,7 +59,6 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.MODULE_
 import static com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*;
 import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
 import static com.intellij.util.ui.ThreeStateCheckBox.State;
-import static java.util.stream.Collectors.toList;
 
 public abstract class ChangesTree extends Tree implements DataProvider {
   @ApiStatus.Internal @NonNls public static final String LOG_COMMIT_SESSION_EVENTS = "LogCommitSessionEvents";
@@ -128,6 +129,14 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     myTreeCopyProvider = new ChangesBrowserNodeCopyProvider(this);
 
     installCommitSessionEventsListeners();
+
+    if (Registry.is("vcs.changes.tree.use.fixed.height.renderer")) {
+      putClientProperty(DefaultTreeUI.LARGE_MODEL_ALLOWED, true);
+      ChangesBrowserFilePathNode sampleNode = new ChangesBrowserFilePathNode(VcsUtil.getFilePath("ChangesTreeDummy.java"), null);
+      Component component = nodeRenderer.getTreeCellRendererComponent(this, sampleNode, true, true, true, 0, true);
+      setRowHeight(component.getPreferredSize().height);
+      setLargeModel(true);
+    }
   }
 
   /**
@@ -209,7 +218,8 @@ public abstract class ChangesTree extends Tree implements DataProvider {
                                                @NotNull @NonNls String propertyName,
                                                @NonNls List<String> defaultGroupingKeys) {
     groupingSupport.setGroupingKeysOrSkip(
-      Set.copyOf(Objects.requireNonNullElse(PropertiesComponent.getInstance(tree.getProject()).getList(propertyName), defaultGroupingKeys)));
+      Set.copyOf(Objects.requireNonNullElse(PropertiesComponent.getInstance(tree.getProject()).getList(propertyName),
+                                            defaultGroupingKeys)));
     groupingSupport.addPropertyChangeListener(e -> {
       PropertiesComponent.getInstance(tree.getProject()).setList(propertyName, groupingSupport.getGroupingKeys());
 
@@ -661,10 +671,10 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   @NotNull
   protected List<Object> getIncludableUserObjects(@NotNull VcsTreeModelData treeModelData) {
     return treeModelData
-      .nodesStream()
+      .iterateNodes()
       .filter(node -> isIncludable(node))
-      .map(node -> node.getUserObject())
-      .collect(toList());
+      .map(node -> (Object)node.getUserObject())
+      .toList();
   }
 
   private class MyToggleSelectionAction extends AnAction implements DumbAware {

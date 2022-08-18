@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.todo;
 
 import com.intellij.find.FindModel;
@@ -19,10 +19,10 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,7 +30,9 @@ import com.intellij.openapi.wm.impl.VisibilityWatcher;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
+import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
@@ -50,10 +52,8 @@ import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
+import javax.swing.tree.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -117,15 +117,6 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       todoTreeBuilder.select(selectableElement);
     }
     return todoTreeBuilder;
-  }
-
-  public static class GroupByActionGroup extends DefaultActionGroup {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        JBPopupFactory.getInstance()
-          .createActionGroupPopup(null, this, e.getDataContext(), JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true)
-          .showUnderneathOf(e.getInputEvent().getComponent());
-      }
   }
 
   protected Tree getTree() {
@@ -233,7 +224,9 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
   protected JComponent createCenterComponent() {
     Splitter splitter = new OnePixelSplitter(false);
     splitter.setSecondComponent(myUsagePreviewPanel);
-    splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree));
+    JBLoadingPanel loadingPanel = new JBLoadingPanel(new BorderLayout(), this, 1000);
+    loadingPanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
+    splitter.setFirstComponent(loadingPanel);
     return splitter;
   }
 
@@ -315,95 +308,60 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     myContent.setDescription(filterName);
   }
 
-  /**
-   * @return list of all selected virtual files.
-   */
-  @Nullable
-  protected PsiFile getSelectedFile() {
-    TreePath path = myTree.getSelectionPath();
-    if (path == null) {
-      return null;
-    }
-    DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-    LOG.assertTrue(node != null);
-    if(node.getUserObject() == null){
-      return null;
-    }
-    return TodoTreeBuilder.getFileForNode(node);
+  protected @Nullable PsiFile getSelectedFile() {
+    Object object = TreeUtil.getLastUserObject(myTree.getSelectionPath());
+    return object instanceof NodeDescriptor ? TodoTreeBuilder.getFileForNodeDescriptor((NodeDescriptor<?>)object) : null;
   }
 
   protected void setDisplayName(@NlsContexts.TabTitle  String tabName) {
     myContent.setDisplayName(tabName);
   }
 
-  @Nullable
-  private PsiElement getSelectedElement() {
-    if (myTree == null) return null;
-    TreePath path = myTree.getSelectionPath();
-    if (path == null) {
-      return null;
+  @Override
+  public Object getData(@NotNull String dataId) {
+    if (TODO_PANEL_DATA_KEY.is(dataId)) {
+      return this;
     }
-    DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-    Object userObject = node.getUserObject();
-    final PsiElement selectedElement = TodoTreeHelper.getInstance(myProject).getSelectedElement(userObject);
-    if (selectedElement != null) return selectedElement;
-    return getSelectedFile();
+    else if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      Object userObject = TreeUtil.getLastUserObject(myTree.getSelectionPath());
+      if (!(userObject instanceof NodeDescriptor)) return null;
+      DataProvider superProvider = (DataProvider)super.getData(PlatformCoreDataKeys.BGT_DATA_PROVIDER.getName());
+      return CompositeDataProvider.compose(slowId -> getSlowData(slowId, (NodeDescriptor<?>)userObject), superProvider);
+    }
+    else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
+      return "find.todoList";
+    }
+    return super.getData(dataId);
   }
 
-  private @Nullable Object getSlowData(@NotNull String dataId, @NotNull NodeDescriptor nodeDescriptor) {
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+  private @Nullable Object getSlowData(@NotNull String dataId, @NotNull NodeDescriptor<?> nodeDescriptor) {
+    if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
+      PsiFile file = TodoTreeBuilder.getFileForNodeDescriptor(nodeDescriptor);
+      return PsiUtilCore.getVirtualFile(file);
+    }
+    else if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+      PsiElement selectedElement = myProject != null ? TodoTreeHelper.getInstance(myProject).getSelectedElement(nodeDescriptor) : null;
+      if (selectedElement != null) return selectedElement;
+      return TodoTreeBuilder.getFileForNodeDescriptor(nodeDescriptor);
+    }
+    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+      VirtualFile file = PsiUtilCore.getVirtualFile(TodoTreeBuilder.getFileForNodeDescriptor(nodeDescriptor));
+      return file == null ? null : new VirtualFile[]{file};
+    }
+    else if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       Object element = nodeDescriptor.getElement();
       if (!(element instanceof TodoFileNode || element instanceof TodoItemNode)) { // allow user to use F4 only on files an TODOs
         return null;
       }
       TodoItemNode pointer = myTodoTreeBuilder.getFirstPointerForElement(element);
       if (pointer != null) {
-        return PsiNavigationSupport.getInstance().createNavigatable(myProject,
-                                                                    pointer.getValue().getTodoItem().getFile()
-                                                                           .getVirtualFile(),
-                                                                    pointer.getValue().getRangeMarker()
-                                                                           .getStartOffset());
+        return PsiNavigationSupport.getInstance().createNavigatable(
+          myProject,
+          pointer.getValue().getTodoItem().getFile().getVirtualFile(),
+          pointer.getValue().getRangeMarker().getStartOffset());
       }
     }
     return null;
-  }
-
-  @Override
-  public Object getData(@NotNull String dataId) {
-    if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-      final PsiFile file = getSelectedFile();
-      return file != null ? file.getVirtualFile() : null;
-    }
-    else if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      return getSelectedElement();
-    }
-    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-      PsiFile file = getSelectedFile();
-      if (file != null) {
-        return new VirtualFile[]{file.getVirtualFile()};
-      }
-      else {
-        return VirtualFile.EMPTY_ARRAY;
-      }
-    }
-    else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-      return "find.todoList";
-    }
-    else if (TODO_PANEL_DATA_KEY.is(dataId)) {
-      return this;
-    }
-    else if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
-      TreePath path = myTree.getSelectionPath();
-      if (path == null) {
-        return null;
-      }
-      Object userObject = TreeUtil.getUserObject(path.getLastPathComponent());
-      if (!(userObject instanceof NodeDescriptor)) {
-        return null;
-      }
-      return List.of((DataProvider)realDataId -> getSlowData(realDataId, (NodeDescriptor)userObject));
-    }
-    return super.getData(dataId);
   }
 
   @Override
@@ -484,7 +442,8 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
         return myTree.getRowCount() != myTree.getRowForPath(path) + 1;
       }
       else {
-        return node.getChildCount() > 0;
+        TreeModel model = myTree.getModel();
+        return !model.isLeaf(node);
       }
     }
 
@@ -588,9 +547,14 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       }
       return pointer;
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
-  public static final class MyShowPackagesAction extends ToggleAction {
+  public static final class MyShowPackagesAction extends ToggleAction implements DumbAware {
     public MyShowPackagesAction() {
       super(IdeBundle.messagePointer("action.group.by.packages"), PlatformIcons.GROUP_BY_PACKAGES);
     }
@@ -599,6 +563,11 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(e.getData(TODO_PANEL_DATA_KEY) != null);
       super.update(e);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -617,7 +586,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     }
   }
 
-  public static final class MyShowModulesAction extends ToggleAction {
+  public static final class MyShowModulesAction extends ToggleAction implements DumbAware {
     public MyShowModulesAction() {
       super(IdeBundle.messagePointer("action.group.by.modules"), AllIcons.Actions.GroupByModule);
     }
@@ -626,6 +595,11 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(e.getData(TODO_PANEL_DATA_KEY) != null);
       super.update(e);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -645,7 +619,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     }
   }
 
-  public static final class MyFlattenPackagesAction extends ToggleAction {
+  public static final class MyFlattenPackagesAction extends ToggleAction implements DumbAware {
     public MyFlattenPackagesAction() {
       super(IdeBundle.messagePointer("action.flatten.view"), PlatformIcons.FLATTEN_PACKAGES_ICON);
     }
@@ -656,6 +630,11 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       e.getPresentation().setText("   " + getTemplateText());
       TodoPanel todoPanel = e.getData(TODO_PANEL_DATA_KEY);
       e.getPresentation().setEnabled(todoPanel != null && todoPanel.mySettings.arePackagesShown);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -684,7 +663,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     }
   }
 
-  private final class MyPreviewAction extends ToggleAction {
+  private final class MyPreviewAction extends ToggleAction implements DumbAware {
 
     MyPreviewAction() {
       super(IdeBundle.messagePointer("todo.panel.preview.source.action.text"), Presentation.NULL_STRING, AllIcons.Actions.PreviewDetails);
@@ -695,6 +674,10 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       return mySettings.showPreview;
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       mySettings.showPreview = state;

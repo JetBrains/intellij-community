@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.perf.util
 
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.jetbrains.kotlin.idea.performance.tests.utils.logMessage
 
 object ESUploader {
     var host: String? = null
@@ -31,7 +32,7 @@ object ESUploader {
 
         val url = "$host/$indexName/_doc/${benchmark.id()}"
         val auth = if (username != null && password != null) {
-            Credentials.basic(username!!, password!!);
+            Credentials.basic(username!!, password!!)
         } else {
             null
         }

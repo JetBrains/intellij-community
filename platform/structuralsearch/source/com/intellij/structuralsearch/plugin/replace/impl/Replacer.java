@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.replace.impl;
 
 import com.intellij.codeInsight.template.Template;
@@ -297,10 +297,13 @@ public class Replacer {
           if (definition == null || definition.getScriptCodeConstraint().length() <= 2 /*empty quotes*/) {
             throw new MalformedPatternException(SSRBundle.message("replacement.variable.is.not.defined.message", replacementSegmentName));
           } else {
-            final String message = ScriptSupport.checkValidScript(StringUtil.unquoteString(definition.getScriptCodeConstraint()),
-                                                                  options.getMatchOptions());
-            if (message != null) {
-              throw new MalformedPatternException(SSRBundle.message("replacement.variable.is.not.valid", replacementSegmentName, message));
+            final String scriptText = StringUtil.unquoteString(definition.getScriptCodeConstraint());
+            try {
+              ScriptSupport.buildScript(definition.getName(), scriptText, options.getMatchOptions());
+            } catch (MalformedPatternException e) {
+              throw new MalformedPatternException(
+                SSRBundle.message("replacement.variable.is.not.valid", replacementSegmentName, e.getLocalizedMessage())
+              );
             }
           }
         }

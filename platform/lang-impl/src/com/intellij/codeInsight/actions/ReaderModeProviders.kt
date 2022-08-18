@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions
 
 import com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightingSettingProvider
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil
 import com.intellij.codeInsight.documentation.render.DocRenderManager
+import com.intellij.formatting.visualLayer.VisualFormattingLayerService
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
@@ -41,16 +42,13 @@ class ReaderModeHighlightingSettingsProvider : DefaultHighlightingSettingProvide
 class LigaturesReaderModeProvider : ReaderModeProvider {
   override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
     val scheme = editor.colorsScheme
-    val preferences = scheme.fontPreferences
-    scheme.fontPreferences =
-      FontPreferencesImpl().also {
-        preferences.copyTo(it)
-        it.setUseLigatures(if (readerMode) {
-          ReaderModeSettings.getInstance(project).showLigatures
-        } else {
-          (AppEditorFontOptions.getInstance().fontPreferences as FontPreferencesImpl).useLigatures()
-        })
+    scheme.isUseLigatures =
+      (if (readerMode) {
+        ReaderModeSettings.getInstance(project).showLigatures
       }
+      else {
+        (AppEditorFontOptions.getInstance().fontPreferences as FontPreferencesImpl).useLigatures()
+      })
   }
 }
 
@@ -74,5 +72,18 @@ class DocsRenderingReaderModeProvider : ReaderModeProvider {
     } else {
       EditorSettingsExternalizable.getInstance().isDocCommentRenderingEnabled
     })
+  }
+}
+
+class VisualFormattingLayerReaderModeProvider : ReaderModeProvider {
+  override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
+    val readerModeSettings = ReaderModeSettings.getInstance(project)
+    val service = VisualFormattingLayerService.getInstance()
+    if (readerMode && readerModeSettings.useVisualFormattingLayer) {
+      service.enableForEditor(editor, readerModeSettings.getVisualFormattingLayerCodeStyleSettings(project))
+    }
+    else {
+      service.disableForEditor(editor)
+    }
   }
 }

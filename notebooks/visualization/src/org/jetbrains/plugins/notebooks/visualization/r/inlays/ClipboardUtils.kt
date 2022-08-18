@@ -27,8 +27,7 @@ object ClipboardUtils {
   private fun copyAllToString(table: JTable, cellBreak: String = CELL_BREAK, limit: Int = Int.MAX_VALUE): String {
     if (table.rowCount == 0 || table.columnCount == 0) {
       // The code should be compatible with 193 and 201 so, so we cannot use NotificationGroup.createIdWithTitle yet
-      // NotificationGroup.createIdWithTitle("Notebook Table", VisualizationBundle.message("inlay.output.table.notification.group.name"))
-      Notifications.Bus.notify(Notification(VisualizationBundle.message("inlay.output.table.notification.group.name"),
+      Notifications.Bus.notify(Notification("Notebook Table",
                                             VisualizationBundle.message("clipboard.utils.error"),
                                             VisualizationBundle.message("clipboard.utils.no.columns.or.rows"),
                                             NotificationType.ERROR))
@@ -69,7 +68,7 @@ object ClipboardUtils {
     val selectedColumns = table.selectedColumns
 
     if (selectedColumnCount == 0 || selectedRowCount == 0) {
-      Notifications.Bus.notify(Notification("InlayTable",
+      Notifications.Bus.notify(Notification("Notebook Table",
                                             VisualizationBundle.message("clipboard.utils.error"),
                                             VisualizationBundle.message("clipboard.utils.no.selection"),
                                             NotificationType.ERROR))

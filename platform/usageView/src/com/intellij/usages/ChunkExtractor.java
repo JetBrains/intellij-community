@@ -61,10 +61,10 @@ public final class ChunkExtractor {
     private WeakReference<Map<PsiFile, ChunkExtractor>> myRef;
 
     @NotNull
-    public Map<PsiFile, ChunkExtractor> getValue() {
-      final Map<PsiFile, ChunkExtractor> cur = SoftReference.dereference(myRef);
+    Map<PsiFile, ChunkExtractor> getValue() {
+      Map<PsiFile, ChunkExtractor> cur = SoftReference.dereference(myRef);
       if (cur != null) return cur;
-      final Map<PsiFile, ChunkExtractor> result = FactoryMap.create(psiFile -> new ChunkExtractor(psiFile));
+      Map<PsiFile, ChunkExtractor> result = FactoryMap.create(psiFile -> new ChunkExtractor(psiFile));
       myRef = new WeakReference<>(result);
       return result;
     }
@@ -87,19 +87,19 @@ public final class ChunkExtractor {
     Project project = file.getProject();
     myDocument = PsiDocumentManager.getInstance(project).getDocument(file);
     LOG.assertTrue(myDocument != null);
-    final FileType fileType = file.getFileType();
+    FileType fileType = file.getFileType();
     SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(fileType, project, file.getVirtualFile());
     highlighter = highlighter == null ? new PlainSyntaxHighlighter() : highlighter;
     myHighlighter = new SyntaxHighlighterOverEditorHighlighter(highlighter, file.getVirtualFile(), project);
     myDocumentStamp = -1;
   }
 
-  public static int getStartOffset(final List<? extends RangeMarker> rangeMarkers) {
+  public static int getStartOffset(List<? extends RangeMarker> rangeMarkers) {
     LOG.assertTrue(!rangeMarkers.isEmpty());
     int minStart = Integer.MAX_VALUE;
     for (RangeMarker rangeMarker : rangeMarkers) {
       if (!rangeMarker.isValid()) continue;
-      final int startOffset = rangeMarker.getStartOffset();
+      int startOffset = rangeMarker.getStartOffset();
       if (startOffset < minStart) minStart = startOffset;
     }
     return minStart == Integer.MAX_VALUE ? -1 : minStart;
@@ -125,12 +125,12 @@ public final class ChunkExtractor {
     int fragmentToShowEnd = fragmentToShowStart < myDocument.getTextLength() ? myDocument.getLineEndOffset(lineNumber) : 0;
     if (fragmentToShowStart > fragmentToShowEnd) return TextChunk.EMPTY_ARRAY;
 
-    final CharSequence chars = myDocument.getCharsSequence();
+    CharSequence chars = myDocument.getCharsSequence();
     if (fragmentToShowEnd - fragmentToShowStart > MAX_LINE_LENGTH_TO_SHOW) {
-      final int lineStartOffset = fragmentToShowStart;
+      int lineStartOffset = fragmentToShowStart;
       fragmentToShowStart = Math.max(lineStartOffset, absoluteStartOffset - OFFSET_BEFORE_TO_SHOW_WHEN_LONG_LINE);
 
-      final int lineEndOffset = fragmentToShowEnd;
+      int lineEndOffset = fragmentToShowEnd;
       Segment segment = usageInfo2UsageAdapter.getUsageInfo().getSegment();
       int usage_length = segment != null ? segment.getEndOffset() - segment.getStartOffset() : 0;
       fragmentToShowEnd = Math.min(lineEndOffset, absoluteStartOffset + usage_length + OFFSET_AFTER_TO_SHOW_WHEN_LONG_LINE);
@@ -154,33 +154,48 @@ public final class ChunkExtractor {
       List<TextRange> editable = InjectedLanguageManager.getInstance(file.getProject())
         .intersectWithAllEditableFragments(file, new TextRange(fragmentToShowStart, fragmentToShowEnd));
       for (TextRange range : editable) {
-        createTextChunks(usageInfo2UsageAdapter, chars, range.getStartOffset(), range.getEndOffset(), true, result);
+        appendTextChunks(usageInfo2UsageAdapter, chars, range.getStartOffset(), range.getEndOffset(), true, result);
       }
       return result.toArray(TextChunk.EMPTY_ARRAY);
     }
-    return createTextChunks(usageInfo2UsageAdapter, chars, fragmentToShowStart, fragmentToShowEnd, true, result);
+    appendTextChunks(usageInfo2UsageAdapter, chars, fragmentToShowStart, fragmentToShowEnd, true, result);
+    return result.toArray(TextChunk.EMPTY_ARRAY);
   }
 
+  public void appendTextChunks(@NotNull UsageInfo2UsageAdapter usageInfo2UsageAdapter,
+                               @NotNull CharSequence chars,
+                               int start,
+                               int end,
+                               boolean selectUsageWithBold,
+                               @NotNull List<? super @NotNull TextChunk> result) {
+    processTokens(chars, start, end, (startOffset, endOffset, textAttributesKeys) -> {
+      processIntersectingRange(usageInfo2UsageAdapter, chars, startOffset, endOffset, textAttributesKeys, selectUsageWithBold, result);
+      return true;
+    });
+  }
+
+  /**
+   * @deprecated use {@link #appendTextChunks(UsageInfo2UsageAdapter, CharSequence, int, int, boolean, List)}
+   */
+  @Deprecated
   public TextChunk @NotNull [] createTextChunks(@NotNull UsageInfo2UsageAdapter usageInfo2UsageAdapter,
                                                 @NotNull CharSequence chars,
                                                 int start,
                                                 int end,
                                                 boolean selectUsageWithBold,
                                                 @NotNull List<? super TextChunk> result) {
-    processTokens(chars, start, end, (startOffset, endOffset, textAttributesKeys) -> {
-      processIntersectingRange(usageInfo2UsageAdapter, chars, startOffset, endOffset, textAttributesKeys, selectUsageWithBold, result);
-      return true;
-    });
+    appendTextChunks(usageInfo2UsageAdapter, chars, start, end, selectUsageWithBold, result);
     return result.toArray(TextChunk.EMPTY_ARRAY);
   }
 
+  @FunctionalInterface
   private interface TokenHighlightProcessor {
     boolean process(int startOffset, int endOffset, @NotNull TextAttributesKey @NotNull [] textAttributesKeys);
   }
 
   private void processTokens(@NotNull CharSequence chars, int start, int end, @NotNull TokenHighlightProcessor tokenHighlightProcessor) {
-    final Lexer lexer = myHighlighter.getHighlightingLexer();
-    final SyntaxHighlighterOverEditorHighlighter highlighter = myHighlighter;
+    Lexer lexer = myHighlighter.getHighlightingLexer();
+    SyntaxHighlighterOverEditorHighlighter highlighter = myHighlighter;
 
     LOG.assertTrue(start <= end);
 
@@ -224,18 +239,18 @@ public final class ChunkExtractor {
   }
 
   private void processIntersectingRange(@NotNull UsageInfo2UsageAdapter usageInfo2UsageAdapter,
-                                        @NotNull final CharSequence chars,
+                                        @NotNull CharSequence chars,
                                         int hiStart,
-                                        final int hiEnd,
-                                        final TextAttributesKey @NotNull [] tokenHighlights,
-                                        final boolean selectUsageWithBold,
-                                        @NotNull final List<? super TextChunk> result) {
-    final TextAttributes originalAttrs = convertAttributes(tokenHighlights);
+                                        int hiEnd,
+                                        TextAttributesKey @NotNull [] tokenHighlights,
+                                        boolean selectUsageWithBold,
+                                        @NotNull List<? super @NotNull TextChunk> result) {
+    TextAttributes originalAttrs = convertAttributes(tokenHighlights);
     if (selectUsageWithBold) {
       originalAttrs.setFontType(Font.PLAIN);
     }
 
-    final int[] lastOffset = {hiStart};
+    int[] lastOffset = {hiStart};
     usageInfo2UsageAdapter.processRangeMarkers(segment -> {
       int usageStart = segment.getStartOffset();
       int usageEnd = segment.getEndOffset();
@@ -243,9 +258,7 @@ public final class ChunkExtractor {
         addChunk(chars, lastOffset[0], Math.max(lastOffset[0], usageStart), originalAttrs, false, result);
         addChunk(chars, Math.max(lastOffset[0], usageStart), Math.min(hiEnd, usageEnd), originalAttrs, selectUsageWithBold, result);
         lastOffset[0] = usageEnd;
-        if (usageEnd > hiEnd) {
-          return false;
-        }
+        return usageEnd <= hiEnd;
       }
       return true;
     });
@@ -256,7 +269,7 @@ public final class ChunkExtractor {
 
   @Nullable UsageType deriveUsageTypeFromHighlighting(@NotNull CharSequence chars, int usageStartOffset, int usageEndOffset) {
     Ref<UsageType> result = new Ref<>();
-    processTokens(chars, usageStartOffset, usageEndOffset, (tokenStart, tokenEnd, tokenAttributeKeys) -> {
+    processTokens(chars, usageStartOffset, usageEndOffset, (__1, __2, tokenAttributeKeys) -> {
       UsageType usageType = deriveUsageTypeFromHighlighting(tokenAttributeKeys);
       if (usageType != null) {
         result.set(usageType);
@@ -275,17 +288,17 @@ public final class ChunkExtractor {
              : null;
   }
 
-  public static boolean isHighlightedAsComment(TextAttributesKey... keys) {
+  public static boolean isHighlightedAsComment(TextAttributesKey @NotNull ... keys) {
     for (TextAttributesKey key : keys) {
-      if (
-        key == DefaultLanguageHighlighterColors.DOC_COMMENT ||
-        key == DefaultLanguageHighlighterColors.LINE_COMMENT ||
-        key == DefaultLanguageHighlighterColors.BLOCK_COMMENT
-      ) {
+      if (key == DefaultLanguageHighlighterColors.DOC_COMMENT ||
+          key == DefaultLanguageHighlighterColors.LINE_COMMENT ||
+          key == DefaultLanguageHighlighterColors.BLOCK_COMMENT) {
         return true;
       }
-      if (key == null) continue;
-      final TextAttributesKey fallbackAttributeKey = key.getFallbackAttributeKey();
+      if (key == null) {
+        continue;
+      }
+      TextAttributesKey fallbackAttributeKey = key.getFallbackAttributeKey();
       if (fallbackAttributeKey != null && isHighlightedAsComment(fallbackAttributeKey)) {
         return true;
       }
@@ -293,13 +306,15 @@ public final class ChunkExtractor {
     return false;
   }
 
-  public static boolean isHighlightedAsString(TextAttributesKey... keys) {
+  public static boolean isHighlightedAsString(TextAttributesKey @NotNull ... keys) {
     for (TextAttributesKey key : keys) {
       if (key == DefaultLanguageHighlighterColors.STRING) {
         return true;
       }
-      if (key == null) continue;
-      final TextAttributesKey fallbackAttributeKey = key.getFallbackAttributeKey();
+      if (key == null) {
+        continue;
+      }
+      TextAttributesKey fallbackAttributeKey = key.getFallbackAttributeKey();
       if (fallbackAttributeKey != null && isHighlightedAsString(fallbackAttributeKey)) {
         return true;
       }
@@ -312,13 +327,13 @@ public final class ChunkExtractor {
                                int end,
                                @NotNull TextAttributes originalAttrs,
                                boolean bold,
-                               @NotNull List<? super TextChunk> result) {
-    if (start >= end) return;
-
-    TextAttributes attrs = bold
-                           ? TextAttributes.merge(originalAttrs, new TextAttributes(null, null, null, null, Font.BOLD))
-                           : originalAttrs;
-    result.add(new TextChunk(attrs, new String(CharArrayUtil.fromSequence(chars, start, end))));
+                               @NotNull List<? super @NotNull TextChunk> result) {
+    if (start < end) {
+      TextAttributes attrs = bold
+                             ? TextAttributes.merge(originalAttrs, new TextAttributes(null, null, null, null, Font.BOLD))
+                             : originalAttrs;
+      result.add(new TextChunk(attrs, new String(CharArrayUtil.fromSequence(chars, start, end))));
+    }
   }
 
   private static boolean rangeIntersect(int s1, int e1, int s2, int e2) {

@@ -27,7 +27,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.java.i18n" exported="" />
     <orderEntry type="module" module-name="intellij.java.compiler.impl" />
-    <orderEntry type="library" name="ASM" level="project" />
     <orderEntry type="module" module-name="intellij.java.compiler.instrumentationUtil" />
     <orderEntry type="library" name="org.codehaus.groovy:groovy" level="project" />
     <orderEntry type="module" module-name="intellij.java.langInjection" scope="RUNTIME" />
@@ -48,7 +47,6 @@
     <orderEntry type="module" module-name="intellij.spellchecker" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.tests" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="easymock" level="project" />
-    <orderEntry type="library" scope="TEST" name="Objenesis" level="project" />
     <orderEntry type="module" module-name="intellij.groovy" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang.tests" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="mockito" level="project" />
@@ -78,7 +76,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
-    <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
@@ -86,5 +83,8 @@
     <orderEntry type="module" module-name="intellij.platform.lang" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit5Suites" level="project" />
     <orderEntry type="module" module-name="intellij.java.impl.refactorings" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ml" scope="TEST" />
   </component>
 </module>

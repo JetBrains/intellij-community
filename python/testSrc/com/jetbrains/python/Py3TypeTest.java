@@ -467,7 +467,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-21692
   public void testSumResult() {
-    doTest("int | Literal[0]",
+    doTest("int",
            "expr = sum([1, 2, 3])");
   }
 
@@ -1064,7 +1064,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-49935
   public void testParamSpecExample() {
-    doTest("(str, bool) -> str",
+    doTest("(a: str, b: bool) -> str",
            "from collections.abc import Callable\n" +
            "from typing import ParamSpec\n" +
            "\n" +
@@ -1083,7 +1083,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-49935
   public void testParamSpecSeveral() {
-    doTest("(int, str) -> bool",
+    doTest("(y: int, x: str) -> bool",
            "from typing import ParamSpec, Callable\n" +
            "\n" +
            "P = ParamSpec(\"P\")\n" +
@@ -1127,7 +1127,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-49935
   public void testParamSpecUserGenericClassMethod() {
-    doTest("(int) -> str",
+    doTest("(q: int) -> str",
            "from typing import TypeVar, Generic, Callable, ParamSpec\n" +
            "\n" +
            "U = TypeVar(\"U\")\n" +
@@ -1151,7 +1151,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-49935
   public void testParamSpecUserGenericClassMethodConcatenate() {
-    doTest("(int, str, bool) -> str",
+    doTest("(int, s: str, b: bool) -> str",
            "from typing import TypeVar, Generic, Callable, ParamSpec, Concatenate\n" +
            "\n" +
            "U = TypeVar(\"U\")\n" +
@@ -1175,7 +1175,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-49935
   public void testParamSpecUserGenericClassMethodConcatenateSeveralParameters() {
-    doTest("(int, bool, str, bool) -> str",
+    doTest("(int, bool, s: str, b: bool) -> str",
            "from typing import TypeVar, Generic, Callable, ParamSpec, Concatenate\n" +
            "\n" +
            "U = TypeVar(\"U\")\n" +
@@ -1199,7 +1199,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-49935
   public void testParamSpecUserGenericClassMethodConcatenateOtherFunction() {
-    doTest("(bool, dict[str, list[str]], str, bool) -> str",
+    doTest("(bool, dict[str, list[str]], s: str, b: bool) -> str",
            "from typing import TypeVar, Generic, Callable, ParamSpec, Concatenate\n" +
            "\n" +
            "U = TypeVar(\"U\")\n" +
@@ -1248,7 +1248,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-49935
   public void testParamSpecConcatenateAdd() {
-    doTest("(str, int, tuple[bool, ...]) -> bool",
+    doTest("(str, x: int, args: tuple[bool, ...]) -> bool",
            "from collections.abc import Callable\n" +
            "from typing import Concatenate, ParamSpec\n" +
            "\n" +
@@ -1266,7 +1266,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-49935
   public void testParamSpecConcatenateAddSeveralParameters() {
-    doTest("(str, bool, int, tuple[bool, ...]) -> bool",
+    doTest("(str, bool, x: int, args: tuple[bool, ...]) -> bool",
            "from collections.abc import Callable\n" +
            "from typing import Concatenate, ParamSpec\n" +
            "\n" +
@@ -1284,7 +1284,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-49935
   public void testParamSpecConcatenateRemove() {
-    doTest("(tuple[bool, ...]) -> bool",
+    doTest("(args: tuple[bool, ...]) -> bool",
            "from collections.abc import Callable\n" +
            "from typing import Concatenate, ParamSpec\n" +
            "\n" +
@@ -1302,7 +1302,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-49935
   public void testParamSpecConcatenateTransform() {
-    doTest("(str, tuple[bool, ...]) -> bool",
+    doTest("(str, args: tuple[bool, ...]) -> bool",
            "from collections.abc import Callable\n" +
            "from typing import Concatenate, ParamSpec\n" +
            "\n" +
@@ -1363,6 +1363,15 @@ public class Py3TypeTest extends PyTestCase {
            "expr: Foo | None");
   }
 
+  // PY-52930
+  public void testExceptionGroupInExceptStar() {
+    doTest("ExceptionGroup",
+           "try:\n" +
+           "    raise ExceptionGroup(\"asdf\", [Exception(\"fdsa\")])\n" +
+           "except* Exception as expr:\n" +
+           "    pass\n");
+  }
+
   /**
    * @see #testRecursiveDictTopDown()
    * @see PyTypeCheckerInspectionTest#testRecursiveDictAttribute()
@@ -1391,6 +1400,14 @@ public class Py3TypeTest extends PyTestCase {
     assertExpressionType("dict[str, Any]", expr);
     PyExpression dict = myFixture.findElementByText("{'foo': self.foo}", PyExpression.class);
     assertExpressionType("dict[str, Any]", dict);
+  }
+
+  // PY-52656 Requires PY-53896 or patching Typeshed
+  public void testDictValuesType() {
+    doTest("int",
+           "d = {'foo': 42}\n" +
+           "for expr in d.values():\n" +
+           "    pass");
   }
 
   private void doTest(final String expectedType, final String text) {

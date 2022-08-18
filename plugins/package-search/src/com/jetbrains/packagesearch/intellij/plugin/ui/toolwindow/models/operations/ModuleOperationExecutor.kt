@@ -1,17 +1,30 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations
 
 import com.intellij.buildsystem.model.OperationFailure
 import com.intellij.buildsystem.model.OperationItem
 import com.intellij.buildsystem.model.unified.UnifiedCoordinates
 import com.intellij.buildsystem.model.unified.UnifiedDependency
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.CoroutineProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyOperationMetadata
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageIdentifier
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
@@ -19,9 +32,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageV
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
 import com.jetbrains.packagesearch.intellij.plugin.util.nullIfBlank
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 internal class ModuleOperationExecutor {
 
@@ -30,7 +40,7 @@ internal class ModuleOperationExecutor {
         companion object {
 
             fun from(operation: PackageSearchOperation<*>, operationFailures: List<OperationFailure<out OperationItem>>) =
-                if (operationFailures.isEmpty()) Result.Success(operation) else Result.Failure(operation, operationFailures)
+                if (operationFailures.isEmpty()) Success(operation) else Failure(operation, operationFailures)
         }
 
         abstract val operation: PackageSearchOperation<*>
@@ -71,7 +81,7 @@ internal class ModuleOperationExecutor {
     private suspend fun installPackage(operation: PackageSearchOperation.Package.Install): List<OperationFailure<out OperationItem>> {
         val projectModule = operation.projectModule
         val operationProvider =
-            ProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType) ?: throw OperationException.unsupportedBuildSystem(
+            CoroutineProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType) ?: throw OperationException.unsupportedBuildSystem(
                 projectModule
             )
 
@@ -81,7 +91,7 @@ internal class ModuleOperationExecutor {
             projectModule = projectModule, dependency = operation.model, newVersion = operation.newVersion, newScope = operation.newScope
         )
 
-        val errors = withEDT { operationProvider.addDependencyToModule(operationMetadata, projectModule) }
+        val errors = operationProvider.addDependencyToModule(operationMetadata, projectModule)
 
         if (errors.isEmpty()) {
             PackageSearchEventsLogger.logPackageInstalled(
@@ -107,7 +117,7 @@ internal class ModuleOperationExecutor {
     private suspend fun removePackage(operation: PackageSearchOperation.Package.Remove): List<OperationFailure<out OperationItem>> {
         val projectModule = operation.projectModule
         val operationProvider =
-            ProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType) ?: throw OperationException.unsupportedBuildSystem(
+            CoroutineProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType) ?: throw OperationException.unsupportedBuildSystem(
                 projectModule
             )
 
@@ -115,7 +125,7 @@ internal class ModuleOperationExecutor {
 
         val operationMetadata = dependencyOperationMetadataFrom(projectModule, operation.model)
 
-        val errors = withEDT { operationProvider.removeDependencyFromModule(operationMetadata, projectModule) }
+        val errors = operationProvider.removeDependencyFromModule(operationMetadata, projectModule)
 
         if (errors.isEmpty()) {
             PackageSearchEventsLogger.logPackageRemoved(
@@ -139,9 +149,8 @@ internal class ModuleOperationExecutor {
     private suspend fun changePackage(operation: PackageSearchOperation.Package.ChangeInstalled): List<OperationFailure<out OperationItem>> {
         val projectModule = operation.projectModule
         val operationProvider = readAction {
-            ProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType) ?: throw OperationException.unsupportedBuildSystem(
-                projectModule
-            )
+            CoroutineProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType)
+                ?: throw OperationException.unsupportedBuildSystem(projectModule)
         }
 
         logDebug("ModuleOperationExecutor#changePackage()") { "Changing package ${operation.model.displayName} in ${projectModule.name}" }
@@ -150,7 +159,7 @@ internal class ModuleOperationExecutor {
             projectModule = projectModule, dependency = operation.model, newVersion = operation.newVersion, newScope = operation.newScope
         )
 
-        val errors = withEDT { operationProvider.updateDependencyInModule(operationMetadata, projectModule) }
+        val errors = operationProvider.updateDependencyInModule(operationMetadata, projectModule)
 
         if (errors.isEmpty()) {
             PackageSearchEventsLogger.logPackageUpdated(
@@ -187,13 +196,13 @@ internal class ModuleOperationExecutor {
     private suspend fun installRepository(operation: PackageSearchOperation.Repository.Install): List<OperationFailure<out OperationItem>> {
         val projectModule = operation.projectModule
         val operationProvider =
-            ProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType) ?: throw OperationException.unsupportedBuildSystem(
+            CoroutineProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType) ?: throw OperationException.unsupportedBuildSystem(
                 projectModule
             )
 
         logDebug("ModuleOperationExecutor#installRepository()") { "Installing repository ${operation.model.displayName} in ${projectModule.name}" }
 
-        val errors = withEDT { operationProvider.addRepositoryToModule(operation.model, projectModule) }
+        val errors = operationProvider.addRepositoryToModule(operation.model, projectModule)
 
         if (errors.isEmpty()) {
             PackageSearchEventsLogger.logRepositoryAdded(operation.model)
@@ -213,13 +222,13 @@ internal class ModuleOperationExecutor {
     private suspend fun removeRepository(operation: PackageSearchOperation.Repository.Remove): List<OperationFailure<out OperationItem>> {
         val projectModule = operation.projectModule
         val operationProvider =
-            ProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType) ?: throw OperationException.unsupportedBuildSystem(
+            CoroutineProjectModuleOperationProvider.forProjectModuleType(projectModule.moduleType) ?: throw OperationException.unsupportedBuildSystem(
                 projectModule
             )
 
         logDebug("ModuleOperationExecutor#removeRepository()") { "Removing repository ${operation.model.displayName} from ${projectModule.name}" }
 
-        val errors = withEDT { operationProvider.removeRepositoryFromModule(operation.model, projectModule) }
+        val errors = operationProvider.removeRepositoryFromModule(operation.model, projectModule)
 
         if (errors.isEmpty()) {
             PackageSearchEventsLogger.logRepositoryRemoved(operation.model)
@@ -235,7 +244,4 @@ internal class ModuleOperationExecutor {
 
         return errors
     }
-
-    private suspend inline fun <T> withEDT(noinline action: suspend CoroutineScope.() -> T) =
-        withContext(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement(), action)
 }

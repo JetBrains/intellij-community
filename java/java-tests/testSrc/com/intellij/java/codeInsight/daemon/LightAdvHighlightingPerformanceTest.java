@@ -62,12 +62,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     return LightAdvHighlightingTest.BASE_PATH + "/" + getTestName(true) + suffix + ".java";
   }
 
-  private List<HighlightInfo> doTest(int maxMillis) {
-    configureByFile(getFilePath(""));
-    return startTest(maxMillis);
-  }
-
-  private List<HighlightInfo> startTest(int maxMillis) {
+  private void startTest(int maxMillis) {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     assertNotNull(getFile().getText()); //to load text
     CodeInsightTestFixtureImpl.ensureIndexesUpToDate(getProject());
@@ -75,36 +70,41 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     PlatformTestUtil.startPerformanceTest(getTestName(false), maxMillis, this::doHighlighting)
       .setup(() -> PsiManager.getInstance(getProject()).dropPsiCaches())
       .usesAllCPUCores().assertTiming();
-
-    return highlightErrors();
   }
 
   public void testAThinlet() {
-    List<HighlightInfo> errors = doTest(8_000);
+    configureByFile(getFilePath(""));
+    List<HighlightInfo> errors = highlightErrors();
     if (1170 != errors.size()) {
       doTest(getFilePath("_hl"), false, false);
       fail("Actual: " + errors.size());
     }
+    startTest(8_000);
   }
 
   public void testAClassLoader() {
-    List<HighlightInfo> errors = doTest(800);
+    configureByFile(getFilePath(""));
+    List<HighlightInfo> errors = highlightErrors();
     if (92 != errors.size()) {
       doTest(getFilePath("_hl"), false, false);
       fail("Actual: " + errors.size());
     }
+    startTest(800);
   }
 
   public void testDuplicateMethods() {
     int N = 1000;
     StringBuilder text = new StringBuilder(N * 100).append("class X {\n");
-    for (int i = 0; i < N; i++) text.append("public void visit(C").append(i).append(" param) {}\n");
-    for (int i = 0; i < N; i++) text.append("class C").append(i).append(" {}\n");
+    for (int i = 0; i < N; i++) {
+      text.append("public void visit(C").append(i).append(" param) {}\n");
+    }
+    for (int i = 0; i < N; i++) {
+      text.append("class C").append(i).append(" {}\n");
+    }
     text.append("}");
     configureFromFileText("x.java", text.toString());
-
-    List<HighlightInfo> infos = startTest(3_300);
-    assertEmpty(infos);
+    assertEmpty(highlightErrors());
+    startTest(3_300);
   }
 
   public void testGetProjectPerformance() {
@@ -120,16 +120,22 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     assertNotNull(ProjectCoreUtil.theOnlyOpenProject());
     getFile().accept(new PsiRecursiveElementVisitor() {});
     Project myProject = getProject();
-    PlatformTestUtil.startPerformanceTest("getProject() for nested elements", 300, () -> {
-      getFile().accept(new PsiRecursiveElementVisitor() {
-        @Override
-        public void visitElement(@NotNull PsiElement element) {
-          for (int i = 0; i < 10; i++) {
-            assertSame(myProject, element.getProject());
+    PlatformTestUtil.startPerformanceTest("getProject() for nested elements", 5000, () -> {
+      for (int k=0; k<5; k++) {
+        getFile().accept(new PsiRecursiveElementVisitor() {
+          int c;
+          @Override
+          public void visitElement(@NotNull PsiElement element) {
+            for (int i = 0; i < 100; i++) {
+              assertSame(myProject, element.getProject());
+            }
+            if (c++ % 100 == 0) {
+              assertNotNull(ProjectCoreUtil.theOnlyOpenProject());
+            }
+            super.visitElement(element);
           }
-          super.visitElement(element);
-        }
-      });
+        });
+      }
     }).assertTiming();
   }
 }

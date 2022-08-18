@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger.variablesview.usertyperenderers
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
@@ -10,7 +11,6 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
 import com.intellij.xdebugger.frame.XValueChildrenList
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import com.jetbrains.python.PyBundle
@@ -50,7 +50,7 @@ private fun loadCustomChildren(frameAccessor: PyFrameAccessor,
 
 fun loadTypeRendererChildren(frameAccessor: PyFrameAccessor,
                              debugValue: PyDebugValue,
-                             typeRenderer: PyUserNodeRenderer): XValueChildrenList? {
+                             typeRenderer: PyUserNodeRenderer): XValueChildrenList {
   val childrenList = XValueChildrenList()
   if (!typeRenderer.childrenRenderer.isDefault) {
     val customChildren = loadCustomChildren(frameAccessor, typeRenderer, debugValue)
@@ -70,6 +70,16 @@ fun loadTypeRendererChildren(frameAccessor: PyFrameAccessor,
 }
 
 class ConfigureTypeRenderersAction : XDebuggerTreeActionBase() {
+  init {
+    templatePresentation.text = PyBundle.message("action.PyDebugger.CustomizeDataView.text")
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isVisible = getSelectedNodes(e.dataContext).size <= 1
+  }
+
   override fun perform(node: XValueNodeImpl, nodeName: String, e: AnActionEvent) {
     val project = e.project ?: ProjectManager.getInstance().defaultProject
     val debugValue = node.valueContainer as? PyDebugValue ?: return
@@ -84,16 +94,6 @@ class ConfigureTypeRenderersAction : XDebuggerTreeActionBase() {
     }
     else {
       showSettingsWithNewRenderer(project, debugValue)
-    }
-  }
-
-  override fun update(e: AnActionEvent) {
-    e.presentation.isVisible = false
-    val tree = XDebuggerTree.getTree(e.dataContext)
-    tree?.selectionPaths?.let {
-      if (it.size > 1) return
-      e.presentation.text = PyBundle.message("action.PyDebugger.CustomizeDataView.text")
-      e.presentation.isVisible = true
     }
   }
 

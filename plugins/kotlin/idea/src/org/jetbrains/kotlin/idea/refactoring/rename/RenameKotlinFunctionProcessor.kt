@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.refactoring.*
 import org.jetbrains.kotlin.idea.references.KtReference
@@ -88,10 +88,7 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
         val originalDeclaration: KtNamedFunction,
         val supers: List<PsiElement>
     ) : KtLightElement<KtNamedFunction, KtNamedFunction>, PsiNamedElement by originalDeclaration {
-        override val kotlinOrigin: KtNamedFunction?
-            get() = originalDeclaration
-        override val clsDelegate: KtNamedFunction
-            get() = originalDeclaration
+        override val kotlinOrigin: KtNamedFunction get() = originalDeclaration
     }
 
     private fun substituteForExpectOrActual(element: PsiElement?) =
@@ -152,7 +149,7 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
             }
             else -> {
                 val declaration = element.unwrapped as? KtNamedFunction ?: return
-                checkSuperMethodsWithPopup(declaration, deepestSuperMethods.toList(), "rename", editor) {
+                checkSuperMethodsWithPopup(declaration, deepestSuperMethods.toList(), editor) {
                     preprocessAndPass(if (it.size > 1) FunctionWithSupersWrapper(declaration, it) else wrappedMethod ?: element)
                 }
             }

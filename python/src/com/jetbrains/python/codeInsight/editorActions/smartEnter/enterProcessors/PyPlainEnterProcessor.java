@@ -12,7 +12,6 @@ import com.jetbrains.python.psi.PyStatementPart;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
  * Author: Alexey.Ivanov
  */
 public class PyPlainEnterProcessor implements EnterProcessor {

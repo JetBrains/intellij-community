@@ -18,6 +18,7 @@ package com.jetbrains.python.sdk
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.module.Module
@@ -45,6 +46,7 @@ import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.remote.PyRemoteSdkAdditionalData
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -56,6 +58,7 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.div
 
 /**
  * @author vlan
@@ -389,4 +392,27 @@ private fun filterSuggestedPaths(suggestedPaths: Collection<String>,
     .toList()
 }
 
-fun Sdk?.isTargetBased(): Boolean = this != null && sdkAdditionalData is PyTargetAwareAdditionalData
+fun Sdk?.isTargetBased(): Boolean = this != null && targetEnvConfiguration != null
+
+/**
+ *  Additional data if sdk is target-based
+ */
+val Sdk.targetAdditionalData get():PyTargetAwareAdditionalData? = sdkAdditionalData as? PyTargetAwareAdditionalData
+
+/**
+ * Returns target environment if configuration is target api based
+ */
+val Sdk.targetEnvConfiguration get():TargetEnvironmentConfiguration? = targetAdditionalData?.targetEnvironmentConfiguration
+
+/**
+ * Where "remote_sources" folder for certain SDK is stored
+ */
+val Sdk.remoteSourcesLocalPath: Path
+  get() =
+    Path.of(PathManager.getSystemPath()) /
+    Path.of(PythonSdkUtil.REMOTE_SOURCES_DIR_NAME) /
+    Path.of(when (val data = sdkAdditionalData) {
+              is PyTargetAwareAdditionalData -> data.uuid.toString()
+              is PyRemoteSdkAdditionalData -> homePath!!
+              else -> error("Only legacy and remote SDK and target-based SDKs are supported")
+            }.hashCode().toString())

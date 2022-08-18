@@ -9,17 +9,12 @@ _collections_abc.ValuesView.__reversed__
 
 # These are not positional-only at runtime, but we treat them
 # as positional-only to match dict.
-_collections_abc.Mapping.__getitem__
-_collections_abc.Mapping.__contains__
-_collections_abc.MutableMapping.__delitem__
-_collections_abc.MutableMapping.__setitem__
 _collections_abc.MutableMapping.pop
 _collections_abc.MutableMapping.setdefault
 
 # typing.IO uses positional-or-keyword arguments, but in the stubs we prefer
 # to mark these as positional-only for compatibility with existing sub-classes.
 typing.BinaryIO.write
-typing.IO.__exit__
 typing.IO.read
 typing.IO.readline
 typing.IO.readlines
@@ -28,6 +23,7 @@ typing.IO.truncate
 typing.IO.write
 typing.IO.writelines
 
+_weakref.ProxyType.__reversed__  # Doesn't really exist
 ast.Bytes.__new__
 ast.Ellipsis.__new__
 ast.ExtSlice.__new__
@@ -36,12 +32,13 @@ ast.Index.__new__
 ast.NameConstant.__new__
 ast.Num.__new__
 ast.Str.__new__
-asyncio.compat  # module removed in 3.7
 asyncio.Future.__init__  # Usually initialized from c object
 asyncio.Future._callbacks  # Usually initialized from c object
 asyncio.futures.Future.__init__  # Usually initialized from c object
 asyncio.futures.Future._callbacks  # Usually initialized from c object
 builtins.dict.get
+builtins.float.__set_format__  # Internal method for CPython test suite
+builtins.property.__set_name__  # Doesn't actually exist
 contextvars.Context.__init__  # Default C __init__ signature is wrong
 contextlib.AbstractAsyncContextManager.__class_getitem__
 contextlib.AbstractContextManager.__class_getitem__
@@ -50,12 +47,8 @@ dataclasses.KW_ONLY
 enum.Enum._generate_next_value_
 fractions.Fraction.__new__  # overload is too complicated for stubtest to resolve
 ftplib.FTP.trust_server_pasv_ipv4_address  # Dangerous to use, intentionally undocumented, intentionally missing from typeshed. #6154
-functools.partialmethod.__get__
-functools.singledispatchmethod.__call__
 gettext.install
 gettext.translation
-hashlib.sha3_\d+  # Can be a class or a built-in function
-hashlib.shake_\d+  # Can be a class or a built-in function
 hmac.new  # Stub is a white lie; see comments in the stub
 http.server.SimpleHTTPRequestHandler.__init__  # *args is expanded
 importlib.abc.Traversable.__init__  # Inherits __init__ from typing.Protocol
@@ -70,6 +63,7 @@ multiprocessing.spawn._main
 os.PathLike.__class_getitem__  # PathLike is a protocol; we don't expect all PathLike classes to implement class_getitem
 pickle.Pickler.reducer_override  # implemented in C pickler
 # platform.uname_result's processor field is now dynamically made to exist
+platform.uname_result.__match_args__
 platform.uname_result.__new__
 platform.uname_result._fields
 platform.uname_result.processor
@@ -82,9 +76,11 @@ sys.UnraisableHookArgs  # Not exported from sys
 types.ClassMethodDescriptorType.__get__
 types.CodeType.replace  # stubtest thinks default values are None but None doesn't work at runtime
 types.GenericAlias.__getattr__
+types.GenericAlias.__mro_entries__
 types.GenericAlias.__call__  # Would be complicated to fix properly, Any could silence problems. #6392
 types.MethodDescriptorType.__get__
 types.WrapperDescriptorType.__get__
+typing._SpecialForm.__mro_entries__
 typing.ForwardRef._evaluate
 typing.SupportsAbs.__init__
 typing.SupportsBytes.__init__
@@ -104,29 +100,22 @@ typing._TypedDict.pop
 typing._TypedDict.setdefault
 typing._TypedDict.update
 typing._TypedDict.values
+weakref.ProxyType.__reversed__  # Doesn't really exist
 weakref.WeakValueDictionary.update
 xml.etree.ElementTree.XMLParser.__init__  # Defined in C so has general signature
 xml.etree.cElementTree.XMLParser.__init__  # Defined in C so has general signature
 
-# positional-only complaints
-builtins.bytearray.pop
-builtins.bytearray.remove
-collections.OrderedDict.fromkeys
-collections.OrderedDict.setdefault
+# positional-only complaints caused by differences between typing aliases and the "real" classes in the stdlib
 _collections_abc.AsyncGenerator.asend
 _collections_abc.AsyncGenerator.athrow
-_collections_abc.Container.__contains__
 _collections_abc.Coroutine.send
 _collections_abc.Coroutine.throw
 _collections_abc.Generator.send
 _collections_abc.Generator.throw
-contextvars.ContextVar.reset
-contextvars.ContextVar.set
-contextlib.AbstractAsyncContextManager.__aexit__
-contextlib.AbstractContextManager.__exit__
-io.IncrementalNewlineDecoder.setstate
-typing.SupportsRound.__round__
+
+# typing.SupportsRound.__round__  # pos-or-kw at runtime, but we pretend it's pos-only in the stub so that e.g. float.__round__ satisfies the interface
 types.DynamicClassAttribute..*  # In the stub we pretend it's an alias for property, but it has positional-only differences
+
 # These three have a pos-or-keyword first parameter at runtime, but deliberately have a pos-only first parameter in the stub. #6812
 posixpath.join
 ntpath.join
@@ -136,19 +125,11 @@ os.path.join
 pstats.SortKey.__new__
 tkinter.EventType.__new__
 
-# Rest of these errors are new in Python 3.10:
-asyncio.proactor_events._ProactorReadPipeTransport.__init__
-distutils.command.bdist_wininst
-py_compile.main
-pyclbr.Class.__init__
-pyclbr.Function.__init__
-sched.Event.__new__
-sched.Event._fields
-signal.default_int_handler
+# stubtest complains that in 3.10 the default argument is inconsistent with the annotation,
+# but in 3.10+ calling the function without the default argument is in fact deprecated,
+# so it's better to ignore stubtest
 ssl.SSLContext.__new__
 ssl._create_unverified_context
-unicodedata.ucnhash_CAPI
-unittest.mock.create_autospec
 
 # Exists at runtime, but missing from stubs
 _ast.Tuple.dims
@@ -163,6 +144,7 @@ _csv.Writer
 _imp.source_hash
 ast.Tuple.dims
 ast.main
+asynchat.__warningregistry__  # Removal planned for 3.12, can add if someone needs this
 asyncio.AbstractEventLoop.connect_accepted_socket
 asyncio.events.AbstractEventLoop.connect_accepted_socket
 bdb.Breakpoint.clearBreakpoints
@@ -170,6 +152,7 @@ distutils.dist.DistributionMetadata.set_classifiers
 distutils.dist.DistributionMetadata.set_keywords
 distutils.dist.DistributionMetadata.set_platforms
 distutils.util.get_host_platform
+functools.partial.__vectorcalloffset__  # undocumented implementation detail
 multiprocessing.managers.SharedMemoryServer.create
 multiprocessing.managers.SharedMemoryServer.list_segments
 multiprocessing.managers.SharedMemoryServer.public
@@ -178,8 +161,6 @@ multiprocessing.managers.SharedMemoryServer.shutdown
 multiprocessing.managers.SharedMemoryServer.track_segment
 pyexpat.XMLParserType.SkippedEntityHandler
 pyexpat.XMLParserType.intern
-sched.Event.sequence
-types.CoroutineType.cr_origin
 typing._SpecialForm.__call__
 unicodedata.UCD.is_normalized
 xml.parsers.expat.XMLParserType.SkippedEntityHandler

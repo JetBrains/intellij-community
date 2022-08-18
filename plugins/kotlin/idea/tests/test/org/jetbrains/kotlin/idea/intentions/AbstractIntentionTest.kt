@@ -1,13 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
+import com.intellij.codeInsight.hints.InlayHintsProviderFactory
+import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
@@ -16,18 +19,18 @@ import com.intellij.psi.PsiFile
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.util.ThrowableRunnable
 import junit.framework.ComparisonFailure
 import junit.framework.TestCase
 import org.jetbrains.kotlin.formatter.FormatSettingsUtil
+import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.codeInsight.hints.KotlinAbstractHintsProvider
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.junit.Assert
 import java.io.File
-import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
@@ -41,6 +44,26 @@ abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
     protected open fun isApplicableDirective(fileText: String): Boolean {
         val isApplicableString = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// ${isApplicableDirectiveName()}: ")
         return isApplicableString == null || isApplicableString == "true"
+    }
+
+    override fun tearDown() {
+        runAll(
+            ThrowableRunnable { resetInlayHints(project) },
+            ThrowableRunnable { super.tearDown() },
+        )
+    }
+
+    private fun resetInlayHints(project: Project) {
+        val language = KotlinLanguage.INSTANCE
+        val providerInfos =
+            InlayHintsProviderFactory.EP.extensionList
+                .flatMap { it.getProvidersInfo(project) }
+                .filter { it.language == language }
+                .mapNotNull { it.provider as? KotlinAbstractHintsProvider<KotlinAbstractHintsProvider.HintsSettings> }
+        providerInfos.forEach {
+            val hintsSettings = InlayHintsSettings.instance()
+            hintsSettings.storeSettings(it.key, language, it.createSettings())
+        }
     }
 
     protected open fun intentionTextDirectiveName(): String = "INTENTION_TEXT"
@@ -59,7 +82,7 @@ abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
 
         when (candidateFiles.size) {
             0 -> throw AssertionError(
-                ".intention file is not found for " + testDataFile +
+                "${intentionFileName()} file is not found for " + testDataFile +
                         "\nAdd it to base directory of test data. It should contain fully-qualified name of intention class."
             )
             1 -> {
@@ -67,14 +90,14 @@ abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
                 return Class.forName(className).getDeclaredConstructor().newInstance() as IntentionAction
             }
             else -> throw AssertionError(
-                "Several .intention files are available for $testDataFile\nPlease remove some of them\n$candidateFiles"
+                "Several ${intentionFileName()} files are available for $testDataFile\nPlease remove some of them\n$candidateFiles"
             )
         }
     }
 
     @Throws(Exception::class)
-    protected fun doTest(path: String) {
-        val mainFile = File(path)
+    protected fun doTest(unused: String) {
+        val mainFile = dataFile()
         val mainFileName = FileUtil.getNameWithoutExtension(mainFile)
         val intentionAction = createIntention(mainFile)
         val sourceFilePaths = ArrayList<String>()
@@ -211,7 +234,7 @@ abstract class AbstractIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
                 if (shouldFailString.isEmpty()) {
                     for ((filePath, value) in pathToFiles) {
                         val canonicalPathToExpectedFile = filePath + afterFileNameSuffix(mainFile)
-                        val afterFile = testDataFile(canonicalPathToExpectedFile)
+                        val afterFile = dataFile(canonicalPathToExpectedFile)
                         if (filePath == mainFilePath) {
                             try {
                                 myFixture.checkResultByFile(canonicalPathToExpectedFile)

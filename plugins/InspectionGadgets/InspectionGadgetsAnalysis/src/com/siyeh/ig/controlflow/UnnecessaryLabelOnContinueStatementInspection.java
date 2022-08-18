@@ -83,7 +83,7 @@ public class UnnecessaryLabelOnContinueStatementInspection
       final PsiStatement labelEnabledParent = PsiTreeUtil.getParentOfType(statement, PsiLoopStatement.class);
       if (labelEnabledParent == null) return;
       if (!exitedStatement.equals(labelEnabledParent)) return;
-      registerStatementError(statement);
+      registerError(labelIdentifier);
     }
   }
 }

@@ -2,14 +2,13 @@
 package com.intellij.util.io.keyStorage;
 
 import com.intellij.openapi.Forceable;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
 import java.io.IOException;
 
 public interface AppendableObjectStorage<Data> extends Forceable, Closeable {
-  Data read(int addr) throws IOException;
+  Data read(int addr, boolean checkAccess) throws IOException;
 
   boolean processAll(@NotNull StorageObjectProcessor<? super Data> processor) throws IOException;
 

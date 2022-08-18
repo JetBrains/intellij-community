@@ -296,7 +296,7 @@ public final class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitAssertStatement(PsiAssertStatement statement) {
+  public void visitAssertStatement(@NotNull PsiAssertStatement statement) {
     super.visitAssertStatement(statement);
     if (assertStatement) {
       return;
@@ -328,7 +328,7 @@ public final class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
   }
 
   @Override
-  public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+  public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
     super.visitReferenceElement(reference);
     final PsiElement parentClass = ClassUtils.getContainingClass(reference);
     if (reference.getParent() instanceof PsiTypeElement) {

@@ -29,7 +29,7 @@ public final class ActionStub extends AnAction implements ActionStubBase {
   private final @NotNull PluginDescriptor myPlugin;
   private final @Nullable String myIconPath;
   private final @Nullable ProjectType myProjectType;
-  private final @NotNull Supplier<Presentation> myTemplatePresentation;
+  private final @NotNull Supplier<? extends Presentation> myTemplatePresentation;
   private List<Supplier<String>> mySynonyms = Collections.emptyList();
 
   public ActionStub(@NotNull String actionClass,
@@ -37,7 +37,7 @@ public final class ActionStub extends AnAction implements ActionStubBase {
                     @NotNull PluginDescriptor plugin,
                     @Nullable String iconPath,
                     @Nullable ProjectType projectType,
-                    @NotNull Supplier<Presentation> templatePresentation) {
+                    @NotNull Supplier<? extends Presentation> templatePresentation) {
     myClassName = actionClass;
     LOG.assertTrue(!id.isEmpty());
     myId = id;

@@ -290,7 +290,7 @@ public final class DfTypes {
 
   /**
    * Returns a custom constant type
-   *
+   * <p>
    * The following types of the objects are supported:
    * <ul>
    *   <li>Integer/Long/Double/Float/Boolean (will be unboxed)</li>
@@ -323,7 +323,9 @@ public final class DfTypes {
     if (constant == null) return NULL;
     DfConstantType<?> primitiveConstant = primitiveConstantImpl(constant);
     if (primitiveConstant != null) return primitiveConstant;
-    if (!(type instanceof DfReferenceType)) throw new IllegalArgumentException("Not reference type: " + type + "; constant: " + constant);
+    if (!(type instanceof DfReferenceType)) {
+      throw new IllegalArgumentException("Not reference type: " + type + "; constant: " + constant);
+    }
     return new DfReferenceConstantType(constant, ((DfReferenceType)type).getConstraint(), false);
   }
 
@@ -388,11 +390,11 @@ public final class DfTypes {
 
   /**
    * @param constant string constant
-   * @param stringType string type
+   * @param constraint string type constraint
    * @return concatenation result string
    */
-  public static @NotNull DfConstantType<?> concatenationResult(@NotNull String constant, @NotNull PsiType stringType) {
-    return new DfReferenceConstantType(constant, TypeConstraints.exact(stringType), true);
+  public static @NotNull DfConstantType<?> concatenationResult(@NotNull String constant, @NotNull TypeConstraint constraint) {
+    return new DfReferenceConstantType(constant, constraint, true);
   }
 
   /**

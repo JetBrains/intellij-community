@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -54,7 +54,6 @@ final class UpdateCheckerService {
   private static final long CHECK_INTERVAL = DateFormatUtil.DAY;
   private static final String ERROR_LOG_FILE_NAME = "idea_updater_error.log"; // must be equal to 'com.intellij.updater.Runner.ERROR_LOG_FILE_NAME'
   private static final String PREVIOUS_BUILD_NUMBER_PROPERTY = "ide.updates.previous.build.number";
-  private static final String WHATS_NEW_SHOWN_FOR_PROPERTY = "ide.updates.whats.new.shown.for";
   private static final String OLD_DIRECTORIES_SCAN_SCHEDULED = "ide.updates.old.dirs.scan.scheduled";
   private static final int OLD_DIRECTORIES_SCAN_DELAY_DAYS = 7;
   private static final int OLD_DIRECTORIES_SHELF_LIFE_DAYS = 180;
@@ -185,24 +184,39 @@ final class UpdateCheckerService {
   private static void showWhatsNew(Project project, BuildNumber current) {
     String url = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl();
     if (url != null && WhatsNewAction.isAvailable() && shouldShowWhatsNew(current, ApplicationInfoEx.getInstanceEx().isMajorEAP())) {
-      ApplicationManager.getApplication().invokeLater(() -> WhatsNewAction.openWhatsNewPage(project, url));
-      IdeUpdateUsageTriggerCollector.UPDATE_WHATS_NEW.log(project);
+      if (UpdateSettings.getInstance().isShowWhatsNewEditor()) {
+        ApplicationManager.getApplication().invokeLater(() -> WhatsNewAction.openWhatsNewPage(project, url));
+        IdeUpdateUsageTriggerCollector.majorUpdateHappened(true);
+      }
+      else {
+        IdeUpdateUsageTriggerCollector.majorUpdateHappened(false);
+      }
     }
   }
 
   @VisibleForTesting
   static boolean shouldShowWhatsNew(@NotNull BuildNumber current, boolean majorEap) {
-    PropertiesComponent properties = PropertiesComponent.getInstance();
+    UpdateSettings settings = UpdateSettings.getInstance();
 
-    int lastShownFor = properties.getInt(WHATS_NEW_SHOWN_FOR_PROPERTY, 0);
+    int lastShownFor = settings.getWhatsNewShownFor();
     if (lastShownFor == 0) {
-      // ensures that the "what's new" page is shown _only_ for users who have updated from a previous version
+      // migration from `PropertiesComponent`; safe to drop around 2024.2
+      String fallbackProperty = "ide.updates.whats.new.shown.for";
+      PropertiesComponent properties = PropertiesComponent.getInstance();
+      lastShownFor = properties.getInt(fallbackProperty, 0);
+      if (lastShownFor != 0) {
+        properties.unsetValue(fallbackProperty);
+        settings.setWhatsNewShownFor(lastShownFor);
+      }
+    }
+    if (lastShownFor == 0) {
+      // this ensures that the "what's new" page is shown _only_ for users who have updated from a previous version
       // (to detect updates, the method relies on imported settings; users starting from scratch are out of luck)
-      properties.setValue(WHATS_NEW_SHOWN_FOR_PROPERTY, current.getBaselineVersion(), 0);
+      settings.setWhatsNewShownFor(current.getBaselineVersion());
       return false;
     }
 
-    if (!majorEap && lastShownFor < current.getBaselineVersion() && UpdateSettings.getInstance().isShowWhatsNewEditor()) {
+    if (!majorEap && lastShownFor < current.getBaselineVersion()) {
       Product product = loadProductData();
       if (product != null) {
         // checking whether the actual "what's new" page is relevant to the current release
@@ -212,7 +226,7 @@ final class UpdateCheckerService {
           .mapToInt(build -> build.getNumber().getBaselineVersion())
           .max().orElse(0);
         if (lastRelease == current.getBaselineVersion()) {
-          properties.setValue(WHATS_NEW_SHOWN_FOR_PROPERTY, current.getBaselineVersion(), 0);
+          settings.setWhatsNewShownFor(current.getBaselineVersion());
           return true;
         }
       }

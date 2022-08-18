@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -12,8 +12,8 @@ import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.SuppressionUtilCore;
-import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
-import com.intellij.codeInspection.javaDoc.JavadocHighlightUtil;
+import com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection;
+import com.intellij.codeInspection.javaDoc.MissingJavadocInspection;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -201,7 +201,7 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
       if (parent instanceof PsiDocTagValue && !(parent instanceof PsiDocParamRef) && !(parent instanceof PsiDocMethodOrFieldRef)) {
         PsiDocTag docTag = ObjectUtils.tryCast(parent.getParent(), PsiDocTag.class);
         if (docTag != null) {
-          JavadocManager docManager = JavadocManager.SERVICE.getInstance(parameters.getOriginalFile().getProject());
+          JavadocManager docManager = JavadocManager.getInstance(parameters.getOriginalFile().getProject());
           JavadocTagInfo info = docManager.getTagInfo(docTag.getName());
           if (info != null) {
             // Avoid suggesting standard tags inside custom tag value, as custom tag may require custom value (e.g., reference)
@@ -398,10 +398,10 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
 
     InspectionProfile inspectionProfile =
       InspectionProjectProfileManager.getInstance(position.getProject()).getCurrentProfile();
-    JavaDocLocalInspection inspection =
-      (JavaDocLocalInspection)inspectionProfile.getUnwrappedTool(JavaDocLocalInspection.SHORT_NAME, position);
+    JavadocDeclarationInspection inspection =
+      (JavadocDeclarationInspection)inspectionProfile.getUnwrappedTool(JavadocDeclarationInspection.SHORT_NAME, position);
     if (inspection != null) {
-      final StringTokenizer tokenizer = new StringTokenizer(inspection.myAdditionalJavadocTags, ", ");
+      final StringTokenizer tokenizer = new StringTokenizer(inspection.ADDITIONAL_TAGS, ", ");
       while (tokenizer.hasMoreTokens()) {
         ret.add(tokenizer.nextToken());
       }
@@ -450,13 +450,13 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
         parent = JavaPsiFacade.getInstance(position.getProject()).findPackage(packageName);
       }
     }
-    return JavadocManager.SERVICE.getInstance(position.getProject()).getTagInfos(parent);
+    return JavadocManager.getInstance(position.getProject()).getTagInfos(parent);
   }
 
   private static List<PsiNamedElement> getParametersToSuggest(PsiDocComment comment) {
     List<PsiNamedElement> allParams = PsiDocParamRef.getAllParameters(comment);
     PsiDocTag[] tags = comment.getTags();
-    return ContainerUtil.filter(allParams, param -> !JavadocHighlightUtil.hasTagForParameter(tags, param));
+    return ContainerUtil.filter(allParams, param -> !MissingJavadocInspection.hasTagForParameter(tags, param));
   }
 
   private static String nameForParamTag(PsiNamedElement param) {

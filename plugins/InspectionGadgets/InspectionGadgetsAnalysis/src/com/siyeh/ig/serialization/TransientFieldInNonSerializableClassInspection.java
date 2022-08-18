@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.serialization;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
@@ -26,7 +27,7 @@ import com.siyeh.ig.fixes.RemoveModifierFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class TransientFieldInNonSerializableClassInspection extends BaseInspection {
+public class TransientFieldInNonSerializableClassInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.util;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -27,6 +27,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.lang.JavaVersion;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,15 +99,19 @@ public final class JavaParametersUtil {
     if (virtualFile == null) return null;
     Module classModule = psiClass.isValid() ? ModuleUtilCore.findModuleForPsiElement(psiClass) : null;
     if (classModule == null) classModule = module;
-    ModuleFileIndex fileIndex = ModuleRootManager.getInstance(classModule).getFileIndex();
+    final ModuleRootManager rootManager = ModuleRootManager.getInstance(classModule);
+    final ModuleFileIndex fileIndex = rootManager.getFileIndex();
     if (fileIndex.isInSourceContent(virtualFile)) {
       return !fileIndex.isInTestSourceContent(virtualFile);
     }
-    final List<OrderEntry> entriesForFile = fileIndex.getOrderEntriesForFile(virtualFile);
-    for (OrderEntry entry : entriesForFile) {
+    // the mainClass is located in libraries
+    for (OrderEntry entry : fileIndex.getOrderEntriesForFile(virtualFile)) {
       if (entry instanceof ExportableOrderEntry && ((ExportableOrderEntry)entry).getScope() == DependencyScope.TEST) {
         return false;
       }
+    }
+    if (rootManager.getSourceRoots(false).length == 0) {
+      return false; // there are no 'non-test' sources in the module
     }
     return true;
   }
@@ -150,6 +155,20 @@ public final class JavaParametersUtil {
       throw CantRunException.noJdkConfigured();
     }
     return jdk;
+  }
+  
+  public static @Nullable JavaVersion getJavaVersion(String jreHome) {
+    final Sdk configuredJdk = ProjectJdkTable.getInstance().findJdk(jreHome);
+    if (configuredJdk != null) {
+      return JavaVersion.tryParse(configuredJdk.getVersionString());
+    }
+
+    if (JdkUtil.checkForJre(jreHome)) {
+      final JavaSdk javaSdk = JavaSdk.getInstance();
+      return JavaVersion.tryParse(javaSdk.getVersionString(jreHome));
+    }
+
+    return null;
   }
 
   private static Sdk createAlternativeJdk(@NotNull Project project, @NotNull String jreHome) throws CantRunException {

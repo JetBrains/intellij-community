@@ -22,8 +22,15 @@ public class EditorConfigEncodingInspectionTest extends InspectionFixtureTestCas
 
   @Override
   protected void tearDown() throws Exception {
-    EditorConfigRegistry.setSkipProjectRootInTest(false);
-    super.tearDown();
+    try {
+      EditorConfigRegistry.setSkipProjectRootInTest(false);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testEncodingMismatch() {

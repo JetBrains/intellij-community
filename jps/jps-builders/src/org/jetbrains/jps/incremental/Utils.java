@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.Key;
@@ -63,7 +63,7 @@ public final class Utils {
     return getDataStorageRoot(systemRoot, projectPath, s -> s.hashCode());
   }
 
-  public static File getDataStorageRoot(final File systemRoot, String projectPath, Function<String, Integer> hashFunction) {
+  public static File getDataStorageRoot(final File systemRoot, String projectPath, Function<? super String, Integer> hashFunction) {
 
     projectPath = FileUtil.toCanonicalPath(projectPath);
     if (projectPath == null) {
@@ -79,18 +79,12 @@ public final class Utils {
       locationHash = hashFunction.apply(projectPath);
     }
     else {
-      Path directoryBased = null;
+      Path directoryBased;
       if (rootFile.endsWith(PathMacroUtil.DIRECTORY_STORE_NAME)) {
         directoryBased = rootFile;
       }
       else {
-        Path child = rootFile.resolve(PathMacroUtil.DIRECTORY_STORE_NAME);
-        if (Files.exists(child)) {
-          directoryBased = child;
-        }
-      }
-      if (directoryBased == null) {
-        return null;
+        directoryBased = rootFile.resolve(PathMacroUtil.DIRECTORY_STORE_NAME);
       }
       name = PathUtilRt.suggestFileName(JpsProjectLoader.getDirectoryBaseProjectName(directoryBased));
       locationHash = hashFunction.apply(directoryBased.toString());

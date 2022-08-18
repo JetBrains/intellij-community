@@ -3,6 +3,7 @@ package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PathUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,10 +21,12 @@ public final class OSAgnosticPathUtil {
   private OSAgnosticPathUtil() { }
 
   /**
-   * Compares paths by elements and without taking separators into account. The key difference from {@link String#compareTo} is
-   * that "a/b" is less than "a.b": instead of character-vs-character matching, the paths are compared as ["a", "b"] vs. ["a.b"].
+   * Comparing paths by elements and without taking separators into account.
+   * The key difference from {@link String#compareTo} is that "a/b" is less than "a.b":
+   * instead of character-vs-character matching, the paths are compared as ["a", "b"] vs. ["a.b"].
    */
   public static final Comparator<String> COMPARATOR = (@Nullable String path1, @Nullable String path2) -> {
+    //noinspection StringEquality
     if (path1 == path2) return 0;
     if (path1 == null) return -1;
     if (path2 == null) return 1;
@@ -65,15 +68,25 @@ public final class OSAgnosticPathUtil {
   }
 
   public static boolean isAbsoluteDosPath(@NotNull String path) {
-    return path.length() > 2 && path.charAt(1) == ':' && isSlash(path.charAt(2)) && isDriveLetter(path.charAt(0));
+    return path.length() > 2 && startsWithWindowsDrive(path) && PathUtilRt.isSeparator(path.charAt(2));
+  }
+
+  /**
+   * @return true when the path starts with a drive letter followed by colon, e.g., "C:"
+   */
+  public static boolean startsWithWindowsDrive(@NotNull String path) {
+    return path.length() >= 2 && path.charAt(1) == ':' && isDriveLetter(path.charAt(0));
   }
 
   public static boolean isUncPath(@NotNull String path) {
-    return path.length() > 1 && isSlash(path.charAt(0)) && path.charAt(1) == path.charAt(0);
+    if (!PathUtilRt.startsWithSeparatorSeparator(path)) return false;
+    int slashIndex = nextSeparatorIndex(path, 2);
+    return PathUtilRt.isWindowsUNCRoot(path, slashIndex == -1 ? path.length() : slashIndex);
   }
 
   public static boolean startsWith(@NotNull String path, @NotNull String prefix) {
-    int pathLength = path.length(), prefixLength = prefix.length();
+    int pathLength = path.length();
+    int prefixLength = prefix.length();
     if (prefixLength == 0) return true;
     if (prefixLength > pathLength) return false;
     boolean ignoreCase = !SystemInfoRt.isFileSystemCaseSensitive;
@@ -118,15 +131,16 @@ public final class OSAgnosticPathUtil {
    */
   public static @Nullable String getParent(@NotNull String path) {
     int length = path.length();
-    int lastSeparator = lastSeparatorIndex(path, length);
+    int lastSeparator = PathUtilRt.lastSeparatorIndex(path, length-1);
     if (lastSeparator < 0) return null;
-    if (lastSeparator == length - 1) lastSeparator = lastSeparatorIndex(path, length - 2);
+    if (lastSeparator == length - 1) lastSeparator = PathUtilRt.lastSeparatorIndex(path, length - 2);
     if (lastSeparator < 0) return null;
 
-    if (length > 1 && isSlash(path.charAt(0)) && path.charAt(1) == path.charAt(0)) {
+    if (PathUtilRt.startsWithSeparatorSeparator(path)) {
       // a UNC path
-      if (lastSeparator > 1) {
-        int prevSeparator = lastSeparatorIndex(path, lastSeparator - 1);
+      int slashIndex = nextSeparatorIndex(path, 2);
+      if (lastSeparator > 1 && slashIndex != -1 && slashIndex <= lastSeparator && PathUtilRt.isWindowsUNCRoot(path, slashIndex)) {
+        int prevSeparator = PathUtilRt.lastSeparatorIndex(path, lastSeparator - 1);
         if (prevSeparator > 1) {
           return path.substring(0, lastSeparator);
         }
@@ -134,7 +148,7 @@ public final class OSAgnosticPathUtil {
       return null;
     }
 
-    if (lastSeparator == 2 && path.charAt(1) == ':' && isDriveLetter(path.charAt(0))) {
+    if (lastSeparator == 2 && startsWithWindowsDrive(path)) {
       // a DOS path
       return path.substring(0, 3);
     }
@@ -142,18 +156,17 @@ public final class OSAgnosticPathUtil {
     return path.substring(0, lastSeparator == 0 ? 1 : lastSeparator);
   }
 
-  private static boolean isSlash(char c) {
-    return c == '/' || c == '\\';
+  private static int nextSeparatorIndex(@NotNull String s, int start) {
+    for (int i = start; i < s.length(); i++) {
+      char c = s.charAt(i);
+      if (PathUtilRt.isSeparator(c)) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   public static boolean isDriveLetter(char c) {
     return 'A' <= c && c <= 'Z' || 'a' <= c && c <= 'z';
-  }
-
-  private static int lastSeparatorIndex(String s, int from) {
-    for (int i = Math.min(from, s.length() - 1); i >= 0; i--) {
-      if (isSlash(s.charAt(i))) return i;
-    }
-    return -1;
   }
 }

@@ -12,3 +12,17 @@ class MyQuickFix implements LocalQuickFix {
     return null;
   }
 }
+class MyQuickFixWriteFalse implements LocalQuickFix {
+  List<?> list;
+
+  public boolean startInWriteAction() {
+    return false;
+  }
+}
+class MyQuickFixWriteTrue implements LocalQuickFix {
+  List<?> <warning descr="Field may prevent intention preview from working properly">list</warning>;
+
+  public boolean startInWriteAction() {
+    return true;
+  }
+}

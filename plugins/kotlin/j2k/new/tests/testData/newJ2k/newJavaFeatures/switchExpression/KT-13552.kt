@@ -10,6 +10,7 @@ object SwitchDemo {
                 print(5)
                 5
             }
+
             2 -> {
                 print(2)
                 print(3)
@@ -17,21 +18,25 @@ object SwitchDemo {
                 print(5)
                 5
             }
+
             3 -> {
                 print(3)
                 print(4)
                 print(5)
                 5
             }
+
             4 -> {
                 print(4)
                 print(5)
                 5
             }
+
             5 -> {
                 print(5)
                 5
             }
+
             6 -> {
                 print(6)
                 print(7)
@@ -42,6 +47,7 @@ object SwitchDemo {
                 monthString = "December"
                 13
             }
+
             7 -> {
                 print(7)
                 print(8)
@@ -51,6 +57,7 @@ object SwitchDemo {
                 monthString = "December"
                 13
             }
+
             8 -> {
                 print(8)
                 print(9)
@@ -59,6 +66,7 @@ object SwitchDemo {
                 monthString = "December"
                 13
             }
+
             9 -> {
                 print(9)
                 print(10)
@@ -66,21 +74,25 @@ object SwitchDemo {
                 monthString = "December"
                 13
             }
+
             10 -> {
                 print(10)
                 print(11)
                 monthString = "December"
                 13
             }
+
             11 -> {
                 print(11)
                 monthString = "December"
                 13
             }
+
             12 -> {
                 monthString = "December"
                 13
             }
+
             else -> {
                 print(4)
                 print(5)

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.fir.quickfix
 
@@ -7,11 +7,14 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixMultiFileTest
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.utils.IgnoreTests
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
 abstract class AbstractHighLevelQuickFixMultiFileTest : AbstractQuickFixMultiFileTest() {
+    override fun isFirPlugin(): Boolean = true
+
     override fun doTestWithExtraFile(beforeFileName: String) {
         IgnoreTests.runTestIfNotDisabledByFileDirective(
             Paths.get(beforeFileName),
@@ -26,7 +29,7 @@ abstract class AbstractHighLevelQuickFixMultiFileTest : AbstractQuickFixMultiFil
 
     override fun checkForUnexpectedErrors(file: KtFile) {}
 
-    override fun checkAvailableActionsAreExpected(file: PsiFile, actions: Collection<IntentionAction>) {}
+    override fun checkAvailableActionsAreExpected(file: File, actions: Collection<IntentionAction>) {}
 
     private fun Path.getAfterFileIfExists(): Path? {
         val afterFileName = fileName.toString().removeSuffix(".before.Main.kt") + ".after.kt"

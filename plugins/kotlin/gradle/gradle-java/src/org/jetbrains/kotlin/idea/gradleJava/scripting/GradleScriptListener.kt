@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.gradleJava.scripting
 
-import com.intellij.openapi.externalSystem.autoimport.AsyncFileChangeListenerBase
+import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener
+import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installAsyncVirtualFileListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangeListener
@@ -23,7 +23,7 @@ class GradleScriptListener(project: Project) : ScriptChangeListener(project) {
     init {
         // listen changes using VFS events, including gradle-configuration related files
         val listener = GradleScriptFileChangeListener(this, buildRootsManager)
-        VirtualFileManager.getInstance().addAsyncFileListener(listener, KotlinPluginDisposable.getInstance(project))
+        installAsyncVirtualFileListener(listener, KotlinPluginDisposable.getInstance(project))
     }
 
     // cache buildRootsManager service for hot path under vfs changes listener
@@ -65,15 +65,15 @@ class GradleScriptListener(project: Project) : ScriptChangeListener(project) {
 private class GradleScriptFileChangeListener(
     private val watcher: GradleScriptListener,
     private val buildRootsManager: GradleBuildRootsManager
-) : AsyncFileChangeListenerBase() {
+) : VirtualFileChangesListener {
     val changedFiles = mutableListOf<String>()
 
     override fun init() {
         changedFiles.clear()
     }
 
-    override fun isRelevant(path: String): Boolean {
-        return buildRootsManager.maybeAffectedGradleProjectFile(path)
+    override fun isRelevant(file: VirtualFile, event: VFileEvent): Boolean {
+        return buildRootsManager.maybeAffectedGradleProjectFile(file.path)
     }
 
     override fun updateFile(file: VirtualFile, event: VFileEvent) {

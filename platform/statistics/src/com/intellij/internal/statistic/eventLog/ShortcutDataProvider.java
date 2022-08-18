@@ -162,7 +162,7 @@ public final class ShortcutDataProvider {
   private static String getLocaleUnawareKeyModifiersText(int modifiers) {
     List<String> pressed = ourModifiers.stream()
       .filter(p -> (p.first & modifiers) != 0)
-      .map(p -> p.second).collect(Collectors.toList());
+      .map(p -> p.second).toList();
     return StringUtil.join(pressed, "+");
   }
 

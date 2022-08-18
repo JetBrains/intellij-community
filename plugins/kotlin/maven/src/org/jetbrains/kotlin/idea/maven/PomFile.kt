@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.maven
 
@@ -24,17 +24,17 @@ import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenArtifactScope
 import org.jetbrains.jps.model.java.JavaSourceRootType
-import org.jetbrains.kotlin.cli.common.arguments.CliArgumentStringBuilder.buildArgumentString
+import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.buildArgumentString
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
-import org.jetbrains.kotlin.idea.extensions.gradle.RepositoryDescription
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator
+import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 import org.jetbrains.kotlin.utils.SmartList
-import java.util.*
 
 fun kotlinPluginId(version: String?) = MavenId(KotlinMavenConfigurator.GROUP_ID, KotlinMavenConfigurator.MAVEN_PLUGIN_ID, version)
 
@@ -645,7 +645,7 @@ private fun PomFile.changeConfigurationOrProperty(
     kotlinPlugin: MavenDomPlugin,
     configurationTagName: String,
     propertyName: String, value: String
-): XmlTag? {
+): XmlTag {
     val configuration = kotlinPlugin.configuration
     if (configuration.exists()) {
         val subTag = configuration.xmlTag?.findFirstSubTag(configurationTagName)
@@ -697,7 +697,8 @@ fun PomFile.changeFeatureConfiguration(
         }
 
     argsSubTag.findSubTags("arg").filter { feature.name in it.value.text }.forEach { it.deleteCascade() }
-    val featureArgumentString = feature.buildArgumentString(state, kotlinPlugin.version.stringValue)
+    val kotlinVersion = kotlinPlugin.version.stringValue?.let(IdeKotlinVersion::opt)
+    val featureArgumentString = feature.buildArgumentString(state, kotlinVersion)
     val childTag = argsSubTag.createChildTag("arg", featureArgumentString)
     return argsSubTag.add(childTag)
 }

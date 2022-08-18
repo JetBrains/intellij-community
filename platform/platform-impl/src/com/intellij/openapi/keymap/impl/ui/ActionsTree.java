@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -328,7 +328,7 @@ public final class ActionsTree {
   private static boolean areGroupShortcutsCustomized(@NotNull Group group, @NotNull Keymap keymap) {
     if (!keymap.canModify()) return false;
 
-    ArrayList children = group.getChildren();
+    ArrayList<Object> children = group.getChildren();
     for (Object child : children) {
       if (child instanceof Group) {
         if (areGroupShortcutsCustomized((Group)child, keymap)) {
@@ -372,7 +372,7 @@ public final class ActionsTree {
 
   @Nullable
   private DefaultMutableTreeNode getNodeForPath(String path) {
-    Enumeration enumeration = ((DefaultMutableTreeNode)myTree.getModel().getRoot()).preorderEnumeration();
+    Enumeration<TreeNode> enumeration = ((DefaultMutableTreeNode)myTree.getModel().getRoot()).preorderEnumeration();
     while (enumeration.hasMoreElements()) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)enumeration.nextElement();
       if (Objects.equals(getPath(node, false), path)) {
@@ -384,7 +384,7 @@ public final class ActionsTree {
 
   private List<DefaultMutableTreeNode> getNodesByPaths(List<String> paths) {
     List<DefaultMutableTreeNode> result = new SmartList<>();
-    Enumeration enumeration = ((DefaultMutableTreeNode)myTree.getModel().getRoot()).preorderEnumeration();
+    Enumeration<TreeNode> enumeration = ((DefaultMutableTreeNode)myTree.getModel().getRoot()).preorderEnumeration();
     while (enumeration.hasMoreElements()) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)enumeration.nextElement();
       final String path = getPath(node, false);
@@ -594,7 +594,7 @@ public final class ActionsTree {
         }
         else {
           if (changed) {
-            foreground = PlatformColors.BLUE;
+            foreground = JBColor.namedColor("Tree.modifiedItemForeground", PlatformColors.BLUE);
           }
           else {
             foreground = UIUtil.getTreeForeground();

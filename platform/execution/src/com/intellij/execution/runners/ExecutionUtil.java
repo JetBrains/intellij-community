@@ -36,6 +36,7 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public final class ExecutionUtil {
@@ -225,6 +226,15 @@ public final class ExecutionUtil {
                                         @Nullable ExecutionTarget targetOrNullForDefault,
                                         @Nullable Long executionId,
                                         @Nullable DataContext dataContext) {
+    doRunConfiguration(configuration, executor, targetOrNullForDefault, executionId, dataContext, null);
+  }
+
+  public static void doRunConfiguration(@NotNull RunnerAndConfigurationSettings configuration,
+                                        @NotNull Executor executor,
+                                        @Nullable ExecutionTarget targetOrNullForDefault,
+                                        @Nullable Long executionId,
+                                        @Nullable DataContext dataContext,
+                                        @Nullable Consumer<? super ExecutionEnvironment> environmentCustomization) {
     ExecutionEnvironmentBuilder builder = createEnvironment(executor, configuration);
     if (builder == null) {
       return;
@@ -242,7 +252,13 @@ public final class ExecutionUtil {
     if (dataContext != null) {
       builder.dataContext(dataContext);
     }
-    ExecutionManager.getInstance(configuration.getConfiguration().getProject()).restartRunProfile(builder.build());
+
+    ExecutionEnvironment environment = builder.build();
+    if(environmentCustomization != null) {
+      environmentCustomization.accept(environment);
+    }
+
+    ExecutionManager.getInstance(configuration.getConfiguration().getProject()).restartRunProfile(environment);
   }
 
   @Nullable

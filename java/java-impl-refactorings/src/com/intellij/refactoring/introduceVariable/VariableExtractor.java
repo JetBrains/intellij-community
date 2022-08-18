@@ -59,12 +59,12 @@ final class VariableExtractor {
   private final @NotNull FieldConflictsResolver myFieldConflictsResolver;
   private final @Nullable LogicalPosition myPosition;
 
-  private VariableExtractor(final @NotNull Project project,
-                            final @NotNull PsiExpression expression,
-                            final @Nullable Editor editor,
-                            final @NotNull PsiElement anchorStatement,
-                            final PsiExpression @NotNull [] occurrences,
-                            final @NotNull IntroduceVariableSettings settings) {
+  VariableExtractor(final @NotNull Project project,
+                    final @NotNull PsiExpression expression,
+                    final @Nullable Editor editor,
+                    final @NotNull PsiElement anchorStatement,
+                    final PsiExpression @NotNull [] occurrences,
+                    final @NotNull IntroduceVariableSettings settings) {
     myProject = project;
     myExpression = expression;
     myEditor = editor;
@@ -80,8 +80,10 @@ final class VariableExtractor {
   }
 
   @NotNull
-  private SmartPsiElementPointer<PsiVariable> extractVariable() {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+  SmartPsiElementPointer<PsiVariable> extractVariable() {
+    if (myExpression.getUserData(IntroduceVariableOnPreviewHandler.INTENTION_PREVIEW_INTRODUCER) == null) {
+      ApplicationManager.getApplication().assertWriteAccessAllowed();
+    }
     final PsiExpression newExpr = myFieldConflictsResolver.fixInitializer(myExpression);
     if (myAnchor == myExpression) {
       myAnchor = newExpr;
@@ -99,7 +101,7 @@ final class VariableExtractor {
 
     replaceOccurrences(newExpr);
 
-    ensureCodeBlock();
+    ensureCodeBlock(type);
 
     PsiVariable var = addVariable(declaration, initializer);
 
@@ -131,7 +133,7 @@ final class VariableExtractor {
     return SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(var);
   }
 
-  private void ensureCodeBlock() {
+  private void ensureCodeBlock(PsiType type) {
     if (myAnchor instanceof PsiStatement && CommonJavaRefactoringUtil.isLoopOrIf(myAnchor.getParent())) {
       myAnchor = BlockUtils.expandSingleStatementToBlockStatement((PsiStatement)myAnchor);
     }
@@ -140,6 +142,14 @@ final class VariableExtractor {
     }
     if (myAnchor instanceof PsiExpression) {
       CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression((PsiExpression)myAnchor);
+      boolean addedCast = false;
+      if (surrounder == null) {
+        PsiExpression typedAnchor = JavaPsiFacade.getElementFactory(myProject)
+          .createExpressionFromText("(" + type.getCanonicalText() + ")" + myAnchor.getText(), null);
+        myAnchor = myAnchor.replace(typedAnchor);
+        addedCast = true;
+        surrounder = CodeBlockSurrounder.forExpression((PsiExpression)myAnchor);
+      }
       if (surrounder == null) {
         throw new RuntimeExceptionWithAttachments(
           "Cannot ensure code block: myAnchor type is " + myAnchor.getClass() + "; parent type is " + myAnchor.getParent().getClass(),
@@ -147,6 +157,10 @@ final class VariableExtractor {
       }
       CodeBlockSurrounder.SurroundResult result = surrounder.surround();
       myAnchor = result.getAnchor();
+      PsiExpression expression = result.getExpression();
+      if (addedCast && expression instanceof PsiTypeCastExpression) {
+        expression.replace(Objects.requireNonNull(((PsiTypeCastExpression)expression).getOperand()));
+      }
     }
   }
 
@@ -218,7 +232,7 @@ final class VariableExtractor {
         final int[] usedFirstVar = new int[]{-1};
         initializer.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
-          public void visitReferenceExpression(PsiReferenceExpression expression) {
+          public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
             final int i = ArrayUtilRt.find(declaredElements, expression.resolve());
             if (i > -1) {
               usedFirstVar[0] = Math.max(i, usedFirstVar[0]);
@@ -341,7 +355,7 @@ final class VariableExtractor {
     if (anchor instanceof PsiWhileStatement) {
       PsiWhileStatement whileStatement = (PsiWhileStatement)anchor;
       PsiExpression condition = whileStatement.getCondition();
-      if (condition != null && allOccurrences.stream().allMatch(occurrence -> PsiTreeUtil.isAncestor(whileStatement, occurrence, true))) {
+      if (condition != null && ContainerUtil.and(allOccurrences, occurrence -> PsiTreeUtil.isAncestor(whileStatement, occurrence, true))) {
         if (firstOccurrence != null && PsiTreeUtil.isAncestor(condition, firstOccurrence, false) &&
             !ExpressionUtils.isLoopInvariant(firstOccurrence, whileStatement)) {
           PsiPolyadicExpression polyadic = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(condition), PsiPolyadicExpression.class);
@@ -362,7 +376,7 @@ final class VariableExtractor {
       if (PsiTreeUtil.isAncestor(anchor, ancestorCandidate, false)) {
         PsiElement statement = CommonJavaRefactoringUtil.getParentStatement(ancestorCandidate, false);
         PsiElement extractable = statement == null ? PsiTreeUtil.getParentOfType(ancestorCandidate, PsiField.class) : statement;
-        if (allOccurrences.stream().allMatch(occurrence ->
+        if (ContainerUtil.and(allOccurrences, occurrence ->
                                                PsiTreeUtil.isAncestor(extractable, occurrence, false) &&
                                                (!PsiTreeUtil.isAncestor(ancestorCandidate, occurrence, false) ||
                                                 ReorderingUtils.canExtract(ancestorCandidate, occurrence) == ThreeState.NO))) {

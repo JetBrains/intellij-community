@@ -192,8 +192,6 @@
       <separator/>
       <reference ref="VersionControlsGroup"/>
       <separator/>
-      <reference ref="AddToFavorites"/>
-      <separator/>
     </group>
 
     <group id="GuiDesigner.ComponentTreePopupMenu">

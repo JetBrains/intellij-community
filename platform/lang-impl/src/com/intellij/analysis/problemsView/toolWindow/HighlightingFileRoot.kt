@@ -46,7 +46,7 @@ internal class HighlightingFileRoot(panel: ProblemsViewPanel, val file: VirtualF
 
   private fun createWatcher(provider: ProblemsProvider,
                             file: VirtualFile): HighlightingWatcher =
-    HighlightingWatcher(provider, this, file, HighlightSeverity.INFORMATION.myVal + 1)
+    HighlightingWatcher(provider, this, file, HighlightSeverity.TEXT_ATTRIBUTES.myVal + 1)
 
   override fun getOtherProblemCount() = 0
 

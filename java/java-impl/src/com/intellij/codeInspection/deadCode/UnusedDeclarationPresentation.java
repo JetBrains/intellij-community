@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
-import com.intellij.codeInspection.reference.KotlinPropertiesDetector;
 import com.intellij.codeInspection.ui.*;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.RefFilter;
@@ -45,7 +44,6 @@ import com.intellij.util.ui.StartupUiUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
-import org.jetbrains.uast.UElement;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -243,15 +241,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
         PsiElement[] elements = Arrays.stream(filteredRefElements).filter(e -> {
           RefEntity owner = e.getOwner();
           return owner == null || !classes.contains(owner);
-        }).map(e -> {
-          if (e instanceof RefJavaElement) {
-            UElement uElement = ((RefJavaElement)e).getUastElement();
-            if (KotlinPropertiesDetector.isPropertyOrAccessor(uElement)) {
-              return e.getPsiElement().getNavigationElement();
-            }
-          }
-            return e.getPsiElement();
-          })
+        }).map(e -> e.getPsiElement())
           .filter(e -> e != null)
           .toArray(PsiElement[]::new);
         SafeDeleteHandler.invoke(project, elements, false,
@@ -273,14 +263,14 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   class MoveToEntries extends QuickFixAction {
     MoveToEntries(@NotNull InspectionToolWrapper toolWrapper) {
-      super(AnalysisBundle.message("inspection.dead.code.entry.point.quickfix"), null, null, toolWrapper);
+      super(AnalysisBundle.message("inspection.dead.code.entry.point.quickfix"), AllIcons.Nodes.EntryPoints, null, toolWrapper);
     }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
       if (e.getPresentation().isEnabledAndVisible()) {
-        final RefEntity[] elements = getInvoker(e).getTree().getSelectedElements();
+        final RefEntity[] elements = InspectionTree.getSelectedRefElements(e);
         for (RefEntity element : elements) {
           if (!((RefElement) element).isEntry()) {
             return;
@@ -608,7 +598,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     };
     htmlView.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
-      protected void hyperlinkActivated(HyperlinkEvent e) {
+      protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
         URL url = e.getURL();
         if (url == null) {
           return;
@@ -637,7 +627,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     final StringBuilder buf = new StringBuilder();
     getComposer().compose(buf, entity, false);
     final String text = buf.toString();
-    DescriptionEditorPaneKt.readHTML(htmlView, DescriptionEditorPaneKt.toHTML(htmlView, text, false));
+    DescriptionEditorPaneKt.readHTML(htmlView, text);
     return ScrollPaneFactory.createScrollPane(htmlView, true);
   }
 

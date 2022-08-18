@@ -11,7 +11,6 @@ import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileListener;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.util.ObjectUtils;
 import org.editorconfig.Utils;
@@ -67,7 +66,6 @@ public class EditorConfigEncodingCache implements PersistentStateComponent<Eleme
   @Override
   public void loadState(@NotNull Element state) {
     myCharsetMap.clear();
-    final VirtualFileManager vfManager = VirtualFileManager.getInstance();
     for (Element fileElement : state.getChildren(ENTRY_ELEMENT)) {
       final Attribute urlAttr = fileElement.getAttribute(URL_ATTR);
       final Attribute charsetAttr =  fileElement.getAttribute(CHARSET_ATTR);
@@ -77,18 +75,15 @@ public class EditorConfigEncodingCache implements PersistentStateComponent<Eleme
         final Charset charset = ConfigEncodingManager.toCharset(charsetStr);
         final boolean useBom = ConfigEncodingManager.UTF8_BOM_ENCODING.equals(charsetStr);
         if (charset != null) {
-          VirtualFile vf = vfManager.findFileByUrl(url);
-          if (vf != null) {
-            CharsetData charsetData = new CharsetData(charset, useBom);
-            myCharsetMap.put(url, charsetData);
-            Attribute ignoreAttr = fileElement.getAttribute(IGNORE_ATTR);
-            if (ignoreAttr != null) {
-              try {
-                charsetData.setIgnored(ignoreAttr.getBooleanValue());
-              }
-              catch (DataConversionException e) {
-                // Ignore, do not set
-              }
+          CharsetData charsetData = new CharsetData(charset, useBom);
+          myCharsetMap.put(url, charsetData);
+          Attribute ignoreAttr = fileElement.getAttribute(IGNORE_ATTR);
+          if (ignoreAttr != null) {
+            try {
+              charsetData.setIgnored(ignoreAttr.getBooleanValue());
+            }
+            catch (DataConversionException e) {
+              // Ignore, do not set
             }
           }
         }
@@ -138,7 +133,8 @@ public class EditorConfigEncodingCache implements PersistentStateComponent<Eleme
 
   @Nullable
   public Charset getCachedEncoding(@NotNull VirtualFile virtualFile) {
-    return ObjectUtils.doIfNotNull(getCachedCharsetData(virtualFile), CharsetData::getCharset);
+    CharsetData charsetData = getCachedCharsetData(virtualFile);
+    return charsetData != null && !charsetData.isIgnored ? charsetData.getCharset() : null;
   }
 
   @Nullable

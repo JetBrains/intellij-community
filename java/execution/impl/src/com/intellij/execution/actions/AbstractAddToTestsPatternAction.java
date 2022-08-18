@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.execution.ExecutionBundle;
@@ -35,7 +21,13 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.*;
 
-public abstract class AbstractAddToTestsPatternAction<T extends JavaTestConfigurationBase> extends AnAction implements UpdateInBackground {
+public abstract class AbstractAddToTestsPatternAction<T extends JavaTestConfigurationBase> extends AnAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @NotNull protected abstract AbstractPatternBasedConfigurationProducer<T> getPatternBasedProducer();
 
   @NotNull protected abstract ConfigurationType getConfigurationType();
@@ -47,7 +39,8 @@ public abstract class AbstractAddToTestsPatternAction<T extends JavaTestConfigur
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+    final PsiElement[] psiElements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+    if (psiElements == null) return;
     final LinkedHashSet<PsiElement> classes = new LinkedHashSet<>();
     PsiElementProcessor.CollectElements<PsiElement> processor = new PsiElementProcessor.CollectElements<>(classes);
     getPatternBasedProducer().collectTestMembers(psiElements, true, true, processor);
@@ -93,9 +86,9 @@ public abstract class AbstractAddToTestsPatternAction<T extends JavaTestConfigur
   @Override
   public void update(@NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
-    presentation.setVisible(false);
+    presentation.setEnabledAndVisible(false);
     final DataContext dataContext = e.getDataContext();
-    final PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+    final PsiElement[] psiElements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     if (psiElements != null) {
       PsiElementProcessor.CollectElementsWithLimit<PsiElement> processor = new PsiElementProcessor.CollectElementsWithLimit<>(2);
       getPatternBasedProducer().collectTestMembers(psiElements, false, false, processor);
@@ -105,7 +98,7 @@ public abstract class AbstractAddToTestsPatternAction<T extends JavaTestConfigur
       if (project != null) {
         final List<T> foundConfigurations = collectPatternConfigurations(collection, project);
         if (!foundConfigurations.isEmpty()) {
-          presentation.setVisible(true);
+          presentation.setEnabledAndVisible(true);
           if (foundConfigurations.size() == 1) {
             presentation.setText(ExecutionBundle.message("add.to.temp.suite.0", foundConfigurations.get(0).getName()));
           }

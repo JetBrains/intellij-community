@@ -3,7 +3,8 @@ package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
-import com.intellij.openapi.application.ApplicationStarter
+import com.intellij.openapi.application.ModernApplicationStarter
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType
 import com.intellij.util.io.jackson.array
@@ -14,14 +15,15 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.system.exitProcess
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 
-internal class BundledPluginsLister : ApplicationStarter {
-  override fun getCommandName() = "listBundledPlugins"
-
-  override fun getRequiredModality() = ApplicationStarter.NOT_IN_EDT
+internal class BundledPluginsLister : ModernApplicationStarter() {
+  override val commandName: String
+    get() = "listBundledPlugins"
 
   // not premain because FileTypeManager is used to report extensions
-  override fun main(args: List<String>) {
+  override suspend fun start(args: List<String>) {
     try {
       val out: Writer = if (args.size == 2) {
         val outFile = Path.of(args[1])
@@ -51,6 +53,7 @@ internal class BundledPluginsLister : ApplicationStarter {
             }
           }
         }
+        extensions.sort()
         writer.obj {
           writeList(writer, "modules", modules.sorted())
           writeList(writer, "plugins", pluginIds)
@@ -59,6 +62,10 @@ internal class BundledPluginsLister : ApplicationStarter {
       }
     }
     catch (e: Exception) {
+      try {
+        Logger.getInstance(javaClass).error("Bundled plugins list builder failed", e)
+      }
+      catch (ignored: Throwable) { }
       e.printStackTrace(System.err)
       exitProcess(1)
     }

@@ -621,7 +621,7 @@ interface TxANotAnno {}
   @NeedsIndex.ForStandardLibrary
   void testPreferClassesOfExpectedClassType() {
     myFixture.addClass "class XException extends Exception {}"
-    checkPreferredItems 0, 'XException', 'XClass', 'XIntf'
+    checkPreferredItems 0, 'XException.class', 'XException', 'XClass', 'XIntf'
   }
 
   void testNoNumberValueOf() {
@@ -723,7 +723,7 @@ interface TxANotAnno {}
     checkPreferredItems 0, 'unmodifiableList', 'unmodifiableCollection'
   }
 
-  @NeedsIndex.Full
+  @NeedsIndex.SmartMode(reason = "isEffectivelyDeprecated needs smart mode")
   void testDispreferDeprecatedMethodWithUnresolvedQualifier() {
     myFixture.addClass("package foo; public class Assert { public static void assertTrue() {} }")
     myFixture.addClass("package bar; @Deprecated public class Assert { public static void assertTrue() {}; public static void assertTrue2() {} }")
@@ -1007,7 +1007,7 @@ class Foo {
     assert weights[3].contains("explicitlyImported=CLASS_DECLARED_IN_SAME_PACKAGE_NESTED,") // same package but nested class not imported
   }
 
-  @NeedsIndex.Full
+  @NeedsIndex.SmartMode(reason = "Ordering requires smart mode")
   void "test discourage experimental"() {
     myFixture.addClass("package org.jetbrains.annotations;public class ApiStatus{public @interface Experimental {}}");
     myFixture.addClass("class Cls {@org.jetbrains.annotations.ApiStatus.Experimental public void methodA() {} public void methodB() {}}")

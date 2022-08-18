@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
@@ -8,8 +8,9 @@ import com.intellij.psi.util.elementType
 import com.intellij.psi.util.siblings
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassConstructorDescriptor
 import org.jetbrains.kotlin.load.java.descriptors.JavaMethodDescriptor
@@ -31,7 +32,7 @@ class AddNamesInCommentToJavaCallArgumentsIntention : SelfTargetingIntention<KtC
         val psiFactory = KtPsiFactory(element)
         for ((argument, parameter) in element.valueArguments.filterIsInstance<KtValueArgument>().resolve(resolvedCall)) {
             val parent = argument.parent
-            parent.addBefore(psiFactory.createComment(parameter.toCommentedParameterName()), argument)
+            parent.addBefore(psiFactory.createComment(parameter.toParameterNameComment()), argument)
             parent.addBefore(psiFactory.createWhiteSpace(), argument)
             if (parameter.isVararg) break
         }
@@ -55,17 +56,28 @@ class AddNamesInCommentToJavaCallArgumentsIntention : SelfTargetingIntention<KtC
             return resolve
         }
 
-        fun ValueParameterDescriptor.toCommentedParameterName(): String =
-            "/* ${if (isVararg) "...$name" else name.asString()} = */"
+        fun ValueParameterDescriptor.toParameterNameComment(): String =
+            canonicalParameterNameComment(if (isVararg) "...$name" else name.asString())
 
-        fun KtValueArgument.hasBlockCommentWithName(): Boolean =
+        private fun canonicalParameterNameComment(parameterName: String): String = "/* $parameterName = */"
+
+        fun PsiComment.isParameterNameComment(parameter: ValueParameterDescriptor): Boolean {
+            if (this.elementType != KtTokens.BLOCK_COMMENT) return false
+            val parameterName = text
+                .removePrefix("/*").removeSuffix("*/").trim()
+                .takeIf { it.endsWith("=") }?.removeSuffix("=")?.trim()
+                ?: return false
+            return canonicalParameterNameComment(parameterName) == parameter.toParameterNameComment()
+        }
+
+        private fun KtValueArgument.hasBlockCommentWithName(): Boolean =
             blockCommentWithName() != null
 
         fun KtValueArgument.blockCommentWithName(): PsiComment? =
             siblings(forward = false, withSelf = false)
                 .takeWhile { it is PsiWhiteSpace || it is PsiComment }
                 .filterIsInstance<PsiComment>()
-                .firstOrNull { it.elementType == KtTokens.BLOCK_COMMENT && it.text.endsWith("= */") }
+                .firstOrNull { it.elementType == KtTokens.BLOCK_COMMENT && it.text.removeSuffix("*/").trim().endsWith("=") }
 
         fun List<KtValueArgument>.resolve(
             resolvedCall: ResolvedCall<out CallableDescriptor>

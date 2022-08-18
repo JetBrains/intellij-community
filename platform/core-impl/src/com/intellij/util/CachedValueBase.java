@@ -20,7 +20,6 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public abstract class CachedValueBase<T> {
-  private static final Logger LOG = Logger.getInstance(CachedValueImpl.class);
   private final boolean myTrackValue;
   private volatile SoftReference<Data<T>> myData;
 
@@ -162,7 +161,7 @@ public abstract class CachedValueBase<T> {
       return 0;
     }
     else {
-      LOG.error("Wrong dependency type: " + dependency.getClass());
+      Logger.getInstance(CachedValueBase.class).error("Wrong dependency type: " + dependency.getClass());
       return -1;
     }
   }

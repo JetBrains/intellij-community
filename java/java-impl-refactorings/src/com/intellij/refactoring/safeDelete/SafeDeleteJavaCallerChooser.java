@@ -37,6 +37,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.EmptyConsumer;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -122,7 +123,7 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
             final Set<PsiParameter> paramRefs = new HashSet<>();
             expression.accept(new JavaRecursiveElementWalkingVisitor() {
               @Override
-              public void visitReferenceExpression(PsiReferenceExpression expression) {
+              public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
                 super.visitReferenceExpression(expression);
                 final PsiElement resolve = expression.resolve();
                 if (resolve instanceof PsiParameter) {

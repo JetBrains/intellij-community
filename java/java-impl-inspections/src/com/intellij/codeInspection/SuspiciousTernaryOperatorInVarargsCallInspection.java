@@ -19,7 +19,7 @@ public class SuspiciousTernaryOperatorInVarargsCallInspection extends AbstractBa
     return new JavaElementVisitor() {
 
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         super.visitMethodCallExpression(expression);
 
         PsiExpressionList argumentList = expression.getArgumentList();

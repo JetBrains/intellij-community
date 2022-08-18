@@ -1,11 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.ui.uiDslShowcase
 
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.RowLayout
+import com.intellij.ui.dsl.builder.panel
 
-@Suppress("DialogTitleCapitalization")
 @Demo(title = "Row Layout",
   description = "Every row has one of three possible RowLayout. Default value is LABEL_ALIGNED when label is provided for the row, " +
                 "INDEPENDENT otherwise. See documentation for Row.layout method and RowLayout enum")

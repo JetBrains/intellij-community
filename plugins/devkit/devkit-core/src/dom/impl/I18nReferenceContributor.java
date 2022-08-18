@@ -177,7 +177,7 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
                                         }));
 
     final XmlTagPattern.Capture intentionActionKeyTagPattern =
-      xmlTag().withLocalName("categoryKey").
+      xmlTag().withLocalName(string().oneOf("categoryKey", "familyNameKey")).
         withParent(DomPatterns.tagWithDom(INTENTION_ACTION_TAG, Extension.class));
     registrar.registerReferenceProvider(intentionActionKeyTagPattern,
                                         new PropertyKeyReferenceProvider(true, null, INTENTION_ACTION_BUNDLE_TAG));

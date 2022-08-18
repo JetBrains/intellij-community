@@ -4,11 +4,17 @@ package com.intellij.ide.actions.searcheverywhere
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Contract
 
+@ApiStatus.Internal
 abstract class SearchEverywhereMlService {
   companion object {
     val EP_NAME: ExtensionPointName<SearchEverywhereMlService> = ExtensionPointName.create("com.intellij.searchEverywhereMlService")
 
+    /**
+     * Returns an instance of the service if Machine Learning in Search Everywhere is enabled (see [isEnabled]), null otherwise.
+     */
     @JvmStatic
     fun getInstance(): SearchEverywhereMlService? {
       val extensions = EP_NAME.extensions
@@ -17,15 +23,23 @@ abstract class SearchEverywhereMlService {
         logger.warn("Multiple implementations of ${SearchEverywhereMlService::class.java.name}. Using the first.")
       }
 
-      return extensions.firstOrNull()
+      return extensions.firstOrNull()?.takeIf { it.isEnabled() }
     }
   }
 
-  abstract fun shouldOrderByMl(tabId: String): Boolean
+  /**
+   * Indicates whether machine learning in Search Everywhere is enabled.
+   * This method can return false if ML-ranking is disabled and no experiments are allowed
+   * (see [com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlExperiment.isAllowed])
+   */
+  abstract fun isEnabled(): Boolean
 
-  abstract fun getMlWeight(contributor: SearchEverywhereContributor<*>, element: Any, matchingDegree: Int): Double
+  abstract fun onSessionStarted(project: Project?, mixedListInfo: SearchEverywhereMixedListInfo)
 
-  abstract fun onSessionStarted(project: Project?)
+  @Contract("_, _, _ -> new")
+  abstract fun createFoundElementInfo(contributor: SearchEverywhereContributor<*>,
+                                      element: Any,
+                                      priority: Int): SearchEverywhereFoundElementInfo
 
   abstract fun onSearchRestart(project: Project?, tabId: String, reason: SearchRestartReason,
                                keysTyped: Int, backspacesTyped: Int, searchQuery: String,

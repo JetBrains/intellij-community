@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("unused", "DuplicatedCode", "HardCodedStringLiteral")
+@file:Suppress("unused", "HardCodedStringLiteral")
 
 package com.intellij.util.indexing.diagnostic.presentation
 
@@ -14,6 +14,7 @@ import com.intellij.util.indexing.diagnostic.JsonSharedIndexDiagnosticEvent
 import com.intellij.util.indexing.diagnostic.dto.*
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
+import java.util.*
 
 fun createAggregateHtml(
   projectName: String,
@@ -95,7 +96,7 @@ fun createAggregateHtml(
                 td(diagnostic.appInfo.productCode + "-" + diagnostic.appInfo.build)
 
                 //Indexing type section
-                td(if (diagnostic.indexingTimes.wasFullIndexing) "Full" else "Partial")
+                td(diagnostic.indexingTimes.scanningType.name.lowercase(Locale.ENGLISH).replace('_', ' '))
               }
             }
           }
@@ -378,7 +379,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
               if (times.indexingReason != null) {
                 tr { td("Reason"); td(times.indexingReason) }
               }
-              tr { td("Full or partial"); td(if (times.wasFullIndexing) "full" else "partial") }
+              tr { td("Type"); td(times.scanningType.name.lowercase(Locale.ENGLISH).replace('_', ' ')) }
               tr { td("Finished at"); td(times.updatingEnd.presentableLocalDateTime()) }
               tr { td("Cancelled?"); td(times.wasInterrupted.toString()) }
               tr { td("Suspended time"); td(times.totalSuspendedTime.presentableDuration()) }
@@ -387,12 +388,12 @@ fun JsonIndexDiagnostic.generateHtml(): String {
               tr { td("Iterators creation time"); td(times.creatingIteratorsTime.presentableDuration()) }
               if (IndexDiagnosticDumper.shouldProvideVisibleAndAllThreadsTimeInfo) {
                 tr {
-                  td("Indexing visible time");
+                  td("Total processing visible time")
                   td(JsonDuration(
                     projectIndexingHistory.fileProviderStatistics.sumOf { stat -> stat.totalIndexingVisibleTime.nano }).presentableDuration())
                 }
                 tr {
-                  td("All threads time to visible time ratio");
+                  td("All threads time to visible time ratio")
                   td(String.format("%.2f", projectIndexingHistory.visibleTimeToAllThreadTimeRatio))
                 }
               }
@@ -401,7 +402,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
               tr { td("Pushing properties time"); td(times.pushPropertiesTime.presentableDuration()) }
               tr { td("Running extensions time"); td(times.indexExtensionsTime.presentableDuration()) }
               tr {
-                td("Separate application time")
+                td("Index writing time")
                 td(if (times.isAppliedAllValuesSeparately)
                      StringUtil.formatDuration(times.separateApplyingIndexesVisibleTime.milliseconds)
                    else
@@ -432,7 +433,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
                     td(if (index == 0) providerStatistic.providerName else "^")
                     td(slowFile.fileName)
                     td(slowFile.contentLoadingTime.presentableDuration())
-                    td(slowFile.indexingTime.presentableDuration())
+                    td(slowFile.evaluationOfIndexValueChangerTime.presentableDuration())
                     td(slowFile.processingTime.presentableDuration())
                   }
                 }
@@ -448,10 +449,10 @@ fun JsonIndexDiagnostic.generateHtml(): String {
               tr {
                 th("File type")
                 th("Number of files")
-                th("Indexing time")
+                th("Total processing time")
                 th("Content loading time")
                 th("Total files size")
-                th("Indexing speed")
+                th("Total processing speed")
                 th("The biggest contributors")
               }
             }
@@ -469,7 +470,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
                   td(visibleIndexingTime.presentableDuration() + " (" + statsPerFileType.partOfTotalProcessingTime.presentablePercentages() + ")")
                   td(visibleContentLoadingTime.presentableDuration() + " (" + statsPerFileType.partOfTotalContentLoadingTime.presentablePercentages() + ")")
                   td(statsPerFileType.totalFilesSize.presentableSize())
-                  td(statsPerFileType.indexingSpeed.presentableSpeed())
+                  td(statsPerFileType.totalProcessingSpeed.presentableSpeed())
                   td(
                     statsPerFileType.biggestContributors.joinToString("\n") {
                       it.partOfTotalProcessingTimeOfThisFileType.presentablePercentages() + ": " +
@@ -506,7 +507,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
                   td(statsPerIndexer.partOfTotalIndexingTime.presentablePercentages())
                   td(statsPerIndexer.totalNumberOfFilesIndexedByExtensions.toString())
                   td(statsPerIndexer.totalFilesSize.presentableSize())
-                  td(statsPerIndexer.indexingSpeed.presentableSpeed())
+                  td(statsPerIndexer.indexValueChangerEvaluationSpeed.presentableSpeed())
 
                   fun JsonProjectIndexingHistory.JsonStatsPerIndexer.JsonSnapshotInputMappingStats.presentable(): String {
                     val hitsPercentages = JsonPercentages(totalHits, totalRequests)
@@ -597,7 +598,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
             thead {
               tr {
                 th("Provider name")
-                th("Indexing time")
+                th("Total processing time")
                 th("Content loading time")
                 th("Number of indexed files")
                 th("Number of files indexed by $INDEX_INFRA_EXTENSIONS")
@@ -781,7 +782,11 @@ private val JETBRAINS_GRAYSCALE_LOGO_SVG = """
   </svg>
 """.trimIndent()
 
-private fun createTag(body: HtmlBuilder.() -> Unit, tag: Element): Element {
+/*
+ * Attention: here we use DSL with inline+crossinline body functions in order to not declare 100+ classes in MetaSpace
+ */
+
+private inline fun createTag(crossinline body: HtmlBuilder.() -> Unit, tag: Element): Element {
   val tagBuilder = HtmlBuilder()
   tagBuilder.body()
   return tagBuilder.toFragment().wrapWith(tag)
@@ -803,29 +808,31 @@ private fun HtmlBuilder.h1(@Nls title: String) = append(HtmlChunk.text(title).wr
 
 private fun HtmlBuilder.hr(className: String) = append(HtmlChunk.hr().attr("class", className))
 
-private fun HtmlBuilder.table(className: String = "", body: HtmlBuilder.() -> Unit) = append(
-  createTag(body, tag("table").addAttrIfNotEmpty("class", className)))
+private inline fun HtmlBuilder.table(className: String = "", crossinline body: HtmlBuilder.() -> Unit): HtmlBuilder {
+  return append(createTag(body, tag("table").addAttrIfNotEmpty("class", className)))
+}
 
-private fun HtmlBuilder.thead(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("thead")))
-private fun HtmlBuilder.tbody(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("tbody")))
-private fun HtmlBuilder.tr(className: String = "", href: String = "", body: HtmlBuilder.() -> Unit) = append(
-  createTag(body, tag("tr").addAttrIfNotEmpty("class", className).addAttrIfNotEmpty("href", href)))
+private inline fun HtmlBuilder.thead(crossinline body: HtmlBuilder.() -> Unit): HtmlBuilder = append(createTag(body, tag("thead")))
+private inline fun HtmlBuilder.tbody(crossinline body: HtmlBuilder.() -> Unit): HtmlBuilder = append(createTag(body, tag("tbody")))
+private inline fun HtmlBuilder.tr(className: String = "", href: String = "", crossinline body: HtmlBuilder.() -> Unit): HtmlBuilder {
+  return append(createTag(body, tag("tr").addAttrIfNotEmpty("class", className).addAttrIfNotEmpty("href", href)))
+}
 
-private fun HtmlBuilder.th(body: HtmlBuilder.() -> Unit, colspan: String = "", rowspan: String = "") = append(createTag(body, tag("th")
-  .addAttrIfNotEmpty("colspan", colspan).addAttrIfNotEmpty("rowspan", rowspan))
-)
+private inline fun HtmlBuilder.th(crossinline body: HtmlBuilder.() -> Unit, colspan: String = "", rowspan: String = ""): HtmlBuilder {
+  return append(createTag(body, tag("th").addAttrIfNotEmpty("colspan", colspan).addAttrIfNotEmpty("rowspan", rowspan)))
+}
 
 private fun HtmlBuilder.th(@Nls text: String, colspan: String = "", rowspan: String = "") = th({ text(text) }, colspan, rowspan)
-private fun HtmlBuilder.td(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("td")))
+private inline fun HtmlBuilder.td(crossinline body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("td")))
 private fun HtmlBuilder.td(@Nls text: String) = td { text(text) }
 
-private fun HtmlBuilder.ul(body: HtmlBuilder.() -> Unit) = append(createTag(body, ul()))
-private fun HtmlBuilder.li(body: HtmlBuilder.() -> Unit) = append(createTag(body, li()))
+private inline fun HtmlBuilder.ul(crossinline body: HtmlBuilder.() -> Unit) = append(createTag(body, ul()))
+private inline fun HtmlBuilder.li(crossinline body: HtmlBuilder.() -> Unit) = append(createTag(body, li()))
 
-private fun HtmlBuilder.textarea(
+private inline fun HtmlBuilder.textarea(
   columns: Int = 75,
   rows: Int = 10,
-  body: HtmlBuilder.() -> Unit
+  crossinline body: HtmlBuilder.() -> Unit
 ) = append(
   createTag(
     body,
@@ -846,10 +853,11 @@ private fun HtmlBuilder.input(id: String, type: String, onClick: String = "", st
   """.trimIndent()))
 
 private fun HtmlBuilder.link(target: String, text: String) = append(HtmlBuilder().appendLink(target, text))
-private fun HtmlBuilder.div(className: String = "", id: String = "", body: HtmlBuilder.() -> Unit) = append(
-  createTag(body, div().addAttrIfNotEmpty("class", className).addAttrIfNotEmpty("id", id)))
+private inline fun HtmlBuilder.div(className: String = "", id: String = "", crossinline body: HtmlBuilder.() -> Unit): HtmlBuilder? {
+  return append(createTag(body, div().addAttrIfNotEmpty("class", className).addAttrIfNotEmpty("id", id)))
+}
 
-private fun HtmlBuilder.head(head: HtmlBuilder.() -> Unit) = append(createTag(head, HtmlChunk.head()))
-private fun HtmlBuilder.body(body: HtmlBuilder.() -> Unit) = append(createTag(body, HtmlChunk.body()))
-private fun HtmlBuilder.html(body: HtmlBuilder.() -> Unit) = createTag(body, html())
-private fun html(body: HtmlBuilder.() -> Unit) = HtmlBuilder().html(body)
+private inline fun HtmlBuilder.head(crossinline head: HtmlBuilder.() -> Unit) = append(createTag(head, HtmlChunk.head()))
+private inline fun HtmlBuilder.body(crossinline body: HtmlBuilder.() -> Unit) = append(createTag(body, HtmlChunk.body()))
+private inline fun HtmlBuilder.html(crossinline body: HtmlBuilder.() -> Unit) = createTag(body, html())
+private inline fun html(crossinline body: HtmlBuilder.() -> Unit) = HtmlBuilder().html(body)

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands
 
 import com.intellij.credentialStore.Credentials
@@ -22,8 +22,7 @@ class GitHttpGuiAuthenticatorTest : GitPlatformTest() {
 
   private var dialogShown = false
 
-  @Throws(Exception::class)
-  public override fun setUp() {
+  override fun setUp() {
     super.setUp()
     // otherwise login dialog doesn't work (missing LaF for JBOptionButton)
     UIManager.setLookAndFeel("com.intellij.ide.ui.laf.darcula.DarculaLaf")
@@ -32,14 +31,18 @@ class GitHttpGuiAuthenticatorTest : GitPlatformTest() {
     passwordSafe = service()
   }
 
-  @Throws(Exception::class)
-  public override fun tearDown() {
-    dialogShown = false
-
-    rememberedInputs.clear()
-    passwordSafe.set(CREDENTIAL_ATTRIBUTES, null)
-
-    super.tearDown()
+  override fun tearDown() {
+    try {
+      dialogShown = false
+      rememberedInputs.clear()
+      passwordSafe.set(CREDENTIAL_ATTRIBUTES, null)
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   fun `test data saved when correct`() {

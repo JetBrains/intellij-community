@@ -152,7 +152,8 @@ class ShelfProvider(private val project: Project, parent: Disposable) : SavedPat
         try {
           data.loadChangesIfNeededOrThrow(project)
           return@Computable SavedPatchesProvider.LoadingResult.Changes(data.getChangeObjects()!!)
-        } catch (throwable : Throwable) {
+        }
+        catch (throwable: Throwable) {
           return@Computable when (throwable) {
             is VcsException -> SavedPatchesProvider.LoadingResult.Error(throwable)
             else -> SavedPatchesProvider.LoadingResult.Error(VcsException(throwable))

@@ -61,6 +61,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @NotNull private final AuthenticationGate myAuthenticationGate;
   @NotNull private final AuthenticationMode myAuthenticationMode;
 
+  private boolean myWasRequested = false;
   @Nullable private volatile ProviderAndData myProviderAndData = null;
   private volatile boolean myCredentialHelperShouldBeUsed = false;
 
@@ -87,6 +88,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @Override
   @NotNull
   public String askPassword(@NotNull String url) {
+    myWasRequested = true;
+
     ProviderAndData providerAndData = myProviderAndData;
     if (providerAndData != null) {
       LOG.debug("askPassword. Data already filled in askUsername.");
@@ -119,6 +122,8 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
   @Override
   @NotNull
   public String askUsername(@NotNull String url) {
+    myWasRequested = true;
+
     String unifiedUrl = splitToUsernameAndUnifiedUrl(getRequiredUrl(url)).second;
     LOG.debug("askUsername. gitUrl=" + url + ", unifiedUrl=" + unifiedUrl);
 
@@ -219,7 +224,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
   @Override
   public boolean wasRequested() {
-    return myProviderAndData != null;
+    return myWasRequested;
   }
 
   /**

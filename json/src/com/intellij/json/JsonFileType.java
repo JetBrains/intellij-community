@@ -10,7 +10,7 @@ import javax.swing.*;
 /**
  * @author Mikhail Golubev
  */
-public class JsonFileType extends LanguageFileType{
+public class JsonFileType extends LanguageFileType {
   public static final JsonFileType INSTANCE = new JsonFileType();
   public static final String DEFAULT_EXTENSION = "json";
 

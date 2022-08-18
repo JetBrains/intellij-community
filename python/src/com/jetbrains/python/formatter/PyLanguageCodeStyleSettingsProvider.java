@@ -165,7 +165,7 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
 
   @Nullable
   @Override
-  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+  public CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return new PyCodeStyleSettings(settings);
   }
 
@@ -175,7 +175,7 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
     return new CodeStyleAbstractConfigurable(baseSettings, modelSettings,
                                              PyBundle.message("configurable.PyLanguageCodeStyleSettingsProvider.display.name")) {
       @Override
-      protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
+      protected @NotNull CodeStyleAbstractPanel createPanel(final @NotNull CodeStyleSettings settings) {
         return new PyCodeStyleMainPanel(getCurrentSettings(), settings);
       }
 
@@ -233,7 +233,7 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
                                                       "try: pass\n" +
                                                       "finally: pass\n";
   private static final String INDENT_SETTINGS_PREVIEW = "def foo():\n" +
-                                                        "    print 'bar'\n\n" +
+                                                        "    print('bar')\n\n" +
                                                         "def long_function_name(\n" +
                                                         "        var_one, var_two, var_three,\n" +
                                                         "        var_four):\n" +

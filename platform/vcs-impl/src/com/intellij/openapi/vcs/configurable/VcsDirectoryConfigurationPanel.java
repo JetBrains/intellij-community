@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.vcs.configurable;
 
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -15,6 +16,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy;
 import com.intellij.openapi.vcs.roots.VcsRootErrorsFinder;
 import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
@@ -365,6 +367,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Disposable
 
   @NotNull
   private Collection<VcsRootError> findUnregisteredRoots() {
+    if (!TrustedProjects.isTrusted(myProject)) return Collections.emptyList();
     return ContainerUtil.filter(VcsRootErrorsFinder.getInstance(myProject).getOrFind(),
                                 error -> error.getType() == VcsRootError.Type.UNREGISTERED_ROOT);
   }
@@ -372,7 +375,9 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Disposable
   private boolean isMappingValid(@NotNull VcsDirectoryMapping mapping) {
     if (mapping.isDefaultMapping()) return true;
     VcsRootChecker checker = myCheckers.get(mapping.getVcs());
-    return checker == null || checker.isRoot(mapping.getDirectory());
+    if (checker == null) return true;
+    VirtualFile directory = LocalFileSystem.getInstance().findFileByPath(mapping.getDirectory());
+    return directory != null && checker.isRoot(directory);
   }
 
   @NotNull
@@ -569,9 +574,11 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Disposable
     List<VcsDirectoryMapping> newMappings = getModelMappings();
     List<VcsDirectoryMapping> previousMappings = myVcsManager.getDirectoryMappings();
     myVcsConfiguration.addIgnoredUnregisteredRoots(previousMappings.stream()
-        .filter(mapping -> !newMappings.contains(mapping))
-        .map(mapping -> mapping.isDefaultMapping() ? guessProjectDir(myProject).getPath() : mapping.getDirectory())
-        .collect(Collectors.toList()));
+                                                     .filter(mapping -> !newMappings.contains(mapping))
+                                                     .map(mapping -> mapping.isDefaultMapping()
+                                                                     ? guessProjectDir(myProject).getPath()
+                                                                     : mapping.getDirectory())
+                                                     .collect(Collectors.toList()));
     myVcsConfiguration.removeFromIgnoredUnregisteredRoots(map(newMappings, VcsDirectoryMapping::getDirectory));
   }
 

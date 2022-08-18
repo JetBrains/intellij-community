@@ -1,33 +1,37 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.dependency.analyzer
 
-import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
-import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.module.Module
 
-abstract class AbstractDependencyAnalyzerAction : AnAction(), DumbAware {
-  abstract fun getSystemId(e: AnActionEvent): ProjectSystemId?
+abstract class AbstractDependencyAnalyzerAction<Data> : DependencyAnalyzerAction() {
 
-  abstract fun setSelectedState(e: AnActionEvent, view: DependencyAnalyzerView)
+  abstract fun getSelectedData(e: AnActionEvent): Data?
 
-  override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project ?: return
-    val systemId = getSystemId(e) ?: return
-    val tab = DependencyAnalyzerEditorTab(project, systemId)
-    setSelectedState(e, tab.view)
-    UIComponentEditorTab.show(project, tab)
+  abstract fun getModule(e: AnActionEvent, selectedData: Data): Module?
+
+  abstract fun getDependencyData(e: AnActionEvent, selectedData: Data): DependencyAnalyzerDependency.Data?
+
+  abstract fun getDependencyScope(e: AnActionEvent, selectedData: Data): String?
+
+  override fun isEnabledAndVisible(e: AnActionEvent): Boolean {
+    val selectedData = getSelectedData(e) ?: return false
+    return getModule(e, selectedData) != null
   }
 
-  override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = Registry.`is`("external.system.dependency.analyzer")
-  }
-
-  init {
-    templatePresentation.icon = AllIcons.Actions.DependencyAnalyzer
-    templatePresentation.text = ExternalSystemBundle.message("external.system.dependency.analyzer.action.name")
+  override fun setSelectedState(view: DependencyAnalyzerView, e: AnActionEvent) {
+    val selectedData = getSelectedData(e) ?: return
+    val module = getModule(e, selectedData) ?: return
+    val dependencyData = getDependencyData(e, selectedData)
+    val dependencyScope = getDependencyScope(e, selectedData)
+    if (dependencyData != null && dependencyScope != null) {
+      view.setSelectedDependency(module, dependencyData, dependencyScope)
+    }
+    else if (dependencyData != null) {
+      view.setSelectedDependency(module, dependencyData)
+    }
+    else {
+      view.setSelectedExternalProject(module)
+    }
   }
 }

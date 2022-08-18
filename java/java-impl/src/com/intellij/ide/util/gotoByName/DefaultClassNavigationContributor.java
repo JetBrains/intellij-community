@@ -29,7 +29,7 @@ import java.util.regex.Matcher;
 
 public class DefaultClassNavigationContributor implements ChooseByNameContributorEx, GotoClassContributor, PossiblyDumbAware {
   @Override
-  public String getQualifiedName(final NavigationItem item) {
+  public String getQualifiedName(final @NotNull NavigationItem item) {
     if (item instanceof PsiClass) {
       return getQualifiedNameForClass((PsiClass)item);
     }

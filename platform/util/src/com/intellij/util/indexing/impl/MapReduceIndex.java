@@ -11,6 +11,7 @@ import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.IntForwardIndex;
 import com.intellij.util.indexing.impl.forward.IntForwardIndexAccessor;
+import com.intellij.util.io.MeasurableIndexStore;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +22,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<Key, Value, Input> {
+import static com.intellij.util.io.MeasurableIndexStore.keysCountApproximatelyIfPossible;
+
+public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<Key, Value, Input>,
+                                                                  MeasurableIndexStore {
   private static final Logger LOG = Logger.getInstance(MapReduceIndex.class);
 
   protected final IndexId<Key, Value> myIndexId;
@@ -84,7 +88,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     LOG.assertTrue(myForwardIndex instanceof IntForwardIndex == myForwardIndexAccessor instanceof IntForwardIndexAccessor,
                    "Invalid index configuration for " + myIndexId);
     myLock = lock == null ? new ReentrantReadWriteLock() : lock;
-    myValueSerializationChecker = IndexDebugProperties.DEBUG ? new ValueSerializationChecker<>(extension, getSerializationProblemReporter()) : null;
+    myValueSerializationChecker = new ValueSerializationChecker<>(extension, getSerializationProblemReporter());
     myLowMemoryFlusher = LowMemoryWatcher.register(() -> clearCaches());
   }
 
@@ -200,6 +204,11 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     finally {
       myLock.writeLock().unlock();
     }
+  }
+
+  @Override
+  public int keysCountApproximately() {
+    return keysCountApproximatelyIfPossible(myStorage);
   }
 
   protected boolean isDisposed() {

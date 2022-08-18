@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.events.MessageEvent;
@@ -123,7 +123,7 @@ public final class GradleProjectResolverUtil {
     boolean isFromIncludedBuild = !rootProjectPath.equals(mainBuildRootPath);
 
     boolean useIncludedBuildPathPrefix = isFromIncludedBuild && isIncludedBuildTaskRunningSupported;
-    String compositeBuildGradlePath = useIncludedBuildPathPrefix ? ":" + rootDir.getName() : "";
+    String compositeBuildGradlePath = useIncludedBuildPathPrefix ? ":" + getRootProject(gradleProject).getName() : "";
     GradleModuleDataKt.setCompositeBuildGradlePath(moduleData, compositeBuildGradlePath);
 
     String directoryToRunTask;
@@ -135,6 +135,15 @@ public final class GradleProjectResolverUtil {
     }
     GradleModuleDataKt.setDirectoryToRunTask(moduleData, directoryToRunTask);
     return projectDataNode.createChild(ProjectKeys.MODULE, moduleData);
+  }
+
+  @NotNull
+  private static GradleProject getRootProject(@NotNull GradleProject project) {
+    GradleProject result = project;
+    while (result.getParent() != null) {
+      result = result.getParent();
+    }
+    return result;
   }
 
   private static final Key<Boolean> IS_INCLUDED_BUILD_TASK_RUN_SUPPORTED = Key.create("is included build task running supported");
@@ -867,7 +876,7 @@ public final class GradleProjectResolverUtil {
 
   @ApiStatus.Internal
   public static Stream<GradleProjectResolverExtension> createProjectResolvers(@Nullable ProjectResolverContext projectResolverContext) {
-    return GradleProjectResolverExtension.EP_NAME.extensions().map(extension -> {
+    return GradleProjectResolverExtension.EP_NAME.getExtensionList().stream().map(extension -> {
       try {
         Constructor<? extends GradleProjectResolverExtension> constructor = extension.getClass().getDeclaredConstructor();
         constructor.setAccessible(true);

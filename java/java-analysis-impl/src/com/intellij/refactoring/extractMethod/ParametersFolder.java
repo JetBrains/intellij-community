@@ -156,7 +156,7 @@ public class ParametersFolder {
     final Set<PsiVariable> found = new HashSet<>();
     expression.accept(new JavaRecursiveElementVisitor() {
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression referenceExpression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression referenceExpression) {
         super.visitReferenceExpression(referenceExpression);
         PsiElement resolved = referenceExpression.resolve();
         if (resolved instanceof PsiVariable && inputVariables.contains(resolved)) {
@@ -260,7 +260,7 @@ public class ParametersFolder {
       }
 
       @Override
-      public void visitExpression(PsiExpression expression) {
+      public void visitExpression(@NotNull PsiExpression expression) {
         if (PsiUtil.isAccessedForWriting(expression)) {
           exprWithWriteAccessInside[0] = expression;
         }
@@ -315,7 +315,7 @@ public class ParametersFolder {
     final boolean[] localVarsUsed = {false};
     expression.accept(new JavaRecursiveElementWalkingVisitor(){
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         final PsiElement resolved = expression.resolve();
         if (resolved instanceof PsiVariable) {
           final PsiVariable variable = (PsiVariable)resolved;

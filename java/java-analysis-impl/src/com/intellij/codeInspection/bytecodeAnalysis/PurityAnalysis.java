@@ -408,17 +408,19 @@ class DataInterpreter extends Interpreter<DataValue> {
       case Opcodes.DCONST_0:
       case Opcodes.DCONST_1:
         return DataValue.UnknownDataValue2;
-      case Opcodes.LDC:
+      case Opcodes.LDC: {
         Object cst = ((LdcInsnNode)insn).cst;
         int size = (cst instanceof Long || cst instanceof Double) ? 2 : 1;
         return size == 1 ? DataValue.UnknownDataValue1 : DataValue.UnknownDataValue2;
-      case Opcodes.GETSTATIC:
+      }
+      case Opcodes.GETSTATIC: {
         FieldInsnNode fieldInsn = (FieldInsnNode)insn;
         Member method = new Member(fieldInsn.owner, fieldInsn.name, fieldInsn.desc);
         EKey key = new EKey(method, Direction.Volatile, true);
         effects[methodNode.instructions.indexOf(insn)] = new EffectQuantum.FieldReadQuantum(key);
-        size = Type.getType(((FieldInsnNode)insn).desc).getSize();
+        int size = Type.getType(((FieldInsnNode)insn).desc).getSize();
         return size == 1 ? DataValue.UnknownDataValue1 : DataValue.UnknownDataValue2;
+      }
       default:
         return DataValue.UnknownDataValue1;
     }

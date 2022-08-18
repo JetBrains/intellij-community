@@ -13,8 +13,8 @@ import java.util.List;
 /**
  * @author Sergey Evdokimov
  */
-public class JavaFindJarFix extends FindJarFix<PsiQualifiedReferenceElement> {
-  public JavaFindJarFix(PsiQualifiedReferenceElement ref) {
+class JavaFindJarFix extends FindJarFix<PsiQualifiedReferenceElement> {
+  JavaFindJarFix(PsiQualifiedReferenceElement ref) {
     super(ref);
   }
 

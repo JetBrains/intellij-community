@@ -3,6 +3,70 @@ from _typeshed import StrPath
 from typing import IO, Any, Container, Iterable, Sequence, TypeVar, overload
 from typing_extensions import Literal
 
+if sys.version_info >= (3, 11):
+    __all__ = [
+        "NullTranslations",
+        "GNUTranslations",
+        "Catalog",
+        "bindtextdomain",
+        "find",
+        "translation",
+        "install",
+        "textdomain",
+        "dgettext",
+        "dngettext",
+        "gettext",
+        "ngettext",
+        "pgettext",
+        "dpgettext",
+        "npgettext",
+        "dnpgettext",
+    ]
+elif sys.version_info >= (3, 8):
+    __all__ = [
+        "NullTranslations",
+        "GNUTranslations",
+        "Catalog",
+        "find",
+        "translation",
+        "install",
+        "textdomain",
+        "bindtextdomain",
+        "bind_textdomain_codeset",
+        "dgettext",
+        "dngettext",
+        "gettext",
+        "lgettext",
+        "ldgettext",
+        "ldngettext",
+        "lngettext",
+        "ngettext",
+        "pgettext",
+        "dpgettext",
+        "npgettext",
+        "dnpgettext",
+    ]
+else:
+    __all__ = [
+        "NullTranslations",
+        "GNUTranslations",
+        "Catalog",
+        "find",
+        "translation",
+        "install",
+        "textdomain",
+        "bindtextdomain",
+        "bind_textdomain_codeset",
+        "dgettext",
+        "dngettext",
+        "gettext",
+        "lgettext",
+        "ldgettext",
+        "ldngettext",
+        "lngettext",
+        "ngettext",
+    ]
+
 class NullTranslations:
     def __init__(self, fp: IO[str] | None = ...) -> None: ...
     def _parse(self, fp: IO[str]) -> None: ...

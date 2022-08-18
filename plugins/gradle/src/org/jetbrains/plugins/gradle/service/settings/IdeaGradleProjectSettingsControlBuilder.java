@@ -88,7 +88,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   private final Alarm myAlarm = new Alarm();
   /**
    * The target {@link Project} reference of the UI control.
-   * It can be the current project of the settings UI configurable (see {@org.jetbrains.plugins.gradle.service.settings.GradleConfigurable}),
+   * It can be the current project of the settings UI configurable (see {@link GradleConfigurable}),
    * or the target project from the wizard context.
    */
   @NotNull
@@ -804,8 +804,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     if (wizardContext != null && wizardContext.getProject() != null) {
       project = wizardContext.getProject();
     }
-    if (project != null && project != myProjectRef.get()
-        && Disposer.findRegisteredObject(project, myProjectRefDisposable) == null) {
+    if (project != null && project != myProjectRef.get()) {
       Disposer.register(project, myProjectRefDisposable);
     }
     myProjectRef.set(project);

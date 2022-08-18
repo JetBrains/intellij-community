@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.naming;
 
 import com.intellij.ide.IdeBundle;
@@ -6,15 +6,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.rename.AutomaticRenamingDialog;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.ValidatingComponent;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +27,7 @@ import java.util.List;
  * @author dsl
  */
 public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
-  private static final Logger LOG = Logger.getInstance(AutomaticRenamingDialog.class);
+  private static final Logger LOG = Logger.getInstance(AutomaticUsageRenamingDialog.class);
   private static final int CHECK_COLUMN = 0;
   private static final int OLD_NAME_COLUMN = 1;
   private static final int NEW_NAME_COLUMN = 2;
@@ -40,7 +37,7 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
   private MyTableModel myTableModel;
   private JBTable myTable;
   private DocumentAdapter myCellEditorListener;
-  private ValidatingComponent myValidatingComponent;
+  private ValidatingComponent<?> myValidatingComponent;
 
   public AutomaticUsageRenamingDialog(Project project, AutomaticUsageRenamer<T> renamer) {
     super(project, true);
@@ -87,12 +84,6 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
     updateRenamer();
 
     boolean okActionEnabled = true;
-    for (T element : getElements()) {
-      final String errorText = getErrorText(element);
-      if (errorText != null) {
-        okActionEnabled = false;
-      }
-    }
     setOKActionEnabled(okActionEnabled);
 
     refreshValidatingComponent();
@@ -101,22 +92,8 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
   private void refreshValidatingComponent() {
     int selectedRow = myTable.getSelectedRow();
     if (selectedRow >= 0) {
-      myValidatingComponent.setErrorText(getErrorText(getElements().get(selectedRow)));
+      myValidatingComponent.setErrorText(null);
     }
-  }
-
-  @Nullable
-  private @NlsContexts.Tooltip String getErrorText(T element) {
-    return isChecked(element) ? myRenamer.getErrorText(element) : null;
-  }
-
-  private static SimpleTextAttributes highlightIfNeeded(SimpleTextAttributes attributes, String errorText) {
-    if (errorText != null) {
-      Color errorColor = SimpleTextAttributes.ERROR_ATTRIBUTES.getFgColor();
-      int style = attributes.getStyle() | SimpleTextAttributes.STYLE_ITALIC | SimpleTextAttributes.STYLE_WAVED;
-      return new SimpleTextAttributes(style, errorColor, errorColor);
-    }
-    return attributes;
   }
 
   @Override
@@ -135,7 +112,7 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
     setupOldNameColumn();
     setupNewNameColumn();
 
-    myValidatingComponent = new ValidatingComponent() {
+    myValidatingComponent = new ValidatingComponent<JComponent>() {
       @Override
       protected JComponent createMainComponent() {
         return ScrollPaneFactory.createScrollPane(myTable);
@@ -158,7 +135,6 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
       }
       myTableModel.fireTableDataChanged();
     });
-    selectAllButton.setMnemonic('S');
 
     deselectAllButton.addActionListener(e -> {
       for (int i = 0; i < getElementCount(); i++) {
@@ -166,7 +142,6 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
       }
       myTableModel.fireTableDataChanged();
     });
-    deselectAllButton.setMnemonic('U');
     box.add(Box.createVerticalStrut(4));
     box.add(buttonBox);
     box.add(Box.createVerticalStrut(4));
@@ -190,11 +165,8 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
     myTable.getColumnModel().getColumn(NEW_NAME_COLUMN).setCellRenderer(new ColoredTableCellRenderer() {
       @Override
       protected void customizeCellRenderer(@NotNull JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
-        T element = getElements().get(row);
-        String errorText = getErrorText(element);
-        setToolTipText(errorText);
-        //noinspection HardCodedStringLiteral
-        append(String.valueOf(value), highlightIfNeeded(SimpleTextAttributes.REGULAR_ATTRIBUTES, errorText));
+        setToolTipText(null);
+        append(String.valueOf(value), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
     });
 
@@ -217,17 +189,11 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
           protected void textChanged(@NotNull DocumentEvent e) {
             myTableModel.setValueAt(getCellEditorValue(), row, column);
             setChecked(row, true);
-            String errorText = myRenamer.getErrorText(getElements().get(row));
-            textField.setToolTipText(errorText);
+            getElements();
+            textField.setToolTipText(null);
             Font font = textField.getFont();
-            if (errorText != null) {
-              textField.setForeground(SimpleTextAttributes.ERROR_ATTRIBUTES.getFgColor());
-              textField.setFont(font.deriveFont(font.getStyle() | Font.ITALIC));
-            }
-            else {
-              textField.setForeground(SimpleTextAttributes.REGULAR_ATTRIBUTES.getFgColor());
-              textField.setFont(font.deriveFont(font.getStyle() & ~Font.ITALIC));
-            }
+            textField.setForeground(SimpleTextAttributes.REGULAR_ATTRIBUTES.getFgColor());
+            textField.setFont(font.deriveFont(font.getStyle() & ~Font.ITALIC));
             repaintTable();
           }
         };
@@ -249,12 +215,8 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
       protected void customizeCellRenderer(@NotNull JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
         //noinspection unchecked
         T element = (T) value;
-        setToolTipText(getErrorText(element));
+        setToolTipText(null);
         append(myRenamer.getName(element), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        String sourceName = myRenamer.getSourceName(element);
-        if (sourceName != null) {
-          append(" (" + sourceName + ")", makeItalic(SimpleTextAttributes.GRAYED_ATTRIBUTES));
-        }
       }
     });
   }
@@ -263,10 +225,6 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
     if (myCellEditorListener != null) {
       textField.getDocument().removeDocumentListener(myCellEditorListener);
     }
-  }
-
-  private static SimpleTextAttributes makeItalic(SimpleTextAttributes attributes) {
-    return new SimpleTextAttributes(SimpleTextAttributes.STYLE_ITALIC | attributes.getStyle(), attributes.getFgColor(), attributes.getWaveColor());
   }
 
   @Override
@@ -361,11 +319,12 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
 
     @Override
     @Nullable
-    public Class getColumnClass(int columnIndex) {
+    public Class<?> getColumnClass(int columnIndex) {
       switch(columnIndex) {
         case CHECK_COLUMN: return Boolean.class;
-        case OLD_NAME_COLUMN: return String.class;
-        case NEW_NAME_COLUMN: return String.class;
+        case OLD_NAME_COLUMN:
+        case NEW_NAME_COLUMN:
+          return String.class;
         default: return null;
       }
     }
@@ -406,7 +365,4 @@ public class AutomaticUsageRenamingDialog<T> extends DialogWrapper {
       }
     }
   }
-
-
-
 }

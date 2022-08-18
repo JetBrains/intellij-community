@@ -35,6 +35,11 @@ public abstract class UndoRedoAction extends DumbAwareAction implements LightEdi
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     FileEditor editor = PlatformCoreDataKeys.FILE_EDITOR.getData(dataContext);

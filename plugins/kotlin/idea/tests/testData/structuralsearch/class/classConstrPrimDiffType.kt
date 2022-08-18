@@ -1,1 +1,0 @@
-class A(val b: String, val c: String)

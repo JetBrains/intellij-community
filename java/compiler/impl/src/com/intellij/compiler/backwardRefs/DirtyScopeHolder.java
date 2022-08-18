@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs;
 
-import com.intellij.ProjectTopics;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
 import com.intellij.openapi.Disposable;
@@ -17,8 +16,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -36,6 +33,13 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
+import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
+import com.intellij.workspaceModel.storage.EntityChange;
+import com.intellij.workspaceModel.storage.VersionedStorageChange;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
 import kotlin.collections.ArraysKt;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -91,13 +95,36 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
 
     compilationAffectedModulesSubscription.accept(connect, myCompilationAffectedModules);
 
-    connect.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    WorkspaceModelTopics.getInstance(myProject).subscribeAfterModuleLoading(connect, new WorkspaceModelChangeListener() {
       @Override
-      public void rootsChanged(@NotNull ModuleRootEvent event) {
-        final Module[] modules = ModuleManager.getInstance(myProject).getModules();
-        synchronized (myLock) {
-          myVFSChangedModules.clear();
-          ContainerUtil.addAll(myVFSChangedModules, modules);
+      public void beforeChanged(@NotNull VersionedStorageChange event) {
+        for (EntityChange<ModuleEntity> change : event.getChanges(ModuleEntity.class)) {
+          ModuleEntity oldEntity = change.getOldEntity();
+          if (oldEntity != null) {
+            addToDirtyModules(ModuleEntityUtils.findModule(oldEntity, event.getStorageBefore()));
+          }
+        }
+        for (EntityChange<ContentRootEntity> change : event.getChanges(ContentRootEntity.class)) {
+          ContentRootEntity oldEntity = change.getOldEntity();
+          if (oldEntity != null) {
+            addToDirtyModules(ModuleEntityUtils.findModule(oldEntity.getModule(), event.getStorageBefore()));
+          }
+        }
+      }
+
+      @Override
+      public void changed(@NotNull VersionedStorageChange event) {
+        for (EntityChange<ModuleEntity> change : event.getChanges(ModuleEntity.class)) {
+          ModuleEntity newEntity = change.getNewEntity();
+          if (newEntity != null) {
+            addToDirtyModules(ModuleEntityUtils.findModule(newEntity, event.getStorageAfter()));
+          }
+        }
+        for (EntityChange<ContentRootEntity> change : event.getChanges(ContentRootEntity.class)) {
+          ContentRootEntity newEntity = change.getNewEntity();
+          if (newEntity != null) {
+            addToDirtyModules(ModuleEntityUtils.findModule(newEntity.getModule(), event.getStorageAfter()));
+          }
         }
       }
     });
@@ -307,13 +334,25 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
     }
   }
 
-  private void addToDirtyModules(@NotNull Module module) {
+  private void addToDirtyModules(@Nullable Module module) {
+    if (module == null) return;
     synchronized (myLock) {
       if (myCompilationPhase) {
         myChangedModulesDuringCompilation.add(module);
       }
       else {
         myVFSChangedModules.add(module);
+      }
+    }
+  }
+
+  private void removeFromDirtyModules(@NotNull Module module) {
+    synchronized (myLock) {
+      if (myCompilationPhase) {
+        myChangedModulesDuringCompilation.remove(module);
+      }
+      else {
+        myVFSChangedModules.remove(module);
       }
     }
   }

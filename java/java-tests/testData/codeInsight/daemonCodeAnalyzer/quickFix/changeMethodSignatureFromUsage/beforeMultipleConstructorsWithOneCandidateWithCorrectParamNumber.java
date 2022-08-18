@@ -1,4 +1,4 @@
-// "<html> Change signature of X(<b>String</b>)</html>" "true"
+// "<html> Change signature of X(<b>String</b>)</html>" "true-preview"
 class X {
   X(Integer i) {}
   X() {}

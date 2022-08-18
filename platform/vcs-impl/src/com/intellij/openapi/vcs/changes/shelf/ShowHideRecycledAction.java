@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -35,11 +36,15 @@ public class ShowHideRecycledAction extends ToggleAction implements DumbAware {
     if (project != null) {
       final boolean fromContextMenu = ShelvedChangesViewManager.SHELF_CONTEXT_MENU.equals(e.getPlace());
       presentation.setText(ShelveChangesManager.getInstance(project).isShowRecycled() && !fromContextMenu
-                           ?
-                           VcsBundle.messagePointer("shelve.hide.already.unshelved.action")
+                           ? VcsBundle.messagePointer("shelve.hide.already.unshelved.action")
                            : VcsBundle.messagePointer("shelve.show.already.unshelved.action"));
       presentation.setIcon(fromContextMenu ? null : AllIcons.Vcs.Patch_applied);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

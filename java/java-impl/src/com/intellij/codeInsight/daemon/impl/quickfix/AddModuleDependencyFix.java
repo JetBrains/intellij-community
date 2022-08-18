@@ -1,9 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.application.options.ModuleListCellRenderer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.ide.nls.NlsMessages;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -17,6 +20,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.util.PointersKt;
@@ -125,6 +129,16 @@ class AddModuleDependencyFix extends OrderEntryFix {
         popup.showCenteredInCurrentWindow(project);
       }
     }
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    return new IntentionPreviewInfo.Html(
+      HtmlChunk.text(JavaBundle.message("adds.module.dependencies.preview",
+                                         myModules.size(),
+                                         ContainerUtil.getFirstItem(myModules).getName(),
+                                         NlsMessages.formatAndList(ContainerUtil.map2List(myModules, module -> "'" + module.getName() + "'")),
+                                         myCurrentModule.getName())));
   }
 
   private void addDependencyOnModule(Project project, Editor editor, @Nullable Module module) {

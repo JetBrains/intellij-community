@@ -8,7 +8,11 @@ UFile (package = ) [import java.lang.reflect.ParameterizedType...]
                     ULocalVariable (name = base) [var base: <ErrorType> = anonymous object : TypeBase<T>() {}]
                         UObjectLiteralExpression [anonymous object : TypeBase<T>() {}] = Undetermined
                             UClass (name = null) [final class null : TypeBase<T> {...}]
-                                UMethod (name = ) [private fun () = UastEmptyExpression]
+                                UMethod (name = ) [private fun () {...}]
+                                    UBlockExpression [{...}] = external <init>()()
+                                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] = external <init>()()
+                                            UIdentifier (Identifier (TypeBase)) [UIdentifier (Identifier (TypeBase))]
+                                            USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: TypeBase) [<init>] = external <init>()()
                 UDeclarationsExpression [var superType: java.lang.reflect.Type = <ErrorType>.java.genericSuperclass!!] = Undetermined
                     ULocalVariable (name = superType) [var superType: java.lang.reflect.Type = <ErrorType>.java.genericSuperclass!!]
                         UPostfixExpression (operator = !!) [<ErrorType>.java.genericSuperclass!!] = Undetermined

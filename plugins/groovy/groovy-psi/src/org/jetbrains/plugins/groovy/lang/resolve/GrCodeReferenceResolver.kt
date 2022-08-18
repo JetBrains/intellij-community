@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.imports.StaticImport
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.CollectElementsProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.TypeParameterProcessor
+import org.jetbrains.plugins.groovy.transformations.inline.getHierarchicalInlineTransformationPerformer
 
 // https://issues.apache.org/jira/browse/GROOVY-8358
 // https://issues.apache.org/jira/browse/GROOVY-8359
@@ -94,6 +95,16 @@ private fun resolveImportReference(file: GroovyFile, import: GroovyImport): Coll
 private fun GrCodeReferenceElement.resolveAsReference(): Collection<GroovyResolveResult> {
   val name = referenceName ?: return emptyList()
 
+  if (canDelegateToInlineTransformation()) {
+    val macroPerformer = getHierarchicalInlineTransformationPerformer(this)
+    if (macroPerformer != null) {
+      val reference = macroPerformer.computeStaticReference(this)
+      if (reference != null) {
+        return listOf(reference)
+      }
+    }
+  }
+
   if (canResolveToTypeParameter()) {
     val typeParameters = resolveToTypeParameter(this, name)
     if (typeParameters.isNotEmpty()) return typeParameters
@@ -129,7 +140,6 @@ private fun GrCodeReferenceElement.resolveAsReference(): Collection<GroovyResolv
 
 private fun GrReferenceElement<*>.canResolveToTypeParameter(): Boolean {
   if (isQualified) return false
-  val parent = parent
   return when (parent) {
     is GrReferenceElement<*>,
     is GrExtendsClause,
@@ -139,6 +149,13 @@ private fun GrReferenceElement<*>.canResolveToTypeParameter(): Boolean {
     is GrNewExpression,
     is GrAnonymousClassDefinition,
     is GrCodeReferenceElement -> false
+    else -> true
+  }
+}
+
+private fun GrReferenceElement<*>.canDelegateToInlineTransformation(): Boolean {
+  return when(parent) {
+    is GrAnnotation -> false
     else -> true
   }
 }

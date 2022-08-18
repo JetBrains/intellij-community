@@ -1,4 +1,3 @@
-// IGNORE_FIR
 open class A(x: Int) {
     protected constructor() : this(1) {}
     private constructor(p: String) : this(2) {}

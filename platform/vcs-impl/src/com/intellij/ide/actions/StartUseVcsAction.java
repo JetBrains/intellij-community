@@ -1,6 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
+import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -20,6 +22,11 @@ public class StartUseVcsAction extends DumbAwareAction {
 
   public StartUseVcsAction() {
     super(VcsBundle.messagePointer("action.enable.version.control.integration.text"));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -50,7 +57,7 @@ public class StartUseVcsAction extends DumbAwareAction {
   }
 
   private static boolean isEnabled(@Nullable Project project) {
-    if (project == null) return false;
+    if (project == null || !TrustedProjects.isTrusted(project)) return false;
     ProjectLevelVcsManagerImpl manager = ProjectLevelVcsManagerImpl.getInstanceImpl(project);
     return manager.haveVcses() && !manager.hasAnyMappings();
   }

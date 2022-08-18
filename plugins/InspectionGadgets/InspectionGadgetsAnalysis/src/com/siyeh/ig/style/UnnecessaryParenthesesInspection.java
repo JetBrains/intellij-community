@@ -93,7 +93,7 @@ public class UnnecessaryParenthesesInspection extends BaseInspection implements 
 
   private class UnnecessaryParenthesesVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitParameterList(PsiParameterList list) {
+    public void visitParameterList(@NotNull PsiParameterList list) {
       super.visitParameterList(list);
       if (!ignoreParenthesesOnLambdaParameter && list.getParent() instanceof PsiLambdaExpression && list.getParametersCount() == 1) {
         final PsiParameter parameter = Objects.requireNonNull(list.getParameter(0));
@@ -104,7 +104,7 @@ public class UnnecessaryParenthesesInspection extends BaseInspection implements 
     }
 
     @Override
-    public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
+    public void visitParenthesizedExpression(@NotNull PsiParenthesizedExpression expression) {
       final PsiElement parent = expression.getParent();
       if (parent instanceof PsiParenthesizedExpression) {
         return;

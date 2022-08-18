@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xmlb;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.serialization.MutableAccessor;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.dom.XmlElement;
@@ -12,30 +11,30 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Type;
 
 abstract class BasePrimitiveBinding implements NestedBinding {
-  protected final MutableAccessor myAccessor;
+  protected final MutableAccessor accessor;
   protected final String name;
 
-  protected final @Nullable Converter<Object> myConverter;
+  protected final @Nullable Converter<Object> converter;
 
-  protected @Nullable Binding myBinding;
+  protected @Nullable Binding binding;
 
   protected BasePrimitiveBinding(@NotNull MutableAccessor accessor, @Nullable String suggestedName, @Nullable Class<? extends Converter> converterClass) {
-    myAccessor = accessor;
+    this.accessor = accessor;
 
-    name = StringUtil.isEmpty(suggestedName) ? myAccessor.getName() : suggestedName;
+    name = (suggestedName == null || suggestedName.isEmpty()) ? this.accessor.getName() : suggestedName;
     //noinspection unchecked
-    myConverter = converterClass == null || converterClass == Converter.class ? null : ReflectionUtil.newInstance(converterClass);
+    converter = converterClass == null || converterClass == Converter.class ? null : ReflectionUtil.newInstance(converterClass);
   }
 
   @Override
   public @NotNull MutableAccessor getAccessor() {
-    return myAccessor;
+    return accessor;
   }
 
   @Override
   public final void init(@NotNull Type originalType, @NotNull Serializer serializer) {
-    if (myConverter == null && !(this instanceof AttributeBinding)) {
-      myBinding = serializer.getBinding(myAccessor);
+    if (converter == null && !(this instanceof AttributeBinding)) {
+      binding = serializer.getBinding(accessor);
     }
   }
 
@@ -61,6 +60,6 @@ abstract class BasePrimitiveBinding implements NestedBinding {
   }
 
   protected final @Nullable Converter<Object> getConverter() {
-    return myConverter;
+    return converter;
   }
 }

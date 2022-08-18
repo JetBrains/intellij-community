@@ -1,25 +1,26 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.tasks
 
 import com.fasterxml.jackson.jr.ob.JSON
+import com.intellij.diagnostic.telemetry.use
 import com.jetbrains.plugin.blockmap.core.BlockMap
 import com.jetbrains.plugin.blockmap.core.FileHash
 import io.opentelemetry.api.common.AttributeKey
+import org.jetbrains.intellij.build.io.W_CREATE_NEW
 import org.jetbrains.intellij.build.io.ZipArchiver
 import org.jetbrains.intellij.build.io.compressDir
 import org.jetbrains.intellij.build.io.writeNewZip
+import org.jetbrains.intellij.build.tracer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ForkJoinTask
 
 private const val algorithm = "SHA-256"
 
-@Suppress("unused")
-fun bulkZipWithPrefix(commonSourceDir: Path, items: List<Map.Entry<String, Path>>, compress: Boolean) {
+fun bulkZipWithPrefix(commonSourceDir: Path, items: Collection<Map.Entry<String, Path>>, compress: Boolean) {
   tracer.spanBuilder("archive directories")
     .setAttribute(AttributeKey.longKey("count"), items.size.toLong())
     .setAttribute(AttributeKey.stringKey("commonSourceDir"), commonSourceDir.toString())
-    .startSpan()
     .use { parentSpan ->
       val json = JSON.std.without(JSON.Feature.USE_FIELDS)
       ForkJoinTask.invokeAll(items.map { item ->
@@ -30,7 +31,6 @@ fun bulkZipWithPrefix(commonSourceDir: Path, items: List<Map.Entry<String, Path>
             tracer.spanBuilder("build plugin archive")
               .setAttribute("inputDir", dir.toString())
               .setAttribute("outputFile", target.toString())
-              .startSpan()
               .use {
                 writeNewZip(target, compress = compress) { zipCreator ->
                   ZipArchiver(zipCreator).use { archiver ->
@@ -41,7 +41,6 @@ fun bulkZipWithPrefix(commonSourceDir: Path, items: List<Map.Entry<String, Path>
               }
             tracer.spanBuilder("build plugin blockmap")
               .setAttribute("file", target.toString())
-              .startSpan()
               .use {
                 buildBlockMap(target, json)
               }
@@ -67,7 +66,7 @@ internal fun buildBlockMap(file: Path, json: JSON) {
 
   val hashFile = fileParent.resolve("$fileName.hash.json")
   Files.newInputStream(file).use { input ->
-    Files.newOutputStream(hashFile).use { output ->
+    Files.newOutputStream(hashFile, *W_CREATE_NEW.toTypedArray()).use { output ->
       json.write(FileHash(input, algorithm), output)
     }
   }

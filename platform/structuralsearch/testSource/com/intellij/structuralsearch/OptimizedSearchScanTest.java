@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -24,7 +24,7 @@ public class OptimizedSearchScanTest extends StructuralSearchTestCase {
            "class C {" +
            "    void '_m{0,1} () throws OMGWTFBBQException {}" +
            "}",
-           "[in code:C][in code:class|in code:enum|in code:interface]");
+           "[in code:C][in code:class|in code:enum|in code:interface|in code:record]");
 
     doTest("throws should not be in plan",
            "class C {" +
@@ -33,16 +33,16 @@ public class OptimizedSearchScanTest extends StructuralSearchTestCase {
            "    return null;" +
            "  }" +
            "}",
-           "[in code:C][in code:class|in code:enum|in code:interface][in code:m][in code:String][in code:println][in code:out]" +
+           "[in code:C][in code:class|in code:enum|in code:interface|in code:record][in code:m][in code:String][in code:println][in code:out]" +
            "[in code:System][in code:return][in code:null]");
   }
 
   public void testExtendsImplements() {
     doTest("extends should not be in plan",
-           "class A extends '_B{0,0} {}", "[in code:A][in code:class|in code:enum|in code:interface]");
+           "class A extends '_B{0,0} {}", "[in code:A][in code:class|in code:enum|in code:interface|in code:record]");
 
     doTest("implements should not be in plan",
-           "class B implements '_I{0,0} {}", "[in code:B][in code:class|in code:enum|in code:interface]");
+           "class B implements '_I{0,0} {}", "[in code:B][in code:class|in code:enum|in code:interface|in code:record]");
   }
 
   public void testLambda() {
@@ -57,9 +57,10 @@ public class OptimizedSearchScanTest extends StructuralSearchTestCase {
   }
 
   public void testClasses() {
-    doTest("class A {}", "[in code:A][in code:class|in code:enum|in code:interface]");
+    doTest("class A {}", "[in code:A][in code:class|in code:enum|in code:interface|in code:record]");
     doTest("interface I {}", "[in code:I][in code:interface]");
     doTest("enum E {}", "[in code:E][in code:enum]");
+    doTest("record R() {}", "[in code:R][in code:record]");
   }
 
   public void testDescendants() {
@@ -69,7 +70,7 @@ public class OptimizedSearchScanTest extends StructuralSearchTestCase {
            "in code:CheckedList|in code:CheckedRandomAccessList|in code:CopiesList|in code:EmptyList|in code:List|" +
            "in code:SingletonList|in code:SubList|in code:SynchronizedList|in code:SynchronizedRandomAccessList|" +
            "in code:UnmodifiableList|in code:UnmodifiableRandomAccessList]" +
-           "[in code:class|in code:enum|in code:interface]");
+           "[in code:class|in code:enum|in code:interface|in code:record]");
 
     doTest("non-existing class name should be added to plan", "enum '_E:*Zyxwvuts {}", "[in code:Zyxwvuts][in code:enum]");
   }

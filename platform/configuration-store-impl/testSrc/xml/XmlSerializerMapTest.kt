@@ -1,16 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("PropertyName", "ReplacePutWithAssignment", "ReplacePutWithAssignment")
+@file:Suppress("PropertyName", "ReplacePutWithAssignment")
 
 package com.intellij.configurationStore.xml
 
 import com.intellij.configurationStore.deserialize
 import com.intellij.ide.plugins.PluginFeatureService
-import com.intellij.ide.plugins.advertiser.FeaturePluginData
-import com.intellij.ide.plugins.advertiser.PluginData
-import com.intellij.ide.plugins.advertiser.PluginFeatureCacheService
-import com.intellij.ide.plugins.advertiser.PluginFeatureMap
+import com.intellij.ide.plugins.advertiser.*
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XMap
@@ -38,6 +36,27 @@ internal class XmlSerializerMapTest {
             </map>
           </option>
         </bean>""", data)
+  }
+
+
+  @Test
+  fun `empty map in data class`() {
+    @Tag("bean")
+    data class Bean(
+      @JvmField
+      @field:OptionTag("TRUSTED_PROJECT_PATHS")
+      val trustedPaths: Map<String, Boolean> = emptyMap()
+    )
+
+    val o = JDOMUtil.load("""
+    <bean>
+      <option name="TRUSTED_PROJECT_PATHS">
+        <map>
+        </map>
+      </option>
+    </bean>
+    """.trimIndent()).deserialize(Bean::class.java)
+    assertThat(o.trustedPaths).isNotNull
   }
 
   @Test fun mapAtTopLevel() {
@@ -293,7 +312,7 @@ internal class XmlSerializerMapTest {
   @Test
   fun `knownExtensions serialization`() {
     val pluginData = PluginData("foo", "Foo")
-    val extensions = PluginFeatureMap(mapOf("foo" to hashSetOf(pluginData)))
+    val extensions = PluginFeatureMap(mapOf("foo" to PluginDataSet(setOf(pluginData))))
 
     testSerializer(
       """
@@ -353,8 +372,9 @@ internal class XmlSerializerMapTest {
 
   @Test
   fun `pluginFeatureService serialization`() {
-    val state = PluginFeatureService.State()
-    state.features.put("foo", PluginFeatureService.FeaturePluginList())
+    val state = PluginFeatureService.State(
+      mapOf("foo" to PluginFeatureService.FeaturePluginList())
+    )
 
     testSerializer(
       """

@@ -14,6 +14,7 @@ class CustomCodeStyleSettingsManager {
 
 
   private final Map<String, CustomCodeStyleSettings> myCustomSettings = new HashMap<>();
+  @NotNull
   private final CodeStyleSettings myRootSettings;
   private final Map<String, Element> myUnknownCustomElements = new HashMap<>();
 

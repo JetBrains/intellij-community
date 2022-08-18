@@ -184,6 +184,11 @@ public class Touchbar {
             e.getPresentation().setText(DialogWrapper.extractMnemonic(button.getText()).second);
           }
         }
+
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
+        }
       };
     }
     if (!(anAct instanceof AnAction)) {

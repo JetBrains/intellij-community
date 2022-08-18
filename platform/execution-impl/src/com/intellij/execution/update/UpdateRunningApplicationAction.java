@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.update;
 
 import com.intellij.execution.ExecutionBundle;
@@ -21,15 +21,21 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class UpdateRunningApplicationAction extends AnAction {
+final class UpdateRunningApplicationAction extends AnAction {
   UpdateRunningApplicationAction() {
     super(ExecutionBundle.messagePointer("action.AnAction.text.update.running.application"),
-          ExecutionBundle.messagePointer("action.AnAction.description.update.running.application"), AllIcons.Javaee.UpdateRunningApplication);
+          ExecutionBundle.messagePointer("action.AnAction.description.update.running.application"),
+          AllIcons.Javaee.UpdateRunningApplication);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    final Project project = e.getData(CommonDataKeys.PROJECT);
+    final Project project = e.getProject();
     final RunContentDescriptor contentDescriptor = e.getData(LangDataKeys.RUN_CONTENT_DESCRIPTOR);
     final Presentation presentation = e.getPresentation();
     if (contentDescriptor != null && project != null) {

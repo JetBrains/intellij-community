@@ -21,8 +21,6 @@ import java.util.Set;
 
 /**
  * Builds custom folding regions. If custom folding is supported for a language, its FoldingBuilder must be inherited from this class.
- *
- * @author Rustam Vishnyakov
  */
 public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements PossiblyDumbAware {
   private CustomFoldingProvider myDefaultProvider;

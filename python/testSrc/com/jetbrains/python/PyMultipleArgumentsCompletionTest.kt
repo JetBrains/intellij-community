@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python
 
 import com.intellij.codeInsight.lookup.Lookup
@@ -116,7 +116,7 @@ class PyMultipleArgumentsCompletionTest: PyTestCase() {
 
   private fun doTestVariantsContainFinished(element: String) {
     doTestVariantsContain(element)
-    myFixture.lookup.currentItem = myFixture.lookupElements.find { it.lookupString == element }
+    myFixture.lookup.currentItem = myFixture.lookupElements?.find { it.lookupString == element }
     myFixture.finishLookup(Lookup.NORMAL_SELECT_CHAR)
     myFixture.checkResultByFile("multipleArgumentsCompletion/${getTestName(true)}.after.py")
   }

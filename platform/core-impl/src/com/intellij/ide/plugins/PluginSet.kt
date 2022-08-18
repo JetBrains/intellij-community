@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
@@ -10,18 +10,16 @@ import org.jetbrains.annotations.TestOnly
 @ApiStatus.Internal
 class PluginSet internal constructor(
   @JvmField val moduleGraph: ModuleGraph,
-  @JvmField val allPlugins: List<IdeaPluginDescriptorImpl>,
+  @JvmField val allPlugins: Set<IdeaPluginDescriptorImpl>,
   @JvmField val enabledPlugins: List<IdeaPluginDescriptorImpl>,
   private val enabledModuleMap: Map<String, IdeaPluginDescriptorImpl>,
   private val enabledPluginAndV1ModuleMap: Map<PluginId, IdeaPluginDescriptorImpl>,
   private val enabledModules: List<IdeaPluginDescriptorImpl>,
 ) {
-  fun getRawListOfEnabledModules() = enabledModules
-
   /**
    * You must not use this method before [ClassLoaderConfigurator.configure].
    */
-  fun getEnabledModules(): Sequence<IdeaPluginDescriptorImpl> = enabledModules.asSequence()
+  fun getEnabledModules(): List<IdeaPluginDescriptorImpl> = enabledModules
 
   @TestOnly
   fun getUnsortedEnabledModules(): Collection<IdeaPluginDescriptorImpl> = ArrayList(enabledModuleMap.values)
@@ -38,17 +36,15 @@ class PluginSet internal constructor(
 
   fun isModuleEnabled(id: String) = enabledModuleMap.containsKey(id)
 
-  fun enablePlugin(toEnable: IdeaPluginDescriptorImpl): PluginSet {
+  fun withModule(module: IdeaPluginDescriptorImpl): PluginSetBuilder {
     // in tests or on install plugin is not in all plugins
     // linear search is ok here - not a hot method
-    PluginManagerCore.getLogger().assertTrue(!enabledPlugins.contains(toEnable) && toEnable.isEnabled)
-    return PluginSetBuilder(if (toEnable in allPlugins) allPlugins else allPlugins + toEnable).computeEnabledModuleMap().createPluginSet()
+    PluginManagerCore.getLogger().assertTrue(!enabledPlugins.contains(module) && module.isEnabled)
+    return PluginSetBuilder(allPlugins + module)
   }
 
-  fun updateEnabledPlugins() = PluginSetBuilder(allPlugins).computeEnabledModuleMap().createPluginSet()
-
-  fun removePluginAndUpdateEnabledPlugins(descriptor: IdeaPluginDescriptorImpl): PluginSet {
-    // not just remove from enabledPlugins - maybe another plugins in list also disabled as result of plugin unloading
-    return PluginSetBuilder(unsortedPlugins = allPlugins - descriptor).computeEnabledModuleMap().createPluginSet()
-  }
+  fun withoutModule(
+    module: IdeaPluginDescriptorImpl,
+    disable: Boolean = true,
+  ) = PluginSetBuilder(if (disable) allPlugins else allPlugins - module)
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.gradleTooling.builders
 
 import org.jetbrains.kotlin.idea.gradleTooling.KonanArtifactModelImpl
@@ -21,6 +21,8 @@ object KonanArtifactModelBuilder : KotlinMultiplatformComponentBuilderBase<Konan
         val runConfiguration = KonanRunConfigurationModelImpl(konanArtifactReflection.runTask)
         val exportDependencies = KonanArtifactDependenciesBuilder.buildComponent(origin, importingContext)
             .map { importingContext.dependencyMapper.getId(it) }.distinct().toTypedArray()
+        val binaryOptions = konanArtifactReflection.binaryOptions.orEmpty()
+            .map { (name, value) -> "$name=$value" }.toTypedArray()
 
         return KonanArtifactModelImpl(
             compilationTargetName,
@@ -32,7 +34,8 @@ object KonanArtifactModelBuilder : KotlinMultiplatformComponentBuilderBase<Konan
             runConfiguration,
             isTests,
             freeCompilerArgs,
-            exportDependencies
+            exportDependencies,
+            binaryOptions,
         )
     }
 

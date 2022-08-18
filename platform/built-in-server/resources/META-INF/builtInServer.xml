@@ -27,12 +27,8 @@
     <applicationService serviceInterface="com.intellij.ide.XmlRpcServer" serviceImplementation="org.jetbrains.ide.XmlRpcServerImpl"/>
 
     <httpRequestHandler implementation="org.jetbrains.ide.XmlRpcServerImpl$XmlRpcRequestHandler"/>
-    <httpRequestHandler implementation="org.jetbrains.ide.ProjectSetRequestHandler"/>
-    <httpRequestHandler implementation="org.jetbrains.ide.DiffHttpService"/>
-    <httpRequestHandler implementation="org.jetbrains.ide.OpenFileHttpService"/>
     <httpRequestHandler implementation="org.jetbrains.ide.AboutHttpService"/>
     <httpRequestHandler implementation="org.jetbrains.ide.StartUpMeasurementService"/>
-    <httpRequestHandler implementation="org.jetbrains.ide.OpenSettingsService"/>
     <httpRequestHandler implementation="org.jetbrains.ide.InstallPluginService"/>
 
     <applicationService serviceImplementation="org.jetbrains.ide.ToolboxRestServiceConfig" preload="true"/>

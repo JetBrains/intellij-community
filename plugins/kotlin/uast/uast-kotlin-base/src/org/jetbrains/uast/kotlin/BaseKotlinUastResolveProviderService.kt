@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.uast.kotlin
 
@@ -17,6 +17,8 @@ interface BaseKotlinUastResolveProviderService {
     // ----------
 
     val baseKotlinConverter: BaseKotlinConverter
+
+    fun convertToPsiAnnotation(ktElement: KtElement): PsiAnnotation?
 
     fun convertParent(uElement: UElement): UElement? {
         return convertParentImpl(this, uElement)
@@ -42,6 +44,8 @@ interface BaseKotlinUastResolveProviderService {
         includeExplicitParameters: Boolean = false
     ): List<KotlinUParameter>
 
+    fun getPsiAnnotations(psiElement: PsiModifierListOwner): Array<PsiAnnotation>
+
     // ----------
     // Resolution
     // ----------
@@ -52,7 +56,7 @@ interface BaseKotlinUastResolveProviderService {
 
     fun resolveCall(ktElement: KtElement): PsiMethod?
 
-    fun resolveAccessorCall(ktSimpleNameExpression: KtSimpleNameExpression): PsiMethod?
+    fun resolveSyntheticJavaPropertyAccessorCall(ktSimpleNameExpression: KtSimpleNameExpression): PsiMethod?
 
     fun isResolvedToExtension(ktCallElement: KtCallElement): Boolean
 

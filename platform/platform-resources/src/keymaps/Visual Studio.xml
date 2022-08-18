@@ -12,9 +12,7 @@
     <keyboard-shortcut first-keystroke="ctrl L"/>
     <keyboard-shortcut first-keystroke="ctrl shift L"/>
   </action>
-  <action id="ShowErrorDescription">
-    <keyboard-shortcut first-keystroke="alt T"/>
-  </action>
+  <action id="ShowErrorDescription"/>
   <action id="HighlightUsagesInFile">
     <keyboard-shortcut first-keystroke="shift alt F11"/>
   </action>
@@ -574,6 +572,14 @@
   <action id="HelpTopics">
     <keyboard-shortcut first-keystroke="control F1"/>
   </action>
+
+  <action id="MainMenuButton.ShowMenu">
+    <keyboard-shortcut first-keystroke="alt PERIOD"/>
+  </action>
+
+  <action id="EditorDecreaseFontSizeGlobal"/>
+  <action id="EditorIncreaseFontSizeGlobal"/>
+
 
   <!--KNOWN CONFLICTS: https://youtrack.jetbrains.com/issue/IDEA-268674-->
   <!--MISSING VISUAL STUDIO SHORTCUTS-->

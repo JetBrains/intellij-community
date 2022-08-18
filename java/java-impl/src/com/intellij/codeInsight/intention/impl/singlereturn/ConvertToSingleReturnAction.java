@@ -2,10 +2,12 @@
 package com.intellij.codeInsight.intention.impl.singlereturn;
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -42,6 +44,17 @@ public class ConvertToSingleReturnAction extends PsiElementBaseIntentionAction {
       Runnable action = () -> CodeStyleManager.getInstance(project).reformat(block.replace(replacement));
       WriteCommandAction.runWriteCommandAction(project, JavaBundle.message("intention.convert.to.single.return.command.text"), null, action, element.getContainingFile());
     }
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+    PsiCodeBlock block = findBlock(element);
+    if (block == null) return IntentionPreviewInfo.EMPTY;
+    PsiCodeBlock replacement = generateBody(project, block, new EmptyProgressIndicator());
+    if (replacement == null) return IntentionPreviewInfo.EMPTY;
+    CodeStyleManager.getInstance(project).reformat(block.replace(replacement));
+    return IntentionPreviewInfo.DIFF;
   }
 
   @Nullable
@@ -111,7 +124,7 @@ public class ConvertToSingleReturnAction extends PsiElementBaseIntentionAction {
   }
 
   @Nullable
-  private static PsiCodeBlock findBlock(PsiElement element) {
+  private static PsiCodeBlock findBlock(@Nullable PsiElement element) {
     PsiParameterListOwner owner = PsiTreeUtil.getParentOfType(element, PsiParameterListOwner.class, false, PsiCodeBlock.class);
     if (owner == null) return null;
     return tryCast(owner.getBody(), PsiCodeBlock.class);
@@ -124,7 +137,7 @@ public class ConvertToSingleReturnAction extends PsiElementBaseIntentionAction {
       private PsiReturnStatement myReturnStatement;
 
       @Override
-      public void visitReturnStatement(PsiReturnStatement statement) {
+      public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
         super.visitReturnStatement(statement);
         if (lastStatement != statement) {
           myReturnStatement = statement;
@@ -133,13 +146,13 @@ public class ConvertToSingleReturnAction extends PsiElementBaseIntentionAction {
       }
 
       @Override
-      public void visitExpression(PsiExpression expression) {}
+      public void visitExpression(@NotNull PsiExpression expression) {}
 
       @Override
-      public void visitLambdaExpression(PsiLambdaExpression expression) {}
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {}
 
       @Override
-      public void visitClass(PsiClass aClass) {}
+      public void visitClass(@NotNull PsiClass aClass) {}
     }
     Visitor visitor = new Visitor();
     block.accept(visitor);

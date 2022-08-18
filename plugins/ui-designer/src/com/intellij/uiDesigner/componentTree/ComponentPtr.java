@@ -31,15 +31,12 @@ public final class ComponentPtr{
   private RadComponent myComponent;
 
   /**
-   * @param component
    */
   public ComponentPtr(@NotNull final GuiEditor editor, @NotNull final RadComponent component) {
     this(editor, component, true);
   }
 
   /**
-   * @param component
-   * @param validate
    */
   public ComponentPtr(@NotNull final GuiEditor editor, @NotNull final RadComponent component, final boolean validate){
     myEditor=editor;

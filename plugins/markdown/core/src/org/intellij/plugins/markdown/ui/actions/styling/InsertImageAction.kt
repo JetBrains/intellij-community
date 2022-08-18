@@ -1,13 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.actions.styling
 
-import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.ReadOnlyFragmentModificationException
 import com.intellij.openapi.editor.ReadOnlyModificationException
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
-import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.refactoring.RefactoringBundle
 import org.intellij.plugins.markdown.MarkdownBundle
@@ -17,7 +17,7 @@ import org.intellij.plugins.markdown.editor.images.MarkdownImageData
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionPlaces
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil
 
-class InsertImageAction : AnAction(), DumbAware {
+class InsertImageAction: DumbAwareAction() {
   init {
     addTextOverride(MarkdownActionPlaces.INSERT_POPUP) {
       MarkdownBundle.message("action.org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction.insert.popup.text")
@@ -25,11 +25,19 @@ class InsertImageAction : AnAction(), DumbAware {
   }
 
   override fun update(event: AnActionEvent) {
-    event.presentation.isEnabled = MarkdownActionUtil.findMarkdownTextEditor(event)?.document?.isWritable == true
+    val editor = MarkdownActionUtil.findMarkdownEditor(event)
+    event.presentation.apply {
+      isVisible = editor != null
+      isEnabled = editor?.document?.isWritable == true
+    }
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   override fun actionPerformed(event: AnActionEvent) {
-    val editor = MarkdownActionUtil.findMarkdownTextEditor(event) ?: return
+    val editor = MarkdownActionUtil.findRequiredMarkdownEditor(event)
     val project = editor.project
     ConfigureImageDialog(project, MarkdownBundle.message("markdown.insert.image.dialog.title")).show { imageData ->
       val document = editor.document

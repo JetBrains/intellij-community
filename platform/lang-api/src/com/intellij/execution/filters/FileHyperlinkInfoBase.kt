@@ -11,9 +11,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import java.io.File
 
-abstract class FileHyperlinkInfoBase(private val myProject: Project,
-                                     private val myDocumentLine: Int,
-                                     private val myDocumentColumn: Int) : FileHyperlinkInfo {
+abstract class FileHyperlinkInfoBase
+@JvmOverloads
+constructor(private val myProject: Project,
+            private val myDocumentLine: Int,
+            private val myDocumentColumn: Int,
+            private val myUseBrowser: Boolean = true) : FileHyperlinkInfo {
 
   protected abstract val virtualFile: VirtualFile?
 
@@ -50,7 +53,7 @@ abstract class FileHyperlinkInfoBase(private val myProject: Project,
       }
     }
     else {
-      if (null == FileEditorManager.getInstance(project).openTextEditor(descriptor, true)) {
+      if (null == FileEditorManager.getInstance(project).openTextEditor(descriptor, true) && myUseBrowser) {
         BrowserHyperlinkInfo(descriptor.file.url).navigate(project)
       }
     }

@@ -25,6 +25,8 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
@@ -41,6 +43,7 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.xml.XmlFileNSInfoProvider;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlSchemaProvider;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -107,6 +110,16 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     finally {
       super.tearDown();
     }
+  }
+
+  // when running very long tasks (e.g. during stress/perf tests) CoreProgressManager might decide to de-prioritize background processes,
+  // defeating the whole purpose. Do not let him do that.
+  @Override
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    ((CoreProgressManager)ProgressManager.getInstance()).<Void, Throwable>suppressAllDeprioritizationsDuringLongTestsExecutionIn(()-> {
+      super.runTestRunnable(testRunnable);
+      return null;
+    });
   }
 
   protected final void enableInspectionTool(@NotNull InspectionProfileEntry tool) {
@@ -278,6 +291,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     IntList toIgnore = new IntArrayList();
     if (!doTestLineMarkers()) {
       toIgnore.add(Pass.LINE_MARKERS);
+      toIgnore.add(Pass.SLOW_LINE_MARKERS);
     }
 
     if (!doExternalValidation()) {
@@ -285,6 +299,7 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
     }
     if (forceExternalValidation()) {
       toIgnore.add(Pass.LINE_MARKERS);
+      toIgnore.add(Pass.SLOW_LINE_MARKERS);
       toIgnore.add(Pass.LOCAL_INSPECTIONS);
       toIgnore.add(Pass.WHOLE_FILE_LOCAL_INSPECTIONS);
       toIgnore.add(Pass.POPUP_HINTS);
@@ -354,9 +369,8 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
 
   @NotNull
   protected static List<IntentionAction> getIntentionActions(@NotNull Collection<? extends HighlightInfo> infos,
-                                                           @NotNull Editor editor,
-                                                           @NotNull PsiFile file) {
-
+                                                             @NotNull Editor editor,
+                                                             @NotNull PsiFile file) {
     List<IntentionAction> actions = LightQuickFixTestCase.getAvailableActions(editor, file);
 
     final List<IntentionAction> quickFixActions = new ArrayList<>();
@@ -364,7 +378,9 @@ public abstract class DaemonAnalyzerTestCase extends JavaCodeInsightTestCase {
       if (info.quickFixActionRanges != null) {
         for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
           IntentionAction action = pair.first.getAction();
-          if (action.isAvailable(file.getProject(), editor, file)) quickFixActions.add(action);
+          if (!actions.contains(action) && action.isAvailable(file.getProject(), editor, file)) {
+            quickFixActions.add(action);
+          }
         }
       }
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix.replaceWith
 
@@ -6,17 +6,17 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.FrontendInternals
-import org.jetbrains.kotlin.idea.analysis.analyzeInContext
+import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
+import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.codeInliner.CodeToInline
 import org.jetbrains.kotlin.idea.codeInliner.CodeToInlineBuilder
 import org.jetbrains.kotlin.idea.core.unwrapIfFakeOverride
-import org.jetbrains.kotlin.idea.project.findAnalyzerServices
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.frontendService
-import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
+import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -34,31 +34,31 @@ import org.jetbrains.kotlin.resolve.scopes.utils.memberScopeAsImportingScope
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.types.expressions.ExpressionTypingServices
 
-data class ReplaceWith(val pattern: String, val imports: List<String>, val replaceInWholeProject: Boolean)
+data class ReplaceWithData(val pattern: String, val imports: List<String>, val replaceInWholeProject: Boolean)
 
 @OptIn(FrontendInternals::class)
 object ReplaceWithAnnotationAnalyzer {
     fun analyzeCallableReplacement(
-        annotation: ReplaceWith,
+        replaceWith: ReplaceWithData,
         symbolDescriptor: CallableDescriptor,
         resolutionFacade: ResolutionFacade,
         reformat: Boolean
     ): CodeToInline? {
         val originalDescriptor = symbolDescriptor.unwrapIfFakeOverride().original
-        return analyzeOriginal(annotation, originalDescriptor, resolutionFacade, reformat)
+        return analyzeOriginal(replaceWith, originalDescriptor, resolutionFacade, reformat)
     }
 
     private fun analyzeOriginal(
-        annotation: ReplaceWith,
+        replaceWith: ReplaceWithData,
         symbolDescriptor: CallableDescriptor,
         resolutionFacade: ResolutionFacade,
         reformat: Boolean
     ): CodeToInline? {
         val psiFactory = KtPsiFactory(resolutionFacade.project)
-        val expression = psiFactory.createExpressionIfPossible(annotation.pattern) ?: return null
+        val expression = psiFactory.createExpressionIfPossible(replaceWith.pattern) ?: return null
 
         val module = resolutionFacade.moduleDescriptor
-        val scope = buildScope(resolutionFacade, annotation, symbolDescriptor) ?: return null
+        val scope = buildScope(resolutionFacade, replaceWith, symbolDescriptor) ?: return null
 
         val expressionTypingServices = resolutionFacade.getFrontendService(module, ExpressionTypingServices::class.java)
 
@@ -76,20 +76,20 @@ object ReplaceWithAnnotationAnalyzer {
     }
 
     fun analyzeClassifierReplacement(
-        annotation: ReplaceWith,
+        replaceWith: ReplaceWithData,
         symbolDescriptor: ClassifierDescriptorWithTypeParameters,
         resolutionFacade: ResolutionFacade
     ): KtUserType? {
         val psiFactory = KtPsiFactory(resolutionFacade.project)
         val typeReference = try {
-            psiFactory.createType(annotation.pattern)
+            psiFactory.createType(replaceWith.pattern)
         } catch (e: Exception) {
             if (e is ControlFlowException) throw e
             return null
         }
         if (typeReference.typeElement !is KtUserType) return null
 
-        val scope = buildScope(resolutionFacade, annotation, symbolDescriptor) ?: return null
+        val scope = buildScope(resolutionFacade, replaceWith, symbolDescriptor) ?: return null
 
         val typeResolver = resolutionFacade.getFrontendService(TypeResolver::class.java)
         val bindingTrace = BindingTraceContext()
@@ -117,12 +117,12 @@ object ReplaceWithAnnotationAnalyzer {
 
     private fun buildScope(
         resolutionFacade: ResolutionFacade,
-        annotation: ReplaceWith,
+        replaceWith: ReplaceWithData,
         symbolDescriptor: DeclarationDescriptor
     ): LexicalScope? {
         val module = resolutionFacade.moduleDescriptor
-        val explicitImportsScope = buildExplicitImportsScope(annotation, resolutionFacade, module)
-        val languageVersionSettings = resolutionFacade.getLanguageVersionSettings()
+        val explicitImportsScope = buildExplicitImportsScope(importFqNames(replaceWith), resolutionFacade, module)
+        val languageVersionSettings = resolutionFacade.languageVersionSettings
         val defaultImportsScopes = buildDefaultImportsScopes(resolutionFacade, module, languageVersionSettings)
 
         return getResolutionScope(
@@ -147,14 +147,6 @@ object ReplaceWithAnnotationAnalyzer {
     }
 
     private fun buildExplicitImportsScope(
-        annotation: ReplaceWith,
-        resolutionFacade: ResolutionFacade,
-        module: ModuleDescriptor
-    ): ExplicitImportsScope {
-        return buildExplicitImportsScope(importFqNames(annotation), resolutionFacade, module)
-    }
-
-    private fun buildExplicitImportsScope(
         importFqNames: List<FqName>,
         resolutionFacade: ResolutionFacade,
         module: ModuleDescriptor
@@ -163,14 +155,13 @@ object ReplaceWithAnnotationAnalyzer {
         return ExplicitImportsScope(importedSymbols)
     }
 
-    private fun importFqNames(annotation: ReplaceWith): List<FqName> {
-        return annotation.imports
-            .asSequence()
-            .filter { FqNameUnsafe.isValid(it) }
-            .map(::FqNameUnsafe)
-            .filter(FqNameUnsafe::isSafe)
-            .map(FqNameUnsafe::toSafe)
-            .toList()
+    private fun importFqNames(annotation: ReplaceWithData): List<FqName> {
+        val result = ArrayList<FqName>()
+        for (fqName in annotation.imports) {
+            if (!FqNameUnsafe.isValid(fqName)) continue
+            result += FqNameUnsafe(fqName).takeIf { it.isSafe }?.toSafe() ?: continue
+        }
+        return result
     }
 
     private fun getResolutionScope(

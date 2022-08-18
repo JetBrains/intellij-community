@@ -11,6 +11,9 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
+/**
+ * Treats byte array as a sequence of chars in {@link StandardCharsets#US_ASCII} encoding
+ */
 @ReviseWhenPortedToJDK("9")
 public final class ByteArrayCharSequence implements CharSequenceWithStringHash {
   private final int myStart;

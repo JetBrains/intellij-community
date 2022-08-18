@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection
 
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
@@ -18,7 +18,7 @@ import javax.swing.JPanel
 abstract class USerializableInspectionBase(vararg hint: Class<out UElement>) : AbstractBaseUastLocalInspectionTool(*hint) {
   var ignoreAnonymousInnerClasses = false
 
-  private var superClassString: @NonNls String = "java.awt.Component"
+  var superClassString: @NonNls String = "java.awt.Component"
 
   protected val superClassList: MutableList<String> = mutableListOf()
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph
 
 import com.intellij.util.containers.ContainerUtil
@@ -151,6 +151,7 @@ private fun LinearGraph.assertEdge(nodeIndex: Int, edge: GraphEdge) {
         assertTrue(nodeIndex == edge.downNodeIndex)
         assertNull(edge.upNodeIndex)
       }
+      else -> {}
     }
   }
 }
@@ -165,6 +166,7 @@ fun LinearGraph.asTestGraphString(sorted: Boolean = false): String = StringBuild
     when (node.type) {
       GraphNodeType.UNMATCHED -> append(".UNM")
       GraphNodeType.NOT_LOAD_COMMIT -> append(".NOT_LOAD")
+      else -> {}
     }
 
     // edges
@@ -189,6 +191,7 @@ fun LinearGraph.asTestGraphString(sorted: Boolean = false): String = StringBuild
           GraphEdgeType.DOTTED_ARROW_UP -> "$startId.up_dot"
           GraphEdgeType.DOTTED_ARROW_DOWN -> "$startId.down_dot"
           GraphEdgeType.NOT_LOAD_COMMIT -> "$startId.not_load"
+          else -> error("must not happen")
         }
       }
       else {

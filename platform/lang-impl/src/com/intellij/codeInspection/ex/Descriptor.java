@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ex;
 
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -25,6 +26,7 @@ public class Descriptor {
   private final HighlightDisplayLevel myLevel;
   @Nullable
   private final NamedScope myScope;
+  private final TextAttributesKey myEditorAttributesKey;
   private final ScopeToolState myState;
   @NotNull
   private final InspectionProfileModifiableModel myInspectionProfile;
@@ -41,6 +43,7 @@ public class Descriptor {
     myGroup = groupPath.length == 0 ? new String[]{InspectionProfileEntry.getGeneralGroupName()} : groupPath;
     myShortName = tool.getShortName();
     myScope = state.getScope(project);
+    myEditorAttributesKey = state.getEditorAttributesKey();
     final HighlightDisplayKey key = HighlightDisplayKey.findOrRegister(myShortName, myText);
     myLevel = inspectionProfile.getErrorLevel(key, myScope, project);
     myEnabled = inspectionProfile.isToolEnabled(key, myScope, project);
@@ -83,6 +86,10 @@ public class Descriptor {
 
   public HighlightDisplayLevel getLevel() {
     return myLevel;
+  }
+
+  public TextAttributesKey getEditorAttributesKey() {
+    return myEditorAttributesKey;
   }
 
   @Nullable

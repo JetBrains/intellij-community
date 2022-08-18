@@ -160,12 +160,6 @@ public final class FormattingDocumentModelImpl implements FormattingDocumentMode
     }
   }
 
-  //@Override
-  //public boolean isWhiteSpaceSymbol(char symbol) {
-  //  myBuffer.put(0, symbol);
-  //  return myWhiteSpaceStrategy.check(myBuffer, 0, 1) > 0;
-  //}
-
   public static boolean canUseDocumentModel(@NotNull Document document,@NotNull PsiFile file) {
     PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(file.getProject());
     return !psiDocumentManager.isUncommited(document) &&

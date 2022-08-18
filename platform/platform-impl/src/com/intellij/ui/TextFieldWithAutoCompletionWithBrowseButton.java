@@ -18,8 +18,27 @@ public class TextFieldWithAutoCompletionWithBrowseButton
     super(TextFieldWithAutoCompletion.create(project, Collections.emptyList(), false, null), null);
   }
 
-  public TextFieldWithAutoCompletionWithBrowseButton(Project project, TextCompletionCache<String> cache, boolean prefixMatchesOnly) {
+  public TextFieldWithAutoCompletionWithBrowseButton(Project project, TextCompletionCache<String> cache,
+                                                     boolean prefixMatchesOnly) {
     super(TextFieldWithAutoCompletionWithCache.create(cache, prefixMatchesOnly, project, null, false, null), null);
+  }
+
+  public TextFieldWithAutoCompletionWithBrowseButton(Project project, TextCompletionCache<String> cache,
+                                                     boolean prefixMatchesOnly, boolean showBottomPanel) {
+    super(TextFieldWithAutoCompletionWithCache
+            .create(cache, prefixMatchesOnly, project, null, false, null, showBottomPanel), null);
+  }
+
+  public TextFieldWithAutoCompletionWithBrowseButton(Project project, TextCompletionCache<String> cache,
+                                                     boolean prefixMatchesOnly, boolean showBottomPanel, boolean allowAutoPopupWithSlash) {
+    super(TextFieldWithAutoCompletionWithCache
+            .create(cache, prefixMatchesOnly, project, null, false, null, showBottomPanel, allowAutoPopupWithSlash, false), null);
+  }
+
+  public TextFieldWithAutoCompletionWithBrowseButton(Project project, TextCompletionCache<String> cache,
+                                                     boolean prefixMatchesOnly, boolean showBottomPanel, boolean allowAutoPopupWithSlash, boolean forbidWordCompletion) {
+    super(TextFieldWithAutoCompletionWithCache
+            .create(cache, prefixMatchesOnly, project, null, false, null, showBottomPanel, allowAutoPopupWithSlash, forbidWordCompletion), null);
   }
 
   @Override

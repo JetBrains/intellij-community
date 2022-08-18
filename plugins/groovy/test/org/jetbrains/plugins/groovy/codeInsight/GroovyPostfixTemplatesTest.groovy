@@ -222,4 +222,12 @@ try {
   void testInClosure2() {
     doAutoPopupTest "1.with { [1, 2, 3].<caret> }", "map", "1.with { [1, 2, 3].collect {} }", GrMapPostfixTemplate
   }
+
+  void testIf() {
+    doAutoPopupTest "true.<caret>", "if", "if (true) {\n    \n}", GrIfPostfixTemplate
+  }
+
+  void testElse() {
+    doAutoPopupTest "true.<caret>", "else", "if (!true) {\n    \n}", GrElsePostfixTemplate
+  }
 }

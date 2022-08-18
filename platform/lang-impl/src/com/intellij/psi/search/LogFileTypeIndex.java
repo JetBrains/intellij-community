@@ -2,12 +2,10 @@
 package com.intellij.psi.search;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
@@ -18,6 +16,7 @@ import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.indexing.impl.ValueContainerImpl;
 import com.intellij.util.indexing.impl.storage.AbstractIntLog;
 import com.intellij.util.indexing.impl.storage.IntLog;
+import com.intellij.util.io.MeasurableIndexStore;
 import com.intellij.util.io.SimpleStringPersistentEnumerator;
 import com.intellij.util.io.StorageLockContext;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -41,10 +40,9 @@ import java.util.function.IntConsumer;
  * Implementation of {@link FileTypeIndexImpl} based on plain change log.
  * Does not support indexing unsaved changes (content-less indexes don't require them).
  */
-public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, FileContent, UpdatableIndex.EmptyData>, FileTypeNameEnumerator {
+public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, FileContent, Void>, FileTypeNameEnumerator,
+                                               MeasurableIndexStore {
   private static final Logger LOG = Logger.getInstance(LogFileTypeIndex.class);
-
-  private final @NotNull Disposable myDisposable;
 
   private final @NotNull LogBasedIntIntIndex myPersistentLog;
   private final @NotNull SimpleStringPersistentEnumerator myFileTypeEnumerator;
@@ -70,8 +68,6 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
     if (myExtension.dependsOnFileContent()) {
       throw new IllegalArgumentException(myExtension.getName() + " should not depend on content");
     }
-
-    myDisposable = Disposer.newDisposable();
 
     mySnapshot = loadIndexToMemory(myPersistentLog);
   }
@@ -104,16 +100,12 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
   }
 
   @Override
-  public @NotNull UpdatableIndex.EmptyData instantiateFileData() {
-    return UpdatableIndex.EmptyData.INSTANCE;
+  public Void getFileIndexMetaData(@NotNull IndexedFile file) {
+    return null;
   }
 
   @Override
-  public void writeData(@NotNull UpdatableIndex.EmptyData unused, @NotNull IndexedFile file) {
-  }
-
-  @Override
-  public void setIndexedStateForFileOnCachedData(int fileId, @NotNull UpdatableIndex.EmptyData data) {
+  public void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable Void data) {
     IndexingStamp.setFileIndexedStateCurrent(fileId, myIndexId);
   }
 
@@ -189,7 +181,7 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
   @Override
   public @NotNull ValueContainer<Void> getData(@NotNull FileType type) throws StorageException {
     int fileTypeId = getFileTypeId(type);
-    ValueContainerImpl<Void> result = new ValueContainerImpl<>();
+    ValueContainerImpl<Void> result = new ValueContainerImpl<>(false);
 
     myLock.readLock().lock();
     try {
@@ -291,13 +283,17 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
 
   @Override
   public void dispose() {
-    Disposer.dispose(myDisposable);
     try {
       myPersistentLog.close();
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @Override
+  public int keysCountApproximately() {
+    return myFileTypeEnumerator.getSize();
   }
 
   @Override

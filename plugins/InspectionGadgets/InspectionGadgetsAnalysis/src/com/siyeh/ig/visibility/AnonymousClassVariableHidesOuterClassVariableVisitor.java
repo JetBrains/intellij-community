@@ -28,7 +28,7 @@ import java.util.Map;
 class AnonymousClassVariableHidesOuterClassVariableVisitor extends BaseInspectionVisitor {
 
   @Override
-  public void visitAnonymousClass(PsiAnonymousClass aClass) {
+  public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
     super.visitAnonymousClass(aClass);
     final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(aClass, PsiCodeBlock.class);
     if (codeBlock == null) {
@@ -83,7 +83,7 @@ class AnonymousClassVariableHidesOuterClassVariableVisitor extends BaseInspectio
     private final Map<String, List<PsiVariable>> variableMap = new HashMap<>();
 
     @Override
-    public void visitVariable(PsiVariable variable) {
+    public void visitVariable(@NotNull PsiVariable variable) {
       super.visitVariable(variable);
       final String name = variable.getName();
       final List<PsiVariable> variableList = variableMap.get(name);
@@ -98,7 +98,7 @@ class AnonymousClassVariableHidesOuterClassVariableVisitor extends BaseInspectio
     }
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       // don't drill down in classes
     }
 

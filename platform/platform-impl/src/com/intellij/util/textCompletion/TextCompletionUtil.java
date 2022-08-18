@@ -2,6 +2,7 @@
 package com.intellij.util.textCompletion;
 
 import com.intellij.codeInsight.AutoPopupController;
+import com.intellij.codeInsight.completion.BaseCompletionService;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -91,15 +92,24 @@ public final class TextCompletionUtil {
   public static class DocumentWithCompletionCreator extends LanguageTextField.SimpleDocumentCreator {
     @NotNull private final TextCompletionProvider myProvider;
     private final boolean myAutoPopup;
+    private final boolean myForbidWordCompletion;
 
     public DocumentWithCompletionCreator(@NotNull TextCompletionProvider provider, boolean autoPopup) {
       myProvider = provider;
       myAutoPopup = autoPopup;
+      myForbidWordCompletion = false;
+    }
+
+    public DocumentWithCompletionCreator(@NotNull TextCompletionProvider provider, boolean autoPopup, boolean forbidWordCompletion) {
+      myProvider = provider;
+      myAutoPopup = autoPopup;
+      myForbidWordCompletion = forbidWordCompletion;
     }
 
     @Override
     public void customizePsiFile(@NotNull PsiFile file) {
       installProvider(file, myProvider, myAutoPopup);
+      file.putUserData(BaseCompletionService.FORBID_WORD_COMPLETION, myForbidWordCompletion);
     }
   }
 }

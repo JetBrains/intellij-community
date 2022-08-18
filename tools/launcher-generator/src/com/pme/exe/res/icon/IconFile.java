@@ -32,7 +32,7 @@ public class IconFile extends Bin.Structure {
   private Level myImages = new Level();
   private File myFile;
 
-  public class IconWrongFormat extends IOException {
+  public static class IconWrongFormat extends IOException {
     public IconWrongFormat( File file ) {
       super("Icon file has wrong format:" + file.getPath());
     }
@@ -70,7 +70,7 @@ public class IconFile extends Bin.Structure {
       myImages.read(stream);
     }
     catch (IOException exception) {
-      throw new IconWrongFormat( myFile );
+      throw new IconWrongFormat(myFile);
     }
   }
 }

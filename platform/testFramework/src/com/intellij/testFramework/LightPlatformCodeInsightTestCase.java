@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -62,8 +62,6 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
 
   @Override
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
-    boolean runInWriteAction = false;
-
     if (isRunInCommand()) {
       Ref<Throwable> e = new Ref<>();
       CommandProcessor.getInstance().executeCommand(getProject(), () -> {
@@ -97,7 +95,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected void configureByFile(@TestDataFile @NonNls @NotNull String relativePath) {
     try {
       String fullPath = getTestDataPath() + relativePath;
-      final File ioFile = new File(fullPath);
+      File ioFile = new File(fullPath);
       checkCaseSensitiveFS(fullPath, ioFile);
       String fileText = FileUtilRt.loadFile(ioFile, CharsetToolkit.UTF8, true);
       configureFromFileText(ioFile.getName(), fileText);
@@ -110,13 +108,6 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   @NotNull
   protected String getAnswerFilePath() {
     return getTestDataPath() + myFileSuffix + ".txt";
-  }
-
-  private static void checkCaseSensitiveFS(@NotNull String fullOrRelativePath, @NotNull File ioFile) throws IOException {
-    fullOrRelativePath = FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(fullOrRelativePath));
-    if (!ioFile.getCanonicalPath().endsWith(fullOrRelativePath)) {
-      throw new RuntimeException("Queried for: " + fullOrRelativePath + "; but found: " + ioFile.getCanonicalPath());
-    }
   }
 
   @NonNls
@@ -132,7 +123,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected VirtualFile getVirtualFile(@NonNls @NotNull String filePath) {
     String fullPath = getTestDataPath() + filePath;
 
-    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
+    VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
     assertNotNull("file " + fullPath + " not found", vFile);
     return vFile;
   }
@@ -143,7 +134,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @param fileText - data file text.
    */
   @NotNull
-  protected Document configureFromFileText(@NonNls @NotNull final String fileName, @NonNls @NotNull final String fileText) {
+  protected Document configureFromFileText(@NonNls @NotNull String fileName, @NonNls @NotNull String fileText) {
     return configureFromFileText(fileName, fileText, false);
   }
 
@@ -151,14 +142,14 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * Same as configureByFile but text is provided directly.
    * @param fileName - name of the file.
    * @param fileText - data file text.
-   * @param checkCaret - if true, if will be verified that file contains at least one caret or selection marker
+   * @param checkCaret - if true, it will be verified that file contains at least one caret or selection marker
    */
   @NotNull
-  protected Document configureFromFileText(@NonNls @NotNull final String fileName,
-                                           @NonNls @NotNull final String fileText,
+  protected Document configureFromFileText(@NonNls @NotNull String fileName,
+                                           @NonNls @NotNull String fileText,
                                            boolean checkCaret) {
     return WriteCommandAction.writeCommandAction(null).compute(() -> {
-      final Document fakeDocument = new DocumentImpl(fileText);
+      Document fakeDocument = new DocumentImpl(fileText);
 
       EditorTestUtil.CaretAndSelectionState caretsState = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
       if (checkCaret) {
@@ -181,14 +172,14 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   @NotNull
-  protected Editor configureFromFileTextWithoutPSI(@NonNls @NotNull final String fileText) {
+  protected Editor configureFromFileTextWithoutPSI(@NonNls @NotNull String fileText) {
     return WriteCommandAction.writeCommandAction(getProject()).compute(() -> {
-      final Document fakeDocument = EditorFactory.getInstance().createDocument(fileText);
+      Document fakeDocument = EditorFactory.getInstance().createDocument(fileText);
       EditorTestUtil.CaretAndSelectionState caretsState = EditorTestUtil.extractCaretAndSelectionMarkers(fakeDocument);
 
       String newFileText = fakeDocument.getText();
       Document document = EditorFactory.getInstance().createDocument(newFileText);
-      final Editor editor = EditorFactory.getInstance().createEditor(document, getProject());
+      Editor editor = EditorFactory.getInstance().createEditor(document, getProject());
       ((EditorImpl)editor).setCaretActive();
 
       EditorTestUtil.setCaretsAndSelection(editor, caretsState);
@@ -238,7 +229,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     if (getEditor() != null) {
       Editor hostEditor = getEditor() instanceof EditorWindow ? ((EditorWindow)getEditor()).getDelegate() : getEditor();
       PsiFile hostFile = myFile == null ? null : InjectedLanguageManager.getInstance(getProject()).getTopLevelFile(myFile);
-      final Ref<EditorWindow> editorWindowRef = new Ref<>();
+      Ref<EditorWindow> editorWindowRef = new Ref<>();
       hostEditor.getCaretModel().runForEachCaret(caret -> {
         Editor editor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(hostEditor, hostFile);
         if (caret == hostEditor.getCaretModel().getPrimaryCaret() && editor instanceof EditorWindow) {
@@ -255,13 +246,17 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
 
   private void deleteVFile() throws IOException {
     if (myVFile != null) {
-      if (myVFile instanceof VirtualFileWindow) myVFile = ((VirtualFileWindow)myVFile).getDelegate();
-      WriteAction.run(() -> {
-        // avoid messing with invalid files, in case someone calls configureXXX() several times
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-        FileEditorManager.getInstance(getProject()).closeFile(myVFile);
-        myVFile.delete(getProject());
-      });
+      if (myVFile instanceof VirtualFileWindow) {
+        myVFile = ((VirtualFileWindow)myVFile).getDelegate();
+      }
+      if (myVFile.isWritable() && !myVFile.getFileSystem().isReadOnly()) {
+        WriteAction.run(() -> {
+          // avoid messing with invalid files, in case someone calls configureXXX() several times
+          PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+          FileEditorManager.getInstance(getProject()).closeFile(myVFile);
+          myVFile.delete(getProject());
+        });
+      }
       getIndexingMode().ensureIndexingStatus(getProject());
     }
   }
@@ -318,12 +313,12 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @param expectedFilePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
    * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
    */
-  protected void checkResultByFile(@Nullable String message, @TestDataFile @NotNull String expectedFilePath, final boolean ignoreTrailingSpaces) {
+  protected void checkResultByFile(@Nullable String message, @TestDataFile @NotNull String expectedFilePath, boolean ignoreTrailingSpaces) {
     bringRealEditorBack();
 
     PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();
     if (ignoreTrailingSpaces) {
-      final Editor editor = getEditor();
+      Editor editor = getEditor();
       TrailingSpacesStripper.strip(editor.getDocument(), false, true);
       EditorUtil.fillVirtualSpaceUntilCaret(editor);
     }
@@ -358,7 +353,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @param message - this check specific message. Added to text, caret position, selection checking. May be null
    * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
    */
-  protected void checkResultByText(final String message, @NotNull String expectedFileText, final boolean ignoreTrailingSpaces) {
+  protected void checkResultByText(@Nullable String message, @NotNull String expectedFileText, boolean ignoreTrailingSpaces) {
     checkResultByText(message, expectedFileText, ignoreTrailingSpaces, null);
   }
 
@@ -367,11 +362,11 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @param message - this check specific message. Added to text, caret position, selection checking. May be null
    * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
    */
-  protected void checkResultByText(final String message, @NotNull String expectedFileText, final boolean ignoreTrailingSpaces, final String filePath) {
+  protected void checkResultByText(@Nullable String message, @NotNull String expectedFileText, boolean ignoreTrailingSpaces, @Nullable String filePath) {
     bringRealEditorBack();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     ApplicationManager.getApplication().runWriteAction(() -> {
-      final Document document = EditorFactory.getInstance().createDocument(expectedFileText);
+      Document document = EditorFactory.getInstance().createDocument(expectedFileText);
 
       if (ignoreTrailingSpaces) {
         ((DocumentImpl)document).stripTrailingSpaces(getProject());
@@ -394,13 +389,13 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     });
   }
 
-  protected void checkResultByTextWithoutPSI(final String message,
-                                                    @NotNull final Editor editor,
-                                                    @NotNull final String fileText,
-                                                    final boolean ignoreTrailingSpaces,
-                                                    final String filePath) {
+  protected void checkResultByTextWithoutPSI(@Nullable String message,
+                                             @NotNull Editor editor,
+                                             @NotNull String fileText,
+                                             boolean ignoreTrailingSpaces,
+                                             @Nullable String filePath) {
     ApplicationManager.getApplication().runWriteAction(() -> {
-      final Document fakeDocument = EditorFactory.getInstance().createDocument(fileText);
+      Document fakeDocument = EditorFactory.getInstance().createDocument(fileText);
 
       if (ignoreTrailingSpaces) {
         ((DocumentImpl)fakeDocument).stripTrailingSpaces(getProject());
@@ -421,7 +416,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   @NotNull
-  private static String getMessage(@NonNls @NotNull String engineMessage, String userMessage) {
+  private static String getMessage(@NonNls @NotNull String engineMessage, @Nullable String userMessage) {
     if (userMessage == null) return engineMessage;
     return userMessage + " [" + engineMessage + "]";
   }
@@ -470,10 +465,10 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   protected void deleteLine() {
-    deleteLine(getEditor(),getProject());
+    deleteLine(getEditor(), getProject());
   }
-  public static void deleteLine(@NotNull Editor editor, Project project) {
-    executeAction(IdeActions.ACTION_EDITOR_DELETE_LINE, editor,project);
+  public static void deleteLine(@NotNull Editor editor, @Nullable Project project) {
+    executeAction(IdeActions.ACTION_EDITOR_DELETE_LINE, editor, project);
   }
 
   protected void type(@NonNls @NotNull String s) {
@@ -485,7 +480,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     type(c, getEditor(),getProject());
   }
 
-  public static void type(char c, @NotNull Editor editor, Project project) {
+  public static void type(char c, @NotNull Editor editor, @Nullable Project project) {
     if (c == '\n') {
       executeAction(IdeActions.ACTION_EDITOR_ENTER, editor,project);
     }
@@ -500,7 +495,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     backspace(getEditor(),getProject());
   }
 
-  public static void backspace(@NotNull final Editor editor, Project project) {
+  public static void backspace(@NotNull Editor editor, @Nullable Project project) {
     executeAction(IdeActions.ACTION_EDITOR_BACKSPACE, editor,project);
   }
 
@@ -526,7 +521,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   protected void delete() {
     delete(getEditor(), getProject());
   }
-  public static void delete(@NotNull final Editor editor, Project project) {
+  public static void delete(@NotNull Editor editor, Project project) {
     executeAction(IdeActions.ACTION_EDITOR_DELETE, editor, project);
   }
 
@@ -638,19 +633,19 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     executeAction(IdeActions.ACTION_COMMENT_LINE);
   }
 
-  protected void executeAction(@NonNls @NotNull final String actionId) {
+  protected void executeAction(@NonNls @NotNull String actionId) {
     executeAction(actionId, getEditor());
   }
-  protected void executeAction(@NonNls @NotNull final String actionId, @NotNull final Editor editor) {
+  protected void executeAction(@NonNls @NotNull String actionId, @NotNull Editor editor) {
     executeAction(actionId, editor, getProject());
   }
-  public static void executeAction(@NonNls @NotNull final String actionId, @NotNull final Editor editor, Project project) {
+  public static void executeAction(@NonNls @NotNull String actionId, @NotNull Editor editor, @Nullable Project project) {
     CommandProcessor.getInstance().executeCommand(project, () -> EditorTestUtil.executeAction(editor, actionId, true), "", null, editor.getDocument());
   }
 
   @NotNull
   protected DataContext getCurrentEditorDataContext() {
-    final DataContext defaultContext = DataManager.getInstance().getDataContext();
+    DataContext defaultContext = DataManager.getInstance().getDataContext();
     return dataId -> {
       if (CommonDataKeys.EDITOR.is(dataId)) {
         return getEditor();
@@ -673,9 +668,10 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   /**
-   * file parameterized tests support
+   * File parameterized tests support.
+   * <p>
+   * &#064;Parameterized.Parameter  fields are injected on parameterized test creation.
    * @see FileBasedTestCaseHelperEx
-   * @Parameterized.Parameter fields are injected on parameterized test creation.
    */
   @Parameterized.Parameter
   public String myFileSuffix;
@@ -695,7 +691,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
 
   @com.intellij.testFramework.Parameterized.Parameters(name = "{0}")
   public static List<Object[]> params(@NotNull Class<?> klass) throws Throwable{
-    final Object testCase = klass.newInstance();
+    Object testCase = klass.newInstance();
     if (!(testCase instanceof FileBasedTestCaseHelper)) {
       fail("Parameterized test should implement FileBasedTestCaseHelper");
     }
@@ -707,7 +703,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       //allow to run out of idea project
     }
 
-    final FileBasedTestCaseHelper fileBasedTestCase = (FileBasedTestCaseHelper)testCase;
+    FileBasedTestCaseHelper fileBasedTestCase = (FileBasedTestCaseHelper)testCase;
 
     String testDataPath;
     if (testCase instanceof LightPlatformCodeInsightTestCase) {
@@ -728,29 +724,29 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     if (fileBasedTestCase instanceof FileBasedTestCaseHelperEx) {
       testDir = new File(testDataPath, ((FileBasedTestCaseHelperEx)fileBasedTestCase).getRelativeBasePath());
     } else {
-      final TestDataPath annotation = klass.getAnnotation(TestDataPath.class);
+      TestDataPath annotation = klass.getAnnotation(TestDataPath.class);
       if (annotation == null) {
         fail("TestCase should implement com.intellij.testFramework.FileBasedTestCaseHelperEx or be annotated with com.intellij.testFramework.TestDataPath");
       } else {
-        final String trimmedRoot = StringUtil.trimStart(StringUtil.trimStart(annotation.value(), "$CONTENT_ROOT"), "$PROJECT_ROOT");
-        final String lastPathComponent = new File(testDataPath).getName();
-        final int idx = trimmedRoot.indexOf(lastPathComponent);
+        String trimmedRoot = StringUtil.trimStart(StringUtil.trimStart(annotation.value(), "$CONTENT_ROOT"), "$PROJECT_ROOT");
+        String lastPathComponent = new File(testDataPath).getName();
+        int idx = trimmedRoot.indexOf(lastPathComponent);
         testDataPath = testDataPath.replace(File.separatorChar, '/') + (idx > 0 ? trimmedRoot.substring(idx + lastPathComponent.length()) : trimmedRoot);
         testDir = new File(testDataPath);
       }
     }
 
-    final File[] files = testDir.listFiles();
+    File[] files = testDir.listFiles();
 
     if (files == null) {
       fail("Test files not found in " + testDir.getPath());
     }
 
-    final Set<String> beforeFileSuffixes = new HashSet<>();
-    final Set<String> afterFileSuffixes = new HashSet<>();
-    final List<Object[]> result = new ArrayList<>();
+    Set<String> beforeFileSuffixes = new HashSet<>();
+    Set<String> afterFileSuffixes = new HashSet<>();
+    List<Object[]> result = new ArrayList<>();
     for (File file : files) {
-      final String fileSuffix = fileBasedTestCase.getFileSuffix(file.getName());
+      String fileSuffix = fileBasedTestCase.getFileSuffix(file.getName());
       String fileAfterSuffix = fileBasedTestCase.getBaseName(file.getName());
       if (fileAfterSuffix != null) {
         afterFileSuffixes.add(fileAfterSuffix);
@@ -775,15 +771,15 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     return super.getName();
   }
 
-  protected void setEditor(Editor editor) {
+  protected void setEditor(@NotNull Editor editor) {
     myEditor = editor;
   }
 
-  protected void setFile(PsiFile file) {
+  protected void setFile(@NotNull PsiFile file) {
     myFile = file;
   }
 
-  protected void setVFile(VirtualFile virtualFile) {
+  protected void setVFile(@NotNull VirtualFile virtualFile) {
     myVFile = virtualFile;
   }
 

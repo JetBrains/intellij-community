@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.TextRange;
@@ -198,6 +198,7 @@ public final class PsiLiteralUtil {
   /**
    * Converts given string to text block content.
    * <p>During conversion:</p>
+   * <ul>
    * <li>All escaped quotes are unescaped.</li>
    * <li>Every third quote is escaped. If escapeStartQuote / escapeEndQuote is set then start / end quote is also escaped.</li>
    * <li>All spaces before \n are converted to \040 escape sequence.
@@ -205,6 +206,7 @@ public final class PsiLiteralUtil {
    * If escapeSpacesInTheEnd is set, then all spaces before the end of the line are converted even if new line in the end is missing. </li>
    * <li> All new line escape sequences are interpreted. </li>
    * <li>Rest of the content is processed as is.</li>
+   * </ul>
    *
    * @param s                    original text
    * @param escapeStartQuote     true if first quote should be escaped (e.g. when copy-pasting into text block after two quotes)
@@ -399,9 +401,13 @@ public final class PsiLiteralUtil {
     while (true) {
       char c = rawText.charAt(start++);
       if (c == '\n') break;
-      if (!Character.isWhitespace(c) || start == rawText.length()) return null;
+      if (!isTextBlockWhiteSpace(c) || start == rawText.length()) return null;
     }
     return rawText.substring(start, rawText.length() - 3).split("\n", -1);
+  }
+
+  public static boolean isTextBlockWhiteSpace(char c) {
+    return c == ' ' || c == '\t' || c == '\f';
   }
 
   /**
@@ -666,12 +672,15 @@ public final class PsiLiteralUtil {
     }
     if (PsiType.DOUBLE.equals(exprType) && PsiType.FLOAT.equals(wantedType)) {
       Double value = ObjectUtils.tryCast(literal.getValue(), Double.class);
-      if (value != null && (double)(float)(double)value == value) {
-        String text = literal.getText();
-        if (StringUtil.endsWithIgnoreCase(text, "D")) {
-          text = text.substring(0, text.length() - 1);
+      if (value != null) {
+        float f = (float)(double)value;
+        if (Float.isFinite(f) && (f != 0.0 || value == 0.0)) {
+          String text = literal.getText();
+          if (StringUtil.endsWithIgnoreCase(text, "D")) {
+            text = text.substring(0, text.length() - 1);
+          }
+          return text + "F";
         }
-        return text + "F";
       }
     }
     if (PsiType.FLOAT.equals(exprType) && PsiType.DOUBLE.equals(wantedType)) {

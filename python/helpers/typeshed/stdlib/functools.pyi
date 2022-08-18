@@ -7,6 +7,53 @@ from typing_extensions import Literal, final
 if sys.version_info >= (3, 9):
     from types import GenericAlias
 
+    __all__ = [
+        "update_wrapper",
+        "wraps",
+        "WRAPPER_ASSIGNMENTS",
+        "WRAPPER_UPDATES",
+        "total_ordering",
+        "cache",
+        "cmp_to_key",
+        "lru_cache",
+        "reduce",
+        "partial",
+        "partialmethod",
+        "singledispatch",
+        "singledispatchmethod",
+        "cached_property",
+    ]
+elif sys.version_info >= (3, 8):
+    __all__ = [
+        "update_wrapper",
+        "wraps",
+        "WRAPPER_ASSIGNMENTS",
+        "WRAPPER_UPDATES",
+        "total_ordering",
+        "cmp_to_key",
+        "lru_cache",
+        "reduce",
+        "partial",
+        "partialmethod",
+        "singledispatch",
+        "singledispatchmethod",
+        "cached_property",
+    ]
+else:
+    __all__ = [
+        "update_wrapper",
+        "wraps",
+        "WRAPPER_ASSIGNMENTS",
+        "WRAPPER_UPDATES",
+        "total_ordering",
+        "cmp_to_key",
+        "lru_cache",
+        "reduce",
+        "partial",
+        "partialmethod",
+        "singledispatch",
+    ]
+
 _AnyCallable = Callable[..., Any]
 
 _T = TypeVar("_T")
@@ -29,6 +76,8 @@ class _lru_cache_wrapper(Generic[_T]):
     def __call__(self, *args: Hashable, **kwargs: Hashable) -> _T: ...
     def cache_info(self) -> _CacheInfo: ...
     def cache_clear(self) -> None: ...
+    def __copy__(self) -> _lru_cache_wrapper[_T]: ...
+    def __deepcopy__(self, __memo: Any) -> _lru_cache_wrapper[_T]: ...
 
 if sys.version_info >= (3, 8):
     @overload
@@ -50,9 +99,12 @@ def total_ordering(cls: type[_T]) -> type[_T]: ...
 def cmp_to_key(mycmp: Callable[[_T, _T], int]) -> Callable[[_T], SupportsAllComparisons]: ...
 
 class partial(Generic[_T]):
-    func: Callable[..., _T]
-    args: tuple[Any, ...]
-    keywords: dict[str, Any]
+    @property
+    def func(self) -> Callable[..., _T]: ...
+    @property
+    def args(self) -> tuple[Any, ...]: ...
+    @property
+    def keywords(self) -> dict[str, Any]: ...
     def __new__(cls: type[Self], __func: Callable[..., _T], *args: Any, **kwargs: Any) -> Self: ...
     def __call__(__self, *args: Any, **kwargs: Any) -> _T: ...
     if sys.version_info >= (3, 9):
@@ -69,7 +121,11 @@ class partialmethod(Generic[_T]):
     def __init__(self, __func: Callable[..., _T], *args: Any, **keywords: Any) -> None: ...
     @overload
     def __init__(self, __func: _Descriptor, *args: Any, **keywords: Any) -> None: ...
-    def __get__(self, obj: Any, cls: type[Any]) -> Callable[..., _T]: ...
+    if sys.version_info >= (3, 8):
+        def __get__(self, obj: Any, cls: type[Any] | None = ...) -> Callable[..., _T]: ...
+    else:
+        def __get__(self, obj: Any, cls: type[Any] | None) -> Callable[..., _T]: ...
+
     @property
     def __isabstractmethod__(self) -> bool: ...
     if sys.version_info >= (3, 9):
@@ -99,13 +155,15 @@ if sys.version_info >= (3, 8):
         dispatcher: _SingleDispatchCallable[_T]
         func: Callable[..., _T]
         def __init__(self, func: Callable[..., _T]) -> None: ...
+        @property
+        def __isabstractmethod__(self) -> bool: ...
         @overload
         def register(self, cls: type[Any], method: None = ...) -> Callable[[Callable[..., _T]], Callable[..., _T]]: ...
         @overload
         def register(self, cls: Callable[..., _T], method: None = ...) -> Callable[..., _T]: ...
         @overload
         def register(self, cls: type[Any], method: Callable[..., _T]) -> Callable[..., _T]: ...
-        def __call__(self, *args: Any, **kwargs: Any) -> _T: ...
+        def __get__(self, obj: _S, cls: type[_S] | None = ...) -> Callable[..., _T]: ...
 
     class cached_property(Generic[_T]):
         func: Callable[[Any], _T]

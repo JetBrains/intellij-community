@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.codeInliner
 
@@ -6,6 +6,10 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiTreeChangeAdapter
 import com.intellij.psi.PsiTreeChangeEvent
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
+import org.jetbrains.kotlin.idea.base.psi.canDropCurlyBrackets
+import org.jetbrains.kotlin.idea.base.psi.copied
+import org.jetbrains.kotlin.idea.base.psi.dropCurlyBrackets
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.intentions.ConvertToBlockBodyIntention
@@ -201,8 +205,8 @@ internal class ExpressionReplacementPerformer(
 
         // simplify "${x}" to "$x"
         val templateEntry = resultExpression?.parent as? KtBlockStringTemplateEntry
-        if (templateEntry?.canDropBraces() == true) {
-            return templateEntry.dropBraces().expression
+        if (templateEntry != null && templateEntry.canDropCurlyBrackets()) {
+            return templateEntry.dropCurlyBrackets().expression
         }
 
         return resultExpression ?: range.last as? KtExpression

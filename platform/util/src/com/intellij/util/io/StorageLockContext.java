@@ -2,9 +2,11 @@
 package com.intellij.util.io;
 
 import com.intellij.util.indexing.impl.IndexDebugProperties;
+import com.intellij.util.io.stats.FilePageCacheStatistics;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @ApiStatus.Internal
@@ -17,31 +19,47 @@ public final class StorageLockContext {
   private final FilePageCache myFilePageCache;
   private final boolean myUseReadWriteLock;
   private final boolean myCacheChannels;
+  private final boolean myDisableAssertions;
 
-  public StorageLockContext(@NotNull FilePageCache filePageCache,
-                            boolean useReadWriteLock,
-                            boolean cacheChannels) {
+  private StorageLockContext(@NotNull FilePageCache filePageCache,
+                             boolean useReadWriteLock,
+                             boolean cacheChannels,
+                             boolean disableAssertions) {
     myLock = new ReentrantReadWriteLock();
     myFilePageCache = filePageCache;
     myUseReadWriteLock = useReadWriteLock;
     myCacheChannels = cacheChannels;
+    myDisableAssertions = disableAssertions;
   }
 
   public StorageLockContext(boolean useReadWriteLock,
                             boolean cacheChannels) {
-    this(ourDefaultCache, useReadWriteLock, cacheChannels);
+    this(ourDefaultCache, useReadWriteLock, cacheChannels, false);
+  }
+
+  public StorageLockContext(boolean useReadWriteLock,
+                            boolean cacheChannels,
+                            boolean disableAssertions) {
+    this(ourDefaultCache, useReadWriteLock, cacheChannels, disableAssertions);
   }
 
   public StorageLockContext(boolean useReadWriteLock) {
-    this(ourDefaultCache, useReadWriteLock, false);
+    this(ourDefaultCache, useReadWriteLock, false, false);
   }
 
   public StorageLockContext() {
-    this(ourDefaultCache, false, false);
+    this(ourDefaultCache, false, false, false);
   }
 
   boolean useChannelCache() {
     return myCacheChannels;
+  }
+
+  public Lock readLock() {
+    return myUseReadWriteLock ? myLock.readLock() : myLock.writeLock();
+  }
+  public Lock writeLock() {
+    return myLock.writeLock();
   }
 
   public void lockRead() {
@@ -77,7 +95,7 @@ public final class StorageLockContext {
 
   @ApiStatus.Internal
   public void checkWriteAccess() {
-    if (IndexDebugProperties.DEBUG) {
+    if (!myDisableAssertions && IndexDebugProperties.DEBUG) {
       if (myLock.writeLock().isHeldByCurrentThread()) return;
       throw new IllegalStateException("Must hold StorageLock write lock to access PagedFileStorage");
     }
@@ -85,15 +103,34 @@ public final class StorageLockContext {
 
   @ApiStatus.Internal
   public void checkReadAccess() {
-    if (IndexDebugProperties.DEBUG) {
+    if (!myDisableAssertions && IndexDebugProperties.DEBUG) {
       if (myLock.getReadHoldCount() > 0 || myLock.writeLock().isHeldByCurrentThread()) return;
-      throw new IllegalStateException("Must hold StorageLock read lock to access PagedFileStorage");
-    }
+      throw new IllegalStateException("Must hold StorageLock read lock to access PagedFileStorage"); }
   }
 
   void assertUnderSegmentAllocationLock() {
     if (IndexDebugProperties.DEBUG) {
       myFilePageCache.assertUnderSegmentAllocationLock();
     }
+  }
+
+  @ApiStatus.Internal
+  public static void forceDirectMemoryCache() {
+    ourDefaultCache.flushBuffers();
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull FilePageCacheStatistics getStatistics() {
+    return ourDefaultCache.getStatistics();
+  }
+
+  @ApiStatus.Internal
+  public static void assertNoBuffersLocked() {
+    ourDefaultCache.assertNoBuffersLocked();
+  }
+
+  @ApiStatus.Internal
+  public static long getCacheMaxSize() {
+    return ourDefaultCache.getMaxSize();
   }
 }

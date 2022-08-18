@@ -21,6 +21,8 @@ internal class IntentionPreviewEditor(psiFileCopy: PsiFile, caretOffset: Int, pr
 
   override fun isViewer(): Boolean = true
 
+  override fun isOneLineMode(): Boolean = false
+
   override fun getSettings(): EditorSettings {
     return settings
   }

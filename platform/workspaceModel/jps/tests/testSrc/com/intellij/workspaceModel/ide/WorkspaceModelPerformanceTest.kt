@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -18,10 +18,9 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Ignore
@@ -128,7 +127,7 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
   private fun hundredModulesRemove(modules: MutableList<Module>,
                                    moduleManager: ModuleManager) {
     modules.forEach {
-      val modifiableModel = moduleManager.modifiableModel
+      val modifiableModel = moduleManager.getModifiableModel()
       modifiableModel.disposeModule(it)
       modifiableModel.commit()
     }
@@ -179,7 +178,7 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
   private fun hundredModulesCreation(moduleManager: ModuleManager,
                                      modules: MutableList<Module>) {
     (1..100).forEach {
-      val modifiableModel = moduleManager.modifiableModel
+      val modifiableModel = moduleManager.getModifiableModel()
       modules.add(modifiableModel.newModule(File(project.basePath, "$TEST_MODULE_PREFIX$it.iml").path, EmptyModuleType.getInstance().id))
       modifiableModel.commit()
     }
@@ -188,7 +187,7 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
   @Test
   fun `test base operations in store`()  = WriteCommandAction.runWriteCommandAction(project) {
     val workspaceModel = WorkspaceModel.getInstance(project)
-    var diff = WorkspaceEntityStorageBuilder.from(workspaceModel.entityStorage.current)
+    var diff = MutableEntityStorage.from(workspaceModel.entityStorage.current)
 
     val moduleType = EmptyModuleType.getInstance().id
     val dependencies = listOf(ModuleDependencyItem.ModuleSourceDependency)
@@ -203,7 +202,7 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
     logExecutionTimeInInNano("Loop thorough the entities from store") { entities.forEach { it.name } }
     assertEquals(modulesCount + 100, entities.toList().size)
 
-    diff = WorkspaceEntityStorageBuilder.from(workspaceModel.entityStorage.current)
+    diff = MutableEntityStorage.from(workspaceModel.entityStorage.current)
     logExecutionTimeInMillis("Remove hundred entities from store") {
       workspaceModel.entityStorage.current.entities(ModuleEntity::class.java).take(100).forEach { diff.removeEntity(it) }
       workspaceModel.updateProjectModel { it.addDiff(diff) }

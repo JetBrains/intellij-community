@@ -1,4 +1,4 @@
-// "Remove '{}'" "true"
+// "Remove '{}'" "true-preview"
 
 enum Planet {
   MERCURY<caret>(3.303e+23);

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.AccessToken;
@@ -60,6 +61,11 @@ public class GithubSyncForkAction extends DumbAwareAction {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(isEnabledAndVisible(e));
   }
@@ -84,7 +90,7 @@ public class GithubSyncForkAction extends DumbAwareAction {
       return;
     }
 
-    GHProjectRepositoriesManager ghRepositoriesManager = project.getServiceIfCreated(GHProjectRepositoriesManager.class);
+    GHHostedRepositoriesManager ghRepositoriesManager = project.getServiceIfCreated(GHHostedRepositoriesManager.class);
     if (ghRepositoriesManager == null) {
       LOG.warn("Unable to get the GHProjectRepositoriesManager service");
       return;
@@ -152,7 +158,7 @@ public class GithubSyncForkAction extends DumbAwareAction {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null || project.isDefault()) return false;
 
-    GHProjectRepositoriesManager repositoriesManager = project.getServiceIfCreated(GHProjectRepositoriesManager.class);
+    GHHostedRepositoriesManager repositoriesManager = project.getServiceIfCreated(GHHostedRepositoriesManager.class);
     if (repositoriesManager == null) return false;
 
     return !repositoriesManager.getKnownRepositories().isEmpty();

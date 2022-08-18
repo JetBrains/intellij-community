@@ -2,6 +2,7 @@
 // "Import" "true"
 // ERROR: No value passed for parameter 'p'
 // ERROR: Type mismatch: inferred type is Unit but String was expected
+/* IGNORE_FIR */
 
 package main
 
@@ -25,6 +26,7 @@ fun <T> X.foo(): T = TODO()
 // "Import" "true"
 // ERROR: No value passed for parameter 'p'
 // ERROR: Type mismatch: inferred type is Unit but String was expected
+/* IGNORE_FIR */
 
 package main
 
@@ -38,4 +40,3 @@ class X {
         return foo(<caret>)
     }
 }
-

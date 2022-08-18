@@ -50,7 +50,7 @@ abstract class BaseXmlOutputter(protected val lineSeparator: String) {
       out.write(systemID)
       out.write("\"")
     }
-    if (internalSubset != null && !internalSubset.isEmpty()) {
+    if (!internalSubset.isNullOrEmpty()) {
       out.write(" [")
       out.write(lineSeparator)
       out.write(docType.internalSubset)
@@ -65,7 +65,7 @@ abstract class BaseXmlOutputter(protected val lineSeparator: String) {
     out.write(target)
 
     val rawData = pi.data
-    if (rawData != null && !rawData.isEmpty()) {
+    if (!rawData.isNullOrEmpty()) {
       out.write(" ")
       out.write(rawData)
     }

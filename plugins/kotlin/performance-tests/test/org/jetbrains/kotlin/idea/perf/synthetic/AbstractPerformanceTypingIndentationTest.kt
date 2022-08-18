@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.perf.synthetic
 
@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.idea.testFramework.Stats
 import org.jetbrains.kotlin.idea.testFramework.performanceTest
 import org.jetbrains.kotlin.idea.test.KotlinLightPlatformCodeInsightTestCase
 import org.jetbrains.kotlin.idea.test.configureCodeStyleAndRun
-import org.jetbrains.kotlin.idea.testFramework.dispatchAllInvocationEvents
+import org.jetbrains.kotlin.idea.performance.tests.utils.dispatchAllInvocationEvents
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 

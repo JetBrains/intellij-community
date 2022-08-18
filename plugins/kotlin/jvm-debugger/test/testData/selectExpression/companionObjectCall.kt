@@ -7,4 +7,5 @@ class O {
         fun foo() {}
     }
 }
-// EXPECTED: null
+// EXPECTED: O
+// EXPECTED_LEGACY: null

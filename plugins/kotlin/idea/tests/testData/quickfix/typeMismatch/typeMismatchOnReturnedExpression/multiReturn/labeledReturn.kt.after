@@ -6,3 +6,5 @@ fun foo(n: Int): Any {
         return@foo 1
     }
 }
+
+/* IGNORE_FIR */

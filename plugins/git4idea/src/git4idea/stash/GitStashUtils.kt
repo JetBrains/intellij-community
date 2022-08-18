@@ -31,6 +31,7 @@ import git4idea.GitCommit
 import git4idea.GitNotificationIdsHolder
 import git4idea.GitNotificationIdsHolder.Companion.STASH_LOCAL_CHANGES_DETECTED
 import git4idea.GitNotificationIdsHolder.Companion.UNSTASH_FAILED
+import git4idea.GitStashUsageCollector
 import git4idea.GitUtil
 import git4idea.changes.GitChangeUtils
 import git4idea.commands.*
@@ -112,7 +113,7 @@ object GitStashOperations {
     val panel = LoadingCommittedChangeListPanel(project)
     panel.loadChangesInBackground {
       val changes = GitChangeUtils.getRevisionChanges(project, GitUtil.getRootForFile(project, stash.root), stash.hash.asString(),
-        true, compareWithLocal, false)
+                                                      true, compareWithLocal, false)
       ChangelistData(changes, null)
     }
 
@@ -178,14 +179,17 @@ object GitStashOperations {
         handler.addLineListener(untrackedFilesDetector)
         handler.addLineListener(localChangesDetector)
 
-        val result = Git.getInstance().runCommand { handler }
+        val activity = GitStashUsageCollector.logStashPop(project)
+        val result = Git.getInstance().runCommand(handler)
+        activity.finished()
 
         if (hash != null) refreshUnstashedChanges(project, hash, root)
         GitRepositoryManager.getInstance(project).getRepositoryForFileQuick(root)?.repositoryFiles?.refreshIndexFile()
 
         if (indexConflictDetector.hasHappened()) {
           // index conflicts could only be resolved manually
-          VcsNotifier.getInstance(project).notifyError(UNSTASH_FAILED, GitBundle.message("notification.title.unstash.failed.index.conflict"),
+          VcsNotifier.getInstance(project).notifyError(UNSTASH_FAILED,
+                                                       GitBundle.message("notification.title.unstash.failed.index.conflict"),
                                                        result.errorOutputAsHtmlString, true)
           return false
         }

@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.EventDispatcher;
@@ -226,7 +227,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
   @NotNull
   @Override
   public List<Inlay<?>> getInlineElementsInRange(int startOffset, int endOffset) {
-    List<InlineInlayImpl<?>> range = getElementsInRange(myInlineElementsTree, startOffset, endOffset, inlay -> true,
+    List<InlineInlayImpl<?>> range = getElementsInRange(myInlineElementsTree, startOffset, endOffset, Predicates.alwaysTrue(),
                                                         INLINE_ELEMENTS_COMPARATOR);
     //noinspection unchecked
     return (List)range;
@@ -246,7 +247,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
   @Override
   public List<Inlay<?>> getBlockElementsInRange(int startOffset, int endOffset) {
     List<BlockInlayImpl<?>> range =
-      getElementsInRange(myBlockElementsTree, startOffset, endOffset, inlay -> true, BLOCK_ELEMENTS_PRIORITY_COMPARATOR);
+      getElementsInRange(myBlockElementsTree, startOffset, endOffset, Predicates.alwaysTrue(), BLOCK_ELEMENTS_PRIORITY_COMPARATOR);
     //noinspection unchecked
     return (List)range;
   }
@@ -458,7 +459,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
   public List<Inlay<?>> getAfterLineEndElementsInRange(int startOffset, int endOffset) {
     if (!hasAfterLineEndElements()) return Collections.emptyList();
     List<AfterLineEndInlayImpl<?>> range =
-      getElementsInRange(myAfterLineEndElementsTree, startOffset, endOffset, inlay -> true, AFTER_LINE_END_ELEMENTS_OFFSET_COMPARATOR);
+      getElementsInRange(myAfterLineEndElementsTree, startOffset, endOffset, Predicates.alwaysTrue(), AFTER_LINE_END_ELEMENTS_OFFSET_COMPARATOR);
     //noinspection unchecked
     return (List)range;
   }
@@ -599,8 +600,8 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
         void addIntervalsFrom(@NotNull IntervalNode<InlineInlayImpl<?>> otherNode) {
           super.addIntervalsFrom(otherNode);
           if (myPutMergedIntervalsAtBeginning) {
-            List<Supplier<InlineInlayImpl<?>>> added = ContainerUtil.subList(intervals, intervals.size() - otherNode.intervals.size());
-            List<Supplier<InlineInlayImpl<?>>> addedCopy = new ArrayList<>(added);
+            List<Supplier<? extends InlineInlayImpl<?>>> added = ContainerUtil.subList(intervals, intervals.size() - otherNode.intervals.size());
+            List<Supplier<? extends InlineInlayImpl<?>>> addedCopy = new ArrayList<>(added);
             added.clear();
             intervals.addAll(0, addedCopy);
           }

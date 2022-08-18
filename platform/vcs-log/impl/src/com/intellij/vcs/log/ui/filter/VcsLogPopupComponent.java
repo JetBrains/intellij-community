@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.icons.AllIcons;
@@ -14,12 +14,10 @@ import com.intellij.ui.ClickListener;
 import com.intellij.ui.dsl.builder.DslComponentProperty;
 import com.intellij.ui.dsl.gridLayout.Gaps;
 import com.intellij.ui.popup.PopupState;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import com.intellij.vcs.log.VcsLogBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +29,9 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Area;
 import java.awt.geom.RoundRectangle2D;
+import java.util.Objects;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 public abstract class VcsLogPopupComponent extends JPanel {
   private static final int GAP_BEFORE_ARROW = 3;
@@ -42,47 +42,81 @@ public abstract class VcsLogPopupComponent extends JPanel {
   @NotNull private final Supplier<@NlsContexts.Label String> myDisplayName;
   @Nullable private JLabel myNameLabel;
   @NotNull private JLabel myValueLabel;
+  @NotNull private InlineIconButton myFilterActionButton;
 
   protected VcsLogPopupComponent(@NotNull Supplier<@NlsContexts.Label String> displayName) {
+    super(null);
     myDisplayName = displayName;
     putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY);
   }
 
   public JComponent initUi() {
-    myNameLabel = shouldDrawLabel() ? new DynamicLabel(() -> myDisplayName.get() + ": ") : null;
+    myNameLabel = shouldDrawLabel() ? new DynamicLabel(() -> myDisplayName.get() + (isValueSelected() ? ": " : "")) : null;
     myValueLabel = new DynamicLabel(this::getCurrentText);
     setDefaultForeground();
     setFocusable(true);
     setBorder(wrapBorder(createUnfocusedBorder()));
 
     setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+
+    myFilterActionButton = new InlineIconButton(AllIcons.Actions.Close);
+
     if (myNameLabel != null) add(myNameLabel);
     add(myValueLabel);
     add(Box.createHorizontalStrut(GAP_BEFORE_ARROW));
-    add(new JLabel(AllIcons.Ide.Statusbar_arrows));
+    add(myFilterActionButton);
+
+    Runnable resetAction = createResetAction();
+
+    myFilterActionButton.setActionListener(e -> {
+      if (isValueSelected()) {
+        resetAction.run();
+      }
+      else {
+        showPopupMenu();
+      }
+    });
+
+    updateFilterButton();
 
     installChangeListener(() -> {
+      setDefaultForeground();
+      updateFilterButton();
+
       myValueLabel.revalidate();
       myValueLabel.repaint();
     });
     showPopupMenuOnClick();
     showPopupMenuFromKeyboard();
     if (shouldIndicateHovering()) {
-      indicateHovering();
+      Stream.of(this, myFilterActionButton, myNameLabel, myValueLabel)
+        .filter(Objects::nonNull)
+        .forEach(this::indicateHovering);
     }
     indicateFocusing();
+    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     return this;
   }
 
+  private void updateFilterButton() {
+    boolean selected = isValueSelected();
+    myFilterActionButton.setIcon(selected ? AllIcons.Actions.Close : AllIcons.General.ArrowDown);
+    myFilterActionButton.setHoveredIcon(selected ? AllIcons.Actions.CloseHovered : AllIcons.General.ArrowDown);
+    myFilterActionButton.setFocusable(selected);
+  }
 
   public abstract String getCurrentText();
 
-  public abstract void installChangeListener(@NotNull Runnable onChange);
-
+  /**
+   * @return text that shows when filter value not selected (e.g. "All")
+   */
   @NotNull
-  protected Color getDefaultSelectorForeground() {
-    return StartupUiUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getInactiveTextColor().darker().darker();
-  }
+  @Nls
+  public abstract String getEmptyFilterValue();
+
+  protected abstract boolean isValueSelected();
+
+  public abstract void installChangeListener(@NotNull Runnable onChange);
 
   protected boolean shouldIndicateHovering() {
     return true;
@@ -96,6 +130,11 @@ public abstract class VcsLogPopupComponent extends JPanel {
    * Create popup actions available under this filter.
    */
   protected abstract ActionGroup createActionGroup();
+
+  /**
+   * @return an action that resets filter to its default state
+   */
+  protected abstract Runnable createResetAction();
 
   private void indicateFocusing() {
     addFocusListener(new FocusAdapter() {
@@ -123,17 +162,20 @@ public abstract class VcsLogPopupComponent extends JPanel {
   }
 
   private void showPopupMenuOnClick() {
-    new ClickListener() {
+    ClickListener clickListener = new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
         showPopupMenu();
         return true;
       }
-    }.installOn(this);
+    };
+    clickListener.installOn(this);
+    clickListener.installOn(myValueLabel);
+    if (myNameLabel != null) clickListener.installOn(myNameLabel);
   }
 
-  private void indicateHovering() {
-    addMouseListener(new MouseAdapter() {
+  private void indicateHovering(@NotNull JComponent component) {
+    component.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseEntered(@NotNull MouseEvent e) {
         setOnHoverForeground();
@@ -148,9 +190,9 @@ public abstract class VcsLogPopupComponent extends JPanel {
 
   private void setDefaultForeground() {
     if (myNameLabel != null) {
-      myNameLabel.setForeground(StartupUiUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getInactiveTextColor());
+      myNameLabel.setForeground(UIUtil.getLabelInfoForeground());
     }
-    myValueLabel.setForeground(getDefaultSelectorForeground());
+    myValueLabel.setForeground(UIUtil.getLabelForeground());
   }
 
   private void setOnHoverForeground() {
@@ -170,7 +212,8 @@ public abstract class VcsLogPopupComponent extends JPanel {
   @NotNull
   protected ListPopup createPopupMenu() {
     return JBPopupFactory.getInstance().
-      createActionGroupPopup(null, ActionGroupUtil.forceRecursiveUpdateInBackground(createActionGroup()), DataManager.getInstance().getDataContext(this),
+      createActionGroupPopup(null, ActionGroupUtil.forceRecursiveUpdateInBackground(createActionGroup()),
+                             DataManager.getInstance().getDataContext(this),
                              JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
   }
 
@@ -231,7 +274,7 @@ public abstract class VcsLogPopupComponent extends JPanel {
   private static final class DynamicLabel extends JLabel {
     private final Supplier<@NlsContexts.Label String> myText;
 
-    private DynamicLabel(@NotNull Supplier<@NlsContexts.Label String> text) {myText = text;}
+    private DynamicLabel(@NotNull Supplier<@NlsContexts.Label String> text) { myText = text; }
 
     @Override
     @NlsContexts.Label

@@ -482,7 +482,19 @@ public class StatementParser {
       return Pair.create(defaultElement, false);
     }
     if (myParser.getPatternParser().isPattern(builder)) {
-      return Pair.create(myParser.getPatternParser().parsePattern(builder), false);
+      PsiBuilder.Marker pattern = myParser.getPatternParser().parsePattern(builder);
+      if (builder.getTokenType() != JavaTokenType.IDENTIFIER || !PsiKeyword.WHEN.equals(builder.getTokenText())) {
+        return Pair.create(pattern, false);
+      }
+      builder.remapCurrentToken(JavaTokenType.WHEN_KEYWORD);
+      builder.advanceLexer();
+      PsiBuilder.Marker guardingExpression = myParser.getExpressionParser().parse(builder, ExpressionParser.FORBID_LAMBDA_MASK);
+      if (guardingExpression == null) {
+        error(builder, JavaPsiBundle.message("expected.expression"));
+      }
+      PsiBuilder.Marker patternGuard = pattern.precede();
+      done(patternGuard, JavaElementType.PATTERN_GUARD);
+      return Pair.create(patternGuard, false);
     }
     return Pair.create(myParser.getExpressionParser().parseAssignment(builder, BitUtil.set(0, ExpressionParser.FORBID_LAMBDA_MASK, true)), true);
   }

@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.ui.TextAccessor;
-import com.intellij.util.BooleanFunction;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StatusText;
@@ -26,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.plaf.TextUI;
-import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Objects;
@@ -55,17 +39,7 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText, T
 
   private void init() {
     UIUtil.addUndoRedoActions(this);
-    myEmptyText = new TextComponentEmptyText(this) {
-      @Override
-      protected boolean isStatusVisible() {
-        Object function = getClientProperty(STATUS_VISIBLE_FUNCTION);
-        if (function instanceof BooleanFunction) {
-          //noinspection unchecked
-          return ((BooleanFunction<JTextComponent>)function).fun(JBTextField.this);
-        }
-        return super.isStatusVisible();
-      }
-
+    myEmptyText = new TextComponentEmptyText(this, true) {
       @Override
       protected Rectangle getTextComponentBound() {
         return getEmptyTextComponentBounds(super.getTextComponentBound());
@@ -88,15 +62,16 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText, T
     UIUtil.resetUndoRedoActions(this);
   }
 
-  @NotNull
   @Override
-  public StatusText getEmptyText() {
+  public @NotNull StatusText getEmptyText() {
     return myEmptyText;
   }
 
   @Override
+  @SuppressWarnings("DuplicatedCode")
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
+
     if (!myEmptyText.getStatusTriggerText().isEmpty() && myEmptyText.isStatusVisible()) {
       g.setColor(getBackground());
 
@@ -107,13 +82,14 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText, T
 
       g.setColor(getForeground());
     }
+
     myEmptyText.paintStatusText(g);
   }
 
   @Override
   public String getToolTipText(MouseEvent event) {
     TextUI ui = getUI();
-    @SuppressWarnings("HardCodedStringLiteral") String text = ui == null ? null : ui.getToolTipText(this, event.getPoint());
+    String text = ui == null ? null : ui.getToolTipText2D(this, event.getPoint());
     return text != null ? text : getToolTipText();
   }
 }

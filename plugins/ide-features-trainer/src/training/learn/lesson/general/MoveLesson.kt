@@ -15,7 +15,7 @@ class MoveLesson(private val caretText: String, private val sample: LessonSample
       prepareSample(sample)
 
       actionTask("MoveLineDown") {
-        restoreIfModifiedOrMoved()
+        restoreIfModifiedOrMoved(sample)
         LessonsBundle.message("move.pull.down", action(it))
       }
       actionTask("MoveLineUp") {

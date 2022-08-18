@@ -11,7 +11,7 @@ import java.io.*;
 import java.util.Collection;
 
 /**
- * @author: db
+ * @author db
  */
 public final class RW {
   private RW() {

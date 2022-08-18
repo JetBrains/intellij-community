@@ -2,10 +2,8 @@
 package com.intellij.execution.services;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
-@ApiStatus.Experimental
 public interface ServiceViewLocatableDescriptor {
   @Nullable
   default VirtualFile getVirtualFile() {

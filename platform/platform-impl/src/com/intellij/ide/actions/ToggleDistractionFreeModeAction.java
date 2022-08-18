@@ -10,6 +10,7 @@ import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.EditorFactory;
@@ -18,7 +19,6 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.RegistryValue;
-import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -40,6 +40,11 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction implements 
                                         "action.ToggleDistractionFreeMode.exit" :
                                         "action.ToggleDistractionFreeMode.enter");
     presentation.setText(text);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -72,10 +77,6 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction implements 
     EditorFactory.getInstance().refreshAllEditors();
     if (!enter) {
       TogglePresentationModeAction.restoreToolWindows(project, false);
-    }
-    JFrame projectJFrame = WindowManager.getInstance().getFrame(project);
-    if (projectJFrame != null) {
-      projectJFrame.transferFocus();
     }
   }
 

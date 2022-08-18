@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.lexer;
 
 import com.intellij.lang.java.JavaParserDefinition;
@@ -158,6 +158,95 @@ public class JavaLexerTest extends LexerTestCase {
     doTest("\"\"\"\n  \"\\\"\"\"  \"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\"\\n  \"\\\"\"\"  \"\"\"')\nWHITE_SPACE (' ')");
     doTest("\"\"\"\n  \"\"\\\"\"\"  \"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\"\\n  \"\"\\\"\"\"  \"\"\"')\nWHITE_SPACE (' ')");
     doTest("\"\"\" \n\"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\" \\n\"\"\"')\nWHITE_SPACE (' ')");
+    doTest("\"\"\"\n \\u005C\"\"\"\n \"\"\"", "TEXT_BLOCK_LITERAL ('\"\"\"\\n \\u005C\"\"\"\\n \"\"\"')"); // unicode escaped backslash '\'
+  }
+
+  public void testStringLiterals() {
+    doTest("\"", "STRING_LITERAL ('\"')");
+    doTest("\" ", "STRING_LITERAL ('\" ')");
+    doTest("\"\"", "STRING_LITERAL ('\"\"')");
+    doTest("\"\" ", "STRING_LITERAL ('\"\"')\nWHITE_SPACE (' ')");
+    doTest("\"\\\"\" ", "STRING_LITERAL ('\"\\\"\"')\nWHITE_SPACE (' ')");
+    doTest("\"\\", "STRING_LITERAL ('\"\\')");
+    doTest("\"\\u", "STRING_LITERAL ('\"\\u')");
+    doTest("\"\n\"", "STRING_LITERAL ('\"')\nWHITE_SPACE ('\\n')\nSTRING_LITERAL ('\"')");
+    doTest("\"\\n\" ", "STRING_LITERAL ('\"\\n\"')\nWHITE_SPACE (' ')");
+    doTest("\"\\uuuuuu005c\"\" ", "STRING_LITERAL ('\"\\uuuuuu005c\"\"')\nWHITE_SPACE (' ')");
+    doTest("\"\\u005c\"\" ", "STRING_LITERAL ('\"\\u005c\"\"')\nWHITE_SPACE (' ')");
+    doTest("\"\\u005\" ", "STRING_LITERAL ('\"\\u005\"')\nWHITE_SPACE (' ')"); // broken unicode escape
+    doTest("\"\\u00\" ", "STRING_LITERAL ('\"\\u00\"')\nWHITE_SPACE (' ')"); // broken unicode escape
+    doTest("\"\\u0\" ", "STRING_LITERAL ('\"\\u0\"')\nWHITE_SPACE (' ')"); // broken unicode escape
+    doTest("\"\\u\" ", "STRING_LITERAL ('\"\\u\"')\nWHITE_SPACE (' ')"); // broken unicode escape
+
+    // see also com.intellij.java.codeInsight.daemon.LightAdvHighlightingTest#testStringLiterals
+    doTest(" \"\\u000a\" ", "WHITE_SPACE (' ')\nSTRING_LITERAL ('\"\\u000a\"')\nWHITE_SPACE (' ')");
+  }
+
+  public void testCharLiterals() {
+    doTest("'\\u005c\\u005c'", "CHARACTER_LITERAL (''\\u005c\\u005c'')"); // unicode escaped escaped slash '\\'
+    doTest("\\u0027\\u005c\\u005c'", "CHARACTER_LITERAL ('\\u0027\\u005c\\u005c'')"); // unicode escaped escaped slash '\\'
+    doTest("'\\u1234' ", "CHARACTER_LITERAL (''\\u1234'')\nWHITE_SPACE (' ')");
+    doTest("'\\u1234\\u0027 ", "CHARACTER_LITERAL (''\\u1234\\u0027')\nWHITE_SPACE (' ')");
+    doTest("'x' ", "CHARACTER_LITERAL (''x'')\nWHITE_SPACE (' ')");
+    doTest("'", "CHARACTER_LITERAL (''')");
+    doTest("\\u0027", "CHARACTER_LITERAL ('\\u0027')");
+    doTest("' ", "CHARACTER_LITERAL ('' ')");
+    doTest("'\\u0020", "CHARACTER_LITERAL (''\\u0020')");
+    doTest("''", "CHARACTER_LITERAL ('''')");
+    doTest("'\\u0027", "CHARACTER_LITERAL (''\\u0027')");
+    doTest("\\u0027\\u0027", "CHARACTER_LITERAL ('\\u0027\\u0027')");
+    doTest("'\\u007F' 'F' ", "CHARACTER_LITERAL (''\\u007F'')\nWHITE_SPACE (' ')\nCHARACTER_LITERAL (''F'')\nWHITE_SPACE (' ')");
+    doTest("'\\u005C' ", "CHARACTER_LITERAL (''\\u005C' ')"); // closing quote is escaped with unicode escaped backslash
+  }
+
+  public void testComments() {
+    doTest("//", "END_OF_LINE_COMMENT ('//')");
+    doTest("\\u002f\\u002F", "END_OF_LINE_COMMENT ('\\u002f\\u002F')");
+    doTest("//\n", "END_OF_LINE_COMMENT ('//')\nWHITE_SPACE ('\\n')");
+    doTest("//\\u000A", "END_OF_LINE_COMMENT ('//')\nWHITE_SPACE ('\\u000A')");
+    doTest("//x\n", "END_OF_LINE_COMMENT ('//x')\nWHITE_SPACE ('\\n')");
+    doTest("/\\u002fx\n", "END_OF_LINE_COMMENT ('/\\u002fx')\nWHITE_SPACE ('\\n')");
+    doTest("/*/ ", "C_STYLE_COMMENT ('/*/ ')");
+    doTest("/\\u002A/ ", "C_STYLE_COMMENT ('/\\u002A/ ')");
+    doTest("/**/ ", "C_STYLE_COMMENT ('/**/')\nWHITE_SPACE (' ')");
+    doTest("\\u002f**/ ", "C_STYLE_COMMENT ('\\u002f**/')\nWHITE_SPACE (' ')");
+    doTest("/*x*/ ", "C_STYLE_COMMENT ('/*x*/')\nWHITE_SPACE (' ')");
+    doTest("/*x\\u002a\\u002F\\u0020", "C_STYLE_COMMENT ('/*x\\u002a\\u002F')\nWHITE_SPACE ('\\u0020')");
+    doTest("/***/ ", "DOC_COMMENT ('/***/')\nWHITE_SPACE (' ')");
+    doTest("/*\\u002a*/ ", "DOC_COMMENT ('/*\\u002a*/')\nWHITE_SPACE (' ')");
+    doTest("/**x*/ ", "DOC_COMMENT ('/**x*/')\nWHITE_SPACE (' ')");
+    doTest("/**\\u0078*/ ", "DOC_COMMENT ('/**\\u0078*/')\nWHITE_SPACE (' ')");
+    doTest("/*", "C_STYLE_COMMENT ('/*')");
+    doTest("/\\u002a", "C_STYLE_COMMENT ('/\\u002a')");
+    doTest("/**", "DOC_COMMENT ('/**')");
+    doTest("/*\\u002a", "DOC_COMMENT ('/*\\u002a')");
+    doTest("/***", "DOC_COMMENT ('/***')");
+    doTest("/**\\u002a", "DOC_COMMENT ('/**\\u002a')");
+    doTest("#! ", "END_OF_LINE_COMMENT ('#! ')");
+    doTest("\\u0023! ", "BAD_CHARACTER ('\\')\nIDENTIFIER ('u0023')\nEXCL ('!')\nWHITE_SPACE (' ')");
+    doTest("/", "DIV ('/')");
+    doTest("1/2", "INTEGER_LITERAL ('1')\nDIV ('/')\nINTEGER_LITERAL ('2')");
+    doTest("//\\\\u000A test", "END_OF_LINE_COMMENT ('//\\\\u000A test')"); // escaped backslash, not a unicode escape
+    doTest("//\\\\\\u000A test", "END_OF_LINE_COMMENT ('//\\\\')\nWHITE_SPACE ('\\u000A ')\nIDENTIFIER ('test')"); // escaped backslash, followed by a unicode escape
+  }
+
+  public void testWhitespace() {
+    doTest(" ", "WHITE_SPACE (' ')");
+    doTest("\t", "WHITE_SPACE ('\t')");
+    doTest("\n", "WHITE_SPACE ('\\n')");
+    doTest("\r", "WHITE_SPACE ('\r')");
+    doTest("\\u000A", "WHITE_SPACE ('\\u000A')");
+    doTest("\\u000d", "WHITE_SPACE ('\\u000d')");
+    doTest("\\u000d\n\\u000a", "WHITE_SPACE ('\\u000d\\n\\u000a')");
+    doTest("\\", "BAD_CHARACTER ('\\')");
+    doTest("\\u", "BAD_CHARACTER ('\\')\nIDENTIFIER ('u')");
+    doTest("\\u0", "BAD_CHARACTER ('\\')\nIDENTIFIER ('u0')");
+    doTest("\\u00", "BAD_CHARACTER ('\\')\nIDENTIFIER ('u00')");
+    doTest("\\u000", "BAD_CHARACTER ('\\')\nIDENTIFIER ('u000')");
+    doTest("\\u000A", "WHITE_SPACE ('\\u000A')");
+    doTest("\\u000A\\u000A", "WHITE_SPACE ('\\u000A\\u000A')");
+    doTest("\\\\u000A", "BAD_CHARACTER ('\\')\nBAD_CHARACTER ('\\')\nIDENTIFIER ('u000A')");
+    doTest("\\\\\\u000A", "BAD_CHARACTER ('\\')\nBAD_CHARACTER ('\\')\nWHITE_SPACE ('\\u000A')");
   }
 
   @Override

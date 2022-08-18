@@ -156,7 +156,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     String bundlePath = getMetaProperties().getProperty(NAME_BUNDLE_PROPERTY);
     String bundleKey = getMetaProperties().getProperty(NAME_KEY_PROPERTY);
     if (bundlePath != null && bundleKey != null) {
-      ResourceBundle bundle = DynamicBundle.INSTANCE.getResourceBundle(bundlePath, getClass().getClassLoader());
+      ResourceBundle bundle = DynamicBundle.getResourceBundle(getClass().getClassLoader(), bundlePath);
       return BundleBase.messageOrDefault(bundle, bundleKey, null);
     }
     return null;
@@ -243,6 +243,16 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   @Override
   public void setLineSpacing(float lineSpacing) {
     ensureEditableFontPreferences().setLineSpacing(lineSpacing);
+  }
+
+  @Override
+  public boolean isUseLigatures() {
+    return getFontPreferences().useLigatures();
+  }
+
+  @Override
+  public void setUseLigatures(boolean useLigatures) {
+    ensureEditableFontPreferences().setUseLigatures(useLigatures);
   }
 
   @Override
@@ -508,11 +518,10 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
                                 @Nullable Float fontScale,
                                 boolean clearFonts) {
     if (clearFonts) preferences.clearFonts();
-    List children = element.getChildren(OPTION_ELEMENT);
+    List<Element> children = element.getChildren(OPTION_ELEMENT);
     String fontFamily = null;
     float size = -1;
-    for (Object child : children) {
-      Element e = (Element)child;
+    for (Element e : children) {
       if (EDITOR_FONT_NAME.equals(e.getAttributeValue(NAME_ATTR))) {
         fontFamily = myValueReader.read(String.class, e);
       }
@@ -769,7 +778,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
       ModifiableFontPreferences editablePrefs = new FontPreferencesImpl();
       myFontPreferences.copyTo(editablePrefs);
       myFontPreferences = editablePrefs;
-      ((FontPreferencesImpl)myFontPreferences).setChangeListener(() -> initFonts());
+      ((FontPreferencesImpl)myFontPreferences).addChangeListener((source) -> initFonts());
     }
     return (ModifiableFontPreferences)myFontPreferences;
   }

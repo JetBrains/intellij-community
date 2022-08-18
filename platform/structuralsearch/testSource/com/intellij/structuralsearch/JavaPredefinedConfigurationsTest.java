@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -357,6 +357,53 @@ public class JavaPredefinedConfigurationsTest extends PredefinedConfigurationsTe
            "class Y {" +
            "      int i;" +
            "    }");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.instance.fields.of.the.class")),
+           "class X {" +
+           "  int a = 1;" +
+           "  int b = 2;" +
+           "  static int c = 3;" +
+           "}",
+           "int a = 1;",
+           "int b = 2;");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.inner.classes")),
+           "class X {" +
+           "  class Inner1 {}" +
+           "  static class Inner2 {}" +
+           "}",
+           "class Inner1 {}",
+           "static class Inner2 {}");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.all.inner.classes.within.hierarchy")),
+           "class X {" +
+           "  class Inner {}" +
+           "}" +
+           "class Y extends X {}",
+           "class Inner {}");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.type.var.substitutions.in.instanceof.with.generic.types")),
+           "class X<T, U, V> {" +
+           "  void x(Object o) {" +
+           "    System.out.println(o instanceof X<Integer, Boolean, String>);" +
+           "  }" +
+           "}",
+           "Integer",
+           "Boolean",
+           "String");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.javadoc.annotated.fields")),
+           "class X {" +
+           "  /** comment */" +
+           "  int i;" +
+           "  int j;" +
+           "}",
+           "/** comment */  int i;");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.javadoc.tags")),
+           "class X {\n" +
+           "  /**\n" +
+           "   * comment\n" +
+           "   * @version 1\n" +
+           "   */\n" +
+           "  int i;\n" +
+           "  int j;\n" +
+           "}",
+           "@version");
     //assertTrue((templates.length - configurationMap.size()) + " of " + templates.length +
     //           " existing templates tested. Untested templates: " + configurationMap.keySet(), configurationMap.isEmpty());
   }

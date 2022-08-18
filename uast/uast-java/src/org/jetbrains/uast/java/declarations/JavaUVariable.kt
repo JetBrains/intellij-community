@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.java
 
@@ -12,6 +12,7 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.util.castSafelyTo
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
+import org.jetbrains.uast.internal.UElementAlternative
 import org.jetbrains.uast.internal.accommodate
 import org.jetbrains.uast.internal.alternative
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
@@ -103,23 +104,35 @@ private class JavaRecordUParameter(
   override fun getPsiParentForLazyConversion(): PsiElement? = javaPsi.context
 }
 
-internal fun convertRecordConstructorParameterAlternatives(
-  element: PsiElement,
-  givenParent: UElement?,
-  expectedTypes: Array<out Class<out UElement>>
-): Sequence<UVariable> {
+internal fun convertRecordConstructorParameterAlternatives(element: PsiElement, givenParent: UElement?, expectedTypes: Array<out Class<out UElement>>): Sequence<UVariable> {
+  val (paramAlternative, fieldAlternative) = createAlternatives(element, givenParent)?:return emptySequence()
+  
+  return when (element) {
+    is LightRecordField -> expectedTypes.accommodate(fieldAlternative, paramAlternative)
+    else -> expectedTypes.accommodate(paramAlternative, fieldAlternative)
+  }
+}
+internal fun convertRecordConstructorParameterAlternatives(element: PsiElement, givenParent: UElement?, expectedType: Class<out UElement>): UVariable? {
+  val (paramAlternative, fieldAlternative) = createAlternatives(element, givenParent)?:return null
 
+  return when (element) {
+    is LightRecordField -> expectedType.accommodate(fieldAlternative, paramAlternative)
+    else -> expectedType.accommodate(paramAlternative, fieldAlternative)
+  }
+}
+
+private fun createAlternatives(element: PsiElement, givenParent: UElement?): Pair<UElementAlternative<JavaRecordUParameter>, UElementAlternative<JavaRecordUField>>? {
   val (psiRecordComponent, lightRecordField, lightConstructorParameter) = when (element) {
     is PsiRecordComponent -> Triple(element, null, null)
     is LightRecordConstructorParameter -> {
       val lightRecordField = element.parentOfType<PsiMethod>()?.containingClass?.findFieldByName(element.name, false)
-        ?.castSafelyTo<LightRecordField>() ?: return emptySequence()
+        ?.castSafelyTo<LightRecordField>() ?: return null
       Triple(lightRecordField.recordComponent, lightRecordField, element)
     }
     is LightRecordField -> Triple(element.recordComponent, element, null)
-    else -> return emptySequence()
+    else -> return null
   }
-  
+
   val paramAlternative = alternative {
     val psiClass = psiRecordComponent.containingClass ?: return@alternative null
     val jvmParameter = lightConstructorParameter ?: psiClass.constructors.asSequence()
@@ -132,11 +145,7 @@ internal fun convertRecordConstructorParameterAlternatives(
                    ?: return@alternative null
     JavaRecordUField(psiRecordComponent, psiField, givenParent)
   }
-  
-  return when (element) {
-    is LightRecordField -> expectedTypes.accommodate(fieldAlternative, paramAlternative)
-    else -> expectedTypes.accommodate(paramAlternative, fieldAlternative)
-  }
+  return Pair(paramAlternative, fieldAlternative)
 }
 
 @ApiStatus.Internal
@@ -215,7 +224,7 @@ class JavaUEnumConstant(
     get() = null
   override val methodIdentifier: UIdentifier?
     get() = null
-  override val classReference: UReferenceExpression?
+  override val classReference: UReferenceExpression
     get() = JavaEnumConstantClassReference(sourcePsi, this)
   override val typeArgumentCount: Int
     get() = 0
@@ -232,7 +241,7 @@ class JavaUEnumConstant(
 
   override fun getArgumentForParameter(i: Int): UExpression? = valueArguments.getOrNull(i)
 
-  override val returnType: PsiType?
+  override val returnType: PsiType
     get() = sourcePsi.type
 
   override fun resolve(): PsiMethod? = sourcePsi.resolveMethod()

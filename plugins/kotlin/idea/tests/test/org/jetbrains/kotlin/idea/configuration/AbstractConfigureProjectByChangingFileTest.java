@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.configuration;
 
@@ -17,6 +17,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightTestCase;
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
@@ -29,8 +30,6 @@ import java.util.Objects;
 @SuppressWarnings("deprecation")
 public abstract class AbstractConfigureProjectByChangingFileTest<C extends KotlinProjectConfigurator>
         extends KotlinLightCodeInsightTestCase {
-    private static final String DEFAULT_VERSION = "default_version";
-
     private PsiFile moduleInfoFile;
 
     @Override
@@ -52,16 +51,18 @@ public abstract class AbstractConfigureProjectByChangingFileTest<C extends Kotli
 
         prepareModuleInfoFile(beforeFile);
 
-        String versionFromFile = InTextDirectivesUtils.findStringWithPrefixes(getFile().getText(), "// VERSION:");
-        String version = versionFromFile != null ? versionFromFile : DEFAULT_VERSION;
+        String rawVersion = InTextDirectivesUtils.findStringWithPrefixes(getFile().getText(), "// VERSION:");
+        assert rawVersion != null : "Directive with configured Kotlin version ('//VERSION: ') should be specified";
 
-        NotificationMessageCollector collector = NotificationMessageCollectorKt.createConfigureKotlinNotificationCollector(getProject());
+        IdeKotlinVersion version = IdeKotlinVersion.get(rawVersion);
+
+        NotificationMessageCollector collector = NotificationMessageCollector.create(getProject());
 
         runConfigurator(getModule(), getFile(), configurator, version, collector);
 
         collector.showNotification();
 
-        KotlinTestUtils.assertEqualsToFile(new File(getTestDataDirectory(), afterFile), getFile().getText().replace(version, "$VERSION$"));
+        KotlinTestUtils.assertEqualsToFile(new File(getTestDataDirectory(), afterFile), getFile().getText());
 
         checkModuleInfoFile(beforeFile);
     }
@@ -77,7 +78,7 @@ public abstract class AbstractConfigureProjectByChangingFileTest<C extends Kotli
 
             PsiFile[] moduleInfoFiles =
                     FilenameIndex.getFilesByName(getProject(), PsiJavaModule.MODULE_INFO_FILE, GlobalSearchScope.allScope(getProject()));
-            assertTrue(PsiJavaModule.MODULE_INFO_FILE + " should be present in index", moduleInfoFiles.length == 1);
+            assertEquals(PsiJavaModule.MODULE_INFO_FILE + " should be present in index", 1, moduleInfoFiles.length);
             moduleInfoFile = moduleInfoFiles[0];
         }
     }
@@ -96,7 +97,7 @@ public abstract class AbstractConfigureProjectByChangingFileTest<C extends Kotli
     protected abstract void runConfigurator(
             Module module, @NotNull PsiFile file,
             @NotNull C configurator,
-            @NotNull String version,
+            @NotNull IdeKotlinVersion version,
             @NotNull NotificationMessageCollector collector
     );
 

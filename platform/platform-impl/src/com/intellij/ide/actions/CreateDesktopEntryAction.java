@@ -10,6 +10,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,9 +42,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
-import static com.intellij.openapi.util.Pair.pair;
-import static com.intellij.util.containers.ContainerUtil.newHashMap;
-
 public final class CreateDesktopEntryAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(CreateDesktopEntryAction.class);
 
@@ -55,6 +53,11 @@ public final class CreateDesktopEntryAction extends DumbAwareAction {
   public void update(@NotNull AnActionEvent event) {
     boolean enabled = isAvailable();
     event.getPresentation().setEnabledAndVisible(enabled);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -135,14 +138,10 @@ public final class CreateDesktopEntryAction extends DumbAwareAction {
     String name = names.getFullProductNameWithEdition();
     String comment = StringUtil.notNullize(names.getMotto(), name);
     String wmClass = AppUIUtil.getFrameClass();
-    Map<String, String> vars = newHashMap(pair("$NAME$", name),
-                                          pair("$SCRIPT$", execPath),
-                                          pair("$ICON$", iconPath),
-                                          pair("$COMMENT$", comment),
-                                          pair("$WM_CLASS$", wmClass));
+    Map<String, String> vars = Map.of("$NAME$", name, "$SCRIPT$", execPath, "$ICON$", iconPath, "$COMMENT$", comment, "$WM_CLASS$", wmClass);
     String content = ExecUtil.loadTemplate(CreateDesktopEntryAction.class.getClassLoader(), "entry.desktop", vars);
     Path entryFile = Paths.get(PathManager.getTempPath(), wmClass + ".desktop");
-    Files.write(entryFile, content.getBytes(StandardCharsets.UTF_8));
+    Files.writeString(entryFile, content);
     return entryFile;
   }
 

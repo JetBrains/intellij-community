@@ -50,7 +50,23 @@ public class YAMLHighlightingTest extends BasePlatformTestCase {
     doTest();
   }
 
+  public void testInvalidBlockChildren() {
+    doTest();
+  }
+
+  public void testInvalidIndent() {
+    doTest();
+  }
+
+  public void testWebUrls() {
+    doTest(true);
+  }
+
   private void doTest() {
-    myFixture.testHighlighting(true, false, false, getTestName(true) + ".yml");
+    doTest(false);
+  }
+
+  private void doTest(boolean checkInfos) {
+    myFixture.testHighlighting(true, checkInfos, false, getTestName(true) + ".yml");
   }
 }

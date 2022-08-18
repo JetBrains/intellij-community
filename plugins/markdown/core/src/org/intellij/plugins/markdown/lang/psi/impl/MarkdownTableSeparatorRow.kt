@@ -2,7 +2,6 @@
 package org.intellij.plugins.markdown.lang.psi.impl
 
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
@@ -10,10 +9,9 @@ import com.intellij.psi.util.parents
 import org.intellij.plugins.markdown.editor.tables.TableProps
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
-import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElement
-import org.intellij.plugins.markdown.util.hasType
+import org.intellij.plugins.markdown.lang.psi.util.hasType
 
-class MarkdownTableSeparatorRow(text: CharSequence): LeafPsiElement(MarkdownTokenTypes.TABLE_SEPARATOR, text), MarkdownPsiElement {
+class MarkdownTableSeparatorRow(text: CharSequence): MarkdownLeafPsiElement(MarkdownTokenTypes.TABLE_SEPARATOR, text) {
   private val cachedCellsRanges
     get() = CachedValuesManager.getCachedValue(this) {
       CachedValueProvider.Result.create(buildCellsRanges(), PsiModificationTracker.MODIFICATION_COUNT)

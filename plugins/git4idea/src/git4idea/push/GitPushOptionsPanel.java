@@ -16,7 +16,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
 
 public class GitPushOptionsPanel extends VcsPushOptionsPanel {
 
@@ -49,7 +48,6 @@ public class GitPushOptionsPanel extends VcsPushOptionsPanel {
     myPushTagsMode.setVisible(followTagsSupported);
 
     myRunHooks = new JBCheckBox(GitBundle.message("checkbox.run.git.hooks"));
-    myRunHooks.setMnemonic(KeyEvent.VK_H);
     myRunHooks.setSelected(true);
     myRunHooks.setVisible(showSkipHookOption);
 

@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -79,18 +80,16 @@ public abstract class JavaPsiTestCase extends JavaModuleTestCase {
   @NotNull
   protected PsiFile createFile(@NotNull final Module module, @NotNull final VirtualFile vDir, @NotNull final String fileName, @NotNull final String text)
     throws IOException {
-    return WriteAction.computeAndWait(() -> {
+    VirtualFile virtualFile = WriteAction.computeAndWait(() -> {
       if (!ModuleRootManager.getInstance(module).getFileIndex().isInSourceContent(vDir)) {
         addSourceContentToRoots(module, vDir);
       }
 
-      final VirtualFile vFile = vDir.createChildData(vDir, fileName);
+      VirtualFile vFile = Objects.requireNonNull(vDir.createChildData(vDir, fileName));
       VfsUtil.saveText(vFile, text);
-      assertNotNull(vFile);
-      final PsiFile file = myPsiManager.findFile(vFile);
-      assertNotNull(file);
-      return file;
+      return vFile;
     });
+    return Objects.requireNonNull(myPsiManager.findFile(virtualFile));
   }
 
   protected void addSourceContentToRoots(@NotNull Module module, @NotNull VirtualFile vDir) {

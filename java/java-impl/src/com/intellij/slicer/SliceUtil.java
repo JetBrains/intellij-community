@@ -323,13 +323,13 @@ final class SliceUtil {
 
       body.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitClass(PsiClass aClass) {}
+        public void visitClass(@NotNull PsiClass aClass) {}
 
         @Override
-        public void visitLambdaExpression(PsiLambdaExpression expression) {}
+        public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {}
 
         @Override
-        public void visitReturnStatement(final PsiReturnStatement statement) {
+        public void visitReturnStatement(final @NotNull PsiReturnStatement statement) {
           PsiExpression returnValue = statement.getReturnValue();
           if (returnValue == null) return;
           PsiType right = superSubstitutor.substitute(superSubstitutor.substitute(returnValue.getType()));

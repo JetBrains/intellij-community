@@ -76,7 +76,6 @@ public final class OriginsAnalysis {
    * @param instructions method instructions
    * @param graph        method control flow graph
    * @return array, array[i] == true means that the result of a method execution may originate at an i-th instruction
-   * @throws AnalyzerException
    */
   public static boolean @NotNull [] resultOrigins(Frame<? extends Value>[] frames, InsnList instructions, ControlFlowGraph graph)
     throws AnalyzerException {
@@ -133,7 +132,6 @@ public final class OriginsAnalysis {
    * @param location location of an interesting value *after* execution of an instruction
    * @param insn     an executed instruction
    * @return location of an interesting value *before* execution of an instruction (in the past) or null if it is not traceable
-   * @throws AnalyzerException
    */
   @Nullable
   private static Location previousLocation(Frame<? extends Value> frame, Location location, AbstractInsnNode insn) throws AnalyzerException {

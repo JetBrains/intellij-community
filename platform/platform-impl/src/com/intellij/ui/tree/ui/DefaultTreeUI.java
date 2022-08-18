@@ -6,10 +6,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ColoredItem;
 import com.intellij.openapi.util.Key;
-import com.intellij.ui.BackgroundSupplier;
-import com.intellij.ui.ClientProperty;
-import com.intellij.ui.DirtyUI;
-import com.intellij.ui.LoadingNode;
+import com.intellij.ui.*;
 import com.intellij.ui.hover.TreeHoverListener;
 import com.intellij.ui.render.RenderingHelper;
 import com.intellij.ui.render.RenderingUtil;
@@ -49,7 +46,7 @@ import static com.intellij.util.ReflectionUtil.getMethod;
 import static com.intellij.util.containers.ContainerUtil.createWeakSet;
 
 @DirtyUI
-public final class DefaultTreeUI extends BasicTreeUI {
+public class DefaultTreeUI extends BasicTreeUI {
   @ApiStatus.Internal
   public static final Key<Boolean> LARGE_MODEL_ALLOWED = Key.create("allows to use large model (only for synchronous tree models)");
   @ApiStatus.Internal
@@ -236,12 +233,12 @@ public final class DefaultTreeUI extends BasicTreeUI {
           Color background = getBackground(tree, path, row, selected);
           if (background != null) {
             g.setColor(background);
-            if (g instanceof Graphics2D && is("ide.experimental.ui.tree.selection") && (selected || row == TreeHoverListener.getHoveredRow(tree))) {
+            if (g instanceof Graphics2D && ExperimentalUI.isNewUI() && is("ide.experimental.ui.tree.selection") && (selected || row == TreeHoverListener.getHoveredRow(tree))) {
               int borderOffset = JBUI.scale(12);
               int rendererOffset = painter.getRendererOffset(control, depth, leaf);
               int controlOffset = painter.getControlOffset(control, depth, leaf);
-              int left = Math.min(helper.getX() + borderOffset, controlOffset < 0 ? rendererOffset : controlOffset);
-              int right = Math.max(helper.getX() + helper.getWidth() - borderOffset, rendererOffset + bounds.width + JBUI.scale(4));
+              int left = Math.min(helper.getX() + borderOffset, insets.left + (controlOffset < 0 ? rendererOffset : controlOffset));
+              int right = Math.max(helper.getX() + helper.getWidth() - borderOffset, insets.left + rendererOffset + bounds.width + JBUI.scale(4));
               int[] rows = tree.getSelectionRows();
               boolean shouldPaintTop = false;
               boolean shouldPaintBottom = false;

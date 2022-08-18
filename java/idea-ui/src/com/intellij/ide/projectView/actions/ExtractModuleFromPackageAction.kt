@@ -5,6 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.analysis.AnalysisScope
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.SaveAndSyncHandler
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -41,11 +42,14 @@ class ExtractModuleFromPackageAction : AnAction() {
     val directory = PsiManager.getInstance(module.project).findDirectory(virtualFile) ?: return
     val suggestedModuleName = "${module.name}.${directory.name}"
     val parentContentRoot = ModuleRootManager.getInstance(module).contentRoots.first()
-    val dialog = ExtractModuleFromPackageDialog(project, suggestedModuleName, Path.of(parentContentRoot.path, directory.name, "src").toString())
+    val dialog = ExtractModuleFromPackageDialog(project, suggestedModuleName,
+                                                Path.of(parentContentRoot.path, directory.name, "src").toString())
     if (!dialog.showAndGet()) return
 
     analyzeDependenciesAndCreateModule(directory, module, dialog.moduleName, dialog.targetSourceRootPath)
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     val project = e.project

@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorWindow
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -50,7 +51,12 @@ class OpenInRightSplitAction : AnAction(), DumbAware {
 
 
     val contextFile = getVirtualFile(e)
-    e.presentation.isEnabledAndVisible = contextFile != null && !contextFile.isDirectory
+    e.presentation.isEnabledAndVisible = contextFile != null && !contextFile.isDirectory &&
+                                         !FileEditorManagerImpl.forbidSplitFor(contextFile)
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   companion object {
@@ -87,11 +93,7 @@ class OpenInRightSplitAction : AnAction(), DumbAware {
           //convert double click -> one click
           if (shortcut.clickCount == 2) {
             val customSet = CustomShortcutSet(MouseShortcut(shortcut.button, shortcut.modifiers, 1))
-            object: AnAction(null as String?) {
-              override fun actionPerformed(e: AnActionEvent) {
-                action.actionPerformed(e)
-              }
-            }.registerCustomShortcutSet(customSet, component)
+            AnActionWrapper(action).registerCustomShortcutSet(customSet, component)
           }
         }
       }

@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.configurationStore.JdomSerializer;
 import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.maven.testFramework.MavenTestCase;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTrackerSettings;
@@ -28,7 +29,6 @@ import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
-import com.intellij.maven.testFramework.MavenTestCase;
 import org.jetbrains.idea.maven.utils.MavenSettings;
 
 import static com.intellij.configurationStore.DefaultStateSerializerKt.deserializeState;
@@ -65,17 +65,24 @@ public class MavenSettingsTest extends MavenTestCase {
       public void createModuleForAggregatorsChanged() {
         log[0] += "changed ";
       }
+
+      @Override
+      public void updateAllProjectStructure() {
+      }
     });
 
     s.setCreateModulesForAggregators(true);
+    s.setCreateModulesForAggregators(false);
     assertEquals("changed ", log[0]);
 
+    s.clone().setCreateModulesForAggregators(true);
     s.clone().setCreateModulesForAggregators(false);
     assertEquals("changed ", log[0]);
   }
 
   public void testImportingSettings() {
-    assertTrue(new MavenImportingSettings().equals(new MavenImportingSettings()));
+    allowAccessToDirsIfExists(System.getenv("JAVA_HOME"));
+    assertEquals(new MavenImportingSettings(), new MavenImportingSettings());
     MavenImportingConfigurable importingConfigurable = new MavenImportingConfigurable(myProject);
     importingConfigurable.reset();
     assertFalse(importingConfigurable.isModified());

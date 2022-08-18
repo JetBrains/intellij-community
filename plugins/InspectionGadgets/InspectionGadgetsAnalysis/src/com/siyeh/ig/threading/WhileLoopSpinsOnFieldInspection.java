@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,14 +43,13 @@ import java.util.function.Predicate;
 public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
   private static final CallMatcher THREAD_ON_SPIN_WAIT = CallMatcher.staticCall("java.lang.Thread", "onSpinWait");
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings({"PublicField", "SpellCheckingInspection"})
   public boolean ignoreNonEmtpyLoops = true;
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "while.loop.spins.on.field.problem.descriptor");
+    return InspectionGadgetsBundle.message("while.loop.spins.on.field.problem.descriptor");
   }
 
   @Nullable
@@ -62,8 +61,7 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
   @Override
   @Nullable
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "while.loop.spins.on.field.ignore.non.empty.loops.option"),
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("while.loop.spins.on.field.ignore.non.empty.loops.option"),
                                           this, "ignoreNonEmtpyLoops");
   }
 
@@ -81,7 +79,7 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
       boolean empty = ControlFlowUtils.statementIsEmpty(body);
       if (ignoreNonEmtpyLoops && !empty) {
         PsiExpressionStatement onlyExpr = ObjectUtils.tryCast(ControlFlowUtils.stripBraces(body), PsiExpressionStatement.class);
-        if(onlyExpr == null || !THREAD_ON_SPIN_WAIT.matches(onlyExpr.getExpression())) return;
+        if (onlyExpr == null || !THREAD_ON_SPIN_WAIT.matches(onlyExpr.getExpression())) return;
       }
       final PsiExpression condition = statement.getCondition();
       final PsiField field = getFieldIfSimpleFieldComparison(condition);
@@ -91,7 +89,7 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
       }
       boolean java9 = PsiUtil.isLanguageLevel9OrHigher(field);
       boolean shouldAddSpinWait = java9 && empty && !containsCall(body, THREAD_ON_SPIN_WAIT);
-      if(field.hasModifierProperty(PsiModifier.VOLATILE) && !shouldAddSpinWait) {
+      if (field.hasModifierProperty(PsiModifier.VOLATILE) && !shouldAddSpinWait) {
         return;
       }
       registerStatementError(statement, field, shouldAddSpinWait);
@@ -102,7 +100,7 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
       final boolean[] result = new boolean[1];
       element.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
           super.visitMethodCallExpression(expression);
           if (predicate.test(expression)) {
             result[0] = true;
@@ -112,78 +110,76 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
       });
       return result[0];
     }
+  }
 
-    @Nullable
-    private PsiField getFieldIfSimpleFieldComparison(PsiExpression condition) {
-      condition = PsiUtil.deparenthesizeExpression(condition);
-      if (condition == null) {
-        return null;
-      }
-      final PsiField field = getFieldIfSimpleFieldAccess(condition);
-      if (field != null) {
-        return field;
-      }
-      if (condition instanceof PsiPrefixExpression) {
-        final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)condition;
-        IElementType type = prefixExpression.getOperationTokenType();
-        if(!type.equals(JavaTokenType.PLUSPLUS) && !type.equals(JavaTokenType.MINUSMINUS)) {
-          final PsiExpression operand = prefixExpression.getOperand();
-          return getFieldIfSimpleFieldComparison(operand);
-        }
-      }
-      if (condition instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)condition;
-        final PsiExpression lOperand = binaryExpression.getLOperand();
-        final PsiExpression rOperand = binaryExpression.getROperand();
-        if (ExpressionUtils.isLiteral(rOperand)) {
-          return getFieldIfSimpleFieldComparison(lOperand);
-        }
-        else if (ExpressionUtils.isLiteral(lOperand)) {
-          return getFieldIfSimpleFieldComparison(rOperand);
-        }
-        else {
-          return null;
-        }
-      }
+  @Nullable
+  private static PsiField getFieldIfSimpleFieldComparison(PsiExpression condition) {
+    condition = PsiUtil.deparenthesizeExpression(condition);
+    if (condition == null) {
       return null;
     }
-
-    @Nullable
-    private PsiField getFieldIfSimpleFieldAccess(PsiExpression expression) {
-      expression = PsiUtil.deparenthesizeExpression(expression);
-      if (expression == null) {
-        return null;
+    final PsiField field = getFieldIfSimpleFieldAccess(condition);
+    if (field != null) {
+      return field;
+    }
+    if (condition instanceof PsiPrefixExpression) {
+      final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)condition;
+      IElementType type = prefixExpression.getOperationTokenType();
+      if(!type.equals(JavaTokenType.PLUSPLUS) && !type.equals(JavaTokenType.MINUSMINUS)) {
+        final PsiExpression operand = prefixExpression.getOperand();
+        return getFieldIfSimpleFieldComparison(operand);
       }
-      if (!(expression instanceof PsiReferenceExpression)) {
-        return null;
+    }
+    if (condition instanceof PsiBinaryExpression) {
+      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)condition;
+      final PsiExpression lOperand = binaryExpression.getLOperand();
+      final PsiExpression rOperand = binaryExpression.getROperand();
+      if (ExpressionUtils.isLiteral(rOperand)) {
+        return getFieldIfSimpleFieldComparison(lOperand);
       }
-      final PsiReferenceExpression reference = (PsiReferenceExpression)expression;
-      final PsiExpression qualifierExpression = reference.getQualifierExpression();
-      if (qualifierExpression != null) {
-        return null;
-      }
-      final PsiElement referent = reference.resolve();
-      if (!(referent instanceof PsiField)) {
-        return null;
-      }
-      final PsiField field = (PsiField)referent;
-      if (field.hasModifierProperty(PsiModifier.VOLATILE) && !PsiUtil.isLanguageLevel9OrHigher(field)) {
-        return null;
+      else if (ExpressionUtils.isLiteral(lOperand)) {
+        return getFieldIfSimpleFieldComparison(rOperand);
       }
       else {
-        return field;
+        return null;
       }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiField getFieldIfSimpleFieldAccess(PsiExpression expression) {
+    expression = PsiUtil.deparenthesizeExpression(expression);
+    if (expression == null) {
+      return null;
+    }
+    if (!(expression instanceof PsiReferenceExpression)) {
+      return null;
+    }
+    final PsiReferenceExpression reference = (PsiReferenceExpression)expression;
+    final PsiExpression qualifierExpression = reference.getQualifierExpression();
+    if (qualifierExpression != null) {
+      return null;
+    }
+    final PsiElement referent = reference.resolve();
+    if (!(referent instanceof PsiField)) {
+      return null;
+    }
+    final PsiField field = (PsiField)referent;
+    if (field.hasModifierProperty(PsiModifier.VOLATILE) && !PsiUtil.isLanguageLevel9OrHigher(field)) {
+      return null;
+    }
+    else {
+      return field;
     }
   }
 
   private static class SpinLoopFix extends InspectionGadgetsFix {
-    private final SmartPsiElementPointer<PsiField> myFieldPointer;
     private final String myFieldName;
     private final boolean myAddOnSpinWait;
     private final boolean myAddVolatile;
 
     SpinLoopFix(PsiField field, boolean addOnSpinWait) {
-      myFieldPointer = SmartPointerManager.getInstance(field.getProject()).createSmartPsiElementPointer(field);
       myFieldName = field.getName();
       myAddOnSpinWait = addOnSpinWait;
       myAddVolatile = !field.hasModifierProperty(PsiModifier.VOLATILE);
@@ -211,22 +207,22 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
-      if(myAddVolatile) {
-        addVolatile(myFieldPointer.getElement());
+      if (myAddVolatile) {
+        addVolatile(descriptor.getPsiElement());
       }
-      if(myAddOnSpinWait) {
-        addOnSpinWait(descriptor.getStartElement());
+      if (myAddOnSpinWait) {
+        addOnSpinWait(descriptor.getPsiElement());
       }
     }
 
     private static void addOnSpinWait(PsiElement element) {
       PsiLoopStatement loop = PsiTreeUtil.getParentOfType(element, PsiLoopStatement.class);
-      if(loop == null) return;
+      if (loop == null) return;
       PsiStatement body = loop.getBody();
-      if(body == null) return;
+      if (body == null) return;
       PsiStatement spinCall =
         JavaPsiFacade.getElementFactory(element.getProject()).createStatementFromText("java.lang.Thread.onSpinWait();", element);
-      if(body instanceof PsiBlockStatement) {
+      if (body instanceof PsiBlockStatement) {
         PsiCodeBlock block = ((PsiBlockStatement)body).getCodeBlock();
         block.addAfter(spinCall, null);
       } else {
@@ -235,7 +231,12 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
       CodeStyleManager.getInstance(element.getProject()).reformat(loop);
     }
 
-    private static void addVolatile(PsiField field) {
+    private static void addVolatile(PsiElement element) {
+      PsiElement parent = element.getParent();
+      if (!(parent instanceof PsiWhileStatement)) return;
+      PsiWhileStatement whileStatement = (PsiWhileStatement)parent;
+      PsiExpression condition = whileStatement.getCondition();
+      PsiField field = getFieldIfSimpleFieldComparison(condition);
       if (field == null) return;
       PsiModifierList list = field.getModifierList();
       if (list == null) return;

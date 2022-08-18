@@ -10,6 +10,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Property;
@@ -78,7 +79,11 @@ public final class ExternalDependenciesManagerImpl extends ExternalDependenciesM
     if (!oldDependencies.equals(myDependencies) && !myDependencies.isEmpty() && !ApplicationManager.getApplication().isUnitTestMode()) {
       // may be executed immediately if start-up activities are already passed, but must be not performed in loadState
       NonUrgentExecutor.getInstance().execute(() -> {
-        StartupManager.getInstance(myProject).runAfterOpened(() -> CheckRequiredPluginsActivity.runCheck(myProject, this));
+        try {
+          StartupManager.getInstance(myProject).runAfterOpened(() -> CheckRequiredPluginsActivity.runCheck(myProject, this));
+        }
+        catch (AlreadyDisposedException ignored) {
+        }
       });
     }
   }

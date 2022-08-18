@@ -1,6 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions.history;
 
+import com.intellij.openapi.ListSelection;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -9,8 +11,8 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
-import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogBundle;
+import com.intellij.vcs.log.VcsLogCommitSelection;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
@@ -21,6 +23,11 @@ import java.util.Arrays;
 
 abstract public class CompareRevisionsFromFileHistoryActionProvider implements AnActionExtensionProvider {
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public boolean isActive(@NotNull AnActionEvent e) {
     FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
     return e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI) != null && filePath != null && !filePath.isDirectory();
@@ -30,13 +37,13 @@ abstract public class CompareRevisionsFromFileHistoryActionProvider implements A
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     FilePath filePath = e.getData(VcsDataKeys.FILE_PATH);
-    VcsLog log = e.getData(VcsLogDataKeys.VCS_LOG);
-    if (project == null || filePath == null || filePath.isDirectory() || log == null) {
+    VcsLogCommitSelection selection = e.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION);
+    if (project == null || filePath == null || filePath.isDirectory() || selection == null) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
 
-    updateActionText(e, log);
+    updateActionText(e, selection);
     e.getPresentation().setVisible(true);
 
     if (e.getInputEvent() instanceof KeyEvent) {
@@ -48,7 +55,7 @@ abstract public class CompareRevisionsFromFileHistoryActionProvider implements A
     }
   }
 
-  protected void updateActionText(@NotNull AnActionEvent e, @NotNull VcsLog log) {}
+  protected void updateActionText(@NotNull AnActionEvent e, @NotNull VcsLogCommitSelection selection) { }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -58,11 +65,13 @@ abstract public class CompareRevisionsFromFileHistoryActionProvider implements A
     Change[] changes = e.getData(VcsDataKeys.SELECTED_CHANGES);
     if (changes == null || changes.length != 1 || changes[0] == null) return;
 
-    ShowDiffAction.showDiffForChange(project, Arrays.asList(changes));
+    ListSelection<Change> selection = ListSelection.createAt(Arrays.asList(changes), 0)
+      .asExplicitSelection();
+    ShowDiffAction.showDiffForChange(project, selection);
   }
 
-  public static void setTextAndDescription(@NotNull AnActionEvent e, @NotNull VcsLog log) {
-    if (log.getSelectedCommits().size() >= 2) {
+  public static void setTextAndDescription(@NotNull AnActionEvent e, @NotNull VcsLogCommitSelection selection) {
+    if (selection.getSize() >= 2) {
       e.getPresentation().setText(VcsLogBundle.messagePointer("action.presentation.CompareRevisionsFromFileHistoryActionProvider.text.compare"));
       e.getPresentation().setDescription(VcsLogBundle.messagePointer("action.presentation.CompareRevisionsFromFileHistoryActionProvider.description.compare"));
     }
@@ -74,8 +83,8 @@ abstract public class CompareRevisionsFromFileHistoryActionProvider implements A
 
   static class ShowDiff extends CompareRevisionsFromFileHistoryActionProvider {
     @Override
-    protected void updateActionText(@NotNull AnActionEvent e, @NotNull VcsLog log) {
-      setTextAndDescription(e, log);
+    protected void updateActionText(@NotNull AnActionEvent e, @NotNull VcsLogCommitSelection selection) {
+      setTextAndDescription(e, selection);
     }
   }
 

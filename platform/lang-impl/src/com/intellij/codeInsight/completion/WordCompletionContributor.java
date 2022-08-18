@@ -10,7 +10,6 @@ import com.intellij.lang.LanguageWordCompletion;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
@@ -29,8 +28,6 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
  * @author peter
  */
 public class WordCompletionContributor extends CompletionContributor implements DumbAware {
-  public static final Key<String> FORBID_WORD_COMPLETION = new Key<>("ForbidWordCompletion");
-
   private static boolean isWordCompletionDefinitelyEnabled(@NotNull PsiFile file) {
     return (DumbService.isDumb(file.getProject()) &&
             LanguageWordCompletion.INSTANCE.isWordCompletionInDumbModeEnabled(file.getLanguage())) ||
@@ -129,7 +126,7 @@ public class WordCompletionContributor extends CompletionContributor implements 
       return false;
     }
 
-    if (parameters.getOriginalFile().getUserData(FORBID_WORD_COMPLETION) != null) {
+    if (Boolean.TRUE.equals(parameters.getOriginalFile().getUserData(BaseCompletionService.FORBID_WORD_COMPLETION))) {
       return false;
     }
 

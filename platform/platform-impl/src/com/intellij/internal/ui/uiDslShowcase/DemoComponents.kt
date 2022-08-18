@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import javax.swing.JLabel
 
 @Suppress("DialogTitleCapitalization")
 @Demo(title = "Components",
@@ -65,7 +66,7 @@ fun demoComponents(parentDisposable: Disposable): DialogPanel {
     }
 
     row("text:") {
-      text("text supports max line width and can contain links, try <a href='https://www.jetbrains.com'>jetbrains.com</a>")
+      text("text supports max line width and can contain links, try <a href='https://www.jetbrains.com'>jetbrains.com</a>.<br><icon src='AllIcons.General.Information'>&nbsp;It's possible to use line breaks and bundled icons")
     }
 
     row("link:") {
@@ -92,6 +93,10 @@ fun demoComponents(parentDisposable: Disposable): DialogPanel {
       textField()
     }
 
+    row("passwordField:") {
+      passwordField().applyToComponent { text = "password" }
+    }
+
     row("textFieldWithBrowseButton:") {
       textFieldWithBrowseButton()
     }
@@ -110,6 +115,15 @@ fun demoComponents(parentDisposable: Disposable): DialogPanel {
 
     row("spinner(0.0..100.0, 0.01):") {
       spinner(0.0..100.0, 0.01)
+    }
+
+    row("spinner(0.0..100.0, 0.01):") {
+      slider(0, 10, 1, 5)
+        .labelTable(mapOf(
+          0 to JLabel("0"),
+          5 to JLabel("5"),
+          10 to JLabel("10"),
+        ))
     }
 
     row {

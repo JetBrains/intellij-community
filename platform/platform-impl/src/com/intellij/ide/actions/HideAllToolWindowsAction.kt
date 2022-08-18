@@ -2,6 +2,7 @@
 package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.project.DumbAwareAction
@@ -57,6 +58,8 @@ internal class HideAllToolWindowsAction : DumbAwareAction() {
       return
     }
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 }
 
 private fun getIdsToHide(toolWindowManager: ToolWindowManagerEx): Sequence<String> {

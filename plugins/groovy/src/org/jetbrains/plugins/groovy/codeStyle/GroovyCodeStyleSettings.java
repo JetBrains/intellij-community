@@ -63,6 +63,14 @@ public class GroovyCodeStyleSettings extends CustomCodeStyleSettings implements 
 
   public boolean ENABLE_GROOVYDOC_FORMATTING = true;
 
+  // GINQ
+  public int GINQ_GENERAL_CLAUSE_WRAP_POLICY = CommonCodeStyleSettings.WRAP_ALWAYS;
+  public int GINQ_ON_WRAP_POLICY = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+  public boolean GINQ_INDENT_ON_CLAUSE = true;
+  public int GINQ_HAVING_WRAP_POLICY = CommonCodeStyleSettings.WRAP_AS_NEEDED;
+  public boolean GINQ_INDENT_HAVING_CLAUSE = true;
+  public boolean GINQ_SPACE_AFTER_KEYWORD = true;
+
   //imports
   public boolean USE_FQ_CLASS_NAMES = false;
   public boolean USE_FQ_CLASS_NAMES_IN_JAVADOC = true;

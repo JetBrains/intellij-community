@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.hints.HintWidthAdjustment
@@ -150,13 +150,13 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
         val xEnd = r.x + r.width
         val y = r.y + ascent
         val font = editor.getColorsScheme().getFont(EditorFontType.PLAIN)
-        @Suppress("NON_EXHAUSTIVE_WHEN")
         when (effectType) {
           EffectType.LINE_UNDERSCORE -> EffectPainter.LINE_UNDERSCORE.paint(g2d, xStart, y, xEnd - xStart, descent, font)
           EffectType.BOLD_LINE_UNDERSCORE -> EffectPainter.BOLD_LINE_UNDERSCORE.paint(g2d, xStart, y, xEnd - xStart, descent, font)
           EffectType.STRIKEOUT -> EffectPainter.STRIKE_THROUGH.paint(g2d, xStart, y, xEnd - xStart, editor.charHeight, font)
           EffectType.WAVE_UNDERSCORE -> EffectPainter.WAVE_UNDERSCORE.paint(g2d, xStart, y, xEnd - xStart, descent, font)
           EffectType.BOLD_DOTTED_LINE -> EffectPainter.BOLD_DOTTED_UNDERSCORE.paint(g2d, xStart, y, xEnd - xStart, descent, font)
+          else -> {}
         }
       }
     }
@@ -234,7 +234,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
 
     @JvmStatic
     protected fun getFontMetrics(editor: Editor, useEditorFont: Boolean): MyFontMetrics {
-      val size = max(1f, editor.colorsScheme.editorFontSize2D - 1f)
+      val size = HintUtil.getSize(editor)
       var metrics = editor.getUserData(HINT_FONT_METRICS)
       val attributes = editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT)
       val fontType = attributes.fontType

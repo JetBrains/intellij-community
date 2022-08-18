@@ -6,6 +6,8 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.extensions.PluginDescriptor
 import java.util.regex.Pattern
 
 object EventsSchemeBuilder {
@@ -77,49 +79,71 @@ object EventsSchemeBuilder {
     return fieldsDescriptors
   }
 
-  @JvmStatic
-  fun buildEventsScheme(): List<GroupDescriptor> = buildEventsScheme(null)
-
   /**
+   * @param recorder id of the recorder, only groups from that recorder will be used to build scheme.
+   * If null, groups from all recorders will be used.
    * @param pluginId id of the plugin, only groups registered in that plugin will be used to build scheme.
    * If null, all registered groups will be used.
+   * @param brokenPluginIds list of plugin ids, groups registered in this plugins will **not** be used to build scheme.
+   * If null, all registered groups will be used.
+   * Only applicable when `pluginId == null`
    */
   @JvmStatic
-  fun buildEventsScheme(pluginId: String?): List<GroupDescriptor> {
+  @JvmOverloads
+  fun buildEventsScheme(recorder: String?, pluginId: String? = null, brokenPluginIds: Set<String> = emptySet()): List<GroupDescriptor> {
     val result = mutableListOf<GroupDescriptor>()
-    val counterCollectors = FUCounterUsageLogger.instantiateCounterCollectors(pluginId)
-    result.addAll(collectGroupsFromExtensions("counter", counterCollectors))
+    val counterCollectors = ArrayList<FeatureUsageCollectorInfo>()
+    FUCounterUsageLogger.EP_NAME.processWithPluginDescriptor { counterUsageCollectorEP, descriptor: PluginDescriptor ->
+      if (counterUsageCollectorEP.implementationClass != null) {
+        val collectorPlugin = descriptor.pluginId.idString
+        if ((pluginId == null && !brokenPluginIds.contains(collectorPlugin)) || pluginId == collectorPlugin) {
+          val collector = ApplicationManager.getApplication().instantiateClass<FeatureUsagesCollector>(
+            counterUsageCollectorEP.implementationClass, descriptor)
+          counterCollectors.add(FeatureUsageCollectorInfo(collector, collectorPlugin))
+        }
+      }
+    }
+    result.addAll(collectGroupsFromExtensions("counter", counterCollectors, recorder))
 
-    val stateCollectors = ArrayList<FeatureUsagesCollector>()
+    val stateCollectors = ArrayList<FeatureUsageCollectorInfo>()
     ApplicationUsagesCollector.EP_NAME.processWithPluginDescriptor { collector, descriptor ->
-      if (pluginId == null || pluginId == descriptor.pluginId.idString) {
-        stateCollectors.add(collector)
+      val collectorPlugin = descriptor.pluginId.idString
+      if ((pluginId == null && !brokenPluginIds.contains(collectorPlugin)) || pluginId == collectorPlugin) {
+        stateCollectors.add(FeatureUsageCollectorInfo(collector, collectorPlugin))
       }
     }
     ProjectUsagesCollector.EP_NAME.processWithPluginDescriptor { collector, descriptor ->
-      if (pluginId == null || pluginId == descriptor.pluginId.idString) {
-        stateCollectors.add(collector)
+      val collectorPlugin = descriptor.pluginId.idString
+      if ((pluginId == null && !brokenPluginIds.contains(collectorPlugin)) || pluginId == collectorPlugin) {
+        stateCollectors.add(FeatureUsageCollectorInfo(collector, collectorPlugin))
       }
     }
-    result.addAll(collectGroupsFromExtensions("state", stateCollectors))
+    result.addAll(collectGroupsFromExtensions("state", stateCollectors, recorder))
     result.sortBy(GroupDescriptor::id)
     return result
   }
 
   fun collectGroupsFromExtensions(groupType: String,
-                                  collectors: Collection<FeatureUsagesCollector>): MutableList<GroupDescriptor> {
-    val result = mutableListOf<GroupDescriptor>()
-    for (collector in collectors) {
+                                  collectors: Collection<FeatureUsageCollectorInfo>,
+                                  recorder: String?): MutableCollection<GroupDescriptor> {
+    val result = HashMap<String, GroupDescriptor>()
+    for ((collector, plugin) in collectors) {
       val collectorClass = if (collector.javaClass.enclosingClass != null) collector.javaClass.enclosingClass else collector.javaClass
       validateGroupId(collector)
       val group = collector.group ?: continue
-      val eventsDescriptors = group.events.groupBy { it.eventId }
+      if (recorder != null && group.recorder != recorder) continue
+      val existingGroup = result[group.id]
+      if (existingGroup != null && group.version != existingGroup.version) {
+        throw IllegalStateException("If group is reused in multiple collectors classes (e.g Project and Application collector), " +
+                                    "it should have the same version (group=${group.id})")
+      }
+      val existingScheme = existingGroup?.schema ?: HashSet()
+      val eventsDescriptors = existingScheme + group.events.groupBy { it.eventId }
         .map { (eventName, events) -> EventDescriptor(eventName, buildFields(events, eventName, group.id)) }
         .toSet()
-      val groupDescriptor = GroupDescriptor(group.id, groupType, group.version, eventsDescriptors, collectorClass.name)
-      result.add(groupDescriptor)
+      result[group.id] = GroupDescriptor(group.id, groupType, group.version, eventsDescriptors, collectorClass.name, group.recorder, plugin)
     }
-    return result
+    return result.values
   }
 
   private fun validateGroupId(collector: FeatureUsagesCollector) {
@@ -152,4 +176,7 @@ object EventsSchemeBuilder {
       dataType
     }
   }
+
+  data class FeatureUsageCollectorInfo(val collector: FeatureUsagesCollector,
+                                       val pluginId: String)
 }

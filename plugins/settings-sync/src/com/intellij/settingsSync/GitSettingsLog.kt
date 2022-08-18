@@ -4,13 +4,11 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.util.io.createFile
-import com.intellij.util.io.exists
-import com.intellij.util.io.isFile
-import com.intellij.util.io.write
+import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
+import com.intellij.util.PathUtil
+import com.intellij.util.io.*
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.MergeResult.MergeStatus.CONFLICTING
-import org.eclipse.jgit.api.MergeResult.MergeStatus.FAST_FORWARD
 import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.api.errors.EmptyCommitException
 import org.eclipse.jgit.lib.Constants
@@ -21,8 +19,11 @@ import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.merge.MergeStrategy
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
+import java.nio.charset.StandardCharsets
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
+import java.time.Instant
+import java.util.regex.Pattern
 import kotlin.io.path.relativeTo
 
 internal class GitSettingsLog(private val settingsSyncStorage: Path,
@@ -42,7 +43,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     Disposer.register(parentDisposable, this)
   }
 
-  override fun initialize(): Boolean {
+  override fun initialize() {
     val dotGit = settingsSyncStorage.resolve(".git")
     repository = FileRepositoryBuilder.create(dotGit.toFile())
     git = Git(repository)
@@ -52,14 +53,15 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
       LOG.info("Initializing new Git repository for Settings Sync at $settingsSyncStorage")
       repository.create()
       initRepository(repository)
-      copyExistingSettings(repository)
     }
 
     createBranchIfNeeded(MASTER_REF_NAME, newRepository)
     createBranchIfNeeded(CLOUD_REF_NAME, newRepository)
     createBranchIfNeeded(IDE_REF_NAME, newRepository)
+  }
 
-    return newRepository
+  override fun logExistingSettings() {
+    copyExistingSettings()
   }
 
   private fun createBranchIfNeeded(name: String, newRepository: Boolean) {
@@ -73,8 +75,10 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     }
   }
 
-  private fun copyExistingSettings(repository: Repository) {
+  private fun copyExistingSettings() {
     LOG.info("Copying existing settings from $rootConfigPath to $settingsSyncStorage")
+    git.checkout().setName(IDE_REF_NAME).call()
+
     val copiedFileSpecs = mutableListOf<String>()
 
     val filesToExport = collectFilesToExportFromSettings()
@@ -83,8 +87,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
       if (path.isFile()) {
         // 'path' is e.g. 'ROOT_CONFIG/options/editor.xml'
         val target = settingsSyncStorage.resolve(fileSpec)
-        NioFiles.createDirectories(target.parent)
-        Files.copy(path, target, LinkOption.NOFOLLOW_LINKS)
+        path.copy(target)
       }
       else {
         // 'path' is e.g. 'ROOT_CONFIG/keymaps/'
@@ -94,13 +97,13 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     }
 
     if (copiedFileSpecs.isNotEmpty()) {
-      val git = Git(repository)
       val addCommand = git.add()
       for (fileSpec in copiedFileSpecs) {
-        addCommand.addFilepattern(fileSpec)
+        val filePattern = PathUtil.toSystemIndependentName(fileSpec)
+        addCommand.addFilepattern(filePattern)
       }
       addCommand.call()
-      git.commit().setMessage("Copy existing configs").call()
+      commit("Copy existing configs", Instant.now())
     }
   }
 
@@ -109,7 +112,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
       override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
         val target = targetDir.resolve(dirToCopy.parent.relativize(file))  // file is mykeymap.xml => target is keymaps/mykeymap.xml
         NioFiles.createDirectories(target.parent)
-        Files.copy(file, target, LinkOption.NOFOLLOW_LINKS)
+        Files.copy(file, target, StandardCopyOption.REPLACE_EXISTING)
         return FileVisitResult.CONTINUE
       }
     })
@@ -132,30 +135,34 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     git.commit().setMessage("Initial").call()
   }
 
-  override fun applyIdeState(snapshot: SettingsSnapshot) {
-    applyState(IDE_REF_NAME, snapshot)
+  override fun applyIdeState(snapshot: SettingsSnapshot, message: String) {
+    applyState(IDE_REF_NAME, snapshot, message)
   }
 
-  override fun applyCloudState(snapshot: SettingsSnapshot) {
-    applyState(CLOUD_REF_NAME, snapshot)
+  override fun applyCloudState(snapshot: SettingsSnapshot, message: String) {
+    applyState(CLOUD_REF_NAME, snapshot, message)
   }
 
-  private fun applyState(refName: String, snapshot: SettingsSnapshot) {
+  override fun forceWriteToMaster(snapshot: SettingsSnapshot, message: String): SettingsLog.Position {
+    applyState(MASTER_REF_NAME, snapshot, message)
+    return getMasterPosition()
+  }
+
+  private fun applyState(refName: String, snapshot: SettingsSnapshot, message: String) {
     if (snapshot.isEmpty()) {
       LOG.error("Empty snapshot")
       return
     }
 
     git.checkout().setName(refName).call()
-    applySnapshotAndCommit(refName, snapshot)
+    applySnapshotAndCommit(refName, snapshot, message)
   }
 
-  private fun applySnapshotAndCommit(refName: String, snapshot: SettingsSnapshot) {
+  private fun applySnapshotAndCommit(refName: String, snapshot: SettingsSnapshot, message: String) {
     // todo check repository consistency before each operation: that we're on master, that rb is deleted, that there're no uncommitted changes
 
     LOG.info("Applying settings changes to branch $refName: " + snapshot.fileStates.joinToString(limit = 5) { it.file })
     val addCommand = git.add()
-    val message = "Apply changes received from $refName"
     for (fileState in snapshot.fileStates) {
       val file = settingsSyncStorage.resolve(fileState.file)
       when (fileState) {
@@ -165,27 +172,51 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
       addCommand.addFilepattern(fileState.file)
     }
     addCommand.call()
-    // Don't allow empty commit: sometimes the stream provider can notify about changes but there are no actual changes on disk
+
+    commit(message, snapshot.metaInfo.dateCreated)
+  }
+
+  private fun commit(message: String, dateCreated: Instant) {
     try {
-      git.commit().setMessage(message).setAllowEmpty(false).call()
+      // Don't allow empty commit: sometimes the stream provider can notify about changes but there are no actual changes on disk
+      val commit = git.commit().setMessage(message).setAllowEmpty(false).call()
+
+      recordCreationDate(commit, dateCreated)
     }
     catch (e: EmptyCommitException) {
       LOG.info("No actual changes in the settings")
     }
   }
 
+  // emulating --author-date since there is no API in JGit to provide this information,
+  // and because the date is 1-second granularity on some OSs
+  private fun recordCreationDate(commit: RevCommit, dateCreated: Instant) {
+    val date = if (dateCreated <= Instant.now()) {
+      dateCreated
+    }
+    else {
+      LOG.error("Date of the snapshot happens in future: $dateCreated")
+      Instant.now()
+    }
+
+    git.notesAdd().setMessage("$DATE_PREFIX${date.toEpochMilli()}").setObjectId(commit).call()
+  }
+
   override fun dispose() {
-    repository.close()   // todo synchronize
+    if (this::repository.isInitialized) {
+      repository.close()   // todo synchronize
+    }
   }
 
   override fun collectCurrentSnapshot(): SettingsSnapshot {
     // todo check repository consistency, e.g. there should be no uncommitted changes
 
+    val lastModifiedDate = getDate(getBranchTip(master))
     val files = settingsSyncStorage.toFile().walkTopDown()
       .onEnter { it.name != ".git" }
       .filter { it.isFile && it.name != ".gitignore" }
       .mapTo(HashSet()) { getFileStateFromFileWithDeletedMarker(it.toPath(), settingsSyncStorage) }
-    return SettingsSnapshot(files)
+    return SettingsSnapshot(MetaInfo(lastModifiedDate, getLocalApplicationInfo()), files)
   }
 
   override fun getIdePosition(): SettingsLog.Position {
@@ -221,31 +252,11 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     return repository.findRef(ref.name)!!
   }
 
-  private fun fastForwardMaster(branchOnSamePosition: Ref, targetBranch: Ref): BranchPosition {
-      LOG.info("Advancing master. Its position is equal to ${branchOnSamePosition.short}: ${master.objectId.short}. " +
-               "Fast-forwarding to ${targetBranch.short} ${targetBranch.objectId.short}")
-      val mergeResult = git.merge().include(targetBranch).call()
-      if (mergeResult.mergeStatus != FAST_FORWARD) {
-        LOG.warn("Non-fast-forward result: $mergeResult")
-        // todo check consistency here
-      }
-      return getPosition(master)
-  }
-
   override fun advanceMaster(): SettingsLog.Position {
     git.checkout().setName(MASTER_REF_NAME).call()
-
-    if (master.objectId == ide.objectId) {
-      return fastForwardMaster(ide, cloud)
-    }
-
-    if (master.objectId == cloud.objectId) {
-      return fastForwardMaster(cloud, ide)
-    }
-
     LOG.info("Advancing master@${master.objectId.short}. Need merge of ide@${ide.objectId.short} and cloud@${cloud.objectId.short}")
     // 1. move master to ide
-    git.reset().setRef(IDE_REF_NAME).setMode(ResetCommand.ResetType.HARD).call();
+    git.reset().setRef(IDE_REF_NAME).setMode(ResetCommand.ResetType.HARD).call()
 
     // 2. merge with cloud
     val mergeResult = git.merge().include(cloud).call()
@@ -264,19 +275,45 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
   }
 
   private fun mergeUsingSimplifiedLastModifiedStrategy() {
-    val ideTip = git.log().add(ide.objectId).setMaxCount(1).call().first()
-    val ideLastDate = ideTip.commitTime
-    val cloudTip = git.log().add(cloud.objectId).setMaxCount(1).call().first()
-    val cloudLastDate = cloudTip.commitTime
+    val ideLastDate = getDate(getBranchTip(ide))
+    val cloudLastDate = getDate(getBranchTip(cloud))
     val mergeStrategy = if (ideLastDate >= cloudLastDate) MergeStrategy.OURS else MergeStrategy.THEIRS
     val mergeResult = git.merge().include(cloud).setStrategy(mergeStrategy).call()
     LOG.info("Merging with the last-modified strategy completed with result: $mergeResult")
   }
 
+  private fun getBranchTip(ref: Ref): RevCommit = git.log().add(ref.objectId).setMaxCount(1).call().first()
+
+  private fun getDate(commit: RevCommit): Instant {
+    try {
+      val noteObject = git.notesShow().setObjectId(commit).call()
+      if (noteObject != null) {
+        val noteContent = String(repository.open(noteObject.data).bytes, StandardCharsets.UTF_8)
+        val matcher = DATE_PATTERN.matcher(noteContent)
+        if (matcher.matches()) {
+          val date = matcher.group(1)
+          return Instant.ofEpochMilli(date.toLong())
+        }
+        else {
+          LOG.warn("Note for commit $commit doesn't match format: [$noteContent]")
+        }
+      }
+      else {
+        if (commit.parentCount == 1) { // merge happens locally, so the commit time is accurate enough, no note is needed
+          LOG.warn("No note assigned to commit $commit")
+        }
+      }
+    }
+    catch (e: Throwable) {
+      LOG.warn("Error reading a note assigned to commit $commit", e)
+    }
+    return Instant.ofEpochSecond(commit.commitTime.toLong())
+  }
+
   private fun abortMerge() {
-    repository.writeMergeCommitMsg(null);
-    repository.writeMergeHeads(null);
-    git.reset().setMode(ResetCommand.ResetType.HARD).call();
+    repository.writeMergeCommitMsg(null)
+    repository.writeMergeHeads(null)
+    git.reset().setMode(ResetCommand.ResetType.HARD).call()
   }
 
   private fun Repository.headCommit(): RevCommit {
@@ -288,7 +325,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
 
   private val ObjectId.short get() = this.name.substring(0, 8)
 
-  private data class BranchPosition(override val id: String): SettingsLog.Position {
+  private data class BranchPosition(override val id: String) : SettingsLog.Position {
     override fun toString(): String = id.substring(0, 8)
   }
 
@@ -298,5 +335,8 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     const val MASTER_REF_NAME = "master"
     const val IDE_REF_NAME = "ide"
     const val CLOUD_REF_NAME = "cloud"
+
+    const val DATE_PREFIX = "date: "
+    val DATE_PATTERN = Pattern.compile("$DATE_PREFIX(\\d+)")
   }
 }

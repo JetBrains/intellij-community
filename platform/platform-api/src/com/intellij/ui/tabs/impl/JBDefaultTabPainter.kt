@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl
 
 import com.intellij.openapi.rd.fill2DRect
@@ -55,7 +55,10 @@ open class JBDefaultTabPainter(val theme : TabTheme = DefaultTabTheme()) : JBTab
       }
     }
 
-    paintUnderline(position, rect, borderThickness, g, active)
+    //this code smells. Remove when animation is default for all tabs
+    if (!JBEditorTabsBorder.hasAnimation() || this !is JBEditorTabPainter) {
+      paintUnderline(position, rect, borderThickness, g, active)
+    }
   }
 
   override fun paintUnderline(position: JBTabsPosition,

@@ -5,7 +5,6 @@ import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
@@ -187,7 +186,7 @@ class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesP
     override fun createPainter(tree: ChangesTree,
                                renderer: ChangesTreeCellRenderer,
                                row: Int,
-                               selected: Boolean): SavedPatchesProvider.PatchObject.Painter? {
+                               selected: Boolean): SavedPatchesProvider.PatchObject.Painter {
       val painter = GitStashPainter(tree, renderer, iconCache)
       painter.customise(data, row, selected)
       return painter
@@ -207,6 +206,9 @@ class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesP
     override fun asChange(): Change = change
 
     override fun getFilePath(): FilePath = ChangesUtil.getFilePath(change)
+
+    override val originalFilePath: FilePath?
+      get() = ChangesUtil.getBeforePath(change)
 
     override fun getFileStatus(): FileStatus = change.fileStatus
 

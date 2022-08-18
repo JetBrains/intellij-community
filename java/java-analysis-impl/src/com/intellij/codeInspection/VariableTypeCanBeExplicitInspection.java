@@ -20,7 +20,7 @@ public class VariableTypeCanBeExplicitInspection extends AbstractBaseJavaLocalIn
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitLambdaExpression(PsiLambdaExpression expression) {
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
         List<PsiTypeElement> typeElements = new ArrayList<>();
         for (PsiParameter parameter: expression.getParameterList().getParameters()) {
           PsiTypeElement typeElement = getTypeElementToExpand(parameter);
@@ -34,7 +34,7 @@ public class VariableTypeCanBeExplicitInspection extends AbstractBaseJavaLocalIn
       }
 
       @Override
-      public void visitVariable(PsiVariable variable) {
+      public void visitVariable(@NotNull PsiVariable variable) {
         if (variable instanceof PsiParameter && 
             ((PsiParameter)variable).getDeclarationScope() instanceof PsiLambdaExpression) {
           return;

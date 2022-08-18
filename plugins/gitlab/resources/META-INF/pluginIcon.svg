@@ -1,0 +1,11 @@
+<!-- Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M35.9399 22.2965L34.1494 16.3143L30.6008 4.45781C30.4182 3.84784 29.6232 3.84784 29.4406 4.45781L25.8919 16.3143H14.1081L10.5593 4.45781C10.3768 3.84784 9.58175 3.84784 9.39914 4.45781L5.85052 16.3143L4.06005 22.2965C3.89666 22.8422 4.07564 23.4399 4.50316 23.7772L20 35.9998L35.4968 23.7772C35.9243 23.4399 36.1032 22.8422 35.9399 22.2965Z" fill="#FC6D26"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M19.9997 35.9994L25.8916 16.3139H14.1078L19.9997 35.9994Z" fill="#E24329"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M19.9998 35.9995L14.1078 16.314H5.85034L19.9998 35.9995Z" fill="#FC6D26"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M5.85033 16.314L4.05978 22.2963C3.89648 22.8419 4.07538 23.4397 4.50298 23.7768L19.9998 35.9995L5.85033 16.314Z" fill="#FCA326"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M5.85034 16.314H14.1078L10.5591 4.45755C10.3765 3.84748 9.58148 3.84748 9.39895 4.45755L5.85034 16.314Z" fill="#E24329"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M19.9998 35.9995L25.8917 16.314H34.1493L19.9998 35.9995Z" fill="#FC6D26"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M34.1492 16.314L35.9398 22.2963C36.1031 22.8419 35.9242 23.4397 35.4966 23.7768L19.9998 35.9995L34.1492 16.314Z" fill="#FCA326"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M34.1492 16.314H25.8917L29.4404 4.45755C29.623 3.84748 30.418 3.84748 30.6006 4.45755L34.1492 16.314Z" fill="#E24329"/>
+</svg>

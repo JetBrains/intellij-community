@@ -1,0 +1,7 @@
+// "Convert expression to 'Long'" "true"
+// WITH_STDLIB
+fun long(x: Long) {}
+
+fun test(c: Char) {
+    long(<caret>'c')
+}

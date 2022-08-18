@@ -3,11 +3,8 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.DataManager;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
@@ -15,6 +12,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -197,15 +195,8 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
   @NotNull
   protected DataContext getContext() {
     Editor editor = getEditor();
-    DataContext parent = DataManager.getInstance().getDataContext((Component)myStatusBar);
-    VirtualFile selectedFile = getSelectedFile();
-    return SimpleDataContext.builder()
-      .add(CommonDataKeys.VIRTUAL_FILE, selectedFile)
-      .add(CommonDataKeys.VIRTUAL_FILE_ARRAY, selectedFile == null ? VirtualFile.EMPTY_ARRAY : new VirtualFile[] {selectedFile})
-      .add(CommonDataKeys.PROJECT, getProject())
-      .add(PlatformCoreDataKeys.CONTEXT_COMPONENT, editor == null ? null : editor.getComponent())
-      .setParent(parent)
-      .build();
+    return editor != null ? EditorUtil.getEditorDataContext(editor) :
+           DataManager.getInstance().getDataContext((Component)myStatusBar);
   }
 
   @Override
@@ -385,7 +376,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
   }
 
   @Nullable
-  protected abstract ListPopup createPopup(DataContext context);
+  protected abstract ListPopup createPopup(@NotNull DataContext context);
 
   protected void registerCustomListeners() {
   }

@@ -149,7 +149,7 @@ public final class DimensionService extends SimpleModificationTracker implements
    * Store specified {@code size} under the {@code key}. If {@code size} is
    * {@code null} then the value stored under {@code key} will be removed.
    *
-   * @param key  a String key to to save size for.
+   * @param key  a String key to save size for.
    * @param size a Size to save.
    * @throws IllegalArgumentException if {@code key} is {@code null}.
    *

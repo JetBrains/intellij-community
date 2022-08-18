@@ -6,6 +6,8 @@ from email.policy import Policy
 # using a type alias ("_HeaderType = Any") breaks mypy, who knows why
 from typing import Any, Any as _HeaderType, Generator, Iterator, Optional, Sequence, TypeVar, Union
 
+__all__ = ["Message", "EmailMessage"]
+
 _T = TypeVar("_T")
 
 _PayloadType = Union[list[Message], str, bytes]

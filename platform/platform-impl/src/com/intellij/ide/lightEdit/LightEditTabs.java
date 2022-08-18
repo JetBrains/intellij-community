@@ -149,6 +149,11 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
       e.getPresentation().setText(IdeBundle.messagePointer("action.presentation.LightEditTabs.text"));
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
     private Icon getIcon() {
       return myEditorInfo.isSaveRequired() ? myUnsavedIcon : AllIcons.Actions.Close;
     }

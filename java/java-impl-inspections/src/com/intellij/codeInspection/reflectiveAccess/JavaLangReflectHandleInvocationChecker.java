@@ -179,7 +179,7 @@ final class JavaLangReflectHandleInvocationChecker {
     final boolean maybeVararg;
     if (!isExact && requiredArgumentCount > 0) {
       ReflectiveType type = lazyMethodSignature.get(requiredArgumentCount).get();
-      maybeVararg = type.getType() instanceof PsiArrayType;
+      maybeVararg = type != null && type.getType() instanceof PsiArrayType;
     } else {
       maybeVararg = false;
     }

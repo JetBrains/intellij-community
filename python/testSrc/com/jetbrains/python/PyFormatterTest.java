@@ -321,7 +321,8 @@ public class PyFormatterTest extends PyTestCase {
       "    desired_impulse_response = {'dirac, '\n" +
       "    gaussian\n" +
       "    ', logistic_derivative'}\n" +
-      "    return desired, o";
+      "    return desired, o\n" +
+      "";
     assertEquals(expected, reformatted.getText());
   }
 
@@ -1215,6 +1216,47 @@ public class PyFormatterTest extends PyTestCase {
   // PY-48009
   public void testSpacesAroundEqualSignsInKeywordPatterns() {
     getPythonCodeStyleSettings().SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT = true;
+    doTest();
+  }
+
+  // PY-52930
+  public void testSpaceAfterStarredExcept() {
+    doTest();
+  }
+
+  // PY-42200
+  public void testParenthesizedWithItems() {
+    doTest();
+  }
+
+  // PY-42200
+  public void testHangingClosingBracketInParenthesizedWithItems() {
+    getPythonCodeStyleSettings().HANG_CLOSING_BRACKETS = true;
+    doTest();
+  }
+
+  // PY-42200
+  public void testParenthesizedWithItemsHangingIndentProcessedSimilarlyToCollectionsInStatementHeaders() {
+    doTest();
+  }
+
+  // PY-42200
+  public void testParenthesizedWithItemsWrapping() {
+    getCodeStyleSettings().setRightMargin(PythonLanguage.getInstance(), 20);
+    doTest();
+  }
+
+  // PY-28496
+  public void testHangingIndentsInMultilineCallChainInParenthesis() {
+    doTest();
+  }
+
+  // PY-27660
+  public void testHangingIndentsInMultilineCallChainInSquareBrackets() {
+    doTest();
+  }
+
+  public void testMultiLineCallChainSplitByBackslashes() {
     doTest();
   }
 }

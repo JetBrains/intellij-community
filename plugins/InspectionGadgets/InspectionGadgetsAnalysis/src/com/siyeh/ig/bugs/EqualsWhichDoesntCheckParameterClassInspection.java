@@ -181,7 +181,7 @@ public class EqualsWhichDoesntCheckParameterClassInspection extends BaseInspecti
     }
 
     @Override
-    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+    public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
       super.visitMethodReferenceExpression(expression);
       if (CLASS_IS_INSTANCE.methodReferenceMatches(expression)) {
         makeChecked();
@@ -197,7 +197,7 @@ public class EqualsWhichDoesntCheckParameterClassInspection extends BaseInspecti
     }
 
     @Override
-    public void visitTypeCastExpression(PsiTypeCastExpression expression) {
+    public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
       super.visitTypeCastExpression(expression);
       final PsiExpression operand = expression.getOperand();
       if (!isParameterReference(operand)) return;

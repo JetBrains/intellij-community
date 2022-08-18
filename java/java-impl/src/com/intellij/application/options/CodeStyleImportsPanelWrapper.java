@@ -27,7 +27,7 @@ public class CodeStyleImportsPanelWrapper extends CodeStyleAbstractPanel {
   }
 
   @Override
-  protected EditorHighlighter createHighlighter(EditorColorsScheme scheme) {
+  protected EditorHighlighter createHighlighter(@NotNull EditorColorsScheme scheme) {
     return null;
   }
 
@@ -43,7 +43,7 @@ public class CodeStyleImportsPanelWrapper extends CodeStyleAbstractPanel {
   }
 
   @Override
-  public void apply(CodeStyleSettings settings) {
+  public void apply(@NotNull CodeStyleSettings settings) {
     myImportsPanel.apply(settings);
   }
 
@@ -58,7 +58,7 @@ public class CodeStyleImportsPanelWrapper extends CodeStyleAbstractPanel {
   }
 
   @Override
-  protected void resetImpl(CodeStyleSettings settings) {
+  protected void resetImpl(@NotNull CodeStyleSettings settings) {
     myImportsPanel.reset(settings);
   }
 

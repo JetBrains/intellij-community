@@ -540,6 +540,7 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
         when (createBookmark(context)?.let { add(it, type, description, -1) }) {
           null -> LOG.info("cannot create bookmark for $context")
           false -> LOG.info("cannot add bookmark for $context")
+          else -> {}
         }
       }
     }

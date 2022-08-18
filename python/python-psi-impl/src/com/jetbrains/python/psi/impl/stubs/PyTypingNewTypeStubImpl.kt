@@ -21,7 +21,7 @@ class PyTypingNewTypeStubImpl private constructor(val qualifiedName: String, pri
     stream.writeName(baseClassName)
   }
 
-  override fun getCalleeName(): QualifiedName? {
+  override fun getCalleeName(): QualifiedName {
     return QualifiedName.fromComponents(qualifiedName)
   }
 

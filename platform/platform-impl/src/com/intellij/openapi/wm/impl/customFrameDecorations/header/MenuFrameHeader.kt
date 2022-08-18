@@ -10,7 +10,8 @@ import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.title.CustomHeaderTitle
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.util.ui.JBUI
-import com.jetbrains.CustomWindowDecoration.*
+import com.jetbrains.CustomWindowDecoration.MENU_BAR
+import com.jetbrains.CustomWindowDecoration.OTHER_HIT_SPOT
 import net.miginfocom.swing.MigLayout
 import java.awt.Frame
 import java.awt.Rectangle
@@ -99,8 +100,8 @@ internal class MenuFrameHeader(frame: JFrame, val headerTitle: CustomHeaderTitle
     super.uninstallListeners()
   }
 
-  override fun getHitTestSpots(): List<Pair<RelativeRectangle, Int>> {
-    val hitTestSpots = super.getHitTestSpots().toMutableList()
+  override fun getHitTestSpots(): Sequence<Pair<RelativeRectangle, Int>> {
+    var hitTestSpots = super.getHitTestSpots()
     if (menuHolder.isVisible) {
       val menuRect = Rectangle(menuHolder.size)
 
@@ -110,9 +111,8 @@ internal class MenuFrameHeader(frame: JFrame, val headerTitle: CustomHeaderTitle
         menuRect.y += topGap
         menuRect.height -= topGap
       }
-      hitTestSpots.add(Pair(RelativeRectangle(menuHolder, menuRect), MENU_BAR))
+      hitTestSpots += Pair(RelativeRectangle(menuHolder, menuRect), MENU_BAR)
     }
-    hitTestSpots.addAll(headerTitle.getBoundList().map { Pair(it, OTHER_HIT_SPOT) })
-    return hitTestSpots
+    return hitTestSpots + headerTitle.getBoundList().asSequence().map { Pair(it, OTHER_HIT_SPOT) }
   }
 }

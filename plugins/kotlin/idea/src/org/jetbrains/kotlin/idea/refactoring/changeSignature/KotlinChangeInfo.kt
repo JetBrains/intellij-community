@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.changeSignature
 
@@ -21,10 +21,10 @@ import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaOrKotlinMemberDescriptor
-import org.jetbrains.kotlin.idea.core.unquote
 import org.jetbrains.kotlin.idea.j2k.j2k
-import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinMethodDescriptor.Kind
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.KotlinCallableDefinitionUsage
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.KotlinCallerUsage
@@ -405,7 +405,7 @@ open class KotlinChangeInfo(
             newReturnType: PsiType?,
             newParameters: Array<ParameterInfoImpl>
         ): JavaChangeInfo? {
-            if (!newName.unquote().isIdentifier()) return null
+            if (!newName.unquoteKotlinIdentifier().isIdentifier()) return null
 
             val newVisibility = if (isPrimaryMethodUpdated)
                 VisibilityUtil.getVisibilityModifier(currentPsiMethod.modifierList)
@@ -515,7 +515,7 @@ open class KotlinChangeInfo(
             return createJavaChangeInfo(originalPsiMethod, currentPsiMethod, newName, PsiType.VOID, newJavaParameters.toTypedArray())
         }
 
-        if (!TargetPlatformDetector.getPlatform(method.containingFile as KtFile).isJvm()) return null
+        if (!(method.containingFile as KtFile).platform.isJvm()) return null
 
         if (javaChangeInfos == null) {
             val method = method

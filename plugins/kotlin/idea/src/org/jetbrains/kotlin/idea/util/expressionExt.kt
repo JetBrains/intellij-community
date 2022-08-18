@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.util
 
@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-
+import org.jetbrains.kotlin.idea.base.psi.textRangeIn as _textRangeIn
 
 fun KtCallElement.replaceOrCreateTypeArgumentList(newTypeArgumentList: KtTypeArgumentList) {
     if (typeArgumentList != null) typeArgumentList?.replace(newTypeArgumentList)
@@ -45,7 +45,8 @@ fun KtExpression.hasNoSideEffects(): Boolean = when (this) {
     else -> ConstantExpressionEvaluator.getConstant(this, analyze(BodyResolveMode.PARTIAL)) != null
 }
 
-fun PsiElement.textRangeIn(other: PsiElement): TextRange = textRange.shiftLeft(other.startOffset)
+@Deprecated("Please use org.jetbrains.kotlin.idea.base.psi.textRangeIn")
+fun PsiElement.textRangeIn(other: PsiElement): TextRange = _textRangeIn(other)
 
 fun KtDotQualifiedExpression.calleeTextRangeInThis(): TextRange? = callExpression?.calleeExpression?.textRangeIn(this)
 

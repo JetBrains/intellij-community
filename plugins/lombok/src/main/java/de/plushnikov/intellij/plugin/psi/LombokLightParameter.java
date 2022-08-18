@@ -3,10 +3,7 @@ package de.plushnikov.intellij.plugin.psi;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiIdentifier;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.SyntheticElement;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightParameter;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +24,7 @@ public class LombokLightParameter extends LightParameter implements SyntheticEle
                               @NotNull PsiType type,
                               @NotNull PsiElement declarationScope,
                               @NotNull Language language) {
-    super(name, type, declarationScope, language, new LombokLightModifierList(declarationScope.getManager(), language));
+    super(name, type, declarationScope, language, new LombokLightModifierList(declarationScope.getManager(), language), type instanceof PsiEllipsisType);
     myNameIdentifier = new LombokLightIdentifier(declarationScope.getManager(), name);
   }
 

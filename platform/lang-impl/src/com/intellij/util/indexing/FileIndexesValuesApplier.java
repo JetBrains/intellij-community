@@ -53,9 +53,9 @@ public class FileIndexesValuesApplier {
                                              boolean logEmptyProvidedIndexes) {
     Set<ID<?, ?>> indexesProvidedByExtensions = new HashSet<>();
     boolean wasFullyIndexedByInfrastructureExtension = true;
-    Map<ID<?, ?>, Long> perIndexerUpdateTimes = new HashMap<>();
+    Map<ID<?, ?>, Long> perIndexerEvaluatingIndexValueAppliersTimes = new HashMap<>();
     for (SingleIndexValueApplier<?> applier : appliers) {
-      perIndexerUpdateTimes.put(applier.indexId, applier.mapInputTime);
+      perIndexerEvaluatingIndexValueAppliersTimes.put(applier.indexId, applier.evaluatingIndexValueApplierTime);
       if (applier.wasIndexProvidedByExtension()) {
         indexesProvidedByExtensions.add(applier.indexId);
       }
@@ -66,9 +66,10 @@ public class FileIndexesValuesApplier {
         wasFullyIndexedByInfrastructureExtension = false;
       }
     }
-    Map<ID<?, ?>, Long> perIndexerDeletionTimes = new HashMap<>();
+    Map<ID<?, ?>, Long> perIndexerEvaluatingIndexValueRemoversTimes = new HashMap<>();
     for (SingleIndexValueRemover remover : removers) {
-      perIndexerDeletionTimes.put(remover.indexId, remover.mapInputTime); //is not 0 only when !writeIndexSeparately
+      perIndexerEvaluatingIndexValueRemoversTimes.put(remover.indexId,
+                                                      remover.evaluatingValueRemoverTime); //is not 0 only when !writeIndexSeparately
     }
     if (logEmptyProvidedIndexes && indexesProvidedByExtensions.isEmpty()) {
       FileBasedIndexImpl.LOG.info("no shared indexes were provided for file " + file.getName());
@@ -76,8 +77,8 @@ public class FileIndexesValuesApplier {
     return new FileIndexingStatistics(fileType,
                                       indexesProvidedByExtensions,
                                       !indexesProvidedByExtensions.isEmpty() && wasFullyIndexedByInfrastructureExtension,
-                                      perIndexerUpdateTimes,
-                                      perIndexerDeletionTimes);
+                                      perIndexerEvaluatingIndexValueAppliersTimes,
+                                      perIndexerEvaluatingIndexValueRemoversTimes);
   }
 
   void applyImmediately(@NotNull VirtualFile file, boolean isValid) {
@@ -92,8 +93,8 @@ public class FileIndexesValuesApplier {
     }
 
     VfsEventsMerger.tryLog("INDEX_UPDATED", file,
-                           () -> " updated_indexes=" + stats.getPerIndexerUpdateTimes().keySet() +
-                                 " deleted_indexes=" + stats.getPerIndexerDeleteTimes().keySet() +
+                           () -> " updated_indexes=" + stats.getPerIndexerEvaluateIndexValueTimes().keySet() +
+                                 " deleted_indexes=" + stats.getPerIndexerEvaluatingIndexValueRemoversTimes().keySet() +
                                  " valid=" + isValid);
     myIndex.getChangedFilesCollector().removeFileIdFromFilesScheduledForUpdate(fileId);
   }
@@ -129,8 +130,8 @@ public class FileIndexesValuesApplier {
         IndexingFlag.unlockFile(file);
       }
       VfsEventsMerger.tryLog("INDEX_UPDATED", file,
-                             () -> " updated_indexes=" + stats.getPerIndexerUpdateTimes().keySet() +
-                                   " deleted_indexes=" + stats.getPerIndexerDeleteTimes().keySet());
+                             () -> " updated_indexes=" + stats.getPerIndexerEvaluateIndexValueTimes().keySet() +
+                                   " deleted_indexes=" + stats.getPerIndexerEvaluatingIndexValueRemoversTimes().keySet());
       myIndex.getChangedFilesCollector().removeFileIdFromFilesScheduledForUpdate(fileId);
     }
     finally {

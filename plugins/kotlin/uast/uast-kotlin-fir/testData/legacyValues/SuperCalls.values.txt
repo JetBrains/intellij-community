@@ -13,8 +13,18 @@ UFile (package = ) [public final class SuperCallsKt {...]
                                 UObjectLiteralExpression [anonymous object : A("inner literal") { }] = Undetermined
                                     ULiteralExpression (value = "inner literal") ["inner literal"] = "inner literal"
                                     UClass (name = null) [final class null : A {...}]
-                                        UMethod (name = ) [private fun () = UastEmptyExpression]
-                    UMethod (name = ) [private fun () = UastEmptyExpression]
+                                        UMethod (name = ) [private fun () {...}]
+                                            UBlockExpression [{...}] = external <init>("inner literal")("inner literal")
+                                                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>("inner literal")] = external <init>("inner literal")("inner literal")
+                                                    UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
+                                                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>] = external <init>("inner literal")("inner literal")
+                                                    ULiteralExpression (value = "inner literal") ["inner literal"] = "inner literal"
+                    UMethod (name = ) [private fun () {...}]
+                        UBlockExpression [{...}] = external <init>("textForAnon")("textForAnon")
+                            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [<init>("textForAnon")] = external <init>("textForAnon")("textForAnon")
+                                UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
+                                USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>] = external <init>("textForAnon")("textForAnon")
+                                ULiteralExpression (value = "textForAnon") ["textForAnon"] = "textForAnon"
                     UClass (name = InnerClass) [public final class InnerClass : A {...}]
                         UMethod (name = InnerClass) [public fun InnerClass() {...}]
                             UBlockExpression [{...}] = external <init>("inner class")("inner class")

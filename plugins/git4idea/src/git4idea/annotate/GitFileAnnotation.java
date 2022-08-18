@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.annotate;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,7 +23,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsUser;
-import com.intellij.vcs.log.impl.*;
+import com.intellij.vcs.log.impl.CommonUiProperties;
+import com.intellij.vcs.log.impl.HashImpl;
+import com.intellij.vcs.log.impl.VcsLogApplicationSettings;
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
@@ -59,7 +62,6 @@ public final class GitFileAnnotation extends FileAnnotation {
   @Nullable private List<VcsFileRevision> myRevisions;
   @Nullable private Object2IntMap<VcsRevisionNumber> myRevisionMap;
   @NotNull private final Map<VcsRevisionNumber, String> myCommitMessageMap = new HashMap<>();
-  private final VcsLogApplicationSettings myLogSettings = ApplicationManager.getApplication().getService(VcsLogApplicationSettings.class);
 
   private final LineAnnotationAspect DATE_ASPECT =
     new GitAnnotationAspect(LineAnnotationAspect.DATE, VcsBundle.message("line.annotation.aspect.date"), true) {
@@ -85,7 +87,6 @@ public final class GitFileAnnotation extends FileAnnotation {
         return VcsUserUtil.toExactString(lineInfo.getAuthorUser());
       }
     };
-  private final VcsLogUiProperties.PropertiesChangeListener myLogSettingChangeListener = this::onLogSettingChange;
 
   public GitFileAnnotation(@NotNull Project project,
                            @NotNull VirtualFile file,
@@ -98,22 +99,6 @@ public final class GitFileAnnotation extends FileAnnotation {
     myVcs = GitVcs.getInstance(myProject);
     myBaseRevision = revision;
     myLines = lines;
-    myLogSettings.addChangeListener(myLogSettingChangeListener);
-  }
-
-  public <T> void onLogSettingChange(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
-    if (property.equals(CommonUiProperties.PREFER_COMMIT_DATE)) {
-      reload(null);
-    }
-  }
-
-  public GitFileAnnotation(@NotNull GitFileAnnotation annotation) {
-    this(annotation.getProject(), annotation.getFile(), annotation.getCurrentRevision(), annotation.getLines());
-  }
-
-  @Override
-  public void dispose() {
-    myLogSettings.removeChangeListener(myLogSettingChangeListener);
   }
 
   @Override
@@ -122,8 +107,9 @@ public final class GitFileAnnotation extends FileAnnotation {
   }
 
   @NotNull
-  private Date getDate(LineInfo info) {
-    return Boolean.TRUE.equals(myLogSettings.get(CommonUiProperties.PREFER_COMMIT_DATE)) ? info.getCommitterDate() : info.getAuthorDate();
+  private static Date getDate(LineInfo info) {
+    VcsLogApplicationSettings logSettings = ApplicationManager.getApplication().getService(VcsLogApplicationSettings.class);
+    return Boolean.TRUE.equals(logSettings.get(CommonUiProperties.PREFER_COMMIT_DATE)) ? info.getCommitterDate() : info.getAuthorDate();
   }
 
   @Nullable
@@ -196,7 +182,7 @@ public final class GitFileAnnotation extends FileAnnotation {
     atb.appendLine(VcsBundle.message("commit.description.tooltip.date", DateFormatUtil.formatDateTime(getDate(lineInfo))));
 
     if (!myFilePath.equals(lineInfo.getFilePath())) {
-      String path = FileUtil.getLocationRelativeToUserHome(lineInfo.getFilePath().getPresentableUrl());
+      String path = VcsUtil.getPresentablePath(myProject, lineInfo.getFilePath(), true, false);
       atb.appendLine(VcsBundle.message("commit.description.tooltip.path", path));
     }
 

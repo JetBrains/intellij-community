@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.navigator.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +43,11 @@ public abstract class MavenProjectsNavigatorAction extends MavenToggleAction {
   private static MavenProjectsNavigator getNavigator(AnActionEvent e) {
     final Project project = MavenActionUtil.getProject(e.getDataContext());
     return project != null ? MavenProjectsNavigator.getInstance(project) : null;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   protected abstract boolean isSelected(@NotNull MavenProjectsNavigator navigator);

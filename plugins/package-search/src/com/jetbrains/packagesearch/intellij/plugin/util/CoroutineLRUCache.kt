@@ -1,6 +1,21 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.util
 
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.KSerializer
@@ -51,7 +66,7 @@ class CoroutineLRUCache<K : Any, V>(val maxSize: Int, initialValues: Map<K, V> =
 
             override fun serialize(encoder: Encoder, value: CoroutineLRUCache<K, V>) = encoder.encodeStructure(descriptor) {
                 encodeIntElement(descriptor, 0, value.maxSize)
-                encodeSerializableElement(descriptor, 1, mapSerializer, runBlocking { value.cachedElements() })
+                encodeSerializableElement(descriptor, 1, mapSerializer, value.cachedElements())
             }
         }
     }
@@ -86,6 +101,6 @@ class CoroutineLRUCache<K : Any, V>(val maxSize: Int, initialValues: Map<K, V> =
         syncMutex.withLock { cache.clear() }
     }
 
-    suspend fun cachedElements() =
-        syncMutex.withLock { cache.map { (k, v) -> k as K to v as V }.toMap() }
+    fun cachedElements() =
+        cache.map { (k, v) -> k as K to v as V }.toMap()
 }

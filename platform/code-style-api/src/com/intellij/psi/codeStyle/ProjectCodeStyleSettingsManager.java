@@ -82,7 +82,9 @@ public final class ProjectCodeStyleSettingsManager extends CodeStyleSettingsMana
   @NotNull
   @Override
   public CodeStyleSettings getMainProjectCodeStyle() {
-    return mySettingsMap.get(MAIN_PROJECT_CODE_STYLE_NAME);
+    synchronized (myStateLock) {
+      return mySettingsMap.get(MAIN_PROJECT_CODE_STYLE_NAME);
+    }
   }
 
   private void initDefaults() {
@@ -146,8 +148,7 @@ public final class ProjectCodeStyleSettingsManager extends CodeStyleSettingsMana
     }
   }
 
-  @Override
-  protected void checkState() {
+  private void checkState() {
     if (mySettingsExist && !myIsLoaded) {
       LOG.error("Invalid state: project settings exist but not loaded yet. The call may cause settings damage.");
     }

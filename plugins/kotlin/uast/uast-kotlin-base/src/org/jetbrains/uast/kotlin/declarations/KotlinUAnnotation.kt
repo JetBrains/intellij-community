@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.kotlin
 
 import com.intellij.openapi.components.ServiceManager
@@ -6,15 +6,15 @@ import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveResult
-import org.jetbrains.kotlin.asJava.toLightAnnotation
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
-import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.internal.multiResolveResults
 
+@ApiStatus.Internal
 sealed class KotlinUAnnotationBase<T : KtCallElement>(
     final override val sourcePsi: T,
     givenParent: UElement?
@@ -70,13 +70,14 @@ sealed class KotlinUAnnotationBase<T : KtCallElement>(
     override fun multiResolve(): Iterable<ResolveResult> = sourcePsi.multiResolveResults().asIterable()
 }
 
+@ApiStatus.Internal
 class KotlinUAnnotation(
     annotationEntry: KtAnnotationEntry,
     givenParent: UElement?
 ) : KotlinUAnnotationBase<KtAnnotationEntry>(annotationEntry, givenParent), UAnnotation {
 
     override val javaPsi by lz {
-        annotationEntry.actionUnderSafeAnalyzeBlock({ annotationEntry.toLightAnnotation() }, { null })
+        baseResolveProviderService.convertToPsiAnnotation(annotationEntry)
     }
 
     override fun annotationUseSiteTarget() = sourcePsi.useSiteTarget?.getAnnotationUseSiteTarget()
@@ -85,7 +86,7 @@ class KotlinUAnnotation(
         return baseResolveProviderService.resolveToClass(sourcePsi, this)
     }
 
-    override val uastAnchor by lz {
+    override val uastAnchor: UIdentifier by lz {
         KotlinUIdentifier(
             javaPsi?.nameReferenceElement,
             annotationEntry.typeReference?.nameElement,
@@ -95,12 +96,15 @@ class KotlinUAnnotation(
 
 }
 
+@ApiStatus.Internal
 class KotlinUNestedAnnotation private constructor(
     original: KtCallExpression,
     givenParent: UElement?
 ) : KotlinUAnnotationBase<KtCallExpression>(original, givenParent) {
 
-    override val javaPsi: PsiAnnotation? by lz { original.toLightAnnotation() }
+    override val javaPsi: PsiAnnotation? by lz {
+        baseResolveProviderService.convertToPsiAnnotation(original)
+    }
 
     override fun annotationUseSiteTarget(): AnnotationUseSiteTarget? = null
 
@@ -108,7 +112,7 @@ class KotlinUNestedAnnotation private constructor(
         return baseResolveProviderService.resolveToClassIfConstructorCall(sourcePsi, this)
     }
 
-    override val uastAnchor by lz {
+    override val uastAnchor: UIdentifier by lz {
         KotlinUIdentifier(
             javaPsi?.nameReferenceElement?.referenceNameElement,
             (original.calleeExpression as? KtNameReferenceExpression)?.getReferencedNameElement(),
@@ -127,5 +131,3 @@ class KotlinUNestedAnnotation private constructor(
     }
 
 }
-
-

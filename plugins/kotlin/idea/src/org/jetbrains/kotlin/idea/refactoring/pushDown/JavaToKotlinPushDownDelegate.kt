@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.pushDown
 
@@ -21,13 +21,14 @@ import org.jetbrains.kotlin.idea.j2k.j2k
 import org.jetbrains.kotlin.idea.j2k.j2kText
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.idea.refactoring.pullUp.addMemberToTarget
+import org.jetbrains.kotlin.idea.util.getTypeSubstitution
+import org.jetbrains.kotlin.idea.util.orEmpty
+import org.jetbrains.kotlin.idea.util.toSubstitutor
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.types.TypeSubstitutor
-import org.jetbrains.kotlin.types.substitutions.getTypeSubstitutor
 
 class JavaToKotlinPushDownDelegate : JavaPushDownDelegate() {
     override fun checkTargetClassConflicts(
@@ -52,7 +53,7 @@ class JavaToKotlinPushDownDelegate : JavaPushDownDelegate() {
         val resolutionFacade = subClass.getResolutionFacade()
         val superClassDescriptor = superClass.getJavaClassDescriptor(resolutionFacade) ?: return
         val subClassDescriptor = subClass.unsafeResolveToDescriptor() as ClassDescriptor
-        val substitutor = getTypeSubstitutor(superClassDescriptor.defaultType, subClassDescriptor.defaultType) ?: TypeSubstitutor.EMPTY
+        val substitutor = getTypeSubstitution(superClassDescriptor.defaultType, subClassDescriptor.defaultType)?.toSubstitutor().orEmpty()
         val psiFactory = KtPsiFactory(subClass)
         var hasAbstractMembers = false
         members@ for (memberInfo in pushDownData.membersToMove) {

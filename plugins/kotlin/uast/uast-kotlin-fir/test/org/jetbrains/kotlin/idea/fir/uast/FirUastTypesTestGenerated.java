@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.uast;
 
@@ -41,6 +41,16 @@ public class FirUastTypesTestGenerated extends AbstractFirUastTypesTest {
     @TestMetadata("classLiteral.kt")
     public void testClassLiteral() throws Exception {
         runTest("testData/type/classLiteral.kt");
+    }
+
+    @TestMetadata("objectLiteral.kt")
+    public void testObjectLiteral() throws Exception {
+        runTest("testData/type/objectLiteral.kt");
+    }
+
+    @TestMetadata("threadSafe.kt")
+    public void testThreadSafe() throws Exception {
+        runTest("testData/type/threadSafe.kt");
     }
 
     @TestMetadata("typeCast.kt")

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.paths
 
 import com.intellij.codeInsight.highlighting.HyperlinkAnnotator
@@ -18,7 +18,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 
-@Suppress("NonDefaultConstructor")
 class UrlReference(private val element: PsiElement,
                    private val rangeInElement: TextRange,
                    val url: String) : PsiHighlightedReference {
@@ -36,7 +35,6 @@ class UrlReference(private val element: PsiElement,
   }
 }
 
-@Suppress("NonDefaultConstructor")
 private class UrlSymbol(
   @NlsSafe private val url: String
 ) : Pointer<UrlSymbol>,

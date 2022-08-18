@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.framework
 
@@ -14,12 +14,14 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider
 import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescription
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
+import org.jetbrains.kotlin.idea.projectConfiguration.JavaRuntimeLibraryDescription
 import org.jetbrains.kotlin.idea.configuration.BuildSystemType
-import org.jetbrains.kotlin.idea.configuration.getBuildSystemType
+import org.jetbrains.kotlin.idea.configuration.buildSystemType
 import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
-import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService
-import org.jetbrains.kotlin.idea.projectWizard.WizardStatsService.ProjectCreationStats
+import org.jetbrains.kotlin.idea.projectConfiguration.JSLibraryStdDescription
+import org.jetbrains.kotlin.idea.statistics.WizardStatsService
+import org.jetbrains.kotlin.idea.statistics.WizardStatsService.ProjectCreationStats
 
 import javax.swing.JComponent
 
@@ -74,6 +76,6 @@ class JavaFrameworkSupportProvider : FrameworkSupportInModuleProvider() {
     override fun isEnabledForModuleType(moduleType: ModuleType<*>): Boolean = moduleType is JavaModuleType
 
     override fun canAddSupport(module: Module, facetsProvider: FacetsProvider): Boolean {
-        return super.canAddSupport(module, facetsProvider) && module.getBuildSystemType() == BuildSystemType.JPS
+        return super.canAddSupport(module, facetsProvider) && module.buildSystemType == BuildSystemType.JPS
     }
 }

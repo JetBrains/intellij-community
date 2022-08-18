@@ -43,7 +43,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PathsList;
-import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -513,6 +512,9 @@ public final class ExternalSystemApiUtil {
     }
     else if (unwrapped.getClass() == ExternalSystemException.class) {
       String originalReason = ((ExternalSystemException)unwrapped).getOriginalReason();
+      if (originalReason.isBlank()) {
+        return stacktraceAsString(unwrapped);
+      }
       return ExternalSystemBundle.message("external.system.api.error.message.prefix", originalReason);
     }
     else {
@@ -676,52 +678,60 @@ public final class ExternalSystemApiUtil {
     getSettings(project, systemId).subscribe(listener, parentDisposable);
   }
 
-  public static @NotNull Collection<TaskData> findProjectTasks(@NotNull Project project,
-                                                               @NotNull ProjectSystemId systemId,
-                                                               @NotNull String projectPath) {
-    AbstractExternalSystemSettings settings = getSettings(project, systemId);
-    ExternalProjectSettings linkedProjectSettings = settings.getLinkedProjectSettings(projectPath);
-    if (linkedProjectSettings == null) return Collections.emptyList();
-
-    ExternalProjectInfo projectInfo = ContainerUtil.find(
-      ProjectDataManager.getInstance().getExternalProjectsData(project, systemId),
-      info -> FileUtil.pathsEqual(linkedProjectSettings.getExternalProjectPath(), info.getExternalProjectPath())
-    );
-
-    if (projectInfo == null) return Collections.emptyList();
-    DataNode<ProjectData> projectStructure = projectInfo.getExternalProjectStructure();
-    if (projectStructure == null) return Collections.emptyList();
-
-    List<TaskData> tasks = new SmartList<>();
-
-    DataNode<ModuleData> moduleDataNode = ContainerUtil.find(
-      findAll(projectStructure, ProjectKeys.MODULE),
-      moduleNode -> FileUtil.pathsEqual(projectPath, moduleNode.getData().getLinkedExternalProjectPath())
-    );
+  public static @NotNull Collection<TaskData> findProjectTasks(
+    @NotNull Project project,
+    @NotNull ProjectSystemId systemId,
+    @NotNull String projectPath
+  ) {
+    var moduleDataNode = findModuleNode(project, systemId, projectPath);
     if (moduleDataNode == null) return Collections.emptyList();
-
-    findAll(moduleDataNode, ProjectKeys.TASK).stream().map(DataNode::getData).forEach(tasks::add);
-    return tasks;
+    var taskNodes = findAll(moduleDataNode, ProjectKeys.TASK);
+    return ContainerUtil.map(taskNodes, it -> it.getData());
   }
 
-  @ApiStatus.Experimental
-  public static @Nullable DataNode<ProjectData> findProjectData(@NotNull Project project,
-                                                                @NotNull ProjectSystemId systemId,
-                                                                @NotNull String projectPath) {
+  /**
+   * @deprecated use ExternalSystemApiUtil.findProjectNode instead
+   */
+  @Deprecated(forRemoval = true)
+  public static @Nullable DataNode<ProjectData> findProjectData(
+    @NotNull Project project,
+    @NotNull ProjectSystemId systemId,
+    @NotNull String projectPath
+  ) {
+    return findProjectNode(project, systemId, projectPath);
+  }
+
+  public static @Nullable DataNode<ProjectData> findProjectNode(
+    @NotNull Project project,
+    @NotNull ProjectSystemId systemId,
+    @NotNull String projectPath
+  ) {
     ExternalProjectInfo projectInfo = findProjectInfo(project, systemId, projectPath);
     if (projectInfo == null) return null;
     return projectInfo.getExternalProjectStructure();
   }
 
-  @ApiStatus.Experimental
-  public static @Nullable ExternalProjectInfo findProjectInfo(@NotNull Project project,
-                                                              @NotNull ProjectSystemId systemId,
-                                                              @NotNull String projectPath) {
-    AbstractExternalSystemSettings settings = getSettings(project, systemId);
-    ExternalProjectSettings linkedProjectSettings = settings.getLinkedProjectSettings(projectPath);
+  public static @Nullable ExternalProjectInfo findProjectInfo(
+    @NotNull Project project,
+    @NotNull ProjectSystemId systemId,
+    @NotNull String projectPath
+  ) {
+    var settings = getSettings(project, systemId);
+    var linkedProjectSettings = settings.getLinkedProjectSettings(projectPath);
     if (linkedProjectSettings == null) return null;
-    String rootProjectPath = linkedProjectSettings.getExternalProjectPath();
+    var rootProjectPath = linkedProjectSettings.getExternalProjectPath();
     return ProjectDataManager.getInstance().getExternalProjectData(project, systemId, rootProjectPath);
+  }
+
+  public static @Nullable DataNode<ModuleData> findModuleNode(
+    @NotNull Project project,
+    @NotNull ProjectSystemId systemId,
+    @NotNull String projectPath
+  ) {
+    var projectNode = findProjectNode(project, systemId, projectPath);
+    if (projectNode == null) return null;
+    var moduleNodes = findAll(projectNode, ProjectKeys.MODULE);
+    return ContainerUtil.find(moduleNodes, it -> FileUtil.pathsEqual(projectPath, it.getData().getLinkedExternalProjectPath()));
   }
 
   public static @NotNull FileChooserDescriptor getExternalProjectConfigDescriptor(@NotNull ProjectSystemId systemId) {

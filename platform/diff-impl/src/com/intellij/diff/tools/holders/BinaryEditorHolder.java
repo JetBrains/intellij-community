@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.holders;
 
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.FileContent;
-import com.intellij.diff.editor.DiffVirtualFile;
 import com.intellij.diff.requests.UnknownFileTypeDiffRequest;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.FileEditorBase;
@@ -26,15 +25,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithoutContent;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.FocusListener;
+import java.util.List;
 
-public class BinaryEditorHolder extends EditorHolder {
+public final class BinaryEditorHolder extends EditorHolder {
   @NotNull private final FileEditor myEditor;
   @Nullable private final FileEditorProvider myEditorProvider;
 
@@ -90,15 +89,15 @@ public class BinaryEditorHolder extends EditorHolder {
         if (project == null) project = ProjectManager.getInstance().getDefaultProject();
         VirtualFile file = ((FileContent)content).getFile();
 
-        FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(project, file);
-        if (providers.length == 0) {
+        List<FileEditorProvider> providers = FileEditorProviderManager.getInstance().getProviderList(project, file);
+        if (providers.size() == 0) {
           JComponent component = FileTypeRegistry.getInstance().isFileOfType(file, UnknownFileType.INSTANCE)
                                  ? UnknownFileTypeDiffRequest.createComponent(file.getName(), context)
                                  : DiffUtil.createMessagePanel(DiffBundle.message("error.cant.show.file"));
           return new BinaryEditorHolder(new DumbFileEditor(file, component), null);
         }
 
-        FileEditorProvider provider = providers[0];
+        FileEditorProvider provider = providers.get(0);
         FileEditor editor = provider.createEditor(project, file);
 
         UIUtil.removeScrollBorder(editor.getComponent());

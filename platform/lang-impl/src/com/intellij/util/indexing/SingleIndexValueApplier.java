@@ -5,33 +5,35 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
 @ApiStatus.Internal
-class SingleIndexValueApplier<CachedFileData> {
+class SingleIndexValueApplier<FileIndexMetaData> {
   private final FileBasedIndexImpl myIndex;
   @NotNull final ID<?, ?> indexId;
   final int inputId;
-  private final CachedFileData myCachedFileData;
-  final long mapInputTime;
+  private final @Nullable FileIndexMetaData myFileIndexMetaData;
+  final long evaluatingIndexValueApplierTime;
   @NotNull final Supplier<Boolean> storageUpdate;
   @NotNull private final String fileInfo;
   @NotNull private final String filePath;
   private final boolean isMock;
 
-  SingleIndexValueApplier(FileBasedIndexImpl index, @NotNull ID<?, ?> indexId,
+  SingleIndexValueApplier(@NotNull FileBasedIndexImpl index,
+                          @NotNull ID<?, ?> indexId,
                           int inputId,
-                          @NotNull CachedFileData cachedFileData,
+                          @Nullable FileIndexMetaData fileIndexMetaData,
                           @NotNull Supplier<Boolean> update,
                           @NotNull VirtualFile file,
                           @NotNull FileContent currentFC,
-                          long mapInputTime) {
+                          long evaluatingIndexValueApplierTime) {
     myIndex = index;
     this.indexId = indexId;
     this.inputId = inputId;
-    myCachedFileData = cachedFileData;
-    this.mapInputTime = mapInputTime;
+    myFileIndexMetaData = fileIndexMetaData;
+    this.evaluatingIndexValueApplierTime = evaluatingIndexValueApplierTime;
     storageUpdate = update;
     fileInfo = FileBasedIndexImpl.getFileInfoLogString(inputId, file, currentFC);
     filePath = file.getPath();
@@ -69,26 +71,26 @@ class SingleIndexValueApplier<CachedFileData> {
       if (!isMock) {
         ConcurrencyUtil.withLock(myIndex.myReadLock, () -> {
           //noinspection unchecked
-          UpdatableIndex<?, ?, FileContent, CachedFileData> index =
-            (UpdatableIndex<?, ?, FileContent, CachedFileData>)myIndex.getIndex(indexId);
-          setIndexedState(index, myCachedFileData, inputId, wasIndexProvidedByExtension());
+          UpdatableIndex<?, ?, FileContent, FileIndexMetaData> index =
+            (UpdatableIndex<?, ?, FileContent, FileIndexMetaData>)myIndex.getIndex(indexId);
+          setIndexedState(index, myFileIndexMetaData, inputId, wasIndexProvidedByExtension());
         });
       }
     }
     return true;
   }
 
-  private static <CachedFileData> void setIndexedState(UpdatableIndex<?, ?, FileContent, CachedFileData> index,
-                                                       @NotNull CachedFileData fileData,
-                                                       int inputId,
-                                                       boolean indexWasProvided) {
+  private static <FileIndexMetaData> void setIndexedState(@NotNull UpdatableIndex<?, ?, FileContent, FileIndexMetaData> index,
+                                                          @Nullable FileIndexMetaData fileData,
+                                                          int inputId,
+                                                          boolean indexWasProvided) {
     if (index instanceof FileBasedIndexInfrastructureExtensionUpdatableIndex) {
       //noinspection unchecked
-      ((FileBasedIndexInfrastructureExtensionUpdatableIndex<?, ?, ?, CachedFileData>)index)
-        .setIndexedStateForFileOnCachedData(inputId, fileData, indexWasProvided);
+      ((FileBasedIndexInfrastructureExtensionUpdatableIndex<?, ?, ?, FileIndexMetaData>)index)
+        .setIndexedStateForFileOnFileIndexMetaData(inputId, fileData, indexWasProvided);
     }
     else {
-      index.setIndexedStateForFileOnCachedData(inputId, fileData);
+      index.setIndexedStateForFileOnFileIndexMetaData(inputId, fileData);
     }
   }
 }

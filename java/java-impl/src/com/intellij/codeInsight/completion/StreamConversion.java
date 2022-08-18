@@ -241,7 +241,7 @@ final class StreamConversion {
     }
 
     @Override
-    public void renderElement(LookupElementPresentation presentation) {
+    public void renderElement(@NotNull LookupElementPresentation presentation) {
       super.renderElement(presentation);
       presentation.setTypeText(myTypeText);
       presentation.setIcon(PlatformIcons.METHOD_ICON);
@@ -294,7 +294,7 @@ final class StreamConversion {
     }
 
     @Override
-    public void renderElement(LookupElementPresentation presentation) {
+    public void renderElement(@NotNull LookupElementPresentation presentation) {
       super.renderElement(presentation);
       presentation.setItemText("stream()." + presentation.getItemText());
     }

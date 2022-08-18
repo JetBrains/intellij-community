@@ -41,7 +41,7 @@ public class StringRepeatCanBeUsedInspection extends AbstractBaseJavaLocalInspec
     if (!PsiUtil.isLanguageLevel11OrHigher(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
-      public void visitForStatement(PsiForStatement statement) {
+      public void visitForStatement(@NotNull PsiForStatement statement) {
         PsiMethodCallExpression call = findAppendCall(statement);
         if (call == null) return;
         PsiReferenceExpression qualifier = tryCast(PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression()),

@@ -29,9 +29,7 @@ class ExampleClassWithNoTypos {
 }
 
 /**
- * It is friend there
- *
- * <warning descr="PLURAL_VERB_AFTER_THIS">This guy have</warning> no useful logic; it's just a documentation example.
+ * It is <warning descr="EN_A_VS_AN">an</warning> friend of human
  */
 class ExampleClassWithTypos {
     /**

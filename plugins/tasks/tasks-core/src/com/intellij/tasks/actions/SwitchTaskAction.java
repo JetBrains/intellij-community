@@ -94,6 +94,11 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
     }
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   private static boolean isImplicit(LocalTask activeTask) {
     return activeTask.isDefault() && Comparing.equal(activeTask.getCreated(), activeTask.getUpdated());
   }

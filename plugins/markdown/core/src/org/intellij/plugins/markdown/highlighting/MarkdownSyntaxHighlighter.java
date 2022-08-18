@@ -41,7 +41,9 @@ public class MarkdownSyntaxHighlighter extends SyntaxHighlighterBase {
     safeMap(ATTRIBUTES, MarkdownElementTypes.INLINE_LINK, MarkdownHighlighterColors.EXPLICIT_LINK_ATTR_KEY);
     safeMap(ATTRIBUTES, MarkdownTokenTypeSets.REFERENCE_LINK_SET, MarkdownHighlighterColors.REFERENCE_LINK_ATTR_KEY);
     safeMap(ATTRIBUTES, MarkdownElementTypes.IMAGE, MarkdownHighlighterColors.IMAGE_ATTR_KEY);
-    safeMap(ATTRIBUTES, MarkdownElementTypes.AUTOLINK, MarkdownHighlighterColors.AUTO_LINK_ATTR_KEY);
+    safeMap(ATTRIBUTES, MarkdownTokenTypes.AUTOLINK, MarkdownHighlighterColors.AUTO_LINK_ATTR_KEY);
+    safeMap(ATTRIBUTES, MarkdownTokenTypes.GFM_AUTOLINK, MarkdownHighlighterColors.AUTO_LINK_ATTR_KEY);
+    safeMap(ATTRIBUTES, MarkdownTokenTypes.EMAIL_AUTOLINK, MarkdownHighlighterColors.AUTO_LINK_ATTR_KEY);
     safeMap(ATTRIBUTES, MarkdownElementTypes.LINK_DEFINITION, MarkdownHighlighterColors.LINK_DEFINITION_ATTR_KEY);
     safeMap(ATTRIBUTES, MarkdownElementTypes.LINK_TEXT, MarkdownHighlighterColors.LINK_TEXT_ATTR_KEY);
     safeMap(ATTRIBUTES, MarkdownElementTypes.LINK_LABEL, MarkdownHighlighterColors.LINK_LABEL_ATTR_KEY);
@@ -65,6 +67,11 @@ public class MarkdownSyntaxHighlighter extends SyntaxHighlighterBase {
 
     safeMap(ATTRIBUTES, MarkdownElementTypes.HTML_BLOCK, MarkdownHighlighterColors.HTML_BLOCK_ATTR_KEY);
     safeMap(ATTRIBUTES, MarkdownTokenTypes.HTML_TAG, MarkdownHighlighterColors.INLINE_HTML_ATTR_KEY);
+
+    safeMap(ATTRIBUTES, MarkdownElementTypes.DEFINITION_LIST, MarkdownHighlighterColors.DEFINITION_LIST_ATTR_KEY);
+    safeMap(ATTRIBUTES, MarkdownElementTypes.DEFINITION_MARKER, MarkdownHighlighterColors.DEFINITION_LIST_MARKER_ATTR_KEY);
+    safeMap(ATTRIBUTES, MarkdownElementTypes.DEFINITION, MarkdownHighlighterColors.DEFINITION_ATTR_KEY);
+    safeMap(ATTRIBUTES, MarkdownElementTypes.DEFINITION_TERM, MarkdownHighlighterColors.TERM_ATTR_KEY);
   }
 
   @Override

@@ -20,9 +20,18 @@ class B:A() {
   }
 }
 
+fun nonLocalReturn(element: String): String {
+    doit {
+        if (element.length > 4) return "42"
+    }
+    return "1"
+}
+
+inline fun doit(v : () -> Unit) {}
 
 fun main(args: Array<String>) {
   println(Test().xxx())
   println(B().xxx())
   println(A().xxx())
+  println(nonLocalReturn("abcde"))
 }

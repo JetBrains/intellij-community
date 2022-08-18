@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeInsight.editor.quotes;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -17,7 +17,7 @@ public class SelectionQuotingTypedHandlerTest extends BasePlatformTestCase {
   private boolean myPrevValue;
 
  /**
-   * Perfoms an action as write action
+   * Performs an action as write action
    *
    * @param project Project
    * @param action  Runnable to be executed
@@ -103,6 +103,17 @@ public class SelectionQuotingTypedHandlerTest extends BasePlatformTestCase {
     doTest("\"", "'aa\\'bb<selection><caret>'</selection>", "'aa\\'bb\"<selection><caret>'</selection>\"");
   }
 
+  public void testMathExpression() {
+    doTest("<",
+           "a <selection><caret>></selection>= b",
+           "a <<caret>= b");
+  }
+
+  public void testMathExpression2() {
+    doTest("<",
+           "a <selection><caret>>=</selection> b",
+           "a <<caret> b");
+  }
   private void doTest(@NotNull final String cs, @NotNull String before, @NotNull String expected) {
     myFixture.configureByText(FileTypes.PLAIN_TEXT, before);
     EditorActionManager.getInstance();

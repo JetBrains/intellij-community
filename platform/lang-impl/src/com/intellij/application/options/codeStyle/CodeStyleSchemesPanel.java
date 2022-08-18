@@ -144,7 +144,7 @@ public class CodeStyleSchemesPanel extends SimpleSchemesPanel<CodeStyleScheme> {
       final CodeStyleSettings currSettings = currScheme.getCodeStyleSettings();
       final CodeStyleSettings modelSettings = myModel.getCloneSettings(currScheme);
       for (CodeStyleSettingsModifier modifier : status.getModifiers()) {
-        Consumer<CodeStyleSettings> disablingFunction = modifier.getDisablingFunction();
+        Consumer<CodeStyleSettings> disablingFunction = modifier.getDisablingFunction(myModel.getProject());
         if (disablingFunction != null) {
           disablingFunction.accept(currSettings);
           CodeStyleSettingsManager.getInstance(myModel.getProject()).notifyCodeStyleSettingsChanged();

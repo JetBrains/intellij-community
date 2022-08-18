@@ -14,7 +14,7 @@ class ProblemsViewProjectErrorsPanelProvider(private val project: Project) : Pro
   }
   private val ACTION_IDS = listOf("CompileDirty", "InspectCode")
 
-  override fun create(): ProblemsViewTab? {
+  override fun create(): ProblemsViewTab {
     val state = ProblemsViewState.getInstance(project)
     val panel = ProblemsViewPanel(project, ID, state, ProblemsViewBundle.messagePointer("problems.view.project"))
     panel.treeModel.root = CollectorBasedRoot(panel)
@@ -28,7 +28,7 @@ class ProblemsViewProjectErrorsPanelProvider(private val project: Project) : Pro
       for (id in ACTION_IDS) {
         val action = ActionUtil.getAction(id) ?: continue
         val text = action.templateText
-        if (text == null || text.isBlank()) continue
+        if (text.isNullOrBlank()) continue
         if (index == 0) {
           status.appendText(".")
           status.appendLine("")

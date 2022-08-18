@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.CommonBundle
@@ -44,12 +30,12 @@ import com.intellij.util.graph.*
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.xml.util.XmlStringUtil
+import kotlinx.coroutines.launch
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.event.MouseEvent
-import java.util.*
 import javax.swing.*
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
@@ -91,7 +77,7 @@ class ConfigureUnloadedModulesDialog(private val project: Project, selectedModul
     }))
   }
 
-  override fun createCenterPanel(): JComponent? {
+  override fun createCenterPanel(): JComponent {
     val buttonsPanel = JPanel(VerticalFlowLayout())
     val moveToUnloadedButton = JButton(ProjectBundle.message("module.unload.button.text"))
     val moveToLoadedButton = JButton(ProjectBundle.message("module.load.button.text"))
@@ -208,12 +194,15 @@ class ConfigureUnloadedModulesDialog(private val project: Project, selectedModul
     }
   }
 
-  override fun getPreferredFocusedComponent(): JComponent? {
+  override fun getPreferredFocusedComponent(): JComponent {
     return initiallyFocusedTree.tree
   }
 
   override fun doOKAction() {
-    ModuleManager.getInstance(project).setUnloadedModules(unloadedModulesTree.getAllModules().map { it.name })
+    val unloadedModuleNames = unloadedModulesTree.getAllModules().map { it.name }
+    project.coroutineScope.launch {
+      ModuleManager.getInstance(project).setUnloadedModules(unloadedModuleNames)
+    }
     super.doOKAction()
   }
 }
@@ -243,7 +232,7 @@ private class ModuleDescriptionsTree(project: Project) {
   fun installDoubleClickListener(action: () -> Unit) {
     object : DoubleClickListener() {
       override fun onDoubleClick(event: MouseEvent): Boolean {
-        if (tree.selectionPaths?.all { (it?.lastPathComponent as? ModuleDescriptionTreeNode)?.isLeaf == true } ?: false) {
+        if (tree.selectionPaths?.all { (it?.lastPathComponent as? ModuleDescriptionTreeNode)?.isLeaf == true } == true) {
           action()
           return true
         }

@@ -33,7 +33,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Area;
 import java.util.Objects;
 
-public class SplitButtonAction extends ActionGroup implements CustomComponentAction, UpdateInBackground {
+public class SplitButtonAction extends ActionGroup implements CustomComponentAction {
   private final ActionGroup myActionGroup;
   private final static Key<AnAction> FIRST_ACTION = Key.create("firstAction");
 
@@ -47,8 +47,8 @@ public class SplitButtonAction extends ActionGroup implements CustomComponentAct
   }
 
   @Override
-  public boolean isUpdateInBackground() {
-    return UpdateInBackground.isUpdateInBackground(myActionGroup);
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return myActionGroup.getActionUpdateThread();
   }
 
   @Override

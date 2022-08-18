@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.NoAccessDuringPsiEvents;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.FilesScanExecutor;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
@@ -21,24 +22,25 @@ import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.impl.InputData;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 
+@ApiStatus.Internal
 public final class FileBasedIndexScanUtil {
 
   private static void ensureUpToDate(@NotNull ID<?, ?> indexId) {
@@ -49,14 +51,31 @@ public final class FileBasedIndexScanUtil {
     ((FileBasedIndexImpl)FileBasedIndex.getInstance()).getChangedFilesCollector().processFilesToUpdateInReadAction();
   }
 
+  public static <K, V> @Nullable Map<K, V> getIndexData(@NotNull ID<K, V> indexId,
+                                                        @Nullable Project project,
+                                                        @NotNull VirtualFile file) {
+    ensureUpToDate(indexId);
+    return getIndexer(indexId, project, true).apply(file);
+  }
+
+  public static <V, K> @Nullable Collection<VirtualFile> getContainingFiles(@NotNull ID<K, V> indexId, @NotNull K key, @NotNull GlobalSearchScope scope) {
+    CommonProcessors.CollectProcessor<VirtualFile> processor = new CommonProcessors.CollectProcessor<>(new HashSet<>());
+    Boolean result = processFilesContainingAnyKey(indexId, Set.of(key), scope, null, null, processor);
+    return result == null ? null : processor.getResults();
+  }
+
+  /**
+   * Basically this method implements processAllKeys() for the indexes that could be implemented without index -- usually by direct
+   * scan of apt subset of VFS
+   */
   static <K> @Nullable Boolean processAllKeys(@NotNull ID<K, ?> indexId,
                                               @NotNull Processor<? super K> processor,
                                               @NotNull GlobalSearchScope scope,
                                               @Nullable IdFilter idFilter) {
-    if (indexId == FilenameIndex.NAME && Registry.is("indexing.filename.over.vfs")) {
+    if (indexId == FilenameIndex.NAME && FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX) {
       ensureUpToDate(indexId);
       //noinspection unchecked
-      return FSRecords.processAllNames((Processor<String>)processor);
+      return FSRecords.processAllNames((Processor<CharSequence>)processor);
     }
     else if (indexId == FileTypeIndex.NAME && Registry.is("indexing.filetype.over.vfs")) {
       InThisThreadProcessor threadProcessor = new InThisThreadProcessor();
@@ -66,19 +85,24 @@ public final class FileBasedIndexScanUtil {
         return threadProcessor.process(() -> processor.process(fileType));
       }) && threadProcessor.processQueue();
     }
-    else if (indexId == TodoIndex.NAME && Registry.is("indexing.todo.over.vfs") ||
-             indexId == IdIndex.NAME && Registry.is("indexing.id.over.vfs")) {
-      Project project = scope.getProject();
-      InThisThreadProcessor threadProcessor = new InThisThreadProcessor();
-      Function<VirtualFile, ? extends Map<K, ?>> indexer = getIndexer(indexId, project, false);
-      return processFilesInScope(indexId, scope, false, idFilter, file -> {
-        Map<K, ?> map = indexer.apply(file);
-        if (map == null) return true;
-        Collection<K> keys = map.keySet();
-        return threadProcessor.process(() -> ContainerUtil.process(keys, processor));
-      }) && threadProcessor.processQueue();
+    else if (indexId == IdIndex.NAME && Registry.is("indexing.id.over.vfs")) {
+      return doProcessAllKeys(indexId, processor, scope, idFilter);
     }
     return null;
+  }
+
+  public static <K> boolean doProcessAllKeys(@NotNull ID<K, ?> indexId,
+                                             @NotNull Processor<? super K> processor,
+                                             @NotNull GlobalSearchScope scope,
+                                             @Nullable IdFilter idFilter) {
+    Project project = scope.getProject();
+    InThisThreadProcessor threadProcessor = new InThisThreadProcessor();
+    Function<VirtualFile, ? extends Map<K, ?>> indexer = getIndexer(indexId, project, false);
+    return processFilesInScope(indexId, scope, false, idFilter, file -> {
+      Map<K, ?> map = indexer.apply(file);
+      if (map == null) return true;
+      return threadProcessor.process(() -> ContainerUtil.process(map.keySet(), processor));
+    }) && threadProcessor.processQueue();
   }
 
   static <K, V> @Nullable Boolean processValuesInScope(@NotNull ID<K, V> indexId,
@@ -87,7 +111,7 @@ public final class FileBasedIndexScanUtil {
                                                        @NotNull GlobalSearchScope scope,
                                                        @Nullable IdFilter idFilter,
                                                        @NotNull FileBasedIndex.ValueProcessor<? super V> processor) {
-    if (indexId == FilenameIndex.NAME && Registry.is("indexing.filename.over.vfs")) {
+    if (indexId == FilenameIndex.NAME && FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX) {
       ensureUpToDate(indexId);
       IntOpenHashSet ids = new IntOpenHashSet();
       FSRecords.processFilesWithNames(Set.of((String)dataKey), id -> {
@@ -119,21 +143,29 @@ public final class FileBasedIndexScanUtil {
       }) && !(ensureValueProcessedOnce && stoppedByVal.get())) return false;
       return threadProcessor.processQueue();
     }
-    else if (indexId == TodoIndex.NAME && Registry.is("indexing.todo.over.vfs") ||
-             indexId == IdIndex.NAME && Registry.is("indexing.id.over.vfs")) {
-      Project project = scope.getProject();
-      InThisThreadProcessor threadProcessor = new InThisThreadProcessor();
-      ConcurrentHashMap<V, Boolean> visitedValues = ensureValueProcessedOnce ? new ConcurrentHashMap<>() : null;
-      Function<VirtualFile, ? extends Map<K, V>> indexer = getIndexer(indexId, project, false);
-      return processFilesInScope(indexId, scope, false, idFilter, file -> {
-        Map<K, V> map = indexer.apply(file);
-        V value = map == null ? null : map.get(dataKey);
-        if (value == null) return true;
-        if (ensureValueProcessedOnce && visitedValues.put(value, true) != null) return true;
-        return threadProcessor.process(() -> processor.process(file, value));
-      }) && threadProcessor.processQueue();
+    else if (indexId == IdIndex.NAME && Registry.is("indexing.id.over.vfs")) {
+      return doProcessValuesInScope(indexId, dataKey, ensureValueProcessedOnce, scope, idFilter, processor);
     }
     return null;
+  }
+
+  public static <K, V> boolean doProcessValuesInScope(@NotNull ID<K, V> indexId,
+                                                      @NotNull K dataKey,
+                                                      boolean ensureValueProcessedOnce,
+                                                      @NotNull GlobalSearchScope scope,
+                                                      @Nullable IdFilter idFilter,
+                                                      FileBasedIndex.@NotNull ValueProcessor<? super V> processor) {
+    Project project = scope.getProject();
+    InThisThreadProcessor threadProcessor = new InThisThreadProcessor();
+    ConcurrentHashMap<V, Boolean> visitedValues = ensureValueProcessedOnce ? new ConcurrentHashMap<>() : null;
+    Function<VirtualFile, ? extends Map<K, V>> indexer = getIndexer(indexId, project, false);
+    return processFilesInScope(indexId, scope, false, idFilter, file -> {
+      Map<K, V> map = indexer.apply(file);
+      V value = map == null ? null : map.get(dataKey);
+      if (value == null) return true;
+      if (ensureValueProcessedOnce && visitedValues.put(value, true) != null) return true;
+      return threadProcessor.process(() -> processor.process(file, value));
+    }) && threadProcessor.processQueue();
   }
 
   private static <K, V> @Nullable FileBasedIndexExtension<K, V> findIndexExtension(@NotNull ID<K, V> id) {
@@ -151,8 +183,7 @@ public final class FileBasedIndexScanUtil {
                                                                 @NotNull VirtualFile file,
                                                                 @NotNull GlobalSearchScope scope,
                                                                 @NotNull FileBasedIndex.ValueProcessor<? super V> processor) {
-    if (indexId == TodoIndex.NAME && Registry.is("indexing.todo.over.vfs") ||
-        indexId == IdIndex.NAME && Registry.is("indexing.id.over.vfs")) {
+    if (indexId == IdIndex.NAME && Registry.is("indexing.id.over.vfs")) {
       Map<K, V> map = getIndexer(indexId, scope.getProject(), false).apply(file);
       V value = map == null ? null : map.get(dataKey);
       if (value == null) return true;
@@ -166,8 +197,7 @@ public final class FileBasedIndexScanUtil {
                                                                        @NotNull GlobalSearchScope scope,
                                                                        @Nullable Condition<? super V> valueChecker,
                                                                        @NotNull Processor<? super VirtualFile> processor) {
-    if (indexId == TodoIndex.NAME && Registry.is("indexing.todo.over.vfs") ||
-        indexId == IdIndex.NAME && Registry.is("indexing.id.over.vfs")) {
+    if (indexId == IdIndex.NAME && Registry.is("indexing.id.over.vfs")) {
       Project project = scope.getProject();
       InThisThreadProcessor threadProcessor = new InThisThreadProcessor();
       Function<VirtualFile, ? extends Map<K, V>> indexer = getIndexer(indexId, project, false);
@@ -203,7 +233,7 @@ public final class FileBasedIndexScanUtil {
                                                             @Nullable IdFilter idFilter,
                                                             @Nullable Condition<? super V> valueChecker,
                                                             @NotNull Processor<? super VirtualFile> processor) {
-    if (indexId == FilenameIndex.NAME && Registry.is("indexing.filename.over.vfs")) {
+    if (indexId == FilenameIndex.NAME && FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX) {
       ensureUpToDate(indexId);
       IntOpenHashSet ids = new IntOpenHashSet();
       //noinspection unchecked
@@ -239,15 +269,38 @@ public final class FileBasedIndexScanUtil {
   private static @NotNull <K, V> Function<VirtualFile, ? extends Map<K, V>> getIndexer(@NotNull ID<K, V> indexId,
                                                                                        @Nullable Project project,
                                                                                        boolean binary) {
+    UpdatableIndex<K, V, FileContent, ?> index = ((FileBasedIndexEx)FileBasedIndex.getInstance()).getIndex(indexId);
     FileBasedIndexExtension<K, V> indexExtension = Objects.requireNonNull(findIndexExtension(indexId));
     FileBasedIndex.InputFilter inputFilter = indexExtension.getInputFilter();
     DataIndexer<K, V, FileContent> indexer = indexExtension.getIndexer();
+    FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
     return file -> {
-      if (FileBasedIndexEx.acceptsInput(inputFilter, new IndexedFileImpl(file, project))) {
+      IndexedFileImpl indexedFile = new IndexedFileImpl(file, project);
+      if (!FileBasedIndexEx.acceptsInput(inputFilter, indexedFile)) return null;
+      int fileId = FileBasedIndex.getFileId(file);
+      Document document = fileDocumentManager.getCachedDocument(file);
+      boolean unsavedDocument = document != null && fileDocumentManager.isDocumentUnsaved(document);
+      try {
+        if (!unsavedDocument && index.getIndexingStateForFile(fileId, indexedFile) == FileIndexingState.UP_TO_DATE) {
+          try {
+            return index.getIndexedFileData(fileId);
+          }
+          catch (StorageException e) {
+            throw new RuntimeException(e);
+          }
+        }
         FileContent content = getFileContent(file, project, binary);
-        return content == null ? null : indexer.map(content);
+        Map<K, V> map = content == null ? null : indexer.map(content);
+        if (unsavedDocument) return map;
+        InputData<K, V> inputData = map == null || map.isEmpty() ? InputData.empty() : new InputData<>(map) {};
+        Computable<Boolean> computable = index.prepareUpdate(fileId, inputData);
+        ProgressManager.getInstance().computeInNonCancelableSection(computable::compute);
+        IndexingStamp.setFileIndexedStateCurrent(fileId, indexId);
+        return map;
       }
-      return null;
+      finally {
+        IndexingStamp.flushCache(fileId);
+      }
     };
   }
 
@@ -265,6 +318,10 @@ public final class FileBasedIndexScanUtil {
       CharSequence s = document != null ? document.getCharsSequence() : LoadTextUtil.loadText(file, -1);
       return FileContentImpl.createByText(file, s, project);
     }
+  }
+
+  public static boolean isManuallyManaged(@NotNull ID<?, ?> id) {
+    return id == TodoIndex.NAME;
   }
 
   private static class InThisThreadProcessor {

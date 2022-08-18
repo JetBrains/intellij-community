@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19modules;
 
 import com.intellij.analysis.AnalysisScope;
@@ -6,19 +6,23 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UFile;
+import org.jetbrains.uast.UImportStatement;
+import org.jetbrains.uast.UastContextKt;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * @author Pavel.Dolgov
@@ -44,18 +48,34 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
           if (!requiredModules.isEmpty()) {
             List<CommonProblemDescriptor> descriptors = new ArrayList<>();
             for (RefJavaModule.RequiredModule requiredModule : requiredModules) {
+              if (requiredModule.isTransitive) continue;
               String requiredModuleName = requiredModule.moduleName;
 
-              if (PsiJavaModule.JAVA_BASE.equals(requiredModuleName) ||
+              boolean isJavaBase = PsiJavaModule.JAVA_BASE.equals(requiredModuleName);
+              if (isJavaBase ||
                   isDependencyUnused(requiredModule.packagesExportedByModule, moduleImportedPackages, refJavaModule.getName())) {
                 PsiRequiresStatement requiresStatement = ContainerUtil.find(
                   psiJavaModule.getRequires(), statement -> requiredModuleName.equals(statement.getModuleName()));
                 if (requiresStatement != null && !isSuppressedFor(requiresStatement)) {
+                  PsiJavaModule dependentModule = requiresStatement.resolve();
+                  DeleteRedundantRequiresStatementFix requiresStatementFix =
+                    new DeleteRedundantRequiresStatementFix(requiredModuleName, moduleImportedPackages, dependentModule, psiJavaModule);
+                  String message = JavaAnalysisBundle.message("inspection.redundant.requires.statement.description", requiredModuleName) + " ";
+                  if (isJavaBase) {
+                    message += JavaAnalysisBundle.message("inspection.redundant.requires.statement.message.java.base.implicitly.required");
+                  }
+                  else if (!requiresStatementFix.hasReexportedDependencies()) {
+                    message += JavaAnalysisBundle.message("inspection.redundant.requires.statement.message.module.unused");
+                  }
+                  else {
+                    message += JavaAnalysisBundle.message("inspection.redundant.requires.statement.message.transitive.dependencies.on.can.be.used.directly",
+                                                          StringUtil.join(requiresStatementFix.myDependencies, "', '"));
+                  }
                   CommonProblemDescriptor descriptor = manager.createProblemDescriptor(
                     requiresStatement,
-                    JavaAnalysisBundle.message("inspection.redundant.requires.statement.description", requiredModuleName),
-                    new DeleteRedundantRequiresStatementFix(requiredModuleName, moduleImportedPackages),
-                    ProblemHighlightType.LIKE_UNUSED_SYMBOL, false);
+                    message,
+                    requiresStatementFix,
+                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
                   descriptors.add(descriptor);
                 }
               }
@@ -93,11 +113,21 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
 
   private static class DeleteRedundantRequiresStatementFix implements LocalQuickFix {
     private final String myRequiredModuleName;
+    @SafeFieldForPreview
     private final Set<String> myImportedPackages;
+    @SafeFieldForPreview
+    private final Set<String> myDependencies;
 
-    DeleteRedundantRequiresStatementFix(String requiredModuleName, Set<String> importedPackages) {
+    DeleteRedundantRequiresStatementFix(String requiredModuleName, Set<String> importedPackages,
+                                        PsiJavaModule dependentModule,
+                                        PsiJavaModule currentModule) {
       myRequiredModuleName = requiredModuleName;
       myImportedPackages = importedPackages;
+      myDependencies = getReexportedDependencies(currentModule, dependentModule);
+    }
+    
+    boolean hasReexportedDependencies() {
+      return !myDependencies.isEmpty();
     }
 
     @Nls
@@ -124,6 +154,7 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
       statementToDelete.delete();
     }
 
+    @NotNull
     private Set<String> getReexportedDependencies(@NotNull PsiJavaModule currentModule, @NotNull PsiJavaModule dependencyModule) {
       Set<String> directDependencies = StreamEx
         .of(currentModule.getRequires().iterator())
@@ -158,21 +189,10 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
       PsiElement parent = statementToDelete.getParent();
       if (parent instanceof PsiJavaModule) {
         PsiJavaModule currentModule = (PsiJavaModule)parent;
-        Optional.of(statementToDelete)
-          .map(PsiRequiresStatement::resolve)
-          .map(dependencyModule -> getReexportedDependencies(currentModule, dependencyModule))
-          .ifPresent(reexportedDependencies -> addReexportedDependencies(reexportedDependencies, currentModule, statementToDelete));
-      }
-    }
-
-    private static void addReexportedDependencies(@NotNull Set<String> reexportedDependencies,
-                                                  @NotNull PsiJavaModule currentModule,
-                                                  @NotNull PsiElement addingPlace) {
-      if (!reexportedDependencies.isEmpty()) {
         PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(currentModule.getProject()).getParserFacade();
-        for (String dependencyName : reexportedDependencies) {
+        for (String dependencyName : myDependencies) {
           PsiStatement requiresStatement = parserFacade.createModuleStatementFromText(PsiKeyword.REQUIRES + ' ' + dependencyName, null);
-          currentModule.addAfter(requiresStatement, addingPlace);
+          currentModule.addAfter(requiresStatement, statementToDelete);
         }
       }
     }
@@ -186,52 +206,49 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
       if (refElement instanceof RefFile) {
         RefFile refFile = (RefFile)refElement;
         PsiFile file = refFile.getPsiElement();
-        if (file instanceof PsiJavaFile) {
-          onJavaFileReferencesBuilt(refFile, (PsiJavaFile)file);
+        UFile uFile = UastContextKt.toUElement(file, UFile.class);
+        if (uFile != null) {
+          onJavaFileReferencesBuilt(refFile, uFile);
         }
       }
     }
 
-    private static void onJavaFileReferencesBuilt(@NotNull RefFile refFile, @NotNull PsiJavaFile file) {
-      if (file.getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_9)) {
-        PsiImportList importList = file.getImportList();
-        if (importList != null) {
-          RefModule refModule = refFile.getModule();
-          if (refModule != null) {
-            Set<String> packageNames = getImportedPackages(refModule, refFile);
-            if (packageNames != DONT_COLLECT_PACKAGES) {
-              for (PsiImportStatementBase statement : importList.getAllImportStatements()) {
-                String packageName = getPackageName(statement);
-                if (!StringUtil.isEmpty(packageName)) {
-                  packageNames.add(packageName);
-                }
-              }
-            }
-          }
+    private static void onJavaFileReferencesBuilt(@NotNull RefFile refFile, UFile file) {
+      RefModule refModule = refFile.getModule();
+      if (refModule != null && LanguageLevelUtil.getEffectiveLanguageLevel(refModule.getModule()).isAtLeast(LanguageLevel.JDK_1_9)) {
+        Set<String> packageNames = getImportedPackages(refModule);
+        if (packageNames != DONT_COLLECT_PACKAGES) {
+          Stream.concat(file.getImports().stream().map(st -> getPackageName(st)), 
+                        file.getImplicitImports().stream())
+            .filter(p -> !StringUtil.isEmpty(p))
+            .forEach(packageNames::add);
         }
       }
     }
 
-    private static @Nullable String getPackageName(@NotNull PsiImportStatementBase statement) {
+    private static @Nullable String getPackageName(UImportStatement statement) {
       PsiElement resolved = statement.resolve();
       if (resolved instanceof PsiPackage) {
         return ((PsiPackage)resolved).getQualifiedName();
       }
-      else if (resolved instanceof PsiMember) {
-        PsiJavaFile parentFile = PsiTreeUtil.getParentOfType(resolved, PsiJavaFile.class);
-        if (parentFile != null) {
-          return parentFile.getPackageName();
+      else if (resolved != null) {
+        UFile uFile = UastContextKt.getUastParentOfType(resolved, UFile.class);
+        if (uFile != null) {
+          return uFile.getPackageName();
         }
       }
       return null;
     }
 
-    private static @NotNull Set<String> getImportedPackages(@NotNull RefModule refModule, @NotNull RefFile refFile) {
+    private static @NotNull Set<String> getImportedPackages(@NotNull RefModule refModule) {
       //noinspection SynchronizationOnLocalVariableOrMethodParameter
       synchronized (refModule) {
         Set<String> importedPackages = refModule.getUserData(IMPORTED_JAVA_PACKAGES);
         if (importedPackages == null) {
-          PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(refFile.getPsiElement());
+          PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByModule(refModule.getModule(), false);
+          if (javaModule == null) {
+            javaModule = JavaModuleGraphUtil.findDescriptorByModule(refModule.getModule(), true);
+          }
           importedPackages = javaModule != null ? ContainerUtil.newConcurrentSet() : DONT_COLLECT_PACKAGES;
           refModule.putUserData(IMPORTED_JAVA_PACKAGES, importedPackages);
         }

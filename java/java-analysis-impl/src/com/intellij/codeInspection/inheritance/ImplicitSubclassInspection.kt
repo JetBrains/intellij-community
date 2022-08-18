@@ -1,23 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.inheritance
 
 import com.intellij.CommonBundle
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeInspection.*
 import com.intellij.java.analysis.JavaAnalysisBundle
 import com.intellij.lang.jvm.JvmClass
@@ -42,8 +30,7 @@ import org.jetbrains.uast.toUElementOfType
 
 class ImplicitSubclassInspection : LocalInspectionTool() {
 
-  private fun checkClass(aClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
-
+  private fun checkClass(aClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor> {
     val psiClass = aClass.javaPsi
     val classIsFinal = aClass.isFinal || psiClass.hasModifierProperty(PsiModifier.PRIVATE)
 
@@ -162,6 +149,19 @@ class ImplicitSubclassInspection : LocalInspectionTool() {
       }
     }
 
+    override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
+      val file = previewDescriptor.startElement.containingFile ?: return IntentionPreviewInfo.EMPTY
+      val editor = IntentionPreviewUtils.getPreviewEditor() ?: return IntentionPreviewInfo.EMPTY
+      for (intentionAction in actionsToPerform) {
+        if (intentionAction.isAvailable(project, null, file)) {
+          if (intentionAction.generatePreview(project, editor, file) != IntentionPreviewInfo.DIFF) {
+            return IntentionPreviewInfo.EMPTY
+          }
+        }
+      }
+      return IntentionPreviewInfo.DIFF
+    }
+
     private fun collectMakeExtendable(declaration: UDeclaration,
                                       actionsList: SmartList<IntentionAction>,
                                       checkParent: Boolean = true) {
@@ -220,7 +220,7 @@ class ImplicitSubclassInspection : LocalInspectionTool() {
     override fun visitElement(element: PsiElement) {
       super.visitElement(element)
       val uClass = element.toUElementOfType<UClass>() ?: return
-      val problems = checkClass(uClass, holder.manager, isOnTheFly) ?: return
+      val problems = checkClass(uClass, holder.manager, isOnTheFly)
       for (problem in problems) {
         holder.registerProblem(problem)
       }

@@ -1,12 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.lang.java.parser.ExpressionParser;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -15,13 +16,11 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
-
 /**
  * @author Bas Leijdekkers
  */
-public final class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
-  private static final Set<IElementType> binaryPromotionOperators = Set.of(
+public final class UnnecessaryExplicitNumericCastInspection extends BaseInspection implements CleanupLocalInspectionTool {
+  private static final TokenSet binaryPromotionOperators = TokenSet.create(
     JavaTokenType.ASTERISK,
     JavaTokenType.DIV,
     JavaTokenType.PERC,
@@ -92,7 +91,7 @@ public final class UnnecessaryExplicitNumericCastInspection extends BaseInspecti
   private static class UnnecessaryExplicitNumericCastVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitTypeCastExpression(PsiTypeCastExpression expression) {
+    public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
       super.visitTypeCastExpression(expression);
       if (!isUnnecessaryPrimitiveNumericCast(expression)) {
         // equal types is caught by "Redundant type cast" inspection
@@ -100,7 +99,7 @@ public final class UnnecessaryExplicitNumericCastInspection extends BaseInspecti
       }
       final PsiTypeElement typeElement = expression.getCastType();
       if (typeElement != null) {
-        registerError(typeElement, ProblemHighlightType.LIKE_UNUSED_SYMBOL, expression.getOperand());
+        registerError(typeElement, expression.getOperand());
       }
     }
   }

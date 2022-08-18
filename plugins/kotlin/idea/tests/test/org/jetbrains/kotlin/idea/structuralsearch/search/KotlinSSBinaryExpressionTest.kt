@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.structuralsearch.search
 
-import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSResourceInspectionTest
+import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
-class KotlinSSBinaryExpressionTest : KotlinSSResourceInspectionTest() {
+class KotlinSSBinaryExpressionTest : KotlinStructuralSearchTest() {
     override fun getBasePath(): String = "binaryExpression"
 
     fun testNestedBinaryExpression() { doTest("1 + 2 - 3", """

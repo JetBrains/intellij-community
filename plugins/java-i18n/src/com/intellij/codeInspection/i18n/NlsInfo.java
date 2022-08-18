@@ -306,7 +306,7 @@ public abstract class NlsInfo implements RestrictionInfo {
     return fromAnnotationInfo(annotation.getQualifiedName(), () -> annotation.findAttributeValue("capitalization"));
   }
 
-  private static @NotNull NlsInfo fromAnnotationInfo(String qualifiedName, Supplier<UExpression> capitalization) {
+  private static @NotNull NlsInfo fromAnnotationInfo(String qualifiedName, Supplier<? extends UExpression> capitalization) {
     if (qualifiedName == null) return NlsUnspecified.UNKNOWN;
     if (qualifiedName.equals(AnnotationUtil.NON_NLS) ||
         qualifiedName.equals(AnnotationUtil.PROPERTY_KEY)) {

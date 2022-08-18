@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -11,7 +12,6 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -21,7 +21,19 @@ import java.util.HashMap;
 /**
  * @author Konstantin Bulenkov
  */
-public class ShowNonRetinaImagesActions extends DumbAwareAction {
+final class ShowNonRetinaImagesActions extends DumbAwareAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null);
+  }
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
@@ -67,9 +79,8 @@ public class ShowNonRetinaImagesActions extends DumbAwareAction {
         init();
       }
 
-      @Nullable
       @Override
-      protected JComponent createCenterPanel() {
+      protected @NotNull JComponent createCenterPanel() {
         return new JBScrollPane(new JTextArea(StringUtil.join(retinaMissed, "\n")));
       }
     }.show();

@@ -1,6 +1,7 @@
 package com.intellij.ide.actions
 
 import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -45,7 +46,9 @@ class ToggleZenModeAction : DumbAwareAction() {
           else ActionsBundle.message("action.ToggleZenMode.enter")
     }
 
-    override fun actionPerformed(e: AnActionEvent) {
+  override fun getActionUpdateThread()  = ActionUpdateThread.BGT
+
+  override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         applyZenMode(e, !isZenModeEnabled(project))
     }

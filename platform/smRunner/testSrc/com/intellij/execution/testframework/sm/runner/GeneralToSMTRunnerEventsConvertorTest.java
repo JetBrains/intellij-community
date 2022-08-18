@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -94,13 +94,18 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
 
   @Override
   protected void tearDown() throws Exception {
-    Disposer.dispose(myEventsProcessor);
-    Disposer.dispose(myConsole);
-
-    super.tearDown();
-
-    if (myTempFile != null) {
-      assertFalse(myTempFile.exists());
+    try {
+      Disposer.dispose(myEventsProcessor);
+      Disposer.dispose(myConsole);
+      if (myTempFile != null) {
+        assertFalse(myTempFile.exists());
+      }
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
     }
   }
 

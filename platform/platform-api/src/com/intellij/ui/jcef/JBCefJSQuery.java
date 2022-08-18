@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -46,8 +46,8 @@ public final class JBCefJSQuery implements JBCefDisposable {
   /**
    * Creates a unique JS query.
    *
+   * @param browser the associated CEF browser
    * @see JBCefClient.Properties#JS_QUERY_POOL_SIZE
-   * @param browser the associated cef browser
    */
   @NotNull
   public static JBCefJSQuery create(@NotNull JBCefBrowserBase browser) {
@@ -78,9 +78,9 @@ public final class JBCefJSQuery implements JBCefDisposable {
   }
 
   /**
-   * Returns the query callback to inject into JS code
+   * Returns the query callback to inject into JS code.
    *
-   * @param queryResult the result (JS variable name, or JS value in single quotes) that will be passed to the java handler {@link #addHandler(Function)}
+   * @param queryResult the result (JS variable name, or JS value in single quotes) that will be passed to the Java handler {@link #addHandler(Function)}
    */
   @NotNull
   public String inject(@Nullable String queryResult) {
@@ -88,11 +88,11 @@ public final class JBCefJSQuery implements JBCefDisposable {
   }
 
   /**
-   * Returns the query callback to inject into JS code
+   * Returns the query callback to inject into JS code.
    *
-   * @param queryResult the result (JS variable name, or JS value in single quotes) that will be passed to the java handler {@link #addHandler(Function)}
-   * @param onSuccessCallback JS callback in format: function(response) {}
-   * @param onFailureCallback JS callback in format: function(error_code, error_message) {}
+   * @param queryResult the result (JS variable name, or JS value in single quotes) that will be passed to the Java handler {@link #addHandler(Function)}
+   * @param onSuccessCallback JS callback in format: {@code function(response) {}}
+   * @param onFailureCallback JS callback in format: {@code function(error_code, error_message) {}}
    */
   @NotNull
   public String inject(@Nullable String queryResult, @NotNull String onSuccessCallback, @NotNull String onFailureCallback) {

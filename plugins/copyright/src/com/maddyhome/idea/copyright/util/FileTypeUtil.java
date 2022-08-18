@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.maddyhome.idea.copyright.util;
 
@@ -183,7 +183,8 @@ public class FileTypeUtil implements Disposable {
       }
     }
 
-    return preview.substring(0, preview.length() - 1);
+    return preview.length() > 0 ? preview.substring(0, preview.length() - 1) 
+                                : preview.toString();
   }
 
   public static boolean isSupportedFile(@NotNull VirtualFile file) {

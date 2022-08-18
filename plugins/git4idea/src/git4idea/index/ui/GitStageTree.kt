@@ -76,7 +76,7 @@ abstract class GitStageTree(project: Project,
       val hoverIcon = createHoverIcon(node)
       if (hoverIcon != null) return hoverIcon
     }
-    val statusNode = VcsTreeModelData.children(node).userObjectsStream(GitFileStatusNode::class.java).findFirst().orElse(null)
+    val statusNode = VcsTreeModelData.children(node).iterateUserObjects(GitFileStatusNode::class.java).first()
                      ?: return null
     val operation = operations.find { it.matches(statusNode) } ?: return null
     if (operation.icon == null) return null
@@ -120,14 +120,14 @@ abstract class GitStageTree(project: Project,
   }
 
   fun selectedStatusNodes(): JBIterable<GitFileStatusNode> {
-    val data = VcsTreeModelData.selected(this)
-    return JBIterable.create { data.userObjectsStream(GitFileStatusNode::class.java).iterator() }
+    return VcsTreeModelData.selected(this).iterateUserObjects(GitFileStatusNode::class.java)
   }
 
   fun statusNodesListSelection(preferLimitedContext: Boolean): ListSelection<GitFileStatusNode> {
     val entries = VcsTreeModelData.selected(this).userObjects(GitFileStatusNode::class.java)
     if (entries.size > 1) {
       return ListSelection.createAt(entries, 0)
+        .asExplicitSelection()
     }
 
     val selected = entries.singleOrNull()
@@ -148,6 +148,7 @@ abstract class GitStageTree(project: Project,
     val allEntries = allEntriesData.userObjects(GitFileStatusNode::class.java)
     return if (allEntries.size <= entries.size) {
       ListSelection.createAt(entries, 0)
+        .asExplicitSelection()
     }
     else {
       ListSelection.create(allEntries, selected)

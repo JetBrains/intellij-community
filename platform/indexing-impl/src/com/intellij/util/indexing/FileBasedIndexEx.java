@@ -22,6 +22,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.search.EverythingGlobalScope;
@@ -40,7 +41,9 @@ import com.intellij.util.indexing.roots.IndexableFilesContributor;
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.snapshot.SnapshotInputMappingException;
+import com.intellij.util.io.MeasurableIndexStore;
 import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.objects.ObjectIterators;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,6 +53,9 @@ import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.function.IntPredicate;
 import java.util.stream.Collectors;
+
+import static com.intellij.util.indexing.diagnostic.IndexOperationFusCollector.*;
+import static com.intellij.util.io.MeasurableIndexStore.keysCountApproximatelyIfPossible;
 
 @ApiStatus.Internal
 public abstract class FileBasedIndexEx extends FileBasedIndex {
@@ -118,33 +124,22 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   @Override
   @NotNull
   public <K, V> List<V> getValues(@NotNull final ID<K, V> indexId, @NotNull K dataKey, @NotNull final GlobalSearchScope filter) {
-    VirtualFile restrictToFile = getTheOnlyFileInScope(filter);
+    @Nullable Iterator<VirtualFile> restrictToFileIt = extractSingleFileOrEmpty(filter);
 
     final List<V> values = new SmartList<>();
     ValueProcessor<V> processor = (file, value) -> {
       values.add(value);
       return true;
     };
-    if (restrictToFile != null) {
+    if (restrictToFileIt != null) {
+      VirtualFile restrictToFile = restrictToFileIt.hasNext() ? restrictToFileIt.next() : null;
+      if (restrictToFile == null) return Collections.emptyList();
       processValuesInOneFile(indexId, dataKey, restrictToFile, filter, processor);
     }
     else {
       processValuesInScope(indexId, dataKey, true, filter, null, processor);
     }
     return values;
-  }
-
-  private static @Nullable VirtualFile getTheOnlyFileInScope(@NotNull GlobalSearchScope filter) {
-    VirtualFileEnumeration files = VirtualFileEnumeration.extract(filter);
-    if (files == null) return null;
-    Iterator<VirtualFile> iterator = files.asIterable().iterator();
-    if (iterator.hasNext()) {
-      VirtualFile first = iterator.next();
-      if (!iterator.hasNext()) {
-        return first;
-      }
-    }
-    return null;
   }
 
   @Override
@@ -166,19 +161,31 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                     @NotNull Processor<? super K> processor,
                                     @NotNull GlobalSearchScope scope,
                                     @Nullable IdFilter idFilter) {
-    try {
+    var trace = lookupAllKeysStarted(indexId)
+      .withProject(scope.getProject());
+    try (trace) {
       waitUntilIndicesAreInitialized();
       UpdatableIndex<K, ?, FileContent, ?> index = getIndex(indexId);
       if (!ensureUpToDate(indexId, scope.getProject(), scope, null)) {
         return true;
       }
+
+      trace.indexValidationFinished();
+
       IdFilter idFilterAdjusted = idFilter == null ? extractIdFilter(scope, scope.getProject()) : idFilter;
-      return myAccessValidator.validate(indexId, () -> index.processAllKeys(processor, scope, idFilterAdjusted));
+      Boolean validated = myAccessValidator.validate(indexId, () -> {
+        trace.totalKeysIndexed(keysCountApproximatelyIfPossible(index));
+        return index.processAllKeys(processor, scope, idFilterAdjusted);
+      });
+
+      return validated;
     }
     catch (StorageException e) {
+      trace.lookupFailed();
       scheduleRebuild(indexId, e);
     }
     catch (RuntimeException e) {
+      trace.lookupFailed();
       final Throwable cause = e.getCause();
       if (cause instanceof StorageException || cause instanceof IOException) {
         scheduleRebuild(indexId, cause);
@@ -234,31 +241,42 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   }
 
   @Override
-  public @NotNull <K, V> Iterator<VirtualFile> getContainingFilesIterator(@NotNull ID<K, V> indexId, @NotNull K dataKey, @NotNull GlobalSearchScope scope) {
+  public @NotNull <K, V> Iterator<VirtualFile> getContainingFilesIterator(@NotNull ID<K, V> indexId,
+                                                                          @NotNull K dataKey,
+                                                                          @NotNull GlobalSearchScope scope) {
     Project project = scope.getProject();
-    if (project instanceof LightEditCompatible) return Collections.emptyIterator();
-    VirtualFile restrictToFile = getTheOnlyFileInScope(scope);
-    if (restrictToFile != null) {
-      return !processValuesInOneFile(indexId, dataKey, restrictToFile, scope, (f, v) -> false) ?
-             Collections.singleton(restrictToFile).iterator() : Collections.emptyIterator();
-    }
+    try (var trace = lookupEntriesStarted(indexId)) {
+      trace.keysWithAND(1)
+        .withProject(project);
 
-    IdFilter filter = extractIdFilter(scope, project);
-    IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(project);
+      if (project instanceof LightEditCompatible) return Collections.emptyIterator();
+      @Nullable Iterator<VirtualFile> restrictToFileIt = extractSingleFileOrEmpty(scope);
+      if (restrictToFileIt != null) {
+        VirtualFile restrictToFile = restrictToFileIt.hasNext() ? restrictToFileIt.next() : null;
+        if (restrictToFile == null) return Collections.emptyIterator();
+        return !processValuesInOneFile(indexId, dataKey, restrictToFile, scope, (f, v) -> false) ?
+               Collections.singleton(restrictToFile).iterator() : Collections.emptyIterator();
+      }
 
-    IntSet fileIds = processExceptions(indexId, null, scope, index -> {
-      IntSet fileIdsInner = new IntOpenHashSet();
-      index.getData(dataKey).forEach((id, value) -> {
-        if (!accessibleFileFilter.test(id) || (filter != null && !filter.containsFileId(id))) return  true;
-        fileIdsInner.add(id);
-        return true;
+      IdFilter filter = extractIdFilter(scope, project);
+      IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(project);
+
+      IntSet fileIds = processExceptions(indexId, null, scope, index -> {
+        IntSet fileIdsInner = new IntOpenHashSet();
+        trace.totalKeysIndexed(keysCountApproximatelyIfPossible(index));
+        index.getData(dataKey).forEach((id, value) -> {
+          if (!accessibleFileFilter.test(id) || (filter != null && !filter.containsFileId(id))) return true;
+          fileIdsInner.add(id);
+          return true;
+        });
+        return fileIdsInner;
       });
-      return fileIdsInner;
-    });
 
-    return createLazyFileIterator(fileIds, scope);
+      trace.lookupResultSize(fileIds != null ? fileIds.size() : 0);
+
+      return createLazyFileIterator(fileIds, scope);
+    }
   }
-
 
   @Override
   public <K, V> boolean processValues(@NotNull final ID<K, V> indexId, @NotNull final K dataKey, @Nullable final VirtualFile inFile,
@@ -299,11 +317,18 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       if (!ensureUpToDate(indexId, project, filter, restrictToFile)) {
         return null;
       }
+      TRACE_OF_ENTRIES_LOOKUP.get()
+        .indexValidationFinished();
 
-      return myAccessValidator.validate(indexId,
-                                        () -> ConcurrencyUtil.withLock(index.getLock().readLock(), () -> computable.convert(index)));
+      final R validated = myAccessValidator.validate(
+        indexId,
+        () -> ConcurrencyUtil.withLock(index.getLock().readLock(), () -> computable.convert(index))
+      );
+
+      return validated;
     }
     catch (StorageException e) {
+      TRACE_OF_ENTRIES_LOOKUP.get().lookupFailed();
       scheduleRebuild(indexId, e);
     }
     catch (RuntimeException e) {
@@ -401,10 +426,18 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                               @Nullable VirtualFile restrictToFile,
                                               @NotNull GlobalSearchScope scope,
                                               @NotNull Processor<? super InvertedIndexValueIterator<V>> valueProcessor) {
-    final Boolean result = processExceptions(indexId, restrictToFile, scope,
-                                             index -> valueProcessor.process(
-                                               (InvertedIndexValueIterator<V>)index.getData(dataKey).getValueIterator()));
-    return result == null || result.booleanValue();
+    try (var trace = lookupEntriesStarted(indexId)) {
+      trace.keysWithAND(1)
+        .withProject(scope.getProject());
+      //TODO RC: .scopeFiles( restrictToFile == null ? -1 : 1 )
+      final ThrowableConvertor<UpdatableIndex<K, V, FileContent, ?>, Boolean, StorageException> convertor = index -> {
+        trace.totalKeysIndexed(keysCountApproximatelyIfPossible(index));
+        var valuesIterator = (InvertedIndexValueIterator<V>)index.getData(dataKey).getValueIterator();
+        return valueProcessor.process(valuesIterator);
+      };
+      final Boolean result = processExceptions(indexId, restrictToFile, scope, convertor);
+      return result == null || result.booleanValue();
+    }
   }
 
   @Override
@@ -436,15 +469,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                                                IdFilter filesSet) {
     IntSet set = null;
     if (filter instanceof GlobalSearchScope.FilesScope) {
-      set = new IntOpenHashSet();
       VirtualFileEnumeration hint = VirtualFileEnumeration.extract(filter);
-      if (hint != null) {
-        for (VirtualFile file : hint.asIterable()) {
-          if (file instanceof VirtualFileWithId) {
-            set.add(((VirtualFileWithId)file).getId());
-          }
-        }
-      }
+      set = hint != null ? new IntOpenHashSet(hint.asArray()) : IntSet.of();
     }
 
     //noinspection rawtypes
@@ -549,7 +575,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       .collect(Collectors.toList());
     if (!allowedIteratorPatterns.isEmpty()) {
       providers = ContainerUtil.filter(providers, p -> {
-        return allowedIteratorPatterns.stream().anyMatch(pattern -> p.getDebugName().contains(pattern));
+        return ContainerUtil.exists(allowedIteratorPatterns, pattern -> p.getDebugName().contains(pattern));
       });
     }
     return providers;
@@ -558,47 +584,62 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   @Nullable
   private <K, V> IntSet collectFileIdsContainingAllKeys(@NotNull ID<K, V> indexId,
                                                         @NotNull Collection<? extends K> dataKeys,
-                                                        @NotNull GlobalSearchScope filter,
+                                                        @NotNull GlobalSearchScope scope,
                                                         @Nullable Condition<? super V> valueChecker,
                                                         @Nullable IdFilter projectFilesFilter,
                                                         @Nullable IntSet restrictedIds) {
-    IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(filter.getProject());
-    IntPredicate idChecker = id -> (projectFilesFilter == null || projectFilesFilter.containsFileId(id)) &&
-                                   accessibleFileFilter.test(id) &&
-                                   (restrictedIds == null || restrictedIds.contains(id));
-    ThrowableConvertor<UpdatableIndex<K, V, FileContent, ?>, IntSet, StorageException> convertor = index -> {
-      IndexDebugProperties.DEBUG_INDEX_ID.set(indexId);
-      try {
-        return InvertedIndexUtil.collectInputIdsContainingAllKeys(index, dataKeys, valueChecker, idChecker);
-      }
-      finally {
-        IndexDebugProperties.DEBUG_INDEX_ID.remove();
-      }
-    };
+    try (var trace = lookupEntriesStarted(indexId)) {
+      trace.keysWithAND(dataKeys.size())
+        .withProject(scope.getProject());
 
-    return processExceptions(indexId, null, filter, convertor);
+      IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(scope.getProject());
+      IntPredicate idChecker = id -> (projectFilesFilter == null || projectFilesFilter.containsFileId(id)) &&
+                                     accessibleFileFilter.test(id) &&
+                                     (restrictedIds == null || restrictedIds.contains(id));
+      ThrowableConvertor<UpdatableIndex<K, V, FileContent, ?>, IntSet, StorageException> convertor = index -> {
+        trace.totalKeysIndexed(keysCountApproximatelyIfPossible(index));
+        IndexDebugProperties.DEBUG_INDEX_ID.set(indexId);
+        try {
+          return InvertedIndexUtil.collectInputIdsContainingAllKeys(index, dataKeys, valueChecker, idChecker);
+        }
+        finally {
+          IndexDebugProperties.DEBUG_INDEX_ID.remove();
+        }
+      };
+
+      final IntSet ids = processExceptions(indexId, null, scope, convertor);
+
+      trace.lookupResultSize(ids != null ? ids.size() : 0);
+      return ids;
+    }
   }
 
   @Nullable
   private <K, V> IntSet collectFileIdsContainingAnyKey(@NotNull ID<K, V> indexId,
-                                                        @NotNull Collection<? extends K> dataKeys,
-                                                        @NotNull GlobalSearchScope filter,
-                                                        @Nullable Condition<? super V> valueChecker,
-                                                        @Nullable IdFilter projectFilesFilter) {
-    IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(filter.getProject());
-    IntPredicate idChecker = id -> (projectFilesFilter == null || projectFilesFilter.containsFileId(id)) &&
-                                   accessibleFileFilter.test(id);
-    ThrowableConvertor<UpdatableIndex<K, V, FileContent, ?>, IntSet, StorageException> convertor = index -> {
-      IndexDebugProperties.DEBUG_INDEX_ID.set(indexId);
-      try {
-        return InvertedIndexUtil.collectInputIdsContainingAnyKey(index, dataKeys, valueChecker, idChecker);
-      }
-      finally {
-        IndexDebugProperties.DEBUG_INDEX_ID.remove();
-      }
-    };
+                                                       @NotNull Collection<? extends K> dataKeys,
+                                                       @NotNull GlobalSearchScope filter,
+                                                       @Nullable Condition<? super V> valueChecker,
+                                                       @Nullable IdFilter projectFilesFilter) {
+    try (var trace = lookupEntriesStarted(indexId)) {
+      trace.keysWithOR(dataKeys.size());
+      IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(filter.getProject());
+      IntPredicate idChecker = id -> (projectFilesFilter == null || projectFilesFilter.containsFileId(id)) &&
+                                     accessibleFileFilter.test(id);
+      ThrowableConvertor<UpdatableIndex<K, V, FileContent, ?>, IntSet, StorageException> convertor = index -> {
+        trace.totalKeysIndexed(keysCountApproximatelyIfPossible(index));
+        IndexDebugProperties.DEBUG_INDEX_ID.set(indexId);
+        try {
+          return InvertedIndexUtil.collectInputIdsContainingAnyKey(index, dataKeys, valueChecker, idChecker);
+        }
+        finally {
+          IndexDebugProperties.DEBUG_INDEX_ID.remove();
+        }
+      };
 
-    return processExceptions(indexId, null, filter, convertor);
+      final IntSet ids = processExceptions(indexId, null, filter, convertor);
+      trace.lookupResultSize(ids != null ? ids.size() : 0);
+      return ids;
+    }
   }
 
   private boolean processVirtualFiles(@NotNull IntCollection ids,
@@ -716,7 +757,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   @Nullable
   public static Throwable getCauseToRebuildIndex(@NotNull RuntimeException e) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      // avoid rebuilding index in tests since we do it synchronously in requestRebuild and we can have readAction at hand
+      // avoid rebuilding index in tests since we do it synchronously in requestRebuild, and we can have readAction at hand
       return null;
     }
     if (e instanceof ProcessCanceledException) {
@@ -764,7 +805,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   }
 
   @NotNull
-  public static InputFilter composeInputFilter(@NotNull InputFilter filter, @NotNull BiPredicate<? super VirtualFile, ? super Project> condition) {
+  public static InputFilter composeInputFilter(@NotNull InputFilter filter,
+                                               @NotNull BiPredicate<? super VirtualFile, ? super Project> condition) {
     return new ProjectSpecificInputFilter() {
       @Override
       public boolean acceptInput(@NotNull IndexedFile file) {
@@ -781,7 +823,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   }
 
   @ApiStatus.Internal
-  public static <T,E extends Throwable> T disableUpToDateCheckIn(@NotNull ThrowableComputable<T, E> runnable) throws E {
+  public static <T, E extends Throwable> T disableUpToDateCheckIn(@NotNull ThrowableComputable<T, E> runnable) throws E {
     return IndexUpToDateCheckIn.disableUpToDateCheckIn(runnable);
   }
 
@@ -798,7 +840,56 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   @ApiStatus.Internal
   @NotNull
   public static Iterator<VirtualFile> createLazyFileIterator(@Nullable IntSet result, @NotNull GlobalSearchScope scope) {
-    Set<VirtualFile> fileSet = new CompactVirtualFileSet(result == null ? ArrayUtil.EMPTY_INT_ARRAY : result.toIntArray()).freezed();
+    Set<VirtualFile> fileSet = new CompactVirtualFileSet(result == null ? IntSets.emptySet() : result).freezed();
     return fileSet.stream().filter(scope::contains).iterator();
+  }
+
+  @ApiStatus.Internal
+  @SuppressWarnings("unchecked")
+  public static @Nullable Iterator<VirtualFile> extractSingleFileOrEmpty(@Nullable GlobalSearchScope scope) {
+    if (scope == null) return null;
+
+    VirtualFileEnumeration enumeration = VirtualFileEnumeration.extract(scope);
+    Iterable<VirtualFile> scopeAsFileIterable = enumeration != null ? enumeration.getFilesIfCollection() :
+                                                scope instanceof Iterable<?> ? (Iterable<VirtualFile>)scope :
+                                                null;
+    if (scopeAsFileIterable == null) return null;
+
+    VirtualFile result = null;
+    boolean isFirst = true;
+
+    for (VirtualFile file : scopeAsFileIterable) {
+      if (!isFirst) return null;
+      result = file;
+      isFirst = false;
+    }
+
+    return isFirst ? ObjectIterators.emptyIterator() :
+           result instanceof VirtualFileWithId ? ObjectIterators.singleton(result) :
+           null;
+  }
+
+  public static @NotNull Iterable<VirtualFile> toFileIterable(int @NotNull [] fileIds) {
+    if (fileIds.length == 0) return Collections.emptyList();
+    return () -> new Iterator<VirtualFile>() {
+      int myId;
+      VirtualFile myNext;
+
+      @Override
+      public boolean hasNext() {
+        while (myNext == null && myId < fileIds.length) {
+          myNext = VirtualFileManager.getInstance().findFileById(fileIds[myId++]);
+        }
+        return myNext != null;
+      }
+
+      @Override
+      public VirtualFile next() {
+        if (!hasNext()) throw new NoSuchElementException();
+        VirtualFile next = myNext;
+        myNext = null;
+        return next;
+      }
+    };
   }
 }

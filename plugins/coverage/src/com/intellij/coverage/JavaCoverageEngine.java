@@ -17,7 +17,7 @@ import com.intellij.execution.target.RunTargetsEnabled;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentConfigurations;
 import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.execution.wsl.WslDistributionManager;
+import com.intellij.execution.wsl.WslPath;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.java.coverage.JavaCoverageBundle;
@@ -53,11 +53,13 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.rt.coverage.data.JumpData;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.SwitchData;
+import com.intellij.task.ProjectTaskManager;
 import com.intellij.testIntegration.TestFramework;
 import jetbrains.coverage.report.ReportGenerationFailedException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.io.DataInputStream;
@@ -107,7 +109,7 @@ public class JavaCoverageEngine extends CoverageEngine {
       return false;
     }
     String projectSdkHomePath = projectSdk.getHomePath();
-    return projectSdkHomePath != null && WslDistributionManager.isWslPath(projectSdkHomePath);
+    return projectSdkHomePath != null && WslPath.isWslUncPath(projectSdkHomePath);
   }
 
   @Override
@@ -326,14 +328,22 @@ public class JavaCoverageEngine extends CoverageEngine {
   @Override
   public boolean recompileProjectAndRerunAction(@NotNull final Module module, @NotNull final CoverageSuitesBundle suite,
                                                 @NotNull final Runnable chooseSuiteAction) {
-    final VirtualFile outputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
-    final VirtualFile testOutputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests();
+    CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
+    if (compilerModuleExtension == null) {
+      return false;
+    }
+
+    final VirtualFile outputpath = compilerModuleExtension.getCompilerOutputPath();
+    final VirtualFile testOutputpath = compilerModuleExtension.getCompilerOutputPathForTests();
 
     if (outputpath == null && isModuleOutputNeeded(module, JavaSourceRootType.SOURCE)
         || suite.isTrackTestFolders() && testOutputpath == null && isModuleOutputNeeded(module, JavaSourceRootType.TEST_SOURCE)) {
       final Project project = module.getProject();
       if (suite.isModuleChecked(module)) return false;
       suite.checkModule(module);
+      LOG.debug("Going to ask to rebuild project. Module output was [" + outputpath + "] for url [" + compilerModuleExtension.getCompilerOutputUrl() + "]\n" +
+                "Test output was [" + testOutputpath + "] for url [" + compilerModuleExtension.getCompilerOutputUrlForTests() + "] and  suite.isTrackTestFolders() is " + suite.isTrackTestFolders(),
+                new Throwable("trace"));
       final Runnable runnable = () -> {
         final int choice = Messages.showOkCancelDialog(project,
                                                        JavaCoverageBundle.message("project.class.files.are.out.of.date"),
@@ -342,14 +352,12 @@ public class JavaCoverageEngine extends CoverageEngine {
                                                        JavaCoverageBundle.message("coverage.hide.report"),
                                                        Messages.getWarningIcon());
         if (choice == Messages.OK) {
-          final CompilerManager compilerManager = CompilerManager.getInstance(project);
-          compilerManager.make(compilerManager.createProjectCompileScope(project), (aborted, errors, warnings, compileContext) -> {
-            if (aborted || errors != 0) return;
-            ApplicationManager.getApplication().invokeLater(() -> {
-              if (project.isDisposed()) return;
-              CoverageDataManager.getInstance(project).chooseSuitesBundle(suite);
-            });
-          });
+          ProjectTaskManager taskManager = ProjectTaskManager.getInstance(project);
+          Promise<ProjectTaskManager.Result> promise = taskManager.buildAllModules();
+          promise.onSuccess(result -> ApplicationManager.getApplication().invokeLater(() -> {
+                              CoverageDataManager.getInstance(project).chooseSuitesBundle(suite);
+                            }, o -> project.isDisposed())
+          );
         } else if (!project.isDisposed()) {
           CoverageDataManager.getInstance(project).chooseSuitesBundle(null);
         }

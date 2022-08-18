@@ -2,7 +2,7 @@ import random
 
 
 class Cat:
-    happiness = math.comb(5, 2)
+    happiness = math.exp(3)
 
     def say_meow(self):
         print("meow")

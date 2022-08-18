@@ -267,6 +267,11 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
             runTest("testData/parameterInfo/functionCall/NoCandidatesSelfDelegatedConstructorCall.kt");
         }
 
+        @TestMetadata("NoCandidatesWrongImplicitReceiver.kt")
+        public void testNoCandidatesWrongImplicitReceiver() throws Exception {
+            runTest("testData/parameterInfo/functionCall/NoCandidatesWrongImplicitReceiver.kt");
+        }
+
         @TestMetadata("NoCandidatesWrongReceiver.kt")
         public void testNoCandidatesWrongReceiver() throws Exception {
             runTest("testData/parameterInfo/functionCall/NoCandidatesWrongReceiver.kt");
@@ -390,6 +395,11 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
         @TestMetadata("SubstituteFromArgumentsOnTyping.kt")
         public void testSubstituteFromArgumentsOnTyping() throws Exception {
             runTest("testData/parameterInfo/functionCall/SubstituteFromArgumentsOnTyping.kt");
+        }
+
+        @TestMetadata("SubstitutedTypeParamInReceiver.kt")
+        public void testSubstitutedTypeParamInReceiver() throws Exception {
+            runTest("testData/parameterInfo/functionCall/SubstitutedTypeParamInReceiver.kt");
         }
 
         @TestMetadata("SuperConstructorCall.kt")
@@ -613,6 +623,16 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
         @TestMetadata("ReifiedNoParens.kt")
         public void testReifiedNoParens() throws Exception {
             runTest("testData/parameterInfo/typeArguments/ReifiedNoParens.kt");
+        }
+
+        @TestMetadata("SubstitutedTypeParamInReceiver.kt")
+        public void testSubstitutedTypeParamInReceiver() throws Exception {
+            runTest("testData/parameterInfo/typeArguments/SubstitutedTypeParamInReceiver.kt");
+        }
+
+        @TestMetadata("SubstitutedTypeParamInReceiverNoParens.kt")
+        public void testSubstitutedTypeParamInReceiverNoParens() throws Exception {
+            runTest("testData/parameterInfo/typeArguments/SubstitutedTypeParamInReceiverNoParens.kt");
         }
 
         @TestMetadata("VariableType.kt")

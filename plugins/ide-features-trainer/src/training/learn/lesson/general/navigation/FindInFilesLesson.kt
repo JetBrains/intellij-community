@@ -6,11 +6,11 @@ import com.intellij.find.FindInProjectSettings
 import com.intellij.find.FindManager
 import com.intellij.find.SearchTextArea
 import com.intellij.find.impl.FindInProjectSettingsBase
+import com.intellij.find.impl.FindPopupItem
 import com.intellij.find.impl.FindPopupPanel
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.Project
-import com.intellij.usages.UsagePresentation
 import com.intellij.util.ui.UIUtil
 import org.assertj.swing.core.MouseClickInfo
 import org.assertj.swing.data.TableCell
@@ -29,6 +29,8 @@ class FindInFilesLesson(override val sampleFilePath: String)
   : KLesson("Find in files", LessonsBundle.message("find.in.files.lesson.name")) {
 
   override val lessonContent: LessonContext.() -> Unit = {
+    sdkConfigurationTasks()
+
     prepareRuntimeTask {
       resetFindSettings(project)
     }
@@ -206,8 +208,8 @@ class FindInFilesLesson(override val sampleFilePath: String)
 
   private fun JTable.findLastRowIndexOfItemWithText(textToFind: String): Int {
     for (ind in (rowCount - 1) downTo 0) {
-      val item = getValueAt(ind, 0) as? UsagePresentation
-      if (item?.plainText?.contains(textToFind, true) == true) {
+      val item = getValueAt(ind, 0) as? FindPopupItem
+      if (item?.presentableText?.contains(textToFind, true) == true) {
         return ind
       }
     }

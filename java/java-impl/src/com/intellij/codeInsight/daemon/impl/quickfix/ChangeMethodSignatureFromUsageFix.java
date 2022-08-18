@@ -6,6 +6,7 @@ import com.intellij.codeInsight.JavaTargetElementEvaluator;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.find.FindManager;
@@ -13,6 +14,7 @@ import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.findUsages.JavaMethodFindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,6 +24,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -145,6 +148,14 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
       if (!expression.isValid()) return false;
     }
     if (!mySubstitutor.isValid()) return false;
+    if (myTargetMethod.isConstructor()) {
+      PsiCallExpression call = PsiTreeUtil.getParentOfType(myContext, PsiCallExpression.class);
+      if (call instanceof PsiMethodCallExpression && ((PsiMethodCallExpression)call).getMethodExpression().textMatches("this") &&
+          PsiTreeUtil.isAncestor(myTargetMethod, call, true)) {
+        // Avoid creating recursive constructor call
+        return false;
+      }
+    }
 
     final StringBuilder buf = new StringBuilder();
     final HashSet<ParameterInfoImpl> newParams = new HashSet<>();
@@ -164,6 +175,45 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
       if (PsiUtil.isApplicable(method, PsiSubstitutor.EMPTY, myExpressions)) return true;
     }
     return false;
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    HashSet<ParameterInfoImpl> newParams = new HashSet<>();
+    HashSet<ParameterInfoImpl> removedParams = new HashSet<>();
+    HashSet<ParameterInfoImpl> changedParams = new HashSet<>();
+    ParameterInfoImpl[] parameterInfos =
+      getNewParametersInfo(myExpressions, myTargetMethod, mySubstitutor, new StringBuilder(), newParams, removedParams, changedParams);
+    PsiParameterList parameterList = myTargetMethod.getParameterList();
+    PsiParameter[] oldParameters = parameterList.getParameters();
+    if (parameterInfos == null) return IntentionPreviewInfo.EMPTY;
+    String params = "(" + StringUtil.join(parameterInfos, p -> {
+      if (p.oldParameterIndex != ParameterInfo.NEW_PARAMETER && !changedParams.contains(p)) {
+        PsiParameter parameter = oldParameters[p.oldParameterIndex];
+        PsiRecordComponent component = JavaPsiRecordUtil.getComponentForCanonicalConstructorParameter(parameter);
+        return Objects.requireNonNullElse(component, parameter).getText();
+      }
+      return p.getTypeText() + " " + p.getName();
+    }, ", ") + ")";
+    TextRange range;
+    String methodText;
+    PsiRecordHeader header = null;
+    if (JavaPsiRecordUtil.isCanonicalConstructor(myTargetMethod) && !JavaPsiRecordUtil.isExplicitCanonicalConstructor(myTargetMethod)) {
+      PsiClass recordClass = ObjectUtils.tryCast(myTargetMethod.getParent(), PsiClass.class);
+      header = recordClass == null ? null : recordClass.getRecordHeader();
+    }
+    if (header != null) {
+      range = header.getTextRangeInParent();
+      methodText = header.getParent().getText();
+    } else {
+      range = parameterList.getTextRangeInParent();
+      methodText = myTargetMethod.getText();
+    }
+    String methodTextWithChangedParameters = methodText.substring(0, range.getStartOffset()) + params + methodText.substring(range.getEndOffset());
+    return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE,
+                                               myTargetMethod.getContainingFile() != myContext.getContainingFile() ? myTargetMethod.getContainingFile().getName() : null,
+                                               methodText,
+                                               methodTextWithChangedParameters); 
   }
 
   @Override
@@ -265,11 +315,12 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
       while (ei < expressions.length && pi < parameters.length) {
         PsiExpression expression = expressions[ei];
         PsiParameter parameter = parameters[pi];
-        PsiType paramType = substitutor.substitute(parameter.getType());
+        PsiType bareParameterType = getValidParameterType(parameter, targetMethod);
+        PsiType paramType = substitutor.substitute(bareParameterType);
         if (buf.length() > 0) buf.append(", ");
         final PsiType parameterType = PsiUtil.convertAnonymousToBaseType(paramType);
         final String presentableText = escapePresentableType(parameterType);
-        final ParameterInfoImpl parameterInfo = ParameterInfoImpl.create(pi).withName(parameter.getName()).withType(parameter.getType());
+        final ParameterInfoImpl parameterInfo = ParameterInfoImpl.create(pi).withName(parameter.getName()).withType(bareParameterType);
         if (TypeConversionUtil.areTypesAssignmentCompatible(paramType, expression)) {
           buf.append(presentableText);
           result.add(parameterInfo);
@@ -285,10 +336,11 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
       if (result.size() != expressions.length) return null;
       for(int i = pi; i < parameters.length; i++) {
         if (buf.length() > 0) buf.append(", ");
-        buf.append("<s>").append(escapePresentableType(parameters[i].getType())).append("</s>");
+        PsiType paramType = getValidParameterType(parameters[i], targetMethod);
+        buf.append("<s>").append(escapePresentableType(paramType)).append("</s>");
         final ParameterInfoImpl parameterInfo = ParameterInfoImpl.create(pi)
           .withName(parameters[i].getName())
-          .withType(parameters[i].getType());
+          .withType(paramType);
         removedParams.add(parameterInfo);
       }
     }
@@ -301,20 +353,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
         if (buf.length() > 0) buf.append(", ");
         PsiParameter parameter = parameters[i];
         PsiExpression expression = expressions[i];
-        PsiType bareParamType = parameter.getType();
-        if (!bareParamType.isValid()) {
-          try {
-            PsiUtil.ensureValidType(bareParamType);
-          }
-          catch (ProcessCanceledException e) {
-            throw e;
-          }
-          catch (Throwable e) {
-            throw PluginException.createByClass(
-              parameter.getClass() + "; valid=" + parameter.isValid() + "; method.valid=" + targetMethod.isValid(),
-              e, parameter.getClass());
-          }
-        }
+        PsiType bareParamType = getValidParameterType(parameter, targetMethod);
         PsiType paramType = substitutor.substitute(bareParamType);
         PsiUtil.ensureValidType(paramType);
         final String presentableText = escapePresentableType(paramType);
@@ -340,10 +379,10 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
       boolean isSilly = true;
       for (int i = 0; i < result.size(); i++) {
         PsiParameter parameter = parameters[i];
-        PsiType paramType = substitutor.substitute(parameter.getType());
+        PsiType paramType = substitutor.substitute(getValidParameterType(parameter, targetMethod));
         ParameterInfoImpl parameterInfo = result.get(i);
         String typeText = parameterInfo.getTypeText();
-        if (!paramType.equalsToText(typeText) && !paramType.getPresentableText().equals(typeText)) {
+        if (!paramType.getPresentableText(true).equals(typeText)) {
           isSilly = false;
           break;
         }
@@ -351,6 +390,25 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
       if (isSilly) return null;
     }
     return result.toArray(new ParameterInfoImpl[0]);
+  }
+
+  @NotNull
+  private static PsiType getValidParameterType(PsiParameter parameter, PsiMethod targetMethod) {
+    PsiType bareParamType = parameter.getType();
+    if (!bareParamType.isValid()) {
+      try {
+        PsiUtil.ensureValidType(bareParamType);
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Throwable e) {
+        throw PluginException.createByClass(
+          parameter.getClass() + "; valid=" + parameter.isValid() + "; method.valid=" + targetMethod.isValid(),
+          e, parameter.getClass());
+      }
+    }
+    return bareParamType;
   }
 
   @NotNull

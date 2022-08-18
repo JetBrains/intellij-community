@@ -1,8 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.requests;
 
 import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.engine.DebugProcess;
+import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Eugene Zhuravlev
  */
-public class MethodReturnValueWatcher implements OverheadProducer {
+public class MethodReturnValueWatcher {
   private static final Logger LOG = Logger.getInstance(MethodReturnValueWatcher.class);
   private @Nullable Method myLastExecutedMethod;
   private @Nullable Value myLastMethodReturnValue;
@@ -39,11 +39,13 @@ public class MethodReturnValueWatcher implements OverheadProducer {
 
   private volatile boolean myTrackingEnabled;
   private final EventRequestManager myRequestManager;
-  private final DebugProcess myProcess;
+  private final DebugProcessImpl myProcess;
+  private final Overhead myOverhead;
 
-  public MethodReturnValueWatcher(EventRequestManager requestManager, DebugProcess process) {
+  public MethodReturnValueWatcher(EventRequestManager requestManager, DebugProcessImpl process) {
     myRequestManager = requestManager;
     myProcess = process;
+    myOverhead = new Overhead(process);
   }
 
   private void processMethodExitEvent(MethodExitEvent event) {
@@ -82,7 +84,7 @@ public class MethodReturnValueWatcher implements OverheadProducer {
       LOG.debug("-> " + event.method());
     }
     try {
-      if (myEntryRequest != null && myEntryRequest.isEnabled()) {
+      if (myEntryRequest != null && myEntryRequest.isEnabled() && myEntryMethod == null) {
         myExitRequest = createExitRequest();
         myExitRequest.addClassFilter(event.location().declaringType());
         myEntryMethod = event.method();
@@ -116,12 +118,10 @@ public class MethodReturnValueWatcher implements OverheadProducer {
     return myLastMethodReturnValue;
   }
 
-  @Override
-  public boolean isEnabled() {
+  private static boolean isEnabled() {
     return DebuggerSettings.getInstance().WATCH_RETURN_VALUES;
   }
 
-  @Override
   public void setEnabled(final boolean enabled) {
     DebuggerSettings.getInstance().WATCH_RETURN_VALUES = enabled;
     clear();
@@ -162,7 +162,7 @@ public class MethodReturnValueWatcher implements OverheadProducer {
         myExitRequest = null;
       }
       if (enabled) {
-        OverheadTimings.add(myProcess, this, 1, null);
+        OverheadTimings.add(myProcess, myOverhead, 1, null);
         clear();
         myThread = thread;
 
@@ -222,9 +222,27 @@ public class MethodReturnValueWatcher implements OverheadProducer {
     return true;
   }
 
-  @Override
-  public void customizeRenderer(SimpleColoredComponent renderer) {
-    renderer.setIcon(AllIcons.Debugger.WatchLastReturnValue);
-    renderer.append(JavaDebuggerBundle.message("action.watches.method.return.value.enable"));
+  static class Overhead implements OverheadProducer {
+    private final DebugProcessImpl myProcess;
+
+    Overhead(DebugProcessImpl process) {
+      myProcess = process;
+    }
+
+    @Override
+    public boolean isEnabled() {
+      return MethodReturnValueWatcher.isEnabled();
+    }
+
+    @Override
+    public void setEnabled(final boolean enabled) {
+      myProcess.setWatchMethodReturnValuesEnabled(enabled);
+    }
+
+    @Override
+    public void customizeRenderer(SimpleColoredComponent renderer) {
+      renderer.setIcon(AllIcons.Debugger.WatchLastReturnValue);
+      renderer.append(JavaDebuggerBundle.message("action.watches.method.return.value.enable"));
+    }
   }
 }

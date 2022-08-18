@@ -1,24 +1,30 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.compilerPlugin
 
 import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
+import org.jetbrains.kotlin.idea.facet.getInstance
+import org.jetbrains.kotlin.idea.macros.KOTLIN_BUNDLED
 import java.io.File
 
-fun Module.getSpecialAnnotations(prefix: String): List<String> {
-    val kotlinFacet = KotlinFacet.get(this) ?: return emptyList()
-    val commonArgs = kotlinFacet.configuration.settings.compilerArguments ?: return emptyList()
-
-    return commonArgs.pluginOptions
+fun Module.getSpecialAnnotations(prefix: String): List<String> =
+    KotlinCommonCompilerArgumentsHolder.getInstance(this).pluginOptions
         ?.filter { it.startsWith(prefix) }
         ?.map { it.substring(prefix.length) }
         ?: emptyList()
-}
 
 class CompilerPluginSetup(val options: List<PluginOption>, val classpath: List<String>) {
     class PluginOption(val key: String, val value: String)
+}
+
+fun File.toJpsVersionAgnosticKotlinBundledPath(): String {
+    val kotlincDirectory = KotlinPluginLayout.kotlinc
+    require(this.startsWith(kotlincDirectory)) { "$this should start with ${kotlincDirectory}" }
+    return "\$$KOTLIN_BUNDLED\$/${this.relativeTo(kotlincDirectory)}"
 }
 
 fun modifyCompilerArgumentsForPlugin(

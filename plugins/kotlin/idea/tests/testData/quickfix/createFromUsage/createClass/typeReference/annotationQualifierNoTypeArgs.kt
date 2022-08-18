@@ -1,9 +1,9 @@
 // "Create annotation 'A'" "false"
-// ACTION: Create class 'A'
-// ACTION: Create object 'A'
-// ACTION: Create interface 'A'
-// ACTION: Create enum 'A'
 // ACTION: Convert to block body
+// ACTION: Create class 'A'
+// ACTION: Create enum 'A'
+// ACTION: Create interface 'A'
+// ACTION: Create object 'A'
 // ACTION: Remove explicit type specification
 // ERROR: Unresolved reference: A
 package p

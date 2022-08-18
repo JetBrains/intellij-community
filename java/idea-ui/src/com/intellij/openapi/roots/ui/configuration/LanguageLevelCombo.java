@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.JavaUiBundle;
@@ -37,12 +37,19 @@ public abstract class LanguageLevelCombo extends ComboBoxWithSeparators<Language
 
     addItem(new Separator(JavaUiBundle.message("language.level.combo.other.versions")));
 
+    LanguageLevel highestPreviewLevel = LanguageLevel.HIGHEST.getPreviewLevel();
+    LanguageLevel highestWithPreview = highestPreviewLevel != null ? highestPreviewLevel : LanguageLevel.HIGHEST;
     Arrays.stream(LanguageLevel.values())
       .sorted((l1, l2) -> l2.toJavaVersion().feature - l1.toJavaVersion().feature)
-      .filter(level -> level != LanguageLevel.JDK_X && (level.isPreview() || !ArrayUtil.contains(level, LTS)))
+      .filter(level -> level.compareTo(highestWithPreview) <= 0 && (level.isPreview() || !ArrayUtil.contains(level, LTS)))
       .forEach(level -> addItem(new Entry(level)));
 
-    addItem(new Entry(LanguageLevel.JDK_X));
+    addItem(new Separator(JavaUiBundle.message("language.level.combo.experimental.versions")));
+    for (LanguageLevel level : LanguageLevel.values()) {
+      if (level.compareTo(highestWithPreview) > 0) {
+        addItem(new Entry(level));
+      }
+    }
   }
 
   private class Entry extends ComboBoxWithSeparators<LanguageLevel>.EntryModel<LanguageLevel> {

@@ -4,7 +4,6 @@ import com.intellij.codeInsight.daemon.impl.StatusItemMerger;
 import com.intellij.grazie.GrazieBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.markup.SeverityStatusItem;
-import com.intellij.spellchecker.SpellCheckerSeveritiesProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +15,7 @@ class TextSeverityMerger extends StatusItemMerger {
     HighlightSeverity s1 = higher.getSeverity();
     HighlightSeverity s2 = lower.getSeverity();
     int sum = higher.getProblemCount() + lower.getProblemCount();
-    if (s1 == GRAMMAR_ERROR && s2 == SpellCheckerSeveritiesProvider.TYPO) {
+    if (s1 == GRAMMAR_ERROR && "TYPO".equals(s2.getName())) {
       return new SeverityStatusItem(s1, higher.getIcon(), sum, GrazieBundle.message("text.error.severity.count", sum));
     }
 

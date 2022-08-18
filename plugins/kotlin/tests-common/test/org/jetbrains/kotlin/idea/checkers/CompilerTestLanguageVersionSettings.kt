@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.checkers
 
 import org.jetbrains.kotlin.config.*
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.junit.Assert
@@ -27,23 +28,14 @@ data class CompilerTestLanguageVersionSettings(
         override val languageVersion: LanguageVersion,
         val analysisFlags: Map<AnalysisFlag<*>, Any?> = emptyMap()
 ) : LanguageVersionSettings {
-    val extraLanguageFeatures = specificFeaturesForTests() + initialLanguageFeatures
-    private val delegate = LanguageVersionSettingsImpl(languageVersion, apiVersion, emptyMap(), extraLanguageFeatures)
+    private val delegate = LanguageVersionSettingsImpl(languageVersion, apiVersion, emptyMap(), initialLanguageFeatures)
 
-    override fun getFeatureSupport(feature: LanguageFeature): LanguageFeature.State =
-            extraLanguageFeatures[feature] ?: delegate.getFeatureSupport(feature)
+    override fun getFeatureSupport(feature: LanguageFeature): LanguageFeature.State = delegate.getFeatureSupport(feature)
 
     override fun isPreRelease(): Boolean = false
 
     @Suppress("UNCHECKED_CAST")
     override fun <T> getFlag(flag: AnalysisFlag<T>): T = analysisFlags[flag] as T? ?: flag.defaultValue
-}
-
-private fun specificFeaturesForTests(): Map<LanguageFeature, LanguageFeature.State> {
-    return if (System.getProperty("kotlin.ni") == "true")
-        mapOf(LanguageFeature.NewInference to LanguageFeature.State.ENABLED)
-    else
-        emptyMap()
 }
 
 fun parseLanguageVersionSettingsOrDefault(directiveMap: Directives): CompilerTestLanguageVersionSettings =
@@ -62,9 +54,6 @@ fun parseLanguageVersionSettings(directives: Directives): CompilerTestLanguageVe
         analysisFlag(JvmAnalysisFlags.inheritMultifileParts, if (INHERIT_MULTIFILE_PARTS in directives) true else null),
         analysisFlag(JvmAnalysisFlags.sanitizeParentheses, if (SANITIZE_PARENTHESES in directives) true else null),
         analysisFlag(JvmAnalysisFlags.enableJvmPreview, if (ENABLE_JVM_PREVIEW in directives) true else null),
-        analysisFlag(AnalysisFlags.constraintSystemForOverloadResolution, directives[CONSTRAINT_SYSTEM_FOR_OVERLOAD_RESOLUTION]?.let {
-            ConstraintSystemForOverloadResolutionMode.valueOf(it)
-        }),
         analysisFlag(AnalysisFlags.explicitApiVersion, if (apiVersionString != null) true else null)
     )
 
@@ -73,20 +62,29 @@ fun parseLanguageVersionSettings(directives: Directives): CompilerTestLanguageVe
     }
 
     val apiVersion = when (apiVersionString) {
-        null -> ApiVersion.LATEST_STABLE
+        null -> KotlinPluginLayout.standaloneCompilerVersion.apiVersion
         "LATEST" -> ApiVersion.LATEST
         else -> ApiVersion.parse(apiVersionString) ?: error("Unknown API version: $apiVersionString")
     }
 
-    val languageVersion = maxOf(LanguageVersion.LATEST_STABLE, LanguageVersion.fromVersionString(apiVersion.versionString)!!)
+    val languageVersion = maxOf(
+        KotlinPluginLayout.standaloneCompilerVersion.languageVersion,
+        LanguageVersion.fromVersionString(apiVersion.versionString)!!
+    )
 
     val languageFeatures = languageFeaturesString?.let(::collectLanguageFeatureMap).orEmpty()
 
     return CompilerTestLanguageVersionSettings(languageFeatures, apiVersion, languageVersion, mapOf(*analysisFlags.toTypedArray()))
 }
 
-fun defaultLanguageVersionSettings(): CompilerTestLanguageVersionSettings =
-    CompilerTestLanguageVersionSettings(emptyMap(), ApiVersion.LATEST_STABLE, LanguageVersion.LATEST_STABLE)
+fun defaultLanguageVersionSettings(): CompilerTestLanguageVersionSettings {
+    val bundledKotlinVersion = KotlinPluginLayout.standaloneCompilerVersion
+    return CompilerTestLanguageVersionSettings(
+        initialLanguageFeatures = emptyMap(),
+        bundledKotlinVersion.apiVersion,
+        bundledKotlinVersion.languageVersion
+    )
+}
 
 fun languageVersionSettingsFromText(fileTexts: List<String>): LanguageVersionSettings {
     val allDirectives = Directives()

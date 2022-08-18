@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.changeSignature.usages
 
@@ -22,6 +22,8 @@ import org.jetbrains.kotlin.idea.refactoring.changeSignature.setValOrVar
 import org.jetbrains.kotlin.idea.refactoring.dropOperatorKeywordIfNecessary
 import org.jetbrains.kotlin.idea.refactoring.dropOverrideKeywordIfNecessary
 import org.jetbrains.kotlin.idea.refactoring.replaceListPsiAndKeepDelimiters
+import org.jetbrains.kotlin.idea.util.getTypeSubstitution
+import org.jetbrains.kotlin.idea.util.toSubstitutor
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
@@ -32,7 +34,6 @@ import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeSubstitutor
-import org.jetbrains.kotlin.types.substitutions.getTypeSubstitutor
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.utils.sure
 
@@ -64,7 +65,7 @@ class KotlinCallableDefinitionUsage<T : PsiElement>(
         } else {
             val currentBaseDescriptor = this.baseFunction.currentCallableDescriptor
             val classDescriptor = currentBaseDescriptor?.containingDeclaration as? ClassDescriptor ?: return@lazy null
-            getTypeSubstitutor(classDescriptor.defaultType, samCallType)
+            getTypeSubstitution(classDescriptor.defaultType, samCallType)?.toSubstitutor()
         }
     }
 

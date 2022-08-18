@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.IdeBundle
@@ -43,7 +43,7 @@ internal object UpdateInstaller {
 
     val files = mutableListOf<File>()
     val product = ApplicationInfo.getInstance().build.productCode
-    val jdk = getJdkSuffix()
+    val jdk = getRuntimeSuffix()
     val share = 1.0 / (chain.size - 1)
 
     for (i in 1 until chain.size) {
@@ -192,9 +192,9 @@ internal object UpdateInstaller {
 
   private fun getTempDir() = File(PathManager.getTempPath(), "patch-update")
 
-  private fun getJdkSuffix(): String = when {
-    SystemInfo.isMac && CpuArch.isArm64() -> "-jbr11-aarch64"
-    Files.isDirectory(Path.of(PathManager.getHomePath(), "jbr")) -> "-jbr11"
-    else -> "-no-jbr"
+  private fun getRuntimeSuffix(): String = when {
+    SystemInfo.isUnix && !SystemInfo.isMac && !Files.isDirectory(Path.of(PathManager.getHomePath(), "jbr")) -> "-no-jbr"
+    (SystemInfo.isMac || SystemInfo.isLinux) && CpuArch.isArm64() -> "-aarch64"
+    else -> ""
   }
 }

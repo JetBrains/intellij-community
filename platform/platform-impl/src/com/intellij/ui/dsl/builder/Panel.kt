@@ -2,8 +2,8 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
@@ -68,10 +68,13 @@ interface Panel : CellBase<Panel> {
    */
   fun threeColumnsRow(column1: (Row.() -> Unit)?, column2: (Row.() -> Unit)? = null, column3: (Row.() -> Unit)? = null): Row
 
-  /**
-   * Adds horizontal line separator with optional [title]
-   */
+  @Deprecated(message = "Use overloaded method or group/groupRowsRange instead", level = DeprecationLevel.HIDDEN)
   fun separator(@NlsContexts.Separator title: String? = null, background: Color? = null): Row
+
+  /**
+   * Adds horizontal line separator. Use [group] or [groupRowsRange] if you need a separator with title
+   */
+  fun separator(background: Color? = null): Row
 
   /**
    * Creates sub-panel that occupies the whole width and uses its own grid inside
@@ -96,6 +99,11 @@ interface Panel : CellBase<Panel> {
   fun group(@NlsContexts.BorderTitle title: String? = null,
             indent: Boolean = true,
             init: Panel.() -> Unit): Row
+
+  /**
+   * See overloaded method
+   */
+  fun group(title: JBLabel, indent: Boolean = true, init: Panel.() -> Unit): Row
 
   @Deprecated("Use overloaded group(...) instead")
   @ApiStatus.ScheduledForRemoval
@@ -174,6 +182,7 @@ interface Panel : CellBase<Panel> {
 
 }
 
+@Suppress("DEPRECATION")
 @Deprecated("Use buttonsGroup(...) instead")
 @ApiStatus.ScheduledForRemoval
 inline fun <reified T : Any> Panel.buttonGroup(noinline getter: () -> T,
@@ -184,6 +193,7 @@ inline fun <reified T : Any> Panel.buttonGroup(noinline getter: () -> T,
   buttonGroup(PropertyBinding(getter, setter), title, indent, init)
 }
 
+@Suppress("DEPRECATION")
 @Deprecated("Use buttonsGroup(...) instead")
 @ApiStatus.ScheduledForRemoval
 inline fun <reified T : Any> Panel.buttonGroup(binding: PropertyBinding<T>, title: @NlsContexts.BorderTitle String? = null,

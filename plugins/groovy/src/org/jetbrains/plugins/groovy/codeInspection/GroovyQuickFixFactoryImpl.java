@@ -1,17 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicMethodFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertyFromLabelFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertyFromRefFix;
+import org.jetbrains.plugins.groovy.annotator.intentions.elements.GrReplaceWithQualifiedExpressionFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.elements.annotation.MapConstructorAttributesFix;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.AddClassToExtendsFix;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.AddMethodFix;
+import org.jetbrains.plugins.groovy.codeInspection.bugs.GrAddMissingCaseSectionsFix;
 import org.jetbrains.plugins.groovy.codeInspection.confusing.ReplaceWithImportFix;
 import org.jetbrains.plugins.groovy.codeInspection.cs.GrReplaceMultiAssignmentFix;
 import org.jetbrains.plugins.groovy.codeInspection.cs.SpreadArgumentFix;
@@ -20,6 +23,7 @@ import org.jetbrains.plugins.groovy.codeInspection.naming.RenameFix;
 import org.jetbrains.plugins.groovy.dsl.InvestigateFix;
 import org.jetbrains.plugins.groovy.lang.GrCreateClassKind;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
@@ -28,6 +32,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
+
+import java.util.List;
 
 public class GroovyQuickFixFactoryImpl extends GroovyQuickFixFactory {
   @Override
@@ -63,7 +69,7 @@ public class GroovyQuickFixFactoryImpl extends GroovyQuickFixFactory {
 
   @Override
   public IntentionAction createCreateGetterFromUsageFix(GrReferenceExpression expr, PsiClass aClass) {
-    return new CreateGetterFromUsageFix(expr, aClass);
+    return new CreateGetterFromUsageFix(expr);
   }
 
   @Override
@@ -154,5 +160,15 @@ public class GroovyQuickFixFactoryImpl extends GroovyQuickFixFactory {
   @Override
   public GroovyFix createMapConstructorFix() {
     return new MapConstructorAttributesFix();
+  }
+
+  @Override
+  public GroovyFix createQualifyExpressionFix() {
+    return new GrReplaceWithQualifiedExpressionFix();
+  }
+
+  @Override
+  public GroovyFix createAddMissingCasesFix(List<? extends PsiElement> expressions, GrSwitchElement switchElement) {
+    return new GrAddMissingCaseSectionsFix(expressions, switchElement);
   }
 }

@@ -25,6 +25,11 @@ import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class ShareWholeProject extends AnAction implements DumbAware {
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void update(@NotNull final AnActionEvent e) {
     final MyChecker checker = new MyChecker();
     checker.execute(e);

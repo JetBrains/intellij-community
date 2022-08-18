@@ -26,11 +26,21 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
   protected val myUpdateQueue =
     MergingUpdateQueue(PartiallyExcludedFilesStateHolder::class.java.name, 300, true, MergingUpdateQueue.ANY_COMPONENT, this)
 
-  private val myIncludedElements: MutableSet<T> = if (hashingStrategy == null) HashSet() else CollectionFactory.createCustomHashingStrategySet(hashingStrategy)
-  private val myTrackerExclusionStates: MutableMap<T, ExclusionState> = if (hashingStrategy == null) HashMap() else CollectionFactory.createCustomHashingStrategyMap(hashingStrategy)
+  private val myIncludedElements: MutableSet<T> = createElementsSet()
+  private val myTrackerExclusionStates: MutableMap<T, ExclusionState> = when (hashingStrategy) {
+    null -> HashMap()
+    else -> CollectionFactory.createCustomHashingStrategyMap(hashingStrategy)
+  }
 
   init {
     MyTrackerManagerListener().install(project)
+  }
+
+  private fun createElementsSet(elements: Collection<T> = emptyList()): MutableSet<T> {
+    return when (hashingStrategy) {
+      null -> HashSet(elements)
+      else -> CollectionFactory.createCustomHashingStrategySet(hashingStrategy).also { it.addAll(elements) }
+    }
   }
 
   override fun dispose() = Unit
@@ -104,7 +114,7 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
   }
 
   fun getIncludedSet(): Set<T> {
-    val set: MutableSet<T> = if (hashingStrategy == null) HashSet(myIncludedElements) else CollectionFactory.createCustomHashingStrategySet(hashingStrategy).also { it.addAll(myIncludedElements) }
+    val set: MutableSet<T> = createElementsSet(myIncludedElements)
     myTrackerExclusionStates.forEach { (element, state) ->
       if (state == ExclusionState.ALL_EXCLUDED) set -= element else set += element
     }
@@ -112,7 +122,7 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
   }
 
   fun setIncludedElements(elements: Collection<T>) {
-    val set: MutableSet<T> = if (hashingStrategy == null) HashSet(elements) else CollectionFactory.createCustomHashingStrategySet(hashingStrategy).also { it.addAll(elements) }
+    val set: MutableSet<T> = createElementsSet(elements)
     trackers.forEach { (element, tracker) ->
       tracker.setExcludedFromCommit(element, element !in set)
     }
@@ -131,11 +141,24 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
   }
 
   fun excludeElements(elements: Collection<T>) {
-    elements.forEach { findTrackerFor(it)?.setExcludedFromCommit(it, true) }
-    myIncludedElements -= elements.asSet()
+    elements.forEach {
+      findTrackerFor(it)?.setExcludedFromCommit(it, true)
+      myIncludedElements.remove(it)
+    }
 
     updateExclusionStates()
   }
 
-  private fun <E> Collection<E>.asSet(): Set<E> = this as? Set ?: HashSet(this)
+  fun retainElements(elements: Collection<T>) {
+    val toRetain = createElementsSet(elements)
+
+    myIncludedElements.retainAll(toRetain)
+    trackers.forEach { (element, tracker) ->
+      if (!toRetain.contains(element)) {
+        tracker.setExcludedFromCommit(element, true)
+      }
+    }
+
+    updateExclusionStates()
+  }
 }

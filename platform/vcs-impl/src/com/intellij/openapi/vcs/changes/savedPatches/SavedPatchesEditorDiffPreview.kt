@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.SimpleTreeEditorDiffPreview
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.util.containers.isEmpty
 import java.awt.Component
 import javax.swing.JComponent
 
@@ -20,9 +19,9 @@ abstract class SavedPatchesEditorDiffPreview(diffProcessor: SavedPatchesDiffPrev
     Disposer.register(diffProcessor, Disposable { lastFocusOwner = null })
   }
 
-  override fun openPreview(focusEditor: Boolean): Boolean {
+  override fun openPreview(requestFocus: Boolean): Boolean {
     lastFocusOwner = IdeFocusManager.getInstance(project).focusOwner
-    return super.openPreview(focusEditor)
+    return super.openPreview(requestFocus)
   }
 
   override fun returnFocusToTree() {
@@ -31,8 +30,8 @@ abstract class SavedPatchesEditorDiffPreview(diffProcessor: SavedPatchesDiffPrev
     focusMainComponent(focusOwner)
   }
 
-  override fun updateAvailability(event: AnActionEvent) {
+  override fun updateDiffAction(event: AnActionEvent) {
     event.presentation.isVisible = true
-    event.presentation.isEnabled = !changeViewProcessor.allChanges.isEmpty()
+    event.presentation.isEnabled = changeViewProcessor.iterateAllChanges().any()
   }
 }

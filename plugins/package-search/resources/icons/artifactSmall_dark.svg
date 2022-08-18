@@ -1,1 +1,17 @@
-<svg height="13" viewBox="0 0 13 13" width="13" xmlns="http://www.w3.org/2000/svg"><path d="m6.5.375 6.125 3.40277778-6.125 3.40277778-6.125-3.40277778zm4.9 5.44444444 1.225.68055556-6.125 3.40277778-6.125-3.40277778 1.225-.68055556 4.9 2.72222223zm0 2.72222223 1.225.68055555-6.125 3.40277778-6.125-3.40277778 1.225-.68055555 4.9 2.72222223z" fill="#afb1b3" fill-rule="evenodd"/></svg>
+<!-- Copyright 2000-2022 JetBrains s.r.o. and contributors. -->
+<!-- -->
+<!-- Licensed under the Apache License, Version 2.0 (the "License"); -->
+<!-- you may not use this file except in compliance with the License. -->
+<!-- You may obtain a copy of the License at -->
+<!-- -->
+<!-- https://www.apache.org/licenses/LICENSE-2.0 -->
+<!-- -->
+<!-- Unless required by applicable law or agreed to in writing, software -->
+<!-- distributed under the License is distributed on an "AS IS" BASIS, -->
+<!-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. -->
+<!-- See the License for the specific language governing permissions and -->
+<!-- limitations under the License. -->
+<svg height="13" viewBox="0 0 13 13" width="13" xmlns="http://www.w3.org/2000/svg">
+    <path d="m6.5.375 6.125 3.40277778-6.125 3.40277778-6.125-3.40277778zm4.9 5.44444444 1.225.68055556-6.125 3.40277778-6.125-3.40277778 1.225-.68055556 4.9 2.72222223zm0 2.72222223 1.225.68055555-6.125 3.40277778-6.125-3.40277778 1.225-.68055555 4.9 2.72222223z"
+          fill="#afb1b3" fill-rule="evenodd"/>
+</svg>

@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.intellij.openapi.application.PermanentInstallationID;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +15,7 @@ import java.util.Map;
 
 public final class LicensingFacade {
   public String licensedTo;
+  @NlsSafe
   public String licenseeEmail;
   public List<String> restrictions;
   public boolean isEvaluation;
@@ -35,6 +37,7 @@ public final class LicensingFacade {
     return licensedTo;
   }
 
+  @NlsSafe
   @Nullable
   public String getLicenseeEmail() {
     return licenseeEmail;
@@ -81,7 +84,6 @@ public final class LicensingFacade {
   }
 
   /**
-   * @param productCode
    * @return a "confirmation stamp" string describing the license obtained by the licensing subsystem for the product with the given productCode.
    *  returns null, if no license is currently obtained for the product.
    *

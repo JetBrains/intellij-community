@@ -44,7 +44,11 @@ class Java8Class {
             }
             f.invoke(i1, k1)
         }
-        val runnable = Runnable {}
+        val runnable1 = Runnable {}
+        val runnable2 = Runnable {
+            if (true) return@Runnable
+            println("false")
+        }
         foo1 { i: Int ->
             if (i > 1) {
                 return@foo1 "42"

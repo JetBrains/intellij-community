@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.codeInsight.unwrap;
 
@@ -7,6 +7,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.psi.*;
+
+import java.util.List;
 
 public class KotlinLambdaUnwrapper extends KotlinUnwrapRemoveBase {
     public KotlinLambdaUnwrapper(String key) {
@@ -17,7 +19,14 @@ public class KotlinLambdaUnwrapper extends KotlinUnwrapRemoveBase {
         PsiElement parent = lambda.getParent();
 
         if (parent instanceof KtValueArgument) {
-            return PsiTreeUtil.getParentOfType(parent, KtCallExpression.class, true);
+            KtCallExpression callExpression = PsiTreeUtil.getParentOfType(parent, KtCallExpression.class, true);
+            if (callExpression != null) {
+                PsiElement parentParent = callExpression.getParent();
+                if (parentParent instanceof KtQualifiedExpression) {
+                    return (KtElement) parentParent;
+                }
+            }
+            return callExpression;
         }
 
         if (parent instanceof KtCallExpression) {
@@ -37,7 +46,7 @@ public class KotlinLambdaUnwrapper extends KotlinUnwrapRemoveBase {
 
         KtLambdaExpression lambda = (KtLambdaExpression) e;
         KtBlockExpression body = lambda.getBodyExpression();
-        KtElement enclosingElement = getLambdaEnclosingElement((KtLambdaExpression) e);
+        KtElement enclosingElement = getLambdaEnclosingElement(lambda);
 
         if (body == null || enclosingElement == null) return false;
 
@@ -52,5 +61,11 @@ public class KotlinLambdaUnwrapper extends KotlinUnwrapRemoveBase {
 
         context.extractFromBlock(body, enclosingExpression);
         context.delete(enclosingExpression);
+    }
+
+    @Override
+    public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<PsiElement> toExtract) {
+        super.collectAffectedElements(e, toExtract);
+        return getLambdaEnclosingElement((KtLambdaExpression) e);
     }
 }

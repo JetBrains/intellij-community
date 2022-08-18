@@ -1,5 +1,6 @@
 package org.intellij.plugins.markdown.ui.actions.styling
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.ToggleAction
@@ -8,7 +9,6 @@ import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.TokenSet
@@ -22,9 +22,9 @@ import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElementFactory
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
+import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil
-import org.intellij.plugins.markdown.util.hasType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
@@ -60,8 +60,9 @@ abstract class SetHeaderLevelImpl(
 
   override fun isSelected(event: AnActionEvent): Boolean {
     val file = event.getData(CommonDataKeys.PSI_FILE) ?: return false
-    val caret = event.getData(CommonDataKeys.CARET) ?: return false
-    val element = findParent(file, caret)
+    val editor = event.getData(CommonDataKeys.EDITOR) ?: return false
+    val caret = SelectionUtil.obtainPrimaryCaretSnapshot(this, event) ?: return false
+    val element = findParent(file, editor.document, caret.selectionStart, caret.selectionEnd)
     val header = element?.parentOfType<MarkdownHeader>(withSelf = true)
     return when {
       header == null && level == 0 -> true
@@ -70,14 +71,18 @@ abstract class SetHeaderLevelImpl(
     }
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   override fun setSelected(event: AnActionEvent, state: Boolean) {
     if (!state) {
       return
     }
     val file = event.getData(CommonDataKeys.PSI_FILE) ?: return
-    val caret = event.getData(CommonDataKeys.CARET) ?: return
     val editor = event.getData(CommonDataKeys.EDITOR) ?: return
-    val element = findParent(file, caret)
+    val caret = event.getData(CommonDataKeys.CARET) ?: return
+    val element = findParent(file, editor.document, caret.selectionStart, caret.selectionEnd)
     if (element == null) {
       tryToCreateHeaderFromRawLine(editor, caret)
       return
@@ -136,8 +141,8 @@ abstract class SetHeaderLevelImpl(
     )
 
     @JvmStatic
-    internal fun findParent(psiFile: PsiFile, caret: Caret): PsiElement? {
-      val (left, right) = MarkdownActionUtil.getElementsUnderCaretOrSelection(psiFile, caret)
+    internal fun findParent(file: PsiFile, document: Document, selectionStart: Int, selectionEnd: Int): PsiElement? {
+      val (left, right) = MarkdownActionUtil.getElementsUnderCaretOrSelection(file, selectionStart, selectionEnd)
       val startElement = when {
         MarkdownPsiUtil.WhiteSpaces.isNewLine(left) -> PsiTreeUtil.nextVisibleLeaf(left)
         else -> left
@@ -153,7 +158,6 @@ abstract class SetHeaderLevelImpl(
       if (parent?.hasType(MarkdownElementTypes.PARAGRAPH) != true) {
         return parent
       }
-      val document = PsiDocumentManager.getInstance(psiFile.project).getDocument(psiFile) ?: return null
       val startOffset = parent.textRange.startOffset
       val endOffset = parent.textRange.endOffset
       if (startOffset < 0 || endOffset > document.textLength) {

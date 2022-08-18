@@ -2,12 +2,15 @@
 package org.jetbrains.idea.maven.wizards
 
 import com.intellij.ide.JavaUiBundle
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
 import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.externalSystem.service.project.wizard.MavenizedNewProjectWizardStep
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ui.DataView
 import com.intellij.openapi.module.StdModuleTypes
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
@@ -17,6 +20,7 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.whenItemSelectedFromUi
 import com.intellij.ui.layout.*
 import icons.OpenapiIcons
 import org.jetbrains.idea.maven.project.MavenProject
@@ -38,9 +42,14 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
         val sdkTypeFilter = { it: SdkTypeId -> it is JavaSdkType && it !is DependentSdkType }
         sdkComboBox(context, sdkProperty, StdModuleTypes.JAVA.id, sdkTypeFilter)
           .columns(COLUMNS_MEDIUM)
+          .whenItemSelectedFromUi { logSdkChanged(sdk) }
       }
     }
     super.setupSettingsUI(builder)
+  }
+
+  override fun setupProject(project: Project) {
+    logSdkFinished(sdk)
   }
 
   override fun createView(data: MavenProject) = MavenDataView(data)

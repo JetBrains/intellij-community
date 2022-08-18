@@ -81,7 +81,7 @@ public class PublicConstructorInspection extends BaseInspection {
   private static class PublicConstructorVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       if (!method.isConstructor()) {
         return;
@@ -103,7 +103,7 @@ public class PublicConstructorInspection extends BaseInspection {
     }
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       super.visitClass(aClass);
       if (aClass.isInterface() || aClass.isEnum() || aClass.isRecord()) {
         return;

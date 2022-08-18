@@ -39,21 +39,21 @@ public class WriteOnlyObjectInspection extends AbstractBaseJavaLocalInspectionTo
                                                  boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitLocalVariable(PsiLocalVariable variable) {
+      public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
         if (!(variable instanceof PsiResourceVariable)) {
           processVariable(variable, PsiUtil.getVariableCodeBlock(variable, null));
         }
       }
 
       @Override
-      public void visitField(PsiField field) {
+      public void visitField(@NotNull PsiField field) {
         if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
           processVariable(field, PsiUtil.getTopLevelClass(field));
         }
       }
 
       @Override
-      public void visitNewExpression(PsiNewExpression expression) {
+      public void visitNewExpression(@NotNull PsiNewExpression expression) {
         PsiMethodCallExpression nextCall = ExpressionUtils.getCallForQualifier(expression);
         PsiJavaCodeReferenceElement anchor = expression.getClassOrAnonymousClassReference();
         if (anchor != null && nextCall != null && isNewExpression(expression) && isWriteOnlyCall(nextCall, true)) {
@@ -62,7 +62,7 @@ public class WriteOnlyObjectInspection extends AbstractBaseJavaLocalInspectionTo
       }
 
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         PsiMethodCallExpression nextCall = ExpressionUtils.getCallForQualifier(call);
         PsiElement anchor = call.getMethodExpression().getReferenceNameElement();
         if (anchor != null && nextCall != null && isNewExpression(call) && isWriteOnlyCall(nextCall, false)) {

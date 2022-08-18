@@ -18,6 +18,7 @@ package org.intellij.plugins.relaxNG.convert;
 
 import com.intellij.ide.highlighter.DTDFileType;
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -56,6 +57,11 @@ public class ConvertSchemaAction extends AnAction {
     } else {
       e.getPresentation().setEnabled(false);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private static SchemaType getInputType(Project project, VirtualFile... files) {

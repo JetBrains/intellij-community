@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.decompiler.navigation
 
@@ -6,10 +6,11 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference
 import com.intellij.util.ThrowableRunnable
 import junit.framework.TestCase
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.navigation.NavigationTestUtils
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.test.*
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 
@@ -134,7 +135,7 @@ class NavigationChecker(val file: PsiFile, val referenceTargetChecker: (PsiEleme
 
         val targetNavFile = targetNavPsiFile.virtualFile ?: return
 
-        if (!ProjectRootsUtil.isProjectSourceFile(target.project, targetNavFile)) {
+        if (!RootKindFilter.projectSources.matches(target.project, targetNavFile)) {
             put(ref.element, ref)
         }
     }

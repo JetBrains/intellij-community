@@ -21,11 +21,39 @@ import java.util.function.Function;
  * that some {@linkplain Application#runWriteAction write action} might be run in between these short read actions,
  * which could potentially change the model of the element (reference model, PSI model, framework model or whatever model).
  * </p>
+ * <pre>
+ * val pointer = readAction {
+ *   val instance = obtainSomeInstanceWhichIsValidWithinAReadAction()
+ *   return@readAction instance.createPointer()
+ * }
+ * // the pointer might be safely stored in the UI or another model for later usage
+ * readAction { // another read action
+ *   val restoredInstance = pointer.dereference()
+ *   if (restoredInstance == null) {
+ *     // instance was invalidated, act accordingly
+ *     return
+ *   }
+ *   // at this point the instance is valid because it should've not exist if it's not
+ *   doSomething(restoredInstance)
+ * }
+ *
+ * readAction {
+ *   // same pointer may be used in several subsequent read actions
+ *   val restoredInstance = pointer.dereference()
+ *   ...
+ * }
+ * </pre>
  *
  * <h3>Example 2</h3>
  * <p>
  * Pointers might be used to avoid hard references to the element to save the memory.
  * In this case the pointer stores minimal needed information to be able to restore the element when requested.
+ * </p>
+ *
+ * <h3>Equality</h3>
+ * <p>
+ * It's expected that most pointers would require a read action for comparison, thus no equality is defined for pointers.
+ * Pointers should be {@linkplain Pointer#dereference de-referenced} in a read action, and their values should be compared instead.
  * </p>
  *
  * @param <T> type of underlying element
@@ -38,10 +66,6 @@ public interface Pointer<T> {
    */
   @Nullable T dereference();
 
-  boolean equals(Object o);
-
-  int hashCode();
-
   /**
    * Creates a pointer which holds the strong reference to the {@code value}.
    * The pointer is always de-referenced into the passed {@code value}.
@@ -49,7 +73,44 @@ public interface Pointer<T> {
    */
   @Contract(value = "_ -> new", pure = true)
   static <T> @NotNull Pointer<T> hardPointer(@NotNull T value) {
-    return new HardPointer<>(value);
+    return () -> value;
+  }
+
+  /**
+   * Creates a pointer which uses {@code underlyingPointer} value to restore its value with {@code restoration} function.
+   */
+  @Contract(value = "_, _ -> new", pure = true)
+  static <T, U> @NotNull Pointer<T> delegatingPointer(
+    @NotNull Pointer<? extends U> underlyingPointer,
+    @NotNull Function<? super U, ? extends T> restoration
+  ) {
+    return new DelegatingPointer.ByValue<>(underlyingPointer, restoration);
+  }
+
+  /**
+   * Creates the same pointer as {@link #delegatingPointer}, which additionally passes itself
+   * into the {@code restoration} function to allow caching the pointer in the restored value.
+   */
+  @Contract(value = "_, _ -> new", pure = true)
+  static <T, U> @NotNull Pointer<T> uroborosPointer(
+    @NotNull Pointer<? extends U> underlyingPointer,
+    @NotNull BiFunction<? super U, ? super Pointer<T>, ? extends T> restoration
+  ) {
+    return new DelegatingPointer.ByValueAndPointer<>(underlyingPointer, restoration);
+  }
+
+  /**
+   * Creates a pointer which holds the strong reference to the {@code value}.
+   * The pointer is always de-referenced into the passed {@code value}.
+   * Hard pointers should be used only for values that cannot be invalidated.
+   *
+   * @deprecated use {@link #hardPointer(Object)}.
+   * See deprecation notice on {@link #delegatingPointer(Pointer, Object, Function)}.
+   */
+  @Deprecated
+  @Contract(value = "_ -> new", pure = true)
+  static <T> @NotNull Pointer<T> hardPointerWithEquality(@NotNull T value) {
+    return new HardPointerEq<>(value);
   }
 
   /**
@@ -58,22 +119,31 @@ public interface Pointer<T> {
    * Equality of {@code restoration} function is unreliable, because it might be a lambda.
    * The {@code key} must be passed to check for equality instead,
    * where two equal keys mean the same restoration logic will be applied.
+   *
+   * @deprecated use {@link #delegatingPointer(Pointer, Function)}.
+   * This method is deprecated because the pointer equality was intended to be used without the read action,
+   * while often being impossible to implement without it, which makes it infeasible to use on the EDT.
    */
+  @Deprecated
   @Contract(value = "_, _, _ -> new", pure = true)
   static <T, U> @NotNull Pointer<T> delegatingPointer(@NotNull Pointer<? extends U> underlyingPointer,
                                                       @NotNull Object key,
                                                       @NotNull Function<? super U, ? extends T> restoration) {
-    return new DelegatingPointer.ByValue<>(underlyingPointer, key, restoration);
+    return new DelegatingPointerEq.ByValue<>(underlyingPointer, key, restoration);
   }
 
   /**
    * Creates the same pointer as {@link #delegatingPointer}, which additionally passes itself
    * into the {@code restoration} function to allow caching the pointer in the restored value.
+   *
+   * @deprecated use {@link #uroborosPointer(Pointer, BiFunction)}.
+   * See deprecation notice on {@link #delegatingPointer(Pointer, Object, Function)}.
    */
+  @Deprecated
   @Contract(value = "_, _, _ -> new", pure = true)
   static <T, U> @NotNull Pointer<T> uroborosPointer(@NotNull Pointer<? extends U> underlyingPointer,
                                                     @NotNull Object key,
                                                     @NotNull BiFunction<? super U, ? super Pointer<T>, ? extends T> restoration) {
-    return new DelegatingPointer.ByValueAndPointer<>(underlyingPointer, key, restoration);
+    return new DelegatingPointerEq.ByValueAndPointer<>(underlyingPointer, key, restoration);
   }
 }

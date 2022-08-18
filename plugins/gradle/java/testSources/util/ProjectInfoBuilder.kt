@@ -8,7 +8,7 @@ import java.io.File
 
 class ProjectInfoBuilder private constructor(id: String, private val base: VirtualFile, var useKotlinDsl: Boolean) {
 
-  val name = "${System.currentTimeMillis()}-$id"
+  val name = "$id-${System.currentTimeMillis()}"
 
   private val modules = ArrayList<ModuleInfo>()
 

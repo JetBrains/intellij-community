@@ -3,7 +3,6 @@
 
 package com.intellij.ide.ui.html
 
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.ui.ColorUtil
@@ -20,8 +19,7 @@ private const val EDITOR_FOREGROUND_STUB = """___EDITOR_FOREGROUND___"""
 @Suppress("CssInvalidHtmlTagReference")
 private const val EDITOR_BACKGROUND_STUB = """___EDITOR_BACKGROUND___"""
 
-@Service(Service.Level.APP)
-internal class LafCssProvider {
+internal object LafCssProvider {
   /**
    * Get custom css styles and overrides for default swing CSS
    */

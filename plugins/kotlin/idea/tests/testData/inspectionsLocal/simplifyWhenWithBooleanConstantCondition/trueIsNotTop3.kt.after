@@ -4,6 +4,7 @@ fun test(i: Int) {
         i == 1 -> {
             println(1)
         }
+
         else -> {
             println(3)
         }

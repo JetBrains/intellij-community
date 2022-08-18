@@ -18,7 +18,7 @@ internal class BinaryXmlWriter(private val out: DataOutputStream) {
   }
 
   private fun writeString(string: String?) {
-    if (string == null || string.isEmpty()) {
+    if (string.isNullOrEmpty()) {
       out.write(1)
       return
     }

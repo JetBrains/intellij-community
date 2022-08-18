@@ -5,7 +5,6 @@ import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.AsyncStacksUtils;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.memory.agent.MemoryAgentUtil;
 import com.intellij.debugger.settings.CaptureSettingsProvider;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.ExecutionException;
@@ -185,7 +184,7 @@ public class RemoteConnectionBuilder {
         Sdk jdk = parameters.getJdk();
         if (jdk != null) {
           JavaSdkVersion sdkVersion = JavaSdk.getInstance().getVersion(jdk);
-          if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_1_6)) {
+          if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_1_7)) {
             String classesRoot = PathUtil.getJarPathForClass(DebuggerManagerImpl.class);
             Path agentArtifactPath = PathManager.getJarArtifactPath(classesRoot, AGENT_ARTIFACT_NAME);
             if (Files.exists(agentArtifactPath)) {

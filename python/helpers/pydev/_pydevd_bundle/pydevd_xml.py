@@ -12,12 +12,13 @@ from _pydev_bundle.pydev_imports import quote
 from _pydevd_bundle import pydevd_extension_utils
 from _pydevd_bundle import pydevd_resolver
 from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, IS_PY3K, \
-    MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT, LOAD_VALUES_POLICY, DEFAULT_VALUES_DICT
+    MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT, LOAD_VALUES_POLICY, DEFAULT_VALUES_DICT, \
+    GET_FRAME_RETURN_GROUP
 from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, StrPresentationProvider
 from _pydevd_bundle.pydevd_user_type_renderers_utils import try_get_type_renderer_for_var
 from _pydevd_bundle.pydevd_utils import take_first_n_coll_elements, is_pandas_container, is_string, pandas_to_str, \
     should_evaluate_full_value, should_evaluate_shape
-
+from _pydevd_bundle.pydevd_frame_type_handler import get_vars_handler, DO_NOT_PROCESS_VARS, XML_COMMUNICATION_VARS_HANDLER
 try:
     import types
 
@@ -236,42 +237,36 @@ get_type = _TYPE_RESOLVE_HANDLER.get_type
 _str_from_providers = _TYPE_RESOLVE_HANDLER.str_from_providers
 
 
-def frame_vars_to_xml(frame_f_locals, hidden_ns=None, user_type_renderers=None):
-    """ dumps frame variables to XML
-    <var name="var_name" scope="local" type="type" value="value"/>
-    """
-
-    xml = ""
-
+def get_sorted_keys(frame_f_locals):
     keys = dict_keys(frame_f_locals)
     if hasattr(keys, 'sort'):
         keys.sort()  # Python 3.0 does not have it
     else:
         keys = sorted(keys)  # Jython 2.1 does not have it
+    return keys
 
-    return_values_xml = ''
+
+def frame_vars_to_xml(frame_f_locals, group_type, hidden_ns=None, user_type_renderers=None):
+    """ dumps frame variables to XML
+    <var name="var_name" scope="local" type="type" value="value"/>
+    """
+    keys = get_sorted_keys(frame_f_locals)
+
+    type_handler = get_vars_handler(var_to_xml,
+                                    handler_type=XML_COMMUNICATION_VARS_HANDLER,
+                                    group_type=group_type)
 
     for k in keys:
         try:
             v = frame_f_locals[k]
-            eval_full_val = should_evaluate_full_value(v)
+            eval_full_val = should_evaluate_full_value(v, group_type)
 
-            if k == RETURN_VALUES_DICT:
-                for name, val in dict_iter_items(v):
-                    return_values_xml += var_to_xml(val, name, additional_in_xml=' isRetVal="True"', user_type_renderers=user_type_renderers)
-
-            else:
-                if hidden_ns is not None and k in hidden_ns:
-                    xml += var_to_xml(v, str(k), additional_in_xml=' isIPythonHidden="True"',
-                                      evaluate_full_value=eval_full_val, user_type_renderers=user_type_renderers)
-                else:
-                    xml += var_to_xml(v, str(k), evaluate_full_value=eval_full_val, user_type_renderers=user_type_renderers)
+            type_handler.handle(k, v, hidden_ns, eval_full_val, user_type_renderers=user_type_renderers)
         except Exception:
             traceback.print_exc()
             pydev_log.error("Unexpected error, recovered safely.\n")
 
-    # Show return values as the first entry.
-    return return_values_xml + xml
+    return type_handler.get_xml()
 
 
 def _get_default_var_string_representation(v, _type, typeName, format):
@@ -305,6 +300,10 @@ def _get_default_var_string_representation(v, _type, typeName, format):
 def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value=True, format='%s', user_type_renderers=None):
     """ single variable or dictionary to xml representation """
 
+    if name in DO_NOT_PROCESS_VARS:
+        xml = '<var name="%s" ' % (make_valid_xml_value(name))
+        return ''.join((xml, ' />\n'))
+
     try:
         # This should be faster than isinstance (but we have to protect against not having a '__class__' attribute).
         is_exception_on_eval = val.__class__ == ExceptionOnEvaluate
@@ -335,7 +334,7 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value
         value = _get_default_var_string_representation(v, _type, typeName, format)
 
     try:
-        name = quote(name, '/>_= ')  # TODO: Fix PY-5834 without using quote
+        name = _do_quote(name)  # TODO: Fix PY-5834 without using quote
     except:
         pass
 
@@ -351,20 +350,9 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value
         value = value[0:MAXIMUM_VARIABLE_REPRESENTATION_SIZE]
         value += '...'
 
-    # fix to work with unicode values
-    try:
-        if not IS_PY3K:
-            if value.__class__ == unicode:  # @UndefinedVariable
-                value = value.encode('utf-8')
-        else:
-            if value.__class__ == bytes:
-                value = value.encode('utf-8')
-    except TypeError:  # in java, unicode is a function
-        pass
-
     if is_pandas_container(type_qualifier, typeName, v) and var_custom_string_repr is None:
         value = pandas_to_str(v, typeName, value, pydevd_resolver.MAX_ITEMS_TO_HANDLE)
-    xml_value = ' value="%s"' % (make_valid_xml_value(quote(value, '/>_= ')))
+    xml_value = ' value="%s"' % (make_valid_xml_value(_do_quote(value)))
 
     xml_shape = ''
     try:
@@ -391,3 +379,31 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value
 
     return ''.join((xml, xml_qualifier, xml_value, xml_container, xml_shape, xml_type_renderer_id, additional_in_xml, ' />\n'))
 
+
+def _do_quote(elem):
+    """ Quote the elem safely,
+    e.g. encoding it first if necessary and decoding again after quoting.
+
+    Note that strings in Python 2 are 'str' or 'unicode' types,
+    'quote' function works only with 'str' and 'unicode' in ASCII types.
+    In Python 3 all strings are unicode and have 'str' type,
+    'quote' function works well with 'str' and 'bytes' types.
+
+    :param elem: name or value of variable
+    :type elem: str, unicode, bytes
+    :return: elem in UTF-8
+    :rtype: unicode, str
+    """
+    if not IS_PY3K:
+        if elem.__class__.__name__ == 'unicode':
+            # unicode to str
+            result = elem.encode('utf-8')
+            result = quote(result, '/>_= ')
+            # str to unicode in UTF-8
+            result = result.decode('utf-8')
+        else:
+            result = quote(elem, '/>_= ')
+    else:
+        result = quote(elem, '/>_= ')
+
+    return result

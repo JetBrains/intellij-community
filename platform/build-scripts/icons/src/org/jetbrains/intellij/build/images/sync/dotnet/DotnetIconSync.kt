@@ -7,9 +7,11 @@ import org.jetbrains.intellij.build.images.shutdownAppScheduledExecutorService
 import org.jetbrains.intellij.build.images.sync.*
 import java.util.*
 
-fun main() = DotnetIconSync.sync()
+object DotnetIconSync {
 
-internal object DotnetIconSync {
+  @JvmStatic
+  fun main(args: Array<String>) = sync()
+
   private class SyncPath(val iconsPath: String, val devPath: String)
 
   private val syncPaths = listOf(

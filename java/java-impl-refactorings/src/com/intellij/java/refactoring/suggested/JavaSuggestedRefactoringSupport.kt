@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring.suggested
 
 import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandler
@@ -40,8 +40,8 @@ class JavaSuggestedRefactoringSupport : SuggestedRefactoringSupport {
     }
   }
 
-  override fun importsRange(psiFile: PsiFile): TextRange {
-    return (psiFile as PsiJavaFile).importList!!.textRange
+  override fun importsRange(psiFile: PsiFile): TextRange? {
+    return (psiFile as? PsiJavaFile)?.importList!!.textRange
   }
 
   override fun nameRange(anchor: PsiElement): TextRange? {

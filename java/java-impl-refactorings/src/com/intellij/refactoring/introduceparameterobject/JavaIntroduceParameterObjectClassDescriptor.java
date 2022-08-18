@@ -336,7 +336,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
     }
 
     @Override
-    public void visitAssignmentExpression(PsiAssignmentExpression assignment) {
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignment) {
       super.visitAssignmentExpression(assignment);
       final PsiExpression lhs = assignment.getLExpression();
       final PsiExpression rhs = assignment.getRExpression();

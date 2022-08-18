@@ -9,3 +9,4 @@ import library.Foo
 fun test() {
     Foo.<caret>baz(1)
 }
+// FIR_COMPARISON

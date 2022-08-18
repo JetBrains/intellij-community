@@ -1,4 +1,4 @@
-// "Merge sequential 'if' statements" "true"
+// "Merge sequential 'if' statements" "true-preview"
 
 class ImplicitOr {
 

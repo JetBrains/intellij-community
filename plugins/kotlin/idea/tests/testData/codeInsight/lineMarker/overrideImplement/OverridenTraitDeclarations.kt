@@ -1,5 +1,5 @@
 // TODO: Declarations have no implementation and should be considered as "overloaded"
-interface <lineMarker descr="*">First</lineMarker> {
+interface <lineMarker descr="Is implemented by Second  Click or press ... to navigate">First</lineMarker> {
     val <lineMarker descr="<html><body>Is implemented in <br/>&nbsp;&nbsp;&nbsp;&nbsp;Second</body></html>">some</lineMarker>: Int
     var <lineMarker descr="<html><body>Is implemented in <br/>&nbsp;&nbsp;&nbsp;&nbsp;Second</body></html>">other</lineMarker>: String
         get

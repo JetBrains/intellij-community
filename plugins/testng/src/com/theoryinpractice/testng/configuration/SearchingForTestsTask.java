@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.theoryinpractice.testng.configuration;
 
@@ -171,7 +171,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
   }
 
   /**
-   * Old testng versions (< 7.0.0) would load dtd from internet iff the dtd is not exactly https://testng.org/testng-1.0.dtd
+   * Old testng versions (< 7.0.0) would load dtd from internet iff the dtd is not exactly <a href="https://testng.org/testng-1.0.dtd">testng-1.0.dtd</a>
    * Detect version from manifest is not possible now because manifest doesn't provide this information unfortunately
    */
   private boolean requireToDowngradeToHttp() {
@@ -184,7 +184,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
   private static String getVersion(PsiClass classFromCommon) {
     VirtualFile virtualFile = PsiUtilCore.getVirtualFile(classFromCommon);
     if (virtualFile != null) {
-      ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(classFromCommon.getProject());
+      ProjectFileIndex index = ProjectFileIndex.getInstance(classFromCommon.getProject());
       VirtualFile root = index.getClassRootForFile(virtualFile);
       if (root != null) {
         VirtualFileSystem fileSystem = root.getFileSystem();
@@ -220,7 +220,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
         FileUtil.writeToFile(myTempFile, path.getBytes(StandardCharsets.UTF_8), true);
         return;
       }
-      final Parser parser = new Parser(myData.getSuiteName());
+      final Parser parser = new Parser(new FileInputStream(myData.getSuiteName()));
       parser.setLoadClasses(false);
       final Collection<XmlSuite> suites = parser.parse();
       for (XmlSuite suite : suites) {

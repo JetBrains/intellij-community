@@ -371,6 +371,21 @@ public class XDebuggerAssertions extends XDebuggerTestUtil {
     );
   }
 
+  public static void assertVariablesDontContain(@NotNull List<? extends XValue> vars, String... notExpected) {
+    List<String> actualNames = new ArrayList<>();
+    for (XValue each : vars) {
+      actualNames.add(computePresentation(each).myName);
+    }
+
+    String allVariablesNames = StringUtil.join(actualNames, ", ");
+    actualNames.retainAll(List.of(notExpected));
+
+    assertTrue("Present variables: " + StringUtil.join(actualNames, ", ")
+               + "\nAll Variables: " + allVariablesNames,
+               actualNames.isEmpty()
+    );
+  }
+
   public static void assertSourcePosition(@NotNull XValue value, @NotNull VirtualFile file, int offset) {
     final XTestNavigatable n = new XTestNavigatable();
     ApplicationManager.getApplication().invokeAndWait(() -> value.computeSourcePosition(n));

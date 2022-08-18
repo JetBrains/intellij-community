@@ -6,7 +6,6 @@ import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.FileEditorLocation
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
@@ -87,8 +86,6 @@ class JupyterViewOnlyFileEditor private constructor(val myFile: VirtualFile) : U
   override fun addPropertyChangeListener(listener: PropertyChangeListener) = Unit
 
   override fun removePropertyChangeListener(listener: PropertyChangeListener) = Unit
-
-  override fun getCurrentLocation(): FileEditorLocation? = null
 
   override fun dispose() {
     scope.cancel()

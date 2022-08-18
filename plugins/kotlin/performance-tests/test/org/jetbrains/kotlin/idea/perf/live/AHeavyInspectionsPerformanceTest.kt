@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.perf.live
 
@@ -22,7 +22,6 @@ import org.junit.runner.RunWith
 class AHeavyInspectionsPerformanceTest : UsefulTestCase() {
     private val listOfFiles = arrayOf(
         "libraries/tools/kotlin-gradle-plugin-integration-tests/src/test/kotlin/org/jetbrains/kotlin/gradle/NewMultiplatformIT.kt",
-        "idea/idea-analysis/src/org/jetbrains/kotlin/idea/util/PsiPrecedences.kt",
         "compiler/psi/src/org/jetbrains/kotlin/psi/KtElement.kt",
         "compiler/psi/src/org/jetbrains/kotlin/psi/KtFile.kt",
         "compiler/psi/src/org/jetbrains/kotlin/psi/KtImportInfo.kt"

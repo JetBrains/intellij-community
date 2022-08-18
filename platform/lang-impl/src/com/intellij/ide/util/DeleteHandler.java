@@ -9,6 +9,7 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -64,6 +65,11 @@ public final class DeleteHandler {
   private DeleteHandler() { }
 
   public static class DefaultDeleteProvider implements DeleteProvider {
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
     @Override
     public boolean canDeleteElement(@NotNull DataContext dataContext) {
       if (CommonDataKeys.PROJECT.getData(dataContext) == null) {

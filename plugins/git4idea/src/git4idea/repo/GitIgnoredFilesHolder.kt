@@ -8,7 +8,7 @@ import com.intellij.openapi.vcs.changes.VcsManagedFilesHolder
 import git4idea.GitVcs
 import git4idea.ignore.GitRepositoryIgnoredFilesHolder
 
-class GitIgnoredFilesHolder(val manager: GitRepositoryManager) : VcsManagedFilesHolderBase() {
+class GitIgnoredFilesHolder private constructor(val manager: GitRepositoryManager) : VcsManagedFilesHolderBase() {
   private val allHolders get() = manager.repositories.asSequence().map { it.ignoredFilesHolder }
 
   override fun isInUpdatingMode() = allHolders.any(GitRepositoryIgnoredFilesHolder::isInUpdateMode)

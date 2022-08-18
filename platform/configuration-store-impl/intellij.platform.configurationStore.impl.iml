@@ -15,7 +15,6 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.jps" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
-    <orderEntry type="module" module-name="intellij.platform.bootstrap" />
     <orderEntry type="library" name="lz4-java" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer" />
@@ -27,5 +26,6 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="library" name="aalto-xml" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
   </component>
 </module>

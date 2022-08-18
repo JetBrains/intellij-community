@@ -68,7 +68,7 @@ public final class CreateSwitchBranchesUtil {
     final PsiCodeBlock body = switchBlock.getBody();
     final PsiExpression switchExpression = switchBlock.getExpression();
     PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(switchExpression != null ? switchExpression.getType() : null);
-    boolean isPatternsGenerated = selectorClass != null && selectorClass.hasModifierProperty(PsiModifier.SEALED);
+    boolean isPatternsGenerated = selectorClass != null && !selectorClass.isEnum() && selectorClass.hasModifierProperty(PsiModifier.SEALED);
     if (body == null) {
       // replace entire switch statement if no code block is present
       @NonNls final StringBuilder newStatementText = new StringBuilder();

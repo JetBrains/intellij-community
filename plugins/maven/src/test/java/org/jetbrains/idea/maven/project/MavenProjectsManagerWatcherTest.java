@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
+import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Test;
 
@@ -42,7 +43,8 @@ public class MavenProjectsManagerWatcherTest extends MavenMultiVersionImportingT
     initProjectsManager(true);
 
     createProjectPom(createPomContent("test", "project"));
-    addManagedFiles(myProjectPom);
+    importProject();
+    //addManagedFiles(myProjectPom);
   }
 
   @Test
@@ -55,10 +57,12 @@ public class MavenProjectsManagerWatcherTest extends MavenMultiVersionImportingT
   }
 
   @Test 
-  public void testChangeConfigInOurProjectShouldCallUpdatePomFile() throws IOException {
+  public void testChangeConfigInOurProjectShouldCallUpdatePomFile() throws Exception {
     assertEmpty(myNotificationAware.getProjectsWithNotification());
     VirtualFile mavenConfig = createProjectSubFile(".mvn/maven.config");
+    waitForImportCompletion();
     replaceContent(mavenConfig, "-Xmx2048m -Xms1024m -XX:MaxPermSize=512m -Djava.awt.headless=true");
+//    assertTrue(MavenImportingManager.getInstance(myProject).isImportingInProgress());
     assertNotEmpty(myNotificationAware.getProjectsWithNotification());
   }
 

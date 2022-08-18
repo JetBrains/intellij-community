@@ -24,16 +24,16 @@ public abstract class ColorSettingsPages {
    * Registers a custom page for the "Colors and Fonts" settings dialog.
    *
    * @param page the instance of the page to register.
-   *
+   * <p>
    * Used only in special cases when pages are registered dynamically (Rider).
-   * Otherwise pages should be registered as extensions with {@link ColorSettingsPage#EP_NAME}
+   * Otherwise, pages should be registered as extensions with {@link ColorSettingsPage#EP_NAME}
    */
   public abstract void registerPage(ColorSettingsPage page);
 
   /**
    * Returns the list of all registered pages in the "Colors and Fonts" dialog.
    *
-   * @return the list of registered pages.
+   * @return the array of registered pages.
    */
   public abstract ColorSettingsPage[] getRegisteredPages();
 

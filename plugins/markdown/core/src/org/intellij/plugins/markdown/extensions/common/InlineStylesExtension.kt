@@ -19,8 +19,7 @@ internal class InlineStylesExtension(private val project: Project?) : MarkdownBr
 
   override fun loadResource(resourceName: String): ResourceProvider.Resource {
     val settings = project?.let(MarkdownSettings::getInstance)
-    val text = settings?.customStylesheetText.takeIf { settings?.useCustomStylesheetText == true }
-    return when (text) {
+    return when (val text = settings?.customStylesheetText.takeIf { settings?.useCustomStylesheetText == true }) {
       null -> ResourceProvider.Resource(emptyStylesheet)
       else -> ResourceProvider.Resource(text.toByteArray())
     }
@@ -29,7 +28,7 @@ internal class InlineStylesExtension(private val project: Project?) : MarkdownBr
   override fun dispose() = Unit
 
   class Provider: MarkdownBrowserPreviewExtension.Provider {
-    override fun createBrowserExtension(panel: MarkdownHtmlPanel): MarkdownBrowserPreviewExtension? {
+    override fun createBrowserExtension(panel: MarkdownHtmlPanel): MarkdownBrowserPreviewExtension {
       return InlineStylesExtension(panel.project)
     }
   }

@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.nio.channels.SeekableByteChannel;
 import java.util.HashSet;
 
+import static org.jetbrains.intellij.build.tasks.ArchiveKt.assertRelativePathIsCorrectForPackaging;
+
 public class NoDuplicateZipArchiveOutputStream extends ZipArchiveOutputStream {
   private final HashSet<String> entries = new HashSet<>();
 
@@ -18,9 +20,14 @@ public class NoDuplicateZipArchiveOutputStream extends ZipArchiveOutputStream {
 
   @Override
   public void putArchiveEntry(ArchiveEntry archiveEntry) throws IOException {
-    if (!entries.add(archiveEntry.getName())) {
-      throw new FileExistsException("File " + archiveEntry.getName() + " already exists");
+    final String entryName = archiveEntry.getName();
+
+    assertRelativePathIsCorrectForPackaging(entryName);
+
+    if (!entries.add(entryName)) {
+      throw new FileExistsException("File " + entryName + " already exists");
     }
+
     super.putArchiveEntry(archiveEntry);
   }
 }

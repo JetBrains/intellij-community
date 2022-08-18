@@ -9,9 +9,17 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
+import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
+import com.intellij.workspaceModel.storage.EntityChange;
+import com.intellij.workspaceModel.storage.VersionedStorageChange;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 
 public final class PythonModulePathCache extends PythonPathCache implements Disposable {
@@ -25,10 +33,13 @@ public final class PythonModulePathCache extends PythonPathCache implements Disp
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
+        if (event.isCausedByWorkspaceModelChangesOnly()) return;
         updateCacheForSdk(module);
         clearCache();
       }
     });
+    WorkspaceModelTopics.getInstance(module.getProject()).subscribeImmediately(connection, new WorkspaceListener(module));
+
     connection.subscribe(PyPackageManager.PACKAGE_MANAGER_TOPIC, sdk -> {
       final Sdk moduleSdk = PythonSdkUtil.findPythonSdk(module);
       if (sdk == moduleSdk) {
@@ -38,6 +49,36 @@ public final class PythonModulePathCache extends PythonPathCache implements Disp
     });
     VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(), this);
     updateCacheForSdk(module);
+  }
+
+  private class WorkspaceListener implements WorkspaceModelChangeListener {
+    private final Module myModule;
+
+    WorkspaceListener(Module module) {
+      myModule = module;
+    }
+
+    @Override
+    public void changed(@NotNull VersionedStorageChange event) {
+      updateCacheForSdk(myModule);
+      List<EntityChange<ModuleEntity>> changes = event.getChanges(ModuleEntity.class);
+      for (EntityChange<ModuleEntity> change : changes) {
+        ModuleEntity entity = null;
+        if (change instanceof EntityChange.Replaced) {
+          entity = ((EntityChange.Replaced<ModuleEntity>)change).getOldEntity();
+        }
+        else if (change instanceof EntityChange.Removed) {
+          entity = ((EntityChange.Removed<ModuleEntity>)change).getEntity();
+        }
+        if (entity != null) {
+          var module = ModuleEntityUtils.findModule(entity, event.getStorageBefore());
+          if (module == myModule) {
+            clearCache();
+            return;
+          }
+        }
+      }
+    }
   }
 
   private static void updateCacheForSdk(Module module) {

@@ -62,7 +62,7 @@ public class CallToSuspiciousStringMethodInspection extends BaseInspection {
     private static final CallMatcher TRIM = CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING, "trim").parameterCount(0);
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       if (SUSPICIOUS_METHODS.test(expression)) {
         final PsiExpressionList argumentList = expression.getArgumentList();
         final PsiExpression[] arguments = argumentList.getExpressions();

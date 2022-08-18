@@ -33,8 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- *
  * @author shkate@jetbrains.com
  */
 public class PsiTypeTokenizer extends Tokenizer<PsiTypeElement> {

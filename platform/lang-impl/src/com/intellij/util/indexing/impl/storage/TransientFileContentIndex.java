@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 
-public abstract class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwareMapReduceIndex.IndexerIdHolder>
+public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwareMapReduceIndex.IndexerIdHolder>
   extends VfsAwareMapReduceIndex<Key, Value, FileCachedData> {
   private static final Logger LOG = Logger.getInstance(TransientFileContentIndex.class);
 
@@ -186,11 +186,6 @@ public abstract class TransientFileContentIndex<Key, Value, FileCachedData exten
                                                                                                                        @NotNull VfsAwareIndexStorageLayout<Key, Value> indexStorageLayout,
                                                                                                                        @Nullable ReadWriteLock lock)
     throws IOException {
-    return new TransientFileContentIndex<>(extension, indexStorageLayout, lock) {
-      @Override
-      public @NotNull IndexerIdHolder instantiateFileData() {
-        return new VfsAwareMapReduceIndex.IndexerIdHolder();
-      }
-    };
+    return new TransientFileContentIndex<>(extension, indexStorageLayout, lock);
   }
 }

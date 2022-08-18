@@ -13,6 +13,10 @@ class IntellijIconClassGeneratorConfig : IconsClasses() {
   override fun getConfigForModule(moduleName: String): IntellijIconClassGeneratorModuleConfig? {
     @Suppress("SpellCheckingInspection")
     return when (moduleName) {
+      "intellij.devkit" -> IntellijIconClassGeneratorModuleConfig(
+        className = "DevKitIcons",
+        packageName = "org.jetbrains.idea.devkit",
+      )
       // force generating "Groovy" inner class to preserve backward compatiblity
       "intellij.groovy.psi" -> IntellijIconClassGeneratorModuleConfig(className = "JetgroovyIcons", iconDirectory = "icons")
       "intellij.clouds.docker" -> IntellijIconClassGeneratorModuleConfig(className = "DockerIcons", packageName = "com.intellij.docker")
@@ -21,6 +25,7 @@ class IntellijIconClassGeneratorConfig : IconsClasses() {
         packageName = "com.intellij.lang.ognl",
         iconDirectory = "icons",
       )
+
       "intellij.struts2.dom" -> IntellijIconClassGeneratorModuleConfig(
         className = "Struts2Icons",
         packageName = "com.intellij.struts2",
@@ -40,18 +45,20 @@ class IntellijIconClassGeneratorConfig : IconsClasses() {
         className = "SpringApiIcons",
         packageName = "com.intellij.spring",
       )
+
       "intellij.spring.mvc.core" -> IntellijIconClassGeneratorModuleConfig(
         className = "SpringMvcApiIcons",
         packageName = "com.intellij.spring.mvc",
       )
+
       "intellij.spring.persistence" -> IntellijIconClassGeneratorModuleConfig(
         className = "SpringPersistenceIntegrationIcons",
         packageName = "com.intellij.spring.persistence.integration",
       )
-      "intellij.postcss" -> IntellijIconClassGeneratorModuleConfig(
-        className = "PostCssIcons",
-        packageName = "org.intellij.plugins.postcss",
-        iconDirectory = "icons",
+
+      "intellij.spring.boot" -> IntellijIconClassGeneratorModuleConfig(
+        className = "SpringBootApiIcons",
+        packageName = "com.intellij.spring.boot",
       )
 
       // default name 'com.goide.GOIcons' clashes with existing 'com.goide.GoIcons'
@@ -59,6 +66,7 @@ class IntellijIconClassGeneratorConfig : IconsClasses() {
       "intellij.toml.core" -> IntellijIconClassGeneratorModuleConfig(className = "TomlIcons", packageName = "org.toml")
       "intellij.markdown.core" -> IntellijIconClassGeneratorModuleConfig(className = "MarkdownIcons",
                                                                          packageName = "org.intellij.plugins.markdown")
+
       "intellij.grazie.core" -> IntellijIconClassGeneratorModuleConfig(className = "GrazieIcons", packageName = "com.intellij.grazie.icons")
       else -> super.getConfigForModule(moduleName)
     }

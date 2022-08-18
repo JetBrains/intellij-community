@@ -24,6 +24,10 @@ public class UnusedDeclarationKtTest20 extends AbstractUnusedDeclarationTest {
     doTest();
   }
 
+  public void testImplementedInterface() {
+    doTest();
+  }
+
   public void testReachableFromMain() {
     myTool.ADD_MAINS_TO_ENTRIES = true;
     doTest();
@@ -42,9 +46,33 @@ public class UnusedDeclarationKtTest20 extends AbstractUnusedDeclarationTest {
   public void testPrimaryConstructor() {
     doTest();
   }
+
+  public void testPrimaryConstructor2() {
+    myTool.getSharedLocalInspectionTool().PARAMETER = true;
+    myTool.getSharedLocalInspectionTool().LOCAL_VARIABLE = false;
+    doTest("deadCode/" + getTestName(true), myToolWrapper);
+  }
   
   public void testReceiverParameter() {
-    doTest();
+    myTool.getSharedLocalInspectionTool().PARAMETER = true;
+    myTool.getSharedLocalInspectionTool().LOCAL_VARIABLE = false;
+    doTest("deadCode/" + getTestName(true), myToolWrapper);
+  }
+
+  public void testOperatorInWhen() {
+    doTest("deadCode/" + getTestName(true), myToolWrapper);
+  }
+
+  public void testCallableParameter() {
+    myTool.getSharedLocalInspectionTool().PARAMETER = true;
+    myTool.getSharedLocalInspectionTool().LOCAL_VARIABLE = false;
+    doTest("deadCode/" + getTestName(true), myToolWrapper);
+  }
+
+  public void testMainParameter() {
+    myTool.getSharedLocalInspectionTool().PARAMETER = true;
+    myTool.getSharedLocalInspectionTool().LOCAL_VARIABLE = false;
+    doTest("deadCode/" + getTestName(true), myToolWrapper);
   }
 
   public void testStaticMethods() {
@@ -71,6 +99,14 @@ public class UnusedDeclarationKtTest20 extends AbstractUnusedDeclarationTest {
     doTest();
   }
 
+  public void testPropertyReference() {
+    doTest();
+  }
+
+  public void testReferenceInLambda() {
+    doTest();
+  }
+
   public void testNonJvmReferences() {
     doTest();
   }
@@ -93,39 +129,6 @@ public class UnusedDeclarationKtTest20 extends AbstractUnusedDeclarationTest {
   }
 
   public void testTopLevelFunction() {
-    doTest();
-  }
-
-  // TODO enable kotlin properties
-  public void _testNoPropertiesUsage() {
-    doTest();
-  }
-
-  public void _testChildGetterUsage() {
-    doTest();
-  }
-
-  public void _testParentGetterUsage() {
-    doTest();
-  }
-
-  public void _testChildSetterUsage() {
-    doTest();
-  }
-
-  public void _testParentSetterUsage() {
-    doTest();
-  }
-
-  public void _testChildGetterSetterUsage() {
-    doTest();
-  }
-
-  public void _testCustomGetterValUsage() {
-    doTest();
-  }
-
-  public void _testCustomGetterVarUsage() {
     doTest();
   }
 }

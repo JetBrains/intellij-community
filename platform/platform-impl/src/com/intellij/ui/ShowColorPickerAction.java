@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
@@ -35,6 +36,11 @@ public class ShowColorPickerAction extends DumbAwareAction {
       return;
     }
     e.getPresentation().setEnabledAndVisible(true);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   private static Window parent() {

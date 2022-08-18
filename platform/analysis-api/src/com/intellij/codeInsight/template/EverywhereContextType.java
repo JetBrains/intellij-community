@@ -6,15 +6,13 @@ import com.intellij.analysis.AnalysisBundle;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-
 public class EverywhereContextType extends TemplateContextType {
   public EverywhereContextType() {
-    super("OTHER", AnalysisBundle.message("template.context.everywhere"), null);
+    super(AnalysisBundle.message("template.context.everywhere"));
   }
 
   @Override
   public boolean isInContext(@NotNull PsiFile file, int offset) {
     return true;
   }
-
 }

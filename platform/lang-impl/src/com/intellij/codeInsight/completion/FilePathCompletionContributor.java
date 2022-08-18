@@ -351,7 +351,7 @@ public class FilePathCompletionContributor extends CompletionContributor {
     }
 
     @Override
-    public void renderElement(LookupElementPresentation presentation) {
+    public void renderElement(@NotNull LookupElementPresentation presentation) {
       final String relativePath = getRelativePath();
 
       final StringBuilder sb = new StringBuilder();

@@ -160,7 +160,7 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
     }
 
     @Override
-    public void visitLiteralExpression(PsiLiteralExpression expression) {
+    public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
       TextBlockModel model = TextBlockModel.create(expression);
       if (model == null) return;
       TextRange contentRange = getContentRange(model.myRange);

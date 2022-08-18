@@ -1,4 +1,4 @@
-// "Set variable type to 'HashMap<String, List<String>>'" "true"
+// "Set variable type to 'HashMap<String, List<String>>'" "true-preview"
 import java.util.HashMap;
 import java.util.List;
 

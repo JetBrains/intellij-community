@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,7 +27,7 @@ import java.util.stream.Stream;
 
 public class JavaHomeFinderBasic {
   @SuppressWarnings("NonConstantLogger") private final Logger log = Logger.getInstance(getClass());
-  private final List<Supplier<Set<String>>> myFinders = new ArrayList<>();
+  private final List<Supplier<? extends Set<String>>> myFinders = new ArrayList<>();
   private final JavaHomeFinder.SystemInfoProvider mySystemInfo;
 
   private boolean myCheckDefaultInstallDir = true;
@@ -87,7 +87,7 @@ public class JavaHomeFinderBasic {
     return scanAll(ContainerUtil.map(mySpecifiedPaths, Paths::get), true);
   }
 
-  protected void registerFinder(@NotNull Supplier<Set<String>> finder) {
+  protected void registerFinder(@NotNull Supplier<? extends Set<String>> finder) {
     myFinders.add(finder);
   }
 
@@ -95,7 +95,7 @@ public class JavaHomeFinderBasic {
   public final Set<String> findExistingJdks() {
     Set<String> result = new TreeSet<>();
 
-    for (Supplier<Set<String>> action : myFinders) {
+    for (Supplier<? extends Set<String>> action : myFinders) {
       try {
         result.addAll(action.get());
       }
@@ -288,7 +288,7 @@ public class JavaHomeFinderBasic {
     var result = new HashSet<@NotNull String>();
 
     try (Stream<Path> stream = Files.list(javasDir)) {
-      List<Path> innerDirectories = stream.filter(d -> Files.isDirectory(d)).collect(Collectors.toList());
+      List<Path> innerDirectories = stream.filter(d -> Files.isDirectory(d)).toList();
       for (Path innerDir : innerDirectories) {
         var home = innerDir;
         var releaseFile = home.resolve("release");
@@ -367,7 +367,7 @@ public class JavaHomeFinderBasic {
 
     // finally, try the usual location in Unix or MacOS
     if (!(this instanceof JavaHomeFinderWindows) && !(this instanceof JavaHomeFinderWsl)) {
-      Path installsDir = getPathInUserHome("asdf/installs");
+      Path installsDir = getPathInUserHome(".asdf/installs");
       if (installsDir != null && safeIsDirectory(installsDir)) return installsDir;
     }
 

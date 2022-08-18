@@ -1,8 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.duplicateThrows;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.MethodThrowsFix;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
@@ -43,7 +46,7 @@ public class DuplicateThrowsInspection extends AbstractBaseJavaLocalInspectionTo
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
 
-      @Override public void visitMethod(PsiMethod method) {
+      @Override public void visitMethod(@NotNull PsiMethod method) {
         PsiReferenceList throwsList = method.getThrowsList();
         PsiJavaCodeReferenceElement[] refs = throwsList.getReferenceElements();
         PsiClassType[] types = throwsList.getReferencedTypes();
@@ -77,7 +80,7 @@ public class DuplicateThrowsInspection extends AbstractBaseJavaLocalInspectionTo
               }
             }
             if (problem != null) {
-              holder.registerProblem(ref, problem, ProblemHighlightType.LIKE_UNUSED_SYMBOL, new MethodThrowsFix.RemoveFirst(method, type, false));
+              holder.registerProblem(ref, problem, new MethodThrowsFix.RemoveFirst(method, type, false));
             }
           }
         }

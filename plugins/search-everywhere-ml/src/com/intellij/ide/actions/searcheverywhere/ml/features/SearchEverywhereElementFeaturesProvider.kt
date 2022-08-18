@@ -2,11 +2,14 @@
 package com.intellij.ide.actions.searcheverywhere.ml.features
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.project.Project
+import com.intellij.textMatching.PrefixMatchingType
 import com.intellij.textMatching.PrefixMatchingUtil
+import org.jetbrains.annotations.ApiStatus
 import kotlin.math.round
 
+@ApiStatus.Internal
 abstract class SearchEverywhereElementFeaturesProvider(private val supportedContributorIds: List<String>) {
   constructor(vararg supportedTabs: Class<out SearchEverywhereContributor<*>>) : this(supportedTabs.map { it.simpleName })
 
@@ -21,64 +24,89 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
     fun getFeatureProvidersForContributor(contributorId: String): List<SearchEverywhereElementFeaturesProvider> {
       return EP_NAME.extensionList.filter { it.isContributorSupported(contributorId) }
     }
-  }
 
-  /**
-   * Returns data to be cached in the search session
-   */
-  open fun getDataToCache(project: Project?): Any? {
-    return null
+    internal val NAME_LENGTH = EventFields.RoundedInt("nameLength")
+
+    internal val nameFeatureToField = hashMapOf<String, EventField<*>>(
+      "prefix_same_start_count" to EventFields.Int("${PrefixMatchingUtil.baseName}SameStartCount"),
+      "prefix_greedy_score" to EventFields.Double("${PrefixMatchingUtil.baseName}GreedyScore"),
+      "prefix_greedy_with_case_score" to EventFields.Double("${PrefixMatchingUtil.baseName}GreedyWithCaseScore"),
+      "prefix_matched_words_score" to EventFields.Double("${PrefixMatchingUtil.baseName}MatchedWordsScore"),
+      "prefix_matched_words_relative" to EventFields.Double("${PrefixMatchingUtil.baseName}MatchedWordsRelative"),
+      "prefix_matched_words_with_case_score" to EventFields.Double("${PrefixMatchingUtil.baseName}MatchedWordsWithCaseScore"),
+      "prefix_matched_words_with_case_relative" to EventFields.Double("${PrefixMatchingUtil.baseName}MatchedWordsWithCaseRelative"),
+      "prefix_skipped_words" to EventFields.Int("${PrefixMatchingUtil.baseName}SkippedWords"),
+      "prefix_matching_type" to EventFields.String(
+        "${PrefixMatchingUtil.baseName}MatchingType", PrefixMatchingType.values().map { it.name }
+      ),
+      "prefix_exact" to EventFields.Boolean("${PrefixMatchingUtil.baseName}Exact"),
+      "prefix_matched_last_word" to EventFields.Boolean("${PrefixMatchingUtil.baseName}MatchedLastWord"),
+    )
+
+    internal fun roundDouble(value: Double): Double {
+      if (!value.isFinite()) return -1.0
+      return round(value * 100000) / 100000
+    }
   }
 
   /**
    * Returns true if the Search Everywhere contributor is supported by the feature provider.
+   *
+   * By default, every feature provider has a list of supported contributors, but it's possible to override this logic.
    */
-  fun isContributorSupported(contributorId: String): Boolean {
+  open fun isContributorSupported(contributorId: String): Boolean {
     return supportedContributorIds.contains(contributorId)
   }
+
+  abstract fun getFeaturesDeclarations(): List<EventField<*>>
 
   abstract fun getElementFeatures(element: Any,
                                   currentTime: Long,
                                   searchQuery: String,
                                   elementPriority: Int,
-                                  cache: Any?): Map<String, Any>
+                                  cache: FeaturesProviderCache?): List<EventPair<*>>
+
+  internal fun addIfTrue(result: MutableList<EventPair<*>>, key: BooleanEventField, value: Boolean) {
+    if (value) {
+      result.add(key.with(true))
+    }
+  }
 
   protected fun withUpperBound(value: Int): Int {
     if (value > 100) return 101
     return value
   }
 
-  internal fun roundDouble(value: Double): Double {
-    if (!value.isFinite()) return -1.0
-    return round(value * 100000) / 100000
-  }
-
   /**
    * Associates the specified key with the value, only if the value is not null.
    */
-  protected fun <K, V> MutableMap<K, V>.putIfValueNotNull(key: K, value: V?) {
+  protected fun <T> MutableList<EventPair<*>>.putIfValueNotNull(key: EventField<T>, value: T?) {
     value?.let {
-      this[key] = it
+      add(key.with(it))
     }
   }
 
-  protected fun getNameMatchingFeatures(nameOfFoundElement: String, searchQuery: String): Map<String, Any> {
-    fun changeToCamelCase(str: String): String {
-      val words = str.split('_')
-      val firstWord = words.first()
-      if (words.size == 1) {
-        return firstWord
-      } else {
-        return firstWord.plus(
-          words.subList(1, words.size)
-            .joinToString(separator = "") { s -> s.replaceFirstChar { it.uppercaseChar() } }
-        )
-      }
-    }
-
+  protected fun getNameMatchingFeatures(nameOfFoundElement: String, searchQuery: String): Collection<EventPair<*>> {
     val features = mutableMapOf<String, Any>()
     PrefixMatchingUtil.calculateFeatures(nameOfFoundElement, searchQuery, features)
-    return features.mapKeys { changeToCamelCase(it.key) }  // Change snake case to camel case for consistency with other feature names.
-      .mapValues { if (it.value is Double) roundDouble(it.value as Double) else it.value }
+    val result = arrayListOf<EventPair<*>>(
+      NAME_LENGTH.with(nameOfFoundElement.length)
+    )
+    features.forEach { (key, value) ->
+      val field = nameFeatureToField[key]
+      if (value is Boolean && field is BooleanEventField) {
+        result.add(field.with(value))
+      }
+      else if (value is Double && field is DoubleEventField) {
+        result.add(field.with(roundDouble(value)))
+      }
+      else if (value is Int && field is IntEventField) {
+        result.add(field.with(value))
+      }
+      else if (value is Enum<*> && field is StringEventField) {
+        result.add(field.with(value.toString()))
+      }
+    }
+    return result
   }
 }

@@ -1,7 +1,7 @@
 // "Remove 'inline' modifier" "false"
-// ACTION: Make 'foo' public
-// ACTION: Make 'bar' private
 // ACTION: Expand boolean expression to 'if else'
+// ACTION: Make 'bar' private
+// ACTION: Make 'foo' public
 // ACTION: Remove braces from all 'if' statements
 // ERROR: Public-API inline function cannot access non-public-API 'private final val foo: Boolean defined in C'
 // WITH_STDLIB

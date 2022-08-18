@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.impl.actions.DisableHighlightingIntentionAction;
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.intention.*;
 import com.intellij.codeInspection.*;
@@ -934,6 +935,10 @@ public class HighlightInfo implements Segment {
           }
           return actions;
         }
+        IntentionAction action = IntentionActionDelegate.unwrap(myAction);
+        if (!(action instanceof EmptyIntentionAction)) {
+          newOptions.add(new DisableHighlightingIntentionAction(toolWrapper.getShortName()));
+        }
         ContainerUtil.addIfNotNull(newOptions, fixAllIntention);
         if (wrappedTool instanceof CustomSuppressableInspectionTool) {
           IntentionAction[] suppressActions = ((CustomSuppressableInspectionTool)wrappedTool).getSuppressActions(element);
@@ -947,7 +952,6 @@ public class HighlightInfo implements Segment {
             newOptions.addAll(ContainerUtil.map(suppressFixes, SuppressIntentionActionFromFix::convertBatchToSuppressIntentionAction));
           }
         }
-
       }
       if (myProblemGroup instanceof SuppressableProblemGroup) {
         IntentionAction[] suppressActions = ((SuppressableProblemGroup)myProblemGroup).getSuppressActions(element);

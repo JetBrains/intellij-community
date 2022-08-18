@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.ide.DataManager;
@@ -11,6 +11,7 @@ import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ui.*;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.TreeUIHelper;
@@ -18,6 +19,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.treeStructure.SimpleTree;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -31,7 +33,6 @@ import java.util.Objects;
 
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
 import static com.intellij.util.ContentsUtil.addContent;
-import static com.intellij.util.containers.UtilKt.stream;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public final class IntersectingLocalChangesPanel {
@@ -55,13 +56,14 @@ public final class IntersectingLocalChangesPanel {
 
     DataManager.registerDataProvider(panel, dataId -> {
       if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-        return getNavigatableArray(myProject, stream(tree.getSelectionPaths())
+        JBIterable<VirtualFile> files = JBIterable.of(tree.getSelectionPaths())
           .map(TreePath::getLastPathComponent)
           .map(node -> (ChangesBrowserNode<?>)node)
-          .flatMap(ChangesBrowserNode::getFilePathsUnderStream)
+          .flatMap(ChangesBrowserNode::iterateFilePathsUnder)
           .map(FilePath::getVirtualFile)
           .filter(Objects::nonNull)
-          .distinct());
+          .unique();
+        return getNavigatableArray(myProject, files);
       }
 
       return null;
@@ -107,7 +109,7 @@ public final class IntersectingLocalChangesPanel {
                                                     @TabTitle @NotNull String title,
                                                     @NotNull List<? extends FilePath> files) {
     IntersectingLocalChangesPanel intersectingPanel = new IntersectingLocalChangesPanel(project, files);
-    Content content = ContentFactory.SERVICE.getInstance().createContent(intersectingPanel.myPanel, title, true);
+    Content content = ContentFactory.getInstance().createContent(intersectingPanel.myPanel, title, true);
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
 
     addContent(toolWindow.getContentManager(), content, true);

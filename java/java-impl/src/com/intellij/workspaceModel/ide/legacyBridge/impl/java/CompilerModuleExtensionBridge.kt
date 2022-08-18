@@ -16,16 +16,16 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridgeFactory
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableJavaModuleSettingsEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addJavaModuleSettingsEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.JavaModuleSettingsEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 
 class CompilerModuleExtensionBridge(
   private val module: ModuleBridge,
   private val entityStorage: VersionedEntityStorage,
-  private val diff: WorkspaceEntityStorageDiffBuilder?
+  private val diff: MutableEntityStorage?
 ) : CompilerModuleExtension(), ModuleExtensionBridge {
 
   private var changed = false
@@ -78,7 +78,7 @@ class CompilerModuleExtensionBridge(
   override fun isChanged(): Boolean = changed
   override fun dispose() = Unit
 
-  private fun updateJavaSettings(updater: ModifiableJavaModuleSettingsEntity.() -> Unit) {
+  private fun updateJavaSettings(updater: JavaModuleSettingsEntity.Builder.() -> Unit) {
     if (diff == null) {
       error("Read-only $javaClass")
     }
@@ -97,7 +97,7 @@ class CompilerModuleExtensionBridge(
       source = moduleSource
     )
 
-    diff.modifyEntity(ModifiableJavaModuleSettingsEntity::class.java, oldJavaSettings, updater)
+    diff.modifyEntity(JavaModuleSettingsEntity.Builder::class.java, oldJavaSettings, updater)
     changed = true
   }
 
@@ -165,7 +165,7 @@ class CompilerModuleExtensionBridge(
   companion object : ModuleExtensionBridgeFactory<CompilerModuleExtensionBridge> {
     override fun createExtension(module: ModuleBridge,
                                  entityStorage: VersionedEntityStorage,
-                                 diff: WorkspaceEntityStorageDiffBuilder?): CompilerModuleExtensionBridge {
+                                 diff: MutableEntityStorage?): CompilerModuleExtensionBridge {
       return CompilerModuleExtensionBridge(module, entityStorage, diff)
     }
   }

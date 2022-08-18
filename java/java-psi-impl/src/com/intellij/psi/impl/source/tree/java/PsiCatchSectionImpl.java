@@ -15,7 +15,6 @@ import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -105,7 +104,7 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
       //     declared to the left of Cj for the same try statement, T is not assignable to Ei ...
       final PsiParameter[] parameters = statement.getCatchBlockParameters();
       final int currentIdx = ArrayUtil.find(parameters, parameter);
-      List<PsiType> uncaughtTypes = ContainerUtil.mapNotNull(thrownTypes, (NullableFunction<PsiClassType, PsiType>)thrownType -> {
+      List<PsiType> uncaughtTypes = ContainerUtil.mapNotNull(thrownTypes, thrownType -> {
         for (int i = 0; i < currentIdx; i++) {
           final PsiType catchType = parameters[i].getType();
           if (catchType.isAssignableFrom(thrownType)) return null;
@@ -167,7 +166,7 @@ public class PsiCatchSectionImpl extends CompositePsiElement implements PsiCatch
     if (catchBlock != null) {
       catchBlock.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
+        public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
           super.visitReferenceExpression(expression);
           if (expression.resolve() == parameter && PsiUtil.isAccessedForWriting(expression)) {
             result[0] = false;

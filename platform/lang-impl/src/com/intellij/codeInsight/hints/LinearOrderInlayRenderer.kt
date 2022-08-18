@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.InlayHintsUtils.produceUpdatedRootList
@@ -25,6 +25,18 @@ abstract class LinearOrderInlayRenderer<Constraint : Any>(
   private val createPresentation: (List<ConstrainedPresentation<*, Constraint>>) -> InlayPresentation,
   private val comparator: Comparator<ConstrainedPresentation<*, Constraint>> = compareBy { it.priority }
 ) : PresentationContainerRenderer<Constraint> {
+
+  @Deprecated("Use constructor with [Comparator] parameter")
+  constructor(
+    constrainedPresentations: Collection<ConstrainedPresentation<*, Constraint>>,
+    createPresentation: (List<ConstrainedPresentation<*, Constraint>>) -> InlayPresentation,
+    comparator: (ConstrainedPresentation<*, Constraint>) -> Int
+  ) : this(
+    constrainedPresentations,
+    createPresentation,
+    compareBy(comparator)
+  )
+
   // Supposed to be changed rarely and rarely contains more than 1 element
   private var presentations: List<ConstrainedPresentation<*, Constraint>> = SmartList(constrainedPresentations.sortedWith(comparator))
 

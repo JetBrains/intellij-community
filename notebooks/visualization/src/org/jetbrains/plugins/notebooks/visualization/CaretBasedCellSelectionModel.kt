@@ -57,8 +57,21 @@ class CaretBasedCellSelectionModel(private val editor: Editor) : NotebookCellSel
   }
 }
 
-private fun Document.getSelectionLines(caret: Caret): IntRange =
-  IntRange(getLineNumber(caret.selectionStart), getLineNumber(caret.selectionEnd))
+private fun Document.getSelectionLines(caret: Caret): IntRange {
+  val selectionEnd = caret.selectionEnd
+  val lastLine = getLineNumber(selectionEnd)
+
+  if (caret.offset < selectionEnd && getLineStartOffset(lastLine) == selectionEnd) {
+    // for example, after triple click on line1
+    // #%%
+    // <selection><caret>line1
+    // </selection>#%%
+    // line2
+    return IntRange(getLineNumber(caret.selectionStart), lastLine - 1)
+  }
+
+  return IntRange(getLineNumber(caret.selectionStart), lastLine)
+}
 
 private val NotebookCellLines.Interval.startLogicalPosition: LogicalPosition
   get() = LogicalPosition(min(firstContentLine, lines.last), 0)

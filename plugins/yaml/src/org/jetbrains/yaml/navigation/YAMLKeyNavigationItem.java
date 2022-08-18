@@ -15,12 +15,14 @@ import java.util.Objects;
 
 public class YAMLKeyNavigationItem implements NavigationItem {
   private final @NotNull Navigatable myNavigatable;
+  private final @NotNull Project myProject;
   private final @NotNull String myName;
   private final @NotNull VirtualFile myFile;
   private final int myPosition;
 
   YAMLKeyNavigationItem(@NotNull Project project, @NotNull String name, @NotNull VirtualFile file, int position) {
     myNavigatable = PsiNavigationSupport.getInstance().createNavigatable(project, file, position);
+    myProject = project;
     myName = name;
     myFile = file;
     myPosition = position;
@@ -42,9 +44,18 @@ public class YAMLKeyNavigationItem implements NavigationItem {
   }
 
   @NotNull
+  public Project getProject() {
+    return myProject;
+  }
+
+  @NotNull
   @Override
   public String getName() {
     return myName;
+  }
+
+  public @NotNull VirtualFile getFile() {
+    return myFile;
   }
 
   @NotNull

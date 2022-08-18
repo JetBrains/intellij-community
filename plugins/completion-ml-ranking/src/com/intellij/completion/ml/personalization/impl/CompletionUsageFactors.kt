@@ -36,15 +36,15 @@ class CompletionUsageUpdater(factor: MutableDoubleFactor) : UserFactorUpdaterBas
 }
 
 class TodayCompletionUsageCount : CompletionUsageFactorBase("todayCompletionCount") {
-    override fun compute(reader: CompletionUsageReader): Double? = reader.getTodayCount()
+    override fun compute(reader: CompletionUsageReader): Double = reader.getTodayCount()
 }
 
 class WeekAverageUsageCount : CompletionUsageFactorBase("weekAverageDailyCompletionCount") {
-    override fun compute(reader: CompletionUsageReader): Double? = reader.getWeekAverage()
+    override fun compute(reader: CompletionUsageReader): Double = reader.getWeekAverage()
 }
 
 class TotalUsageCount : CompletionUsageFactorBase("totalCompletionCountInLastDays") {
-    override fun compute(reader: CompletionUsageReader): Double? = reader.getTotalCount()
+    override fun compute(reader: CompletionUsageReader): Double = reader.getTotalCount()
 }
 
 abstract class CompletionUsageFactorBase(override val id: String) : UserFactor {

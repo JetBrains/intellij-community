@@ -88,7 +88,7 @@ class StripedIndexingStampLock {
     return result.toIntArray();
   }
 
-  private void forEachStripe(boolean readLock, Consumer<Int2LongMap> consumer) {
+  private void forEachStripe(boolean readLock, Consumer<? super Int2LongMap> consumer) {
     List<Exception> exceptions = new SmartList<>();
     for (int i = 0; i < myLocks.length; i++) {
       Lock lock = null;

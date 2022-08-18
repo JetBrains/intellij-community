@@ -70,14 +70,15 @@
     <applicationService serviceImplementation="training.learn.lesson.LessonStateBase"/>
     <toolWindow id="Learn"
                 canCloseContents="true"
-                icon="training.FeaturesTrainerIcons.Img.FeatureTrainerToolWindow"
+                icon="training.FeaturesTrainerIcons.FeatureTrainerToolWindow"
                 factoryClass="training.ui.LearnToolWindowFactory"
     />
 
     <applicationConfigurable groupId="tools" bundle="messages.LearnBundle" key="learn.options.panel.name" id="FeaturesTrainerSettingsPanel"
                              instance="training.ui.FeaturesTrainerSettingsPanel"/>
 
-    <notificationGroup displayType="STICKY_BALLOON" id="IDE Features Trainer" isLogByDefault="false"/>
+    <notificationGroup displayType="STICKY_BALLOON" id="IDE Features Trainer" isLogByDefault="false"
+        bundle="messages.LearnBundle" key="notification.group.feature.trainer"/>
   </extensions>
 
   <actions>
@@ -86,6 +87,7 @@
       <action internal="true" id="AutorunAllLessons" class="training.actions.AutorunAllLessons"/>
       <action internal="true" id="AutorunCurrentLesson" class="training.actions.AutorunCurrentLesson"/>
       <action internal="true" id="SetCurrentLessonAsPassed" class="training.actions.SetCurrentLessonAsPassed"/>
+      <action internal="true" id="ResetOnboardingFeedbackState" class="training.actions.ResetOnboardingFeedbackStateAction"/>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
 
@@ -97,7 +99,7 @@
     <!-- Help -->
     <group id="LearnGroup">
       <separator/>
-      <action id="ShowLearnPanel" class="training.actions.OpenLearnPanel" icon="training.FeaturesTrainerIcons.Img.FeatureTrainerToolWindow"/>
+      <action id="ShowLearnPanel" class="training.actions.OpenLearnPanel" icon="training.FeaturesTrainerIcons.FeatureTrainerToolWindow"/>
       <separator/>
       <add-to-group group-id="HelpMenu" relative-to-action="HelpTopics" anchor="after"/>
     </group>
@@ -187,13 +189,15 @@
       implementationClass="training.featuresSuggester.statistics.FeatureSuggesterStatistics"/>
     <statistics.validation.customValidationRule
       implementation="training.featuresSuggester.statistics.FeatureSuggesterIdRuleValidator"/>
-    <registryKey defaultValue="true" description="Enable actions processing by IDE Feature Suggester plugin"
-                 key="feature.suggester.enabled"/>
     <registryKey defaultValue="true" description="Send statistics about IDE Feature Suggester plugin usage"
                  key="feature.suggester.send.statistics"/>
     <registryKey defaultValue="false" description="Show suggestion even if corresponding action has been used recently"
                  key="feature.suggester.force.show.suggestions"/>
-    <notificationGroup id="IDE Feature Suggester" displayType="STICKY_BALLOON" isLogByDefault="false"/>
+    <registryKey defaultValue="true" description="Should suggesters be enabled in settings by default or not"
+                 key="feature.suggester.enable.suggesters" restartRequired="true"/>
+    <notificationGroup id="IDE Feature Suggester" displayType="STICKY_BALLOON" isLogByDefault="false"
+        bundle="messages.FeatureSuggesterBundle" key="notification.group.feature.suggester"/>
+    <iconMapper mappingFile="FeaturesTrainerIconMappings.json"/>
   </extensions>
 
   <projectListeners>

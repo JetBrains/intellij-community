@@ -8,6 +8,6 @@
   <problem>
     <file>Test.java</file>
     <line>17</line>
-    <description>Parameter 'i' is not used in either this method or any of its derived methods</description>
+    <description>Parameter 'i' is not used in any implementation</description>
   </problem>
 </problems>

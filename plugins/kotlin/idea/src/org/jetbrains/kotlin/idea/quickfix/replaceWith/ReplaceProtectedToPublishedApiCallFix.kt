@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix.replaceWith
 
@@ -12,9 +12,9 @@ import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.ShortenReferences
-import org.jetbrains.kotlin.idea.quickfix.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
@@ -27,13 +27,13 @@ import org.jetbrains.kotlin.resolve.source.getPsi
 
 class ReplaceProtectedToPublishedApiCallFix(
     element: KtExpression,
-    val classOwnerPointer: SmartPsiElementPointer<KtClass>,
-    val originalName: String,
-    val paramNames: Map<String, String>,
-    val newSignature: String,
-    val isProperty: Boolean,
-    val isVar: Boolean,
-    val isPublishedMemberAlreadyExists: Boolean
+    private val classOwnerPointer: SmartPsiElementPointer<KtClass>,
+    private val originalName: String,
+    private val paramNames: Map<String, String>,
+    private val newSignature: String,
+    private val isProperty: Boolean,
+    private val isVar: Boolean,
+    private val isPublishedMemberAlreadyExists: Boolean
 ) : KotlinQuickFixAction<KtExpression>(element) {
 
     override fun getFamilyName() = KotlinBundle.message("replace.with.publishedapi.bridge.call")

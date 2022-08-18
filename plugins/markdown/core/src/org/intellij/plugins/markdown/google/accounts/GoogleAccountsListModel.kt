@@ -4,14 +4,13 @@ package org.intellij.plugins.markdown.google.accounts
 import com.intellij.collaboration.auth.ui.AccountsListModelBase
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.google.GoogleAppCredentialsException
@@ -33,29 +32,21 @@ class GoogleAccountsListModel : AccountsListModelBase<GoogleAccount, GoogleCrede
 
   override fun addAccount(parentComponent: JComponent, point: RelativePoint?) {
     AcquireUserInfoTask(parentComponent) { userCred, userInfo ->
-      if (isAccountUnique(userInfo.id)) updateAccountList(userInfo, userCred)
+      if (isAccountUnique(userInfo.id)) {
+        val account = GoogleAccountManager.createAccount(userInfo)
+        add(account, userCred)
+      }
     }.queue()
   }
 
   override fun editAccount(parentComponent: JComponent, account: GoogleAccount) {
     AcquireUserInfoTask(parentComponent) { userCred, userInfo ->
-      newCredentials[account] = userCred
       account.name = userInfo.email
-      notifyCredentialsChanged(account)
+      update(account, userCred)
     }.queue()
   }
 
   private fun isAccountUnique(accountId: String): Boolean = accountsListModel.items.none { it.id == accountId }
-
-  @RequiresEdt
-  private fun updateAccountList(userInfo: GoogleUserInfo, credentials: GoogleCredentials) {
-    val account = GoogleAccountManager.createAccount(userInfo)
-
-    accountsListModel.add(account)
-    newCredentials[account] = credentials
-
-    notifyCredentialsChanged(account)
-  }
 
   private fun showNetworkErrorMessage(parentComponent: JComponent) {
     MessageDialogBuilder.Message(
@@ -69,35 +60,32 @@ class GoogleAccountsListModel : AccountsListModelBase<GoogleAccount, GoogleCrede
     private val process: (userCred: GoogleCredentials, userInfo: GoogleUserInfo) -> Unit
   ) : Task.Modal(null, parentComponent, MarkdownBundle.message("markdown.google.account.login.progress.title"), true) {
 
-    private var credentials: GoogleCredentials? = null
-    private var userInfo: GoogleUserInfo? = null
+    private lateinit var credentialsFuture: CompletableFuture<GoogleCredentials>
+
+    private lateinit var credentials: GoogleCredentials
+    private lateinit var userInfo: GoogleUserInfo
 
     override fun run(indicator: ProgressIndicator) {
-      var credentialsFuture: CompletableFuture<GoogleCredentials> = CompletableFuture()
+      val request = getGoogleAuthRequest()
+      credentialsFuture = service<GoogleOAuthService>().authorize(request)
+      credentials = ProgressIndicatorUtils.awaitWithCheckCanceled(credentialsFuture, indicator)
 
-      try {
-        val request = getGoogleAuthRequest()
-        credentialsFuture = service<GoogleOAuthService>().authorize(request)
-        credentials = ProgressIndicatorUtils.awaitWithCheckCanceled(credentialsFuture, indicator)
-
-        val userInfoFuture = credentials?.let { userInfoService.acquireUserInfo(it.accessToken, indicator) }
-        userInfo = userInfoFuture?.let { ProgressIndicatorUtils.awaitWithCheckCanceled(it) }
-      }
-      catch (t: Throwable) {
-        when (t) {
-          is ProcessCanceledException -> LOG.info("The authorization process has been canceled")
-          is GoogleAppCredentialsException -> parentComponent?.let { showNetworkErrorMessage(it) }
-          else -> LOG.info(t.localizedMessage)
-        }
-
-        credentialsFuture.cancel(true)
+      userInfo = runBlockingCancellable {
+        userInfoService.acquireUserInfo(credentials.accessToken)
       }
     }
 
     override fun onSuccess() {
-      if (credentials != null && userInfo != null) {
-        process(credentials!!, userInfo!!)
-      }
+      process(credentials, userInfo)
+    }
+
+    override fun onThrowable(error: Throwable) {
+      if (error is GoogleAppCredentialsException) parentComponent?.let { showNetworkErrorMessage(it) }
+      else LOG.info(error.localizedMessage)
+    }
+
+    override fun onCancel() {
+      credentialsFuture.cancel(true)
     }
   }
 }

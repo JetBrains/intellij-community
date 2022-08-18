@@ -1,0 +1,20 @@
+list-case-1:
+    - item1
+  <error descr="Invalid list item indent">- item2</error>
+list-case-2:
+    - item1
+  <error descr="Invalid list item indent">- item2</error>
+    - item3
+list-case-3:
+  - - item 1
+   <error descr="Invalid list item indent">- item 2</error>
+no-error-list:
+  - - item 1
+    - item 2
+key-case-1:
+  subKey1: text 1
+ <error descr="Invalid block mapping key indent">subKey2: text 2</error>
+key-case-2:
+  subKey1: text 1
+ subKey2: <error descr="Invalid child element in a block mapping">text 2
+  subKey3: text 3</error>

@@ -1,11 +1,10 @@
 <html>
 <body>
-Reports <code>switch</code> statements or expressions in which the <code>default</code> case
-comes before another case.
-<p>This construct is unnecessarily confusing.
-There is a quick-fix that moves the <code>default</code> case to the last position.
-  The fix is available only when a given branch has <code>break</code>/<code>yield</code> at the end.</p>
-<p>Example:</p>
+Reports <code>switch</code> statements or expressions in which the <code>default</code> branch
+is positioned before another case.
+Such a construct is unnecessarily confusing.
+A quick-fix is provided to move the <code>default</code> branch to the last position, if possible.
+<p><b>Example:</b></p>
 <pre><code>
   switch (n) {
       default:

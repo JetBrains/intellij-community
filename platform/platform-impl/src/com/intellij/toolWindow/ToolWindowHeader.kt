@@ -18,11 +18,9 @@ import com.intellij.openapi.wm.ToolWindowContentUiType
 import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.impl.DockToolWindowAction
 import com.intellij.openapi.wm.impl.ToolWindowImpl
+import com.intellij.openapi.wm.impl.content.SingleContentLayout
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
-import com.intellij.ui.ClientProperty
-import com.intellij.ui.DoubleClickListener
-import com.intellij.ui.MouseDragHelper
-import com.intellij.ui.UIBundle
+import com.intellij.ui.*
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.layout.migLayout.*
 import com.intellij.ui.layout.migLayout.patched.*
@@ -39,7 +37,9 @@ import java.awt.event.MouseEvent
 import java.awt.image.BufferedImage
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
+import java.util.*
 import java.util.function.Supplier
+import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
@@ -54,10 +54,11 @@ abstract class ToolWindowHeader internal constructor(
 ) :
   BorderLayoutPanel(),
   UISettingsListener, DataProvider, PropertyChangeListener {
-  private var image: BufferedImage? = null
+  private var inactiveImageFlags: Array<Any>? = null
+  private var activeImageFlags: Array<Any>? = null
+  private var inactiveImage: BufferedImage? = null
   private var activeImage: BufferedImage? = null
-  private var imageType: ToolWindowType? = null
-  private var drawBottomLine: Boolean? = null
+
   private val actionGroup = DefaultActionGroup()
   private val actionGroupWest = DefaultActionGroup()
   private val toolbar: ActionToolbar
@@ -89,32 +90,50 @@ abstract class ToolWindowHeader internal constructor(
     @Suppress("LeakingThis")
     add(westPanel)
     ToolWindowContentUi.initMouseListeners(westPanel, contentUi, true, true)
-    toolbar = ActionManager.getInstance().createActionToolbar(
+    val commonActionsGroup = DefaultActionGroup(DockToolWindowAction(), ShowOptionsAction(), HideAction())
+    toolbar = object : ActionToolbarImpl(
       ActionPlaces.TOOLWINDOW_TITLE,
       object : ActionGroup(), DumbAware {
-        private val children by lazy<Array<AnAction>> {
-          val tabListAction = ActionManager.getInstance().getAction("TabList")
-          arrayOf(tabListAction, actionGroup, DockToolWindowAction(), ShowOptionsAction(), HideAction())
-        }
+        override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
         override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-          val nearestDecorator = InternalDecoratorImpl.findNearestDecorator(e?.getData(PlatformDataKeys.CONTEXT_COMPONENT))
-          val b = if (nearestDecorator is Component) ClientProperty.get(nearestDecorator as Component?,
-                                                                        InternalDecoratorImpl.HIDE_COMMON_TOOLWINDOW_BUTTONS)
+          if (e == null) return EMPTY_ARRAY
+          val nearestDecorator = InternalDecoratorImpl.findNearestDecorator(e.getData(PlatformDataKeys.CONTEXT_COMPONENT))
+          val hideCommonActions = if (nearestDecorator is Component) ClientProperty.get(
+            nearestDecorator as Component?, InternalDecoratorImpl.HIDE_COMMON_TOOLWINDOW_BUTTONS)
           else null
-          if (b == true) {
-            return (children.filter { it !is DockToolWindowAction && it !is ShowOptionsAction && it !is HideAction }).toTypedArray()
-          }
-          return children
-        }
 
-        override fun isDumbAware() = true
+          val extraActions = mutableListOf<AnAction>(actionGroup)
+          if (ExperimentalUI.isNewUI()) {
+            val singleContentLayout = contentUi.currentLayout as? SingleContentLayout
+            if (singleContentLayout != null) {
+              val contentActions = singleContentLayout.getSupplier()?.getContentActions()
+              if (!contentActions.isNullOrEmpty()) {
+                extraActions.addAll(0, contentActions)
+                extraActions.add(0, Separator.create())
+                extraActions.add(0, singleContentLayout.CloseCurrentContentAction())
+              }
+            }
+          }
+
+          val tabListAction = e.actionManager.getAction("TabList")
+          if (hideCommonActions == true) {
+            return arrayOf(tabListAction, *extraActions.toTypedArray())
+          }
+          return arrayOf(tabListAction, *extraActions.toTypedArray(), commonActionsGroup)
+        }
       },
       true
-    )
+    ) {
+      override fun getDataContext(): DataContext {
+        val content = toolWindow.contentManagerIfCreated?.selectedContent
+        val target = content?.preferredFocusableComponent ?: content?.component ?: this
+        if (targetComponent != target) targetComponent = target
+        return super.getDataContext()
+      }
+    }
 
-    @Suppress("LeakingThis")
-    toolbar.targetComponent = this
+    toolbar.targetComponent = toolbar.component
     toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
     toolbar.setReservePlaceAutoPopupIcon(false)
     val component = toolbar.component
@@ -130,14 +149,6 @@ abstract class ToolWindowHeader internal constructor(
 
     @Suppress("LeakingThis")
     add(toolbarPanel, BorderLayout.EAST)
-
-    //westPanel.addMouseListener(
-    //  object : PopupHandler() {
-    //    override fun invokePopup(comp: Component, x: Int, y: Int) {
-    //      contentUi.showContextMenu(comp, x, y, toolWindow.popupGroup, contentUi.contentManager.selectedContent)
-    //    }
-    //  }
-    //)
     westPanel.addMouseListener(
       object : MouseAdapter() {
         override fun mouseClicked(e: MouseEvent) {
@@ -258,7 +269,7 @@ abstract class ToolWindowHeader internal constructor(
   fun setAdditionalTitleActions(actions: List<AnAction>) {
     actionGroup.removeAll()
     actionGroup.addAll(actions)
-    if (actions.isNotEmpty()) {
+    if (actions.isNotEmpty() && !ExperimentalUI.isNewUI()) {
       actionGroup.addSeparator()
     }
     toolbar.updateActionsImmediately()
@@ -275,37 +286,37 @@ abstract class ToolWindowHeader internal constructor(
     val type = toolWindow.type
     val image: Image?
     val nearestDecorator = InternalDecoratorImpl.findNearestDecorator(this@ToolWindowHeader)
+    val isNewUi = toolWindow.toolWindowManager.isNewUi
+    val height = r.height
     val drawTopLine = type != ToolWindowType.FLOATING && !ClientProperty.isTrue(nearestDecorator, InternalDecoratorImpl.INACTIVE_LOOK)
     var drawBottomLine = true
 
-    if (toolWindow.toolWindowManager.isNewUi) {
+    if (isNewUi) {
       val scrolled = ClientProperty.isTrue(nearestDecorator, SimpleToolWindowPanel.SCROLLED_STATE)
       drawBottomLine = (toolWindow.anchor == ToolWindowAnchor.BOTTOM
                         || (toolWindow.windowInfo.contentUiType == ToolWindowContentUiType.TABBED && toolWindow.contentManager.contentCount > 1)
                         || ToggleToolbarAction.hasVisibleToolwindowToolbars(toolWindow)
                         || scrolled)
-
-      if (this.drawBottomLine != drawBottomLine) {
-        //no active header for new UI
-        activeImage = drawToBuffer(g2d, false, r.height, drawTopLine, drawBottomLine)
-        this.image = drawToBuffer(g2d, false, r.height, drawTopLine, drawBottomLine)
-        this.drawBottomLine = drawBottomLine
-      }
     }
 
+    val imageFlags = arrayOf<Any>(type, isNewUi, height, drawTopLine, drawBottomLine)
     if (isActive) {
-      if (activeImage == null ||  /*myActiveImage.getHeight() != r.height ||*/type != imageType) {
-        activeImage = drawToBuffer(g2d, true, r.height, drawTopLine, drawBottomLine)
+      activeImage = when {
+        activeImage != null && Arrays.equals(activeImageFlags, imageFlags) -> activeImage
+        else -> drawToBuffer(g2d, !isNewUi, height, drawTopLine, drawBottomLine)
       }
+      activeImageFlags = imageFlags
       image = activeImage
     }
     else {
-      if (this.image == null ||  /*myImage.getHeight() != r.height ||*/type != imageType) {
-        this.image = drawToBuffer(g2d, false, r.height, drawTopLine, drawBottomLine)
+      inactiveImage = when {
+        inactiveImage != null && Arrays.equals(inactiveImageFlags, imageFlags) -> inactiveImage
+        else -> drawToBuffer(g2d, false, height, drawTopLine, drawBottomLine)
       }
-      image = this.image
+      inactiveImageFlags = imageFlags
+      image = inactiveImage
     }
-    imageType = type
+
     val clipBounds = clip.bounds
     var x = clipBounds.x
     while (x < clipBounds.x + clipBounds.width) {
@@ -320,7 +331,7 @@ abstract class ToolWindowHeader internal constructor(
   }
 
   fun clearCaches() {
-    image = null
+    inactiveImage = null
     activeImage = null
   }
 
@@ -352,12 +363,20 @@ abstract class ToolWindowHeader internal constructor(
 
   private inner class ShowOptionsAction : DumbAwareAction() {
     val myPopupState = PopupState.forPopupMenu()
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
+    override fun update(e: AnActionEvent) {
+      e.presentation.isEnabledAndVisible = true
+    }
+
     override fun actionPerformed(e: AnActionEvent) {
       if (myPopupState.isRecentlyHidden) return // do not show new popup
-      val inputEvent = e.inputEvent
       val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, gearProducer.get())
+      popupMenu.setTargetComponent(e.getData(PlatformDataKeys.CONTEXT_COMPONENT) as? JComponent ?: this@ToolWindowHeader)
       var x = 0
       var y = 0
+      val inputEvent = e.inputEvent
       if (inputEvent is MouseEvent) {
         x = inputEvent.x
         y = inputEvent.y
@@ -373,18 +392,21 @@ abstract class ToolWindowHeader internal constructor(
   }
 
   private inner class HideAction : DumbAwareAction() {
-    override fun actionPerformed(e: AnActionEvent) {
-      hideToolWindow()
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
+    override fun update(e: AnActionEvent) {
+      e.presentation.isEnabledAndVisible = true
     }
 
-    override fun update(event: AnActionEvent) {
-      event.presentation.isEnabled = toolWindow.isVisible
+    override fun actionPerformed(e: AnActionEvent) {
+      hideToolWindow()
     }
 
     init {
       ActionUtil.copyFrom(this, InternalDecoratorImpl.HIDE_ACTIVE_WINDOW_ACTION_ID)
       templatePresentation.icon = AllIcons.General.HideToolWindow
-      templatePresentation.setText { UIBundle.message("tool.window.hide.action.name") }
+      templatePresentation.setText(UIBundle.messagePointer("tool.window.hide.action.name"))
     }
   }
 }

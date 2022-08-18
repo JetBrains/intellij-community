@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -17,6 +18,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileSystemUtil
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.remoteDev.RemoteDevSystemSettings
 import com.intellij.remoteDev.RemoteDevUtilBundle
 import com.intellij.remoteDev.connection.CodeWithMeSessionInfoProvider
 import com.intellij.remoteDev.connection.StunTurnServerInfo
@@ -45,10 +47,13 @@ import java.io.File
 import java.io.IOException
 import java.net.URI
 import java.nio.file.Files
+import java.nio.file.LinkOption
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.FileTime
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.*
 import kotlin.math.min
@@ -84,7 +89,8 @@ object CodeWithMeClientDownloader {
     Done
   }
 
-  val buildNumberRegex = Regex("""[0-9]{3}\.(([0-9]+(\.[0-9]+)?)|SNAPSHOT)""")
+  const val buildNumberPattern = """[0-9]{3}\.(([0-9]+(\.[0-9]+)?)|SNAPSHOT)"""
+  val buildNumberRegex = Regex(buildNumberPattern)
 
   private fun getClientDistributionName(clientBuildVersion: String) = when {
     VersionComparatorUtil.compare(clientBuildVersion, "211.6167") < 0 -> "IntelliJClient"
@@ -100,7 +106,8 @@ object CodeWithMeClientDownloader {
 
     val hostBuildNumber = buildNumberRegex.find(clientBuildVersion)!!.value
     val platformSuffix = when {
-      SystemInfo.isLinux -> "-no-jbr.tar.gz"
+      SystemInfo.isLinux && CpuArch.isIntel64() -> "-no-jbr.tar.gz"
+      SystemInfo.isLinux && CpuArch.isArm64() -> "-no-jbr-aarch64.tar.gz"
       SystemInfo.isWindows -> ".win.zip"
       SystemInfo.isMac && CpuArch.isIntel64() -> "-no-jdk.sit"
       SystemInfo.isMac && CpuArch.isArm64() -> "-no-jdk-aarch64.sit"
@@ -109,7 +116,7 @@ object CodeWithMeClientDownloader {
 
     val clientDistributionName = getClientDistributionName(clientBuildVersion)
 
-    val clientDownloadUrl = "${config.clientDownloadLocation}$clientDistributionName-$hostBuildNumber$platformSuffix"
+    val clientDownloadUrl = "${config.clientDownloadUrl.toString().trimEnd('/')}/$clientDistributionName-$hostBuildNumber$platformSuffix"
 
     val platformString = when {
       SystemInfo.isLinux -> "linux-x64"
@@ -120,16 +127,28 @@ object CodeWithMeClientDownloader {
     }
 
     val jreBuildParts = jreBuild.split("b")
-    require(jreBuildParts.size == 2) { "jreBuild format should be like 12_3_45b6789.0" }
-    require(jreBuildParts[0].matches(Regex("^[0-9_]+$"))) { "jreBuild format should be like 12_3_45b6789.0" }
-    require(jreBuildParts[1].matches(Regex("^[0-9.]+$"))) { "jreBuild format should be like 12_3_45b6789.0" }
+    require(jreBuildParts.size == 2) { "jreBuild format should be like 12_3_45b6789.0: ${jreBuild}" }
+    require(jreBuildParts[0].matches(Regex("^[0-9_.]+$"))) { "jreBuild format should be like 12_3_45b6789.0: ${jreBuild}" }
+    require(jreBuildParts[1].matches(Regex("^[0-9.]+$"))) { "jreBuild format should be like 12_3_45b6789.0: ${jreBuild}" }
 
-    val jdkVersion = jreBuildParts[0]
+    /**
+     * After upgrade to JRE 17 Jetbrains Runtime Team made a couple of incompatible changes:
+     * 1. Java version began to contain dots in it's version
+     * 2. Root directory was renamed from 'jbr' to 'jbr_jcef_12.3.4b1235'
+     *
+     * We decided to maintain backward compatibility with old IDEs and
+     * rename archives and root directories back to old format.
+     */
+    val jdkVersion = jreBuildParts[0].replace(".", "_")
     val jdkBuild = jreBuildParts[1]
-    val jreDownloadUrl = "${config.jreDownloadLocation}jbr_jcef-$jdkVersion-$platformString-b${jdkBuild}.tar.gz"
+    val jreDownloadUrl = "${config.jreDownloadUrl.toString().trimEnd('/')}/jbr_jcef-$jdkVersion-$platformString-b${jdkBuild}.tar.gz"
 
     val clientName = "$clientDistributionName-$hostBuildNumber"
     val jreName = jreDownloadUrl.substringAfterLast('/').removeSuffix(".tar.gz")
+
+    val pgpPublicKeyUrl = if (unattendedMode) {
+      RemoteDevSystemSettings.getPgpPublicKeyUrl().value
+    } else null
 
     val sessionInfo = object : CodeWithMeSessionInfoProvider {
       override val hostBuildNumber = hostBuildNumber
@@ -140,7 +159,7 @@ object CodeWithMeClientDownloader {
       override val compatibleJreUrl = jreDownloadUrl
       override val hostFeaturesToEnable: Set<String>? = null
       override val stunTurnServers: List<StunTurnServerInfo>? = null
-      override val downloadPgpPublicKeyUrl: String? = null
+      override val downloadPgpPublicKeyUrl: String? = pgpPublicKeyUrl
     }
 
     LOG.info("Generated session info: $sessionInfo")
@@ -159,7 +178,7 @@ object CodeWithMeClientDownloader {
     jdkBuildProgressIndicator.text = RemoteDevUtilBundle.message("thinClientDownloader.checking")
 
     val clientDistributionName = getClientDistributionName(clientBuildVersion)
-    val clientJdkDownloadUrl = "${config.clientDownloadLocation}$clientDistributionName-$clientBuildVersion-jdk-build.txt"
+    val clientJdkDownloadUrl = "${config.clientDownloadUrl}$clientDistributionName-$clientBuildVersion-jdk-build.txt"
     LOG.info("Downloading from $clientJdkDownloadUrl")
 
     val tempFile = Files.createTempFile("jdk-build", "txt")
@@ -182,7 +201,6 @@ object CodeWithMeClientDownloader {
    * @returns Pair(path/to/thin/client, path/to/jre)
    *
    * Update this method (any jdk-related stuff) together with:
-   *  `setupJdk.gradle`
    *  `org/jetbrains/intellij/build/impl/BundledJreManager.groovy`
    */
   fun downloadClientAndJdk(clientBuildVersion: String,
@@ -331,7 +349,7 @@ object CodeWithMeClientDownloader {
             }
           }
           catch (ex: IOException) {
-            future.complete(false)
+            future.completeExceptionally(ex)
             LOG.warn(ex)
             return@execute
           }
@@ -363,7 +381,7 @@ object CodeWithMeClientDownloader {
           future.complete(true)
         }
         catch (e: Throwable) {
-          future.complete(false)
+          future.completeExceptionally(e)
           LOG.warn(e)
         }
         finally {
@@ -378,24 +396,22 @@ object CodeWithMeClientDownloader {
       val guestSucceeded = guestData.downloadFuture.get()
       val jdkSucceeded = jdkData.downloadFuture.get()
 
-      if (guestSucceeded && jdkSucceeded) {
-        RemoteDevStatisticsCollector.onGuestDownloadFinished(activity, isSucceeded = true)
-        LOG.info("Download of guest and jdk succeeded")
-        return guestData.targetPath to jdkData.targetPath
-      }
-      else {
-        LOG.warn("Some of downloads failed: guestSucceeded=$guestSucceeded, jdkSucceeded=$jdkSucceeded")
-        RemoteDevStatisticsCollector.onGuestDownloadFinished(activity, isSucceeded = false)
-        return null
-      }
+      if (!guestSucceeded || !jdkSucceeded) error("Guest or jdk was not downloaded")
+
+      LOG.info("Download of guest and jdk succeeded")
+      return guestData.targetPath to jdkData.targetPath
     }
     catch(e: ProcessCanceledException) {
       LOG.info("Download was canceled")
       return null
     }
     catch (e: Throwable) {
+      RemoteDevStatisticsCollector.onGuestDownloadFinished(activity, isSucceeded = false)
       LOG.warn(e)
-      return null
+      if (e is ExecutionException) {
+        e.cause?.let { throw it }
+      }
+      throw e
     }
   }
 
@@ -416,7 +432,17 @@ object CodeWithMeClientDownloader {
       try {
         LOG.info("Downloading from $url to ${path.absolutePathString()}, attempt $i of $MAX_ATTEMPTS")
 
-        HttpRequests.request(url.toString()).saveToFile(path, progressIndicator)
+        when (url.scheme) {
+          "http", "https" -> {
+            HttpRequests.request(url.toString()).saveToFile(path, progressIndicator)
+          }
+          "file" -> {
+            Files.copy(url.toPath(), path, StandardCopyOption.REPLACE_EXISTING)
+          }
+          else -> {
+            error("scheme ${url.scheme} is not supported")
+          }
+        }
 
         LOG.info("Download from $url to ${path.absolutePathString()} succeeded on attempt $i of $MAX_ATTEMPTS")
         return
@@ -493,7 +519,7 @@ object CodeWithMeClientDownloader {
         if (SystemInfo.isMac) {
           val app = guestRoot.toFile().listFiles { file -> file.name.endsWith(".app") && file.isDirectory }!!.singleOrNull()
           if (app != null) {
-            return app.toPath() to listOf("open", "-n", "-a", app.toString(), "--args")
+            return app.toPath() to listOf("open", "-n", "-W", "-a", app.toString(), "--args")
           }
         }
 
@@ -513,10 +539,8 @@ object CodeWithMeClientDownloader {
                                      guestRoot: Path,
                                      jdkRoot: Path): Lifetime {
     val (executable, fullLauncherCmd) = findLauncherUnderCwmGuestRoot(guestRoot)
-    val guestHome = findCwmGuestHome(guestRoot)
 
-    val linkTarget = if (SystemInfo.isMac) jdkRoot / "jbr" else detectTrueJdkRoot(jdkRoot)
-    createSymlink(guestHome / "jbr", linkTarget)
+    createSymlinkToJdkFromGuest(guestRoot, jdkRoot)
 
     // Update mtime on JRE & CWM Guest roots. The cleanup process will use it later.
     listOf(guestRoot, jdkRoot).forEach { path ->
@@ -590,16 +614,22 @@ object CodeWithMeClientDownloader {
             super.processTerminated(event)
             LOG.info("Guest process terminated, exit code " + event.exitCode)
 
-            // if process exited abnormally but took longer than 10 seconds, it's likely to be an issue with connection instead of Mac-specific bug
-            if (event.exitCode != 0 && (System.currentTimeMillis() - lastProcessStartTime) < 10_000) {
-              if (attemptCount > 0) {
-                LOG.info("Previous attempt to start guest process failed, will try again in one second")
-                EdtScheduledExecutorService.getInstance().schedule({ doRunProcess() }, ModalityState.any(), 1, TimeUnit.SECONDS)
+            if (event.exitCode == 0) {
+              application.invokeLater {
+                processLifetimeDef.terminate()
               }
-              else {
-                LOG.warn("Running client process failed after specified number of attempts")
-                application.invokeLater {
-                  processLifetimeDef.terminate()
+            } else {
+              // if process exited abnormally but took longer than 10 seconds, it's likely to be an issue with connection instead of Mac-specific bug
+              if ((System.currentTimeMillis() - lastProcessStartTime) < 10_000 ) {
+                if (attemptCount > 0) {
+                  LOG.info("Previous attempt to start guest process failed, will try again in one second")
+                  EdtScheduledExecutorService.getInstance().schedule({ doRunProcess() }, ModalityState.any(), 1, TimeUnit.SECONDS)
+                }
+                else {
+                  LOG.warn("Running client process failed after specified number of attempts")
+                  application.invokeLater {
+                    processLifetimeDef.terminate()
+                  }
                 }
               }
             }
@@ -624,19 +654,33 @@ object CodeWithMeClientDownloader {
     return processLifetimeDef.lifetime
   }
 
-  fun createSymlinkToJdkFromGuest(guestRoot: Path, jdkRoot: Path) {
-    val linkTarget = if (SystemInfo.isMac) jdkRoot / "jbr" else detectTrueJdkRoot(jdkRoot)
+  private fun detectMacOsJbrDirectory(root: Path): Path {
+    val jbrDirectory = root.listDirectoryEntries().find { it.nameWithoutExtension.startsWith("jbr") }
+
+    LOG.debug { "JBR directory: $jbrDirectory" }
+    return jbrDirectory ?: error("Unable to find target content directory starts with 'jbr' inside MacOS package: '$root'")
+  }
+
+  fun createSymlinkToJdkFromGuest(guestRoot: Path, jdkRoot: Path): Path {
+    val linkTarget = if (SystemInfo.isMac) detectMacOsJbrDirectory(jdkRoot) else detectTrueJdkRoot(jdkRoot)
     val guestHome = findCwmGuestHome(guestRoot)
-    createSymlink(guestHome / "jbr", linkTarget)
+    val link = guestHome / "jbr"
+    createSymlink(link, linkTarget)
+    return link
   }
 
   private fun createSymlink(link: Path, target: Path) {
     val targetRealPath = target.toRealPath()
-    if (link.exists() && link.toRealPath() == targetRealPath) {
+    val linkExists = true
+    val linkRealPath = if (link.exists(LinkOption.NOFOLLOW_LINKS)) link.toRealPath() else null
+    val isSymlink = FileSystemUtil.getAttributes(link.toFile())?.isSymLink == true
+
+    LOG.info("$link: exists=$linkExists, realPath=$linkRealPath, isSymlink=$isSymlink")
+    if (linkExists && isSymlink && linkRealPath == targetRealPath) {
       LOG.info("Symlink/junction '$link' is UP-TO-DATE and points to '$target'")
     }
     else {
-      Files.deleteIfExists(link)
+      FileUtil.deleteWithRenamingIfExists(link)
 
       LOG.info("Creating symlink/junction '$link' -> '$target'")
 

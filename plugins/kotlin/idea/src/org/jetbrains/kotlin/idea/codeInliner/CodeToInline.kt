@@ -1,13 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInliner
 
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.idea.codeInliner.CodeToInline.Companion.PARAMETER_USAGE_KEY
 import org.jetbrains.kotlin.idea.codeInliner.CodeToInline.Companion.TYPE_PARAMETER_USAGE_KEY
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.resolve.ImportPath
 
 /**
  * Represents code to be inlined to replace usages of particular callable.
@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.psi.KtExpression
 class CodeToInline(
     val mainExpression: KtExpression?,
     val statementsBefore: List<KtExpression>,
-    val fqNamesToImport: Collection<FqName>,
+    val fqNamesToImport: Collection<ImportPath>,
     val alwaysKeepMainExpression: Boolean,
     val extraComments: CommentHolder?,
 ) {

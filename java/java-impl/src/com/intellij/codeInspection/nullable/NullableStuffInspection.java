@@ -2,8 +2,10 @@
 package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.NullableNotNullDialog;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ReadAction;
@@ -136,6 +138,13 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
     @Override
     public boolean startInWriteAction() {
       return false;
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      return new IntentionPreviewInfo.Html(
+        JavaBundle.message("nullable.stuff.inspection.navigate.null.argument.usages.fix.family.preview")
+      );
     }
   }
 }

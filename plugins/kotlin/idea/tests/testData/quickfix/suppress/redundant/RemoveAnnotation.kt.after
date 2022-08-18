@@ -1,0 +1,8 @@
+// "Remove suppression" "true"
+
+<caret>fun function() {
+    
+}
+
+// TOOL: com.intellij.codeInspection.RedundantSuppressInspection
+// TOOL: org.jetbrains.kotlin.idea.inspections.MoveVariableDeclarationIntoWhenInspection

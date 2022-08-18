@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 
 public class CreateMissingSwitchBranchesAction extends PsiElementBaseIntentionAction {
   private static final int MAX_NUMBER_OF_BRANCHES = 100;
+  @SafeFieldForPreview
   private List<Value> myAllValues;
 
   @Override

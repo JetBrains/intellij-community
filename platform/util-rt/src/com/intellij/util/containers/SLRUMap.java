@@ -129,6 +129,7 @@ public class SLRUMap<K,V> {
   }
 
   public void iterateKeys(final Consumer<? super K> keyConsumer) {
+    //RC: same key could be reported more than once to the consumer -- is it OK?
     for (K key : myProtectedQueue.keySet()) {
       keyConsumer.consume(key);
     }
@@ -185,5 +186,9 @@ public class SLRUMap<K,V> {
     }
 
     return key;
+  }
+
+  public @NotNull String dumpStats() {
+    return "probational hits = " + probationalHits + ", protected hits = " + protectedHits + ", misses = " + misses;
   }
 }

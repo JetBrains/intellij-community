@@ -14,3 +14,5 @@ fun bar() {
     val a = 1
 }
 
+
+// IGNORE_K2

@@ -9,26 +9,29 @@ import com.intellij.grazie.jlanguage.broker.GrazieDynamicDataBroker
 import com.intellij.grazie.jlanguage.filters.UppercaseMatchFilter
 import com.intellij.grazie.jlanguage.hunspell.LuceneHunspellDictionary
 import com.intellij.grazie.utils.text
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PreloadingActivity
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.serviceContainer.AlreadyDisposedException
-import com.intellij.util.concurrency.SequentialTaskExecutor
 import com.intellij.util.containers.ContainerUtil
+import kotlinx.coroutines.*
 import org.apache.commons.text.similarity.LevenshteinDistance
 import org.languagetool.JLanguageTool
 import org.languagetool.ResultCache
 import org.languagetool.Tag
 import org.languagetool.rules.CategoryId
 import org.languagetool.rules.IncorrectExample
+import org.languagetool.rules.Rule
+import org.languagetool.rules.patterns.AbstractPatternRule
+import org.languagetool.rules.patterns.PatternToken
 import org.languagetool.rules.spelling.hunspell.Hunspell
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 
 object LangTool : GrazieStateLifecycle {
   private val langs: MutableMap<Lang, JLanguageTool> = Collections.synchronizedMap(ContainerUtil.createSoftValueMap())
-  private val rulesEnabledByDefault: MutableMap<Lang, Set<String>> = ConcurrentHashMap()
-  private val executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("LangTool")
+  private val rulesEnabledByDefault = ConcurrentHashMap<Lang, Set<String>>()
+  private val isInitialized = AtomicBoolean()
 
   init {
     JLanguageTool.useCustomPasswordAuthenticator(false)
@@ -129,10 +132,32 @@ object LangTool : GrazieStateLifecycle {
         rule.correctExamples = emptyList()
         rule.errorTriggeringExamples = emptyList()
         rule.incorrectExamples = removeVerySimilarExamples(rule.incorrectExamples)
+        if (Lang.shouldDisableChunker(jLanguage)) {
+          prepareForNoChunkTags(rule)
+        }
       }
 
       this.language.disambiguator
     }
+  }
+
+  private fun prepareForNoChunkTags(rule: Rule) {
+    @Suppress("TestOnlyProblems")
+    fun relaxChunkConditions(token: PatternToken, positive: Boolean) {
+      if (token.negation == positive && token.chunkTag != null) {
+        token.chunkTag = null
+      }
+
+      token.andGroup.forEach { relaxChunkConditions(it, positive) }
+      token.orGroup.forEach { relaxChunkConditions(it, positive) }
+      (token.exceptionList ?: emptyList()).forEach { relaxChunkConditions(it, !positive) }
+    }
+
+    if (rule is AbstractPatternRule) {
+      rule.patternTokens?.forEach { relaxChunkConditions(it, positive = true) }
+    }
+
+    rule.antiPatterns.forEach { it.patternTokens?.forEach { token -> relaxChunkConditions(token, positive = false) } }
   }
 
   private fun removeVerySimilarExamples(examples: List<IncorrectExample>): List<IncorrectExample> {
@@ -171,26 +196,21 @@ object LangTool : GrazieStateLifecycle {
     langs.clear()
     rulesEnabledByDefault.clear()
 
-    preloadAsync()
-  }
-
-  private fun preloadAsync() {
-    runAsync {
-      LangDetector.getLanguage("Hello")
-      GrazieConfig.get().availableLanguages.forEach { getTool(it) }
+    if (isInitialized.compareAndSet(false, true)) {
+      ApplicationManager.getApplication().coroutineScope.launch { preloadLang() }
     }
   }
 
-  internal fun runAsync(action: Runnable) {
-    executor.execute {
-      try {
-        action.run()
-      }
-      catch (ignore: AlreadyDisposedException) { }
-    }
+  private fun preloadLang() {
+    LangDetector.getLanguage("Hello")
+    GrazieConfig.get().availableLanguages.forEach(::getTool)
   }
 
   internal class Preloader : PreloadingActivity() {
-    override fun preload(indicator: ProgressIndicator): Unit = preloadAsync()
+    override suspend fun execute() {
+      if (isInitialized.compareAndSet(false, true)) {
+        preloadLang()
+      }
+    }
   }
 }

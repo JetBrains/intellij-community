@@ -75,6 +75,7 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -584,7 +585,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @NotNull
   @Override
   public String getName() {
-    return IdeUICustomization.getInstance().getProjectViewTitle();
+    return IdeUICustomization.getInstance().getProjectViewTitle(myProject);
   }
 
   @NotNull
@@ -655,6 +656,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       e.getPresentation().setIcon(mySubId != null ? pane.getPresentableSubIdIcon(mySubId) : pane.getIcon());
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       changeView(myId, mySubId);
@@ -1067,7 +1072,14 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   @Override
   public AbstractProjectViewPane getCurrentProjectViewPane() {
-    return getProjectViewPaneById(myCurrentViewId);
+    if (myProject.isDisposed()) return null;
+    ProjectViewCurrentPaneProvider currentPaneProvider = ProjectViewCurrentPaneProvider.getInstance(myProject);
+    final String currentProjectViewPaneId = currentPaneProvider != null
+                                            ? currentPaneProvider.getCurrentPaneId()
+                                            : myCurrentViewId;
+    return currentProjectViewPaneId != null
+           ? getProjectViewPaneById(currentProjectViewPaneId)
+           : null;
   }
 
   @Override
@@ -1244,21 +1256,14 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     @Override
     public Object getData(@NotNull String dataId) {
-      final AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
-
-      if (currentProjectViewPane != null) {
-        final Object paneSpecificData = currentProjectViewPane.getData(dataId);
-        if (paneSpecificData != null) return paneSpecificData;
+      AbstractProjectViewPane selectedPane = getCurrentProjectViewPane();
+      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+        DataProvider paneProvider = selectedPane == null ? null : PlatformCoreDataKeys.BGT_DATA_PROVIDER.getData(selectedPane);
+        return CompositeDataProvider.compose(slowId -> getSlowData(slowId, paneProvider), paneProvider);
       }
-
-      if (PlatformCoreDataKeys.MODULE.is(dataId)) {
-        VirtualFile[] virtualFiles = (VirtualFile[])getData(CommonDataKeys.VIRTUAL_FILE_ARRAY.getName());
-        if (virtualFiles == null || virtualFiles.length <= 1) return null;
-        final Set<Module> modules = new HashSet<>();
-        for (VirtualFile virtualFile : virtualFiles) {
-          modules.add(ModuleUtilCore.findModuleForFile(virtualFile, myProject));
-        }
-        return modules.size() == 1 ? modules.iterator().next() : null;
+      Object paneData = selectedPane == null ? null : selectedPane.getData(dataId);
+      if (paneData != null) {
+        return paneData;
       }
       if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
         return myCopyPasteDelegator.getCutProvider();
@@ -1279,6 +1284,20 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         return ProjectViewImpl.this;
       }
 
+      return null;
+    }
+
+    private @Nullable Object getSlowData(@NotNull String dataId, @Nullable DataProvider paneSlowProvider) {
+      if (PlatformCoreDataKeys.MODULE.is(dataId)) {
+        VirtualFile[] virtualFiles = paneSlowProvider == null ? null : CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(paneSlowProvider);
+        if (virtualFiles == null || virtualFiles.length < 1) return null;
+        if (virtualFiles.length == 1) return ModuleUtilCore.findModuleForFile(virtualFiles[0], myProject);
+        Set<Module> modules = new HashSet<>();
+        for (VirtualFile virtualFile : virtualFiles) {
+          ContainerUtil.addIfNotNull(modules, ModuleUtilCore.findModuleForFile(virtualFile, myProject));
+        }
+        return ContainerUtil.getOnlyItem(modules);
+      }
       return null;
     }
   }
@@ -1872,6 +1891,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         ProjectView view = project == null || project.isDisposed() ? null : getInstance(project);
         return view instanceof ProjectViewImpl ? optionSupplier.apply((ProjectViewImpl)view) : null;
       });
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     static final class AbbreviatePackageNames extends Action {

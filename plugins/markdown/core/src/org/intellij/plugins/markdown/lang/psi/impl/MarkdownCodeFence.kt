@@ -102,10 +102,7 @@ class MarkdownCodeFence(elementType: IElementType): MarkdownCodeFenceImpl(elemen
     }
 
     override fun getRelevantTextRange(): TextRange {
-      val elements = obtainFenceContent(myHost as MarkdownCodeFence, withWhitespaces = true) ?: return MarkdownCodeFenceUtils.getEmptyRange(myHost)
-      val first = elements[0]
-      val last = elements[elements.size - 1]
-      return TextRange.create(first.startOffsetInParent, last.startOffsetInParent + last.textLength)
+      return obtainRelevantTextRange(myHost as MarkdownCodeFence)
     }
 
     override fun isOneLine(): Boolean = false
@@ -114,24 +111,86 @@ class MarkdownCodeFence(elementType: IElementType): MarkdownCodeFenceImpl(elemen
   internal class Manipulator: AbstractElementManipulator<MarkdownCodeFence>() {
     @Throws(IncorrectOperationException::class)
     override fun handleContentChange(element: MarkdownCodeFence, range: TextRange, content: String): MarkdownCodeFence? {
-      var actualContent = content
-      if (actualContent.contains("```") || actualContent.contains("~~~")) {
-        val textElement = MarkdownPsiElementFactory.createTextElement(element.project, actualContent)
-        return if (textElement is MarkdownCodeFence) element.replace(textElement) as MarkdownCodeFence else null
+      // Check if new content should break current code fence
+      if (content.contains("```") || content.contains("~~~")) {
+        val textElement = MarkdownPsiElementFactory.createTextElement(element.project, content)
+        return if (textElement is MarkdownCodeFence) {
+          element.replace(textElement) as MarkdownCodeFence
+        } else null
       }
-      val indent = MarkdownCodeFenceUtils.getIndent(element)
-      if (indent != null && indent.isNotEmpty()) {
-        actualContent = StringUtil.splitByLinesKeepSeparators(actualContent).joinToString(separator = "") { indent + it }
-        if (StringUtil.endsWithLineBreak(actualContent)) {
-          actualContent += indent
+      val relevantRange = obtainRelevantTextRange(element)
+      val indent = MarkdownCodeFenceUtils.getIndent(element) ?: ""
+      val text = collectText(element)
+      val updatedText = when {
+        text.isNullOrEmpty() || range.startOffset < relevantRange.startOffset -> appendIndent(content, indent)
+        else -> replaceWithIndent(text, content, range = createShiftedChangeRange(range, relevantRange, text.length), indent)
+      }
+      val fenceElement = MarkdownPsiElementFactory.createCodeFence(element.project, element.fenceLanguage, updatedText, indent)
+      return element.replace(fenceElement) as MarkdownCodeFence
+    }
+
+    private fun createShiftedChangeRange(range: TextRange, relevantRange: TextRange, textLength: Int): TextRange {
+      val delta = relevantRange.startOffset
+      return TextRange(
+        (range.startOffset - delta).coerceIn(0, textLength),
+        (range.endOffset - delta).coerceIn(0, textLength)
+      )
+    }
+
+    private fun replaceWithIndent(text: String, content: String, range: TextRange, indent: String): String {
+      if (content.isEmpty()) {
+        return text
+      }
+      val prefix = text.substring(0, range.startOffset)
+      val suffix = text.substring(range.endOffset)
+      val lines = StringUtil.splitByLinesKeepSeparators(content).asSequence()
+      return buildString {
+        append(prefix)
+        // If the last char of prefix was '\n', that means that new content will start on the new line,
+        // so add indent before that line.
+        // Otherwise, the first content line is inserted as a continuation of already existed line,
+        // that should already be correctly indented.
+        if (prefix.lastOrNull()?.let(StringUtil::isLineBreak) == true) {
+          append(indent)
+        }
+        append(lines.first())
+        for (line in lines.drop(1)) {
+          append(indent)
+          append(line)
+        }
+        append(suffix)
+      }
+    }
+
+    private fun appendIndent(content: String, indent: String): String {
+      if (indent.isEmpty()) {
+        return content
+      }
+      val result = StringUtil.splitByLinesKeepSeparators(content).joinToString(separator = "") { indent + it }
+      return when {
+        StringUtil.endsWithLineBreak(content) -> result + indent
+        else -> result
+      }
+    }
+
+    private fun collectText(element: MarkdownCodeFence): String? {
+      val elements = obtainFenceContent(element, withWhitespaces = true) ?: return null
+      return buildString {
+        for (child in elements) {
+          append(child.text)
         }
       }
-      val fenceElement = MarkdownPsiElementFactory.createCodeFence(element.project, element.fenceLanguage, actualContent, indent)
-      return element.replace(fenceElement) as MarkdownCodeFence
     }
   }
 
   companion object {
+    private fun obtainRelevantTextRange(element: MarkdownCodeFence): TextRange {
+      val elements = obtainFenceContent(element, withWhitespaces = true) ?: return MarkdownCodeFenceUtils.getEmptyRange(element)
+      val first = elements.first()
+      val last = elements.last()
+      return TextRange.create(first.startOffsetInParent, last.startOffsetInParent + last.textLength)
+    }
+
     @ApiStatus.Experimental
     fun obtainFenceContent(element: MarkdownCodeFence, withWhitespaces: Boolean): List<PsiElement>? {
       return when {

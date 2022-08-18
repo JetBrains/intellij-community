@@ -11,6 +11,7 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.*;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.execution.testframework.export.TestResultsXmlFormatter;
+import com.intellij.execution.testframework.sm.SMStacktraceParser;
 import com.intellij.execution.testframework.sm.SmRunnerBundle;
 import com.intellij.execution.testframework.sm.TestHistoryConfiguration;
 import com.intellij.execution.testframework.sm.runner.*;
@@ -74,7 +75,7 @@ import java.util.List;
 import java.util.*;
 
 /**
- * @author: Roman Chernyatchik
+ * @author Roman Chernyatchik
  */
 public class SMTestRunnerResultsForm extends TestResultsPanel
   implements TestFrameworkRunningModel, TestResultsViewer, SMTRunnerEventsListener {
@@ -194,8 +195,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   /**
    * Returns root node, fake parent suite for all tests and suites
    *
-   * @param testsRoot
-   * @return
    */
   @Override
   public void onTestingStarted(@NotNull SMTestProxy.SMRootTestProxy testsRoot) {
@@ -818,8 +817,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
           String configurationName = myConfiguration != null ? myConfiguration.getName() : null;
           DumbService.getInstance(getProject()).runReadActionInSmartMode(() -> {
             Project project = getProject();
-            TestStackTraceParser info =
-              new TestStackTraceParser(url, proxy.getStacktrace(), proxy.getErrorMessage(), proxy.getLocator(), project);
+            TestStackTraceParser info = getStackTraceParser(proxy, url, project);
             TestStateStorage storage = TestStateStorage.getInstance(project);
             storage.writeState(url, new TestStateStorage.Record(proxy.getMagnitude(), new Date(),
                                                                 configurationName == null ? 0 : configurationName.hashCode(),
@@ -827,6 +825,15 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
                                                                 info.getErrorMessage(), info.getTopLocationLine()));
           });
         }
+      }
+    }
+
+    private TestStackTraceParser getStackTraceParser(@NotNull SMTestProxy proxy, @NotNull String url, @NotNull Project project) {
+      if (myConsoleProperties instanceof SMStacktraceParser) {
+        return ((SMStacktraceParser)myConsoleProperties).getTestStackTraceParser(url, proxy, project);
+      }
+      else {
+        return new TestStackTraceParser(url, proxy.getStacktrace(), proxy.getErrorMessage(), proxy.getLocator(), project);
       }
     }
 

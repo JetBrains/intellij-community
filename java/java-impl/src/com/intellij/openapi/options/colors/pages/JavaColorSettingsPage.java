@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.application.options.colors.InspectionColorSettingsPage;
@@ -111,7 +97,6 @@ public class JavaColorSettingsPage implements RainbowColorSettingsPage, Inspecti
     ourTags.put("unknownType", CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
     ourTags.put("localVar", JavaHighlightingColors.LOCAL_VARIABLE_ATTRIBUTES);
     ourTags.put("reassignedLocalVar", JavaHighlightingColors.REASSIGNED_LOCAL_VARIABLE_ATTRIBUTES);
-    ourTags.put("reassignedParameter", JavaHighlightingColors.REASSIGNED_PARAMETER_ATTRIBUTES);
     ourTags.put("implicitAnonymousParameter", JavaHighlightingColors.IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES);
     ourTags.put("static", JavaHighlightingColors.STATIC_FIELD_ATTRIBUTES);
     ourTags.put("static_final", JavaHighlightingColors.STATIC_FINAL_FIELD_ATTRIBUTES);
@@ -199,12 +184,11 @@ public class JavaColorSettingsPage implements RainbowColorSettingsPage, Inspecti
       "  /**" +
       RainbowHighlighter.generatePaletteExample("\n   * ") + "\n" +
       "   * @param <javadocTagValue>param1</javadocTagValue>\n" +
-      "   * @param <javadocTagValue>reassignedParam</javadocTagValue>\n" +
       "   * @param <javadocTagValue>param2</javadocTagValue>\n" +
       "   * @param <javadocTagValue>param3</javadocTagValue>\n" +
       "   */\n" +
-      "  public <constructorDeclaration>SomeClass</constructorDeclaration>(<interface>AnInterface</interface> <param>param1</param>, int[] <reassignedParameter>reassignedParam</reassignedParameter>,\n" +
-      "                  int <param>param2</param>\n" +
+      "  public <constructorDeclaration>SomeClass</constructorDeclaration>(<interface>AnInterface</interface> <param>param1</param>,\n" +
+      "                  int <param>param2</param>,\n" +
       "                  int <param>param3</param>) {\n" +
       "    int <reassignedLocalVar>reassignedValue</reassignedLocalVar> = this.<warning>staticField</warning> + <param>param2</param> + <param>param3</param>;\n" +
       "    long <localVar>localVar1</localVar>, <localVar>localVar2</localVar>, <localVar>localVar3</localVar>, <localVar>localVar4</localVar>;\n" +
@@ -220,7 +204,7 @@ public class JavaColorSettingsPage implements RainbowColorSettingsPage, Inspecti
       "        int <localVar>a</localVar> = <implicitAnonymousParameter>localVar</implicitAnonymousParameter>;\n" +
       "      }\n" +
       "    };\n" +
-      "    <reassignedParameter>reassignedParam</reassignedParameter> = new <constructorCall>ArrayList</constructorCall><<class>String</class>>().<methodCall>toArray</methodCall>(new int[<staticallyConstImported>CONSTANT</staticallyConstImported>]);\n" +
+      "    int[] <localVar>l</localVar> = new <constructorCall>ArrayList</constructorCall><<class>String</class>>().<methodCall>toArray</methodCall>(new int[<staticallyConstImported>CONSTANT</staticallyConstImported>]);\n" +
       "  }\n" +
       "}\n" +
       "enum <enum>AnEnum</enum> { <static_final>CONST1</static_final>, <static_final>CONST2</static_final> }\n" +

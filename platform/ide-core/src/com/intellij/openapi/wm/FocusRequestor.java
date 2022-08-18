@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,10 +14,17 @@ import java.awt.*;
 public interface FocusRequestor extends Disposable {
 
   /**
-   * Requests focus on a component
-   * @param c - component to request focus to
-   * @param forced - if true - focus request is explicit, must be fulfilled, if false - can be dropped
-   * @return action callback that either notifies when the focus was obtained or focus request was dropped
+   * Requests focus on a component. Effectively the same as {@link Component#requestFocus()}.
+   * <p>
+   * WARNING: Using this method is only acceptable in an immediate response to a direct user action (e.g. a mouse or a keyboard event), as
+   * it can cause the activation of the component's owning window. If that's done e.g. at the end of some background activity, it can be
+   * too unexpected and disruptive for the user. Consider using other, less 'harsh', alternatives, such as:
+   * <ul>
+   *   <li>{@link IdeFocusManager#requestFocusInProject(Component, Project)}: transfer focus only within the active project's windows</li>
+   *   <li>{@link Component#requestFocusInWindow()}: transfer focus only within the active window</li>
+   * </ul>
+   * @param forced currently ignored
+   * @return always {@link ActionCallback#DONE} currently
    */
   @NotNull
   ActionCallback requestFocus(@NotNull Component c, boolean forced);

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.codeVision.settings
 
 import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.codeInsight.hints.InlayGroup
+import com.intellij.codeInsight.hints.codeVision.CodeVisionPass
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.Editor
@@ -12,8 +13,6 @@ abstract class CodeVisionGroupSettingModel(isEnabled: Boolean, id: String) : Inl
 
   final override val group: InlayGroup
     get() = InlayGroup.CODE_VISION_GROUP_NEW
-
-  override fun collectAndApply(editor: Editor, file: PsiFile) { }
 
   override val previewText: String? = null
 

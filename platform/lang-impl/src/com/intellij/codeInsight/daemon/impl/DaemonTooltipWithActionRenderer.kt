@@ -1,5 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("MayBeConstant")
 
 package com.intellij.codeInsight.daemon.impl
 
@@ -317,6 +316,8 @@ internal class DaemonTooltipWithActionRenderer(@NlsContexts.Tooltip text: String
       return isShowActions()
     }
 
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
     override fun setSelected(e: AnActionEvent, state: Boolean) {
       setShowActions(state)
       reloader.reload(myCurrentWidth > 0)
@@ -342,6 +343,8 @@ internal class DaemonTooltipWithActionRenderer(@NlsContexts.Tooltip text: String
     override fun isSelected(e: AnActionEvent): Boolean {
       return myCurrentWidth > 0
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
       TooltipActionsLogger.logShowDescription(e.project, TooltipActionsLogger.Source.Gear, e.inputEvent, e.place)

@@ -3,7 +3,6 @@ package com.intellij.psi;
 
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.Function;
-import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +17,7 @@ public interface PsiExpression extends PsiAnnotationMemberValue, PsiCaseLabelEle
 
   ArrayFactory<PsiExpression> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PsiExpression[count];
 
-  Function<PsiExpression, PsiType> EXPRESSION_TO_TYPE = (NullableFunction<PsiExpression, PsiType>)expression -> expression.getType();
+  Function<PsiExpression, PsiType> EXPRESSION_TO_TYPE = expression -> expression.getType();
 
   /**
    * Returns the type of the expression.

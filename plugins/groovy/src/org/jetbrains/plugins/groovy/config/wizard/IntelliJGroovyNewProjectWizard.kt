@@ -4,16 +4,17 @@ package org.jetbrains.plugins.groovy.config.wizard
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings
 import com.intellij.framework.library.FrameworkLibraryVersionFilter
 import com.intellij.ide.highlighter.ModuleFileType
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logAddSampleCodeChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logContentRootChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logModuleFileLocationChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logModuleNameChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkChanged
-import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logSdkFinished
+import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.INTELLIJ
+import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.projectWizard.generators.IntelliJNewProjectWizardStep
+import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.util.EditorHelper
 import com.intellij.ide.util.projectWizard.ModuleBuilder
+import com.intellij.ide.wizard.GitNewProjectWizardData.Companion.gitData
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
+import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.chain
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
@@ -39,16 +40,15 @@ import java.nio.file.Paths
 
 class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
 
-  override val name: String = "IntelliJ"
+  override val name = INTELLIJ
 
-  override val ordinal: Int = 0
+  override val ordinal = 0
 
-  override fun createStep(parent: GroovyNewProjectWizard.Step): NewProjectWizardStep = Step(parent)
+  override fun createStep(parent: GroovyNewProjectWizard.Step): NewProjectWizardStep = Step(parent).chain(::AssetsStep)
 
   class Step(parent: GroovyNewProjectWizard.Step) :
     IntelliJNewProjectWizardStep<GroovyNewProjectWizard.Step>(parent),
     BuildSystemGroovyNewProjectWizardData by parent {
-
 
     override fun Panel.customOptions() {
       row(GroovyBundle.message("label.groovy.sdk")) {
@@ -57,6 +57,8 @@ class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
     }
 
     override fun setupProject(project: Project) {
+      super.setupProject(project)
+
       val groovyModuleBuilder = GroovyAwareModuleBuilder().apply {
         val contentRoot = FileUtil.toSystemDependentName(contentRoot)
         contentEntryPath = contentRoot
@@ -82,16 +84,6 @@ class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
       if (addSampleCode) {
         openSampleCodeInEditorLater(project, contentRoot)
       }
-
-      logSdkFinished(sdk)
-    }
-
-    init {
-      sdkProperty.afterChange { logSdkChanged(it) }
-      addSampleCodeProperty.afterChange { logAddSampleCodeChanged() }
-      moduleNameProperty.afterChange { logModuleNameChanged() }
-      contentRootProperty.afterChange { logContentRootChanged() }
-      moduleFileLocationProperty.afterChange { logModuleFileLocationChanged() }
     }
 
     private fun openSampleCodeInEditorLater(project: Project, contentEntryPath: String) {
@@ -106,8 +98,6 @@ class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
         }
       }
     }
-
-
 
     private fun createCompositionSettings(project: Project, container: LibrariesContainer): LibraryCompositionSettings? {
       val libraryDescription = GroovyLibraryDescription()
@@ -136,6 +126,14 @@ class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
         else -> return null
       }
     }
+  }
 
+  private class AssetsStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
+    override fun setupAssets(project: Project) {
+      outputDirectory = "$path/$name"
+      if (gitData?.git == true) {
+        addAssets(StandardAssetsProvider().getIntelliJIgnoreAssets())
+      }
+    }
   }
 }

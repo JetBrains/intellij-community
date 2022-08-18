@@ -20,10 +20,10 @@ import org.jetbrains.yaml.formatter.YAMLCodeStyleSettings;
 public class YAMLCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   @NotNull
   @Override
-  public Configurable createSettingsPage(final CodeStyleSettings settings, final CodeStyleSettings originalSettings) {
+  public Configurable createSettingsPage(final @NotNull CodeStyleSettings settings, final @NotNull CodeStyleSettings originalSettings) {
     return new CodeStyleAbstractConfigurable(settings, originalSettings, YAMLLanguage.INSTANCE.getDisplayName()) {
       @Override
-      protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
+      protected @NotNull CodeStyleAbstractPanel createPanel(final @NotNull CodeStyleSettings settings) {
         final CodeStyleSettings currentSettings = getCurrentSettings();
         return new TabbedLanguageCodeStylePanel(YAMLLanguage.INSTANCE, currentSettings, settings) {
           @Override
@@ -49,7 +49,7 @@ public class YAMLCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
 
   @Nullable
   @Override
-  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+  public CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return new YAMLCodeStyleSettings(settings);
   }
 }

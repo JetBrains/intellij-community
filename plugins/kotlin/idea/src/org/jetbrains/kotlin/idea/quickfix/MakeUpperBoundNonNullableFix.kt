@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.HighPriorityAction
@@ -6,21 +6,25 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsContext
-import com.intellij.openapi.util.NlsSafe
-import org.jetbrains.annotations.Nls
+import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.backend.jvm.ir.psiElement
 import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
+import org.jetbrains.kotlin.descriptors.isOverridable
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.getTypeParameters
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtTypeParameter
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
@@ -111,7 +115,12 @@ open class MakeUpperBoundNonNullableFix(
             return when (diagnostic.factory) {
                 ErrorsJvm.NULLABLE_TYPE_PARAMETER_AGAINST_NOT_NULL_TYPE_PARAMETER -> {
                     val info = ErrorsJvm.NULLABLE_TYPE_PARAMETER_AGAINST_NOT_NULL_TYPE_PARAMETER.cast(diagnostic)
-                    createActionsForType(info.a)
+                    listOfNotNull(createActionForTypeParameter(info.a))
+                }
+
+                ErrorsJvm.WRONG_TYPE_PARAMETER_NULLABILITY_FOR_JAVA_OVERRIDE -> {
+                    val info = ErrorsJvm.WRONG_TYPE_PARAMETER_NULLABILITY_FOR_JAVA_OVERRIDE.cast(diagnostic)
+                    listOfNotNull(createActionForTypeParameter(info.a))
                 }
 
                 Errors.TYPE_MISMATCH -> {
@@ -192,6 +201,17 @@ open class MakeUpperBoundNonNullableFix(
         }
 
         private fun createActionsForType(type: KotlinType, highPriority: Boolean = false): List<IntentionAction> {
+            val result = mutableListOf<IntentionAction>()
+            for (typeParameterDescriptor in type.getTypeParameters()) {
+                result.addIfNotNull(createActionForTypeParameter(typeParameterDescriptor, highPriority))
+            }
+            return result
+        }
+
+        private fun createActionForTypeParameter(
+            typeParameterDescriptor: TypeParameterDescriptor,
+            highPriority: Boolean = false,
+        ): IntentionAction? {
             fun makeAction(typeParameter: KtTypeParameter, kind: Kind): IntentionAction {
                 return if (highPriority)
                     HighPriorityMakeUpperBoundNonNullableFix(typeParameter, kind)
@@ -199,22 +219,21 @@ open class MakeUpperBoundNonNullableFix(
                     MakeUpperBoundNonNullableFix(typeParameter, kind)
             }
 
-            val result = mutableListOf<IntentionAction>()
-            for (typeParameterDescriptor in type.getTypeParameters()) {
-                val psiElement = typeParameterDescriptor.psiElement?.safeAs<KtTypeParameter>() ?: continue
-                val existingUpperBound = psiElement.extendsBound
-                if (existingUpperBound != null) {
-                    val context = existingUpperBound.analyze(BodyResolveMode.PARTIAL)
-                    val upperBoundType = context[BindingContext.TYPE, existingUpperBound] ?: continue
-                    if (upperBoundType.isMarkedNullable) {
-                        result.add(makeAction(psiElement, Kind.ReplaceExistingUpperBound(upperBoundType.makeNotNullable())))
-                    }
-                } else {
-                    result.add(makeAction(psiElement, Kind.AddAnyAsUpperBound))
+            val psiElement = typeParameterDescriptor.psiElement?.safeAs<KtTypeParameter>() ?: return null
+            val existingUpperBound = psiElement.extendsBound
+            if (existingUpperBound != null) {
+                val context = existingUpperBound.analyze(BodyResolveMode.PARTIAL)
+                val upperBoundType = context[BindingContext.TYPE, existingUpperBound] ?: return null
+                if (upperBoundType.isMarkedNullable) {
+                    return makeAction(psiElement, Kind.ReplaceExistingUpperBound(upperBoundType.makeNotNullable()))
                 }
+            } else {
+                return makeAction(psiElement, Kind.AddAnyAsUpperBound)
             }
-            return result
+
+            return null
         }
+
     }
 }
 

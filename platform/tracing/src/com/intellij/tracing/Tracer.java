@@ -42,7 +42,7 @@ public class Tracer {
     return new Span(eventId, threadId, name, startNs);
   }
 
-  public static void runTracer(int pid, Path filePath, long threshold, Consumer<Exception> exceptionHandler) throws IOException {
+  public static void runTracer(int pid, Path filePath, long threshold, Consumer<? super Exception> exceptionHandler) throws IOException {
     if (running) throw new IllegalStateException("Tracer already started");
     tracingStartMs = System.currentTimeMillis();
     tracingStartNs = System.nanoTime();
@@ -60,7 +60,7 @@ public class Tracer {
     running = true;
   }
 
-  public static void finishTracer(Consumer<Exception> exceptionHandler) {
+  public static void finishTracer(Consumer<? super Exception> exceptionHandler) {
     if (fileState == null) return;
     new FlushingTask(fileState, true, exceptionHandler).run();
     fileState = null;
@@ -147,9 +147,9 @@ public class Tracer {
   private static class FlushingTask implements Runnable {
     private final FileState fileState;
     private final boolean shouldFinish;
-    private final Consumer<Exception> myExceptionHandler;
+    private final Consumer<? super Exception> myExceptionHandler;
 
-    private FlushingTask(FileState fileState, boolean shouldFinish, Consumer<Exception> exceptionHandler) {
+    private FlushingTask(FileState fileState, boolean shouldFinish, Consumer<? super Exception> exceptionHandler) {
       this.fileState = fileState;
       this.shouldFinish = shouldFinish;
       myExceptionHandler = exceptionHandler;

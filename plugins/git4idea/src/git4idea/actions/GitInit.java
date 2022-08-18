@@ -2,6 +2,7 @@
 package git4idea.actions;
 
 import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -35,6 +36,11 @@ public class GitInit extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     e.getPresentation().setEnabledAndVisible(project == null || project.isDefault() || TrustedProjects.isTrusted(project));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -90,5 +96,10 @@ public class GitInit extends DumbAwareAction {
     ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
     manager.setDirectoryMappings(VcsUtil.addMapping(manager.getDirectoryMappings(), path, GitVcs.NAME));
     VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(root);
+  }
+
+  public static void configureVcsMappings(@NotNull Project project, @NotNull VirtualFile root) {
+    ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
+    manager.setDirectoryMappings(VcsUtil.addMapping(manager.getDirectoryMappings(), root.getPath(), GitVcs.NAME));
   }
 }

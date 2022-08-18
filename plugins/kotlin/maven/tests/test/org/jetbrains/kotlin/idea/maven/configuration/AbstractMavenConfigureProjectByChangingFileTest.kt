@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.maven.configuration
 
@@ -8,10 +8,11 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.IdeaTestUtil
 import org.jetbrains.idea.maven.model.MavenConstants
+import org.jetbrains.kotlin.idea.base.test.AndroidStudioTestUtils
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.AbstractConfigureProjectByChangingFileTest
 import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.test.AndroidStudioTestUtils
 import java.io.File
 
 abstract class AbstractMavenConfigureProjectByChangingFileTest : AbstractConfigureProjectByChangingFileTest<KotlinMavenConfigurator>() {
@@ -33,7 +34,7 @@ abstract class AbstractMavenConfigureProjectByChangingFileTest : AbstractConfigu
         module: Module,
         file: PsiFile,
         configurator: KotlinMavenConfigurator,
-        version: String,
+        version: IdeKotlinVersion,
         collector: NotificationMessageCollector
     ) {
         WriteCommandAction.runWriteCommandAction(module.project) {

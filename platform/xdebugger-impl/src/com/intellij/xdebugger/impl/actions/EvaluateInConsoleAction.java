@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,5 +28,10 @@ final class EvaluateInConsoleAction extends XDebuggerActionBase {
   @Override
   protected DebuggerActionHandler getHandler(@NotNull DebuggerSupport debuggerSupport) {
     return debuggerSupport.getEvaluateInConsoleActionHandler();
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 }

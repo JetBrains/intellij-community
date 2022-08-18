@@ -8,6 +8,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -89,9 +90,9 @@ public final class FormMergerTreeStructureProvider implements TreeStructureProvi
   public Object getData(@NotNull Collection<AbstractTreeNode<?>> selected, @NotNull String dataId) {
     if (Form.DATA_KEY.is(dataId)) {
       List<Form> result = new ArrayList<>();
-      for(AbstractTreeNode<?> node: selected) {
-        if (node.getValue() instanceof Form) {
-          result.add((Form) node.getValue());
+      for (AbstractTreeNode<?> node : selected) {
+        if (node instanceof FormNode) {
+          result.add(((FormNode)node).getValue());
         }
       }
       if (!result.isEmpty()) {
@@ -99,8 +100,8 @@ public final class FormMergerTreeStructureProvider implements TreeStructureProvi
       }
     }
     else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      for(AbstractTreeNode<?> node: selected) {
-        if (node.getValue() instanceof Form) {
+      for (AbstractTreeNode<?> node : selected) {
+        if (node instanceof FormNode) {
           return new MyDeleteProvider(selected);
         }
       }
@@ -136,6 +137,11 @@ public final class FormMergerTreeStructureProvider implements TreeStructureProvi
 
     MyDeleteProvider(final Collection<AbstractTreeNode<?>> selected) {
       myElements = collectFormPsiElements(selected);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override

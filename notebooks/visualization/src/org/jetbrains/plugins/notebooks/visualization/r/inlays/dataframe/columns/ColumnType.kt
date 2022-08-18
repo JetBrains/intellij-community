@@ -69,7 +69,7 @@ object IntType : Type<Int>() {
   /** IntType could be upgraded to
    * DoubleType if incoming type is DoubleType
    * StringType if incoming type is any other. */
-  override fun upgrade(type: Type<*>? ) : Type<*>? {
+  override fun upgrade(type: Type<*>? ) : Type<*> {
     return when(type) {
       null -> IntType
       IntType -> IntType
@@ -93,7 +93,7 @@ object IntType : Type<Int>() {
 
 object DoubleType : Type<Double>() {
 
-  override fun upgrade(type: Type<*>? ) : Type<*>? {
+  override fun upgrade(type: Type<*>? ) : Type<*> {
     return when(type) {
       null -> DoubleType
       IntType -> DoubleType
@@ -117,7 +117,7 @@ object DoubleType : Type<Double>() {
 
 object StringType : Type<String?>() {
 
-  override fun upgrade(type: Type<*>? ) : Type<*>? {
+  override fun upgrade(type: Type<*>? ) : Type<*> {
     return StringType
   }
 

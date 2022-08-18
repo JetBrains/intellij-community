@@ -11,3 +11,4 @@ open class A<<caret>T>(foo: T, list: List<T>) {
     val T.d: Boolean get() = true
     fun bar(t: T): T = t
 }
+// FIR_COMPARISON

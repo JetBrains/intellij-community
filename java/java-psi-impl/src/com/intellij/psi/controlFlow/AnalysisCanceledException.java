@@ -2,14 +2,16 @@
 package com.intellij.psi.controlFlow;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 public class AnalysisCanceledException extends Exception {
   private final PsiElement myErrorElement;
 
-  public AnalysisCanceledException(PsiElement errorElement) {
+  public AnalysisCanceledException(@NotNull PsiElement errorElement) {
     myErrorElement = errorElement;
   }
 
+  @NotNull
   public PsiElement getErrorElement() {
     return myErrorElement;
   }

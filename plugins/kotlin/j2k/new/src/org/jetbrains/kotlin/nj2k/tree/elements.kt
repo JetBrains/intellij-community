@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.tree
 
@@ -286,8 +286,6 @@ class JKJavaResourceExpression(expression: JKExpression) : JKJavaResourceElement
 class JKJavaResourceDeclaration(declaration: JKLocalVariable) : JKJavaResourceElement() {
     var declaration by child(declaration)
 }
-
-class JKJavaErrorResourceDeclaration
 
 interface JKErrorElement: JKElement {
     val psi: PsiElement?

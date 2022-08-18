@@ -18,6 +18,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.Function;
 import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UField;
 import org.jetbrains.uast.UMethod;
 import org.jetbrains.uast.UastContextKt;
 
@@ -60,7 +61,9 @@ public class TestUniqueId extends TestObject {
       }
       else {
         UClass containingClass = UastContextKt.getUastParentOfType(psiElement, UClass.class);
-        if (containingClass == null || TestFrameworks.detectFramework(containingClass) == null) {
+        if (containingClass == null || 
+            TestFrameworks.detectFramework(containingClass) == null || 
+            UastContextKt.getUastParentOfType(psiElement, UField.class) != null) {
           return nodeId;
         }
       }

@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.util
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.project.Project
@@ -10,7 +11,7 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import java.util.concurrent.Callable
 
 internal inline fun <R> nonBlocking(project: Project, crossinline block: () -> R, crossinline uiContinuation: (R) -> Unit) {
-    if (isUnitTestMode()) {
+    if (isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment) {
         val result = block()
         uiContinuation(result)
     } else {

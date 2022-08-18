@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataV
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataSettingsPersistence
 import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventsSchemePathSettings
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -59,6 +60,8 @@ class ConfigureEventsSchemeFileAction(private var myRecorderId: String = Statist
       validator.reload()
     }
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(event: AnActionEvent) {
     super.update(event)

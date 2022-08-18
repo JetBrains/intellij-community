@@ -134,9 +134,8 @@ public class PsiLiteralExpressionImpl
         return null;
       }
       text = text.substring(1, textLength - 1);
-      StringBuilder chars = new StringBuilder();
-      boolean success = parseStringCharacters(text, chars, null);
-      if (!success) return null;
+      CharSequence chars = CodeInsightUtilCore.parseStringCharacters(text, null);
+      if (chars == null) return null;
       if (chars.length() != 1) return null;
       return chars.charAt(0);
     }
@@ -157,9 +156,8 @@ public class PsiLiteralExpressionImpl
   @Nullable
   private static String internedParseStringCharacters(final String chars) {
     if (chars == null) return null;
-    final StringBuilder outChars = new StringBuilder(chars.length());
-    final boolean success = parseStringCharacters(chars, outChars, null);
-    return success ? outChars.toString() : null;
+    final CharSequence outChars = CodeInsightUtilCore.parseStringCharacters(chars, null);
+    return outChars == null ? null : outChars.toString();
   }
 
   public static boolean parseStringCharacters(@NotNull String chars, @NotNull StringBuilder outChars, int @Nullable [] sourceOffsets) {

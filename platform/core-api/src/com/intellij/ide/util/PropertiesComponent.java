@@ -36,7 +36,7 @@ public abstract class PropertiesComponent {
   public abstract void setValue(@NonNls @NotNull String name, @NonNls @Nullable String value);
 
   /**
-   * Set value or unset if equals to default value
+   * Set value or unset if equals to default value or null
    */
   public abstract void setValue(@NonNls @NotNull String name, @NonNls @Nullable String value, @Nullable String defaultValue);
 

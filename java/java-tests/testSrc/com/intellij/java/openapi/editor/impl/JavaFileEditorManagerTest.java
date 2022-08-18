@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.openapi.editor.impl;
 
 import com.intellij.codeHighlighting.Pass;
@@ -16,18 +16,11 @@ import com.intellij.testFramework.FileEditorManagerTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.ui.tabs.TabInfo;
-import org.jdom.JDOMException;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
 
-/**
- * @author Dmitry Avdeev
- */
 public class JavaFileEditorManagerTest extends FileEditorManagerTestCase {
-
-  public void testAsyncOpening() throws JDOMException, ExecutionException, InterruptedException, IOException {
+  public void testAsyncOpening() {
     openFiles("<component name=\"FileEditorManager\">\n" +
               "    <leaf>\n" +
               "      <file pinned=\"false\" current=\"true\" current-in-tab=\"true\">\n" +
@@ -53,7 +46,7 @@ public class JavaFileEditorManagerTest extends FileEditorManagerTestCase {
     PsiMethod method = psiFile.getClasses()[0].getMethods()[0];
     method.navigate(true);
 
-    FileEditor[] editors = myManager.getEditors(file);
+    FileEditor[] editors = manager.getEditors(file);
     assertEquals(1, editors.length);
     Editor editor = ((TextEditor)editors[0]).getEditor();
     EditorTestUtil.waitForLoading(editor);
@@ -74,10 +67,10 @@ public class JavaFileEditorManagerTest extends FileEditorManagerTestCase {
     VirtualFile moduleInfoFile = getFile("/src/module-info.java");
     assertNotNull(moduleInfoFile);
 
-    myManager.openFile(moduleInfoFile, false);
+    manager.openFile(moduleInfoFile, false);
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
 
-    EditorTabbedContainer openedTabPane = myManager.getCurrentWindow().getTabbedPane();
+    EditorTabbedContainer openedTabPane = manager.getCurrentWindow().getTabbedPane();
     assertEquals(1, openedTabPane.getTabCount());
     TabInfo firstTab = openedTabPane.getTabs().getTabAt(0);
     assertEquals("module-info.java (test.module)", firstTab.getText());

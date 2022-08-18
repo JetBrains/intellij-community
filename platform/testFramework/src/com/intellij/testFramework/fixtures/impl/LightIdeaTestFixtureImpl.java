@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.application.options.CodeStyle;
@@ -10,12 +10,11 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.testFramework.*;
+import com.intellij.testFramework.common.TestApplicationKt;
 import com.intellij.testFramework.fixtures.LightIdeaTestFixture;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,7 +67,7 @@ public final class LightIdeaTestFixtureImpl extends BaseFixture implements Light
       },
       () -> {
         if (project != null) {
-          TestApplicationManagerKt.waitForProjectLeakingThreads(project);
+          TestApplicationManager.waitForProjectLeakingThreads(project);
         }
       },
       () -> super.tearDown(), // call all disposables' dispose() while the project is still open
@@ -76,7 +75,7 @@ public final class LightIdeaTestFixtureImpl extends BaseFixture implements Light
         myProject = null;
         myModule = null;
         if (project != null) {
-          TestApplicationManagerKt.tearDownProjectAndApp(project);
+          TestApplicationManager.tearDownProjectAndApp(project);
         }
       },
       () -> LightPlatformTestCase.checkEditorsReleased(),
@@ -95,10 +94,7 @@ public final class LightIdeaTestFixtureImpl extends BaseFixture implements Light
       () -> {
         Application app = ApplicationManager.getApplication();
         if (app != null) {
-          ManagingFS managingFS = app.getServiceIfCreated(ManagingFS.class);
-          if (managingFS != null) {
-            ((PersistentFS)managingFS).clearIdCache();
-          }
+          TestApplicationKt.clearIdCache(app);
         }
       },
       () -> HeavyPlatformTestCase.cleanupApplicationCaches(project)

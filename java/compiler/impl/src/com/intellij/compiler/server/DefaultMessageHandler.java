@@ -1,19 +1,15 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.server;
 
-import com.intellij.compiler.cache.client.CompilerCacheServerAuthUtil;
 import com.intellij.compiler.cache.git.GitRepositoryUtil;
-import com.intellij.compiler.cache.statistic.CompilerCacheLoadingStats;
+import com.intellij.compiler.cache.CompilerCacheLoadingSettings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import io.netty.channel.Channel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 public abstract class DefaultMessageHandler implements BuilderMessageHandler {
@@ -63,8 +59,8 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
       case SAVE_LATEST_DOWNLOAD_STATISTIC_MESSAGE:
         CmdlineRemoteProto.Message.BuilderMessage.CommitAndDownloadStatistics downloadStatisticsMessage = msg.getCommitAndDownloadStatistics();
         GitRepositoryUtil.saveLatestDownloadedCommit(downloadStatisticsMessage.getCommit());
-        CompilerCacheLoadingStats.saveApproximateDecompressionSpeed(downloadStatisticsMessage.getDecompressionSpeed());
-        CompilerCacheLoadingStats.saveApproximateDeletionSpeed(downloadStatisticsMessage.getDeletionSpeed());
+        CompilerCacheLoadingSettings.saveApproximateDecompressionSpeed(downloadStatisticsMessage.getDecompressionSpeed());
+        CompilerCacheLoadingSettings.saveApproximateDeletionSpeed(downloadStatisticsMessage.getDeletionSpeed());
         break;
       case SAVE_LATEST_BUILT_COMMIT_MESSAGE:
         GitRepositoryUtil.saveLatestBuiltMasterCommit(myProject);

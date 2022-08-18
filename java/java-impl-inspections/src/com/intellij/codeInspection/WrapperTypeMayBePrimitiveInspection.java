@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.Nullability;
@@ -59,7 +59,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethod(PsiMethod method) {
+      public void visitMethod(@NotNull PsiMethod method) {
         PsiCodeBlock body = method.getBody();
         if (body == null) return;
         WrapperTypeMayBePrimitiveDetectingVisitor visitor = new WrapperTypeMayBePrimitiveDetectingVisitor();
@@ -119,12 +119,12 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
     private final Map<PsiVariable, List<BoxingInfo>> myBoxingMap = new HashMap<>();
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       // To avoid revisiting elements from child method
     }
 
     @Override
-    public void visitLocalVariable(PsiLocalVariable variable) {
+    public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
       super.visitLocalVariable(variable);
       if (variable instanceof PsiField) return;
       if (!TypeConversionUtil.isPrimitiveWrapper(variable.getType())) return;
@@ -137,7 +137,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       super.visitReferenceExpression(expression);
       final PsiVariable variable = tryCast(expression.resolve(), PsiVariable.class);
       if (variable == null) return;
@@ -367,7 +367,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
       UnboxingVisitor(PsiLocalVariable variable) {myVariable = variable;}
 
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         if (!ExpressionUtils.isReferenceTo(expression, myVariable)) return;
         PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression).getParent();
@@ -394,7 +394,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
       PsiExpression argument = arguments[0];
       if (containingClass == null) return;
       String containingClassName = containingClass.getQualifiedName();
-      String replacementMethodCall = JavaPsiBoxingUtils.getParseMethod(containingClassName);
+      String replacementMethodCall = JavaPsiBoxingUtils.getParseMethod(callExpression.getType());
       if (replacementMethodCall == null) return;
       CommentTracker tracker = new CommentTracker();
       String argumentText = tracker.text(argument);

@@ -9,6 +9,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ObjectIntHashMap;
+import com.intellij.util.containers.ObjectIntMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +69,7 @@ final class JavaLangReflectVarHandleInvocationChecker {
   private static final String WEAK_COMPARE_AND_SET_PLAIN = "weakCompareAndSetPlain";
   private static final String WEAK_COMPARE_AND_SET_RELEASE = "weakCompareAndSetRelease";
 
-  private static final ObjectIntHashMap<String> VAR_HANDLE_ARGUMENT_COUNTS = new ObjectIntHashMap<>();
+  private static final ObjectIntMap<String> VAR_HANDLE_ARGUMENT_COUNTS = new ObjectIntHashMap<>();
 
   static {
     for (String name : Arrays.asList(GET, GET_VOLATILE, GET_OPAQUE, GET_ACQUIRE)) {

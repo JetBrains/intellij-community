@@ -33,7 +33,7 @@ class GHPRStateServiceImpl internal constructor(private val progressManager: Pro
 
     return progressManager.submitIOTask(progressIndicator) {
       try {
-        requestExecutor.execute(GithubApiRequests.Repos.Branches.getProtection(repository, baseBranch))
+        requestExecutor.execute(it, GithubApiRequests.Repos.Branches.getProtection(repository, baseBranch))
       }
       catch (e: Exception) {
         // assume there are no restrictions
@@ -49,7 +49,7 @@ class GHPRStateServiceImpl internal constructor(private val progressManager: Pro
                                      prHtmlUrl: String,
                                      baseBranchProtectionRules: GHBranchProtectionRules?) =
     progressManager.submitIOTask(progressIndicator) {
-      val mergeabilityData = requestExecutor.execute(GHGQLRequests.PullRequest.mergeabilityData(repository, pullRequestId.number))
+      val mergeabilityData = requestExecutor.execute(it, GHGQLRequests.PullRequest.mergeabilityData(repository, pullRequestId.number))
                              ?: error("Could not find pull request $pullRequestId.number")
       val builder = GHPRMergeabilityStateBuilder(headRefOid, prHtmlUrl,
                                                  mergeabilityData)

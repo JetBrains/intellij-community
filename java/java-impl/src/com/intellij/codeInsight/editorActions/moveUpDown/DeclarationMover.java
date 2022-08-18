@@ -294,9 +294,7 @@ class DeclarationMover extends LineMover {
   @Nullable
   private LineRange moveInsideOutsideClassPosition(Editor editor, PsiElement sibling, final boolean isDown, boolean areWeMovingClass) throws IllegalMoveException{
     if (sibling == null || sibling instanceof PsiImportList) throw new IllegalMoveException();
-    if (sibling instanceof PsiJavaToken &&
-        ((PsiJavaToken)sibling).getTokenType() == (isDown ? JavaTokenType.RBRACE : JavaTokenType.LBRACE) &&
-        sibling.getParent() instanceof PsiClass) {
+    if (PsiUtil.isJavaToken(sibling, (isDown ? JavaTokenType.RBRACE : JavaTokenType.LBRACE)) && sibling.getParent() instanceof PsiClass) {
       // moving outside class
       final PsiClass aClass = (PsiClass)sibling.getParent();
       final PsiElement parent = aClass.getParent();

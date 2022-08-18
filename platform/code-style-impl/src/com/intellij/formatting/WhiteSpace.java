@@ -115,6 +115,7 @@ public class WhiteSpace {
     if (newEndOffset == oldEndOffset) return;
     if (myStart >= newEndOffset) {
       myRangesAssert.assertInvalidRanges(myStart, newEndOffset, model, "some block intersects with whitespace");
+      return;
     }
 
     myEnd = newEndOffset;
@@ -124,6 +125,7 @@ public class WhiteSpace {
 
     if (!coveredByBlock(model)) {
       myRangesAssert.assertInvalidRanges(myStart, myEnd, model, "nonempty text is not covered by block");
+      return;
     }
 
     if (newEndOffset > oldEndOffset) {
@@ -162,7 +164,7 @@ public class WhiteSpace {
     if (!(model instanceof FormattingDocumentModelImpl)) return false;
     PsiFile psiFile = ((FormattingDocumentModelImpl)model).getFile();
     PsiElement start = psiFile.findElementAt(myStart);
-    PsiElement end = psiFile.findElementAt(myEnd-1);
+    PsiElement end = psiFile.findElementAt(myEnd - 1);
     return start == end && start instanceof PsiWhiteSpace; // there maybe non-white text inside CDATA-encoded injected elements
   }
 
@@ -186,14 +188,22 @@ public class WhiteSpace {
     int column = mySpaces + myIndentSpaces;
     for (int i = oldEndOffset - 1; i >= newEndOffset; i--) {
       switch (oldText.charAt(i)) {
-        case LINE_FEED: ++lineFeedsNumberAtRemovedText; column = 0; break;
-        case ' ': ++spacesNumberAtRemovedText; column--; break;
+        case LINE_FEED:
+          ++lineFeedsNumberAtRemovedText;
+          column = 0;
+          break;
+        case ' ':
+          ++spacesNumberAtRemovedText;
+          column--;
+          break;
         case '\t':
           int change = column % tabSize;
           if (change == 0) {
             change = tabSize;
           }
-          indentSpacesNumberAtRemovedText += change; column -= change; break;
+          indentSpacesNumberAtRemovedText += change;
+          column -= change;
+          break;
       }
     }
 
@@ -428,7 +438,6 @@ public class WhiteSpace {
         mySpaces = 0;
       }
     });
-
   }
 
   /**
@@ -491,7 +500,7 @@ public class WhiteSpace {
    */
   public boolean equalsToString(CharSequence ws) {
     if (myInitial == null) return ws.length() == 0;
-    return Comparing.equal(ws,myInitial,true);
+    return Comparing.equal(ws, myInitial, true);
   }
 
   public void setIsSafe(final boolean value) {
@@ -557,7 +566,7 @@ public class WhiteSpace {
    * Here <code>'ws<sub>nm</sub>'</code> is a m-th white space symbol at the n-th line. {@code 'Spaces'} property of
    * {@link WhiteSpace} object for such white-space text has a value not <b>2</b> or <b>3</b> but <b>1</b>.
    *
-   * @return      number of white spaces at the last line of target continuous white space text document fragment
+   * @return number of white spaces at the last line of target continuous white space text document fragment
    */
   public int getSpaces() {
     return mySpaces;
@@ -565,10 +574,6 @@ public class WhiteSpace {
 
   public void setKeepFirstColumn(final boolean b) {
     setFlag(KEEP_FIRST_COLUMN_MASK, b);
-  }
-
-  public void setLineFeedsAreReadOnly() {
-    setLineFeedsAreReadOnly(true);
   }
 
   public void setReadOnly(final boolean isReadOnly) {
@@ -608,8 +613,8 @@ public class WhiteSpace {
   }
 
   public StringBuilder generateWhiteSpace(final CommonCodeStyleSettings.IndentOptions indentOptions,
-                                                  final int offset,
-                                                  final IndentInfo indent) {
+                                          final int offset,
+                                          final IndentInfo indent) {
     final StringBuilder result = new StringBuilder();
     int currentOffset = getStartOffset();
     CharSequence[] lines = getInitialLines();
@@ -623,7 +628,6 @@ public class WhiteSpace {
       if (currentOffset == offset) {
         break;
       }
-
     }
     final String newIndentSpaces = indent.generateNewWhiteSpace(indentOptions);
     result.append(newIndentSpaces);
@@ -634,9 +638,8 @@ public class WhiteSpace {
         result.append(lines[i]);
         result.append(LINE_FEED);
       }
-      appendNonWhitespaces(result, lines, lines.length-1);
+      appendNonWhitespaces(result, lines, lines.length - 1);
       result.append(lines[lines.length - 1]);
-
     }
     return result;
   }
@@ -658,7 +661,7 @@ public class WhiteSpace {
    * <p/>
    * <b>Note:</b> arrays usage here is considered to be a historical heritage.
    *
-   * @return      target document text fragment as a sequence of strings
+   * @return target document text fragment as a sequence of strings
    */
   private CharSequence[] getInitialLines() {
     if (myInitial == null) return new CharSequence[]{""};
@@ -699,7 +702,7 @@ public class WhiteSpace {
    * <b>8</b> or <b>12</b> but <b>4</b>, i.e. tabulation symbols from last line
    * only are counted.
    *
-   * @return        number of indent spaces at the last line of target continuous white space text document fragment
+   * @return number of indent spaces at the last line of target continuous white space text document fragment
    */
   public int getIndentSpaces() {
     return myIndentSpaces;
@@ -713,7 +716,7 @@ public class WhiteSpace {
    * Provides access to the line feed symbols number at continuous white space text document fragment represented
    * by the current {@link WhiteSpace} object.
    *
-   * @return      line feed symbols number
+   * @return line feed symbols number
    */
   public final int getLineFeeds() {
     return myFlags >>> LF_COUNT_SHIFT;
@@ -729,10 +732,9 @@ public class WhiteSpace {
     assert (flags & 0x7F) == (myFlags & 0x7F);
   }
 
-  @NotNull
-  public WhiteSpace setBeforeCodeBlockEnd(boolean isBeforeCodeBlockEnd) {
+  @SuppressWarnings("SameParameterValue")
+  void setBeforeCodeBlockEnd(boolean isBeforeCodeBlockEnd) {
     myIsBeforeCodeBlockEnd = isBeforeCodeBlockEnd;
-    return this;
   }
 
   public TextRange getTextRange() {

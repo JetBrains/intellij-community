@@ -7,6 +7,7 @@ import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.Timer;
 import javax.swing.*;
@@ -34,11 +35,13 @@ class DefaultScrollBarUI extends ScrollBarUI {
   JScrollBar myScrollBar;
 
   final ScrollBarPainter.Track myTrack = new ScrollBarPainter.Track(() -> myScrollBar);
-  final ScrollBarPainter.Thumb myThumb = new ScrollBarPainter.Thumb(() -> myScrollBar, false);
+  final ScrollBarPainter.Thumb myThumb = createThumbPainter();
 
   private boolean isValueCached;
   private int myCachedValue;
   private int myOldValue;
+
+  protected final ScrollBarAnimationBehavior myAnimationBehavior;
 
   DefaultScrollBarUI() {
     this(ScrollSettings.isThumbSmallIfOpaque() ? 13 : 10, 14, 10);
@@ -48,6 +51,17 @@ class DefaultScrollBarUI extends ScrollBarUI {
     myThickness = thickness;
     myThicknessMax = thicknessMax;
     myThicknessMin = thicknessMin;
+    myAnimationBehavior = new ToggleableScrollBarAnimationBehaviorDecorator(createBaseAnimationBehavior(),
+                                                                            myTrack.animator,
+                                                                            myThumb.animator);
+  }
+
+  protected ScrollBarPainter.Thumb createThumbPainter() {
+    return new ScrollBarPainter.Thumb(() -> myScrollBar, false);
+  }
+
+  protected ScrollBarAnimationBehavior createBaseAnimationBehavior() {
+    return new DefaultScrollBarAnimationBehavior(myTrack.animator, myThumb.animator);
   }
 
   int getThickness() {
@@ -56,6 +70,10 @@ class DefaultScrollBarUI extends ScrollBarUI {
 
   int getMinimalThickness() {
     return scale(myScrollBar == null || isOpaque(myScrollBar) ? myThickness : myThicknessMin);
+  }
+
+  void toggle(boolean isOn) {
+    myAnimationBehavior.onToggle(isOn);
   }
 
   static boolean isOpaque(Component c) {
@@ -70,7 +88,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
   }
 
   boolean isTrackClickable() {
-    return isOpaque(myScrollBar) || myTrack.animator.myValue > 0;
+    return isOpaque(myScrollBar) || myAnimationBehavior.getTrackFrame() > 0;
   }
 
   boolean isTrackExpandable() {
@@ -85,23 +103,12 @@ class DefaultScrollBarUI extends ScrollBarUI {
     return myThumb.bounds.contains(x, y);
   }
 
-  void onTrackHover(boolean hover) {
-    myTrack.animator.start(hover);
-  }
-
-  void onThumbHover(boolean hover) {
-    myThumb.animator.start(hover);
-  }
-
   void paintTrack(Graphics2D g, JComponent c) {
     paint(myTrack, g, c, false);
   }
 
   void paintThumb(Graphics2D g, JComponent c) {
     paint(myThumb, g, c, ScrollSettings.isThumbSmallIfOpaque() && isOpaque(c));
-  }
-
-  void onThumbMove() {
   }
 
   void paint(ScrollBarPainter p, Graphics2D g, JComponent c, boolean small) {
@@ -125,18 +132,23 @@ class DefaultScrollBarUI extends ScrollBarUI {
         if (alignment == Alignment.BOTTOM) y += offset;
       }
     }
-    if (small) {
-      x += 1;
-      y += 1;
-      width -= 2;
-      height -= 2;
-    }
+
+    Insets insets = getInsets(small);
+    x += insets.left;
+    y += insets.top;
+    width -= (insets.left + insets.right);
+    height -= (insets.top + insets.bottom);
+
     p.paint(g, x, y, width, height, p.animator.myValue);
+  }
+
+  protected @NotNull Insets getInsets(boolean small) {
+    return small ? JBUI.insets(1) : JBUI.emptyInsets();
   }
 
   private int getTrackOffset(int offset) {
     if (!isTrackExpandable()) return offset;
-    float value = myTrack.animator.myValue;
+    float value = myAnimationBehavior.getTrackFrame();
     if (value <= 0) return offset;
     if (value >= 1) return 0;
     return (int)(.5f + offset * (1 - value));
@@ -180,9 +192,8 @@ class DefaultScrollBarUI extends ScrollBarUI {
 
   @Override
   public void uninstallUI(JComponent c) {
+    myAnimationBehavior.onUninstall();
     myScrollTimer.stop();
-    myTrack.animator.stop();
-    myThumb.animator.stop();
     myScrollBar.removeFocusListener(myListener);
     myScrollBar.removePropertyChangeListener(myListener);
     myScrollBar.getModel().removeChangeListener(myListener);
@@ -337,7 +348,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
       }
     }
     myOldValue = value;
-    if (animate) onThumbMove();
+    if (animate) myAnimationBehavior.onThumbMove();
   }
 
   private int getValue() {
@@ -366,9 +377,9 @@ class DefaultScrollBarUI extends ScrollBarUI {
 
     private void updateMouse(int x, int y) {
       if (isTrackContains(x, y)) {
-        if (!isOverTrack) onTrackHover(isOverTrack = true);
+        if (!isOverTrack) myAnimationBehavior.onTrackHover(isOverTrack = true);
         boolean hover = isThumbContains(x, y);
-        if (isOverThumb != hover) onThumbHover(isOverThumb = hover);
+        if (isOverThumb != hover) myAnimationBehavior.onThumbHover(isOverThumb = hover);
       }
       else {
         updateMouseExit();
@@ -376,8 +387,8 @@ class DefaultScrollBarUI extends ScrollBarUI {
     }
 
     private void updateMouseExit() {
-      if (isOverThumb) onThumbHover(isOverThumb = false);
-      if (isOverTrack) onTrackHover(isOverTrack = false);
+      if (isOverThumb) myAnimationBehavior.onThumbHover(isOverThumb = false);
+      if (isOverTrack) myAnimationBehavior.onTrackHover(isOverTrack = false);
     }
 
     private boolean redispatchIfTrackNotClickable(MouseEvent event) {
@@ -540,8 +551,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
         repaint();
       }
       if ("opaque" == name || "visible" == name) {
-        myTrack.animator.rewind(false);
-        myThumb.animator.rewind(false);
+        myAnimationBehavior.onReset();
         myTrack.bounds.setBounds(0, 0, 0, 0);
         myThumb.bounds.setBounds(0, 0, 0, 0);
       }
@@ -560,7 +570,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
           int minY = Math.min(myThumb.bounds.y, thumbPos);
           int maxY = Math.max(myThumb.bounds.y, thumbPos) + myThumb.bounds.height;
           myThumb.bounds.y = thumbPos;
-          onThumbMove();
+          myAnimationBehavior.onThumbMove();
           repaint(myThumb.bounds.x, minY, myThumb.bounds.width, maxY - minY);
         }
       }
@@ -572,7 +582,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
           int minX = Math.min(myThumb.bounds.x, thumbPos);
           int maxX = Math.max(myThumb.bounds.x, thumbPos) + myThumb.bounds.width;
           myThumb.bounds.x = thumbPos;
-          onThumbMove();
+          myAnimationBehavior.onThumbMove();
           repaint(minX, myThumb.bounds.y, maxX - minX, myThumb.bounds.height);
         }
       }

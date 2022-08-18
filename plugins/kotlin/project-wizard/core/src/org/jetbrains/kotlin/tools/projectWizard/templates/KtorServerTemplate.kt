@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.tools.projectWizard.templates
 
@@ -40,7 +40,7 @@ object KtorServerTemplate : Template() {
         withSettingsOf(module.originalModule) {
             buildList {
                 +DEPENDENCIES.KTOR_SERVER_NETTY
-                +ktorArtifactDependency("ktor-html-builder")
+                +ktorArtifactDependency("ktor-server-html-builder-jvm")
                 +ArtifactBasedLibraryDependencyIR(
                     MavenArtifact(Repositories.KOTLINX_HTML, "org.jetbrains.kotlinx", "kotlinx-html-jvm"),
                     Versions.KOTLINX.KOTLINX_HTML,

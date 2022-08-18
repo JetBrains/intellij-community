@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.debugger.coroutine
 
 import com.intellij.execution.JavaTestConfigurationWithDiscoverySupport
@@ -10,7 +10,7 @@ import com.intellij.openapi.projectRoots.JdkUtil
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.psi.JavaPsiFacade
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion
-import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
+import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 
 enum class CoroutineDebuggerMode {
     DISABLED,

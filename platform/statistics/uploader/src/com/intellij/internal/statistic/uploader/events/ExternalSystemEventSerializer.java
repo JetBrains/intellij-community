@@ -19,7 +19,7 @@ public final class ExternalSystemEventSerializer {
 
   @NotNull
   public static String serialize(@NotNull ExternalSystemEvent event) {
-    String prefix = event.getTimestamp() + " " + event.getEventType().name();
+    String prefix = event.getTimestamp() + " " + event.getEventType().name() + " " + event.getRecorderId();
     if (event instanceof ExternalUploadFinishedEvent) {
       ExternalUploadFinishedEvent failed = (ExternalUploadFinishedEvent)event;
       if (isNotEmpty(failed.getError())) {
@@ -42,34 +42,40 @@ public final class ExternalSystemEventSerializer {
   }
 
   @Nullable
-  public static ExternalSystemEvent deserialize(@NotNull String line) {
+  public static ExternalSystemEvent deserialize(@NotNull String line, int version) {
+    int payloadStartIndex = version == 0 ? 2 : 3;
     String[] parts = line.split(" ");
     int length = parts.length;
-    ExternalSystemEventType type = length > 1 ? ExternalSystemEventType.parse(parts[1]) : null;
+    if (length < payloadStartIndex) {
+      return null;
+    }
+
+    ExternalSystemEventType type = ExternalSystemEventType.parse(parts[1]);
     if (type == null) {
       return null;
     }
 
     long timestamp = parseLong(parts[0]);
+    String recorderId = version == 0 ? "FUS" : parts[2];
     if (type == ExternalSystemEventType.FINISHED) {
-      String error = parts.length >= 3 ? parts[2].trim() : null;
-      return new ExternalUploadFinishedEvent(timestamp, error);
+      String error = length > payloadStartIndex ? parts[payloadStartIndex].trim() : null;
+      return new ExternalUploadFinishedEvent(timestamp, error, recorderId);
     }
-    else if (type == ExternalSystemEventType.SEND && length >= 5 && length <= 7) {
-      int succeed = parseInt(parts[2]);
-      int failed = parseInt(parts[3]);
-      int total = parseInt(parts[4]);
-      List<String> sentFiles = length >= 6 ? parseSentFiles(parts[5]) : Collections.emptyList();
-      List<Integer> errors = length >= 7 ? parseErrors(parts[6]) : Collections.emptyList();
-      return new ExternalUploadSendEvent(timestamp, succeed, failed, total, sentFiles, errors);
+    else if (type == ExternalSystemEventType.SEND && length > payloadStartIndex + 2) {
+      int succeed = parseInt(parts[payloadStartIndex]);
+      int failed = parseInt(parts[payloadStartIndex + 1]);
+      int total = parseInt(parts[payloadStartIndex + 2]);
+      List<String> sentFiles = length > payloadStartIndex + 3 ? parseSentFiles(parts[payloadStartIndex + 3]) : Collections.emptyList();
+      List<Integer> errors = length > payloadStartIndex + 4 ? parseErrors(parts[payloadStartIndex + 4]) : Collections.emptyList();
+      return new ExternalUploadSendEvent(timestamp, succeed, failed, total, sentFiles, errors, recorderId);
     }
-    else if (type == ExternalSystemEventType.STARTED && length == 2) {
-      return new ExternalUploadStartedEvent(timestamp);
+    else if (type == ExternalSystemEventType.STARTED && length == payloadStartIndex) {
+      return new ExternalUploadStartedEvent(timestamp, recorderId);
     }
-    else if (type == ExternalSystemEventType.ERROR && length == 4) {
-      String event = parts[2].trim();
-      String errorClass = parts[3].trim();
-      return new ExternalSystemErrorEvent(timestamp, event, errorClass);
+    else if (type == ExternalSystemEventType.ERROR && length == payloadStartIndex + 2) {
+      String event = parts[payloadStartIndex].trim();
+      String errorClass = parts[payloadStartIndex + 1].trim();
+      return new ExternalSystemErrorEvent(timestamp, event, errorClass, recorderId);
     }
     return null;
   }
@@ -85,7 +91,7 @@ public final class ExternalSystemEventSerializer {
   }
 
   @NotNull
-  private static <V> List<V> parseValues(@NotNull String part, @NotNull Function<String, V> processor) {
+  private static <V> List<V> parseValues(@NotNull String part, @NotNull Function<? super String, ? extends V> processor) {
     try {
       if (part.startsWith("[") && part.endsWith("]")) {
         String unwrappedPart = part.substring(1, part.length() - 1);
@@ -112,7 +118,7 @@ public final class ExternalSystemEventSerializer {
     return valuesToString(errors, error -> String.valueOf(error));
   }
 
-  private static <V> String valuesToString(@NotNull List<V> values, @NotNull Function<V, String> processor) {
+  private static <V> String valuesToString(@NotNull List<? extends V> values, @NotNull Function<? super V, String> processor) {
     return values.stream().map(processor).collect(Collectors.joining(",", "[", "]"));
   }
 

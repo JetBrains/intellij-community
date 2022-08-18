@@ -181,10 +181,14 @@ class InvalidMailbox(TokenList):
     token_type: str
     @property
     def display_name(self) -> None: ...
-    local_part: None
-    domain: None
-    route: None
-    addr_spec: None
+    @property
+    def local_part(self) -> None: ...
+    @property
+    def domain(self) -> None: ...
+    @property
+    def route(self) -> None: ...
+    @property
+    def addr_spec(self) -> None: ...
 
 class Domain(TokenList):
     token_type: str

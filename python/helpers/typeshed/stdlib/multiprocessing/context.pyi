@@ -8,8 +8,13 @@ from multiprocessing import queues, synchronize
 from multiprocessing.pool import Pool as _Pool
 from multiprocessing.process import BaseProcess
 from multiprocessing.sharedctypes import SynchronizedArray, SynchronizedBase
-from typing import Any, TypeVar, Union, overload
+from typing import Any, ClassVar, TypeVar, Union, overload
 from typing_extensions import Literal
+
+if sys.version_info >= (3, 8):
+    __all__ = ()
+else:
+    __all__: list[str] = []
 
 _LockLike = Union[synchronize.Lock, synchronize.RLock]
 _CT = TypeVar("_CT", bound=_CData)
@@ -134,6 +139,8 @@ class DefaultContext(BaseContext):
     def set_start_method(self, method: str | None, force: bool = ...) -> None: ...
     def get_start_method(self, allow_none: bool = ...) -> str: ...
     def get_all_start_methods(self) -> list[str]: ...
+    if sys.version_info < (3, 8):
+        __all__: ClassVar[list[str]]
 
 _default_context: DefaultContext
 

@@ -14,7 +14,6 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.createNewProjectFrame
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.IdeFocusManager
@@ -58,7 +57,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
 
   // null keys must be supported
   // null key - root frame
-  private val projectToFrame: MutableMap<Project?, ProjectFrameHelper> = HashMap()
+  private val projectToFrame = HashMap<Project?, ProjectFrameHelper>()
 
   internal val defaultFrameInfoHelper = FrameInfoHelper()
 
@@ -122,7 +121,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   override fun getProjectFrameHelpers() = projectToFrame.values.toList()
 
   override fun findVisibleFrame(): JFrame? {
-    return projectToFrame.values.firstOrNull()?.frame ?: WelcomeFrame.getInstance() as? JFrame
+    return projectToFrame.values.firstOrNull()?.frameOrNull ?: WelcomeFrame.getInstance() as? JFrame
   }
 
   override fun findFirstVisibleFrameHelper() = projectToFrame.values.firstOrNull()
@@ -245,7 +244,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   override fun getFrame(project: Project?): IdeFrameImpl? {
     // no assert! otherwise, WindowWatcher.suggestParentWindow fails for default project
     //LOG.assertTrue(myProject2Frame.containsKey(project));
-    return getFrameHelper(project)?.frame
+    return getFrameHelper(project)?.frameOrNull
   }
 
   @ApiStatus.Internal
@@ -284,7 +283,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     LOG.assertTrue(!projectToFrame.containsKey(project))
     projectToFrame.put(project, frameHelper)
     frameHelper.setProject(project)
-    val frame = frameHelper.frame!!
+    val frame = frameHelper.frameOrNull!!
     // set only if not previously set (we remember previous project name and set it on frame creation)
     //if (Strings.isEmpty(frame.title)) {
       frame.title = FrameTitleBuilder.getInstance().getProjectTitle(project)
@@ -293,12 +292,9 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   }
 
   /**
-   * This method is not used in a normal conditions. Only in case of violation and early access to ToolWindowManager.
+   * This method is not used in a normal conditions. Only for light edit.
    */
-  fun allocateFrame(project: Project,
-                    projectFrameHelperFactory: Supplier<out ProjectFrameHelper> = Supplier {
-                      ProjectFrameHelper(createNewProjectFrame(forceDisableAutoRequestFocus = false, frameInfo = null), null)
-                    }): ProjectFrameHelper {
+  fun allocateFrame(project: Project, projectFrameHelperFactory: Supplier<out ProjectFrameHelper>): ProjectFrameHelper {
     var frame = getFrameHelper(project)
     if (frame != null) {
       return frame
@@ -335,13 +331,13 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
       }
       val bounds = frameInfo.bounds
       if (bounds != null) {
-        frameHelper.frame!!.bounds = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(bounds)
+        frameHelper.frameOrNull!!.bounds = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(bounds)
       }
     }
 
     projectToFrame.put(project, frameHelper)
     frameHelper.setProject(project)
-    val uiFrame = frameHelper.frame!!
+    val uiFrame = frameHelper.frameOrNull!!
     if (frameInfo != null) {
       uiFrame.extendedState = frameInfo.extendedState
     }
@@ -355,7 +351,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   }
 
   override fun releaseFrame(frameHelper: ProjectFrameHelper) {
-    val project = frameHelper.project!!
+    val project = frameHelper.project ?: return
     frameHelper.frameReleased()
     projectToFrame.remove(project)
     if (frameReuseEnabled && !projectToFrame.containsKey(null) && project !is LightEditCompatible) {
@@ -379,15 +375,10 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     }
   }
 
-  fun <T> runWithFrameReuseEnabled(task: Supplier<T>): T {
-    val savedValue = frameReuseEnabled
+  fun withFrameReuseEnabled(): AutoCloseable {
+    val oldValue = frameReuseEnabled
     frameReuseEnabled = true
-    try {
-      return task.get()
-    }
-    finally {
-      frameReuseEnabled = savedValue
-    }
+    return AutoCloseable { frameReuseEnabled = oldValue }
   }
 
   override fun getMostRecentFocusedWindow() = windowWatcher.focusedWindow
@@ -504,5 +495,5 @@ private fun getIdeFrame(component: Component): IdeFrame? {
 }
 
 private fun getFrameInfoByFrameHelper(frameHelper: ProjectFrameHelper): FrameInfo? {
-  return updateFrameInfo(frameHelper, frameHelper.frame ?: return null, null, null)
+  return updateFrameInfo(frameHelper, frameHelper.frameOrNull ?: return null, null, null)
 }

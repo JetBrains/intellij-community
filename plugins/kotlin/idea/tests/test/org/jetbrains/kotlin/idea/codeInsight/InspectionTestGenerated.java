@@ -123,16 +123,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/coroutines/asyncResultUnused/inspectionData/inspections.test");
         }
 
-        @TestMetadata("coroutines/directUseOfResultType/inspectionData/inspections.test")
-        public void testCoroutines_directUseOfResultType_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/coroutines/directUseOfResultType/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("dataClassPrivateConstructor/inspectionData/inspections.test")
-        public void testDataClassPrivateConstructor_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/dataClassPrivateConstructor/inspectionData/inspections.test");
-        }
-
         @TestMetadata("destructuringWrongName/inspectionData/inspections.test")
         public void testDestructuringWrongName_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/destructuringWrongName/inspectionData/inspections.test");
@@ -236,11 +226,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         @TestMetadata("nullableBooleanElvis/inspectionData/inspections.test")
         public void testNullableBooleanElvis_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/nullableBooleanElvis/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("overridingDeprecatedMember/inspectionData/inspections.test")
-        public void testOverridingDeprecatedMember_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/overridingDeprecatedMember/inspectionData/inspections.test");
         }
 
         @TestMetadata("protectedInFinal/inspectionData/inspections.test")

@@ -17,25 +17,28 @@ package org.jetbrains.idea.maven.importing;
 
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
 import com.intellij.execution.util.ProgramParametersUtil;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.project.MavenImportingSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.Path;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.junit.Assume;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
 
   //public static Test suite() throws ClassNotFoundException {
@@ -79,18 +82,18 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     createStdProjectFolders();
 
     createProjectPom("<groupId>test</groupId>" +
-                 "<artifactId>project</artifactId>" +
-                 "<version>1</version>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
 
-                 "<build>" +
-                 "  <extensions>" +
-                 "    <extension>" +
-                 "      <groupId>xxx</groupId>" +
-                 "      <artifactId>xxx</artifactId>" +
-                 "      <version>xxx</version>" +
-                 "    </extension>" +
-                 "  </extensions>" +
-                 "</build>");
+                     "<build>" +
+                     "  <extensions>" +
+                     "    <extension>" +
+                     "      <groupId>xxx</groupId>" +
+                     "      <artifactId>xxx</artifactId>" +
+                     "      <version>xxx</version>" +
+                     "    </extension>" +
+                     "  </extensions>" +
+                     "</build>");
     importProjectWithErrors();
 
     assertModules("project");
@@ -111,7 +114,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       MavenRootModelAdapter adapter =
-        new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(myProjectsTree.findProject(myProjectPom),
+        new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(getProjectsTree().findProject(myProjectPom),
                                                                       getModule("project"),
                                                                       new ModifiableModelsProviderProxyWrapper(myProject)));
       adapter.addSourceFolder(dir1.getPath(), JavaSourceRootType.SOURCE);
@@ -120,18 +123,32 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     });
 
 
-    assertSources("project", "userSourceFolder");
-    assertExcludes("project", "target", "userExcludedFolder");
+    if (supportsKeepingManualChanges()) {
+      assertSources("project", "userSourceFolder");
+      assertExcludes("project", "target", "userExcludedFolder");
+    }
 
     importProject();
 
-    assertSources("project", "userSourceFolder");
-    assertExcludes("project", "target", "userExcludedFolder");
+    if (supportsKeepingManualChanges()) {
+      assertSources("project", "userSourceFolder");
+      assertExcludes("project", "target", "userExcludedFolder");
+    }
+    else {
+      assertSources("project", "src/main/java");
+      assertExcludes("project", "target");
+    }
 
     resolveFoldersAndImport();
 
-    assertSources("project", "userSourceFolder");
-    assertExcludes("project", "target", "userExcludedFolder");
+    if (supportsKeepingManualChanges()) {
+      assertSources("project", "userSourceFolder");
+      assertExcludes("project", "target", "userExcludedFolder");
+    }
+    else {
+      assertSources("project", "src/main/java");
+      assertExcludes("project", "target");
+    }
   }
 
   @Test
@@ -146,12 +163,12 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertResources("project", "src/main/resources");
 
     createProjectPom("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
 
-                  "<build>" +
-                  "  <sourceDirectory>src</sourceDirectory>" +
-                  "</build>");
+                     "<build>" +
+                     "  <sourceDirectory>src</sourceDirectory>" +
+                     "</build>");
     resolveFoldersAndImport();
 
     assertSources("project", "src");
@@ -180,27 +197,32 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
 
     getMavenImporterSettings().setKeepSourceFolders(false);
     createProjectPom("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
 
-                  "<build>" +
-                  "  <sourceDirectory>src2</sourceDirectory>" +
-                  "</build>");
+                     "<build>" +
+                     "  <sourceDirectory>src2</sourceDirectory>" +
+                     "</build>");
     resolveFoldersAndImport();
 
     assertSources("project", "src2");
 
     getMavenImporterSettings().setKeepSourceFolders(true);
     createProjectPom("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
 
-                  "<build>" +
-                  "  <sourceDirectory>src1</sourceDirectory>" +
-                  "</build>");
+                     "<build>" +
+                     "  <sourceDirectory>src1</sourceDirectory>" +
+                     "</build>");
     resolveFoldersAndImport();
 
-    assertSources("project", "src2", "src1");
+    if (supportsLegacyKeepingFoldersFromPreviousImport()) {
+      assertSources("project", "src2", "src1");
+    }
+    else {
+      assertSources("project", "src1");
+    }
   }
 
   @Test
@@ -268,6 +290,10 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                          "</build>");
     importProject();
     assertModules("project", "m");
+
+    assertContentRoots("project",
+                       getProjectPath());
+
     assertContentRoots("m",
                        getProjectPath() + "/m",
                        getProjectPath() + "/src",
@@ -742,6 +768,128 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
   }
 
   @Test
+  public void testAddingExistingGeneratedSourcesInPerSourceTypeModules() throws Exception {
+    Assume.assumeTrue(MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject));
+
+    createStdProjectFolders();
+
+    createProjectSubFile("target/generated-sources/src1/com/A.java", "package com; class A {}");
+    createProjectSubFile("target/generated-sources/src2/com/B.java", "package com; class B {}");
+    createProjectSubFile("target/generated-test-sources/test1/com/test/A.java", "package com.test; class A {}");
+    createProjectSubFile("target/generated-test-sources/test2/com/test/B.java", "package com.test; class B {}");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<properties>" +
+                  "  <maven.compiler.source>8</maven.compiler.source>" +
+                  "  <maven.compiler.target>8</maven.compiler.target>" +
+                  "  <maven.compiler.testSource>11</maven.compiler.testSource>" +
+                  "  <maven.compiler.testTarget>11</maven.compiler.testTarget>" +
+                  "</properties>");
+
+    assertModules("project", "project.main", "project.test");
+
+    assertContentRoots("project", getProjectPath());
+    assertSources("project");
+    assertResources("project");
+    assertTestSources("project");
+    assertTestResources("project");
+    assertExcludes("project", "target");
+
+    String mainResources = getProjectPath() + "/src/main/resources";
+    var mainSources = new String[]{
+      getProjectPath() + "/src/main/java",
+      mainResources,
+      getProjectPath() + "/target/generated-sources/src1",
+      getProjectPath() + "/target/generated-sources/src2"
+    };
+    String testResources = getProjectPath() + "/src/test/resources";
+    var testSources = new String[]{
+      getProjectPath() + "/src/test/java",
+      testResources,
+      getProjectPath() + "/target/generated-test-sources/test1",
+      getProjectPath() + "/target/generated-test-sources/test2"
+    };
+
+    assertContentRoots("project.main", mainSources);
+    assertContentRoots("project.test", testSources);
+
+    for (String main : mainSources) {
+      if (main.equals(mainResources)) {
+        assertContentRootResources("project.main", main, "");
+      }
+      else {
+        assertContentRootSources("project.main", main, "");
+      }
+      assertContentRootTestSources("project.main", main);
+      assertContentRootTestResources("project.main", main);
+      assertContentRootExcludes("project.main", main);
+    }
+
+    for (String test : testSources) {
+      assertContentRootResources("project.test", test);
+      assertContentRootSources("project.test", test);
+
+      if (test.equals(testResources)) {
+        assertContentRootTestResources("project.test", test, "");
+      }
+      else {
+        assertContentRootTestSources("project.test", test, "");
+      }
+      assertContentRootExcludes("project.test", test);
+    }
+  }
+
+  @Test
+  public void testContentRootOutsideOfModuleDirInPerSourceTypeImport() throws Exception {
+    Assume.assumeTrue(MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject));
+
+    createModulePom("m1",
+                    "<groupId>test</groupId>" +
+                    "<artifactId>m1</artifactId>" +
+                    "<version>1</version>" +
+                    "<parent>" +
+                    "  <groupId>test</groupId>" +
+                    "  <artifactId>project</artifactId>" +
+                    "  <version>1</version>" +
+                    "</parent>" +
+
+                    "<build>" +
+                    "  <sourceDirectory>../custom-sources</sourceDirectory>" +
+                    "</build>");
+
+    createProjectSubFile("custom-sources/com/CustomSource.java", "package com; class CustomSource {}");
+    createProjectSubFile("m1/src/main/resources/test.txt", "resource");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<packaging>pom</packaging>" +
+
+                  "<properties>" +
+                  "  <maven.compiler.source>8</maven.compiler.source>" +
+                  "  <maven.compiler.target>8</maven.compiler.target>" +
+                  "  <maven.compiler.testSource>11</maven.compiler.testSource>" +
+                  "  <maven.compiler.testTarget>11</maven.compiler.testTarget>" +
+                  "</properties>" +
+
+                  "<modules>" +
+                  "  <module>m1</module>" +
+                  "</modules>");
+
+    assertModules("project",
+                  mn("project", "m1"),
+                  mn("project", "m1.main"),
+                  mn("project", "m1.test"));
+
+    assertContentRoots(mn("project", "m1.main"),
+                       getProjectPath() + "/m1/src/main/resources",
+                       getProjectPath() + "/custom-sources");
+  }
+
+  @Test
   public void testAddingExistingGeneratedSources2() throws Exception {
     createStdProjectFolders();
 
@@ -938,7 +1086,9 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
 
   @Test
   public void testIgnoringFilesRightUnderGeneratedSources() throws Exception {
-    createStdProjectFolders();
+    if (!supportsImportOfNonExistingFolders()) {
+      createStdProjectFolders();
+    }
     createProjectSubFile("target/generated-sources/f.txt");
     createProjectSubFile("target/generated-test-sources/f.txt");
 
@@ -950,6 +1100,8 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     assertResources("project", "src/main/resources");
     assertTestSources("project", "src/test/java");
     assertTestResources("project", "src/test/resources");
+
+    assertExcludes("project", "target");
   }
 
   @Test
@@ -1060,21 +1212,185 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     String targetUrl = new Path(targetPath).toUrl().getUrl();
 
     assertContentRoots("project", getProjectPath());
-
-    //ContentEntry targetEntry = null;
-    //for (ContentEntry each : getContentRoots("project")) {
-    //  if (each.getUrl().equals(targetUrl)) {
-    //    targetEntry = each;
-    //    break;
-    //  }
-    //}
-    //ExcludeFolder[] excludedFolders = targetEntry.getExcludeFolders();
-    //assertEquals(1, excludedFolders.length);
-    //assertEquals(targetUrl, excludedFolders[0].getUrl());
-    //
     assertModuleOutput("project",
                        getParentPath() + "/target/classes",
                        getParentPath() + "/target/test-classes");
+  }
+
+  @Test
+  public void testCustomPomFileNameDefaultContentRoots() throws Exception {
+    createProjectSubFile("m1/customName.xml", createPomXml(
+      "<artifactId>m1</artifactId>" +
+      "<version>1</version>" +
+
+      "<parent>" +
+      "  <groupId>test</groupId>" +
+      "  <artifactId>project</artifactId>" +
+      "  <version>1</version>" +
+      "</parent>" +
+
+      "<build>" +
+      "  <sourceDirectory>sources</sourceDirectory>" +
+      "  <testSourceDirectory>tests</testSourceDirectory>" +
+      "</build>"));
+
+    new File(myProjectRoot.getPath(), "m1/sources").mkdirs();
+    new File(myProjectRoot.getPath(), "m1/tests").mkdirs();
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<packaging>pom</packaging>" +
+                  "<version>1</version>" +
+
+                  "<modules>" +
+                  "  <module>m1/customName.xml</module>" +
+                  "</modules>");
+
+    assertContentRoots(mn("project", "m1"), getProjectPath() + "/m1");
+  }
+
+  @Test
+  public void testCustomPomFileNameCustomContentRoots() throws Exception {
+    createProjectSubFile("m1/pom.xml", createPomXml(
+      "<artifactId>m1-pom</artifactId>" +
+      "<version>1</version>" +
+
+      "<parent>" +
+      "  <groupId>test</groupId>" +
+      "  <artifactId>project</artifactId>" +
+      "  <version>1</version>" +
+      "</parent>"));
+
+    createProjectSubFile("m1/custom.xml", createPomXml(
+      "<artifactId>m1-custom</artifactId>" +
+      "<version>1</version>" +
+
+      "<parent>" +
+      "  <groupId>test</groupId>" +
+      "  <artifactId>project</artifactId>" +
+      "  <version>1</version>" +
+      "</parent>" +
+
+      "<build>" +
+      "  <resources><resource><directory>sources/resources</directory></resource></resources>" +
+      "  <sourceDirectory>sources</sourceDirectory>" +
+      "  <testSourceDirectory>tests</testSourceDirectory>" +
+      "</build>"));
+
+    createProjectSubDirs("m1/src/main/java",
+                         "m1/src/main/resources",
+                         "m1/src/test/java",
+                         "m1/src/test/resources",
+
+                         "m1/sources/resources",
+                         "m1/tests");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<packaging>pom</packaging>" +
+                  "<version>1</version>" +
+
+                  "<modules>" +
+                  "  <module>m1</module>" +
+                  "  <module>m1/custom.xml</module>" +
+                  "</modules>");
+
+    String m1_pom_module = mn("project", "m1-pom");
+    String m1_custom_module = mn("project", "m1-custom");
+    assertModules("project", m1_pom_module, m1_custom_module);
+
+    String m1_pom_root = getProjectPath() + "/m1";
+    assertContentRoots(m1_pom_module, m1_pom_root);
+    assertContentRootSources(m1_pom_module, m1_pom_root, "src/main/java");
+    assertContentRootResources(m1_pom_module, m1_pom_root, "src/main/resources");
+    assertContentRootTestSources(m1_pom_module, m1_pom_root, "src/test/java");
+    assertContentRootTestResources(m1_pom_module, m1_pom_root, "src/test/resources");
+
+    String m1_custom_sources_root = getProjectPath() + "/m1/sources";
+    String m1_custom_tests_root = getProjectPath() + "/m1/tests";
+    String m1_standard_test_resources = getProjectPath() + "/m1/src/test/resources";
+    assertContentRoots(m1_custom_module,
+                       m1_custom_sources_root,
+                       m1_custom_tests_root,
+                       // [anton] The next folder doesn't look correct, as it intersects with 'pom.xml' module folders,
+                       // but I'm testing the behavior as is in order to preserve it in the new Workspace import
+                       m1_standard_test_resources);
+    assertContentRootSources(m1_custom_module, m1_custom_sources_root, "");
+    assertContentRootResources(m1_custom_module, m1_custom_sources_root);
+    assertContentRootTestSources(m1_custom_module, m1_custom_tests_root, "");
+    assertContentRootTestResources(m1_custom_module, m1_standard_test_resources, "");
+  }
+
+  @Test
+  public void testContentRootOutsideOfModuleDir() throws Exception {
+    if (!supportsImportOfNonExistingFolders()) {
+      createStdProjectFolders("m1");
+    }
+
+    createProjectSubFile("m1/pom.xml", createPomXml(
+      "<artifactId>m1-pom</artifactId>" +
+      "<version>1</version>" +
+
+      "<parent>" +
+      "  <groupId>test</groupId>" +
+      "  <artifactId>project</artifactId>" +
+      "  <version>1</version>" +
+      "</parent>" +
+
+      "<build>" +
+      "  <sourceDirectory>../pom-sources</sourceDirectory>" +
+      "</build>"));
+
+    createProjectSubFile("m1/custom.xml", createPomXml(
+      "<artifactId>m1-custom</artifactId>" +
+      "<version>1</version>" +
+
+      "<parent>" +
+      "  <groupId>test</groupId>" +
+      "  <artifactId>project</artifactId>" +
+      "  <version>1</version>" +
+      "</parent>" +
+
+      "<build>" +
+      "  <sourceDirectory>../custom-sources</sourceDirectory>" +
+      "</build>"));
+
+    new File(myProjectRoot.getPath(), "pom-sources").mkdirs();
+    new File(myProjectRoot.getPath(), "custom-sources").mkdirs();
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<packaging>pom</packaging>" +
+                  "<version>1</version>" +
+
+                  "<modules>" +
+                  "  <module>m1</module>" +
+                  "  <module>m1/custom.xml</module>" +
+                  "</modules>");
+
+    assertModules("project", mn("project", "m1-pom"), mn("project", "m1-custom"));
+
+    assertContentRoots(mn("project", "m1-pom"),
+                       getProjectPath() + "/m1", getProjectPath() + "/pom-sources");
+
+    assertContentRootSources(mn("project", "m1-pom"), getProjectPath() + "/m1");
+    assertContentRootTestSources(mn("project", "m1-pom"), getProjectPath() + "/m1", "src/test/java");
+    assertContentRootSources(mn("project", "m1-pom"), getProjectPath() + "/pom-sources", "");
+    assertContentRootTestSources(mn("project", "m1-pom"), getProjectPath() + "/pom-sources");
+
+    assertContentRoots(mn("project", "m1-custom"),
+                       getProjectPath() + "/custom-sources",
+                       getProjectPath() + "/m1/src/main/resources",
+                       getProjectPath() + "/m1/src/test/java",
+                       getProjectPath() + "/m1/src/test/resources");
+
+    // this is not quite correct behavior, since we have both modules (m1-pom and m2-custom) pointing at the same folders
+    // (Though, it somehow works in IJ, and it's a rare case anyway).
+    // The assertions are only to make sure the behavior is 'stable'. Should be updates once the behavior changes intentionally
+    assertContentRootSources(mn("project", "m1-custom"), getProjectPath() + "/custom-sources", "");
+    assertContentRootTestSources(mn("project", "m1-custom"), getProjectPath() + "/m1/src/test/java", "");
+    assertContentRootResources(mn("project", "m1-custom"), getProjectPath() + "/m1/src/main/resources", "");
+    assertContentRootTestResources(mn("project", "m1-custom"), getProjectPath() + "/m1/src/test/resources", "");
   }
 
   @Test
@@ -1202,12 +1518,11 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
 
     final VirtualFile target = createProjectSubDir("target");
     createProjectSubDirsWithFile("anno",
+                                 "test-anno",
                                  "target/generated-sources/foo",
                                  "target/generated-sources/annotations",
                                  "target/generated-sources/test-annotations",
                                  "target/generated-test-sources/foo");
-
-    createProjectSubDir("test-anno");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -1227,22 +1542,37 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                   " </plugins>" +
                   "</build>");
 
-    final Runnable testAssertions = () -> {
-      assertSources("project",
-                    "anno",
-                    "src/main/java",
-                    "target/generated-sources/annotations",
-                    "target/generated-sources/foo",
-                    "target/generated-sources/test-annotations");
+    final Consumer<Boolean> testAssertions = (shouldKeepGeneratedFolders) -> {
+      if (shouldKeepGeneratedFolders) {
+        assertSources("project",
+                      "anno",
+                      "src/main/java",
+                      "target/generated-sources/annotations",
+                      "target/generated-sources/foo",
+                      "target/generated-sources/test-annotations");
+      }
+      else {
+        assertSources("project",
+                      "anno",
+                      "src/main/java");
+      }
 
       assertResources("project", "src/main/resources");
-      assertTestSources("project",
-                        "src/test/java",
-                        "target/generated-test-sources/foo");
+      if (shouldKeepGeneratedFolders) {
+        assertTestSources("project",
+                          "src/test/java",
+                          "target/generated-test-sources/foo",
+                          "test-anno");
+      }
+      else {
+        assertTestSources("project",
+                          "src/test/java",
+                          "test-anno");
+      }
       assertTestResources("project", "src/test/resources");
     };
 
-    testAssertions.run();
+    testAssertions.accept(true);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
@@ -1256,11 +1586,11 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
       }
     });
 
-    testAssertions.run();
+    testAssertions.accept(true);
     importProject();
-    testAssertions.run();
+    testAssertions.accept(supportsLegacyKeepingFoldersFromPreviousImport());
     resolveFoldersAndImport();
-    testAssertions.run();
+    testAssertions.accept(supportsLegacyKeepingFoldersFromPreviousImport());
   }
 
   @Test
@@ -1269,7 +1599,7 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
     createProjectSubDirs("target/src");
     createProjectSubDirs("target/test/subFolder");
 
-    importProject("<groupId>test</groupId>" +
+   importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
@@ -1283,7 +1613,8 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                      "  <sourceDirectory>target/src</sourceDirectory>" +
                      "  <testSourceDirectory>target/test/subFolder</testSourceDirectory>" +
                      "</build>");
-    resolveFoldersAndImport();
+    importProject();
+    //resolveFoldersAndImport();
 
     assertSources("project", "target/src");
     assertTestSources("project", "target/test/subFolder");
@@ -1344,13 +1675,12 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
   @Test
   public void testCustomAnnotationProcessorSources() throws Exception {
     createStdProjectFolders();
-    createProjectSubDirsWithFile("anno",
+    createProjectSubDirsWithFile("custom-annotations",
+                                 "custom-test-annotations",
                                  "target/generated-sources/foo",
                                  "target/generated-sources/annotations",
                                  "target/generated-sources/test-annotations",
                                  "target/generated-test-sources/foo");
-
-    createProjectSubDir("test-anno");
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -1363,27 +1693,67 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
                   "   <artifactId>maven-compiler-plugin</artifactId>" +
                   "   <version>2.3.2</version>" +
                   "   <configuration>" +
-                  "     <generatedSourcesDirectory>${basedir}/anno</generatedSourcesDirectory>" +
-                  "     <generatedTestSourcesDirectory>${basedir}/test-anno</generatedTestSourcesDirectory>" +
+                  "     <generatedSourcesDirectory>${basedir}/custom-annotations</generatedSourcesDirectory>" +
+                  "     <generatedTestSourcesDirectory>${basedir}/custom-test-annotations</generatedTestSourcesDirectory>" +
                   "   </configuration>" +
                   "  </plugin>" +
                   " </plugins>" +
                   "</build>");
 
     assertSources("project",
-                  "anno",
+                  "custom-annotations",
                   "src/main/java",
                   "target/generated-sources/annotations",
                   "target/generated-sources/foo",
                   "target/generated-sources/test-annotations");
-    assertResources("project", "src/main/resources");
-
     assertTestSources("project",
                       "src/test/java",
-                      "target/generated-test-sources/foo");
-    assertTestResources("project", "src/test/resources");
+                      "target/generated-test-sources/foo",
+                      "custom-test-annotations");
   }
 
+  @Test
+  public void testCustomAnnotationProcessorSourcesUnderMainGeneratedFolder() throws Exception {
+    if (!supportsImportOfNonExistingFolders()) {
+      createStdProjectFolders();
+    }
+    createProjectSubDirsWithFile("target/generated-sources/foo",
+                                 "target/generated-sources/annotations",
+                                 "target/generated-sources/custom-annotations",      // this and...
+                                 "target/generated-sources/custom-test-annotations", // this, are explicitly specified as annotation folders
+                                 "target/generated-test-sources/foo",
+                                 "target/generated-test-sources/test-annotations"
+    );
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  " <plugins>" +
+                  "  <plugin>" +
+                  "   <groupId>org.apache.maven.plugins</groupId>" +
+                  "   <artifactId>maven-compiler-plugin</artifactId>" +
+                  "   <version>2.3.2</version>" +
+                  "   <configuration>" +
+                  "     <generatedSourcesDirectory>${basedir}/target/generated-sources/custom-annotations</generatedSourcesDirectory>" +
+                  "     <generatedTestSourcesDirectory>${basedir}/target/generated-sources/custom-test-annotations</generatedTestSourcesDirectory>" +
+                  "   </configuration>" +
+                  "  </plugin>" +
+                  " </plugins>" +
+                  "</build>");
+
+    assertSources("project",
+                  "src/main/java",
+                  "target/generated-sources/foo",
+                  "target/generated-sources/annotations",
+                  "target/generated-sources/custom-annotations");
+    assertTestSources("project",
+                      "src/test/java",
+                      "target/generated-sources/custom-test-annotations",
+                      "target/generated-test-sources/foo",
+                      "target/generated-test-sources/test-annotations");
+  }
 
   @Test
   public void testModuleWorkingDirWithMultiplyContentRoots() {
@@ -1475,8 +1845,8 @@ public class FoldersImportingTest extends MavenMultiVersionImportingTestCase {
         return false;
       }
     };
-    assertModules("project", "AA", "BB");
-    String workingDir = ProgramParametersUtil.getWorkingDir(parameters, myProject, getModule("BB"));
+    assertModules("project", mn("project", "AA"), mn("project", "BB"));
+    String workingDir = ProgramParametersUtil.getWorkingDir(parameters, myProject, getModule(mn("project", "BB")));
     assertEquals(pomBB.getCanonicalFile().getParent().getPath(), workingDir);
   }
 

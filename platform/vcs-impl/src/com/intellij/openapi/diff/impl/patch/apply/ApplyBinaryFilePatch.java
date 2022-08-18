@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -17,12 +18,17 @@ public final class ApplyBinaryFilePatch extends ApplyFilePatchBase<BinaryFilePat
   }
 
   @Override
-  protected void applyCreate(Project project, final VirtualFile newFile, @Nullable CommitContext commitContext) throws IOException {
+  protected void applyCreate(@NotNull Project project,
+                             @NotNull VirtualFile newFile,
+                             @Nullable CommitContext commitContext) throws IOException {
     newFile.setBinaryContent(myPatch.getAfterContent());
   }
 
   @Override
-  protected Result applyChange(Project project, final VirtualFile fileToPatch, FilePath pathBeforeRename, Supplier<? extends CharSequence> baseContents) throws IOException {
+  protected Result applyChange(@NotNull Project project,
+                               @NotNull VirtualFile fileToPatch,
+                               @NotNull FilePath pathBeforeRename,
+                               @Nullable Supplier<? extends CharSequence> baseContents) throws IOException {
     fileToPatch.setBinaryContent(myPatch.getAfterContent());
     return SUCCESS;
   }

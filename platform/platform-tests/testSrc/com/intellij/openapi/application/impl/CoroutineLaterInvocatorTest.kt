@@ -5,30 +5,18 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.progress.timeoutRunBlocking
-import com.intellij.testFramework.ApplicationExtension
-import com.intellij.testFramework.UncaughtExceptionsExtension
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ConcurrencyUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.extension.RegisterExtension
 import javax.swing.SwingUtilities
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.resume
 
+@TestApplication
 class CoroutineLaterInvocatorTest {
-
-  companion object {
-
-    @RegisterExtension
-    @JvmField
-    val applicationExtension = ApplicationExtension()
-  }
-
-  @RegisterExtension
-  @JvmField
-  val uncaughtExceptionsExtension = UncaughtExceptionsExtension()
 
   @BeforeEach
   @AfterEach
@@ -130,6 +118,15 @@ class CoroutineLaterInvocatorTest {
   }
 
   @Test
+  fun `modal delays default non-modal`(): Unit = timeoutRunBlocking {
+    val modalCoroutine = launchModalCoroutineAndWait(this)
+    val nonModalCoroutine = launch(Dispatchers.EDT) {} // modality is not specified
+    processSwingQueue()
+    assertFalse(nonModalCoroutine.isCompleted)
+    modalCoroutine.cancel()
+  }
+
+  @Test
   fun `modal delays modal`(): Unit = timeoutRunBlocking {
     withDifferentInitialModalities {
       val modalCoroutine = launchModalCoroutineAndWait(cs = this@withDifferentInitialModalities)
@@ -142,7 +139,7 @@ class CoroutineLaterInvocatorTest {
 
   @Test
   fun `any edt coroutine is resumed while modal is running`(): Unit = timeoutRunBlocking {
-    withContext(Dispatchers.EDT) {
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       val modalCoroutine = launch {
         withModalContext {
           awaitCancellation()
@@ -185,6 +182,8 @@ class CoroutineLaterInvocatorTest {
           throw e
         }
       }
+      //suppressed until this one is fixed: https://youtrack.jetbrains.com/issue/KT-52379
+      @Suppress("AssertBetweenInconvertibleTypes")
       assertSame(e, t)
     }
   }

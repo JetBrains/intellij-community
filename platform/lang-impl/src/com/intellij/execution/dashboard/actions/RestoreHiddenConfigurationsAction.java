@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.dashboard.actions;
 
 import com.intellij.execution.ExecutionBundle;
@@ -11,7 +11,9 @@ import com.intellij.execution.dashboard.tree.RunDashboardGroupImpl;
 import com.intellij.execution.services.ServiceViewActionUtils;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ObjectUtils;
@@ -24,40 +26,47 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class RestoreHiddenConfigurationsAction extends DumbAwareAction {
+final class RestoreHiddenConfigurationsAction extends DumbAwareAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
+    Presentation presentation = e.getPresentation();
     if (project == null) {
-      e.getPresentation().setEnabledAndVisible(false);
+      presentation.setEnabledAndVisible(false);
       return;
     }
     if (ActionPlaces.getActionGroupPopupPlace(ActionPlaces.SERVICES_TOOLBAR).equals(e.getPlace())) {
-      e.getPresentation().setEnabledAndVisible(hasHiddenConfiguration(project));
-      e.getPresentation().setText(ExecutionBundle.message("run.dashboard.restore.hidden.configurations.toolbar.action.name"));
+      presentation.setEnabledAndVisible(hasHiddenConfiguration(project));
+      presentation.setText(ExecutionBundle.message("run.dashboard.restore.hidden.configurations.toolbar.action.name"));
       return;
     }
-    e.getPresentation().setText(ExecutionBundle.message("run.dashboard.restore.hidden.configurations.popup.action.name"));
+    presentation.setText(ExecutionBundle.message("run.dashboard.restore.hidden.configurations.popup.action.name"));
     RunDashboardServiceViewContributor root = ServiceViewActionUtils.getTarget(e, RunDashboardServiceViewContributor.class);
     if (root != null) {
-      e.getPresentation().setEnabledAndVisible(hasHiddenConfiguration(project));
+      presentation.setEnabledAndVisible(hasHiddenConfiguration(project));
       return;
     }
     if (!PropertiesComponent.getInstance(project).getBoolean(ConfigurationTypeDashboardGroupingRule.NAME, true)) {
       JBIterable<RunDashboardNode> nodes = ServiceViewActionUtils.getTargets(e, RunDashboardNode.class);
-      e.getPresentation().setEnabledAndVisible(nodes.isNotEmpty() && hasHiddenConfiguration(project));
+      presentation.setEnabledAndVisible(nodes.isNotEmpty() && hasHiddenConfiguration(project));
       return;
     }
     Set<ConfigurationType> types = getTargetTypes(e);
     if (types.isEmpty()) {
-      e.getPresentation().setEnabledAndVisible(false);
+      presentation.setEnabledAndVisible(false);
       return;
     }
     Set<RunConfiguration> hiddenConfigurations =
       ((RunDashboardManagerImpl)RunDashboardManager.getInstance(project)).getHiddenConfigurations();
     List<RunConfiguration> configurations =
       ContainerUtil.filter(hiddenConfigurations, configuration -> types.contains(configuration.getType()));
-    e.getPresentation().setEnabledAndVisible(!configurations.isEmpty());
+    presentation.setEnabledAndVisible(!configurations.isEmpty());
   }
 
   @Override

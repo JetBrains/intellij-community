@@ -81,6 +81,10 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     init(null, project);
   }
 
+  protected final AbstractEditor getEditor() {
+    return myEditor;
+  }
+
   protected @NotNull SettingsTreeView treeViewFactory(@NotNull SettingsFilter filter, @NotNull List<? extends ConfigurableGroup> groups) {
     return new SettingsTreeView(filter, groups);
   }

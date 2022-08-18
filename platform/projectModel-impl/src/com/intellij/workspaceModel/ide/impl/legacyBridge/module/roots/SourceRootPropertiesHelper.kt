@@ -3,9 +3,9 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity
 import org.jdom.Element
 import org.jetbrains.jps.model.JpsDummyElement
 import org.jetbrains.jps.model.JpsElement
@@ -21,6 +21,7 @@ import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtensio
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer
 import org.jetbrains.jps.model.serialization.module.UnknownSourceRootPropertiesSerializer
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 
 object SourceRootPropertiesHelper {
   @Suppress("UNCHECKED_CAST")
@@ -49,7 +50,7 @@ object SourceRootPropertiesHelper {
              && javaResourceEntity.relativeOutputPath == properties.relativeOutputPath
     }
 
-    val customEntity = entity.asCustomSourceRoot()
+    val customEntity = entity.customSourceRootProperties
     if (customEntity == null) {
       return properties is JpsDummyElement
     }
@@ -65,7 +66,7 @@ object SourceRootPropertiesHelper {
     return JDOMUtil.writeElement(sourceElement)
   }
 
-  internal fun applyChanges(diff: WorkspaceEntityStorageBuilder, entity: SourceRootEntity, actualSourceRootData: JpsModuleSourceRoot) {
+  internal fun applyChanges(diff: MutableEntityStorage, entity: SourceRootEntity, actualSourceRootData: JpsModuleSourceRoot) {
     if (hasEqualProperties(entity, actualSourceRootData)) {
       return
     }
@@ -74,30 +75,30 @@ object SourceRootPropertiesHelper {
     val javaSourceEntity = entity.asJavaSourceRoot()
     val javaResourceEntity = entity.asJavaResourceRoot()
     if (javaSourceEntity != null && properties is JavaSourceRootProperties) {
-      diff.modifyEntity(ModifiableJavaSourceRootEntity::class.java, javaSourceEntity) {
+      diff.modifyEntity(javaSourceEntity) {
         generated = properties.isForGeneratedSources
         packagePrefix = properties.packagePrefix
       }
     }
     else if (javaResourceEntity != null && properties is JavaResourceRootProperties) {
-      diff.modifyEntity(ModifiableJavaResourceRootEntity::class.java, javaResourceEntity) {
+      diff.modifyEntity(javaResourceEntity) {
         generated = properties.isForGeneratedSources
         relativeOutputPath = properties.relativeOutputPath
       }
     }
     else {
-      val customEntity = entity.asCustomSourceRoot() ?: return
+      val customEntity = entity.customSourceRootProperties ?: return
       val serializer = findSerializer(actualSourceRootData.rootType as JpsModuleSourceRootType<JpsElement>)
                        ?: return
       val propertiesXml = savePropertiesToString(serializer, properties)
-      diff.modifyEntity(ModifiableCustomSourceRootPropertiesEntity::class.java, customEntity) {
+      diff.modifyEntity(customEntity) {
         propertiesXmlTag = propertiesXml
       }
     }
 
   }
 
-  internal fun <P : JpsElement> addPropertiesEntity(diff: WorkspaceEntityStorageDiffBuilder,
+  internal fun <P : JpsElement> addPropertiesEntity(diff: MutableEntityStorage,
                                                     sourceRootEntity: SourceRootEntity,
                                                     properties: P,
                                                     serializer: JpsModuleSourceRootPropertiesSerializer<P>) {
@@ -151,7 +152,7 @@ object SourceRootPropertiesHelper {
   internal fun loadCustomRootProperties(entity: SourceRootEntity, rootType: JpsModuleSourceRootType<out JpsElement>): JpsElement {
     val elementFactory = JpsElementFactory.getInstance()
 
-    val customSourceRoot = entity.asCustomSourceRoot()
+    val customSourceRoot = entity.customSourceRootProperties
     if (customSourceRoot == null || customSourceRoot.propertiesXmlTag.isEmpty()) return rootType.createDefaultProperties()
 
     val serializer = findSerializer(rootType)

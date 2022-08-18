@@ -39,7 +39,7 @@ public class IOStreamConstructorInspection extends AbstractBaseJavaLocalInspecti
     if (!PsiUtil.isLanguageLevel7OrHigher(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new JavaElementVisitor() {
       @Override
-      public void visitNewExpression(PsiNewExpression newExpression) {
+      public void visitNewExpression(@NotNull PsiNewExpression newExpression) {
         super.visitNewExpression(newExpression);
         IOStreamConstructorModel constructorModel = IOStreamConstructorModel.create(newExpression);
         if (constructorModel == null) return;
@@ -198,7 +198,7 @@ public class IOStreamConstructorInspection extends AbstractBaseJavaLocalInspecti
 
     @Override
     public @NotNull String getFamilyName() {
-      return CommonQuickFixBundle.message("fix.replace.with.x", myReplacement);
+      return CommonQuickFixBundle.message("fix.replace.with.x", myReplacement + "()");
     }
 
     @Override
@@ -223,7 +223,7 @@ public class IOStreamConstructorInspection extends AbstractBaseJavaLocalInspecti
       // maybe we can reuse already created file.toPath() / Path.of(...) variable
       List<PsiVariable> pathVars = Arrays.stream(occurrences).map(o -> findVariableAssignedTo(o))
         .filter(var -> var != null && HighlightControlFlowUtil.isEffectivelyFinal(var, toPathConversion, null))
-        .collect(Collectors.toList());
+        .toList();
       if (!pathVars.isEmpty()) {
         PsiCodeBlock body = containingMethod.getBody();
         if (body == null) return;

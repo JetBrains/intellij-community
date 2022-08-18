@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.artifacts.ui;
 
 import com.intellij.compiler.artifacts.ArtifactsTestUtil;
@@ -28,7 +29,7 @@ public class ExtractArtifactActionTest extends ArtifactEditorActionTestCase {
   }
 
   public void testDisabledForJarFromLib() {
-    final VirtualFile jar = getJDomJar();
+    final VirtualFile jar = getFastUtilJar();
     createEditor(addArtifact(root().lib(addProjectLibrary(null, "dom", jar))), true);
 
     selectNode(jar.getName());

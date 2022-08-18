@@ -57,11 +57,11 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
                        "}");
 
     myFixture.addClass("package org.assertj.core.api; public class Assertions { " +
-                       "public static <T> Assert<?, T> assertThat(Object actual) {}\n" +
-                       "public static <T> Assert<?, T> assertThat(java.util.concurrent.atomic.AtomicBoolean actual) {}\n" +
-                       "public static <T> Assert<?, T> assertThat(boolean actual) {}\n" +
+                       "public static <T> AbstractAssert<?, T> assertThat(Object actual) {}\n" +
+                       "public static <T> AbstractAssert<?, T> assertThat(java.util.concurrent.atomic.AtomicBoolean actual) {}\n" +
+                       "public static <T> AbstractAssert<?, T> assertThat(boolean actual) {}\n" +
                        "}");
-    myFixture.addClass("package org.assertj.core.api; public class Assert<S extends Assert<S, A>, A> {" +
+    myFixture.addClass("package org.assertj.core.api; public class AbstractAssert<S extends AbstractAssert<S, A>, A> {" +
                        "public S isNotNull() {}" +
                        "public S describedAs(String s) {}" +
                        "public S isTrue() {}" +
@@ -69,7 +69,14 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
                        "public S isEmpty() {}" +
                        "public S isPresent() {}" +
                        "public S isNotBlank() {}" +
+                       "public S isEqualTo(Object expected) {}" +
                        "public S map(java.util.function.Function<String, Object> mapper) {}" +
+                       "public S hasSize(int size) {}" +
+                       "public S hasSizeBetween(int min, int max) {}" +
+                       "public S hasSizeGreaterThan(int size) {}" +
+                       "public S hasSizeGreaterThanOrEqualTo(int size) {}" +
+                       "public S hasSizeLessThan(int size) {}" +
+                       "public S hasSizeLessThanOrEqualTo(int size) {}" +
                        "}");
 
     checkHighlighting();
@@ -91,9 +98,9 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
                        "public static Subject assertThat(Object o) {}\n" +
                        "}");
     myFixture.addClass("package com.google.common.truth; public class TruthJUnit { " +
-                       "public static TestVerb assume() {}\n" +
+                       "public static StandardSubjectBuilder assume() {}\n" +
                        "}");
-    myFixture.addClass("package com.google.common.truth; public class TestVerb { " +
+    myFixture.addClass("package com.google.common.truth; public class StandardSubjectBuilder { " +
                        "public static Subject that(Object o) {}\n" +
                        "}");
     myFixture.addClass("package com.google.common.truth; public class Subject { public void isNotNull() {} }");
@@ -167,6 +174,10 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
   }
 
   public void testArraysEqualsPure() {
+    checkHighlighting();
+  }
+
+  public void testDateContracts() {
     checkHighlighting();
   }
 

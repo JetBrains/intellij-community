@@ -27,14 +27,14 @@ final class PropertiesLanguageCodeStyleSettingsProvider extends LanguageCodeStyl
       }
 
       @Override
-      protected CodeStyleAbstractPanel createPanel(CodeStyleSettings settings) {
+      protected @NotNull CodeStyleAbstractPanel createPanel(@NotNull CodeStyleSettings settings) {
         return new PropertiesCodeStyleSettingsPanel(settings);
       }
     };
   }
 
   @Override
-  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+  public CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return new PropertiesCodeStyleSettings(settings);
   }
 

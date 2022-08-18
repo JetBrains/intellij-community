@@ -4,7 +4,6 @@ package com.intellij.compiler.progress
 import com.intellij.build.BuildWorkspaceConfiguration
 import com.intellij.compiler.BaseCompilerTestCase
 import com.intellij.compiler.CompilerWorkspaceConfiguration
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.compiler.CompilationStatusListener
 import com.intellij.openapi.compiler.CompileContext
@@ -19,17 +18,15 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil.addSourceRoot
-import com.intellij.testFramework.RunAll
+import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.BuildViewTestFixture
-import com.intellij.util.ThrowableRunnable
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.jps.model.java.JavaResourceRootType
 
 class CompilerBuildViewTest : BaseCompilerTestCase() {
   private lateinit var buildViewTestFixture: BuildViewTestFixture
-  private val testDisposable: Disposable = Disposer.newDisposable()
+  private val testDisposable = Disposer.newDisposable()
 
-  @Throws(Exception::class)
   public override fun setUp() {
     super.setUp()
     buildViewTestFixture = BuildViewTestFixture(project)
@@ -37,11 +34,11 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
   }
 
   public override fun tearDown() {
-    RunAll(
-      ThrowableRunnable { if (::buildViewTestFixture.isInitialized) buildViewTestFixture.tearDown() },
-      ThrowableRunnable { Disposer.dispose(testDisposable) },
-      ThrowableRunnable { super.tearDown() }
-    ).run()
+    runAll (
+      { if (::buildViewTestFixture.isInitialized) buildViewTestFixture.tearDown() },
+      { Disposer.dispose(testDisposable) },
+      { super.tearDown() }
+    )
   }
 
   fun `test empty build`() {
@@ -70,11 +67,9 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
 
     runWithProgressExIndicatorSupport { rebuildProject() }
     buildViewTestFixture.assertBuildViewTreeEquals("-\n rebuild finished")
-    buildViewTestFixture.assertBuildViewSelectedNode("rebuild finished", false) { output: String? ->
+    buildViewTestFixture.assertBuildViewSelectedNode("rebuild finished", false) { output ->
       assertThat(output).startsWith("Clearing build system data...\n" +
                                     "Executing pre-compile tasks...\n" +
-                                    "Loading Ant configuration...\n" +
-                                    "Running Ant tasks...\n" +
                                     "Cleaning output directories…\n" +
                                     "Running 'before' tasks\n" +
                                     "Checking sources\n" +
@@ -82,23 +77,19 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
                                     "Parsing java… [a]\n" +
                                     "Writing classes… [a]\n" +
                                     "Updating dependency information… [a]\n" +
-                                    "Adding @NotNull assertions… [a]\n" +
+                                    "Adding nullability assertions… [a]\n" +
+                                    "Adding threading assertions… [a]\n" +
                                     "Adding pattern assertions… [a]\n" +
-                                    "Adding the Threading Model assertions… [a]\n" +
                                     "Running 'after' tasks\n")
       assertThat(output).contains("Finished, saving caches…\n" +
                                   "Executing post-compile tasks...\n" +
-                                  "Loading Ant configuration...\n" +
-                                  "Running Ant tasks...\n" +
                                   "Synchronizing output directories...")
     }
 
     runWithProgressExIndicatorSupport { rebuild(module) }
     buildViewTestFixture.assertBuildViewTreeEquals("-\n recompile finished")
-    buildViewTestFixture.assertBuildViewSelectedNode("recompile finished", false) { output: String? ->
+    buildViewTestFixture.assertBuildViewSelectedNode("recompile finished", false) { output ->
       assertThat(output).startsWith("Executing pre-compile tasks...\n" +
-                                    "Loading Ant configuration...\n" +
-                                    "Running Ant tasks...\n" +
                                     "Cleaning output directories…\n" +
                                     "Running 'before' tasks\n" +
                                     "Checking sources\n" +
@@ -106,14 +97,12 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
                                     "Parsing java… [a]\n" +
                                     "Writing classes… [a]\n" +
                                     "Updating dependency information… [a]\n" +
-                                    "Adding @NotNull assertions… [a]\n" +
+                                    "Adding nullability assertions… [a]\n" +
+                                    "Adding threading assertions… [a]\n" +
                                     "Adding pattern assertions… [a]\n" +
-                                    "Adding the Threading Model assertions… [a]\n" +
                                     "Running 'after' tasks")
       assertThat(output).contains("Finished, saving caches…\n" +
                                   "Executing post-compile tasks...\n" +
-                                  "Loading Ant configuration...\n" +
-                                  "Running Ant tasks...\n" +
                                   "Synchronizing output directories...")
     }
   }

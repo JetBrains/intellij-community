@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.console
 
 import com.intellij.execution.console.ConsoleHistoryController
 import com.intellij.ide.scratch.ScratchFileService
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
@@ -25,4 +26,6 @@ class GrNewConsoleAction : AnAction() {
     GroovyConsoleStateService.getInstance(project).setFileModule(contentFile, module)
     FileEditorManager.getInstance(project).openFile(contentFile, true)
   }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }

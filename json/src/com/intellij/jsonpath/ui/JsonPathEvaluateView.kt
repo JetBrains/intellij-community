@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jsonpath.ui
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
@@ -267,6 +267,7 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
       is IncorrectDocument -> setError(result.message)
       is ResultNotFound -> setError(result.message)
       is ResultString -> setResult(result.value)
+      else -> {}
     }
 
     if (result != null && result !is IncorrectExpression) {

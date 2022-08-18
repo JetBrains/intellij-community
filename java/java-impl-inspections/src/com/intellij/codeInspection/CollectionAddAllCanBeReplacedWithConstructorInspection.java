@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
@@ -64,7 +65,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
                                         @NotNull LocalInspectionToolSession session) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         final PsiReferenceExpression methodExpression = expression.getMethodExpression();
         final PsiElement nameElement = methodExpression.getReferenceNameElement();
         final String methodName = methodExpression.getReferenceName();
@@ -207,7 +208,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
 
     addAllExpression.accept(new JavaRecursiveElementVisitor() {
       @Override
-      public void visitReferenceExpression(PsiReferenceExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         final PsiElement resolved = expression.resolve();
         if (PsiUtil.isJvmLocalVariable(resolved)) {
           PsiVariable variable = (PsiVariable) resolved;
@@ -232,6 +233,16 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
       myMethodCallExpression = smartPointerManager.createSmartPsiElementPointer(expression);
       myNewExpression = smartPointerManager.createSmartPsiElementPointer(newExpression);
       this.methodName = methodName;
+    }
+
+    @Override
+    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+      PsiMethodCallExpression call = myMethodCallExpression.getElement();
+      PsiNewExpression newExpression = myNewExpression.getElement();
+      if (call == null || newExpression == null) return null;
+      return new ReplaceAddAllWithConstructorFix(PsiTreeUtil.findSameElementInCopy(newExpression, target),
+                                                 PsiTreeUtil.findSameElementInCopy(call, target),
+                                                 methodName);
     }
 
     @Nls

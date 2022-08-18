@@ -8,9 +8,11 @@ import com.intellij.openapi.util.Key;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.WeakList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 public class PresentationFactory {
@@ -26,7 +28,7 @@ public class PresentationFactory {
 
   public final @NotNull Presentation getPresentation(@NotNull AnAction action) {
     Presentation presentation = myPresentations.get(action);
-    boolean needUpdate = presentation != null && presentation.getClientProperty(NEED_UPDATE_PRESENTATION)  == Boolean.TRUE;
+    boolean needUpdate = presentation != null && Boolean.TRUE.equals(presentation.getClientProperty(NEED_UPDATE_PRESENTATION));
     if (presentation == null || !action.isDefaultIcon() || needUpdate) {
       Presentation templatePresentation = action.getTemplatePresentation();
       if (presentation == null) {
@@ -40,9 +42,22 @@ public class PresentationFactory {
           presentation.putClientProperty(NEED_UPDATE_PRESENTATION, null);
         }
       }
-      processPresentation(presentation);
+      processPresentation(presentation, action);
     }
     return presentation;
+  }
+
+  /**
+   * Get an unmodifiable collection of actions which this factory
+   * is currently storing {@link Presentation}s for.
+   */
+  @ApiStatus.Internal
+  public final @NotNull Collection<AnAction> getActions() {
+    return Collections.unmodifiableSet(myPresentations.keySet());
+  }
+
+  protected void processPresentation(@NotNull Presentation presentation, @NotNull AnAction action) {
+    processPresentation(presentation);
   }
 
   protected void processPresentation(@NotNull Presentation presentation) {
@@ -70,7 +85,10 @@ public class PresentationFactory {
 
   public static void updatePresentation(@NotNull AnAction action)  {
     for (PresentationFactory factory : ourAllFactories) {
-      ObjectUtils.consumeIfNotNull(factory.myPresentations.get(action), p -> p.putClientProperty(NEED_UPDATE_PRESENTATION, Boolean.TRUE));
+      Presentation presentation = factory.myPresentations.get(action);
+      if (presentation != null) {
+        presentation.putClientProperty(NEED_UPDATE_PRESENTATION, true);
+      }
     }
   }
 }

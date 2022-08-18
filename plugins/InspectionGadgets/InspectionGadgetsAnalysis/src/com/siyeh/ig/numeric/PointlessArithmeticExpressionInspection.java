@@ -15,11 +15,13 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -38,26 +40,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 
-public final class PointlessArithmeticExpressionInspection extends BaseInspection {
-  private static final Set<IElementType> arithmeticTokens = new HashSet<>(9);
-
-  static {
-    arithmeticTokens.add(JavaTokenType.PLUS);
-    arithmeticTokens.add(JavaTokenType.MINUS);
-    arithmeticTokens.add(JavaTokenType.ASTERISK);
-    arithmeticTokens.add(JavaTokenType.DIV);
-    arithmeticTokens.add(JavaTokenType.PERC);
-    arithmeticTokens.add(JavaTokenType.GT);
-    arithmeticTokens.add(JavaTokenType.LT);
-    arithmeticTokens.add(JavaTokenType.LE);
-    arithmeticTokens.add(JavaTokenType.GE);
-  }
+public final class PointlessArithmeticExpressionInspection extends BaseInspection implements CleanupLocalInspectionTool {
+  private static final TokenSet arithmeticTokens = TokenSet.create(
+    JavaTokenType.PLUS, JavaTokenType.MINUS, JavaTokenType.ASTERISK, JavaTokenType.DIV, JavaTokenType.PERC, JavaTokenType.GT,
+    JavaTokenType.LT, JavaTokenType.LE, JavaTokenType.GE);
 
   /**
    * @noinspection PublicField

@@ -25,10 +25,10 @@ public final class HashMapZipFile implements ZipFile {
   ByteBuffer mappedBuffer;
   final int fileSize;
 
-  HashMapZipFile(ImmutableZipEntry[] nameMap,
-                 ImmutableZipEntry[] entries,
-                 ByteBuffer mappedBuffer,
-                 int fileSize) {
+  private HashMapZipFile(ImmutableZipEntry[] nameMap,
+                         ImmutableZipEntry[] entries,
+                         ByteBuffer mappedBuffer,
+                         int fileSize) {
     this.mappedBuffer = mappedBuffer;
     this.fileSize = fileSize;
 
@@ -102,7 +102,6 @@ public final class HashMapZipFile implements ZipFile {
 
   /**
    * Returns a named entry, or {@code null} if no entry by that name exists. The name should not contain trailing slashes.
-   * @return
    */
   @Override
   public @Nullable ZipResource getResource(String name) {

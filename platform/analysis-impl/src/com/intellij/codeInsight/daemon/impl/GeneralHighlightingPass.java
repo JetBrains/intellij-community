@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -57,7 +57,10 @@ import java.util.function.Predicate;
 public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingPass {
   private static final Logger LOG = Logger.getInstance(GeneralHighlightingPass.class);
   private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
-  static final Predicate<PsiFile> SHOULD_HIGHLIGHT_FILTER = file -> HighlightingLevelManager.getInstance(file.getProject()).shouldHighlight(file);
+  static final Predicate<PsiFile> SHOULD_HIGHLIGHT_FILTER = file -> {
+    HighlightingLevelManager manager = HighlightingLevelManager.getInstance(file.getProject());
+    return manager != null && manager.shouldHighlight(file);
+  };
   private static final Random RESTART_DAEMON_RANDOM = new Random();
 
   final boolean myUpdateAll;
@@ -287,6 +290,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     for (int j = 0; j < holder.size(); j++) {
       HighlightInfo info = holder.get(j);
       postInfos.add(info);
+      insideResult.add(info);
     }
     myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, getEditor(),
                                                                     postInfos, getFile().getTextRange(), getFile().getTextRange(), POST_UPDATE_ALL);
@@ -342,8 +346,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
         try {
           visitor.visit(element);
 
-          // assume that the visitor is done messing with just created HighlightInfo after its visit() method completed
-          // and we can start applying them incrementally at last.
+          // assume that the visitor is done messing with just created HighlightInfo after its visit() method completed,
+          // so we can start applying them incrementally at last.
           // (but not sooner, thanks to awfully racey HighlightInfo.setXXX() and .registerFix() API)
           holder.queueToUpdateIncrementally();
         }
@@ -387,21 +391,16 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       holder.clear();
 
       // include infos which we got while visiting nested elements with the same range
-      while (true) {
-        if (!nestedRange.empty() && TextRange.contains(elementRange, nestedRange.peek())) {
-          long oldRange = nestedRange.pop();
-          List<HighlightInfo> oldInfos = nestedInfos.pop();
-          if (elementRange == oldRange) {
-            if (infosForThisRange == null) {
-              infosForThisRange = oldInfos;
-            }
-            else if (oldInfos != null) {
-              infosForThisRange.addAll(oldInfos);
-            }
+      while (!nestedRange.empty() && TextRange.contains(elementRange, nestedRange.peek())) {
+        long oldRange = nestedRange.pop();
+        List<HighlightInfo> oldInfos = nestedInfos.pop();
+        if (elementRange == oldRange) {
+          if (infosForThisRange == null) {
+            infosForThisRange = oldInfos;
           }
-        }
-        else {
-          break;
+          else if (oldInfos != null) {
+            infosForThisRange.addAll(oldInfos);
+          }
         }
       }
       nestedRange.push(elementRange);
@@ -498,7 +497,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                              @NotNull ProperTextRange priorityRange,
                              @NotNull Collection<? super HighlightInfo> insideResult,
                              @NotNull Collection<? super HighlightInfo> outsideResult) {
-    PsiTodoSearchHelper helper = PsiTodoSearchHelper.SERVICE.getInstance(file.getProject());
+    PsiTodoSearchHelper helper = PsiTodoSearchHelper.getInstance(file.getProject());
     if (helper == null || !shouldHighlightTodos(helper, file)) return;
     TodoItem[] todoItems = helper.findTodoItems(file, startOffset, endOffset);
     if (todoItems.length == 0) return;

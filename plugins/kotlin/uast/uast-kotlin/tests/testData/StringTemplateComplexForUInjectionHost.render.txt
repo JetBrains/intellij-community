@@ -19,4 +19,10 @@ public final class StringTemplateComplexForUInjectionHostKt {
         var template1: java.lang.String = simpleForTemplate()
         var template2: java.lang.String = "." + simpleForTemplate()
     }
+    public static final fun baz() : void {
+        var trimA: java.lang.String = "\n" + "        text=text" + "\n" + "    ".trimIndent()
+        var trimB: java.lang.String = "\n" + "        | margined" + "\n" + "    ".trimMargin()
+        var c: boolean = "bar" == "\n" + "        margin=text" + "\n" + "    ".trimIndent()
+        var concat: java.lang.String = "abc" + "cde" + "efg"
+    }
 }

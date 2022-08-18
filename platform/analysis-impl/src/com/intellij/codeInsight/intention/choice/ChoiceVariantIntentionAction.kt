@@ -7,37 +7,26 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionWithChoice
 import com.intellij.codeInspection.IntentionAndQuickFixAction
 import com.intellij.openapi.util.Iconable
-import com.intellij.ui.IconManager
-import com.intellij.util.PlatformIcons
+import com.intellij.util.ui.EmptyIcon
 import javax.swing.Icon
 
 /**
  * Intention action that is used as a variant of [IntentionActionWithChoice].
  *
- * Action should implement [invoke], requests to [applyFix] would proxied to [invoke].
+ * The action should implement [invoke], requests to [applyFix] would be proxied to [invoke].
  *
- * Actions requires [index] param so it can maintain order of variants in
+ * The action requires [index] param, so it can maintain order of variants in
  * quick-fix popup.
  */
 abstract class ChoiceVariantIntentionAction : IntentionAndQuickFixAction(), HighlightInfoType.Iconable, Iconable, CustomizableIntentionAction,
                                               Comparable<IntentionAction> {
-  companion object {
-    private val EMPTY_ICON by lazy {
-      IconManager.getInstance().createEmptyIcon(PlatformIcons.PUBLIC_ICON)
-    }
-  }
-
   abstract val index: Int
-
-  override fun isSelectable(): Boolean = true
 
   override fun isShowSubmenu(): Boolean = false
 
-  override fun isShowIcon(): Boolean = true
+  override fun getIcon(): Icon = EmptyIcon.ICON_0
 
-  override fun getIcon(): Icon = EMPTY_ICON
-
-  override fun getIcon(flags: Int): Icon = EMPTY_ICON
+  override fun getIcon(flags: Int): Icon = EmptyIcon.ICON_0
 
   override fun compareTo(other: IntentionAction): Int {
     if (familyName != other.familyName) return this.familyName.compareTo(other.familyName)

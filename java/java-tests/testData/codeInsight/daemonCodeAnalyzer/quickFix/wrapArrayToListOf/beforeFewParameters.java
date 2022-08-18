@@ -1,4 +1,4 @@
-// "Wrap 4th argument using 'List.of()'" "true"
+// "Adapt 4th argument using 'List.of()'" "true-preview"
 import java.util.List;
 
 public class Test {

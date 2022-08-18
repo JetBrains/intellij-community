@@ -1,95 +1,180 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.tools.model.updater
 
+import org.jdom.Document
+import org.jetbrains.tools.model.updater.GeneratorPreferences.ArtifactMode
 import org.jetbrains.tools.model.updater.impl.*
 import java.io.File
 import java.util.*
 
+class GeneratorPreferences(properties: Properties) : Preferences(properties) {
+    val jpsPluginVersion: String by Preference()
+    val jpsPluginArtifactsMode: ArtifactMode by Preference(ArtifactMode::valueOf)
+
+    val kotlincVersion: String by Preference()
+    val kotlinGradlePluginVersion: String by Preference()
+    val kotlincArtifactsMode: ArtifactMode by Preference(ArtifactMode::valueOf)
+
+    enum class ArtifactMode {
+        MAVEN, BOOTSTRAP
+    }
+
+    companion object {
+        fun parse(args: Array<String>): GeneratorPreferences {
+            val properties = Properties()
+
+            val configurationFile = object {}::class.java.getResource("/model.properties")
+            configurationFile?.openStream()?.use { stream -> properties.load(stream) }
+
+            // Preferences passed as command line arguments override those from a configuration file
+            for (arg in args.flatMap { it.split(" ") }) {
+                val parts = arg.split('=')
+                if (parts.size != 2) {
+                    throw IllegalArgumentException("Invalid argument: $arg")
+                }
+                properties[parts[0]] = parts[1]
+            }
+
+            return GeneratorPreferences(properties)
+        }
+    }
+}
+
 fun main(args: Array<String>) {
-    val manualArgs = args.flatMap { it.split(" ") }.toMapOfArgs()
-    val defaultArgs = File(object {}::class.java.getResource("/model.properties")!!.toURI()).inputStream().use { stream ->
-        Properties().apply { load(stream) }.map { (key, value) -> key as String to value as String }.toMap()
-    }
-    val communityRoot = generateSequence(File(".").canonicalFile) { it.parentFile }.first {
-        it.resolve(".idea").isDirectory && !it.resolve("community").isDirectory
-    }
+    val preferences = GeneratorPreferences.parse(args)
+
+    val communityRoot = generateSequence(File(".").canonicalFile) { it.parentFile }
+        .first { it.resolve(".idea").isDirectory && !it.resolve("community").isDirectory }
+
     val monorepoRoot = communityRoot.resolve("..").takeIf { it.resolve(".idea").isDirectory }
 
-    for ((root, isCommunity) in listOf(monorepoRoot to false, communityRoot to true)) {
-        if (root == null) continue
-        val parsedArgs = Args(defaultArgs + manualArgs)
-        generateProjectModelFiles(root.resolve(".idea"), parsedArgs, isCommunity)
-        patchProjectModelFiles(root.resolve(".idea"), parsedArgs, isCommunity)
+    fun processRoot(root: File, isCommunity: Boolean) {
+        val libraries = generateKotlincLibraries(preferences, isCommunity)
+        regenerateProjectLibraries(root.resolve(".idea"), libraries)
+    }
+
+    if (monorepoRoot != null) {
+        processRoot(monorepoRoot, isCommunity = false)
+        cloneModuleStructure(monorepoRoot, communityRoot)
+    }
+
+    processRoot(communityRoot, isCommunity = true)
+    patchGitignore(communityRoot, preferences.kotlincArtifactsMode)
+    updateLatestGradlePluginVersion(communityRoot, preferences.kotlinGradlePluginVersion)
+}
+
+private fun regenerateProjectLibraries(dotIdea: File, libraries: List<JpsLibrary>) {
+    val librariesDir = dotIdea.resolve("libraries")
+    librariesDir.listFiles { file -> file.startsWith("kotlinc_") }!!.forEach { it.delete() }
+
+    for (library in libraries) {
+        val libraryFileName = library.name.replace("\\W".toRegex(), "_") + ".xml"
+        librariesDir.resolve(libraryFileName).writeText(library.render())
     }
 }
 
-private fun generateProjectModelFiles(dotIdea: File, args: Args, isCommunity: Boolean) {
-    val libraries = dotIdea.resolve("libraries")
-    libraries.listFiles()!!.filter { it.startsWith("kotlinc_") }.forEach { it.delete() }
-    generateKotlincLibraries(args.kotlincArtifactsMode, args.kotlincVersion, isCommunity).forEach {
-        val libXmlName = it.name.jpsEntityNameToFilename() + ".xml"
-        libraries.resolve(libXmlName).writeText(it.generateXml())
-    }
-
-    generateRunConfigurations(dotIdea, args.kotlincArtifactsMode, args.kotlincVersion)
-}
-
-private fun patchProjectModelFiles(dotIdea: File, args: Args, isCommunity: Boolean) {
-    patchGitignore(dotIdea, args.kotlincArtifactsMode, isCommunity)
-    patchKotlincLibs(args, isCommunity, dotIdea)
-}
-
-private fun patchGitignore(dotIdea: File, kotlincArtifactsMode: KotlincArtifactsMode, isCommunity: Boolean) {
-    if (!isCommunity) {
-        return
-    }
-    val gitignore = dotIdea.resolve("..").resolve(".gitignore")
+private fun patchGitignore(dotIdea: File, kotlincArtifactsMode: ArtifactMode) {
+    val gitignoreFile = dotIdea.resolve("..").resolve(".gitignore")
     val ignoreRule = "**/build"
-    val normalizedContent = gitignore.readLines().filter { it != ignoreRule }.joinToString("\n")
+    val normalizedContent = gitignoreFile.readLines().filter { it != ignoreRule }.joinToString("\n")
+
     when (kotlincArtifactsMode) {
-        KotlincArtifactsMode.MAVEN -> {
-            gitignore.writeText(normalizedContent)
-        }
-        KotlincArtifactsMode.BOOTSTRAP -> {
-            gitignore.writeText("$normalizedContent\n$ignoreRule")
-        }
+        ArtifactMode.MAVEN -> gitignoreFile.writeText(normalizedContent)
+        ArtifactMode.BOOTSTRAP -> gitignoreFile.writeText("$normalizedContent\n$ignoreRule")
     }
 }
 
-private fun patchKotlincLibs(args: Args, isCommunity: Boolean, dotIdea: File) {
-    val kotlincMvnLibs = generateKotlincLibraries(KotlincArtifactsMode.MAVEN, args.kotlincVersion, isCommunity)
+private fun cloneModuleStructure(monorepoRoot: File, communityRoot: File) {
+    val monorepoModulesFile = monorepoRoot.resolve(".idea/modules.xml")
+    val communityModulesFile = communityRoot.resolve(".idea/modules.xml")
 
-    val artifactIds = kotlincMvnLibs.flatMap { lib -> lib.classes.map { (it.jpsPath as JpsPath.MavenRepository).mavenId.artifactId } }
-    val replacements = generateKotlincLibraries(args.kotlincArtifactsMode, args.kotlincVersion, isCommunity)
-        .flatMap { lib -> lib.classes.map { it.jpsPath.generateXml() } }
+    val monorepoModulesXml = monorepoModulesFile.readXml()
+    val communityModulesXml = communityModulesFile.readXml()
 
-    val stubVersion = "STUB_VERSION"
-    val regexes = KotlincArtifactsMode.values().flatMap { generateKotlincLibraries(it, stubVersion, isCommunity) }
-        .flatMap { it.classes }
-        .map {
-            it.jpsPath.generateXml().escapeForRegex().replace(stubVersion, """\d+.\d+.\d+(-SNAPSHOT|-M1|-M2|-RC|-release)?(-\d+)?""")
+    val monorepoModules = readModules(monorepoRoot, monorepoModulesXml)
+
+    val communityModules = monorepoModules
+        .filterValues { module -> module.isCommunity && module.dependencies.all { dep -> monorepoModules[dep]?.isCommunity ?: false } }
+        .mapValues { (_, module) -> module.copy(path = module.path.removePrefix("community/")) }
+
+    // Leave community renames as is. They're rarely changed, and it seems there are a number of old ones
+    val communityModuleRenames = readModuleRenames(communityModulesXml)
+
+    val newCommunityModulesXmlContent = xml("project", "version" to "4") {
+        if (communityModules.isNotEmpty()) {
+            xml("component", "name" to "ModuleRenamingHistory") {
+                communityModuleRenames.forEach { (old, new) -> xml("module", "old-name" to old, "new-name" to new) }
+            }
         }
-        .distinct()
-        .map { Regex(it) }
-        .toList()
-
-    for (artifactXmlFile in dotIdea.resolve("artifacts").listFiles()!!) {
-        for (artifactId in artifactIds) {
-            val allMatchingRegexes = regexes.filter { it.toString().contains("\\/$artifactId\\/") }
-            check(allMatchingRegexes.size == KotlincArtifactsMode.values().size) {
-                "There should be only ${KotlincArtifactsMode.values().size} matching regexes"
+        xml("component", "name" to "ProjectModuleManager") {
+            xml("modules") {
+                for (module in communityModules.values) {
+                    val modulePath = "\$PROJECT_DIR$/${module.path}"
+                    xml("module", "fileurl" to "file://$modulePath", "filepath" to modulePath)
+                }
             }
-            val replacement = replacements.single { it.contains("/$artifactId/") }
-            val newText = allMatchingRegexes.fold(artifactXmlFile.readText()) { text, regex ->
-                regex.replace(text, Regex.escapeReplacement(replacement))
-            }
-            artifactXmlFile.writeText(newText)
         }
     }
+
+    communityModulesFile.writeText(newCommunityModulesXmlContent.render(addXmlDeclaration = true))
 }
 
-private fun Iterable<String>.toMapOfArgs(): Map<String, String> = associate { arg ->
-    arg.split("=").also {
-        check(it.size == 2) { "All arguments are expected to be key value pairs in 'key=value' format but got '$arg'" }
-    }.let { it[0] to it[1] }
+/**
+ * Updates the `KotlinGradlePluginVersions.kt` source file to contain the latest [kotlinGradlePluginVersion] in the source code.
+ * The `KotlinGradlePluginVersions` source file can't directly read the `model.properties` file directly, since
+ * the project model can be overwritten by the [main] args (see also [GeneratorPreferences.parse])
+ */
+private fun updateLatestGradlePluginVersion(communityRoot: File, kotlinGradlePluginVersion: String) {
+    val sourceFile = communityRoot.resolve(
+        "plugins/kotlin/gradle/gradle-java/tests/test/org/jetbrains/kotlin/idea/codeInsight/gradle/KotlinGradlePluginVersions.kt"
+    )
+
+    val updatedFileContent = sourceFile.readText().replace(
+        Regex("""val latest = .*"""), "val latest = KotlinToolingVersion(\"$kotlinGradlePluginVersion\")"
+    )
+
+    sourceFile.writeText(updatedFileContent)
+}
+
+private data class JpsModule(val name: String, val path: String, val dependencies: List<String>) {
+    val isCommunity: Boolean
+        get() = path.startsWith("community/")
+}
+
+private fun readModules(root: File, document: Document): Map<String, JpsModule> {
+    val projectModuleManagerComponent = document.rootElement.getChildren("component")
+        .first { it.getAttributeValue("name") == "ProjectModuleManager" }
+
+    val result = LinkedHashMap<String, JpsModule>()
+
+    for (moduleEntry in projectModuleManagerComponent.getChild("modules").getChildren("module")) {
+        val modulePath = moduleEntry.getAttributeValue("filepath").removePrefix("\$PROJECT_DIR$/")
+        val moduleName = modulePath.substringAfterLast("/").removeSuffix(".iml")
+
+        val moduleXml = root.resolve(modulePath).readXml()
+        val moduleRootManagerComponent = moduleXml.rootElement.getChildren("component")
+            .first { it.getAttributeValue("name") == "NewModuleRootManager" }
+
+        val dependencies = moduleRootManagerComponent.getChildren("orderEntry")
+            .filter { it.getAttributeValue("type") == "module" }
+            .mapNotNull { it.getAttributeValue("module-name") }
+
+        result[moduleName] = JpsModule(moduleName, modulePath, dependencies)
+    }
+
+    return result
+}
+
+private fun readModuleRenames(document: Document): Map<String, String> {
+    val moduleRenamingHistoryComponent = document.rootElement.getChildren("component")
+        .firstOrNull { it.getAttributeValue("name") == "ModuleRenamingHistory" }
+        ?: return emptyMap()
+
+    val result = mutableMapOf<String, String>()
+    for (moduleEntry in moduleRenamingHistoryComponent.getChildren("module")) {
+        val oldName = moduleEntry.getAttributeValue("old-name") ?: continue
+        val newName = moduleEntry.getAttributeValue("new-name") ?: continue
+        result[oldName] = newName
+    }
+    return result
 }

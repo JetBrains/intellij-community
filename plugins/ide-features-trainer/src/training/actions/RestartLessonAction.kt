@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.actions
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import training.FeaturesTrainerIcons
@@ -10,7 +11,7 @@ import training.statistic.LessonStartingWay
 import training.statistic.StatisticBase
 import training.ui.LearningUiManager
 
-private class RestartLessonAction : AnAction(FeaturesTrainerIcons.Img.ResetLesson) {
+private class RestartLessonAction : AnAction(FeaturesTrainerIcons.ResetLesson) {
   override fun actionPerformed(e: AnActionEvent) {
     val activeToolWindow = LearningUiManager.activeToolWindow ?: return
     val lesson = LessonManager.instance.currentLesson ?: return
@@ -19,6 +20,8 @@ private class RestartLessonAction : AnAction(FeaturesTrainerIcons.Img.ResetLesso
     lesson.module.primaryLanguage?.let { it.onboardingFeedbackData = null }
     CourseManager.instance.openLesson(activeToolWindow.project, lesson, LessonStartingWay.RESTART_BUTTON)
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
     val activeToolWindow = LearningUiManager.activeToolWindow

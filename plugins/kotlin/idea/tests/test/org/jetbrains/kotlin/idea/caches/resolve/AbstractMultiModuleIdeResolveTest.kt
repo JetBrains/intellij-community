@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
@@ -20,12 +20,11 @@ import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.Severity
-import org.jetbrains.kotlin.idea.FrontendInternals
+import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.KotlinMultiplatformAnalysisModeComponent
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromTextFile
-import org.jetbrains.kotlin.idea.project.KotlinMultiplatformAnalysisModeComponent
 import org.jetbrains.kotlin.idea.codeMetaInfo.AbstractDiagnosticCodeMetaInfoTest
-import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
-import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
+import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
+import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.allKotlinFiles
@@ -91,17 +90,17 @@ abstract class AbstractMultiModuleIdeResolveTest : AbstractMultiModuleTest() {
         val diagnosticsFilter = parseDiagnosticFilterDirective(directives, allowUnderscoreUsage = false)
 
         val actualDiagnostics = CheckerTestUtil.getDiagnosticsIncludingSyntaxErrors(
-            bindingContext,
-            file,
-            markDynamicCalls = false,
-            dynamicCallDescriptors = mutableListOf(),
-            configuration = DiagnosticsRenderingConfiguration(
-                platform = null, // we don't need to attach platform-description string to diagnostic here
-                withNewInference = false,
-                languageVersionSettings = resolutionFacade.getLanguageVersionSettings(),
+          bindingContext,
+          file,
+          markDynamicCalls = false,
+          dynamicCallDescriptors = mutableListOf(),
+          configuration = DiagnosticsRenderingConfiguration(
+              platform = null, // we don't need to attach platform-description string to diagnostic here
+              withNewInference = false,
+              languageVersionSettings = resolutionFacade.languageVersionSettings,
             ),
-            dataFlowValueFactory = resolutionFacade.getDataFlowValueFactory(),
-            moduleDescriptor = moduleDescriptor as ModuleDescriptorImpl
+          dataFlowValueFactory = resolutionFacade.dataFlowValueFactory,
+          moduleDescriptor = moduleDescriptor as ModuleDescriptorImpl
         ).filter { diagnosticsFilter.value(it.diagnostic) }
 
         val actualTextWithDiagnostics = CheckerTestUtil.addDiagnosticMarkersToText(

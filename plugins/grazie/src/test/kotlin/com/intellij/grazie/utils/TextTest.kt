@@ -31,5 +31,6 @@ internal class TextTest {
     assertFalse("Berlin, Munich, Hamburg, Koeln, Duesseldorf, Stuttgart and Frankfurt are cities".looksLikeCode())
     assertFalse("einal, um ganz sicher zu gehen.".looksLikeCode())
     assertFalse("Doxygen: We desperately and definitely need \\a bit of fresh air.".looksLikeCode())
+    assertFalse("the channel \"IDEA EAP\". It's an great mistake.".looksLikeCode())
   }
 }

@@ -74,7 +74,7 @@ public class NonAtomicOperationOnVolatileFieldInspection extends BaseInspection 
       }
       rhs.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitReferenceExpression(PsiReferenceExpression reference) {
+        public void visitReferenceExpression(@NotNull PsiReferenceExpression reference) {
           if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(lhs, reference)) {
             stopWalking();
             registerError(referenceNameElement);
@@ -86,7 +86,7 @@ public class NonAtomicOperationOnVolatileFieldInspection extends BaseInspection 
     }
 
     @Override
-    public void visitUnaryExpression(PsiUnaryExpression expression) {
+    public void visitUnaryExpression(@NotNull PsiUnaryExpression expression) {
       super.visitUnaryExpression(expression);
       if (!PsiUtil.isIncrementDecrementOperation(expression)) {
         return;

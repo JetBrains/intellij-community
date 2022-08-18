@@ -45,7 +45,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
                                @Nullable TextRange rangeInElement,
                                boolean showTooltip,
                                boolean onTheFly) {
-    super(filterFixes(fixes, onTheFly), descriptionTemplate);
+    super(descriptionTemplate, filterFixes(fixes, onTheFly));
     myShowTooltip = showTooltip;
     PsiFile startContainingFile = startElement.getContainingFile();
     LOG.assertTrue(startContainingFile != null && startContainingFile.isValid() || startElement.isValid(), startElement);

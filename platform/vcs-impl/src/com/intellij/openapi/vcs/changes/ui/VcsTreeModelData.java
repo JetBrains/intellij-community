@@ -9,19 +9,19 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
-import com.intellij.util.containers.TreeTraversal;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.io.File;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 public abstract class VcsTreeModelData {
@@ -65,7 +65,7 @@ public abstract class VcsTreeModelData {
   }
 
   @NotNull
-  public static VcsTreeModelData allUnder(@NotNull ChangesBrowserNode node) {
+  public static VcsTreeModelData allUnder(@NotNull ChangesBrowserNode<?> node) {
     return new AllUnderData(node);
   }
 
@@ -86,46 +86,92 @@ public abstract class VcsTreeModelData {
   }
 
 
+  /**
+   * @deprecated use {@link #iterateRawNodes()}
+   */
   @NotNull
-  public abstract Stream<ChangesBrowserNode<?>> rawNodesStream();
+  @Deprecated
+  public final Stream<ChangesBrowserNode<?>> rawNodesStream() {
+    return iterateRawNodes().toStream();
+  }
+
+  /**
+   * @deprecated use {@link #iterateNodes()}
+   */
+  @NotNull
+  @Deprecated
+  public final Stream<ChangesBrowserNode<?>> nodesStream() {
+    return iterateNodes().toStream();
+  }
+
+  /**
+   * @deprecated use {@link #iterateRawUserObjects()}
+   */
+  @NotNull
+  @Deprecated
+  public final Stream<Object> rawUserObjectsStream() {
+    return iterateRawUserObjects().toStream();
+  }
+
+  /**
+   * @deprecated use {@link #iterateRawUserObjects(Class)}
+   */
+  @NotNull
+  @Deprecated
+  public final <U> Stream<U> rawUserObjectsStream(@NotNull Class<U> clazz) {
+    return iterateRawUserObjects(clazz).toStream();
+  }
+
+  /**
+   * @deprecated use {@link #iterateUserObjects()}
+   */
+  @NotNull
+  @Deprecated
+  public final Stream<Object> userObjectsStream() {
+    return iterateUserObjects().toStream();
+  }
+
+  /**
+   * @deprecated use {@link #iterateUserObjects(Class)}
+   */
+  @NotNull
+  @Deprecated
+  public final <U> Stream<U> userObjectsStream(@NotNull Class<U> clazz) {
+    return iterateUserObjects(clazz).toStream();
+  }
+
+
+  public abstract @NotNull JBIterable<ChangesBrowserNode<?>> iterateRawNodes();
+
+  public final @NotNull JBIterable<ChangesBrowserNode<?>> iterateNodes() {
+    return iterateRawNodes().filter(ChangesBrowserNode::isMeaningfulNode);
+  }
+
+  public final @NotNull JBIterable<Object> iterateRawUserObjects() {
+    return iterateRawNodes().map(ChangesBrowserNode::getUserObject);
+  }
+
+  public final <U> @NotNull JBIterable<U> iterateRawUserObjects(@NotNull Class<U> clazz) {
+    return iterateRawNodes().map(ChangesBrowserNode::getUserObject).filter(clazz);
+  }
+
+  public final @NotNull JBIterable<Object> iterateUserObjects() {
+    return iterateNodes().map(ChangesBrowserNode::getUserObject);
+  }
+
+  public final <U> @NotNull JBIterable<U> iterateUserObjects(@NotNull Class<U> clazz) {
+    return iterateNodes().map(ChangesBrowserNode::getUserObject).filter(clazz);
+  }
+
 
   @NotNull
-  public Stream<ChangesBrowserNode<?>> nodesStream() {
-    return rawNodesStream().filter(ChangesBrowserNode::isMeaningfulNode);
+  public final List<Object> userObjects() {
+    return iterateUserObjects().toList();
   }
 
   @NotNull
-  public Stream<Object> rawUserObjectsStream() {
-    return rawUserObjectsStream(Object.class);
-  }
-
-  @NotNull
-  public <U> Stream<U> rawUserObjectsStream(@NotNull Class<U> clazz) {
-    //noinspection unchecked
-    return (Stream<U>)rawNodesStream().map(ChangesBrowserNode::getUserObject).filter(clazz::isInstance);
-  }
-
-
-  @NotNull
-  public Stream<Object> userObjectsStream() {
-    return userObjectsStream(Object.class);
-  }
-
-  @NotNull
-  public <U> Stream<U> userObjectsStream(@NotNull Class<U> clazz) {
-    //noinspection unchecked
-    return (Stream<U>)nodesStream().map(ChangesBrowserNode::getUserObject).filter(clazz::isInstance);
-  }
-
-
-  @NotNull
-  public List<Object> userObjects() {
-    return userObjectsStream().collect(Collectors.toList());
-  }
-
-  @NotNull
-  public <U> List<U> userObjects(@NotNull Class<U> clazz) {
-    return userObjectsStream(clazz).collect(Collectors.toList());
+  public final <U> List<U> userObjects(@NotNull Class<U> clazz) {
+    return iterateUserObjects(clazz).toList();
   }
 
 
@@ -135,8 +181,8 @@ public abstract class VcsTreeModelData {
 
     @NotNull
     @Override
-    public Stream<ChangesBrowserNode<?>> rawNodesStream() {
-      return Stream.empty();
+    public JBIterable<ChangesBrowserNode<?>> iterateRawNodes() {
+      return JBIterable.empty();
     }
   }
 
@@ -149,8 +195,8 @@ public abstract class VcsTreeModelData {
 
     @NotNull
     @Override
-    public Stream<ChangesBrowserNode<?>> rawNodesStream() {
-      return myNode.getNodesUnderStream();
+    public JBIterable<ChangesBrowserNode<?>> iterateRawNodes() {
+      return myNode.traverse();
     }
   }
 
@@ -162,10 +208,10 @@ public abstract class VcsTreeModelData {
 
     @NotNull
     @Override
-    public Stream<ChangesBrowserNode<?>> rawNodesStream() {
-      return super.rawNodesStream()
-        .flatMap(ChangesBrowserNode::getNodesUnderStream)
-        .distinct(); // filter out nodes that already were processed (because their parent selected too)
+    public JBIterable<ChangesBrowserNode<?>> iterateRawNodes() {
+      return super.iterateRawNodes()
+        .flatMap(ChangesBrowserNode::traverse)
+        .unique(); // filter out nodes that already were processed (because their parent selected too)
     }
   }
 
@@ -178,11 +224,11 @@ public abstract class VcsTreeModelData {
 
     @NotNull
     @Override
-    public Stream<ChangesBrowserNode<?>> rawNodesStream() {
+    public JBIterable<ChangesBrowserNode<?>> iterateRawNodes() {
       TreePath[] paths = myPaths;
-      if (paths == null) return Stream.empty();
+      if (paths == null) return JBIterable.empty();
 
-      return Stream.of(paths).map(path -> (ChangesBrowserNode<?>)path.getLastPathComponent());
+      return JBIterable.of(paths).map(path -> (ChangesBrowserNode<?>)path.getLastPathComponent());
     }
   }
 
@@ -197,16 +243,16 @@ public abstract class VcsTreeModelData {
 
     @NotNull
     @Override
-    public Stream<ChangesBrowserNode<?>> rawNodesStream() {
+    public JBIterable<ChangesBrowserNode<?>> iterateRawNodes() {
       ChangesBrowserNode<?> tagNode = myTagNode;
-      if (tagNode == null) return Stream.empty();
+      if (tagNode == null) return JBIterable.empty();
 
       TreePath[] paths = myPaths;
-      if (paths == null) return Stream.empty();
+      if (paths == null) return JBIterable.empty();
 
-      return Stream.of(paths)
+      return JBIterable.of(paths)
         .filter(path -> (path.getPathCount() <= 1 ||
-                        path.getPathComponent(1) == tagNode))
+                         path.getPathComponent(1) == tagNode))
         .map(path -> (ChangesBrowserNode<?>)path.getLastPathComponent());
     }
   }
@@ -219,10 +265,10 @@ public abstract class VcsTreeModelData {
 
     @NotNull
     @Override
-    public Stream<ChangesBrowserNode<?>> rawNodesStream() {
-      return super.rawNodesStream()
-        .flatMap(ChangesBrowserNode::getNodesUnderStream)
-        .distinct(); // filter out nodes that already were processed (because their parent selected too)
+    public JBIterable<ChangesBrowserNode<?>> iterateRawNodes() {
+      return super.iterateRawNodes()
+        .flatMap(ChangesBrowserNode::traverse)
+        .unique(); // filter out nodes that already were processed (because their parent selected too)
     }
   }
 
@@ -237,8 +283,8 @@ public abstract class VcsTreeModelData {
 
     @NotNull
     @Override
-    public Stream<ChangesBrowserNode<?>> rawNodesStream() {
-      return myNode.getNodesUnderStream().filter(node -> myIncluded.contains(node.getUserObject()));
+    public JBIterable<ChangesBrowserNode<?>> iterateRawNodes() {
+      return myNode.traverse().filter(node -> myIncluded.contains(node.getUserObject()));
     }
   }
 
@@ -251,20 +297,16 @@ public abstract class VcsTreeModelData {
 
     @NotNull
     @Override
-    public Stream<ChangesBrowserNode<?>> rawNodesStream() {
+    public JBIterable<ChangesBrowserNode<?>> iterateRawNodes() {
       JBTreeTraverser<ChangesBrowserNode<?>> traverser = JBTreeTraverser.from(node -> {
         if (node.shouldExpandByDefault()) {
-          return () -> {
-            //noinspection unchecked
-            Enumeration<ChangesBrowserNode<?>> children = (Enumeration)node.children();
-            return ContainerUtil.iterate(children);
-          };
+          return node.iterateNodeChildren();
         }
         else {
-          return Collections.emptyList();
+          return JBIterable.empty();
         }
       });
-      return StreamEx.of(traverser.withRoot(myNode).traverse(TreeTraversal.PRE_ORDER_DFS).iterator());
+      return traverser.withRoot(myNode).preOrderDfsTraversal();
     }
   }
 
@@ -272,10 +314,11 @@ public abstract class VcsTreeModelData {
   public static ListSelection<Object> getListSelectionOrAll(@NotNull JTree tree) {
     List<Object> entries = selected(tree).userObjects();
     if (entries.size() > 1) {
-      return ListSelection.createAt(entries, 0);
+      return ListSelection.createAt(entries, 0)
+        .asExplicitSelection();
     }
 
-    ChangesBrowserNode<?> selected = selected(tree).nodesStream().findFirst().orElse(null);
+    ChangesBrowserNode<?> selected = selected(tree).iterateNodes().first();
 
     List<Object> allEntries;
     if (underExpandByDefault(selected)) {
@@ -286,7 +329,8 @@ public abstract class VcsTreeModelData {
     }
 
     if (allEntries.size() <= entries.size()) {
-      return ListSelection.createAt(entries, 0);
+      return ListSelection.createAt(entries, 0)
+        .asExplicitSelection();
     }
     else {
       int index = selected != null ? ContainerUtil.indexOfIdentity(allEntries, selected.getUserObject()) : 0;
@@ -301,63 +345,62 @@ public abstract class VcsTreeModelData {
       return project;
     }
     else if (VcsDataKeys.CHANGES.is(dataId)) {
-      Change[] changes = mapToChange(selected(tree)).toArray(Change[]::new);
+      Change[] changes = mapToChange(selected(tree)).toArray(Change.EMPTY_CHANGE_ARRAY);
       if (changes.length != 0) return changes;
-      return mapToChange(all(tree)).toArray(Change[]::new);
+      return mapToChange(all(tree)).toArray(Change.EMPTY_CHANGE_ARRAY);
     }
     else if (VcsDataKeys.SELECTED_CHANGES.is(dataId) ||
              VcsDataKeys.SELECTED_CHANGES_IN_DETAILS.is(dataId)) {
-      return mapToChange(selected(tree)).toArray(Change[]::new);
+      return mapToChange(selected(tree)).toArray(Change.EMPTY_CHANGE_ARRAY);
     }
     else if (VcsDataKeys.CHANGES_SELECTION.is(dataId)) {
       return getListSelectionOrAll(tree).map(entry -> ObjectUtils.tryCast(entry, Change.class));
     }
     else if (VcsDataKeys.CHANGE_LEAD_SELECTION.is(dataId)) {
-      return mapToChange(exactlySelected(tree)).limit(1).toArray(Change[]::new);
+      return mapToChange(exactlySelected(tree)).take(1).toArray(Change.EMPTY_CHANGE_ARRAY);
     }
     else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-      return mapToVirtualFile(selected(tree)).toArray(VirtualFile[]::new);
+      return mapToVirtualFile(selected(tree)).toArray(VirtualFile.EMPTY_ARRAY);
     }
     else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       if (project == null) return null;
       return ChangesUtil.getNavigatableArray(project, mapToNavigatableFile(selected(tree)));
     }
     else if (VcsDataKeys.IO_FILE_ARRAY.is(dataId)) {
-      return mapToIoFile(selected(tree)).toArray(File[]::new);
+      return mapToIoFile(selected(tree)).toArray(ArrayUtil.EMPTY_FILE_ARRAY);
     }
     return null;
   }
 
 
   @NotNull
-  private static Stream<Change> mapToChange(@NotNull VcsTreeModelData data) {
-    return data.userObjectsStream()
-      .filter(it -> it instanceof Change)
-      .map(entry -> (Change)entry);
+  private static JBIterable<Change> mapToChange(@NotNull VcsTreeModelData data) {
+    return data.iterateUserObjects()
+      .filter(Change.class);
   }
 
   @NotNull
-  private static Stream<VirtualFile> mapToNavigatableFile(@NotNull VcsTreeModelData data) {
-    return data.userObjectsStream()
+  private static JBIterable<VirtualFile> mapToNavigatableFile(@NotNull VcsTreeModelData data) {
+    return data.iterateUserObjects()
       .flatMap(entry -> {
         if (entry instanceof Change) {
-          return ChangesUtil.getPathsCaseSensitive((Change)entry)
+          return ChangesUtil.iteratePathsCaseSensitive((Change)entry)
             .map(FilePath::getVirtualFile);
         }
         else if (entry instanceof VirtualFile) {
-          return Stream.of((VirtualFile)entry);
+          return JBIterable.of((VirtualFile)entry);
         }
         else if (entry instanceof FilePath) {
-          return Stream.of(((FilePath)entry).getVirtualFile());
+          return JBIterable.of(((FilePath)entry).getVirtualFile());
         }
-        return Stream.empty();
+        return JBIterable.empty();
       })
-      .filter(Objects::nonNull);
+      .filterNotNull();
   }
 
   @NotNull
-  private static Stream<VirtualFile> mapToVirtualFile(@NotNull VcsTreeModelData data) {
-    return data.userObjectsStream()
+  private static JBIterable<VirtualFile> mapToVirtualFile(@NotNull VcsTreeModelData data) {
+    return data.iterateUserObjects()
       .map(entry -> {
         if (entry instanceof Change) {
           FilePath path = ChangesUtil.getAfterPath((Change)entry);
@@ -371,12 +414,12 @@ public abstract class VcsTreeModelData {
         }
         return null;
       })
-      .filter(Objects::nonNull);
+      .filterNotNull();
   }
 
   @NotNull
-  private static Stream<File> mapToIoFile(@NotNull VcsTreeModelData data) {
-    return data.userObjectsStream()
+  private static JBIterable<File> mapToIoFile(@NotNull VcsTreeModelData data) {
+    return data.iterateUserObjects()
       .map(entry -> {
         if (entry instanceof Change) {
           FilePath path = ChangesUtil.getAfterPath((Change)entry);
@@ -384,17 +427,14 @@ public abstract class VcsTreeModelData {
         }
         return null;
       })
-      .filter(Objects::nonNull);
+      .filterNotNull();
   }
 
 
   @Nullable
   public static ChangesBrowserNode<?> findTagNode(@NotNull JTree tree, @NotNull Object tag) {
     ChangesBrowserNode<?> root = (ChangesBrowserNode<?>)tree.getModel().getRoot();
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    Enumeration<ChangesBrowserNode<?>> children = (Enumeration)root.children();
-    Iterator<ChangesBrowserNode<?>> iterator = ContainerUtil.iterate(children);
-    return ContainerUtil.find(iterator, node -> tag.equals(node.getUserObject()));
+    return root.iterateNodeChildren().find(node -> tag.equals(node.getUserObject()));
   }
 
   private static boolean underExpandByDefault(@Nullable ChangesBrowserNode<?> node) {

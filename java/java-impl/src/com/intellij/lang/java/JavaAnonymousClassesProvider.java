@@ -37,7 +37,7 @@ public class JavaAnonymousClassesProvider implements AnonymousElementProvider {
         final PsiElement element = parent;
         element.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
-          public void visitAnonymousClass(PsiAnonymousClass aClass) {
+          public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
             final PsiExpressionList arguments = aClass.getArgumentList();
             if (arguments != null) {
               for (PsiExpression expression : arguments.getExpressions()) {
@@ -48,7 +48,7 @@ public class JavaAnonymousClassesProvider implements AnonymousElementProvider {
           }
 
           @Override
-          public void visitClass(PsiClass aClass) {
+          public void visitClass(@NotNull PsiClass aClass) {
             if (aClass == element) {
               super.visitClass(aClass);
             }

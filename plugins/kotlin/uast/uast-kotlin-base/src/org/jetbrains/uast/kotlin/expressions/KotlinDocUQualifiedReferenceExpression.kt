@@ -1,13 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.ResolveResult
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.internal.multiResolveResults
 
+@ApiStatus.Internal
 class KotlinDocUQualifiedReferenceExpression(
     override val sourcePsi: KDocName,
     givenParent: UElement?

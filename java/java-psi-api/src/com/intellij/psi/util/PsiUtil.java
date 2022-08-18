@@ -49,7 +49,7 @@ public final class PsiUtil extends PsiUtilCore {
   public static final int ACCESS_LEVEL_PRIVATE = 1;
   public static final Key<Boolean> VALID_VOID_TYPE_IN_CODE_FRAGMENT = Key.create("VALID_VOID_TYPE_IN_CODE_FRAGMENT");
 
-  private static final Pattern IGNORED_NAMES = Pattern.compile("ignored?[A-Z]?[a-z]*\\d*");
+  private static final Pattern IGNORED_NAMES = Pattern.compile("ignored?[A-Za-z\\d]*");
 
   private PsiUtil() {}
 
@@ -165,7 +165,7 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   public static void addException(@NotNull PsiMethod method, @NotNull PsiClass exceptionClass) throws IncorrectOperationException {
-    addException(method, exceptionClass, exceptionClass.getQualifiedName());
+    addException(method, exceptionClass, exceptionClass instanceof PsiTypeParameter ? exceptionClass.getName() : exceptionClass.getQualifiedName());
   }
 
   private static void addException(@NotNull PsiMethod method,
@@ -902,18 +902,29 @@ public final class PsiUtil extends PsiUtilCore {
     return psiClass != null && psiClass.isAnnotationType();
   }
 
+  /**
+   * Returns a suitable modifier for a newly generated member of the specified class.
+   *
+   * @param aClass  the class that will get a new member
+   * @param constructor  specify true if the new member is a constructor, false otherwise.
+   * @return a modifier based on the visibility and type of the specified class
+   */
   @PsiModifier.ModifierConstant
-  public static String getMaximumModifierForMember(PsiClass aClass, boolean allowPublicAbstract) {
+  public static String getSuitableModifierForMember(@Nullable PsiClass aClass, boolean constructor) {
     String modifier = PsiModifier.PUBLIC;
 
-    if (!allowPublicAbstract && aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !aClass.isEnum()) {
-      modifier =  PsiModifier.PROTECTED;
-    }
-    else if (aClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) || aClass.isEnum()) {
-      modifier = PsiModifier.PACKAGE_LOCAL;
-    }
-    else if (aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
-      modifier = PsiModifier.PRIVATE;
+    if (aClass != null && (!aClass.isRecord() || constructor) && !aClass.isInterface()) {
+      if (aClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) || constructor && aClass.isEnum()) {
+        // enum constructors are implicitly private
+        modifier = PsiModifier.PACKAGE_LOCAL;
+      }
+      else if (aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
+        modifier = PsiModifier.PRIVATE;
+      }
+      else if (aClass.hasModifierProperty(PsiModifier.PROTECTED) ||
+          constructor && aClass.hasModifierProperty(PsiModifier.ABSTRACT) && aClass.hasModifierProperty(PsiModifier.PUBLIC)) {
+        modifier = PsiModifier.PROTECTED;
+      }
     }
 
     return modifier;

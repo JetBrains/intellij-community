@@ -23,7 +23,6 @@ final class ProjectNotificationAware(private val project: Project) : ExternalSys
     AutoImportProjectNotificationAware.getInstance(project).notificationExpire()
   }
 
-  @Suppress("SSBasedInspection")
   override fun dispose() {
     AutoImportProjectNotificationAware.getInstance(project).dispose()
   }

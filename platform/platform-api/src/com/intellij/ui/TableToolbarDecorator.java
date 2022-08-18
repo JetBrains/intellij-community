@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.ElementProducer;
@@ -48,6 +49,14 @@ class TableToolbarDecorator extends ToolbarDecorator {
   @Override
   protected @NotNull JComponent getComponent() {
     return myTable;
+  }
+
+  @Override
+  public @NotNull ToolbarDecorator setVisibleRowCount(int rowCount) {
+    if (myTable instanceof JBTable) {
+      ((JBTable) myTable).setVisibleRowCount(rowCount);
+    }
+    return this;
   }
 
   @Override

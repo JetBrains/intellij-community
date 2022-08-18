@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.dependencies;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,7 +50,7 @@ import java.util.function.Consumer;
  * so this builder does nothing in normal cases. However it's needed when the build process is started in standalone mode (not from IDE) or
  * if build is triggered before IDE downloads all required dependencies.
  */
-public class DependencyResolvingBuilder extends ModuleLevelBuilder {
+public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance(DependencyResolvingBuilder.class);
   private static final String MAVEN_REPOSITORY_PATH_VAR = "MAVEN_REPOSITORY";
   private static final String DEFAULT_MAVEN_REPOSITORY_PATH = ".m2/repository";
@@ -146,8 +146,8 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder {
   }
 
   private static void resolveMissingDependencies(
-    Collection<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> libs,
-    Consumer<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> resolveAction
+    Collection<? extends JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> libs,
+    Consumer<? super JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> resolveAction
   ) throws Exception {
     int parallelism = SystemProperties.getIntProperty(RESOLUTION_PARALLELISM_PROPERTY, 1);
     if (parallelism < 2 || libs.size() < 2) {
@@ -229,8 +229,10 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder {
     private static final byte PROGRESS = 1;
     private static final byte FINISHED = 2;
     private byte myState = INITIAL;
+    private CanceledStatus myStatus;
 
-    synchronized boolean requestProcessing(final CanceledStatus cancelStatus) {
+    private synchronized boolean requestProcessing(final CanceledStatus cancelStatus) {
+      myStatus = cancelStatus;
       if (myState == INITIAL) {
         myState = PROGRESS;
         return true;
@@ -248,18 +250,18 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder {
       return false;
     }
 
-    synchronized void finish() {
+    private synchronized void finish() {
       if (myState != FINISHED) {
         myState = FINISHED;
         this.notifyAll();
       }
     }
 
-    static void init(CompileContext context) {
+    private static void init(CompileContext context) {
       context.putUserData(CONTEXT_KEY, new ConcurrentHashMap<>());
     }
 
-    static @NotNull ResourceGuard get(CompileContext context, JpsMavenRepositoryLibraryDescriptor descriptor) {
+    private static @NotNull ResourceGuard get(CompileContext context, JpsMavenRepositoryLibraryDescriptor descriptor) {
       final ConcurrentMap<JpsMavenRepositoryLibraryDescriptor, ResourceGuard> map = context.getUserData(CONTEXT_KEY);
       assert map != null;
       final ResourceGuard g = new ResourceGuard();
@@ -331,7 +333,7 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder {
     return null;
   }
 
-  public static @NotNull File getLocalArtifactRepositoryRoot(@NotNull JpsGlobal global) {
+  private static @NotNull File getLocalArtifactRepositoryRoot(@NotNull JpsGlobal global) {
     final JpsPathVariablesConfiguration pvConfig = JpsModelSerializationDataService.getPathVariablesConfiguration(global);
     final String localRepoPath = pvConfig != null ? pvConfig.getUserVariableValue(MAVEN_REPOSITORY_PATH_VAR) : null;
     if (localRepoPath != null) {

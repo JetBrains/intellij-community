@@ -1,13 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.script
 
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.idea.base.util.invalidateProjectRoots
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
-import org.jetbrains.kotlin.idea.roots.invalidateProjectRoots
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.scripting.definitions.SCRIPT_DEFINITION_MARKERS_EXTENSION_WITH_DOT
 import org.jetbrains.kotlin.scripting.definitions.SCRIPT_DEFINITION_MARKERS_PATH
@@ -33,7 +34,7 @@ class ScriptTemplatesFromDependenciesProviderTest : AbstractScriptConfigurationT
 
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
         runWriteAction {
-            project.invalidateProjectRoots()
+            project.invalidateProjectRoots(RootsChangeRescanningInfo.NO_RESCAN_NEEDED)
         }
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
     }

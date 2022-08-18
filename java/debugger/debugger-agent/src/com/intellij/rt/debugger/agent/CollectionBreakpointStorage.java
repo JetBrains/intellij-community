@@ -7,17 +7,31 @@ import org.jetbrains.capture.org.objectweb.asm.Type;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class CollectionBreakpointStorage {
-  private static final ConcurrentMap<CapturedField, FieldHistory> FIELD_MODIFICATIONS_STORAGE = new ConcurrentHashMap<CapturedField, FieldHistory>();
-  private static final ConcurrentMap<CollectionWrapper, CollectionHistory> COLLECTION_MODIFICATIONS_STORAGE = new ConcurrentHashMap<CollectionWrapper, CollectionHistory>();
-  private static boolean ENABLED = true;
+  private static final ConcurrentMap<CapturedField, FieldHistory> FIELD_MODIFICATIONS_STORAGE;
+  private static final ConcurrentMap<CollectionWrapper, CollectionHistory> COLLECTION_MODIFICATIONS_STORAGE;
+  private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
 
-  public static void saveFieldModification(String internalClsName, String fieldName, Object clsInstance, Object collectionInstance,  boolean shouldSaveStack) {
+  private static boolean ENABLED; // set from debugger
+
+  static {
+    FIELD_MODIFICATIONS_STORAGE = new ConcurrentHashMap<CapturedField, FieldHistory>();
+    COLLECTION_MODIFICATIONS_STORAGE = new ConcurrentHashMap<CollectionWrapper, CollectionHistory>();
+  }
+
+  public static void saveFieldModification(String internalClsName,
+                                           String fieldName,
+                                           Object clsInstance,
+                                           Object collectionInstance,
+                                           boolean shouldSaveStack) {
     if (!ENABLED) {
       return;
     }
@@ -40,24 +54,28 @@ public class CollectionBreakpointStorage {
     history.add(new CollectionModificationInfo(exception, elem, isAddition));
   }
 
+  @SuppressWarnings("unused")
   public static Object[] getCollectionModifications(Object collectionInstance) {
     CollectionWrapper wrapper = new CollectionWrapper(collectionInstance);
     CollectionHistory history = COLLECTION_MODIFICATIONS_STORAGE.get(wrapper);
-    return history == null ? new Object[]{} : history.get();
+    return history == null ? EMPTY_OBJECT_ARRAY : history.get();
   }
 
+  @SuppressWarnings("unused")
   public static Object[] getFieldModifications(String clsName, String fieldName, Object clsInstance) {
     CapturedField field = new CapturedField(clsName, fieldName, clsInstance);
     FieldHistory history = FIELD_MODIFICATIONS_STORAGE.get(field);
-    return history == null ? new Object[]{} : history.getCollectionInstances();
+    return history == null ? EMPTY_OBJECT_ARRAY : history.getCollectionInstances();
   }
 
+  @SuppressWarnings("unused")
   public static String getStack(Object collectionInstance, int modificationIndex) throws IOException {
     CollectionWrapper wrapper = new CollectionWrapper(collectionInstance);
     CollectionHistory history = COLLECTION_MODIFICATIONS_STORAGE.get(wrapper);
     return history == null ? "" : wrapInString(history.get(modificationIndex));
   }
 
+  @SuppressWarnings("unused")
   public static String getStack(String clsName, String fieldName, Object clsInstance, int modificationIndex) throws IOException {
     CapturedField field = new CapturedField(clsName, fieldName, clsInstance);
     FieldHistory history = FIELD_MODIFICATIONS_STORAGE.get(field);
@@ -73,9 +91,11 @@ public class CollectionBreakpointStorage {
     try {
       dos = new DataOutputStream(bas);
       for (StackTraceElement stackTraceElement : info.getStackTrace()) {
-        dos.writeUTF(stackTraceElement.getClassName());
-        dos.writeUTF(stackTraceElement.getMethodName());
-        dos.writeInt(stackTraceElement.getLineNumber());
+        if (stackTraceElement != null) {
+          dos.writeUTF(stackTraceElement.getClassName());
+          dos.writeUTF(stackTraceElement.getMethodName());
+          dos.writeInt(stackTraceElement.getLineNumber());
+        }
       }
       return bas.toString("ISO-8859-1");
     }
@@ -187,10 +207,12 @@ public class CollectionBreakpointStorage {
       myIsAddition = isAddition;
     }
 
+    @SuppressWarnings("unused")
     private Object getElement() {
       return myElement;
     }
 
+    @SuppressWarnings("unused")
     private boolean isAddition() {
       return myIsAddition;
     }
@@ -229,7 +251,7 @@ public class CollectionBreakpointStorage {
     final String myFieldName;
     final Object myClsInstance;
 
-    CapturedField(String clsName, String fieldName, Object clsInstance) {
+    private CapturedField(String clsName, String fieldName, Object clsInstance) {
       myClsName = clsName;
       myFieldName = fieldName;
       myClsInstance = clsInstance;
@@ -238,9 +260,9 @@ public class CollectionBreakpointStorage {
     @Override
     public boolean equals(Object obj) {
       return obj instanceof CapturedField &&
+             myClsInstance == ((CapturedField)obj).myClsInstance &&
              myFieldName.equals(((CapturedField)obj).myFieldName) &&
-             myClsName.equals(((CapturedField)obj).myClsName) &&
-             myClsInstance == ((CapturedField)obj).myClsInstance;
+             myClsName.equals(((CapturedField)obj).myClsName);
     }
 
     @Override

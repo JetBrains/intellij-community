@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.script.configuration
 
@@ -17,7 +17,7 @@ import com.intellij.ui.EditorNotificationProvider.*
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.HyperlinkLabel
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.StandardIdeScriptDefinition
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
@@ -56,9 +56,12 @@ class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
     }
 
     private fun areDefinitionsForGradleKts(allApplicableDefinitions: List<ScriptDefinition>): Boolean {
-        return allApplicableDefinitions.all {
-            val pattern = it.asLegacyOrNull<KotlinScriptDefinitionFromAnnotatedTemplate>()?.scriptFilePattern?.pattern
-            pattern == ".*\\.gradle\\.kts" || pattern == "^(settings|.+\\.settings)\\.gradle\\.kts\$" || pattern == ".+\\.init\\.gradle\\.kts"
+        return allApplicableDefinitions.all { definition ->
+            definition.asLegacyOrNull<KotlinScriptDefinitionFromAnnotatedTemplate>()?.let {
+                val pattern = it.scriptFilePattern.pattern
+                return@all pattern.endsWith("\\.gradle\\.kts") || pattern.endsWith("\\.gradle\\.kts$")
+            }
+            definition.fileExtension.endsWith("gradle.kts")
         }
     }
 

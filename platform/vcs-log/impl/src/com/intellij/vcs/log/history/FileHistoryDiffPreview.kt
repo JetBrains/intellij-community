@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history
 
 import com.intellij.diff.chains.DiffRequestChain
@@ -53,8 +53,8 @@ class FileHistoryEditorDiffPreview(project: Project, private val fileHistoryPane
     return SimpleDiffRequestChain.fromProducer(producer)
   }
 
-  override fun updateAvailability(event: AnActionEvent) {
-    val log = event.getData(VcsLogDataKeys.VCS_LOG) ?: return
-    CompareRevisionsFromFileHistoryActionProvider.setTextAndDescription(event, log)
+  override fun updateDiffAction(event: AnActionEvent) {
+    val selection = event.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION) ?: return
+    CompareRevisionsFromFileHistoryActionProvider.setTextAndDescription(event, selection)
   }
 }

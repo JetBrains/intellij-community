@@ -2,7 +2,6 @@
 package org.intellij.plugins.markdown.editor.tables.intentions
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
-import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -29,8 +28,6 @@ internal class ReformatTableIntention: PsiElementBaseIntentionAction() {
   override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
     requireNotNull(editor)
     val table = TableUtils.findTable(element)!!
-    executeCommand(project) {
-      TableFormattingUtils.reformatAllColumns(table, editor.document, trimToMaxContent = true)
-    }
+    TableFormattingUtils.reformatAllColumns(table, editor.document, trimToMaxContent = true)
   }
 }

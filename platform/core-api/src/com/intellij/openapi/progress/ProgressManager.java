@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.project.Project;
@@ -18,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Supplier;
 
 public abstract class ProgressManager extends ProgressIndicatorProvider {
   static ProgressManager ourInstance = CachedSingletonsRegistry.markCachedField(ProgressManager.class);
@@ -33,6 +33,14 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
     return result;
   }
 
+  /**
+   * @return ProgressManager or null if not yet initialized
+   */
+  @ApiStatus.Internal
+  @Nullable
+  public static ProgressManager getInstanceOrNull() {
+    return ourInstance;
+  }
   public abstract boolean hasProgressIndicator();
   public abstract boolean hasModalProgressIndicator();
   public abstract boolean hasUnsafeProgressIndicator();
@@ -259,8 +267,8 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   public abstract <T, E extends Throwable> T computePrioritized(@NotNull ThrowableComputable<T, E> computable) throws E;
 
   /**
-   * Makes {@link #getProgressIndicator()} return {@code null} until the returned token is closed.
+   * Makes {@link #getProgressIndicator()} return {@code null} within {@code computable}.
    */
   @ApiStatus.Internal
-  public abstract @NotNull AccessToken silenceGlobalIndicator();
+  public abstract <X> X silenceGlobalIndicator(@NotNull Supplier<? extends X> computable);
 }

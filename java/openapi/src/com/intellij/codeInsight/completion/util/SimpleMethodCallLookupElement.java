@@ -37,7 +37,7 @@ public class SimpleMethodCallLookupElement extends LookupElement {
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     presentation.setIcon(myMethod.getIcon(Iconable.ICON_FLAG_VISIBILITY));
     presentation.setItemText(myMethod.getName());
     presentation.setTailText(PsiFormatUtil.formatMethod(myMethod,

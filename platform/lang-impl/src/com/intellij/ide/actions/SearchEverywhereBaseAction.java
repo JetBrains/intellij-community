@@ -24,6 +24,11 @@ public abstract class SearchEverywhereBaseAction extends AnAction {
     presentation.setVisible(hasContributors);
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   protected boolean requiresProject() {
     return true;
   }

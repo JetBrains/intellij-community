@@ -16,10 +16,14 @@
 package org.jetbrains.jps.model.module;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.module.JpsModule;
 
 import java.util.EventListener;
 
+/**
+ * @deprecated modifications of JpsModel were never fully supported, and they won't be since JpsModel will be superseded by {@link com.intellij.workspaceModel.storage.WorkspaceEntityStorage the workspace model}.
+ */
+@SuppressWarnings("DeprecatedIsStillUsed")
+@Deprecated
 public interface JpsModuleListener extends EventListener {
   void moduleAdded(@NotNull JpsModule module);
   void moduleRemoved(@NotNull JpsModule module);

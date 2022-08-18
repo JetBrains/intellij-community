@@ -14,6 +14,7 @@ import com.intellij.psi.scope.JavaScopeProcessorEvent;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.*;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,6 +63,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.api.*;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 import org.jetbrains.plugins.groovy.lang.typing.GroovyClosureType;
+import org.jetbrains.plugins.groovy.transformations.inline.GroovyInlineASTTransformationPerformer;
+import org.jetbrains.plugins.groovy.transformations.inline.GroovyInlineTransformationUtilKt;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -86,9 +89,7 @@ public final class ResolveUtil {
   /**
    *
    * @param place - place to start tree walk up
-   * @param processor
    * @param processNonCodeMembers - this parameter tells us if we need non code members
-   * @return
    */
   public static boolean treeWalkUp(@NotNull PsiElement place, @NotNull PsiScopeProcessor processor, boolean processNonCodeMembers) {
     return ResolveUtilKt.treeWalkUp(place, processor, initialState(processNonCodeMembers));
@@ -192,6 +193,8 @@ public final class ResolveUtil {
 
     if (scope instanceof GrStatementOwner) {
       if (!GdkMethodUtil.processMixinToMetaclass((GrStatementOwner)scope, processor, state, lastParent, place)) return false;
+      GroovyInlineASTTransformationPerformer performer = GroovyInlineTransformationUtilKt.getHierarchicalInlineTransformationPerformer(scope);
+      if (performer != null && !performer.processResolve(processor, state, place)) return false;
     }
 
     return true;
@@ -444,9 +447,9 @@ public final class ResolveUtil {
     final List<GroovyResolveResult> result = new ArrayList<>();
 
     final Iterator<? extends GroovyResolveResult> allIterator = candidates.iterator();
-    result.add(allIterator.next());
 
-    Outer:
+    Map<String, List<GroovyResolveResult>> cache = new HashMap<>(candidates.size());
+
     while (allIterator.hasNext()) {
       final GroovyResolveResult currentResult = allIterator.next();
 
@@ -466,41 +469,52 @@ public final class ResolveUtil {
         continue;
       }
 
-      Inner:
-      for (Iterator<GroovyResolveResult> resultIterator = result.iterator(); resultIterator.hasNext(); ) {
-        final GroovyResolveResult otherResult = resultIterator.next();
+      boolean isDominated = false;
 
+      List<GroovyResolveResult> existingCandidates = cache.computeIfAbsent(getKey(currentMethod), (__) -> new SmartList<>());
+      for (Iterator<GroovyResolveResult> iterator = existingCandidates.listIterator(); iterator.hasNext();) {
+        GroovyResolveResult candidateResult = iterator.next();
         final PsiMethod otherMethod;
         final PsiSubstitutor otherSubstitutor;
-        if (otherResult instanceof GroovyMethodResult) {
-          final GroovyMethodResult otherMethodResult = (GroovyMethodResult)otherResult;
+        if (candidateResult instanceof GroovyMethodResult) {
+          final GroovyMethodResult otherMethodResult = (GroovyMethodResult)candidateResult;
           otherMethod = otherMethodResult.getElement();
           otherSubstitutor = otherMethodResult.getContextSubstitutor();
         }
-        else if (otherResult.getElement() instanceof PsiMethod) {
-          otherMethod = (PsiMethod)otherResult.getElement();
-          otherSubstitutor = otherResult.getSubstitutor();
+        else if (candidateResult.getElement() instanceof PsiMethod) {
+          otherMethod = (PsiMethod)candidateResult.getElement();
+          otherSubstitutor = candidateResult.getSubstitutor();
+        } else {
+          continue;
         }
-        else {
-          continue Inner;
-        }
-
         if (dominated(currentMethod, currentSubstitutor, otherMethod, otherSubstitutor)) {
           // if current method is dominated by other method
           // then do not add current method to result and skip rest other methods
-          continue Outer;
+          isDominated = true;
+          break;
         }
         else if (dominated(otherMethod, otherSubstitutor, currentMethod, currentSubstitutor)) {
           // if other method is dominated by current method
           // then remove other from result
-          resultIterator.remove();
+          iterator.remove();
         }
       }
+      if (!isDominated) {
+        existingCandidates.add(currentResult);
+      }
+    }
 
-      result.add(currentResult);
+    for (List<GroovyResolveResult> resultsByName : cache.values()) {
+      result.addAll(resultsByName);
     }
 
     return result.toArray(GroovyResolveResult.EMPTY_ARRAY);
+  }
+
+  private static String getKey(PsiMethod method) {
+    int parameters = method.getParameters().length;
+    String name = method.getName();
+    return parameters + "_" + name;
   }
 
   public static boolean dominated(PsiMethod method1,

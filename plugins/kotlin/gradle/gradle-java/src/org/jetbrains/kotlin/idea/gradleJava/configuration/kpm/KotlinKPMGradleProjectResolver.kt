@@ -11,27 +11,39 @@ import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.util.PlatformUtils
 import org.gradle.tooling.model.idea.IdeaModule
-import org.jetbrains.kotlin.idea.PlatformVersion
+import org.jetbrains.kotlin.gradle.kpm.idea.*
+import org.jetbrains.kotlin.idea.base.externalSystem.findAll
+import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.configuration.multiplatform.KotlinMultiplatformNativeDebugSuggester
 import org.jetbrains.kotlin.idea.gradle.configuration.ResolveModulesPerSourceSetInMppBuildIssue
 import org.jetbrains.kotlin.idea.gradle.configuration.buildClasspathData
 import org.jetbrains.kotlin.idea.gradle.configuration.findChildModuleById
+import org.jetbrains.kotlin.idea.gradle.configuration.kpm.ContentRootsCreator
+import org.jetbrains.kotlin.idea.gradle.configuration.kpm.ModuleDataInitializer
 import org.jetbrains.kotlin.idea.gradle.ui.notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded
 import org.jetbrains.kotlin.idea.gradleTooling.*
-import org.jetbrains.kotlin.idea.projectModel.KotlinFragment
-import org.jetbrains.kotlin.idea.roots.findAll
+import org.jetbrains.kotlin.tooling.core.Extras
+import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
-import java.lang.reflect.Proxy
 
 @Order(ExternalSystemConstants.UNORDERED + 1)
 open class KotlinKPMGradleProjectResolver : AbstractProjectResolverExtension() {
-    override fun getExtraProjectModelClasses(): Set<Class<out Any>> = setOf(KotlinKPMGradleModel::class.java)
-    override fun getToolingExtensionsClasses(): Set<Class<out Any>> = setOf(KotlinKPMGradleModelBuilder::class.java, Unit::class.java)
+
+    override fun getExtraProjectModelClasses(): Set<Class<out Any>> =
+        throw UnsupportedOperationException("Use getModelProvider() instead!")
+
+    override fun getModelProvider(): ProjectImportModelProvider? = IdeaKpmProjectProvider
+
+    override fun getToolingExtensionsClasses(): Set<Class<out Any>> = setOf(
+        IdeaKpmProject::class.java,  // representative of kotlin-gradle-plugin-idea
+        Extras::class.java, // representative of kotlin-tooling-core
+        Unit::class.java // representative of kotlin-stdlib
+    )
 
     override fun populateModuleExtraModels(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>) {
         if (ExternalSystemApiUtil.find(ideModule, BuildScriptClasspathData.KEY) == null) {
@@ -43,9 +55,12 @@ open class KotlinKPMGradleProjectResolver : AbstractProjectResolverExtension() {
     }
 
     override fun createModule(gradleModule: IdeaModule, projectDataNode: DataNode<ProjectData>): DataNode<ModuleData>? {
-        return super.createModule(gradleModule, projectDataNode)?.also {
-            val model = getModelOrNull(gradleModule) ?: return@also
-            KotlinKPMModuleDataInitializer(model).doInitialize(gradleModule, it, projectDataNode, resolverCtx)
+        return super.createModule(gradleModule, projectDataNode)?.also { mainModuleNode ->
+            val initializerContext = ModuleDataInitializer.Context.EMPTY
+            ModuleDataInitializer.EP_NAME.extensions.forEach { moduleDataInitializer ->
+                moduleDataInitializer.initialize(gradleModule, mainModuleNode, projectDataNode, resolverCtx, initializerContext)
+            }
+            suggestNativeDebug(gradleModule, resolverCtx)
         }
     }
 
@@ -53,130 +68,78 @@ open class KotlinKPMGradleProjectResolver : AbstractProjectResolverExtension() {
         if (!modelExists(gradleModule)) {
             return super.populateModuleContentRoots(gradleModule, ideModule)
         }
-        nativeDebugSuggester.suggestNativeDebug(getModelOrNull(gradleModule), resolverCtx)
-
-        if (!resolverCtx.isResolveModulePerSourceSet && !PlatformVersion.isAndroidStudio() && !PlatformUtils.isMobileIde() &&
-            !PlatformUtils.isAppCode()
-        ) {
-            notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded(resolverCtx.projectPath)
-            resolverCtx.report(MessageEvent.Kind.WARNING, ResolveModulesPerSourceSetInMppBuildIssue())
+        ContentRootsCreator.EP_NAME.extensions.forEach { contentRootsCreator ->
+            contentRootsCreator.populateContentRoots(gradleModule, ideModule, resolverCtx)
         }
-
-        val sourceSetsMap = ExternalSystemApiUtil.findAll(ideModule, GradleSourceSetData.KEY).filter {
-            ExternalSystemApiUtil.find(it, KotlinFragmentData.KEY) != null
-        }.associateBy { it.data.id }
-        val model = resolverCtx.getKpmModel(gradleModule)!!
-
-        for (fragment in model.kpmModules.flatMap { it.fragments }) {
-            val moduleId = calculateKotlinFragmentModuleId(gradleModule, fragment, resolverCtx)
-            val moduleDataNode = sourceSetsMap[moduleId]
-            if (moduleDataNode == null) continue
-
-            createContentRootData(
-                extractSourceDirs(fragment),
-                fragment.computeSourceType(),
-                extractPackagePrefix(fragment),
-                moduleDataNode
-            )
-            createContentRootData(
-                extractResourceDirs(fragment),
-                fragment.computeResourceType(),
-                null,
-                moduleDataNode
-            )
-        }
-
-        gradleModule.contentRoots.mapNotNull {
-            val gradleContentRoot = it ?: return@mapNotNull null
-            val rootDirectory = it.rootDirectory ?: return@mapNotNull null
-            ContentRootData(GradleConstants.SYSTEM_ID, rootDirectory.absolutePath).also { ideContentRoot ->
-                (gradleContentRoot.excludeDirectories ?: emptySet()).forEach { file ->
-                    ideContentRoot.storePath(ExternalSystemSourceType.EXCLUDED, file.absolutePath)
-                }
-            }
-        }.forEach { ideModule.createChild(ProjectKeys.CONTENT_ROOT, it) }
     }
 
     override fun populateModuleDependencies(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>, ideProject: DataNode<ProjectData>) {
         if (!modelExists(gradleModule)) {
             return super.populateModuleDependencies(gradleModule, ideModule, ideProject)
         }
-        populateDependenciesByFragmentData(ideModule, ideProject)
+        populateDependenciesByFragmentData(gradleModule, ideModule, ideProject, resolverCtx)
     }
 
-    private fun modelExists(gradleModule: IdeaModule): Boolean = getModelOrNull(gradleModule) != null
-    private fun getModelOrNull(gradleModule: IdeaModule): KotlinKPMGradleModel? = resolverCtx.getKpmModel(gradleModule)
+    private fun modelExists(gradleModule: IdeaModule): Boolean = resolverCtx.getIdeaKpmProject(gradleModule) != null
 
     companion object {
-        private val nativeDebugSuggester = object : KotlinMultiplatformNativeDebugSuggester<KotlinKPMGradleModel>() {
-            override fun hasKotlinNativeHome(model: KotlinKPMGradleModel?): Boolean = model?.kotlinNativeHome?.isNotEmpty() ?: false
+        private val nativeDebugSuggester = object : KotlinMultiplatformNativeDebugSuggester<IdeaKpmProject>() {
+            override fun hasKotlinNativeHome(model: IdeaKpmProject?): Boolean = model?.kotlinNativeHome?.exists() ?: false
         }
 
-        fun ProjectResolverContext.getKpmModel(gradleModule: IdeaModule): KotlinKPMGradleModel? {
-            return when (val kpmModel = this.getExtraProject(gradleModule, KotlinKPMGradleModel::class.java)) {
-                is Proxy? -> kpmModel?.let { kotlinKpmModel ->
-                    KotlinKPMGradleModelImpl(
-                        kpmModules = kotlinKpmModel.kpmModules,
-                        settings = kotlinKpmModel.settings,
-                        kotlinNativeHome = kotlinKpmModel.kotlinNativeHome,
-                    )
-                }
-                else -> kpmModel
-            }
+        internal fun ProjectResolverContext.getIdeaKpmProject(gradleModule: IdeaModule): IdeaKpmProject? {
+            return this.getExtraProject(gradleModule, IdeaKpmProjectContainer::class.java)?.instanceOrNull
         }
 
+        private fun suggestNativeDebug(gradleModule: IdeaModule, resolverCtx: ProjectResolverContext) {
+            nativeDebugSuggester.suggestNativeDebug(resolverCtx.getIdeaKpmProject(gradleModule), resolverCtx)
 
-        private fun createContentRootData(
-            sourceDirs: Set<File>,
-            sourceType: ExternalSystemSourceType,
-            packagePrefix: String?,
-            parentNode: DataNode<*>
-        ) {
-            for (sourceDir in sourceDirs) {
-                val contentRootData = ContentRootData(GradleConstants.SYSTEM_ID, sourceDir.absolutePath)
-                packagePrefix?.also {
-                    contentRootData.storePath(sourceType, sourceDir.absolutePath, it)
-                } ?: contentRootData.storePath(sourceType, sourceDir.absolutePath)
-                parentNode.createChild(ProjectKeys.CONTENT_ROOT, contentRootData)
+            if (!resolverCtx.isResolveModulePerSourceSet && !KotlinPlatformUtils.isAndroidStudio && !PlatformUtils.isMobileIde() &&
+                !PlatformUtils.isAppCode()
+            ) {
+                notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded(resolverCtx.projectPath)
+                resolverCtx.report(MessageEvent.Kind.WARNING, ResolveModulesPerSourceSetInMppBuildIssue())
             }
         }
 
         //TODO check this
-        private fun extractPackagePrefix(fragment: KotlinFragment): String? = null
-        private fun extractSourceDirs(fragment: KotlinFragment): Set<File> = fragment.sourceDirs
-        private fun extractResourceDirs(fragment: KotlinFragment): Set<File> = fragment.resourceDirs
-        private fun extractContentRootSources(multiplatformModel: KotlinKPMGradleModel): Collection<KotlinFragment> =
-            multiplatformModel.kpmModules.flatMap { it.fragments }
+        internal fun extractPackagePrefix(fragment: IdeaKpmFragment): String? = null
+        internal fun extractContentRootSources(model: IdeaKpmProject): Collection<IdeaKpmFragment> =
+            model.modules.flatMap { it.fragments }
 
         //TODO replace with proper implementation, like with KotlinTaskProperties
-        private fun extractPureKotlinSourceFolders(fragment: KotlinFragment): Collection<File> = fragment.sourceDirs.toList()
+        internal fun extractPureKotlinSourceFolders(fragment: IdeaKpmFragment): Collection<File> = fragment.sourceDirs
 
         //TODO Unite with KotlinGradleProjectResolverExtension.getSourceSetName
-        private val KotlinKPMGradleModel.pureKotlinSourceFolders: Collection<String>
+        internal val IdeaKpmProject.pureKotlinSourceFolders: Collection<String>
             get() = extractContentRootSources(this).flatMap { extractPureKotlinSourceFolders(it) }.map { it.absolutePath }
 
-        private val DataNode<out ModuleData>.sourceSetName
+        internal val DataNode<out ModuleData>.sourceSetName
             get() = (data as? GradleSourceSetData)?.id?.substringAfterLast(':')
 
         //TODO Unite with KotlinGradleProjectResolverExtension.addDependency
-        private fun addModuleDependency(
+        internal fun addModuleDependency(
             dependentModule: DataNode<out ModuleData>,
             dependencyModule: DataNode<out ModuleData>,
-            isPropagated: Boolean = false
         ) {
             val moduleDependencyData = ModuleDependencyData(dependentModule.data, dependencyModule.data)
             //TODO Replace with proper scope from dependency
-            moduleDependencyData.scope = if (isPropagated) DependencyScope.PROVIDED else DependencyScope.COMPILE
+            moduleDependencyData.scope = DependencyScope.COMPILE
             moduleDependencyData.isExported = false
             moduleDependencyData.isProductionOnTestDependency = dependencyModule.sourceSetName == "test"
             dependentModule.createChild(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData)
         }
 
         private fun populateDependenciesByFragmentData(
+            gradleModule: IdeaModule,
             ideModule: DataNode<ModuleData>,
-            ideProject: DataNode<ProjectData>
+            ideProject: DataNode<ProjectData>,
+            resolverCtx: ProjectResolverContext
         ) {
-            val allModules = ExternalSystemApiUtil.findAll(ideProject, ProjectKeys.MODULE)
+            val allGradleModules = gradleModule.project.modules
+            val allModuleDataNodes = ExternalSystemApiUtil.findAll(ideProject, ProjectKeys.MODULE)
+            val allFragmentModulesById = allModuleDataNodes.flatMap { ExternalSystemApiUtil.findAll(it, GradleSourceSetData.KEY) }
+                .associateBy { it.data.id }
 
             val sourceSetDataWithFragmentData = ExternalSystemApiUtil.findAll(ideModule, GradleSourceSetData.KEY)
                 .mapNotNull { ExternalSystemApiUtil.find(it, KotlinFragmentData.KEY)?.data?.let { fragmentData -> it to fragmentData } }
@@ -188,56 +151,64 @@ open class KotlinKPMGradleProjectResolver : AbstractProjectResolverExtension() {
                     addModuleDependency(fragmentSourceSetNode, it)
                 }
 
-                //TODO asymptotic
-                kpmFragmentData.resolvedFragmentDependencies.forEach { dependency ->
-                    when (dependency) {
-                        is KotlinFragmentResolvedSourceDependency -> {
-                            val resolvedLocalFragmentSourceSetsDataNode = allModules.mapNotNull { node ->
-                                node.findChildModuleById(dependency.dependencyIdentifier)
-                            }.single()
-                            addModuleDependency(fragmentSourceSetNode, resolvedLocalFragmentSourceSetsDataNode)
-                        }
-                        is KotlinFragmentResolvedBinaryDependency -> populateLibraryDependency(
-                            fragmentSourceSetNode,
-                            ideProject,
-                            dependency
-                        )
+                val sourceDependencyIds = kpmFragmentData.fragmentDependencies
+                    .filterIsInstance<IdeaKpmFragmentDependency>()
+                    .mapNotNull { fragmentDependency ->
+                        val foundGradleModule = allGradleModules.singleOrNull { dependencyGradleModule ->
+                            dependencyGradleModule.name == fragmentDependency.coordinates.module.projectName
+                        } ?: return@mapNotNull null // Probably it's worth to log
+                        fragmentDependency to foundGradleModule
                     }
-                }
-                //Propagation of ModuleDependencyData through refines edges
-                val moduleDependencies = ExternalSystemApiUtil.findAll(fragmentSourceSetNode, ProjectKeys.MODULE_DEPENDENCY)
-                    .map { it.data.target }
-                val moduleDependenciesToBePropagated = refinesFragmentNodes.flatMap { refinesModuleDep ->
-                    ExternalSystemApiUtil.findAll(refinesModuleDep, ProjectKeys.MODULE_DEPENDENCY)
-                }.filter { it.data.target !in moduleDependencies }
-                    .filterNotNull()
-                    .distinct()
-                    .map { it.data.target }
+                    .map { (dependency, module) -> calculateKotlinFragmentModuleId(module, dependency.coordinates, resolverCtx) }
 
-                val nodesToBePropagated = moduleDependenciesToBePropagated.mapNotNull {
-                    ideModule.findChildModuleById(it.id)
+                val dependencyModuleNodes = sourceDependencyIds.mapNotNull { allFragmentModulesById[it] }
+                dependencyModuleNodes.forEach { addModuleDependency(fragmentSourceSetNode, it) }
+
+                val groupedBinaryDependencies = kpmFragmentData.fragmentDependencies
+                    .filterIsInstance<IdeaKpmResolvedBinaryDependency>()
+                    .groupBy { it.coordinates.toString() }
+                    .map { (coordinates, binariesWithType) ->
+                        GroupedLibraryDependency(coordinates, binariesWithType.map { it.binaryFile to it.binaryType.toBinaryType() })
+                    }
+
+                groupedBinaryDependencies.forEach {
+                    populateLibraryDependency(fragmentSourceSetNode, ideProject, it)
                 }
-                nodesToBePropagated.forEach { addModuleDependency(fragmentSourceSetNode, it, isPropagated = true) }
             }
         }
+
+        private fun String.toBinaryType(): LibraryPathType = when (this) {
+            IdeaKpmDependency.CLASSPATH_BINARY_TYPE -> LibraryPathType.BINARY
+            IdeaKpmDependency.SOURCES_BINARY_TYPE -> LibraryPathType.SOURCE
+            IdeaKpmDependency.DOCUMENTATION_BINARY_TYPE -> LibraryPathType.DOC
+            else -> LibraryPathType.EXCLUDED
+        }
+
+        private data class GroupedLibraryDependency(
+            val coordinates: String?,
+            val binariesWithType: Collection<Pair<File, LibraryPathType>>
+        )
 
         private fun populateLibraryDependency(
             dependentModule: DataNode<out ModuleData>,
             projectDataNode: DataNode<out ProjectData>,
-            moduleDependency: KotlinFragmentResolvedBinaryDependency
+            binaryDependency: GroupedLibraryDependency
         ) {
+            val coordinates = binaryDependency.coordinates ?: return
             val existingLibraryNodeWithData = projectDataNode.findAll(ProjectKeys.LIBRARY).find {
-                it.data.owner == GradleConstants.SYSTEM_ID && it.data.externalName == moduleDependency.dependencyIdentifier
+                it.data.owner == GradleConstants.SYSTEM_ID && it.data.externalName == coordinates
             }
             val libraryData: LibraryData
             if (existingLibraryNodeWithData != null) {
                 libraryData = existingLibraryNodeWithData.data
             } else {
-                libraryData = LibraryData(GradleConstants.SYSTEM_ID, moduleDependency.dependencyIdentifier)
-                moduleDependency.dependencyContent?.forEach { libraryData.addPath(LibraryPathType.BINARY, it.absolutePath) }
+                libraryData = LibraryData(GradleConstants.SYSTEM_ID, coordinates).apply {
+                    binaryDependency.binariesWithType.forEach { (binaryFile, pathType) ->
+                        addPath(pathType, binaryFile.absolutePath)
+                    }
+                }
                 projectDataNode.createChild(ProjectKeys.LIBRARY, libraryData)
             }
-
             val libraryDependencyData = LibraryDependencyData(dependentModule.data, libraryData, LibraryLevel.PROJECT)
             dependentModule.createChild(ProjectKeys.LIBRARY_DEPENDENCY, libraryDependencyData)
         }

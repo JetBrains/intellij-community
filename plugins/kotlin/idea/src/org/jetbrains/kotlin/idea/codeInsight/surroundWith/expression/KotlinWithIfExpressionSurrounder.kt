@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.codeInsight.surroundWith.expression
 
@@ -9,7 +9,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.surroundWith.KotlinExpressionSurrounder
-import org.jetbrains.kotlin.idea.core.util.range
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.typeUtil.isBoolean
@@ -35,7 +34,7 @@ class KotlinWithIfExpressionSurrounder(val withElse: Boolean) : KotlinExpression
 
         val firstStatementInThenRange = (ifExpression.then as? KtBlockExpression).sure {
             "Then branch should exist and be a block expression"
-        }.statements.first().range
+        }.statements.first().textRange
 
         editor.document.deleteString(firstStatementInThenRange.startOffset, firstStatementInThenRange.endOffset)
 

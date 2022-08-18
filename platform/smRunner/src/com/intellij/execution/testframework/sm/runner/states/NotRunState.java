@@ -13,7 +13,6 @@ public final class NotRunState extends AbstractState {
   /**
    * This state is common for all instances and doesn't contains
    * instance-specific information
-   * @return
    */
   public static NotRunState getInstance() {
     return INSTANCE;

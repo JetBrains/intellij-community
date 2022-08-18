@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
@@ -446,7 +446,7 @@ public final class UpdateHighlightersUtil {
       }
       ProperTextRange fixRange = info.getFixTextRange();
       if (fixRange.equalsToRange(finalInfoRange)) {
-        info.fixMarker = null; // null means it the same as highlighter'
+        info.fixMarker = null; // null means it the same as highlighter's range
       }
       else {
         info.fixMarker = getOrCreate(document, ranges2markersCache, fixRange);
@@ -475,14 +475,14 @@ public final class UpdateHighlightersUtil {
   private static int getLayer(@NotNull HighlightInfo info, @NotNull SeverityRegistrar severityRegistrar) {
     HighlightSeverity severity = info.getSeverity();
     int layer;
-    if (severity == HighlightSeverity.WARNING) {
+    if (severityRegistrar.compare(severity, HighlightSeverity.ERROR) >= 0) {
+      layer = HighlighterLayer.ERROR;
+    }
+    else if (severityRegistrar.compare(severity, HighlightSeverity.WARNING) >= 0) {
       layer = HighlighterLayer.WARNING;
     }
-    else if (severity == HighlightSeverity.WEAK_WARNING) {
+    else if (severityRegistrar.compare(severity, HighlightSeverity.WEAK_WARNING) >= 0) {
       layer = HighlighterLayer.WEAK_WARNING;
-    }
-    else if (severityRegistrar.compare(severity, HighlightSeverity.ERROR) >= 0) {
-      layer = HighlighterLayer.ERROR;
     }
     else if (severity == HighlightInfoType.INJECTED_FRAGMENT_SEVERITY || severity == HighlightInfoType.HIGHLIGHTED_REFERENCE_SEVERITY) {
       layer = HighlighterLayer.CARET_ROW - 1;
@@ -493,6 +493,9 @@ public final class UpdateHighlightersUtil {
     else if (severity == HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY) {
       layer = HighlighterLayer.ELEMENT_UNDER_CARET;
     }
+    else if (severityRegistrar.getAllSeverities().contains(severity) && !SeverityRegistrar.isDefaultSeverity(severity)) {
+      layer = HighlighterLayer.WARNING;
+    }
     else {
       layer = HighlighterLayer.ADDITIONAL_SYNTAX;
     }
@@ -500,7 +503,7 @@ public final class UpdateHighlightersUtil {
   }
 
   @NotNull
-  private static RangeMarker getOrCreate(@NotNull Document document, @NotNull Long2ObjectMap<RangeMarker> ranges2markersCache, TextRange textRange) {
+  private static RangeMarker getOrCreate(@NotNull Document document, @NotNull Long2ObjectMap<RangeMarker> ranges2markersCache, @NotNull TextRange textRange) {
     return ranges2markersCache.computeIfAbsent(textRange.toScalarRange(), __ -> document.createRangeMarker(textRange));
   }
 

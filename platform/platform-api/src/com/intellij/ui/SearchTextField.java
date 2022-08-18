@@ -143,7 +143,7 @@ public class SearchTextField extends JPanel {
     }
 
     myTextField.putClientProperty("JTextField.variant", "search");
-    myTextField.putClientProperty("JTextField.Search.Gap", JBUIScale.scale(6));
+    myTextField.putClientProperty("JTextField.Search.Gap", JBUIScale.scale(4));
     myTextField.putClientProperty("JTextField.Search.CancelAction", (ActionListener)e -> {
       myTextField.setText("");
       onFieldCleared();
@@ -444,6 +444,11 @@ public class SearchTextField extends JPanel {
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(e.getData(KEY) != null);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 }

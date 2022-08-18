@@ -3,8 +3,9 @@
   "$id": "http://jetbrains.org/intellij/schema/product.schema.json",
   "title": "IntelliJ-based IDE installation",
   "description": "Meta-information about installation of an IDE based on IntelliJ Platform",
-  "version": "0.1",
+  "version": "0.2",
   "type": "object",
+  "additionalProperties": false,
   "required": [
     "name", "version", "buildNumber", "productCode", "launch"
   ],
@@ -37,12 +38,17 @@
       "description": "Path to an SVG file which contains the product icon (relative to the parent directory of this file, '/' as a separator, may start with '../'), e.g. 'bin/idea.svg'",
       "type": "string"
     },
+    "productVendor": {
+      "description": "Short company name as used in config paths, e.g. ~/.config/JetBrains/...",
+      "type": "string"
+    },
     "launch": {
       "description": "Specifies how the IDE can be launched",
       "type": "array",
       "items": {
         "type": "object",
         "required": ["os", "launcherPath", "vmOptionsFilePath"],
+        "additionalProperties": false,
         "minItems": 1,
         "properties": {
           "os": {
@@ -65,6 +71,22 @@
           "startupWmClass": {
             "description": "Value of 'WMClass' property used by some Linux desktop distributions to associate windows with the owning application, e.g. 'jetbrains-idea'. May be specified only if 'os' is 'Linux'.",
             "type": "string"
+          },
+          "bootClassPathJarNames" : {
+            "description": "Names of JARs inside `IDE_HOME/lib` directory which need to be added to the JVM classpath to start the IDE",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minItems": 1
+            }
+          },
+          "additionalJvmArguments" : {
+            "description": "Additional arguments required for IDE to launch which are not supposed to be changed by a user, e.g. various --add-opens",
+            "type" : "array",
+            "items": {
+              "type": "string",
+              "minItems": 1
+            }
           }
         }
       }
@@ -75,6 +97,7 @@
       "items": {
         "type": "object",
         "required": ["key", "value"],
+        "additionalProperties": false,
         "minItems": 0,
         "properties": {
           "key": {
@@ -84,6 +107,27 @@
             "type": "string"
           }
         }
+      }
+    },
+    "bundledPlugins": {
+      "description": "Plugins bundled into this distribution",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "fileExtensions": {
+      "description": "File extensions reported to be handled by this distribution",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "modules": {
+      "description": "Product modules (non-removable bundled plugins) contained in this distribution, see https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#modules",
+      "type": "array",
+      "items": {
+        "type": "string"
       }
     }
   }

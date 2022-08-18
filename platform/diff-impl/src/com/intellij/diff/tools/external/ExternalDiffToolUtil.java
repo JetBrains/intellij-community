@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -42,9 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -323,7 +320,7 @@ public final class ExternalDiffToolUtil {
 
   @NotNull
   private static Process execute(@NotNull String exePath, @NotNull String parametersTemplate, @NotNull Map<String, String> patterns)
-    throws ExecutionException, IOException {
+    throws ExecutionException {
     List<String> parameters = ParametersListUtil.parse(parametersTemplate, true);
 
     List<String> from = new ArrayList<>();
@@ -342,14 +339,7 @@ public final class ExternalDiffToolUtil {
     GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.setExePath(exePath);
     commandLine.addParameters(args);
-
-    Process process = commandLine.createProcess();
-    String infoMessage = StreamUtil.readText(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8)); // NON-NLS
-    if (!infoMessage.isEmpty()) {
-      throw new ExecutionException(infoMessage);
-    }
-
-    return process;
+    return commandLine.createProcess();
   }
 
   //

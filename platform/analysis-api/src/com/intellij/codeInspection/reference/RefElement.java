@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.psi.PsiElement;
@@ -41,6 +41,12 @@ public interface RefElement extends RefEntity {
 
   SmartPsiElementPointer<?> getPointer();
 
+  default void buildReferences() {}
+
+  default boolean areReferencesBuilt() {
+    return false;
+  }
+
   /**
    * Checks if a chain of references exists from one of the entry points to this element.
    *
@@ -65,9 +71,9 @@ public interface RefElement extends RefEntity {
   }
 
   /**
-   * Blocks until this element has been initialized.
+   * Tries to initialize this element, if it wasn't initialized yet.
    */
-  default void waitForInitialized() {}
+  default void initializeIfNeeded() {}
 
   /**
    * Returns the collection of references from this element to other elements.

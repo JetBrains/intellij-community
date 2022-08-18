@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import java.util.Objects
 
 class BookmarkOccurrence internal constructor(
@@ -19,7 +20,10 @@ class BookmarkOccurrence internal constructor(
     var index = current
     if (index < 0) index = list.indexOfLast { it.group == group && it.bookmark == bookmark }
     while (true) {
-      val occurrence = list.getOrNull(++index) ?: return null
+      val occurrence = list.getOrNull(++index) ?: return when {
+        cyclic -> list.firstOrNull(predicate)
+        else -> null
+      }
       if (predicate(occurrence)) return occurrence
     }
   }
@@ -32,7 +36,10 @@ class BookmarkOccurrence internal constructor(
     if (index < 0) index = list.indexOfFirst { it.group == group && it.bookmark == bookmark }
     if (index < 0) index = list.size
     while (true) {
-      val occurrence = list.getOrNull(--index) ?: return null
+      val occurrence = list.getOrNull(--index) ?: return when {
+        cyclic -> list.lastOrNull(predicate)
+        else -> null
+      }
       if (predicate(occurrence)) return occurrence
     }
   }
@@ -44,6 +51,9 @@ class BookmarkOccurrence internal constructor(
 
   companion object {
     private fun manager(project: Project) = BookmarksManager.getInstance(project) as? BookmarksManagerImpl
+
+    val cyclic
+      get() = Registry.`is`("ide.bookmark.occurrence.cyclic.iteration.allowed", false)
 
     fun firstFileBookmark(project: Project) = first(project) { it.bookmark is FileBookmark }
     fun firstLineBookmark(project: Project) = first(project) { it.bookmark is LineBookmark }

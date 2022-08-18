@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -204,9 +204,16 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
         copyClassType(originalClass, queryClass, replacementClass);
         copyExtendsListIfNotReplaced(originalClass, queryClass, replacementClass);
         copyImplementsListIfNotReplaced(originalClass, queryClass, replacementClass);
-        copyTypeParameterListIfNotReplaced(originalClass, queryClass, replacementClass);
 
         copyUnmatchedMembers(originalClass, originalNamedElements, replacementClass);
+      }
+
+      if (originalNamedElement instanceof PsiTypeParameterListOwner &&
+          patternNamedElement instanceof PsiTypeParameterListOwner &&
+          replacementNamedElement instanceof PsiTypeParameterListOwner) {
+        copyTypeParameterListIfNotReplaced((PsiTypeParameterListOwner)originalNamedElement,
+                                           (PsiTypeParameterListOwner)patternNamedElement,
+                                           (PsiTypeParameterListOwner)replacementNamedElement);
       }
     }
   }
@@ -406,7 +413,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
   private PsiWhiteSpace whiteSpace(PsiElement element, @SuppressWarnings("SameParameterValue") String defaultWs) {
     return element instanceof PsiWhiteSpace
            ? (PsiWhiteSpace)element
-           : (PsiWhiteSpace)PsiParserFacade.SERVICE.getInstance(myProject).createWhiteSpaceFromText(defaultWs);
+           : (PsiWhiteSpace)PsiParserFacade.getInstance(myProject).createWhiteSpaceFromText(defaultWs);
   }
 
   private static boolean isCompatibleModifier(String modifier, PsiModifierList modifierList) {
@@ -529,7 +536,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
         if (replacement instanceof PsiTryStatement) {
           final PsiTryStatement tryStatement = (PsiTryStatement)replacement;
           final List<? extends PsiElement> unmatchedElements = elementToReplace.getUserData(GlobalMatchingVisitor.UNMATCHED_ELEMENTS_KEY);
-          if (unmatchedElements != null) {
+          if (unmatchedElements != null && !unmatchedElements.isEmpty()) {
             final PsiElement firstElement = unmatchedElements.get(0);
             if (firstElement instanceof PsiResourceList) addElementAfterAnchor(tryStatement, firstElement, tryStatement.getFirstChild());
             outer:
@@ -656,7 +663,9 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     }
   }
 
-  private static void copyTypeParameterListIfNotReplaced(PsiClass original, PsiClass query, PsiClass replacement) {
+  private static void copyTypeParameterListIfNotReplaced(PsiTypeParameterListOwner original,
+                                                         PsiTypeParameterListOwner query,
+                                                         PsiTypeParameterListOwner replacement) {
     final PsiTypeParameterList originalTypeParameterList = original.getTypeParameterList();
     final PsiTypeParameterList queryTypeParameterList = query.getTypeParameterList();
     final PsiTypeParameterList replacementTypeParameterList = replacement.getTypeParameterList();
@@ -666,7 +675,11 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     if (originalTypeParameterList.getTypeParameters().length != 0 &&
         queryTypeParameterList.getTypeParameters().length == 0 &&
         replacementTypeParameterList.getTypeParameters().length == 0) {
-      replacementTypeParameterList.replace(originalTypeParameterList);
+      final PsiElement newElement = replacementTypeParameterList.replace(originalTypeParameterList);
+      final PsiElement prev = originalTypeParameterList.getPrevSibling();
+      if (prev instanceof PsiWhiteSpace) {
+        newElement.getParent().addBefore(prev, newElement);
+      }
     }
   }
 
@@ -724,7 +737,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     final List<PsiJavaCodeReferenceElement> references = new SmartList<>();
     final JavaRecursiveElementVisitor collector = new JavaRecursiveElementVisitor() {
       @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         final int offset = reference.getTextOffset();
         if (offset > finalEndOffset) {
           return;
@@ -794,7 +807,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     private final HashMap<String, PsiElement> namedElements = new HashMap<>(1); // uses null keys
 
     @Override
-    public void visitClass(PsiClass aClass) {
+    public void visitClass(@NotNull PsiClass aClass) {
       if (aClass instanceof PsiAnonymousClass) {
         final PsiAnonymousClass anonymousClass = (PsiAnonymousClass)aClass;
         final String name = anonymousClass.getBaseClassReference().getReferenceName();
@@ -817,17 +830,17 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
     }
 
     @Override
-    public void visitVariable(PsiVariable var) {
+    public void visitVariable(@NotNull PsiVariable var) {
       handleNamedElement(var);
     }
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       handleNamedElement(method);
     }
 
     @Override
-    public void visitAnnotation(PsiAnnotation annotation) {
+    public void visitAnnotation(@NotNull PsiAnnotation annotation) {
       final PsiJavaCodeReferenceElement referenceElement = annotation.getNameReferenceElement();
       if (referenceElement != null) {
         final String name = referenceElement.getText();

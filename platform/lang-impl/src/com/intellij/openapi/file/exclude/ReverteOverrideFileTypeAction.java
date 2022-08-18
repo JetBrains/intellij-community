@@ -2,6 +2,7 @@
 package com.intellij.openapi.file.exclude;
 
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -19,6 +20,11 @@ class ReverteOverrideFileTypeAction extends DumbAwareAction {
                                 ? ActionsBundle.message("action.ReverteOverrideFileTypeAction.verbose.description", files[0].getName(), files.length - 1)
                                 : ActionsBundle.message("action.ReverteOverrideFileTypeAction.description"));
     presentation.setEnabledAndVisible(enabled);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

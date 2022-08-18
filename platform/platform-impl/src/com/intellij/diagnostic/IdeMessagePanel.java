@@ -1,19 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.icons.AllIcons;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationAction;
-import com.intellij.notification.NotificationType;
+import com.intellij.notification.*;
 import com.intellij.notification.impl.NotificationsManagerImpl;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
@@ -38,7 +37,8 @@ import java.util.concurrent.TimeUnit;
 public final class IdeMessagePanel extends NonOpaquePanel implements MessagePoolListener, IconLikeCustomStatusBarWidget {
   public static final String FATAL_ERROR = "FatalError";
 
-  private static final boolean NORMAL_MODE = !Boolean.getBoolean("fatal.error.icon.disable.blinking");
+  private static final boolean NOTIFICATIONS_ENABLED = Registry.intValue("ea.indicator.blinking.timeout", -1) < 0;
+  private static final String GROUP_ID = "IDE-errors";
 
   private final IdeErrorsIcon myIcon;
   private final IdeFrame myFrame;
@@ -51,7 +51,7 @@ public final class IdeMessagePanel extends NonOpaquePanel implements MessagePool
   public IdeMessagePanel(@Nullable IdeFrame frame, @NotNull MessagePool messagePool) {
     super(new BorderLayout());
 
-    myIcon = new IdeErrorsIcon(frame != null && NORMAL_MODE);
+    myIcon = new IdeErrorsIcon(frame != null);
     myIcon.setVerticalAlignment(SwingConstants.CENTER);
     add(myIcon, BorderLayout.CENTER);
     new ClickListener() {
@@ -71,8 +71,7 @@ public final class IdeMessagePanel extends NonOpaquePanel implements MessagePool
   }
 
   @Override
-  @NotNull
-  public String ID() {
+  public @NotNull String ID() {
     return FATAL_ERROR;
   }
 
@@ -176,7 +175,7 @@ public final class IdeMessagePanel extends NonOpaquePanel implements MessagePool
         Disposer.dispose(myBalloon);
       }
     }
-    else if (state == MessagePool.State.UnreadErrors && myBalloon == null && isActive(myFrame) && NORMAL_MODE) {
+    else if (state == MessagePool.State.UnreadErrors && myBalloon == null && isActive(myFrame) && NOTIFICATIONS_ENABLED) {
       Project project = myFrame.getProject();
       if (project != null) {
         ApplicationManager.getApplication().invokeLater(() -> showErrorNotification(project), project.getDisposed());
@@ -195,28 +194,28 @@ public final class IdeMessagePanel extends NonOpaquePanel implements MessagePool
   private void showErrorNotification(@NotNull Project project) {
     if (myBalloon != null) return;
 
-    String title = DiagnosticBundle.message("error.new.notification.title");
-    String linkText = DiagnosticBundle.message("error.new.notification.link");
-    //noinspection UnresolvedPluginConfigReference
-    Notification notification = new Notification("", title, NotificationType.ERROR)
-      .setIcon(AllIcons.Ide.FatalError)
-      .addAction(new NotificationAction(linkText) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-          notification.expire();
-          openErrorsDialog(null);
-        }
-      });
+    NotificationDisplayType displayType = NotificationsConfiguration.getNotificationsConfiguration().getDisplayType(GROUP_ID);
+    if (displayType == NotificationDisplayType.NONE) {
+      return;
+    }
 
     BalloonLayout layout = myFrame.getBalloonLayout();
-    assert layout != null : myFrame;
+    if (layout == null) {
+      Logger.getInstance(IdeMessagePanel.class).error("frame=" + myFrame + " (" + myFrame.getClass() + ')');
+      return;
+    }
+
+    Notification notification = new Notification(GROUP_ID, DiagnosticBundle.message("error.new.notification.title"), NotificationType.ERROR)
+      .setIcon(AllIcons.Ide.FatalError)
+      .addAction(NotificationAction.createSimpleExpiring(DiagnosticBundle.message("error.new.notification.link"), () -> openErrorsDialog(null)));
 
     BalloonLayoutData layoutData = BalloonLayoutData.createEmpty();
-    layoutData.fadeoutTime = 10000;
+    layoutData.fadeoutTime = displayType == NotificationDisplayType.STICKY_BALLOON ? 300000 : 10000;
     layoutData.textColor = JBUI.CurrentTheme.Notification.Error.FOREGROUND;
     layoutData.fillColor = JBUI.CurrentTheme.Notification.Error.BACKGROUND;
     layoutData.borderColor = JBUI.CurrentTheme.Notification.Error.BORDER_COLOR;
     layoutData.closeAll = () -> ((BalloonLayoutImpl)layout).closeAll();
+    layoutData.showSettingButton = true;
 
     myBalloon = NotificationsManagerImpl.createBalloon(myFrame, notification, false, false, new Ref<>(layoutData), project);
     Disposer.register(myBalloon, () -> myBalloon = null);

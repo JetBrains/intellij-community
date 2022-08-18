@@ -176,9 +176,6 @@ public final class InsertComponentProcessor extends EventProcessor {
   /**
    * Tries to create binding for {@link #myInsertedComponent}
    *
-   * @param editor
-   * @param insertedComponent
-   * @param forceBinding
    */
   public static void createBindingWhenDrop(final GuiEditor editor, final RadComponent insertedComponent, final boolean forceBinding) {
     final ComponentItem item = Palette.getInstance(editor.getProject()).getItem(insertedComponent.getComponentClassName());

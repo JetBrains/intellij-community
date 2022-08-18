@@ -18,7 +18,10 @@ public class ActionIsNotPreviewFriendlyInspectionTest extends LightJavaCodeInsig
     myFixture.addClass("package com.intellij.codeInspection; public interface ProblemDescriptor {}");
     myFixture.addClass("package com.intellij.codeInsight.intention.preview; public interface IntentionPreviewInfo {}");
     myFixture.addClass("package com.intellij.openapi.project; public interface Project {}");
-    myFixture.addClass("package com.intellij.codeInsight.intention;public interface FileModifier{@interface SafeFieldForPreview {}}");
+    myFixture.addClass("package com.intellij.codeInsight.intention;public interface FileModifier{\n" +
+                       "@interface SafeFieldForPreview {}\n" +
+                       "@interface SafeTypeForPreview {}\n" +
+                       "}");
     myFixture.addClass("package com.intellij.codeInspection;\n" +
                        "\n" +
                        "import com.intellij.codeInsight.intention.preview.*;\n" +
@@ -30,9 +33,19 @@ public class ActionIsNotPreviewFriendlyInspectionTest extends LightJavaCodeInsig
                        "    return null;\n" +
                        "  }\n" +
                        "}");
+    myFixture.addClass("package com.intellij.codeInsight.intention;\n" +
+                       "\n" +
+                       "import com.intellij.codeInsight.intention.*;\n" +
+                       "\n" +
+                       "public interface IntentionAction extends FileModifier {\n" +
+                       "}");
   }
 
   public void testMyQuickFix() {
+    myFixture.testHighlighting(getTestName(false) + ".java");
+  }
+
+  public void testMyIntentionAction() {
     myFixture.testHighlighting(getTestName(false) + ".java");
   }
 

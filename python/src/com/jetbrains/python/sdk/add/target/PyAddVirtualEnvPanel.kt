@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.UserDataHolder
@@ -71,7 +72,9 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
    */
   private var projectSync: ProjectSync? = null
 
-  private lateinit var isNewEnvironmentMode: () -> Boolean
+  private val contentPanel: DialogPanel
+
+  private lateinit var newEnvironmentModeSelected: ComponentPredicate
 
   override var newProjectPath: String? = null
     set(value) {
@@ -101,17 +104,16 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
                               FileChooserDescriptorFactory.createSingleFolderDescriptor())
     }
     baseInterpreterCombobox = PySdkPathChoosingComboBox(targetEnvironmentConfiguration = targetEnvironmentConfiguration)
-    val panel = panel {
-      lateinit var newEnvironmentModeSelected: ComponentPredicate
-
+    contentPanel = panel {
       if (allowAddNewVirtualenv && isMutableTarget) {
         isCreateNewVirtualenv = true
         buttonsGroup {
           row {
             label(PyBundle.message("sdk.create.venv.environment.label"))
             radioButton(PyBundle.message("sdk.create.venv.existing.option.label"), false)
-            val newEnvironmentRadioButton = radioButton(PyBundle.message("sdk.create.venv.new.option.label"), true)
-            newEnvironmentModeSelected = newEnvironmentRadioButton.selected
+            radioButton(PyBundle.message("sdk.create.venv.new.option.label"), true).apply {
+              newEnvironmentModeSelected = selected
+            }
           }
         }.bind(getter = { isCreateNewVirtualenv }, setter = { isCreateNewVirtualenv = it })
       }
@@ -132,13 +134,12 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
       row {
         checkBox(PyBundle.message("sdk.create.venv.dialog.label.inherit.global.site.packages"))
           .bindSelected(::isInheritSitePackages)
-      }
-        .visibleIf(newEnvironmentModeSelected)
+      }.visibleIf(newEnvironmentModeSelected)
 
       projectSync = projectSyncRows(project, targetEnvironmentConfiguration)
     }
 
-    add(panel, BorderLayout.NORTH)
+    add(contentPanel, BorderLayout.NORTH)
 
     if (targetEnvironmentConfiguration.isLocal()) {
       // asynchronously fill the combobox
@@ -165,19 +166,18 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
   }
 
   override fun validateAll(): List<ValidationInfo> =
-    if (isUnderLocalTarget) {
-      when (isCreateNewVirtualenv) {
-        true -> listOfNotNull(validateEnvironmentDirectoryLocation(locationField),
-                              validateSdkComboBox(baseInterpreterCombobox, this))
-        false -> listOfNotNull(validateSdkComboBox(interpreterCombobox, this))
-      }
+    when (newEnvironmentModeSelected()) {
+      true -> listOfNotNull(validateEnvironmentDirectoryLocation(locationField, pathInfoProvider),
+                            validateSdkComboBox(baseInterpreterCombobox, this))
+      false -> listOfNotNull(validateSdkComboBox(interpreterCombobox, this))
     }
-    else emptyList()
 
-  override fun getOrCreateSdk(): Sdk? =
-    getOrCreateSdk(targetEnvironmentConfiguration = null)
+  override fun getOrCreateSdk(): Sdk? = getOrCreateSdk(targetEnvironmentConfiguration = null)
 
   override fun getOrCreateSdk(targetEnvironmentConfiguration: TargetEnvironmentConfiguration?): Sdk? {
+    // applies components' states for bound properties (e.g. selected radio button to `isCreateNewVirtualenv` field)
+    contentPanel.apply()
+
     // TODO [targets] Refactor this workaround
     applyOptionalProjectSyncConfiguration(targetEnvironmentConfiguration)
 

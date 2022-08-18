@@ -313,7 +313,7 @@ open class TrackerModificationsTest(val tracker: LocalLineStatusTracker<*>) {
         for (i in innerRange.line1 until innerRange.line2) {
           val line = lines2[i]
           val searchSpace = lines1.subList(start, lines1.size)
-          val index = ContainerUtil.indexOf(searchSpace) { it -> StringUtil.equalsIgnoreWhitespaces(it, line) }
+          val index = ContainerUtil.indexOf(searchSpace) { StringUtil.equalsIgnoreWhitespaces(it, line) }
           TestCase.assertTrue(index != -1)
           start += index + 1
         }

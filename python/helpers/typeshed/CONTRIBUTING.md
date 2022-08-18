@@ -16,7 +16,7 @@ are important to the project's success.
     * Create your stubs, considering [what to include](#what-to-include) and
       conforming to the [coding style](#stub-file-coding-style).
 4. [Format and check your stubs](#formatting-stubs).
-5. Optionally [run the tests](#running-the-tests).
+5. Optionally [run the tests](tests/README.md).
 6. [Submit your changes](#submitting-changes) by opening a pull request.
 
 You can expect a reply within a few days, but please be patient when
@@ -176,6 +176,9 @@ supported:
   [removing obsolete third-party libraries](#third-party-library-removal-policy).
   It contains the first version of the corresponding library that ships
   its own `py.typed` file.
+* `stubtest` (default: `true`): Whether stubtest should be run against this
+  package. Please avoid setting this to `false`, and add a comment if you have
+  to.
 * `stubtest_apt_dependencies` (default: `[]`): A list of Ubuntu APT packages
   that need to be installed for stubtest to run successfully. These are
   usually packages needed to pip install the implementation distribution.
@@ -535,7 +538,7 @@ if it consisted of several smaller commits.
 Third-party packages are generally removed from typeshed when one of the
 following criteria is met:
 
-* The upstream package ships a `py.typed` file for at least 6-12 months, or
+* The upstream package ships a `py.typed` file for at least six months, or
 * the package does not support any of the Python versions supported by
   typeshed.
 

@@ -153,7 +153,7 @@ class JavaConstructorUCallExpression(
 
   override val classReference: UReferenceExpression? by lz {
     sourcePsi.classReference?.let { ref ->
-      JavaConverter.convertReference(ref, this) as? UReferenceExpression
+      JavaConverter.convertReference(ref, this, UElement::class.java) as? UReferenceExpression
     }
   }
 
@@ -267,7 +267,7 @@ class JavaAnnotationArrayInitializerUCallExpression(
 
   override val valueArguments: List<UExpression> by lz {
     sourcePsi.initializers.map {
-      JavaConverter.convertPsiElement(it, this) as? UExpression ?: UnknownJavaExpression(it, this)
+      JavaConverter.convertPsiElement(it, this, UElement::class.java) as? UExpression ?: UnknownJavaExpression(it, this)
     }
   }
 

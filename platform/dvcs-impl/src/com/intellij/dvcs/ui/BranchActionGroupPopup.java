@@ -2,9 +2,9 @@
 package com.intellij.dvcs.ui;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -44,7 +44,7 @@ import static com.intellij.icons.AllIcons.General.FitContent;
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 
 public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
-  private static final DataKey<ListPopupModel> POPUP_MODEL = DataKey.create("VcsPopupModel");
+  private static final Logger LOG = Logger.getInstance(BranchActionGroupPopup.class);
 
   private static final String EXPERIMENTAL_UI_DIMENSION_KEY_SUFFIX = ".ExperimentalUi";
 
@@ -68,10 +68,11 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
                                 @NotNull ActionGroup actions,
                                 @Nullable String dimensionKey,
                                 @NotNull DataContext dataContext) {
-    super(title, ActionGroupUtil.forceRecursiveUpdateInBackground(createBranchSpeedSearchActionGroup(actions)), dataContext, preselectActionCondition, true);
+    super(title,
+          ActionGroupUtil.forceRecursiveUpdateInBackground(createBranchSpeedSearchActionGroup(actions)),
+          dataContext, preselectActionCondition, true);
     getTitle().setBackground(JBColor.PanelBackground);
     myProject = project;
-    DataManager.registerDataProvider(getList(), dataId -> POPUP_MODEL.is(dataId) ? getListModel() : null);
     myKey = buildDimensionKey(dimensionKey);
     if (myKey != null) {
       setDimensionServiceKey(myKey);
@@ -89,7 +90,7 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   @Nullable
   private static String buildDimensionKey(@Nullable final String initialDimensionKey) {
     if (initialDimensionKey == null) return null;
-    return ExperimentalUI.isNewVcsBranchPopup() ? initialDimensionKey + EXPERIMENTAL_UI_DIMENSION_KEY_SUFFIX : initialDimensionKey;
+    return ExperimentalUI.isNewUI() ? initialDimensionKey + EXPERIMENTAL_UI_DIMENSION_KEY_SUFFIX : initialDimensionKey;
   }
 
   private void createTitlePanelToolbar(@NotNull String dimensionKey) {
@@ -101,29 +102,25 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     };
     AnAction restoreSizeButton =
       new AnAction(DvcsBundle.messagePointer("action.BranchActionGroupPopup.Anonymous.text.restore.size"), FitContent) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        WindowStateService.getInstance(myProject).putSizeFor(myProject, dimensionKey, null);
-        myInternalSizeChanged = true;
-        pack(true, true);
-      }
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e) {
+          WindowStateService.getInstance(myProject).putSizeFor(myProject, dimensionKey, null);
+          myInternalSizeChanged = true;
+          pack(true, true);
+        }
 
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setEnabled(myUserSizeChanged);
-      }
-    };
+        @Override
+        public void update(@NotNull AnActionEvent e) {
+          e.getPresentation().setEnabled(myUserSizeChanged);
+        }
+      };
     ActionGroup settingsGroup = new ActionGroup(DvcsBundle.message("action.BranchActionGroupPopup.settings.text"), true) {
       @Override
       public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
         return mySettingsActions.toArray(AnAction.EMPTY_ARRAY);
       }
-
-      @Override
-      public boolean hideIfNoVisibleChildren() {
-        return true;
-      }
     };
+    settingsGroup.getTemplatePresentation().setHideGroupIfEmpty(true);
     settingsGroup.getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
 
     myToolbarActions.add(restoreSizeButton);
@@ -147,7 +144,6 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     super(aParent, aStep, DataContext.EMPTY_CONTEXT, parentValue);
     // don't store children popup userSize;
     myKey = null;
-    DataManager.registerDataProvider(getList(), dataId -> POPUP_MODEL.is(dataId) ? getListModel() : null);
   }
 
   private void trackDimensions(@Nullable String dimensionKey) {
@@ -322,7 +318,6 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       mySpeedSearch.updatePattern(newFilter.trim());
       return;
     }
-    getList().setSelectedIndex(0);
     super.onSpeedSearchPatternChanged();
     ScrollingUtil.ensureSelectionExists(getList());
   }
@@ -375,7 +370,7 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       }
       super.customizeComponent(list, value, isSelected);
       if (mySeparatorComponent.isVisible()) {
-        boolean hideLineAboveCaption = !ExperimentalUI.isNewVcsBranchPopup() && StringUtil.isNotEmpty(mySeparatorComponent.getCaption());
+        boolean hideLineAboveCaption = !ExperimentalUI.isNewUI() && StringUtil.isNotEmpty(mySeparatorComponent.getCaption());
         ((GroupHeaderSeparator)mySeparatorComponent).setHideLine(myCurrentIndex == 0 || hideLineAboveCaption);
       }
 
@@ -451,20 +446,27 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       myToExpandText = DvcsBundle.message("action.branch.popup.show.n.nodes.more", numberOfHiddenNodes);
       myToCollapseText = hasFavorites ? DvcsBundle.message("action.branch.popup.show.only.favorites")
                                       : DvcsBundle.message("action.branch.popup.show.less");
-      setExpanded(
-        settingName != null ? PropertiesComponent.getInstance(project).getBoolean(settingName, defaultExpandValue) : defaultExpandValue);
+      setExpanded(settingName != null ? PropertiesComponent.getInstance(project).getBoolean(settingName, defaultExpandValue)
+                                      : defaultExpandValue);
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       setExpanded(!myIsExpanded);
       InputEvent event = e.getInputEvent();
-      if (event != null && event.getSource() instanceof JComponent) {
-        DataProvider dataProvider = DataManager.getDataProvider((JComponent)event.getSource());
-        if (dataProvider != null) {
-          Objects.requireNonNull(POPUP_MODEL.getData(dataProvider)).refilter();
+      if (event == null) {
+        return; // Enter - 'KeepingPopupOpenAction' logic should refilter the list
+      }
+
+      Object source = event.getSource();
+      if (source instanceof JList) {
+        ListModel<?> model = ((JList<?>)source).getModel();
+        if (model instanceof ListPopupModel) {
+          ((ListPopupModel<?>)model).refilter();
+          return;
         }
       }
+      LOG.warn("Can't' refilter popup after 'More branches' toggle, event: " + event);
     }
 
     public boolean isExpanded() {
@@ -478,6 +480,7 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     }
 
     private void updateActionText() {
+      // Triggers listener in com.intellij.ui.popup.PopupFactoryImpl.ActionItem.ActionItem
       getTemplatePresentation().setText(myIsExpanded ? myToCollapseText : myToExpandText);
     }
 
@@ -492,7 +495,9 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     boolean shouldBeShown();
   }
 
-  private static final class HideableActionGroup extends EmptyAction.MyDelegatingActionGroup implements MoreHideableActionGroup, DumbAware, AlwaysVisibleActionGroup {
+  private static final class HideableActionGroup extends ActionGroupWrapper implements MoreHideableActionGroup,
+                                                                                       DumbAware,
+                                                                                       AlwaysVisibleActionGroup {
     @NotNull private final MoreAction myMoreAction;
 
     private HideableActionGroup(@NotNull ActionGroup actionGroup, @NotNull MoreAction moreAction) {

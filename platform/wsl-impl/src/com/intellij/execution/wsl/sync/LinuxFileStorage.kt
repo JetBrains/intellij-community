@@ -14,48 +14,57 @@ import kotlin.io.path.writeText
 
 private val LOGGER = Logger.getInstance(LinuxFileStorage::class.java)
 
-internal class LinuxFileStorage(dir: LinuxFilePath, distro: AbstractWslDistribution, onlyExtensions: Array<String>)
+
+class LinuxFileStorage(dir: LinuxFilePath, distro: AbstractWslDistribution, onlyExtensions: Array<String>)
   : FileStorage<LinuxFilePath, WindowsFilePath>(dir.trimEnd('/') + '/', distro, onlyExtensions) {
 
+  // Linux side only works with UTF of 7-bit ASCII which is also supported by UTF and WSL doesn't support other charsets
 
-  override fun getHashes(): List<WslHashRecord> {
-    val result = ArrayList<WslHashRecord>(AVG_NUM_FILES)
+  private val CHARSET = Charsets.UTF_8
+  private val FILE_SEPARATOR = CHARSET.encode(":").get()
+  private val LINK_SEPARATOR = CHARSET.encode(";").get()
+
+  override fun createSymLinks(links: Map<FilePathRelativeToDir, FilePathRelativeToDir>) {
+    val script = createTmpWinFile(distro)
+    script.first.writeText(links
+                             .map { it.key.escapedWithDir to it.value.escapedWithDir }
+                             .joinToString("\n")
+                             // No need to create link if parent dir doesn't exist
+                             { "[ -e $(dirname ${it.first}) ] && ln -s ${it.second} ${it.first}" })
+    distro.runCommand("sh", script.second, ignoreExitCode = true)
+    script.first.delete()
+  }
+
+  override fun getHashesAndLinks(skipHashCalculation: Boolean): Pair<List<WslHashRecord>, Map<FilePathRelativeToDir, FilePathRelativeToDir>> {
+    val hashes = ArrayList<WslHashRecord>(AVG_NUM_FILES)
+    val links = HashMap<FilePathRelativeToDir, FilePathRelativeToDir>(AVG_NUM_FILES)
     val time = TimeoutUtil.measureExecutionTime<Throwable> {
-      val tool = distro.getTool("wslhash", dir, *onlyExtensions)
+      val tool = distro.getTool("wslhash", dir, if (skipHashCalculation) "no_hash" else "hash", *onlyExtensions)
       val process = tool.createProcess()
       process.inputStream.use {
-        result += getHashesInternal(it)
+        val hashesAndLinks = getHashesInternal(it)
+        hashes += hashesAndLinks.first
+        links += hashesAndLinks.second
       }
       waitProcess(process, tool.commandLineString)
     }
     LOGGER.info("Linux files calculated in $time")
-    return result
+    return Pair(hashes, links)
   }
 
-
-  override fun getAllFilesInDir(): Collection<FilePathRelativeToDir> {
-    val extCommands = ArrayList<String>(onlyExtensions.size)
-    for (ext in onlyExtensions) {
-      extCommands += listOf("-name", "*.$ext", "-or")
-    }
-    extCommands.removeLastOrNull()
-    // See find(1)
-    return distro.runCommand("find", dir, "-xdev", "-type", "f", *(extCommands.toTypedArray()))
-      .splitToSequence('\n')
-      .filterNot { it.isBlank() }
-      .map { it.substring(dir.length) }
-      .toList()
-  }
 
   override fun createTempFile(): String = distro.runCommand("mktemp", "-u")
 
+  override fun removeLinks(vararg linksToRemove: FilePathRelativeToDir) {
+    this.removeFiles(linksToRemove.asList())
+  }
+
   override fun isEmpty(): Boolean {
     val options = WSLCommandLineOptions().apply {
-      val escapedDir = GeneralCommandLine(dir).commandLineString
-      addInitCommand("[ -e $escapedDir ]")
+      addInitCommand("[ -e ${escapePath(dir)} ]")
     }
     val process = distro.patchCommandLine(GeneralCommandLine("ls", "-A", dir), null, options).createProcess()
-    if (!process.waitFor(5, TimeUnit.SECONDS)) throw Exception("Process didn't finished: WSL frozen?")
+    if (!process.waitFor(5, TimeUnit.SECONDS)) throw Exception("Process didn't finish: WSL frozen?")
     if (process.exitValue() == 0) {
       // Folder exists, lets check if empty
       return process.inputStream.read() == -1
@@ -70,16 +79,7 @@ internal class LinuxFileStorage(dir: LinuxFilePath, distro: AbstractWslDistribut
 
   override fun removeFiles(filesToRemove: Collection<FilePathRelativeToDir>) {
     LOGGER.info("Removing files")
-    if (filesToRemove.size < 3) {
-      for (file in filesToRemove) {
-        distro.runCommand("rm", "$dir/$file")
-      }
-      return
-    }
-    val script = createTmpWinFile(distro)
-    script.first.writeText(filesToRemove.joinToString("\n") { GeneralCommandLine("rm", "$dir/$it").commandLineString })
-    distro.runCommand("sh", script.second)
-    script.first.delete()
+    runCommands(*filesToRemove.map { arrayOf("rm", it.escapedWithDir) }.toTypedArray())
   }
 
   override fun removeTempFile(file: LinuxFilePath) {
@@ -110,30 +110,62 @@ internal class LinuxFileStorage(dir: LinuxFilePath, distro: AbstractWslDistribut
   /**
    * Read `wslhash` stdout and return map of [file->hash]
    */
-  private fun getHashesInternal(toolStdout: InputStream): List<WslHashRecord> {
-    val result = ArrayList<WslHashRecord>(AVG_NUM_FILES)
+  private fun getHashesInternal(toolStdout: InputStream): Pair<List<WslHashRecord>, Map<FilePathRelativeToDir, FilePathRelativeToDir>> {
+    val hashes = ArrayList<WslHashRecord>(AVG_NUM_FILES)
+    val links = HashMap<FilePathRelativeToDir, FilePathRelativeToDir>(AVG_NUM_FILES)
     val fileOutput = ByteBuffer.wrap(toolStdout.readAllBytes()).order(ByteOrder.LITTLE_ENDIAN)
-    // Linux side only works with UTF of 7-bit ASCII which is also supported by UTF and WSL doesn't support other charsets
-    val charset = Charsets.UTF_8
+
     // See wslhash.c: format is the following: [file_path]:[hash].
     // Hash is little-endian 8 byte (64 bit) integer
-    val separator = charset.encode(":").get()
+    // or [file_path];[link_len][link] where link_len is 4 byte signed int
+
     var fileStarted = 0
-    val limit = fileOutput.limit()
-    while (fileOutput.position() < limit) {
-      val byte = fileOutput.get()
-      if (byte == separator) {
-        val hash = fileOutput.long
-        val prevPos = fileOutput.position()
-        // 9 = 8 bytes long + separator
-        val message = charset.decode(fileOutput.limit(prevPos - 9).position(fileStarted))
-        fileOutput.limit(limit).position(prevPos)
-        val name = message.toString()
-        result += WslHashRecord(name, hash)
-        fileStarted = prevPos
+    val outputLimit = fileOutput.limit()
+    while (fileOutput.position() < outputLimit) {
+      when (fileOutput.get()) {
+        FILE_SEPARATOR -> {
+          val hash = fileOutput.long
+          val prevPos = fileOutput.position()
+          // 9 = 8 bytes long + separator
+          val name = CHARSET.decode(fileOutput.limit(prevPos - 9).position(fileStarted)).toString()
+          fileOutput.limit(outputLimit).position(prevPos)
+          hashes += WslHashRecord(FilePathRelativeToDir(name), hash)
+          fileStarted = prevPos
+        }
+        LINK_SEPARATOR -> {
+          val length = fileOutput.int
+          val prevPos = fileOutput.position()
+          //  5 = 4 bytes int + separator
+          val file = CHARSET.decode(fileOutput.limit(prevPos - 5).position(fileStarted)).toString()
+          val link = CHARSET.decode(fileOutput.limit(prevPos + length).position(prevPos)).toString()
+          fileOutput.limit(outputLimit).position(prevPos + length)
+          if (link.startsWith(dir)) {
+            links[FilePathRelativeToDir((file))] = FilePathRelativeToDir(link.substring(dir.length))
+          }
+          fileStarted = prevPos + length
+        }
       }
     }
-    return result
+    return Pair(hashes, links)
+  }
+
+  private val FilePathRelativeToDir.escapedWithDir: String get() = escapePath(dir + asUnixPath)
+
+  private fun escapePath(path: LinuxFilePath) = GeneralCommandLine(path).commandLineString
+
+  // it is cheaper to run 1-2 commands directly, but long list of command should run as script
+  private fun runCommands(vararg commands: Array<String>) {
+    if (commands.count() < 3) {
+      for (command in commands) {
+        distro.runCommand(*command)
+      }
+    }
+    else {
+      val script = createTmpWinFile(distro)
+      script.first.writeText(commands.joinToString("\n") { it.joinToString(" ") })
+      distro.runCommand("sh", script.second)
+      script.first.delete()
+    }
   }
 }
 

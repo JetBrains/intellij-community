@@ -4,8 +4,7 @@ class C {
         int s = 0;
         for (int i = 0; i < n; i++) {
             switch (i % 4) {
-                case 1:
-                case 3:
+                case 1, 3:
                     s += i;
                     continue;
                 case 2:

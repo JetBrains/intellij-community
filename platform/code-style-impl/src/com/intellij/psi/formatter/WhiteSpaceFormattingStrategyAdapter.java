@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class WhiteSpaceFormattingStrategyAdapter implements WhiteSpaceFormattingStrategy {
   
-  private final WhiteSpaceFormattingStrategy DELEGATE = new StaticSymbolWhiteSpaceDefinitionStrategy(' ', '\t', '\n');
+  private final WhiteSpaceFormattingStrategy DELEGATE = WhiteSpaceFormattingStrategyFactory.DEFAULT_STRATEGY;
   
   @Override
   public int check(@NotNull CharSequence text, int start, int end) {

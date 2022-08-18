@@ -1,4 +1,4 @@
-// "Simplify 'pureConsumer(...)' to true extracting side effects" "true"
+// "Simplify 'pureConsumer(...)' to true extracting side effects" "true-preview"
 import org.jetbrains.annotations.Contract;
 
 public class Main {

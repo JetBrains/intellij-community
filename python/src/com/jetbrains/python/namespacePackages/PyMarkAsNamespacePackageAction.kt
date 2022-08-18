@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.namespacePackages
 
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.*
 import com.intellij.util.PlatformIcons
 import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PyBundle
@@ -12,6 +9,10 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher
 
 class PyMarkAsNamespacePackageAction : AnAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   override fun update(e: AnActionEvent) {
     val presentation = e.presentation
     presentation.isEnabled = false

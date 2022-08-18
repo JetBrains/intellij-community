@@ -103,7 +103,6 @@ public final class ThisDescriptor extends PsiVarDescriptor {
 
   /**
    * Creates a variable representing "this" value with given class as a context
-   * @param factory
    * @param aClass a class to bind "this" value to
    * @return a DFA variable
    */

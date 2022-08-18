@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic.dump.paths.resolvers
 
 import com.intellij.openapi.project.Project
@@ -21,7 +22,7 @@ object ArchiveRootPortableFilePathResolver : PortableFilePathResolver {
       val archiveLocalFile = PortableFilePaths.findFileByPath(portableFilePath.archiveLocalPath, project) ?: return null
       return archiveFileSystems.asSequence()
                .mapNotNull { it.getRootByLocal(archiveLocalFile) }
-               .firstOrNull() ?: return null
+               .firstOrNull()
     }
     return null
   }

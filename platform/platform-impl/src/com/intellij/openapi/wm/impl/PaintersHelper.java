@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -508,7 +508,8 @@ final class PaintersHelper implements Painter.Listener {
             flipFilter == null ? Collections.emptyList() : Collections.singletonList(flipFilter),
             ImageLoader.ALLOW_FLOAT_SCALING, ScaleContext.create(),
             true,
-            !isSvg, 1,
+            !isSvg,
+            1,
             isSvg);
         }
         catch (Exception e) {

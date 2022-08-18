@@ -6,7 +6,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPreselectionUtil
 import com.intellij.codeInsight.navigation.NavigationUtil
 import com.intellij.ide.util.PsiClassListCellRenderer
-import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
@@ -28,6 +28,7 @@ import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.extractMethod.newImpl.structures.InputParameter
 import com.intellij.refactoring.util.RefactoringUtil
 import com.intellij.refactoring.util.VariableData
+import java.util.concurrent.CompletableFuture
 
 object ExtractMethodPipeline {
 
@@ -137,40 +138,43 @@ object ExtractMethodPipeline {
     return extractOptions.copy(isStatic = shouldBeStatic)
   }
 
-  fun findTargetCandidates(analyzer: CodeFragmentAnalyzer, options: ExtractOptions): List<PsiClass> {
-    return generateSequence (options.anchor as PsiElement) { it.parent }
-      .takeWhile { it !is PsiFile }
-      .filterIsInstance<PsiClass>()
-      .filter { targetClass -> withTargetClass(analyzer, options, targetClass) != null }
-      .toList()
-  }
-
   fun findDefaultTargetCandidate(candidates: List<PsiClass>): PsiClass {
     return AnonymousTargetClassPreselectionUtil.getPreselection(candidates, candidates.first()) ?: candidates.first()
   }
 
-  fun selectTargetClass(options: ExtractOptions, onSelect: (ExtractOptions) -> Unit): ExtractOptions {
-    val analyzer = CodeFragmentAnalyzer(options.elements)
-    val targetCandidates = findTargetCandidates(analyzer, options)
-    val preselection = findDefaultTargetCandidate(targetCandidates)
+  fun findAllOptionsToExtract(elements: List<PsiElement>): List<ExtractOptions> {
+    val extractOptions = findExtractOptions(elements)
+    val analyzer = CodeFragmentAnalyzer(extractOptions.elements)
+    return generateSequence (extractOptions.anchor as PsiElement) { it.parent }
+      .takeWhile { it !is PsiFile }
+      .filterIsInstance<PsiClass>()
+      .mapNotNull { targetClass -> withTargetClass(analyzer, extractOptions, targetClass) }
+      .toList()
+  }
 
-    val editor = FileEditorManager.getInstance(options.project).selectedTextEditor ?: return options
+  fun selectOptionWithTargetClass(editor: Editor, options: List<ExtractOptions>): CompletableFuture<ExtractOptions> {
+    require(options.isNotEmpty())
+    if (options.size == 1) {
+      return CompletableFuture.completedFuture(options.first())
+    }
 
+    fun bindClassWithOption(option: ExtractOptions): Pair<PsiClass, ExtractOptions>? {
+      return option.anchor.containingClass?.let { psiClass -> Pair(psiClass, option) }
+    }
+    val classToOptionMap: Map<PsiClass, ExtractOptions> = options.mapNotNull(::bindClassWithOption).toMap()
+    val selectedOption: CompletableFuture<ExtractOptions> = CompletableFuture()
     val processor = PsiElementProcessor<PsiClass> { selected ->
-      val mappedOptions = withTargetClass(analyzer, options, selected)!!
-      onSelect(mappedOptions)
+      selectedOption.complete(classToOptionMap[selected])
       true
     }
 
-    if (targetCandidates.size > 1) {
-      NavigationUtil.getPsiElementPopup(targetCandidates.toTypedArray(), PsiClassListCellRenderer(),
-                                        RefactoringBundle.message("choose.destination.class"), processor, preselection)
-        .showInBestPositionFor(editor)
-    } else {
-      processor.execute(preselection)
-    }
+    val preselection = findDefaultTargetCandidate(classToOptionMap.keys.toList())
+    NavigationUtil
+      .getPsiElementPopup(classToOptionMap.keys.toTypedArray(), PsiClassListCellRenderer(),
+                          RefactoringBundle.message("choose.destination.class"), processor, preselection)
+      .showInBestPositionFor(editor)
 
-    return options
+    return selectedOption
   }
 
   private fun findReferencedVariable(expression: PsiExpression?): PsiVariable? {

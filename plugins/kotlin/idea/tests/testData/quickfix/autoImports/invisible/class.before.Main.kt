@@ -6,3 +6,4 @@ package my.pack
 fun main() {
     val f: F<caret>
 }
+/* IGNORE_FIR */

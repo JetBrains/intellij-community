@@ -7,8 +7,8 @@ import java.io.OutputStream
 interface EntityStorageSerializer {
   val serializerDataFormatVersion: String
 
-  fun serializeCache(stream: OutputStream, storage: WorkspaceEntityStorage): SerializationResult
-  fun deserializeCache(stream: InputStream): WorkspaceEntityStorageBuilder?
+  fun serializeCache(stream: OutputStream, storage: EntityStorageSnapshot): SerializationResult
+  fun deserializeCache(stream: InputStream): Result<MutableEntityStorage?>
 }
 
 interface EntityTypesResolver {
@@ -19,4 +19,26 @@ interface EntityTypesResolver {
 sealed class SerializationResult {
   object Success : SerializationResult()
   class Fail<T>(val info: T) : SerializationResult()
+}
+
+sealed interface EntityInformation {
+  interface Serializer : EntityInformation {
+    fun saveInt(i: Int)
+    fun saveString(s: String)
+    fun saveBoolean(b: Boolean)
+    fun saveBlob(b: Any, javaSimpleName: String)
+    fun saveNull()
+  }
+
+  interface Deserializer : EntityInformation {
+    fun readBoolean(): Boolean
+    fun readString(): String
+    fun readInt(): Int
+    fun acceptNull(): Boolean
+  }
+}
+
+interface SerializableEntityData {
+  fun serialize(ser: EntityInformation.Serializer)
+  fun deserialize(de: EntityInformation.Deserializer)
 }

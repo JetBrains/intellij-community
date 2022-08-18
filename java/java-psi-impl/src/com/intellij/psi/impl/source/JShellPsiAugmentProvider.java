@@ -35,7 +35,7 @@ public class JShellPsiAugmentProvider extends PsiAugmentProvider{
   }
 
   private static boolean isInsideJShellField(PsiElement element) {
-    final PsiElement parent = element.getParent();
+    PsiElement parent = element.getParent();
     return parent instanceof PsiField && parent.getParent() instanceof PsiJShellRootClass;
   }
 }

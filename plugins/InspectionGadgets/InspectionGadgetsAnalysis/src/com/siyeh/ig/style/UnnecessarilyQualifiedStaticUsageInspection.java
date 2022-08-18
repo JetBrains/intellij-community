@@ -17,7 +17,6 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -102,7 +101,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspection 
   private class UnnecessarilyQualifiedStaticUsageVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+    public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
       final PsiElement qualifier = reference.getQualifier();
       if (qualifier == null) {
@@ -111,11 +110,11 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspection 
       if (!isUnnecessarilyQualifiedAccess(reference, m_ignoreStaticAccessFromStaticContext, m_ignoreStaticFieldAccesses, m_ignoreStaticMethodCalls)) {
         return;
       }
-      registerError(qualifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL, reference);
+      registerError(qualifier, reference);
     }
 
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
       visitReferenceElement(expression);
     }
   }

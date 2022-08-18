@@ -51,6 +51,12 @@ public abstract class FindManager {
   public abstract void showFindDialog(@NotNull FindModel model, @NotNull Runnable okHandler);
 
   /**
+   * Closes the last Find, Replace or Find Usages dialog.
+   * If no dialog is open, does nothing.
+   */
+  public abstract void closeFindDialog();
+
+  /**
    * Shows a replace prompt dialog for the specified replace operation.
    *
    * @param model the model containing the settings of the replace operation.

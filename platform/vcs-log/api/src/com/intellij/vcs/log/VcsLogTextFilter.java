@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -26,9 +26,9 @@ public interface VcsLogTextFilter extends VcsLogDetailsFilter {
   boolean isRegex();
 
   /**
-   * Check whether the filter should be case sensitive.
+   * Check whether the filter should be case-sensitive.
    *
-   * @return true if case sensitive, false otherwise.
+   * @return true if case-sensitive, false otherwise.
    */
   boolean matchesCase();
 

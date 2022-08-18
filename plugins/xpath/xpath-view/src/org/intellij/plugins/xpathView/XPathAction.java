@@ -24,7 +24,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class XPathAction extends AnAction implements UpdateInBackground {
+public abstract class XPathAction extends AnAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   @Override
   public void update(@NotNull AnActionEvent event) {
     final Presentation presentation = event.getPresentation();

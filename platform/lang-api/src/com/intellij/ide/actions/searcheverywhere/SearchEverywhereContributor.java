@@ -74,10 +74,7 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Di
    * <p>Defines if separate tab should be shown for this contributor in <i>Search Everywhere</i> dialog.</p>
    * <p>Please do not override this method unless absolutely necessary. Too many separate tabs make the <i>Search Everywhere</i>
    * dialog unusable.</p>
-   *
-   * @deprecated method is not used since 2022.1
    */
-  @Deprecated(since = "2022.1")
   default boolean isShownInSeparateTab() {
     return false;
   }
@@ -213,6 +210,14 @@ public interface SearchEverywhereContributor<Item> extends PossiblyDumbAware, Di
    */
   @Nullable
   Object getDataForItem(@NotNull Item element, @NotNull String dataId);
+
+  /**
+   * String description for elements in suggestions list. One should check passed element explicitly for it's validity.
+   */
+  @Nullable
+  default String getItemDescription(@NotNull Item element) {
+    return null;
+  }
 
   /**
    * Filter out special symbols from pattern before search.

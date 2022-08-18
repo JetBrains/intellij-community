@@ -2,7 +2,6 @@
 package org.intellij.plugins.markdown.editor.tables.intentions
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
-import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -27,9 +26,7 @@ internal class MarkdownRemoveRowIntention: PsiElementBaseIntentionAction() {
 
   override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
     val row = findContentNonHeaderRow(element) ?: return
-    executeCommand(project) {
-      row.delete()
-    }
+    row.delete()
   }
 
   private fun findContentNonHeaderRow(element: PsiElement): PsiElement? {

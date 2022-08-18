@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
@@ -36,7 +36,7 @@ public class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLocalIns
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         if (FILES_WRITE.test(call)) {
           PsiMethodCallExpression bytesExpression = tryCast(ExpressionUtils.resolveExpression(call.getArgumentList().getExpressions()[1]), PsiMethodCallExpression.class);
           if (STRING_GET_BYTES.test(bytesExpression) && bytesExpression.getMethodExpression().getQualifierExpression() != null) {
@@ -49,7 +49,12 @@ public class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLocalIns
               highlight = ProblemHighlightType.INFORMATION;
               if (!isOnTheFly) return;
             }
-            holder.registerProblem(call, message, highlight, new ReplaceWithWriteStringFix(highlight == ProblemHighlightType.INFORMATION));
+            PsiReferenceExpression methodExpression = call.getMethodExpression();
+            PsiElement referenceNameElement = methodExpression.getReferenceNameElement();
+            if (referenceNameElement != null) {
+              holder.registerProblem(referenceNameElement, message, highlight,
+                                     new ReplaceWithWriteStringFix(highlight == ProblemHighlightType.INFORMATION));
+            }
           }
         } else if (FILES_READ_ALL_BYTES.test(call)) {
           PsiExpressionList expressionList = tryCast(PsiUtil.skipParenthesizedExprUp(call.getParent()), PsiExpressionList.class);
@@ -60,8 +65,11 @@ public class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLocalIns
               PsiExpression[] args = expressionList.getExpressions();
               if (args.length == 2 && PsiTreeUtil.isAncestor(args[0], call, false) &&
                   TypeUtils.typeEquals("java.nio.charset.Charset", args[1].getType())) {
-                holder.registerProblem(newExpression, JavaBundle.message("inspection.message.can.be.replaced.with.files.readstring"),
-                                       new ReplaceWithReadStringFix());
+                final PsiJavaCodeReferenceElement classReference = newExpression.getClassOrAnonymousClassReference();
+                if (classReference != null) {
+                  holder.registerProblem(classReference, JavaBundle.message("inspection.message.can.be.replaced.with.files.readstring"),
+                                         new ReplaceWithReadStringFix());
+                }
               }
             }
           }
@@ -81,7 +89,7 @@ public class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLocalIns
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiNewExpression newExpression = tryCast(descriptor.getStartElement(), PsiNewExpression.class);
+      PsiNewExpression newExpression = tryCast(descriptor.getStartElement().getParent(), PsiNewExpression.class);
       if (newExpression == null) return;
       PsiExpressionList newArgList = newExpression.getArgumentList();
       if (newArgList == null) return;
@@ -123,7 +131,7 @@ public class ReadWriteStringCanBeUsedInspection extends AbstractBaseJavaLocalIns
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression writeCall = tryCast(descriptor.getStartElement(), PsiMethodCallExpression.class);
+      PsiMethodCallExpression writeCall = tryCast(descriptor.getStartElement().getParent().getParent(), PsiMethodCallExpression.class);
       if (!FILES_WRITE.test(writeCall)) return;
       PsiExpressionList argumentList = writeCall.getArgumentList();
       PsiExpression[] args = argumentList.getExpressions();

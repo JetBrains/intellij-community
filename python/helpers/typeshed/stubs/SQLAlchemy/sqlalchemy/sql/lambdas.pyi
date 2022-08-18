@@ -94,7 +94,7 @@ class AnalyzedFunction:
     closure_bindparams: Any
     def __init__(self, analyzed_code, lambda_element, apply_propagate_attrs, fn) -> None: ...
 
-class PyWrapper(ColumnOperators):
+class PyWrapper(ColumnOperators[Any]):
     fn: Any
     track_bound_values: Any
     def __init__(

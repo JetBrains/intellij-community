@@ -1,8 +1,8 @@
 <html>
 <body>
-Reports lambda expressions which can be replaced with a JDK method call.
-<p>For example, the expression <code>x -&gt; x</code> of the <code>Function&lt;T, T&gt;</code> type
-  can be replaced with the <code>Function.identity()</code> call.</p>
+Reports lambda expressions which can be replaced with a call to a JDK method.
+<p>For example, an expression <code>x -&gt; x</code> of type <code>Function&lt;T, T&gt;</code>
+  can be replaced with a <code>Function.identity()</code> call.</p>
 <!-- tooltip end -->
 <p><small>New in 2017.1</small></p>
 </body>

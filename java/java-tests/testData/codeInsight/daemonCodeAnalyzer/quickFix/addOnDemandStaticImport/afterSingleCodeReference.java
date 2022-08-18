@@ -1,4 +1,4 @@
-// "Add import for 'test.Bar.Foo'" "true"
+// "Add import for 'test.Bar.Foo'" "true-preview"
 package test;
 
 import test.Bar.Foo;

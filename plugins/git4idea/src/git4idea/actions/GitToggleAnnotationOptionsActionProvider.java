@@ -1,10 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -31,17 +28,24 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     return new MyGroup(annotation);
   }
 
-  private static void resetAllAnnotations(@NotNull Project project) {
-    ProjectLevelVcsManager.getInstance(project).getVcsHistoryCache().clearAnnotations();
+  public static void resetAllAnnotations(@NotNull Project project, boolean clearCaches) {
+    if (clearCaches) {
+      ProjectLevelVcsManager.getInstance(project).getVcsHistoryCache().clearAnnotations();
+    }
     ProjectLevelVcsManager.getInstance(project).getAnnotationLocalChangesListener().reloadAnnotationsForVcs(GitVcs.getKey());
   }
 
-  private static class MyGroup extends ActionGroup {
+  private static class MyGroup extends ActionGroup implements ActionUpdateThreadAware.Recursive {
     private final FileAnnotation myAnnotation;
 
     MyGroup(@NotNull FileAnnotation annotation) {
       super(GitBundle.message("annotations.options.group"), true);
       myAnnotation = annotation;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -62,7 +66,7 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     private final VcsLogApplicationSettings mySettings = ApplicationManager.getApplication().getService(VcsLogApplicationSettings.class);
 
     private ToggleCommitDate() {
-      super(VcsBundle.messagePointer("prefer.commit.timestamp.action.text"),
+      super(VcsBundle.messagePointer("prefer.commit.timestamp.action.text.show"),
             VcsBundle.messagePointer("prefer.commit.timestamp.action.description"), null);
     }
 
@@ -76,6 +80,11 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
       if (mySettings != null) {
         mySettings.set(CommonUiProperties.PREFER_COMMIT_DATE, state);
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 
@@ -95,7 +104,7 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean enabled) {
       SETTINGS.setIgnoreWhitespaces(enabled);
-      resetAllAnnotations(myProject);
+      resetAllAnnotations(myProject, true);
     }
   }
 
@@ -121,7 +130,7 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
       else {
         SETTINGS.setAnnotateDetectMovementsOption(AnnotateDetectMovementsOption.NONE);
       }
-      resetAllAnnotations(myProject);
+      resetAllAnnotations(myProject, true);
     }
   }
 
@@ -146,7 +155,7 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
       else {
         SETTINGS.setAnnotateDetectMovementsOption(AnnotateDetectMovementsOption.INNER);
       }
-      resetAllAnnotations(myProject);
+      resetAllAnnotations(myProject, true);
     }
   }
 }

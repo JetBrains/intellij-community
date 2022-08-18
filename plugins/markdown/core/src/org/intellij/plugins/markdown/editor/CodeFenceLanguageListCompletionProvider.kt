@@ -10,11 +10,11 @@ import com.intellij.lang.LanguageUtil
 import com.intellij.psi.PsiElement
 import com.intellij.ui.DeferredIconImpl
 import com.intellij.util.ProcessingContext
-import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
 import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageAliases.findMainAlias
+import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
-import org.intellij.plugins.markdown.util.hasType
+import org.intellij.plugins.markdown.lang.psi.util.hasType
 import javax.swing.Icon
 
 class CodeFenceLanguageListCompletionProvider: CompletionProvider<CompletionParameters>() {

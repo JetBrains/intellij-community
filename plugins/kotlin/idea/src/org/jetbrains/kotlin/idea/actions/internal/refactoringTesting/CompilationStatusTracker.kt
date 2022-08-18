@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.actions.internal.refactoringTesting
 
@@ -41,7 +41,7 @@ internal class CompilationStatusTracker(private val project: Project) {
     }
 
     private val runBuildAction by lazyPub {
-        val am = ActionManager.getInstance();
+        val am = ActionManager.getInstance()
         val action = am.getAction("CompileProject")
 
         val event = AnActionEvent(

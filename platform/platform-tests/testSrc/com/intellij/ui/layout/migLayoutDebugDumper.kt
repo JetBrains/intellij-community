@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.layout
 
 import com.intellij.configurationStore.serialize
@@ -88,7 +88,6 @@ private fun dumpCellBounds(layout: MigLayout): Any {
   return MigLayoutTestUtil.getRectangles(gridField.get(layout) as Grid)
 }
 
-@Suppress("UNCHECKED_CAST")
 internal fun serializeLayout(component: Container, isIncludeCellBounds: Boolean = true, isIncludeComponentBounds: Boolean = true): String {
   val layout = component.layout as MigLayout
 

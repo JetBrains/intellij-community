@@ -15,18 +15,17 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.*
-import java.awt.RenderingHints.*
+import java.awt.RenderingHints.KEY_ANTIALIASING
+import java.awt.RenderingHints.VALUE_ANTIALIAS_ON
 import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
 import javax.swing.*
 
 private val ASSIGNED_FOREGROUND = namedColor("BookmarkMnemonicAssigned.foreground", 0x000000, 0xBBBBBB)
 private val ASSIGNED_BACKGROUND = namedColor("BookmarkMnemonicAssigned.background", 0xF7C777, 0x665632)
-private val ASSIGNED_BORDER = namedColor("BookmarkMnemonicAssigned.borderColor", ASSIGNED_BACKGROUND)
 
 private val CURRENT_FOREGROUND = namedColor("BookmarkMnemonicCurrent.foreground", 0xFFFFFF, 0xFEFEFE)
 private val CURRENT_BACKGROUND = namedColor("BookmarkMnemonicCurrent.background", 0x389FD6, 0x345F85)
-private val CURRENT_BORDER = namedColor("BookmarkMnemonicCurrent.borderColor", CURRENT_BACKGROUND)
 
 private val SHARED_CURSOR by lazy { Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) }
 private val SHARED_LAYOUT by lazy {
@@ -84,17 +83,17 @@ internal class MnemonicChooser(
       type == current -> {
         putClientProperty("JButton.textColor", CURRENT_FOREGROUND)
         putClientProperty("JButton.backgroundColor", CURRENT_BACKGROUND)
-        putClientProperty("JButton.borderColor", CURRENT_BORDER)
+        putClientProperty("JButton.borderColor", CURRENT_BACKGROUND)
       }
       manager.findBookmarkForMnemonic(type.mnemonic) != null -> {
         putClientProperty("JButton.textColor", ASSIGNED_FOREGROUND)
         putClientProperty("JButton.backgroundColor", ASSIGNED_BACKGROUND)
-        putClientProperty("JButton.borderColor", ASSIGNED_BORDER)
+        putClientProperty("JButton.borderColor", ASSIGNED_BACKGROUND)
       }
       else -> {
-        putClientProperty("JButton.textColor", UIManager.getColor("BookmarkMnemonicAvailable.foreground"))
-        putClientProperty("JButton.backgroundColor", UIManager.getColor("BookmarkMnemonicAvailable.background"))
-        putClientProperty("JButton.borderColor", UIManager.getColor("BookmarkMnemonicAvailable.borderColor"))
+        putClientProperty("JButton.textColor", UIManager.getColor("Bookmark.MnemonicAvailable.foreground"))
+        putClientProperty("JButton.backgroundColor", UIManager.getColor("Bookmark.MnemonicAvailable.buttonBackground"))
+        putClientProperty("JButton.borderColor", UIManager.getColor("Bookmark.MnemonicAvailable.borderColor"))
       }
     }
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, true), "released")

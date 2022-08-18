@@ -17,10 +17,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PyRemoteSkeletonGeneratorFactory;
+import com.jetbrains.python.run.PyRunnerUtil;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -118,8 +120,12 @@ public class PySkeletonRefresher {
     myIndicator = indicator;
     mySdk = sdk;
     mySkeletonsPath = skeletonsPath;
-    if (Registry.get("python.use.targets.api").asBoolean()) {
+    if (Registry.is("python.use.targets.api")) {
       mySkeletonsGenerator = new PyTargetsSkeletonGenerator(getSkeletonsPath(), mySdk, folder, myProject);
+    }
+    else if (PyRunnerUtil.isTargetBased(sdk)) {
+      // when `python.use.targets.api` flag is disabled
+      throw new InvalidSdkException(PySdkBundle.message("python.sdk.please.reconfigure.interpreter"));
     }
     else if (PythonSdkUtil.isRemote(sdk)) {
       try {

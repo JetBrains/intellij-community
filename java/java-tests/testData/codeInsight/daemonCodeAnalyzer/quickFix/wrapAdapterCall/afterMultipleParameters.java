@@ -1,4 +1,4 @@
-// "Wrap 2nd argument using 'new File()'" "true"
+// "Adapt 2nd argument using 'new File()'" "true-preview"
 import java.io.File;
 
 class Test {

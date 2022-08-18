@@ -3,3 +3,5 @@
 abstract public class MyJavaCLass {
     public abstract void <caret>meth(Integer i);
 }
+
+// FIR_COMPARISON

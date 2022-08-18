@@ -335,4 +335,6 @@
   <action id="GoGenerateFileAction"/>
   <action id="Diff.ApplyLeftSide"/>
   <action id="Diff.ApplyRightSide"/>
+  <action id="EditorDecreaseFontSizeGlobal"/>
+  <action id="EditorIncreaseFontSizeGlobal"/>
 </keymap>

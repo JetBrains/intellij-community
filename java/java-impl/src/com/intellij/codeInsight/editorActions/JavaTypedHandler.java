@@ -9,7 +9,6 @@ import com.intellij.codeInsight.completion.JavaClassReferenceCompletionContribut
 import com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
-import com.intellij.lang.java.parser.ExpressionParser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -27,7 +26,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -41,9 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-
 public class JavaTypedHandler extends TypedHandlerDelegate {
-  static final TokenSet INVALID_INSIDE_REFERENCE = TokenSet.create(JavaTokenType.SEMICOLON, JavaTokenType.LBRACE, JavaTokenType.RBRACE);
   private boolean myJavaLTTyped;
 
   private static void autoPopupMemberLookup(Project project, final Editor editor) {
@@ -118,7 +114,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
 
     if ('>' == c) {
       if (!(file instanceof JspFile) && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET && PsiUtil.isLanguageLevel5OrHigher(file)) {
-        if (TypedHandlerUtil.handleGenericGT(editor, JavaTokenType.LT, JavaTokenType.GT, INVALID_INSIDE_REFERENCE)) return Result.STOP;
+        if (TypedHandlerUtil.handleGenericGT(editor, JavaTokenType.LT, JavaTokenType.GT, JavaTypingTokenSets.INVALID_INSIDE_REFERENCE)) return Result.STOP;
       }
     }
 
@@ -230,19 +226,6 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     return true;
   }
 
-  private static final TokenSet UNWANTED_TOKEN_AT_QUESTION =
-    TokenSet.create(JavaTokenType.C_STYLE_COMMENT, JavaTokenType.END_OF_LINE_COMMENT, JavaTokenType.CHARACTER_LITERAL,
-                    JavaTokenType.STRING_LITERAL, JavaTokenType.TEXT_BLOCK_LITERAL);
-
-  private static final TokenSet UNWANTED_TOKEN_BEFORE_QUESTION =
-    TokenSet.orSet(ExpressionParser.ASSIGNMENT_OPS, TokenSet.create(JavaTokenType.QUEST, JavaTokenType.COLON));
-
-  private static final TokenSet WANTED_TOKEN_BEFORE_QUESTION =
-    // Tokens that may appear before ?: in polyadic expression that may have non-boolean result
-    TokenSet.orSet(
-      TokenSet.create(JavaTokenType.OR, JavaTokenType.XOR, JavaTokenType.AND),
-      ExpressionParser.SHIFT_OPS, ExpressionParser.ADDITIVE_OPS, ExpressionParser.MULTIPLICATIVE_OPS);
-
   /**
    * Automatically insert parentheses around the ?: when necessary.
    *
@@ -253,7 +236,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     HighlighterIterator it = editor.getHighlighter().createIterator(offsetBefore);
     if (it.atEnd()) return false;
     IElementType curToken = it.getTokenType();
-    if (UNWANTED_TOKEN_AT_QUESTION.contains(curToken)) return false;
+    if (JavaTypingTokenSets.UNWANTED_TOKEN_AT_QUESTION.contains(curToken)) return false;
     int nesting = 0;
     while (true) {
       it.retreat();
@@ -267,8 +250,8 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
         nesting++;
       }
       else if (nesting == 0) {
-        if (UNWANTED_TOKEN_BEFORE_QUESTION.contains(curToken)) return false;
-        if (WANTED_TOKEN_BEFORE_QUESTION.contains(curToken)) break;
+        if (JavaTypingTokenSets.UNWANTED_TOKEN_BEFORE_QUESTION.contains(curToken)) return false;
+        if (JavaTypingTokenSets.WANTED_TOKEN_BEFORE_QUESTION.contains(curToken)) break;
       }
     }
 
@@ -277,7 +260,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     editor.getCaretModel().moveToOffset(offsetBefore + 1);
     PsiDocumentManager.getInstance(project).commitDocument(doc);
     PsiElement element = file.findElementAt(offsetBefore);
-    if (!(element instanceof PsiJavaToken) || !((PsiJavaToken)element).getTokenType().equals(JavaTokenType.QUEST)) return true;
+    if (!PsiUtil.isJavaToken(element, JavaTokenType.QUEST)) return true;
     PsiConditionalExpression cond = ObjectUtils.tryCast(element.getParent(), PsiConditionalExpression.class);
     if (cond == null || cond.getThenExpression() != null || cond.getElseExpression() != null) return true;
     PsiExpression condition = cond.getCondition();
@@ -340,7 +323,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
 
     if (myJavaLTTyped) {
       myJavaLTTyped = false;
-      TypedHandlerUtil.handleAfterGenericLT(editor, JavaTokenType.LT, JavaTokenType.GT, INVALID_INSIDE_REFERENCE);
+      TypedHandlerUtil.handleAfterGenericLT(editor, JavaTokenType.LT, JavaTokenType.GT, JavaTypingTokenSets.INVALID_INSIDE_REFERENCE);
       return Result.STOP;
     }
     else if (c == ':') {

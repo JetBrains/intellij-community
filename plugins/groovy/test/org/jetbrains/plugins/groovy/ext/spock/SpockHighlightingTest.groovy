@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.ext.spock
 
 import com.intellij.codeInspection.LocalInspectionTool
@@ -7,6 +7,7 @@ import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilit
 import org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyPointlessArithmeticInspection
 import org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyPointlessBooleanInspection
 import org.jetbrains.plugins.groovy.codeInspection.style.JavaStylePropertiesInvocationInspection
+import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.util.HighlightingTest
 import org.junit.Test
 
@@ -99,6 +100,48 @@ class FooSpec extends spock.lang.Specification {
     when:
     42
   }    
+}
+'''
+  }
+
+  @Test
+  void 'indirect extending'() {
+    fixture.enableInspections(GrUnresolvedAccessInspection)
+    highlightingTest '''\
+class A extends spock.lang.Specification {}
+
+class FooSpec extends A {
+  def foo() {
+    when:
+    def concat = a + b
+    
+    where:
+    a     | b
+    "foo" | "bar"
+  }    
+}
+'''
+  }
+
+  @Test
+  void 'Use annotation'() {
+    fixture.enableInspections(GrUnresolvedAccessInspection)
+    highlightingTest '''\
+import spock.lang.Specification
+import spock.util.mop.Use
+
+class A {
+     static String foo(Integer self) {
+        return "abs"
+    }
+}
+
+@Use(A)
+class HelloSpockSpec extends Specification {
+    def "length of Spock's and his friends' names"() {
+        expect:
+        1.foo() == "abs"
+    }
 }
 '''
   }

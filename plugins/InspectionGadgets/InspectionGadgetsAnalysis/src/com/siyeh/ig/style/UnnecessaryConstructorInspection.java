@@ -91,7 +91,8 @@ public class UnnecessaryConstructorInspection extends BaseInspection {
         return;
       }
       final PsiMethod constructor = constructors[0];
-      if (!constructor.isPhysical() || constructor.getNameIdentifier() == null) {
+      final PsiIdentifier identifier = constructor.getNameIdentifier();
+      if (!constructor.isPhysical() || identifier == null) {
         return;
       }
       if (!aClass.isEnum()) {
@@ -119,7 +120,7 @@ public class UnnecessaryConstructorInspection extends BaseInspection {
       final PsiCodeBlock body = constructor.getBody();
       if (ControlFlowUtils.isEmptyCodeBlock(body) ||
           isSuperConstructorInvocationWithoutArguments(ControlFlowUtils.getOnlyStatementInBlock(body))) {
-        registerMethodError(constructor);
+        registerError(identifier);
       }
     }
 

@@ -1,4 +1,4 @@
-// "Add 'IOException' to catch with 'IndexOutOfBoundsException'" "true"
+// "Add 'IOException' to catch with 'IndexOutOfBoundsException'" "true-preview"
 import java.io.File;
 import java.io.IOException;
 

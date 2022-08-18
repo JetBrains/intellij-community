@@ -90,7 +90,7 @@ class JavaLanguageInjectionSupportTest : AbstractLanguageInjectionTestCase() {
 
     fun currentPrintlnInjection(): BaseInjection? {
       val psiMethod = topLevelFile.findElementAt(topLevelCaretPosition)!!.parentOfType<PsiMethodCallExpression>()!!.resolveMethod()!!
-      val injection = JavaLanguageInjectionSupport.makeParameterInjection(psiMethod, 0, "JSON");
+      val injection = JavaLanguageInjectionSupport.makeParameterInjection(psiMethod, 0, "JSON")
       return InjectorUtils.getEditableInstance(project).findExistingInjection(injection)
     }
 

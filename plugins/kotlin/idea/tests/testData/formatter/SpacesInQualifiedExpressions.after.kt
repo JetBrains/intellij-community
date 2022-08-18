@@ -14,7 +14,7 @@ fun test(t: Test) {
     t
 
 
-            .foo()
+        .foo()
 
 
     t.foo().foo()
@@ -29,7 +29,7 @@ fun test(t: Test) {
     t
 
 
-            ?.foo()
+        ?.foo()
 
     t?.foo()?.foo()
 }

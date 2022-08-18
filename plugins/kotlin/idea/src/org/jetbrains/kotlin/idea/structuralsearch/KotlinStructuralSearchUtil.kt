@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.structuralsearch
 
@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.KotlinTypeFactory
+import org.jetbrains.kotlin.types.TypeAttributes
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 
 fun getCommentText(comment: PsiComment): String {
@@ -56,4 +57,4 @@ fun KtDeclaration.resolveKotlinType(): KotlinType? =
     (resolveToDescriptorIfAny() as? CallableDescriptor)?.returnType
 
 fun ClassDescriptor.toSimpleType(nullable: Boolean = false) =
-    KotlinTypeFactory.simpleType(Annotations.EMPTY, this.typeConstructor, emptyList(), nullable)
+    KotlinTypeFactory.simpleType(TypeAttributes.Empty, this.typeConstructor, emptyList(), nullable)

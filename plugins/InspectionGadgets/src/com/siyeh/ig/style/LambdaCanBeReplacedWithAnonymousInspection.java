@@ -119,10 +119,10 @@ public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
       final Set<PsiExpression> replacements = new HashSet<>();
       blockFromText.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitClass(PsiClass aClass) {}
+        public void visitClass(@NotNull PsiClass aClass) {}
 
         @Override
-        public void visitSuperExpression(PsiSuperExpression expression) {
+        public void visitSuperExpression(@NotNull PsiSuperExpression expression) {
           super.visitSuperExpression(expression);
           if (expression.getQualifier() == null) {
             replacements.add(expression);
@@ -130,7 +130,7 @@ public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
         }
 
         @Override
-        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+        public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
           super.visitMethodCallExpression(expression);
           final PsiMethod psiMethod = expression.resolveMethod();
           final PsiReferenceExpression methodExpression = expression.getMethodExpression();
@@ -171,7 +171,7 @@ public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
 
   private static class LambdaToAnonymousVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitLambdaExpression(PsiLambdaExpression lambdaExpression) {
+    public void visitLambdaExpression(@NotNull PsiLambdaExpression lambdaExpression) {
       super.visitLambdaExpression(lambdaExpression);
       if (isConvertibleLambdaExpression(lambdaExpression)) {
         PsiParameterList parameterList = lambdaExpression.getParameterList();
@@ -201,12 +201,12 @@ public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
         final boolean [] disabled = new boolean[1];
         body.accept(new JavaRecursiveElementWalkingVisitor() {
           @Override
-          public void visitThisExpression(PsiThisExpression expression) {
+          public void visitThisExpression(@NotNull PsiThisExpression expression) {
             disabled[0] = true;
           }
 
           @Override
-          public void visitSuperExpression(PsiSuperExpression expression) {
+          public void visitSuperExpression(@NotNull PsiSuperExpression expression) {
             disabled[0] = true;
           }
         });

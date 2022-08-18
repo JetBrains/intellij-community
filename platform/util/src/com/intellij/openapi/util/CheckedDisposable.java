@@ -6,8 +6,11 @@ import org.jetbrains.annotations.ApiStatus;
 
 /**
  * A {@link Disposable} which knows its own "disposed" status.
- * Usually you don't need this class, when you properly register your {@link Disposable} in disposable hierarchy via {@link Disposer#register(Disposable, Disposable)},
- * because then 1) your Disposable is disposed automatically along with its parent and 2) you don't need race-condition-inducing {@link #isDisposed()} calls.
+ * Usually you don't need this class if you properly registered your {@link Disposable} in disposable hierarchy via {@link Disposer#register(Disposable, Disposable)},
+ * because then <ol>
+ * <li>your Disposable would be disposed automatically along with its parent</li> and
+ * <li>you wouldn't need to worry about potential race conditions when {@link #isDisposed()} is called during the object disposal process</li>
+ * </ol>
  * <p>
  * If however you (reluctantly) do need this class, be aware of additional memory consumption for storing extra "isDisposed" information.
  * <p>
@@ -16,7 +19,8 @@ import org.jetbrains.annotations.ApiStatus;
 @ApiStatus.NonExtendable
 public interface CheckedDisposable extends Disposable {
   /**
-   * @return true when this instance is disposed (i.e. {@link Disposer#dispose(Disposable)} was called on this, or it was registered in the dispose hierarchy with {@link Disposer#register(Disposable, Disposable)} and its parent was disposed)
+   * @return true when this instance is disposed (i.e. {@link Disposer#dispose(Disposable)} was called on this,
+   * or it was registered in the {@link Disposer} hierarchy with {@link Disposer#register(Disposable, Disposable)} and its parent was disposed)
    */
   boolean isDisposed();
 }

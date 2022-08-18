@@ -18,7 +18,7 @@ public interface CustomizableIntentionActionDelegate extends IntentionActionDele
     if (action instanceof CustomizableIntentionAction) {
       return ((CustomizableIntentionAction)action).isShowSubmenu();
     }
-    return true;
+    return CustomizableIntentionAction.super.isShowSubmenu();
   }
 
   @Override
@@ -27,7 +27,7 @@ public interface CustomizableIntentionActionDelegate extends IntentionActionDele
     if (action instanceof CustomizableIntentionAction) {
       return ((CustomizableIntentionAction)action).isSelectable();
     }
-    return true;
+    return CustomizableIntentionAction.super.isSelectable();
   }
 
   @Override
@@ -36,7 +36,7 @@ public interface CustomizableIntentionActionDelegate extends IntentionActionDele
     if (action instanceof CustomizableIntentionAction) {
       return ((CustomizableIntentionAction)action).isShowIcon();
     }
-    return true;
+    return CustomizableIntentionAction.super.isShowIcon();
   }
 
   @Override

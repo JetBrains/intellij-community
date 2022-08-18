@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -11,8 +11,8 @@ import com.intellij.psi.search.searches.DefinitionsScopedSearch
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.cfg.LeakingThisDescriptor.*
 import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.util.safeAnalyzeWithContentNonSourceRootCode
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeWithContentNonSourceRootCode
 import org.jetbrains.kotlin.idea.quickfix.AddModifierFixFE10
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -20,8 +20,11 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingContext.LEAKING_THIS
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
+
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class LeakingThisInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = classVisitor { klass ->
@@ -30,6 +33,8 @@ class LeakingThisInspection : AbstractKotlinInspection() {
         // for different class internal elements, like KtProperty and KtClassInitializer.
         // It can affect performance, so yet we want to avoid this.
         val context = klass.safeAnalyzeWithContentNonSourceRootCode()
+        if (context == BindingContext.EMPTY) return@classVisitor
+
         klass.forEachDescendantOfType(fun(expression: KtExpression) {
             val leakingThisDescriptor = context[LEAKING_THIS, expression] ?: return
             if (leakingThisDescriptor.classOrObject != klass) return
@@ -91,14 +96,12 @@ class LeakingThisInspection : AbstractKotlinInspection() {
         })
     }
 
-    companion object {
-        private fun createMakeFinalFix(declaration: KtDeclaration?): IntentionWrapper? {
-            declaration ?: return null
-            val useScope = declaration.useScope
-            if (DefinitionsScopedSearch.search(declaration, useScope).findFirst() != null) return null
-            if ((declaration.containingClassOrObject as? KtClass)?.isInterface() == true) return null
-            return IntentionWrapper(AddModifierFixFE10(declaration, KtTokens.FINAL_KEYWORD))
-        }
+    private fun createMakeFinalFix(declaration: KtDeclaration?): IntentionWrapper? {
+        declaration ?: return null
+        val useScope = declaration.useScope
+        if (DefinitionsScopedSearch.search(declaration, useScope).findFirst() != null) return null
+        if ((declaration.containingClassOrObject as? KtClass)?.isInterface() == true) return null
+        return IntentionWrapper(AddModifierFixFE10(declaration, KtTokens.FINAL_KEYWORD))
     }
 }
 

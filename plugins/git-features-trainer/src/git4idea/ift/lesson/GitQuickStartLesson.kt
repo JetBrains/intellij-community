@@ -28,7 +28,6 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.cloneDialog.VcsCloneDialogExtensionList
 import git4idea.i18n.GitBundle
 import git4idea.ift.GitLessonsBundle
-import git4idea.ift.GitLessonsUtil.gotItStep
 import git4idea.ift.GitLessonsUtil.openCommitWindowText
 import git4idea.ift.GitLessonsUtil.openPushDialogText
 import git4idea.ift.GitLessonsUtil.restoreByUiAndBackgroundTask
@@ -40,21 +39,16 @@ import git4idea.ift.GitLessonsUtil.triggerOnCheckout
 import git4idea.ift.GitLessonsUtil.triggerOnNotification
 import git4idea.ift.GitProjectUtil
 import git4idea.repo.GitRepositoryManager
-import git4idea.ui.branch.GitBranchPopupActions
-import org.assertj.swing.fixture.JListFixture
 import training.dsl.*
 import training.dsl.LessonUtil.adjustPopupPosition
 import training.dsl.LessonUtil.sampleRestoreNotification
 import training.ui.LearningUiHighlightingManager
-import training.ui.LearningUiUtil.findComponentWithTimeout
 import training.util.LessonEndInfo
 import training.util.toNullableString
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.KeyEvent
-import java.util.regex.Pattern
 import javax.swing.JButton
-import javax.swing.JList
 import javax.swing.JTree
 import javax.swing.tree.TreePath
 
@@ -105,13 +99,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
       test {
         waitComponent(SearchEverywhereUI::class.java)
         type("clone")
-        ideFrame {
-          val list = findComponentWithTimeout(defaultTimeout) { ui: JList<*> ->
-            val model = ui.model
-            (0 until model.size).any { ind -> model.getElementAt(ind).toString().contains(cloneActionText) }
-          }
-          JListFixture(robot, list).clickItem(Pattern.compile(""".*$cloneActionText.*"""))
-        }
+        waitAndUsePreviouslyFoundListItem { jListItemFixture ->  jListItemFixture.click() }
       }
     }
 
@@ -192,19 +180,15 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
       }
     }
 
-    task {
-      text(GitLessonsBundle.message("git.quick.start.choose.new.branch.item", strong(newBranchActionText)))
-      triggerStart(GitBranchPopupActions.GitNewBranchAction::class.java.name)
-      restoreByUi(showBranchesTaskId)
-      test {
-        ideFrame { jList(newBranchActionText).clickItem(newBranchActionText) }
-      }
-    }
-
     val createButtonText = GitBundle.message("new.branch.dialog.operation.create.name")
     task {
+      text(GitLessonsBundle.message("git.quick.start.choose.new.branch.item", strong(newBranchActionText)))
       triggerAndFullHighlight().component { ui: JButton ->
         ui.text?.contains(createButtonText) == true
+      }
+      restoreByUi(showBranchesTaskId, delayMillis = defaultRestoreDelay)
+      test {
+        ideFrame { jList(newBranchActionText).clickItem(newBranchActionText) }
       }
     }
 
@@ -221,7 +205,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
 
     prepareRuntimeTask {
       VcsConfiguration.getInstance(project).apply {
-        myLastCommitMessages = mutableListOf()
+        setRecentMessages(emptyList())
       }
     }
 

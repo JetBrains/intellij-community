@@ -4,6 +4,7 @@
 // ACTION: Convert member to extension
 // ACTION: Convert property to function
 // ACTION: Move to companion object
+// ACTION: Specify type explicitly
 
 class My {
     val <caret>x

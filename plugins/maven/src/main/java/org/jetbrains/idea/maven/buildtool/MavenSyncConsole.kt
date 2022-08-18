@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.buildtool
 
 import com.intellij.build.BuildProgressListener
@@ -16,6 +16,7 @@ import com.intellij.execution.ExecutionException
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.externalSystem.issue.BuildIssueException
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
@@ -96,7 +97,7 @@ class MavenSyncConsole(private val myProject: Project) {
     debugLog("maven sync: started importing $myProject")
 
     myPostponed.forEach(this::doIfImportInProcess)
-    myPostponed.clear();
+    myPostponed.clear()
   }
 
   private fun createTaskId() = ExternalSystemTaskId.create(MavenUtil.SYSTEM_ID, ExternalSystemTaskType.RESOLVE_PROJECT, myProject)
@@ -135,14 +136,14 @@ class MavenSyncConsole(private val myProject: Project) {
   fun addWarning(@Nls text: String, @Nls description: String) = addWarning(text, description, null)
 
   fun addBuildIssue(issue: BuildIssue, kind: MessageEvent.Kind) = doIfImportInProcessOrPostpone {
-    if (!newIssue(issue.title + issue.description)) return@doIfImportInProcessOrPostpone;
+    if (!newIssue(issue.title + issue.description)) return@doIfImportInProcessOrPostpone
     mySyncView.onEvent(mySyncId, BuildIssueEventImpl(mySyncId, issue, kind))
-    hasErrors = hasErrors || kind == MessageEvent.Kind.ERROR;
+    hasErrors = hasErrors || kind == MessageEvent.Kind.ERROR
   }
 
   @Synchronized
   fun addWarning(@Nls text: String, @Nls description: String, filePosition: FilePosition?) = doIfImportInProcess {
-    if (!newIssue(text + description + filePosition)) return;
+    if (!newIssue(text + description + filePosition)) return
     if (filePosition == null) {
       mySyncView.onEvent(mySyncId,
                          MessageEventImpl(mySyncId, MessageEvent.Kind.WARNING, SyncBundle.message("maven.sync.group.compiler"), text,
@@ -228,15 +229,23 @@ class MavenSyncConsole(private val myProject: Project) {
   }
 
   private fun MavenProjectProblem.getFilePosition(): FilePosition {
-    val (line, columns) = getPosition() ?: (-1 to -1)
-    return FilePosition(File(path), line, columns)
+    val (line, column) = getPositionFromDescription() ?: getPositionFromPath() ?: (-1 to -1)
+    val pathWithoutPosition = path.substringBeforeLast(":${line + 1}:$column")
+    return FilePosition(File(pathWithoutPosition), line, column)
   }
 
-  private fun MavenProjectProblem.getPosition(): Pair<Int, Int>? {
-    val description = description ?: return null
+  private fun MavenProjectProblem.getPositionFromDescription(): Pair<Int, Int>? {
+    return getPosition(description, Regex("@(\\d+):(\\d+)"))
+  }
+
+  private fun MavenProjectProblem.getPositionFromPath(): Pair<Int, Int>? {
+    return getPosition(path, Regex(":(\\d+):(\\d+)"))
+  }
+
+  private fun MavenProjectProblem.getPosition(source: String?, pattern: Regex): Pair<Int, Int>? {
+    if (source == null) return null
     if (type == MavenProjectProblem.ProblemType.STRUCTURE) {
-      val pattern = Regex("@(\\d+):(\\d+)")
-      val matchResults = pattern.findAll(description)
+      val matchResults = pattern.findAll(source)
       val matchResult = matchResults.lastOrNull() ?: return null
       val (_, line, offset) = matchResult.groupValues
       return line.toInt() - 1 to offset.toInt()
@@ -250,8 +259,14 @@ class MavenSyncConsole(private val myProject: Project) {
     if (started && !finished) {
       MavenLog.LOG.warn(e)
       hasErrors = true
-      @Suppress("HardCodedStringLiteral")
-      mySyncView.onEvent(mySyncId, createMessageEvent(e))
+      val buildIssueException = ExceptionUtil.findCause(e, BuildIssueException::class.java)
+      if (buildIssueException != null) {
+        addBuildIssue(buildIssueException.buildIssue, MessageEvent.Kind.ERROR)
+      }
+      else {
+        mySyncView.onEvent(mySyncId, createMessageEvent(e))
+      }
+
     }
     else {
       this.startImport(progressListener, MavenImportSpec.EXPLICIT_IMPORT)
@@ -283,7 +298,7 @@ class MavenSyncConsole(private val myProject: Project) {
       return ExceptionUtil.getThrowableText(e)
     }
 
-    if(!e.localizedMessage.isNullOrEmpty()) return e.localizedMessage
+    if (!e.localizedMessage.isNullOrEmpty()) return e.localizedMessage
     return if (StringUtil.isEmpty(e.message)) SyncBundle.message("build.event.title.error") else e.message!!
   }
 
@@ -323,7 +338,9 @@ class MavenSyncConsole(private val myProject: Project) {
           override fun getNavigatable(project: Project): Navigatable? = null
         }, MessageEvent.Kind.ERROR))
       }
-    } catch (ignore: Exception){}
+    }
+    catch (ignore: Exception) {
+    }
 
   }
 
@@ -452,6 +469,7 @@ class MavenSyncConsole(private val myProject: Project) {
 
   fun <Result> runTask(@NlsSafe taskName: String, task: () -> Result): Result {
     startTask(mySyncId, taskName)
+    val startTime = System.currentTimeMillis()
     try {
       return task().also {
         completeTask(mySyncId, taskName, SuccessResultImpl())
@@ -460,6 +478,9 @@ class MavenSyncConsole(private val myProject: Project) {
     catch (e: Exception) {
       completeTask(mySyncId, taskName, FailureResultImpl(e))
       throw e
+    }
+    finally {
+      MavenLog.LOG.info("[maven import] $taskName took ${System.currentTimeMillis() - startTime}ms")
     }
   }
 

@@ -10,13 +10,13 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.xml.impl" />
-    <orderEntry type="library" name="ASM" level="project" />
     <orderEntry type="module" module-name="intellij.regexp" />
     <orderEntry type="module" module-name="intellij.xpath" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="library" name="Jaxen" level="project" />
     <orderEntry type="module" module-name="intellij.platform.langInjection" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
   </component>
   <component name="copyright">
     <Base>

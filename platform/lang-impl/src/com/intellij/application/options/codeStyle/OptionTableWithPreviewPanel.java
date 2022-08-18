@@ -896,7 +896,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
   }
 
   @Override
-  public void apply(CodeStyleSettings settings) throws ConfigurationException {
+  public void apply(@NotNull CodeStyleSettings settings) throws ConfigurationException {
     TableCellEditor editor = myTreeTable.getCellEditor();
     if (editor != null && !editor.stopCellEditing()) {
       throw new ConfigurationException(LangBundle.message("dialog.message.editing.cannot.be.stopped"));
@@ -926,7 +926,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
   }
 
   @Override
-  protected void resetImpl(final CodeStyleSettings settings) {
+  protected void resetImpl(final @NotNull CodeStyleSettings settings) {
     TreeModel treeModel = myTreeTable.getTree().getModel();
     TreeNode root = (TreeNode)treeModel.getRoot();
     resetNode(root, settings);

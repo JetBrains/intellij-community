@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.rules
 
 import com.intellij.facet.Facet
@@ -29,7 +29,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RuleChain
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorageSnapshot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.junit.jupiter.api.extension.AfterEachCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
@@ -54,7 +54,7 @@ open class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = fal
     public override fun before() {
       projectRootDir = baseProjectDir.root.toPath()
       if (forceEnableWorkspaceModel) {
-        WorkspaceModelInitialTestContent.withInitialContent(WorkspaceEntityStorageBuilder.create()) {
+        WorkspaceModelInitialTestContent.withInitialContent(EntityStorageSnapshot.empty()) {
           project = PlatformTestUtil.loadAndOpenProject(projectRootDir, disposableRule.disposable)
         }
       }
@@ -173,7 +173,7 @@ open class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = fal
   }
 
   fun renameModule(module: Module, newName: String) {
-    val model = runReadAction { moduleManager.modifiableModel }
+    val model = runReadAction { moduleManager.getModifiableModel() }
     model.renameModule(module, newName)
     runWriteActionAndWait { model.commit() }
   }

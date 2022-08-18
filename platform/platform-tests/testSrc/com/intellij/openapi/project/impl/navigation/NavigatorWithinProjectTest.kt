@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl.navigation
 
 import com.intellij.navigation.LocationToOffsetConverter
@@ -19,8 +19,8 @@ class NavigatorWithinProjectTest: NavigationTestBase() {
   @Test fun pathTabInLinePositionCharacterOneBased() = runNavigationTest(
     navigationAction = { navigateByPath("A.java:3:20", locationToOffsetAsCharacterOneBased) }
   ) {
-    assertThat(currentElement.containingFile.name).isEqualTo("A.java")
-    with(currentCharacterZeroBasedPosition) {
+    assertThat(getCurrentElement().containingFile.name).isEqualTo("A.java")
+    with(getCurrentCharacterZeroBasedPosition()) {
       assertThat(line + 1).isEqualTo(3)
       assertThat(column + 1).isEqualTo(20)
     }
@@ -29,8 +29,8 @@ class NavigatorWithinProjectTest: NavigationTestBase() {
   @Test fun pathTabInLinePositionLogical() = runNavigationTest(
     navigationAction = { navigateByPath("A.java:2:10", locationToOffsetAsLogicalPosition) }
   ) {
-    assertThat(currentElement.containingFile.name).isEqualTo("A.java")
-    with(currentLogicalPosition) {
+    assertThat(getCurrentElement().containingFile.name).isEqualTo("A.java")
+    with(getCurrentLogicalPosition()) {
       assertThat(line).isEqualTo(2)
       assertThat(column).isEqualTo(10)
     }
@@ -39,8 +39,8 @@ class NavigatorWithinProjectTest: NavigationTestBase() {
   @Test fun pathNegativeOffset() = runNavigationTest (
     navigationAction = { navigateByPath("A.java:3:5", locationToOffsetNegativeOffset) }
   ) {
-    assertThat(currentElement.containingFile.name).isEqualTo("A.java")
-    with(currentCharacterZeroBasedPosition) {
+    assertThat(getCurrentElement().containingFile.name).isEqualTo("A.java")
+    with(getCurrentCharacterZeroBasedPosition()) {
       assertThat(line).isEqualTo(0)
       assertThat(column).isEqualTo(0)
     }
@@ -49,8 +49,8 @@ class NavigatorWithinProjectTest: NavigationTestBase() {
   @Test fun pathNoColumn() = runNavigationTest(
     navigationAction = { navigateByPath("A.java:3", locationToOffsetAsCharacterOneBased) }
   ) {
-    assertThat(currentElement.containingFile.name).isEqualTo("A.java")
-    with(currentCharacterZeroBasedPosition) {
+    assertThat(getCurrentElement().containingFile.name).isEqualTo("A.java")
+    with(getCurrentCharacterZeroBasedPosition()) {
       assertThat(line + 1).isEqualTo(3)
       assertThat(column).isEqualTo(0)
     }
@@ -59,8 +59,8 @@ class NavigatorWithinProjectTest: NavigationTestBase() {
   @Test fun pathNoLineNoColumn() = runNavigationTest(
     navigationAction = { navigateByPath("A.java", locationToOffsetAsCharacterOneBased) }
   ) {
-    assertThat(currentElement.containingFile.name).isEqualTo("A.java")
-    with(currentCharacterZeroBasedPosition) {
+    assertThat(getCurrentElement().containingFile.name).isEqualTo("A.java")
+    with(getCurrentCharacterZeroBasedPosition()) {
       assertThat(line).isEqualTo(0)
       assertThat(column).isEqualTo(0)
     }

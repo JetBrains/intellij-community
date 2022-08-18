@@ -1,6 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java18StreamApi;
-
 
 import com.intellij.codeInsight.intention.impl.config.ActionUsagePanel;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -36,14 +35,14 @@ import java.util.*;
 /**
  * @author Dmitry Batkovich
  */
-public class AddMethodsDialog extends DialogWrapper {
+public final class AddMethodsDialog extends DialogWrapper {
   public static final @NlsSafe String OR_ELSE_DEFAULT_VALUE = ".orElseGet(() -> defaultValue)";
   private static final @NlsSafe String STREAM_PREFIX = "stream.";
   private final static Logger LOG = Logger.getInstance(AddMethodsDialog.class);
   @NotNull private final Project myProject;
 
   private JPanel myPanel;
-  private ComboBox myTemplatesCombo;
+  private ComboBox<PseudoLambdaReplaceTemplate> myTemplatesCombo;
   private ClassNameReferenceEditor myClassNameEditor;
   private ComboBox<Collection<PsiMethod>> myMethodNameCombo;
   private ActionUsagePanel myBeforeActionPanel;
@@ -51,7 +50,7 @@ public class AddMethodsDialog extends DialogWrapper {
   private JPanel myExamplePanel;
 
   @SuppressWarnings("unchecked")
-  protected AddMethodsDialog(@NotNull final Project project, @NotNull final Component parent, boolean canBeParent) {
+  AddMethodsDialog(@NotNull final Project project, @NotNull final Component parent, boolean canBeParent) {
     super(parent, canBeParent);
     myProject = project;
     myTemplatesCombo.setEnabled(false);
@@ -67,7 +66,7 @@ public class AddMethodsDialog extends DialogWrapper {
         }
         append(STREAM_PREFIX);
         final String streamApiMethodName = template.getStreamApiMethodName();
-        if (StreamApiConstants.STREAM_STREAM_API_METHODS.getValue().contains(streamApiMethodName)) {
+        if (StreamApiConstants.STREAM_STREAM_API_METHODS.get().contains(streamApiMethodName)) {
           append(streamApiMethodName + "()", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
         else {
@@ -119,7 +118,7 @@ public class AddMethodsDialog extends DialogWrapper {
         }
         LOG.assertTrue(!suitableTemplates.isEmpty());
         final List<PseudoLambdaReplaceTemplate> templatesAsList = new ArrayList<>(suitableTemplates);
-        myTemplatesCombo.setModel(new CollectionComboBoxModel(templatesAsList));
+        myTemplatesCombo.setModel(new CollectionComboBoxModel<>(templatesAsList));
         myTemplatesCombo.setSelectedItem(templatesAsList.get(0));
       }
     });
@@ -129,7 +128,7 @@ public class AddMethodsDialog extends DialogWrapper {
       public void documentChanged(@NotNull DocumentEvent e) {
         final String classFqn = e.getDocument().getText();
         final PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(classFqn, GlobalSearchScope.allScope(project));
-        final DefaultComboBoxModel comboBoxModel = (DefaultComboBoxModel)myMethodNameCombo.getModel();
+        final var comboBoxModel = (DefaultComboBoxModel<Collection<PsiMethod>>)myMethodNameCombo.getModel();
         comboBoxModel.removeAllElements();
         if (aClass == null) {
           enable(false);
@@ -210,8 +209,8 @@ public class AddMethodsDialog extends DialogWrapper {
 
   public StaticPseudoFunctionalStyleMethodOptions.PipelineElement getSelectedElement() {
     return new StaticPseudoFunctionalStyleMethodOptions.PipelineElement(myClassNameEditor.getText(),
-                                                                        ContainerUtil.getFirstItem((Collection < PsiMethod >)myMethodNameCombo.getSelectedItem()).getName(),
-                                                                        (PseudoLambdaReplaceTemplate)myTemplatesCombo.getSelectedItem());
+                                                                        ContainerUtil.getFirstItem(myMethodNameCombo.getItem()).getName(),
+                                                                        myTemplatesCombo.getItem());
   }
 
   @Nullable

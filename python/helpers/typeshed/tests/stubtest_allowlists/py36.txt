@@ -4,15 +4,11 @@ _collections_abc.AsyncGenerator.ag_frame
 _collections_abc.AsyncGenerator.ag_running
 _dummy_threading
 asyncio.Future.__init__  # Usually initialized from c object
-asyncio.exceptions  # Added in Python 3.8
-asyncio.format_helpers  # Added in Python 3.7
 asyncio.futures.Future.__init__  # Usually initialized from c object
 asyncio.futures._TracebackLogger.__init__
-asyncio.runners  # Added in Python 3.7
-asyncio.staggered  # Added in Python 3.8
-asyncio.threads  # Added in Python 3.9
-asyncio.trsock  # Added in Python 3.8
-asyncio.mixins  # Added in Python 3.10
+asyncio.locks._ContextManagerMixin.__enter__  # Always raises; deliberately omitted from the stub
+asyncio.locks._ContextManagerMixin.__exit__  # Always raises; deliberately omitted from the stub
+builtins.float.__setformat__  # Internal method for CPython test suite
 builtins.str.maketrans
 cmath.log
 collections.AsyncGenerator.ag_await
@@ -20,8 +16,15 @@ collections.AsyncGenerator.ag_code
 collections.AsyncGenerator.ag_frame
 collections.AsyncGenerator.ag_running
 collections.Callable
+collections.Mapping.__reversed__  # Set to None at runtime for a better error message
+# Adding these reflected dunders to `typing.AbstractSet` causes a large number of false-positives. See #7414.
+collections.Set.__rand__
+collections.Set.__ror__
+collections.Set.__rsub__
+collections.Set.__rxor__
 collections.UserString.maketrans
 datetime.datetime_CAPI
+distutils.command.bdist_wininst  # see #6523
 distutils.cygwinccompiler.RE_VERSION
 distutils.dist.command_re
 distutils.fancy_getopt.longopt_re
@@ -33,19 +36,13 @@ dummy_threading.local.__new__
 enum.Enum._generate_next_value_
 fractions.Fraction.__new__  # overload is too complicated for stubtest to resolve
 hmac.HMAC.__init__
-importlib.metadata  # Added in 3.8
-importlib.metadata._meta  # Added in 3.10
-importlib.resources  # Added in 3.7
 io.StringIO.readline
 ipaddress._BaseNetwork.__init__
 json.loads
 mmap.ACCESS_DEFAULT
-multiprocessing.shared_memory
 (os|posix).utime
-plistlib.Dict.__init__
 pyexpat.XMLParserType.ExternalEntityParserCreate  # C signature is wrong - function gets only positional args
 random.Random.randrange  # missing undocumented arg _int
-random.randrange  # missing undocumented arg _int
 sched.Event.__doc__  # __slots__ is overridden
 stringprep.unicodedata  # re-exported from unicodedata
 sre_compile.dis
@@ -71,8 +68,6 @@ typing.Sequence.index
 typing.Text.maketrans
 typing.runtime_checkable
 typing\.\w+\.__new__
-unittest._log  # New in Python 3.9
-unittest.async_case  # Added in Python 3.8
 uuid.UUID.int
 uuid.libname
 xml.etree.ElementTree.TreeBuilder.start  # Discrepancy between Python and C modules, fixed in bpo-39495
@@ -116,17 +111,17 @@ collections.Generator.gi_yieldfrom
 collections.Mapping.get  # Adding None to the Union messed up mypy
 collections.Sequence.index  # Supporting None in end is not mandatory
 
+# Intentionally omitted because of syntax issues
+asyncio.async
+asyncio.tasks.async
+
 # Exists at runtime, but missing from stubs
 _bisect.bisect
 _bisect.insort
-asyncio.async
 asyncio.futures._TracebackLogger.loop
 asyncio.futures._TracebackLogger.source_traceback
-asyncio.tasks.async
 calendar.HTMLCalendar.cssclasses
 distutils.cmd.install_misc
-distutils.command.bdist_wininst
-distutils.command.bdist_wininst.bdist_wininst
 distutils.sysconfig.expand_makefile_vars
 distutils.sysconfig.get_python_version
 dummy_threading.Lock
@@ -136,14 +131,11 @@ html.parser.HTMLParser.unescape
 platform.popen
 plistlib.Data.asBase64
 plistlib.Data.fromBase64
-plistlib.Plist
 ssl.SSLObject.verify_client_post_handshake
 ssl.SSLSocket.verify_client_post_handshake
-sys.callstats
-sys.get_coroutine_wrapper
-sys.set_coroutine_wrapper
 tempfile.SpooledTemporaryFile.softspace
 tkinter.dnd.Icon
 tkinter.dnd.Tester
 tkinter.dnd.test
+typing.[A-Z]\w*.__.*__  # many missing typing dunders in py36
 xml.dom.xmlbuilder.DocumentLS.async

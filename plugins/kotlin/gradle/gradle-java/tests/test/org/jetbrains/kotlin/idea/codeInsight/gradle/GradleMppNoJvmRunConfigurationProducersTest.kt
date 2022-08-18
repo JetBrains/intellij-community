@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.asJava.toLightClass
-import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.listRepositories
 import org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInDirectoryConfigurationProducer
 import org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInPackageConfigurationProducer
@@ -15,7 +14,7 @@ import org.jetbrains.kotlin.idea.gradleJava.testing.native.KotlinMultiplatformNa
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducerTestCase
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder
-import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder.Companion.buildscript
+import org.jetbrains.plugins.gradle.testFramework.util.buildscript
 import org.jetbrains.plugins.gradle.util.findChildByType
 import org.jetbrains.plugins.gradle.util.runReadActionAndWait
 import org.junit.Test
@@ -205,7 +204,7 @@ class GradleMppNoJvmRunConfigurationProducersTest216 : GradleTestRunConfiguratio
         })
 
         createProjectSubFile("build.gradle", buildscript {
-            withPlugin("org.jetbrains.kotlin.multiplatform", TestedKotlinGradlePluginVersions.ALL_PUBLIC.last().toString())
+            withPlugin("org.jetbrains.kotlin.multiplatform", KotlinGradlePluginVersions.lastStable.toString())
             withPrefix {
                 code(
                     """

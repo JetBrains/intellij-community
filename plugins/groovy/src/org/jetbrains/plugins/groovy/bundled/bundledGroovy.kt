@@ -5,11 +5,14 @@ package org.jetbrains.plugins.groovy.bundled
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.JarUtil.getJarAttribute
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFsConnectionListener
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScopesCore
 import groovy.lang.GroovyObject
@@ -28,7 +31,7 @@ private fun doGetBundledGroovyFile(): File {
   return File(jarPath)
 }
 
-val bundledGroovyJarRoot: VirtualFile? by lazy(::doGetBundledGroovyRoot)
+val bundledGroovyJarRoot: ClearableLazyValue<Ref<VirtualFile>> = ClearableLazyValue.create { Ref.create(doGetBundledGroovyRoot()) }
 
 private fun doGetBundledGroovyRoot(): VirtualFile? {
   val jar = bundledGroovyFile
@@ -37,6 +40,12 @@ private fun doGetBundledGroovyRoot(): VirtualFile? {
 }
 
 fun createBundledGroovyScope(project: Project): GlobalSearchScope? {
-  val root = bundledGroovyJarRoot ?: return null
+  val root = bundledGroovyJarRoot.value.get() ?: return null
   return GlobalSearchScopesCore.directoryScope(project, root, true)
+}
+
+internal class BundledGroovyPersistentFsConnectionListener: PersistentFsConnectionListener {
+  override fun beforeConnectionClosed() {
+    bundledGroovyJarRoot.drop()
+  }
 }

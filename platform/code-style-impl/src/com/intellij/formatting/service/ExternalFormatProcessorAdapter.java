@@ -53,7 +53,7 @@ public final class ExternalFormatProcessorAdapter implements FormattingService {
     List<CoreCodeStyleUtil.RangeFormatInfo> infos = CoreCodeStyleUtil.getRangeFormatInfoList(file, rangesInfo);
     // IMPORTANT: Don't use canChangeWhiteSpaceOnly from parameters because we always want it to be 'false' for formatRanges called here.
     CoreCodeStyleUtil.postProcessRanges(
-      file, infos, range -> ExternalFormatProcessor.formatRangeInFile(file, range, false, false));
+      infos, range -> ExternalFormatProcessor.formatRangeInFile(file, range, false, false));
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.configurationStore.StoreReloadManager;
@@ -125,7 +125,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     PlatformTestUtil.saveProject(getProject(), true);
     VirtualFile fileUnderProjectDir = createFileExternally(new File(getProject().getBasePath()));
 
-    assertFalse(ProjectFileIndex.SERVICE.getInstance(getProject()).isInContent(fileUnderProjectDir));
+    assertFalse(ProjectFileIndex.getInstance(getProject()).isInContent(fileUnderProjectDir));
 
     typeAndCheck(getProject().getProjectFile(), true);
     typeAndCheck(getProject().getWorkspaceFile(), true);
@@ -151,7 +151,7 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
 
     VirtualFile fileUnderNonProjectModuleDir = createFileExternally(moduleWithoutContentRoot.getModuleNioFile().getParent().toFile());
 
-    assertFalse(ProjectFileIndex.SERVICE.getInstance(getProject()).isInContent(fileUnderNonProjectModuleDir));
+    assertFalse(ProjectFileIndex.getInstance(getProject()).isInContent(fileUnderNonProjectModuleDir));
 
     typeAndCheck(moduleWithoutContentRoot.getModuleFile(), true);
     typeAndCheck(myModule.getModuleFile(), true);

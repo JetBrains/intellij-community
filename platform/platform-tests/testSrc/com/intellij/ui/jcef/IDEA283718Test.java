@@ -1,18 +1,19 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.ui.scale.TestScaleHelper;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.Nullable;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import static org.junit.Assert.*;
+
 /**
- * Tests https://youtrack.jetbrains.com/issue/IDEA-283718
+ * Tests IDEA-283718
  * 1) JCEFHtmlPanel should not additionally chain the new browser instance for disposal.
  * 2) JCEFHtmlPanel should be auto-disposed after its client.
  *
@@ -48,13 +49,14 @@ public class IDEA283718Test {
     JBCefBrowserBase browser = null;
     try {
       browser = new JCEFHtmlPanel(client, "about:blank");
-    } catch (RuntimeException ex) {
-      TestCase.fail("Exception occurred: " + ex.getMessage());
+    }
+    catch (RuntimeException ex) {
+      fail("Exception occurred: " + ex.getMessage());
       ex.printStackTrace();
     }
     if (client == null) client = browser.getJBCefClient();
-    TestCase.assertFalse(browser.isDisposed());
+    assertFalse(browser.isDisposed());
     Disposer.dispose(client);
-    TestCase.assertTrue(browser.isDisposed());
+    assertTrue(browser.isDisposed());
   }
 }

@@ -109,12 +109,12 @@ public final class PluginManager {
 
   /**
    * @deprecated Bad API, sorry. Please use {@link PluginManagerCore#isDisabled(PluginId)} to check plugin's state,
-   * {@link DisabledPluginsState#disabledPlugins()} to get an unmodifiable collection of all disabled plugins (rarely needed).
+   * {@link DisabledPluginsState#getDisabledIds()} to get an unmodifiable collection of all disabled plugins (rarely needed).
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public static @NotNull List<String> getDisabledPlugins() {
-    Set<PluginId> list = DisabledPluginsState.disabledPlugins();
+    Set<PluginId> list = DisabledPluginsState.getDisabledIds();
     return new AbstractList<String>() {
       //<editor-fold desc="Just a list-like immutable wrapper over a set; move along.">
       @Override

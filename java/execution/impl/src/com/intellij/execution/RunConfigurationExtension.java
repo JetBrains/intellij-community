@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
@@ -75,5 +76,14 @@ public abstract class RunConfigurationExtension extends RunConfigurationExtensio
    */
   public  boolean isListenerDisabled(RunConfigurationBase<?> configuration, Object listener, RunnerSettings runnerSettings) {
     return false;
+  }
+
+
+  /**
+   * Enhances the run process console by adding any extension-specific information to it.
+   */
+  @NotNull
+  protected ConsoleView decorate(@NotNull ConsoleView console, @NotNull RunConfigurationBase<?> configuration, @NotNull Executor executor) {
+    return console;
   }
 }

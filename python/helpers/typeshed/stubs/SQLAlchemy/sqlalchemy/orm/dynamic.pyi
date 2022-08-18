@@ -1,7 +1,9 @@
-from typing import Any
+from typing import Any, Generic, TypeVar
 
 from . import attributes, strategies
 from .query import Query
+
+_T = TypeVar("_T")
 
 class DynaLoader(strategies.AbstractRelationshipLoader):
     logger: Any
@@ -63,7 +65,7 @@ class AppenderMixin:
     def append(self, item) -> None: ...
     def remove(self, item) -> None: ...
 
-class AppenderQuery(AppenderMixin, Query): ...
+class AppenderQuery(AppenderMixin, Query[_T], Generic[_T]): ...
 
 def mixin_user_query(cls): ...
 

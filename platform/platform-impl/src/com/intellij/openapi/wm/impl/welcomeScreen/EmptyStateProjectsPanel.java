@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.DataManager;
@@ -11,14 +11,12 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.StartPagePromoter;
 import com.intellij.ui.components.AnActionLink;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.FocusUtil;
@@ -31,13 +29,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-import static com.intellij.openapi.wm.impl.welcomeScreen.ProjectsTabFactory.PRIMARY_BUTTONS_NUM;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil.LargeIconWithTextWrapper;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil.splitAndWrapActions;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.getApplicationTitle;
 
-class EmptyStateProjectsPanel extends BorderLayoutPanel {
-
+final class EmptyStateProjectsPanel extends BorderLayoutPanel {
   EmptyStateProjectsPanel(@NotNull Disposable parentDisposable) {
     setBackground(WelcomeScreenUIManager.getMainAssociatedComponentBackground());
     JPanel mainPanel = new NonOpaquePanel(new VerticalFlowLayout());
@@ -50,7 +46,7 @@ class EmptyStateProjectsPanel extends BorderLayoutPanel {
     Couple<DefaultActionGroup> mainAndMore =
       splitAndWrapActions((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART_EMPTY_STATE),
                           action -> ActionGroupPanelWrapper.wrapGroups(action, parentDisposable),
-                          PRIMARY_BUTTONS_NUM);
+                          ProjectsTabFactory.PRIMARY_BUTTONS_NUM);
     ActionGroup main = new DefaultActionGroup(
       ContainerUtil.map2List(mainAndMore.getFirst().getChildren(null), LargeIconWithTextWrapper::wrapAsBigIconWithText));
 
@@ -90,7 +86,7 @@ class EmptyStateProjectsPanel extends BorderLayoutPanel {
         super.actionsUpdated(forced, newVisibleActions);
         if (forced && !newVisibleActions.isEmpty() && getComponents().length > 0 && !wasFocusRequested) {
           ObjectUtils.doIfNotNull(FocusUtil.findFocusableComponentIn(getComponents()[0], null),
-                                  (Function<Component, Object>)component -> {
+                                  component -> {
                                     wasFocusRequested =true;
                                     return IdeFocusManager.getGlobalInstance().requestFocus(component, true);
                                   });
@@ -134,17 +130,18 @@ class EmptyStateProjectsPanel extends BorderLayoutPanel {
   private static JPanel createBottomPanelForEmptyState(@NotNull Disposable parentDisposable) {
     JPanel vPanel = new NonOpaquePanel();
     vPanel.setLayout(new BoxLayout(vPanel, BoxLayout.PAGE_AXIS));
-    StartPagePromoter[] extensions = StartPagePromoter.START_PAGE_PROMOTER_EP.getExtensions();
-    boolean hasPromotion = false;
-    for (StartPagePromoter x : extensions) {
-      JPanel promotion = x.getPromotionForInitialState();
-      if (promotion == null) continue;
-      vPanel.add(promotion);
-      hasPromotion = true;
-    }
+    JPanel promoPanel = WelcomeScreenComponentFactory.getSinglePromotion(true);
     JPanel notification = WelcomeScreenComponentFactory.createNotificationPanel(parentDisposable);
-    if (!hasPromotion) return notification;
-    vPanel.add(notification);
-    return vPanel;
+    if (promoPanel == null) {
+      return notification;
+    }
+    else {
+      vPanel.add(notification);
+      JPanel borderPanel = new NonOpaquePanel();
+      borderPanel.setBorder(JBUI.Borders.empty(8, 16, 16, 16));
+      borderPanel.add(promoPanel);
+      vPanel.add(borderPanel);
+      return vPanel;
+    }
   }
 }

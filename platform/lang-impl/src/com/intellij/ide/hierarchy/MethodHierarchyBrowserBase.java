@@ -120,6 +120,10 @@ public abstract class MethodHierarchyBrowserBase extends HierarchyBrowserBaseEx 
       Presentation presentation = event.getPresentation();
       presentation.setEnabled(isValidBase());
     }
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
   }
 
   public static class BaseOnThisMethodAction extends BaseOnThisElementAction {

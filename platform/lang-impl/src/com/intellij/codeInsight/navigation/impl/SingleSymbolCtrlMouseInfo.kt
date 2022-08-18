@@ -1,4 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("DEPRECATION")
+
 package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.codeInsight.navigation.BaseCtrlMouseInfo
@@ -9,6 +11,7 @@ import com.intellij.model.psi.PsiSymbolService
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 
+@Deprecated("Unused in v2 implementation")
 internal class SingleSymbolCtrlMouseInfo(
   symbol: Symbol,
   private val elementAtOffset: PsiElement,

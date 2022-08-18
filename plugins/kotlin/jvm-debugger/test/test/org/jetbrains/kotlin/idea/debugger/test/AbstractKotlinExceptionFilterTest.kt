@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test
 
@@ -11,13 +11,9 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.codegen.forTestCompile.ForTestCompileRuntime
 import org.jetbrains.kotlin.idea.core.util.toVirtualFile
-import org.jetbrains.kotlin.idea.debugger.InlineFunctionHyperLinkInfo
-import org.jetbrains.kotlin.idea.debugger.KotlinExceptionFilterFactory
-import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.MockLibraryFacility
-import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.debugger.core.InlineFunctionHyperLinkInfo
+import org.jetbrains.kotlin.idea.debugger.core.KotlinExceptionFilterFactory
+import org.jetbrains.kotlin.idea.test.*
 import java.io.File
 import java.lang.reflect.InvocationTargetException
 import java.net.URLClassLoader
@@ -37,7 +33,7 @@ abstract class AbstractKotlinExceptionFilterTest : KotlinLightCodeInsightFixture
     override fun setUp() {
         super.setUp()
 
-        val mainFile = testDataFile()
+        val mainFile = dataFile()
         val testDir = mainFile.parentFile ?: error("Invalid test directory")
 
         val fileText = FileUtil.loadFile(mainFile, true)
@@ -59,7 +55,7 @@ abstract class AbstractKotlinExceptionFilterTest : KotlinLightCodeInsightFixture
     }
 
     protected fun doTest(unused: String) {
-        val mainFile = testDataFile()
+        val mainFile = dataFile()
         val testDir = mainFile.parentFile ?: error("Invalid test directory")
 
         val fileText = FileUtil.loadFile(mainFile, true)
@@ -92,7 +88,7 @@ abstract class AbstractKotlinExceptionFilterTest : KotlinLightCodeInsightFixture
         val info = result.firstHyperlinkInfo as FileHyperlinkInfo
 
         val descriptor = if (InTextDirectivesUtils.isDirectiveDefined(fileText, "NAVIGATE_TO_CALL_SITE")) {
-            (info as? InlineFunctionHyperLinkInfo)?.callSiteDescriptor
+          (info as? InlineFunctionHyperLinkInfo)?.callSiteDescriptor
         } else {
             info.descriptor
         }

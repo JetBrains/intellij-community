@@ -55,7 +55,7 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
                        ArrayUtil.append(additionalJobs, stdJobDescriptors.BUILD_GRAPH);
     }
     if (tool instanceof GlobalSimpleInspectionTool) {
-      // if we run e.g. just "Annotator" simple global tool then myJobDescriptors are empty but LOCAL_ANALYSIS is used from inspectFile()
+      // if we run e.g., just "Annotator" simple global tool then myJobDescriptors are empty but LOCAL_ANALYSIS is used from inspectFile()
       additionalJobs = additionalJobs.length == 0 ? stdJobDescriptors.LOCAL_ANALYSIS_ARRAY :
                        ArrayUtil.contains(stdJobDescriptors.LOCAL_ANALYSIS, additionalJobs) ? additionalJobs :
                        ArrayUtil.append(additionalJobs, stdJobDescriptors.LOCAL_ANALYSIS);

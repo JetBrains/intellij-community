@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.template.actions;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.OffsetKey;
 import com.intellij.codeInsight.completion.OffsetsInFile;
@@ -10,10 +9,7 @@ import com.intellij.codeInsight.template.TemplateActionContext;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.impl.*;
 import com.intellij.lang.StdLanguages;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -22,6 +18,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -29,6 +26,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.*;
 
@@ -38,17 +37,17 @@ public class SaveAsTemplateAction extends AnAction {
 
   @NotNull
   @VisibleForTesting
-  public static String suggestTemplateText(@NotNull Editor editor, @NotNull PsiFile file) {
-    PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
+  public static String suggestTemplateText(@NotNull Editor editor, @Nullable PsiFile file, @NotNull Project project) {
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     TextRange selection = new TextRange(editor.getSelectionModel().getSelectionStart(), editor.getSelectionModel().getSelectionEnd());
 
     PsiElement[] psiElements = PsiTreeUtil.collectElements(file, element -> selection.contains(element.getTextRange()));
 
     Document document = EditorFactory.getInstance().createDocument(selection.substring(editor.getDocument().getText()));
-    boolean isXml = file.getLanguage().is(StdLanguages.XML);
+    boolean isXml = file != null && file.getLanguage().is(StdLanguages.XML);
     int offsetDelta = editor.getSelectionModel().getSelectionStart();
-    WriteCommandAction.writeCommandAction(file.getProject()).withName(null).run(() -> {
+    WriteCommandAction.writeCommandAction(project).withName(null).run(() -> {
       Map<RangeMarker, String> rangeToText = new HashMap<>();
 
       for (PsiElement element : psiElements) {
@@ -109,29 +108,31 @@ public class SaveAsTemplateAction extends AnAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Editor editor = Objects.requireNonNull(CommonDataKeys.EDITOR.getData(dataContext));
-    PsiFile file = Objects.requireNonNull(CommonDataKeys.PSI_FILE.getData(dataContext));
-
-    String templateText = suggestTemplateText(editor, file);
+    PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
+    Project project = Objects.requireNonNull(e.getProject());
+    String templateText = suggestTemplateText(editor, file, project);
     TemplateImpl template = new TemplateImpl(TemplateListPanel.ABBREVIATION, templateText, TemplateSettings.USER_GROUP_NAME);
     template.setToReformat(true);
 
-    OffsetKey startKey = OffsetKey.create("pivot");
-    OffsetsInFile offsets = new OffsetsInFile(file);
-    offsets.getOffsets().addOffset(startKey, editor.getSelectionModel().getSelectionStart());
-    OffsetsInFile copy = TemplateManagerImpl.copyWithDummyIdentifier(offsets,
-                                                                     editor.getSelectionModel().getSelectionStart(),
-                                                                     editor.getSelectionModel().getSelectionEnd(),
-                                                                     CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
+    if (file != null) {
+      OffsetKey startKey = OffsetKey.create("pivot");
+      OffsetsInFile offsets = new OffsetsInFile(file);
+      offsets.getOffsets().addOffset(startKey, editor.getSelectionModel().getSelectionStart());
+      OffsetsInFile copy = TemplateManagerImpl.copyWithDummyIdentifier(offsets,
+                                                                       editor.getSelectionModel().getSelectionStart(),
+                                                                       editor.getSelectionModel().getSelectionEnd(),
+                                                                       CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
 
-    Set<TemplateContextType> applicable = TemplateManagerImpl.getApplicableContextTypes(
-      TemplateActionContext.expanding(copy.getFile(), copy.getOffsets().getOffset(startKey)));
+      Set<TemplateContextType> applicable = TemplateManagerImpl.getApplicableContextTypes(
+        TemplateActionContext.expanding(copy.getFile(), copy.getOffsets().getOffset(startKey)));
 
-    for (TemplateContextType contextType : TemplateManagerImpl.getAllContextTypes()) {
-      template.getTemplateContext().setEnabled(contextType, applicable.contains(contextType));
+      for (TemplateContextType contextType : TemplateManagerImpl.getAllContextTypes()) {
+        template.getTemplateContext().setEnabled(contextType, applicable.contains(contextType));
+      }
     }
 
     final LiveTemplatesConfigurable configurable = new LiveTemplatesConfigurable();
-    SingleConfigurableEditor dialog = new SingleConfigurableEditor(file.getProject(), configurable, DialogWrapper.IdeModalityType.MODELESS);
+    SingleConfigurableEditor dialog = new SingleConfigurableEditor(project, configurable, DialogWrapper.IdeModalityType.MODELESS);
     new UiNotifyConnector.Once(dialog.getContentPane(), new Activatable() {
       @Override
       public void showNotify() {
@@ -143,11 +144,14 @@ public class SaveAsTemplateAction extends AnAction {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
   public void update(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-    PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
-
-    e.getPresentation().setEnabled(file != null && editor != null && editor.getSelectionModel().hasSelection() && !EditorUtil.contextMenuInvokedOutsideOfSelection(e));
+    e.getPresentation().setEnabled(e.getProject() != null && editor != null && editor.getSelectionModel().hasSelection() && !EditorUtil.contextMenuInvokedOutsideOfSelection(e));
   }
 }

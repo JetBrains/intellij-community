@@ -43,11 +43,12 @@ import java.awt.event.KeyEvent
 import java.util.*
 import javax.swing.*
 
+@Suppress("OVERRIDE_DEPRECATION")
 @ApiStatus.Internal
 internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
-                       private val panelContext: PanelContext,
-                       private val parent: PanelImpl,
-                       rowLayout: RowLayout) : Row {
+                            private val panelContext: PanelContext,
+                            private val parent: PanelImpl,
+                            rowLayout: RowLayout) : Row {
 
   var rowLayout = rowLayout
     private set
@@ -102,6 +103,12 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   override fun <T : JComponent> cell(component: T, viewComponent: JComponent): CellImpl<T> {
     val result = CellImpl(dialogPanelConfig, component, this, viewComponent)
     cells.add(result)
+
+    if (component is JRadioButton) {
+      @Suppress("UNCHECKED_CAST")
+      registerRadioButton(result as CellImpl<JRadioButton>, null)
+    }
+
     return result
   }
 
@@ -117,6 +124,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(component, JBScrollPane(component))
   }
 
+  @Deprecated("Remove with deprecated collapsibleGroup")
   fun cell(cell: CellBaseImpl<*>) {
     cells.add(cell)
   }
@@ -191,7 +199,9 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun checkBox(@NlsContexts.Checkbox text: String): CellImpl<JBCheckBox> {
-    return cell(JBCheckBox(text))
+    return cell(JBCheckBox(text)).applyToComponent {
+      isOpaque = false
+    }
   }
 
   override fun radioButton(@NlsContexts.RadioButton text: String): Cell<JBRadioButton> {
@@ -199,16 +209,17 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun radioButton(text: String, value: Any?): Cell<JBRadioButton> {
-    val buttonsGroup = dialogPanelConfig.context.getButtonsGroup() ?: throw UiDslException(
-      "Button group must be defined before using radio button")
-    val result = cell(JBRadioButton(text))
-    buttonsGroup.add(result, value)
+    val result = cell(JBRadioButton(text)).applyToComponent {
+      isOpaque = false
+    }
+    registerRadioButton(result, value)
     return result
   }
 
   override fun button(@NlsContexts.Button text: String, actionListener: (event: ActionEvent) -> Unit): CellImpl<JButton> {
     val button = JButton(BundleBase.replaceMnemonicAmpersand(text))
     button.addActionListener(actionListener)
+    button.isOpaque = false
     return cell(button)
   }
 
@@ -232,7 +243,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun <T> segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> String): Cell<SegmentedButtonToolbar> {
-    val actionGroup = DefaultActionGroup(options.map { SegmentedButtonAction(it, property, renderer(it)) })
+    val actionGroup = DefaultActionGroup(options.map { DeprecatedSegmentedButtonAction(it, property, renderer(it)) })
     val toolbar = SegmentedButtonToolbar(actionGroup, parent.spacingConfiguration)
     toolbar.targetComponent = null // any data context is supported, suppress warning
     return cell(toolbar)
@@ -330,7 +341,16 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
                                          project: Project?,
                                          fileChooserDescriptor: FileChooserDescriptor,
                                          fileChosen: ((chosenFile: VirtualFile) -> String)?): Cell<TextFieldWithBrowseButton> {
-    val result = cell(textFieldWithBrowseButton(project, browseDialogTitle, fileChooserDescriptor, fileChosen))
+    val result = cell(textFieldWithBrowseButton(project, browseDialogTitle, fileChooserDescriptor, fileChosen)).applyToComponent {
+      isOpaque = false
+      textField.isOpaque = false
+    }
+    result.columns(COLUMNS_SHORT)
+    return result
+  }
+
+  override fun passwordField(): CellImpl<JBPasswordField> {
+    val result = cell(JBPasswordField())
     result.columns(COLUMNS_SHORT)
     return result
   }
@@ -380,11 +400,15 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun spinner(range: IntRange, step: Int): CellImpl<JBIntSpinner> {
-    return cell(JBIntSpinner(range.first, range.first, range.last, step))
+    return cell(JBIntSpinner(range.first, range.first, range.last, step)).applyToComponent {
+      isOpaque = false
+    }
   }
 
   override fun spinner(range: ClosedRange<Double>, step: Double): Cell<JSpinner> {
-    return cell(JSpinner(SpinnerNumberModel(range.start, range.start, range.endInclusive, step)))
+    return cell(JSpinner(SpinnerNumberModel(range.start, range.start, range.endInclusive, step))).applyToComponent {
+      isOpaque = false
+    }
   }
 
   override fun textArea(): Cell<JBTextArea> {
@@ -396,7 +420,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     textArea.font = JBFont.regular()
     textArea.emptyText.setFont(JBFont.regular())
     textArea.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY)
-    return cell(textArea, JBScrollPane(textArea))
+    return scrollCell(textArea)
   }
 
   override fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<in T?>?): Cell<ComboBox<T>> {
@@ -442,6 +466,12 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
       cell?.enabledFromParent(isEnabled)
     }
     rowComment?.let { it.isEnabled = isEnabled }
+  }
+
+  private fun registerRadioButton(cell: CellImpl<out JRadioButton>, value: Any?) {
+    val buttonsGroup = dialogPanelConfig.context.getButtonsGroup() ?: throw UiDslException(
+      "Button group must be defined before using radio button")
+    buttonsGroup.add(cell, value)
   }
 }
 

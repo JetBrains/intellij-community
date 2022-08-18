@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.hierarchy.actions;
 
@@ -29,12 +29,17 @@ import java.awt.*;
 import java.util.List;
 
 
-public abstract class BrowseHierarchyActionBase extends AnAction implements UpdateInBackground {
+public abstract class BrowseHierarchyActionBase extends AnAction {
   private static final Logger LOG = Logger.getInstance(BrowseHierarchyActionBase.class);
   private final LanguageExtension<HierarchyProvider> myExtension;
 
   protected BrowseHierarchyActionBase(@NotNull LanguageExtension<HierarchyProvider> extension) {
     myExtension = extension;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -81,7 +86,7 @@ public abstract class BrowseHierarchyActionBase extends AnAction implements Upda
       content.setComponent(browserComponent);
     }
     else {
-      content = ContentFactory.SERVICE.getInstance().createContent(browserComponent, null, true);
+      content = ContentFactory.getInstance().createContent(browserComponent, null, true);
       contentManager.addContent(content);
     }
     content.setHelpId(HierarchyBrowserBaseEx.HELP_ID);

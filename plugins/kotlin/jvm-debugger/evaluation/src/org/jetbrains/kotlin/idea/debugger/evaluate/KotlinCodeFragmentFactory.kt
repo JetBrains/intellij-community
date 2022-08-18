@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
@@ -23,11 +23,13 @@ import com.sun.jdi.AbsentInformationException
 import com.sun.jdi.InvalidStackFrameException
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.projectStructure.hasKotlinJvmRuntime
+import org.jetbrains.kotlin.idea.core.syncNonBlockingReadAction
 import org.jetbrains.kotlin.idea.core.util.CodeFragmentUtils
-import org.jetbrains.kotlin.idea.core.util.getKotlinJvmRuntimeMarkerClass
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.KotlinDebuggerEvaluator
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.DebugLabelPropertyDescriptorProvider
-import org.jetbrains.kotlin.idea.debugger.getContextElement
-import org.jetbrains.kotlin.idea.debugger.hopelessAware
+import org.jetbrains.kotlin.idea.debugger.core.getContextElement
+import org.jetbrains.kotlin.idea.debugger.base.util.hopelessAware
 import org.jetbrains.kotlin.idea.j2k.J2kPostProcessor
 import org.jetbrains.kotlin.idea.j2k.convertToKotlin
 import org.jetbrains.kotlin.idea.j2k.j2kText
@@ -138,10 +140,7 @@ class KotlinCodeFragmentFactory : CodeFragmentFactory() {
 
         DebugLabelPropertyDescriptorProvider(codeFragment, debugProcess).supplyDebugLabels()
 
-        @Suppress("MoveVariableDeclarationIntoWhen")
-        val evaluator = debugProcess.session.xDebugSession?.currentStackFrame?.evaluator
-
-        val evaluationType = when (evaluator) {
+        val evaluationType = when (val evaluator = debugProcess.session.xDebugSession?.currentStackFrame?.evaluator) {
             is KotlinDebuggerEvaluator -> evaluator.getType(item)
             is JavaDebuggerEvaluator -> KotlinDebuggerEvaluator.EvaluationType.FROM_JAVA
             else -> KotlinDebuggerEvaluator.EvaluationType.UNKNOWN
@@ -196,7 +195,7 @@ class KotlinCodeFragmentFactory : CodeFragmentFactory() {
     }
 
     private fun initImports(imports: String?): String? {
-        if (imports != null && imports.isNotEmpty()) {
+        if (!imports.isNullOrEmpty()) {
             return imports.split(KtCodeFragment.IMPORT_SEPARATOR)
                 .mapNotNull { fixImportIfNeeded(it) }
                 .joinToString(KtCodeFragment.IMPORT_SEPARATOR)
@@ -278,7 +277,9 @@ class KotlinCodeFragmentFactory : CodeFragmentFactory() {
             contextElement == null -> false
             contextElement.language == KotlinFileType.INSTANCE.language -> true
             contextElement.language == JavaFileType.INSTANCE.language -> {
-                getKotlinJvmRuntimeMarkerClass(contextElement.project, contextElement.resolveScope) != null
+                val project = contextElement.project
+                val scope = contextElement.resolveScope
+                syncNonBlockingReadAction(project) { scope.hasKotlinJvmRuntime(project) }
             }
             else -> false
         }

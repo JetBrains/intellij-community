@@ -44,7 +44,7 @@ class ReturnPointCountVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitStatement(PsiStatement statement) {
+  public void visitStatement(@NotNull PsiStatement statement) {
     super.visitStatement(statement);
     if (!previousWasGuardClause) {
       return;
@@ -89,10 +89,10 @@ class ReturnPointCountVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitLambdaExpression(PsiLambdaExpression expression) {
+  public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
   }
 
   @Override
-  public void visitClass(PsiClass aClass) {
+  public void visitClass(@NotNull PsiClass aClass) {
   }
 }

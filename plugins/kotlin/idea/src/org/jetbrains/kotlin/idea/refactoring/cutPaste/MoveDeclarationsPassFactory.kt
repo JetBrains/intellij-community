@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.cutPaste
 
@@ -12,7 +12,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiModificationTracker
-import org.jetbrains.kotlin.idea.core.util.range
+import com.intellij.refactoring.suggested.range
 
 class MoveDeclarationsPassFactory : TextEditorHighlightingPassFactory {
 
@@ -28,7 +28,7 @@ class MoveDeclarationsPassFactory : TextEditorHighlightingPassFactory {
         }
     }
 
-    override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? {
+    override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass {
         return MyPass(file.project, file, editor)
     }
 
@@ -48,7 +48,7 @@ class MoveDeclarationsPassFactory : TextEditorHighlightingPassFactory {
         private fun buildHighlightingInfo(): HighlightInfo? {
             val cookie = editor.getUserData(MoveDeclarationsEditorCookie.KEY) ?: return null
 
-            if (cookie.modificationCount != PsiModificationTracker.SERVICE.getInstance(project).modificationCount) return null
+            if (cookie.modificationCount != PsiModificationTracker.getInstance(project).modificationCount) return null
 
             val processor = MoveDeclarationsProcessor.build(editor, cookie)
 

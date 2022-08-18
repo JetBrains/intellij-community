@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.compound
 
 import com.intellij.execution.*
@@ -7,6 +7,7 @@ import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.impl.compareTypesForUi
+import com.intellij.execution.runToolbar.RunToolbarProcessData
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.icons.AllIcons
@@ -105,7 +106,7 @@ class CompoundRunConfiguration @JvmOverloads constructor(@NlsSafe name: String? 
     }
   }
 
-  override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
+  override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState {
     try {
       checkConfiguration()
     }
@@ -119,11 +120,14 @@ class CompoundRunConfiguration @JvmOverloads constructor(@NlsSafe name: String? 
 
     return RunProfileState { _, _ ->
       ApplicationManager.getApplication().invokeLater {
+        val compoundSettings = RunManagerImpl.getInstanceImpl(project).findSettings(this)
+
         val groupId = ExecutionEnvironment.getNextUnusedExecutionId()
         for ((configuration, target) in getConfigurationsWithEffectiveRunTargets()) {
           val settings = RunManagerImpl.getInstanceImpl(project).findSettings(configuration) ?: continue
-          ExecutionUtil.runConfiguration(settings, executor, target, groupId)
-        }
+          ExecutionUtil.doRunConfiguration(settings, executor, target, groupId,
+                                           null, RunToolbarProcessData.prepareBaseSettingCustomization(compoundSettings))}
+
       }
       null
     }
@@ -139,7 +143,7 @@ class CompoundRunConfiguration @JvmOverloads constructor(@NlsSafe name: String? 
     }
   }
 
-  override fun getState(): CompoundRunConfigurationOptions? {
+  override fun getState(): CompoundRunConfigurationOptions {
     if (isDirty.compareAndSet(true, false)) {
       options.configurations.clear()
       for (entry in sortedConfigurationsWithTargets) {

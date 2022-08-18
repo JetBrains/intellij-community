@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -19,12 +20,10 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 public class PsiResolveHelperImpl implements PsiResolveHelper {
   private static final Logger LOG = Logger.getInstance(PsiResolveHelperImpl.class);
@@ -139,8 +138,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     return isAccessible(moduleSystem -> moduleSystem.isAccessible(pkg.getQualifiedName(), null, place));
   }
 
-  private static boolean isAccessible(Predicate<? super JavaModuleSystem> predicate) {
-    return Stream.of(JavaModuleSystem.EP_NAME.getExtensions()).allMatch(predicate);
+  private static boolean isAccessible(Condition<? super JavaModuleSystem> predicate) {
+    return ContainerUtil.and(JavaModuleSystem.EP_NAME.getExtensions(), predicate);
   }
 
   @Override

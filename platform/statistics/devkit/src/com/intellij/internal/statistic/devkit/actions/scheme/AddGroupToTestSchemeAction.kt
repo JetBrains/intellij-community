@@ -11,6 +11,7 @@ import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidatio
 import com.intellij.internal.statistic.eventLog.validator.storage.ValidationTestRulesPersistedStorage
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -32,6 +33,8 @@ class AddGroupToTestSchemeAction constructor(private val recorderId: String = St
                     ActionsBundle.messagePointer("action.AddGroupToTestSchemeAction.description"),
                     AllIcons.General.Add) {
 
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun update(event: AnActionEvent) {
     event.presentation.isEnabled = StatisticsRecorderUtil.isTestModeEnabled(recorderId)
   }
@@ -44,7 +47,7 @@ class AddGroupToTestSchemeAction constructor(private val recorderId: String = St
       return
     }
     val group = GroupValidationTestRule("", false)
-    val dialog = createAddToTestSchemeDialog(project, testStorage, group)
+    val dialog = createAddToTestSchemeDialog(project, testStorage, group, recorderId)
     if (dialog == null || !dialog.showAndGet()) return
 
     runBackgroundableTask(StatisticsBundle.message("stats.updating.test.scheme"), project, false) {
@@ -61,8 +64,9 @@ class AddGroupToTestSchemeAction constructor(private val recorderId: String = St
   companion object {
     fun createAddToTestSchemeDialog(project: Project,
                                     testRulesStorage: ValidationTestRulesPersistedStorage,
-                                    group: GroupValidationTestRule): DialogWrapper? {
-      val scheme = loadEventsScheme(project, testRulesStorage) ?: return null
+                                    group: GroupValidationTestRule,
+                                    recorderId: String): DialogWrapper? {
+      val scheme = loadEventsScheme(project, testRulesStorage, recorderId) ?: return null
       val groupConfiguration = EventsTestSchemeGroupConfiguration(project, scheme.productionGroups, group, scheme.generatedScheme)
       val dialog = dialog(
         StatisticsBundle.message("stats.add.test.group.to.test.scheme"),
@@ -77,13 +81,14 @@ class AddGroupToTestSchemeAction constructor(private val recorderId: String = St
     }
 
     private fun loadEventsScheme(project: Project,
-                                 testRulesStorage: ValidationTestRulesPersistedStorage): EditEventsTestSchemeAction.EventsTestScheme? {
+                                 testRulesStorage: ValidationTestRulesPersistedStorage,
+                                 recorderId: String): EditEventsTestSchemeAction.EventsTestScheme? {
       return ProgressManager.getInstance().run(object : Task.WithResult<EditEventsTestSchemeAction.EventsTestScheme?, IOException>(
         project, StatisticsBundle.message("stats.loading.validation.rules"), true) {
         override fun compute(indicator: ProgressIndicator): EditEventsTestSchemeAction.EventsTestScheme? {
           val productionGroups = testRulesStorage.loadProductionGroups()
           if (indicator.isCanceled) return null
-          val eventsScheme = EventsSchemeBuilder.buildEventsScheme()
+          val eventsScheme = EventsSchemeBuilder.buildEventsScheme(recorderId)
           return EditEventsTestSchemeAction.EventsTestScheme(emptyList(), productionGroups, eventsScheme)
         }
       })

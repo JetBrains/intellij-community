@@ -10,7 +10,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.impl.gson.TaskGsonUtil;
 import com.intellij.tasks.impl.httpclient.TaskResponseUtil.GsonSingleObjectDeserializer;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.URIBuilder;
@@ -46,12 +45,7 @@ public class YouTrackIntellisense {
 
   private static final Logger LOG = Logger.getInstance(YouTrackIntellisense.class);
 
-  private static final Map<String, TextAttributes> TEXT_ATTRIBUTES = ContainerUtil.newHashMap(
-    Pair.create("field-value", CONSTANT.getDefaultAttributes()),
-    Pair.create("field-name", KEYWORD.getDefaultAttributes()),
-    Pair.create("text", STRING.getDefaultAttributes()),
-    Pair.create("error", BAD_CHARACTER.getDefaultAttributes())
-  );
+  private static final Map<String, TextAttributes> TEXT_ATTRIBUTES = Map.of("field-value", CONSTANT.getDefaultAttributes(), "field-name", KEYWORD.getDefaultAttributes(), "text", STRING.getDefaultAttributes(), "error", BAD_CHARACTER.getDefaultAttributes());
   private static final int CACHE_SIZE = 30;
 
   private static final class SizeLimitedCache<K, V> extends LinkedHashMap<K, V> {

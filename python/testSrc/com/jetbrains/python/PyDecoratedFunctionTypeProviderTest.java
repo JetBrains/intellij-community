@@ -266,7 +266,7 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
 
   // PY-49935
   public void testParamSpec() {
-    doTest("int", "(int, str) -> int",
+    doTest("int", "(x: int, y: str) -> int",
            "from typing import Callable, ParamSpec, TypeVar\n" +
            "\n" +
            "P = ParamSpec(\"P\")\n" +
@@ -297,7 +297,7 @@ public class PyDecoratedFunctionTypeProviderTest extends PyTestCase {
 
   // PY-49935
   public void testParamSpecAndConcatenate() {
-    doTest("int", "(int, str) -> int",
+    doTest("int", "(x: int, y: str) -> int",
            "from typing import Concatenate, Callable, ParamSpec, TypeVar\n" +
            "\n" +
            "P = ParamSpec(\"P\")\n" +

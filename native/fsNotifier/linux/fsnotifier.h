@@ -1,8 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 #pragma once
 
-#define VERSION "20210419.1140"
+#ifndef VERSION
+#define VERSION "SNAPSHOT"
+#endif
 
 #define _DEFAULT_SOURCE
 #define _FILE_OFFSET_BITS 64

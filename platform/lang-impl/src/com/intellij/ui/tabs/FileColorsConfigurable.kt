@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle.message
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.scopeChooser.EditScopesDialog
 import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable.PROJECT_SCOPES
 import com.intellij.openapi.application.invokeLater
@@ -28,7 +29,6 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
 import com.intellij.ui.ColorChooser.chooseColor
 import com.intellij.ui.ColorUtil.toHex
 import com.intellij.ui.CommonActionsPanel
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.FileColorManager
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
@@ -83,6 +83,11 @@ internal class FileColorsConfigurable(project: Project) : SearchableConfigurable
       set(state) {
         FileColorManagerImpl.setEnabledForTabs(state)
       }
+
+    override fun apply() {
+      super.apply()
+      UISettings.getInstance().fireUISettingsChanged()
+    }
   }
 
   private val useInProjectView = object : CheckBoxConfigurable() {
@@ -111,9 +116,7 @@ internal class FileColorsConfigurable(project: Project) : SearchableConfigurable
     val north = JPanel(HorizontalLayout(10))
     north.border = Borders.emptyBottom(5)
     north.add(HorizontalLayout.LEFT, enabledFileColors.createComponent())
-    if (!ExperimentalUI.isNewEditorTabs()) {
-      north.add(HorizontalLayout.LEFT, useInEditorTabs.createComponent())
-    }
+    north.add(HorizontalLayout.LEFT, useInEditorTabs.createComponent())
     north.add(HorizontalLayout.LEFT, useInProjectView.createComponent())
 
     val south = JPanel(VerticalLayout(5))

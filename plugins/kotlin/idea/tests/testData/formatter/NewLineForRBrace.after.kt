@@ -31,8 +31,10 @@ enum class E1 {
     }
 }
 
-fun e = fun(a: Int,
-            b: String) {
+fun e = fun(
+    a: Int,
+    b: String
+) {
 }
 
 /**

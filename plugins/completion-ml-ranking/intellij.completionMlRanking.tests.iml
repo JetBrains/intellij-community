@@ -5,7 +5,6 @@
     <content url="file://$MODULE_DIR$/test">
       <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
     </content>
-    <content url="file://$MODULE_DIR$/testResources" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
@@ -14,5 +13,6 @@
     <orderEntry type="module" module-name="intellij.platform.ml.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="library" name="ngram-slp" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.ml" scope="TEST" />
   </component>
 </module>

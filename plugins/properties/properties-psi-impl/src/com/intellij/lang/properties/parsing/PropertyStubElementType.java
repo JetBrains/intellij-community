@@ -74,7 +74,7 @@ class PropertyStubElementType extends ILightStubElementType<PropertyStub, Proper
 
   @NotNull
   @Override
-  public PropertyStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement parentStub) {
+  public PropertyStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
     LighterASTNode keyNode = LightTreeUtil.firstChildOfType(tree, node, PropertiesTokenTypes.KEY_CHARACTERS);
     String key = intern(tree.getCharTable(), keyNode);
     return new PropertyStubImpl(parentStub, key);

@@ -56,7 +56,7 @@ class GHPRListETagUpdateChecker(private val progressManager: ProgressManager,
 
   private fun loadListETag(indicator: ProgressIndicator): String? =
     progressManager.runProcess(Computable {
-      requestExecutor.execute(GithubApiRequests.Repos.PullRequests.getListETag(serverPath, repoPath))
+      requestExecutor.execute(indicator, GithubApiRequests.Repos.PullRequests.getListETag(serverPath, repoPath))
     }, indicator)
 
   override fun stop() {

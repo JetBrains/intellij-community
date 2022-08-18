@@ -55,7 +55,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleJvmSupportMatriciesKt;
+import org.jetbrains.plugins.gradle.util.GradleJvmSupportMatrices;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 import org.junit.Assume;
 import org.junit.Rule;
@@ -183,6 +183,10 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     return GradleVersion.version(gradleVersion).getBaseVersion();
   }
 
+  public @NotNull VirtualFile getProjectRoot() {
+    return myProjectRoot;
+  }
+
   protected void assumeTestJavaRuntime(@NotNull JavaVersion javaRuntimeVersion) {
     int javaVer = javaRuntimeVersion.feature;
     GradleVersion gradleBaseVersion = getCurrentGradleBaseVersion();
@@ -197,34 +201,40 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     }
     JavaVersion javaRuntimeVersion = JavaVersion.current();
     assumeTestJavaRuntime(javaRuntimeVersion);
-    GradleVersion baseVersion = getCurrentGradleBaseVersion();
-    if (!GradleJvmSupportMatriciesKt.isSupported(baseVersion, javaRuntimeVersion)) {
-      // fix exception of FJP at JavaHomeFinder.suggestHomePaths => ... => EnvironmentUtil.getEnvironmentMap => CompletableFuture.<clinit>
-      IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
-      List<String> paths = JavaHomeFinder.suggestHomePaths(true);
-      for (String path : paths) {
-        if (JdkUtil.checkForJdk(path)) {
-          JdkVersionDetector.JdkVersionInfo jdkVersionInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(path);
-          if (jdkVersionInfo == null) continue;
-          if (GradleJvmSupportMatriciesKt.isSupported(baseVersion, jdkVersionInfo.version)) {
-            return path;
-          }
-        }
-      }
-      fail("Cannot find JDK for Gradle, checked paths: " + paths);
-      return null;
-    }
-    else {
-      return IdeaTestUtil.requireRealJdkHome();
-    }
+    return findJdkPath();
   }
 
-  private String requireWslJdkHome(WSLDistribution distribution) {
+  private static String requireWslJdkHome(@NotNull WSLDistribution distribution) {
     String jdkPath = System.getProperty("wsl.jdk.path");
     if (jdkPath == null) {
       jdkPath = "/usr/lib/jvm/java-11-openjdk-amd64";
     }
     return distribution.getWindowsPath(jdkPath);
+  }
+
+  public static @NotNull String requireJdkHome(@NotNull GradleVersion gradleVersion) {
+    JavaVersion javaRuntimeVersion = JavaVersion.current();
+    if (GradleJvmSupportMatrices.isSupported(gradleVersion, javaRuntimeVersion)) {
+      return IdeaTestUtil.requireRealJdkHome();
+    }
+    // fix exception of FJP at JavaHomeFinder.suggestHomePaths => ... => EnvironmentUtil.getEnvironmentMap => CompletableFuture.<clinit>
+    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
+    List<String> paths = JavaHomeFinder.suggestHomePaths(true);
+    for (String path : paths) {
+      if (JdkUtil.checkForJdk(path)) {
+        JdkVersionDetector.JdkVersionInfo jdkVersionInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(path);
+        if (jdkVersionInfo == null) continue;
+        if (GradleJvmSupportMatrices.isSupported(gradleVersion, jdkVersionInfo.version)) {
+          return path;
+        }
+      }
+    }
+    fail("Cannot find JDK for Gradle " + gradleVersion.getVersion() + ", checked paths: " + paths);
+    return null;
+  }
+
+  public String findJdkPath() {
+    return requireJdkHome(getCurrentGradleVersion());
   }
 
   protected void collectAllowedRoots(final List<String> roots, PathAssembler.LocalDistribution distribution) {
@@ -327,7 +337,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     super.importProject(config, skipIndexing);
   }
 
-  protected void importProject(@NonNls @Language("Groovy") String config) throws IOException {
+  public void importProject(@NonNls @Language("Groovy") String config) throws IOException {
     importProject(config, null);
   }
 
@@ -336,8 +346,10 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
       .addPrefix(MAVEN_REPOSITORY_PATCH_PLACE, "");
   }
 
-  protected @NotNull String script(@NotNull Consumer<TestGradleBuildScriptBuilder> configure) {
-    return TestGradleBuildScriptBuilder.Companion.buildscript(this, configure);
+  public @NotNull String script(@NotNull Consumer<TestGradleBuildScriptBuilder> configure) {
+    var builder = createBuildScriptBuilder();
+    configure.accept(builder);
+    return builder.generate();
   }
 
   protected @NotNull String getJUnitTestAnnotationClass() {

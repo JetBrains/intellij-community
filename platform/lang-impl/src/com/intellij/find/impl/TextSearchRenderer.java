@@ -2,13 +2,10 @@
 package com.intellij.find.impl;
 
 import com.intellij.find.FindBundle;
-import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.icons.AllIcons;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.TextChunk;
-import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,14 +16,12 @@ import javax.accessibility.AccessibleStateSet;
 import javax.swing.*;
 import java.awt.*;
 
-class TextSearchRenderer extends JPanel implements ListCellRenderer<UsageInfo2UsageAdapter> {
-  private final ColoredListCellRenderer<UsageInfo2UsageAdapter> myUsageRenderer = new ColoredListCellRenderer<>() {
+class TextSearchRenderer extends JPanel implements ListCellRenderer<SearchEverywhereItem> {
+
+  private final ColoredListCellRenderer<SearchEverywhereItem> myUsageRenderer = new ColoredListCellRenderer<>() {
     @Override
-    protected void customizeCellRenderer(@NotNull JList<? extends UsageInfo2UsageAdapter> list,
-                                         UsageInfo2UsageAdapter value, int index, boolean selected, boolean hasFocus) {
-      if (!value.isValid()) {
-        myUsageRenderer.append(" " + UsageViewBundle.message("node.invalid") + " ", SimpleTextAttributes.ERROR_ATTRIBUTES);
-      }
+    protected void customizeCellRenderer(@NotNull JList<? extends SearchEverywhereItem> list, SearchEverywhereItem value,
+                                         int index, boolean selected, boolean hasFocus) {
       TextChunk[] text = value.getPresentation().getText();
 
       // skip line number / file info
@@ -34,6 +29,10 @@ class TextSearchRenderer extends JPanel implements ListCellRenderer<UsageInfo2Us
         TextChunk textChunk = text[i];
         myUsageRenderer.append(textChunk.getText(), getAttributes(textChunk, selected));
       }
+
+      myUsageRenderer.setIcon(AllIcons.Nodes.TextArea);
+      //noinspection UseDPIAwareInsets
+      myUsageRenderer.setIpad(new Insets(0, 0, 0, getIpad().right));
       setBorder(null);
     }
 
@@ -48,24 +47,23 @@ class TextSearchRenderer extends JPanel implements ListCellRenderer<UsageInfo2Us
     }
   };
 
-  private final ColoredListCellRenderer<UsageInfo2UsageAdapter> myFileAndLineNumber;
+  private final ColoredListCellRenderer<SearchEverywhereItem> myFileAndLineNumber = new FileAndLineTextRenderer();
 
-  TextSearchRenderer(@NotNull GlobalSearchScope scope) {
+  TextSearchRenderer() {
     setLayout(new BorderLayout());
-    myFileAndLineNumber = new FileAndLineTextRenderer(scope);
     add(myUsageRenderer, BorderLayout.CENTER);
     add(myFileAndLineNumber, BorderLayout.EAST);
     setBorder(JBUI.Borders.empty(2, 2, 2, 0));
   }
 
   @Override
-  public Component getListCellRendererComponent(JList<? extends UsageInfo2UsageAdapter> list,
-                                                UsageInfo2UsageAdapter value, int index, boolean isSelected, boolean cellHasFocus) {
+  public Component getListCellRendererComponent(JList<? extends SearchEverywhereItem> list,
+                                                SearchEverywhereItem value, int index, boolean isSelected, boolean cellHasFocus) {
     myUsageRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     myFileAndLineNumber.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     setBackground(myUsageRenderer.getBackground());
     if (!isSelected) {
-      Color color = VfsPresentationUtil.getFileBackgroundColor(value.getUsageInfo().getProject(), value.getFile());
+      Color color = value.getPresentation().getBackgroundColor();
       setBackground(color);
       myUsageRenderer.setBackground(color);
       myFileAndLineNumber.setBackground(color);
@@ -114,4 +112,3 @@ class TextSearchRenderer extends JPanel implements ListCellRenderer<UsageInfo2Us
     }
   }
 }
-

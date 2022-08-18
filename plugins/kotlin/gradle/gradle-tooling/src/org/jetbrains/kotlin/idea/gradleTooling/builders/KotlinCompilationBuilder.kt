@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.gradleTooling.builders
 
 import org.gradle.api.Task
@@ -37,10 +37,21 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
             .flatMap { sourceSet -> importingContext.resolveAllDependsOnSourceSets(sourceSet) }
             .union(kotlinSourceSets)
 
-        val cachedArgsInfo = if (compileKotlinTask.isCompilerArgumentAware)
+        val cachedArgsInfo = if (compileKotlinTask.isCompilerArgumentAware
+            //TODO hotfix for KTIJ-21807.
+            // Remove after proper implementation of org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile#setupCompilerArgs
+            && !compileKotlinTask.isKotlinNativeCompileTask //TODO hotfix for KTIJ-21807. Replace after
+        )
             buildCachedArgsInfo(compileKotlinTask, importingContext.compilerArgumentsCacheMapper)
         else
             buildSerializedArgsInfo(compileKotlinTask, importingContext.compilerArgumentsCacheMapper, logger)
+
+        val associateCompilations = origin.associateCompilations.mapNotNull { associateCompilation ->
+            KotlinCompilationCoordinatesImpl(
+                targetName = associateCompilation.target?.targetName ?: return@mapNotNull null,
+                compilationName = associateCompilation.compilationName
+            )
+        }
 
         @Suppress("DEPRECATION_ERROR")
         return KotlinCompilationImpl(
@@ -53,7 +64,8 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
             dependencyClasspath = emptyArray(),
             cachedArgsInfo = cachedArgsInfo,
             kotlinTaskProperties = kotlinTaskProperties,
-            nativeExtensions = nativeExtensions
+            nativeExtensions = nativeExtensions,
+            associateCompilations = associateCompilations.toSet()
         )
     }
 
@@ -71,6 +83,7 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
         }
 
         private const val COMPILER_ARGUMENT_AWARE_CLASS = "org.jetbrains.kotlin.gradle.internal.CompilerArgumentAware"
+        private const val KOTLIN_NATIVE_COMPILE_CLASS = "org.jetbrains.kotlin.gradle.tasks.AbstractKotlinNativeCompile"
 
         private fun buildCompilationDependencies(
             importingContext: MultiplatformModelImportingContext,
@@ -98,6 +111,8 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
 
         private val Task.isCompilerArgumentAware: Boolean
             get() = javaClass.classLoader.loadClassOrNull(COMPILER_ARGUMENT_AWARE_CLASS)?.isAssignableFrom(javaClass) ?: false
+        private val Task.isKotlinNativeCompileTask: Boolean
+            get() = javaClass.classLoader.loadClassOrNull(KOTLIN_NATIVE_COMPILE_CLASS)?.isAssignableFrom(javaClass) ?: false
 
     }
 }

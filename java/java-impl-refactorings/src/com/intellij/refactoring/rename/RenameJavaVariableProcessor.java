@@ -298,7 +298,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
 
     LOG.assertTrue(scopeElement != null);
     scopeElement.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         if (!expression.isQualified()) {
           PsiElement resolved = expression.resolve();

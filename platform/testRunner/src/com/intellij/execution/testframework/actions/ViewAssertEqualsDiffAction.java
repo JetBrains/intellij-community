@@ -20,8 +20,13 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeViewAction, DumbAware, UpdateInBackground {
+public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeViewAction, DumbAware {
   @NonNls public static final String ACTION_ID = "openAssertEqualsDiff";
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {

@@ -34,7 +34,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
         compileOnly 'org.projectlombok:lombok:1.18.8'
         annotationProcessor 'org.projectlombok:lombok:1.18.8'
       }
-    """.trimIndent()).generate());
+    """.trimIndent()).generate())
 
     val config = CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl
     val moduleProcessorProfiles = config.moduleProcessorProfiles
@@ -73,7 +73,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
         compileOnly 'org.projectlombok:lombok:1.18.8'
         annotationProcessor 'org.projectlombok:lombok:1.18.8'
       }
-    """.trimIndent()).generate());
+    """.trimIndent()).generate())
 
     val config = CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl
     val moduleProcessorProfiles = config.moduleProcessorProfiles
@@ -94,7 +94,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
         compileOnly 'com.google.dagger:dagger:2.24'
         annotationProcessor 'com.google.dagger:dagger-compiler:2.24'
       }
-    """.trimIndent()).generate());
+    """.trimIndent()).generate())
 
     val modifiedProfiles = config.moduleProcessorProfiles
 
@@ -127,7 +127,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
         compileOnly 'org.projectlombok:lombok:1.18.8'
         annotationProcessor 'org.projectlombok:lombok:1.18.8'
       }
-    """.trimIndent()).generate());
+    """.trimIndent()).generate())
 
     val config = CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl
     val moduleProcessorProfiles = config.moduleProcessorProfiles
@@ -168,7 +168,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
                 annotationProcessor 'org.projectlombok:lombok:1.18.8'
               }
       }
-    """.trimIndent()).generate());
+    """.trimIndent()).generate())
 
     val config = CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl
     val moduleProcessorProfiles = config.moduleProcessorProfiles
@@ -192,11 +192,11 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
     // default location for processor output when building by IDEA
     val ideaGeneratedDir = "generated"
     createProjectSubFile("src/main/$ideaGeneratedDir/Generated.java",
-                         "public class Generated {}");
+                         "public class Generated {}")
     // default location for processor output when building by Gradle
     val gradleGeneratedDir = "build/generated/sources/annotationProcessor/java/main"
     createProjectSubFile("$gradleGeneratedDir/Generated.java",
-                         "public class Generated {}");
+                         "public class Generated {}")
 
     val config = createBuildScriptBuilder()
       .withJavaPlugin()
@@ -209,14 +209,14 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
     """.trimIndent()).generate()
 
     // import with default settings: delegate build to gradle
-    importProject(config);
+    importProject(config)
     assertSources("project.main", gradleGeneratedDir)
     assertGeneratedSources("project.main", gradleGeneratedDir)
 
-    currentExternalProjectSettings.delegatedBuild = false;
+    currentExternalProjectSettings.delegatedBuild = false
 
     // import with build by intellij idea
-    importProject(config);
+    importProject(config)
     assertSources("project.main", ideaGeneratedDir)
     assertGeneratedSources("project.main", ideaGeneratedDir)
 
@@ -258,7 +258,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
             |        annotationProcessor 'com.google.dagger:dagger-compiler:2.24'
             |    }
             |  }
-    """.trimMargin()).generate());
+    """.trimMargin()).generate())
 
     val config = CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl
     val moduleProcessorProfiles = config.moduleProcessorProfiles
@@ -294,7 +294,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
             |        annotationProcessor 'org.projectlombok:lombok:1.18.8'
             |      }
             |  }
-    """.trimMargin()).generate());
+    """.trimMargin()).generate())
 
     then((CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl)
            .moduleProcessorProfiles)
@@ -314,7 +314,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
             |        annotationProcessor 'org.projectlombok:lombok:1.18.8'
             |      }
             |  }
-    """.trimMargin()).generate());
+    """.trimMargin()).generate())
 
     then((CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl)
            .moduleProcessorProfiles)
@@ -337,7 +337,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
       dependencies {
         annotationProcessor 'junit:junit:4.12' // this is not an annotation processor, but has transitive deps
       }
-    """.trimIndent()).generate());
+    """.trimIndent()).generate())
 
     then((CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl)
            .moduleProcessorProfiles[0]
@@ -362,7 +362,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
             compileOnly("org.immutables:value-annotations:2.7.1")
             annotationProcessor("org.immutables:value:2.7.1")
           }
-        """.trimIndent()).generate());
+        """.trimIndent()).generate())
 
     val config = CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl
     val moduleProcessorProfiles = config.moduleProcessorProfiles
@@ -402,7 +402,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
       compileJava {
         options.annotationProcessorPath = configurations.apt
       }
-    """.trimIndent()).generate());
+    """.trimIndent()).generate())
 
     val config = CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl
     val moduleProcessorProfiles = config.moduleProcessorProfiles
@@ -438,7 +438,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
         .withJavaLibraryPlugin()
         .addCompileOnlyDependency("org.projectlombok:lombok:1.18.8")
         .addDependency("annotationProcessor", "org.projectlombok:lombok:1.18.8")
-        .generate());
+        .generate())
 
     val annotationProcessingConfiguration = config.getAnnotationProcessingConfiguration(nonGradleModule)
 

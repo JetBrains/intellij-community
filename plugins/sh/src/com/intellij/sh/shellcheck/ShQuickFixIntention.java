@@ -15,7 +15,7 @@ import java.util.Comparator;
 import java.util.stream.Stream;
 
 public class ShQuickFixIntention implements IntentionAction {
-  private final ShShellcheckExternalAnnotator.Fix fix;
+  @SafeFieldForPreview private final ShShellcheckExternalAnnotator.Fix fix;
   private final long timestamp;
   private final @IntentionName String message;
 

@@ -11,3 +11,5 @@ public class ServerEx() : Server(foo = "!") {
     private val foo = "f"
     override fun processRequest() = "foo" + foo
 }
+
+// FIR_COMPARISON

@@ -15,6 +15,7 @@ import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -41,13 +42,13 @@ internal class RecordStateStatisticsEventLogAction(private val recorderId: Strin
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    if (!checkLogRecordingEnabled(project, DEFAULT_RECORDER)) return
+    if (!checkLogRecordingEnabled(project, recorderId)) return
 
     val message = StatisticsBundle.message("stats.collecting.feature.usages.in.event.log")
     ProgressManager.getInstance().run(object : Backgroundable(project, message, false) {
       override fun run(indicator: ProgressIndicator) {
         rollOver()
-        val state = FusStatesRecorder.recordStateAndWait(project, indicator)
+        val state = FusStatesRecorder.recordStateAndWait(project, recorderId)
         if (state == null) {
           StatisticsDevKitUtil.showNotification(project, NotificationType.ERROR, StatisticsBundle.message("stats.failed.recording.state"))
         }
@@ -62,7 +63,8 @@ internal class RecordStateStatisticsEventLogAction(private val recorderId: Strin
     val logFile = getConfig().getActiveLogFile()
     val virtualFile = if (logFile != null) LocalFileSystem.getInstance().findFileByIoFile(logFile.file) else null
     ApplicationManager.getApplication().invokeLater {
-      val notification = Notification(STATISTICS_NOTIFICATION_GROUP_ID, "Finished collecting and recording events", NotificationType.INFORMATION)
+      val notification = Notification(STATISTICS_NOTIFICATION_GROUP_ID, "Finished collecting and recording events",
+                                      NotificationType.INFORMATION)
       if (virtualFile != null) {
         notification.addAction(NotificationAction.createSimple(
           StatisticsBundle.message("stats.open.log.notification.action"),
@@ -72,10 +74,13 @@ internal class RecordStateStatisticsEventLogAction(private val recorderId: Strin
     }
   }
 
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun update(e: AnActionEvent) {
     super.update(e)
-    val isTestMode = recorderId == DEFAULT_RECORDER && StatisticsRecorderUtil.isTestModeEnabled(DEFAULT_RECORDER)
-    e.presentation.isEnabled = isTestMode && !FusStatesRecorder.isRecordingInProgress()
+    e.presentation.isEnabled = e.project != null
+                               && StatisticsRecorderUtil.isTestModeEnabled(recorderId)
+                               && !FusStatesRecorder.isRecordingInProgress()
   }
 
   companion object {

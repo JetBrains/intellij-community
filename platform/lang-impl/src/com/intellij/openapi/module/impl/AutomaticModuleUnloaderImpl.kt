@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl
 
 import com.intellij.ide.SaveAndSyncHandler
@@ -14,10 +14,11 @@ import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.roots.ui.configuration.ConfigureUnloadedModulesDialog
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.xmlb.annotations.XCollection
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleDependencyItem
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
 import com.intellij.xml.util.XmlStringUtil
+import kotlinx.coroutines.launch
 
 /**
  * If some modules were unloaded and new modules appears after loading project configuration, automatically unloads those which
@@ -26,12 +27,17 @@ import com.intellij.xml.util.XmlStringUtil
 @State(name = "AutomaticModuleUnloader", storages = [(Storage(StoragePathMacros.WORKSPACE_FILE))])
 internal class AutomaticModuleUnloaderImpl(private val project: Project) : SimplePersistentStateComponent<LoadedModulesListStorage>(LoadedModulesListStorage()),
                                                                            AutomaticModuleUnloader {
-  override fun processNewModules(currentModules: Set<String>, storage: WorkspaceEntityStorage) {
-    if (currentModules.isEmpty()) return
+  override fun processNewModules(currentModules: Set<String>, storage: EntityStorage) {
+    if (currentModules.isEmpty()) {
+      return
+    }
 
-    val oldLoaded = state.modules.toSet()
-    //if we don't store list of loaded modules most probably it means that the project wasn't opened on this machine, so let's not unload all modules
-    if (oldLoaded.isEmpty()) return
+    val oldLoaded = state.modules.toHashSet()
+    // if we don't store list of loaded modules most probably it means that the project wasn't opened on this machine,
+    // so let's not unload all modules
+    if (oldLoaded.isEmpty()) {
+      return
+    }
 
     val unloadedStorage = UnloadedModulesListStorage.getInstance(project)
     val unloadedModules = unloadedStorage.unloadedModuleNames
@@ -61,7 +67,7 @@ internal class AutomaticModuleUnloaderImpl(private val project: Project) : Simpl
     unloadedStorage.addUnloadedModuleNames(toUnload)
   }
 
-  private fun processTransitiveDependencies(moduleId: ModuleId, storage: WorkspaceEntityStorage, explicitlyUnloaded: Set<String>,
+  private fun processTransitiveDependencies(moduleId: ModuleId, storage: EntityStorage, explicitlyUnloaded: Set<String>,
                                             result: MutableSet<String>) {
     if (moduleId.name in explicitlyUnloaded) return
     val moduleEntity = storage.resolve(moduleId) ?: return
@@ -114,7 +120,9 @@ internal class AutomaticModuleUnloaderImpl(private val project: Project) : Simpl
       val moduleManager = ModuleManager.getInstance(project)
       moduleManager.unloadedModuleDescriptions.mapTo(unloaded) { it.name }
       action(unloaded)
-      moduleManager.setUnloadedModules(unloaded)
+      project.coroutineScope.launch {
+        moduleManager.setUnloadedModules(unloaded)
+      }
       notification.expire()
     }
   }

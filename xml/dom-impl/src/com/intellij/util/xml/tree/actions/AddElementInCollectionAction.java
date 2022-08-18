@@ -74,6 +74,7 @@ public class AddElementInCollectionAction extends AddDomElementAction {
   @Override
   protected DomCollectionChildDescription @NotNull [] getDomCollectionChildDescriptions(final AnActionEvent e) {
     final DomModelTreeView view = getTreeView(e);
+    if (view == null) return DomCollectionChildDescription.EMPTY_ARRAY;
 
     SimpleNode node = view.getTree().getSelectedNode();
     if (node instanceof BaseDomElementNode) {

@@ -140,7 +140,7 @@ public final class EnvironmentVariablesData {
     if (passParentEnvs && envs.isEmpty() && environmentFile == null) {
       return DEFAULT;
     }
-    return new EnvironmentVariablesData(envs, passParentEnvs, null);
+    return new EnvironmentVariablesData(envs, passParentEnvs, environmentFile);
   }
 
   public @NotNull EnvironmentVariablesData with(@NotNull Map<String, String> envs) {

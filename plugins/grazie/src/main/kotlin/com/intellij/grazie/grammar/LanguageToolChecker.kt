@@ -34,20 +34,20 @@ open class LanguageToolChecker : TextChecker() {
     return grammarRules(LangTool.getTool(lang), lang)
   }
 
-  override fun check(extracted: TextContent): List<TextProblem> {
+  override fun check(extracted: TextContent): List<Problem> {
     return CachedValuesManager.getManager(extracted.containingFile.project).getCachedValue(extracted) {
       CachedValueProvider.Result.create(doCheck(extracted), extracted.containingFile)
     }
   }
 
-  private fun doCheck(extracted: TextContent): List<TextProblem> {
+  private fun doCheck(extracted: TextContent): List<Problem> {
     val str = extracted.toString()
     if (str.isBlank()) return emptyList()
 
     val lang = LangDetector.getLang(str) ?: return emptyList()
 
     return try {
-      ClassLoaderUtil.computeWithClassLoader<List<TextProblem>, Throwable>(GraziePlugin.classLoader) {
+      ClassLoaderUtil.computeWithClassLoader<List<Problem>, Throwable>(GraziePlugin.classLoader) {
         val tool = LangTool.getTool(lang)
         val sentences = tool.sentenceTokenize(str)
         if (sentences.any { it.length > 1000 }) emptyList()
@@ -86,7 +86,7 @@ open class LanguageToolChecker : TextChecker() {
     return TextRange(start, end)
   }
 
-  private class Problem(val match: RuleMatch, lang: Lang, text: TextContent, val testDescription: Boolean)
+  class Problem(val match: RuleMatch, lang: Lang, text: TextContent, val testDescription: Boolean)
     : TextProblem(LanguageToolRule(lang, match.rule), text, TextRange(match.fromPos, match.toPos)) {
 
     override fun getShortMessage(): String =
@@ -98,8 +98,8 @@ open class LanguageToolChecker : TextChecker() {
 
     override fun getTooltipTemplate(): String = toTooltipTemplate(match)
 
-    override fun getReplacementRange(): TextRange = highlightRanges[0]
-    override fun getCorrections(): List<String> = match.suggestedReplacements
+    override fun getSuggestions(): List<Suggestion> = match.suggestedReplacements.map { Suggestion.replace(highlightRanges[0], it) }
+
     override fun getPatternRange() = TextRange(match.patternFromPos, match.patternToPos)
 
     override fun fitsGroup(group: RuleGroup): Boolean {
@@ -130,6 +130,8 @@ open class LanguageToolChecker : TextChecker() {
     private val logger = LoggerFactory.getLogger(LanguageToolChecker::class.java)
     private val interner = Interner.createWeakInterner<String>()
     private val sentenceSeparationRules = setOf("LC_AFTER_PERIOD", "PUNT_GEEN_HL", "KLEIN_NACH_PUNKT")
+    private val openClosedRangeStart = Regex("[\\[(].+?(\\.\\.|:|,).+[])]")
+    private val openClosedRangeEnd = Regex(".*" + openClosedRangeStart.pattern)
 
     internal fun grammarRules(tool: JLanguageTool, lang: Lang): List<LanguageToolRule> {
       return tool.allRules.asSequence()
@@ -151,17 +153,17 @@ open class LanguageToolChecker : TextChecker() {
     }
 
     private fun isKnownLTBug(match: RuleMatch, text: TextContent): Boolean {
-      if (match.rule is GenericUnpairedBracketsRule && match.fromPos > 0 &&
-          (text.startsWith("\")", match.fromPos - 1) || text.subSequence(0, match.fromPos).contains("(\""))) {
-        return true //https://github.com/languagetool-org/languagetool/issues/5269
+      if (match.rule is GenericUnpairedBracketsRule && match.fromPos > 0) {
+        if (text.startsWith("\")", match.fromPos - 1) || text.subSequence(0, match.fromPos).contains("(\"")) {
+          return true //https://github.com/languagetool-org/languagetool/issues/5269
+        }
+        if (couldBeOpenClosedRange(text, match.fromPos)) {
+          return true
+        }
       }
 
       if (match.rule.id == "ARTICLE_ADJECTIVE_OF" && text.substring(match.fromPos, match.toPos).equals("iterable", ignoreCase = true)) {
         return true // https://github.com/languagetool-org/languagetool/issues/5270
-      }
-
-      if (match.rule.id == "THIS_NNS_VB" && text.subSequence(match.toPos, text.length).matches(Regex("\\s+reverts\\s.*"))) {
-        return true // https://github.com/languagetool-org/languagetool/issues/5455
       }
 
       if (match.rule.id.endsWith("DOUBLE_PUNCTUATION") &&
@@ -170,6 +172,13 @@ open class LanguageToolChecker : TextChecker() {
       }
 
       return false
+    }
+
+    // https://github.com/languagetool-org/languagetool/issues/6566
+    private fun couldBeOpenClosedRange(text: TextContent, index: Int): Boolean {
+      val unpaired = text[index]
+      return "([".contains(unpaired) && openClosedRangeStart.matchesAt(text, index) ||
+             ")]".contains(unpaired) && openClosedRangeEnd.matches(text.subSequence(0, index + 1))
     }
 
     // https://github.com/languagetool-org/languagetool/issues/5230

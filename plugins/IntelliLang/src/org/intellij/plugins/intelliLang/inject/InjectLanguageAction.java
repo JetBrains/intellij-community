@@ -273,7 +273,7 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
                  @NotNull TextRange range,
                  @NotNull SmartPsiElementPointer<PsiLanguageInjectionHost> pointer,
                  @NotNull @Nls String text,
-                 @NotNull Processor<PsiLanguageInjectionHost> data);
+                 @NotNull Processor<? super PsiLanguageInjectionHost> data);
   }
 
 

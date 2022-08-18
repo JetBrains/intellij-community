@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl
 
 import com.intellij.facet.*
@@ -12,6 +12,7 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge
 import org.jetbrains.jps.model.serialization.facet.FacetState
@@ -42,8 +43,7 @@ class FacetTypeRegistryImpl : FacetTypeRegistry() {
       val model = FacetManager.getInstance(module).createModifiableModel()
       val invalidFacets = model.getFacetsByType(InvalidFacetType.TYPE_ID).filter { it.configuration.facetState.facetType == facetType.stringId }
       for (invalidFacet in invalidFacets) {
-        val newFacet = FacetManagerBridge.createFacetFromStateRaw(module, facetType, invalidFacet.configuration.facetState,
-                                                                       invalidFacet.underlyingFacet)
+        val newFacet = FacetUtil.createFacetFromStateRawJ(module, facetType, invalidFacet)
         model.replaceFacet(invalidFacet, newFacet)
         for (subFacet in invalidFacet.configuration.facetState.subFacets) {
           model.addFacet(FacetManagerBase.createInvalidFacet(module, subFacet, newFacet, invalidFacet.configuration.errorMessage, false, false))
@@ -85,7 +85,7 @@ class FacetTypeRegistryImpl : FacetTypeRegistry() {
     if (modulesWithFacets.isNotEmpty()) {
       /* this is needed to recompute RootIndex, otherwise its DirectoryInfoImpl instances will keep references to SourceFolderBridges,
          which will keep references to Facet instances from unloaded plugin via WorkspaceEntityStorage making it impossible to unload plugins without restart */
-      ProjectRootManagerEx.getInstanceEx(project).makeRootsChange({}, false, true)
+      ProjectRootManagerEx.getInstanceEx(project).makeRootsChange({}, RootsChangeRescanningInfo.NO_RESCAN_NEEDED)
     }
   }
 

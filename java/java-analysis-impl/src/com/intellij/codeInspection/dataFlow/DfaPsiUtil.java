@@ -221,7 +221,7 @@ public final class DfaPsiUtil {
 
   private static boolean shouldIgnoreAnnotation(PsiAnnotation annotation) {
     PsiClass containingClass = ClassUtils.getContainingClass(annotation);
-    if (containingClass == null) return false;
+    if (containingClass == null || !containingClass.isValid()) return false;
     String qualifiedName = containingClass.getQualifiedName();
     // We deliberately ignore nullability annotations on Guava functional interfaces to avoid noise warnings
     // See IDEA-170548 for details
@@ -279,16 +279,21 @@ public final class DfaPsiUtil {
     return Nullability.UNKNOWN;
   }
 
+  private static final CallMatcher OPTIONAL_FUNCTIONS =
+    CallMatcher.instanceCall(JAVA_UTIL_OPTIONAL, "map", "filter", "ifPresent", "flatMap", "ifPresentOrElse");
+  private static final CallMatcher MAP_COMPUTE =
+    CallMatcher.instanceCall(JAVA_UTIL_MAP, "compute").parameterTypes("K", JAVA_UTIL_FUNCTION_BI_FUNCTION);
+
   @NotNull
   private static Nullability getLambdaParameterNullability(@NotNull PsiMethod method, int parameterIndex, int lambdaParameterIndex) {
-    PsiClass type = method.getContainingClass();
-    if(type != null) {
-      if(JAVA_UTIL_OPTIONAL.equals(type.getQualifiedName())) {
-        String methodName = method.getName();
-        if((methodName.equals("map") || methodName.equals("filter") || methodName.equals("ifPresent") || methodName.equals("flatMap"))
-          && parameterIndex == 0 && lambdaParameterIndex == 0) {
-          return Nullability.NOT_NULL;
-        }
+    if (OPTIONAL_FUNCTIONS.methodMatches(method)) {
+      if (parameterIndex == 0 && lambdaParameterIndex == 0) {
+        return Nullability.NOT_NULL;
+      }
+    }
+    else if (MAP_COMPUTE.methodMatches(method)) {
+      if (parameterIndex == 1 && lambdaParameterIndex == 1) {
+        return Nullability.NULLABLE;
       }
     }
     return Nullability.UNKNOWN;
@@ -445,7 +450,7 @@ public final class DfaPsiUtil {
         final MultiMap<PsiField, PsiExpression> result = new MultiMap<>();
         JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
           @Override
-          public void visitAssignmentExpression(PsiAssignmentExpression assignment) {
+          public void visitAssignmentExpression(@NotNull PsiAssignmentExpression assignment) {
             super.visitAssignmentExpression(assignment);
             PsiExpression lExpression = assignment.getLExpression();
             PsiExpression rExpression = assignment.getRExpression();

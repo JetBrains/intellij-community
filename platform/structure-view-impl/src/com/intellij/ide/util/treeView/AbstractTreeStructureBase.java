@@ -1,10 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.SettingsProvider;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.openapi.actionSystem.CompositeDataProvider;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -20,8 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.SLOW_DATA_PROVIDERS;
 
 public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
   private static final Logger LOG = Logger.getInstance(AbstractTreeStructureBase.class);
@@ -81,28 +81,23 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
   }
 
   @Override
-  @NotNull
-  public NodeDescriptor<?> createDescriptor(@NotNull final Object element, final NodeDescriptor parentDescriptor) {
+  public @NotNull NodeDescriptor<?> createDescriptor(final @NotNull Object element, final NodeDescriptor parentDescriptor) {
     return (NodeDescriptor<?>)element;
   }
 
-  @Nullable
-  public abstract List<TreeStructureProvider> getProviders();
+  public abstract @Nullable List<TreeStructureProvider> getProviders();
 
-  @SuppressWarnings("unchecked")
-  @Nullable
-  public Object getDataFromProviders(@NotNull List<AbstractTreeNode<?>> selectedNodes, @NotNull String dataId) {
+  public @Nullable Object getDataFromProviders(@NotNull List<AbstractTreeNode<?>> selectedNodes, @NotNull String dataId) {
     List<TreeStructureProvider> providers = getProvidersDumbAware();
     if (providers.isEmpty()) {
       return null;
     }
-    if (SLOW_DATA_PROVIDERS.is(dataId)) {
-      return ContainerUtil.nullize(ContainerUtil.flattenIterables(ContainerUtil.mapNotNull(
-        providers, provider -> (Iterable<DataProvider>)provider.getData(selectedNodes, dataId)
-      )));
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      List<DataProvider> bgtProviders = ContainerUtil.mapNotNull(providers, o -> (DataProvider)o.getData(selectedNodes, dataId));
+      return bgtProviders.isEmpty() ? null : CompositeDataProvider.compose(bgtProviders);
     }
     for (TreeStructureProvider treeStructureProvider : providers) {
-      final Object fromProvider = treeStructureProvider.getData(selectedNodes, dataId);
+      Object fromProvider = treeStructureProvider.getData(selectedNodes, dataId);
       if (fromProvider != null) {
         return fromProvider;
       }
@@ -110,8 +105,7 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
     return null;
   }
 
-  @NotNull
-  private List<TreeStructureProvider> getProvidersDumbAware() {
+  private @NotNull List<TreeStructureProvider> getProvidersDumbAware() {
     if (myProject == null) {
       return Collections.emptyList();
     }

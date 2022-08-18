@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests.targets.java
 
 import com.intellij.execution.PsiLocation
@@ -205,7 +205,7 @@ abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTarg
       conf.persistentData.setMainClass(alsoTestClass)
     }
 
-    @Suppress("SpellCheckingInspection", "GrazieInspection")
+    @Suppress("SpellCheckingInspection")
     doTestJUnitRunConfiguration(runConfiguration = runConfiguration,
                                 expectedTestsResultExported = "<testrun name=\"JUnit tests Run Configuration\">\n" +
                                                               "  <count name=\"total\" value=\"1\" />\n" +
@@ -233,7 +233,7 @@ abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTarg
       conf.persistentData.dirName = "$testAppPath/tests"
     }
 
-    @Suppress("SpellCheckingInspection", "GrazieInspection")
+    @Suppress("SpellCheckingInspection")
     doTestJUnitRunConfiguration(runConfiguration = runConfiguration,
                                 expectedTestsResultExported = "<testrun name=\"JUnit tests Run Configuration\">\n" +
                                                               "  <count name=\"total\" value=\"2\" />\n" +
@@ -269,7 +269,7 @@ abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTarg
       conf.persistentData.setPatterns(LinkedHashSet(listOf("^So.*")))
     }
 
-    @Suppress("SpellCheckingInspection", "GrazieInspection")
+    @Suppress("SpellCheckingInspection")
     doTestJUnitRunConfiguration(runConfiguration = runConfiguration,
                                 expectedTestsResultExported = "<testrun name=\"JUnit tests Run Configuration\">\n" +
                                                               "  <count name=\"total\" value=\"1\" />\n" +
@@ -314,7 +314,7 @@ abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTarg
       conf.persistentData.setTestMethod(PsiLocation.fromPsiElement(getTestClass("AlsoTest").findMethodsByName("testShouldFail", false)[0]))
     }
 
-    @Suppress("SpellCheckingInspection", "GrazieInspection")
+    @Suppress("SpellCheckingInspection")
     doTestJUnitRunConfiguration(runConfiguration = runConfiguration,
                                 expectedTestsResultExported = "<testrun name=\"JUnit tests Run Configuration\">\n" +
                                                               "  <count name=\"total\" value=\"1\" />\n" +
@@ -342,7 +342,7 @@ abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTarg
       conf.persistentData.tags = "selected"
     }
 
-    @Suppress("SpellCheckingInspection", "GrazieInspection")
+    @Suppress("SpellCheckingInspection")
     doTestJUnitRunConfiguration(runConfiguration = runConfiguration,
                                 expectedTestsResultExported = "<testrun name=\"JUnit tests Run Configuration\">\n" +
                                                               "  <count name=\"total\" value=\"1\" />\n" +
@@ -362,7 +362,7 @@ abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTarg
       conf.persistentData.setUniqueIds("[engine:junit-jupiter]/[class:SomeTest]")
     }
 
-    @Suppress("SpellCheckingInspection", "GrazieInspection")
+    @Suppress("SpellCheckingInspection")
     doTestJUnitRunConfiguration(runConfiguration = runConfiguration,
                                 expectedTestsResultExported = "<testrun name=\"JUnit tests Run Configuration\">\n" +
                                                               "  <count name=\"total\" value=\"1\" />\n" +

@@ -1,18 +1,19 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.ui
 
-import com.intellij.feedback.FEEDBACK_REPORT_ID_KEY
-import com.intellij.feedback.FeedbackRequestType
-import com.intellij.feedback.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
-import com.intellij.feedback.dialog.CommonFeedbackSystemInfoData
-import com.intellij.feedback.dialog.showFeedbackSystemInfoDialog
-import com.intellij.feedback.submitGeneralFeedback
+import com.intellij.feedback.common.FEEDBACK_REPORT_ID_KEY
+import com.intellij.feedback.common.FeedbackRequestType
+import com.intellij.feedback.common.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
+import com.intellij.feedback.common.dialog.CommonFeedbackSystemInfoData
+import com.intellij.feedback.common.dialog.showFeedbackSystemInfoDialog
+import com.intellij.feedback.common.submitGeneralFeedback
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -21,10 +22,14 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeBalloonLayoutImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.HyperlinkAdapter
 import com.intellij.ui.JBColor
+import com.intellij.ui.LicensingFacade
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
+import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.*
@@ -33,6 +38,7 @@ import kotlinx.serialization.json.*
 import org.jetbrains.annotations.Nls
 import training.FeaturesTrainerIcons
 import training.dsl.LessonUtil
+import training.lang.LangSupport
 import training.learn.LearnBundle
 import training.statistic.FeedbackEntryPlace
 import training.statistic.FeedbackLikenessAnswer
@@ -53,7 +59,15 @@ private const val FEEDBACK_CONTENT_WIDTH = 500
 private const val SUB_OFFSET = 20
 
 /** Increase the additional number when onboarding feedback format is changed */
-private const val FEEDBACK_JSON_VERSION = COMMON_FEEDBACK_SYSTEM_INFO_VERSION + 0
+private const val FEEDBACK_JSON_VERSION = COMMON_FEEDBACK_SYSTEM_INFO_VERSION + 1
+
+// Key for PropertiesComponent to check whether to show onboarding feedback notification or not
+fun getFeedbackProposedPropertyName(langSupport: LangSupport): String {
+  val ideName = langSupport.defaultProductName?.let {
+    if (it == "GoLand") "go" else it.lowercase()
+  } ?: error("Lang support should implement 'defaultProductName': $langSupport")
+  return "ift.$ideName.onboarding.feedback.proposed"
+}
 
 fun showOnboardingFeedbackNotification(project: Project?, onboardingFeedbackData: OnboardingFeedbackData) {
   onboardingFeedbackData.feedbackHasBeenProposed()
@@ -80,7 +94,7 @@ fun showOnboardingFeedbackNotification(project: Project?, onboardingFeedbackData
 fun showOnboardingLessonFeedbackForm(project: Project?,
                                      onboardingFeedbackData: OnboardingFeedbackData,
                                      openedViaNotification: Boolean): Boolean {
-  onboardingFeedbackData?.feedbackHasBeenProposed()
+  onboardingFeedbackData.feedbackHasBeenProposed()
   val saver = mutableListOf<JsonObjectBuilder.() -> Unit>()
 
   fun feedbackTextArea(fieldName: String, optionalText: @Nls String, width: Int, height: Int): JBScrollPane {
@@ -118,41 +132,52 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
                                              FEEDBACK_CONTENT_WIDTH - SUB_OFFSET, 65)
 
   val technicalIssuesPanel = FormBuilder.createFormBuilder().let { builder ->
-    builder.addComponent(feedbackOption("cannot_pass", LearnBundle.message("onboarding.feedback.option.cannot.pass.task")))
-    for ((id, label) in onboardingFeedbackData.possibleTechnicalIssues) {
-      builder.addComponent(feedbackOption(id, label))
-    }
     builder.addComponent(technicalIssuesArea)
-
     builder.panel
   }
   technicalIssuesPanel.isVisible = false
   technicalIssuesPanel.border = JBUI.Borders.emptyLeft(SUB_OFFSET)
 
   val experiencedUserOption = feedbackOption("experienced_user", LearnBundle.message("onboarding.feedback.option.experienced.user"))
-  val usefulPanel = FormBuilder.createFormBuilder()
-    .addComponent(experiencedUserOption)
-    .addComponent(feedbackOption("too_obvious", LearnBundle.message("onboarding.feedback.option.too.obvious")))
-    .panel
-  usefulPanel.isVisible = false
-  usefulPanel.border = JBUI.Borders.emptyLeft(SUB_OFFSET)
 
   val (votePanel, likenessResult) = createLikenessPanel()
   saver.add {
-    "like_vote" to likenessToString(likenessResult())
+    put("like_vote", likenessToString(likenessResult()))
   }
 
   val systemInfoData = CommonFeedbackSystemInfoData.getCurrentData()
 
-  val recentProjectsNumber = RecentProjectsManagerBase.instanceEx.getRecentPaths().size
+  val recentProjectsNumber = RecentProjectsManagerBase.getInstanceEx().getRecentPaths().size
   val actionsNumber = service<ActionsLocalSummary>().getActionsStats().keys.size
 
-  val agreement = createAgreementComponent {
-    showSystemData(project, systemInfoData, onboardingFeedbackData, recentProjectsNumber, actionsNumber)
+  val emailCheckBox = JBCheckBox(LearnBundle.message("onboarding.feedback.email.consent"))
+
+  val jLabel = JLabel(ApplicationBundle.message("feedback.form.email"))
+  jLabel.isEnabled = false
+  val emailTextField = JBTextField(LicensingFacade.INSTANCE?.getLicenseeEmail() ?: "")
+  emailTextField.disabledTextColor = UIUtil.getComboBoxDisabledForeground()
+  emailTextField.isEnabled = false
+
+  val emailLine = JPanel().also { panel ->
+    panel.isOpaque = false
+    panel.layout = BoxLayout(panel, BoxLayout.X_AXIS)
+    panel.add(jLabel)
+    panel.add(emailTextField)
   }
 
+  emailCheckBox.addItemListener {
+    emailCheckBox.isSelected.let {
+      jLabel.isEnabled = it
+      emailTextField.isEnabled = it
+    }
+  }
+
+  val agreement1 = createAgreementTextPane(LearnBundle.message("onboarding.feedback.user.agreement.info"), false) {
+    showSystemData(project, systemInfoData, onboardingFeedbackData, recentProjectsNumber, actionsNumber)
+  }
+  val agreement2 = createCollapsableAgreement()
+
   val technicalIssuesOption = feedbackOption("technical_issues", LearnBundle.message("onboarding.feedback.option.technical.issues"))
-  val unusefulOption = feedbackOption("useless", LearnBundle.message("onboarding.feedback.option.tour.is.useless"))
   val header = JLabel(LearnBundle.message("onboarding.feedback.option.form.header")).also {
     it.font = UISettings.getInstance().getFont(5).deriveFont(Font.BOLD)
     it.border = JBUI.Borders.empty(24 - UIUtil.DEFAULT_VGAP, 0, 20 - UIUtil.DEFAULT_VGAP, 0)
@@ -166,16 +191,16 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
     })
     .addComponent(technicalIssuesOption)
     .addComponent(technicalIssuesPanel)
-    .addComponent(feedbackOption("dislike_interactive", LearnBundle.message("onboarding.feedback.option.dislike.interactive")))
-    .addComponent(feedbackOption("too_restrictive", LearnBundle.message("onboarding.feedback.option.too.restrictive")))
-    .addComponent(unusefulOption)
-    .addComponent(usefulPanel)
+    .addComponent(feedbackOption("useless", LearnBundle.message("onboarding.feedback.option.tour.is.useless")))
     .addComponent(feedbackOption("very_long", LearnBundle.message("onboarding.feedback.option.too.many.steps")))
     .addComponent(JLabel(LearnBundle.message("onboarding.feedback.label.overall.experience")).also {
       it.border = JBUI.Borders.empty(20 - UIUtil.DEFAULT_VGAP, 0, 12 - UIUtil.DEFAULT_VGAP, 0)
     })
     .addComponent(freeForm)
-    .addComponent(agreement.also { it.border = JBUI.Borders.emptyTop(18 - UIUtil.DEFAULT_VGAP) })
+    .addComponent(agreement1.also { it.border = JBUI.Borders.emptyBottom(20 - UIUtil.DEFAULT_VGAP) })
+    .addComponent(emailCheckBox.also { it.border = JBUI.Borders.emptyBottom(6 - UIUtil.DEFAULT_VGAP) })
+    .addComponent(emailLine.also { it.border = JBUI.Borders.emptyBottom(14 - UIUtil.DEFAULT_VGAP) })
+    .addComponent(agreement2)
     .panel
 
   val dialog = object : DialogWrapper(project) {
@@ -192,15 +217,15 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
   dialog.isResizable = false
 
   installSubPanelLogic(technicalIssuesOption, technicalIssuesPanel, wholePanel, dialog)
-  installSubPanelLogic(unusefulOption, usefulPanel, wholePanel, dialog)
 
   val maySendFeedback = dialog.showAndGet()
   if (maySendFeedback) {
-    val jsonConverter = Json { }
+    val jsonConverter = Json
 
     val collectedData = buildJsonObject {
       put(FEEDBACK_REPORT_ID_KEY, onboardingFeedbackData.feedbackReportId)
       put("format_version", FEEDBACK_JSON_VERSION + onboardingFeedbackData.additionalFeedbackFormatVersion)
+      put("email", if (emailCheckBox.isSelected) emailTextField.text else "")
       for (function in saver) {
         function()
       }
@@ -282,8 +307,8 @@ private fun showSystemData(project: Project?,
 
 private fun createLikenessPanel(): Pair<NonOpaquePanel, () -> FeedbackLikenessAnswer> {
   val votePanel = NonOpaquePanel()
-  val likeIcon = getLikenessIcon(FeaturesTrainerIcons.Img.Like)
-  val dislikeIcon = getLikenessIcon(FeaturesTrainerIcons.Img.Dislike)
+  val likeIcon = getLikenessIcon(FeaturesTrainerIcons.Like)
+  val dislikeIcon = getLikenessIcon(FeaturesTrainerIcons.Dislike)
   votePanel.layout = BoxLayout(votePanel, BoxLayout.X_AXIS)
   val likeAnswer = FeedbackOption(likeIcon)
   votePanel.add(likeAnswer)
@@ -369,12 +394,28 @@ private class FeedbackOption(@NlsContexts.Label text: String?, icon: Icon?) : JB
   }
 }
 
-private fun createAgreementComponent(showSystemInfo: () -> Unit): JComponent {
-  val htmlText = LearnBundle.message("onboarding.feedback.user.agreement")
-  val jTextPane = JTextPane().apply {
+private fun createCollapsableAgreement(): JComponent {
+  val prefix = LearnBundle.message("onboarding.feedback.user.agreement.prefix")
+  val suffix = LearnBundle.message("onboarding.feedback.user.agreement.suffix")
+  val shortText = prefix + " " + LearnBundle.message("onboarding.feedback.user.agreement.more")
+  val longText = prefix + " " + suffix + " " + LearnBundle.message("onboarding.feedback.user.agreement.less")
+  var shortForm = true
+  val jTextPane = createAgreementTextPane(shortText, true) {
+    shortForm = !shortForm
+    text = if (shortForm) shortText else longText
+  }
+
+  val scrollPane = JBScrollPane(jTextPane)
+  scrollPane.preferredSize = Dimension(FEEDBACK_CONTENT_WIDTH, 100)
+  scrollPane.border = null
+  return scrollPane
+}
+
+private fun createAgreementTextPane(@Nls htmlText: String, customLink: Boolean, showSystemInfo: JTextPane.() -> Unit): JTextPane {
+  return JTextPane().apply {
     contentType = "text/html"
     addHyperlinkListener(object : HyperlinkAdapter() {
-      override fun hyperlinkActivated(e: HyperlinkEvent?) {
+      override fun hyperlinkActivated(e: HyperlinkEvent) {
         showSystemInfo()
       }
     })
@@ -382,14 +423,13 @@ private fun createAgreementComponent(showSystemInfo: () -> Unit): JComponent {
     text = htmlText
 
     val styleSheet = (document as HTMLDocument).styleSheet
-    styleSheet.addRule("body {font-size:${JBUI.Fonts.label().lessOn(3f)}pt;}")
+    val textColor = "#" + ColorUtil.toHex(UIUtil.getContextHelpForeground())
+    styleSheet.addRule("body { color: $textColor; font-size:${JBUI.Fonts.label().lessOn(3f)}pt;}")
+    if (customLink) {
+      styleSheet.addRule("a, a:link { color: $textColor; text-decoration: underline;}")
+    }
     isEditable = false
   }
-
-  val scrollPane = JBScrollPane(jTextPane)
-  scrollPane.preferredSize = Dimension(FEEDBACK_CONTENT_WIDTH, 100)
-  scrollPane.border = null
-  return scrollPane
 }
 
 private fun getFeedbackEntryPlace(project: Project?) = when {

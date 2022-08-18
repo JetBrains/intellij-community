@@ -1,4 +1,4 @@
-// "Bring 'String msg' into scope" "true"
+// "Bring 'String msg' into scope" "true-preview"
 public class BringVarIntoScope {
   public void moveVariableDeclarationOutOfBlock(boolean b) {
       String msg;

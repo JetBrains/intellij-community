@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmMultifileClass
 @file:JvmName("UastUtils")
 
@@ -75,14 +75,21 @@ fun <T : UElement> UElement.getParentOfType(
 }
 
 @JvmOverloads
-fun UElement?.getUCallExpression(searchLimit: Int = Int.MAX_VALUE): UCallExpression? =
-  this?.withContainingElements?.take(searchLimit)?.mapNotNull {
-    when (it) {
-      is UCallExpression -> it
-      is UQualifiedReferenceExpression -> it.selector as? UCallExpression
-      else -> null
+fun UElement?.getUCallExpression(searchLimit: Int = Int.MAX_VALUE): UCallExpression? {
+  if (this == null) return null
+  var u: UElement? = this;
+  for (i in 1..searchLimit) {
+    if (u == null) break
+    if (u is UCallExpression) return u
+
+    if (u is UQualifiedReferenceExpression) {
+      val selector = u.selector
+      if (selector is UCallExpression) return selector
     }
-  }?.firstOrNull()
+    u = u.uastParent
+  }
+  return null
+}
 
 fun UElement.getContainingUFile(): UFile? = getParentOfType(UFile::class.java, false)
 
@@ -147,7 +154,7 @@ fun UReferenceExpression?.getQualifiedName(): String? = (this?.resolve() as? Psi
  */
 fun UExpression.evaluateString(): String? = evaluate().takeIf { it is String || isIntegralLiteral() }?.toString()
 
-fun UExpression.skipParenthesizedExprDown(): UExpression? {
+fun UExpression.skipParenthesizedExprDown(): UExpression {
   var expression = this
   while (expression is UParenthesizedExpression) {
     expression = expression.expression
@@ -171,7 +178,7 @@ fun UFile.getIoFile(): File? = sourcePsi.virtualFile?.let { VfsUtilCore.virtualT
 
 @Deprecated("use UastFacade", ReplaceWith("UastFacade"))
 @ApiStatus.ScheduledForRemoval
-@Suppress("Deprecation")
+@Suppress("DEPRECATION")
 tailrec fun UElement.getUastContext(): UastContext {
   val psi = this.sourcePsi
   if (psi != null) {

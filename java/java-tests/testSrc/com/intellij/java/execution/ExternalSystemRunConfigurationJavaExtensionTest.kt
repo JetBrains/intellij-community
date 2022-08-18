@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.execution
 
 import com.intellij.execution.ExecutionException
@@ -20,6 +20,7 @@ import com.intellij.testFramework.runInEdtAndWait
 import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.CoreMatchers.hasItem
 import org.junit.Assert.assertThat
+import java.util.*
 
 class ExternalSystemRunConfigurationJavaExtensionTest : RunConfigurationJavaExtensionManagerTestCase() {
   override fun getTestAppPath(): String = ""
@@ -32,8 +33,9 @@ class ExternalSystemRunConfigurationJavaExtensionTest : RunConfigurationJavaExte
     val configuration = createExternalSystemRunConfiguration()
 
     LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
-      override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean =
-        t !is FakeExecutionException  // don't fail this if `LOG.error()` was called for our exception somewhere
+      override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> =
+        // don't fail this if `LOG.error()` was called for our exception somewhere
+        if (t is FakeExecutionException) Action.NONE else Action.ALL
     }) {
       runInEdtAndWait {
         ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configuration).buildAndExecute()

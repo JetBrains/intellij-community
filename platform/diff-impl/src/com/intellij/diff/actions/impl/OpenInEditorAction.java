@@ -10,6 +10,8 @@ import com.intellij.ide.actions.EditSourceAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.fileEditor.FileNavigator;
+import com.intellij.openapi.fileEditor.FileNavigatorImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
@@ -76,12 +78,11 @@ public class OpenInEditorAction extends EditSourceAction implements DumbAware {
   }
 
   public void openEditor(@NotNull Project project, Navigatable @NotNull [] navigatables) {
+    FileNavigatorImpl fileNavigator = (FileNavigatorImpl)FileNavigator.getInstance();
+
     boolean success = false;
     for (Navigatable navigatable : navigatables) {
-      if (navigatable.canNavigate()) {
-        navigatable.navigate(true);
-        success = true;
-      }
+      success |= fileNavigator.navigateIgnoringContextEditor(navigatable);
     }
     if (success) onAfterEditorOpened();
   }

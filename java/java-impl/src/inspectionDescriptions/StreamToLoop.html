@@ -29,6 +29,10 @@ Reports Stream API chains, <code>Iterable.forEach()</code>, and <code>Map.forEac
   the stream short-circuits.
 </p>
 <!-- tooltip end -->
+<p>
+  <i>Stream API</i> appeared in Java 8.
+  This inspection can help to downgrade for backward compatibility with earlier Java versions.
+</p>
 <p>Configure the inspection:</p>
 <p>Use the <b>Iterate unknown Stream sources via Stream.iterator()</b> option to suggest conversions for streams with unrecognized source.
   In this case, iterator will be created from the stream.

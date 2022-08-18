@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.command.WriteCommandAction
@@ -14,8 +14,8 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.util.xmlb.annotations.Attribute
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryPropertiesEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryPropertiesEntity
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -82,7 +82,7 @@ class LibraryPropertiesTest {
     val elementAsString = "<properties data=\"$propertyData\" />"
 
     val moduleFile = File(project.basePath, "$moduleName.iml")
-    val module = ModuleManager.getInstance(project).modifiableModel.let { moduleModel ->
+    val module = ModuleManager.getInstance(project).getModifiableModel().let { moduleModel ->
       val module = moduleModel.newModule(moduleFile.path, EmptyModuleType.getInstance().id) as ModuleBridge
       moduleModel.commit()
       module
@@ -114,7 +114,7 @@ class LibraryPropertiesTest {
 }
 
 private class TestLibraryProperties(@get:Attribute("data") var data: String = "") : LibraryProperties<TestLibraryProperties>() {
-  override fun getState(): TestLibraryProperties? = this
+  override fun getState(): TestLibraryProperties = this
 
   override fun loadState(state: TestLibraryProperties) {
     data = state.data

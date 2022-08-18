@@ -67,4 +67,9 @@ public class ContextHelpAction extends AnAction implements DumbAware {
       presentation.setText(CommonBundle.getHelpButtonText());
     }
   }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
 }

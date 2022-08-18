@@ -12,6 +12,7 @@
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="intellij.java.debugger" />
     <orderEntry type="module" module-name="intellij.groovy.rt" />
+    <orderEntry type="module" module-name="intellij.groovy.spock.rt" />
     <orderEntry type="module" module-name="intellij.java.compiler.impl" />
     <orderEntry type="module" module-name="intellij.java.debugger.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
@@ -31,7 +32,8 @@
     <orderEntry type="module" module-name="intellij.xml.langInjection" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.build" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
-    <orderEntry type="module" module-name="intellij.junit" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.junit" />
+    <orderEntry type="module" module-name="intellij.junit.rt" />
     <orderEntry type="module" module-name="intellij.java.indexing" />
     <orderEntry type="module" module-name="intellij.groovy.jps" />
     <orderEntry type="module" module-name="intellij.java.byteCodeViewer" scope="PROVIDED" />
@@ -49,5 +51,8 @@
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="library" scope="TEST" name="ASM" level="project" />
     <orderEntry type="module" module-name="intellij.java.impl.refactorings" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
   </component>
 </module>

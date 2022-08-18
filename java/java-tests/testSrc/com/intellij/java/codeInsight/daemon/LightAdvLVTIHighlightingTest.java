@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
@@ -12,7 +12,10 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.util.IdempotenceChecker;
 
 public class LightAdvLVTIHighlightingTest extends LightDaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advLVTI";
@@ -56,10 +59,20 @@ public class LightAdvLVTIHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testFailedInferenceWithLeftTypeVar() { doTest(); }
   public void testDisjunctionType() { doTest(); }
 
+  public void testRecursiveInference() {
+    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    final int offset = getEditor().getCaretModel().getOffset();
+    PsiMethodCallExpression expression = PsiTreeUtil.getParentOfType(getFile().findElementAt(offset), PsiMethodCallExpression.class);
+    IdempotenceChecker.disableRandomChecksUntil(getTestRootDisposable());
+    assertTrue(expression.resolveMethodGenerics().isValidResult());
+  }
+
   public void testVarInLambdaParameters() {
     setLanguageLevel(LanguageLevel.JDK_11);
     doTest();
   }
+
+  public void testWildcardInference() { doTest(); }
 
   public void testGotoDeclarationOnVar() {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");

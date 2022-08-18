@@ -1,12 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.moduleDependencies;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -30,6 +27,10 @@ public class ShowModuleDependenciesAction extends AnAction {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return;
@@ -51,7 +52,7 @@ public class ShowModuleDependenciesAction extends AnAction {
 
     ModulesDependenciesPanel panel = new ModulesDependenciesPanel(project, modules);
     AnalysisScope scope = modules != null ? new AnalysisScope(modules) : new AnalysisScope(project);
-    Content content = ContentFactory.SERVICE.getInstance().createContent(panel, scope.getDisplayName(), false);
+    Content content = ContentFactory.getInstance().createContent(panel, scope.getDisplayName(), false);
     content.setHelpId(ModulesDependenciesPanel.HELP_ID);
     content.setDisposer(panel);
     panel.setContent(content);

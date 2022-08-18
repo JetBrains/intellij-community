@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.codeInsight.hint.types
 import com.intellij.codeInsight.hints.FactoryInlayHintsCollector
 import com.intellij.codeInsight.hints.InlayHintsSink
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
+import com.intellij.codeInsight.hints.settings.CASE_KEY
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.CommonClassNames
@@ -32,7 +33,7 @@ class GroovyParameterTypeHintsCollector(editor: Editor,
     if (DumbService.isDumb(element.project) || element.project.isDefault) {
       return false
     }
-    if (!settings.showInferredParameterTypes) {
+    if (!settings.showInferredParameterTypes && CASE_KEY.get(editor) == null) {
       return false
     }
     PsiUtilCore.ensureValid(element)

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -7,6 +7,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PackagePrefixElementFinder;
 import com.intellij.psi.impl.light.LightClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -15,7 +16,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 
 public class LightClassCodeInsightTest extends LightJavaCodeInsightFixtureTestCase {
@@ -24,7 +25,7 @@ public class LightClassCodeInsightTest extends LightJavaCodeInsightFixtureTestCa
     super.setUp();
 
     // MyElementFinder provides "abc.MyInterface"
-    PlatformTestUtil.maskExtensions(PsiElementFinder.EP, getProject(), Collections.singletonList(new MyElementFinder()), getTestRootDisposable());
+    PlatformTestUtil.maskExtensions(PsiElementFinder.EP, getProject(), Arrays.asList(new MyElementFinder(), PackagePrefixElementFinder.getInstance(getProject())), getTestRootDisposable());
   }
 
   public void testCustomInstanceMethodHighlighting() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.actions;
 
@@ -66,6 +66,11 @@ public abstract class GotoActionBase extends AnAction {
   }
 
   protected abstract void gotoActionPerformed(@NotNull AnActionEvent e);
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
 
   @Override
   public void update(@NotNull final AnActionEvent event) {
@@ -283,6 +288,11 @@ public abstract class GotoActionBase extends AnAction {
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(historyEnabled());
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
 
       void setText(@NotNull List<String> strings) {

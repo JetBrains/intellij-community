@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -33,7 +33,6 @@ import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -151,18 +150,18 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
       final PsiElement member = memberInfo.getMember();
       member.accept(new JavaRecursiveElementVisitor() {
         @Override
-        public void visitThisExpression(PsiThisExpression expression) {
+        public void visitThisExpression(@NotNull PsiThisExpression expression) {
           encodeRef((PsiClass)pushDownData.getSourceClass(), null, movedMembers, expression, expression);
           super.visitThisExpression(expression);
         }
 
         @Override
-        public void visitReferenceElement(PsiJavaCodeReferenceElement referenceElement) {
+        public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement referenceElement) {
           encodeRef((PsiClass)pushDownData.getSourceClass(), referenceElement, movedMembers, referenceElement);
           super.visitReferenceElement(referenceElement);
         }
 
-        @Override public void visitNewExpression(PsiNewExpression expression) {
+        @Override public void visitNewExpression(@NotNull PsiNewExpression expression) {
           final PsiJavaCodeReferenceElement classReference = expression.getClassReference();
           if (classReference != null) {
             encodeRef((PsiClass)pushDownData.getSourceClass(), classReference, movedMembers, expression);
@@ -171,7 +170,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
         }
 
         @Override
-        public void visitTypeElement(final PsiTypeElement type) {
+        public void visitTypeElement(final @NotNull PsiTypeElement type) {
           final PsiJavaCodeReferenceElement referenceElement = type.getInnermostComponentReferenceElement();
           if (referenceElement != null) {
             encodeRef((PsiClass)pushDownData.getSourceClass(), referenceElement, movedMembers, type);
@@ -344,18 +343,19 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
 
   public void inlineSuperCall(MemberInfoBase<? extends PsiElement> memberInfo, PsiMethod methodBySignature) {
     PsiMethod superMethod = (PsiMethod)memberInfo.getMember();
-    Collection<PsiReference> superReferences =
-      ReferencesSearch.search(superMethod, new LocalSearchScope(methodBySignature)).findAll();
-    if (superReferences.size() == 1) {
-      PsiReference reference = ContainerUtil.getFirstItem(superReferences);
-      if (reference == null) return;
-      PsiElement element = reference.getElement();
-      if (element instanceof PsiReferenceExpression) {
-        PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
-        if (superMethod.getBody() != null) {
-          // No super method body: either native method or compilation error
-          new InlineMethodProcessor(element.getProject(), superMethod, referenceExpression, null, true)
-            .inlineMethodCall(referenceExpression);
+    PsiClass containingClass = methodBySignature.getContainingClass();
+    if (containingClass != null) {
+      Collection<PsiReference> superReferences =
+        ReferencesSearch.search(superMethod, new LocalSearchScope(containingClass)).findAll();
+      for (PsiReference reference : superReferences) {
+        PsiElement element = reference.getElement();
+        if (element instanceof PsiReferenceExpression) {
+          PsiReferenceExpression referenceExpression = (PsiReferenceExpression)element;
+          if (superMethod.getBody() != null) {
+            // No super method body: either native method or compilation error
+            new InlineMethodProcessor(element.getProject(), superMethod, referenceExpression, null, true)
+              .inlineMethodCall(referenceExpression);
+          }
         }
       }
     }
@@ -462,25 +462,25 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(sourceClass.getProject());
     member.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement referenceElement) {
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement referenceElement) {
         decodeRef(sourceClass, referenceElement, factory, targetClass, referenceElement);
         super.visitReferenceElement(referenceElement);
       }
 
       @Override
-      public void visitThisExpression(PsiThisExpression expression) {
+      public void visitThisExpression(@NotNull PsiThisExpression expression) {
         decodeRef(sourceClass, expression, factory, targetClass, expression);
         super.visitThisExpression(expression);
       }
 
-      @Override public void visitNewExpression(PsiNewExpression expression) {
+      @Override public void visitNewExpression(@NotNull PsiNewExpression expression) {
         final PsiJavaCodeReferenceElement classReference = expression.getClassReference();
         if (classReference != null) decodeRef(sourceClass, classReference, factory, targetClass, expression);
         super.visitNewExpression(expression);
       }
 
       @Override
-      public void visitTypeElement(final PsiTypeElement type) {
+      public void visitTypeElement(final @NotNull PsiTypeElement type) {
         final PsiJavaCodeReferenceElement referenceElement = type.getInnermostComponentReferenceElement();
         if (referenceElement != null)  decodeRef(sourceClass, referenceElement, factory, targetClass, type);
         super.visitTypeElement(type);

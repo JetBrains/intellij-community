@@ -1,4 +1,4 @@
-// "Replace with 'findVarHandle'" "true"
+// "Replace with 'findVarHandle'" "true-preview"
 import java.lang.invoke.*;
 
 public class Main {

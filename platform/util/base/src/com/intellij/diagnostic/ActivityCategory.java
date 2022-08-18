@@ -28,8 +28,7 @@ public enum ActivityCategory {
   GC("GC"),
   REOPENING_EDITOR("reopeningEditor"),
 
-  SERVICE_WAITING("serviceWaiting"),
-  GRADLE_IMPORT("importingProject")
+  SERVICE_WAITING("serviceWaiting")
   ;
 
   private final String jsonName;

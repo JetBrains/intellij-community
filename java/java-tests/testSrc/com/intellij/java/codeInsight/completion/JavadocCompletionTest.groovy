@@ -7,7 +7,7 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
-import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection
+import com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.pom.java.LanguageLevel
@@ -44,7 +44,7 @@ class JavadocCompletionTest extends LightFixtureCompletionTestCase {
   protected void setUp() {
     super.setUp()
     javaSettings = JavaCodeStyleSettings.getInstance(getProject())
-    myFixture.enableInspections(new JavaDocLocalInspection())
+    myFixture.enableInspections(new JavadocDeclarationInspection())
   }
 
   void testNamesInPackage() {
@@ -160,7 +160,7 @@ class JavadocCompletionTest extends LightFixtureCompletionTestCase {
 
   void testInlineLookup() {
     configureByFile("InlineTagName.java")
-    assertStringItems("code", "docRoot", "index", "inheritDoc", "link", "linkplain", "literal", "summary", "systemProperty", "value")
+    assertStringItems("code", "docRoot", "index", "inheritDoc", "link", "linkplain", "literal", "snippet", "summary", "systemProperty", "value")
   }
 
   @NeedsIndex.ForStandardLibrary
@@ -775,7 +775,7 @@ interface Bar<T> extends Foo<T> {
   void "test tags at top level inline"() {
     myFixture.configureByText 'a.java', "interface Foo { /** Hello <caret> */void foo(int a); }"
     myFixture.completeBasic()
-    assert myFixture.lookupElementStrings == ['{@code}', '{@docRoot}', '{@index}', '{@inheritDoc}', '{@linkplain}', '{@link}', '{@literal}', '{@summary}', '{@systemProperty}', '{@value}']
+    assert myFixture.lookupElementStrings == ['{@code}', '{@docRoot}', '{@index}', '{@inheritDoc}', '{@linkplain}', '{@link}', '{@literal}', '{@snippet}', '{@summary}', '{@systemProperty}', '{@value}']
     def element = myFixture.lookupElements[5]
     assert element.lookupString == "{@link}"
     selectItem(element)
@@ -785,7 +785,7 @@ interface Bar<T> extends Foo<T> {
   void "test tags after return"() {
     myFixture.configureByText 'a.java', "interface Foo { /** @return <caret> */int foo(int a); }"
     myFixture.completeBasic()
-    assert myFixture.lookupElementStrings == ['{@code}', '{@docRoot}', '{@index}', '{@inheritDoc}', '{@linkplain}', '{@link}', '{@literal}', '{@return}', '{@summary}', '{@systemProperty}', '{@value}']
+    assert myFixture.lookupElementStrings == ['{@code}', '{@docRoot}', '{@index}', '{@inheritDoc}', '{@linkplain}', '{@link}', '{@literal}', '{@return}', '{@snippet}', '{@summary}', '{@systemProperty}', '{@value}']
     def element = myFixture.lookupElements[5]
     assert element.lookupString == "{@link}"
     selectItem(element)
@@ -795,7 +795,7 @@ interface Bar<T> extends Foo<T> {
   void "test tags at top level inline in brace"() {
     myFixture.configureByText 'a.java', "interface Foo { /** Hello {<caret>} */void foo(int a); }"
     myFixture.completeBasic()
-    assert myFixture.lookupElementStrings == ['@code', '@docRoot', '@index', '@inheritDoc', '@link', '@linkplain', '@literal', '@summary', '@systemProperty', '@value']
+    assert myFixture.lookupElementStrings == ['@code', '@docRoot', '@index', '@inheritDoc', '@link', '@linkplain', '@literal', '@snippet', '@summary', '@systemProperty', '@value']
     def element = myFixture.lookupElements[4]
     assert element.lookupString == "@link"
     selectItem(element)
@@ -816,4 +816,12 @@ interface Bar<T> extends Foo<T> {
     }
   }
 
+  void "test custom tag"() {
+    def inspection = new JavadocDeclarationInspection()
+    inspection.registerAdditionalTag("foobar")
+    myFixture.enableInspections(inspection)
+    myFixture.configureByText "a.java", "/**\n * @fo<caret>\n */\npublic class Demo {}"
+    myFixture.completeBasic()
+    myFixture.checkResult("/**\n * @foobar \n */\npublic class Demo {}")
+  }
 }

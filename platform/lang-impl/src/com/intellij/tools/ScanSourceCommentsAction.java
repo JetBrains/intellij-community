@@ -19,6 +19,7 @@
  */
 package com.intellij.tools;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -47,12 +48,19 @@ public class ScanSourceCommentsAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(ScanSourceCommentsAction.class);
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
 
     final Project p = e.getProject();
     final String file =
       Messages.showInputDialog(p, "Enter path to the file comments will be extracted to", "Comments File Path", Messages.getQuestionIcon());
-
+    if (file  == null) {
+      return;
+    }
     try (final PrintStream stream = new PrintStream(file)){
       stream.println("Comments in " + p.getName());
 

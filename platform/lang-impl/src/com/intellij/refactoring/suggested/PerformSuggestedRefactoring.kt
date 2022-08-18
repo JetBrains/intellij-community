@@ -5,6 +5,7 @@ package com.intellij.refactoring.suggested
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeWithMe.isForeignClientOnServer
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.application.ApplicationManager
@@ -96,7 +97,7 @@ internal fun performSuggestedRefactoring(
         popup, project, editor, popupAnchorComponent, popupAnchorPoint, rangeToHighlight,
         commandName = RefactoringBundle.message("suggested.refactoring.rename.command.name"),
         doRefactoring = { doRefactor() },
-        onEnter = ::doRefactor,
+        onEnter = { popup.onRefactor() },
         isEnterEnabled = { true },
         isEscapeEnabled = { true },
         onClosed = { isOk ->
@@ -189,6 +190,7 @@ internal fun performSuggestedRefactoring(
 
       SuggestedRefactoringFeatureUsage.logEvent(SuggestedRefactoringFeatureUsage.POPUP_SHOWN, refactoringData, state, actionPlace)
     }
+    else -> {}
   }
 }
 
@@ -258,6 +260,8 @@ private fun <TData> createAndShowBalloon(
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabled = isEnterEnabled()
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.EDT
   }.registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER"), content, balloon)
 
   object : DumbAwareAction() {
@@ -268,6 +272,8 @@ private fun <TData> createAndShowBalloon(
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabled = isEscapeEnabled()
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
   }.registerCustomShortcutSet(CustomShortcutSet.fromString("ESCAPE"), content, balloon)
 
   val attributes = TextAttributes(

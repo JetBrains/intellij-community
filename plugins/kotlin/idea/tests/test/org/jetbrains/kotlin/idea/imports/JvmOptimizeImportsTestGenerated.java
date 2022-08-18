@@ -579,6 +579,11 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
                 runTest("testData/editor/optimizeImports/common/NestedClassReferenceOutsideClassBody.kt");
             }
 
+            @TestMetadata("NestedClassReferenceThroughAlias.kt")
+            public void testNestedClassReferenceThroughAlias() throws Exception {
+                runTest("testData/editor/optimizeImports/common/NestedClassReferenceThroughAlias.kt");
+            }
+
             @TestMetadata("NestedClassReferenceThroughTopLevelClass.kt")
             public void testNestedClassReferenceThroughTopLevelClass() throws Exception {
                 runTest("testData/editor/optimizeImports/common/NestedClassReferenceThroughTopLevelClass.kt");

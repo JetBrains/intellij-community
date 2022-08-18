@@ -1,24 +1,33 @@
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
+
 package com.jetbrains.packagesearch.intellij.plugin.extensibility
 
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 
-class BuildSystemType(
+class BuildSystemType @JvmOverloads constructor(
     val name: String,
     val language: String,
+    @Suppress("unused")
     @Deprecated("This property will be removed soon as it is unused.")
-    @ApiStatus.ScheduledForRemoval
-    val statisticsKey: String
+    @ScheduledForRemoval
+    val statisticsKey: String,
+    val dependencyAnalyzerKey: ProjectSystemId? = null
 ) {
 
-    companion object {
-
-        @JvmStatic
-        val MAVEN = BuildSystemType(name = "MAVEN", language = "xml", statisticsKey = "maven")
-
-        @JvmStatic
-        val GRADLE_GROOVY = BuildSystemType(name = "GRADLE", language = "groovy", statisticsKey = "gradle-groovy")
-
-        @JvmStatic
-        val GRADLE_KOTLIN = BuildSystemType(name = "GRADLE", language = "kotlin", statisticsKey = "gradle-kts")
-    }
+    companion object
 }

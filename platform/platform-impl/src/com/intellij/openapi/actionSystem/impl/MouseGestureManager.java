@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +25,7 @@ public final class MouseGestureManager {
   }
 
   public void add(@NotNull IdeFrame frame) {
-    if (!SystemInfo.isMac || !Registry.is("actionSystem.mouseGesturesEnabled", true)) {
+    if (!SystemInfoRt.isMac || !Registry.is("actionSystem.mouseGesturesEnabled", true)) {
       return;
     }
 
@@ -49,7 +49,7 @@ public final class MouseGestureManager {
   }
 
   public void remove(@NotNull IdeFrame frame) {
-    if (!SystemInfo.isMac || !Registry.is("actionSystem.mouseGesturesEnabled", true)) {
+    if (!SystemInfoRt.isMac || !Registry.is("actionSystem.mouseGesturesEnabled", true)) {
       return;
     }
 

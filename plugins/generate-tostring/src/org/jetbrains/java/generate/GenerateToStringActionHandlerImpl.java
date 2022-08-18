@@ -296,7 +296,6 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
             comboBox.setSelectedItem(ToStringTemplatesManager.getInstance().getDefaultTemplate());
 
             final JLabel templatesLabel = new JLabel(JavaBundle.message("generate.tostring.template.label"));
-            templatesLabel.setDisplayedMnemonic('T');
             templatesLabel.setLabelFor(comboBox);
 
             final GridBagConstraints constraints = new GridBagConstraints();

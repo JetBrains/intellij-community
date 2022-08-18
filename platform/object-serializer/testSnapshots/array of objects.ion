@@ -4,19 +4,19 @@
   children:[
     {
       '@id':1,
+      foo:foo,
       short:4,
       long:9223372036854775807,
       counter:42,
-      intAsObject:null,
-      foo:foo
+      intAsObject:null
     },
     {
       '@id':2,
+      foo:'or bar',
       short:4,
       long:9223372036854775807,
       counter:42,
-      intAsObject:null,
-      foo:'or bar'
+      intAsObject:null
     }
   ]
 }

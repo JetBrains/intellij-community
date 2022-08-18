@@ -43,7 +43,7 @@ def setup(
     license: str = ...,
     keywords: list[str] | str = ...,
     platforms: list[str] | str = ...,
-    cmdclass: Mapping[str, type[Command]] = ...,
+    cmdclass: Mapping[str, type[_Command]] = ...,
     data_files: list[tuple[str, list[str]]] = ...,
     package_dir: Mapping[str, str] = ...,
     obsoletes: list[str] = ...,

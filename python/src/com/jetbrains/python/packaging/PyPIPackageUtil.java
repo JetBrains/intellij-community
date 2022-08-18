@@ -188,7 +188,7 @@ public class PyPIPackageUtil {
     return getCachedValueOrRethrowIO(myPackageToDetails, packageName);
   }
 
-  public void usePackageReleases(@NotNull String packageName, @NotNull CatchingConsumer<List<String>, Exception> callback) {
+  public void usePackageReleases(@NotNull String packageName, @NotNull CatchingConsumer<? super List<String>, ? super Exception> callback) {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         final List<String> releasesFromSimpleIndex = getPackageVersionsFromAdditionalRepositories(packageName);
@@ -361,7 +361,11 @@ public class PyPIPackageUtil {
         @Override
         public void handleText(char @NotNull [] data, int pos) {
           if (myTag != null && "a".equals(myTag.toString())) {
-            packages.add(String.valueOf(data));
+            String packageName = String.valueOf(data);
+            if (packageName.endsWith("/")) {
+              packageName = packageName.substring(0, packageName.indexOf("/"));
+            }
+            packages.add(packageName);
           }
         }
 

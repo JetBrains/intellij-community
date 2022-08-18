@@ -16,11 +16,16 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkTypeId;
+import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 public class MavenProjectsProcessorFoldersResolvingTask extends MavenProjectsProcessorBasicTask {
   @NotNull private final MavenImportingSettings myImportingSettings;
@@ -39,7 +44,14 @@ public class MavenProjectsProcessorFoldersResolvingTask extends MavenProjectsPro
   public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
     myResolver.resolveFolders(myMavenProject, myImportingSettings, embeddersManager, console, indicator);
-    MavenServerManager.getInstance().shutdown(false);
+    //actually a fix for https://youtrack.jetbrains.com/issue/IDEA-286455 to be rewritten, see IDEA-294209
+    MavenUtil.restartMavenConnectors(project, false, c -> {
+      Sdk sdk = c.getJdk();
+      String version = sdk.getVersionString();
+      if (version == null) return false;
+      if (JavaVersion.parse(version).isAtLeast(17)) return true;
+      return false;
+    });
     if (myOnCompletion != null) myOnCompletion.run();
   }
 }

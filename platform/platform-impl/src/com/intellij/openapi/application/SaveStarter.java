@@ -8,7 +8,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 
 final class SaveStarter extends ApplicationStarterBase {
   private SaveStarter() {
@@ -27,7 +26,7 @@ final class SaveStarter extends ApplicationStarterBase {
 
   @NotNull
   @Override
-  protected Future<CliResult> processCommand(@NotNull List<String> args, @Nullable String currentDirectory) {
+  protected CompletableFuture<CliResult> processCommand(@NotNull List<String> args, @Nullable String currentDirectory) {
     saveAll();
     return CompletableFuture.completedFuture(CliResult.OK);
   }

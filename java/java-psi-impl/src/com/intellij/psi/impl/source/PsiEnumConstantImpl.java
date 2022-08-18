@@ -40,11 +40,11 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
   private static final Logger LOG = Logger.getInstance(PsiEnumConstantImpl.class);
   private final MyReference myReference = new MyReference();
 
-  public PsiEnumConstantImpl(final PsiFieldStub stub) {
+  public PsiEnumConstantImpl(PsiFieldStub stub) {
     super(stub, JavaStubElementTypes.ENUM_CONSTANT);
   }
 
-  public PsiEnumConstantImpl(final ASTNode node) {
+  public PsiEnumConstantImpl(ASTNode node) {
     super(node);
   }
 
@@ -75,14 +75,14 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
 
   @Override
   public @NotNull PsiEnumConstantInitializer getOrCreateInitializingClass() {
-    final PsiEnumConstantInitializer initializingClass = getInitializingClass();
+    PsiEnumConstantInitializer initializingClass = getInitializingClass();
     if (initializingClass != null) return initializingClass;
 
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
-    final PsiEnumConstantInitializer initializer = factory.createEnumConstantFromText("foo{}", null).getInitializingClass();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
+    PsiEnumConstantInitializer initializer = factory.createEnumConstantFromText("foo{}", null).getInitializingClass();
     LOG.assertTrue(initializer != null);
 
-    final PsiExpressionList argumentList = getArgumentList();
+    PsiExpressionList argumentList = getArgumentList();
     if (argumentList != null) {
       return (PsiEnumConstantInitializer)addAfter(initializer, argumentList);
     }
@@ -99,7 +99,7 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
 
   @Override
   public PsiElement getContext() {
-    final PsiClass cc = getContainingClass();
+    PsiClass cc = getContainingClass();
     return cc != null ? cc : super.getContext();
   }
 
@@ -151,7 +151,7 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
     return CachedValuesManager.getCachedValue(this, () -> {
       PsiClass containingClass = getContainingClass();
       LOG.assertTrue(containingClass != null);
-      final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+      JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
       return new CachedValueProvider.Result<>(facade.getResolveHelper().resolveConstructor(facade.getElementFactory().createType(containingClass), getArgumentList(), this),
                                               PsiModificationTracker.MODIFICATION_COUNT);
     });
@@ -164,7 +164,7 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
 
   @Override
   public @NotNull String getName() {
-    final PsiFieldStub stub = getGreenStub();
+    PsiFieldStub stub = getGreenStub();
     if (stub != null) {
       return stub.getName();
     }
@@ -203,8 +203,8 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
   }
 
   @Override
-  public Icon getElementIcon(final int flags) {
-    final RowIcon baseIcon =
+  public Icon getElementIcon(int flags) {
+    RowIcon baseIcon =
       IconManager.getInstance().createLayeredIcon(this, PlatformIcons.FIELD_ICON, ElementPresentationUtil.getFlags(this, false));
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
@@ -253,14 +253,14 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
 
     @Override
     public JavaResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
-      final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+      JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
       PsiClassType type = facade.getElementFactory().createType(getContainingClass());
       return facade.getResolveHelper().multiResolveConstructor(type, getArgumentList(), getElement());
     }
 
     @Override
     public @NotNull JavaResolveResult advancedResolve(boolean incompleteCode) {
-      final JavaResolveResult[] results = multiResolve(incompleteCode);
+      JavaResolveResult[] results = multiResolve(incompleteCode);
       if (results.length == 1) return results[0];
       return JavaResolveResult.EMPTY;
     }
@@ -295,7 +295,7 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
   }
 
   @Override
-  public boolean isEquivalentTo(final PsiElement another) {
+  public boolean isEquivalentTo(PsiElement another) {
     return PsiClassImplUtil.isFieldEquivalentTo(this, another);
   }
 

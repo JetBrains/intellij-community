@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.impl.smartPointers.SmartPointerEx
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.tree.project.ProjectFileNode
@@ -143,8 +144,16 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
     return if (!parent.isDirectory || file.parent != parent) null else createBookmark(file)
   }
 
-  private val TreePath.asVirtualFile
-    get() = TreeUtil.getLastUserObject(ProjectViewNode::class.java, this)?.virtualFile
+  private val TreePath.asVirtualFile: VirtualFile?
+    get() {
+      val node = TreeUtil.getLastUserObject(ProjectViewNode::class.java, this) ?: return null
+      node.virtualFile?.let { return it }
+      // Workaround for KTIJ-21708
+      return when (val nodeValue = node.equalityObject) {
+        is SmartPointerEx<*> -> nodeValue.virtualFile
+        else -> null
+      }
+    }
 
   private val MouseEvent.isUnexpected // see MouseEvent.isUnexpected in ToggleBookmarkAction
     get() = !SwingUtilities.isLeftMouseButton(this) || isPopupTrigger || if (SystemInfo.isMac) !isMetaDown else !isControlDown
@@ -154,6 +163,7 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
 
   override fun mouseClicked(event: EditorMouseEvent) {
     if (event.isUnexpected) return
+    event.editor.project?.let { if (it != project) return }
     val manager = BookmarksManager.getInstance(project) ?: return
     val bookmark = createBookmark(event.editor, event.logicalPosition.line) ?: return
     manager.getType(bookmark)?.let { manager.remove(bookmark) } ?: manager.add(bookmark, BookmarkType.DEFAULT)

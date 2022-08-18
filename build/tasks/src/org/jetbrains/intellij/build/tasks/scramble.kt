@@ -1,9 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "PLATFORM_CLASS_MAPPED_TO_KOTLIN")
 
 package org.jetbrains.intellij.build.tasks
 
+import com.intellij.diagnostic.telemetry.forkJoinTask
+import com.intellij.diagnostic.telemetry.use
 import org.jetbrains.intellij.build.io.*
+import org.jetbrains.intellij.build.tracer
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.ClassVisitor
 import org.jetbrains.org.objectweb.asm.Opcodes
@@ -13,7 +16,6 @@ import java.util.List
 import java.util.concurrent.ForkJoinTask
 import java.util.function.Consumer
 
-@Suppress("unused")
 fun runScrambler(scramblerJar: Path,
                  mainClass: String,
                  scriptFile: Path,
@@ -23,20 +25,26 @@ fun runScrambler(scramblerJar: Path,
                  files: List<Path>,
                  args: Iterable<String>,
                  jvmArgs: Iterable<String>,
+                 javaExe: Path,
                  artifactBuilt: Consumer<Path>) {
   val logSpecifier = pluginDir?.fileName?.toString() ?: files.first().fileName.toString().removeSuffix(".jar")
   val logDir = artifactDir.resolve("scramble-logs")
   val processOutputFile = logDir.resolve("$logSpecifier-process-output.log")
   try {
-    //noinspection SpellCheckingInspection
-    runJavaWithOutputToFile(
-      mainClass = mainClass,
-      args = args,
-      jvmArgs = jvmArgs,
-      classPath = List.of(scramblerJar.toString()),
-      workingDir = workingDir,
-      outputFile = processOutputFile
-    )
+    try {
+      runJavaWithOutputToFile(
+        mainClass = mainClass,
+        args = args,
+        jvmArgs = jvmArgs,
+        classPath = List.of(scramblerJar.toString()),
+        workingDir = workingDir,
+        outputFile = processOutputFile,
+        javaExe = javaExe,
+      )
+    }
+    catch (e: Exception) {
+      throw if (e is ProcessRunTimedOut) e else ScramblingException(e)
+    }
 
     if (pluginDir == null) {
       // yes, checked only for a main JAR
@@ -44,7 +52,7 @@ fun runScrambler(scramblerJar: Path,
 
       // update package index (main jar will be merged into app.jar, so, skip it)
       ForkJoinTask.invokeAll(files.subList(1, files.size).map { file ->
-        task(tracer.spanBuilder("update package index after scrambling")
+        forkJoinTask(tracer.spanBuilder("update package index after scrambling")
                .setAttribute("file", file.toString())) {
           updatePackageIndexUsingTempFile(file)
         }
@@ -58,7 +66,7 @@ fun runScrambler(scramblerJar: Path,
       }
 
       ForkJoinTask.invokeAll(files.map { file ->
-        task(tracer.spanBuilder("update package index after scrambling")
+        forkJoinTask(tracer.spanBuilder("update package index after scrambling")
                .setAttribute("plugin", pluginDir.toString())
                .setAttribute("file", pluginDir.relativize(file).toString())) {
           updatePackageIndexUsingTempFile(file)
@@ -111,7 +119,7 @@ private fun updatePackageIndex(sourceFile: Path, targetFile: Path) {
 // so we check validity of the produced class files here
 private fun checkClassFilesValidity(jarFile: Path) {
   val checkVisitor = object : ClassVisitor(Opcodes.API_VERSION) {}
-  tracer.spanBuilder("check class files validity").setAttribute("file", jarFile.toString()).startSpan().use {
+  tracer.spanBuilder("check class files validity").setAttribute("file", jarFile.toString()).use {
     readZipFile(jarFile) { name, entry ->
       if (name.endsWith(".class")) {
         try {
@@ -125,3 +133,4 @@ private fun checkClassFilesValidity(jarFile: Path) {
   }
 }
 
+class ScramblingException(cause: Exception) : Exception(cause)

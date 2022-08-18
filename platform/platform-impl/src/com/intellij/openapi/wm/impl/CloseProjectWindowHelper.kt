@@ -33,7 +33,7 @@ open class CloseProjectWindowHelper {
 
   open fun windowClosing(project: Project?) {
     val numberOfOpenedProjects = getNumberOfOpenedProjects()
-    val isLightEditActive = LightEditService.getInstance().project != null;
+    val isLightEditActive = LightEditService.getInstance().project != null
     // Exit on Linux and Windows if the only opened project frame is closed.
     // On macOS behaviour is different - to exit app, quit action should be used, otherwise welcome frame is shown.
     // If welcome screen is disabled, behaviour on all OS is the same.

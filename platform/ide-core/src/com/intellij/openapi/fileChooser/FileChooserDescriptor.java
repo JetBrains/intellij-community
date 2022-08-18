@@ -244,7 +244,6 @@ public class FileChooserDescriptor implements Cloneable {
 
   /**
    * Defines whether a file can be chosen.
-   * @param file
    */
   @Contract("null -> false")
   public boolean isFileSelectable(@Nullable VirtualFile file) {

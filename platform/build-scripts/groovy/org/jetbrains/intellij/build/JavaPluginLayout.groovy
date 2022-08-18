@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
+import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.impl.PluginLayout
-import org.jetbrains.intellij.build.impl.ProjectLibraryData
 
 import java.util.function.Consumer
 
@@ -85,12 +85,12 @@ final class JavaPluginLayout {
         }
 
         spec.withArtifact("debugger-agent", "rt")
-        spec.layout.includedProjectLibraries.add(new ProjectLibraryData("Eclipse", "ecj", ProjectLibraryData.PackMode.STANDALONE_MERGED))
+        spec.withProjectLibrary("Eclipse", "ecj", LibraryPackMode.STANDALONE_MERGED)
         // used in JPS - do not use uber jar
-        spec.withProjectLibrary("jgoodies-common", ProjectLibraryData.PackMode.STANDALONE_MERGED)
-        spec.withProjectLibrary("jps-javac-extension", ProjectLibraryData.PackMode.STANDALONE_MERGED)
+        spec.withProjectLibrary("jgoodies-common", LibraryPackMode.STANDALONE_MERGED)
+        spec.withProjectLibrary("jps-javac-extension", LibraryPackMode.STANDALONE_MERGED)
         // gpl-cpe license - do not use uber jar
-        spec.withProjectLibrary("jb-jdi", ProjectLibraryData.PackMode.STANDALONE_MERGED)
+        spec.withProjectLibrary("jb-jdi", LibraryPackMode.STANDALONE_MERGED)
 
         spec.withModuleLibrary("debugger-memory-agent", "intellij.java.debugger.memory.agent", "")
         // explicitly pack jshell-frontend and sa-jdwp as a separate JARs

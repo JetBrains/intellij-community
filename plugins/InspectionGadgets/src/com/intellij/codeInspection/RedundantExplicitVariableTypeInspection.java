@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -23,11 +23,15 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitLocalVariable(PsiLocalVariable variable) {
+      public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
         PsiTypeElement typeElement = variable.getTypeElement();
         if (!typeElement.isInferredType()) {
           PsiElement parent = variable.getParent();
           if (parent instanceof PsiDeclarationStatement && ((PsiDeclarationStatement)parent).getDeclaredElements().length > 1) {
+            return;
+          }
+          PsiExpression initializer = variable.getInitializer();
+          if (initializer instanceof PsiFunctionalExpression) {
             return;
           }
           doCheck(variable, (PsiLocalVariable)variable.copy(), typeElement);
@@ -35,7 +39,7 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
       }
 
       @Override
-      public void visitForeachStatement(PsiForeachStatement statement) {
+      public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
         super.visitForeachStatement(statement);
         PsiParameter parameter = statement.getIterationParameter();
         PsiTypeElement typeElement = parameter.getTypeElement();
@@ -58,7 +62,6 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
           if (variable.getType().equals(getNormalizedType(copyVariable))) {
             holder.registerProblem(element2Highlight,
                                    InspectionGadgetsBundle.message("inspection.redundant.explicit.variable.type.description"),
-                                   ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                    new ReplaceWithVarFix());
           }
         }

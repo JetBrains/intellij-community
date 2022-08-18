@@ -1,11 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.diagnostic.ImplementationConflictException;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.BootstrapBundle;
-import com.intellij.idea.Main;
+import com.intellij.idea.AppExitCodes;
+import com.intellij.idea.StartupErrorReporter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -22,6 +23,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public final class StartupAbortedException extends RuntimeException {
+  private static boolean hasGraphics = true;
+
   public StartupAbortedException(@NotNull String message, @NotNull Throwable cause) {
     super(message, cause);
   }
@@ -40,12 +43,12 @@ public final class StartupAbortedException extends RuntimeException {
   public static void logAndExit(@NotNull Throwable t, @Nullable Logger log) {
     PluginManagerCore.EssentialPluginMissingException essentialPluginMissingException = findCause(t, PluginManagerCore.EssentialPluginMissingException.class);
     if (essentialPluginMissingException != null && essentialPluginMissingException.pluginIds != null) {
-      Main.showMessage(BootstrapBundle.message("bootstrap.error.title.corrupted.installation"),
-                       BootstrapBundle.message("bootstrap.error.message.missing.essential.plugins.0.1.please.reinstall.2",
+      StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.corrupted.installation"),
+                                       BootstrapBundle.message("bootstrap.error.message.missing.essential.plugins.0.1.please.reinstall.2",
                                                essentialPluginMissingException.pluginIds.size(),
                                                essentialPluginMissingException.pluginIds.stream().sorted().collect(Collectors.joining("\n  ", "  ", "\n\n")),
                                                getProductNameSafe()), true);
-      System.exit(Main.INSTALLATION_CORRUPTED);
+      System.exit(AppExitCodes.INSTALLATION_CORRUPTED);
     }
 
     PluginException pluginException = findCause(t, PluginException.class);
@@ -84,12 +87,12 @@ public final class StartupAbortedException extends RuntimeException {
       Throwable cause = pluginException.getCause();
       Objects.requireNonNullElse(cause, pluginException).printStackTrace(new PrintWriter(message));
 
-      Main.showMessage(BootstrapBundle.message("bootstrap.error.title.plugin.error"), message.toString(), false); //NON-NLS
-      System.exit(Main.PLUGIN_ERROR);
+      StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.plugin.error"), message.toString(), false); //NON-NLS
+      System.exit(AppExitCodes.PLUGIN_ERROR);
     }
     else {
-      Main.showMessage(BootstrapBundle.message("bootstrap.error.title.start.failed"), t);
-      System.exit(Main.STARTUP_EXCEPTION);
+      StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.start.failed"), t);
+      System.exit(AppExitCodes.STARTUP_EXCEPTION);
     }
   }
 

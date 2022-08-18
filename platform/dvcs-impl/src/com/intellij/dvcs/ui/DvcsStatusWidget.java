@@ -51,6 +51,9 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
       });
   }
 
+  /**
+   * @see com.intellij.dvcs.DvcsUtil#guessWidgetRepository
+   */
   @Nullable
   protected abstract T guessCurrentRepository(@NotNull Project project);
 

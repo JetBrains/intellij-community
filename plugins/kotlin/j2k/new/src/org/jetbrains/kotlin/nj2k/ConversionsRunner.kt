@@ -11,7 +11,7 @@ import java.util.*
 
 object ConversionsRunner {
     private fun createConversions(context: NewJ2kConverterContext) = listOf(
-        ParenthesizeBitwiseOperationConversion(context),
+        ParenthesizeBinaryExpressionIfNeededConversion(context),
         NonCodeElementsConversion(context),
         JavaModifiersConversion(context),
         JavaAnnotationsConversion(context),
@@ -23,13 +23,12 @@ object ConversionsRunner {
         BoxedTypeOperationsConversion(context),
         AnyWithStringConcatenationConversion(context),
         AssignmentExpressionUnfoldingConversion(context),
-        AddParenthesisForLineBreaksInBinaryExpression(context),
         ThrowStatementConversion(context),
         ArrayInitializerConversion(context),
         TryStatementConversion(context),
         EnumFieldAccessConversion(context),
         SynchronizedStatementConversion(context),
-        JetbrainsNullableAnnotationsConverter(context),
+        NullabilityAnnotationsConversion(context),
         DefaultArgumentsConversion(context),
         ConstructorConversion(context),
         MoveConstructorsAfterFieldsConversion(context),
@@ -65,9 +64,8 @@ object ConversionsRunner {
         ImplicitCastsConversion(context),
         PrimitiveTypeCastsConversion(context),
         LiteralConversion(context),
-        StaticMemberAccessConversion(context),
         RemoveRedundantQualifiersForCallsConversion(context),
-        FunctionalInterfacesConverter(context),
+        FunctionalInterfacesConversion(context),
 
         FilterImportsConversion(context),
         AddElementsInfoConversion(context)
@@ -93,7 +91,9 @@ object ConversionsRunner {
 
     private fun Conversion.description(): String {
         val conversionName = this::class.simpleName
-        val words = conversionName?.let { wordRegex.findAll(conversionName).map { it.value.decapitalize(Locale.US) }.toList() }
+        val words = conversionName?.let {
+            wordRegex.findAll(conversionName).map { it.value.replaceFirstChar { char -> char.lowercase(Locale.US) } }.toList()
+        }
         return when {
             conversionName == null -> "Converting..."
             conversionName.endsWith("Conversion") -> "Converting ${words!!.dropLast(1).joinToString(" ")}"
@@ -101,5 +101,5 @@ object ConversionsRunner {
         }
     }
 
-    private val wordRegex = "[A-Z][a-z0-9]+".toRegex()
+    private val wordRegex = """[A-Z][a-z\d]+""".toRegex()
 }

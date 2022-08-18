@@ -25,7 +25,7 @@ class ExtractMethodCocktailSortLesson(private val sample: LessonSample)
         triggerUI().component { dialog: JDialog ->
           dialog.title == extractMethodDialogTitle
         }
-        restoreIfModifiedOrMoved()
+        restoreIfModifiedOrMoved(sample)
         test { actions(it) }
       }
       // Now will be open the first dialog
@@ -61,7 +61,7 @@ class ExtractMethodCocktailSortLesson(private val sample: LessonSample)
           !insideRefactoring()
         }
         test(waitEditorToBeReady = false) {
-          dialog(extractMethodDialogTitle) {
+          dialog {
             button(yesButtonText).click()
           }
         }

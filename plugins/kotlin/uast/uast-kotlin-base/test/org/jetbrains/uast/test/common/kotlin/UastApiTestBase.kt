@@ -371,9 +371,7 @@ interface UastApiTestBase : UastPluginSelection {
             barMethod.assertResolveCall("IntRange(1, 2)")
         }
 
-        uFile.findElementByTextFromPsi<UElement>("barT").getParentOfType<UMethod>()!!.let { barMethod ->
-            barMethod.assertResolveCall("foo()")
-        }
+        uFile.findElementByTextFromPsi<UElement>("barT").getParentOfType<UMethod>()!!.assertResolveCall("foo()")
 
         uFile.findElementByTextFromPsi<UElement>("listT").getParentOfType<UMethod>()!!.let { barMethod ->
             barMethod.assertResolveCall("isEmpty()")
@@ -447,8 +445,8 @@ interface UastApiTestBase : UastPluginSelection {
     }
 
     private fun checkLocalDeclarationCall(uFile: UFile) {
-        val localFunction = uFile.findElementByTextFromPsi<UElement>("bar() == Local()", strict = true).
-        findElementByText<UCallExpression>("bar()")
+        val localFunction =
+            uFile.findElementByTextFromPsi<UElement>("bar() == Local()", strict = true).findElementByText<UCallExpression>("bar()")
         TestCase.assertEquals(
             "UIdentifier (Identifier (bar))",
             localFunction.methodIdentifier?.asLogString()
@@ -471,8 +469,8 @@ interface UastApiTestBase : UastPluginSelection {
     }
 
     private fun checkLocalConstructorCall(uFile: UFile) {
-        val localFunction = uFile.findElementByTextFromPsi<UElement>("bar() == Local()", strict = true).
-        findElementByText<UCallExpression>("Local()")
+        val localFunction =
+            uFile.findElementByTextFromPsi<UElement>("bar() == Local()", strict = true).findElementByText<UCallExpression>("Local()")
         TestCase.assertEquals(
             "UIdentifier (Identifier (Local))",
             localFunction.methodIdentifier?.asLogString()
@@ -499,7 +497,7 @@ interface UastApiTestBase : UastPluginSelection {
         TestCase.assertEquals(localClass.javaPsi, localPrimaryConstructor.javaPsi.cast<PsiMethod>().containingClass)
     }
 
-    fun checkCallbackForElvis(uFilePath: String, uFile:UFile) {
+    fun checkCallbackForElvis(uFilePath: String, uFile: UFile) {
         TestCase.assertEquals(
             "UTypeReferenceExpression (name = java.lang.String)",
             uFile.findElementByTextFromPsi<UMethod>("fun foo(bar: String): String? = null").returnTypeReference?.asLogString()
@@ -639,17 +637,20 @@ interface UastApiTestBase : UastPluginSelection {
 
     fun checkCallbackForComplicatedTypes(uFilePath: String, uFile: UFile) {
         val render = StringBuilder()
-        uFile.accept(object: AbstractUastVisitor(){
+        uFile.accept(object : AbstractUastVisitor() {
             override fun visitCallExpression(node: UCallExpression): Boolean {
                 render.appendLine("${node.asRenderString()} -> typeArguments: ${node.typeArguments}")
                 return super.visitCallExpression(node)
             }
         })
-        TestCase.assertEquals("""
+        TestCase.assertEquals(
+            """
+                <init>() -> typeArguments: [PsiType:T]
                 getGenericSuperclass() -> typeArguments: []
                 getActualTypeArguments() -> typeArguments: []
                 first() -> typeArguments: []
-            """.trimIndent(), render.toString().trimEnd())
+            """.trimIndent(), render.toString().trimEnd()
+        )
     }
 
     fun checkCallbackForSAM(uFilePath: String, uFile: UFile) {
@@ -735,5 +736,24 @@ interface UastApiTestBase : UastPluginSelection {
                 TestCase.assertEquals("SOURCE", (reference?.referenceNameElement as? UIdentifier)?.name)
             }
         }
+    }
+
+    fun checkCallbackForComplexStrings(uFilePath: String, uFile: UFile) {
+        TestCase.assertEquals(
+            "\"\"\"\n        text=text\n    \"\"\".trimIndent()",
+            uFile.findElementByText<UInjectionHost>("\"\"\"\n        text=text\n    \"\"\"").getStringRoomExpression().sourcePsi?.text
+        )
+        TestCase.assertEquals(
+            "\"\"\"\n        | margined\n    \"\"\".trimMargin()",
+            uFile.findElementByText<UInjectionHost>("\"\"\"\n        | margined\n    \"\"\"").getStringRoomExpression().sourcePsi?.text
+        )
+        TestCase.assertEquals(
+            "\"bar\"",
+            uFile.findElementByTextFromPsi<UInjectionHost>("\"bar\"").getStringRoomExpression().sourcePsi?.text
+        )
+        TestCase.assertEquals(
+            "\"abc\" + \"cde\" + \"efg\"",
+            uFile.findElementByTextFromPsi<UInjectionHost>("\"efg\"").getStringRoomExpression().sourcePsi?.text
+        )
     }
 }

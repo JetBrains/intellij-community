@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
@@ -9,11 +9,12 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsLogFilterCollection;
@@ -22,7 +23,6 @@ import com.intellij.vcs.log.VcsLogRefresher;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogStatusBarProgress;
-import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.ui.*;
@@ -30,6 +30,9 @@ import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl;
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.IntSets;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -42,7 +45,7 @@ public class VcsLogManager implements Disposable {
 
   @NotNull private final Project myProject;
   @NotNull private final VcsLogTabsProperties myUiProperties;
-  @Nullable private final Consumer<? super Throwable> myRecreateMainLogHandler;
+  @Nullable private final PairConsumer<? super VcsLogErrorHandler.Source, ? super Throwable> myRecreateMainLogHandler;
 
   @NotNull private final VcsLogData myLogData;
   @NotNull private final VcsLogColorManagerImpl myColorManager;
@@ -59,13 +62,12 @@ public class VcsLogManager implements Disposable {
                        @NotNull VcsLogTabsProperties uiProperties,
                        @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
                        boolean scheduleRefreshImmediately,
-                       @Nullable Consumer<? super Throwable> recreateHandler) {
+                       @Nullable PairConsumer<? super VcsLogErrorHandler.Source, ? super Throwable> recreateHandler) {
     myProject = project;
     myUiProperties = uiProperties;
     myRecreateMainLogHandler = recreateHandler;
 
-    MyFatalErrorsHandler fatalErrorsHandler = new MyFatalErrorsHandler();
-    myLogData = new VcsLogData(myProject, logProviders, fatalErrorsHandler, this);
+    myLogData = new VcsLogData(myProject, logProviders, new MyErrorHandler(), this);
     myPostponableRefresher = new PostponableLogRefresher(myLogData);
 
     refreshLogOnVcsEvents(logProviders, myPostponableRefresher, myLogData);
@@ -285,34 +287,34 @@ public class VcsLogManager implements Disposable {
     return myDisposed;
   }
 
-  private class MyFatalErrorsHandler implements FatalErrorHandler {
-    private final AtomicBoolean myIsBroken = new AtomicBoolean(false);
+  private class MyErrorHandler implements VcsLogErrorHandler {
+    private final @NotNull IntSet myErrors = IntSets.synchronize(new IntOpenHashSet());
+    private final @NotNull AtomicBoolean myIsBroken = new AtomicBoolean(false);
 
     @Override
-    public void consume(@Nullable Object source, @NotNull Throwable e) {
+    public void handleError(@Nullable Source source, @NotNull Throwable throwable) {
       if (myIsBroken.compareAndSet(false, true)) {
-        processError(source, e);
+        if (myRecreateMainLogHandler != null) {
+          ApplicationManager.getApplication().invokeLater(() -> myRecreateMainLogHandler.consume(source, throwable));
+        }
+        else {
+          LOG.error(throwable);
+        }
+
+        if (source == Source.Storage) {
+          ((VcsLogModifiableIndex)myLogData.getIndex()).markCorrupted();
+        }
       }
       else {
-        LOG.debug("Vcs Log storage is broken and is being recreated", e);
-      }
-    }
-
-    protected void processError(@Nullable Object source, @NotNull Throwable e) {
-      if (myRecreateMainLogHandler != null) {
-        ApplicationManager.getApplication().invokeLater(() -> myRecreateMainLogHandler.consume(e));
-      }
-      else {
-        LOG.error(e);
-      }
-
-      if (source instanceof VcsLogStorage) {
-        ((VcsLogModifiableIndex)myLogData.getIndex()).markCorrupted();
+        int errorHashCode = ThrowableInterner.computeTraceHashCode(throwable);
+        if (myErrors.add(errorHashCode)) {
+          LOG.debug("Vcs Log storage is broken and is being recreated", throwable);
+        }
       }
     }
 
     @Override
-    public void displayFatalErrorMessage(@Nls @NotNull String message) {
+    public void displayMessage(@Nls @NotNull String message) {
       VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.ERROR);
     }
   }

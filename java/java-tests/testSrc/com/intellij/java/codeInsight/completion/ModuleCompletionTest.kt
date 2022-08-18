@@ -46,6 +46,14 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   @NeedsIndex.ForStandardLibrary
   fun testRequiresQualifiedName() = complete("module M { requires lib.mult<caret> }", "module M { requires lib.multi.release;<caret> }")
 
+  @NeedsIndex.ForStandardLibrary
+  fun testRequiresWithNextLine() {
+    myFixture.configureByText("module-info.java", "module M { requires lib.mult<caret>\nrequires java.io;}")
+    myFixture.completeBasic()
+    myFixture.type('\t')
+    myFixture.checkResult("module M { requires lib.multi.release;  \nrequires java.io;}")
+  }
+
   fun testExportsBare() = variants("module M { exports <caret> }", "pkg")
   fun testExportsPrefixed() = complete("module M { exports p<caret> }", "module M { exports pkg.<caret> }")
   fun testExportsQualified() = variants("module M { exports pkg.<caret> }", "main", "other", "empty")

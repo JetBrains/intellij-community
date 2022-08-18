@@ -20,7 +20,7 @@ public class UsageNode extends Node implements Comparable<UsageNode>, Navigatabl
 
   @Override
   public int compareTo(@NotNull UsageNode usageNode) {
-    return UsageViewImpl.USAGE_COMPARATOR.compare(getUsage(), usageNode.getUsage());
+    return UsageViewImpl.USAGE_COMPARATOR_BY_FILE_AND_OFFSET.compare(getUsage(), usageNode.getUsage());
   }
 
   @NotNull

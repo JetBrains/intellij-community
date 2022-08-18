@@ -2,6 +2,9 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.Comparing;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -286,6 +289,19 @@ public final class ArrayUtil {
     System.arraycopy(a1, 0, result, 0, a1.length);
     System.arraycopy(a2, 0, result, a1.length, a2.length);
     return result;
+  }
+
+  @Contract(pure=true)
+  public static int[] intersection(int @NotNull [] a1, int @NotNull [] a2) {
+    if (a1.length == 0) {
+      return a2;
+    }
+    if (a2.length == 0) {
+      return a1;
+    }
+    IntSet result = new IntOpenHashSet(a1);
+    result.retainAll(new IntArrayList(a2));
+    return result.toIntArray();
   }
 
   /**
@@ -592,14 +608,13 @@ public final class ArrayUtil {
 
   //must be Comparables
   @Contract(pure=true)
-  public static <T> int lexicographicCompare(T @NotNull [] obj1, T @NotNull [] obj2) {
+  public static <T extends Comparable<T>> int lexicographicCompare(T @NotNull [] obj1, T @NotNull [] obj2) {
     for (int i = 0; i < Math.max(obj1.length, obj2.length); i++) {
       T o1 = i < obj1.length ? obj1[i] : null;
       T o2 = i < obj2.length ? obj2[i] : null;
       if (o1 == null) return -1;
       if (o2 == null) return 1;
-      //noinspection unchecked
-      int res = ((Comparable<T>)o1).compareTo(o2);
+      int res = o1.compareTo(o2);
       if (res != 0) return res;
     }
     return 0;
@@ -971,9 +986,9 @@ public final class ArrayUtil {
   }
 
   @Contract(pure=true)
-  public static <T> int indexOfIdentity(T @NotNull [] list, T element) {
-    for (int i = 0; i < list.length; i++) {
-      if (list[i] == element) {
+  public static <T> int indexOfIdentity(T @NotNull [] array, T element) {
+    for (int i = 0; i < array.length; i++) {
+      if (array[i] == element) {
         return i;
       }
     }

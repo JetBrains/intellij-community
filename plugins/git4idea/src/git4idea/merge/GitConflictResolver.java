@@ -10,7 +10,6 @@ import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,7 +24,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import git4idea.GitDisposable;
 import git4idea.GitUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.i18n.GitBundle;
@@ -142,6 +140,7 @@ public class GitConflictResolver {
    *
    * @return {@code true} if there is nothing to merge anymore, {@code false} if unmerged files remain or in the case of error.
    */
+  @RequiresBackgroundThread
   public final boolean merge() {
     return merge(false);
   }
@@ -206,7 +205,7 @@ public class GitConflictResolver {
     notification.setDisplayId(CANNOT_RESOLVE_CONFLICT);
     notification.addAction(NotificationAction.createSimple(GitBundle.messagePointer("action.NotificationAction.text.resolve"), () -> {
       notification.expire();
-      BackgroundTaskUtil.executeOnPooledThread(GitDisposable.getInstance(myProject), () -> mergeNoProceed());
+      mergeNoProceedInBackground();
     }));
     VcsNotifier.getInstance(myProject).notify(notification);
   }

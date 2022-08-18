@@ -100,12 +100,13 @@ public class BigJavaFilesPerformanceTest extends LightJavaCodeInsightFixtureTest
 
   private long doHighlightingTest(String filename, int samples) {
     List<Long> highlightingTimings = new ArrayList<>(samples);
-    doTest(filename, samples, (daemonListener) -> {
+    doTest(filename, samples, daemonListener -> {
       getFixture().type("a");
       try {
         long highlightingTime = waitDaemonToFinish(daemonListener);
         highlightingTimings.add(highlightingTime);
-      } catch (Exception ignored) {
+      }
+      catch (Exception ignored) {
       }
     });
     return calculateMean(highlightingTimings);
@@ -113,7 +114,7 @@ public class BigJavaFilesPerformanceTest extends LightJavaCodeInsightFixtureTest
 
   private long doTypingTest(String filename, int samples, boolean waitDaemonToStart) {
     List<Long> typingTimings = new ArrayList<>(samples);
-    doTest(filename, samples, (daemonListener) -> {
+    doTest(filename, samples, daemonListener -> {
       long typingTime = TimeoutUtil.measureExecutionTime(() -> {
         getFixture().type("a");
       });
@@ -206,7 +207,7 @@ public class BigJavaFilesPerformanceTest extends LightJavaCodeInsightFixtureTest
     return EdtTestUtil.runInEdtAndGet(() -> {
       return SyntaxTraverser.psiTraverser(file)
         .filter(PsiVariable.class)
-        .map((element) -> element.getNameIdentifier().getTextRange().getEndOffset())
+        .map(element -> element.getNameIdentifier().getTextRange().getEndOffset())
         .take(number)
         .toList();
     });

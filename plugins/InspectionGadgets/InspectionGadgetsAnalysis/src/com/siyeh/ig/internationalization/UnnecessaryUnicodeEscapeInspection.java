@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -100,7 +101,7 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
     return new UnnecessaryUnicodeEscapeVisitor();
   }
 
-  private class UnnecessaryUnicodeEscapeVisitor extends BaseInspectionVisitor {
+  private static class UnnecessaryUnicodeEscapeVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitFile(@NotNull PsiFile file) {
@@ -173,12 +174,17 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
           if (coderResult.isError()) {
             continue;
           }
-          final PsiElement element = file.findElementAt(i);
-          if (element != null && isSuppressedFor(element)) {
+          PsiElement element = file.findElementAt(i);
+          if (element == null) {
             return;
           }
           final RangeMarker rangeMarker = document.createRangeMarker(i, escapeEnd);
-          registerErrorAtOffset(file, i, escapeEnd - i, Character.valueOf(d), rangeMarker);
+          TextRange range = element.getTextRange();
+          while (escapeEnd > range.getEndOffset()) {
+            element = element.getParent();
+            range = element.getTextRange();
+          }
+          registerErrorAtOffset(element, i - range.getStartOffset(), escapeEnd - i, Character.valueOf(d), rangeMarker);
         }
       }
     }

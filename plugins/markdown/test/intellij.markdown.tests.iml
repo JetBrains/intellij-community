@@ -19,5 +19,8 @@
     <orderEntry type="module" module-name="intellij.platform.tests" scope="TEST" />
     <orderEntry type="library" name="jsoup" level="project" />
     <orderEntry type="library" name="jcef" level="project" />
+    <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" />
+    <orderEntry type="library" name="jetbrains.markdown.jvm" level="project" />
   </component>
 </module>

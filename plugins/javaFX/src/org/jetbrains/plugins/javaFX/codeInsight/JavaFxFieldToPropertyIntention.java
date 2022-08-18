@@ -4,6 +4,7 @@ package org.jetbrains.plugins.javaFX.codeInsight;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ReadAction;
@@ -81,9 +82,9 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
   }
 
   @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     // As the action spawns the search which could be very long, let's disable preview here
-    return null;
+    return IntentionPreviewInfo.EMPTY;
   }
 
   private static class SearchUsagesTask extends Task.Modal {

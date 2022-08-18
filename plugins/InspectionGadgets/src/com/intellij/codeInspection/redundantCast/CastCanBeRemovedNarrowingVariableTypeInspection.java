@@ -1,10 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.redundantCast;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
@@ -12,10 +11,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.RedundantCastUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -25,7 +28,7 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitTypeCastExpression(PsiTypeCastExpression cast) {
+      public void visitTypeCastExpression(@NotNull PsiTypeCastExpression cast) {
         PsiTypeElement castTypeElement = cast.getCastType();
         if (castTypeElement == null || castTypeElement.getAnnotations().length > 0) return;
         PsiType castType = GenericsUtil.getVariableTypeByExpressionType(cast.getType());
@@ -67,7 +70,7 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
         }
         String message = JavaBundle
           .message("inspection.cast.can.be.removed.narrowing.variable.type.message", variable.getName(), castType.getPresentableText());
-        holder.registerProblem(castTypeElement, message, new CastCanBeRemovedNarrowingVariableTypeFix(variable, castType, isOnTheFly));
+        holder.registerProblem(castTypeElement, message, new CastCanBeRemovedNarrowingVariableTypeFix(castTypeElement, variable, castType, isOnTheFly));
       }
     };
   }
@@ -127,20 +130,20 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
     return true;
   }
 
-  private static class CastCanBeRemovedNarrowingVariableTypeFix implements LocalQuickFix {
+  private static class CastCanBeRemovedNarrowingVariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     private final String myVariableName;
     private final String myType;
     private final boolean myOnTheFly;
 
-    CastCanBeRemovedNarrowingVariableTypeFix(PsiVariable variable, PsiType type, boolean onTheFly) {
+    CastCanBeRemovedNarrowingVariableTypeFix(PsiTypeElement castTypeElement, PsiVariable variable, PsiType type, boolean onTheFly) {
+      super(castTypeElement);
       myVariableName = variable.getName();
       myType = type.getPresentableText();
       myOnTheFly = onTheFly;
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getText() {
       return JavaBundle.message("inspection.cast.can.be.removed.narrowing.variable.type.fix.name", myVariableName, myType);
     }
 
@@ -151,8 +154,12 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiTypeCastExpression cast = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiTypeCastExpression.class);
+    public void invoke(@NotNull Project project,
+                       @NotNull PsiFile file,
+                       @Nullable Editor editor,
+                       @NotNull PsiElement startElement,
+                       @NotNull PsiElement endElement) {
+      PsiTypeCastExpression cast = PsiTreeUtil.getParentOfType(startElement, PsiTypeCastExpression.class);
       if (cast == null) return;
       PsiReferenceExpression ref = tryCast(PsiUtil.skipParenthesizedExprDown(cast.getOperand()), PsiReferenceExpression.class);
       if (ref == null) return;
@@ -173,11 +180,8 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
           }
         }
       }
-      if (myOnTheFly) {
-        Editor editor = PsiEditorUtil.findEditor(newTypeElement);
-        if (editor != null) {
-          HighlightUtils.highlightElement(newTypeElement, editor);
-        }
+      if (myOnTheFly && editor != null) {
+        HighlightUtils.highlightElement(newTypeElement, editor);
       }
     }
   }

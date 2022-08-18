@@ -76,18 +76,18 @@ public final class ExceptionUtil {
       }
 
       @Override
-      public void visitAnonymousClass(PsiAnonymousClass aClass) {
+      public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
         // process anonymous getArgumentList()
         visitElement(aClass);
       }
 
       @Override
-      public void visitClass(PsiClass aClass) {
+      public void visitClass(@NotNull PsiClass aClass) {
         // do not go inside class declaration
       }
 
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
         PsiReferenceExpression methodRef = expression.getMethodExpression();
         JavaResolveResult resolveResult = methodRef.advancedResolve(false);
         PsiMethod method = (PsiMethod)resolveResult.getElement();
@@ -98,7 +98,7 @@ public final class ExceptionUtil {
       }
 
       @Override
-      public void visitNewExpression(PsiNewExpression expression) {
+      public void visitNewExpression(@NotNull PsiNewExpression expression) {
         JavaResolveResult resolveResult = expression.resolveMethodGenerics();
         PsiMethod method = (PsiMethod)resolveResult.getElement();
         if (method != null) {
@@ -108,7 +108,7 @@ public final class ExceptionUtil {
       }
 
       @Override
-      public void visitThrowStatement(PsiThrowStatement statement) {
+      public void visitThrowStatement(@NotNull PsiThrowStatement statement) {
         final PsiExpression expr = statement.getException();
         if (expr != null) {
           addExceptions(result, StreamEx.of(getPreciseThrowTypes(expr)).select(PsiClassType.class).toList());
@@ -117,12 +117,12 @@ public final class ExceptionUtil {
       }
 
       @Override
-      public void visitLambdaExpression(PsiLambdaExpression expression) {
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
         // do not go inside lambda
       }
 
       @Override
-      public void visitResourceList(PsiResourceList resourceList) {
+      public void visitResourceList(@NotNull PsiResourceList resourceList) {
         for (PsiResourceListElement listElement : resourceList) {
           addExceptions(result, getCloserExceptions(listElement));
         }
@@ -130,7 +130,7 @@ public final class ExceptionUtil {
       }
 
       @Override
-      public void visitTryStatement(PsiTryStatement statement) {
+      public void visitTryStatement(@NotNull PsiTryStatement statement) {
         addExceptions(result, getTryExceptions(statement));
         // do not call super: try exception goes into try body recursively
       }
@@ -380,7 +380,7 @@ public final class ExceptionUtil {
       }
 
       @Override
-      public void visitLambdaExpression(PsiLambdaExpression expression) {
+      public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
         if (ArrayUtil.find(elements, expression) >= 0) {
           visitElement(expression);
         }
@@ -394,7 +394,7 @@ public final class ExceptionUtil {
       }
 
       @Override
-      public void visitClass(PsiClass aClass) { }
+      public void visitClass(@NotNull PsiClass aClass) { }
     };
 
     for (PsiElement element : elements) {

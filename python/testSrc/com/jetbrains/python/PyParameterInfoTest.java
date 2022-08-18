@@ -311,6 +311,18 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("self: A, a, b", new String[]{"b"}, new String[]{"self: A, "});
   }
 
+  // PY-53671
+  public void testUnboundMethodReassignedAndImportedWithQualifiedImport() {
+    Map<String, PsiElement> marks = loadMultiFileTest(1);
+    feignCtrlP(marks.get("<arg>").getTextOffset()).check("self: C, param", new String[]{"self: C, "}, ArrayUtil.EMPTY_STRING_ARRAY);
+  }
+
+  // PY-53671
+  public void testBoundMethodReassignedAndImportedWithQualifiedImport() {
+    Map<String, PsiElement> marks = loadMultiFileTest(1);
+    feignCtrlP(marks.get("<arg>").getTextOffset()).check("self: C, param", new String[]{"param"}, new String[]{"self: C, "});
+  }
+
   public void testConstructorFactory() {
     Map<String, PsiElement> marks = loadTest(1);
 
@@ -1014,6 +1026,18 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("self: CallableTest, arg=None",
                                                           new String[]{"arg=None"},
                                                           new String[]{"self: CallableTest, "});
+  }
+
+  // PY-53611
+  public void testTypedDictWithRequiredAndNotRequiredKeys() {
+    final Map<String, PsiElement> test = loadTest(2);
+
+    feignCtrlP(test.get("<arg1>").getTextOffset()).check("*, x: int, y: int = ...",
+                                                         new String[]{"x: int, "},
+                                                         ArrayUtilRt.EMPTY_STRING_ARRAY);
+    feignCtrlP(test.get("<arg2>").getTextOffset()).check("*, x: int, y: int = ...",
+                                                         new String[]{"x: int, "},
+                                                         ArrayUtilRt.EMPTY_STRING_ARRAY);
   }
 
   @NotNull

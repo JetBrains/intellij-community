@@ -1,13 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.psi.patternMatching
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.kotlin.idea.base.psi.unifier.toRange
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.KotlinPsiUnifier
-import org.jetbrains.kotlin.idea.util.psi.patternMatching.toRange
+import org.jetbrains.kotlin.idea.util.psi.patternMatching.match
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
@@ -31,7 +32,7 @@ abstract class AbstractPsiUnifierTest : KotlinLightCodeInsightFixtureTestCase() 
         DirectiveBasedActionUtils.checkForUnexpectedErrors(file)
 
         val actualText =
-            findPattern(file).toRange().match(file, KotlinPsiUnifier.DEFAULT).map { it.range.getTextRange().substring(file.getText()!!) }
+            findPattern(file).toRange().match(file, KotlinPsiUnifier.DEFAULT).map { it.range.textRange.substring(file.getText()!!) }
                 .joinToString("\n\n")
         KotlinTestUtils.assertEqualsToFile(File(testDataPath, "${fileName()}.match"), actualText)
     }

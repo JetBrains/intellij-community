@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.codeMetaInfo
 
@@ -47,8 +47,8 @@ import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingC
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.LineMarkerConfiguration
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromDirStructure
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromTextFile
-import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
-import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
+import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
+import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.psi.KtFile
@@ -75,17 +75,17 @@ class CodeMetaInfoTestCase(
         val directives = KotlinTestUtils.parseDirectives(file.text)
         val diagnosticsFilter = AbstractMultiModuleIdeResolveTest.parseDiagnosticFilterDirective(directives, allowUnderscoreUsage = false)
         val diagnostics = CheckerTestUtil.getDiagnosticsIncludingSyntaxErrors(
-            bindingContext,
-            file,
-            markDynamicCalls = false,
-            dynamicCallDescriptors = mutableListOf(),
-            configuration = DiagnosticsRenderingConfiguration(
-                platform = null, // we don't need to attach platform-description string to diagnostic here
-                withNewInference = false,
-                languageVersionSettings = resolutionFacade.getLanguageVersionSettings(),
+          bindingContext,
+          file,
+          markDynamicCalls = false,
+          dynamicCallDescriptors = mutableListOf(),
+          configuration = DiagnosticsRenderingConfiguration(
+              platform = null, // we don't need to attach platform-description string to diagnostic here
+              withNewInference = false,
+              languageVersionSettings = resolutionFacade.languageVersionSettings,
             ),
-            dataFlowValueFactory = resolutionFacade.getDataFlowValueFactory(),
-            moduleDescriptor = moduleDescriptor as ModuleDescriptorImpl
+          dataFlowValueFactory = resolutionFacade.dataFlowValueFactory,
+          moduleDescriptor = moduleDescriptor as ModuleDescriptorImpl
         ).map { it.diagnostic }.filter { !parseDirective || diagnosticsFilter.value(it) }
         configuration.renderParams = directives.contains(AbstractMultiModuleIdeResolveTest.RENDER_DIAGNOSTICS_MESSAGES)
         return getCodeMetaInfo(diagnostics, configuration, filterMetaInfo)

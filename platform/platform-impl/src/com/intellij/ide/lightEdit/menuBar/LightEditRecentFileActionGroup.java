@@ -83,6 +83,11 @@ class LightEditRecentFileActionGroup extends ActionGroup implements DumbAware, A
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       if (project != null) {

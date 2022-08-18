@@ -81,13 +81,13 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
       result = injectedResult.isEmpty() ? Collections.emptySet(): new HashSet<>(injectedResult);
     }
     Set<HighlightInfo> gotHighlights = new HashSet<>(100);
-    List<HighlightInfo> injectionsOutside = new ArrayList<>(gotHighlights.size());
+    List<HighlightInfo> injectionsOutside = new ArrayList<>(100);
     for (HighlightInfo info : result) {
       if (myRestrictRange.contains(info)) {
         gotHighlights.add(info);
       }
       else {
-        // nonconditionally apply injected results regardless whether they are in myStartOffset,myEndOffset
+        // non-conditionally apply injected results regardless whether they are in myStartOffset,myEndOffset
         injectionsOutside.add(info);
       }
     }
@@ -101,8 +101,7 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
         myHighlights.addAll(toApplyInside);
         gotHighlights.clear();
 
-        myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, getEditor(), toApplyInside, myPriorityRange, myRestrictRange,
-                                                                        getId());
+        myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, getEditor(), toApplyInside, myPriorityRange, myRestrictRange, getId());
       }
 
       List<HighlightInfo> toApply = new ArrayList<>();
@@ -114,14 +113,12 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
       }
       toApply.addAll(injectionsOutside);
 
-      myHighlightInfoProcessor.highlightsOutsideVisiblePartAreProduced(myHighlightingSession, getEditor(), toApply, myRestrictRange, new ProperTextRange(0, myDocument.getTextLength()),
-                                                                       getId());
+      myHighlightInfoProcessor.highlightsOutsideVisiblePartAreProduced(myHighlightingSession, getEditor(), toApply, myRestrictRange, new ProperTextRange(0, myDocument.getTextLength()), getId());
     }
     else {
       // else apply only result (by default apply command) and only within inside
       myHighlights.addAll(gotHighlights);
-      myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, getEditor(), myHighlights, myRestrictRange, myRestrictRange,
-                                                                      getId());
+      myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, getEditor(), myHighlights, myRestrictRange, myRestrictRange, getId());
     }
   }
 
@@ -212,7 +209,7 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
   }
 
   private boolean addInjectedPsiHighlights(@NotNull PsiFile injectedPsi,
-                                           TextAttributesKey attributesKey,
+                                           @Nullable TextAttributesKey attributesKey,
                                            @NotNull Collection<? super HighlightInfo> outInfos,
                                            @NotNull InjectedLanguageManager injectedLanguageManager) {
     DocumentWindow documentWindow = (DocumentWindow)PsiDocumentManager.getInstance(myProject).getCachedDocument(injectedPsi);
@@ -308,7 +305,7 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
 
       boolean isAfterEndOfLine = info.isAfterEndOfLine();
       if (isAfterEndOfLine) {
-        // convert injected afterEndOfLine to either host' afterEndOfLine or not-afterEndOfLine highlight of the injected fragment boundary
+        // convert injected afterEndOfLine to either host's afterEndOfLine or not-afterEndOfLine highlight of the injected fragment boundary
         int hostEndOffset = hostRange.getEndOffset();
         int lineNumber = documentWindow.getDelegate().getLineNumber(hostEndOffset);
         int hostLineEndOffset = documentWindow.getDelegate().getLineEndOffset(lineNumber);
@@ -343,9 +340,8 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
     }
   }
 
-  // finds the first nearest text range
   @Nullable("null means invalid")
-  private static TextRange findNearestTextRange(DocumentWindow documentWindow, int startOffset) {
+  private static TextRange findNearestTextRange(@NotNull DocumentWindow documentWindow, int startOffset) {
     TextRange textRange = null;
     for (Segment marker : documentWindow.getHostRanges()) {
       TextRange curRange = ProperTextRange.create(marker);
@@ -402,9 +398,9 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
   }
 
   @NotNull
-  public static List<HighlightInfo> overrideDefaultHighlights(@NotNull EditorColorsScheme scheme,
-                                                              @NotNull TextRange range,
-                                                              TextAttributesKey @NotNull [] keys) {
+  static List<HighlightInfo> overrideDefaultHighlights(@NotNull EditorColorsScheme scheme,
+                                                       @NotNull TextRange range,
+                                                       TextAttributesKey @NotNull [] keys) {
     List<HighlightInfo> result = new ArrayList<>();
 
     if (range.isEmpty()) {

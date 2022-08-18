@@ -13,7 +13,7 @@ UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = In
     UBlockExpression -> UQualifiedReferenceExpression -> KtUltraLightMethodForSourceDeclaration:run: run
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = runnable) -> LightVariableBuilder:runnable: runnable
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to KtUltraLightMethodForSourceDeclaration:run) -> USimpleNameReferenceExpression (identifier = run) -> KtUltraLightMethodForSourceDeclaration:run: run
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = Runnable) -> PsiClass:Runnable: Runnable
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = Runnable) -> PsiClass:Runnable: Runnable
         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to PsiMethod:println) -> USimpleNameReferenceExpression (identifier = println) -> PsiMethod:println: println
     UBlockExpression -> UQualifiedReferenceExpression -> PsiMethod:run: run
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = runnable2) -> LightVariableBuilder:runnable2: runnable2
@@ -22,7 +22,8 @@ UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = In
     UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = Runnable) -> PsiClass:Runnable: Runnable
     UTypeReferenceExpression (name = java.io.Closeable) -> USimpleNameReferenceExpression (identifier = Closeable) -> PsiClass:Closeable: Closeable
     ULocalVariable (name = runnableIs) -> UObjectLiteralExpression -> PsiMethod:InputStream:
-    UTypeReferenceExpression (name = java.io.InputStream) -> USimpleNameReferenceExpression (identifier = InputStream) -> PsiMethod:InputStream: InputStream
+    ULocalVariable (name = runnableIs) -> UObjectLiteralExpression -> PsiMethod:InputStream:
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to PsiMethod:InputStream) -> USimpleNameReferenceExpression (identifier = InputStream) -> PsiMethod:InputStream: InputStream
     UTypeReferenceExpression (name = java.lang.Runnable) -> USimpleNameReferenceExpression (identifier = Runnable) -> PsiClass:Runnable: Runnable
     UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
     ULocalVariable (name = runnable) -> UObjectLiteralExpression -> null:

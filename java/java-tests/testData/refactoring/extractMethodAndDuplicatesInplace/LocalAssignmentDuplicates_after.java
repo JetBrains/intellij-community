@@ -4,7 +4,7 @@ public class Sample2 {
         extracted();
     }
 
-    private void extracted() {
+    private static void extracted() {
         int a = 1;
         int b = 2;
         a = 42;

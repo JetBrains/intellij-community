@@ -386,7 +386,6 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
 
   /**
    * Returns {@code true} if icon should be vertically centered. Otherwise, icon will be placed on top
-   * @return
    */
   protected boolean isIconVerticallyCentered() {
     return false;

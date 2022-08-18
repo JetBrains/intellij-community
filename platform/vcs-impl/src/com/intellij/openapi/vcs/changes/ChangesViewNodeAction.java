@@ -8,9 +8,13 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * EP that allows adding actions to the 'Commit' (aka 'Local Changes') tree, that are visible only when specific node is hovered by mouse.
+ */
 @ApiStatus.Experimental
 public interface ChangesViewNodeAction {
-  ProjectExtensionPointName<ChangesViewNodeAction> EP_NAME = new ProjectExtensionPointName<>("com.intellij.vcs.changes.changesViewNodeAction");
+  ProjectExtensionPointName<ChangesViewNodeAction> EP_NAME =
+    new ProjectExtensionPointName<>("com.intellij.vcs.changes.changesViewNodeAction");
 
   @Nullable
   HoverIcon createNodeHoverIcon(@NotNull ChangesBrowserNode<?> node);

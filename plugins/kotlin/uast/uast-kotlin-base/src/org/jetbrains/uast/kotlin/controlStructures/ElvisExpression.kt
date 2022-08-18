@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.kotlin
 
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiType
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtAnnotatedExpression
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -93,6 +94,7 @@ fun createElvisExpression(elvisExpression: KtBinaryExpression, givenParent: UEle
     return KotlinUElvisExpression(elvisExpression, left, right, givenParent)
 }
 
+@ApiStatus.Internal
 class KotlinUElvisExpression(
     private val elvisExpression: KtBinaryExpression,
     private val left: KtExpression,

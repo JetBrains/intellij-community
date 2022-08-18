@@ -1,0 +1,22 @@
+<!-- Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<html>
+<body>
+Reports incorrect date time format patterns.
+<p>The following errors are reported:</p>
+<ul>
+  <li>Unsupported patterns, like "TT"</li>
+  <li>Using reserved patterns, like "#"</li>
+  <li>Unappropriated padding.</li>
+  <li>Optional brackets without a pair.</li>
+</ul>
+<p>
+  Examples:<br>
+  <code>DateTimeFormatter.ofPattern("[][]])"<br></code>
+  <code>DateTimeFormatter.ofPattern("TT")<br></code>
+  <code>DateTimeFormatter.ofPattern("[[")<br></code>
+  <code>DateTimeFormatter.ofPattern("{")<br></code>
+  <code>DateTimeFormatter.ofPattern("MMMMMM")<br></code>
+</p>
+<!-- tooltip end -->
+</body>
+</html>

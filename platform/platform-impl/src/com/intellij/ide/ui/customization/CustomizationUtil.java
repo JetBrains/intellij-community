@@ -90,8 +90,7 @@ public final class CustomizationUtil {
     ActionManager actionManager = ActionManager.getInstance();
     final ArrayList<AnAction> reorderedChildren = new ArrayList<>();
     ContainerUtil.addAll(reorderedChildren, group.getChildren(e));
-    final List<ActionUrl> actions = schema.getActions();
-    for (ActionUrl actionUrl : actions) {
+    for (ActionUrl actionUrl : schema.getActions()) {
       if (actionUrl.getParentGroup() == null) continue;
       if ((actionUrl.getParentGroup().equals(text) ||
            actionUrl.getParentGroup().equals(defaultGroupName) ||
@@ -329,7 +328,7 @@ public final class CustomizationUtil {
       String name = group.getName();
       @NlsSafe String id = group.getId();
       text = name != null ? name : ObjectUtils.notNull(id, IdeBundle.message("action.group.name.unnamed.group"));
-      icon = ObjectUtils.notNull(group.getIcon(), AllIcons.Nodes.Folder);
+      icon = group.getIcon();
       if (UISettings.getInstance().getShowInplaceCommentsInternal()) {
         description = id;
       }
@@ -446,8 +445,7 @@ public final class CustomizationUtil {
   @Nullable
   public static PopupHandler installToolbarCustomizationHandler(@NotNull ActionToolbarImpl toolbar) {
     ActionGroup actionGroup = toolbar.getActionGroup();
-    String groupID = ActionManager.getInstance().getId(actionGroup instanceof CustomisedActionGroup
-                                                       ? ((CustomisedActionGroup)actionGroup).getOrigin() : actionGroup);
+    String groupID = getGroupID(actionGroup);
     if (groupID == null) {
       return null;
     }
@@ -529,7 +527,19 @@ public final class CustomizationUtil {
   }
 
   @Nullable
-  public static String getGroupName(AnAction action, String groupID) {
+  private static String getGroupID(ActionGroup actionGroup) {
+    AnAction actionForId = actionGroup;
+    if (actionGroup instanceof ActionWithDelegate) {
+      Object delegate = ((ActionWithDelegate<?>)actionGroup).getDelegate();
+      if (delegate instanceof AnAction) {
+        actionForId = (AnAction)delegate;
+      }
+    }
+    return ActionManager.getInstance().getId(actionForId);
+  }
+
+  @Nullable
+  private static String getGroupName(AnAction action, String groupID) {
     String templateText = action.getTemplateText();
     return Strings.isEmpty(templateText) ? CustomActionsSchema.getInstance().getDisplayName(groupID) : templateText;
   }
@@ -555,6 +565,11 @@ public final class CustomizationUtil {
         public void update(@NotNull AnActionEvent e) {
           e.getPresentation().setEnabled(mySelectedSchema.isModified(CustomActionsSchema.getInstance()));
         }
+
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
+        }
       }, new DumbAwareAction(IdeBundle.messagePointer("button.restore.defaults")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
@@ -566,6 +581,10 @@ public final class CustomizationUtil {
           CustomActionsSchema cleanScheme = new CustomActionsSchema();
           updateLocalSchema(cleanScheme);
           e.getPresentation().setEnabled(mySelectedSchema.isModified(cleanScheme));
+        }
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
         }
       }) {
         {

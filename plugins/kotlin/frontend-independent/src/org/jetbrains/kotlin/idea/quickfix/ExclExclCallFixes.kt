@@ -1,24 +1,24 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinPsiOnlyQuickFixAction
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.PsiElementSuitabilityCheckers
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPostfixExpression
-import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 abstract class ExclExclCallFix(psiElement: PsiElement) : KotlinPsiOnlyQuickFixAction<PsiElement>(psiElement) {
     override fun getFamilyName(): String = text
-
-    override fun startInWriteAction(): Boolean = true
 }
 
 class RemoveExclExclCallFix(
@@ -28,8 +28,8 @@ class RemoveExclExclCallFix(
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val postfixExpression = element as? KtPostfixExpression ?: return
-        val expression = KtPsiFactory(project).createExpression(postfixExpression.baseExpression!!.text)
-        postfixExpression.replace(expression)
+        val baseExpression = postfixExpression.baseExpression ?: return
+        postfixExpression.replace(baseExpression)
     }
 
     companion object : QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {

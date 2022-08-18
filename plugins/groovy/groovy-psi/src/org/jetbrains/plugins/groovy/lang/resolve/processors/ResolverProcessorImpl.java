@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
 import com.intellij.psi.*;
@@ -22,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyProperty;
 
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -87,6 +74,7 @@ public class ResolverProcessorImpl extends ResolverProcessor<GroovyResolveResult
     if (element instanceof PsiMethod) return DeclarationKind.METHOD;
     if (element instanceof PsiEnumConstant) return DeclarationKind.ENUM_CONST;
     if (element instanceof PsiField) return DeclarationKind.FIELD;
+    if (element instanceof GroovyProperty) return DeclarationKind.FIELD;
     if (element instanceof PsiVariable) return DeclarationKind.VARIABLE;
     if (element instanceof PsiClass) return DeclarationKind.CLASS;
     if (element instanceof PsiPackage) return DeclarationKind.PACKAGE;

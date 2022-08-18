@@ -5,15 +5,10 @@ import com.intellij.debugger.engine.*
 import com.intellij.debugger.engine.evaluation.EvaluationContext
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.events.DebuggerCommandImpl
-import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.impl.DebuggerUtilsImpl.getValueMarkers
-import com.intellij.debugger.jdi.ClassesByNameProvider
-import com.intellij.debugger.jdi.GeneratedLocation
-import com.intellij.debugger.jdi.GeneratedReferenceType
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.debugger.memory.utils.InstanceJavaValue
 import com.intellij.debugger.memory.utils.InstanceValueDescriptor
-import com.intellij.debugger.memory.utils.StackFrameItem
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl
 import com.intellij.debugger.ui.impl.watch.MessageDescriptor
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorProvider
@@ -28,37 +23,32 @@ import com.intellij.debugger.ui.tree.render.NodeRenderer
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
+import com.intellij.psi.CommonClassNames
+import com.intellij.psi.PsiType
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.InheritanceUtil
+import com.intellij.psi.util.PsiUtil
 import com.intellij.ui.JBSplitter
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.frame.XValueChildrenList
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import com.intellij.xdebugger.memory.ui.InstancesTree
-import com.sun.jdi.*
+import com.sun.jdi.BooleanValue
+import com.sun.jdi.ClassType
+import com.sun.jdi.ObjectReference
+import com.sun.jdi.Value
 import org.jetbrains.annotations.ApiStatus
-import java.io.DataInputStream
-import java.nio.charset.StandardCharsets
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.event.TreeSelectionListener
 
 @ApiStatus.Experimental
-class CollectionHistoryView(private val myClsName: String?,
-                            private val myFieldName: String?,
+class CollectionHistoryView(private val myClsName: String,
+                            private val myFieldName: String,
                             debugProcess: XDebugProcess,
                             private val myValueNode: XValueNodeImpl?) {
   private val DEFAULT_SPLITTER_PROPORTION = 0.5f
-  private val STORAGE_CLASS = "com.intellij.rt.debugger.agent.CollectionBreakpointStorage"
-  private val COLLECTION_MODIFICATION_INFO_CLASS = "$STORAGE_CLASS\$CollectionModificationInfo"
-  private val GET_COLLECTION_MODIFICATIONS_METHOD_NAME = "getCollectionModifications"
-  private val GET_COLLECTION_MODIFICATIONS_METHOD_DESCRIPTOR = "(Ljava/lang/Object;)[Ljava/lang/Object;"
-  private val GET_FIELD_MODIFICATIONS_METHOD_NAME = "getFieldModifications"
-  private val GET_FIELD_MODIFICATIONS_METHOD_DESCRIPTOR = "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;)[Ljava/lang/Object;"
-  private val GET_COLLECTION_STACK_METHOD_NAME = "getStack"
-  private val GET_COLLECTION_STACK_METHOD_DESCRIPTOR = "(Ljava/lang/Object;I)Ljava/lang/String;"
-  private val GET_FIELD_STACK_METHOD_NAME = "getStack"
-  private val GET_FIELD_STACK_METHOD_DESCRIPTOR = "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Object;I)Ljava/lang/String;"
   private val MAX_INSTANCES_NUMBER: Long = 1000000
 
   private val myDebugProcess = (debugProcess as JavaDebugProcess).debuggerSession.process
@@ -99,17 +89,14 @@ class CollectionHistoryView(private val myClsName: String?,
       myHistoryTree.addChildren(createChildren(listOf(), null), true)
       myHistoryTree.rebuildTree(InstancesTree.RebuildPolicy.RELOAD_INSTANCES)
       invokeInDebuggerThread {
-        if (myClsName != null && myFieldName != null) {
-          val selectionPath = it.path
-          val node = selectionPath?.lastPathComponent as? XValueNodeImpl ?: return@invokeInDebuggerThread
-          val clsType = (node.valueContainer as? JavaValue)?.descriptor?.type?.name() ?: return@invokeInDebuggerThread
-          loadFieldHistory(clsType, myFieldName, node)
-        }
+        val selectionPath = it.path
+        val node = selectionPath?.lastPathComponent as? XValueNodeImpl ?: return@invokeInDebuggerThread
+        val clsType = (node.valueContainer as? JavaValue)?.descriptor?.type?.name() ?: return@invokeInDebuggerThread
+        loadFieldHistory(clsType, myFieldName, node)
       }
     })
 
     myHistoryInstancesTree.addChildren(createChildren(listOf(), null), true)
-    if (myClsName == null) return
     invokeInDebuggerThread {
       val virtualMachineProxy = getVirtualMachine() ?: return@invokeInDebuggerThread
       val classes = virtualMachineProxy.allClasses().filter { it.name().replace("$", ".") == myClsName }
@@ -130,91 +117,38 @@ class CollectionHistoryView(private val myClsName: String?,
 
       invokeInDebuggerThread {
         val virtualMachineProxy = getVirtualMachine() ?: return@invokeInDebuggerThread
-        val result = if (parentNode == myHistoryTree.root) {
+        val items = if (parentNode == myHistoryTree.root) {
           val descriptor = (myValueNode?.valueContainer as? JavaValue)?.descriptor as? FieldDescriptor
           var clsName = descriptor?.field?.declaringType()?.name()
           if (clsName == null) {
             clsName = (getSelectedNode(myHistoryInstancesTree)?.valueContainer as? JavaValue)?.descriptor?.type?.name()
           }
-          val fieldName = myFieldName ?: descriptor?.field?.name()
 
-          val clsNameRef = virtualMachineProxy.mirrorOf(clsName) ?: return@invokeInDebuggerThread
-          val fieldNameRef = virtualMachineProxy.mirrorOf(fieldName) ?: return@invokeInDebuggerThread
           val parent = myValueNode?.parent ?: getSelectedNode(myHistoryInstancesTree)
-          val field = getObjectReferenceForNode(parent as? XValueNodeImpl)?.referenceType()?.fieldByName(fieldName)
+          val field = getObjectReferenceForNode(parent as? XValueNodeImpl)?.referenceType()?.fieldByName(myFieldName)
                       ?: return@invokeInDebuggerThread
-          val clsObject = if (!field.isStatic) getObjectReferenceForNode(parent as? XValueNodeImpl) else null
+          val clsInstance = if (!field.isStatic) getObjectReferenceForNode(parent as? XValueNodeImpl) else null
           val modificationIndex = virtualMachineProxy.mirrorOf(parentRow!!)
-          invokeStorageMethod(GET_FIELD_STACK_METHOD_NAME,
-                              GET_FIELD_STACK_METHOD_DESCRIPTOR,
-                              listOf(clsNameRef, fieldNameRef, clsObject, modificationIndex))
+          CollectionBreakpointUtils.getFieldModificationStack(mySuspendContext, myFieldName, clsName, clsInstance, modificationIndex)
         }
         else {
           if (childRow == null) return@invokeInDebuggerThread
           val modificationIndex = virtualMachineProxy.mirrorOf(childRow)
           val collectionInstance = getObjectReferenceForNode(parentNode) ?: return@invokeInDebuggerThread
-          invokeStorageMethod(GET_COLLECTION_STACK_METHOD_NAME,
-                              GET_COLLECTION_STACK_METHOD_DESCRIPTOR,
-                              listOf(collectionInstance, modificationIndex))
+
+          CollectionBreakpointUtils.getCollectionModificationStack(mySuspendContext, collectionInstance, modificationIndex)
         }
 
-        val message = (result as? StringReference)?.value() ?: return@invokeInDebuggerThread
-
-        val items = readStackItems(message, virtualMachineProxy)
         invokeLater { myStackFrameList.setFrameItems(items) }
       }
     })
   }
 
-
-  private fun readStackItems(message: String, virtualMachineProxy: VirtualMachineProxyImpl): List<StackFrameItem> {
-    val items = mutableListOf<StackFrameItem>()
-    val classesByName = ClassesByNameProvider.createCache(virtualMachineProxy.allClasses())
-    val dis = DataInputStream(message.byteInputStream(StandardCharsets.ISO_8859_1))
-    while (dis.available() > 0) {
-      val className: String = dis.readUTF()
-      val methodName: String = dis.readUTF()
-      val line: Int = dis.readInt()
-      val location = findLocation(myDebugProcess, classesByName, className, methodName, line)
-      val item = StackFrameItem(location, null)
-      items.add(item)
-    }
-    return items
-  }
-
-  private fun findLocation(debugProcess: DebugProcessImpl,
-                           classesByName: ClassesByNameProvider,
-                           className: String,
-                           methodName: String,
-                           line: Int): Location {
-    var classType = ContainerUtil.getFirstItem(classesByName[className])
-    if (classType == null) {
-      classType = GeneratedReferenceType(debugProcess.virtualMachineProxy.virtualMachine, className)
-    }
-    else if (line >= 0) {
-      for (method in DebuggerUtilsEx.declaredMethodsByName(classType, methodName)) {
-        val locations = DebuggerUtilsEx.locationsOfLine(method!!, line)
-        if (!locations.isEmpty()) {
-          return locations[0]
-        }
-      }
-    }
-    return GeneratedLocation(classType, methodName, line)
-  }
-
   private fun loadFieldHistory(clsName: String, fieldName: String, parent: XValueNodeImpl) {
-    val virtualMachineProxy = getVirtualMachine() ?: return
-
-    val clsNameRef = virtualMachineProxy.mirrorOf(clsName) ?: return
-    val fieldNameRef = virtualMachineProxy.mirrorOf(fieldName) ?: return
-
     val field = getObjectReferenceForNode(parent)?.referenceType()?.fieldByName(fieldName) ?: return
-    val clsObject = if (!field.isStatic) getObjectReferenceForNode(parent as? XValueNodeImpl) else null
+    val clsInstance = if (!field.isStatic) getObjectReferenceForNode(parent as? XValueNodeImpl) else null
 
-    val result = invokeStorageMethod(GET_FIELD_MODIFICATIONS_METHOD_NAME,
-                                     GET_FIELD_MODIFICATIONS_METHOD_DESCRIPTOR,
-                                     listOf(clsNameRef, fieldNameRef, clsObject))
-    val fieldModifications = (result as? ArrayReference)?.values ?: return
+    val fieldModifications = CollectionBreakpointUtils.getFieldModificationsHistory(mySuspendContext, fieldName, clsName, clsInstance)
 
     invokeLater { myHistoryTree.addChildren(createChildren(fieldModifications, CollectionHistoryRenderer()), true) }
   }
@@ -266,14 +200,6 @@ class CollectionHistoryView(private val myClsName: String?,
     return mySuspendContext.frameProxy?.virtualMachine
   }
 
-  private fun invokeStorageMethod(methodName: String, methodDescriptor: String, args: List<Value?>): Value? {
-    DebuggerManagerThreadImpl.assertIsManagerThread()
-    val evalContext = EvaluationContextImpl(mySuspendContext, mySuspendContext.frameProxy)
-    val cls = myDebugProcess.findClass(evalContext, STORAGE_CLASS, null) as ClassType
-    val method = DebuggerUtils.findMethod(cls, methodName, methodDescriptor)
-    return myDebugProcess.invokeMethod(evalContext, cls, method, args)
-  }
-
   private fun getParentNode(tree: InstancesTree): XValueNodeImpl? {
     val selectionPath = tree.selectionPath
     val selectedItem = selectionPath?.lastPathComponent as? XValueNodeImpl ?: return null
@@ -294,20 +220,6 @@ class CollectionHistoryView(private val myClsName: String?,
     return myMainComponent
   }
 
-  private class MyItem(val value: String) {
-    override fun equals(other: Any?): Boolean {
-      return other == value
-    }
-
-    override fun hashCode(): Int {
-      return value.hashCode()
-    }
-
-    override fun toString(): String {
-      return value
-    }
-  }
-
   private class MyNodeManager(project: Project?) : NodeManagerImpl(project, null) {
     override fun createNode(descriptor: NodeDescriptor, evaluationContext: EvaluationContext): DebuggerTreeNodeImpl {
       return DebuggerTreeNodeImpl(null, descriptor)
@@ -326,27 +238,17 @@ class CollectionHistoryView(private val myClsName: String?,
 
     override fun buildChildren(value: Value?, builder: ChildrenBuilder?, evaluationContext: EvaluationContext?) {
       if (evaluationContext == null || builder == null) return
-      val objRef = value as? ObjectReference ?: return
+      val collectionInstance = value as? ObjectReference ?: return
 
-      val collectionModifications = invokeStorageMethod(GET_COLLECTION_MODIFICATIONS_METHOD_NAME,
-                                                        GET_COLLECTION_MODIFICATIONS_METHOD_DESCRIPTOR,
-                                                        listOf(objRef)) as? ArrayReference
+      val collectionModifications = CollectionBreakpointUtils.getCollectionModificationsHistory(mySuspendContext, collectionInstance)
 
-      if (collectionModifications == null) {
-        builder.setChildren(listOf())
-        return
-      }
-
-      val cls = myDebugProcess.findClass(evaluationContext, COLLECTION_MODIFICATION_INFO_CLASS, null) as? ClassType ?: return
-      val getElementMethod = DebuggerUtils.findMethod(cls, "getElement", "()Ljava/lang/Object;") ?: return
-      val isAdditionMethod = DebuggerUtils.findMethod(cls, "isAddition", "()Z") ?: return
-
-      val nodes = collectionModifications.values
+      val nodes = collectionModifications
         .filterIsInstance<ObjectReference>()
         .map {
-          val element = myDebugProcess.invokeInstanceMethod(evaluationContext, it, getElementMethod, listOf(), 0)
-          val isAddition = myDebugProcess.invokeInstanceMethod(evaluationContext, it, isAdditionMethod, listOf(), 0)
-          Pair(element as? ObjectReference, isAddition as? BooleanValue)
+          val modificationInfo = CollectionBreakpointUtils.getCollectionModificationInfo(myDebugProcess, evaluationContext, it)
+          val element = modificationInfo?.first
+          val isAddition = modificationInfo?.second
+          Pair(element, isAddition)
         }
         .filter { it.first is ObjectReference && it.second is BooleanValue }
         .map {
@@ -373,14 +275,23 @@ class CollectionHistoryView(private val myClsName: String?,
         val getKey = DebuggerUtils.findMethod(cls, "getKey", "()Ljava/lang/Object;") ?: return null
         val getValue = DebuggerUtils.findMethod(cls, "getValue", "()Ljava/lang/Object;") ?: return null
         val key = myDebugProcess.invokeInstanceMethod(evaluationContext, obj!!, getKey, listOf(), 0)
-        val value = myDebugProcess.invokeInstanceMethod(evaluationContext, obj!!, getValue, listOf(), 0)
+        val value = myDebugProcess.invokeInstanceMethod(evaluationContext, obj, getValue, listOf(), 0)
         return Pair(key, value)
+      }
+
+      private fun isMap(): Boolean {
+        val javaValue = myValueNode?.valueContainer as? JavaValue ?: return false
+        val type = javaValue.descriptor.type ?: return false
+        val project = myDebugProcess.project
+        val psiType = PsiType.getTypeByName(type.name(), project, GlobalSearchScope.allScope(project))
+        val resolved = PsiUtil.resolveClassInClassTypeOnly(psiType) ?: return false
+        return InheritanceUtil.isInheritor(resolved, CommonClassNames.JAVA_UTIL_MAP)
       }
 
       override fun calcLabel(descriptor: ValueDescriptor?,
                              evaluationContext: EvaluationContext?,
                              labelListener: DescriptorLabelListener?): String {
-        if ((myValueNode?.valueContainer as? JavaValue)?.descriptor?.type?.name() == "java.util.HashMap") {
+        if (isMap()) {
           val pair = evaluate(evaluationContext!!)
           val key = pair?.first
           val value = pair?.second

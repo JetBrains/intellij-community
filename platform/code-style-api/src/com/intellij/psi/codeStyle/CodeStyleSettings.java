@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.CodeStyleBundle;
@@ -116,7 +116,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
   }
 
-  public void setParentSettings(CodeStyleSettings parent) {
+  public void setParentSettings(@NotNull CodeStyleSettings parent) {
     myParentSettings = parent;
   }
 
@@ -186,7 +186,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   private static final String ourSystemLineSeparator = System.lineSeparator();
 
   /**
-   * Line separator. It can be null if choosen line separator is "System-dependent"!
+   * Line separator. It can be null if chosen line separator is "System-dependent"!
    */
   public String LINE_SEPARATOR;
 

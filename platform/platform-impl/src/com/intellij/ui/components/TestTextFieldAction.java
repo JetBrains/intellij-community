@@ -2,6 +2,7 @@
 package com.intellij.ui.components;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.ComboBox;
@@ -38,6 +39,11 @@ public class TestTextFieldAction extends DumbAwareAction {
       frame.setVisible(true);
       frame.toFront();
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   private enum Fill {None, Both, Horizontal, Vertical}

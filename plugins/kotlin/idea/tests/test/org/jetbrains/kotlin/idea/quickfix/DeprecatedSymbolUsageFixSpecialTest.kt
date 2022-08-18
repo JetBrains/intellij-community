@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
-import org.jetbrains.kotlin.idea.quickfix.replaceWith.ReplaceWith
+import org.jetbrains.kotlin.idea.quickfix.replaceWith.ReplaceWithData
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
@@ -37,7 +37,7 @@ class DeprecatedSymbolUsageFixSpecialTest : KotlinLightCodeInsightFixtureTestCas
         val element = file.findElementAt(offset)
         val nameExpression = element!!.parents.firstIsInstance<KtSimpleNameExpression>()
         val fix = ActionUtil.underModalProgress(project, "") {
-            DeprecatedSymbolUsageFix(nameExpression, ReplaceWith(pattern, emptyList(), false))
+            DeprecatedSymbolUsageFix(nameExpression, ReplaceWithData(pattern, emptyList(), false))
         }
 
         project.executeWriteCommand("") {

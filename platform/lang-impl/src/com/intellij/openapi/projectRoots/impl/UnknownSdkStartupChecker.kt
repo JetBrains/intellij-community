@@ -2,6 +2,7 @@
 package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.ProjectTopics
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.project.Project
@@ -16,6 +17,9 @@ import com.intellij.openapi.startup.StartupActivity
 
 internal class UnknownSdkStartupChecker : StartupActivity.DumbAware {
   override fun runActivity(project: Project) {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      return // avoid crazy background activity in tests
+    }
     checkUnknownSdks(project)
 
     UnknownSdkResolver.EP_NAME.addExtensionPointListener(object: ExtensionPointListener<UnknownSdkResolver> {

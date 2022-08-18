@@ -2,7 +2,6 @@ package com.jetbrains.python.ift
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolderBase
@@ -18,7 +17,6 @@ import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.put
-import org.jetbrains.annotations.Nls
 import training.dsl.LessonContext
 import training.lang.LangSupport
 import training.ui.LearningUiManager
@@ -48,14 +46,9 @@ object PythonLessonsUtil {
                                              configPropertyName: String,
                                              reportTitle: String,
                                              feedbackReportId: String,
-                                             primaryLanguage: LangSupport?,
+                                             primaryLanguage: LangSupport,
                                              lessonEndInfo: LessonEndInfo,
                                              usedInterpreterAtStart: String) {
-    if (primaryLanguage == null) {
-      thisLogger().error("Onboarding lesson has no language support for some magical reason")
-      return
-    }
-
     if (PropertiesComponent.getInstance().getBoolean(configPropertyName, false)) {
       return
     }
@@ -104,10 +97,6 @@ object PythonLessonsUtil {
           label(startInterpreter)
         }
       }
-
-      override val possibleTechnicalIssues: Map<String, @Nls String> = mapOf(
-        "interpreter_issues" to PythonLessonsBundle.message("python.onboarding.option.interpreter.issues")
-      )
 
       override fun feedbackHasBeenProposed() {
         PropertiesComponent.getInstance().setValue(configPropertyName, true, false)

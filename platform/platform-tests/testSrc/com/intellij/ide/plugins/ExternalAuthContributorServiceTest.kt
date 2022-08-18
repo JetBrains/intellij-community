@@ -30,41 +30,47 @@ class PluginRepositoryAuthServiceTest {
 
   private val unescapedUrl = "https://buildserver.labs.intellij.net/guestAuth/repository/download/Documentation_Stardust/lastSuccessful/updatePlugins.xml?branch=master-internal &build=IU-221.3427.103"
 
-  private val anyUrlInvalidContributor = object : PluginRepositoryAuthProvider {
-    override fun canHandle(domain: String): Boolean = true
-    override fun getAuthHeaders(url: String?): Map<String, String> = headers
-  }
-
-  private inner class FakeUrlMatchingContributor(private val myDomain: String): PluginRepositoryAuthProvider {
-    override fun canHandle(domain: String): Boolean = (domain == myDomain)
-    override fun getAuthHeaders(url: String?): Map<String, String>  = headers
+  private inner class FakeUrlMatchingContributor(private val myDomain: String,
+                                                 private val contributorHeaders: Map<String, String> = headers): PluginRepositoryAuthProvider {
+    override fun canHandle(url: String): Boolean = (url.contains(myDomain))
+    override fun getAuthHeaders(url: String?): Map<String, String>  = contributorHeaders
   }
 
   @Test
   fun basicTest() {
     setupContributors(FakeUrlMatchingContributor(fooDomain))
-    assertEquals(PluginRepositoryAuthService().getAllCustomHeaders(fooUrl), headers)
+    assertEquals(headers, PluginRepositoryAuthService().getAllCustomHeaders(fooUrl))
   }
 
   @Test
-  fun singleUrlHandling() {
+  fun `no headers are returned for an unmatched URL`() {
     val authService = PluginRepositoryAuthService()
-    setupContributors(anyUrlInvalidContributor)
-    assertEquals(authService.getAllCustomHeaders(fooUrl), headers)
-    assertEquals(authService.getAllCustomHeaders(barUrl), emptyMap())
+    setupContributors(FakeUrlMatchingContributor(fooDomain))
+    assertEquals(headers, authService.getAllCustomHeaders(fooUrl))
+    assertEquals(emptyMap(), authService.getAllCustomHeaders(barUrl))
   }
 
   @Test
-  fun singleContributorPerUrl() {
+  fun `only the first contributor is used in case of multiple matching`() {
     val authService = PluginRepositoryAuthService()
-    setupContributors(FakeUrlMatchingContributor(fooDomain), FakeUrlMatchingContributor(fooDomain))
-    assertEquals(authService.getAllCustomHeaders(fooUrl), emptyMap())
+    setupContributors(FakeUrlMatchingContributor(fooDomain), FakeUrlMatchingContributor(fooDomain, mapOf("foo" to "bar")))
+    assertEquals(headers, authService.getAllCustomHeaders(fooUrl))
   }
 
   @Test
-  fun nonEscapedUrlTest() {
+  fun `malformed URL doesn't crash getAllCustomHeaders`() {
     val authService = PluginRepositoryAuthService()
     authService.getAllCustomHeaders(unescapedUrl)
+  }
+
+  @Test
+  fun `getAllCustomHeaders doesn't crash when no contributors match`() {
+    val authService = PluginRepositoryAuthService()
+    setupContributors(FakeUrlMatchingContributor(fooDomain))
+    authService.getAllCustomHeaders(barUrl)
+    authService.getAllCustomHeaders(fooUrl)
+    authService.getAllCustomHeaders(barUrl)
+    assertEquals(headers, authService.getAllCustomHeaders(fooUrl))
   }
 
   private fun setupContributors(vararg contributor: PluginRepositoryAuthProvider) {

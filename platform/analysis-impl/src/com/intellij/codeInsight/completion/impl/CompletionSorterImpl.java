@@ -70,7 +70,7 @@ public class CompletionSorterImpl extends CompletionSorter {
     return enhanced(classifierFactory, beforeAnchor ? Math.max(0, i) : i + 1);
   }
 
-  public CompletionSorterImpl withoutClassifiers(@NotNull Predicate<ClassifierFactory<LookupElement>> removeCondition) {
+  public CompletionSorterImpl withoutClassifiers(@NotNull Predicate<? super ClassifierFactory<LookupElement>> removeCondition) {
     return new CompletionSorterImpl(myMembers.stream().filter(removeCondition.negate()).collect(Collectors.toList()));
   }
 

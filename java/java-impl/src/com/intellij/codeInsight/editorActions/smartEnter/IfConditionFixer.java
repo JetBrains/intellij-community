@@ -5,9 +5,9 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
 public class IfConditionFixer implements Fixer {
   @Override
   public void apply(Editor editor, JavaSmartEnterProcessor processor, PsiElement psiElement) throws IncorrectOperationException {
@@ -27,9 +27,20 @@ public class IfConditionFixer implements Fixer {
           }
           stopOffset = Math.min(stopOffset, ifStatement.getTextRange().getEndOffset());
 
-          doc.replaceString(ifStatement.getTextRange().getStartOffset(), stopOffset, "if ()");
+          PsiElement lastChild = ifStatement.getLastChild();
+          String innerComment = "";
+          String lastComment = "";
+          if (lParen != null && PsiUtilCore.getElementType(lastChild) == JavaTokenType.C_STYLE_COMMENT) {
+            innerComment = lastChild.getText();
+          }
+          else if (lastChild instanceof PsiComment) {
+            lastComment = lastChild.getText();
+          }
 
-          processor.registerUnresolvedError(ifStatement.getTextRange().getStartOffset() + "if (".length());
+          String prefix = "if (" + innerComment;
+          doc.replaceString(ifStatement.getTextRange().getStartOffset(), stopOffset, prefix + ")" + lastComment);
+
+          processor.registerUnresolvedError(ifStatement.getTextRange().getStartOffset() + prefix.length());
         } else {
           processor.registerUnresolvedError(lParen.getTextRange().getEndOffset());
         }

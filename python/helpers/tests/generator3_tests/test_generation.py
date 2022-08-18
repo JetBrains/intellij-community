@@ -1,4 +1,4 @@
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 
 import collections
 import errno
@@ -151,8 +151,16 @@ class FunctionalGeneratorTestCase(GeneratorTestCase):
         return GeneratorResult(result, skeletons_dir=output_dir)
 
     def run_process(self, args, input=None, env=None):
-        # Remove possible (NAME: None) pairs
-        env = {k: v for k, v in env.items() if v is not None}
+        # Remove possible (NAME: None) pairs and make sure that environment content is
+        # all str (critical for Python 2.x on Windows)
+        def as_str(s):
+            if isinstance(s, str):
+                return s
+            elif six.PY2:
+                return s.encode(encoding='latin-1')
+            else:
+                return s.decode(encoding='latin-1')
+        env = {as_str(k): as_str(v) for k, v in env.items() if v is not None}
         process = subprocess.Popen(args,
                                    env=env,
                                    stdin=subprocess.PIPE,

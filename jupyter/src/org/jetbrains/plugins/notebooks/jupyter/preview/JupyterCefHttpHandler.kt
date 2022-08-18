@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.notebooks.jupyter.preview
 
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.PathUtil
@@ -67,7 +68,8 @@ abstract class JupyterCefHttpHandlerBase(private val absolutePathFiles: Collecti
     val uri = getFileFromUrl(fullUri) ?: return false
 
     val extension = FileUtilRt.getExtension(uri)
-    if (extension in allowedTypes) {
+    // map files used for debugging
+    if (extension in allowedTypes || (ApplicationManager.getApplication().isInternal && extension == "map")) {
       return readFile(request, context.channel(), uri)
     }
     else {

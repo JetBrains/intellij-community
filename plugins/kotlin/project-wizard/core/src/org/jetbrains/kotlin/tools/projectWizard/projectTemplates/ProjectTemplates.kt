@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.tools.projectWizard.projectTemplates
 
@@ -67,19 +67,18 @@ abstract class ProjectTemplate : DisplayableSettingItem {
         }
     }
 
-
     companion object {
         val ALL = listOf(
-            ConsoleApplicationProjectTemplateWithSample,
+            FullStackWebApplicationProjectTemplate,
             MultiplatformLibraryProjectTemplate,
             NativeApplicationProjectTemplate,
             FrontendApplicationProjectTemplate,
             ReactApplicationProjectTemplate,
-            FullStackWebApplicationProjectTemplate,
             NodeJsApplicationProjectTemplate,
             ComposeDesktopApplicationProjectTemplate,
             ComposeMultiplatformApplicationProjectTemplate,
-            ComposeWebApplicationProjectTemplate
+            ComposeWebApplicationProjectTemplate,
+            ConsoleApplicationProjectTemplateWithSample
         )
 
         fun byId(id: String): ProjectTemplate? = ALL.firstOrNull {
@@ -94,7 +93,7 @@ private infix fun <V : Any, T : SettingType<V>> PluginSettingReference<V, T>.wit
 private inline infix fun <V : Any, reified T : SettingType<V>> PluginSetting<V, T>.withValue(value: V): SettingWithValue<V, T> =
     SettingWithValue(reference, value)
 
-private fun createDefaultSourceSets() =
+fun createDefaultSourceSets() =
     SourcesetType.values().map { sourceSetType ->
         Sourceset(
             sourceSetType,
@@ -298,7 +297,7 @@ abstract class MultiplatformMobileApplicationProjectTemplateBase : ProjectTempla
                 },
                 Module(
                     "ios",
-                    RealNativeTargetConfigurator.configuratorsByModuleType.getValue(ModuleSubType.ios),
+                    sharedIosConfigurator,
                     null,
                     permittedTemplateIds = emptySet(),
                     sourceSets = createDefaultSourceSets(),
@@ -313,6 +312,8 @@ abstract class MultiplatformMobileApplicationProjectTemplateBase : ProjectTempla
 
     protected abstract fun iosAppModule(shared: Module): Module
     protected abstract fun androidAppModule(shared: Module): Module
+
+    open val sharedIosConfigurator get() = RealNativeTargetConfigurator.configuratorsByModuleType.getValue(ModuleSubType.ios)
 }
 
 object NodeJsApplicationProjectTemplate : ProjectTemplate() {

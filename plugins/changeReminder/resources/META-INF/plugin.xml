@@ -30,7 +30,7 @@ Suggested files are listed as <b>People who change the files in the active chang
                  description="A maximum number of changes for which predictions are calculated"/>
     
     <applicationService serviceImplementation="com.jetbrains.changeReminder.plugin.UserSettings"/>
-    <statistics.counterUsagesCollector groupId="vcs.change.reminder" version="2"/>
+    <statistics.counterUsagesCollector implementationClass="com.jetbrains.changeReminder.stats.ChangeReminderStatsCollector"/>
     <vcs.changes.changesViewModifier implementation="com.jetbrains.changeReminder.changes.ChangeReminderChangesViewModifier"/>
     <projectService serviceImplementation="com.jetbrains.changeReminder.predict.PredictionService"/>
     <vcsCheckinHandlerFactory implementation="com.jetbrains.changeReminder.stats.commit.ChangeReminderStatsCheckinHandler"/>

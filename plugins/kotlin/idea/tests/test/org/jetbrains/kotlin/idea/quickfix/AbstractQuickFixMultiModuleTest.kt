@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -8,27 +8,25 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.ComparisonFailure
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.inspections.findExistingEditor
+import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.multiplatform.setupMppProjectFromDirStructure
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.TestMetadataUtil
 import org.junit.Assert
 import java.io.File
 import java.nio.file.Paths
 
 abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), QuickFixTest {
-    protected fun testDataFile(fileName: String): File = File(testDataPath, fileName)
+    protected fun dataFile(fileName: String): File = File(testDataPath, fileName)
 
-    protected fun testDataFile(): File = testDataFile(fileName())
+    protected fun dataFile(): File = dataFile(fileName())
 
     protected open fun fileName(): String = KotlinTestUtils.getTestDataFileName(this::class.java, this.name) ?: (getTestName(false) + ".kt")
 
@@ -37,16 +35,30 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
     }
 
     fun doTest(unused: String) {
-        setupMppProjectFromDirStructure(testDataFile())
+        setupMppProjectFromDirStructure(dataFile())
         val directiveFileText = project.findFileWithCaret().text
         withCustomCompilerOptions(directiveFileText, project, module) {
             doQuickFixTest(fileName())
         }
     }
 
+    private fun VirtualFile.toIOFile(): File? {
+        val paths = mutableListOf<String>()
+        var vFile: VirtualFile? = this
+        while (vFile != null) {
+            vFile.sourceIOFile()?.let {
+                return File(it, paths.reversed().joinToString("/"))
+            }
+            paths.add(vFile.name)
+            vFile = vFile.parent
+        }
+        return null
+    }
+
     private fun doQuickFixTest(dirPath: String) {
         val actionFile = project.findFileWithCaret()
         val virtualFile = actionFile.virtualFile!!
+        val mainFile = virtualFile.toIOFile()?.takeIf(File::exists) ?: error("unable to lookup source io file")
         configureByExistingFile(virtualFile)
         val actionFileText = actionFile.text
         val actionFileName = actionFile.name
@@ -79,6 +91,7 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
                 val log = try {
 
                     AbstractQuickFixMultiFileTest.doAction(
+                        mainFile,
                         text,
                         file,
                         editor,

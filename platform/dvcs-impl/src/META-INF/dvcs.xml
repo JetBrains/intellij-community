@@ -51,7 +51,7 @@
       <add-to-group group-id="Vcs.Log.Toolbar"/>
     </group>
 
-    <group>
+    <group id="Vcs.CherryPick.KeymapGroup" searchable="false">
       <reference ref="Vcs.CherryPick"/>
       <reference ref="Vcs.Push"/>
       <separator/>

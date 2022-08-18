@@ -76,6 +76,7 @@ public class BulkDecompilationTest {
         ZipEntry entry = entries.nextElement();
         if (!entry.isDirectory()) {
           File file = new File(targetDir, entry.getName());
+          assertTrue(file.toPath().normalize().startsWith(targetDir.toPath().normalize())); // check for zip-slip vulnerability
           assertTrue(file.getParentFile().mkdirs() || file.getParentFile().isDirectory());
           try (InputStream in = zip.getInputStream(entry); OutputStream out = new FileOutputStream(file)) {
             InterpreterUtil.copyStream(in, out);

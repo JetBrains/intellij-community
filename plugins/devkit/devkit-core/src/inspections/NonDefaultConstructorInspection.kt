@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.InspectionManager
@@ -130,7 +130,6 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass::class.j
     return errors?.toTypedArray()
   }
 
-  @Suppress("HardCodedStringLiteral")
   private fun getArea(extensionPoint: ExtensionPoint?): Area {
     val areaName = (extensionPoint ?: return Area.IDEA_APPLICATION).area.stringValue
     when (areaName) {
@@ -220,28 +219,24 @@ private fun checkAttributes(tag: XmlTag, qualifiedName: String): Boolean {
   }
 }
 
-@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 @NonNls
 private val allowedClientSessionsQualifiedNames = setOf(
   "com.intellij.openapi.client.ClientSession",
   "com.jetbrains.rdserver.core.GuestSession",
 )
 
-@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 @NonNls
 private val allowedClientAppSessionsQualifiedNames = setOf(
   "com.intellij.openapi.client.ClientAppSession",
   "com.jetbrains.rdserver.core.GuestAppSession",
 ) + allowedClientSessionsQualifiedNames
 
-@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 @NonNls
 private val allowedClientProjectSessionsQualifiedNames = setOf(
   "com.intellij.openapi.client.ClientProjectSession",
   "com.jetbrains.rdserver.core.GuestProjectSession",
 ) + allowedClientSessionsQualifiedNames
 
-@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 @NonNls
 private val allowedServiceQualifiedNames = setOf(
   "com.intellij.openapi.project.Project",
@@ -254,7 +249,6 @@ private val allowedServiceQualifiedNames = setOf(
 
 private val allowedServiceNames = allowedServiceQualifiedNames.mapTo(HashSet(allowedServiceQualifiedNames.size)) { it.substringAfterLast('.') }
 
-@Suppress("HardCodedStringLiteral")
 private fun isAllowedParameters(list: PsiParameterList,
                                 extensionPoint: ExtensionPoint?,
                                 isAppLevelExtensionPoint: Boolean,

@@ -280,7 +280,6 @@ public final class TestNGUtil {
   }
 
   /**
-   * @return were javadoc params used
    */
   public static void collectAnnotationValues(final Map<String, Collection<String>> results, PsiMethod[] psiMethods, PsiClass... classes) {
     final Set<String> test = new HashSet<>(1);

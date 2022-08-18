@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +29,6 @@ import java.util.*;
 
 /**
  * Extension point for customization maven module import process.
- * Main import logic {@link MavenModuleImporter}.
  */
 public abstract class MavenImporter {
   public static final ExtensionPointName<MavenImporter> EXTENSION_POINT_NAME = ExtensionPointName.create("org.jetbrains.idea.maven.importer");
@@ -42,10 +42,16 @@ public abstract class MavenImporter {
   }
 
   public static List<MavenImporter> getSuitableImporters(MavenProject p) {
+    return getSuitableImporters(p, false);
+  }
+
+  public static List<MavenImporter> getSuitableImporters(MavenProject p, boolean isWorkspaceImport) {
     List<MavenImporter> result = null;
     Set<ModuleType<?>> moduleTypes = null;
 
     for (MavenImporter importer : EXTENSION_POINT_NAME.getExtensions()) {
+      if (isWorkspaceImport && importer.isMigratedToConfigurator()) continue;
+
       if (importer.isApplicable(p)) {
         if (result == null) {
           result = new ArrayList<>();
@@ -122,24 +128,31 @@ public abstract class MavenImporter {
   }
 
   /**
+   * This is 'work in progress' API and must not be used directly until further notice
+   */
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public boolean isMigratedToConfigurator() { return false; }
+
+  /**
    * Import pre process callback.
    */
-  public abstract void preProcess(Module module,
-                                  MavenProject mavenProject,
-                                  MavenProjectChanges changes,
-                                  IdeModifiableModelsProvider modifiableModelsProvider);
+  public void preProcess(Module module,
+                         MavenProject mavenProject,
+                         MavenProjectChanges changes,
+                         IdeModifiableModelsProvider modifiableModelsProvider) { }
 
   /**
    * Import process callback.
    */
-  public abstract void process(IdeModifiableModelsProvider modifiableModelsProvider,
-                               Module module,
-                               MavenRootModelAdapter rootModel,
-                               MavenProjectsTree mavenModel,
-                               MavenProject mavenProject,
-                               MavenProjectChanges changes,
-                               Map<MavenProject, String> mavenProjectToModuleName,
-                               List<MavenProjectsProcessorTask> postTasks);
+  public void process(IdeModifiableModelsProvider modifiableModelsProvider,
+                      Module module,
+                      MavenRootModelAdapter rootModel,
+                      MavenProjectsTree mavenModel,
+                      MavenProject mavenProject,
+                      MavenProjectChanges changes,
+                      Map<MavenProject, String> mavenProjectToModuleName,
+                      List<MavenProjectsProcessorTask> postTasks) { }
 
   /**
    * Import post process callback.

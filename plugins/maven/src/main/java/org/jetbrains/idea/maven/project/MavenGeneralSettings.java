@@ -96,7 +96,7 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   public void setPluginUpdatePolicy(MavenExecutionOptions.PluginUpdatePolicy value) {
-    if (value == null) return; // null may come from deserializator
+    if (value == null) return; // null may come from deserializer
     this.pluginUpdatePolicy = value;
     changed();
   }
@@ -108,7 +108,7 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   public void setChecksumPolicy(MavenExecutionOptions.ChecksumPolicy value) {
-    if (value == null) return; // null may come from deserializator
+    if (value == null) return; // null may come from deserializer
     if (!Comparing.equal(this.checksumPolicy, value)) {
       this.checksumPolicy = value;
       changed();
@@ -122,7 +122,7 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   public void setFailureBehavior(MavenExecutionOptions.FailureMode value) {
-    if (value == null) return; // null may come from deserializator
+    if (value == null) return; // null may come from deserializer
     if (!Comparing.equal(this.failureBehavior, value)) {
       this.failureBehavior = value;
       changed();
@@ -146,7 +146,7 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   public void setOutputLevel(MavenExecutionOptions.LoggingLevel value) {
-    if (value == null) return; // null may come from deserializator
+    if (value == null) return; // null may come from deserializer
     if (!Comparing.equal(this.outputLevel, value)) {
       this.outputLevel = value;
       changed();
@@ -248,12 +248,14 @@ public class MavenGeneralSettings implements Cloneable {
     return overriddenLocalRepository;
   }
 
-  public void setLocalRepository(final @Nullable String overridenLocalRepository) {
-    if (overridenLocalRepository == null) return;
+  public void setLocalRepository(final @Nullable String overriddenLocalRepository) {
+    if (overriddenLocalRepository == null) return;
 
-    if (!Objects.equals(this.overriddenLocalRepository, overridenLocalRepository)) {
-      this.overriddenLocalRepository = overridenLocalRepository;
-      MavenServerManager.getInstance().shutdown(true);
+    if (!Objects.equals(this.overriddenLocalRepository, overriddenLocalRepository)) {
+      this.overriddenLocalRepository = overriddenLocalRepository;
+      if (myProject != null) {
+        MavenUtil.restartMavenConnectors(myProject, false);
+      }
       changed();
     }
   }
@@ -454,6 +456,10 @@ public class MavenGeneralSettings implements Cloneable {
     myListeners.remove(l);
   }
 
+  public void copyListeners(MavenGeneralSettings another) {
+    myListeners.addAll(another.myListeners);
+  }
+
   @Transient
   public void updateFromMavenConfig(@NotNull List<VirtualFile> mavenRootProjects) {
     if (mavenRootProjects.isEmpty() || !useMavenConfig) return;
@@ -475,24 +481,24 @@ public class MavenGeneralSettings implements Cloneable {
     needUpdate = needUpdate || !Objects.equals(failureBehavior, failureBehaviorConfig);
     failureBehavior = failureBehaviorConfig;
 
-    MavenExecutionOptions.LoggingLevel outputLevelCongig = requireNonNullElse(config.getOutputLevel(),
+    MavenExecutionOptions.LoggingLevel outputLevelConfig = requireNonNullElse(config.getOutputLevel(),
                                                                               MavenExecutionOptions.LoggingLevel.INFO);
-    needUpdate = needUpdate || !Objects.equals(outputLevel, outputLevelCongig);
-    outputLevel = outputLevelCongig;
+    needUpdate = needUpdate || !Objects.equals(outputLevel, outputLevelConfig);
+    outputLevel = outputLevelConfig;
 
-    Boolean offlineConfig = requireNonNullElse(config.hasOption(OFFLINE), false);
+    Boolean offlineConfig = config.hasOption(OFFLINE);
     needUpdate = needUpdate || !Objects.equals(workOffline, offlineConfig);
     workOffline = offlineConfig;
 
-    Boolean stackTracesConfig = requireNonNullElse(config.hasOption(ERRORS), false);
+    Boolean stackTracesConfig = config.hasOption(ERRORS);
     needUpdate = needUpdate || !Objects.equals(printErrorStackTraces, stackTracesConfig);
     printErrorStackTraces = stackTracesConfig;
 
-    Boolean updateSnapshotsConfig = requireNonNullElse(config.hasOption(UPDATE_SNAPSHOTS), false);
+    Boolean updateSnapshotsConfig = config.hasOption(UPDATE_SNAPSHOTS);
     needUpdate = needUpdate || !Objects.equals(alwaysUpdateSnapshots, updateSnapshotsConfig);
     alwaysUpdateSnapshots = updateSnapshotsConfig;
 
-    Boolean nonRecursiveConfig = requireNonNullElse(config.hasOption(NON_RECURSIVE), false);
+    Boolean nonRecursiveConfig = config.hasOption(NON_RECURSIVE);
     needUpdate = needUpdate || !Objects.equals(nonRecursive, nonRecursiveConfig);
     nonRecursive = nonRecursiveConfig;
 

@@ -8,7 +8,6 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.ListStack;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
@@ -414,8 +413,8 @@ public class FunctionExprent extends Exprent {
     if (!(o instanceof FunctionExprent)) return false;
 
     FunctionExprent fe = (FunctionExprent)o;
-    return funcType == fe.getFuncType() &&
-           InterpreterUtil.equalLists(lstOperands, fe.getLstOperands()); // TODO: order of operands insignificant
+    return funcType == fe.funcType &&
+           Objects.equals(lstOperands, fe.lstOperands); // TODO: order of operands insignificant
   }
 
   @Override

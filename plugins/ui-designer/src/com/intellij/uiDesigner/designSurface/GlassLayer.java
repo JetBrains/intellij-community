@@ -3,6 +3,7 @@ package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.ui.popup.PopupOwner;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.actions.*;
@@ -24,11 +25,12 @@ import java.util.ArrayList;
  * @author Vladimir Kondratyev
  */
 public final class GlassLayer extends JComponent implements DataProvider, PopupOwner {
-  private final GuiEditor myEditor;
   private static final Logger LOG = Logger.getInstance(GlassLayer.class);
+
+  private final GuiEditor myEditor;
   private Point myLastMousePosition;
 
-  public GlassLayer(final GuiEditor editor){
+  public GlassLayer(GuiEditor editor) {
     myEditor = editor;
     enableEvents(AWTEvent.KEY_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
 
@@ -80,7 +82,7 @@ public final class GlassLayer extends JComponent implements DataProvider, PopupO
   }
 
   @Override
-  protected void processKeyEvent(final KeyEvent e){
+  protected void processKeyEvent(final KeyEvent e) {
     myEditor.myProcessor.processKeyEvent(e);
     if (!e.isConsumed()) {
       super.processKeyEvent(e);
@@ -88,25 +90,31 @@ public final class GlassLayer extends JComponent implements DataProvider, PopupO
   }
 
   @Override
-  protected void processMouseEvent(final MouseEvent e){
-    if(e.getID() == MouseEvent.MOUSE_PRESSED){
+  protected void processMouseEvent(final MouseEvent e) {
+    if (e.getID() == MouseEvent.MOUSE_PRESSED) {
       requestFocusInWindow();
     }
     try {
       myEditor.myProcessor.processMouseEvent(e);
     }
-    catch(Exception ex) {
+    catch (ProcessCanceledException ex) {
+      throw ex;
+    }
+    catch (Exception ex) {
       LOG.error(ex);
     }
   }
 
   @Override
-  protected void processMouseMotionEvent(final MouseEvent e){
+  protected void processMouseMotionEvent(final MouseEvent e) {
     myLastMousePosition = e.getPoint();
     try {
       myEditor.myProcessor.processMouseEvent(e);
     }
-    catch(Exception ex) {
+    catch (ProcessCanceledException ex) {
+      throw ex;
+    }
+    catch (Exception ex) {
       LOG.error(ex);
     }
   }
@@ -125,7 +133,7 @@ public final class GlassLayer extends JComponent implements DataProvider, PopupO
    */
   @Override
   public Object getData(@NotNull final String dataId) {
-    if(CommonDataKeys.NAVIGATABLE.is(dataId)) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       final ComponentTree componentTree = DesignerToolWindowManager.getInstance(myEditor).getComponentTree();
       if (componentTree != null) {
         return componentTree.getData(dataId);
@@ -141,8 +149,8 @@ public final class GlassLayer extends JComponent implements DataProvider, PopupO
     if (selection.size() > 0) {
       final RadComponent component = selection.get(0);
       final Rectangle bounds = component.getBounds();
-      int bottom = bounds.height > 4 ? bounds.y+bounds.height-4 : bounds.y;
-      int left = bounds.width > 4 ? bounds.x+4 : bounds.x;
+      int bottom = bounds.height > 4 ? bounds.y + bounds.height - 4 : bounds.y;
+      int left = bounds.width > 4 ? bounds.x + 4 : bounds.x;
       Point pnt = new Point(left, bottom);  // the location needs to be within the component
       return SwingUtilities.convertPoint(component.getParent().getDelegee(), pnt, this);
     }

@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.ui;
 
-import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -218,11 +217,6 @@ public abstract class PerspectiveFileEditor extends UserDataHolderBase implement
     if (!checkIsValid() || myInvalidated) return;
     setShowing(false);
     commit();
-  }
-
-  @Override
-  public BackgroundEditorHighlighter getBackgroundHighlighter() {
-    return null;
   }
 
   @Override

@@ -107,7 +107,7 @@ public final class Util {
 
     IntSet suspects = new IntOpenHashSet();
     expr.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitReferenceExpression(final PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(final @NotNull PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         PsiElement resolved = expression.resolve();
         if (resolved instanceof PsiParameter) {

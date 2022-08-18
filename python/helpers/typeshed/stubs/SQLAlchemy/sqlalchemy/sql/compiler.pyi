@@ -66,7 +66,7 @@ class TypeCompiler:
     def process(self, type_, **kw): ...
     def visit_unsupported_compilation(self, element, err, **kw) -> None: ...
 
-class _CompileLabel(elements.ColumnElement):
+class _CompileLabel(elements.ColumnElement[Any]):
     __visit_name__: str
     element: Any
     name: Any

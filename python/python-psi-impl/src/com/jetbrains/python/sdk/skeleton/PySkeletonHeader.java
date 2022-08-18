@@ -76,7 +76,6 @@ public class PySkeletonHeader {
   /**
    * Transforms a string like "1.2" into an integer representing it.
    *
-   * @param input
    * @return an int representing the version: major number shifted 8 bit and minor number added. or 0 if version can't be parsed.
    */
   public static int fromVersionString(final String input) {

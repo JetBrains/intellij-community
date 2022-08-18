@@ -50,7 +50,6 @@ public abstract class AbstractMavenServerRemoteProcessSupport extends MavenRemot
   }
 
 
-
   @Override
   protected void fireModificationCountChanged() {
   }
@@ -85,14 +84,16 @@ public abstract class AbstractMavenServerRemoteProcessSupport extends MavenRemot
 
   @Override
   protected void onProcessTerminated(ProcessEvent event) {
-    if (event.getExitCode() == 0) {
-      return;
-    }
     Consumer<ProcessEvent> eventConsumer = onTerminate;
 
     if (eventConsumer != null) {
       eventConsumer.accept(event);
     }
+    
+    if (event.getExitCode() == 0) {
+      return;
+    }
+
 
     myImportEventProcessor.finish();
 

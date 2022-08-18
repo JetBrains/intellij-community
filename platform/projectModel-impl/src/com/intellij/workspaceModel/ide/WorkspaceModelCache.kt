@@ -1,8 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.project.Project
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.EntityStorage
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 interface WorkspaceModelCache {
   val enabled: Boolean
 
-  fun loadCache(): WorkspaceEntityStorage?
+  fun loadCache(): EntityStorage?
 
   /**
    * Save workspace model caches
@@ -20,7 +20,6 @@ interface WorkspaceModelCache {
   fun saveCacheNow()
 
   companion object {
-    @JvmStatic
     fun getInstance(project: Project): WorkspaceModelCache? = project.getService(WorkspaceModelCache::class.java)?.takeIf { it.enabled }
   }
 }

@@ -63,7 +63,7 @@ public class PsiJShellRootClassImpl extends ASTWrapperPsiElement implements PsiJ
 
   @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement lastParent, @NotNull PsiElement place) {
-    final LanguageLevel level = PsiUtil.getLanguageLevel(place);
+    LanguageLevel level = PsiUtil.getLanguageLevel(place);
     return PsiClassImplUtil.processDeclarationsInClass(this, processor, state, null, lastParent, place, level, false);
   }
 
@@ -305,8 +305,8 @@ public class PsiJShellRootClassImpl extends ASTWrapperPsiElement implements PsiJ
     return null;
   }
 
-  private <T extends PsiElement> T @NotNull [] findChildren(final Class<T> memberClass, final T[] emptyArray) {
-    final T[] members = PsiTreeUtil.getChildrenOfType(this, memberClass);
+  private <T extends PsiElement> T @NotNull [] findChildren(Class<T> memberClass, T[] emptyArray) {
+    T[] members = PsiTreeUtil.getChildrenOfType(this, memberClass);
     return members != null ? members : emptyArray;
   }
 }

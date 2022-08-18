@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.gradle
 
 import org.gradle.internal.impldep.org.apache.commons.lang.math.RandomUtils
@@ -20,19 +20,17 @@ internal fun createKotlinMPPGradleModel(
         targets = targets.toList(),
         extraFeatures = extraFeatures,
         kotlinNativeHome = kotlinNativeHome,
-        partialCacheAware = CompilerArgumentsCacheAwareImpl()
+        cacheAware = CompilerArgumentsCacheAwareImpl()
     )
 }
 
 internal fun createExtraFeatures(
     coroutinesState: String? = null,
     isHmppEnabled: Boolean = false,
-    isNativeDependencyPropagationEnabled: Boolean = false
 ): ExtraFeaturesImpl {
     return ExtraFeaturesImpl(
         coroutinesState = coroutinesState,
         isHMPPEnabled = isHmppEnabled,
-        isNativeDependencyPropagationEnabled = isNativeDependencyPropagationEnabled
     )
 }
 
@@ -74,8 +72,8 @@ internal fun createKotlinCompilation(
     dependencyClasspath: Iterable<String> = emptyList(),
     cachedArgsInfo: CachedArgsInfo<*> = createCachedArgsInfo(),
     kotlinTaskProperties: KotlinTaskProperties = createKotlinTaskProperties(),
-    nativeExtensions: KotlinNativeCompilationExtensions? = null
-
+    nativeExtensions: KotlinNativeCompilationExtensions? = null,
+    associateCompilations: Set<KotlinCompilationCoordinates> = emptySet()
 ): KotlinCompilationImpl {
     return KotlinCompilationImpl(
         name = name,
@@ -87,7 +85,8 @@ internal fun createKotlinCompilation(
         dependencyClasspath = dependencyClasspath.toList().toTypedArray(),
         cachedArgsInfo = cachedArgsInfo,
         kotlinTaskProperties = kotlinTaskProperties,
-        nativeExtensions = nativeExtensions
+        nativeExtensions = nativeExtensions,
+        associateCompilations = associateCompilations
     )
 }
 

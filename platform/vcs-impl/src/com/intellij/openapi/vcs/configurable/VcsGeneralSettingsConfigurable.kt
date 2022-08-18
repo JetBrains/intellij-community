@@ -32,9 +32,16 @@ import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
-internal class GeneralVcSettingsProviderEP(project: Project) : ConfigurableEP<UnnamedConfigurable>(project)
-
-private val VCS_SETTINGS_EP_NAME = ExtensionPointName<GeneralVcSettingsProviderEP>("com.intellij.generalVcsSettingsExtension")
+/**
+ * EP that allows appending options to the bottom of *File | Settings | Version Control | Confirmation* settings panel.
+ *
+ * @see com.intellij.openapi.options.UiDslUnnamedConfigurable
+ */
+internal class GeneralVcsSettingsProviderEP(project: Project) : ConfigurableEP<UnnamedConfigurable>(project) {
+  companion object {
+    val VCS_SETTINGS_EP_NAME = ExtensionPointName<GeneralVcsSettingsProviderEP>("com.intellij.generalVcsSettingsExtension")
+  }
+}
 
 class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearchableConfigurable<UnnamedConfigurable>(
   message("configurable.VcsGeneralConfigurationConfigurable.display.name"),
@@ -42,9 +49,9 @@ class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearc
 ), Configurable.WithEpDependencies {
 
   override fun createConfigurables(): List<UnnamedConfigurable> =
-    VCS_SETTINGS_EP_NAME.getExtensions(project).mapNotNull { it.createConfigurable() }
+    GeneralVcsSettingsProviderEP.VCS_SETTINGS_EP_NAME.getExtensions(project).mapNotNull { it.createConfigurable() }
 
-  override fun getDependencies() = listOf(VcsEP.EP_NAME, VCS_SETTINGS_EP_NAME)
+  override fun getDependencies() = listOf(VcsEP.EP_NAME, GeneralVcsSettingsProviderEP.VCS_SETTINGS_EP_NAME)
 
   override fun createPanel(): DialogPanel {
     val vcsManager = ProjectLevelVcsManagerEx.getInstanceEx(project)

@@ -21,6 +21,7 @@ public interface ShTokenTypes extends ShTypes {
   IElementType COMMENT = new ShTokenType("Comment");
 
   TokenSet commentTokens = TokenSet.create(COMMENT, SHEBANG);
+  TokenSet literals = TokenSet.create(STRING_CONTENT, RAW_STRING, INT, HEX, OCTAL);
 
   TokenSet HUMAN_READABLE_KEYWORDS_WITHOUT_TEMPLATES = TokenSet.create(
       DO, DONE, ELSE, ESAC, FI, IN, THEN
@@ -50,6 +51,6 @@ public interface ShTokenTypes extends ShTypes {
 
   TokenSet stringLiterals = TokenSet.create(WORD, RAW_STRING);
 
-  TokenSet arithmeticOperationsForRemapping = TokenSet.create(PLUS, MINUS, DIV, MULT, MOD,MINUS_MINUS, PLUS_PLUS);
+  TokenSet arithmeticOperationsForRemapping = TokenSet.create(PLUS, MINUS, DIV, MULT, MOD,MINUS_MINUS, PLUS_PLUS, COLON, QMARK);
   TokenSet numbers = TokenSet.create(INT, OCTAL, HEX);
 }

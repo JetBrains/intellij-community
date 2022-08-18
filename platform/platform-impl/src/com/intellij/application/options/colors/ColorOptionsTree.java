@@ -25,9 +25,6 @@ import java.util.List;
 
 import static com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptorWithPath.NAME_SEPARATOR;
 
-/**
- * @author Rustam Vishnyakov
- */
 public class ColorOptionsTree extends Tree {
   private final String myCategoryName;
   private final DefaultTreeModel myTreeModel;

@@ -16,7 +16,7 @@ import java.util.Map;
  * please do not add any more logic here as it won't be run if you start your target
  * from IDE
  */
-public class BuildScriptLauncher {
+public final class BuildScriptLauncher {
   private static final String MAIN_CLASS_PROPERTY = "build.script.launcher.main.class";
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
@@ -31,7 +31,8 @@ public class BuildScriptLauncher {
         .invokeExact(args);
 
       System.exit(0);
-    } catch (Throwable t) {
+    }
+    catch (Throwable t) {
       StringWriter sw = new StringWriter();
       try (PrintWriter printWriter = new PrintWriter(sw)) {
         t.printStackTrace(printWriter);
@@ -45,7 +46,8 @@ public class BuildScriptLauncher {
         // https://www.jetbrains.com/help/teamcity/service-messages.html#Reporting+Build+Problems
         System.out.println(new ServiceMessage("buildProblem", Map.of("description", message)) {}.asString());
         System.exit(0);
-      } else {
+      }
+      else {
         System.err.println("\nFATAL: " + message);
         System.exit(1);
       }

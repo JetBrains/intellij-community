@@ -11,6 +11,16 @@ class ExcessiveRangeCheck {
     if(b || <warning descr="Can be replaced with 'x != 1'">(x == 0) || x > 1 || x < 0</warning> || b) {}
     if(<warning descr="Can be replaced with 'x != 2'">!(x > 1) || x > 2</warning>) {}
   }
+
+  void testHex(int x) {
+    if (<warning descr="Can be replaced with 'x == 0x123B'">x > 0x123A && x < 0x123C</warning>) {}
+  }
+
+  void testLong(long l) {
+    if (<warning descr="Can be replaced with 'l == 2'">l > 1 && l < 3</warning>) {}
+    if (<warning descr="Can be replaced with 'l == 123456789013L'">l > 123456789012L && l < 123456789014L</warning>) {}
+    if (<warning descr="Can be replaced with 'l == 0x4321432143214322L'">l > 0x4321432143214321L && l < 0x4321432143214323L</warning>) {}
+  }
   
   public void testTwo(int x, int y) {
     if(<warning descr="Can be replaced with 'x == 1'">x > 0 && x < 2</warning> && <warning descr="Can be replaced with 'y == 1'">y > 0 && y < 2</warning>) {}

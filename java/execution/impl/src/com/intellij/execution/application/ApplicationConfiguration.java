@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
@@ -34,6 +34,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -141,9 +142,15 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
       return null;
     }
     String configName = JavaExecutionUtil.getPresentableClassName(mainClassName);
-    if (configName != null &&
-        RunManager.getInstance(getProject()).findConfigurationByTypeAndName(getType(), configName) != null) {
-      return mainClassName;
+    if (configName != null) {
+      RunnerAndConfigurationSettings configuration = RunManager.getInstance(getProject()).findConfigurationByTypeAndName(getType(), configName);
+      if (configuration != null) {
+        RunConfiguration thatConfig = configuration.getConfiguration();
+        if (thatConfig instanceof ApplicationConfiguration && 
+            !Objects.equals(((ApplicationConfiguration)thatConfig).getMainClassName(), mainClassName)) {
+          return mainClassName;
+        }
+      }
     }
     return configName;
   }
@@ -309,10 +316,11 @@ public class ApplicationConfiguration extends JavaRunConfigurationBase
   @Override
   public @NotNull List<EventPair<?>> getAdditionalUsageData() {
     PsiClass mainClass = getMainClass();
+    List<EventPair<?>> additionalUsageData = super.getAdditionalUsageData();
     if (mainClass == null) {
-      return Collections.emptyList();
+      return additionalUsageData;
     }
-    return Collections.singletonList(EventFields.Language.with(mainClass.getLanguage()));
+    return ContainerUtil.concat(additionalUsageData, Collections.singletonList(EventFields.Language.with(mainClass.getLanguage())));
   }
 
   public static void onAlternativeJreChanged(boolean changed, Project project) {

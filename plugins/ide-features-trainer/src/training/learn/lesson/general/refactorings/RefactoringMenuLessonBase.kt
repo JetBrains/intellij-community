@@ -15,7 +15,13 @@ import training.util.isToStringContains
 import javax.swing.JList
 
 abstract class RefactoringMenuLessonBase(lessonId: String) : KLesson(lessonId, LessonsBundle.message("refactoring.menu.lesson.name")) {
+  protected abstract val sample: LessonSample
+
   fun LessonContext.extractParameterTasks() {
+    prepareSample(sample)
+
+    showWarningIfInplaceRefactoringsDisabled()
+
     lateinit var showPopupTaskId: TaskContext.TaskId
     task("Refactorings.QuickListPopupAction") {
       showPopupTaskId = taskId
@@ -24,7 +30,7 @@ abstract class RefactoringMenuLessonBase(lessonId: String) : KLesson(lessonId, L
       triggerUI().component { ui: EngravedLabel ->
         ui.text.isToStringContains(refactorThisTitle)
       }
-      restoreIfModifiedOrMoved()
+      restoreIfModifiedOrMoved(sample)
       test { actions(it) }
     }
 

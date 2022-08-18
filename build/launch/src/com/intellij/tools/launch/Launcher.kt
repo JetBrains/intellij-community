@@ -1,6 +1,8 @@
 package com.intellij.tools.launch
 
 import com.intellij.tools.launch.impl.ClassPathBuilder
+import com.intellij.util.JavaModuleOptions
+import com.intellij.util.system.OS
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import java.io.File
 import java.net.InetAddress
@@ -65,8 +67,15 @@ object Launcher {
       "-XX:HeapDumpPath=${paths.tempFolder.canonicalPath}",
       "-XX:MaxJavaStackTraceDepth=10000",
       "-XX:ReservedCodeCacheSize=240m",
-      "-XX:SoftRefLRUPolicyMSPerMB=50"
+      "-XX:SoftRefLRUPolicyMSPerMB=50",
+      "-XX:+UnlockDiagnosticVMOptions",
+      "-XX:+BytecodeVerificationLocal",
+      "-Dshared.indexes.download.auto.consent=true"
     )
+
+    val optionsOpenedFile = paths.communityRootFolder.resolve("plugins/devkit/devkit-core/src/run/OpenedPackages.txt")
+    val optionsOpenedPackages = JavaModuleOptions.readOptions(optionsOpenedFile.toPath(), OS.CURRENT)
+    cmd.addAll(optionsOpenedPackages)
 
     if (options.platformPrefix != null) {
       cmd.add("-Didea.platform.prefix=${options.platformPrefix}")

@@ -2,10 +2,13 @@
 package com.intellij.codeInspection.ui.actions
 
 import com.intellij.codeInspection.InspectionsBundle
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl
+import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.export.InspectionTreeHtmlWriter
-import com.intellij.codeInspection.ui.InspectionResultsView
+import com.intellij.codeInspection.ui.InspectionTree
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
+import com.intellij.openapi.project.Project
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import java.nio.file.Path
@@ -22,9 +25,13 @@ class ExportToHTMLAction : InspectionResultsExportActionProvider(Supplier { "HTM
   val open by openProperty
   var outputPath: Path? = null
 
-  override fun writeResults(view: InspectionResultsView, outputPath: Path) {
-    InspectionTreeHtmlWriter(view, outputPath)
+  override fun writeResults(tree: InspectionTree,
+                            profile: InspectionProfileImpl,
+                            globalInspectionContext: GlobalInspectionContextImpl,
+                            project: Project,
+                            outputPath: Path) {
     this.outputPath = outputPath
+    InspectionTreeHtmlWriter(tree, profile, globalInspectionContext.refManager, outputPath)
   }
 
   override fun onExportSuccessful() {

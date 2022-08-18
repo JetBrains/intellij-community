@@ -5,8 +5,27 @@ import com.intellij.internal.statistic.config.StatisticsStringUtil
 import java.io.File
 import java.nio.file.Path
 
+/**
+ * @deprecated Use {@link EventLogInternalSendConfig} because it contains both information about recorder and device
+ * Kept for compatibility with TBE.
+ */
+@Deprecated(message="Use EventLogSendConfig")
 interface EventLogRecorderConfig {
   fun getRecorderId(): String
+
+  fun isSendEnabled(): Boolean
+
+  fun getFilesToSendProvider(): FilesToSendProvider
+}
+
+interface EventLogSendConfig {
+  fun getRecorderId(): String
+
+  fun getDeviceId(): String
+
+  fun getBucket(): Int
+
+  fun getMachineId(): MachineId
 
   fun isSendEnabled(): Boolean
 

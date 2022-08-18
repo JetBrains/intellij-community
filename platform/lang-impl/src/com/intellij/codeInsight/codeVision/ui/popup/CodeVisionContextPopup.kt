@@ -1,8 +1,8 @@
 package com.intellij.codeInsight.codeVision.ui.popup
 
-import com.intellij.codeInsight.codeVision.CodeVisionEntry
-import com.intellij.codeInsight.codeVision.CodeVisionEntryExtraActionModel
+import com.intellij.codeInsight.codeVision.*
 import com.intellij.codeInsight.codeVision.ui.model.CodeVisionListData
+import com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.ListSeparator
@@ -15,7 +15,11 @@ class CodeVisionContextPopup private constructor(project: Project, aStep: ListPo
   companion object {
 
     fun createLensList(entry: CodeVisionEntry, model: CodeVisionListData, project: Project): CodeVisionContextPopup {
-      val lst = entry.extraActions + model.projectModel.hideLens
+      val activeProvider = CodeVisionInitializer.getInstance(project).getCodeVisionHost().getProviderById(entry.providerId) ?: error("Can't find provider with id: ${entry.providerId}")
+      val lst = entry.extraActions +
+                CodeVisionEntryExtraActionModel(CodeVisionBundle.message("action.hide.this.metric.text", activeProvider.name), ProjectCodeVisionModel.HIDE_PROVIDER_ID) +
+                CodeVisionEntryExtraActionModel(CodeVisionBundle.message("action.hide.all.text"), ProjectCodeVisionModel.HIDE_ALL) +
+                CodeVisionEntryExtraActionModel(CodeVisionBundle.message("LensListPopup.tooltip.settings"), CodeVisionHost.settingsLensProviderId)
 
       val aStep = object : SubCodeVisionMenu(lst,
                                              {
@@ -24,7 +28,7 @@ class CodeVisionContextPopup private constructor(project: Project, aStep: ListPo
 
 
         override fun getSeparatorAbove(value: CodeVisionEntryExtraActionModel): ListSeparator? {
-          return super.getSeparatorAbove(value) ?: if (value == model.projectModel.hideLens) ListSeparator() else null
+          return null
         }
       }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.actions.ImportModuleAction;
@@ -76,27 +76,45 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
         PlatformTestUtil.forceCloseProjectWithoutSaving(myCreatedProject);
         myCreatedProject = null;
       }
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        LanguageLevelProjectExtensionImpl extension =
-          LanguageLevelProjectExtensionImpl.getInstanceImpl(ProjectManager.getInstance().getDefaultProject());
-        extension.resetDefaults();
-        ProjectRootManager.getInstance(ProjectManager.getInstance().getDefaultProject()).setProjectSdk(myOldDefaultProjectSdk);
-        JavaAwareProjectJdkTableImpl.removeInternalJdkInTests();
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          LanguageLevelProjectExtensionImpl extension =
+            LanguageLevelProjectExtensionImpl.getInstanceImpl(ProjectManager.getInstance().getDefaultProject());
+          extension.resetDefaults();
+          ProjectRootManager.getInstance(ProjectManager.getInstance().getDefaultProject()).setProjectSdk(myOldDefaultProjectSdk);
+          JavaAwareProjectJdkTableImpl.removeInternalJdkInTests();
+        });
+        SelectTemplateSettings.getInstance().setLastTemplate(null, null);
+        // let vfs update pass
+        PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
       });
-      SelectTemplateSettings.getInstance().setLastTemplate(null, null);
-      // let vfs update pass
-      PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
     }
     catch (Throwable e) {
       addSuppressedException(e);
     }
     finally {
-      super.tearDown();
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        try {
+          super.tearDown();
+        }
+        catch (Exception e) {
+          addSuppressedException(e);
+        }
+      });
     }
   }
 
-  protected Project createProjectFromTemplate(@NotNull String group, @Nullable String name, @Nullable Consumer<? super Step> adjuster) throws IOException {
-    runWizard(group, name, null, adjuster);
+  protected Project createProjectFromTemplate(@NotNull String group, @Nullable String name, @Nullable Consumer<? super Step> adjuster)
+    throws IOException {
+    return createProject(step -> {
+      setSelectedTemplate(step, group, name);
+      if (adjuster != null) {
+        adjuster.accept(step);
+      }
+    });
+  }
+
+  private Project createProjectFromWizard() {
     try {
       myCreatedProject = NewProjectUtil.createFromWizard(myWizard);
     }
@@ -107,45 +125,51 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
       throw new RuntimeException(e);
     }
     assertNotNull(myCreatedProject);
+
     UIUtil.dispatchAllInvocationEvents();
 
-    Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    assertEquals(Arrays.asList(projects).toString(), 2, projects.length);
     return myCreatedProject;
   }
 
-  protected @Nullable Module createModuleFromTemplate(String group, String name, @Nullable Consumer<? super Step> adjuster) throws IOException {
-    return createModuleFromTemplate(group, name, getProject(), adjuster);
+  protected Project getCreatedProject() {
+    return myCreatedProject;
   }
 
   protected @Nullable Module createModuleFromTemplate(String group, String name, @NotNull Project project, @Nullable Consumer<? super Step> adjuster)
     throws IOException {
-    runWizard(group, name, project, adjuster);
-    return createModuleFromWizard(project);
+    return createModule(project, step -> {
+      setSelectedTemplate(step, group, name);
+      if (adjuster != null) {
+        adjuster.accept(step);
+      }
+    });
   }
 
   private Module createModuleFromWizard(@NotNull Project project) {
     return new NewModuleAction().createModuleFromWizard(project, null, myWizard);
   }
 
-  private void runWizard(@NotNull String group,
-                         @Nullable String name,
-                         @Nullable Project project,
-                         @Nullable Consumer<? super Step> adjuster) throws IOException {
-    createWizard(project);
-    ProjectTypeStep step = (ProjectTypeStep)myWizard.getCurrentStepObject();
-    if (!step.setSelectedTemplate(group, name)) {
-      throw new IllegalArgumentException(group + '/' + name + " template not found. Available groups: " + step.availableTemplateGroupsToString());
+  private static void setSelectedTemplate(@NotNull Step step, @NotNull String group, @Nullable String name) {
+    if (step instanceof ProjectTypeStep) {
+      ProjectTypeStep projectTypeStep = (ProjectTypeStep)step;
+      if (!projectTypeStep.setSelectedTemplate(group, name)) {
+        throw new IllegalArgumentException(
+          group + '/' + name + " template not found. " +
+          "Available groups: " + projectTypeStep.availableTemplateGroupsToString()
+        );
+      }
     }
-
-    runWizard(step1 -> {
-      if (name != null && step1 instanceof ChooseTemplateStep) {
-        ((ChooseTemplateStep)step1).setSelectedTemplate(name);
+    if (step instanceof ChooseTemplateStep) {
+      if (name != null) {
+        ChooseTemplateStep chooseTemplateStep = (ChooseTemplateStep)step;
+        if (!chooseTemplateStep.setSelectedTemplate(name)) {
+          throw new IllegalArgumentException(
+            group + '/' + name + " template not found. " +
+            "Available groups: " + chooseTemplateStep.getTemplateList().availableProjectTemplatesToString()
+          );
+        }
       }
-      if (adjuster != null) {
-        adjuster.accept(step1);
-      }
-    });
+    }
   }
 
   protected void cancelWizardRun() {
@@ -193,17 +217,16 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     createWizard(null);
     runWizard(adjuster);
     myWizard.disposeIfNeeded();
-    myCreatedProject = NewProjectUtil.createFromWizard(myWizard);
-    return myCreatedProject;
+    return createProjectFromWizard();
   }
 
-  protected Project createProjectFromTemplate(@NotNull Consumer<NewProjectWizardStep> adjuster) throws IOException {
+  protected Project createProjectFromTemplate(@NotNull Consumer<? super NewProjectWizardStep> adjuster) throws IOException {
     return createProjectFromTemplate(UIBundle.message("label.project.wizard.project.generator.name"), adjuster);
   }
 
-  protected Project createProjectFromTemplate(@NotNull String group, @NotNull Consumer<NewProjectWizardStep> adjuster) throws IOException {
-    return createProject(step -> {
-      var npwStep = getNewProjectWizardStep(step, group);
+  protected Project createProjectFromTemplate(@NotNull String group, @NotNull Consumer<? super NewProjectWizardStep> adjuster) throws IOException {
+    return createProjectFromTemplate(group, null, step -> {
+      var npwStep = getNewProjectWizardStep(step);
       if (npwStep != null) {
         adjuster.accept(npwStep);
       }
@@ -211,36 +234,32 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   }
 
   protected Module createModule(@NotNull Project project, @NotNull Consumer<? super Step> adjuster) throws IOException {
-    createWizard(null);
+    createWizard(project);
     runWizard(adjuster);
     myWizard.disposeIfNeeded();
     return createModuleFromWizard(project);
   }
 
-  protected Module createModuleFromTemplate(@NotNull Project project, @NotNull Consumer<NewProjectWizardStep> adjuster) throws IOException {
+  protected Module createModuleFromTemplate(@NotNull Project project, @NotNull Consumer<? super NewProjectWizardStep> adjuster) throws IOException {
     return createModuleFromTemplate(project, UIBundle.message("label.project.wizard.module.generator.name"), adjuster);
   }
 
   protected Module createModuleFromTemplate(
     @NotNull Project project,
     @NotNull String group,
-    @NotNull Consumer<NewProjectWizardStep> adjuster
+    @NotNull Consumer<? super NewProjectWizardStep> adjuster
   ) throws IOException {
     return createModuleFromTemplate(group, null, project, step -> {
-      var npwStep = getNewProjectWizardStep(step, group);
+      var npwStep = getNewProjectWizardStep(step);
       if (npwStep != null) {
         adjuster.accept(npwStep);
       }
     });
   }
 
-  protected @Nullable NewProjectWizardStep getNewProjectWizardStep(@NotNull Step step, @NotNull String group) {
+  protected @Nullable NewProjectWizardStep getNewProjectWizardStep(@NotNull Step step) {
     if (step instanceof ProjectTypeStep) {
-      var projectTypeStep = (ProjectTypeStep)step;
-      assertTrue(projectTypeStep.setSelectedTemplate(group, null));
-      var steps = myWizard.getSequence().getSelectedSteps();
-      assertEquals(steps.toString(), 1, steps.size());
-      var moduleWizardStep = projectTypeStep.getCustomStep();
+      var moduleWizardStep = ((ProjectTypeStep)step).getCustomStep();
       assertInstanceOf(moduleWizardStep, NewProjectWizardStep.class);
       return (NewProjectWizardStep)moduleWizardStep;
     }

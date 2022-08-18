@@ -49,6 +49,7 @@ sealed class BasePropertyService : PropertiesComponent(), PersistentStateCompone
 
   override fun loadState(state: MyState) {
     keyToString.clear()
+    keyToStringList.clear()
     keyToString.putAll(state.keyToString)
     keyToStringList.putAll(state.keyToStringList)
   }
@@ -106,13 +107,19 @@ sealed class BasePropertyService : PropertiesComponent(), PersistentStateCompone
     }
   }
 
+  private fun unsetList(name: String) {
+    if (keyToStringList.remove(name) != null) {
+      tracker.incModificationCount()
+    }
+  }
+
   override fun isValueSet(name: String) = keyToString.containsKey(name)
 
   override fun getValues(name: @NonNls String) = getList(name)?.toTypedArray()
 
   override fun setValues(name: @NonNls String, values: Array<String>?) {
     if (values == null) {
-      unsetValue(name)
+      unsetList(name)
     }
     else {
       keyToStringList.put(name, java.util.List.of(*values))
@@ -124,7 +131,7 @@ sealed class BasePropertyService : PropertiesComponent(), PersistentStateCompone
 
   override fun setList(name: String, values: MutableCollection<String>?) {
     if (values == null) {
-      unsetValue(name)
+      unsetList(name)
     }
     else {
       // for possible backward compatibility to existing usages, allow to store empty collections
@@ -134,12 +141,10 @@ sealed class BasePropertyService : PropertiesComponent(), PersistentStateCompone
   }
 }
 
-@State(name = "PropertyService", reportStatistic = false, storages = [
-  Storage(value = StoragePathMacros.NON_ROAMABLE_FILE),
-  Storage(value = StoragePathMacros.CACHE_FILE, deprecated = true),
-])
+@State(name = "PropertyService", reportStatistic = false, storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE)])
 @Internal
 class AppPropertyService : BasePropertyService()
 
 @State(name = "PropertiesComponent", reportStatistic = false, storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
+@Internal
 internal class ProjectPropertyService : BasePropertyService()

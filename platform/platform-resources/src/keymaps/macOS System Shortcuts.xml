@@ -345,7 +345,7 @@
     <keyboard-shortcut first-keystroke="F7"/>
   </action>
 
-  <action id="EditorDecreaseFontSize">
+  <action id="EditorDecreaseFontSizeGlobal">
     <keyboard-shortcut first-keystroke="meta shift MINUS"/>
   </action>
 
@@ -353,7 +353,7 @@
     <keyboard-shortcut first-keystroke="shift alt MINUS"/>
   </action>
 
-  <action id="EditorIncreaseFontSize">
+  <action id="EditorIncreaseFontSizeGlobal">
     <keyboard-shortcut first-keystroke="meta shift PLUS"/>
   </action>
 

@@ -82,7 +82,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitTryStatement(PsiTryStatement statement) {
+      public void visitTryStatement(@NotNull PsiTryStatement statement) {
         super.visitTryStatement(statement);
         final PsiCatchSection[] catchSections = statement.getCatchSections();
         for (final PsiCatchSection section : catchSections) {
@@ -153,11 +153,11 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
       }
 
       /**
-       * Returns true if given catch block may ignore VM exception such as NullPointerException
+       * Returns class name of important VM exception (like NullPointerException) if given catch block may ignore it
        *
        * @param parameter a catch block parameter
        * @param block     a catch block body
-       * @return true if it's determined that catch block may ignore VM exception
+       * @return class name of important VM exception (like NullPointerException) if given catch block may ignore it
        */
       private @Nullable String mayIgnoreVMException(PsiParameter parameter, PsiCodeBlock block) {
         PsiType type = parameter.getType();

@@ -25,12 +25,17 @@ import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactRootElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.CompositePackagingElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.PackagingElementEntity
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 import org.junit.Assert.*
 import org.junit.Assume.assumeTrue
 import org.junit.ClassRule
@@ -62,8 +67,6 @@ class ArtifactsPropertyTest {
 
   @Test
   fun `property test`() {
-    assumeTrue(WorkspaceModel.enabledForArtifacts)
-
     val writeDisposable = writeActionDisposable(disposableRule.disposable)
     invokeAndWaitIfNeeded {
       PackagingElementType.EP_NAME.point.registerExtension(MyWorkspacePackagingElementType, writeDisposable)
@@ -115,7 +118,7 @@ class ArtifactsPropertyTest {
             modifiableModel.commit()
 
             WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
-              it.replaceBySource({ true }, WorkspaceEntityStorageBuilder.create())
+              it.replaceBySource({ true }, MutableEntityStorage.create())
             }
           }
 
@@ -330,7 +333,7 @@ class ArtifactsPropertyTest {
       env.logMessage("Rename artifact via workspace model: ${selectedArtifact.name} -> $artifactName")
       makeChecksHappy {
         workspaceModel.updateProjectModel {
-          it.modifyEntity(ModifiableArtifactEntity::class.java, selectedArtifact) {
+          it.modifyEntity(selectedArtifact) {
             this.name = artifactName
           }
         }
@@ -358,14 +361,14 @@ class ArtifactsPropertyTest {
       env.logMessage("Change build on make option for ${selectedArtifact.name}: Prev value: ${selectedArtifact.includeInProjectBuild}")
       makeChecksHappy {
         workspaceModel.updateProjectModel {
-          it.modifyEntity(ModifiableArtifactEntity::class.java, selectedArtifact) {
+          it.modifyEntity(selectedArtifact) {
             this.includeInProjectBuild = !this.includeInProjectBuild
           }
         }
       }
 
       checkResult(env) {
-        val artifactEntity = workspaceModel.entityStorage.current.resolve(selectedArtifact.persistentId())!!
+        val artifactEntity = workspaceModel.entityStorage.current.resolve(selectedArtifact.persistentId)!!
         assertEquals(!selectedArtifact.includeInProjectBuild, artifactEntity.includeInProjectBuild)
 
         onManager(env) { manager ->
@@ -385,7 +388,7 @@ class ArtifactsPropertyTest {
       env.logMessage("Change artifact type for ${selectedArtifact.name}: Prev value: ${selectedArtifact.artifactType}")
       makeChecksHappy {
         workspaceModel.updateProjectModel {
-          it.modifyEntity(ModifiableArtifactEntity::class.java, selectedArtifact) {
+          it.modifyEntity(selectedArtifact) {
             this.artifactType = id
           }
         }
@@ -735,7 +738,7 @@ class ArtifactsPropertyTest {
   }
 
   private fun createCompositeElementEntity(env: ImperativeCommand.Environment,
-                                           builder: WorkspaceEntityStorageBuilder): CompositePackagingElementEntity {
+                                           builder: MutableEntityStorage): CompositePackagingElementEntity {
     return builder.addArtifactRootElementEntity(emptyList(), TestEntitySource)
   }
 

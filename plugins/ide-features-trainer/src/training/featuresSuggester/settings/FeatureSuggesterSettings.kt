@@ -1,10 +1,13 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.featuresSuggester.settings
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.util.registry.Registry
 import training.featuresSuggester.suggesters.FeatureSuggester
 import java.time.Instant
 import java.time.ZoneId
@@ -14,10 +17,13 @@ import kotlin.math.min
 
 @State(
   name = "FeatureSuggesterSettings",
-  storages = [Storage("FeatureSuggester.xml")]
+  storages = [Storage("FeatureSuggester.xml", roamingType = RoamingType.DISABLED)]
 )
 class FeatureSuggesterSettings : PersistentStateComponent<FeatureSuggesterSettings> {
-  var suggesters: MutableMap<String, Boolean> = FeatureSuggester.suggesters.associate { it.id to true }.toMutableMap()
+  var suggesters: MutableMap<String, Boolean> = run {
+    val enabled = isSuggestersEnabledByDefault
+    FeatureSuggester.suggesters.associate { internalId(it.id) to enabled }.toMutableMap()
+  }
 
   // SuggesterId to the last time this suggestion was shown
   var suggestionLastShownTime: MutableMap<String, Long> = mutableMapOf()
@@ -25,22 +31,38 @@ class FeatureSuggesterSettings : PersistentStateComponent<FeatureSuggesterSettin
   // List of timestamps (millis) of the first IDE session start for the last days
   var workingDays: MutableList<Long> = mutableListOf()
 
+  val isAnySuggesterEnabled: Boolean
+    get() = suggesters.any { it.value }
+
+  private val isSuggestersEnabledByDefault: Boolean
+    get() = Registry.`is`("feature.suggester.enable.suggesters", false)
+
+  private fun internalId(suggesterId: String): String {
+    return if (isSuggestersEnabledByDefault) suggesterId else suggesterId + "_"
+  }
+
   override fun getState(): FeatureSuggesterSettings {
     return this
   }
 
   override fun loadState(state: FeatureSuggesterSettings) {
-    suggesters = state.suggesters
+    // leave default settings if loading settings contains something different
+    // needed in case when suggesters enabled default is changed
+    val oldSettingsFound = state.suggesters.any { !suggesters.containsKey(it.key) }
+    if (!oldSettingsFound) {
+      suggesters = state.suggesters
+    }
+
     suggestionLastShownTime = state.suggestionLastShownTime
     workingDays = state.workingDays
   }
 
   fun isEnabled(suggesterId: String): Boolean {
-    return suggesters[suggesterId] == true
+    return suggesters[internalId(suggesterId)] == true
   }
 
   fun setEnabled(suggesterId: String, enabled: Boolean) {
-    suggesters[suggesterId] = enabled
+    suggesters[internalId(suggesterId)] = enabled
   }
 
   fun updateSuggestionShownTime(suggesterId: String) {

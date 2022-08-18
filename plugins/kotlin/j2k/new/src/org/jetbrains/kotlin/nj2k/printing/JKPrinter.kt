@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.printing
 
@@ -7,13 +7,14 @@ import org.jetbrains.kotlin.j2k.ast.Nullability
 import org.jetbrains.kotlin.nj2k.JKElementInfoStorage
 import org.jetbrains.kotlin.nj2k.JKImportStorage
 import org.jetbrains.kotlin.nj2k.symbols.JKSymbol
-import org.jetbrains.kotlin.nj2k.tree.*
+import org.jetbrains.kotlin.nj2k.tree.JKLambdaExpression
+import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
 import org.jetbrains.kotlin.nj2k.types.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal open class JKPrinterBase {
     private val stringBuilder: StringBuilder = StringBuilder()
-    var currentIndent = 0;
+    var currentIndent = 0
     private val indentSymbol = " ".repeat(4)
     private var lastSymbolIsLineBreak = false
 
@@ -78,13 +79,13 @@ internal class JKPrinter(
     importStorage: JKImportStorage,
     private val elementInfoStorage: JKElementInfoStorage
 ) : JKPrinterBase() {
-    val symbolRenderer = JKSymbolRenderer(importStorage, project)
+    private val symbolRenderer = JKSymbolRenderer(importStorage, project)
 
     private fun JKType.renderTypeInfo() {
         this@JKPrinter.print(elementInfoStorage.getOrCreateInfoForElement(this).render())
     }
 
-    fun renderType(type: JKType, owner: JKTreeElement?) {
+    fun renderType(type: JKType, owner: JKTreeElement? = null) {
         if (type is JKNoType) return
         if (type is JKCapturedType) {
             when (val wildcard = type.wildcardType) {
@@ -113,13 +114,13 @@ internal class JKPrinter(
                     JKVarianceTypeParameterType.Variance.IN -> this.print("in ")
                     JKVarianceTypeParameterType.Variance.OUT -> this.print("out ")
                 }
-                renderType(type.boundType, null)
+                renderType(type.boundType)
             }
             else -> this.print("Unit /* TODO: ${type::class} */")
         }
         if (type is JKParametrizedType && type.parameters.isNotEmpty()) {
             par(ParenthesisKind.ANGLE) {
-                renderList(type.parameters, renderElement = { renderType(it, null) })
+                renderList(type.parameters, renderElement = { renderType(it) })
             }
         }
         // we print undefined types as nullable because we need smartcast to work in nullability inference in post-processing

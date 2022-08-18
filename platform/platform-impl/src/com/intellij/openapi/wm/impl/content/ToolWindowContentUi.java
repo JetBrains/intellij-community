@@ -115,6 +115,9 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
          */
         @Override
         public void propertyChange(PropertyChangeEvent event) {
+          if (Content.PROP_COMPONENT.equals(event.getPropertyName())) {
+            ensureSelectedContentVisible();
+          }
           update();
         }
       };
@@ -132,12 +135,15 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
       @Override
       public void contentRemoved(@NotNull ContentManagerEvent event) {
-        event.getContent().removePropertyChangeListener(propertyChangeListener);
+        Content content = event.getContent();
+        content.removePropertyChangeListener(propertyChangeListener);
         getCurrentLayout().contentRemoved(event);
         ensureSelectedContentVisible();
         rebuild();
 
-        if (contentManager.isEmpty()) {
+        if (contentManager.isEmpty() &&
+            contentManager == window.getContentManager() &&
+            !Content.TEMPORARY_REMOVED_KEY.get(content, false)) {
           boolean removeFromStripe;
           if (window.isToHideOnEmptyContent()) {
             removeFromStripe = true;
@@ -229,7 +235,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   }
 
   @NotNull
-  private ContentLayout getCurrentLayout() {
+   public ContentLayout getCurrentLayout() {
     if (type == ToolWindowContentUiType.TABBED) {
       return tabsLayout;
     }
@@ -265,8 +271,11 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       }
     }
 
+    JComponent replacement = selected.getUserData(Content.REPLACEMENT_COMPONENT);
+    JComponent newComponent = replacement != null ? replacement : selected.getComponent();
+
     contentComponent.removeAll();
-    contentComponent.add(selected.getComponent(), BorderLayout.CENTER);
+    contentComponent.add(newComponent, BorderLayout.CENTER);
 
     contentComponent.revalidate();
     contentComponent.repaint();
@@ -412,9 +421,8 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       @Override
       public void mousePressed(@NotNull MouseEvent e) {
         if (e.isPopupTrigger() || UIUtil.isCloseClick(e)) return;
-        PointerInfo info = MouseInfo.getPointerInfo();
         if (!isToolWindowDrag(e)) {
-          myLastPoint.set(info != null ? info.getLocation() : e.getLocationOnScreen());
+          myLastPoint.set(e.getLocationOnScreen());
           myPressPoint.set(myLastPoint.get());
           myDragTracker.set(LocationOnDragTracker.startDrag(e));
           if (allowResize && ui.isResizeable()) {
@@ -484,13 +492,11 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
         if (myLastPoint.isNull() || myPressPoint.isNull() || myDragTracker.isNull()) return;
         //"Dock" modes,
         // for "Undock" mode processing see com.intellij.toolWindow.InternalDecoratorImpl.ResizeOrMoveDocketToolWindowMouseListener
-        PointerInfo info = MouseInfo.getPointerInfo();
-        if (info == null) return;
-        Point newMouseLocation = info.getLocation();
+        Point newMouseLocation = e.getLocationOnScreen();
 
         Window window = SwingUtilities.windowForComponent(c);
         if (!(window instanceof IdeFrame)) {
-          myDragTracker.get().updateLocationOnDrag(window);
+          myDragTracker.get().updateLocationOnDrag(window, newMouseLocation);
         }
         myLastPoint.set(newMouseLocation);
         Component component = getActualSplitter();

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage
 
 import com.intellij.ProjectTopics
@@ -16,7 +16,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.roots.ModuleRootManagerEx
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.util.Disposer
@@ -31,9 +31,12 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.util.xmlb.annotations.XCollection
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.toBuilder
+import kotlinx.coroutines.async
+import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -142,7 +145,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
         }
 
         val application = ApplicationManager.getApplication()
-        val future = application.executeOnPooledThread { updateSourceFolders(sourceFoldersToChange) }
+        val future = project.coroutineScope.async { updateSourceFolders(sourceFoldersToChange) }.asCompletableFuture()
         if (application.isUnitTestMode) {
           ApplicationManager.getApplication().assertIsDispatchThread()
           operationsStates.removeIf { it.isDone }
@@ -152,12 +155,14 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
     })
 
     project.messageBus.connect().subscribe(ProjectTopics.MODULES, object : ModuleListener {
-      override fun moduleAdded(project: Project, module: Module) {
+      override fun modulesAdded(project: Project, modules: List<Module>) {
         synchronized(mutex) {
-          moduleNamesToSourceFolderState[module.name].forEach {
-            loadSourceFolderState(it, module)
+          for (module in modules) {
+            moduleNamesToSourceFolderState[module.name].forEach {
+              loadSourceFolderState(it, module)
+            }
+            moduleNamesToSourceFolderState.remove(module.name)
           }
-          moduleNamesToSourceFolderState.remove(module.name)
         }
       }
     })
@@ -187,7 +192,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
           val contentEntry = MarkRootActionBase.findContentEntry(model, eventFile)
                              ?: model.addContentEntry(url)
           val sourceFolder = contentEntry.addSourceFolder(url, type)
-          if (packagePrefix != null && packagePrefix.isNotEmpty()) {
+          if (!packagePrefix.isNullOrEmpty()) {
             sourceFolder.packagePrefix = packagePrefix
           }
           setForGeneratedSources(sourceFolder, generated)
@@ -199,8 +204,9 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   private fun batchUpdateModels(project: Project, modules: Collection<Module>, modifier: (ModifiableRootModel) -> Unit) {
     val diffBuilder = WorkspaceModel.getInstance(project).entityStorage.current.toBuilder()
     val modifiableRootModels = modules.asSequence().filter { !it.isDisposed }.map { module ->
-      val modifiableRootModel = ModuleRootManagerEx.getInstanceEx(module).getModifiableModelForMultiCommit(
-        ExternalSystemRootConfigurationAccessor(diffBuilder))
+      val moduleRootComponentBridge = ModuleRootManager.getInstance(module) as ModuleRootComponentBridge
+      val modifiableRootModel = moduleRootComponentBridge.getModifiableModelForMultiCommit(ExternalSystemRootConfigurationAccessor(diffBuilder),
+                                                                                           false)
       modifiableRootModel as ModifiableRootModelBridge
       modifier.invoke(modifiableRootModel)
       modifiableRootModel.prepareForCommit()
@@ -224,7 +230,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
     if (properties != null) properties.isForGeneratedSources = generated
   }
 
-  override fun getState(): SourceFolderManagerState? {
+  override fun getState(): SourceFolderManagerState {
     synchronized(mutex) {
       return SourceFolderManagerState(sourceFolders.valueSequence
                                         .mapNotNull { model ->
@@ -303,8 +309,8 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   }
 }
 
-class ExternalSystemRootConfigurationAccessor(override val actualDiffBuilder: WorkspaceEntityStorageBuilder) : RootConfigurationAccessor(),
-                                                                                                                RootConfigurationAccessorForWorkspaceModel
+class ExternalSystemRootConfigurationAccessor(override val actualDiffBuilder: MutableEntityStorage) : RootConfigurationAccessor(),
+                                                                                                      RootConfigurationAccessorForWorkspaceModel
 
 data class SourceFolderManagerState(@get:XCollection(style = XCollection.Style.v2) val sourceFolders: Collection<SourceFolderModelState>) {
   constructor() : this(mutableListOf())

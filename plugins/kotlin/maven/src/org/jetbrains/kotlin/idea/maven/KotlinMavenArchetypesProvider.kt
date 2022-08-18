@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.maven
 
@@ -8,7 +8,7 @@ import com.intellij.util.net.HttpConfigurable
 import org.jetbrains.idea.maven.dom.MavenVersionComparable
 import org.jetbrains.idea.maven.indices.MavenArchetypesProvider
 import org.jetbrains.idea.maven.model.MavenArchetype
-import org.jetbrains.kotlin.idea.KotlinPluginUtil
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.utils.ifEmpty
 import java.net.HttpURLConnection
@@ -19,7 +19,7 @@ class KotlinMavenArchetypesProvider(private val kotlinPluginVersion: String, pri
     MavenArchetypesProvider {
 
     @Suppress("unused")
-    constructor() : this(KotlinPluginUtil.getPluginVersion(), null)
+    constructor() : this(KotlinIdePlugin.version, null)
 
     companion object {
         private val VERSIONS_LIST_URL = mavenSearchUrl("org.jetbrains.kotlin", packaging = "maven-archetype", rowsLimit = 1000)

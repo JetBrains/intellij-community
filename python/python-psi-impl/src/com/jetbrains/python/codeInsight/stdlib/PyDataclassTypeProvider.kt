@@ -6,7 +6,6 @@ package com.jetbrains.python.codeInsight.stdlib
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.util.containers.isNullOrEmpty
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.*
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
@@ -212,7 +211,8 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       val parameter = PyCallableParameterImpl.nonPsi(
         parameterName,
         getTypeForParameter(cls, field, dataclassType, context),
-        getDefaultValueForParameter(cls, field, fieldStub, dataclassType, ellipsis, context)
+        getDefaultValueForParameter(cls, field, fieldStub, dataclassType, ellipsis, context),
+        field
       )
 
       return Triple(parameterName, fieldStub?.kwOnly() == true, parameter)

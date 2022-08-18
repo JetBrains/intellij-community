@@ -26,9 +26,6 @@ import com.intellij.psi.codeStyle.DetectableIndentOptionsProvider;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
-/**
- * @author Rustam Vishnyakov
- */
 public class JavaDetectableIndentsTest extends BasePlatformTestCase {
   private static final String BASE_PATH = "/codeInsight/editorActions/detectableIndents/";
 

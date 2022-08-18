@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.transformations.impl;
 
 import com.intellij.psi.*;
@@ -13,6 +13,7 @@ import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -22,6 +23,10 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
 import org.jetbrains.plugins.groovy.transformations.TransformationContext;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtilKt.findDeclaredDetachedValue;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_BASE_SCRIPT;
@@ -53,12 +58,32 @@ public class BaseScriptTransformationSupport implements AstTransformationSupport
     PsiClassType type = CachedValuesManager.getCachedValue(scriptClass, () -> CachedValueProvider.Result.create(
       getSuperClassTypeFromBaseScriptAnnotation(scriptClass), scriptClass.getContainingFile()
     ));
-    if (type != null) return type;
+    if (type != null) {
+      PsiClass resolved = type.resolve();
+      if (resolved instanceof GrTypeDefinition && reachableInHierarchy(new HashSet<>(List.of(scriptClass)), (GrTypeDefinition)resolved)) {
+        return TypesUtil.createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_SCRIPT, scriptClass);
+      }
+      return type;
+    }
 
     final PsiClassType superClassFromDSL = GroovyDslFileIndex.processScriptSuperClasses(scriptClass.getContainingFile());
     if (superClassFromDSL != null) return superClassFromDSL;
 
     return TypesUtil.createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_SCRIPT, scriptClass);
+  }
+
+
+  private static boolean reachableInHierarchy(Set<PsiClass> forbidden, GrTypeDefinition root) {
+    for (PsiClass aSuper : root.getSupers(false)) {
+      if (forbidden.contains(aSuper)) {
+        return true;
+      }
+      forbidden.add(aSuper);
+      if (aSuper instanceof GrTypeDefinition && reachableInHierarchy(forbidden, (GrTypeDefinition)aSuper)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Nullable

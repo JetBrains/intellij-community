@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.elements.KtLightAbstractAnnotation
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
@@ -13,19 +14,18 @@ import org.jetbrains.uast.kotlin.internal.DelegatedMultiResolve
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameter
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiVariable
 
+@ApiStatus.Internal
 abstract class AbstractKotlinUVariable(
     givenParent: UElement?
 ) : KotlinAbstractUElement(givenParent), PsiVariable, UVariableEx, UAnchorOwner {
 
     override val uastInitializer: UExpression?
         get() {
-            val psi = psi
-            val initializerExpression = when (psi) {
+            val initializerExpression = when (val psi = psi) {
                 is UastKotlinPsiVariable -> psi.ktInitializer
                 is UastKotlinPsiParameter -> psi.ktDefaultValue
                 is KtLightElement<*, *> -> {
-                    val origin = psi.kotlinOrigin?.takeIf { it.canAnalyze() } // EA-137191
-                    when (origin) {
+                    when (val origin = psi.kotlinOrigin?.takeIf { it.canAnalyze() }) { // EA-137191
                         is KtVariableDeclaration -> origin.initializer
                         is KtParameter -> origin.defaultValue
                         else -> null
@@ -36,9 +36,8 @@ abstract class AbstractKotlinUVariable(
             return languagePlugin?.convertElement(initializerExpression, this) as? UExpression ?: UastEmptyExpression(null)
         }
 
-    val delegateExpression: UExpression? by lz {
-        val psi = psi
-        val expression = when (psi) {
+    protected val delegateExpression: UExpression? by lz {
+        val expression = when (val psi = psi) {
             is KtLightElement<*, *> -> (psi.kotlinOrigin as? KtProperty)?.delegateExpression
             is UastKotlinPsiVariable -> (psi.ktElement as? KtProperty)?.delegateExpression
             else -> null
@@ -103,7 +102,7 @@ abstract class AbstractKotlinUVariable(
             psi.parameterList.attributes.map { WrappedUNamedExpression(it, this) }
         }
 
-        override val uastAnchor by lazy {
+        override val uastAnchor: UIdentifier by lz {
             KotlinUIdentifier(
                 { javaPsi.nameReferenceElement?.referenceNameElement },
                 sourcePsi.safeAs<KtAnnotationEntry>()?.typeReference?.nameElement,

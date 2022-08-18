@@ -2,6 +2,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.psi.PsiAnonymousClass;
 
 public abstract class JavaRefactoringActionHandlerFactory {
   public static JavaRefactoringActionHandlerFactory getInstance() {
@@ -14,7 +15,7 @@ public abstract class JavaRefactoringActionHandlerFactory {
    * {@link RefactoringActionHandler#invoke(com.intellij.openapi.project.Project, com.intellij.psi.PsiElement[], com.intellij.openapi.actionSystem.DataContext)}
    * is not implemented.
    */
-  public abstract RefactoringActionHandler createAnonymousToInnerHandler();
+  public abstract RefactoringActionHandlerOnPsiElement<PsiAnonymousClass> createAnonymousToInnerHandler();
 
   /**
    * Creates handler for Pull Members Up refactoring.<p>
@@ -176,4 +177,12 @@ public abstract class JavaRefactoringActionHandlerFactory {
    * accepts 1 {@code PsiMethod}, that will be inverted
    */
   public abstract RefactoringActionHandler createInvertBooleanHandler();
+
+  /**
+   * Creates handler for Introduce Variable refactoring using for intention preview.<p>
+   *
+   * {@link RefactoringActionHandler#invoke(com.intellij.openapi.project.Project, com.intellij.psi.PsiElement[], com.intellij.openapi.actionSystem.DataContext)}
+   * accepts 1 {@code PsiExpression}, that will be an initializer for introduced variable.
+   */
+  public abstract RefactoringActionHandler createIntroduceVariableOnPreviewHandler();
 }

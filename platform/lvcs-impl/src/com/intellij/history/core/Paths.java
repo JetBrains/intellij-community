@@ -58,12 +58,12 @@ public final class Paths {
   public static Iterable<String> split(String path) {
     String root = FileUtil.extractRootPath(path);
     if (root == null) return splitInner(path);
-    if (root.length() + 1 == path.length() && path.endsWith(":///")) {
+    if (root.length() + 1 == path.length() && path.endsWith("/")) {
       return Collections.singleton(root);
     }
 
-    Iterable<String> tail = splitInner(path.substring(root.length()));
-    return ContainerUtil.concat(Collections.singleton(root), tail);
+    List<String> tail = splitInner(path.substring(root.length()));
+    return ContainerUtil.concat(Collections.singletonList(root), tail);
   }
 
   @NotNull

@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.python
 
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.impl.BuildHelper
 import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.PluginLayoutGroovy
+import org.jetbrains.intellij.build.io.FileKt
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -46,7 +47,7 @@ final class PythonCommunityPluginModules {
 
   static PluginLayout pythonPlugin(String mainModuleName, String name, List<String> modules,
                                    @DelegatesTo(PluginLayout.PluginLayoutSpec) Closure body = {}) {
-    PluginLayout.plugin(mainModuleName) {
+    PluginLayoutGroovy.plugin(mainModuleName) {
       directoryName = name
       mainJarName = "${name}.jar"
       modules.each { module ->
@@ -71,7 +72,7 @@ final class HelpersGenerator implements BiConsumer<Path, BuildContext> {
   void accept(Path targetDir, BuildContext context) {
     Path output = targetDir.resolve("helpers")
     Files.createDirectories(output)
-    BuildHelper.getInstance(context).copyDir(context.paths.communityHomeDir.resolve("python/helpers"), output, new Predicate<Path>() {
+    FileKt.copyDir(context.paths.communityHomeDir.communityRoot.resolve("python/helpers"), output, new Predicate<Path>() {
       @Override
       boolean test(Path path) {
         if (path.endsWith("tests") || path.endsWith(".idea")) {

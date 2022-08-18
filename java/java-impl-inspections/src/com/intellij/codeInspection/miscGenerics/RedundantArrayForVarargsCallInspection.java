@@ -3,7 +3,6 @@ package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInspection.*;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -39,7 +38,6 @@ public class RedundantArrayForVarargsCallInspection extends AbstractBaseJavaLoca
   }
 
   private static final class RedundantArrayForVarargVisitor extends JavaElementVisitor {
-    private static final Logger LOG = Logger.getInstance(RedundantArrayForVarargVisitor.class);
 
     private static final String[] LOGGER_NAMES = new String[]{"debug", "error", "info", "trace", "warn"};
 
@@ -55,13 +53,13 @@ public class RedundantArrayForVarargsCallInspection extends AbstractBaseJavaLoca
     }
 
     @Override
-    public void visitCallExpression(PsiCallExpression expression) {
+    public void visitCallExpression(@NotNull PsiCallExpression expression) {
       super.visitCallExpression(expression);
       checkCall(expression);
     }
 
     @Override
-    public void visitEnumConstant(PsiEnumConstant expression) {
+    public void visitEnumConstant(@NotNull PsiEnumConstant expression) {
       super.visitEnumConstant(expression);
       checkCall(expression);
     }

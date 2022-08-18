@@ -37,7 +37,7 @@ public final class JavaImportListElementType extends JavaStubElementType<PsiImpo
 
   @NotNull
   @Override
-  public PsiImportListStub createStub(@NotNull final LighterAST tree, @NotNull final LighterASTNode node, @NotNull final StubElement parentStub) {
+  public PsiImportListStub createStub(@NotNull final LighterAST tree, @NotNull final LighterASTNode node, final @NotNull StubElement<?> parentStub) {
     return new PsiImportListStubImpl(parentStub);
   }
 

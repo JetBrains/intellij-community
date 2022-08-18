@@ -39,13 +39,12 @@ class CodeVisionSettingsLiveModel(lifetime: Lifetime) {
   val defaultPosition: Property<CodeVisionAnchorKind> = Property(CodeVisionSettings.instance().defaultPosition)
   val visibleMetricsAboveDeclarationCount: Property<Int> = Property(CodeVisionSettings.instance().visibleMetricsAboveDeclarationCount)
   val visibleMetricsNextToDeclarationCount: Property<Int> = Property(CodeVisionSettings.instance().visibleMetricsNextToDeclarationCount)
-  val disabledCodeVisionProviderIds: ViewableSet<String> = ViewableSet(CodeVisionSettings.instance().state.disabledCodeVisionProviderIds)
+  val disabledCodeVisionProviderIds: ViewableSet<String> = ViewableSet(CodeVisionSettings.instance().state.disabledCodeVisionProviderIds.toMutableSet())
   val codeVisionGroupToPosition: ViewableMap<String, CodeVisionAnchorKind> = ViewableMap<String, CodeVisionAnchorKind>().apply {
     putAll(CodeVisionSettings.instance().state.codeVisionGroupToPosition.map { it.key to CodeVisionAnchorKind.valueOf(it.value) })
   }
 
   init {
-
     application.messageBus.connect(lifetime.createNestedDisposable())
       .subscribe(CodeVisionSettings.CODE_LENS_SETTINGS_CHANGED,
                  object : CodeVisionSettings.CodeVisionSettingsListener {

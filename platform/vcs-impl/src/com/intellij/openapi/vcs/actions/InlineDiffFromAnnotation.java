@@ -56,6 +56,7 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
 
   private int myCurrentLine = -1;
   @Nullable private ProgressIndicator myIndicator;
+  @Nullable private Disposable myDisposable;
   @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<>();
 
   private InlineDiffFromAnnotation(@NotNull EditorEx editor,
@@ -123,9 +124,17 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
       myIndicator.cancel();
       myIndicator = null;
     }
+    removeHighlighters();
+    myCurrentLine = -1;
+  }
+
+  private void removeHighlighters() {
+    if (myDisposable != null) {
+      Disposer.dispose(myDisposable);
+      myDisposable = null;
+    }
     myHighlighters.forEach(highlighter -> myEditor.getMarkupModel().removeHighlighter(highlighter));
     myHighlighters.clear();
-    myCurrentLine = -1;
   }
 
   @RequiresEdt
@@ -158,6 +167,7 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
   private void showDiff(int editorLine, @NotNull AnnotatedLineModificationDetails details, @Nullable ProgressIndicator indicator) {
     if (indicator != null) indicator.checkCanceled();
     if (editorLine == myCurrentLine) {
+      removeHighlighters();
       addHighlighters(editorLine, details);
     }
   }
@@ -171,13 +181,26 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
     String contentAfter = details.lineContentAfter;
     List<InnerChange> changes = details.changes;
 
+    myDisposable = Disposer.newDisposable();
+    DiffDrawUtil.setupLayeredRendering(myEditor, editorLine, editorLine + 1, DiffDrawUtil.LAYER_PRIORITY_MAX, myDisposable);
+
     InnerChange onlyItem = ContainerUtil.getOnlyItem(changes);
     if (onlyItem != null && onlyItem.startOffset == 0 && onlyItem.endOffset == contentAfter.length()) {
       TextDiffType diffType = getDiffType(onlyItem.type);
-      myHighlighters.addAll(DiffDrawUtil.createHighlighter(myEditor, editorLine, editorLine + 1, diffType, false));
+      myHighlighters.addAll(
+        new DiffDrawUtil.LineHighlighterBuilder(myEditor, editorLine, editorLine + 1, diffType)
+          .withLayerPriority(DiffDrawUtil.LAYER_PRIORITY_MAX)
+          .withIgnored(false)
+          .withHideStripeMarkers(true)
+          .done());
     }
     else {
-      myHighlighters.addAll(DiffDrawUtil.createHighlighter(myEditor, editorLine, editorLine + 1, TextDiffType.MODIFIED, true));
+      myHighlighters.addAll(
+        new DiffDrawUtil.LineHighlighterBuilder(myEditor, editorLine, editorLine + 1, TextDiffType.MODIFIED)
+          .withLayerPriority(DiffDrawUtil.LAYER_PRIORITY_MAX)
+          .withIgnored(true)
+          .withHideStripeMarkers(true)
+          .done());
 
       List<InnerChange> currentChanges = adjustChangesToCurrent(currentContent, contentAfter, changes);
       for (InnerChange change : currentChanges) {
@@ -186,7 +209,9 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
         TextDiffType diffType = getDiffType(change.type);
         LOG.assertTrue(start <= end && end <= lineEndOffset, String.format("Range: [%s, %s), Line range: [%s, %s)",
                                                                            start, end, lineStartOffset, lineEndOffset));
-        myHighlighters.addAll(DiffDrawUtil.createInlineHighlighter(myEditor, start, end, diffType));
+        myHighlighters.addAll(new DiffDrawUtil.InlineHighlighterBuilder(myEditor, start, end, diffType)
+                                .withLayerPriority(DiffDrawUtil.LAYER_PRIORITY_MAX)
+                                .done());
       }
     }
   }

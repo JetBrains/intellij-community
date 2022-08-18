@@ -3,8 +3,10 @@ package com.intellij.openapi.editor.ex;
 
 import com.intellij.accessibility.AccessibilityUtils;
 import com.intellij.ide.ui.UINumericRange;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.actions.CaretStopOptions;
@@ -66,7 +68,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public boolean SHOW_BREADCRUMBS_ABOVE = false;
     public boolean SHOW_BREADCRUMBS = true;
     public boolean ENABLE_RENDERED_DOC = false;
-    public boolean SHOW_INTENTION_PREVIEW = false;
+    public boolean SHOW_INTENTION_PREVIEW = true;
     public boolean USE_EDITOR_FONT_IN_INLAYS = false;
 
     public boolean SMART_HOME = true;
@@ -104,10 +106,22 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
     public boolean KEEP_TRAILING_SPACE_ON_CARET_LINE = true;
 
+    public boolean INSERT_PARENTHESES_AUTOMATICALLY = true;
+
     private final Map<String, Boolean> mapLanguageBreadcrumbs = new HashMap<>();
 
     public Map<String, Boolean> getLanguageBreadcrumbsMap() {
       return mapLanguageBreadcrumbs;
+    }
+
+    public OptionSet() {
+      Application application = ApplicationManager.getApplication();
+      if (application != null) {
+        PropertiesComponent properties = application.getService(PropertiesComponent.class);
+        if (properties != null) {
+          INSERT_PARENTHESES_AUTOMATICALLY = properties.getBoolean("js.insert.parentheses.on.completion", true);
+        }
+      }
     }
 
     @SuppressWarnings("unused")
@@ -747,5 +761,13 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public void setUseEditorFontInInlays(boolean value) {
     myOptions.USE_EDITOR_FONT_IN_INLAYS = value;
+  }
+
+  public boolean isInsertParenthesesAutomatically() {
+    return myOptions.INSERT_PARENTHESES_AUTOMATICALLY;
+  }
+
+  public void setInsertParenthesesAutomatically(boolean value) {
+    myOptions.INSERT_PARENTHESES_AUTOMATICALLY = value;
   }
 }

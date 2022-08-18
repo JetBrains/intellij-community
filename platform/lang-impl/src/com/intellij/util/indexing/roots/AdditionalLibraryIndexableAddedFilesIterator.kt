@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots
 
 import com.intellij.openapi.project.Project
@@ -11,9 +11,16 @@ import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import org.jetbrains.annotations.Nls
 
 internal class AdditionalLibraryIndexableAddedFilesIterator(val presentableLibraryName: @Nls String?,
-                                                            val rootsToIndex: Iterable<VirtualFile>,
+                                                            private val rootsToIndex: Collection<VirtualFile>,
                                                             val libraryNameForDebug: String) : IndexableFilesIterator {
-  override fun getDebugName(): String = "Additional library change reindexing iterator for ${presentableLibraryName ?: "unknown"} library; $libraryNameForDebug"
+  override fun getDebugName(): String = "${libDebugDescription()} ${rootsDebugDescription()} roots"
+
+  private fun libDebugDescription() = "Additional library change reindexing iterator for ${presentableLibraryName ?: libraryNameForDebug} library"
+  private fun rootsDebugDescription(): String {
+    if (rootsToIndex.isEmpty()) return "empty"
+    if (rootsToIndex.size > 5) return "${rootsToIndex.size}"
+    return rootsToIndex.joinToString()
+  }
 
   override fun getIndexingProgressText(): String = presentableLibraryName?.let {
     IndexingBundle.message("progress.text.additional.library.indexing.added.files", it)
@@ -32,4 +39,4 @@ internal class AdditionalLibraryIndexableAddedFilesIterator(val presentableLibra
   override fun getRootUrls(project: Project): Set<String> = rootsToIndex.map { it.url }.toSet()
 }
 
-private data class PartialAdditionalLibraryIndexableSetOrigin(val rootsToIndex: Iterable<VirtualFile>) : IndexableSetOrigin
+data class PartialAdditionalLibraryIndexableSetOrigin(val rootsToIndex: Collection<VirtualFile>) : IndexableSetOrigin

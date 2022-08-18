@@ -3,7 +3,6 @@ package com.intellij.codeInspection.sourceToSink;
 
 import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
@@ -27,12 +26,10 @@ import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.UCallExpression;
-import org.jetbrains.uast.UExpression;
-import org.jetbrains.uast.UReferenceExpression;
-import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.*;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -144,15 +141,30 @@ public class MarkAsSafeFix extends LocalQuickFixOnPsiElement {
                                                     title, null, UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION);
     }
     else {
-      FileModificationService modificationService = FileModificationService.getInstance();
-      boolean canModifyFiles = toAnnotate.stream()
-        .map(e -> e.getContainingFile())
-        .allMatch(f -> modificationService.prepareFileForWrite(f));
-      if (!canModifyFiles) return;
+      PsiFile[] files = filesToAnnotate(toAnnotate);
       WriteCommandAction.runWriteCommandAction(project, title, null, () -> {
         annotateInCode(project, toAnnotate);
-      });
+      }, files);
     }
+  }
+
+  private static PsiFile[] filesToAnnotate(@NotNull Collection<PsiElement> elements) {
+    Set<PsiFile> files = new HashSet<>();
+    for (PsiElement element : elements) {
+      if (element.isPhysical()) {
+        files.add(element.getContainingFile());
+        continue;
+      }
+      // It is possible that some elements are non-physical (e.g. when we resolved kotlin reference in java file we get light element).
+      // In such cases we want to get the original physical file from this non-physical element so that we can add annotation later on.
+      // The simplest way to do it is to make two conversions: non-physical element -> uast element -> source psi 
+      UElement uElement = UastContextKt.toUElement(element);
+      if (uElement == null) continue;
+      PsiElement sourcePsi = uElement.getSourcePsi();
+      if (sourcePsi == null) continue;
+      files.add(sourcePsi.getContainingFile());
+    }
+    return files.toArray(PsiFile.EMPTY_ARRAY);
   }
 
   private static void annotateExternally(@NotNull Project project, @NotNull Collection<PsiElement> toAnnotate) {

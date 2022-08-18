@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.stash;
 
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,6 +14,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
+import git4idea.GitStashUsageCollector;
 import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
@@ -62,7 +64,10 @@ public class GitStashChangesSaver extends GitChangesSaver {
         LOG.error("Repository is null for root " + root);
       }
       else {
+        StructuredIdeActivity activity = GitStashUsageCollector.logStashPush(myProject);
         GitCommandResult result = myGit.stashSave(repository, myStashMessage);
+        activity.finished();
+
         if (result.success() && somethingWasStashed(result)) {
           myStashedRoots.put(root, myGit.resolveReference(repository, "stash@{0}"));
         }

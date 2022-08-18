@@ -49,9 +49,9 @@ fun uastInjectionHostReferenceProvider(targetClass: Class<out PsiElement>?,
 fun <T : UElement> uastReferenceProvider(cls: Class<T>, targetClass: Class<out PsiElement>?,
                                          provider: (T, PsiElement) -> Array<PsiReference>): UastReferenceProvider =
   object : UastReferenceProvider(cls) {
-
-    override fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference> =
-      provider(cls.cast(element), context[REQUESTED_PSI_ELEMENT])
+    override fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference> {
+      return provider(cls.cast(element), getRequestedPsiElement(context))
+    }
 
     override fun acceptsTarget(target: PsiElement): Boolean {
       return targetClass?.isInstance(target) ?: true
@@ -59,6 +59,10 @@ fun <T : UElement> uastReferenceProvider(cls: Class<T>, targetClass: Class<out P
 
     override fun toString(): String = "uastReferenceProvider($provider)"
   }
+
+fun getRequestedPsiElement(context: ProcessingContext): PsiElement {
+  return context[REQUESTED_PSI_ELEMENT]
+}
 
 fun <T : UElement> uastReferenceProvider(cls: Class<T>, provider: (T, PsiElement) -> Array<PsiReference>): UastReferenceProvider =
   uastReferenceProvider(cls, null, provider)
@@ -97,8 +101,8 @@ fun uastReferenceProviderByUsage(targetClass: Class<out PsiElement>?,
   object : UastReferenceProvider(UInjectionHost::class.java) {
     override fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference> {
       val uLiteral = element as? UExpression ?: return PsiReference.EMPTY_ARRAY
-      val host = context[REQUESTED_PSI_ELEMENT] as? PsiLanguageInjectionHost ?: return PsiReference.EMPTY_ARRAY
-      val usagePsi = context[USAGE_PSI_ELEMENT] ?: context[REQUESTED_PSI_ELEMENT]
+      val host = getRequestedPsiElement(context) as? PsiLanguageInjectionHost ?: return PsiReference.EMPTY_ARRAY
+      val usagePsi = context[USAGE_PSI_ELEMENT] ?: getRequestedPsiElement(context)
 
       return provider(uLiteral, host, usagePsi)
     }

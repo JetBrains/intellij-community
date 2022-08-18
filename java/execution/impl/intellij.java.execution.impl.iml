@@ -11,14 +11,12 @@
     <orderEntry type="module" module-name="intellij.java.execution" exported="" />
     <orderEntry type="module" module-name="intellij.java.rt" />
     <orderEntry type="module" module-name="intellij.java.debugger.impl" />
-    <orderEntry type="library" name="jgoodies-forms" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testRunner" exported="" />
     <orderEntry type="module" module-name="intellij.java.compiler" />
     <orderEntry type="module" module-name="intellij.java.impl" />
     <orderEntry type="module" module-name="intellij.java.indexing" />
     <orderEntry type="module" module-name="intellij.platform.smRunner" />
     <orderEntry type="module" module-name="intellij.java.jshell.protocol" />
-    <orderEntry type="library" name="intellij-coverage" level="project" />
     <orderEntry type="library" name="intellij-test-discovery" level="project" />
     <orderEntry type="module-library" scope="RUNTIME">
       <library name="jshell-frontend">
@@ -43,6 +41,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
   </component>
   <component name="copyright">
     <Base>

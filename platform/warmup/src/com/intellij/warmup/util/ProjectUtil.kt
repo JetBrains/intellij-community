@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.warmup.util
 
 import com.intellij.conversion.ConversionListener
@@ -8,11 +9,11 @@ import com.intellij.ide.CommandLineInspectionProjectConfigurator.ConfiguratorCon
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.PatchProjectUtil
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.runReadAction
+import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.OrderRootType
@@ -20,37 +21,30 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import java.util.*
 import java.util.function.Predicate
 
 private val LOG = ConsoleLog
 
-fun importOrOpenProject(args: OpenProjectArgs, indicator: ProgressIndicator): Project = runAndCatchNotNull("Opening Project") {
+fun importOrOpenProject(args: OpenProjectArgs, indicator: ProgressIndicator): Project {
   LOG.info("Opening project from ${args.projectDir}...")
-  var project: Project? = null
-  val action = Runnable {
-    indicator.pushState()
-    try {
-      project = runBlocking {
-        runTaskAndLogTime("open project") {
-          importOrOpenProjectImpl(args, indicator)
-        }
-      }
-    }
-    catch (t: Throwable) {
-      LOG.error("Failed to open project ${args.projectDir}. ${t.message}", t)
-    }
-    finally {
-      indicator.popState()
+  // most of the sensible operations would run in the same thread
+  return runUnderModalProgressIfIsEdt {
+    runTaskAndLogTime("open project") {
+      importOrOpenProjectImpl(args, indicator)
     }
   }
+}
 
-  //most of the sensible operations would run in the same thread
-  ProgressManager.getInstance().runProcess(action, indicator)
-
-  project
+suspend fun importOrOpenProjectAsync(args: OpenProjectArgs, indicator: ProgressIndicator): Project {
+  LOG.info("Opening project from ${args.projectDir}...")
+  // most of the sensible operations would run in the same thread
+  return runTaskAndLogTime("open project") {
+    importOrOpenProjectImpl(args, indicator)
+  }
 }
 
 private suspend fun importOrOpenProjectImpl(args: OpenProjectArgs, indicator: ProgressIndicator): Project {
@@ -70,12 +64,12 @@ private suspend fun importOrOpenProjectImpl(args: OpenProjectArgs, indicator: Pr
   }
 
   val project = runTaskAndLogTime("open project") {
-    ProjectUtil.openOrImport(vfsProject.toNioPath(), OpenProjectTask())
+    ProjectUtil.openOrImportAsync(vfsProject.toNioPath(), OpenProjectTask())
   } ?: throw RuntimeException("Failed to open project, null is returned")
   yieldThroughInvokeLater()
 
   runTaskAndLogTime("patching project") {
-    invokeAndWaitIfNeeded {
+    withContext(Dispatchers.EDT) {
       //TODO[jo]: allow to configure that from commandline parameters
       PatchProjectUtil.patchProject(project)
     }
@@ -92,7 +86,7 @@ private suspend fun importOrOpenProjectImpl(args: OpenProjectArgs, indicator: Pr
   }
 
   LOG.info("Finishing project open...")
-  val modulesCount = runReadAction {
+  val modulesCount = readAction {
     val modules = ModuleManager.getInstance(project).modules
     if (modules.isEmpty()) {
       LOG.warn("Project contains 0 modules. There is nothing to index")
@@ -104,7 +98,7 @@ private suspend fun importOrOpenProjectImpl(args: OpenProjectArgs, indicator: Pr
   runTaskAndLogTime("check project roots") {
     val errors = TreeSet<String>()
     val missingSDKs = TreeSet<String>()
-    runReadAction {
+    readAction {
       ProjectRootManager.getInstance(project).contentRoots.forEach { file ->
         if (!file.exists()) {
           errors += "Missing root: $file"
@@ -168,7 +162,7 @@ private suspend fun callProjectConversion(projectArgs: OpenProjectArgs) {
   val conversionService = ConversionService.getInstance() ?: return
   runTaskAndLogTime("convert project") {
     LOG.info("Checking if conversions are needed for the project")
-    val conversionResult = invokeAndWaitIfNeeded {
+    val conversionResult = withContext(Dispatchers.EDT) {
       conversionService.convertSilently(projectArgs.projectDir, listener)
     }
 

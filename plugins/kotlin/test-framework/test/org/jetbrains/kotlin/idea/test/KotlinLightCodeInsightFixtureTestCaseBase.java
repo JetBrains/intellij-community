@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.test;
 
@@ -14,7 +14,6 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -24,6 +23,8 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
+
+import static org.jetbrains.kotlin.idea.test.TestUtilsKt.checkPluginIsCorrect;
 
 public abstract class KotlinLightCodeInsightFixtureTestCaseBase extends LightJavaCodeInsightFixtureTestCase {
     @NotNull
@@ -45,6 +46,13 @@ public abstract class KotlinLightCodeInsightFixtureTestCaseBase extends LightJav
 
     protected final Collection<Path> myFilesToDelete = new HashSet<>();
     private final TempFiles myTempFiles = new TempFiles(myFilesToDelete);
+
+    @Override
+    protected void setUp() throws Exception {
+        System.setProperty("idea.kotlin.plugin.use.k2", Boolean.toString(isFirPlugin()));
+        super.setUp();
+        checkPluginIsCorrect(isFirPlugin());
+    }
 
     @Override
     protected void tearDown() throws Exception {

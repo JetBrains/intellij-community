@@ -22,7 +22,7 @@ class NCSSVisitor extends JavaRecursiveElementWalkingVisitor {
   private int m_statementCount;
 
   @Override
-  public void visitClass(PsiClass aClass) {
+  public void visitClass(@NotNull PsiClass aClass) {
     // no call to super, to keep this from drilling down
   }
 

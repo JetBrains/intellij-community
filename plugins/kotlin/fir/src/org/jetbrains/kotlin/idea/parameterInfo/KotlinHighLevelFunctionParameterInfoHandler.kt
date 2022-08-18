@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.parameterInfo
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -10,15 +10,17 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyse
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
+import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.parameterInfo.KotlinParameterInfoBase
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.NULLABILITY_ANNOTATIONS
@@ -105,7 +107,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             ?: return null
 
         val callElement = argumentList.parent as? KtElement ?: return null
-        return analyse(callElement) {
+        return analyze(callElement) {
             // findElementForParameterInfo() is only called once before the UI is shown. updateParameterInfo() is called once before the UI
             // is shown, and is also called every time the cursor moves or the call arguments change (i.e., user types something) while the
             // UI is shown, hence the need to resolve the call again in updateParameterInfo() (e.g., argument mappings can change).
@@ -115,7 +117,9 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             // `context.itemsToShow` array which becomes `context.objectsToView` array in updateParameterInfo(). Unfortunately
             // `objectsToView` is read-only so we can't change the size of the array. So we have to store an array here of the correct size,
             // which does mean we have to resolve here to know the number of candidates.
-            val candidatesWithMapping = resolveCallCandidates(callElement)
+            val candidatesWithMapping = collectCallCandidates(callElement)
+
+            // TODO: Filter shadowed candidates. See use of ShadowedDeclarationsFilter in KotlinFunctionParameterInfoHandler.kt.
             context.itemsToShow = Array(candidatesWithMapping.size) { CandidateInfo() }
 
             argumentList
@@ -136,16 +140,17 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         context.setCurrentParameter(currentArgumentIndex)
 
         val callElement = argumentList.parent as? KtElement ?: return
-        analyse(callElement) {
+        analyze(callElement) {
             val (valueArguments, arguments) = when (callElement) {
                 is KtCallElement -> {
                     val valueArguments = callElement.valueArgumentList?.arguments
                     Pair(valueArguments, valueArguments?.map { it.getArgumentExpression() } ?: listOf())
                 }
                 is KtArrayAccessExpression -> Pair(null, callElement.indexExpressions)
-                else -> return@analyse
+                else -> return@analyze
             }
-            val candidatesWithMapping = resolveCallCandidates(callElement)
+            val candidatesWithMapping = collectCallCandidates(callElement)
+            val hasMultipleApplicableBestCandidates = candidatesWithMapping.count { it.isApplicableBestCandidate } > 1
 
             for ((index, objectToView) in context.objectsToView.withIndex()) {
                 val candidateInfo = objectToView as? CandidateInfo ?: continue
@@ -154,7 +159,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                     // Number of candidates somehow changed while UI is shown, which should NOT be possible. Bail out to be safe.
                     return
                 }
-                val (candidateSignature, argumentMapping) = candidatesWithMapping[index]
+                val (candidateSignature, argumentMapping, isApplicableBestCandidate) = candidatesWithMapping[index]
 
                 // For array set calls, we only want the index arguments in brackets, which are all except the last (the value to set).
                 val isArraySetCall = candidateSignature.symbol.callableIdIfNonLocal?.let {
@@ -205,8 +210,10 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                     setValueParameter
                 )
 
-                // TODO: This should be changed when there are multiple candidates available; need to know which one the call is resolved to
-                val isCallResolvedToCandidate = candidatesWithMapping.size == 1
+                // We want to highlight the candidate green if it is the only best/final candidate selected and is applicable.
+                // However, if there is only one candidate available, we want to highlight it green regardless of its applicability.
+                val shouldHighlightGreen = (isApplicableBestCandidate && !hasMultipleApplicableBestCandidates)
+                        || candidatesWithMapping.size == 1
 
                 candidateInfo.callInfo = CallInfo(
                     callElement,
@@ -215,10 +222,10 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                     argumentToParameterIndex,
                     valueParameters.size,
                     parameterIndexToText,
-                    isCallResolvedToCandidate,
+                    shouldHighlightGreen,
                     hasTypeMismatchBeforeCurrent,
                     highlightParameterIndex,
-                    candidateSignature.symbol.deprecationStatus != null,
+                    isDeprecated = candidateSignature.symbol.deprecationStatus != null,
                 )
             }
         }
@@ -251,16 +258,16 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             }
 
             if (includeName) {
-                append(parameter.symbol.name)
+                append(parameter.name)
                 append(": ")
             }
 
             val returnType = parameter.returnType.takeUnless { it is KtClassErrorType } ?: parameter.symbol.returnType
             append(returnType.render(KtTypeRendererOptions.SHORT_NAMES))
 
-            if (parameter.symbol.hasDefaultValue) {
-                // TODO: append(" = " + defaultValue).
-                // HL API currently doesn't give actual default value.
+            parameter.symbol.defaultValue?.let { defaultValue ->
+                append(" = ")
+                append(KotlinParameterInfoBase.getDefaultValueStringRepresentation(defaultValue))
             }
         }
     }
@@ -388,9 +395,10 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             var isDisabledBeforeHighlight = false
             var hasUnmappedArgument = false
             var hasUnmappedArgumentBeforeCurrent = false
+            var lastMappedArgumentIndex = -1
+            var namedMode = false
             val usedParameterIndices = HashSet<Int>()
             val text = buildString {
-                var namedMode = false
                 var argumentIndex = 0
 
                 fun appendParameter(
@@ -452,6 +460,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                             argumentIndex++
                             continue
                         }
+                        lastMappedArgumentIndex = argumentIndex
                         if (!usedParameterIndices.add(parameterIndex)) continue
 
                         val shouldHighlight = parameterIndex == highlightParameterIndex
@@ -463,12 +472,13 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                         val parameterIndex = argumentToParameterIndex[argument]
                         if (parameterIndex == null) {
                             hasUnmappedArgument = true
-                            if (argumentIndex <= currentArgumentIndex) {
+                            if (argumentIndex < currentArgumentIndex) {
                                 hasUnmappedArgumentBeforeCurrent = true
                             }
                             argumentIndex++
                             continue
                         }
+                        lastMappedArgumentIndex = argumentIndex
                         if (!usedParameterIndices.add(parameterIndex)) continue
 
                         val shouldHighlight = parameterIndex == highlightParameterIndex
@@ -493,14 +503,15 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                 }
             }
 
-            val backgroundColor = if (isCallResolvedToCandidate) GREEN_BACKGROUND else context.defaultParameterColor
+            val backgroundColor = if (shouldHighlightGreen) GREEN_BACKGROUND else context.defaultParameterColor
 
             // Disabled when there are too many arguments.
             val allParametersUsed = usedParameterIndices.size == valueParameterCount
             val supportsTrailingCommas = callElement.languageVersionSettings.supportsFeature(LanguageFeature.TrailingCommas)
             val afterTrailingComma = arguments.isNotEmpty() && currentArgumentIndex == arguments.size
             val isInPositionToEnterArgument = !supportsTrailingCommas && afterTrailingComma
-            val tooManyArgs = allParametersUsed && (isInPositionToEnterArgument || hasUnmappedArgument)
+            val isAfterMappedArgs = currentArgumentIndex > lastMappedArgumentIndex
+            val tooManyArgs = allParametersUsed && (isInPositionToEnterArgument || hasUnmappedArgument) && (isAfterMappedArgs || namedMode)
 
             val isDisabled = tooManyArgs || hasTypeMismatchBeforeCurrent || hasUnmappedArgumentBeforeCurrent
 
@@ -525,7 +536,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         val argumentToParameterIndex: LinkedHashMap<KtExpression, Int>,
         val valueParameterCount: Int,
         val parameterIndexToText: Map<Int, String>,
-        val isCallResolvedToCandidate: Boolean,
+        val shouldHighlightGreen: Boolean,
         val hasTypeMismatchBeforeCurrent: Boolean,
         val highlightParameterIndex: Int?,
         val isDeprecated: Boolean,

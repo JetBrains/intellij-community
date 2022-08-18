@@ -3,6 +3,7 @@
 
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.RepositoryHelper
@@ -10,6 +11,7 @@ import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationGroupManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
@@ -56,31 +58,33 @@ fun installAndEnablePlugins(
 fun installAndEnable(
   pluginIds: Set<PluginId>,
   onSuccess: Runnable,
-) = installAndEnable(null, pluginIds, true, false, onSuccess)
+) = installAndEnable(null, pluginIds, true, false, null, onSuccess)
 
+@JvmOverloads
 fun installAndEnable(
   project: Project?,
   pluginIds: Set<PluginId>,
   showDialog: Boolean = false,
+  selectAlInDialog: Boolean = false,
+  modalityState: ModalityState? = null,
   onSuccess: Runnable,
-) = installAndEnable(project, pluginIds, showDialog, false, onSuccess)
+) {
+  require(!showDialog || modalityState == null) {
+    "`modalityState` can be not null only if plugin installation won't show the dialog"
+  }
+  ProgressManager.getInstance().run(InstallAndEnableTask(project, pluginIds, showDialog, selectAlInDialog, modalityState, onSuccess))
+}
 
-fun installAndEnable(
-  project: Project?,
-  pluginIds: Set<PluginId>,
-  showDialog: Boolean = false,
-  selectAlInDialog: Boolean,
-  onSuccess: Runnable,
-) = ProgressManager.getInstance().run(InstallAndEnableTask(project, pluginIds, showDialog, selectAlInDialog, onSuccess))
 
-internal fun getBundledPluginToInstall(plugins: Collection<PluginData>): List<String> {
+internal fun getBundledPluginToInstall(
+  plugins: Collection<PluginData>,
+  descriptorsById: Map<PluginId, IdeaPluginDescriptor> = PluginManagerCore.buildPluginIdMap(),
+): List<String> {
   return if (isIdeaUltimate()) {
     emptyList()
   }
   else {
-    val descriptorsById = PluginManagerCore.buildPluginIdMap()
-    plugins
-      .filter { it.isBundled }
+    plugins.filter { it.isBundled }
       .filterNot { descriptorsById.containsKey(it.pluginId) }
       .map { it.pluginName }
   }

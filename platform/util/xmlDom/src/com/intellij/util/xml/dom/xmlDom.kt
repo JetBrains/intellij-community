@@ -1,15 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("XmlDomReader")
-@file:ApiStatus.Internal
 package com.intellij.util.xml.dom
 
 import com.fasterxml.aalto.WFCException
 import com.fasterxml.aalto.impl.ErrorConsts
-import com.intellij.util.xml.dom.createXmlStreamReader
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import org.codehaus.stax2.XMLStreamReader2
 import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
+import java.io.Reader
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.*
 import javax.xml.stream.XMLStreamConstants
 import javax.xml.stream.XMLStreamException
@@ -34,39 +35,29 @@ object NoOpXmlInterner : XmlInterner {
   override fun value(name: String, value: String) = value
 }
 
-@ApiStatus.Internal
+fun readXmlAsModel(inputReader: Reader): XmlElement {
+  return readAndClose(createXmlStreamReader(inputReader))
+}
+
 fun readXmlAsModel(inputStream: InputStream): XmlElement {
-  val reader = createXmlStreamReader(inputStream)
+  return readAndClose(createXmlStreamReader(inputStream))
+}
+
+fun readXmlAsModel(file: Path): XmlElement {
+  return readAndClose(createXmlStreamReader(Files.newInputStream(file)))
+}
+
+fun readXmlAsModel(inputData: ByteArray): XmlElement {
+  return readAndClose(createXmlStreamReader(inputData))
+}
+
+private fun readAndClose(reader: XMLStreamReader2): XmlElement {
   try {
-    val tag = nextTag(reader)
-    val rootName = if (tag == XMLStreamConstants.START_ELEMENT) {
-      reader.localName
-    }
-    else {
-      null
-    }
+    val rootName = if (nextTag(reader) == XMLStreamConstants.START_ELEMENT) reader.localName else null
     return readXmlAsModel(reader, rootName, NoOpXmlInterner)
   }
   finally {
     reader.closeCompletely()
-  }
-}
-
-@ApiStatus.Internal
-fun readXmlAsModel(inputStream: ByteArray): XmlElement {
-  val reader = createXmlStreamReader(inputStream)
-  try {
-    val tag = nextTag(reader)
-    val rootName = if (tag == XMLStreamConstants.START_ELEMENT) {
-      reader.localName
-    }
-    else {
-      null
-    }
-    return readXmlAsModel(reader, rootName, NoOpXmlInterner)
-  }
-  finally {
-    reader.close()
   }
 }
 

@@ -1,5 +1,7 @@
 from typing import IO, Any, Callable, Sequence, Union
 
+__all__ = ["Timer", "timeit", "repeat", "default_timer"]
+
 _Timer = Callable[[], float]
 _Stmt = Union[str, Callable[[], Any]]
 

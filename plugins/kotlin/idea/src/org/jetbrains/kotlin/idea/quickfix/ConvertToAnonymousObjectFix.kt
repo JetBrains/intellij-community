@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -10,8 +10,9 @@ import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticWithParameters3
 import org.jetbrains.kotlin.diagnostics.Errors
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.intentions.SamConversionToAnonymousObjectIntention
 import org.jetbrains.kotlin.idea.intentions.SamConversionToAnonymousObjectIntention.Companion.typeParameters
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -21,7 +22,6 @@ import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.tower.WrongResolutionToClassifier
 import org.jetbrains.kotlin.resolve.sam.getAbstractMembers
-import org.jetbrains.kotlin.util.firstNotNullResult
 
 class ConvertToAnonymousObjectFix(element: KtNameReferenceExpression) : KotlinQuickFixAction<KtNameReferenceExpression>(element) {
     override fun getFamilyName() = KotlinBundle.message("convert.to.anonymous.object")
@@ -33,7 +33,7 @@ class ConvertToAnonymousObjectFix(element: KtNameReferenceExpression) : KotlinQu
         val call = nameReference.parent as? KtCallExpression ?: return
         val lambda = SamConversionToAnonymousObjectIntention.getLambdaExpression(call) ?: return
         val context = nameReference.analyze()
-        val functionDescriptor = context.diagnostics.forElement(nameReference).firstNotNullResult {
+        val functionDescriptor = context.diagnostics.forElement(nameReference).firstNotNullOfOrNull {
             if (it.factory == Errors.RESOLUTION_TO_CLASSIFIER) getFunctionDescriptor(Errors.RESOLUTION_TO_CLASSIFIER.cast(it)) else null
         } ?: return
         val classDescriptor = functionDescriptor.containingDeclaration as? ClassDescriptor

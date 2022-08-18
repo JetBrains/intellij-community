@@ -1,7 +1,7 @@
 class Test {
   private int _foo;
 
-    public Test(int foo) {
+    Test(int foo) {
         _foo = foo;
     }
 }

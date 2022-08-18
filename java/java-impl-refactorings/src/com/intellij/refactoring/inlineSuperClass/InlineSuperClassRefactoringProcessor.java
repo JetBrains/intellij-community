@@ -160,7 +160,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
           if (element instanceof PsiReferenceExpression &&
               ((PsiReferenceExpression)element).getQualifierExpression() instanceof PsiSuperExpression &&
               PsiTreeUtil.isAncestor(targetClass, element, false) &&
-              !PushDownConflicts.isSuperCallToBeInlined(member, targetClass, mySuperClass, element)) {
+              !PushDownConflicts.isSuperCallToBeInlined(member, targetClass, mySuperClass)) {
             usages.add(new RemoveQualifierUsageInfo((PsiReferenceExpression)element));
           }
         }
@@ -394,7 +394,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
       final PsiClassType targetClassType = elementFactory.createType(targetClass, superClassSubstitutor);
       targetClass.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitTypeElement(final PsiTypeElement typeElement) {
+        public void visitTypeElement(final @NotNull PsiTypeElement typeElement) {
           super.visitTypeElement(typeElement);
           final PsiType superClassType = typeElement.getType();
           if (PsiUtil.resolveClassInClassTypeOnly(superClassType) == mySuperClass) {
@@ -404,7 +404,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
         }
 
         @Override
-        public void visitNewExpression(final PsiNewExpression expression) {
+        public void visitNewExpression(final @NotNull PsiNewExpression expression) {
           super.visitNewExpression(expression);
           final PsiType superClassType = expression.getType();
           if (PsiUtil.resolveClassInType(superClassType) == mySuperClass) {
@@ -423,7 +423,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
         }
 
         @Override
-        public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+        public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
           super.visitReferenceElement(reference);
           if (reference.resolve() == mySuperClass && PsiTreeUtil.getParentOfType(reference, PsiComment.class) != null) {
             replacementMap.put(new UsageInfo(reference), elementFactory.createClassReferenceElement(targetClass));

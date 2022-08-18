@@ -23,7 +23,7 @@ private class ClassSetImpl<out T>(vararg val initialClasses: Class<out T>) : Cla
 
   private val isSimple = initialClasses.size <= SIMPLE_CLASS_SET_LIMIT
 
-  private lateinit var internalMapping: ConcurrentMap<Class<out T>, Boolean>
+  private lateinit var internalMapping: MutableMap<Class<out T>, Boolean>
 
   init {
     if (!isSimple)

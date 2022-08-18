@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-@file:Suppress("UnstableApiUsage")
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.gradleJava.scripting
 
 import com.intellij.diff.util.DiffUtil
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -21,8 +20,8 @@ import org.gradle.tooling.model.kotlin.dsl.KotlinDslModelsParameters
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinIcons
-import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
+import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslScriptModelResolver
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRoot
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
@@ -95,6 +94,8 @@ class LoadConfigurationAction : AnAction(
 
         runPartialGradleImport(project, root)
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
         ensureValidActionVisibility(e)

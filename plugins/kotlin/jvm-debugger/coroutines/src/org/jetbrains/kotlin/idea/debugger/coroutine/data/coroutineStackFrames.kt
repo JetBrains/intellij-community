@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.debugger.coroutine.data
 
 import com.intellij.debugger.engine.DebugProcessImpl
@@ -17,8 +17,9 @@ import com.sun.jdi.Location
 import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinDebuggerCoroutinesBundle
 import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinVariableNameFinder
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.safeCoroutineStackFrameProxy
-import org.jetbrains.kotlin.idea.debugger.safeLocation
-import org.jetbrains.kotlin.idea.debugger.stackFrame.KotlinStackFrame
+import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
+import org.jetbrains.kotlin.idea.debugger.core.stackFrame.InlineStackTraceCalculator
+import org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrame
 
 /**
  * Coroutine exit frame represented by a stack frames
@@ -60,7 +61,14 @@ open class CoroutineStackFrame(
     private val spilledVariables: List<JavaValue> = emptyList(),
     private val includeFrameVariables: Boolean = true,
     location: Location? = frame.safeLocation(),
-) : KotlinStackFrame(safeCoroutineStackFrameProxy(location, spilledVariables, frame)) {
+) : KotlinStackFrame(
+    safeCoroutineStackFrameProxy(location, spilledVariables, frame),
+    if (spilledVariables.isEmpty() || includeFrameVariables) {
+        InlineStackTraceCalculator.calculateVisibleVariables(frame)
+    } else {
+        listOf()
+    }
+) {
 
     init {
         descriptor.updateRepresentation(null, DescriptorLabelListener.DUMMY_LISTENER)

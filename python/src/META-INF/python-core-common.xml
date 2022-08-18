@@ -19,14 +19,16 @@
   <projectListeners>
     <listener
       class="com.jetbrains.python.inspections.PyInterpreterInspection$Visitor$CacheCleaner"
-      topic="com.intellij.openapi.roots.ModuleRootListener"/>
+      topic="com.intellij.workspaceModel.ide.WorkspaceModelChangeListener"/>
     <listener
       class="com.jetbrains.python.inspections.PyInterpreterInspection$Visitor$CacheCleaner"
       topic="com.intellij.openapi.projectRoots.ProjectJdkTable$Listener"/>
   </projectListeners>
 
   <extensions defaultExtensionNs="com.intellij">
+    <iconMapper mappingFile="PythonIconMappings.json"/>
     <library.type implementation="com.jetbrains.python.library.PythonLibraryType"/>
+    <roots.watchedRootsProvider implementation="com.jetbrains.python.target.targetWithVfs.TargetVfsWatchedRootsProvider"/>
     <renameHandler implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralRenameHandler"/>
     <nameSuggestionProvider implementation="com.jetbrains.python.refactoring.PyNameSuggestionProvider"/>
     <methodNavigationOffsetProvider implementation="com.jetbrains.python.codeInsight.PyMethodNavigationOffsetProvider"/>
@@ -176,9 +178,9 @@
     <localInspection language="Python" shortName="PyRelativeImportInspection" suppressId="PyPackages" bundle="messages.PyPsiBundle" key="INSP.NAME.relative.import" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyRelativeImportInspection"/>
 
     <defaultLiveTemplates file="liveTemplates/Python.xml"/>
-    <liveTemplateContext implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$General"/>
-    <liveTemplateContext implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$Class"/>
-    <liveTemplateContext implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$TopLevel"/>
+    <liveTemplateContext contextId="Python" implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$General"/>
+    <liveTemplateContext contextId="Python_Class" baseContextId="Python" implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$Class"/>
+    <liveTemplateContext contextId="Python_Top_Level" baseContextId="Python" implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$TopLevel"/>
     <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.CollectionElementNameMacro"/>
     <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.PyClassNameMacro"/>
     <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.PyFunctionNameMacro"/>
@@ -313,7 +315,9 @@
     <additionalTextAttributes scheme="Default" file="colorSchemes/PythonDefault.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/PythonDarcula.xml"/>
 
+    <postStartupActivity implementation="com.jetbrains.python.sdk.PythonHeadlessSdkUpdater"/>
     <backgroundPostStartupActivity implementation="com.jetbrains.python.sdk.PythonSdkUpdater"/>
+
     <backgroundPostStartupActivity implementation="com.jetbrains.python.packaging.PyPackagesUpdater"/>
     <directoryProjectConfigurator implementation="com.jetbrains.python.configuration.PyDefaultProjectAwareServiceConfigurator" id="integratedTools" order="after sdk"/>
 
@@ -335,9 +339,6 @@
     <moduleService serviceImplementation="com.jetbrains.python.namespacePackages.PyNamespacePackagesService"/>
     <registryKey key="python.explicit.namespace.packages" defaultValue="true" restartRequired="true" description="Require marking namespace packages explicitly, treat regular directories as implicit source roots"/>
     <registryKey key="python.create.namespace.package.action" defaultValue="false" description="Possibility to create namespace packages from New | Python Package"/>
-
-    <!-- CommandQueueForPythonConsoleService -->
-    <registryKey key="python.console.CommandQueue" defaultValue="true" restartRequired="true" description="Use CommandQueue in PythonConsole"/>
 
     <!-- typing -->
     <multiHostInjector implementation="com.jetbrains.python.codeInsight.typing.PyTypingAnnotationInjector"/>
@@ -412,12 +413,13 @@
     <notificationGroup id="Python Debugger" displayType="TOOL_WINDOW" toolWindowId="Debug" bundle="messages.PyBundle" key="debug.notification.group"/>
     <notificationGroup id="Python SDK Updater" displayType="BALLOON" bundle="messages.PyBundle" key="python.sdk.updater.notifications.group.title"/>
     <notificationGroup id="Sync Python requirements" displayType="BALLOON" bundle="messages.PyBundle" key="python.requirements.balloon"/>
-    <notificationGroup id="CythonWarning" displayType="BALLOON"/>
-    <notificationGroup id="Skeletons" displayType="BALLOON"/>
+    <notificationGroup id="CythonWarning" displayType="BALLOON" bundle="messages.PyBundle" key="notification.group.cython"/>
     <notificationGroup id="Python Compatibility Inspection Advertiser" displayType="STICKY_BALLOON" isLogByDefault="false" bundle="messages.PyBundle" key="python.compatibility.inspection.advertiser.notifications.group.title"/>
-    <notificationGroup id="Package requirements" displayType="BALLOON" isLogByDefault="false"/>
-    <notificationGroup id="Pipfile Watcher" displayType="STICKY_BALLOON" isLogByDefault="false"/>
+    <notificationGroup id="Package requirements" displayType="BALLOON" isLogByDefault="false" bundle="messages.PyBundle" key="notification.group.package.requirements"/>
+    <notificationGroup id="Pipfile Watcher" displayType="STICKY_BALLOON" isLogByDefault="false" bundle="messages.PyBundle" key="python.sdk.pipenv.pip.file.watcher"/>
     <notificationGroup id="ConfiguredPythonInterpreter" displayType="BALLOON" isLogByDefault="true" bundle="messages.PyBundle" key="sdk.has.been.configured.notification.name"/>
+    <notificationGroup id="Packaging" displayType="BALLOON" bundle="messages.PyBundle" key="notification.group.packaging"/>
+    <notificationGroup id="pyproject.toml Watcher" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.PyBundle" key="python.sdk.poetry.pip.file.watcher"/>
 
     <toolWindow id="Python Packages" anchor="bottom"
                 icon="PythonIcons.Python.PythonPackages"
@@ -428,6 +430,9 @@
     <vcs.envCustomizer implementation="com.jetbrains.python.sdk.PyVirtualEnvVcsCustomizer"/>
 
     <executionTargetLanguageRuntimeType implementation="com.jetbrains.python.target.PythonLanguageRuntimeType"/>
+
+  <!--  Code vision -->
+    <vcs.codeVisionLanguageContext language="Python" implementationClass="com.jetbrains.python.vcs.PyVcsContextProvider"/>
   </extensions>
 
   <extensionPoints>
@@ -505,6 +510,10 @@
     <extensionPoint qualifiedName="Pythonid.pySdkProvider"
                     interface="com.jetbrains.python.sdk.PySdkProvider"
                     dynamic="true"/>
+
+    <extensionPoint qualifiedName="Pythonid.connectionCredentialsToTargetConfigurationConverter"
+                    interface="com.jetbrains.python.run.target.ConnectionCredentialsToTargetConfigurationConverter"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -517,6 +526,7 @@
     <pyAnnotator implementation="com.jetbrains.python.validation.FStringsAnnotator"/>
     <pyAnnotator implementation="com.jetbrains.python.validation.PyHighlightingAnnotator"/>
     <pyAnnotator implementation="com.jetbrains.python.validation.PyPatternAnnotator"/>
+    <pyAnnotator implementation="com.jetbrains.python.validation.PyTryExceptAnnotator"/>
 
     <!--stdlib-->
     <documentationLinkProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibDocumentationLinkProvider"/>
@@ -598,6 +608,7 @@
     <inspectionExtension implementation="com.jetbrains.python.inspections.PyUnresolvedReferenceDefaultInspectionExtension" order="last"/>
 
     <runConfigurationEditorExtension implementation="com.jetbrains.python.run.PyRunConfigurationTargetOptions"/>
+    <remoteSdkValidator implementation="com.jetbrains.python.target.PyTargetSdkValidator"/>
   </extensions>
 
   <actions>

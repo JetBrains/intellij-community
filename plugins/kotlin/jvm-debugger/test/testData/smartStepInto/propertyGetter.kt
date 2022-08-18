@@ -16,3 +16,4 @@ val d: Int
     }
 
 // EXISTS: getter for c: Int, getter for d: Int
+// IGNORE_K2

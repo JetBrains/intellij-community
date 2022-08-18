@@ -2,7 +2,7 @@
 <body>
 Reports redundant modifiers and suggests to remove them.
 The resulting code will be shorter, but the behaviour and meaning will remain the same.
-<p>Example 1:</p>
+<p><b>Example 1:</b></p>
 <pre><code>
   // all code is implicitly strictfp under Java 17 and higher
   strictfp class X {
@@ -17,7 +17,7 @@ The resulting code will be shorter, but the behaviour and meaning will remain th
     }
   }
 </code></pre>
-<p>Example 2:</p>
+<p><b>Example 2:</b></p>
 <pre><code>
   final record R() {
     // all records are implicitly final

@@ -48,7 +48,7 @@ import javax.swing.event.HyperlinkEvent
 object MavenWslUtil : MavenUtil() {
   @JvmStatic
   fun getWslJdk(project: Project, name: String): Sdk {
-    val projectWslDistr = tryGetWslDistribution(project) ?: throw IllegalStateException("project $project is not WSL based");
+    val projectWslDistr = tryGetWslDistribution(project) ?: throw IllegalStateException("project $project is not WSL based")
     if (name == MavenRunnerSettings.USE_JAVA_HOME) {
       val jdk =MavenWslCache.getInstance().wslEnv(projectWslDistr)?.get("JAVA_HOME")?.let { projectWslDistr.getWindowsPath(it) }?.let {
         JavaSdk.getInstance().createJdk("", it)
@@ -63,7 +63,7 @@ object MavenWslUtil : MavenUtil() {
       if (jdk != null && jdk.sdkType is JavaSdkType && projectWslDistr == tryGetWslDistributionForPath(jdk.homePath)) {
         return jdk
       } else {
-        MavenProjectsManager.getInstance(project).syncConsole.addBuildIssue(BuildIssueWslJdk(), MessageEvent.Kind.ERROR);
+        MavenProjectsManager.getInstance(project).syncConsole.addBuildIssue(BuildIssueWslJdk(), MessageEvent.Kind.ERROR)
         throw InvalidSdkException(name)
       }
     }
@@ -240,7 +240,7 @@ object MavenWslUtil : MavenUtil() {
   @JvmStatic
   fun getLocalRepo(project: Project?, overriddenLocalRepository: String?, mavenHome: String?,
                    mavenSettingsFile: String?, mavenConfig: MavenConfig?): File {
-    var settingPath = mavenSettingsFile;
+    var settingPath = mavenSettingsFile
     if (StringUtil.isEmptyOrSpaces(mavenSettingsFile)) {
       settingPath = mavenConfig?.getFilePath(MavenConfigSettings.ALTERNATE_USER_SETTINGS) ?: ""
     }
@@ -251,7 +251,7 @@ object MavenWslUtil : MavenUtil() {
 
   @JvmStatic
   fun getUserSettings(project: Project?, userSettingsPath: String?, mavenConfig: MavenConfig?): File {
-    var settingPath = userSettingsPath;
+    var settingPath = userSettingsPath
     if (StringUtil.isEmptyOrSpaces(userSettingsPath)) {
       settingPath = mavenConfig?.getFilePath(MavenConfigSettings.ALTERNATE_USER_SETTINGS) ?: ""
     }
@@ -300,7 +300,7 @@ object MavenWslUtil : MavenUtil() {
               val jdkWslDistr = tryGetWslDistributionForPath(it.jdk.homePath)
               if ((projectWslDistr != null && it.supportType != "WSL") || !sameDistributions(projectWslDistr, jdkWslDistr)) {
                 needReset = true
-                it.shutdown(true)
+                MavenServerManager.getInstance().shutdownConnector(it, true)
               }
             }
           }
@@ -317,7 +317,7 @@ object MavenWslUtil : MavenUtil() {
   fun checkWslJdkAndShowNotification(project: Project?) {
     val projectWslDistr = tryGetWslDistribution(project!!)
     val sdk = ProjectRootManager.getInstance(project).projectSdk
-    if (sdk == null) return;
+    if (sdk == null) return
     val jdkWslDistr = tryGetWslDistributionForPath(sdk.homePath)
     val FIX_STR = "FIX"
     val OPEN_STR = "OPEN"
@@ -366,7 +366,7 @@ object MavenWslUtil : MavenUtil() {
     val sdk = service<ProjectJdkTable>().allJdks.filter {
       sameDistributions(projectWslDistr, it.homePath?.let(WslPath::getDistributionByWindowsUncPath))
     }.maxWithOrNull(compareBy(VersionComparatorUtil.COMPARATOR) { it.versionString })
-    if (sdk == null) return false;
+    if (sdk == null) return false
     WriteAction.runAndWait<RuntimeException> {
       ProjectRootManagerEx.getInstance(project).projectSdk = sdk
       notification.hideBalloon()
@@ -427,7 +427,7 @@ class MavenWslCache {
   private val myEnvCache: MutableMap<String, Map<String, String>> = HashMap()
 
   fun wslEnv(distribution: WSLDistribution): Map<String, String>? {
-    var result = myEnvCache[distribution.msId];
+    var result = myEnvCache[distribution.msId]
     if (result != null) return result
     for(i in 1..2){
       result = distribution.environment
@@ -436,7 +436,7 @@ class MavenWslCache {
         return result
       }
     }
-    return null;
+    return null
   }
 
   fun clearCache() {

@@ -33,6 +33,9 @@ public class LightReferenceList extends LightElement implements PsiReferenceList
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor) visitor).visitReferenceList(this);
     }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @Override

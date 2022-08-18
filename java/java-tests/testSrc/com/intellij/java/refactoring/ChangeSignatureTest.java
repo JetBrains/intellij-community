@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -567,6 +567,14 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
       return new ParameterInfoImpl[]{
         ParameterInfoImpl.create(0).withName("x").withType(PsiType.INT),
         ParameterInfoImpl.create(-1).withName("y").withType(PsiType.INT)
+      };
+    }, false);
+  }
+  
+  public void testRecordComponentWithImportToBeAdded() {
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(-1).withName("y").withType(myFactory.createTypeFromText("java.util.List<java.lang.String>", method))
       };
     }, false);
   }

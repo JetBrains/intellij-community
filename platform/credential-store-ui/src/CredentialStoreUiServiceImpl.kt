@@ -9,12 +9,12 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.*
+import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.dialog
 import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
 import com.intellij.ui.dsl.builder.columns
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.SmartList
 import java.awt.Component
 import javax.swing.JPasswordField
@@ -53,12 +53,18 @@ internal fun doShowRequestMasterPasswordDialog(@DialogTitle title: String,
                                                @DialogMessage topNote: String? = null,
                                                contextComponent: Component? = null,
                                                @DialogMessage ok: (value: ByteArray) -> String?): Boolean {
-  val passwordField = JPasswordField()
+  lateinit var passwordField: JBPasswordField
   val panel = panel {
     topNote?.let {
-      noteRow(it)
+      row {
+        text(it)
+      }
     }
-    row(CredentialStoreBundle.message("kee.pass.row.master.password")) { passwordField().focused() }
+    row(CredentialStoreBundle.message("kee.pass.row.master.password")) {
+      passwordField = passwordField()
+        .focused()
+        .component
+    }
   }
 
   return dialog(title = title, panel = panel, parent = contextComponent) {

@@ -1,4 +1,4 @@
-// "Replace !LongStream.anyMatch(...) with noneMatch(...)" "true"
+// "Replace !LongStream.anyMatch(...) with noneMatch(...)" "true-preview"
 
 import java.util.stream.*;
 

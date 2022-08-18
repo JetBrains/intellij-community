@@ -23,7 +23,7 @@ public class ClassGetClassInspection extends AbstractBaseJavaLocalInspectionTool
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         if (!OBJECT_GET_CLASS.test(call)) return;
         // Sometimes people use xyz.getClass() for implicit NPE check. While it's a questionable code style
         // do not warn about such case

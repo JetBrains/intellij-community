@@ -128,7 +128,7 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
 
   @Override
   public PsiType @NotNull [] getParameters() {
-    final PsiTypeParameter[] parameters = myClass.getTypeParameters();
+    PsiTypeParameter[] parameters = myClass.getTypeParameters();
     if (parameters.length == 0) {
       return PsiType.EMPTY_ARRAY;
     }
@@ -306,7 +306,7 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
     if (text.equals(getCanonicalText(false))) return true;
 
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(myManager.getProject());
-    final PsiType patternType;
+    PsiType patternType;
     try {
       patternType = factory.createTypeFromText(text, myClass);
     }

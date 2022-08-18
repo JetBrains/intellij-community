@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status.widget;
 
 import com.intellij.ide.lightEdit.LightEdit;
@@ -142,16 +142,15 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
       myWidgetIdsMap.put(widget.ID(), factory);
       String anchor = getAnchor(factory, availableFactories);
 
-      UIUtil.invokeLaterIfNeeded(() -> {
-        if (!myProject.isDisposed()) {
-          StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-          if (statusBar == null) {
-            LOG.error("Cannot add a widget for project without root status bar: " + factory.getId());
-            return;
-          }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+        if (statusBar == null) {
+          LOG.error("Cannot add a widget for project without root status bar: " + factory.getId());
+        }
+        else {
           statusBar.addWidget(widget, anchor, this);
         }
-      });
+      }, myProject.getDisposed());
     }
   }
 
@@ -204,9 +203,8 @@ public final class StatusBarWidgetsManager extends SimpleModificationTracker imp
     LOG.assertTrue(WindowManager.getInstance().getStatusBar(myProject) != null);
 
     synchronized (myWidgetFactories) {
-      List<StatusBarWidgetFactory> pendingFactories = new ArrayList<>(myPendingFactories);
+      List<StatusBarWidgetFactory> pendingFactories = List.copyOf(myPendingFactories);
       myPendingFactories.clear();
-
       for (StatusBarWidgetFactory factory : pendingFactories) {
         addWidgetFactory(factory);
       }

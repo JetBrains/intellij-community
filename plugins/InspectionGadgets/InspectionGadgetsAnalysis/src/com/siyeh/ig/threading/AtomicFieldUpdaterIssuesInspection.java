@@ -31,7 +31,7 @@ public class AtomicFieldUpdaterIssuesInspection extends BaseInspection {
   private static class AtomicFieldUpdaterIssuesVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final @NonNls String name = methodExpression.getReferenceName();

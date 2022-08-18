@@ -1,20 +1,20 @@
 #!/bin/bash
 
 # Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+set +x
 APP_DIRECTORY=$1
-APPL_USER=$2
-APPL_PASSWORD=$3
-
+APPLE_USERNAME=$2
+APPLE_PASSWORD=$3
 APP_NAME=$4
 BUNDLE_ID=$5
 FAKE_ROOT="${6:-fake-root}"
-
 if [[ -z "$APP_DIRECTORY" ]] || \
-   [[ -z "$APPL_USER" ]] || [[ -z "$APPL_PASSWORD" ]] || \
+   [[ -z "$APPLE_USERNAME" ]] || [[ -z "$APPLE_PASSWORD" ]] || \
    [[ -z "$APP_NAME" ]] || [[ -z "$BUNDLE_ID" ]] ; then
   echo "Usage: $0 AppDirectory Username Password AppName BundleId [FakeRootForAltool]"
   exit 1
 fi
+set -x
 if [[ ! -d "$APP_DIRECTORY" ]]; then
   echo "AppDirectory '$APP_DIRECTORY' does not exist or not a directory"
   exit 1
@@ -32,9 +32,12 @@ function publish-log() {
 }
 
 function check-itmstransporter() {
-  transporter="$(find /Applications -name 'iTMSTransporter' -print -quit)"
+  transporter=/usr/local/itms/bin/iTMSTransporter
+  if [[ ! -f $transporter ]]; then
+    transporter="$(find /Applications -name 'iTMSTransporter' -print -quit || echo "")"
+  fi
   if [[ -z "$transporter" ]]; then
-    echo "iTMSTransporter not found"
+    echo "iTMSTransporter is not installed and installation requires sudo. Please install manually."
     exit 1
   fi
   if ! "$transporter" -v eXtreme; then
@@ -58,15 +61,19 @@ function altool-upload() {
     cp -r "$shared_itmstransporter" "$HOME/.itmstransporter"
   fi
   check-itmstransporter
+  if ! xcodebuild -version; then
+    log "Installing Xcode and accepting 'sudo xcodebuild -license' is required for the first use"
+    exit 1
+  fi
   # For some reason altool prints everything to stderr, not stdout
-  set +e
+  set +ex
   xcrun altool --notarize-app \
-    --username "$APPL_USER" --password "$APPL_PASSWORD" \
+    --username "$APPLE_USERNAME" --password "$APPLE_PASSWORD" \
     --primary-bundle-id "$BUNDLE_ID" \
     --asc-provider JetBrainssro --file "$1" 2>&1 | tee "altool.init.out"
   unset TMPDIR
   export HOME="$OLD_HOME"
-  set -e
+  set -ex
 }
 
 #immediately exit script with an error if a command fails
@@ -74,16 +81,14 @@ set -euo pipefail
 
 set -x
 
+# only ZIP or DMG file can be notarized
 file="$APP_NAME.zip"
-
 log "Zipping $file..."
 rm -rf "$file"
 ditto -c -k --sequesterRsrc --keepParent "$APP_DIRECTORY" "$file"
-
 log "Notarizing $file..."
 rm -rf "altool.init.out" "altool.check.out"
 altool-upload "$file"
-
 rm -rf "$file"
 
 notarization_info="$(grep -e "RequestUUID" "altool.init.out" | grep -oE '([0-9a-f-]{36})')"
@@ -100,8 +105,10 @@ spent=0
 
 max_wait=300
 while true; do
+  set +x
   # For some reason altool prints everything to stderr, not stdout
-  xcrun altool --username "$APPL_USER" --notarization-info "$notarization_info" --password "$APPL_PASSWORD" >"altool.check.out" 2>&1 || true
+  xcrun altool --username "$APPLE_USERNAME" --notarization-info "$notarization_info" --password "$APPLE_PASSWORD" >"altool.check.out" 2>&1 || true
+  set -x
   status="$(grep -oe 'Status: .*' "altool.check.out" | cut -c 9- || true)"
   log "Current status: $status"
   if [ "$status" = "invalid" ]; then
@@ -110,6 +117,10 @@ while true; do
   elif [ "$status" = "success" ]; then
     log "Notarization succeeded"
     ec=0
+  elif [ "$status" = "upload failed" ]; then
+    log "Notarization upload failed"
+    ec=4
+    break
   else
     if [ "$status" != "in progress" ]; then
       log "Unknown notarization status, waiting more, altool output:"
@@ -127,7 +138,7 @@ while true; do
   developer_log="developer_log.json"
   log "Fetching $developer_log"
   url="$(grep -oe 'LogFileURL: .*' "altool.check.out" | sed 's/LogFileURL: //')"
-  wget "$url" -O "$developer_log"
+  curl --output "$developer_log" "$url"
   log "$developer_log content:"
   cat "$developer_log"
   issues=$(python -c "import sys, json; print(json.load(sys.stdin)['issues'])" < "$developer_log")

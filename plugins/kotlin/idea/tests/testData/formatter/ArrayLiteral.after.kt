@@ -1,7 +1,7 @@
 @Component(
-        modules = [
-            AppModule::class,
-            DataModule::class,
-            DomainModule::class
-        ]
+    modules = [
+        AppModule::class,
+        DataModule::class,
+        DomainModule::class
+    ]
 )

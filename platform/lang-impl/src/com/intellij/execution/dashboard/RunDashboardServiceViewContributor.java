@@ -31,6 +31,7 @@ import com.intellij.openapi.actionSystem.impl.MoreActionGroup;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -211,6 +212,7 @@ public final class RunDashboardServiceViewContributor
                                                                         ServiceViewLocatableDescriptor,
                                                                         ServiceViewDnDDescriptor {
     private final RunConfigurationNode myNode;
+    private final RunDashboardComponentWrapper myWrapper = new RunDashboardComponentWrapper();
 
     RunConfigurationServiceViewDescriptor(RunConfigurationNode node) {
       myNode = node;
@@ -226,15 +228,24 @@ public final class RunDashboardServiceViewContributor
     @Override
     public JComponent getContentComponent() {
       Content content = myNode.getContent();
-      if (content == null) return new RunDashboardComponentWrapper(createEmptyContent(), null);
+      if (content == null) {
+        myWrapper.setContent(createEmptyContent());
+        myWrapper.setContentId(null);
+      }
+      else {
+        ContentManager contentManager = content.getManager();
+        if (contentManager == null) return null;
 
-      ContentManager contentManager = content.getManager();
-      if (contentManager == null) return null;
+        myWrapper.setContent(contentManager.getComponent());
+        myWrapper.setContentId(getContentId());
+      }
+      return myWrapper;
+    }
 
+    private Integer getContentId() {
       RunContentDescriptor descriptor = myNode.getDescriptor();
       ProcessHandler handler = descriptor == null ? null : descriptor.getProcessHandler();
-      Integer contentId = handler == null ? null : handler.hashCode();
-      return new RunDashboardComponentWrapper(contentManager.getComponent(), contentId);
+      return handler == null ? null : handler.hashCode();
     }
 
     @NotNull
@@ -296,28 +307,30 @@ public final class RunDashboardServiceViewContributor
     @Nullable
     @Override
     public Navigatable getNavigatable() {
-      for (RunDashboardCustomizer customizer : myNode.getCustomizers()) {
-        PsiElement psiElement = customizer.getPsiElement(myNode);
-        if (psiElement != null) {
-          return new Navigatable() {
-            @Override
-            public void navigate(boolean requestFocus) {
-              PsiNavigateUtil.navigate(psiElement, requestFocus);
-            }
-
-            @Override
-            public boolean canNavigate() {
-              return true;
-            }
-
-            @Override
-            public boolean canNavigateToSource() {
-              return true;
-            }
-          };
+      NullableLazyValue<PsiElement> value = NullableLazyValue.lazyNullable(() -> {
+        for (RunDashboardCustomizer customizer : myNode.getCustomizers()) {
+          PsiElement psiElement = customizer.getPsiElement(myNode);
+          if (psiElement != null) return psiElement;
         }
-      }
-      return null;
+        return null;
+      });
+      return new Navigatable() {
+        @Override
+        public void navigate(boolean requestFocus) {
+          PsiNavigateUtil.navigate(value.getValue(), requestFocus);
+        }
+
+        @Override
+        public boolean canNavigate() {
+          return value.getValue() != null;
+        }
+
+        @Override
+        public boolean canNavigateToSource() {
+          return canNavigate();
+        }
+      };
+
     }
 
     @Nullable

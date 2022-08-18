@@ -6,7 +6,8 @@ import com.intellij.settingsSync.SettingsSyncBundle.message
 import com.intellij.ui.CheckBoxList
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.ThreeStateCheckBox.State
@@ -21,51 +22,50 @@ internal object SettingsSyncPanelFactory {
       row {
         label(syncLabel)
       }
-      row {
-        SettingsCategoryDescriptor.listAll().forEach { descriptor ->
-          row {
-            cell {
-              if (descriptor.secondaryGroup == null) {
-                checkBox(
-                  descriptor.name,
-                  { descriptor.isSynchronized },
-                  { descriptor.isSynchronized = it }
-                )
-                  .onReset { descriptor.reset() }
-                  .onApply { descriptor.apply() }
-                  .onIsModified { descriptor.isModified() }
-                commentNoWrap(descriptor.description)
-              }
-              else {
-                val topCheckBox = ThreeStateCheckBox(descriptor.name)
-                topCheckBox.isThirdStateEnabled = false
-                val subcategoryLink = configureLink(descriptor.secondaryGroup) {
-                  topCheckBox.state = getGroupState(descriptor)
-                  descriptor.isSynchronized = topCheckBox.state != State.NOT_SELECTED
-                }
-                topCheckBox.addActionListener {
-                  descriptor.isSynchronized = topCheckBox.state != State.NOT_SELECTED
-                  descriptor.secondaryGroup.getDescriptors().forEach {
-                    it.isSelected = descriptor.isSynchronized
-                  }
-                  subcategoryLink.isEnabled = descriptor.secondaryGroup.isComplete() || descriptor.isSynchronized
-                }
-                component(topCheckBox)
-                  .onReset {
-                    descriptor.reset()
-                    topCheckBox.state = getGroupState(descriptor)
-                  }
-                  .onApply {
-                    descriptor.isSynchronized = topCheckBox.state != State.NOT_SELECTED
-                    descriptor.apply()
-                  }
-                  .onIsModified { descriptor.isModified() }
-                commentNoWrap(descriptor.description)
-                component(subcategoryLink)
-              }
-            }
+
+      SettingsCategoryDescriptor.listAll().forEach { descriptor ->
+        row {
+          if (descriptor.secondaryGroup == null) {
+            checkBox(
+              descriptor.name
+            )
+              .bindSelected({ descriptor.isSynchronized },
+                            { descriptor.isSynchronized = it })
+              .onReset { descriptor.reset() }
+              .onApply { descriptor.apply() }
+              .onIsModified { descriptor.isModified() }
+            comment(descriptor.description)
           }
+          else {
+            val topCheckBox = ThreeStateCheckBox(descriptor.name)
+            topCheckBox.isThirdStateEnabled = false
+            val subcategoryLink = configureLink(descriptor.secondaryGroup) {
+              topCheckBox.state = getGroupState(descriptor)
+              descriptor.isSynchronized = topCheckBox.state != State.NOT_SELECTED
+            }
+            topCheckBox.addActionListener {
+              descriptor.isSynchronized = topCheckBox.state != State.NOT_SELECTED
+              descriptor.secondaryGroup.getDescriptors().forEach {
+                it.isSelected = descriptor.isSynchronized
+              }
+              subcategoryLink.isEnabled = descriptor.secondaryGroup.isComplete() || descriptor.isSynchronized
+            }
+            cell(topCheckBox)
+              .onReset {
+                descriptor.reset()
+                topCheckBox.state = getGroupState(descriptor)
+              }
+              .onApply {
+                descriptor.isSynchronized = topCheckBox.state != State.NOT_SELECTED
+                descriptor.apply()
+              }
+              .onIsModified { descriptor.isModified() }
+            comment(descriptor.description)
+            cell(subcategoryLink)
+          }
+
         }
+
       }
     }
   }
@@ -110,6 +110,7 @@ internal object SettingsSyncPanelFactory {
     descriptors.forEach { checkboxList.addItem(it, it.name, it.isSelected) }
     val scrollPane = JBScrollPane(checkboxList)
     panel.add(scrollPane, BorderLayout.CENTER)
+    scrollPane.border = JBUI.Borders.empty(5)
     val chooserBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, checkboxList)
     chooserBuilder.createPopup().showUnderneathOf(owner)
   }

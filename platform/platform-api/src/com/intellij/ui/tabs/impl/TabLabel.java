@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.DataManager;
@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,6 +30,7 @@ import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
@@ -165,13 +167,17 @@ public class TabLabel extends JPanel implements Accessible {
   }
 
   private void setHovered(boolean value) {
-    if (myTabs.isHoveredTab(this) == value) return;
+    if (isHovered() == value) return;
     if (value) {
       myTabs.setHovered(this);
     }
     else {
       myTabs.unHover(this);
     }
+  }
+
+  public boolean isHovered() {
+    return myTabs.isHoveredTab(this);
   }
 
   @Override
@@ -286,7 +292,7 @@ public class TabLabel extends JPanel implements Accessible {
   }
 
   public boolean isLastPinned() {
-    if (myInfo.isPinned()) {
+    if (myInfo.isPinned() && AdvancedSettings.getBoolean("editor.keep.pinned.tabs.on.left")) {
       @NotNull List<TabInfo> tabs = myTabs.getTabs();
       for (int i = 0; i < tabs.size(); i++) {
         TabInfo info = tabs.get(i);
@@ -299,7 +305,7 @@ public class TabLabel extends JPanel implements Accessible {
   }
 
   public boolean isNextToLastPinned() {
-    if (!myInfo.isPinned()) {
+    if (!myInfo.isPinned() && AdvancedSettings.getBoolean("editor.keep.pinned.tabs.on.left")) {
       @NotNull List<TabInfo> tabs = myTabs.getVisibleInfos();
       boolean wasPinned = false;
       for (TabInfo info : tabs) {
@@ -444,10 +450,13 @@ public class TabLabel extends JPanel implements Accessible {
 
     myActionPanel = new ActionPanel(myTabs, myInfo, e -> processMouseEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, this)),
                                     value -> setHovered(value));
-    myActionPanel.setBorder(JBUI.Borders.empty(1, 0));
+    boolean buttonsOnTheRight = UISettings.getShadowInstance().getCloseTabButtonOnTheRight();
+    Border border = buttonsOnTheRight ? JBUI.Borders.empty(1, ExperimentalUI.isNewUI() ? 3 : 0, 1, 0)
+                                      : JBUI.Borders.empty(1, 0, 1, 3);
+    myActionPanel.setBorder(border);
     toggleShowActions(false);
 
-    add(myActionPanel, UISettings.getShadowInstance().getCloseTabButtonOnTheRight() ? BorderLayout.EAST : BorderLayout.WEST);
+    add(myActionPanel, buttonsOnTheRight ? BorderLayout.EAST : BorderLayout.WEST);
 
     myTabs.revalidateAndRepaint(false);
   }

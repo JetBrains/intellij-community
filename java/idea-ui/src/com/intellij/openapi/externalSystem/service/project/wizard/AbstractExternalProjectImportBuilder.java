@@ -174,7 +174,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     final ExternalProjectSettings projectSettings = getCurrentExternalProjectSettings();
 
     //noinspection unchecked
-    Set<ExternalProjectSettings> projects = new HashSet<>(systemSettings.getLinkedProjectsSettings());
+    Set<ExternalProjectSettings> projects = new HashSet<ExternalProjectSettings>(systemSettings.getLinkedProjectsSettings());
     // add current importing project settings to linked projects settings or replace if similar already exist
     projects.remove(projectSettings);
     projects.add(projectSettings);

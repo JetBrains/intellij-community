@@ -3,6 +3,7 @@ package com.intellij.refactoring.rename.inplace
 
 import com.intellij.codeInsight.hints.InlayPresentationFactory
 import com.intellij.codeInsight.hints.presentation.*
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
@@ -31,7 +32,8 @@ import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import com.intellij.refactoring.rename.impl.TextOptions
 import com.intellij.refactoring.rename.impl.isEmpty
 import com.intellij.refactoring.util.TextOccurrencesUtil
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBInsets
@@ -39,7 +41,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
-import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.LayoutFocusTraversalPolicy
 
@@ -47,20 +48,35 @@ import javax.swing.LayoutFocusTraversalPolicy
 object TemplateInlayUtil {
 
   @JvmStatic
-  fun createNavigatableButton(templateState: TemplateState,
-                              inEditorOffset: Int,
+  fun createNavigatableButton(editor: Editor,
+                              offset: Int,
                               presentation: SelectableInlayPresentation,
                               templateElement: VirtualTemplateElement): Inlay<PresentationRenderer>? {
-    VirtualTemplateElement.installOnTemplate(templateState, templateElement)
-    return createNavigatableButton(templateState, inEditorOffset, presentation)
+    return createInlayButton(editor, offset, presentation)?.also { inlay ->
+      DumbAwareAction
+        .create {
+          val templateState = TemplateManagerImpl.getTemplateState(editor)
+          if (templateState != null) {
+            templateElement.onSelect(templateState)
+          }
+        }
+        .registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts("SelectVirtualTemplateElement"), editor.component, inlay)
+    }
   }
 
   @JvmStatic
   fun createNavigatableButton(templateState: TemplateState,
                               inEditorOffset: Int,
                               presentation: InlayPresentation): Inlay<PresentationRenderer>? {
+    return createInlayButton(templateState.editor, inEditorOffset, presentation)?.also { inlay ->
+      Disposer.register(templateState, inlay)
+    }
+  }
+
+  @JvmStatic
+  fun createInlayButton(editor: Editor, offset: Int, presentation: InlayPresentation): Inlay<PresentationRenderer>? {
     val renderer = PresentationRenderer(presentation)
-    val inlay = templateState.editor.inlayModel.addInlineElement(inEditorOffset, true, renderer) ?: return null
+    val inlay = editor.inlayModel.addInlineElement(offset, true, renderer) ?: return null
     presentation.addListener(object : PresentationListener {
       override fun contentChanged(area: Rectangle) {
         inlay.repaint()
@@ -70,7 +86,6 @@ object TemplateInlayUtil {
         inlay.repaint()
       }
     })
-    Disposer.register(templateState, inlay)
     return inlay
   }
 
@@ -102,41 +117,56 @@ object TemplateInlayUtil {
                                        panel: JPanel,
                                        templateElement: SelectableTemplateElement = SelectableTemplateElement(presentation),
                                        logStatisticsOnHide: () -> Unit = {}): Inlay<PresentationRenderer>? {
-    val editor = templateState.editor
-    val inlay = createNavigatableButton(templateState, inEditorOffset, presentation, templateElement) ?: return null
+    val inlay = createNavigatableButtonWithPopup(templateState.editor, inEditorOffset, presentation, panel, templateElement) ?: return null
+    Disposer.register(templateState, inlay)
+    presentation.addSelectionListener { isSelected ->
+      if (!isSelected) logStatisticsOnHide.invoke()
+    }
+    return inlay
+  }
+
+  @JvmOverloads
+  @JvmStatic
+  fun createNavigatableButtonWithPopup(editor: Editor,
+                                       offset: Int,
+                                       presentation: SelectableInlayPresentation,
+                                       panel: JPanel,
+                                       templateElement: SelectableTemplateElement = SelectableTemplateElement(presentation),
+  ): Inlay<PresentationRenderer>? {
+    val inlay = createNavigatableButton(editor, offset, presentation, templateElement) ?: return null
     fun showPopup() {
-      try {
-        editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION, inlay.visualPosition)
-        panel.border = JBEmptyBorder(JBInsets.create(Insets(8, 12, 4, 12)))
-        val focusedComponent = if (panel is DialogPanel) panel.preferredFocusedComponent else panel
-        val popup = JBPopupFactory.getInstance()
-          .createComponentPopupBuilder(panel, focusedComponent)
-          .setRequestFocus(true)
-          .addListener(object : JBPopupListener {
-            override fun onClosed(event: LightweightWindowEvent) {
-              presentation.isSelected = false
-              templateState.focusCurrentHighlighter(true)
-              logStatisticsOnHide.invoke()
-            }
-          })
-          .createPopup()
-        val customEnterAction = object : DumbAwareAction() {
-          override fun actionPerformed(e: AnActionEvent) {
-            popup.cancel()
-            CommandProcessor.getInstance().executeCommand(templateState.project, {templateState.nextTab()}, null, null)
+      panel.border = JBEmptyBorder(JBInsets.create(Insets(8, 12, 4, 12)))
+      val focusedComponent = if (panel is DialogPanel) panel.preferredFocusedComponent else panel
+      val popup = JBPopupFactory.getInstance()
+        .createComponentPopupBuilder(panel, focusedComponent)
+        .setRequestFocus(true)
+        .addListener(object : JBPopupListener {
+          override fun onClosed(event: LightweightWindowEvent) {
+            presentation.isSelected = false
+          }
+        })
+        .createPopup()
+      DumbAwareAction
+        .create {
+          popup.cancel()
+          val templateState = TemplateManagerImpl.getTemplateState(editor)
+          if (templateState != null) {
+            CommandProcessor.getInstance().executeCommand(templateState.project, templateState::nextTab, null, null)
           }
         }
-        customEnterAction.registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_EDITOR_ENTER), panel)
-        Disposer.register(popup) {
-          customEnterAction.unregisterCustomShortcutSet(panel)
-        }
+        .registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_EDITOR_ENTER), panel, popup)
+      try {
+        editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION, inlay.visualPosition)
         popup.showInBestPositionFor(editor)
       }
       finally {
         editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POSITION, null)
       }
     }
-    presentation.addSelectionListener { isSelected -> if (isSelected) showPopup() }
+    presentation.addSelectionListener { isSelected ->
+      if (isSelected) showPopup()
+      TemplateManagerImpl.getTemplateState(editor)?.focusCurrentHighlighter(!isSelected)
+    }
     return inlay
   }
 
@@ -318,48 +348,43 @@ object TemplateInlayUtil {
     val renameAction = ActionManager.getInstance().getAction(IdeActions.ACTION_RENAME)
     var (commentsStringsOccurrences, textOccurrences) = initOptions // model
     val panel = panel {
-      row(LangBundle.message("inlay.rename.also.rename.options.title")) {
+      buttonsGroup(LangBundle.message("inlay.rename.also.rename.options.title")) {
         commentsStringsOccurrences?.let {
           row {
-            cell {
-              checkBox(
-                text = RefactoringBundle.message("comments.and.strings"),
-                isSelected = it,
-                actionListener = { _, cb ->
-                  commentsStringsOccurrences = cb.isSelected
+            checkBox(RefactoringBundle.message("comments.and.strings"))
+              .applyToComponent {
+                isSelected = it
+                addActionListener {
+                  commentsStringsOccurrences = isSelected
                   optionsListener(TextOptions(commentStringOccurrences = commentsStringsOccurrences, textOccurrences = textOccurrences))
                 }
-              ).focused()
-              component(JLabel(AllIcons.Actions.InlayRenameInComments))
-            }
+              }.gap(RightGap.SMALL)
+              .focused()
+            icon(AllIcons.Actions.InlayRenameInComments)
           }
         }
         textOccurrences?.let {
           row {
-            cell {
-              val cb = checkBox(
-                text = RefactoringBundle.message("text.occurrences"),
-                isSelected = it,
-                actionListener = { _, cb ->
-                  textOccurrences = cb.isSelected
+            val cb = checkBox(RefactoringBundle.message("text.occurrences"))
+              .applyToComponent {
+                isSelected = it
+                addActionListener {
+                  textOccurrences = isSelected
                   optionsListener(TextOptions(commentStringOccurrences = commentsStringsOccurrences, textOccurrences = textOccurrences))
                 }
-              )
-              if (commentsStringsOccurrences == null) {
-                cb.focused()
-              }
-              component(JLabel(AllIcons.Actions.InlayRenameInNoCodeFiles))
+              }.gap(RightGap.SMALL)
+            if (commentsStringsOccurrences == null) {
+              cb.focused()
             }
+            icon(AllIcons.Actions.InlayRenameInNoCodeFiles)
           }
         }
       }
       row {
-        cell {
-          link(LangBundle.message("inlay.rename.link.label.more.options"), null) {
-            doRename(editor, renameAction, null)
-          }.component.isFocusable = true
-          comment(KeymapUtil.getFirstKeyboardShortcutText(renameAction))
-        }
+        link(LangBundle.message("inlay.rename.link.label.more.options")) {
+          doRename(editor, renameAction, null)
+        }.gap(RightGap.SMALL)
+        comment(KeymapUtil.getFirstKeyboardShortcutText(renameAction))
       }
     }
     DumbAwareAction.create {

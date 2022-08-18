@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.fir.low.level.api.ide
 
@@ -11,12 +11,12 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
 import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.classId
 import org.jetbrains.kotlin.fir.declarations.utils.isSealed
 import org.jetbrains.kotlin.fir.psi
-import org.jetbrains.kotlin.idea.util.classIdIfNonLocal
-import org.jetbrains.kotlin.idea.util.module
+import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade
@@ -49,7 +49,7 @@ internal class SealedClassInheritorsProviderIdeImpl : SealedClassInheritorsProvi
         val searchScope: SearchScope = getSearchScope(module, psiPackage)
         val searchParameters = ClassInheritorsSearch.SearchParameters(lightClass, searchScope, false, true, false)
         val subclasses = ClassInheritorsSearch.search(searchParameters)
-            .mapNotNull { it.classIdIfNonLocal() }
+            .mapNotNull { it.classIdIfNonLocal }
             .toMutableList()
 
         // Enforce a deterministic order on the result.

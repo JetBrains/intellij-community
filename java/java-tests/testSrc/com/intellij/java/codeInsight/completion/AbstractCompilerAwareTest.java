@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.CompilerTester;
@@ -20,6 +21,13 @@ public abstract class AbstractCompilerAwareTest extends JavaCodeInsightFixtureTe
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder<?> moduleBuilder) throws Exception {
     moduleBuilder.setLanguageLevel(LanguageLevel.JDK_11);
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_11);
   }
 
   @Override

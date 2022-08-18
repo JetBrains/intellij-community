@@ -1,24 +1,23 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.maven.compilerPlugin
 
 import org.jdom.Element
 import org.jdom.Text
 import org.jetbrains.idea.maven.project.MavenProject
-import org.jetbrains.kotlin.idea.compilerPlugin.modifyCompilerArgumentsForPlugin
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup
 import org.jetbrains.kotlin.idea.compilerPlugin.CompilerPluginSetup.PluginOption
+import org.jetbrains.kotlin.idea.compilerPlugin.modifyCompilerArgumentsForPlugin
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
-import org.jetbrains.kotlin.idea.maven.MavenProjectImportHandler
-import org.jetbrains.kotlin.idea.maven.KotlinMavenImporter.Companion.KOTLIN_PLUGIN_GROUP_ID
 import org.jetbrains.kotlin.idea.maven.KotlinMavenImporter.Companion.KOTLIN_PLUGIN_ARTIFACT_ID
-import java.io.File
+import org.jetbrains.kotlin.idea.maven.KotlinMavenImporter.Companion.KOTLIN_PLUGIN_GROUP_ID
+import org.jetbrains.kotlin.idea.maven.MavenProjectImportHandler
 
 abstract class AbstractMavenImportHandler : MavenProjectImportHandler {
     abstract val compilerPluginId: String
     abstract val pluginName: String
     abstract val mavenPluginArtifactName: String
-    abstract val pluginJarFileFromIdea: File
+    abstract val pluginJarFileFromIdea: String
 
     override fun invoke(facet: KotlinFacet, mavenProject: MavenProject) {
         modifyCompilerArgumentsForPlugin(facet, getPluginSetup(mavenProject),
@@ -51,7 +50,7 @@ abstract class AbstractMavenImportHandler : MavenProjectImportHandler {
                 ?: mutableListOf<String>()
 
         // We can't use the plugin from Gradle as it may have the incompatible version
-        val classpath = listOf(pluginJarFileFromIdea.absolutePath)
+        val classpath = listOf(pluginJarFileFromIdea)
 
         val options = getOptions(mavenProject, enabledCompilerPlugins, compilerPluginOptions) ?: return null
         return CompilerPluginSetup(options, classpath)
@@ -59,6 +58,5 @@ abstract class AbstractMavenImportHandler : MavenProjectImportHandler {
 
     private fun Element.getElement(name: String) = content.firstOrNull { it is Element && it.name == name } as? Element
 
-    @Suppress("UNCHECKED_CAST")
     private fun Element.getElements() = content.filterIsInstance<Element>()
 }

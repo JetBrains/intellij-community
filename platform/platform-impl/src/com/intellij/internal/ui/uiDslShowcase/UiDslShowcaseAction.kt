@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.ui.uiDslShowcase
 
 import com.intellij.ide.BrowserUtil
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.ModuleManager
@@ -22,9 +23,9 @@ import kotlin.reflect.KFunction
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.jvm.javaMethod
 
-const val BASE_URL = "https://github.com/JetBrains/intellij-community/blob/master/platform/platform-impl/"
+private const val BASE_URL = "https://github.com/JetBrains/intellij-community/blob/master/platform/platform-impl/"
 
-val DEMOS = arrayOf(
+private val DEMOS = arrayOf(
   ::demoBasics,
   ::demoRowLayout,
   ::demoComponentLabels,
@@ -37,14 +38,15 @@ val DEMOS = arrayOf(
   ::demoTips
 )
 
-class UiDslShowcaseAction : DumbAwareAction() {
+internal class UiDslShowcaseAction : DumbAwareAction() {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     UiDslShowcaseDialog(e.project, templatePresentation.text).show()
   }
 }
 
-@Suppress("DialogTitleCapitalization")
 private class UiDslShowcaseDialog(val project: Project?, dialogTitle: String) :
   DialogWrapper(project, null, true, IdeModalityType.MODELESS, false) {
 

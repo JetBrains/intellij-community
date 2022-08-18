@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.util
 
 import com.intellij.lang.jvm.types.JvmArrayType
@@ -77,7 +77,7 @@ fun GrExpression?.isNullLiteral(): Boolean {
   return this is GrLiteral && GrLiteralImpl.getLiteralType(this) == KW_NULL
 }
 
-fun GrExpression?.skipParenthesesDown(): GrExpression? {
+fun GrExpression?.skipParenthesesDownOrNull(): GrExpression? {
   var current = this
   while (current is GrParenthesizedExpression) {
     current = current.operand

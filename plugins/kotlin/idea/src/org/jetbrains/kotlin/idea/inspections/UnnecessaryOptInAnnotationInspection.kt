@@ -1,21 +1,22 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.inspections
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
-import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.config.ApiVersion
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -24,27 +25,25 @@ import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.references.ReadWriteAccessChecker
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import org.jetbrains.kotlin.idea.util.projectStructure.module
-import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
-import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.SINCE_KOTLIN_FQ_NAME
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
+import org.jetbrains.kotlin.resolve.checkers.OptInNames.OPT_IN_FQ_NAMES
 import org.jetbrains.kotlin.resolve.constants.ArrayValue
 import org.jetbrains.kotlin.resolve.constants.KClassValue
 import org.jetbrains.kotlin.resolve.constants.StringValue
-import org.jetbrains.kotlin.resolve.descriptorUtil.*
-import org.jetbrains.kotlin.resolve.references.ReferenceAccess
-import org.jetbrains.kotlin.types.expressions.OperatorConventions
-import org.jetbrains.kotlin.util.aliasImportMap
-import org.jetbrains.kotlin.utils.addToStdlib.constant
+import org.jetbrains.kotlin.resolve.descriptorUtil.annotationClass
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
+import org.jetbrains.kotlin.resolve.descriptorUtil.getImportableDescriptor
+import org.jetbrains.kotlin.resolve.descriptorUtil.module
+import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 /**
@@ -61,6 +60,8 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
  * any names. For these redundant markers, the inspection proposes a quick fix to remove the marker
  * or the entire unnecessary `@OptIn` annotation if it contains a single marker.
  */
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+
 class UnnecessaryOptInAnnotationInspection : AbstractKotlinInspection() {
 
     /**
@@ -83,24 +84,23 @@ class UnnecessaryOptInAnnotationInspection : AbstractKotlinInspection() {
     )
 
     // Short names for `kotlin.OptIn` and `kotlin.UseExperimental` for faster comparison without name resolution
-    private val USE_EXPERIMENTAL_SHORT_NAMES = OptInNames.USE_EXPERIMENTAL_FQ_NAMES.map { it.shortName().asString() }.toSet()
+    private val OPT_IN_SHORT_NAMES = OPT_IN_FQ_NAMES.map { it.shortName().asString() }.toSet()
 
     /**
      * Main inspection visitor to traverse all annotation entries.
      */
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-        val optInAliases = holder.file.safeAs<KtFile>()
-            ?.aliasImportMap()
-            ?.entries()
-            ?.filter { it.value in USE_EXPERIMENTAL_SHORT_NAMES }
-            ?.mapNotNull { it.key }
-            ?.toSet()
-            ?: emptySet()
+        val file = holder.file
+        val optInAliases = if (file is KtFile) KotlinPsiHeuristics.getImportAliases(file, OPT_IN_SHORT_NAMES) else emptySet()
 
         return annotationEntryVisitor { annotationEntry  ->
+            val annotationEntryArguments = annotationEntry.valueArguments.ifEmpty {
+                return@annotationEntryVisitor
+            }
+
             // Fast check if the annotation may be `@OptIn`/`@UseExperimental` or any of their import aliases
             val entryShortName = annotationEntry.shortName?.asString()
-            if (entryShortName != null && entryShortName !in USE_EXPERIMENTAL_SHORT_NAMES && entryShortName !in optInAliases)
+            if (entryShortName != null && entryShortName !in OPT_IN_SHORT_NAMES && entryShortName !in optInAliases)
                 return@annotationEntryVisitor
 
             // Resolve the candidate annotation entry. If it is an `@OptIn`/`@UseExperimental` annotation,
@@ -108,10 +108,10 @@ class UnnecessaryOptInAnnotationInspection : AbstractKotlinInspection() {
             val resolutionFacade = annotationEntry.getResolutionFacade()
             val annotationContext = annotationEntry.analyze(resolutionFacade)
             val annotationFqName = annotationContext[BindingContext.ANNOTATION, annotationEntry]?.fqName
-            if (annotationFqName !in OptInNames.USE_EXPERIMENTAL_FQ_NAMES) return@annotationEntryVisitor
+            if (annotationFqName !in OPT_IN_FQ_NAMES) return@annotationEntryVisitor
 
             val resolvedMarkers = mutableListOf<ResolvedMarker>()
-            for (arg in annotationEntry.valueArguments) {
+            for (arg in annotationEntryArguments) {
                 val argumentExpression = arg.getArgumentExpression()?.safeAs<KtClassLiteralExpression>() ?: continue
                 val markerFqName = annotationContext[
                         BindingContext.REFERENCE_TARGET,
@@ -125,13 +125,12 @@ class UnnecessaryOptInAnnotationInspection : AbstractKotlinInspection() {
             annotationEntry.getOwner()?.accept(OptInMarkerVisitor(), markerProcessor)
 
             val unusedMarkers = resolvedMarkers.filter { markerProcessor.isUnused(it.fqName) }
-            if (annotationEntry.valueArguments.size == unusedMarkers.size) {
+            if (annotationEntryArguments.size == unusedMarkers.size) {
                 // If all markers in the `@OptIn` annotation are useless, create a quick fix to remove
                 // the entire annotation.
                 holder.registerProblem(
                     annotationEntry,
                     KotlinBundle.message("inspection.unnecessary.opt_in.redundant.annotation"),
-                    ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                     RemoveAnnotationEntry()
                 )
             } else {
@@ -145,7 +144,6 @@ class UnnecessaryOptInAnnotationInspection : AbstractKotlinInspection() {
                                     "inspection.unnecessary.opt_in.redundant.marker",
                                     marker.fqName.shortName().render()
                                 ),
-                        ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                         RemoveAnnotationArgumentOrEntireEntry()
                     )
                 }
@@ -162,7 +160,7 @@ private class MarkerCollector(private val resolutionFacade: ResolutionFacade) {
     private val foundMarkers = mutableSetOf<FqName>()
 
     // A checker instance for setter call detection
-    private val readWriteAccessChecker = ReadWriteAccessChecker.getInstance()
+    private val readWriteAccessChecker = ReadWriteAccessChecker.getInstance(resolutionFacade.project)
 
     /**
      * Check if a specific experimental marker is not used in the scope of a specific `@OptIn` annotation.
@@ -186,7 +184,7 @@ private class MarkerCollector(private val resolutionFacade: ResolutionFacade) {
         if (declaration !is KtFunction && declaration !is KtProperty && declaration !is KtParameter) return
         if (declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
             val descriptor = declaration.resolveToDescriptorIfAny(resolutionFacade)?.safeAs<CallableMemberDescriptor>() ?: return
-            descriptor.getDirectlyOverriddenDeclarations().forEach { it.collectMarkers(declaration.module) }
+            descriptor.getDirectlyOverriddenDeclarations().forEach { it.collectMarkers(declaration.languageVersionSettings.apiVersion) }
         }
     }
 
@@ -210,24 +208,51 @@ private class MarkerCollector(private val resolutionFacade: ResolutionFacade) {
             .resolveMainReferenceToDescriptors()
             .flatMap { setOf(it, it.getImportableDescriptor()) }
 
-        val module = expression.module
+        val moduleApiVersion = expression.languageVersionSettings.apiVersion
+
         for (descriptor in descriptorList) {
-            descriptor.collectMarkers(module)
+            descriptor.collectMarkers(moduleApiVersion)
             // A special case: a property has no experimental markers but its setter is experimental.
             // We need to additionally collect markers from the setter if it is invoked in the expression.
             if (descriptor is PropertyDescriptor) {
-                val setter = descriptor.setter ?: continue
-                if (expression.isSetterCall()) setter.collectMarkers(module)
+                val setter = descriptor.setter
+                if (setter != null && expression.isSetterCall()) setter.collectMarkers(moduleApiVersion)
+            }
+
+            // The caller implicitly uses argument types and return types of a declaration,
+            // so we need to check whether these types have experimental markers
+            // regardless of the `@OptIn` annotation on the declaration itself.
+            if (descriptor is CallableDescriptor) {
+                descriptor.valueParameters.forEach { it.type.collectMarkers(moduleApiVersion)}
+                descriptor.returnType?.collectMarkers(moduleApiVersion)
             }
         }
+    }
+
+    /**
+     * Collect markers from a declaration descriptor corresponding to a Kotlin type.
+     *
+     * @receiver the type to collect markers
+     * @param moduleApiVersion the API version of the current module to check `@WasExperimental` annotations
+     */
+    private fun KotlinType.collectMarkers(moduleApiVersion: ApiVersion) {
+        arguments.forEach {
+            if (!it.isStarProjection) {
+                it.type.collectMarkers(moduleApiVersion)
+            }
+        }
+
+        val descriptor = this.constructor.declarationDescriptor ?: return
+        descriptor.collectMarkers(moduleApiVersion)
     }
 
     /**
      * Actually collect markers for a resolved descriptor and add them to [foundMarkers].
      *
      * @receiver the descriptor to collect markers
+     * @param moduleApiVersion the API version of the current module to check `@WasExperimental` annotations
      */
-    private fun DeclarationDescriptor.collectMarkers(currentModule: Module?) {
+    private fun DeclarationDescriptor.collectMarkers(moduleApiVersion: ApiVersion) {
         for (ann in annotations) {
             val annotationFqName = ann.fqName ?: continue
             val annotationClass = ann.annotationClass ?: continue
@@ -238,8 +263,9 @@ private class MarkerCollector(private val resolutionFacade: ResolutionFacade) {
                 foundMarkers += annotationFqName
             }
 
-            val wasExperimental = annotations.findAnnotation(OptInNames.WAS_EXPERIMENTAL_FQ_NAME) ?: continue
+            val wasExperimental = annotations.findAnnotation(OptInNames.WAS_EXPERIMENTAL_FQ_NAME)  ?: continue
             val sinceKotlin = annotations.findAnnotation(SINCE_KOTLIN_FQ_NAME) ?: continue
+
             // If there are both `@SinceKotlin` and `@WasExperimental` annotations,
             // and Kotlin API version of the module is less than the version specified by `@SinceKotlin`,
             // then the `@OptIn` for `@WasExperimental` marker is necessary and should be added
@@ -257,23 +283,12 @@ private class MarkerCollector(private val resolutionFacade: ResolutionFacade) {
             // annotation would not be necessary. At the same time, when the code is compiled with
             // `apiVersion = 1.5`, the non-experimental declaration of `foo` will be hidden
             // from the resolver, so `@OptIn` is necessary for the code to compile.
-
             val sinceKotlinApiVersion = sinceKotlin.allValueArguments[VERSION_ARGUMENT]
                 ?.safeAs<StringValue>()?.value?.let {
-                    LanguageVersion.fromVersionString(it)
+                    ApiVersion.parse(it)
                 }
 
-            val moduleApiVersion = currentModule?.let {
-                KotlinFacetSettingsProvider.getInstance(it.project)?.getSettings(it)?.apiLevel
-            }
-
-            // If the Kotlin API version of the current module could not be found,
-            // add the marker, as it is better to skip a redundant `@OptIn` than to remove
-            // a necessary annotation. If the module API version is known, compare it
-            // to the API version specified via the `@SinceKotlin` annotation.
-            // Add the marker only if the module API version is less than the version
-            // required by the declaration.
-            if (moduleApiVersion == null || (sinceKotlinApiVersion != null && moduleApiVersion < sinceKotlinApiVersion)) {
+            if (sinceKotlinApiVersion != null && moduleApiVersion < sinceKotlinApiVersion) {
                 wasExperimental.allValueArguments[OptInNames.WAS_EXPERIMENTAL_ANNOTATION_CLASS]?.safeAs<ArrayValue>()?.value
                     ?.mapNotNull { it.safeAs<KClassValue>()?.getArgumentType(module)?.fqName }
                     ?.forEach { foundMarkers.add(it) }

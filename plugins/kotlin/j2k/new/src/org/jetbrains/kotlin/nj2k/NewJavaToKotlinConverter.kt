@@ -10,7 +10,7 @@ import com.intellij.openapi.util.Computable
 import com.intellij.psi.*
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.NewExternalCodeProcessing
@@ -223,7 +223,7 @@ class NewJ2kWithProgressProcessor(
 
     override fun updateState(fileIndex: Int?, phase: Int, description: String) {
         if (fileIndex == null)
-            updateState(phase, 1, 1, fileIndex, description)
+            updateState(phase, 1, 1, null, description)
         else
             updateState(phase, 0, 1, fileIndex, description)
     }
@@ -259,7 +259,7 @@ class NewJ2kWithProgressProcessor(
             progress?.text = KotlinNJ2KBundle.message("progress.text", description, phase + 1, phasesCount)
         }
         progress?.text2 = when {
-            files != null && files.isNotEmpty() && fileIndex != null -> files[fileIndex].virtualFile.presentableUrl + if (files.size > 1) " ($fileIndex/${files.size})" else ""
+            !files.isNullOrEmpty() && fileIndex != null -> files[fileIndex].virtualFile.presentableUrl + if (files.size > 1) " ($fileIndex/${files.size})" else ""
             else -> ""
         }
     }

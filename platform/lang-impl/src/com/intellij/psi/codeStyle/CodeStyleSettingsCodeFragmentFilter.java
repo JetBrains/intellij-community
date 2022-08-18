@@ -58,7 +58,7 @@ public class CodeStyleSettingsCodeFragmentFilter {
   }
 
   @NotNull
-  private CodeStyleSettingsToShow computeFieldsWithTempSettings(CodeStyleSettings tempSettings, LanguageCodeStyleSettingsProvider.SettingsType[] types) {
+  private CodeStyleSettingsToShow computeFieldsWithTempSettings(@NotNull CodeStyleSettings tempSettings, LanguageCodeStyleSettingsProvider.SettingsType @NotNull [] types) {
     CommonCodeStyleSettings commonSettings = tempSettings.getCommonSettings(myProvider.getLanguage());
     CustomCodeStyleSettings customSettings = getCustomSettings(myProvider, tempSettings);
 
@@ -102,7 +102,7 @@ public class CodeStyleSettingsCodeFragmentFilter {
 
   @Nullable
   private static CustomCodeStyleSettings getCustomSettings(@NotNull LanguageCodeStyleSettingsProvider languageProvider,
-                                                           CodeStyleSettings tempSettings) {
+                                                           @NotNull CodeStyleSettings tempSettings) {
     CustomCodeStyleSettings fromLanguageProvider = getCustomSettingsFromProvider(languageProvider, tempSettings);
     if (fromLanguageProvider != null) {
       return fromLanguageProvider;
@@ -120,7 +120,7 @@ public class CodeStyleSettingsCodeFragmentFilter {
 
   @Nullable
   private static CustomCodeStyleSettings getCustomSettingsFromProvider(@NotNull CodeStyleSettingsProvider languageProvider,
-                                                                       CodeStyleSettings tempSettings) {
+                                                                       @NotNull CodeStyleSettings tempSettings) {
     CustomCodeStyleSettings modelSettings = languageProvider.createCustomSettings(tempSettings);
     return modelSettings != null ? tempSettings.getCustomSettings(modelSettings.getClass()) : null;
   }

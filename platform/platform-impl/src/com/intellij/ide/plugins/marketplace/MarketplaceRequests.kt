@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.marketplace
 
 import com.fasterxml.jackson.core.type.TypeReference
@@ -31,6 +31,7 @@ import java.io.IOException
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URLConnection
+import java.net.UnknownHostException
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -212,6 +213,7 @@ class MarketplaceRequests : PluginInfoProvider {
     return Urls.newFromEncoded("${pluginManagerUrl}/feature/getImplementations").addParameters(param)
   }
 
+  @Throws(IOException::class)
   fun getFeatures(param: Map<String, String>): List<FeatureImpl> {
     if (param.isEmpty()) {
       return emptyList()
@@ -236,6 +238,7 @@ class MarketplaceRequests : PluginInfoProvider {
     }
   }
 
+  @Throws(IOException::class)
   internal fun getFeatures(
     featureType: String,
     implementationName: String,
@@ -252,13 +255,19 @@ class MarketplaceRequests : PluginInfoProvider {
   @JvmOverloads
   @Throws(IOException::class)
   fun getMarketplacePlugins(indicator: ProgressIndicator? = null): Set<PluginId> {
-    return readOrUpdateFile(
-      Path.of(PathManager.getPluginTempPath(), FULL_PLUGINS_XML_IDS_FILENAME),
-      "${pluginManagerUrl}/files/$FULL_PLUGINS_XML_IDS_FILENAME",
-      indicator,
-      IdeBundle.message("progress.downloading.available.plugins"),
-      ::parseXmlIds,
-    )
+    try {
+      return readOrUpdateFile(
+        Path.of(PathManager.getPluginTempPath(), FULL_PLUGINS_XML_IDS_FILENAME),
+        "${pluginManagerUrl}/files/$FULL_PLUGINS_XML_IDS_FILENAME",
+        indicator,
+        IdeBundle.message("progress.downloading.available.plugins"),
+        ::parseXmlIds,
+      )
+    }
+    catch (e: UnknownHostException) {
+      LOG.infoOrDebug("Cannot get plugins from Marketplace", e)
+      return emptySet()
+    }
   }
 
   override fun loadPlugins(indicator: ProgressIndicator?): Future<Set<PluginId>> {
@@ -513,13 +522,13 @@ class MarketplaceRequests : PluginInfoProvider {
 /**
  * NB!: any previous tuners set by {@link RequestBuilder#tuner} will be overwritten by this call
  */
-fun RequestBuilder.setHeadersViaTuner(): RequestBuilder =
-  if (ApplicationManager.getApplication() != null) {
-    serviceOrNull<PluginRepositoryAuthService>()
-      ?.let {
-        tuner(it.connectionTuner)
-      } ?: this
-  } else this
+fun RequestBuilder.setHeadersViaTuner(): RequestBuilder {
+  return ApplicationManager.getApplication()
+           ?.getService(PluginRepositoryAuthService::class.java)
+           ?.connectionTuner
+           ?.let(::tuner)
+         ?: this
+}
 
 private fun loadETagForFile(file: Path): String {
   val eTagFile = getETagFile(file)

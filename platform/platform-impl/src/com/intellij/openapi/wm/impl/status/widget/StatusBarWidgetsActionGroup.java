@@ -10,15 +10,19 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 
-public class StatusBarWidgetsActionGroup extends ActionGroup {
+import static com.intellij.openapi.actionSystem.ActionPlaces.STATUS_BAR_PLACE;
+
+public class StatusBarWidgetsActionGroup extends DefaultActionGroup {
   public static final String GROUP_ID = "ViewStatusBarWidgetsGroup";
 
   @Override
@@ -26,11 +30,31 @@ public class StatusBarWidgetsActionGroup extends ActionGroup {
     Project project = e != null ? e.getProject() : null;
     if (project == null) return AnAction.EMPTY_ARRAY;
 
+    ArrayList<AnAction> actions = new ArrayList<>();
+
+    AnAction[] superActions = super.getChildren(e);
+    if (superActions.length > 0) {
+      actions.addAll(Arrays.asList(superActions));
+    }
+
+    if (e.getPlace().equals(STATUS_BAR_PLACE) && ExperimentalUI.isNewUI()) {
+      AnAction navBarLocationGroup = e.getActionManager().getAction("NavbarLocationGroup");
+      if (navBarLocationGroup instanceof ActionGroup) {
+        actions.add(navBarLocationGroup);
+      }
+    }
+
+    if (!actions.isEmpty()) {
+      actions.add(Separator.getInstance());
+    }
+
     StatusBarWidgetsManager manager = project.getService(StatusBarWidgetsManager.class);
-    Collection<AnAction> toggleActions = new ArrayList<>(ContainerUtil.map(manager.getWidgetFactories(), ToggleWidgetAction::new));
-    toggleActions.add(Separator.getInstance());
-    toggleActions.add(new HideCurrentWidgetAction());
-    return toggleActions.toArray(AnAction.EMPTY_ARRAY);
+    Collection<AnAction> widgetToggles = new ArrayList<>(ContainerUtil.map(manager.getWidgetFactories(), ToggleWidgetAction::new));
+    widgetToggles.add(Separator.getInstance());
+    widgetToggles.add(new HideCurrentWidgetAction());
+    actions.addAll(widgetToggles);
+
+    return actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
   private static final class ToggleWidgetAction extends DumbAwareToggleAction {
@@ -56,6 +80,11 @@ public class StatusBarWidgetsActionGroup extends ActionGroup {
       StatusBar statusBar = e.getData(PlatformDataKeys.STATUS_BAR);
       e.getPresentation().setEnabledAndVisible(statusBar != null && project.getService(StatusBarWidgetsManager.class)
         .canBeEnabledOnStatusBar(myWidgetFactory, statusBar));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -92,6 +121,11 @@ public class StatusBarWidgetsActionGroup extends ActionGroup {
       if (factory != null) {
         e.getPresentation().setText(UIBundle.message("status.bar.hide.widget.action.name", factory.getDisplayName()));
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     private @Nullable

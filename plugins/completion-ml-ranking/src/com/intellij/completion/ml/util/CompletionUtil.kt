@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-@file:Suppress("DEPRECATION")
-
 package com.intellij.completion.ml.util
 
 import com.intellij.codeInsight.completion.CompletionParameters

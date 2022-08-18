@@ -63,9 +63,11 @@
     <lang.surroundDescriptor language="JSON" implementationClass="com.intellij.json.surroundWith.JsonSurroundDescriptor"/>
     <lang.findUsagesProvider language="JSON" implementationClass="com.intellij.json.findUsages.JsonFindUsagesProvider"/>
     <statementUpDownMover implementation="com.intellij.json.editor.lineMover.JsonLineMover" id="JSON" order="before line"/>
-    <liveTemplateContext implementation="com.intellij.json.liveTemplates.JsonContextType"/>
-    <liveTemplateContext implementation="com.intellij.json.liveTemplates.JsonInLiteralsContextType"/>
-    <liveTemplateContext implementation="com.intellij.json.liveTemplates.JsonInPropertyKeysContextType"/>
+
+    <liveTemplateContext contextId="JSON" implementation="com.intellij.json.liveTemplates.JsonContextType"/>
+    <liveTemplateContext contextId="JSON_STRING_VALUES" baseContextId="JSON" implementation="com.intellij.json.liveTemplates.JsonInLiteralsContextType"/>
+    <liveTemplateContext contextId="JSON_PROPERTY_KEYS" baseContextId="JSON" implementation="com.intellij.json.liveTemplates.JsonInPropertyKeysContextType"/>
+
     <spellchecker.support language="JSON" implementationClass="com.intellij.json.JsonSpellcheckerStrategy"/>
     <extendWordSelectionHandler implementation="com.intellij.json.editor.selection.JsonStringLiteralSelectionHandler"/>
 
@@ -135,7 +137,9 @@
       <bundleName>messages.JsonBundle</bundleName>
       <categoryKey>json.intention.category.name</categoryKey>
     </intentionAction>
-    <notificationGroup id="JSON Schema" displayType="NONE"/>
+    <notificationGroup id="JSON Schema" displayType="NONE" bundle="messages.JsonBundle" key="notification.group.json.schema"/>
+
+    <psi.referenceContributor language="JSON" implementation="com.intellij.json.JsonWebReferenceContributor"/>
 
     <lang.parserDefinition language="JSONPath" implementationClass="com.intellij.jsonpath.psi.JsonPathParserDefinition"/>
     <lang.braceMatcher language="JSONPath" implementationClass="com.intellij.jsonpath.JsonPathPairedBraceMatcher"/>

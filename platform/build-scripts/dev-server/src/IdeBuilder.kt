@@ -1,16 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 package org.jetbrains.intellij.build.devServer
 
 import com.intellij.util.PathUtilRt
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.IdeaProjectLoaderUtil
 import org.jetbrains.intellij.build.ProductProperties
-import org.jetbrains.intellij.build.ProprietaryBuildTools
-import org.jetbrains.intellij.build.impl.DistributionJARsBuilder
-import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
-import org.jetbrains.intellij.build.impl.PluginLayout
-import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry.LibraryFileEntry
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
+import org.jetbrains.intellij.build.impl.*
+import org.jetbrains.intellij.build.impl.projectStructureMapping.LibraryFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.library.JpsOrderRootType
@@ -56,22 +55,26 @@ class IdeBuilder(val pluginBuilder: PluginBuilder,
 internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: Path, outDir: Path): IdeBuilder {
   val productProperties = URLClassLoader.newInstance(productConfiguration.modules.map { outDir.resolve(it).toUri().toURL() }.toTypedArray())
     .loadClass(productConfiguration.className)
-    .getConstructor(String::class.java).newInstance(homePath.toString()) as ProductProperties
+    .getConstructor(Path::class.java).newInstance(homePath) as ProductProperties
 
-  val allNonTrivialPlugins = productProperties.productLayout.allNonTrivialPlugins
+  val pluginLayoutsFromProductProperties = productProperties.productLayout.pluginLayouts
   val bundledMainModuleNames = getBundledMainModuleNames(productProperties)
 
   val platformPrefix = productProperties.platformPrefix ?: "idea"
   val runDir = createRunDirForProduct(homePath, platformPrefix)
 
-  val buildContext = BuildContext.createContext(getCommunityHomePath(homePath).toString(), homePath.toString(), productProperties,
-                                                ProprietaryBuildTools.DUMMY, createBuildOptions(runDir))
+  val buildContext = BuildContextImpl.createContext(
+    communityHome = getCommunityHomePath(homePath),
+    projectHome = homePath,
+    productProperties = productProperties,
+    options = createBuildOptions(runDir),
+  )
   val pluginsDir = runDir.resolve("plugins")
 
   val mainModuleToNonTrivialPlugin = HashMap<String, BuildItem>(bundledMainModuleNames.size)
-  for (plugin in allNonTrivialPlugins) {
+  for (plugin in pluginLayoutsFromProductProperties) {
     if (bundledMainModuleNames.contains(plugin.mainModule)) {
-      val item = BuildItem(pluginsDir.resolve(DistributionJARsBuilder.getActualPluginDirectoryName(plugin, buildContext)), plugin)
+      val item = BuildItem(pluginsDir.resolve(getActualPluginDirectoryName(plugin, buildContext)), plugin)
       mainModuleToNonTrivialPlugin.put(plugin.mainModule, item)
     }
   }
@@ -82,12 +85,11 @@ internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: 
     // (old module names are not supported)
     var item = mainModuleToNonTrivialPlugin.get(mainModuleName)
     if (item == null) {
-      val pluginLayout = PluginLayout.plugin(mainModuleName)
-      val pluginDir = pluginsDir.resolve(DistributionJARsBuilder.getActualPluginDirectoryName(pluginLayout, buildContext))
-      item = BuildItem(pluginDir, PluginLayout.plugin(mainModuleName))
+      val pluginLayout = PluginLayout.simplePlugin(mainModuleName)
+      item = BuildItem(dir = pluginsDir.resolve(pluginLayout.directoryName), layout = pluginLayout)
     }
     else {
-      for (entry in item.layout.jarToIncludedModuleNames) {
+      for (entry in item.layout.getJarToIncludedModuleNames()) {
         if (!entry.key.contains('/')) {
           for (name in entry.value) {
             moduleNameToPlugin.put(name, item)
@@ -120,12 +122,12 @@ internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: 
 }
 
 private fun createLibClassPath(context: BuildContext, homePath: Path): String {
-  val platformLayout = DistributionJARsBuilder.createPlatformLayout(emptySet(), context)
+  val platformLayout = createPlatformLayout(emptySet(), context)
   val isPackagedLib = System.getProperty("dev.server.pack.lib") == "true"
-  val projectStructureMapping = DistributionJARsBuilder.processLibDirectoryLayout(ModuleOutputPatcher(),
-                                                                                  platformLayout,
-                                                                                  context,
-                                                                                  isPackagedLib).fork().join()
+  val projectStructureMapping = processLibDirectoryLayout(moduleOutputPatcher = ModuleOutputPatcher(),
+                                                          platform = platformLayout,
+                                                          context = context,
+                                                          copyFiles = isPackagedLib).fork().join()
   // for some reasons maybe duplicated paths - use set
   val classPath = LinkedHashSet<String>()
   if (isPackagedLib) {
@@ -206,15 +208,15 @@ private fun createRunDirForProduct(homePath: Path, platformPrefix: String): Path
   return runDir
 }
 
-private fun getCommunityHomePath(homePath: Path): Path {
+private fun getCommunityHomePath(homePath: Path): BuildDependenciesCommunityRoot {
   val communityDotIdea = homePath.resolve("community/.idea")
-  return if (Files.isDirectory(communityDotIdea)) communityDotIdea.parent else homePath
+  return BuildDependenciesCommunityRoot(if (Files.isDirectory(communityDotIdea)) communityDotIdea.parent else homePath)
 }
 
 private fun createBuildOptions(runDir: Path): BuildOptions {
   val buildOptions = BuildOptions()
   buildOptions.useCompiledClassesFromProjectOutput = true
-  buildOptions.targetOS = BuildOptions.OS_NONE
+  buildOptions.targetOs = BuildOptions.OS_NONE
   buildOptions.cleanOutputFolder = false
   buildOptions.skipDependencySetup = true
   buildOptions.outputRootPath = runDir.toString()

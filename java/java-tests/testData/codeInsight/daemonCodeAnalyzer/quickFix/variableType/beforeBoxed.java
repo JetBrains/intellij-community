@@ -1,4 +1,4 @@
-// "Change parameter 'a' type to 'Long[]'" "true"
+// "Change parameter 'a' type to 'Long[]'" "true-preview"
 
 class Base {
   void m(long[] a) {

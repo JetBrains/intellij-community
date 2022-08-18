@@ -60,9 +60,11 @@ open class SavedPatchesUi(project: Project, private val providers: List<SavedPat
       addToCenter(changesBrowser)
       addToBottom(createBottomComponent(bottomToolbar))
     }
-    providers.forEach { provider -> provider.subscribeToPatchesListChanges(this) {
-      treeChangesSplitter.secondComponent.isVisible = providers.any { !it.isEmpty() }
-    }}
+    providers.forEach { provider ->
+      provider.subscribeToPatchesListChanges(this) {
+        treeChangesSplitter.secondComponent.isVisible = providers.any { !it.isEmpty() }
+      }
+    }
     treeChangesSplitter.secondComponent.isVisible = providers.any { !it.isEmpty() }
 
     treeDiffSplitter = OnePixelSplitter("vcs.saved.patches.diff.splitter", 0.5f)
@@ -135,6 +137,7 @@ open class SavedPatchesUi(project: Project, private val providers: List<SavedPat
 
   override fun getData(dataId: String): Any? {
     if (EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW.`is`(dataId)) return changesBrowser.editorTabPreview
+    if (SAVED_PATCH_SELECTED_PATCH.`is`(dataId)) return selectedPatchObjectOrNull()
     if (SAVED_PATCHES_UI.`is`(dataId)) return this
     return null
   }
@@ -149,6 +152,7 @@ open class SavedPatchesUi(project: Project, private val providers: List<SavedPat
   companion object {
     const val SAVED_PATCHES_UI_PLACE = "SavedPatchesUiPlace"
     val SAVED_PATCHES_UI = DataKey.create<SavedPatchesUi>("SavedPatchesUi")
-    val SAVED_PATCH_SELECTED_CHANGES = DataKey.create<List<SavedPatchesProvider.ChangeObject>>("SavedPatchSelectedChanges")
+    val SAVED_PATCH_SELECTED_CHANGES = DataKey.create<Iterable<SavedPatchesProvider.ChangeObject>>("SavedPatchSelectedChanges")
+    val SAVED_PATCH_SELECTED_PATCH = DataKey.create<SavedPatchesProvider.PatchObject<*>>("SavedPatchSelectedPatches")
   }
 }

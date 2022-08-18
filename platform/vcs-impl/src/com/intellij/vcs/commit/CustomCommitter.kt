@@ -11,11 +11,9 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vcs.changes.CommitSession
-import com.intellij.util.containers.ContainerUtil.createLockFreeCopyOnWriteList
+import com.intellij.util.containers.forEachLoggingErrors
 import com.intellij.util.ui.UIUtil.removeMnemonic
 import org.jetbrains.annotations.Nls
-
-private val LOG = logger<CustomCommitter>()
 
 class CustomCommitter(
   private val project: Project,
@@ -23,8 +21,7 @@ class CustomCommitter(
   private val changes: List<Change>,
   private val commitMessage: String
 ) {
-
-  private val resultHandlers = createLockFreeCopyOnWriteList<CommitResultHandler>()
+  private val resultHandlers = mutableListOf<CommitResultHandler>()
 
   fun addResultHandler(resultHandler: CommitResultHandler) {
     resultHandlers += resultHandler
@@ -35,20 +32,24 @@ class CustomCommitter(
 
     override fun onSuccess() {
       LOG.debug("Commit successful")
-      resultHandlers.forEach { it.onSuccess(commitMessage) }
+      resultHandlers.forEachLoggingErrors(LOG) { it.onSuccess(commitMessage) }
     }
 
     override fun onCancel() {
       LOG.debug("Commit canceled")
       session.executionCanceled()
-      resultHandlers.forEach { it.onCancel() }
+      resultHandlers.forEachLoggingErrors(LOG) { it.onCancel() }
     }
 
     override fun onThrowable(error: Throwable) {
       showErrorDialog(message("error.executing.commit", taskName, error.localizedMessage), taskName)
 
       val errors = listOf(VcsException(error))
-      resultHandlers.forEach { it.onFailure(errors) }
+      resultHandlers.forEachLoggingErrors(LOG) { it.onFailure(errors) }
     }
   }.queue()
+
+  companion object {
+    private val LOG = logger<CustomCommitter>()
+  }
 }

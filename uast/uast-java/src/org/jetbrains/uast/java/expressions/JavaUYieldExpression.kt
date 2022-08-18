@@ -11,17 +11,16 @@ import org.jetbrains.uast.UYieldExpression
 @ApiStatus.Internal
 class JavaUYieldExpression(
   override val sourcePsi: PsiYieldStatement,
-  private val psiExpression: PsiExpression?,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UYieldExpression {
   override val expression: UExpression? by lazy {
-    JavaConverter.convertOrEmpty(psiExpression, this)
+    JavaConverter.convertOrEmpty(sourcePsi.expression, this)
   }
 
   override val label: String?
     get() = null
 
   override val jumpTarget: UElement? by lz {
-    sourcePsi.findEnclosingExpression().takeIf { sourcePsi !== it }?.let { JavaConverter.convertExpression(it, null) }
+    sourcePsi.findEnclosingExpression().takeIf { sourcePsi !== it }?.let { JavaConverter.convertExpression(it, null, UExpression::class.java) }
   }
 }

@@ -20,9 +20,9 @@ class MarkdownSettings(internal val project: Project): SimplePersistentStateComp
     get() = state.areInjectionsEnabled
     set(value) { state.areInjectionsEnabled = value }
 
-  var hideErrorsInCodeBlocks
-    get() = state.hideErrorsInCodeBlocks
-    set(value) { state.hideErrorsInCodeBlocks = value }
+  var showProblemsInCodeBlocks
+    get() = state.showProblemsInCodeBlocks
+    set(value) { state.showProblemsInCodeBlocks = value }
 
   var isEnhancedEditingEnabled
     get() = state.isEnhancedEditingEnabled
@@ -110,7 +110,7 @@ class MarkdownSettings(internal val project: Project): SimplePersistentStateComp
       }
       enabledExtensions = old.extensionsEnabledState
       areInjectionsEnabled = !old.isDisableInjections
-      hideErrorsInCodeBlocks = old.isHideErrors
+      showProblemsInCodeBlocks = !old.isHideErrors
       isEnhancedEditingEnabled = old.isEnhancedEditingEnabled
       resetModificationCount()
     }

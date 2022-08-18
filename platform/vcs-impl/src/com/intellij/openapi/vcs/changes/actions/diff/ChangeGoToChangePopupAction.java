@@ -127,7 +127,7 @@ public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain
     protected void onDoubleClick() {
       myRef.get().cancel();
 
-      ChangesBrowserNode selection = VcsTreeModelData.selected(myViewer).nodesStream().findFirst().orElse(null);
+      ChangesBrowserNode<?> selection = VcsTreeModelData.selected(myViewer).iterateNodes().first();
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> onSelected(selection));
     }
   }

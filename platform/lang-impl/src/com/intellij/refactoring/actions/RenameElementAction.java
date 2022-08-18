@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.actions;
 
 import com.intellij.openapi.actionSystem.*;
@@ -23,10 +23,15 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class RenameElementAction extends AnAction implements UpdateInBackground {
+public class RenameElementAction extends AnAction {
 
   public RenameElementAction() {
     setInjectedContext(true);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -92,7 +97,7 @@ public class RenameElementAction extends AnAction implements UpdateInBackground 
 
   @NotNull
   private static Stream<Renamer> getAvailableRenamers(@NotNull DataContext dataContext) {
-    return RenamerFactory.EP_NAME.extensions().flatMap(factory -> factory.createRenamers(dataContext).stream());
+    return RenamerFactory.EP_NAME.getExtensionList().stream().flatMap(factory -> factory.createRenamers(dataContext).stream());
   }
 
   public static boolean isRenameEnabledOnElements(PsiElement @NotNull [] elements) {

@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.migration;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -28,7 +29,7 @@ import javax.swing.*;
 /**
  * @author Bas Leijdekkers
  */
-public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
+public class EqualsReplaceableByObjectsCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
   public boolean checkNotNull;
 
   private static final EquivalenceChecker EQUIVALENCE = new NoSideEffectExpressionEquivalenceChecker();
@@ -97,7 +98,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
   private class EqualsReplaceableByObjectsCallVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       final String methodName = expression.getMethodExpression().getReferenceName();
       if (!HardcodedMethodConstants.EQUALS.equals(methodName)) {
         return;
@@ -189,7 +190,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
      * @return true if the pattern is matched
      */
     private boolean registerProblem(@NotNull PsiBinaryExpression expression, PsiExpression rightOperand, boolean equal) {
-      if ((rightOperand instanceof PsiMethodCallExpression)) {
+      if (rightOperand instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)rightOperand;
         final NullCheck nullCheck = NullCheck.create(expression.getLOperand());
         if (nullCheck != null && nullCheck.isEqual != equal) {
@@ -362,7 +363,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     private static EqualsCheck create(@Nullable PsiExpression maybeEqualsCheckExpression) {
       final Negated n = Negated.create(maybeEqualsCheckExpression);
       if (n != null && n.expression instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression callExpression = ((PsiMethodCallExpression)n.expression);
+        final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)n.expression;
         if (HardcodedMethodConstants.EQUALS.equals(callExpression.getMethodExpression().getReferenceName())) {
           final PsiExpression argument = getArgumentExpression(callExpression);
           final PsiExpression qualifier = getQualifierExpression(callExpression);

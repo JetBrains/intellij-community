@@ -60,6 +60,11 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware, Lig
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public final void actionPerformed(@NotNull final AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
 
@@ -110,7 +115,12 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware, Lig
      public void update(@NotNull final AnActionEvent e) {
      }
 
-     @NotNull
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
+
+      @NotNull
      @Override
      protected DefaultActionGroup createPopupActionGroup(JComponent button) {
        return createCharsetsActionGroup(clearItemText, null, charset -> IdeBundle.message("action.text.change.encoding", charset.displayName()));

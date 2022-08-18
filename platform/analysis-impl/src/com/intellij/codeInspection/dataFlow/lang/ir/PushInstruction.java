@@ -26,9 +26,7 @@ public class PushInstruction extends EvalInstruction {
 
   @Override
   public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
-    var instruction = new PushInstruction(getValue().bindToFactory(factory), getDfaAnchor());
-    instruction.setIndex(getIndex());
-    return instruction;
+    return new PushInstruction(getValue().bindToFactory(factory), getDfaAnchor());
   }
 
   @Override

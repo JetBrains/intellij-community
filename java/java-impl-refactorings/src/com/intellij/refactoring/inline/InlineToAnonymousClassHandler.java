@@ -60,8 +60,8 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
     if (element instanceof PsiAnonymousClass) return false;
     PsiClass psiClass = (PsiClass)element;
     if (hasInheritors(psiClass)) return false;
-    boolean hasMethods = PsiTreeUtil.findChildOfType(psiClass, PsiMember.class) != null;
-    return !hasMethods || !SealedUtils.hasSealedParent(psiClass);
+    boolean hasMembers = PsiTreeUtil.findChildOfType(psiClass, PsiMember.class) != null;
+    return !hasMembers || !SealedUtils.hasSealedParent(psiClass);
   }
 
   private static boolean hasInheritors(final PsiClass element) {

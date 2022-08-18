@@ -5,6 +5,7 @@ import com.intellij.codeInsight.codeVision.settings.PlatformCodeVisionIds
 import com.intellij.codeInsight.codeVision.ui.model.CodeVisionPredefinedActionEntry
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
@@ -22,10 +23,24 @@ import org.jetbrains.annotations.Nls
 @ApiStatus.Experimental
 interface CodeVisionProvider<T> {
   companion object {
-    val EP_NAME = "com.intellij.codeInsight.codeVisionProvider"
-    val providersExtensionPoint = ExtensionPointName.create<CodeVisionProvider<*>>(EP_NAME)
+    const val EP_NAME: String = "com.intellij.codeInsight.codeVisionProvider"
+    val providersExtensionPoint: ExtensionPointName<CodeVisionProvider<*>> = ExtensionPointName.create(EP_NAME)
   }
 
+  /**
+   * WARNING! Must work very fast, it is invoked for a file during its opening. The user won't see the file's content if this method works long.
+   * @return true iff it could potentially provide any lenses for the project
+   */
+  @JvmDefault
+  fun isAvailableFor(project: Project): Boolean = true
+
+  /**
+   * Prepares data for preview (to understand later that it is a preview), for example, stores user data in the editor/file.
+   */
+  @JvmDefault
+  fun preparePreview(editor: Editor, file: PsiFile) {
+  }
+  
   /**
    * Computes some data on UI thread, before the background thread invocation
    */
@@ -36,16 +51,24 @@ interface CodeVisionProvider<T> {
    *  Return true if [computeForEditor] should be called
    *  false otherwise
    */
-  fun shouldRecomputeForEditor(editor: Editor, uiData: T) = true
+  fun shouldRecomputeForEditor(editor: Editor, uiData: T?): Boolean = true
 
   /**
    * Should return text ranges and applicable hints for them, invoked on background thread.
    *
    * Note that this method is not executed under read action.
    */
-  fun computeForEditor(editor: Editor, uiData: T): List<Pair<TextRange, CodeVisionEntry>>
+  @Deprecated("Use computeCodeVision instead", ReplaceWith("computeCodeVision"))
+  fun computeForEditor(editor: Editor, uiData: T): List<Pair<TextRange, CodeVisionEntry>> = emptyList()
 
   /**
+   * Should return text ranges and applicable hints for them, invoked on background thread.
+   *
+   * Note that this method is not executed under read action.
+   */
+  fun computeCodeVision(editor: Editor, uiData: T): CodeVisionState = CodeVisionState.Ready(computeForEditor(editor, uiData))
+
+    /**
    * Handle click on a lens at given range
    * [java.awt.event.MouseEvent] accessible with [codeVisionEntryMouseEventKey] data key from [CodeVisionEntry]
    */
@@ -56,11 +79,11 @@ interface CodeVisionProvider<T> {
   /**
    * Handle click on an extra action on a lens at a given range
    */
-  fun handleExtraAction(editor: Editor, textRange: TextRange, actionId: String) = Unit
+  fun handleExtraAction(editor: Editor, textRange: TextRange, actionId: String): Unit = Unit
 
   /**
    * Calls on background BEFORE editor opening
-   * Returns ranges where placeholders should be when editor opens
+   * @return ranges where placeholders should be when editor opens
    */
   @Deprecated("use getPlaceholderCollector")
   fun collectPlaceholders(editor: Editor): List<TextRange> = emptyList()

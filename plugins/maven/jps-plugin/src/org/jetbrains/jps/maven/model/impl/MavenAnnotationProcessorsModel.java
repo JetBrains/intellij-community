@@ -9,8 +9,7 @@ import java.util.List;
 /**
  * @author ibessonov
  */
-public class MavenAnnotationProcessorsModel {
-
+public final class MavenAnnotationProcessorsModel {
   public static final String COMPONENT_NAME = "MavenAnnotationProcessors";
 
   @XCollection(propertyElementName = "modules", elementName = "module", valueAttributeName = "name")

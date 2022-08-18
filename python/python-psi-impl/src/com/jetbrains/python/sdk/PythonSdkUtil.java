@@ -200,18 +200,6 @@ public class PythonSdkUtil {
     return basePath + File.separator + SKELETON_DIR_NAME;
   }
 
-  public static String getRemoteSourcesLocalPath(String sdkHome) {
-    String sep = File.separator;
-
-    String basePath = PathManager.getSystemPath();
-    return basePath +
-           File.separator +
-           REMOTE_SOURCES_DIR_NAME +
-           sep +
-           FileUtil.toSystemIndependentName(sdkHome).hashCode() +
-           sep;
-  }
-
   @Nullable
   public static VirtualFile findSkeletonsDir(@NotNull final Sdk sdk) {
     return findLibraryDir(sdk, SKELETON_DIR_NAME, BUILTIN_ROOT_TYPE);

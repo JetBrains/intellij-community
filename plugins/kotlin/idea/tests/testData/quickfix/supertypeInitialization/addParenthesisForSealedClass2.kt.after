@@ -1,4 +1,6 @@
 // "Change to constructor invocation" "true"
+// ACTION: Add full qualifier
+// ACTION: Change to constructor invocation
 // ACTION: Introduce import alias
 
 class My {

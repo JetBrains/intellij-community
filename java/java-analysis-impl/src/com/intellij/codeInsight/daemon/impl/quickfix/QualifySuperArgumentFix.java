@@ -17,15 +17,22 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class QualifySuperArgumentFix extends QualifyThisOrSuperArgumentFix {
   public QualifySuperArgumentFix(@NotNull PsiExpression expression, @NotNull PsiClass psiClass) {
     super(expression, psiClass);
+  }
+
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return new QualifySuperArgumentFix(PsiTreeUtil.findSameElementInCopy(myExpression, target), myPsiClass);
   }
 
   @Override

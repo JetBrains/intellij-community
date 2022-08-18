@@ -1,4 +1,4 @@
-// "Add Thread.onSpinWait()" "true"
+// "Add Thread.onSpinWait()" "true-preview"
 import java.util.*;
 
 public class Test {

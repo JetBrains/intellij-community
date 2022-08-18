@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.util
 
 import com.intellij.execution.CommandLineUtil
@@ -11,7 +11,6 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.PathExecLazyValue
@@ -21,6 +20,8 @@ import com.intellij.util.io.IdeUtilIoBundle
 import org.jetbrains.annotations.Nls
 import java.io.*
 import java.nio.charset.Charset
+import java.nio.file.Files
+import java.nio.file.Path
 
 object ExecUtil {
   private val hasGkSudo = PathExecLazyValue.create("gksudo")
@@ -34,7 +35,7 @@ object ExecUtil {
 
   @field:NlsSafe
   private const val nicePath = "/usr/bin/nice"
-  private val hasNice by lazy { File(nicePath).exists() }
+  private val hasNice by lazy { Files.exists(Path.of(nicePath)) }
 
   @JvmStatic
   val osascriptPath: String
@@ -54,9 +55,8 @@ object ExecUtil {
   @Throws(IOException::class)
   fun loadTemplate(loader: ClassLoader, templateName: String, variables: Map<String, String>?): String {
     val stream = loader.getResourceAsStream(templateName) ?: throw IOException("Template '$templateName' not found by $loader")
-
-    val template = FileUtil.loadTextAndClose(InputStreamReader(stream, Charsets.UTF_8))
-    if (variables == null || variables.isEmpty()) {
+    val template = stream.use { it.readAllBytes().decodeToString() }
+    if (variables.isNullOrEmpty()) {
       return template
     }
 
@@ -84,17 +84,19 @@ object ExecUtil {
 
   @JvmStatic
   @Throws(ExecutionException::class)
-  fun execAndGetOutput(commandLine: GeneralCommandLine): ProcessOutput =
-    CapturingProcessHandler(commandLine).runProcess()
+  fun execAndGetOutput(commandLine: GeneralCommandLine): ProcessOutput {
+    return CapturingProcessHandler(commandLine).runProcess()
+  }
 
   @JvmStatic
   @Throws(ExecutionException::class)
-  fun execAndGetOutput(commandLine: GeneralCommandLine, timeoutInMilliseconds: Int): ProcessOutput =
-    CapturingProcessHandler(commandLine).runProcess(timeoutInMilliseconds)
+  fun execAndGetOutput(commandLine: GeneralCommandLine, timeoutInMilliseconds: Int): ProcessOutput {
+    return CapturingProcessHandler(commandLine).runProcess(timeoutInMilliseconds)
+  }
 
   @JvmStatic
-  fun execAndGetOutput(commandLine: GeneralCommandLine, stdin: String): String =
-    CapturingProcessHandler(commandLine).also { processHandler ->
+  fun execAndGetOutput(commandLine: GeneralCommandLine, stdin: String): String {
+    return CapturingProcessHandler(commandLine).also { processHandler ->
       processHandler.addProcessListener(object : ProcessAdapter() {
         override fun startNotified(event: ProcessEvent) {
           processHandler.processInput.writer(commandLine.charset).use {
@@ -103,26 +105,29 @@ object ExecUtil {
         }
       })
     }.runProcess().stdout
+  }
 
   @JvmStatic
-  fun execAndReadLine(commandLine: GeneralCommandLine): String? =
-    try {
+  fun execAndReadLine(commandLine: GeneralCommandLine): String? {
+    return try {
       readFirstLine(commandLine.createProcess().inputStream, commandLine.charset)
     }
     catch (e: ExecutionException) {
       Logger.getInstance(ExecUtil::class.java).debug(e)
       null
     }
+  }
 
   @JvmStatic
-  fun readFirstLine(stream: InputStream, cs: Charset?): String? =
-    try {
+  fun readFirstLine(stream: InputStream, cs: Charset?): String? {
+    return try {
       BufferedReader(if (cs == null) InputStreamReader(stream) else InputStreamReader(stream, cs)).use { it.readLine() }
     }
     catch (e: IOException) {
       Logger.getInstance(ExecUtil::class.java).debug(e)
       null
     }
+  }
 
   /**
    * Run the command with superuser privileges using safe escaping and quoting.
@@ -135,13 +140,14 @@ object ExecUtil {
    */
   @JvmStatic
   @Throws(ExecutionException::class, IOException::class)
-  fun sudo(commandLine: GeneralCommandLine, prompt: @Nls String): Process =
-    sudoCommand(commandLine, prompt).createProcess()
+  fun sudo(commandLine: GeneralCommandLine, prompt: @Nls String): Process {
+    return sudoCommand(commandLine, prompt).createProcess()
+  }
 
   @JvmStatic
   @Throws(ExecutionException::class, IOException::class)
   fun sudoCommand(commandLine: GeneralCommandLine, prompt: @Nls String): GeneralCommandLine {
-    if (SystemInfo.isUnix && "root" == System.getenv("USER")) { //NON-NLS
+    if (SystemInfoRt.isUnix && "root" == System.getenv("USER")) { //NON-NLS
       return commandLine
     }
 
@@ -154,7 +160,7 @@ object ExecUtil {
         GeneralCommandLine(listOf(launcherExe.toString(), commandLine.exePath) + commandLine.parametersList.parameters)
       }
       SystemInfoRt.isMac -> {
-        val escapedCommand = StringUtil.join(command, { escapeAppleScriptArgument(it) }, " & \" \" & ")
+        val escapedCommand = command.joinToString(separator = " & \" \" & ") { escapeAppleScriptArgument(it) }
         val messageArg = " with prompt \"${StringUtil.escapeQuotes(prompt)}\""
         val escapedScript =
           "tell current application\n" +
@@ -174,11 +180,11 @@ object ExecUtil {
         GeneralCommandLine(listOf("pkexec") + envCommand(commandLine) + command)//NON-NLS
       }
       hasTerminalApp() -> {
-        val escapedCommandLine = StringUtil.join(command, { escapeUnixShellArgument(it) }, " ")
+        val escapedCommandLine = command.joinToString(separator = " ") { escapeUnixShellArgument(it) }
         @NlsSafe
         val escapedEnvCommand = when (val args = envCommandArgs(commandLine)) {
           emptyList<String>() -> ""
-          else -> "env " + StringUtil.join(args, { escapeUnixShellArgument(it) }, " ") + " "
+          else -> "env " + args.joinToString(separator = " ") { escapeUnixShellArgument(it) } + " "
         }
         val script = createTempExecutableScript(
           "sudo", ".sh",
@@ -231,36 +237,40 @@ object ExecUtil {
   fun escapeUnixShellArgument(arg: String): String = "'${arg.replace("'", "'\"'\"'")}'"
 
   @JvmStatic
-  fun hasTerminalApp(): Boolean =
-    SystemInfo.isWindows || SystemInfo.isMac || hasKdeTerminal.value || hasGnomeTerminal.value || hasUrxvt.value || hasXTerm.value
+  fun hasTerminalApp(): Boolean {
+    return SystemInfoRt.isWindows || SystemInfoRt.isMac ||
+           hasKdeTerminal.value || hasGnomeTerminal.value || hasUrxvt.value || hasXTerm.value
+  }
 
   @NlsSafe
   @JvmStatic
-  fun getTerminalCommand(@Nls(capitalization = Nls.Capitalization.Title) title: String?, command: String): List<String> = when {
-    SystemInfo.isWindows -> {
-      listOf(windowsShellName, "/c", "start", GeneralCommandLine.inescapableQuote(title?.replace('"', '\'') ?: ""), command)
-    }
-    SystemInfo.isMac -> {
-      listOf(openCommandPath, "-a", "Terminal", command)
-    }
-    hasKdeTerminal.value -> {
-      if (title != null) listOf("konsole", "-p", "tabtitle=\"${title.replace('"', '\'')}\"", "-e", command)
-      else listOf("konsole", "-e", command)
-    }
-    hasGnomeTerminal.value -> {
-      if (title != null) listOf("gnome-terminal", "-t", title, "-x", command)
-      else listOf("gnome-terminal", "-x", command)
-    }
-    hasUrxvt.value -> {
-      if (title != null) listOf("urxvt", "-title", title, "-e", command)
-      else listOf("urxvt", "-e", command)
-    }
-    hasXTerm.value -> {
-      if (title != null) listOf("xterm", "-T", title, "-e", command)
-      else listOf("xterm", "-e", command)
-    }
-    else -> {
-      throw UnsupportedOperationException("Unsupported OS/desktop: ${SystemInfo.OS_NAME}/${System.getenv("XDG_CURRENT_DESKTOP")}")
+  fun getTerminalCommand(@Nls(capitalization = Nls.Capitalization.Title) title: String?, command: String): List<String> {
+    return when {
+      SystemInfoRt.isWindows -> {
+        listOf(windowsShellName, "/c", "start", GeneralCommandLine.inescapableQuote(title?.replace('"', '\'') ?: ""), command)
+      }
+      SystemInfoRt.isMac -> {
+        listOf(openCommandPath, "-a", "Terminal", command)
+      }
+      hasKdeTerminal.value -> {
+        if (title != null) listOf("konsole", "-p", "tabtitle=\"${title.replace('"', '\'')}\"", "-e", command)
+        else listOf("konsole", "-e", command)
+      }
+      hasGnomeTerminal.value -> {
+        if (title != null) listOf("gnome-terminal", "-t", title, "-x", command)
+        else listOf("gnome-terminal", "-x", command)
+      }
+      hasUrxvt.value -> {
+        if (title != null) listOf("urxvt", "-title", title, "-e", command)
+        else listOf("urxvt", "-e", command)
+      }
+      hasXTerm.value -> {
+        if (title != null) listOf("xterm", "-T", title, "-e", command)
+        else listOf("xterm", "-e", command)
+      }
+      else -> {
+        throw UnsupportedOperationException("Unsupported OS/desktop: ${SystemInfoRt.OS_NAME}/${System.getenv("XDG_CURRENT_DESKTOP")}")
+      }
     }
   }
 
@@ -274,7 +284,7 @@ object ExecUtil {
   fun setupLowPriorityExecution(commandLine: GeneralCommandLine) {
     if (canRunLowPriority()) {
       val executablePath = commandLine.exePath
-      if (SystemInfo.isWindows) {
+      if (SystemInfoRt.isWindows) {
         commandLine.exePath = windowsShellName
         commandLine.parametersList.prependAll("/c", "start", "/b", "/low", "/wait", GeneralCommandLine.inescapableQuote(""), executablePath)
       }
@@ -285,11 +295,11 @@ object ExecUtil {
     }
   }
 
-  private fun canRunLowPriority() = Registry.`is`("ide.allow.low.priority.process") && (SystemInfo.isWindows || hasNice)
+  private fun canRunLowPriority() = Registry.`is`("ide.allow.low.priority.process") && (SystemInfoRt.isWindows || hasNice)
 
   @JvmStatic
   fun setupNoTtyExecution(commandLine: GeneralCommandLine) {
-    if (SystemInfo.isLinux && hasSetsid.value) {
+    if (SystemInfoRt.isLinux && hasSetsid.value) {
       val executablePath = commandLine.exePath
       commandLine.exePath = "setsid"
       commandLine.parametersList.prependAll(executablePath)

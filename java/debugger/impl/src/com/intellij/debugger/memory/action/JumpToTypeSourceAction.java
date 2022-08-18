@@ -17,7 +17,9 @@ package com.intellij.debugger.memory.action;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -33,22 +35,25 @@ public class JumpToTypeSourceAction extends ClassesActionBase {
 
   @Override
   protected boolean isEnabled(AnActionEvent e) {
-    final PsiClass psiClass = getPsiClass(e);
+    final PsiClass psiClass = getPsiClass(e, true);
 
     return super.isEnabled(e) && psiClass != null && psiClass.isPhysical();
   }
 
   @Override
   protected void perform(AnActionEvent e) {
-    final PsiClass psiClass = getPsiClass(e);
+    final PsiClass psiClass = getPsiClass(e, false);
     if (psiClass != null) {
       NavigationUtil.activateFileWithPsiElement(psiClass);
     }
   }
 
   @Nullable
-  private static PsiClass getPsiClass(AnActionEvent e) {
-    final ReferenceType selectedClass = ActionUtil.getSelectedClass(e);
+  private PsiClass getPsiClass(AnActionEvent e, boolean fromUpdate) {
+
+    final ReferenceType selectedClass = fromUpdate ? Utils.getOrCreateUpdateSession(e)
+      .compute(this, "selectedClass", ActionUpdateThread.EDT, () -> ActionUtil.getSelectedClass(e))
+                                                   : ActionUtil.getSelectedClass(e);
     final Project project = e.getProject();
     if (selectedClass == null || project == null) {
       return null;

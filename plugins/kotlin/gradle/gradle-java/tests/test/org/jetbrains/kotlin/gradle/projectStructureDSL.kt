@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.gradle
 
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -16,18 +15,17 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.kotlin.config.ExternalSystemTestRunTask
+import org.jetbrains.kotlin.idea.base.facet.externalSystemTestRunTasks
+import org.jetbrains.kotlin.idea.base.facet.isHMPPEnabled
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
-import org.jetbrains.kotlin.idea.facet.externalSystemTestRunTasks
-import org.jetbrains.kotlin.idea.configuration.GRADLE_SYSTEM_ID
 import org.jetbrains.kotlin.idea.gradleJava.configuration.kotlinGradleProjectDataOrFail
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinImportingDiagnostic
-import org.jetbrains.kotlin.idea.project.isHMPPEnabled
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
-import org.jetbrains.kotlin.idea.project.platform
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.utils.addToStdlib.filterIsInstanceWithChecker
-import java.io.File
 import org.jetbrains.plugins.gradle.util.GradleUtil
+import java.io.File
 import kotlin.test.fail
 
 class MessageCollector {
@@ -45,7 +43,6 @@ class MessageCollector {
     }
 }
 
-@Suppress("UnstableApiUsage")
 class ProjectInfo(
     project: Project,
     internal val projectPath: String,
@@ -57,13 +54,20 @@ class ProjectInfo(
     val messageCollector = MessageCollector()
 
     private val moduleManager = ModuleManager.getInstance(project)
-    private val projectDataNode = ExternalSystemApiUtil.findProjectData(project, GRADLE_SYSTEM_ID, projectPath)
     private val expectedModuleNames = HashSet<String>()
     private var allModulesAsserter: (ModuleInfo.() -> Unit)? = null
+    private val moduleInfos = moduleManager.modules.associateWith { module -> ModuleInfo(module, this) }
 
+    @Deprecated("Use .forEachModule instead. This method is error prone and has to be called before 'module(..)' in order to run")
     fun allModules(body: ModuleInfo.() -> Unit) {
         assert(allModulesAsserter == null)
         allModulesAsserter = body
+    }
+
+    fun forEachModule(body: ModuleInfo.() -> Unit) {
+        moduleInfos.values.forEach { moduleInfo ->
+            moduleInfo.run(body)
+        }
     }
 
     fun module(name: String, isOptional: Boolean = false, body: ModuleInfo.() -> Unit = {}) {
@@ -75,7 +79,7 @@ class ProjectInfo(
             return
         }
 
-        val moduleInfo = ModuleInfo(module, this)
+        val moduleInfo = moduleInfos.getValue(module)
         allModulesAsserter?.let { moduleInfo.it() }
         moduleInfo.run(body)
         expectedModuleNames += name
@@ -199,14 +203,14 @@ class ModuleInfo(val module: Module, val projectInfo: ProjectInfo) {
     }
 
     fun libraryDependency(libraryName: String, scope: DependencyScope, isOptional: Boolean = false) {
-        libraryDependency(Regex.fromLiteral(libraryName), scope, isOptional)
+        libraryDependency(Regex.fromLiteral(libraryName), scope, allowMultiple = false, isOptional)
     }
 
-    fun libraryDependency(libraryName: Regex, scope: DependencyScope, isOptional: Boolean = false) {
+    fun libraryDependency(libraryName: Regex, scope: DependencyScope, allowMultiple: Boolean = false, isOptional: Boolean = false) {
         val libraryEntries = rootModel.orderEntries.filterIsInstance<LibraryOrderEntry>()
             .filter { it.libraryName?.matches(libraryName) == true }
 
-        if (libraryEntries.size > 1) {
+        if (!allowMultiple && libraryEntries.size > 1) {
             report("Multiple root entries for library $libraryName")
         }
 
@@ -223,7 +227,9 @@ class ModuleInfo(val module: Module, val projectInfo: ProjectInfo) {
             report("Expected library dependency $libraryName, found nothing. Most probably candidate: $candidateName")
         }
 
-        checkLibrary(libraryEntries.firstOrNull() ?: return, scope)
+        libraryEntries.forEach { library ->
+            checkLibrary(library, scope)
+        }
     }
 
     fun libraryDependencyByUrl(classesUrl: String, scope: DependencyScope) {
@@ -266,20 +272,17 @@ class ModuleInfo(val module: Module, val projectInfo: ProjectInfo) {
             return
         }
 
-        val moduleEntry = moduleEntries.firstOrNull()
-
-        if (moduleEntry == null) {
-            if (!isOptional) {
-                val allModules = rootModel.orderEntries.filterIsInstance<ModuleOrderEntry>().joinToString { it.debugText }
-                report("Module dependency ${moduleName} (${scope.displayName}) not found. All module dependencies: $allModules")
-            }
-            return
+        if (moduleEntries.isEmpty() && !isOptional) {
+            val allModules = rootModel.orderEntries.filterIsInstance<ModuleOrderEntry>().joinToString { it.debugText }
+            report("Module dependency ${moduleName} (${scope.displayName}) not found. All module dependencies: $allModules")
         }
 
-        checkDependencyScope(moduleEntry, scope)
-        checkProductionOnTest(moduleEntry, productionOnTest)
-        expectedDependencies += moduleEntry
-        expectedDependencyNames += moduleEntry.debugText
+        moduleEntries.forEach { moduleEntry ->
+            checkDependencyScope(moduleEntry, scope)
+            checkProductionOnTest(moduleEntry, productionOnTest)
+            expectedDependencies += moduleEntry
+            expectedDependencyNames += moduleEntry.debugText
+        }
     }
 
     private val ANY_PACKAGE_PREFIX = "any_package_prefix"
@@ -330,26 +333,6 @@ class ModuleInfo(val module: Module, val projectInfo: ProjectInfo) {
         mustHaveSdk = false
     }
 
-    fun assertExhaustiveModuleDependencyList() {
-        assertions += {
-            val expectedModuleDependencies = expectedDependencies.filterIsInstance<ModuleOrderEntry>()
-                .map { it.debugText }.sorted().distinct()
-            val actualModuleDependencies = rootModel.orderEntries.filterIsInstance<ModuleOrderEntry>()
-                .map { it.debugText }.sorted().distinct()
-                // increasing readability of log outputs
-                .sortedBy { if (it in expectedModuleDependencies) 0 else 1 }
-
-            if (actualModuleDependencies != expectedModuleDependencies) {
-                report(
-                    "Bad Module dependency list for ${module.name}\n" +
-                            "Expected: $expectedModuleDependencies\n" +
-                            "Actual:   $actualModuleDependencies"
-                )
-            }
-        }
-    }
-
-    @Suppress("UnstableApiUsage")
     inline fun <reified T : KotlinImportingDiagnostic> assertDiagnosticsCount(count: Int) {
         val moduleNode = GradleUtil.findGradleModuleData(module)
         val diagnostics = moduleNode!!.kotlinGradleProjectDataOrFail.kotlinImportingDiagnosticsContainer!!
@@ -375,6 +358,46 @@ class ModuleInfo(val module: Module, val projectInfo: ProjectInfo) {
                 .sortedBy { if (it in expectedDependencyNames) 0 else 1 }
 
             checkReport("Dependency list", expectedDependencyNames, actualDependencyNames)
+        }
+    }
+
+    fun assertExhaustiveModuleDependencyList() {
+        assertions += {
+            val expectedModuleDependencies = expectedDependencies.filterIsInstance<ModuleOrderEntry>()
+                .map { it.debugText }.sorted().distinct()
+
+            val actualModuleDependencies = rootModel.orderEntries.filterIsInstance<ModuleOrderEntry>()
+                .map { it.debugText }.sorted().distinct()
+                // increasing readability of log outputs
+                .sortedBy { if (it in expectedModuleDependencies) 0 else 1 }
+
+            if (actualModuleDependencies != expectedModuleDependencies) {
+                report(
+                    "Bad Module dependency list for ${module.name}\n" +
+                            "Expected: $expectedModuleDependencies\n" +
+                            "Actual:   $actualModuleDependencies"
+                )
+            }
+        }
+    }
+
+    fun assertExhaustiveLibraryDependencyList() {
+        assertions += {
+            val expectedLibraryDependencies = expectedDependencies.filterIsInstance<LibraryOrderEntry>()
+                .map { it.debugText }.sorted().distinct()
+
+            val actualLibraryDependencies = rootModel.orderEntries.filterIsInstance<LibraryOrderEntry>()
+                .map { it.debugText }.sorted().distinct()
+                // increasing readability of log outputs
+                .sortedBy { if (it in expectedLibraryDependencies) 0 else 1 }
+
+            if (actualLibraryDependencies != expectedLibraryDependencies) {
+                report(
+                    "Bad Library dependency list for ${module.name}\n" +
+                            "Expected: $expectedLibraryDependencies\n" +
+                            "Actual:   $actualLibraryDependencies"
+                )
+            }
         }
     }
 
@@ -420,6 +443,7 @@ class ModuleInfo(val module: Module, val projectInfo: ProjectInfo) {
     fun run(body: ModuleInfo.() -> Unit = {}) {
         body()
         assertions.forEach { it.invoke(this) }
+        assertions.clear()
         if (mustHaveSdk && rootModel.sdk == null) {
             report("No SDK defined")
         }

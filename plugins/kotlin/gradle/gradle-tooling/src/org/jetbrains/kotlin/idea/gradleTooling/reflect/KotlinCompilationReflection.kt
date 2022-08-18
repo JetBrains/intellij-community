@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleTooling.reflect
 
 import org.gradle.api.Named
@@ -8,6 +8,7 @@ fun KotlinCompilationReflection(kotlinCompilation: Any): KotlinCompilationReflec
     KotlinCompilationReflectionImpl(kotlinCompilation)
 
 interface KotlinCompilationReflection {
+    val target: KotlinTargetReflection?
     val compilationName: String
     val gradleCompilation: Named
     val sourceSets: Collection<Named>? // Source Sets that directly added to compilation
@@ -15,9 +16,15 @@ interface KotlinCompilationReflection {
     val compilationOutput: KotlinCompilationOutputReflection?
     val konanTargetName: String?
     val compileKotlinTaskName: String?
+    val associateCompilations: Iterable<KotlinCompilationReflection>
 }
 
 private class KotlinCompilationReflectionImpl(private val instance: Any) : KotlinCompilationReflection {
+
+    override val target: KotlinTargetReflection? by lazy {
+        KotlinTargetReflection(instance.callReflectiveAnyGetter("getTarget", logger) ?: return@lazy null)
+    }
+
     override val gradleCompilation: Named
         get() = instance as Named
 
@@ -46,8 +53,13 @@ private class KotlinCompilationReflectionImpl(private val instance: Any) : Kotli
         instance.callReflectiveGetter("getCompileKotlinTaskName", logger)
     }
 
+    override val associateCompilations: Iterable<KotlinCompilationReflection> by lazy {
+        instance.callReflectiveGetter<List<*>>("getAssociateWith", logger).orEmpty()
+            .filterNotNull()
+            .map { compilation -> KotlinCompilationReflection(compilation) }
+    }
+
     companion object {
         private val logger: ReflectionLogger = ReflectionLogger(KotlinCompilationReflection::class.java)
-        private const val NATIVE_COMPILATION_CLASS = "org.jetbrains.kotlin.gradle.plugin.mpp.AbstractKotlinNativeCompilation"
     }
 }

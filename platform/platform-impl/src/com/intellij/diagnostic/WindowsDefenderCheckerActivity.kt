@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.CommonBundle
@@ -9,17 +9,22 @@ import com.intellij.notification.impl.NotificationFullContent
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.nio.file.Path
 
-class WindowsDefenderCheckerActivity : StartupActivity.Background {
-  override fun runActivity(project: Project) {
+internal class WindowsDefenderCheckerActivity : ProjectPostStartupActivity {
+  override suspend fun execute(project: Project) {
     val app = ApplicationManager.getApplication()
-    if (app.isUnitTestMode) return
+    if (app.isUnitTestMode) {
+      return
+    }
 
     val windowsDefenderChecker = WindowsDefenderChecker.getInstance()
     if (windowsDefenderChecker.isVirusCheckIgnored(project)) return
@@ -38,17 +43,17 @@ class WindowsDefenderCheckerActivity : StartupActivity.Background {
       notification.collapseDirection = Notification.CollapseActionsDirection.KEEP_LEFTMOST
       windowsDefenderChecker.configureActions(project, notification)
 
-      app.invokeLater {
+      withContext(Dispatchers.EDT) {
         notification.notify(project)
       }
     }
   }
 }
 
-class WindowsDefenderNotification(@NlsContexts.NotificationTitle title: String, @NlsContexts.NotificationContent text: String, val paths: Collection<Path>) :
+internal class WindowsDefenderNotification(@NlsContexts.NotificationTitle title: String, @NlsContexts.NotificationContent text: String, val paths: Collection<Path>) :
   Notification(NotificationGroup.createIdWithTitle("System Health", IdeBundle.message("notification.group.system.health")), title, text, NotificationType.WARNING), NotificationFullContent
 
-class WindowsDefenderFixAction(val paths: Collection<Path>) : NotificationAction(DiagnosticBundle.message("virus.scanning.fix.action")) {
+internal class WindowsDefenderFixAction(val paths: Collection<Path>) : NotificationAction(DiagnosticBundle.message("virus.scanning.fix.action")) {
   override fun actionPerformed(e: AnActionEvent, notification: Notification) {
     val rc = Messages.showDialog(
       e.project,

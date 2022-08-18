@@ -51,13 +51,13 @@ public final class StringExpressionHelper {
 
           body.accept(new JavaRecursiveElementWalkingVisitor() {
             @Override
-            public void visitClass(PsiClass aClass) {}
+            public void visitClass(@NotNull PsiClass aClass) {}
 
             @Override
-            public void visitLambdaExpression(PsiLambdaExpression expression) {}
+            public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {}
 
             @Override
-            public void visitReturnStatement(PsiReturnStatement statement) {
+            public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
               PsiExpression returnValue = statement.getReturnValue();
               if (returnValue != null) {
                 returns.add(returnValue);

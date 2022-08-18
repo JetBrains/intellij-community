@@ -4,21 +4,27 @@ package com.intellij.execution.wsl;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.testFramework.fixtures.TestFixtureRule;
 import com.intellij.testFramework.rules.TempDirectory;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
 
 import java.io.File;
 
 import static org.junit.Assert.*;
 
-public final class WSLUtilTest extends WslTestBase {
-  @Rule
-  public final TempDirectory myTempDirectory = new TempDirectory();
+public final class WSLUtilTest {
+  private static final TestFixtureRule appRule = new TestFixtureRule();
+  private static final WslRule wslRule = new WslRule();
+  @ClassRule public static final RuleChain ruleChain = RuleChain.outerRule(appRule).around(wslRule);
+
+  @Rule public final TempDirectory tempDirectory = new TempDirectory();
 
   @Test
   public void testWslToWinPath() {
-    var wsl = getWsl();
+    var wsl = wslRule.getWsl();
     assertEquals("\\\\wsl$\\" + wsl.getMsId() + "\\mnt\\cd", wsl.getWindowsPath("/mnt/cd"));
     assertEquals("\\\\wsl$\\" + wsl.getMsId() + "\\mnt", wsl.getWindowsPath("/mnt"));
     assertEquals("\\\\wsl$\\" + wsl.getMsId(), wsl.getWindowsPath(""));
@@ -26,7 +32,11 @@ public final class WSLUtilTest extends WslTestBase {
     assertEquals("\\\\wsl$\\" + wsl.getMsId() + "\\mnt\\1\\test", wsl.getWindowsPath("/mnt/1/test"));
 
     assertEquals("C:", wsl.getWindowsPath("/mnt/c"));
+    assertEquals("\\\\wsl$\\" + wsl.getMsId() + "\\mnt\\", wsl.getWindowsPath("/mnt/"));
+    assertEquals("\\\\wsl$\\" + wsl.getMsId() + "\\mnt", wsl.getWindowsPath("/mnt"));
+    assertEquals("\\\\wsl$\\" + wsl.getMsId() + "\\", wsl.getWindowsPath("/"));
     assertEquals("X:\\", wsl.getWindowsPath("/mnt/x/"));
+    assertEquals("C:", wsl.getWindowsPath("/mnt/C"));
 
     assertEquals("C:\\temp\\foo", wsl.getWindowsPath("/mnt/c/temp/foo"));
     assertEquals("C:\\temp\\KeepCase", wsl.getWindowsPath("/mnt/c/temp/KeepCase"));
@@ -37,7 +47,7 @@ public final class WSLUtilTest extends WslTestBase {
 
   @Test
   public void testWinToWslPath() {
-    var wsl = getWsl();
+    var wsl = wslRule.getWsl();
     assertEquals("/mnt/c/foo", wsl.getWslPath("C:\\foo"));
     assertEquals("/mnt/c/temp/KeepCase", wsl.getWslPath("C:\\temp\\KeepCase"));
     assertNull(wsl.getWslPath("?:\\temp\\KeepCase"));
@@ -46,7 +56,7 @@ public final class WSLUtilTest extends WslTestBase {
 
   @Test
   public void testPaths() {
-    var wsl = getWsl();
+    var wsl = wslRule.getWsl();
     String originalWinPath = "C:\\usr\\something\\bin\\gcc";
     assertEquals(originalWinPath, wsl.getWindowsPath(wsl.getWslPath(originalWinPath)));
 
@@ -56,9 +66,9 @@ public final class WSLUtilTest extends WslTestBase {
 
   @Test
   public void testResolveSymlink() throws Exception {
-    var wsl = getWsl();
-    File winFile = myTempDirectory.newFile("the_file.txt");
-    File winSymlink = new File(myTempDirectory.getRoot(), "sym_link");
+    var wsl = wslRule.getWsl();
+    File winFile = tempDirectory.newFile("the_file.txt");
+    File winSymlink = new File(tempDirectory.getRoot(), "sym_link");
 
     String file = wsl.getWslPath(winFile.getPath());
     String symlink = wsl.getWslPath(winSymlink.getPath());
@@ -70,8 +80,8 @@ public final class WSLUtilTest extends WslTestBase {
     assertTrue(winFile.getPath().equalsIgnoreCase(resolved));
   }
 
-  private void mkSymlink(String file, String symlink) throws Exception {
-    var wsl = getWsl();
+  private static void mkSymlink(String file, String symlink) throws Exception {
+    var wsl = wslRule.getWsl();
     GeneralCommandLine cmd = wsl.patchCommandLine(new GeneralCommandLine("ln", "-s", file, symlink), null, new WSLCommandLineOptions());
     ProcessOutput output = new CapturingProcessHandler(cmd).runProcess(10_000);
     assertEquals(0, output.getExitCode());

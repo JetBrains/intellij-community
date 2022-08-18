@@ -35,7 +35,7 @@ class ColumnsSizeCalculator {
     val visibleColumns = getVisibleColumns()
     val result = Array(dimension + 1) { 0 }
     var remainedSizes = sizes.toMap()
-    val remainedResizableColumns = resizableColumns.filter { it < dimension }.toMutableSet()
+    val remainedResizableColumns = resizableColumns.intersect(visibleColumns).toMutableSet()
 
     // Calculate preferred sizes of columns one by one
     for (i in 0 until dimension) {
@@ -115,10 +115,8 @@ class ColumnsSizeCalculator {
 
   private fun getVisibleColumns(): Set<Int> {
     val result = mutableSetOf<Int>()
-    for ((columnInfo, _) in sizes) {
-      for (i in columnInfo.x until columnInfo.x + columnInfo.width) {
-        result.add(i)
-      }
+    for (columnInfo in sizes.keys) {
+      result.addAll(columnInfo.x until columnInfo.x + columnInfo.width)
     }
     return result
   }

@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ignore
 
-import com.intellij.configurationStore.saveComponentManager
+import com.intellij.configurationStore.saveSettings
+import com.intellij.ide.impl.runBlockingUnderModalProgress
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project.DIRECTORY_STORE_FOLDER
 import com.intellij.openapi.util.io.FileUtil
@@ -36,7 +36,6 @@ const val EXCLUDED_CHILD = "$EXCLUDED/$EXCLUDED_CHILD_DIR"
 const val SHELF = "shelf"
 
 class GitIgnoredFileTest : GitSingleRepoTest() {
-
   override fun isCreateDirectoryBasedProject() = true
 
   override fun setUp() {
@@ -46,7 +45,12 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
 
   override fun setUpProject() {
     super.setUpProject()
-    invokeAndWaitIfNeeded { saveComponentManager(project) } //will create .idea directory
+
+    // will create .idea directory
+    // setUpProject is executed in EDT
+    runBlockingUnderModalProgress {
+      saveSettings(project)
+    }
   }
 
   override fun setUpModule() {

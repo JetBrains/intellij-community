@@ -6,6 +6,7 @@ import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts.ENTER
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT
@@ -22,7 +23,8 @@ import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.VerticalLayout
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.EMPTY_LABEL
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBInsets
@@ -97,7 +99,9 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
 
   fun setServer(path: String, editable: Boolean) = loginPanel.setServer(path, editable)
 
-  override fun dispose() = Unit
+  override fun dispose() {
+    cancelLogin()
+  }
 
   private fun buildLayout() {
     add(JPanel(HorizontalLayout(0)).apply {
@@ -118,12 +122,10 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
     clearErrors()
   }
 
-  private fun LayoutBuilder.buttonPanel() =
-    row("") {
-      cell {
-        loginButton()
-        backLink().withLargeLeftGap()
-      }
+  private fun Panel.buttonPanel() =
+    row(EMPTY_LABEL) {
+      cell(loginButton)
+      cell(backLink)
     }
 
   fun cancelLogin() {
@@ -203,6 +205,9 @@ internal class CloneDialogLoginPanel(private val account: GithubAccount?) :
     }
 
   private inner class LoginAction : DumbAwareAction() {
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabledAndVisible = e.getData(CONTEXT_COMPONENT) != backLink
     }

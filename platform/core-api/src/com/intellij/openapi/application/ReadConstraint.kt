@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.OverrideOnly
 
-@Experimental
+@OverrideOnly // no new implementations are expected currently, this 'constraint' may be relaxed later
 interface ReadConstraint {
 
   /**
@@ -16,6 +16,7 @@ interface ReadConstraint {
 
   /**
    * Schedules the [runnable] to be executed when this constraint can be satisfied.
+   * General contract: [isSatisfied] should be `true` inside that runnable.
    */
   @RequiresReadLock
   fun schedule(runnable: Runnable)

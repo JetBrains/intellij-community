@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.testFramework
 
@@ -19,22 +19,16 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.search.IndexPatternBuilder
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
-import com.intellij.psi.search.FilenameIndex
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.xml.XmlFileNSInfoProvider
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.ExpectedHighlightingData
@@ -46,9 +40,10 @@ import junit.framework.TestCase.*
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
-import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.perf.suite.CursorConfig
 import org.jetbrains.kotlin.idea.perf.suite.TypingConfig
+import org.jetbrains.kotlin.idea.performance.tests.utils.*
+import org.jetbrains.kotlin.idea.performance.tests.utils.project.openInEditor
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 
@@ -184,7 +179,7 @@ class Fixture(
 
     fun updateScriptDependenciesIfNeeded() {
         if (isAKotlinScriptFile(fileName)) {
-            Stats.runAndMeasure("update script dependencies for $fileName") {
+            runAndMeasure("update script dependencies for $fileName") {
                 ScriptConfigurationManager.updateScriptDependenciesSynchronously(psiFile)
             }
         }
@@ -261,63 +256,6 @@ class Fixture(
             return Fixture(fileName ?: project.relativePath(file), project, editor, psiFile)
         }
 
-        private fun baseName(name: String): String {
-            val index = name.lastIndexOf("/")
-            return if (index > 0) name.substring(index + 1) else name
-        }
-
-        internal fun projectFileByName(project: Project, name: String): PsiFile {
-            val fileManager = VirtualFileManager.getInstance()
-            val url = "${project.guessProjectDir()}/$name"
-            fileManager.refreshAndFindFileByUrl(url)?.let {
-                return it.toPsiFile(project)!!
-            }
-
-            val baseFileName = baseName(name)
-            val projectBaseName = baseName(project.name)
-
-            val virtualFiles = FilenameIndex.getVirtualFilesByName(
-                project,
-                baseFileName, true,
-                GlobalSearchScope.projectScope(project)
-            )
-                .filter { it.canonicalPath?.contains("/$projectBaseName/$name") ?: false }.toList()
-
-            assertEquals(
-                "expected the only file with name '$name'\n, it were: [${virtualFiles.map { it.canonicalPath }.joinToString("\n")}]",
-                1,
-                virtualFiles.size
-            )
-            return virtualFiles.iterator().next().toPsiFile(project)!!
-        }
-
-        fun openInEditor(project: Project, name: String): EditorFile {
-            val psiFile = projectFileByName(project, name)
-            return openInEditor(project, psiFile.virtualFile)
-        }
-
-        fun openInEditor(project: Project, vFile: VirtualFile): EditorFile {
-            val fileDocumentManager = FileDocumentManager.getInstance()
-            val fileEditorManager = FileEditorManager.getInstance(project)
-
-            val psiFile = vFile.toPsiFile(project) ?: error("Unable to find psi file for ${vFile.path}")
-
-            assertTrue("file $vFile is not indexed yet", FileIndexFacade.getInstance(project).isInContent(vFile))
-
-            runInEdtAndWait {
-                fileEditorManager.openFile(vFile, true)
-            }
-            val document = fileDocumentManager.getDocument(vFile) ?: error("no document for $vFile found")
-
-            assertNotNull("doc not found for $vFile", EditorFactory.getInstance().getEditors(document))
-            assertTrue("expected non empty doc", document.text.isNotEmpty())
-
-            val offset = psiFile.textOffset
-            assertTrue("side effect: to load the text", offset >= 0)
-
-            return EditorFile(psiFile = psiFile, document = document)
-        }
-
         /**
          * @param lookupElements perform basic autocompletion and check presence of suggestion if elements are not empty
          */
@@ -373,7 +311,6 @@ class Fixture(
     }
 }
 
-data class EditorFile(val psiFile: PsiFile, val document: Document)
 
 fun KotlinLightCodeInsightFixtureTestCase.removeInfoMarkers() {
     ExpectedHighlightingData(editor.document, true, true).init()

@@ -10,7 +10,7 @@ import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 
 /**
- * @author: db
+ * @author db
  */
 public class CommonTest extends IncrementalTestCase {
   public CommonTest() {

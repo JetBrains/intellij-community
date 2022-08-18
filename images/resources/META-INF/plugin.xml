@@ -43,6 +43,7 @@
     <registryKey key="ide.images.show.grid.only.when.zoom.factor.equal.or.more.than" defaultValue="3" description="Hide grid if zoom factor is less than value"/>
     <registryKey key="ide.images.show.grid.after.every.x.pixels" defaultValue="1" description="Pixels between grid lines"/>
     <registryKey key="ide.images.change.background.action.enabled" defaultValue="false" description="Show action for changing background in the editor toolbar"/>
+    <iconMapper mappingFile="ImagesIconMappings.json"/>
   </extensions>
 
   <actions>
@@ -166,8 +167,6 @@
       <separator/>
       <reference id="Images.SetBackgroundImage"/>
       <separator/>
-      <reference id="AddToFavorites"/>
-      <separator/>
       <reference id="VersionControlsGroup"/>
       <separator/>
       <reference id="Images.EditExternally"/>
@@ -197,8 +196,6 @@
       <separator/>
       <reference id="FindUsages"/>
       <reference id="RefactoringMenu"/>
-      <separator/>
-      <reference id="AddToFavorites"/>
       <separator/>
       <reference id="$Delete"/>
       <separator/>

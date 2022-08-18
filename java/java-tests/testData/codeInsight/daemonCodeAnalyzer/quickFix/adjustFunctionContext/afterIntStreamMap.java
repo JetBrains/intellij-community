@@ -1,4 +1,4 @@
-// "Replace 'map()' with 'mapToDouble()'" "true"
+// "Replace 'map()' with 'mapToDouble()'" "true-preview"
 import java.util.stream.*;
 
 class Test {

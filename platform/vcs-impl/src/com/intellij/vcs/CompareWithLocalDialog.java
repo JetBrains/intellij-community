@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs;
 
 import com.intellij.icons.AllIcons;
@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
@@ -29,6 +30,7 @@ import com.intellij.openapi.vcs.impl.ChangesBrowserToolWindow;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
@@ -42,10 +44,14 @@ import java.util.List;
 import java.util.Objects;
 
 public class CompareWithLocalDialog {
+  @RequiresEdt
   public static void showChanges(@NotNull Project project,
                                  @NotNull @NlsContexts.DialogTitle String dialogTitle,
                                  @NotNull LocalContent localContent,
                                  @NotNull ThrowableComputable<? extends Collection<Change>, ? extends VcsException> changesLoader) {
+    if (localContent != LocalContent.NONE) {
+      FileDocumentManager.getInstance().saveAllDocuments();
+    }
     if (AbstractVcsHelperImpl.showCommittedChangesAsTab()) {
       showAsTab(project, dialogTitle, localContent, changesLoader);
     }
@@ -80,7 +86,7 @@ public class CompareWithLocalDialog {
     DiffPreview diffPreview = ChangesBrowserToolWindow.createDiffPreview(project, changesBrowser, changesPanel);
     changesBrowser.setShowDiffActionPreview(diffPreview);
 
-    Content content = ContentFactory.SERVICE.getInstance().createContent(changesPanel, dialogTitle, false);
+    Content content = ContentFactory.getInstance().createContent(changesPanel, dialogTitle, false);
     content.setPreferredFocusableComponent(changesBrowser.getPreferredFocusedComponent());
     content.setDisposer(changesPanel);
 

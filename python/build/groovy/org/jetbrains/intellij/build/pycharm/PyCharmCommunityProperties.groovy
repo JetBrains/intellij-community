@@ -1,19 +1,23 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.pycharm
 
 import groovy.transform.CompileStatic
-import groovy.transform.TypeCheckingMode
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 
-import static org.jetbrains.intellij.build.impl.PluginLayout.plugin
+import java.nio.file.Files
+import java.nio.file.Path
+
+import static kotlinx.collections.immutable.ExtensionsKt.persistentListOf
+import static org.jetbrains.intellij.build.impl.PluginLayoutGroovy.plugin
 
 @CompileStatic
 class PyCharmCommunityProperties extends PyCharmPropertiesBase {
-  PyCharmCommunityProperties(String communityHome) {
+  PyCharmCommunityProperties(BuildDependenciesCommunityRoot communityHome) {
     platformPrefix = "PyCharmCore"
     customProductCode = "PC"
     applicationInfoModule = "intellij.pycharm.community"
-    brandingResourcePaths = ["$communityHome/python/resources".toString()]
+    brandingResourcePaths = List.of(communityHome.communityRoot.resolve("python/resources"))
     scrambleMainJar = false
     buildSourcesArchive = true
 
@@ -23,32 +27,31 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
       "intellij.xml.dom.impl",
       "intellij.platform.main",
       "intellij.pycharm.community"
-    ]
-    productLayout.bundledPluginModules +=
-      ["intellij.python.community.plugin",
-       "intellij.pycharm.community.customization"
-      ] + new File("$communityHome/python/build/plugin-list.txt").readLines()
 
-    productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
+    ]
+    productLayout.bundledPluginModules.add("intellij.python.community.plugin")
+    productLayout.bundledPluginModules.add("intellij.pycharm.community.customization")
+    productLayout.bundledPluginModules.addAll(Files.readAllLines(communityHome.communityRoot.resolve("python/build/plugin-list.txt")))
+
+    productLayout.pluginLayouts = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS.add(
       plugin("intellij.pycharm.community.customization") {
         directoryName = "pythonIDE"
         mainJarName = "python-ide.jar"
         withModule("intellij.pycharm.community.ide.impl", mainJarName)
         withModule("intellij.jupyter.viewOnly")
         withModule("intellij.jupyter.core")
-      }
-    ]
-    productLayout.pluginModulesToPublish = ["intellij.python.community.plugin"]
+      })
+    productLayout.pluginModulesToPublish = persistentListOf("intellij.python.community.plugin")
   }
 
   @Override
-  @CompileStatic(TypeCheckingMode.SKIP)
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {
     super.copyAdditionalFiles(context, targetDirectory)
-    context.ant.copy(todir: "$targetDirectory/license") {
-      fileset(file: "$context.paths.communityHome/LICENSE.txt")
-      fileset(file: "$context.paths.communityHome/NOTICE.txt")
-    }
+
+    new FileSet(context.paths.communityHomeDir.communityRoot)
+      .include("LICENSE.txt")
+      .include("NOTICE.txt")
+      .copyToDir(Path.of(targetDirectory, "license"))
   }
 
   @Override
@@ -88,6 +91,7 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
   }
 }
 
+@CompileStatic
 class PyCharmCommunityWindowsDistributionCustomizer extends PyCharmWindowsDistributionCustomizer {
   PyCharmCommunityWindowsDistributionCustomizer(String projectHome) {
     icoPath = "$projectHome/python/resources/PyCharmCore.ico"
@@ -102,6 +106,7 @@ class PyCharmCommunityWindowsDistributionCustomizer extends PyCharmWindowsDistri
   }
 }
 
+@CompileStatic
 class PyCharmCommunityLinuxDistributionCustomizer extends LinuxDistributionCustomizer {
   PyCharmCommunityLinuxDistributionCustomizer(projectHome) {
     iconPngPath = "$projectHome/python/resources/PyCharmCore128.png"
@@ -110,10 +115,11 @@ class PyCharmCommunityLinuxDistributionCustomizer extends LinuxDistributionCusto
 
   @Override
   String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
-    "pycharm-community-${applicationInfo.isEAP ? buildNumber : applicationInfo.fullVersion}"
+    "pycharm-community-${applicationInfo.isEAP() ? buildNumber : applicationInfo.fullVersion}"
   }
 }
 
+@CompileStatic
 class PyCharmCommunityMacDistributionCustomizer extends PyCharmMacDistributionCustomizer {
   PyCharmCommunityMacDistributionCustomizer(projectHome) {
     icnsPath = "$projectHome/python/resources/PyCharmCore.icns"
@@ -124,7 +130,7 @@ class PyCharmCommunityMacDistributionCustomizer extends PyCharmMacDistributionCu
 
   @Override
   String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
-    String suffix = applicationInfo.isEAP ? " ${applicationInfo.majorVersion}.${applicationInfo.minorVersion} EAP" : ""
+    String suffix = applicationInfo.isEAP() ? " ${applicationInfo.majorVersion}.${applicationInfo.minorVersion} EAP" : ""
     "PyCharm CE${suffix}.app"
   }
 }

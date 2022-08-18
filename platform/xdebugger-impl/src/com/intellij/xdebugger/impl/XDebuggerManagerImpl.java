@@ -14,7 +14,6 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunContentWithExecutorListener;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.plugins.CannotUnloadPluginException;
 import com.intellij.ide.plugins.DynamicPluginListener;
@@ -30,10 +29,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.EditorGutter;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
@@ -41,6 +37,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
@@ -52,15 +49,17 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.DocumentUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
-import com.intellij.xdebugger.breakpoints.XBreakpoint;
-import com.intellij.xdebugger.breakpoints.XBreakpointListener;
-import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
@@ -408,28 +407,53 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     return NotificationGroupManager.getInstance().getNotificationGroup("Debugger messages");
   }
 
-  private static final class BreakpointPromoterEditorListener implements EditorMouseMotionListener, EditorMouseListener {
-    final Icon hoverIcon = AllIcons.Debugger.Db_set_breakpoint;
+  private final class BreakpointPromoterEditorListener implements EditorMouseMotionListener, EditorMouseListener {
+    private XSourcePositionImpl myLastPosition = null;
+    private Icon myLastIcon = null;
 
     @Override
     public void mouseMoved(@NotNull EditorMouseEvent e) {
       if (!ExperimentalUI.isNewUI()) return;
-      EditorGutter editorGutter = e.getEditor().getGutter();
+      Editor editor = e.getEditor();
+      if (editor.getProject() != myProject || editor.getEditorKind() != EditorKind.MAIN_EDITOR) return;
+      EditorGutter editorGutter = editor.getGutter();
       if (editorGutter instanceof EditorGutterComponentEx) {
         EditorGutterComponentEx gutter = (EditorGutterComponentEx)editorGutter;
         if (e.getArea() == EditorMouseEventArea.LINE_NUMBERS_AREA) {
-          gutter.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-          updateActiveLineNumberIcon(gutter, hoverIcon, e.getVisualPosition().line);
-        } else {
-          updateActiveLineNumberIcon(gutter, null, null);
+          int line = EditorUtil.yToLogicalLineNoCustomRenderers(editor, e.getMouseEvent().getY());
+          Document document = editor.getDocument();
+          if (DocumentUtil.isValidLine(line, document)) {
+            XSourcePositionImpl position = XSourcePositionImpl.create(FileDocumentManager.getInstance().getFile(document), line);
+            if (position != null) {
+              if (myLastPosition == null || !myLastPosition.getFile().equals(position.getFile()) || myLastPosition.getLine() != line) {
+                List<XLineBreakpointType> types = XBreakpointUtil.getAvailableLineBreakpointTypes(myProject, position, editor);
+                myLastPosition = position;
+                myLastIcon = ObjectUtils.doIfNotNull(ContainerUtil.getFirstItem(types), XBreakpointType::getEnabledIcon);
+              }
+              if (myLastIcon != null) {
+                gutter.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                updateActiveLineNumberIcon(gutter, myLastIcon, e.getLogicalPosition().line);
+              }
+              else {
+                updateActiveLineNumberIcon(gutter, null, null);
+              }
+              return;
+            }
+          }
         }
+        myLastPosition = null;
+        myLastIcon = null;
+        updateActiveLineNumberIcon(gutter, null, null);
       }
     }
 
-    private static void updateActiveLineNumberIcon(@NotNull EditorGutterComponentEx gutter, @Nullable Icon icon, @Nullable Integer line) {
+    private void updateActiveLineNumberIcon(@NotNull EditorGutterComponentEx gutter, @Nullable Icon icon, @Nullable Integer line) {
+      if (gutter.getClientProperty("editor.gutter.context.menu") != null) return;
       boolean requireRepaint = false;
       if (gutter.getClientProperty("line.number.hover.icon") != icon) {
         gutter.putClientProperty("line.number.hover.icon", icon);
+        gutter.putClientProperty("line.number.hover.icon.context.menu", icon == null ? null
+                                                                                     : ActionManager.getInstance().getAction("XDebugger.Hover.Breakpoint.Context.Menu"));
         requireRepaint = true;
       }
       if (!Objects.equals(gutter.getClientProperty("active.line.number"), line)) {

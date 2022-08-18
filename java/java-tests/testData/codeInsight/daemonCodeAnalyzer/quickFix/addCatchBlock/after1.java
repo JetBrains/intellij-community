@@ -1,4 +1,4 @@
-// "Add 'catch' clause(s)" "true"
+// "Add 'catch' clause(s)" "true-preview"
 class a {
     void g() throws Exception {
     }

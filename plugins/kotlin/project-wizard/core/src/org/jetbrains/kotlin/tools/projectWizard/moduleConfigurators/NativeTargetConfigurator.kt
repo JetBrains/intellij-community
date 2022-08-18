@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators
 
 import kotlinx.collections.immutable.toPersistentList
@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.core.Reader
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildSystemIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.*
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.multiplatform.DefaultTargetConfigurationIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.multiplatform.NonDefaultTargetConfigurationIR
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.*
@@ -31,8 +32,26 @@ class RealNativeTargetConfigurator private constructor(
 
     override fun createInnerTargetIrs(reader: Reader, module: Module): List<BuildSystemIR> = irsList {
         +super<SimpleTargetConfigurator>.createInnerTargetIrs(reader, module)
-        if (moduleSubType.isIOS) {
+        if (moduleSubType.isIOS && moduleSubType != ModuleSubType.iosCocoaPods) {
             "binaries" {
+                "framework"  {
+                    "baseName" assign const(module.parent!!.name)
+                }
+            }
+        }
+    }
+
+    override fun Reader.createTargetIrs(module: Module): List<BuildSystemIR> = irsList {
+        +DefaultTargetConfigurationIR(
+            module.createTargetAccessIr(moduleSubType),
+            createInnerTargetIrs(this@createTargetIrs, module).toPersistentList()
+        )
+        if (moduleSubType == ModuleSubType.iosCocoaPods) {
+            "cocoapods" {
+                "summary" assign const("Some description for the Shared Module")
+                "homepage" assign const("Link to the Shared Module homepage")
+                "ios.deploymentTarget" assign const("14.1")
+                "podfile" assign raw("project.file(\"../iosApp/Podfile\")") //TODO hardcoded name
                 "framework"  {
                     "baseName" assign const(module.parent!!.name)
                 }
@@ -88,7 +107,7 @@ object NativeForCurrentSystemTarget : NativeTargetConfigurator, SingleCoexistenc
                         +"""if (hostOs == "Mac OS X") $variableName = macosX64('$moduleName')"""; nlIndented()
                         +"""else if (hostOs == "Linux") $variableName = linuxX64("$moduleName")"""; nlIndented()
                         +"""else if (isMingwX64) $variableName = mingwX64("$moduleName")"""; nlIndented()
-                        +"""else throw new GradleException("Host OS is not supported in Kotlin/Native.")""";
+                        +"""else throw new GradleException("Host OS is not supported in Kotlin/Native.")"""
                     }
                 }
                 nl()

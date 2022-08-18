@@ -248,7 +248,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   private Promise<AbstractTreeNode<?>> expandPathTo(final VirtualFile file,
                                                  @NotNull final AbstractTreeNode root,
                                                  final Object element,
-                                                 @NotNull final Condition<AbstractTreeNode<?>> nonStopCondition,
+                                                 @NotNull final Condition<? super AbstractTreeNode<?>> nonStopCondition,
                                                  @NotNull final ProgressIndicator indicator,
                                                  @Nullable final Ref<Object> target) {
     final AsyncPromise<AbstractTreeNode<?>> async = new AsyncPromise<>();
@@ -316,14 +316,14 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
   private void expandChild(@NotNull final List<? extends AbstractTreeNode<?>> kids,
                            int i,
-                           @NotNull final Condition<AbstractTreeNode<?>> nonStopCondition,
+                           final @NotNull Condition<? super AbstractTreeNode<?>> nonStopCondition,
                            final VirtualFile file,
                            final Object element,
                            @NotNull final AsyncPromise<? super AbstractTreeNode<?>> async,
                            @NotNull final ProgressIndicator indicator,
                            final Ref<Object> virtualSelectTarget) {
     while (i < kids.size()) {
-      final AbstractTreeNode eachKid = kids.get(i);
+      final AbstractTreeNode<?> eachKid = kids.get(i);
       final boolean[] nodeWasCollapsed = {true};
       final DefaultMutableTreeNode nodeForElement = getNodeForElement(eachKid);
       if (nodeForElement != null) {
@@ -373,7 +373,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   @Override
   protected boolean validateNode(@NotNull final Object child) {
     if (child instanceof ProjectViewNode) {
-      final ProjectViewNode projectViewNode = (ProjectViewNode)child;
+      final ProjectViewNode<?> projectViewNode = (ProjectViewNode<?>)child;
       return projectViewNode.validate();
     }
     return true;

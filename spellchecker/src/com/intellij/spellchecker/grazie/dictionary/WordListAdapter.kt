@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.grazie.dictionary
 
+import ai.grazie.nlp.similarity.Levenshtein
 import ai.grazie.spell.lists.WordList
-import ai.grazie.spell.utils.Distances
 
 internal class WordListAdapter : WordList, EditableWordListAdapter() {
   fun isAlien(word: String): Boolean {
@@ -26,7 +26,7 @@ internal class WordListAdapter : WordList, EditableWordListAdapter() {
     val result = LinkedHashSet<String>()
     for (dictionary in dictionaries.values) {
       dictionary.consumeSuggestions(word) {
-        val distance = Distances.levenshtein.distance(word, it, SimpleWordList.MAX_LEVENSHTEIN_DISTANCE + 1)
+        val distance = Levenshtein.distance(word, it, SimpleWordList.MAX_LEVENSHTEIN_DISTANCE + 1)
         if (distance <= SimpleWordList.MAX_LEVENSHTEIN_DISTANCE) {
           result.add(it)
         }

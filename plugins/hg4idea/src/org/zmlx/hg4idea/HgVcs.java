@@ -329,12 +329,6 @@ public class HgVcs extends AbstractVcs {
 
   @Override
   @RequiresEdt
-  public void enableIntegration() {
-    enableIntegration(null);
-  }
-
-  @Override
-  @RequiresEdt
   public void enableIntegration(@Nullable VirtualFile targetDirectory) {
     new Task.Backgroundable(myProject, HgBundle.message("progress.title.enabling.hg"), true) {
       @Override

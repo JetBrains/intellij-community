@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.widget;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -65,8 +65,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
   private final AtomicReference<Pair<VirtualFile, Boolean>> mySuppressInfoRef = new AtomicReference<>();
 
-  private volatile VirtualFile myLastUpdatedFile;
-  private volatile WidgetState mySchemaWidgetState;
+  private volatile Pair<WidgetState, VirtualFile> myLastWidgetStateAndFilePair;
   private ProgressIndicator myCurrentProgress;
 
   JsonSchemaStatusWidget(@NotNull Project project) {
@@ -192,20 +191,24 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     if (DumbService.getInstance(project).isDumb()) {
       return WidgetStatus.ENABLED;
     }
-    if (JsonWidgetSuppressor.EXTENSION_POINT_NAME.extensions().anyMatch(s -> s.isCandidateForSuppress(file, project))) {
+    if (JsonWidgetSuppressor.EXTENSION_POINT_NAME.getExtensionList().stream().anyMatch(s -> s.isCandidateForSuppress(file, project))) {
       return WidgetStatus.MAYBE_SUPPRESSED;
     }
     return WidgetStatus.ENABLED;
   }
 
-  @NotNull
   @Override
-  protected WidgetState getWidgetState(@Nullable VirtualFile file) {
+  protected @NotNull WidgetState getWidgetState(@Nullable VirtualFile file) {
+    Pair<WidgetState, VirtualFile> lastStateAndFilePair = myLastWidgetStateAndFilePair;
+    WidgetState widgetState = calcWidgetState(file, Pair.getFirst(lastStateAndFilePair), Pair.getSecond(lastStateAndFilePair));
+    myLastWidgetStateAndFilePair = new Pair<>(widgetState, file);
+    return widgetState;
+  }
+
+  private @NotNull WidgetState calcWidgetState(@Nullable VirtualFile file,
+                                               @Nullable WidgetState lastWidgetState,
+                                               @Nullable VirtualFile lastFile) {
     Pair<VirtualFile, Boolean> suppressInfo = mySuppressInfoRef.getAndSet(null);
-    WidgetState schemaWidgetState = mySchemaWidgetState;
-    mySchemaWidgetState = null;
-    VirtualFile lastUpdatedFile = myLastUpdatedFile;
-    myLastUpdatedFile = file;
     if (myCurrentProgress != null && !myCurrentProgress.isCanceled()) {
       myCurrentProgress.cancel();
     }
@@ -232,7 +235,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
         scheduleSuppressCheck(file, myCurrentProgress);
 
         // show 'loading' only when switching between files and previous state was not hidden, otherwise the widget will "jump"
-        if (!Comparing.equal(lastUpdatedFile, file) && schemaWidgetState != null && schemaWidgetState != WidgetState.HIDDEN) {
+        if (!Comparing.equal(lastFile, file) && lastWidgetState != null && lastWidgetState != WidgetState.HIDDEN) {
           return new WidgetState(JsonBundle.message("schema.widget.checking.state.tooltip"),
                                  JsonBundle.message("schema.widget.checking.state.text",
                                                     isJsonFile ? JsonBundle.message("schema.widget.prefix.json.files")
@@ -248,12 +251,10 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       }
     }
 
-    WidgetState state = doGetWidgetState(file, isJsonFile);
-    mySchemaWidgetState = state;
-    return state;
+    return doGetWidgetState(file, isJsonFile);
   }
 
-  private WidgetState doGetWidgetState(@NotNull VirtualFile file, boolean isJsonFile) {
+  private @NotNull WidgetState doGetWidgetState(@NotNull VirtualFile file, boolean isJsonFile) {
     JsonSchemaService service = getService();
     if (service == null) {
       return getNoSchemaState();
@@ -345,7 +346,8 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
         mySuppressInfoRef.set(null);
       }
       else {
-        boolean suppress = JsonWidgetSuppressor.EXTENSION_POINT_NAME.extensions().anyMatch(s -> s.suppressSwitcherWidget(file, myProject));
+        boolean suppress = JsonWidgetSuppressor.EXTENSION_POINT_NAME.getExtensionList().stream()
+          .anyMatch(s -> s.suppressSwitcherWidget(file, myProject));
         mySuppressInfoRef.set(Pair.create(file, suppress));
       }
       super.update(null);
@@ -462,18 +464,20 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
   @Nullable
   @Override
-  protected ListPopup createPopup(DataContext context) {
-    final VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(context);
-    if (virtualFile == null) return null;
+  protected ListPopup createPopup(@NotNull DataContext context) {
+    VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(context);
+    if (file == null) return null;
 
     Project project = getProject();
-    WidgetState popupState = mySchemaWidgetState;
-    if (!(popupState instanceof MyWidgetState) || !virtualFile.equals(myLastUpdatedFile)) return null;
-
-    JsonSchemaService service = getService();
-    if (service == null) return null;
-
-    return JsonSchemaStatusPopup.createPopup(service, project, virtualFile, ((MyWidgetState)popupState).isWarning());
+    Pair<WidgetState, VirtualFile> lastWidgetStateAndFilePair = myLastWidgetStateAndFilePair;
+    WidgetState lastWidgetState = Pair.getFirst(lastWidgetStateAndFilePair);
+    if (lastWidgetState instanceof MyWidgetState && file.equals(Pair.getSecond(lastWidgetStateAndFilePair))) {
+      JsonSchemaService service = getService();
+      if (service != null) {
+        return JsonSchemaStatusPopup.createPopup(service, project, file, ((MyWidgetState)lastWidgetState).isWarning());
+      }
+    }
+    return null;
   }
 
   @Override
@@ -536,7 +540,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       .map(file -> jsonSchemaService.getSchemaProvider(file))
       .filter(Objects::nonNull)
       .map(provider -> Pair.create(SchemaType.userSchema.equals(provider.getSchemaType()), provider.getName()))
-      .collect(Collectors.toList());
+      .toList();
 
     final long numOfSystemSchemas = pairList.stream().filter(pair -> !pair.getFirst()).count();
     // do not report anything if there is only one system schema and one user schema (user overrides schema that we provide)

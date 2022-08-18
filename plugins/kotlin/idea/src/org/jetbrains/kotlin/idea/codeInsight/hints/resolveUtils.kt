@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
 import com.intellij.openapi.project.Project
@@ -23,8 +23,8 @@ private fun Project.resolveFqNameOfJavaClassByIndex(fqNameString: String, scope:
 }
 
 private fun Project.resolveFqNameOfKtClassByIndex(fqNameString: String, scope: GlobalSearchScope): KtDeclaration? {
-    val classesPsi = KotlinFullClassNameIndex.getInstance()[fqNameString, this, scope]
-    val typeAliasesPsi = KotlinTopLevelTypeAliasFqNameIndex.getInstance()[fqNameString, this, scope]
+    val classesPsi = KotlinFullClassNameIndex.get(fqNameString, this, scope)
+    val typeAliasesPsi = KotlinTopLevelTypeAliasFqNameIndex.get(fqNameString, this, scope)
 
     return scope.selectNearest(classesPsi, typeAliasesPsi)
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate.classLoading
 
@@ -7,10 +7,10 @@ import com.intellij.debugger.impl.ClassLoadingUtils
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.sun.jdi.ClassLoaderReference
 import com.sun.jdi.ClassType
-import org.jetbrains.kotlin.idea.debugger.evaluate.ExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.DexDebugFacility
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerEvaluationBundle
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.ReflectionCallClassPatcher
-import org.jetbrains.kotlin.idea.debugger.isDexDebug
 import org.jetbrains.org.objectweb.asm.*
 import org.jetbrains.org.objectweb.asm.commons.InstructionAdapter
 import kotlin.jvm.internal.Lambda
@@ -84,7 +84,7 @@ class OrdinaryClassLoadingAdapter : ClassLoadingAdapter {
     }
 
     override fun isApplicable(context: ExecutionContext, info: ClassLoadingAdapter.Companion.ClassInfoForEvaluator): Boolean {
-        return info.isCompilingEvaluatorPreferred && context.classLoader != null && !context.debugProcess.isDexDebug()
+        return info.isCompilingEvaluatorPreferred && context.classLoader != null && !DexDebugFacility.isDex(context.debugProcess)
     }
 
     override fun loadClasses(context: ExecutionContext, classes: Collection<ClassToLoad>): ClassLoaderReference {

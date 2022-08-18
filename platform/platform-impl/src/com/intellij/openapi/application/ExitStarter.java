@@ -9,7 +9,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 
 final class ExitStarter extends ApplicationStarterBase {
   private ExitStarter() {
@@ -42,7 +41,7 @@ final class ExitStarter extends ApplicationStarterBase {
 
   @NotNull
   @Override
-  protected Future<CliResult> processCommand(@NotNull List<String> args, @Nullable String currentDirectory) {
+  protected CompletableFuture<CliResult> processCommand(@NotNull List<String> args, @Nullable String currentDirectory) {
     Application application = ApplicationManager.getApplication();
     LaterInvocator.forceLeaveAllModals();
     application.invokeLater(() -> {

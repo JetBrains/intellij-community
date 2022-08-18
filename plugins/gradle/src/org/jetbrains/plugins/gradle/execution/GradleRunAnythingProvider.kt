@@ -12,7 +12,7 @@ import com.intellij.ide.actions.runAnything.getPath
 import com.intellij.ide.util.gotoByName.GotoClassModel2
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.findProjectData
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.findProjectNode
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil.substringBeforeLast
@@ -146,7 +146,7 @@ class GradleRunAnythingProvider : RunAnythingCommandLineProvider() {
   private fun ProjectContext.getLinkedProjectPath(): String? {
     return GradleSettings.getInstance(project)
       .linkedProjectsSettings.firstOrNull()
-      ?.let { findProjectData(project, SYSTEM_ID, it.externalProjectPath) }
+      ?.let { findProjectNode(project, SYSTEM_ID, it.externalProjectPath) }
       ?.data?.linkedExternalProjectPath
   }
 

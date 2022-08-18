@@ -1,8 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.enhancedSwitch;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -25,7 +28,7 @@ public class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspecti
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitSwitchLabeledRuleStatement(PsiSwitchLabeledRuleStatement statement) {
+      public void visitSwitchLabeledRuleStatement(@NotNull PsiSwitchLabeledRuleStatement statement) {
         super.visitSwitchLabeledRuleStatement(statement);
 
         PsiStatement body = statement.getBody();
@@ -51,7 +54,6 @@ public class RedundantLabeledSwitchRuleCodeBlockInspection extends LocalInspecti
         if (element != null) {
           holder.registerProblem(element,
                                  message("inspection.labeled.switch.rule.redundant.code.block.message"),
-                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                                  new UnwrapCodeBlockFix());
         }
       }

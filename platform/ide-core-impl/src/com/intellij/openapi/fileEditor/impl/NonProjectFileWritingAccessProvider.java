@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.lightEdit.LightEdit;
@@ -136,7 +136,7 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
       if(each.isNotWritable(file)) return false;
     }
 
-    ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(project);
+    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
     if (fileIndex.isInContent(file)) return true;
     if (!Registry.is("ide.hide.excluded.files") && fileIndex.isExcluded(file) && !fileIndex.isUnderIgnored(file)) return true;
 

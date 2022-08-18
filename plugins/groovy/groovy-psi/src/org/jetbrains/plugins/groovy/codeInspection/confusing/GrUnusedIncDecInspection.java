@@ -104,13 +104,11 @@ public class GrUnusedIncDecInspection extends BaseInspection {
         if (expression.isPostfix() && PsiUtil.isExpressionUsed(expression)) {
           registerError(expression.getOperationToken(),
                         GroovyBundle.message("unused.0", expression.getOperationToken().getText()),
-                        new LocalQuickFix[]{new ReplacePostfixIncWithPrefixFix(expression), new RemoveIncOrDecFix(expression)},
-                        ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+                        new LocalQuickFix[]{new ReplacePostfixIncWithPrefixFix(expression), new RemoveIncOrDecFix(expression)}, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         }
         else if (!PsiUtil.isExpressionUsed(expression)) {
           registerError(expression.getOperationToken(),
-                        GroovyBundle.message("unused.0", expression.getOperationToken().getText()), LocalQuickFix.EMPTY_ARRAY,
-                        ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+                        GroovyBundle.message("unused.0", expression.getOperationToken().getText()), LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         }
       }
     }
@@ -159,29 +157,6 @@ public class GrUnusedIncDecInspection extends BaseInspection {
           .createExpressionFromText(expr.getOperationToken().getText() + expr.getOperand().getText());
 
         expr.replaceWithExpression(prefix, true);
-      }
-    }
-
-    private static class ReplaceIncDecWithBinary implements LocalQuickFix {
-      private final @IntentionFamilyName String myMessage;
-
-      ReplaceIncDecWithBinary(GrUnaryExpression expression) {
-        String opToken = expression.getOperationToken().getText();
-        myMessage = GroovyBundle.message("replace.0.with.1", opToken, opToken.substring(0, 1));
-      }
-
-      @NotNull
-      @Override
-      public String getFamilyName() {
-        return myMessage;
-      }
-
-      @Override
-      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        GrUnaryExpression expr = findUnaryExpression(descriptor);
-        GrExpression newExpr = GroovyPsiElementFactory.getInstance(project)
-          .createExpressionFromText(expr.getOperand().getText() + expr.getOperationToken().getText().charAt(0) + "1");
-        expr.replaceWithExpression(newExpr, true);
       }
     }
   }

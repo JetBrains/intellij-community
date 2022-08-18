@@ -46,7 +46,7 @@ public class JavaLiteralExpressionElementType extends JavaStubElementType<PsiLit
 
   @NotNull
   @Override
-  public PsiLiteralStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement parentStub) {
+  public PsiLiteralStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
     return new PsiLiteralStub(parentStub, RecordUtil.intern(tree.getCharTable(), tree.getChildren(node).get(0)));
   }
 

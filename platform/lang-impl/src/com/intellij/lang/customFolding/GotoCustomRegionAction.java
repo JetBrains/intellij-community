@@ -25,9 +25,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author Rustam Vishnyakov
- */
 public class GotoCustomRegionAction extends AnAction implements DumbAware, PopupAction {
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
@@ -66,6 +63,11 @@ public class GotoCustomRegionAction extends AnAction implements DumbAware, Popup
     final Project project = e.getProject();
     boolean isAvailable = editor != null && project != null;
     presentation.setEnabledAndVisible(isAvailable);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @NotNull

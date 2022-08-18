@@ -3,6 +3,21 @@ from _typeshed import SupportsRead
 from importlib.abc import Loader, MetaPathFinder, PathEntryFinder
 from typing import IO, Any, Callable, Iterable, Iterator, NamedTuple
 
+__all__ = [
+    "get_importer",
+    "iter_importers",
+    "get_loader",
+    "find_loader",
+    "walk_packages",
+    "iter_modules",
+    "get_data",
+    "ImpImporter",
+    "ImpLoader",
+    "read_code",
+    "extend_path",
+    "ModuleInfo",
+]
+
 class ModuleInfo(NamedTuple):
     module_finder: MetaPathFinder | PathEntryFinder
     name: str

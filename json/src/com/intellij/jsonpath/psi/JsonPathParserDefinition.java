@@ -16,12 +16,10 @@ import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.jsonpath.psi.JsonPathTokenSets.JSONPATH_STRINGS_SET;
+
 public final class JsonPathParserDefinition implements ParserDefinition {
   public static final IFileElementType FILE = new IFileElementType(JsonPathLanguage.INSTANCE);
-  public static final TokenSet STRINGS = TokenSet.create(
-    JsonPathTypes.SINGLE_QUOTED_STRING,
-    JsonPathTypes.DOUBLE_QUOTED_STRING
-  );
 
   @Override
   public @NotNull Lexer createLexer(Project project) {
@@ -50,7 +48,7 @@ public final class JsonPathParserDefinition implements ParserDefinition {
 
   @Override
   public @NotNull TokenSet getStringLiteralElements() {
-    return STRINGS;
+    return JSONPATH_STRINGS_SET;
   }
 
   @Override

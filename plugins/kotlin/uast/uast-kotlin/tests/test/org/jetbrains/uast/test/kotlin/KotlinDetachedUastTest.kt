@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.uast.test.kotlin
 
@@ -12,9 +12,9 @@ import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
+import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclaration
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
-import org.jetbrains.kotlin.idea.caches.lightClasses.KtLightClassForDecompiledDeclaration
-import org.jetbrains.kotlin.idea.core.copied
+import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -140,8 +140,7 @@ class KotlinDetachedUastTest : KotlinLightCodeInsightFixtureTestCase() {
         """
         )
 
-        val anonymousClass = detachedClass.findUElementByTextFromPsi<UObjectLiteralExpression>("object : MyClass() {}")
-            .let { uObjectLiteralExpression -> uObjectLiteralExpression.declaration }
+        val anonymousClass = detachedClass.findUElementByTextFromPsi<UObjectLiteralExpression>("object : MyClass() {}").declaration
         TestCase.assertEquals(
             "UClass (name = null), UObjectLiteralExpression, UField (name = obj), UClass (name = MyClass), UFile (package = )",
             generateSequence<UElement>(anonymousClass, { it.uastParent }).joinToString { it.asLogString() })

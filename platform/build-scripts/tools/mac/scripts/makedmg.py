@@ -1,4 +1,5 @@
 #!/usr/local/bin/python3 -w
+import os.path
 import sys
 import struct
 
@@ -41,11 +42,8 @@ with DSStore.open(f"/Volumes/{mountName}/.DS_Store", "w+") as d:
     d['.']['fwvh'] = ('shor', 296)
     d['.']['ICVO'] = ('bool', True)
 
-    alias = Alias.for_file(f"/Volumes/{mountName}/.background/{bgPic}")
-    d['.']['icvp'] = {
+    icvp = {
         'viewOptionsVersion': 1,
-        'backgroundType': 2,
-        'backgroundImageAlias': alias.to_bytes(),
         'backgroundColorRed': 1.0,
         'backgroundColorGreen': 1.0,
         'backgroundColorBlue': 1.0,
@@ -62,6 +60,19 @@ with DSStore.open(f"/Volumes/{mountName}/.DS_Store", "w+") as d:
         'scrollPositionX': 0.0,
         'scrollPositionY': 0.0
     }
+
+    bg_path = f"/Volumes/{mountName}/.background/{bgPic}"
+    if os.path.exists(bg_path):
+        print(f"Using background file {bg_path}")
+        alias = Alias.for_file(bg_path)
+        icvp['backgroundType'] = 2
+        icvp['backgroundImageAlias'] = alias.to_bytes()
+    else:
+        print(f"No background file found at {bg_path}")
+        icvp['backgroundType'] = 1
+
+    d['.']['icvp'] = icvp
+
     d['.']['icvt'] = ('shor', 12)
 
     d[f"{name}.app"]["Iloc"] = (110, 167)

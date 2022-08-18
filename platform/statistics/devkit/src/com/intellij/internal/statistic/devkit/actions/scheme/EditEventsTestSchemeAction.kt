@@ -12,6 +12,7 @@ import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidatio
 import com.intellij.internal.statistic.eventLog.validator.storage.ValidationTestRulesPersistedStorage
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -81,11 +82,13 @@ class EditEventsTestSchemeAction(private val recorderId: String = StatisticsDevK
         if (indicator.isCanceled) return null
         val productionGroups = testSchemeStorage.loadProductionGroups()
         if (indicator.isCanceled) return null
-        val eventsScheme = EventsSchemeBuilder.buildEventsScheme()
+        val eventsScheme = EventsSchemeBuilder.buildEventsScheme(recorderId)
         return EventsTestScheme(localGroups, productionGroups, eventsScheme)
       }
     })
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = StatisticsRecorderUtil.isTestModeEnabled(recorderId)

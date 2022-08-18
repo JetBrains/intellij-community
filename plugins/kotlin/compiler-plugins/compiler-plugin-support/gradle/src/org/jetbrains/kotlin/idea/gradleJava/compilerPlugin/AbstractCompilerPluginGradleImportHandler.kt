@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.gradleJava.compilerPlugin
 
@@ -37,7 +37,7 @@ abstract class AbstractAnnotationBasedCompilerPluginGradleImportHandler<T : Anno
 abstract class AbstractCompilerPluginGradleImportHandler<T> : GradleProjectImportHandler {
     abstract val compilerPluginId: String
     abstract val pluginName: String
-    abstract val pluginJarFileFromIdea: File
+    abstract val pluginJarFileFromIdea: String
     abstract val modelKey: Key<T>
 
     override fun importBySourceSet(facet: KotlinFacet, sourceSetNode: DataNode<GradleSourceSetData>) {
@@ -62,7 +62,7 @@ abstract class AbstractCompilerPluginGradleImportHandler<T> : GradleProjectImpor
 
         // For now we can't use plugins from Gradle cause they're shaded and may have an incompatible version.
         // So we use ones from the IDEA plugin.
-        val classpath = listOf(pluginJarFileFromIdea.absolutePath)
+        val classpath = listOf(pluginJarFileFromIdea)
 
         return CompilerPluginSetup(options, classpath)
     }

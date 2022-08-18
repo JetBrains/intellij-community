@@ -29,7 +29,7 @@ public class PsiElementConcatenationInspection extends AbstractBaseJavaLocalInsp
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         String methodName = call.getMethodExpression().getReferenceName();
         if(methodName == null || !methodName.startsWith("create")) return;
         PsiExpression[] args = call.getArgumentList().getExpressions();

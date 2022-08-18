@@ -10,9 +10,9 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.PopupTitle;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,12 +26,12 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
                                         SpeedSearchFilter<PopupFactoryImpl.ActionItem> {
   private static final Logger LOG = Logger.getInstance(ActionPopupStep.class);
 
-  private final List<PopupFactoryImpl.ActionItem> myItems;
+  private final @NotNull List<PopupFactoryImpl.ActionItem> myItems;
   private final @NlsContexts.PopupTitle @Nullable String myTitle;
-  private final Supplier<? extends DataContext> myContext;
-  private final String myActionPlace;
+  private final @NotNull Supplier<? extends DataContext> myContext;
+  private final @NotNull String myActionPlace;
   private final boolean myEnableMnemonics;
-  private final PresentationFactory myPresentationFactory;
+  private final @Nullable PresentationFactory myPresentationFactory;
   private final int myDefaultOptionIndex;
   private final boolean myAutoSelectionEnabled;
   private final boolean myShowDisabledActions;
@@ -132,6 +132,10 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     return myItems;
   }
 
+  public List<PopupFactoryImpl.InlineActionItem> getInlineActions(PopupFactoryImpl.ActionItem value) {
+    return value.getInlineActions();
+  }
+
   @Override
   public boolean isSelectable(final PopupFactoryImpl.ActionItem value) {
     return value.isEnabled();
@@ -203,12 +207,12 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   }
 
   @Override
-  public PopupStep<?> onChosen(final PopupFactoryImpl.ActionItem actionChoice, final boolean finalChoice) {
-    return onChosen(actionChoice, finalChoice, 0);
+  public PopupStep<?> onChosen(PopupFactoryImpl.ActionItem actionChoice, boolean finalChoice) {
+    return onChosen(actionChoice, finalChoice, null);
   }
 
   @Override
-  public PopupStep<?> onChosen(@NotNull PopupFactoryImpl.ActionItem item, boolean finalChoice, int eventModifiers) {
+  public @Nullable PopupStep<?> onChosen(PopupFactoryImpl.ActionItem item, boolean finalChoice, @Nullable InputEvent inputEvent) {
     if (!item.isEnabled()) return FINAL_CHOICE;
     AnAction action = item.getAction();
     if (action instanceof ActionGroup && (!finalChoice || !item.isPerformGroup())) {
@@ -217,7 +221,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
         false, false, myContext, myActionPlace, myPreselectActionCondition, -1, myPresentationFactory);
     }
     else {
-      myFinalRunnable = () -> performAction(action, eventModifiers);
+      myFinalRunnable = () -> performAction(action, inputEvent);
       return FINAL_CHOICE;
     }
   }
@@ -228,25 +232,28 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     return !(item.getAction() instanceof ActionGroup) || item.isPerformGroup();
   }
 
-  @ApiStatus.Internal
-  public static void performAction(@NotNull Supplier<? extends DataContext> contextSupplier, @NotNull String actionPlace,
-                                   @NotNull AnAction action, int modifiers, @Nullable InputEvent inputEvent) {
-    DataContext dataContext = contextSupplier.get();
-    AnActionEvent event = new AnActionEvent(
-      inputEvent, dataContext, actionPlace, action.getTemplatePresentation().clone(),
-      ActionManager.getInstance(), modifiers);
-    event.setInjectedContext(action.isInInjectedContext());
-    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-      ActionUtil.performActionDumbAwareWithCallbacks(action, event);
-    }
+  public void performAction(@NotNull AnAction action, @Nullable InputEvent inputEvent) {
+    ActionUtil.invokeAction(action, myContext.get(), myActionPlace, inputEvent, null);
   }
 
-  public void performAction(@NotNull AnAction action, int modifiers) {
-    performAction(action, modifiers, null);
-  }
-
-  public void performAction(@NotNull AnAction action, int modifiers, InputEvent inputEvent) {
-    performAction(myContext, myActionPlace, action, modifiers, inputEvent);
+  public void updateStepItems(@NotNull JComponent component) {
+    DataContext dataContext = Utils.wrapDataContext(myContext.get());
+    PresentationFactory presentationFactory = myPresentationFactory != null ? myPresentationFactory : new PresentationFactory();
+    List<PopupFactoryImpl.ActionItem> values = getValues();
+    Utils.updateComponentActions(
+      component, ContainerUtil.map(values, PopupFactoryImpl.ActionItem::getAction),
+      dataContext, myActionPlace, presentationFactory,
+      () -> {
+        for (PopupFactoryImpl.ActionItem actionItem : values) {
+          Presentation presentation = presentationFactory.getPresentation(actionItem.getAction());
+          actionItem.updateFromPresentation(presentation, myActionPlace);
+          for (PopupFactoryImpl.InlineActionItem inlineActionItem : actionItem.getInlineActions()) {
+            presentation = presentationFactory.getPresentation(inlineActionItem.getAction());
+            inlineActionItem.updateFromPresentation(presentation, myActionPlace);
+          }
+        }
+      }
+    );
   }
 
   @Override

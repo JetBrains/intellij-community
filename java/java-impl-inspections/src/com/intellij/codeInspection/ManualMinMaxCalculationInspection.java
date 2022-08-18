@@ -44,14 +44,14 @@ public class ManualMinMaxCalculationInspection extends AbstractBaseJavaLocalInsp
     return new JavaElementVisitor() {
 
       @Override
-      public void visitIfStatement(PsiIfStatement statement) {
+      public void visitIfStatement(@NotNull PsiIfStatement statement) {
         ConditionalModel model = IfConditionalModel.from(statement, false);
         if (model == null) return;
         visitConditional(statement.getFirstChild(), model);
       }
 
       @Override
-      public void visitConditionalExpression(PsiConditionalExpression expression) {
+      public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
         ConditionalModel model = ConditionalModel.from(expression);
         if (model == null) return;
         visitConditional(expression, model);
@@ -122,28 +122,31 @@ public class ManualMinMaxCalculationInspection extends AbstractBaseJavaLocalInsp
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
+      final CommentTracker ct = new CommentTracker();
       if (element instanceof PsiConditionalExpression) {
         ConditionalModel model = ConditionalModel.from((PsiConditionalExpression)element);
         if (model == null) return;
-        String replacement = createReplacement(model.getCondition());
+        String replacement = createReplacement(model.getCondition(), ct);
         if (replacement == null) return;
-        PsiReplacementUtil.replaceExpression((PsiExpression)element, replacement, new CommentTracker());
+        PsiReplacementUtil.replaceExpression((PsiExpression)element, replacement, ct);
         return;
       }
       PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(element, PsiIfStatement.class);
       if (ifStatement == null) return;
       IfConditionalModel model = IfConditionalModel.from(ifStatement, false);
       if (model == null) return;
-      String replacement = createReplacement(model.getCondition());
+      String replacement = createReplacement(model.getCondition(), ct);
       if (replacement == null) return;
       PsiStatement elseBranch = model.getElseBranch();
       final PsiElement result;
       if (elseBranch instanceof PsiDeclarationStatement) {
-        result = replace(ifStatement, elseBranch, model.getElseExpression(), replacement);
+        PsiReplacementUtil.replaceExpression(model.getElseExpression(), replacement, new CommentTracker());
+        result = PsiReplacementUtil.replaceStatement(ifStatement, ct.text(elseBranch), ct);
         elseBranch.delete();
       }
       else {
-        result = replace(ifStatement, model.getThenBranch(), model.getThenExpression(), replacement);
+        PsiReplacementUtil.replaceExpression(model.getThenExpression(), replacement, new CommentTracker());
+        result = PsiReplacementUtil.replaceStatement(ifStatement, ct.text(model.getThenBranch()), ct);
         if (!PsiTreeUtil.isAncestor(ifStatement, elseBranch, true)) {
           new CommentTracker().deleteAndRestoreComments(elseBranch);
         }
@@ -151,23 +154,14 @@ public class ManualMinMaxCalculationInspection extends AbstractBaseJavaLocalInsp
       SimplifiableIfStatementInspection.tryJoinDeclaration(result);
     }
 
-    private static @NotNull PsiElement replace(@NotNull PsiIfStatement ifStatement,
-                                               @NotNull PsiStatement branch, @NotNull PsiExpression toReplace,
-                                               @NotNull String replacement) {
-      PsiReplacementUtil.replaceExpression(toReplace, replacement, new CommentTracker());
-      CommentTracker tracker = new CommentTracker();
-      tracker.text(branch);
-      return PsiReplacementUtil.replaceStatement(ifStatement, branch.getText(), tracker);
-    }
-
     @Nullable
-    private String createReplacement(@NotNull PsiExpression expression) {
+    private String createReplacement(@NotNull PsiExpression expression, CommentTracker ct) {
       PsiBinaryExpression condition = getCondition(expression);
       if (condition == null) return null;
       PsiExpression left = condition.getLOperand();
       PsiExpression right = condition.getROperand();
       if (right == null) return null;
-      return CommonClassNames.JAVA_LANG_MATH + (myUseMathMin ? ".min" : ".max") + "(" + left.getText() + "," + right.getText() + ")";
+      return CommonClassNames.JAVA_LANG_MATH + (myUseMathMin ? ".min" : ".max") + "(" + ct.text(left) + "," + ct.text(right) + ")";
     }
   }
 }

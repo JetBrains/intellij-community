@@ -52,7 +52,7 @@ class TodoViewChangesSupportImpl : TodoViewChangesSupport() {
     private var myIsVisible = false
 
     override fun setVisible(value: Boolean) {
-      myIsVisible = value;
+      myIsVisible = value
     }
 
     override fun directoryMappingChanged() {

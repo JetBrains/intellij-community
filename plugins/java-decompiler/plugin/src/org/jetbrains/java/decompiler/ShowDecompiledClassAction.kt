@@ -3,10 +3,10 @@ package org.jetbrains.java.decompiler
 
 import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.ide.util.PsiNavigationSupport
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiClass
@@ -15,7 +15,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilBase
 
-class ShowDecompiledClassAction : AnAction(IdeaDecompilerBundle.message("action.show.decompiled.name")), UpdateInBackground {
+class ShowDecompiledClassAction : AnAction(IdeaDecompilerBundle.message("action.show.decompiled.name")) {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun update(e: AnActionEvent) {
     val psiElement = getPsiElement(e)
     val visible = psiElement?.containingFile is PsiClassOwner

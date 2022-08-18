@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.messages;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -18,7 +18,7 @@ import java.lang.annotation.Target;
 @ApiStatus.NonExtendable
 public class Topic<L> {
   /**
-   * Indicates that messages the of annotated topic are published to a application level message bus.
+   * Indicates that messages the of annotated topic are published to an application level message bus.
    */
   @Retention(RetentionPolicy.SOURCE)
   @Target(ElementType.FIELD)
@@ -51,7 +51,6 @@ public class Topic<L> {
     this(listenerClass.getSimpleName(), listenerClass, broadcastDirection);
   }
 
-  @ApiStatus.Experimental
   public Topic(@NotNull Class<L> listenerClass, @NotNull BroadcastDirection broadcastDirection, boolean immediateDelivery) {
     myDisplayName = listenerClass.getSimpleName();
     myListenerClass = listenerClass;
@@ -107,7 +106,7 @@ public class Topic<L> {
     return new Topic<>(displayName, listenerClass);
   }
 
-  public static @NotNull <L> Topic<L> create(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass, BroadcastDirection direction) {
+  public static @NotNull <L> Topic<L> create(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass, @NotNull BroadcastDirection direction) {
     return new Topic<>(displayName, listenerClass, direction);
   }
 
@@ -152,11 +151,10 @@ public class Topic<L> {
     /**
      * Use only for application level publishers. To avoid collection subscribers from modules.
      */
-    @ApiStatus.Experimental
     TO_DIRECT_CHILDREN,
 
     /**
-     * No broadcasting is performed for the
+     * No broadcasting is performed.
      */
     NONE,
 

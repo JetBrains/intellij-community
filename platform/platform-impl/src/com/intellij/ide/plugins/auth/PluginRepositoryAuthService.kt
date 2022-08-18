@@ -1,24 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.auth
 
-import com.google.common.net.UrlEscapers
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.HttpRequests
 import org.jetbrains.annotations.NotNull
-import java.net.URI
-import java.util.*
 
 /**
- * Collects custom auth headers from EPs and validates them
- *
- * This service keeps track of [PluginRepositoryAuthProvider] injected headers to ensure that:
- * - each contributor handles only 1 domain
- * - each domain has no more than 1 contributor
+ * Collects custom auth headers from EPs and optionally provides a HttpRequests.ConnectionTuner with injected headers
  */
 @Service(Service.Level.APP)
 class PluginRepositoryAuthService {
-  private val contributorToDomainCache = Collections.synchronizedMap(WeakHashMap<PluginRepositoryAuthProvider, String>())
 
   val connectionTuner = HttpRequests.ConnectionTuner { connection ->
     try {
@@ -26,66 +18,40 @@ class PluginRepositoryAuthService {
         .forEach { (k, v) -> connection.addRequestProperty(k, v) }
     }
     catch (e: Exception) {
-      LOG.error(e)
+      LOG.warn("Filed to inject headers into request(${connection.url})", e)
     }
   }
 
   @NotNull
   fun getAllCustomHeaders(@NotNull url: String): Map<String, String> {
     val allContributors = PluginRepositoryAuthProvider.EP_NAME.extensionsIfPointIsRegistered
+    val matchingContributors = allContributors.filter { it.canHandleSafe(url) }
 
-    val domain = getDomainFromUrl(url) ?: return cancelWithWarning("Can't get domain from url: $url")
-
-    if (allContributors.isEmpty())
+    if (matchingContributors.isEmpty())
       return emptyMap()
-    if (!hasNoOrSingleContributor(domain, allContributors))
-      return cancelWithWarning("Multiple contributors found for domain: $domain")
-    if (allContributors.any { !handlesSingleDomain(it, domain) })
-      return cancelWithWarning(
-        "Contributor ${allContributors.find { !handlesSingleDomain(it, domain) }} tried to inject into multiple domains")
+    if (matchingContributors.size > 1)
+      LOG.warn("Multiple contributors tried to inject headers in to url($url): ${matchingContributors.joinToString { it.javaClass.simpleName }}")
 
-    val matchingContributor = allContributors.find { it.canHandleSafe(domain) }
-    return matchingContributor
-             ?.also { contributor -> updateCaches(domain, contributor) }
-             ?.getCustomHeadersSafe(url)
-           ?: emptyMap()
-  }
+    val primeCandidate = matchingContributors.first()
 
-  private fun hasNoOrSingleContributor(@NotNull domain: String, @NotNull contributors: List<PluginRepositoryAuthProvider>): Boolean {
-    return contributors.count { it.canHandleSafe(domain) } <= 1
-  }
-
-  private fun handlesSingleDomain(@NotNull contributor: PluginRepositoryAuthProvider, @NotNull domain: String): Boolean {
-    val lastKnownDomain = contributorToDomainCache[contributor]
-    return domain == lastKnownDomain || lastKnownDomain == null
-  }
-
-  private fun getDomainFromUrl(url: String): String? = URI(UrlEscapers.urlFragmentEscaper().escape(url)).host
-
-  private fun updateCaches(@NotNull url: String, @NotNull contributor: PluginRepositoryAuthProvider) {
-    contributorToDomainCache[contributor] = url
-  }
-
-  private fun cancelWithWarning(message: String): Map<String, String> {
-    LOG.warn(message)
-    return emptyMap()
+    return primeCandidate.getCustomHeadersSafe(url)
   }
 }
 
 private val LOG = logger<PluginRepositoryAuthService>()
 
-private fun PluginRepositoryAuthProvider.canHandleSafe(domain: String): Boolean = withLogging(false) { canHandle(domain) }
+private fun PluginRepositoryAuthProvider.canHandleSafe(url: String): Boolean = try {
+    canHandle(url)
+  } catch (e: Exception) {
+    LOG.warn("Error while checking if a provider can handle URL($url), assuming false", e)
+    false
+  }
 
 private fun PluginRepositoryAuthProvider.getCustomHeadersSafe(url: String): Map<String, String> {
-  return withLogging(emptyMap()) { getAuthHeaders(url) }
-}
-
-private inline fun <T> withLogging(default: T, f: () -> T): T {
   return try {
-    f()
-  }
-  catch (e: Exception) {
-    LOG.error(e)
-    default
+    getAuthHeaders(url)
+  } catch (e: Exception) {
+    LOG.warn("Failed to get custom headers from provider for URL($url), returning emptyMap()", e)
+    emptyMap()
   }
 }

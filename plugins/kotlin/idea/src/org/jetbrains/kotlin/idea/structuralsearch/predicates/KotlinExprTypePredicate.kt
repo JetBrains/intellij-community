@@ -13,11 +13,12 @@ import com.intellij.structuralsearch.StructuralSearchUtil
 import com.intellij.structuralsearch.impl.matcher.MatchContext
 import com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate
+import com.intellij.util.castSafelyTo
 import org.jetbrains.kotlin.builtins.getReceiverTypeFromFunctionType
-import org.jetbrains.kotlin.idea.base.utils.fqname.getKotlinFqName
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
+import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
-import org.jetbrains.kotlin.idea.search.allScope
 import org.jetbrains.kotlin.idea.structuralsearch.resolveKotlinType
 import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
@@ -47,7 +48,7 @@ class KotlinExprTypePredicate(
         val type = when {
             node is KtDeclaration -> node.resolveKotlinType()
             node is KtExpression -> try {
-                node.resolveType()
+                node.resolveType() ?: node.parent?.castSafelyTo<KtDotQualifiedExpression>()?.resolveType()
             } catch (e: Exception) {
                 if (e is ControlFlowException) throw e
                 null
@@ -170,22 +171,22 @@ class KotlinExprTypePredicate(
 
             // Kotlin indexes
             when {
-                fq -> if (KotlinFullClassNameIndex.getInstance()[className, project, scope].any {
-                        it.getKotlinFqName() == type.fqName
-                    }) return true
-                else -> if (KotlinClassShortNameIndex.getInstance()[className, project, scope].any {
-                        it.getKotlinFqName() == type.fqName
-                    }) return true
+                fq -> if (KotlinFullClassNameIndex.get(className, project, scope).any {
+                    it.kotlinFqName == type.fqName
+                  }) return true
+                else -> if (KotlinClassShortNameIndex.get(className, project, scope).any {
+                    it.kotlinFqName == type.fqName
+                  }) return true
             }
 
             // Java indexes
             when {
                 fq -> if (JavaFullClassNameIndex.getInstance()[className, project, scope].any {
-                        it.getKotlinFqName() == type.fqName
-                    }) return true
+                    it.kotlinFqName == type.fqName
+                  }) return true
                 else -> if (JavaShortClassNameIndex.getInstance()[className, project, scope].any {
-                        it.getKotlinFqName() == type.fqName
-                    }) return true
+                    it.kotlinFqName == type.fqName
+                  }) return true
             }
 
             return false

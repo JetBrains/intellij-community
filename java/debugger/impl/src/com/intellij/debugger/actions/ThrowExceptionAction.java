@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.debugger.actions;
 
@@ -16,6 +14,7 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -80,7 +79,6 @@ public class ThrowExceptionAction extends DebuggerAction {
           showError(debugProcess.getProject(), JavaDebuggerBundle.message("error.throw.exception", e.getLocalizedMessage()));
           return;
         }
-        //noinspection SSBasedInspection
         SwingUtilities.invokeLater(() -> {
           if (dialog != null) {
             dialog.close(DialogWrapper.OK_EXIT_CODE);
@@ -134,5 +132,10 @@ public class ThrowExceptionAction extends DebuggerAction {
     else {
       e.getPresentation().setVisible(enable);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

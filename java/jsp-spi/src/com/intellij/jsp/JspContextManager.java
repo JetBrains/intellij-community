@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.jsp;
 
@@ -13,7 +13,7 @@ import java.util.HashSet;
 
 public abstract class JspContextManager {
 
-  public static JspContextManager getInstance(Project project) {
+  public static JspContextManager getInstance(@NotNull Project project) {
     return project.getService(JspContextManager.class);
   }
 
@@ -21,15 +21,11 @@ public abstract class JspContextManager {
 
   public abstract void setContextFile(@NotNull PsiFile file, @Nullable BaseJspFile contextFile);
 
-  @Nullable
-  public abstract
-  BaseJspFile getContextFile(@NotNull PsiFile file);
+  public abstract @Nullable BaseJspFile getContextFile(@NotNull PsiFile file);
 
-  @Nullable
-  public abstract JspFile getConfiguredContextFile(@NotNull PsiFile file);
+  public abstract @Nullable JspFile getConfiguredContextFile(@NotNull PsiFile file);
 
-  @NotNull
-  public
+  public @NotNull
   BaseJspFile getRootContextFile(@NotNull BaseJspFile file) {
     BaseJspFile rootContext = file;
     HashSet<BaseJspFile> recursionPreventer = new HashSet<>();

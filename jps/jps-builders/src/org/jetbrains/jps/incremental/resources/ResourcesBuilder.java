@@ -104,26 +104,29 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
     if (outputRoot == null) {
       return;
     }
-    final String sourceRootPath = FileUtil.toSystemIndependentName(rd.getRootFile().getAbsolutePath());
-    final String relativePath = FileUtil.getRelativePath(sourceRootPath, FileUtil.toSystemIndependentName(file.getPath()), '/');
+    final String sourceRootPath = FileUtil.toCanonicalPath(rd.getRootFile().getAbsolutePath());
+    final String relativePath = FileUtil.getRelativePath(sourceRootPath, FileUtil.toCanonicalPath(file.getPath()), '/');
     final String prefix = rd.getPackagePrefix();
 
     final StringBuilder targetPath = new StringBuilder();
-    targetPath.append(FileUtil.toSystemIndependentName(outputRoot.getPath()));
+    targetPath.append(FileUtil.toCanonicalPath(outputRoot.getPath()));
     if (prefix.length() > 0) {
       targetPath.append('/').append(prefix.replace('.', '/'));
     }
     targetPath.append('/').append(relativePath);
 
-    context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.copying.resources.0",
-                                                                      rd.getTarget().getModule().getName())));
+    context.processMessage(
+      new ProgressMessage(JpsBuildBundle.message("progress.message.copying.resources.0", rd.getTarget().getModule().getName()))
+    );
     try {
       final File targetFile = new File(targetPath.toString());
       FSOperations.copy(file, targetFile);
       outputConsumer.registerOutputFile(targetFile, Collections.singletonList(file.getPath()));
     }
     catch (Exception e) {
-      context.processMessage(new CompilerMessage(getBuilderName(), BuildMessage.Kind.ERROR, CompilerMessage.getTextFromThrowable(e)));
+      context.processMessage(
+        new CompilerMessage(getBuilderName(), BuildMessage.Kind.ERROR, CompilerMessage.getTextFromThrowable(e))
+      );
     }
   }
 

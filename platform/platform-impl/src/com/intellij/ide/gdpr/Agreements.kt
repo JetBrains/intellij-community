@@ -1,8 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("Agreements")
 package com.intellij.ide.gdpr
 
-import com.intellij.idea.Main
+import com.intellij.idea.AppExitCodes
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
@@ -36,7 +36,7 @@ private fun applyUserAgreement(ui: AgreementUi, agreement: EndUserAgreement.Docu
     .setDeclineButton(bundle.getString("userAgreement.dialog.exit")) {
       val application = ApplicationManager.getApplication()
       if (application == null) {
-        exitProcess(Main.PRIVACY_POLICY_REJECTION)
+        exitProcess(AppExitCodes.PRIVACY_POLICY_REJECTION)
       }
       else {
         application.exit(true, true, false)

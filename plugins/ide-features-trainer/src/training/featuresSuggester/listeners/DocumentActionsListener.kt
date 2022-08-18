@@ -8,7 +8,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.guessProjectForFile
-import training.featuresSuggester.SuggestingUtils
+import com.intellij.testFramework.LightVirtualFile
 import training.featuresSuggester.SuggestingUtils.handleAction
 import training.featuresSuggester.TextFragment
 import training.featuresSuggester.actions.*
@@ -17,6 +17,8 @@ import java.lang.ref.WeakReference
 class DocumentActionsListener : BulkAwareDocumentListener {
 
   override fun beforeDocumentChangeNonBulk(event: DocumentEvent) {
+    val virtualFile = FileDocumentManager.getInstance().getFile(event.document) ?: return
+    if (virtualFile is LightVirtualFile) return
     // Store in a weak reference, otherwise PsiDocumentManagerImplTest.testDoNotLeakForgottenUncommittedDocument will fail
     val eventRef = WeakReference(event)
     runInEdt {
@@ -29,6 +31,8 @@ class DocumentActionsListener : BulkAwareDocumentListener {
   }
 
   override fun documentChangedNonBulk(event: DocumentEvent) {
+    val virtualFile = FileDocumentManager.getInstance().getFile(event.document) ?: return
+    if (virtualFile is LightVirtualFile) return
     // Store in a weak reference, otherwise PsiDocumentManagerImplTest.testDoNotLeakForgottenUncommittedDocument will fail
     val eventRef = WeakReference(event)
     runInEdt {
@@ -45,7 +49,6 @@ class DocumentActionsListener : BulkAwareDocumentListener {
     textInsertedActionConstructor: (String, Int, Editor, Long) -> T,
     textRemovedActionConstructor: (TextFragment, Int, Editor, Long) -> T
   ) {
-    if (!SuggestingUtils.isActionsProcessingEnabled) return
     val event = eventRef.get() ?: return
     val document = event.document
     val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return

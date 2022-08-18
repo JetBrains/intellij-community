@@ -373,7 +373,7 @@ public abstract class AbstractListBuilder implements Disposable {
     }
 
     if (shouldAddTopElement()) {
-      final List elems = new ArrayList();
+      final List<NodeDescriptor<?>> elems = new ArrayList<>();
       Object value = parentDescriptor.getValue();
       if (value != null) {
         elems.add(new TopLevelNode(myProject, value));

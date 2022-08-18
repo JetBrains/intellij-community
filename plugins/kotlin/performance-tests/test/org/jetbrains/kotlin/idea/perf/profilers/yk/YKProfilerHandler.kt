@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.perf.profilers.yk
 
@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.idea.perf.profilers.ProfilerConfig
 import org.jetbrains.kotlin.idea.perf.profilers.ProfilerHandler
 import org.jetbrains.kotlin.idea.perf.profilers.ProfilerHandler.Companion.determinePhasePath
 import org.jetbrains.kotlin.idea.perf.profilers.doOrThrow
-import org.jetbrains.kotlin.idea.perf.util.logMessage
+import org.jetbrains.kotlin.idea.performance.tests.utils.logMessage
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.lang.management.ManagementFactory

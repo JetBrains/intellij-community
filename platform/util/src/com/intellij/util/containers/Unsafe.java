@@ -27,6 +27,7 @@ class Unsafe {
   private static final MethodHandle putObject;
   private static final MethodHandle getObject;
   private static final MethodHandle putOrderedObject;
+  private static final MethodHandle copyMemory;
 
   static {
     try {
@@ -44,6 +45,7 @@ class Unsafe {
       putObject = find("putObject", void.class, Object.class, long.class, Object.class);
       getObject = find("getObject", Object.class, Object.class, long.class);
       putOrderedObject = find("putOrderedObject", void.class, Object.class, long.class, Object.class);
+      copyMemory = find("copyMemory", void.class, Object.class, long.class, Object.class, long.class, long.class);
     }
     catch (Throwable t) {
       throw new Error(t);
@@ -59,7 +61,7 @@ class Unsafe {
       .bindTo(unsafe);
   }
 
-  static boolean compareAndSwapInt(@NotNull Object object, long offset, int expected, int value) {
+  public static boolean compareAndSwapInt(Object object, long offset, int expected, int value) {
     try {
       return (boolean)compareAndSwapInt.invokeExact(object, offset, expected, value);
     }
@@ -173,6 +175,16 @@ class Unsafe {
   public static void putOrderedObject(Object o, long offset, Object x) {
     try {
       putOrderedObject.invokeExact(o, offset, x);
+    }
+    catch (Throwable throwable) {
+      throw new RuntimeException(throwable);
+    }
+  }
+  public static void copyMemory(Object srcBase, long srcOffset,
+                                Object destBase, long destOffset,
+                                long bytes) {
+    try {
+      copyMemory.invokeExact(srcBase, srcOffset, destBase, destOffset, bytes);
     }
     catch (Throwable throwable) {
       throw new RuntimeException(throwable);

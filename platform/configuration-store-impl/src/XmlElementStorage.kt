@@ -300,7 +300,6 @@ private fun save(states: StateMap, newLiveStates: Map<String, Element>): Mutable
     // name attribute should be first
     val elementAttributes = element.attributes
     var nameAttribute = element.getAttribute(FileStorageCoreUtil.NAME)
-    @Suppress("SuspiciousEqualsCombination")
     if (nameAttribute != null && nameAttribute === elementAttributes[0] && componentName == nameAttribute.value) {
       // all is OK
     }

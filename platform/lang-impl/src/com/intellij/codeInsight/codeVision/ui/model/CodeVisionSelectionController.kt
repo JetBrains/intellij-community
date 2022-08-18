@@ -7,6 +7,9 @@ import com.intellij.codeInsight.codeVision.ui.renderers.CodeVisionRenderer
 import com.intellij.codeInsight.codeVision.ui.renderers.painters.CodeVisionTheme
 import com.intellij.ide.IdeTooltip
 import com.intellij.ide.IdeTooltipManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
@@ -15,7 +18,6 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.UIUtil
-import com.jetbrains.rd.swing.componentHoverPoint
 import com.jetbrains.rd.util.asProperty
 import com.jetbrains.rd.util.debounceNotNull
 import com.jetbrains.rd.util.lifetime.Lifetime
@@ -35,7 +37,8 @@ class CodeVisionSelectionController private constructor(val lifetime: Lifetime,
                                                         val projectModel: ProjectCodeVisionModel) {
 
   companion object {
-    val map = HashMap<Editor, CodeVisionSelectionController>()
+    val map: HashMap<Editor, CodeVisionSelectionController> = HashMap<Editor, CodeVisionSelectionController>()
+    val logger: Logger = logger<CodeVisionSelectionController>()
 
     fun install(editor: EditorImpl, projectModel: ProjectCodeVisionModel) {
       var controller = map[editor]
@@ -72,7 +75,7 @@ class CodeVisionSelectionController private constructor(val lifetime: Lifetime,
 
             editor.mouseReleased().advise(entryLifetime) {
               val mouseEvent: MouseEvent = it.mouseEvent
-              checkEditorMousePosition(editor.contentComponent.componentHoverPoint()) ?: return@advise
+              checkEditorMousePosition(mouseEvent.point) ?: return@advise
 
               if (mouseEvent.isPopupTrigger) it.consume()
             }
@@ -106,7 +109,7 @@ class CodeVisionSelectionController private constructor(val lifetime: Lifetime,
   private fun entryPressHandler(event: EditorMouseEvent) {
     val mouseEvent: MouseEvent = event.mouseEvent
 
-    val entry = checkEditorMousePosition(editor.contentComponent.componentHoverPoint()) ?: return
+    val entry = checkEditorMousePosition(mouseEvent.point) ?: return
     editor.contentComponent.requestFocus()
     event.consume()
 
@@ -114,9 +117,11 @@ class CodeVisionSelectionController private constructor(val lifetime: Lifetime,
 
     entry.putUserData(codeVisionEntryMouseEventKey, mouseEvent)
     if (SwingUtilities.isLeftMouseButton(mouseEvent)) {
+      logger.trace { "entryPressHandler :: isLeftMouseButton" }
       rangeLensesModel.handleLensClick(entry)
     }
     else if (SwingUtilities.isRightMouseButton(mouseEvent)) {
+      logger.trace { "entryPressHandler :: isRightMouseButton" }
       rangeLensesModel.handleLensRightClick()
     }
   }

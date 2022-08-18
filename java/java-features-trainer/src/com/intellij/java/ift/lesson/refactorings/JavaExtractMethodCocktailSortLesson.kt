@@ -20,7 +20,7 @@ class JavaExtractMethodCocktailSortLesson
       showWarningIfInplaceRefactoringsDisabled()
 
       actionTask("ExtractMethod") {
-        restoreIfModifiedOrMoved()
+        restoreIfModifiedOrMoved(javaSortSample)
         LessonsBundle.message("extract.method.invoke.action", action(it))
       }
 

@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.test.testFramework;
 
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
 import com.intellij.mock.*;
@@ -73,7 +72,7 @@ public abstract class KtParsingTestCase extends KtPlatformLiteFixture {
     protected void setUp() throws Exception {
         super.setUp();
         initApplication();
-        ComponentAdapter component = getApplication().getPicoContainer().getComponentAdapter(ProgressManager.class.getName());
+        ComponentAdapter component = getApplication().getComponentAdapter(ProgressManager.class.getName());
 
         myProject = new MockProjectEx(getTestRootDisposable());
         myPsiManager = new MockPsiManager(myProject);
@@ -296,7 +295,7 @@ public abstract class KtParsingTestCase extends KtPlatformLiteFixture {
     public static void ensureParsed(PsiFile file) {
         file.accept(new PsiElementVisitor() {
             @Override
-            public void visitElement(PsiElement element) {
+            public void visitElement(@NotNull PsiElement element) {
                 element.acceptChildren(this);
             }
         });

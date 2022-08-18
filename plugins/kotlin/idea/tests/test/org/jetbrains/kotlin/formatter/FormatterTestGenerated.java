@@ -443,6 +443,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 public void testArgumentListWrapAsNeeded() throws Exception {
                     runTest("testData/formatter/trailingComma/valueArguments/ArgumentListWrapAsNeeded.after.kt");
                 }
+
+                @TestMetadata("NamedArguments.after.kt")
+                public void testNamedArguments() throws Exception {
+                    runTest("testData/formatter/trailingComma/valueArguments/NamedArguments.after.kt");
+                }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
@@ -455,6 +460,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 @TestMetadata("LambdaValueParameters.after.kt")
                 public void testLambdaValueParameters() throws Exception {
                     runTest("testData/formatter/trailingComma/valueParameters/LambdaValueParameters.after.kt");
+                }
+
+                @TestMetadata("NamedParameters.after.kt")
+                public void testNamedParameters() throws Exception {
+                    runTest("testData/formatter/trailingComma/valueParameters/NamedParameters.after.kt");
                 }
 
                 @TestMetadata("ParameterListChopAsNeeded.after.kt")
@@ -594,9 +604,19 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 runTest("testData/formatter/CallLParenthOnNextLine.after.kt");
             }
 
+            @TestMetadata("CallLParenthOnNextLineAndComma.after.kt")
+            public void testCallLParenthOnNextLineAndComma() throws Exception {
+                runTest("testData/formatter/CallLParenthOnNextLineAndComma.after.kt");
+            }
+
             @TestMetadata("CallRParenthOnNextLine.after.kt")
             public void testCallRParenthOnNextLine() throws Exception {
                 runTest("testData/formatter/CallRParenthOnNextLine.after.kt");
+            }
+
+            @TestMetadata("CallRParenthOnNextLineAndComma.after.kt")
+            public void testCallRParenthOnNextLineAndComma() throws Exception {
+                runTest("testData/formatter/CallRParenthOnNextLineAndComma.after.kt");
             }
 
             @TestMetadata("Cast.after.kt")
@@ -677,6 +697,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             @TestMetadata("DanglingComments.after.kt")
             public void testDanglingComments() throws Exception {
                 runTest("testData/formatter/DanglingComments.after.kt");
+            }
+
+            @TestMetadata("DefinitelyNonNullTypes.after.kt")
+            public void testDefinitelyNonNullTypes() throws Exception {
+                runTest("testData/formatter/DefinitelyNonNullTypes.after.kt");
             }
 
             @TestMetadata("DelegationList.after.kt")
@@ -1665,6 +1690,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 public void testArgumentListWrapAsNeeded() throws Exception {
                     runTest("testData/formatter/trailingComma/valueArguments/ArgumentListWrapAsNeeded.after.inv.kt");
                 }
+
+                @TestMetadata("NamedArguments.after.inv.kt")
+                public void testNamedArguments() throws Exception {
+                    runTest("testData/formatter/trailingComma/valueArguments/NamedArguments.after.inv.kt");
+                }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
@@ -1677,6 +1707,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 @TestMetadata("LambdaValueParameters.after.inv.kt")
                 public void testLambdaValueParameters() throws Exception {
                     runTest("testData/formatter/trailingComma/valueParameters/LambdaValueParameters.after.inv.kt");
+                }
+
+                @TestMetadata("NamedParameters.after.inv.kt")
+                public void testNamedParameters() throws Exception {
+                    runTest("testData/formatter/trailingComma/valueParameters/NamedParameters.after.inv.kt");
                 }
 
                 @TestMetadata("ParameterListChopAsNeeded.after.inv.kt")
@@ -1746,9 +1781,19 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 runTest("testData/formatter/CallLParenthOnNextLine.after.inv.kt");
             }
 
+            @TestMetadata("CallLParenthOnNextLineAndComma.after.inv.kt")
+            public void testCallLParenthOnNextLineAndComma() throws Exception {
+                runTest("testData/formatter/CallLParenthOnNextLineAndComma.after.inv.kt");
+            }
+
             @TestMetadata("CallRParenthOnNextLine.after.inv.kt")
             public void testCallRParenthOnNextLine() throws Exception {
                 runTest("testData/formatter/CallRParenthOnNextLine.after.inv.kt");
+            }
+
+            @TestMetadata("CallRParenthOnNextLineAndComma.after.inv.kt")
+            public void testCallRParenthOnNextLineAndComma() throws Exception {
+                runTest("testData/formatter/CallRParenthOnNextLineAndComma.after.inv.kt");
             }
 
             @TestMetadata("CatchFinallyOnNewLine.after.inv.kt")

@@ -28,6 +28,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -74,7 +75,7 @@ import java.util.Map;
 
 import static com.intellij.diff.tools.util.base.TextDiffViewerUtil.recursiveRegisterShortcutSet;
 
-public abstract class DiffRequestProcessor implements Disposable {
+public abstract class DiffRequestProcessor implements CheckedDisposable {
   private static final Logger LOG = Logger.getInstance(DiffRequestProcessor.class);
 
   private boolean myDisposed;
@@ -155,6 +156,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     myProgressBar = new MyProgressBar();
 
     myToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_TOOLBAR, myToolbarGroup, true);
+    putContextUserData(DiffUserDataKeysEx.LEFT_TOOLBAR, myToolbar);
     if (myIsNewToolbar) {
       myToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     }
@@ -484,8 +486,8 @@ public abstract class DiffRequestProcessor implements Disposable {
   }
 
   @NotNull
-  protected static List<DiffTool> getToolOrderFromSettings(@NotNull DiffSettings diffSettings,
-                                                           @NotNull List<? extends DiffTool> availableTools) {
+  public static List<DiffTool> getToolOrderFromSettings(@NotNull DiffSettings diffSettings,
+                                                        @NotNull List<? extends DiffTool> availableTools) {
     List<DiffTool> result = new ArrayList<>();
     List<String> savedOrder = diffSettings.getDiffToolsOrder();
 
@@ -676,6 +678,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     return mySettings;
   }
 
+  @Override
   public boolean isDisposed() {
     return myDisposed;
   }
@@ -706,7 +709,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
   }
 
-  private class ShowInExternalToolActionGroup extends ActionGroup {
+  private class ShowInExternalToolActionGroup extends ActionGroup implements DumbAware {
     private ShowInExternalToolActionGroup() {
       ActionUtil.copyFrom(this, "Diff.ShowInExternalTool");
     }
@@ -718,17 +721,19 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     @Override
     public void update(@NotNull AnActionEvent e) {
+      Presentation presentation = e.getPresentation();
       if (!ExternalDiffTool.isEnabled()) {
-        e.getPresentation().setEnabledAndVisible(false);
+        presentation.setEnabledAndVisible(false);
         return;
       }
 
       List<ShowInExternalToolAction> actions = getShowActions();
 
-      e.getPresentation().setEnabled(ExternalDiffTool.canShow(myActiveRequest));
-      e.getPresentation().setPerformGroup(actions.size() == 1);
-      e.getPresentation().setPopupGroup(true);
-      e.getPresentation().setVisible(true);
+      presentation.setEnabled(ExternalDiffTool.canShow(myActiveRequest));
+      presentation.setPerformGroup(actions.size() == 1);
+      presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, presentation.isPerformGroup());
+      presentation.setPopupGroup(true);
+      presentation.setVisible(true);
     }
 
     @Override
@@ -896,11 +901,6 @@ public abstract class DiffRequestProcessor implements Disposable {
     public MyNextDifferenceAction() {
     }
 
-    @Nullable
-    protected PrevNextDifferenceIterable getDifferenceIterable(@NotNull AnActionEvent e) {
-      return e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE);
-    }
-
     @Override
     public void update(@NotNull AnActionEvent e) {
       if (DiffUtil.isFromShortcut(e)) {
@@ -908,7 +908,7 @@ public abstract class DiffRequestProcessor implements Disposable {
         return;
       }
 
-      PrevNextDifferenceIterable iterable = getDifferenceIterable(e);
+      PrevNextDifferenceIterable iterable = e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE);
       if (iterable != null && iterable.canGoNext()) {
         e.getPresentation().setEnabled(true);
         return;
@@ -924,7 +924,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      PrevNextDifferenceIterable iterable = getDifferenceIterable(e);
+      PrevNextDifferenceIterable iterable = e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE);
       if (iterable != null && iterable.canGoNext()) {
         iterable.goNext();
         myIterationState = IterationState.NONE;
@@ -949,11 +949,6 @@ public abstract class DiffRequestProcessor implements Disposable {
     public MyPrevDifferenceAction() {
     }
 
-    @Nullable
-    protected PrevNextDifferenceIterable getDifferenceIterable(@NotNull AnActionEvent e) {
-      return e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE);
-    }
-
     @Override
     public void update(@NotNull AnActionEvent e) {
       if (DiffUtil.isFromShortcut(e)) {
@@ -961,7 +956,7 @@ public abstract class DiffRequestProcessor implements Disposable {
         return;
       }
 
-      PrevNextDifferenceIterable iterable = getDifferenceIterable(e);
+      PrevNextDifferenceIterable iterable = e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE);
       if (iterable != null && iterable.canGoPrev()) {
         e.getPresentation().setEnabled(true);
         return;
@@ -977,7 +972,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      PrevNextDifferenceIterable iterable = getDifferenceIterable(e);
+      PrevNextDifferenceIterable iterable = e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE);
       if (iterable != null && iterable.canGoPrev()) {
         iterable.goPrev();
         myIterationState = IterationState.NONE;
@@ -998,7 +993,11 @@ public abstract class DiffRequestProcessor implements Disposable {
   }
 
   private void notifyMessage(@NotNull AnActionEvent e, boolean next) {
-    if (!myContentPanel.isShowing()) return;
+    notifyMessage(e, myContentPanel, next);
+  }
+
+  public static void notifyMessage(@NotNull AnActionEvent e, @NotNull JComponent contentPanel, boolean next) {
+    if (!contentPanel.isShowing()) return;
     Editor editor = e.getData(DiffDataKeys.CURRENT_EDITOR);
 
     // TODO: provide "change" word in chain UserData - for tests/etc
@@ -1008,15 +1007,15 @@ public abstract class DiffRequestProcessor implements Disposable {
                                                                         DiffUtil.getSettingsConfigurablePath()));
 
     final LightweightHint hint = new LightweightHint(HintUtil.createInformationLabel(message));
-    Point point = new Point(myContentPanel.getWidth() / 2, next ? myContentPanel.getHeight() - JBUIScale.scale(40) : JBUIScale.scale(40));
+    Point point = new Point(contentPanel.getWidth() / 2, next ? contentPanel.getHeight() - JBUIScale.scale(40) : JBUIScale.scale(40));
 
-    if (editor == null) {
+    if (editor == null || editor.isDisposed()) {
       final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-      final HintHint hintHint = createNotifyHint(myContentPanel, point, next);
-      hint.show(myContentPanel, point.x, point.y, owner instanceof JComponent ? (JComponent)owner : null, hintHint);
+      final HintHint hintHint = createNotifyHint(contentPanel, point, next);
+      hint.show(contentPanel, point.x, point.y, owner instanceof JComponent ? (JComponent)owner : null, hintHint);
     }
     else {
-      int x = SwingUtilities.convertPoint(myContentPanel, point, editor.getComponent()).x;
+      int x = SwingUtilities.convertPoint(contentPanel, point, editor.getComponent()).x;
 
       JComponent header = editor.getHeaderComponent();
       int shift = editor.getScrollingModel().getVerticalScrollOffset() - (header != null ? header.getHeight() : 0);
@@ -1045,6 +1044,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       .setPreferredPosition(above ? Balloon.Position.above : Balloon.Position.below)
       .setAwtTooltip(true)
       .setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD))
+      .setBorderColor(HintUtil.getHintBorderColor())
       .setTextBg(HintUtil.getInformationColor())
       .setShowImmediately(true);
   }
@@ -1052,7 +1052,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   // Iterate requests
 
   protected class MyNextChangeAction extends NextChangeAction {
-    public MyNextChangeAction() {}
+    public MyNextChangeAction() { }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
@@ -1079,7 +1079,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   }
 
   protected class MyPrevChangeAction extends PrevChangeAction {
-    public MyPrevChangeAction() {}
+    public MyPrevChangeAction() { }
 
     @Override
     public void update(@NotNull AnActionEvent e) {

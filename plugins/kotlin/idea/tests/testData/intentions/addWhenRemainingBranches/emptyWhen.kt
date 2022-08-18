@@ -1,3 +1,4 @@
+// SKIP_ERRORS_BEFORE
 // WITH_STDLIB
 
 enum class Entry {

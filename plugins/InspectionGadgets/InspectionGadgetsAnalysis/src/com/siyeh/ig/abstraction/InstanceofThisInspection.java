@@ -45,7 +45,7 @@ public class InstanceofThisInspection extends BaseInspection {
 
   private static class InstanceofThisVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression call) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       if (OBJECT_GET_CLASS.test(call)) {
         PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(call.getMethodExpression());
         if (qualifier != null && StreamEx.of(ExpressionUtils.nonStructuralChildren(qualifier)).select(PsiThisExpression.class)

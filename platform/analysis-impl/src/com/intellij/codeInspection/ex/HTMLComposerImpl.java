@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -42,10 +42,10 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     myListStack = new int[5];
     myListStackTop = -1;
     for (InspectionExtensionsFactory factory : InspectionExtensionsFactory.EP_NAME.getExtensionList()) {
-      final HTMLComposerExtension extension = factory.createHTMLComposerExtension(this);
+      final HTMLComposerExtension<?> extension = factory.createHTMLComposerExtension(this);
       if (extension != null) {
         myExtensions.put(extension.getID(), extension);
-        myLanguageExtensions.put(extension.getLanguage(), extension);
+        extension.getLanguages().forEach(l -> myLanguageExtensions.put(l, extension));
       }
     }
   }

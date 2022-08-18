@@ -68,7 +68,7 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
       @Override
       public void ok(String value) {
         callback.ok(parseExecResponseString(value));
-        if (RegistryManager.getInstance().is("python.console.CommandQueue")) {
+        if (PyConsoleUtil.isCommandQueueEnabled(myProject)) {
           ApplicationManager.getApplication()
             .getService(CommandQueueForPythonConsoleService.class)
             .removeCommand(PythonDebugConsoleCommunication.this, false);
@@ -78,7 +78,7 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
       @Override
       public void error(PyDebuggerException exception) {
         callback.error(exception);
-        if (RegistryManager.getInstance().is("python.console.CommandQueue")) {
+        if (PyConsoleUtil.isCommandQueueEnabled(myProject)) {
           ApplicationManager.getApplication()
             .getService(CommandQueueForPythonConsoleService.class)
             .removeCommand(PythonDebugConsoleCommunication.this, true);

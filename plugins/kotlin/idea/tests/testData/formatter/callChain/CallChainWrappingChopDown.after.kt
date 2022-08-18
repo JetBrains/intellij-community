@@ -286,32 +286,42 @@ val x8 = foo!!!!!!!!.bar().baz()!!.quux()!!
 
 val x9 = ((b!!)!!!!)!!.f
 
-val x10 = awswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswsww()!!.a()
+val x10 =
+    awswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswsww()!!.a()
 
-val x11 = awswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswsww()!!!!.a()
+val x11 =
+    awswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswsww()!!!!.a()
 
-val x12 = awswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswsww()!!.a()!!
-    .a()
+val x12 =
+    awswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswsww()!!.a()!!
+        .a()
 
-val x13 = awswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswsww()!!!!.a()
-    .a()
+val x13 =
+    awswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswsww()!!!!.a()
+        .a()
 
-val x14 = awswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswsww().a()
+val x14 =
+    awswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswsww().a()
 
-val x15 = (awswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswsww()).a()
+val x15 =
+    (awswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswsww()).a()
 
-val x16 = (awswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswsww()).a()
-    .awswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswsww()
+val x16 =
+    (awswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswsww()).a()
+        .awswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswsww()
 
-val x17 = (a().awswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswsww()).a()
+val x17 =
+    (a().awswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswsww()).a()
 
 val x18 = (a().a()).a().a()
 
-val x18 = (a().awswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswsww()
-    .a()).a().a()
+val x18 =
+    (a().awswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswsww()
+        .a()).a().a()
 
-val x19 = (a().awswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswsww()
-    .a()).a()
+val x19 =
+    (a().awswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswswwawswswswswswswsww()
+        .a()).a()
 
 // SET_INT: METHOD_CALL_CHAIN_WRAP = 5
 // SET_FALSE: WRAP_FIRST_METHOD_IN_CALL_CHAIN

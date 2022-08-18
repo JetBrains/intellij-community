@@ -33,7 +33,20 @@ class <lineMarker descr="Run Test" icon="runConfigurations/testState/run_run.svg
             }
         }
     }
+}
 
+abstract class <lineMarker descr="Run Test"><lineMarker descr="Is subclassed by FooCase in AbstractFoo  Click or press ... to navigate">AbstractFoo</lineMarker></lineMarker> {
+    inner class FooCase : AbstractFoo() {
+        @Test
+        fun testFoo() {
+
+        }
+    }
+
+    @Test
+    fun <lineMarker descr="Run Test">testBaseFoo</lineMarker>() {
+
+    }
 }
 
 fun String.foo() {}

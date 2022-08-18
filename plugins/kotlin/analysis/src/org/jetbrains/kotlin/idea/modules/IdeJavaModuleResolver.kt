@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.modules
 
@@ -41,7 +41,7 @@ class IdeJavaModuleResolver(private val project: Project) : JavaModuleResolver {
     override fun checkAccessibility(
         fileFromOurModule: VirtualFile?, referencedFile: VirtualFile, referencedPackage: FqName?
     ): JavaModuleResolver.AccessError? {
-        val ourModule = fileFromOurModule?.let(this::findJavaModule)
+        val ourModule = fileFromOurModule?.let(::findJavaModule)?.also { if (it is LightJavaModule) return null }
         val theirModule = findJavaModule(referencedFile)
 
         if (ourModule?.name == theirModule?.name) return null

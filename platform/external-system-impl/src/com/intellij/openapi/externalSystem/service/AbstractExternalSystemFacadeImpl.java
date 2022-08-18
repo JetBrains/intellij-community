@@ -140,7 +140,6 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
    * @throws IllegalAccessException   in case of incorrect assumptions about server class interface
    * @throws InstantiationException   in case of incorrect assumptions about server class interface
    * @throws ClassNotFoundException   in case of incorrect assumptions about server class interface
-   * @throws RemoteException
    */
   protected abstract  <I extends RemoteExternalSystemService<S>, C extends I> I createService(@NotNull Class<I> interfaceClass,
                                                                                               final @NotNull C impl)
@@ -217,15 +216,15 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
     }
 
     @Override
-    public void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
+    public synchronized void onStart(@NotNull ExternalSystemTaskId id, String workingDir) {
     }
 
     @Override
-    public void onStart(@NotNull ExternalSystemTaskId id) {
+    public synchronized void onStart(@NotNull ExternalSystemTaskId id) {
     }
 
     @Override
-    public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
+    public synchronized void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
       try {
         myManager.onStatusChange(event);
       }
@@ -235,7 +234,7 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
     }
 
     @Override
-    public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
+    public synchronized void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
       try {
         myManager.onTaskOutput(id, text, stdOut);
       }
@@ -245,23 +244,23 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
     }
 
     @Override
-    public void onEnd(@NotNull ExternalSystemTaskId id) {
+    public synchronized void onEnd(@NotNull ExternalSystemTaskId id) {
     }
 
     @Override
-    public void onSuccess(@NotNull ExternalSystemTaskId id) {
+    public synchronized void onSuccess(@NotNull ExternalSystemTaskId id) {
     }
 
     @Override
-    public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception ex) {
+    public synchronized void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception ex) {
     }
 
     @Override
-    public void beforeCancel(@NotNull ExternalSystemTaskId id) {
+    public synchronized void beforeCancel(@NotNull ExternalSystemTaskId id) {
     }
 
     @Override
-    public void onCancel(@NotNull ExternalSystemTaskId id) {
+    public synchronized void onCancel(@NotNull ExternalSystemTaskId id) {
     }
   }
 }

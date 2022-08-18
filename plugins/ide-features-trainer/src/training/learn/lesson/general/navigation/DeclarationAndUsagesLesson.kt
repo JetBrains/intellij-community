@@ -27,6 +27,8 @@ abstract class DeclarationAndUsagesLesson
 
   override val lessonContent: LessonContext.() -> Unit
     get() = {
+      sdkConfigurationTasks()
+
       setInitialPosition()
 
       prepareRuntimeTask {

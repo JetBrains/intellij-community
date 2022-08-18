@@ -10,7 +10,7 @@ class D : C("") {
 }
 
 /*
-LINEMARKER: <html><body>Is overridden in <br/>&nbsp;&nbsp;&nbsp;&nbsp;D</body></html>
+LINEMARKER: descr='Is overridden in D'
 TARGETS:
 PrimaryConstructorOpen.kt
     override val <1>s: String get() = "q"

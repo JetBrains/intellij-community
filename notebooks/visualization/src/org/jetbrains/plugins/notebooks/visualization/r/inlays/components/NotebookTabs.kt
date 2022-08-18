@@ -32,9 +32,7 @@ class NotebookTabs private constructor(private val editor: BorderLayoutPanel) : 
         return null
       }
 
-      val bottomComponent = componentLayout.getLayoutComponent(BorderLayout.SOUTH)
-
-      when (bottomComponent) {
+      when (val bottomComponent = componentLayout.getLayoutComponent(BorderLayout.SOUTH)) {
         null -> return NotebookTabs(component)
         is NotebookTabs -> return bottomComponent
         else -> return null

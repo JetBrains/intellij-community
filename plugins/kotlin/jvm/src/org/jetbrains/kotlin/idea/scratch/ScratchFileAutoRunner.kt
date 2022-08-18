@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.scratch
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -16,7 +17,6 @@ import org.jetbrains.kotlin.idea.scratch.actions.RunScratchAction
 import org.jetbrains.kotlin.idea.scratch.actions.RunScratchFromHereAction
 import org.jetbrains.kotlin.idea.scratch.actions.ScratchCompilationSupport
 import org.jetbrains.kotlin.idea.scratch.ui.findScratchFileEditorWithPreview
-import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 
 class ScratchFileAutoRunner(private val project: Project) : DocumentListener, Disposable {
     companion object {
@@ -29,7 +29,7 @@ class ScratchFileAutoRunner(private val project: Project) : DocumentListener, Di
             }
         }
 
-        private fun getInstance(project: Project): ScratchFileAutoRunner = project.getServiceSafe()
+        private fun getInstance(project: Project): ScratchFileAutoRunner = project.service()
 
         const val AUTO_RUN_DELAY_IN_SECONDS = 2
     }

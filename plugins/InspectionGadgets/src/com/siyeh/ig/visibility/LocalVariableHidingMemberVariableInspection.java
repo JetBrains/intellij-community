@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,6 +68,30 @@ public class LocalVariableHidingMemberVariableInspection extends BaseInspection 
     return optionsPanel;
   }
 
+  @Nullable
+  static PsiClass findSurroundingClassWithHiddenField(PsiVariable variable,
+                                                      boolean ignoreInvisibleFields,
+                                                      boolean ignoreStaticHidingInstance) {
+    PsiClass aClass = ClassUtils.getContainingClass(variable);
+    final String variableName = variable.getName();
+    if (variableName == null) {
+      return null;
+    }
+    while (aClass != null) {
+      final PsiField field = aClass.findFieldByName(variableName, true);
+      if (field != null) {
+        if (!ignoreInvisibleFields || ClassUtils.isFieldVisible(field, aClass)) {
+          if (!ignoreStaticHidingInstance || field.hasModifierProperty(PsiModifier.STATIC) ||
+              !CommonJavaRefactoringUtil.isInStaticContext(variable, aClass)) {
+            return aClass;
+          }
+        }
+      }
+      aClass = ClassUtils.getContainingClass(aClass);
+    }
+    return null;
+  }
+
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new LocalVariableHidingMemberVariableVisitor();
@@ -78,7 +102,7 @@ public class LocalVariableHidingMemberVariableInspection extends BaseInspection 
     @Override
     public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
       super.visitLocalVariable(variable);
-      final PsiClass aClass = checkFieldNames(variable);
+      final PsiClass aClass = findSurroundingClassWithHiddenField(variable, m_ignoreInvisibleFields, m_ignoreStaticMethods);
       if (aClass == null) {
         return;
       }
@@ -92,33 +116,11 @@ public class LocalVariableHidingMemberVariableInspection extends BaseInspection 
       if (!(declarationScope instanceof PsiCatchSection) && !(declarationScope instanceof PsiForeachStatement)) {
         return;
       }
-      final PsiClass aClass = checkFieldNames(variable);
+      final PsiClass aClass = findSurroundingClassWithHiddenField(variable, m_ignoreInvisibleFields, m_ignoreStaticMethods);
       if (aClass == null) {
         return;
       }
       registerVariableError(variable, aClass);
-    }
-
-    @Nullable
-    private PsiClass checkFieldNames(PsiVariable variable) {
-      PsiClass aClass = ClassUtils.getContainingClass(variable);
-      final String variableName = variable.getName();
-      if (variableName == null) {
-        return null;
-      }
-      while (aClass != null) {
-        final PsiField field = aClass.findFieldByName(variableName, true);
-        if (field != null) {
-          if (!m_ignoreInvisibleFields || ClassUtils.isFieldVisible(field, aClass)) {
-            if (!m_ignoreStaticMethods || field.hasModifierProperty(PsiModifier.STATIC) ||
-                !CommonJavaRefactoringUtil.isInStaticContext(variable, aClass)) {
-              return aClass;
-            }
-          }
-        }
-        aClass = ClassUtils.getContainingClass(aClass);
-      }
-      return null;
     }
   }
 }

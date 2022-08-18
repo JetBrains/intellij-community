@@ -36,7 +36,7 @@ public abstract class Instruction {
    */
   public void setIndex(int index) {
     if (myIndex != -1) {
-      throw new IllegalStateException("Index is already set");
+      throw new IllegalStateException("Index is already set: old = " + myIndex + "; new = " + index);
     }
     myIndex = index;
   }
@@ -58,7 +58,6 @@ public abstract class Instruction {
 
   /**
    * @return list of variables that are known to be always written by this instruction
-   * @param factory
    */
   public List<DfaVariableValue> getWrittenVariables(DfaValueFactory factory) {
     return Collections.emptyList();
@@ -69,7 +68,6 @@ public abstract class Instruction {
    * Variables that are not required to be reachable by any instructions 
    * until the next write or the interpretation end, 
    * could be flushed automatically.
-   * @param factory
    */
   public List<DfaVariableValue> getRequiredVariables(DfaValueFactory factory) {
     return Collections.emptyList();

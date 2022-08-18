@@ -1,7 +1,7 @@
-// "Convert to local" "true"
+// "Convert to local" "true-preview"
 class Test {
 
     private Runnable r = () -> {
-        String field = "foo";
+      String field = "foo";
   }
 }

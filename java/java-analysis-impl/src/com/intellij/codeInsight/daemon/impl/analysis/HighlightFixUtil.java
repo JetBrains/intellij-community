@@ -322,16 +322,11 @@ public final class HighlightFixUtil {
     }
   }
 
-  static void registerLambdaReturnTypeFixes(HighlightInfo info, PsiLambdaExpression lambda, PsiExpression expression) {
+  static void registerLambdaReturnTypeFixes(@Nullable HighlightInfo info, PsiLambdaExpression lambda, PsiExpression expression) {
+    if (info == null) return;
     PsiType type = LambdaUtil.getFunctionalInterfaceReturnType(lambda);
     if (type != null) {
-      PsiType exprType = expression.getType();
-      if (exprType != null && TypeConversionUtil.areTypesConvertible(exprType, type)) {
-        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddTypeCastFix(type, expression));
-      }
-      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createWrapWithOptionalFix(type, expression));
-      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createWrapExpressionFix(type, expression));
-      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createWrapWithAdapterFix(type, expression));
+      AdaptExpressionTypeFixUtil.registerExpectedTypeFixes(info, expression, type);
     }
   }
 
@@ -478,16 +473,10 @@ public final class HighlightFixUtil {
     for (CandidateInfo methodCandidate : methodCandidates) {
       PsiMethod method = (PsiMethod)methodCandidate.getElement();
       if (methodCandidate.isAccessible() && PsiUtil.isApplicable(method, methodCandidate.getSubstitutor(), exprList)) {
-        final PsiClass parentClass = PsiTreeUtil.getParentOfType(methodCall, PsiClass.class);
-        final PsiMethod parentMethod = PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class);
-        if ((parentClass != null && !parentClass.hasModifierProperty(PsiModifier.STATIC) &&
-             parentMethod != null && !parentMethod.hasModifierProperty(PsiModifier.STATIC)) ||
-            method.hasModifierProperty(PsiModifier.STATIC)) {
-          PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(methodCall.getMethodExpression(), method);
-          if (qualifier == null) continue;
-          IntentionAction fix = new QualifyMethodCallFix(methodCall, qualifier.getText());
-          QuickFixAction.registerQuickFixAction(highlightInfo, HighlightMethodUtil.getFixRange(methodCall), fix);
-        }
+        PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(methodCall.getMethodExpression(), method);
+        if (qualifier == null) continue;
+        IntentionAction fix = new QualifyMethodCallFix(methodCall, qualifier.getText());
+        QuickFixAction.registerQuickFixAction(highlightInfo, HighlightMethodUtil.getFixRange(methodCall), fix);
       }
     }
   }

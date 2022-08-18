@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.dashboard
 
 import com.intellij.openapi.components.service
@@ -64,7 +64,7 @@ internal object BranchesDashboardUtil {
                                      branchesToCheck: Collection<BranchInfo>,
                                      indicator: ProgressIndicator): Set<BranchInfo> {
     val myCommits = findMyCommits(log)
-    if (myCommits.isNullOrEmpty()) return emptySet()
+    if (myCommits.isEmpty()) return emptySet()
 
     indicator.isIndeterminate = false
     val myBranches = hashSetOf<BranchInfo>()

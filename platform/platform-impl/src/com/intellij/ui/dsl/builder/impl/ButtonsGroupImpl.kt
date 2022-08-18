@@ -5,16 +5,36 @@ import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.ButtonsGroup
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.MutableProperty
+import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.AbstractButton
 import javax.swing.ButtonGroup
+import javax.swing.JRadioButton
 
 @ApiStatus.Internal
-internal class ButtonsGroupImpl : ButtonsGroup {
+internal class ButtonsGroupImpl(panel: PanelImpl, startIndex: Int) : RowsRangeImpl(panel, startIndex), ButtonsGroup {
 
-  private val unboundRadioButtons = mutableSetOf<Cell<AbstractButton>>()
-  private val boundRadioButtons = mutableMapOf<Cell<AbstractButton>, Any>()
+  private val radioButtons = mutableMapOf<Cell<JRadioButton>, Any?>()
   private var groupBinding: GroupBinding<*>? = null
+
+  override fun visible(isVisible: Boolean): ButtonsGroup {
+    super.visible(isVisible)
+    return this
+  }
+
+  override fun visibleIf(predicate: ComponentPredicate): ButtonsGroup {
+    super.visibleIf(predicate)
+    return this
+  }
+
+  override fun enabled(isEnabled: Boolean): ButtonsGroup {
+    super.enabled(isEnabled)
+    return this
+  }
+
+  override fun enabledIf(predicate: ComponentPredicate): ButtonsGroup {
+    super.enabledIf(predicate)
+    return this
+  }
 
   override fun <T> bind(prop: MutableProperty<T>, type: Class<T>): ButtonsGroup {
     if (groupBinding != null) {
@@ -24,13 +44,8 @@ internal class ButtonsGroupImpl : ButtonsGroup {
     return this
   }
 
-  fun <T : AbstractButton> add(cell: Cell<T>, value: Any? = null) {
-    if (value == null) {
-      unboundRadioButtons += cell
-    }
-    else {
-      boundRadioButtons[cell] = value
-    }
+  fun add(cell: Cell<JRadioButton>, value: Any? = null) {
+    radioButtons[cell] = value
   }
 
   fun postInit() {
@@ -43,12 +58,12 @@ internal class ButtonsGroupImpl : ButtonsGroup {
   }
 
   private fun postInitBound(groupBinding: GroupBinding<*>) {
-    if (unboundRadioButtons.isNotEmpty()) {
-      throw UiDslException("Radio button '${unboundRadioButtons.first().component.text}' is used without value for binding")
-    }
-
     val buttonGroup = ButtonGroup()
-    for ((cell, value) in boundRadioButtons) {
+    for ((cell, value) in radioButtons) {
+      if (value == null) {
+        throw UiDslException("Radio button '${cell.component.text}' is used without value for binding")
+      }
+
       groupBinding.validate(value)
       buttonGroup.add(cell.component)
 
@@ -60,12 +75,12 @@ internal class ButtonsGroupImpl : ButtonsGroup {
   }
 
   private fun postInitUnbound() {
-    if (boundRadioButtons.isNotEmpty()) {
-      throw UiDslException("Radio button '${boundRadioButtons.keys.first().component.text}' is used without ButtonsGroup.bind")
-    }
-
     val buttonGroup = ButtonGroup()
-    for (cell in unboundRadioButtons) {
+    for ((cell, value) in radioButtons) {
+      if (value != null) {
+        throw UiDslException("Radio button '${cell.component.text}' is used without ButtonsGroup.bind")
+      }
+
       buttonGroup.add(cell.component)
     }
   }

@@ -43,7 +43,7 @@ class VariableReturnedVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitLambdaExpression(PsiLambdaExpression expression) {
+  public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
     final PsiElement body = expression.getBody();
     if (body instanceof PsiExpression && VariableAccessUtils.mayEvaluateToVariable((PsiExpression)body, variable, myBuilderPattern)) {
       returned = true;

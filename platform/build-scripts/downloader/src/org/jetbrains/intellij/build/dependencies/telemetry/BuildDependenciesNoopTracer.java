@@ -3,7 +3,7 @@ package org.jetbrains.intellij.build.dependencies.telemetry;
 
 import org.jetbrains.annotations.NotNull;
 
-public class BuildDependenciesNoopTracer implements BuildDependenciesTracer {
+public final class BuildDependenciesNoopTracer implements BuildDependenciesTracer {
   public static final BuildDependenciesNoopTracer INSTANCE = new BuildDependenciesNoopTracer();
 
   private BuildDependenciesNoopTracer() {

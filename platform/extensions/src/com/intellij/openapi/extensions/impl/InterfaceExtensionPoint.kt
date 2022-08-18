@@ -6,13 +6,15 @@ import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.XmlExtensionAdapter.SimpleConstructorInjectionAdapter
 
-internal class InterfaceExtensionPoint<T>(name: String,
-                                          className: String,
-                                          pluginDescriptor: PluginDescriptor,
-                                          componentManager: ComponentManager,
-                                          clazz: Class<T>?,
-                                          dynamic: Boolean) : ExtensionPointImpl<T>(name, className, pluginDescriptor, componentManager,
-                                                                                    clazz, dynamic) {
+internal class InterfaceExtensionPoint<T : Any>(
+  name: String,
+  className: String,
+  pluginDescriptor: PluginDescriptor,
+  componentManager: ComponentManager,
+  clazz: Class<T>?,
+  dynamic: Boolean,
+) : ExtensionPointImpl<T>(name, className, pluginDescriptor, componentManager, clazz, dynamic) {
+
   public override fun createAdapter(descriptor: ExtensionDescriptor,
                                     pluginDescriptor: PluginDescriptor,
                                     componentManager: ComponentManager): ExtensionComponentAdapter {
@@ -31,9 +33,8 @@ internal class InterfaceExtensionPoint<T>(name: String,
 
   public override fun unregisterExtensions(componentManager: ComponentManager,
                                            pluginDescriptor: PluginDescriptor,
-                                           elements: List<ExtensionDescriptor>,
-                                           priorityListenerCallbacks: List<Runnable>,
-                                           listenerCallbacks: List<Runnable>) {
+                                           priorityListenerCallbacks: MutableList<in Runnable>,
+                                           listenerCallbacks: MutableList<in Runnable>) {
     unregisterExtensions(false, priorityListenerCallbacks, listenerCallbacks) { it.pluginDescriptor !== pluginDescriptor }
   }
 }

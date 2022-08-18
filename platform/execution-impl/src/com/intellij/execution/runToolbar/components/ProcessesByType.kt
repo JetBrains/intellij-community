@@ -5,6 +5,7 @@ import com.intellij.execution.runToolbar.RunToolbarProcess
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
+import java.awt.Color
 import java.awt.Font
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -20,14 +21,20 @@ class ProcessesByType : JPanel() {
     override fun getFont(): Font {
       return UIUtil.getToolbarFont()
     }
+
+    override fun getForeground(): Color {
+      return UIUtil.getLabelForeground()
+    }
   }
 
   private val processLabel = object : JLabel() {
     override fun getFont(): Font {
       return UIUtil.getToolbarFont()
     }
-  }.apply {
-    foreground = UIUtil.getLabelInfoForeground()
+
+    override fun getForeground(): Color {
+      return UIUtil.getLabelInfoForeground()
+    }
   }
 
   init {

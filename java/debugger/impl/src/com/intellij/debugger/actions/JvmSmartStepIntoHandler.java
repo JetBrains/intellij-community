@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.SourcePosition;
@@ -7,6 +7,7 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -40,7 +41,6 @@ public abstract class JvmSmartStepIntoHandler {
   /**
    * Override in case if your JVMNames slightly different then it can be provided by getJvmSignature method.
    *
-   * @param stepTarget
    * @return SmartStepFilter
    */
   @Nullable
@@ -78,5 +78,16 @@ public abstract class JvmSmartStepIntoHandler {
       return lambdaMethodFilter;
     }
     return null;
+  }
+
+  protected static List<SmartStepTarget> reorderWithSteppingFilters(List<SmartStepTarget> targets) {
+    if (targets.size() > 1) {
+      // deprioritize filtered items in stepping filters
+      int firstGood = ContainerUtil.indexOf(targets, elem -> !DebugProcessImpl.isClassFiltered(elem.getClassName()));
+      if (firstGood > 0) {
+        targets = ContainerUtil.concat(targets.subList(firstGood, targets.size()), targets.subList(0, firstGood));
+      }
+    }
+    return targets;
   }
 }

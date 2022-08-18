@@ -16,6 +16,7 @@
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -33,7 +34,7 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
+public class TypeParameterExtendsFinalClassInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   @NotNull
@@ -113,7 +114,7 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
 
   private static class TypeParameterExtendsFinalClassVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitTypeParameter(PsiTypeParameter classParameter) {
+    public void visitTypeParameter(@NotNull PsiTypeParameter classParameter) {
       super.visitTypeParameter(classParameter);
       final PsiClassType[] extendsListTypes = classParameter.getExtendsListTypes();
       if (extendsListTypes.length < 1) {
@@ -134,7 +135,7 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
     }
 
     @Override
-    public void visitTypeElement(PsiTypeElement typeElement) {
+    public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
       super.visitTypeElement(typeElement);
       final PsiType type = typeElement.getType();
       if (!(type instanceof PsiWildcardType)) {

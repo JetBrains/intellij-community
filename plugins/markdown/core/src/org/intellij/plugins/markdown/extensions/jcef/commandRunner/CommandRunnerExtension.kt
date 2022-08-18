@@ -17,7 +17,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -27,60 +26,63 @@ import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.MarkdownUsageCollector.Companion.RUNNER_EXECUTED
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionsUtil
-import org.intellij.plugins.markdown.fileActions.utils.MarkdownFileEditorUtils
 import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
 import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings
-import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
-import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
 import java.util.concurrent.ConcurrentHashMap
 
-internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
-                                      private val provider: Provider)
-  : MarkdownBrowserPreviewExtension, ResourceProvider, MarkdownEditorWithPreview.SplitLayoutListener {
-
+internal class CommandRunnerExtension(
+  val panel: MarkdownHtmlPanel,
+  private val provider: Provider
+): MarkdownBrowserPreviewExtension {
   override val scripts: List<String> = listOf("commandRunner/commandRunner.js")
   override val styles: List<String> = listOf("commandRunner/commandRunner.css")
   private val hash2Cmd = mutableMapOf<String, String>()
-  private var splitEditor: MarkdownEditorWithPreview? = null
 
   init {
     panel.browserPipe?.subscribe(RUN_LINE_EVENT, this::runLine)
     panel.browserPipe?.subscribe(RUN_BLOCK_EVENT, this::runBlock)
-    panel.browserPipe?.subscribe(PAGE_READY_EVENT, this::onPageReady)
-    invokeLater {
-      MarkdownFileEditorUtils.findMarkdownSplitEditor(panel.project!!, panel.virtualFile!!)?.let {
-        splitEditor = it
-        it.addLayoutListener(this)
-      }
-    }
-
     Disposer.register(this) {
       panel.browserPipe?.removeSubscription(RUN_LINE_EVENT, ::runLine)
       panel.browserPipe?.removeSubscription(RUN_BLOCK_EVENT, ::runBlock)
-      splitEditor?.removeLayoutListener(this)
     }
   }
 
-  override fun onLayoutChange(oldLayout: TextEditorWithPreview.Layout?, newLayout: TextEditorWithPreview.Layout) {
-    panel.browserPipe?.send(LAYOUT_CHANGE_EVENT, newLayout.name)
-  }
+  override val resourceProvider: ResourceProvider = ResourceProvider.aggregating(
+    CommandRunnerResourceProvider(),
+    CommandRunnerIconsResourceProvider()
+  )
 
-  private fun onPageReady(ready: String) {
-    splitEditor?.let {
-      panel.browserPipe?.send(LAYOUT_CHANGE_EVENT, it.layout.name)
+  private inner class CommandRunnerResourceProvider: ResourceProvider {
+    override fun canProvide(resourceName: String): Boolean {
+      return resourceName in scripts || resourceName in styles
+    }
+
+    override fun loadResource(resourceName: String): ResourceProvider.Resource? {
+      return ResourceProvider.loadInternalResource<CommandRunnerResourceProvider>(resourceName)
     }
   }
 
+  private class CommandRunnerIconsResourceProvider: ResourceProvider {
+    override fun canProvide(resourceName: String): Boolean {
+      return resourceName in icons
+    }
 
-  override val resourceProvider: ResourceProvider = this
+    override fun loadResource(resourceName: String): ResourceProvider.Resource? {
+      val icon = when (resourceName) {
+        RUN_LINE_ICON -> AllIcons.RunConfigurations.TestState.Run
+        RUN_BLOCK_ICON -> AllIcons.RunConfigurations.TestState.Run_run
+        else -> return null
+      }
+      val format = resourceName.substringAfterLast(".")
+      return ResourceProvider.Resource(MarkdownExtensionsUtil.loadIcon(icon, format))
+    }
 
-  override fun canProvide(resourceName: String): Boolean = resourceName in scripts || resourceName in styles
-
-  override fun loadResource(resourceName: String): ResourceProvider.Resource? {
-    return ResourceProvider.loadInternalResource(this::class, resourceName)
+    companion object {
+      private val icons = setOf(RUN_LINE_ICON, RUN_BLOCK_ICON)
+    }
   }
 
 
@@ -111,9 +113,9 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
   }
 
   private fun getHtmlForLineRunner(insideFence: Boolean, hash: String): String {
-    val cssClass = "run-icon hidden" + if (insideFence) " code-block" else ""
-    return "<a class='${cssClass}' href='#' role='button' data-command='${DefaultRunExecutor.EXECUTOR_ID}:$hash'>" +
-           "<img src='${PreviewStaticServer.getStaticUrl(provider, RUN_LINE_ICON)}'>" +
+    val cssClass = "run-icon" + if (insideFence) " code-block" else ""
+    return "<a class='$cssClass' href='#' role='button' data-command='${DefaultRunExecutor.EXECUTOR_ID}:$hash'>" +
+           "<img src='$RUN_LINE_ICON'>" +
            "</a>"
   }
 
@@ -130,13 +132,13 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
       val lines = codeFenceRawContent.trimEnd().lines()
       val firstLineHash = if (lines.size > 1) processLine(lines[0], false) else null
       val firstLineData = if (firstLineHash.isNullOrBlank()) "" else "data-firstLine='$firstLineHash'"
-      val cssClass = "run-icon hidden code-block"
+      val cssClass = "run-icon code-block"
       return "<a class='${cssClass}' href='#' role='button' " +
              "data-command='${DefaultRunExecutor.EXECUTOR_ID}:$hash' " +
              "data-commandtype='block'" +
              firstLineData +
              ">" +
-             "<img src='${PreviewStaticServer.getStaticUrl(provider, RUN_BLOCK_ICON)}'>" +
+             "<img src='$RUN_BLOCK_ICON'>" +
              "</a>"
     }
     catch (e: Exception) {
@@ -174,7 +176,9 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
     if (project != null && virtualFile != null) {
       TrustedProjectUtil.executeIfTrusted(project) {
         RUNNER_EXECUTED.log(project,  RunnerPlace.PREVIEW, RunnerType.BLOCK, runner.javaClass)
-        runner.run(command, project, virtualFile.parent.canonicalPath, executor)
+        invokeLater {
+          runner.run(command, project, virtualFile.parent.canonicalPath, executor)
+        }
       }
     }
   }
@@ -232,12 +236,8 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
   }
 
 
-  class Provider: MarkdownBrowserPreviewExtension.Provider, ResourceProvider {
+  class Provider: MarkdownBrowserPreviewExtension.Provider {
     val extensions = ConcurrentHashMap<VirtualFile, CommandRunnerExtension>()
-
-    init {
-      PreviewStaticServer.instance.registerResourceProvider(this)
-    }
 
     override fun createBrowserExtension(panel: MarkdownHtmlPanel): MarkdownBrowserPreviewExtension? {
       val virtualFile = panel.virtualFile ?: return null
@@ -246,33 +246,13 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
       }
       return extensions.computeIfAbsent(virtualFile) { CommandRunnerExtension(panel, this) }
     }
-
-    val icons: List<String> = listOf(RUN_LINE_ICON, RUN_BLOCK_ICON)
-
-    override fun canProvide(resourceName: String): Boolean {
-      return resourceName in icons
-    }
-
-    override fun loadResource(resourceName: String): ResourceProvider.Resource? {
-      val icon = when (resourceName) {
-        RUN_LINE_ICON -> AllIcons.RunConfigurations.TestState.Run
-        RUN_BLOCK_ICON -> AllIcons.RunConfigurations.TestState.Run_run
-        else -> return null
-      }
-      val format = resourceName.substringAfterLast(".")
-      return ResourceProvider.Resource(MarkdownExtensionsUtil.loadIcon(icon, format))
-    }
   }
-
-
 
   companion object {
     private const val RUN_LINE_EVENT = "runLine"
     private const val RUN_BLOCK_EVENT = "runBlock"
-    private const val PAGE_READY_EVENT = "pageReady"
-    private const val LAYOUT_CHANGE_EVENT = "layoutChange"
-    private const val RUN_LINE_ICON = "run.png"
-    private const val RUN_BLOCK_ICON = "runrun.png"
+    private const val RUN_LINE_ICON = "commandRunner/run.png"
+    private const val RUN_BLOCK_ICON = "commandRunner/runrun.png"
 
     const val extensionId = "MarkdownCommandRunnerExtension"
 
@@ -293,24 +273,34 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
       val dataContext = createDataContext(project, localSession, workingDirectory)
 
       return runReadAction {
-        RunAnythingProvider.EP_NAME.extensionList
-          .asSequence()
+        RunAnythingProvider.EP_NAME.extensionList.asSequence()
           .filter { checkForCLI(it, allowRunConfigurations) }
           .any { provider -> provider.findMatchingValue(dataContext, trimmedCmd) != null }
       }
     }
 
-    fun execute(project: Project, workingDirectory: String?, localSession: Boolean, command: String, executor: Executor, place: RunnerPlace): Boolean {
+    fun execute(
+      project: Project,
+      workingDirectory: String?,
+      localSession: Boolean,
+      command: String,
+      executor: Executor,
+      place: RunnerPlace
+    ): Boolean {
       val dataContext = createDataContext(project, localSession, workingDirectory, executor)
       val trimmedCmd = command.trim()
-      for (provider in RunAnythingProvider.EP_NAME.extensionList) {
-        val value = provider.findMatchingValue(dataContext, trimmedCmd) ?: continue
-        return TrustedProjectUtil.executeIfTrusted(project) {
-          RUNNER_EXECUTED.log(project, place, RunnerType.LINE, provider.javaClass)
-          provider.execute(dataContext, value)
+      return runReadAction {
+        for (provider in RunAnythingProvider.EP_NAME.extensionList) {
+          val value = provider.findMatchingValue(dataContext, trimmedCmd) ?: continue
+          return@runReadAction TrustedProjectUtil.executeIfTrusted(project) {
+            RUNNER_EXECUTED.log(project, place, RunnerType.LINE, provider.javaClass)
+            invokeLater {
+              provider.execute(dataContext, value)
+            }
+          }
         }
+        return@runReadAction false
       }
-      return false
     }
 
     private fun createDataContext(project: Project, localSession: Boolean, workingDirectory: String?, executor: Executor? = null): DataContext {

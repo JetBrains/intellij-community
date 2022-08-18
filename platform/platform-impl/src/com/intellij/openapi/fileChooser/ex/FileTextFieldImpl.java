@@ -10,6 +10,7 @@ import com.intellij.openapi.fileChooser.FileTextField;
 import com.intellij.openapi.fileChooser.ex.FileLookup.Finder;
 import com.intellij.openapi.fileChooser.ex.FileLookup.LookupFile;
 import com.intellij.openapi.fileChooser.ex.FileLookup.LookupFilter;
+import com.intellij.openapi.fileChooser.ex.FileTextFieldUtil.CompletionResult;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -20,7 +21,7 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.psi.codeStyle.MinusculeMatcher;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ListActions;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.JBList;
@@ -34,21 +35,20 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
-import java.util.List;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_CODE_COMPLETION;
 import static com.intellij.openapi.application.ModalityState.stateForComponent;
-import static com.intellij.openapi.fileChooser.ex.FileTextFieldUtil.createMatcher;
 
 public class FileTextFieldImpl implements FileTextField, Disposable {
-  private final Object myLock = new Object();
   private final JTextField myPathTextField;
 
   private CompletionResult myCurrentCompletion;
@@ -64,12 +64,11 @@ public class FileTextFieldImpl implements FileTextField, Disposable {
   private Finder myFinder;
   private LookupFilter myFilter;
 
-  private String myFileSpitRegExp;
-
   protected boolean myAutopopup = false;
   private FileTextFieldImpl.CancelAction myCancelAction;
   private final Set<Action> myDisabledTextActions;
-  private Map<String, String> myMacroMap;
+
+  private volatile Map<String, String> myMacroMap;
 
   public FileTextFieldImpl(JTextField field, Finder finder, LookupFilter filter, Map<String, String> macroMap, Disposable parent) {
     myPathTextField = field;
@@ -97,10 +96,9 @@ public class FileTextFieldImpl implements FileTextField, Disposable {
       assigned.myFilter = filter;
       return;
     }
-
     myPathTextField.putClientProperty(KEY, this);
-    boolean headless = ApplicationManager.getApplication().isUnitTestMode();
 
+    boolean headless = ApplicationManager.getApplication().isUnitTestMode();
     myUiUpdater = new MergingUpdateQueue("FileTextField.UiUpdater", 200, false, myPathTextField);
     if (!headless) {
       new UiNotifyConnector(myPathTextField, myUiUpdater);
@@ -109,21 +107,9 @@ public class FileTextFieldImpl implements FileTextField, Disposable {
     myFinder = finder;
     myFilter = filter;
 
-    myFileSpitRegExp = myFinder.getSeparator().replaceAll("\\\\", "\\\\\\\\");
-
-    myPathTextField.getDocument().addDocumentListener(new DocumentListener() {
+    myPathTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      public void insertUpdate(DocumentEvent e) {
-        processTextChanged();
-      }
-
-      @Override
-      public void removeUpdate(DocumentEvent e) {
-        processTextChanged();
-      }
-
-      @Override
-      public void changedUpdate(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         processTextChanged();
       }
     });
@@ -154,9 +140,7 @@ public class FileTextFieldImpl implements FileTextField, Disposable {
 
   @SuppressWarnings("unused") //used by rider
   public void resetMacroMap(Map<String, String> macroMap) {
-    synchronized (myLock) {
-      myMacroMap = new TreeMap<>(macroMap);
-    }
+    myMacroMap = new TreeMap<>(macroMap);
   }
 
   @Override
@@ -183,37 +167,39 @@ public class FileTextFieldImpl implements FileTextField, Disposable {
 
     if (!getField().isFocusOwner()) return;
 
-    CompletionResult result = new CompletionResult();
+    LookupFile preselected = null;
     if (myList != null && myCurrentCompletion != null) {
       int index = myList.getSelectedIndex();
       if (index >= 0 && index < myList.getModel().getSize()) {
-        result.myPreselected = myList.getSelectedValue();
+        preselected = myList.getSelectedValue();
       }
     }
 
+    LookupFile _preselected = preselected;
     myUiUpdater.queue(new Update("textField.suggestCompletion") {
       @Override
       public void run() {
         String completionBase = getCompletionBase();
-        if (completionBase != null) {
-          LookupFile file = myFinder.find(completionBase);
-          if (file != null && file.exists() && !file.isDirectory()) {
-            // we've entered a complete path already, no need to autopopup completion again (IDEA-78996)
-            return;
-          }
+        if (completionBase == null) return;
+
+        LookupFile file = myFinder.find(completionBase);
+        if (file != null && file.exists() && !file.isDirectory()) {
+          return;  // we've entered a complete path already, no need to autopopup completion again (IDEA-78996)
         }
-        result.myCompletionBase = completionBase;
-        if (result.myCompletionBase == null) return;
-        result.myFieldText = myPathTextField.getText();
+
+        boolean showAdText = completionBase.length() != myPathTextField.getText().length();
+
         EmptyProgressIndicator indicator = new EmptyProgressIndicator(stateForComponent(myPathTextField));
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          ProgressManager.getInstance().runProcess(() -> processCompletion(result), indicator);
+          CompletionResult result = ProgressManager.getInstance().runProcess(
+            () -> FileTextFieldUtil.processCompletion(completionBase, myFinder, myFilter, myMacroMap, _preselected),
+            indicator);
+
           SwingUtilities.invokeLater(() -> {
-            if (!result.myCompletionBase.equals(getCompletionBase())) return;
-
-            selectCompletionRemoveText(result, selectReplacedText);
-
-            showCompletionPopup(result, isExplicitCall);
+            if (completionBase.equals(getCompletionBase())) {
+              selectCompletionRemoveText(result, selectReplacedText);
+              showCompletionPopup(result, isExplicitCall, showAdText);
+            }
           });
         });
       }
@@ -222,38 +208,13 @@ public class FileTextFieldImpl implements FileTextField, Disposable {
 
   private void selectCompletionRemoveText(CompletionResult result, boolean selectReplacedText) {
     int pos = myPathTextField.getCaretPosition();
-    if (result.myToComplete.size() > 0 && selectReplacedText) {
+    if (result.variants.size() > 0 && selectReplacedText) {
       myPathTextField.setCaretPosition(myPathTextField.getText().length());
       myPathTextField.moveCaretPosition(pos);
     }
   }
 
-  public static @Nullable @NlsContexts.PopupAdvertisement String getAdText(CompletionResult result) {
-    if (result.myCompletionBase == null) return null;
-    if (result.myCompletionBase.length() == result.myFieldText.length()) return null;
-
-    String strokeText = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("EditorChooseLookupItemReplace"));
-    return IdeBundle.message("file.chooser.completion.ad.text", strokeText);
-  }
-
-  public static class CompletionResult {
-    public List<LookupFile> myMacros;
-    public List<LookupFile> myToComplete;
-    public List<LookupFile> mySiblings;
-    public List<LookupFile> myKidsAfterSeparator;
-    public String myCompletionBase;
-    public LookupFile myClosestParent;
-    public LookupFile myPreselected;
-    public LookupFile current;
-    public boolean currentParentMatch;
-    public String effectivePrefix;
-    public LookupFile currentGrandparent;
-    public String grandparentPrefix;
-    public boolean closedPath;
-    public String myFieldText;
-  }
-
-  private void showCompletionPopup(CompletionResult result, boolean isExplicit) {
+  private void showCompletionPopup(CompletionResult result, boolean isExplicit, boolean showAdText) {
     if (myList == null) {
       myList = new JBList<>();
       myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -269,24 +230,23 @@ public class FileTextFieldImpl implements FileTextField, Disposable {
           return value.getIcon();
         }
 
-        private @NlsContexts.Separator @Nullable String getSeparatorAboveOf(Object value) {
+        private @NlsContexts.Separator @Nullable String getSeparatorAboveOf(LookupFile file) {
           if (myCurrentCompletion == null) return null;
-          LookupFile file = (LookupFile)value;
 
-          int fileIndex = myCurrentCompletion.myToComplete.indexOf(file);
-          if (fileIndex > 0 && !myCurrentCompletion.myMacros.contains(file)) {
-            LookupFile prev = myCurrentCompletion.myToComplete.get(fileIndex - 1);
-            if (myCurrentCompletion.myMacros.contains(prev)) {
+          int fileIndex = myCurrentCompletion.variants.indexOf(file);
+          if (fileIndex > 0 && !myCurrentCompletion.macros.contains(file)) {
+            LookupFile prev = myCurrentCompletion.variants.get(fileIndex - 1);
+            if (myCurrentCompletion.macros.contains(prev)) {
               return "";
             }
           }
 
-          if (myCurrentCompletion.myKidsAfterSeparator.indexOf(file) == 0 && myCurrentCompletion.mySiblings.size() > 0) {
+          if (myCurrentCompletion.kidsAfterSeparator.indexOf(file) == 0 && myCurrentCompletion.siblings.size() > 0) {
             LookupFile parent = file.getParent();
             return parent != null ? parent.getName() : "";
           }
 
-          if (myCurrentCompletion.myMacros.size() > 0 && fileIndex == 0) {
+          if (myCurrentCompletion.macros.size() > 0 && fileIndex == 0) {
             return getPathVariablesSeparatorText();
           }
 
@@ -311,7 +271,7 @@ public class FileTextFieldImpl implements FileTextField, Disposable {
 
     myCurrentCompletion = result;
 
-    if (myCurrentCompletion.myToComplete.size() == 0) {
+    if (result.variants.size() == 0) {
       showNoSuggestions(isExplicit);
       return;
     }
@@ -319,15 +279,21 @@ public class FileTextFieldImpl implements FileTextField, Disposable {
     myList.setModel(new AbstractListModel<>() {
       @Override
       public int getSize() {
-        return myCurrentCompletion.myToComplete.size();
+        return myCurrentCompletion.variants.size();
       }
 
       @Override
       public LookupFile getElementAt(int index) {
-        return myCurrentCompletion.myToComplete.get(index);
+        return myCurrentCompletion.variants.get(index);
       }
     });
     myList.getSelectionModel().clearSelection();
+
+    String adText = null;
+    if (showAdText) {
+      String strokeText = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("EditorChooseLookupItemReplace"));
+      adText = IdeBundle.message("file.chooser.completion.ad.text", strokeText);
+    }
 
     //noinspection DuplicatedCode
     myCurrentPopup = new PopupChooserBuilder<>(myList)
@@ -349,7 +315,7 @@ public class FileTextFieldImpl implements FileTextField, Disposable {
         }
       })
       .setRequestFocus(false)
-      .setAdText(getAdText(myCurrentCompletion))
+      .setAdText(adText)
       .setAutoSelectIfEmpty(false)
       .setResizable(false)
       .setCancelCallback(() -> {
@@ -366,8 +332,8 @@ public class FileTextFieldImpl implements FileTextField, Disposable {
       .setFocusOwners(new Component[]{myPathTextField})
       .createPopup();
 
-    if (result.myPreselected != null) {
-      myList.setSelectedValue(result.myPreselected, false);
+    if (result.preselected != null) {
+      myList.setSelectedValue(result.preselected, false);
     }
 
     myPathTextField.setFocusTraversalKeysEnabled(false);
@@ -394,9 +360,9 @@ public class FileTextFieldImpl implements FileTextField, Disposable {
     if (!isExplicit) return;
 
     JComponent message = HintUtil.createErrorLabel(IdeBundle.message("file.chooser.completion.no.suggestions"));
-    ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(message, message);
-    builder.setRequestFocus(false).setResizable(false).setAlpha(0.1f).setFocusOwners(new Component[] {myPathTextField});
-    myNoSuggestionsPopup = builder.createPopup();
+    myNoSuggestionsPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(message, message)
+      .setRequestFocus(false).setResizable(false).setAlpha(0.1f).setFocusOwners(new Component[]{myPathTextField})
+      .createPopup();
     myNoSuggestionsPopup.showInScreenCoordinates(getField(), getLocationForCaret(myPathTextField));
   }
 
@@ -405,7 +371,6 @@ public class FileTextFieldImpl implements FileTextField, Disposable {
       myCurrentPopup.cancel();
       myCurrentPopup = null;
     }
-
     if (myNoSuggestionsPopup != null) {
       myNoSuggestionsPopup.cancel();
       myNoSuggestionsPopup = null;
@@ -429,34 +394,6 @@ public class FileTextFieldImpl implements FileTextField, Disposable {
     point.y += 2;
 
     return point;
-  }
-
-  public void processCompletion(CompletionResult result) {
-    Map<String, String> macroMap;
-    synchronized (myLock) {
-      macroMap = myMacroMap;
-    }
-    FileTextFieldUtil.processCompletion(result, myFinder, myFilter, myFileSpitRegExp, macroMap);
-  }
-
-  static void addMacroPaths(CompletionResult result, String typedText, @NotNull Finder finder, Map<String, String> macroMap) {
-    result.myMacros = new ArrayList<>();
-
-    MinusculeMatcher matcher = createMatcher(typedText);
-
-    for (String eachMacro : macroMap.keySet()) {
-      if (matcher.matches(eachMacro)) {
-        String eachPath = macroMap.get(eachMacro);
-        if (eachPath != null) {
-          LookupFile macroFile = finder.find(eachPath);
-          if (macroFile != null && macroFile.exists()) {
-            result.myMacros.add(macroFile);
-            result.myToComplete.add(macroFile);
-            macroFile.setMacro(eachMacro);
-          }
-        }
-      }
-    }
   }
 
   public @Nullable LookupFile getFile() {
@@ -598,9 +535,7 @@ public class FileTextFieldImpl implements FileTextField, Disposable {
   }
 
   public @Nullable String getTextFieldText() {
-    String text = myPathTextField.getText();
-    if (text == null) return null;
-    return text;
+    return myPathTextField.getText();
   }
 
   public final void setText(String text, boolean now, @Nullable Runnable onDone) {

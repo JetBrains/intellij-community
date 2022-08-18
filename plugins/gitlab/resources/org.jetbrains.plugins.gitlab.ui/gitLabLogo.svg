@@ -1,0 +1,11 @@
+<!-- Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M14.9741 9.00501L14.1907 6.38773L12.6381 1.20046C12.5583 0.933589 12.2105 0.933589 12.1306 1.20046L10.578 6.38773H5.42247L3.86985 1.20046C3.78999 0.933589 3.44217 0.933589 3.36228 1.20046L1.80973 6.38773L1.02639 9.00501C0.954911 9.24373 1.03322 9.50525 1.22026 9.6528L8.00021 15.0003L14.7802 9.6528C14.9672 9.50525 15.0455 9.24373 14.9741 9.00501Z" fill="#FC6D26"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M7.99998 15L10.5777 6.38745H5.42222L7.99998 15Z" fill="#E24329"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M8.00001 15L5.42224 6.38745H1.80954L8.00001 15Z" fill="#FC6D26"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M1.80953 6.38745L1.02616 9.00473C0.954711 9.24345 1.03298 9.50497 1.22006 9.65247L8 15L1.80953 6.38745Z" fill="#FCA326"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M1.80954 6.38746H5.42223L3.86965 1.20018C3.78976 0.933273 3.44194 0.933273 3.36208 1.20018L1.80954 6.38746Z" fill="#E24329"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M8 15L10.5778 6.38745H14.1905L8 15Z" fill="#FC6D26"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M14.1905 6.38745L14.9739 9.00473C15.0453 9.24345 14.967 9.50497 14.78 9.65247L8.00002 15L14.1905 6.38745Z" fill="#FCA326"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M14.1905 6.38746H10.5778L12.1304 1.20018C12.2103 0.933273 12.5581 0.933273 12.6379 1.20018L14.1905 6.38746Z" fill="#E24329"/>
+</svg>

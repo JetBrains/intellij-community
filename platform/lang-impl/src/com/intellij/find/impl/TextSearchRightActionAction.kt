@@ -3,6 +3,7 @@ package com.intellij.find.impl
 
 import com.intellij.find.FindBundle
 import com.intellij.icons.AllIcons.Actions
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider
 import com.intellij.openapi.actionSystem.ex.TooltipLinkProvider
@@ -19,6 +20,10 @@ sealed class TextSearchRightActionAction(message: String,
                                          private val callback: Runnable,
                                          private val myTooltipLink: TooltipLinkProvider.TooltipLink? = null) :
   DumbAwareToggleAction(FindBundle.message(message), null, icon), TooltipLinkProvider, TooltipDescriptionProvider {
+
+  val tooltipText = FindBundle.message(message)
+
+
   init {
     templatePresentation.hoveredIcon = hoveredIcon
     templatePresentation.selectedIcon = selectedIcon
@@ -27,6 +32,9 @@ sealed class TextSearchRightActionAction(message: String,
   override fun getTooltipLink(owner: JComponent?) = myTooltipLink
 
   fun isSelected() = state.get()
+
+  override  fun getActionUpdateThread() = ActionUpdateThread.EDT
+
   override fun isSelected(e: AnActionEvent) = isSelected()
 
   override fun setSelected(e: AnActionEvent, selected: Boolean) {

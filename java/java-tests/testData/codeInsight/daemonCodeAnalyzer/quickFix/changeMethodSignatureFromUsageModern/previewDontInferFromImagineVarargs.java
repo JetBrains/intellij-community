@@ -1,0 +1,1 @@
+public static <T1> void get(List<T1> l, String s) {}

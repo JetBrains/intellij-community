@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
@@ -57,7 +57,7 @@ class GrUnusedDefTest extends GrHighlightingTestBase {
   void testUnusedParameter() { doTest() }
 
   void testSuppressUnusedMethod() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 class <warning descr="Class Foo is unused">Foo</warning> {
     @SuppressWarnings("GroovyUnusedDeclaration")
     static def foo(int x) {
@@ -70,7 +70,7 @@ class <warning descr="Class Foo is unused">Foo</warning> {
   }
 
   void testUsedVar() {
-    testHighlighting '''
+    doTestHighlighting '''
       def <warning descr="Method foo is unused">foo</warning>(xxx) {
         if ((xxx = 5) || xxx) {
           <warning descr="Assignment is not used">xxx</warning>=4
@@ -88,7 +88,7 @@ class <warning descr="Class Foo is unused">Foo</warning> {
   }
 
   void testFallthroughInSwitch() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 def <warning descr="Method f is unused">f</warning>(String foo, int mode) {
     switch (mode) {
         case 0: foo = foo.reverse()
@@ -106,13 +106,13 @@ def <warning descr="Method f2 is unused">f2</warning>(String foo, int mode) {
   }
 
   void testUnusedUnassignedVar() {
-    testHighlighting('''\
+    doTestHighlighting('''\
 def <warning descr="Variable is not used">abc</warning>
 ''')
   }
 
   void 'test method referenced via incapplicable call is used'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 static boolean fsdasdfsgsdsfadfgs(a, b) { a == b }
 def bar() { fsdasdfsgsdsfadfgs("s") }
 bar()
@@ -126,7 +126,7 @@ package groovy.lang;
 public @interface Delegate {}
 '''
 
-    testHighlighting '''\
+    doTestHighlighting '''\
 class Foo {
   @Delegate
   Integer i
@@ -139,14 +139,14 @@ new Foo()
   }
 
   void 'test "unused" suppresses warning'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 @SuppressWarnings("unused")
 class Aaaa {} 
 '''
   }
 
   void 'test suppress with "unused"'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 class <caret><warning descr="Class Aaaa is unused">Aaaa</warning> {}
 '''
     def action = fixture.findSingleIntention 'Suppress for class'

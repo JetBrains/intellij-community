@@ -2,6 +2,7 @@
 package com.intellij.util.xml.tree.actions;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
@@ -39,5 +40,10 @@ public class AddDomElementActionGroup extends ActionGroup {
 
     getTemplatePresentation().setText(myAction.getTemplatePresentation().getText());
     super.update(e);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

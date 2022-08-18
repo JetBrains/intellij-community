@@ -1,15 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization
 
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifactNames
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactNames
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
+import org.jetbrains.kotlin.idea.compilerPlugin.toJpsVersionAgnosticKotlinBundledPath
 import java.io.File
 
 object KotlinSerializationImportHandler {
-    val PLUGIN_JPS_JAR: String by lazy { KotlinArtifacts.instance.kotlinxSerializationCompilerPlugin.absolutePath }
+    val PLUGIN_JPS_JAR: String by lazy {
+        KotlinArtifacts.kotlinxSerializationCompilerPlugin.toJpsVersionAgnosticKotlinBundledPath()
+    }
 
     fun isPluginJarPath(path: String): Boolean {
         return path.endsWith(KotlinArtifactNames.KOTLINX_SERIALIZATION_COMPILER_PLUGIN)

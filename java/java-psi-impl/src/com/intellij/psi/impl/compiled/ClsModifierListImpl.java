@@ -116,6 +116,9 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
     if (hasModifierProperty(PsiModifier.FINAL) && !isEnum && !isInterfaceField && !isEnumConstant) {
       buffer.append(PsiModifier.FINAL).append(' ');
     }
+    if (hasModifierProperty(PsiModifier.SEALED)) {
+      buffer.append(PsiModifier.SEALED).append(' ');
+    }
     if (hasModifierProperty(PsiModifier.NATIVE)) {
       buffer.append(PsiModifier.NATIVE).append(' ');
     }

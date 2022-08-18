@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerExImpl;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -10,9 +11,6 @@ import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 
-/**
- * @author Dmitry Avdeev
- */
 public abstract class HeavyFileEditorManagerTestCase extends CodeInsightFixtureTestCase<ModuleFixtureBuilder<?>> {
   protected VirtualFile getFile(String path) {
     return LocalFileSystem.getInstance().refreshAndFindFileByPath(
@@ -24,7 +22,7 @@ public abstract class HeavyFileEditorManagerTestCase extends CodeInsightFixtureT
     super.setUp();
 
     Project project = getProject();
-    FileEditorManagerImpl manager = new FileEditorManagerImpl(project);
+    FileEditorManagerImpl manager = new FileEditorManagerExImpl(project);
     ServiceContainerUtil.registerComponentInstance(project, FileEditorManager.class, manager, getTestRootDisposable());
   }
 

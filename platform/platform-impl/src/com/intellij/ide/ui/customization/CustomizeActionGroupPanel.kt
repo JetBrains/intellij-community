@@ -197,6 +197,10 @@ class CustomizeActionGroupPanel(
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabled = direction.test(list.selectedIndices, list.model.size)
     }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
   }
 
   private inner class RemoveAction(
@@ -218,6 +222,10 @@ class CustomizeActionGroupPanel(
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabled = list.selectedIndices.isNotEmpty()
     }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
   }
 
   private inner class RestoreAction(
@@ -234,6 +242,10 @@ class CustomizeActionGroupPanel(
     override fun update(e: AnActionEvent) {
       val current = (list.model as CollectionListModel).items
       e.presentation.isEnabled = defaultActions != current
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
     }
   }
 

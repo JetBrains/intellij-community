@@ -4,6 +4,7 @@ package com.intellij.ide.actions;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.PasteProvider;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,12 +26,18 @@ import java.awt.datatransfer.Transferable;
 
 public class PasteReferenceProvider implements PasteProvider {
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void performPaste(@NotNull DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (project == null || editor == null) return;
 
     final String fqn = getCopiedFqn(dataContext);
+    if (fqn == null) return;
 
     QualifiedNameProvider theProvider = null;
     PsiElement element = null;
@@ -61,7 +68,12 @@ public class PasteReferenceProvider implements PasteProvider {
     return project != null && fqn != null && QualifiedNameProviderUtil.qualifiedNameToElement(fqn, project) != null;
   }
 
-  private static void insert(final String fqn, final PsiElement element, final Editor editor, final QualifiedNameProvider provider) {
+  private static void insert(
+    @NotNull String fqn,
+    @NotNull PsiElement element,
+    @NotNull Editor editor,
+    @NotNull QualifiedNameProvider provider
+  ) {
     final Project project = editor.getProject();
     if (project == null) return;
 

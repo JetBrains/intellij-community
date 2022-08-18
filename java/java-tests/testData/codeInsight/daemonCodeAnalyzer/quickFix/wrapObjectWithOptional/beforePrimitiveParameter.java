@@ -1,4 +1,4 @@
-// "Wrap 2nd argument using 'java.util.Optional'" "true"
+// "Wrap 2nd argument using 'java.util.Optional'" "true-preview"
 import java.util.Optional;
 
 public class Test {

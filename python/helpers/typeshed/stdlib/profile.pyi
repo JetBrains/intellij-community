@@ -2,6 +2,8 @@ from _typeshed import Self, StrOrBytesPath
 from typing import Any, Callable, TypeVar
 from typing_extensions import ParamSpec
 
+__all__ = ["run", "runctx", "Profile"]
+
 def run(statement: str, filename: str | None = ..., sort: str | int = ...) -> None: ...
 def runctx(
     statement: str, globals: dict[str, Any], locals: dict[str, Any], filename: str | None = ..., sort: str | int = ...

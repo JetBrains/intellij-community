@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.stubindex
 
@@ -7,19 +7,19 @@ import com.intellij.psi.stubs.IndexSink
 import com.intellij.psi.stubs.NamedStub
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
+import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.stubs.*
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
-import org.jetbrains.kotlin.util.aliasImportMap
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 fun <TDeclaration : KtCallableDeclaration> indexTopLevelExtension(stub: KotlinCallableStubBase<TDeclaration>, sink: IndexSink) {
-    KotlinTopLevelExtensionsByReceiverTypeIndex.INSTANCE.indexExtension(stub, sink)
+    KotlinTopLevelExtensionsByReceiverTypeIndex.indexExtension(stub, sink)
 }
 
 fun <TDeclaration : KtCallableDeclaration> indexExtensionInObject(stub: KotlinCallableStubBase<TDeclaration>, sink: IndexSink) {
-    KotlinExtensionsInObjectsByReceiverTypeIndex.INSTANCE.indexExtension(stub, sink)
+    KotlinExtensionsInObjectsByReceiverTypeIndex.indexExtension(stub, sink)
 }
 
 private fun <TDeclaration : KtCallableDeclaration> KotlinExtensionsByReceiverTypeIndex.indexExtension(
@@ -80,7 +80,7 @@ private fun KtTypeElement.index(
 
                 occurrence(referenceName)
 
-                aliasImportMap()[referenceName].forEach { occurrence(it) }
+                KotlinPsiHeuristics.unwrapImportAlias(this, referenceName).forEach { occurrence(it) }
             }
 
             is KtNullableType -> innerType?.indexWithVisited(declaration, containingTypeReference, visited, occurrence)
@@ -118,7 +118,7 @@ fun indexInternals(stub: KotlinCallableStubBase<*>, sink: IndexSink) {
     if (stub.isTopLevel()) return
 
     if (modifierListStub.hasModifier(KtTokens.OPEN_KEYWORD) || modifierListStub.hasModifier(KtTokens.ABSTRACT_KEYWORD)) {
-        sink.occurrence(KotlinOverridableInternalMembersShortNameIndex.Instance.key, name)
+        sink.occurrence(KotlinOverridableInternalMembersShortNameIndex.key, name)
     }
 }
 
@@ -153,7 +153,7 @@ fun indexJvmNameAnnotation(stub: KotlinAnnotationEntryStub, sink: IndexSink) {
     }
 
     if (annotatedElementName != jvmName) {
-        sink.occurrence(KotlinJvmNameAnnotationIndex.INSTANCE.key, jvmName)
+        sink.occurrence(KotlinJvmNameAnnotationIndex.key, jvmName)
     }
 }
 

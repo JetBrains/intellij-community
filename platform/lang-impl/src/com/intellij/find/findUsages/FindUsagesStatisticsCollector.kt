@@ -8,18 +8,18 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
-import com.intellij.usages.impl.UsageViewStatisticsCollector
+import com.intellij.usages.impl.ScopeRuleValidator
 
 class FindUsagesStatisticsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
     @JvmField
-    val GROUP = EventLogGroup("find.usages", 2)
+    val GROUP = EventLogGroup("find.usages", 3)
 
     const val OPTIONS_EVENT_ID = "options"
 
-    private val SEARCHABLE_SCOPE_EVENT_FIELD = EventFields.StringValidatedByCustomRule("searchScope", UsageViewStatisticsCollector.SCOPE_RULE_ID)
+    private val SEARCHABLE_SCOPE_EVENT_FIELD = EventFields.StringValidatedByCustomRule("searchScope", ScopeRuleValidator::class.java)
     private val SEARCH_FOR_TEXT_OCCURRENCES_FIELD = EventFields.Boolean("isSearchForTextOccurrences")
     private val IS_USAGES_FIELD = EventFields.Boolean("isUsages")
     private val ADDITIONAL = EventFields.createAdditionalDataField(GROUP.id, OPTIONS_EVENT_ID)

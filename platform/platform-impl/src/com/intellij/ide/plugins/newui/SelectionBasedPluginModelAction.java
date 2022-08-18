@@ -116,6 +116,11 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       myPluginModel.setEnabledState(getAllDescriptors(),
                                     myAction);
@@ -166,6 +171,11 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
       e.getPresentation().setEnabledAndVisible(!disabled);
 
       setShortcutSet(SHORTCUT_SET, myShowShortcut);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override

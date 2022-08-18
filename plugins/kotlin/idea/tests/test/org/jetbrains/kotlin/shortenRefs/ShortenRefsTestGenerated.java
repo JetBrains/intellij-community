@@ -427,6 +427,11 @@ public abstract class ShortenRefsTestGenerated extends AbstractShortenRefsTest {
             runTest("testData/shortenRefs/classInCompanionObject.kt");
         }
 
+        @TestMetadata("classLiteralOnCompanion.kt")
+        public void testClassLiteralOnCompanion() throws Exception {
+            runTest("testData/shortenRefs/classLiteralOnCompanion.kt");
+        }
+
         @TestMetadata("ClassNameConflict.kt")
         public void testClassNameConflict() throws Exception {
             runTest("testData/shortenRefs/ClassNameConflict.kt");

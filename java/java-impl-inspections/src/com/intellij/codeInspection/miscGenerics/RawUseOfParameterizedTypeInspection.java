@@ -1,13 +1,18 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.miscGenerics;
 
+import com.intellij.codeInsight.intention.HighPriorityAction;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -101,15 +106,38 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
       }
     }
     if (target instanceof PsiJavaCodeReferenceElement) {
-      PsiTypeElement typeElement = ObjectUtils.tryCast(target.getParent(), PsiTypeElement.class);
-      if (typeElement == null) return null;
-      PsiTypeCastExpression cast = ObjectUtils.tryCast(typeElement.getParent(), PsiTypeCastExpression.class);
-      if (cast == null) return null;
-      if (!canUseUpperBound(cast)) return null;
-      PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(cast.getType());
-      if (psiClass == null) return null;
-      int count = psiClass.getTypeParameters().length;
-      return new CastQuickFix(typeElement.getText() + StreamEx.constant("?", count).joining(",", "<", ">"));
+      PsiElement parent = target.getParent();
+      if (parent instanceof PsiTypeElement) {
+        PsiTypeElement typeElement = (PsiTypeElement)parent;
+        PsiReferenceParameterList params = ((PsiJavaCodeReferenceElement)target).getParameterList();
+        // Can be erroneous empty <>
+        if (params != null && !params.textMatches("")) return null;
+        PsiTypeCastExpression cast = ObjectUtils.tryCast(typeElement.getParent(), PsiTypeCastExpression.class);
+        if (cast == null) return null;
+        if (!canUseUpperBound(cast)) return null;
+        PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(cast.getType());
+        if (psiClass == null) return null;
+        int count = psiClass.getTypeParameters().length;
+        return new CastQuickFix(typeElement.getText() + StreamEx.constant("?", count).joining(",", "<", ">"));
+      }
+      else if (parent instanceof PsiNewExpression) {
+        if (!PsiUtil.isLanguageLevel7OrHigher(parent)) return null;
+        PsiNewExpression newExpression = (PsiNewExpression)parent;
+        if (newExpression.isArrayCreation() || newExpression.getAnonymousClass() != null) return null;
+        PsiType expectedType = ExpectedTypeUtils.findExpectedType(newExpression, false);
+        if (expectedType == null || (expectedType instanceof PsiClassType && ((PsiClassType)expectedType).isRaw())) return null;
+        PsiNewExpression copy = (PsiNewExpression)LambdaUtil.copyWithExpectedType(parent, expectedType);
+        PsiJavaCodeReferenceElement reference = copy.getClassReference();
+        if (reference == null) return null;
+        PsiReferenceParameterList parameterList = reference.getParameterList();
+        if (parameterList == null || !parameterList.textMatches("")) return null;
+        parameterList.replace(PsiDiamondTypeUtil.createExplicitReplacement(parameterList));
+        JavaResolveResult resolveResult = copy.resolveMethodGenerics();
+        if (!resolveResult.isValidResult()) return null;
+        PsiType diamondType = copy.getType();
+        if (diamondType == null || !expectedType.isAssignableFrom(diamondType)) return null;
+        return new UseDiamondFix();
+      }
     }
     return null;
   }
@@ -151,7 +179,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
             continue;
           }
           PsiType parameterType = parameter.getType();
-          if (PsiTypesUtil.mentionsTypeParameters(parameterType, tp -> true)) return false;
+          if (PsiTypesUtil.mentionsTypeParameters(parameterType, Predicates.alwaysTrue())) return false;
         }
         return true;
       }
@@ -183,12 +211,9 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
     @Override
     public void visitTypeElement(@NotNull PsiTypeElement typeElement) {
       PsiElement directParent = typeElement.getParent();
-      if (directParent instanceof PsiVariable) {
-        if (directParent instanceof PsiPatternVariable) return;
-        if (getSuggestedType((PsiVariable)directParent) != null) {
-          reportProblem(typeElement);
-          return;
-        }
+      if (directParent instanceof PsiVariable && getSuggestedType((PsiVariable)directParent) != null) {
+        reportProblem(typeElement);
+        return;
       }
       final PsiType type = typeElement.getType();
       if (!(type instanceof PsiClassType)) {
@@ -248,7 +273,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
     }
 
     @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+    public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
       final PsiElement referenceParent = reference.getParent();
       if (!(referenceParent instanceof PsiReferenceList)) {
@@ -316,6 +341,24 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
     if (variableType.equals(type)) return null;
     return type;
   }
+
+  private static class UseDiamondFix extends InspectionGadgetsFix implements HighPriorityAction {
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return CommonQuickFixBundle.message("fix.insert.x", "<>");
+    }
+
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      PsiJavaCodeReferenceElement element = ObjectUtils.tryCast(descriptor.getPsiElement(), PsiJavaCodeReferenceElement.class);
+      if (element == null) return;
+      PsiReferenceParameterList parameterList = element.getParameterList();
+      if (parameterList == null) return;
+      RemoveRedundantTypeArgumentsUtil.replaceExplicitWithDiamond(parameterList);
+    }
+  }
+
 
   private static class CastQuickFix extends InspectionGadgetsFix {
     private final String myTargetType;

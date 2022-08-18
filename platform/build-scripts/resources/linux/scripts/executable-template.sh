@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+# Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 # ---------------------------------------------------------------------
 # __product_full__ startup script.
@@ -22,9 +22,9 @@ message()
 }
 
 if [ -z "$(command -v uname)" ] || [ -z "$(command -v realpath)" ] || [ -z "$(command -v dirname)" ] || [ -z "$(command -v cat)" ] || \
-   [ -z "$(command -v egrep)" ]; then
+   [ -z "$(command -v grep)" ]; then
   TOOLS_MSG="Required tools are missing:"
-  for tool in uname realpath egrep dirname cat ; do
+  for tool in uname realpath grep dirname cat ; do
      test -z "$(command -v $tool)" && TOOLS_MSG="$TOOLS_MSG $tool"
   done
   message "$TOOLS_MSG (SHELL=$SHELL PATH=$PATH)"
@@ -61,8 +61,11 @@ if [ -z "$JRE" ] && [ -s "${CONFIG_HOME}/__product_vendor__/__system_selector__/
   fi
 fi
 
-if [ -z "$JRE" ] && [ "$OS_TYPE" = "Linux" ] && [ "$OS_ARCH" = "x86_64" ] && [ -d "$IDE_HOME/jbr" ]; then
-  JRE="$IDE_HOME/jbr"
+if [ -z "$JRE" ] && [ "$OS_TYPE" = "Linux" ] && [ -f "$IDE_HOME/jbr/release" ]; then
+  JBR_ARCH="OS_ARCH=\"$OS_ARCH\""
+  if grep -q -e "$JBR_ARCH" "$IDE_HOME/jbr/release" ; then
+    JRE="$IDE_HOME/jbr"
+  fi
 fi
 
 # shellcheck disable=SC2153
@@ -140,7 +143,7 @@ __class_path__
 # ---------------------------------------------------------------------
 IFS="$(printf '\n\t')"
 # shellcheck disable=SC2086
-"$JAVA_BIN" \
+exec "$JAVA_BIN" \
   -classpath "$CLASS_PATH" \
   ${VM_OPTIONS} \
   "-XX:ErrorFile=$HOME/java_error_in___vm_options___%p.log" \
@@ -148,5 +151,5 @@ IFS="$(printf '\n\t')"
   "-Djb.vmOptionsFile=${USER_VM_OPTIONS_FILE:-${VM_OPTIONS_FILE}}" \
   ${IDE_PROPERTIES_PROPERTY} \
   __ide_jvm_args__ \
-  com.intellij.idea.Main \
+  __main_class_name__ \
   "$@"

@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
@@ -19,10 +20,13 @@ import com.intellij.openapi.ui.WindowWrapper
 import com.intellij.openapi.ui.WindowWrapperBuilder
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager.Companion.getInstance
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
@@ -49,6 +53,10 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 class GitShowExternalLogAction : DumbAwareAction() {
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
+
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabledAndVisible = e.project != null
@@ -63,29 +71,44 @@ class GitShowExternalLogAction : DumbAwareAction() {
     }
     val window = getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID)
     if (project.isDefault || !ProjectLevelVcsManager.getInstance(project).hasActiveVcss() || window == null) {
-      ProgressManager.getInstance().run(ShowLogInDialogTask(project, roots, vcs))
-      return
-    }
-    val showContent = {
-      val cm = window.contentManager
-      if (!selectProjectLog(project, vcs, roots) && !selectAlreadyOpened(cm, roots)) {
-        val component = createManagerAndContent(project, vcs, roots, true)
-        val content = ContentFactory.SERVICE.getInstance().createContent(component, calcTabName(cm, roots), false)
-        content.setDisposer(component.disposable)
-        content.description = GitBundle.message("git.log.external.tab.description",
-                                                roots.joinToString("\n") { obj: VirtualFile -> obj.path })
-        content.isCloseable = true
-        cm.addContent(content)
-        cm.setSelectedContent(content)
-        doOnProviderRemoval(project, component.disposable) { cm.removeContent(content, true) }
-      }
-    }
-    if (!window.isVisible) {
-      window.activate(showContent, true)
+      showExternalGitLogInDialog(project, vcs, roots, GitBundle.message("git.log.external.window.title"))
     }
     else {
-      showContent()
+      val description = GitBundle.message("git.log.external.tab.description", roots.joinToString("\n") { obj: VirtualFile -> obj.path })
+      showExternalGitLogInToolwindow(project, window, vcs, roots, calcTabName(window.contentManager, roots), description)
     }
+  }
+}
+
+fun showExternalGitLogInDialog(project: Project, vcs: GitVcs, roots: List<VirtualFile>, dialogTitle: @DialogTitle String) {
+  ProgressManager.getInstance().run(ShowLogInDialogTask(project, roots, vcs, dialogTitle))
+}
+
+fun showExternalGitLogInToolwindow(project: Project,
+                                   toolWindow: ToolWindow,
+                                   vcs: GitVcs,
+                                   roots: List<VirtualFile>,
+                                   tabTitle: @NlsContexts.TabTitle String,
+                                   tabDescription: @NlsContexts.Tooltip String) {
+  val showContent = {
+    val cm = toolWindow.contentManager
+    if (!selectProjectLog(project, vcs, roots) && !selectAlreadyOpened(cm, roots)) {
+      val isToolWindowTab = toolWindow.id == ChangesViewContentManager.TOOLWINDOW_ID
+      val component = createManagerAndContent(project, vcs, roots, isToolWindowTab)
+      val content = ContentFactory.getInstance().createContent(component, tabTitle, false)
+      content.setDisposer(component.disposable)
+      content.description = tabDescription
+      content.isCloseable = true
+      cm.addContent(content)
+      cm.setSelectedContent(content)
+      doOnProviderRemoval(project, component.disposable) { cm.removeContent(content, true) }
+    }
+  }
+  if (!toolWindow.isVisible) {
+    toolWindow.activate(showContent, true)
+  }
+  else {
+    showContent()
   }
 }
 
@@ -98,7 +121,7 @@ private class MyContentComponent(actualComponent: JComponent,
   }
 }
 
-private class ShowLogInDialogTask(project: Project, val roots: List<VirtualFile>, val vcs: GitVcs) :
+private class ShowLogInDialogTask(project: Project, val roots: List<VirtualFile>, val vcs: GitVcs, @DialogTitle val dialogTitle: String) :
   Backgroundable(project, @Suppress("DialogTitleCapitalization") GitBundle.message("git.log.external.loading.process"), true) {
   override fun run(indicator: ProgressIndicator) {
     if (!GitExecutableManager.getInstance().testGitExecutableVersionValid(project)) {
@@ -111,7 +134,7 @@ private class ShowLogInDialogTask(project: Project, val roots: List<VirtualFile>
       val content = createManagerAndContent(project, vcs, roots, false)
       val window = WindowWrapperBuilder(WindowWrapper.Mode.FRAME, content)
         .setProject(project)
-        .setTitle(GitBundle.message("git.log.external.window.title"))
+        .setTitle(dialogTitle)
         .setPreferredFocusedComponent(content)
         .setDimensionServiceKey(GitShowExternalLogAction::class.java.name)
         .build()

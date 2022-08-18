@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
@@ -36,12 +36,12 @@ import org.jetbrains.kotlin.asJava.finder.KtLightPackage
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.findClassAcrossModuleDependencies
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.jsonUtils.getNullableString
 import org.jetbrains.kotlin.idea.jsonUtils.getString
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.search.allScope
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.*
@@ -79,10 +79,15 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
         val withRuntime = renameObject.getNullableString("withRuntime")
         val libraryInfos = renameObject.getAsJsonArray("libraries")?.map { it.asString!! }
         if (libraryInfos != null) {
-            val jarPaths = listOf(KotlinArtifacts.instance.kotlinStdlib) + libraryInfos.map {
-                File(PlatformTestUtil.getCommunityPath(), it.substringAfter("@"))
+            val jarPaths = listOf(TestKotlinArtifacts.kotlinStdlib) + libraryInfos.map { libraryInfo ->
+                if ("@" in libraryInfo) {
+                    File(PlatformTestUtil.getCommunityPath(), libraryInfo.substringAfter("@"))
+                }
+                else {
+                    ConfigLibraryUtil.ATTACHABLE_LIBRARIES[libraryInfo]
+                }
             }
-            return KotlinWithJdkAndRuntimeLightProjectDescriptor(jarPaths, listOf(KotlinArtifacts.instance.kotlinStdlibSources))
+            return KotlinWithJdkAndRuntimeLightProjectDescriptor(jarPaths, listOf(TestKotlinArtifacts.kotlinStdlibSources))
         }
 
         if (withRuntime != null) {
@@ -169,7 +174,7 @@ abstract class AbstractRenameTest : KotlinLightCodeInsightFixtureTestCase() {
         val classFQN = renameParamsObject.getString("classId").toClassId().asSingleFqName().asString()
         val newName = renameParamsObject.getString("newName")
 
-        doTestCommittingDocuments(context) { _ ->
+        doTestCommittingDocuments(context) {
             val aClass = context.javaFacade.findClass(classFQN, context.project.allScope())!!
             val substitution = RenamePsiElementProcessor.forElement(aClass).substituteElementToRename(aClass, null)
 

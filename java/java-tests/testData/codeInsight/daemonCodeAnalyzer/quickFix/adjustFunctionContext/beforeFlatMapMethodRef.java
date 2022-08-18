@@ -1,4 +1,4 @@
-// "Replace 'flatMap()' with 'flatMapToInt()'" "true"
+// "Replace 'flatMap()' with 'flatMapToInt()'" "true-preview"
 import java.util.*;
 import java.util.stream.*;
 

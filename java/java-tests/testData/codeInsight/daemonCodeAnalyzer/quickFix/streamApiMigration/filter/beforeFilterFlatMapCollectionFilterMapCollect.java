@@ -1,4 +1,4 @@
-// "Replace with collect" "true"
+// "Replace with collect" "true-preview"
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;

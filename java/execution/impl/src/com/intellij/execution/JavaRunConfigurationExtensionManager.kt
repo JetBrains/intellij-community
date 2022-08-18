@@ -5,6 +5,7 @@ import com.intellij.execution.configuration.RunConfigurationExtensionsManager
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.RunnerSettings
+import com.intellij.execution.ui.ConsoleView
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceOrNull
@@ -40,6 +41,17 @@ class JavaRunConfigurationExtensionManager : RunConfigurationExtensionsManager<R
     processEnabledExtensions(configuration, runnerSettings) {
       it.updateJavaParameters(configuration, params, runnerSettings, executor)
     }
+  }
+
+  fun <T : RunConfigurationBase<*>> decorateExecutionConsole(configuration: T,
+                                                             runnerSettings: RunnerSettings?,
+                                                             console: ConsoleView,
+                                                             executor: Executor): ConsoleView {
+    var result = console
+    processEnabledExtensions(configuration, runnerSettings) {
+      result = it.decorate(result, configuration, executor)
+    }
+    return result
   }
 
   override val idAttrName = "name"

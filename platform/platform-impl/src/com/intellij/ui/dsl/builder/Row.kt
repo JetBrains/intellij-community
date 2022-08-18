@@ -113,9 +113,11 @@ interface Row {
 
   /**
    * Adds comment after the row with appropriate color and font size (macOS and Linux use smaller font).
-   * [comment] can contain HTML tags except &lt;html&gt;, which is added automatically.
-   * \n does not work as new line in html, use &lt;br&gt; instead.
-   * Links with href to http/https are automatically marked with additional arrow icon.
+   * * [comment] can contain HTML tags except &lt;html&gt;, which is added automatically
+   * * \n does not work as new line in html, use &lt;br&gt; instead
+   * * Links with href to http/https are automatically marked with additional arrow icon
+   * * Use bundled icons with `<code>` tag, for example `<icon src='AllIcons.General.Information'>`
+   *
    * Visibility and enabled state of the row affects row comment as well.
    *
    * @see MAX_LINE_LENGTH_WORD_WRAP
@@ -197,8 +199,12 @@ interface Row {
 
   /**
    * Adds radio button. [Panel.buttonsGroup] must be defined above hierarchy before adding radio buttons.
-   * If there is a binding [ButtonsGroup.bind] for the buttons group then [value] must be provided with correspondent to binding type,
-   * or null otherwise
+   * If there is a binding [ButtonsGroup.bind] for the buttons group then:
+   * * [value] must be provided with correspondent to binding type for all radio buttons in the group
+   * * it's possible to mark default radio button by [JRadioButton.isSelected] = true, such button will be selected by default in case
+   * initial bound variable value is not equal to values of radio button in the group
+   *
+   * If there is no binding, then values of all radio buttons in the group must be null
    */
   fun radioButton(@NlsContexts.RadioButton text: String, value: Any? = null): Cell<JBRadioButton>
 
@@ -248,9 +254,12 @@ interface Row {
                 action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
 
   /**
-   * Adds text. [text] can contain HTML tags except &lt;html&gt;, which is added automatically.
-   * \n does not work as new line in html, use &lt;br&gt; instead.
-   * Links with href to http/https are automatically marked with additional arrow icon.
+   * Adds text
+   * * [text] can contain HTML tags except &lt;html&gt;, which is added automatically
+   * * \n does not work as new line in html, use &lt;br&gt; instead
+   * * Links with href to http/https are automatically marked with additional arrow icon
+   * * Use bundled icons with `<code>` tag, for example `<icon src='AllIcons.General.Information'>`
+   *
    * It is preferable to use [label] method for short plain single-lined strings because labels use less resources and simpler
    *
    * @see DEFAULT_COMMENT_WIDTH
@@ -266,9 +275,10 @@ interface Row {
 
   /**
    * Adds comment with appropriate color and font size (macOS and Linux use smaller font).
-   * [comment] can contain HTML tags except &lt;html&gt;, which is added automatically.
-   * \n does not work as new line in html, use &lt;br&gt; instead.
-   * Links with href to http/https are automatically marked with additional arrow icon.
+   * * [comment] can contain HTML tags except &lt;html&gt;, which is added automatically
+   * * \n does not work as new line in html, use &lt;br&gt; instead
+   * * Links with href to http/https are automatically marked with additional arrow icon
+   * * Use bundled icons with `<code>` tag, for example `<icon src='AllIcons.General.Information'>`
    *
    * @see DEFAULT_COMMENT_WIDTH
    * @see MAX_LINE_LENGTH_WORD_WRAP
@@ -320,6 +330,10 @@ interface Row {
                                 project: Project? = null,
                                 fileChooserDescriptor: FileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
                                 fileChosen: ((chosenFile: VirtualFile) -> String)? = null): Cell<TextFieldWithBrowseButton>
+  /**
+   * Creates password field with [columns] set to [COLUMNS_SHORT]
+   */
+  fun passwordField(): Cell<JBPasswordField>
 
   /**
    * Creates expandable text field with [columns] set to [COLUMNS_SHORT]

@@ -150,8 +150,10 @@ public class EclipseThemeOptionHandler implements EclipseThemeReader.OptionHandl
     if (myColorsScheme instanceof AbstractColorsScheme) {
       TextAttributes alreadyDefined = ((AbstractColorsScheme)myColorsScheme).getDirectlyDefinedAttributes(key);
       if (alreadyDefined != null) {
+        alreadyDefined = alreadyDefined.clone();
         if (attributes.getForegroundColor() != null) alreadyDefined.setForegroundColor(attributes.getForegroundColor());
         if (attributes.getBackgroundColor() != null) alreadyDefined.setBackgroundColor(attributes.getBackgroundColor());
+        myColorsScheme.setAttributes(key, alreadyDefined);
         return;
       }
     }

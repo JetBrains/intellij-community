@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.DynamicBundle;
@@ -139,6 +139,10 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   @NotNull
   public String getShortName() {
     return myEP != null ? myEP.getShortName() : getTool().getShortName();
+  }
+
+  public @Nullable String getDefaultEditorAttributes() {
+    return myEP == null ? getTool().getEditorAttributesKey() : myEP.editorAttributes;
   }
 
   @NotNull

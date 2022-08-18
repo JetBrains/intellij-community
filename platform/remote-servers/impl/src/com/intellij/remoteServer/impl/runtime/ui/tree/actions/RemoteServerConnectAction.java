@@ -15,6 +15,7 @@
  */
 package com.intellij.remoteServer.impl.runtime.ui.tree.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.EmptyRunnable;
@@ -40,4 +41,10 @@ public class RemoteServerConnectAction extends DumbAwareAction {
       ServerConnectionManager.getInstance().getOrCreateConnection(node.getValue()).connect(EmptyRunnable.INSTANCE);
     }
   }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
 }

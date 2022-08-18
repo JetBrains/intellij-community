@@ -1,16 +1,31 @@
-@file:Suppress("DEPRECATION")
+/*******************************************************************************
+ * Copyright 2000-2022 JetBrains s.r.o. and contributors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 
 package com.jetbrains.packagesearch.intellij.plugin.data
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiManager
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.PluginEnvironment
-import com.jetbrains.packagesearch.intellij.plugin.api.PackageSearchApiClient
-import com.jetbrains.packagesearch.intellij.plugin.api.ServerURLs
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackagesToUpgrade
@@ -19,7 +34,6 @@ import com.jetbrains.packagesearch.intellij.plugin.util.BackgroundLoadingBarCont
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.batchAtIntervals
 import com.jetbrains.packagesearch.intellij.plugin.util.catchAndLog
-import com.jetbrains.packagesearch.intellij.plugin.util.coroutineModuleTransformers
 import com.jetbrains.packagesearch.intellij.plugin.util.filesChangedEventFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
@@ -27,7 +41,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.mapLatestTimedWithLoadin
 import com.jetbrains.packagesearch.intellij.plugin.util.modifiedBy
 import com.jetbrains.packagesearch.intellij.plugin.util.moduleChangesSignalFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.moduleTransformers
-import com.jetbrains.packagesearch.intellij.plugin.util.nativeModulesChangesFlow
+import com.jetbrains.packagesearch.intellij.plugin.util.nativeModulesFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectCachesService
 import com.jetbrains.packagesearch.intellij.plugin.util.packageVersionNormalizer
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
@@ -36,42 +50,43 @@ import com.jetbrains.packagesearch.intellij.plugin.util.replayOnSignals
 import com.jetbrains.packagesearch.intellij.plugin.util.showBackgroundLoadingBar
 import com.jetbrains.packagesearch.intellij.plugin.util.throttle
 import com.jetbrains.packagesearch.intellij.plugin.util.timer
+import com.jetbrains.packagesearch.intellij.plugin.util.toolWindowManagerFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.trustedProjectFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.whileLoading
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.job
+import kotlinx.coroutines.flow.take
 import kotlinx.serialization.json.Json
-import java.util.concurrent.Executors
-import kotlin.time.Duration
-import kotlin.time.seconds
+import org.jetbrains.idea.packagesearch.api.PackageSearchProvider
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.seconds
 
 @Service(Service.Level.PROJECT)
-internal class PackageSearchProjectService(private val project: Project) : CoroutineScope by project.lifecycleScope {
+internal class PackageSearchProjectService(private val project: Project) {
 
     private val retryFromErrorChannel = Channel<Unit>()
     private val restartChannel = Channel<Unit>()
     val dataProvider = ProjectDataProvider(
-        PackageSearchApiClient(ServerURLs.base),
+        PackageSearchProvider(),
         project.packageSearchProjectCachesService.installedDependencyCache
     )
 
@@ -84,6 +99,8 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
     private val installedPackagesDifferenceLoadingFlow = MutableStateFlow(false)
     private val packageUpgradesLoadingFlow = MutableStateFlow(false)
     private val availableUpgradesLoadingFlow = MutableStateFlow(false)
+
+    private val canShowLoadingBar = MutableStateFlow(false)
 
     private val operationExecutedChannel = Channel<List<ProjectModule>>()
 
@@ -100,55 +117,46 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
         installedPackagesStep2LoadingFlow,
         installedPackagesDifferenceLoadingFlow,
         packageUpgradesLoadingFlow
-    ) { booleans -> emit(booleans.any { it }) }.stateIn(this, SharingStarted.Eagerly, false)
+    ) { booleans -> emit(booleans.any { it }) }
+        .stateIn(project.lifecycleScope, SharingStarted.Eagerly, false)
 
-    private val projectModulesSharedFlow = project.trustedProjectFlow.flatMapLatest { isProjectTrusted ->
-        if (isProjectTrusted) project.nativeModulesChangesFlow else flowOf(emptyList())
-    }
+    private val projectModulesSharedFlow = project.trustedProjectFlow
+        .flatMapLatest { isProjectTrusted -> if (isProjectTrusted) project.nativeModulesFlow else flowOf(emptyList()) }
         .replayOnSignals(
             retryFromErrorChannel.receiveAsFlow().throttle(10.seconds),
             project.moduleChangesSignalFlow,
             restartChannel.receiveAsFlow()
         )
         .mapLatestTimedWithLoading("projectModulesSharedFlow", projectModulesLoadingFlow) { modules ->
-            val moduleTransformations = project.moduleTransformers.map { transformer ->
-                async { readAction { runCatching { transformer.transformModules(project, modules) } }.getOrThrow() }
-            }
-
-            val coroutinesModulesTransformations = project.coroutineModuleTransformers
+            project.moduleTransformers
                 .map { async { it.transformModules(project, modules) } }
                 .awaitAll()
                 .flatten()
-
-            moduleTransformations.awaitAll().flatten() + coroutinesModulesTransformations
         }
         .catchAndLog(
             context = "${this::class.qualifiedName}#projectModulesSharedFlow",
-            message = "Error while elaborating latest project modules",
-            fallbackValue = emptyList(),
-            retryChannel = retryFromErrorChannel
+            message = "Error while elaborating latest project modules"
         )
-        .shareIn(this, SharingStarted.Eagerly)
+        .shareIn(project.lifecycleScope, SharingStarted.Eagerly)
 
-    val projectModulesStateFlow = projectModulesSharedFlow.stateIn(this, SharingStarted.Eagerly, emptyList())
+    val projectModulesStateFlow = projectModulesSharedFlow.stateIn(project.lifecycleScope, SharingStarted.Eagerly, emptyList())
 
     val isAvailable
         get() = projectModulesStateFlow.value.isNotEmpty()
 
-    private val knownRepositoriesFlow = timer(Duration.hours(1))
+    private val knownRepositoriesFlow = timer(1.hours)
         .mapLatestTimedWithLoading("knownRepositoriesFlow", knownRepositoriesLoadingFlow) { dataProvider.fetchKnownRepositories() }
         .catchAndLog(
             context = "${this::class.qualifiedName}#knownRepositoriesFlow",
-            message = "Error while refreshing known repositories",
-            fallbackValue = emptyList()
+            message = "Error while refreshing known repositories"
         )
-        .stateIn(this, SharingStarted.Eagerly, emptyList())
+        .stateIn(project.lifecycleScope, SharingStarted.Eagerly, emptyList())
 
     private val buildFileChangesFlow = combine(
         projectModulesSharedFlow,
         project.filesChangedEventFlow.map { it.mapNotNull { it.file } }
     ) { modules, changedBuildFiles -> modules.filter { it.buildFile in changedBuildFiles } }
-        .shareIn(this, SharingStarted.Eagerly)
+        .shareIn(project.lifecycleScope, SharingStarted.Eagerly)
 
     private val projectModulesChangesFlow = merge(
         buildFileChangesFlow.filter { it.isNotEmpty() },
@@ -158,10 +166,9 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
         .map { it.flatMap { it }.distinct() }
         .catchAndLog(
             context = "${this::class.qualifiedName}#projectModulesChangesFlow",
-            message = "Error while checking Modules changes",
-            fallbackValue = emptyList()
+            message = "Error while checking Modules changes"
         )
-        .shareIn(this, SharingStarted.Eagerly)
+        .shareIn(project.lifecycleScope, SharingStarted.Eagerly)
 
     val moduleModelsStateFlow = projectModulesSharedFlow
         .mapLatestTimedWithLoading(
@@ -176,13 +183,11 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
         .map { it.values.toList() }
         .catchAndLog(
             context = "${this::class.qualifiedName}#moduleModelsStateFlow",
-            message = "Error while evaluating modules models",
-            fallbackValue = emptyList(),
-            retryChannel = retryFromErrorChannel
+            message = "Error while evaluating modules models"
         )
-        .stateIn(this, SharingStarted.Eagerly, emptyList())
+        .stateIn(project.lifecycleScope, SharingStarted.Eagerly, emptyList())
 
-    val allInstalledKnownRepositoriesFlow =
+    val allInstalledKnownRepositoriesStateFlow =
         combine(moduleModelsStateFlow, knownRepositoriesFlow) { moduleModels, repos -> moduleModels to repos }
             .mapLatestTimedWithLoading(
                 loggingContext = "allInstalledKnownRepositoriesFlow",
@@ -192,14 +197,9 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
             }
             .catchAndLog(
                 context = "${this::class.qualifiedName}#allInstalledKnownRepositoriesFlow",
-                message = "Error while evaluating installed repositories",
-                fallbackValue = KnownRepositories.All.EMPTY
+                message = "Error while evaluating installed repositories"
             )
-            .stateIn(this, SharingStarted.Eagerly, KnownRepositories.All.EMPTY)
-
-    private val installedDependenciesExecutor = Executors.newFixedThreadPool(
-        (Runtime.getRuntime().availableProcessors() / 4).coerceAtLeast(1)
-    ).asCoroutineDispatcher()
+            .stateIn(project.lifecycleScope, SharingStarted.Eagerly, KnownRepositories.All.EMPTY)
 
     val dependenciesByModuleStateFlow = projectModulesSharedFlow
         .mapLatestTimedWithLoading("installedPackagesStep1LoadingFlow", installedPackagesStep1LoadingFlow) {
@@ -216,12 +216,9 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
         }
         .catchAndLog(
             context = "${this::class.qualifiedName}#dependenciesByModuleStateFlow",
-            message = "Error while evaluating installed dependencies",
-            fallbackValue = emptyMap(),
-            retryChannel = retryFromErrorChannel
+            message = "Error while evaluating installed dependencies"
         )
-        .flowOn(installedDependenciesExecutor)
-        .stateIn(this, SharingStarted.Eagerly, emptyMap())
+        .stateIn(project.lifecycleScope, SharingStarted.Eagerly, emptyMap())
 
     val installedPackagesStateFlow = dependenciesByModuleStateFlow
         .mapLatestTimedWithLoading("installedPackagesStep2LoadingFlow", installedPackagesStep2LoadingFlow) {
@@ -234,50 +231,64 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
         }
         .catchAndLog(
             context = "${this::class.qualifiedName}#installedPackagesStateFlow",
-            message = "Error while evaluating installed packages",
-            fallbackValue = emptyList(),
-            retryChannel = retryFromErrorChannel
+            message = "Error while evaluating installed packages"
         )
-        .flowOn(installedDependenciesExecutor)
-        .stateIn(this, SharingStarted.Eagerly, emptyList())
+        .stateIn(project.lifecycleScope, SharingStarted.Eagerly, emptyList())
 
     val packageUpgradesStateFlow = combine(
         installedPackagesStateFlow,
         moduleModelsStateFlow,
         knownRepositoriesFlow
     ) { installedPackages, moduleModels, repos ->
-        availableUpgradesLoadingFlow.whileLoading {
-            val allKnownRepos = allKnownRepositoryModels(moduleModels, repos)
-            val nativeModulesMap = moduleModels.associateBy { it.projectModule }
+        coroutineScope {
+            availableUpgradesLoadingFlow.whileLoading {
+                val allKnownRepos = allKnownRepositoryModels(moduleModels, repos)
+                val nativeModulesMap = moduleModels.associateBy { it.projectModule }
 
-            val getUpgrades: suspend (Boolean) -> PackagesToUpgrade = {
-                computePackageUpgrades(installedPackages, it, packageVersionNormalizer, allKnownRepos, nativeModulesMap)
-            }
+                val getUpgrades: suspend (Boolean) -> PackagesToUpgrade = {
+                    computePackageUpgrades(installedPackages, it, packageVersionNormalizer, allKnownRepos, nativeModulesMap)
+                }
 
-            val stableUpdates = async { getUpgrades(true) }
-            val allUpdates = async { getUpgrades(false) }
-            PackageUpgradeCandidates(stableUpdates.await(), allUpdates.await())
-        }.value
+                val stableUpdates = async { getUpgrades(true) }
+                val allUpdates = async { getUpgrades(false) }
+                PackageUpgradeCandidates(stableUpdates.await(), allUpdates.await())
+            }.value
+        }
     }
         .catchAndLog(
             context = "${this::class.qualifiedName}#packageUpgradesStateFlow",
-            message = "Error while evaluating packages upgrade candidates",
-            fallbackValue = PackageUpgradeCandidates.EMPTY,
-            retryChannel = retryFromErrorChannel
+            message = "Error while evaluating packages upgrade candidates"
         )
-        .stateIn(this, SharingStarted.Eagerly, PackageUpgradeCandidates.EMPTY)
+        .stateIn(project.lifecycleScope, SharingStarted.Eagerly, PackageUpgradeCandidates.EMPTY)
 
     init {
         // allows rerunning PKGS inspections on already opened files
         // when the data is finally available or changes for PackageUpdateInspection
         // or when a build file changes
-        packageUpgradesStateFlow.onEach { DaemonCodeAnalyzer.getInstance(project).restart() }
-            .launchIn(this)
+        packageUpgradesStateFlow.throttle(5.seconds)
+            .map { projectModulesStateFlow.value.mapNotNull { it.buildFile?.path }.toSet() }
+            .filter { it.isNotEmpty() }
+            .flatMapLatest { knownBuildFiles ->
+                FileEditorManager.getInstance(project).openFiles
+                    .filter { it.path in knownBuildFiles }.asFlow()
+            }
+            .mapNotNull { readAction { PsiManager.getInstance(project).findFile(it) } }
+            .onEach { readAction { DaemonCodeAnalyzer.getInstance(project).restart(it) } }
+            .catchAndLog("${this::class.qualifiedName}#inspectionsRestart")
+            .launchIn(project.lifecycleScope)
 
         var controller: BackgroundLoadingBarController? = null
 
+        project.toolWindowManagerFlow
+            .filter { it.id == PackageSearchToolWindowFactory.ToolWindowId }
+            .take(1)
+            .onEach { canShowLoadingBar.emit(true) }
+            .launchIn(project.lifecycleScope)
+
         if (PluginEnvironment.isNonModalLoadingEnabled) {
-            isLoadingFlow.throttle(1.seconds)
+            canShowLoadingBar.filter { it }
+                .flatMapLatest { isLoadingFlow }
+                .throttle(1.seconds)
                 .onEach { controller?.clear() }
                 .filter { it }
                 .onEach {
@@ -286,10 +297,8 @@ internal class PackageSearchProjectService(private val project: Project) : Corou
                         PackageSearchBundle.message("toolwindow.stripe.Dependencies"),
                         PackageSearchBundle.message("packagesearch.ui.loading")
                     )
-                }.launchIn(this)
+                }.launchIn(project.lifecycleScope)
         }
-
-        coroutineContext.job.invokeOnCompletion { installedDependenciesExecutor.close() }
     }
 
     fun notifyOperationExecuted(successes: List<ProjectModule>) {

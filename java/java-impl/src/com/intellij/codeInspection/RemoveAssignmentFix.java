@@ -16,13 +16,16 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
 import com.intellij.codeInsight.editorActions.DeclarationJoinLinesHandler;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,15 +39,8 @@ public class RemoveAssignmentFix extends RemoveInitializerFix {
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
-    final PsiElement parent;
-    if (element instanceof PsiReferenceExpression) {
-      parent = element.getParent();
-    } else {
-      parent = element;
-    }
-    if (!(parent instanceof PsiAssignmentExpression)) return;
-
-    PsiAssignmentExpression parentExpr = (PsiAssignmentExpression)parent;
+    PsiAssignmentExpression parentExpr = getAssignment(descriptor);
+    if (parentExpr == null) return;
     PsiElement gParentExpr = parentExpr.getParent();
     PsiExpression initializer = getInitializer(parentExpr);
     if (initializer == null) return;
@@ -63,8 +59,36 @@ public class RemoveAssignmentFix extends RemoveInitializerFix {
     PsiElement resolve = resolveExpression(element, parentExpr);
     if (!(resolve instanceof PsiVariable)) return;
 
-    sideEffectAwareRemove(project, initializer, parent, (PsiVariable)resolve);
+    sideEffectAwareRemove(project, initializer, parentExpr, (PsiVariable)resolve);
   }
+
+  PsiAssignmentExpression getAssignment(@NotNull ProblemDescriptor descriptor) {
+    final PsiElement element = descriptor.getPsiElement();
+    final PsiElement parent = element instanceof PsiReferenceExpression ? element.getParent() : element;
+    return ObjectUtils.tryCast(parent, PsiAssignmentExpression.class);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    final PsiElement element = previewDescriptor.getPsiElement();
+    PsiAssignmentExpression parentExpr = getAssignment(previewDescriptor);
+    if (parentExpr == null) return IntentionPreviewInfo.EMPTY;
+    PsiElement gParentExpr = parentExpr.getParent();
+    PsiExpression initializer = getInitializer(parentExpr);
+    if (initializer == null) return IntentionPreviewInfo.EMPTY;
+    if (mayBeFixedWithoutSideEffect(gParentExpr)) {
+      PsiElement target = gParentExpr instanceof PsiParenthesizedExpression ? gParentExpr : parentExpr;
+      target.replace(initializer);
+      return IntentionPreviewInfo.DIFF;
+    }
+    PsiVariable resolve = ObjectUtils.tryCast(resolveExpression(element, parentExpr), PsiVariable.class);
+    if (resolve == null) return IntentionPreviewInfo.EMPTY;
+
+    RemoveUnusedVariableUtil.RemoveMode res = RemoveUnusedVariableUtil.getModeForPreview(initializer, resolve);
+    doRemove(project, initializer, parentExpr, resolve, resolve.getParent(), res);
+    return IntentionPreviewInfo.DIFF;
+  }
+
 
   @Nullable
   private static PsiExpression getInitializer(@NotNull PsiAssignmentExpression assignmentExpr) {

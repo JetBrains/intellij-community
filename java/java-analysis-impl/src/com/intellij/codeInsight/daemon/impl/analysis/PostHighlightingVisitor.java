@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -13,6 +13,8 @@ import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
@@ -49,6 +51,7 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 class PostHighlightingVisitor {
   private static final Logger LOG = Logger.getInstance(PostHighlightingVisitor.class);
@@ -184,9 +187,13 @@ class PostHighlightingVisitor {
   }
 
   private boolean isToolEnabled(HighlightDisplayKey displayKey) {
-    InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
+    if (!(myFile instanceof PsiJavaFile)) {
+      return false;
+    }
+    Function<? super InspectionProfile, ? extends InspectionProfileWrapper> custom = InspectionProfileWrapper.getCustomInspectionProfileWrapper(myFile);
+    InspectionProfileImpl currentProfile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
+    InspectionProfile profile = custom != null ? custom.apply(currentProfile).getInspectionProfile() : currentProfile;
     return profile.isToolEnabled(displayKey, myFile) &&
-           myFile instanceof PsiJavaFile &&
            HighlightingLevelManager.getInstance(myProject).shouldInspect(myFile) &&
            !HighlightingLevelManager.getInstance(myProject).runEssentialHighlightingOnly(myFile);
   }
@@ -254,7 +261,7 @@ class PostHighlightingVisitor {
   @Nullable
   private HighlightInfo processLocalVariable(@NotNull PsiLocalVariable variable,
                                              @NotNull PsiIdentifier identifier) {
-    if (variable instanceof PsiResourceVariable && PsiUtil.isIgnoredName(variable.getName())) return null;
+    if (PsiUtil.isIgnoredName(variable.getName())) return null;
     if (UnusedSymbolUtil.isImplicitUsage(myProject, variable)) return null;
 
     String message = null;

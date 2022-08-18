@@ -1,31 +1,39 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.ide.plugins
 
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.core.CoreBundle
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.xml.dom.XmlInterner
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.function.Supplier
-
-private val unitTestWithBundledPlugins = java.lang.Boolean.getBoolean("idea.run.tests.with.bundled.plugins")
-
-private val LOG: Logger
-  get() = PluginManagerCore.getLogger()
 
 @ApiStatus.Internal
 class DescriptorListLoadingContext constructor(
-  @JvmField val disabledPlugins: Set<PluginId>,
-  @JvmField val result: PluginLoadingResult = createPluginLoadingResult(buildNumber = null),
+  @JvmField val disabledPlugins: Set<PluginId> = DisabledPluginsState.getDisabledIds(),
+  @JvmField val expiredPlugins: Set<PluginId> = ExpiredPluginsState.expiredPluginIds,
+  @ApiStatus.Experimental @JvmField val enabledOnDemandPlugins: Set<PluginId> = EnabledOnDemandPluginsState.enabledPluginIds,
+  private val brokenPluginVersions: Map<PluginId, Set<String?>> = PluginManagerCore.getBrokenPluginVersions(),
+  @JvmField val productBuildNumber: () -> BuildNumber = { PluginManagerCore.getBuildNumber() },
   override val isMissingIncludeIgnored: Boolean = false,
   @JvmField val isMissingSubDescriptorIgnored: Boolean = false,
   checkOptionalConfigFileUniqueness: Boolean = false,
   @JvmField val transient: Boolean = false
 ) : AutoCloseable, ReadModuleContext {
+  @JvmField
+  internal val globalErrors = CopyOnWriteArrayList<Supplier<String>>()
+
+  internal fun copyGlobalErrors(): MutableList<Supplier<String>> = ArrayList(globalErrors)
+
   private val toDispose = ConcurrentLinkedQueue<Array<MyXmlInterner?>>()
   // synchronization will ruin parallel loading, so, string pool is local for thread
   private val threadLocalXmlFactory = ThreadLocal.withInitial(Supplier {
@@ -39,19 +47,34 @@ class DescriptorListLoadingContext constructor(
     get() {
       var result = field
       if (result == null) {
-        result = this.result.productBuildNumber.get().asStringWithoutProductCode()
+        result = productBuildNumber().asStringWithoutProductCode()
         field = result
       }
       return result
     }
     private set
 
-  @JvmField var usePluginClassLoader = !PluginManagerCore.isUnitTestMode || unitTestWithBundledPlugins
-
   private val optionalConfigNames: MutableMap<String, PluginId>? = if (checkOptionalConfigFileUniqueness) ConcurrentHashMap() else null
+
+
+  internal fun reportCannotLoad(file: Path, e: Throwable?) {
+    PluginManagerCore.getLogger().warn("Cannot load $file", e)
+    globalErrors.add(Supplier {
+      CoreBundle.message("plugin.loading.error.text.file.contains.invalid.plugin.descriptor", pluginPathToUserString(file))
+    })
+  }
 
   fun isPluginDisabled(id: PluginId): Boolean {
     return PluginManagerCore.CORE_ID != id && disabledPlugins.contains(id)
+  }
+
+  fun isBroken(id: PluginId, descriptor: IdeaPluginDescriptorImpl): Boolean {
+    val set = brokenPluginVersions.get(id) ?: return false
+    return set.contains(descriptor.version)
+  }
+
+  fun isBroken(descriptor: IdeaPluginDescriptorImpl): Boolean {
+    return (brokenPluginVersions.get(descriptor.pluginId) ?: return false).contains(descriptor.version)
   }
 
   override val interner: XmlInterner
@@ -78,7 +101,7 @@ class DescriptorListLoadingContext constructor(
       return false
     }
 
-    LOG.error("Optional config file with name $configFile already registered by $oldPluginId. " +
+    PluginManagerCore.getLogger().error("Optional config file with name $configFile already registered by $oldPluginId. " +
               "Please rename to ensure that lookup in the classloader by short name returns correct optional config. " +
               "Current plugin: $descriptor.")
     return true

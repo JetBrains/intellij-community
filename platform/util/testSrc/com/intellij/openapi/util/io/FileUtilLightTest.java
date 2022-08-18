@@ -102,8 +102,10 @@ public class FileUtilLightTest {
   public void testCheckImmediateChildren() {
     String root = "/a";
     String[] data = {"/a/b/c", "/a", "/a/b", "/d/e", "/b/c", "/a/d", "/a/b/c/d/e"};
-    ThreeState[] expected1 = {ThreeState.UNSURE, ThreeState.YES, ThreeState.YES, ThreeState.NO, ThreeState.NO, ThreeState.YES, ThreeState.UNSURE};
-    ThreeState[] expected2 = {ThreeState.UNSURE, ThreeState.NO, ThreeState.YES, ThreeState.NO, ThreeState.NO, ThreeState.YES, ThreeState.UNSURE};
+    ThreeState[] expected1 =
+      {ThreeState.UNSURE, ThreeState.YES, ThreeState.YES, ThreeState.NO, ThreeState.NO, ThreeState.YES, ThreeState.UNSURE};
+    ThreeState[] expected2 =
+      {ThreeState.UNSURE, ThreeState.NO, ThreeState.YES, ThreeState.NO, ThreeState.NO, ThreeState.YES, ThreeState.UNSURE};
 
     for (int i = 0; i < data.length; i++) {
       ThreeState state = FileUtil.isAncestorThreeState(root, data[i], false);
@@ -213,5 +215,23 @@ public class FileUtilLightTest {
     assertFalse(FileUtil.isWindowsAbsolutePath("1:"));
     assertFalse(FileUtil.isWindowsAbsolutePath("C:C"));
     assertFalse(FileUtil.isWindowsAbsolutePath("C?"));
+  }
+
+  @Test
+  public void relativePaths() {
+    assertThat(FileUtil.getRelativePath("/dir/subdir1/", "/dir/subdir2/file.txt", '/', true)).isEqualTo("../subdir2/file.txt");
+    assertThat(FileUtil.getRelativePath("/dir/subdir1/", "/dir/subdir2/", '/', true)).isEqualTo("../subdir2/");
+    assertThat(FileUtil.getRelativePath("/dir/subdir1/", "/dir/subdir2", '/', true)).isEqualTo("../subdir2");
+
+    assertThat(FileUtil.getRelativePath("/dir/subdir/", "/dir/subdir/file.txt", '/', true)).isEqualTo("file.txt");
+    assertThat(FileUtil.getRelativePath("/dir/subdir", "/dir/subdir/file.txt", '/', true)).isEqualTo("file.txt");
+
+    assertThat(FileUtil.getRelativePath("/dir/subdir/file.txt", "/dir/subdir/", '/', true)).isEqualTo("../");
+    assertThat(FileUtil.getRelativePath("/dir/subdir/file.txt", "/dir/subdir", '/', true)).isEqualTo("../../subdir");
+
+    assertThat(FileUtil.getRelativePath("/dir/subdir", "/dir/subdir/", '/', true)).isEqualTo(".");
+    assertThat(FileUtil.getRelativePath("/dir/subdir/", "/dir/subdir", '/', true)).isEqualTo(".");
+    assertThat(FileUtil.getRelativePath("/dir/subdir/", "/dir/subdir/", '/', true)).isEqualTo(".");
+    assertThat(FileUtil.getRelativePath("/dir/subdir", "/dir/subdir", '/', true)).isEqualTo(".");
   }
 }

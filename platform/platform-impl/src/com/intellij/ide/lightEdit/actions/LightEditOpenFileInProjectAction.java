@@ -6,6 +6,7 @@ import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.lightEdit.LightEditUtil;
 import com.intellij.ide.lightEdit.intentions.openInProject.LightEditOpenInProjectIntention;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -17,6 +18,11 @@ import org.jetbrains.annotations.NotNull;
 public class LightEditOpenFileInProjectAction extends DumbAwareAction implements LightEditCompatible {
   public LightEditOpenFileInProjectAction() {
     super(ActionsBundle.messagePointer("action.LightEditOpenFileInProjectAction.text"));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

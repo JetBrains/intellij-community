@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.uast;
 
@@ -63,6 +63,11 @@ public class FirLegacyUastValuesTestGenerated extends AbstractFirLegacyUastValue
         runTest("../uast-kotlin/tests/testData/BrokenDataClass.kt");
     }
 
+    @TestMetadata("BrokenGeneric.kt")
+    public void testBrokenGeneric() throws Exception {
+        runTest("../uast-kotlin/tests/testData/BrokenGeneric.kt");
+    }
+
     @TestMetadata("BrokenMethod.kt")
     public void testBrokenMethod() throws Exception {
         runTest("../uast-kotlin/tests/testData/BrokenMethod.kt");
@@ -83,6 +88,11 @@ public class FirLegacyUastValuesTestGenerated extends AbstractFirLegacyUastValue
         runTest("../uast-kotlin/tests/testData/Comments.kt");
     }
 
+    @TestMetadata("ComplicatedTypes.kt")
+    public void testComplicatedTypes() throws Exception {
+        runTest("../uast-kotlin/tests/testData/ComplicatedTypes.kt");
+    }
+
     @TestMetadata("ConstructorDelegate.kt")
     public void testConstructorDelegate() throws Exception {
         runTest("../uast-kotlin/tests/testData/ConstructorDelegate.kt");
@@ -96,11 +106,6 @@ public class FirLegacyUastValuesTestGenerated extends AbstractFirLegacyUastValue
     @TestMetadata("CycleInTypeParameters.kt")
     public void testCycleInTypeParameters() throws Exception {
         runTest("../uast-kotlin/tests/testData/CycleInTypeParameters.kt");
-    }
-
-    @TestMetadata("DataClassInheritsAbstractClassWithEquals.kt")
-    public void testDataClassInheritsAbstractClassWithEquals() throws Exception {
-        runTest("../uast-kotlin/testData/DataClassInheritsAbstractClassWithEquals.kt");
     }
 
     @TestMetadata("DefaultImpls.kt")
@@ -181,6 +186,11 @@ public class FirLegacyUastValuesTestGenerated extends AbstractFirLegacyUastValue
     @TestMetadata("InnerNonFixedTypeVariable.kt")
     public void testInnerNonFixedTypeVariable() throws Exception {
         runTest("../uast-kotlin/tests/testData/InnerNonFixedTypeVariable.kt");
+    }
+
+    @TestMetadata("LambdaExpressionFunctionalInterfaceType.kt")
+    public void testLambdaExpressionFunctionalInterfaceType() throws Exception {
+        runTest("../uast-kotlin/tests/testData/LambdaExpressionFunctionalInterfaceType.kt");
     }
 
     @TestMetadata("LambdaParameters.kt")

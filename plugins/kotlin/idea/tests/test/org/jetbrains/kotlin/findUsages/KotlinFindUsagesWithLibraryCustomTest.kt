@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.findUsages
 
@@ -26,7 +26,7 @@ class KotlinFindUsagesWithLibraryCustomTest : AbstractKotlinFindUsagesWithLibrar
         val usages = findUsages(privateClass, null, false, project)
         assertEquals(
             listOf(
-                "PrivateLibraryClass (class org.jetbrains.kotlin.idea.references.KtSimpleNameReferenceDescriptorsImpl)",
+                "PrivateLibraryClass (class org.jetbrains.kotlin.references.fe10.KtFe10SimpleNameReference)",
                 "library.PrivateLibraryClass (class com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl)",
             ),
             usages.map { it.toString() }.sorted(),

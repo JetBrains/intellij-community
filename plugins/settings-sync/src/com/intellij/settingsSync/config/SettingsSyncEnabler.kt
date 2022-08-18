@@ -1,6 +1,5 @@
 package com.intellij.settingsSync.config
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.settingsSync.*
@@ -37,12 +36,16 @@ internal class SettingsSyncEnabler {
 
   fun getSettingsFromServer() {
     eventDispatcher.multicaster.updateFromServerStarted()
-    val updateChecker = SettingsSyncMain.getInstance().controls.updateChecker
+    val settingsSyncControls = SettingsSyncMain.getInstance().controls
     object : Task.Modal(null, SettingsSyncBundle.message("enable.sync.get.from.server.progress"), false) {
       private lateinit var updateResult: UpdateResult
 
       override fun run(indicator: ProgressIndicator) {
-        updateResult = updateChecker.scheduleUpdateFromServer()
+        updateResult = settingsSyncControls.remoteCommunicator.receiveUpdates()
+        if (updateResult is UpdateResult.Success) {
+          val snapshot = (updateResult as UpdateResult.Success).settingsSnapshot
+          settingsSyncControls.bridge.initialize(SettingsSyncBridge.InitMode.TakeFromServer(SyncSettingsEvent.CloudChange(snapshot)))
+        }
       }
 
       override fun onFinished() {
@@ -53,7 +56,13 @@ internal class SettingsSyncEnabler {
 
 
   fun pushSettingsToServer() {
-    ApplicationManager.getApplication().messageBus.syncPublisher(SETTINGS_CHANGED_TOPIC).settingChanged(SyncSettingsEvent.MustPushRequest)
+    val settingsSyncControls = SettingsSyncMain.getInstance().controls
+    object: Task.Modal(null, SettingsSyncBundle.message("enable.sync.push.to.server.progress"), false) {
+      override fun run(indicator: ProgressIndicator) {
+        // todo initialization must be modal but pushing to server can be made later
+        settingsSyncControls.bridge.initialize(SettingsSyncBridge.InitMode.PushToServer)
+      }
+    }.queue()
   }
 
 

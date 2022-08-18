@@ -32,19 +32,8 @@ public class LightMethod extends LightElement implements PsiMethod {
   protected final @NotNull PsiClass myContainingClass;
   protected final @NotNull PsiSubstitutor mySubstitutor;
 
-  public LightMethod(@NotNull PsiClass containingClass, @NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
-    this(containingClass.getManager(), method, containingClass, containingClass.getLanguage(), substitutor);
-  }
-
   public LightMethod(@NotNull PsiManager manager, @NotNull PsiMethod method, @NotNull PsiClass containingClass) {
-    this(manager, method, containingClass, PsiSubstitutor.EMPTY);
-  }
-
-  public LightMethod(@NotNull PsiManager manager,
-                     @NotNull PsiMethod method,
-                     @NotNull PsiClass containingClass,
-                     @NotNull PsiSubstitutor substitutor) {
-    this(manager, method, containingClass, JavaLanguage.INSTANCE, substitutor);
+    this(manager, method, containingClass, JavaLanguage.INSTANCE, PsiSubstitutor.EMPTY);
   }
 
   public LightMethod(@NotNull PsiManager manager,
@@ -216,7 +205,12 @@ public class LightMethod extends LightElement implements PsiMethod {
 
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
-    myMethod.accept(visitor);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitMethod(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.test.kotlin.comparison
 
 import com.intellij.testFramework.LightProjectDescriptor
@@ -39,6 +39,10 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkMultiResolveInClass(myFixture)
     }
 
+    fun testResolveToFacade() {
+        checkResolveToFacade(myFixture)
+    }
+
     fun testMultiConstructorResolve() {
         checkMultiConstructorResolve(myFixture, project)
     }
@@ -55,12 +59,56 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkLocalResolve(myFixture)
     }
 
+    fun testResolveLocalDefaultConstructor() {
+        checkResolveLocalDefaultConstructor(myFixture)
+    }
+
+    fun testResolveJavaClassAsAnonymousObjectSuperType() {
+        checkResolveJavaClassAsAnonymousObjectSuperType(myFixture)
+    }
+
     fun testResolveCompiledAnnotation() {
         checkResolveCompiledAnnotation(myFixture)
     }
 
+    fun testResolveExplicitLambdaParameter() {
+        checkResolveExplicitLambdaParameter(myFixture)
+    }
+
+    fun testResolveImplicitLambdaParameter() {
+        checkResolveImplicitLambdaParameter(myFixture)
+    }
+
+    fun testResolveSyntheticMethod() {
+        checkResolveSyntheticMethod(myFixture)
+    }
+
     fun testAssigningArrayElementType() {
         checkAssigningArrayElementType(myFixture)
+    }
+
+    fun testMapFunctions() {
+        checkMapFunctions(myFixture)
+    }
+
+    fun testListIterator() {
+        checkListIterator(myFixture)
+    }
+
+    fun testArgumentMappingDefaultValue() {
+        checkArgumentMappingDefaultValue(myFixture)
+    }
+
+    fun testArgumentMappingExtensionFunction() {
+        checkArgumentMappingExtensionFunction(myFixture)
+    }
+
+    fun testArgumentMappingVararg() {
+        checkArgumentMappingVararg(myFixture)
+    }
+
+    fun testArgumentMappingOOBE() {
+        checkArgumentMappingOOBE(myFixture)
     }
 
     fun testDivByZero() {
@@ -70,4 +118,37 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     fun testDetailsOfDeprecatedHidden() {
         checkDetailsOfDeprecatedHidden(myFixture)
     }
+
+    fun testSyntheticEnumMethods() {
+        checkSyntheticEnumMethods(myFixture)
+    }
+
+    fun testImplicitReceiverType() {
+        checkImplicitReceiverType(myFixture)
+    }
+
+    fun testSubstitutedReceiverType() {
+        checkSubstitutedReceiverType(myFixture)
+    }
+
+    fun testCallKindOfSamConstructor() {
+        checkCallKindOfSamConstructor(myFixture)
+    }
+
+    fun testArrayAccessOverloads() {
+        checkArrayAccessOverloads(myFixture)
+    }
+
+    fun testOperatorOverloads() {
+        checkOperatorOverloads(myFixture)
+    }
+
+    fun testResolveSyntheticJavaPropertyAccessor() {
+        checkResolveSyntheticJavaPropertyAccessor(myFixture)
+    }
+
+    fun testResolveKotlinPropertyAccessor() {
+        checkResolveKotlinPropertyAccessor(myFixture)
+    }
+
 }

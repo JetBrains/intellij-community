@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -11,6 +11,7 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.configuration.ConfigurationProvider
 import org.jetbrains.intellij.build.tasks.DirSource
+import org.jetbrains.intellij.build.tasks.ZipSource
 import org.jetbrains.intellij.build.tasks.buildJar
 import org.jetbrains.intellij.build.tasks.dir
 import org.junit.jupiter.api.Assumptions
@@ -113,8 +114,7 @@ class ZipTest {
   fun excludes(@TempDir tempDir: Path) {
     val random = Random(42)
 
-    val dir = tempDir.resolve("dir")
-    Files.createDirectories(dir)
+    val dir = Files.createDirectories(tempDir.resolve("dir"))
     val list = mutableListOf<String>()
     for (i in 0..10) {
       val name = "entry-item${random.nextInt()}-$i"
@@ -167,6 +167,45 @@ class ZipTest {
   }
 
   @Test
+  fun excludesInZipSource(@TempDir tempDir: Path) {
+    val random = Random(42)
+
+    val dir = Files.createDirectories(tempDir.resolve("zip"))
+    Files.write(dir.resolve("zip-included"), random.nextBytes(random.nextInt(128)))
+    Files.write(dir.resolve("zip-excluded"), random.nextBytes(random.nextInt(128)))
+    val zip = tempDir.resolve("test.zip")
+    zip(zip, mapOf(dir to ""), false)
+
+    val archiveFile = tempDir.resolve("archive.zip")
+    buildJar(archiveFile, listOf(
+      ZipSource(file = zip, excludes = listOf(Regex("^zip-excl.*")))
+    ))
+
+    checkZip(archiveFile) { zipFile ->
+      if (zipFile is ImmutableZipFile) {
+        assertThat(zipFile.getOrComputeNames()).containsExactly("zip-included")
+      }
+    }
+  }
+
+  @Test
+  fun skipIndex(@TempDir tempDir: Path) {
+    val dir = Files.createDirectories(tempDir.resolve("dir"))
+    Files.writeString(dir.resolve("file1"), "1")
+    Files.writeString(dir.resolve("file2"), "2")
+
+    val archiveFile = tempDir.resolve("archive.zip")
+    buildJar(archiveFile, listOf(DirSource(dir = dir, excludes = emptyList())), compress = true)
+
+    java.util.zip.ZipFile(archiveFile.toString()).use { zipFile ->
+      assertThat(zipFile.entries().asSequence().map { it.name }.toList())
+        .containsExactlyInAnyOrder("file1", "file2")
+    }
+
+    checkZip(archiveFile) { }
+  }
+
+  @Test
   fun `small file`(@TempDir tempDir: Path) {
     val dir = tempDir.resolve("dir")
     val file = dir.resolve("samples/nested_dir/__init__.py")
@@ -199,9 +238,7 @@ class ZipTest {
 
     val zipFile = tempDir.resolve("file.zip")
     writeNewFile(zipFile) { outFileChannel ->
-      ZipArchiveOutputStream(outFileChannel).use { out ->
-        out.dir(dir, "")
-      }
+      ZipArchiveOutputStream(outFileChannel).use { out -> out.dir(dir, "") }
     }
   }
 
@@ -280,7 +317,7 @@ class ZipTest {
     }
   }
 
-  // check both IKV- and non-IKV varians of immutable zip file
+  // check both IKV- and non-IKV variants of immutable zip file
   private fun checkZip(file: Path, checker: (ZipFile) -> Unit) {
     HashMapZipFile.load(file).use { zipFile ->
       checker(zipFile)

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine
 
@@ -25,7 +25,7 @@ import com.intellij.xdebugger.XDebuggerManagerListener
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.CreateContentParamsProvider
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
-import org.jetbrains.kotlin.idea.debugger.coroutine.view.XCoroutineView
+import org.jetbrains.kotlin.idea.debugger.coroutine.view.CoroutineView
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class DebuggerConnection(
@@ -90,13 +90,14 @@ class DebuggerConnection(
 
     private fun registerXCoroutinesPanel(session: XDebugSession): Disposable? {
         val ui = session.ui ?: return null
-        val xCoroutineThreadView = XCoroutineView(project, session as XDebugSessionImpl)
-        val framesContent: Content = createContent(ui, xCoroutineThreadView)
+        val javaDebugProcess = session.debugProcess as? JavaDebugProcess ?: return null
+        val coroutineThreadView = CoroutineView(project, javaDebugProcess)
+        val framesContent: Content = createContent(ui, coroutineThreadView)
         framesContent.isCloseable = false
         ui.addContent(framesContent, 0, PlaceInGrid.right, true)
-        session.addSessionListener(xCoroutineThreadView.debugSessionListener(session))
+        session.addSessionListener(coroutineThreadView.debugSessionListener(session))
         session.rebuildViews()
-        return xCoroutineThreadView
+        return coroutineThreadView
     }
 
     private fun coroutinesPanelShouldBeShown() =

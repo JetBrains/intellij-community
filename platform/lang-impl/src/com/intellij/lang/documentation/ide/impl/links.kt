@@ -4,6 +4,7 @@
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.codeInsight.documentation.DocumentationManager
+import com.intellij.codeInsight.documentation.DocumentationManagerProtocol
 import com.intellij.ide.BrowserUtil
 import com.intellij.lang.documentation.CompositeDocumentationProvider
 import com.intellij.lang.documentation.DocumentationTarget
@@ -50,7 +51,10 @@ internal fun openUrl(project: Project, targetPointer: Pointer<out DocumentationT
   if (handleExternal(project, targetPointer, url)) {
     return true
   }
-  return BrowserUtil.browseAbsolute(project, url)
+  if (url.startsWith(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL)) {
+    return false
+  }
+  return browseAbsolute(project, url)
 }
 
 private fun handleExternal(project: Project, targetPointer: Pointer<out DocumentationTarget>, url: String): Boolean {
@@ -70,6 +74,14 @@ private fun doHandleExternal(project: Project, targetPointer: Pointer<out Docume
     if (p.handleExternalLink(PsiManager.getInstance(project), url, element)) {
       return true
     }
+  }
+  return false
+}
+
+fun browseAbsolute(project: Project, url: String): Boolean {
+  if (BrowserUtil.isAbsoluteURL(url)) {
+    BrowserUtil.browse(url, project)
+    return true
   }
   return false
 }

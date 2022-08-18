@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.roots.ui
 
@@ -9,7 +9,7 @@ import com.intellij.openapi.roots.ui.configuration.ClasspathEditor
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProviderEx
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState
 import com.intellij.openapi.roots.ui.configuration.OutputEditor
-import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.platform.jvm.isJvm
 
 class NonJvmKotlinModuleEditorsProvider : ModuleConfigurationEditorProviderEx {
@@ -18,9 +18,10 @@ class NonJvmKotlinModuleEditorsProvider : ModuleConfigurationEditorProviderEx {
     override fun createEditors(state: ModuleConfigurationState): Array<ModuleConfigurationEditor> {
         val rootModel = state.rootModel
         val module = rootModel.module
-        if (ModuleType.get(module) !is JavaModuleType) return ModuleConfigurationEditor.EMPTY
-        val targetPlatform = TargetPlatformDetector.getPlatform(module)
-        if (targetPlatform.isJvm()) return ModuleConfigurationEditor.EMPTY
+
+        if (ModuleType.get(module) !is JavaModuleType || module.platform.isJvm()) {
+            return ModuleConfigurationEditor.EMPTY
+        }
 
         val moduleName = module.name
         return arrayOf(

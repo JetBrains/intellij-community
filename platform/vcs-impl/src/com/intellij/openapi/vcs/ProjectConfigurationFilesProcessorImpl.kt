@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs
 
 import com.intellij.ide.highlighter.ModuleFileType
@@ -110,7 +110,7 @@ class ProjectConfigurationFilesProcessorImpl(project: Project,
 
 
   override val muteActionText: String = VcsBundle.message("project.configuration.files.add.notification.action.mute")
-  override val viewFilesDialogTitle: String? = VcsBundle.message("project.configuration.files.view.dialog.title", vcsName)
+  override val viewFilesDialogTitle: String = VcsBundle.message("project.configuration.files.view.dialog.title", vcsName)
 
   private fun isProjectConfigurationFile(configDir: VirtualFile?, file: VirtualFile) =
     configDir != null && VfsUtilCore.isAncestor(configDir, file, true)

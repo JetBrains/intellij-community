@@ -18,7 +18,7 @@ public class UsageInfo {
   private static final Logger LOG = Logger.getInstance(UsageInfo.class);
   private final SmartPsiElementPointer<?> mySmartPointer;
   private final SmartPsiFileRange myPsiFileRange;
-  @Nullable private Class<? extends PsiReference> myReferenceClass = null;
+  @Nullable private Class<? extends PsiReference> myReferenceClass;
 
   public final boolean isNonCodeUsage;
   protected boolean myDynamicUsage;
@@ -290,7 +290,17 @@ public class UsageInfo {
                                Math.min(range.getEndOffset(), range.getStartOffset() + rangeInElement.getEndOffset()));
   }
 
-  private Pair<VirtualFile, Integer> offset() {
+  private static class FileWithOffset {
+    private final VirtualFile myFile;
+    private final int myOffset;
+
+    private FileWithOffset(VirtualFile file, int offset) {
+      myFile = file;
+      myOffset = offset;
+    }
+  }
+
+  private FileWithOffset offset() {
     VirtualFile containingFile0 = getVirtualFile();
     int shift0 = 0;
     if (containingFile0 instanceof VirtualFileWindow) {
@@ -299,22 +309,22 @@ public class UsageInfo {
     }
     Segment range = myPsiFileRange == null ? mySmartPointer.getPsiRange() : myPsiFileRange.getPsiRange();
     if (range == null) return null;
-    return Pair.create(containingFile0, range.getStartOffset() + shift0);
+    return new FileWithOffset(containingFile0, range.getStartOffset() + shift0);
   }
 
   public int compareToByStartOffset(@NotNull UsageInfo info) {
-    Pair<VirtualFile, Integer> offset0 = offset();
-    Pair<VirtualFile, Integer> offset1 = info.offset();
+    FileWithOffset offset0 = offset();
+    FileWithOffset offset1 = info.offset();
     if (offset0 == null || offset1 == null) {
       return (offset0 == null ? 0 : 1) - (offset1 == null ? 0 : 1);
     }
-    VirtualFile file0 = offset0.first;
-    VirtualFile file1 = offset1.first;
+    VirtualFile file0 = offset0.myFile;
+    VirtualFile file1 = offset1.myFile;
     if (file0 == null || file1 == null) {
       return (file0 == null ? 0 : 1) - (file1 == null ? 0 : 1);
     }
-    if (Comparing.equal(file0, file1)) {
-      return offset0.second - offset1.second;
+    if (file0.equals(file1)) {
+      return Integer.compare(offset0.myOffset, offset1.myOffset);
     }
     return file0.getPath().compareTo(file1.getPath());
   }

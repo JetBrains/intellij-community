@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -14,6 +15,7 @@ import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.DrawUtil
 import com.intellij.util.SmartList
@@ -84,6 +86,8 @@ class MaximizeEditorInSplitAction : DumbAwareAction() {
     presentation.isEnabled = false
   }
 
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+
   companion object {
     val CURRENT_STATE_IS_MAXIMIZED_KEY = Key.create<Boolean>("CURRENT_STATE_IS_MAXIMIZED")
 
@@ -93,7 +97,7 @@ class MaximizeEditorInSplitAction : DumbAwareAction() {
       var comp = editorComponent
       while (comp != editorManager.mainSplitters && comp != null) {
         val parent = comp.parent
-        if (parent is Splitter && UIUtil.isClientPropertyTrue(parent, EditorsSplitters.SPLITTER_KEY)) {
+        if (parent is Splitter && ClientProperty.isTrue(parent, EditorsSplitters.SPLITTER_KEY)) {
           if (parent.firstComponent == comp) {
             if (parent.proportion < parent.maximumProportion) {
               set.add(Pair(parent, true))

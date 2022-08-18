@@ -5,7 +5,20 @@ from importlib.abc import PathEntryFinder
 from importlib.machinery import ModuleSpec
 from io import TextIOWrapper
 from types import FrameType, ModuleType, TracebackType
-from typing import Any, AsyncGenerator, Callable, NoReturn, Optional, Protocol, Sequence, TextIO, TypeVar, Union, overload
+from typing import (
+    Any,
+    AsyncGenerator,
+    Callable,
+    Coroutine,
+    NoReturn,
+    Optional,
+    Protocol,
+    Sequence,
+    TextIO,
+    TypeVar,
+    Union,
+    overload,
+)
 from typing_extensions import Literal, final
 
 _T = TypeVar("_T")
@@ -215,8 +228,8 @@ def _clear_type_cache() -> None: ...
 def _current_frames() -> dict[int, FrameType]: ...
 def _getframe(__depth: int = ...) -> FrameType: ...
 def _debugmallocstats() -> None: ...
-def __displayhook__(value: object) -> None: ...
-def __excepthook__(type_: type[BaseException], value: BaseException, traceback: TracebackType | None) -> None: ...
+def __displayhook__(__value: object) -> None: ...
+def __excepthook__(__exctype: type[BaseException], __value: BaseException, __traceback: TracebackType | None) -> None: ...
 def exc_info() -> _OptExcInfo: ...
 
 # sys.exit() accepts an optional argument of anything printable
@@ -292,6 +305,10 @@ if sys.version_info < (3, 9):
     def getcheckinterval() -> int: ...  # deprecated
     def setcheckinterval(__n: int) -> None: ...  # deprecated
 
+if sys.version_info < (3, 9):
+    # An 11-tuple or None
+    def callstats() -> tuple[int, int, int, int, int, int, int, int, int, int, int] | None: ...
+
 if sys.version_info >= (3, 8):
     # Doesn't exist at runtime, but exported in the stubs so pytest etc. can annotate their code more easily.
     class UnraisableHookArgs:
@@ -301,6 +318,7 @@ if sys.version_info >= (3, 8):
         err_msg: str | None
         object: _object | None
     unraisablehook: Callable[[UnraisableHookArgs], Any]
+    def __unraisablehook__(__unraisable: UnraisableHookArgs) -> Any: ...
     def addaudithook(hook: Callable[[str, tuple[Any, ...]], Any]) -> None: ...
     def audit(__event: str, *args: Any) -> None: ...
 
@@ -316,6 +334,15 @@ class _asyncgen_hooks(structseq[_AsyncgenHook], tuple[_AsyncgenHook, _AsyncgenHo
 def get_asyncgen_hooks() -> _asyncgen_hooks: ...
 def set_asyncgen_hooks(firstiter: _AsyncgenHook = ..., finalizer: _AsyncgenHook = ...) -> None: ...
 
+if sys.version_info >= (3, 6):
+    if sys.platform == "win32":
+        def _enablelegacywindowsfsencoding() -> None: ...
+
 if sys.version_info >= (3, 7):
     def get_coroutine_origin_tracking_depth() -> int: ...
     def set_coroutine_origin_tracking_depth(depth: int) -> None: ...
+
+if sys.version_info < (3, 8):
+    _CoroWrapper = Callable[[Coroutine[Any, Any, Any]], Any]
+    def set_coroutine_wrapper(__wrapper: _CoroWrapper) -> None: ...
+    def get_coroutine_wrapper() -> _CoroWrapper: ...

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.util.Condition;
@@ -18,15 +18,18 @@ class ImmutableSyntheticLibrary extends SyntheticLibrary {
   private final Condition<? super VirtualFile> myExcludeCondition;
   private final int hashCode;
 
-  ImmutableSyntheticLibrary(@NotNull List<? extends VirtualFile> sourceRoots,
+  ImmutableSyntheticLibrary(@Nullable String comparisonId,
+                            @NotNull List<? extends VirtualFile> sourceRoots,
                             @NotNull List<? extends VirtualFile> binaryRoots,
                             @NotNull Set<? extends VirtualFile> excludedRoots,
-                            @Nullable Condition<? super VirtualFile> excludeCondition) {
+                            @Nullable Condition<? super VirtualFile> excludeCondition,
+                            @Nullable ExcludeFileCondition constantCondition) {
+    super(comparisonId, constantCondition);
     mySourceRoots = immutableOrEmptyList(sourceRoots);
     myBinaryRoots = immutableOrEmptyList(binaryRoots);
     myExcludedRoots = ContainerUtil.unmodifiableOrEmptySet(excludedRoots);
     myExcludeCondition = excludeCondition;
-    hashCode = 31*(31*sourceRoots.hashCode() + binaryRoots.hashCode())+excludedRoots.hashCode();
+    hashCode = Objects.hash(mySourceRoots, myBinaryRoots, myExcludedRoots, myExcludeCondition);
   }
 
   @NotNull
@@ -58,6 +61,7 @@ class ImmutableSyntheticLibrary extends SyntheticLibrary {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     ImmutableSyntheticLibrary library = (ImmutableSyntheticLibrary)o;
+    if (!Objects.equals(getComparisonId(), library.getComparisonId())) return false;
     if (!mySourceRoots.equals(library.getSourceRoots())) return false;
     if (!myBinaryRoots.equals(library.getBinaryRoots())) return false;
     if (!myExcludedRoots.equals(library.getExcludedRoots())) return false;
@@ -72,5 +76,5 @@ class ImmutableSyntheticLibrary extends SyntheticLibrary {
   @NotNull
   private static <E> List<E> immutableOrEmptyList(@NotNull List<? extends E> list) {
     return list.isEmpty() ? Collections.emptyList() : ContainerUtil.immutableList(list);
-  } 
+  }
 }

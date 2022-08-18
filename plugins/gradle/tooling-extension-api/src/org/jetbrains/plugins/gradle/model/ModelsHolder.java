@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.tooling.serialization.ToolingSerializer;
 
 import java.io.Serializable;
+import java.lang.reflect.Method;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -129,11 +130,37 @@ public abstract class ModelsHolder<B extends BuildModel, P extends ProjectModel>
           }
         }
         catch (Exception e) {
-          //noinspection UseOfSystemOutOrSystemErr
-          System.err.println(e.getMessage());
+          reportError(entry.getKey(), e);
           iterator.remove();
         }
       }
+    }
+  }
+
+  private void reportError(String key, Exception e) {
+    //noinspection UseOfSystemOutOrSystemErr
+    System.err.println(e.getMessage());
+    tryReportingViaIdeaLogger(e, key);
+  }
+
+  /**
+   * Try to report error to IDEA logging subsystem.
+   * <p>
+   * The ModelsHolder can be used both, in Gradle Daemon process and in IntelliJ IDEA process.
+   * In latter case, it would be good to report errors to IDEA log, as failure to deserialize an entity
+   * can lead to unexpected behavior (e.g., broken project model after import
+   * @param e the exception
+   * @param key key (name of the model) that was not possible to deserialize.
+   */
+  private void tryReportingViaIdeaLogger(Exception e, String key) {
+    try {
+      Class<? extends ModelsHolder> aClass = getClass();
+      Class<?> loggerClazz = aClass.getClassLoader().loadClass("com.intellij.openapi.diagnostic.Logger");
+      Method getInstanceMethod = loggerClazz.getMethod("getInstance", Class.class);
+      Object logger = getInstanceMethod.invoke(null, aClass);
+      Method errorMethod = loggerClazz.getMethod("error", String.class, Throwable.class);
+      errorMethod.invoke(logger, "Failed to parse model with key [" + key + "]", e);
+    } catch (Exception ignore) {
     }
   }
 

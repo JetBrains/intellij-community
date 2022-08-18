@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.j2k
 
@@ -242,7 +242,7 @@ class ConstructorConverter(
     private fun PsiExpression.isSuperConstructorCall() = (this as? PsiMethodCallExpression)?.methodExpression?.text == "super"
     private fun PsiExpression.isThisConstructorCall() = (this as? PsiMethodCallExpression)?.methodExpression?.text == "this"
 
-    private inner open class ReplacingExpressionConverter(val parameterUsageReplacementMap: Map<String, String>) : SpecialExpressionConverter {
+    private open inner class ReplacingExpressionConverter(val parameterUsageReplacementMap: Map<String, String>) : SpecialExpressionConverter {
         override fun convertExpression(expression: PsiExpression, codeConverter: CodeConverter): Expression? {
             if (expression is PsiReferenceExpression && expression.qualifier == null) {
                 val replacement = parameterUsageReplacementMap[expression.referenceName]

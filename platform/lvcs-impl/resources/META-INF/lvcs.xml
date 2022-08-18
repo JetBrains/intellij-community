@@ -31,13 +31,17 @@
       <reference id="LocalHistory.PutLabel"/>
       <add-to-group group-id="Vcs.Operations.Popup" anchor="after" relative-to-action="ShowAnnotateOperationsPopupGroup"/>
     </group>
+
+    <action internal="true" id="ValidateLocalHistory" class="com.intellij.history.integration.ValidateHistoryAction">
+      <add-to-group group-id="Internal.VFS"/>
+    </action>
   </actions>
   <extensions defaultExtensionNs="com.intellij">
     <undoProvider implementation="com.intellij.openapi.command.impl.FileUndoProvider"/>
     <projectUndoProvider implementation="com.intellij.openapi.command.impl.FileUndoProvider"/>
 
     <applicationService serviceInterface="com.intellij.history.LocalHistory"
-                        serviceImplementation="com.intellij.history.integration.LocalHistoryImpl" preload="true"/>
+                        serviceImplementation="com.intellij.history.integration.LocalHistoryImpl"/>
 
     <virtualFileManagerListener implementation="com.intellij.history.integration.LocalHistoryEventDispatcher$LocalHistoryFileManagerListener"/>
     <advancedSetting id="localHistory.daysToKeep" default="5" groupKey="group.advanced.settings.ide"/>

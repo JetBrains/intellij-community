@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -18,7 +19,13 @@ import java.awt.*;
 
 import static com.intellij.execution.services.ServiceViewActionProvider.getSelectedView;
 
-public class OpenInNewTabActionGroup extends DefaultActionGroup implements DumbAware {
+final class OpenInNewTabActionGroup extends DefaultActionGroup implements DumbAware {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   @Override
   public void update(@NotNull AnActionEvent e) {
     ServiceView selectedView = getSelectedView(e);

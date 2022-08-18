@@ -2,49 +2,51 @@ package org.jetbrains.tools.model.updater.impl
 
 data class JpsLibrary(
     val name: String,
-    val kind: Kind,
+    val type: LibraryType,
     val annotations: List<JpsUrl> = emptyList(),
     val classes: List<JpsUrl> = emptyList(),
+    val javadoc: List<JpsUrl> = emptyList(),
     val sources: List<JpsUrl> = emptyList(),
-) : XmlEntity {
-    override fun generateXml(): String {
-        val annotationsXml =
-            if (annotations.isEmpty()) XmlEntity.Empty
-            else XmlTag("ANNOTATIONS", children = annotations.map { XmlTag("root", attributes = listOf("url" to it.generateXml())) })
-        val classesXml = XmlTag("CLASSES", children = classes.map { XmlTag("root", attributes = listOf("url" to it.generateXml())) })
-        val sourcesXml = XmlTag("SOURCES", children = sources.map { XmlTag("root", attributes = listOf("url" to it.generateXml())) })
-        val propertiesXml = when (kind) {
-            Kind.Jars -> XmlEntity.Empty
-            is Kind.Maven -> XmlTag(
-                "properties",
-                attributes = listOfNotNull(
-                    ("include-transitive-deps" to "false").takeIf { !kind.includeTransitive },
-                    "maven-id" to kind.mavenId.coordinates,
-                ),
-                children = listOf(
-                    XmlTag(
-                        "exclude",
-                        children = kind.excludes.map { XmlTag("dependency", attributes = listOf("maven-id" to it.coordinates)) }
+) {
+    fun render(): String {
+        return xml("component", "name" to "libraryTable") {
+            xml("library", "name" to name, if (type is LibraryType.Repository) "type" to "repository" else null) {
+                if (type is LibraryType.Repository) {
+                    val properties = arrayOf(
+                        if (!type.includeTransitive) "include-transitive-deps" to "false" else null,
+                        "maven-id" to type.mavenId.toString()
                     )
-                )
-            )
-        }
-        val typeXml = " type=\"repository\"".takeIf { kind is Kind.Maven } ?: ""
-        return """
-            |<component name="libraryTable">
-            |  <library name="$name"$typeXml>
-            |    ${propertiesXml.generateXml()}
-            |    ${annotationsXml.generateXml()}
-            |    ${classesXml.generateXml()}
-            |    <JAVADOC />
-            |    ${sourcesXml.generateXml()}
-            |  </library>
-            |</component>
-        """.trimMarginWithInterpolations().lines().filter { it.isNotBlank() }.joinToString("\n")
+
+                    xml("properties", *properties) {
+                        if (type.excludes.isNotEmpty()) {
+                            xml("exclude") {
+                                type.excludes.forEach { xml("dependency", "maven-id" to it.toString()) }
+                            }
+                        }
+                    }
+                }
+
+                fun addRoots(kindName: String, roots: List<JpsUrl>) = xml(kindName) {
+                    roots.forEach { xml("root", "url" to it.url) }
+                }
+
+                if (annotations.isNotEmpty()) {
+                    addRoots("ANNOTATIONS", annotations)
+                }
+                addRoots("CLASSES", classes)
+                addRoots("JAVADOC", emptyList())
+                addRoots("SOURCES", sources)
+            }
+        }.render(addXmlDeclaration = false)
     }
 
-    sealed class Kind {
-        object Jars : Kind()
-        data class Maven(val mavenId: MavenId, val excludes: List<MavenId> = emptyList(), val includeTransitive: Boolean = true) : Kind()
+    sealed class LibraryType {
+        object Plain : LibraryType()
+
+        data class Repository(
+            val mavenId: MavenId,
+            val excludes: List<MavenId> = emptyList(),
+            val includeTransitive: Boolean = true
+        ) : LibraryType()
     }
 }

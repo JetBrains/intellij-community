@@ -2,6 +2,7 @@
 
 package com.intellij.uiDesigner.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.uiDesigner.FormEditingUtil;
@@ -10,6 +11,12 @@ import org.jetbrains.annotations.NotNull;
 
 
 public class ShowComponentTagsAction extends ToggleAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
   @Override
   public void update(@NotNull final AnActionEvent e) {
     super.update(e);

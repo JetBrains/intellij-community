@@ -3,10 +3,44 @@ package com.intellij.execution.wsl.sync
 
 import com.intellij.execution.wsl.AbstractWslDistribution
 import com.intellij.execution.wsl.getWslPath
+import io.ktor.util.toLowerCasePreservingASCIIRules
 import java.nio.file.Files
 import java.nio.file.Path
 
-typealias FilePathRelativeToDir = String
+class FilePathRelativeToDir(path: String) {
+  private val path: String
+
+  init {
+    if (path.startsWith("/")) throw IllegalArgumentException("Not a relative path: $path")
+    this.path = separatorsToUnix(path.trimEnd('/', '\\'))
+  }
+
+  val asUnixPath: String get() = separatorsToUnix(path)
+
+  private fun separatorsToUnix(path: String): String = path.replace('\\', '/')
+
+  private fun separatorsToWindows(path: String): String = path.replace('/', '\\')
+
+  val asWindowsPath: String get() = separatorsToWindows(path)
+
+  override fun toString(): String = path
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as FilePathRelativeToDir
+
+    if (path.toLowerCasePreservingASCIIRules() != other.path.toLowerCasePreservingASCIIRules()) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    return path.hashCode()
+  }
+
+
+}
 typealias WindowsFilePath = Path
 typealias LinuxFilePath = String
 

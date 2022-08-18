@@ -6,6 +6,7 @@ _collections_abc.AsyncGenerator.ag_running
 _collections_abc.ItemsView.__reversed__
 _collections_abc.KeysView.__reversed__
 _collections_abc.ValuesView.__reversed__
+_weakref.ProxyType.__reversed__  # Doesn't really exist
 ast.Bytes.__new__
 ast.Ellipsis.__new__
 ast.ExtSlice.__new__
@@ -14,38 +15,39 @@ ast.Index.__new__
 ast.NameConstant.__new__
 ast.Num.__new__
 ast.Str.__new__
-asyncio.compat  # module removed in 3.7
 asyncio.Future.__init__  # Usually initialized from c object
 asyncio.Future._callbacks  # Usually initialized from c object
 asyncio.futures.Future.__init__  # Usually initialized from c object
 asyncio.futures.Future._callbacks  # Usually initialized from c object
-asyncio.mixins  # Added in Python 3.10
 builtins.dict.get
+builtins.float.__set_format__  # Internal method for CPython test suite
 collections.AsyncGenerator.ag_await
 collections.AsyncGenerator.ag_code
 collections.AsyncGenerator.ag_frame
 collections.AsyncGenerator.ag_running
 collections.Callable
+collections.Mapping.__reversed__  # Set to None at runtime for a better error message
 collections.ItemsView.__reversed__
 collections.KeysView.__reversed__
 collections.ValuesView.__reversed__
+# Adding these reflected dunders to `typing.AbstractSet` causes a large number of false-positives. See #7414.
+collections.Set.__rand__
+collections.Set.__ror__
+collections.Set.__rsub__
+collections.Set.__rxor__
 contextvars.Context.__init__  # Default C __init__ signature is wrong
 contextlib.AbstractAsyncContextManager.__class_getitem__
 contextlib.AbstractContextManager.__class_getitem__
 dataclasses.field
+distutils.command.bdist_wininst  # see #6523
 enum.Enum._generate_next_value_
 fractions.Fraction.__new__  # overload is too complicated for stubtest to resolve
 ftplib.FTP.trust_server_pasv_ipv4_address  # Dangerous to use, intentionally undocumented, intentionally missing from typeshed. #6154
-functools.partialmethod.__get__
-functools.singledispatchmethod.__call__
 gettext.install
 gettext.translation
-hashlib.sha3_\d+
-hashlib.shake_\d+
 hmac.new  # Stub is a white lie; see comments in the stub
 http.server.SimpleHTTPRequestHandler.__init__  # *args is expanded
 importlib.abc.Traversable.__init__  # Inherits __init__ from typing.Protocol
-importlib.metadata._meta  # Added in 3.10
 ipaddress.IPv4Interface.hostmask
 ipaddress.IPv6Interface.hostmask
 ipaddress._BaseNetwork.broadcast_address
@@ -89,6 +91,7 @@ typing._TypedDict.pop
 typing._TypedDict.setdefault
 typing._TypedDict.update
 typing._TypedDict.values
+weakref.ProxyType.__reversed__  # Doesn't really exist
 weakref.WeakValueDictionary.update
 xml.etree.ElementTree.XMLParser.__init__  # Defined in C so has general signature
 xml.etree.cElementTree.XMLParser.__init__  # Defined in C so has general signature
@@ -129,8 +132,6 @@ collections.Awaitable.__class_getitem__
 collections.Container.__class_getitem__
 collections.Iterable.__class_getitem__
 collections.MappingView.__class_getitem__
-distutils.command.bdist_wininst
-distutils.command.bdist_wininst.bdist_wininst
 distutils.dist.DistributionMetadata.set_classifiers
 distutils.dist.DistributionMetadata.set_keywords
 distutils.dist.DistributionMetadata.set_platforms
@@ -153,8 +154,9 @@ multiprocessing.managers.SharedMemoryServer.track_segment
 pyexpat.XMLParserType.SkippedEntityHandler
 pyexpat.XMLParserType.intern
 stringprep.unicodedata  # re-exported from unicodedata
-types.CoroutineType.cr_origin
+types.GenericAlias.__mro_entries__
 typing._SpecialForm.__call__
+typing._SpecialForm.__mro_entries__
 unicodedata.UCD.is_normalized
 xml.parsers.expat.XMLParserType.SkippedEntityHandler
 xml.parsers.expat.XMLParserType.intern

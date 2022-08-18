@@ -39,7 +39,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   public SeparatorPlacement separatorPlacement;
   public RangeHighlighter highlighter;
 
-  public final int updatePass;
+  public int updatePass;
   private final Function<? super T, @NlsContexts.Tooltip String> myTooltipProvider;
   private final Supplier<@Nls @NotNull String> myAccessibleNameProvider;
   private AnAction myNavigateAction = new NavigateAction<>(this);

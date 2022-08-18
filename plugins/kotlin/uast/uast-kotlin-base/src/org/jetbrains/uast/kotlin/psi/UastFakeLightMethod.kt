@@ -1,10 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.kotlin.psi
 
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.*
-import com.intellij.psi.impl.light.*
+import com.intellij.psi.impl.light.LightMethodBuilder
+import com.intellij.psi.impl.light.LightModifierList
+import com.intellij.psi.impl.light.LightParameterListBuilder
+import com.intellij.psi.impl.light.LightReferenceListBuilder
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.elements.KotlinLightTypeParameterBuilder
 import org.jetbrains.kotlin.asJava.elements.KotlinLightTypeParameterListBuilder
 import org.jetbrains.kotlin.asJava.elements.KtLightAnnotationForSourceEntry
@@ -16,7 +20,8 @@ import org.jetbrains.uast.UastErrorType
 import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.lz
 
-class UastFakeLightMethod(
+@ApiStatus.Internal
+open class UastFakeLightMethod(
     original: KtFunction,
     containingClass: PsiClass,
 ) : UastFakeLightMethodBase<KtFunction>(original, containingClass) {
@@ -92,6 +97,7 @@ class UastFakeLightMethod(
     override fun getParameterList(): PsiParameterList = _parameterList
 }
 
+@ApiStatus.Internal
 class UastFakeLightPrimaryConstructor(
     original: KtClassOrObject,
     lightClass: PsiClass,
@@ -99,6 +105,7 @@ class UastFakeLightPrimaryConstructor(
     override fun isConstructor(): Boolean = true
 }
 
+@ApiStatus.Internal
 abstract class UastFakeLightMethodBase<T: KtDeclaration>(
     val original: T,
     containingClass: PsiClass,
@@ -148,7 +155,6 @@ abstract class UastFakeLightMethodBase<T: KtDeclaration>(
                 lazyQualifiedName = { baseResolveProviderService.qualifiedAnnotationName(entry) },
                 kotlinOrigin = entry,
                 parent = original,
-                lazyClsDelegate = null
             )
         }.toTypedArray()
     }
@@ -165,6 +171,10 @@ abstract class UastFakeLightMethodBase<T: KtDeclaration>(
         return hasAnnotation(StandardClassIds.Annotations.Deprecated.asFqNameString()) ||
                 hasAnnotation(CommonClassNames.JAVA_LANG_DEPRECATED) ||
                 super.isDeprecated()
+    }
+
+    override fun isConstructor(): Boolean {
+        return original is KtConstructor<*>
     }
 
     override fun getReturnType(): PsiType? {

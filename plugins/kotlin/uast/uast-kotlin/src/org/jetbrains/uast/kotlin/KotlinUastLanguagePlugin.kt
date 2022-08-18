@@ -1,17 +1,22 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.kotlin
 
 import com.intellij.lang.Language
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.annotations.JVM_STATIC_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
-import org.jetbrains.uast.*
+import org.jetbrains.uast.DEFAULT_TYPES_LIST
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.analysis.UastAnalysisPlugin
 import org.jetbrains.uast.kotlin.KotlinConverter.convertDeclaration
 import org.jetbrains.uast.kotlin.KotlinConverter.convertDeclarationOrElement
@@ -119,12 +124,19 @@ class KotlinUastLanguagePlugin : UastLanguagePlugin {
             element is KtFile -> KotlinConverter.convertKtFile(element, null, requiredTypes) as Sequence<T>
             (element is KtProperty && !element.isLocal) ->
                 KotlinConverter.convertNonLocalProperty(element, null, requiredTypes) as Sequence<T>
+            element is KtNamedFunction && element.isJvmStatic() ->
+                KotlinConverter.convertJvmStaticMethod(element, null, requiredTypes) as Sequence<T>
             element is KtParameter -> KotlinConverter.convertParameter(element, null, requiredTypes) as Sequence<T>
             element is KtClassOrObject -> KotlinConverter.convertClassOrObject(element, null, requiredTypes) as Sequence<T>
             element is UastFakeLightPrimaryConstructor ->
                 KotlinConverter.convertFakeLightConstructorAlternatives(element, null, requiredTypes) as Sequence<T>
             else -> sequenceOf(convertElementWithParent(element, requiredTypes.nonEmptyOr(DEFAULT_TYPES_LIST)) as? T).filterNotNull()
         }
+
+    private fun KtNamedFunction.isJvmStatic() = annotationEntries.any {
+        it.shortName?.asString() == JVM_STATIC_ANNOTATION_FQ_NAME.shortName().asString()
+                && analyze()[BindingContext.ANNOTATION, it]?.fqName == JVM_STATIC_ANNOTATION_FQ_NAME
+    }
 
     override fun getPossiblePsiSourceTypes(vararg uastTypes: Class<out UElement>): ClassSet<PsiElement> =
         when (uastTypes.size) {

@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.charts
 
 import java.awt.BasicStroke
@@ -169,6 +170,7 @@ abstract class LineChart<X: Number, Y: Number, D: LineDataset<X, Y>>: GridChartW
           when (stepped) {
             LineStepped.AFTER -> path.lineTo(neighborhood[4], py)
             LineStepped.BEFORE -> path.lineTo(px, neighborhood[5])
+            else -> {}
           }
           path.lineTo(px, py)
         } else if (i > 1) {

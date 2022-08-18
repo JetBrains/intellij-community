@@ -60,7 +60,7 @@ public class CloudModuleBuilder extends JavaModuleBuilder {
 
   @Override
   public @NonNls String getBuilderId() {
-    return getClass().getName();
+    return "Cloud";
   }
 
   @Override

@@ -48,7 +48,7 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
   @Override
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    return ((Boolean)infos[0]) ? new FallthruInSwitchStatementFix((String) infos[1]) : null;
+    return (Boolean)infos[0] ? new FallthruInSwitchStatementFix((String) infos[1]) : null;
   }
 
   @Override
@@ -101,7 +101,7 @@ public class FallthruInSwitchStatementInspection extends BaseInspection {
     }
 
     @Override
-    public void visitSwitchExpression(PsiSwitchExpression expression) {
+    public void visitSwitchExpression(@NotNull PsiSwitchExpression expression) {
       super.visitSwitchExpression(expression);
       doCheckSwitchBlock(expression);
     }

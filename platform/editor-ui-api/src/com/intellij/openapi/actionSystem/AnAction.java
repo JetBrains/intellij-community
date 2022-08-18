@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.SmartList;
 import org.intellij.lang.annotations.JdkConstants;
@@ -22,6 +23,7 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.NlsActions.ActionDescription;
@@ -29,12 +31,12 @@ import static com.intellij.openapi.util.NlsActions.ActionText;
 
 /**
  * Represents an entity that has a state, a presentation and can be performed.
- *
+ * <p>
  * For an action to be useful, you need to implement {@link AnAction#actionPerformed}
  * and optionally to override {@link AnAction#update}. By overriding the
  * {@link AnAction#update} method you can dynamically change action's presentation
  * depending on the place (for more information on places see {@link com.intellij.openapi.actionSystem.ActionPlaces}.
- *
+ * <p>
  * The same action can have various presentations.
  *
  * <pre>
@@ -61,15 +63,14 @@ import static com.intellij.openapi.util.NlsActions.ActionText;
  * @see com.intellij.openapi.actionSystem.ActionPlaces
  * @see com.intellij.openapi.project.DumbAwareAction
  */
-public abstract class AnAction implements PossiblyDumbAware {
+public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadAware {
   private static final Logger LOG = Logger.getInstance(AnAction.class);
 
   public static final Key<List<AnAction>> ACTIONS_KEY = Key.create("AnAction.shortcutSet");
   public static final AnAction[] EMPTY_ARRAY = new AnAction[0];
 
   private Presentation myTemplatePresentation;
-  @NotNull
-  private ShortcutSet myShortcutSet = CustomShortcutSet.EMPTY;
+  private @NotNull ShortcutSet myShortcutSet = CustomShortcutSet.EMPTY;
   private boolean myEnabledInModalContext;
 
   private boolean myIsDefaultIcon = true;
@@ -77,10 +78,12 @@ public abstract class AnAction implements PossiblyDumbAware {
   private SmartFMap<String, Supplier<String>> myActionTextOverrides = SmartFMap.emptyMap();
   private List<Supplier<@Nls String>> mySynonyms = Collections.emptyList();
 
+  private Boolean myUpdateNotOverridden;
+
   /**
    * Creates a new action with its text, description and icon set to {@code null}.
    */
-  public AnAction(){
+  public AnAction() {
     // avoid eagerly creating template presentation
   }
 
@@ -89,7 +92,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    *
    * @param icon Default icon to appear in toolbars and menus (Note some platform don't have icons in menu).
    */
-  public AnAction(Icon icon){
+  public AnAction(@Nullable Icon icon) {
     this(Presentation.NULL_STRING, Presentation.NULL_STRING, icon);
   }
 
@@ -98,7 +101,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    * set to {@code null}.
    *
    * @param text Serves as a tooltip when the presentation is a button and the name of the
-   *  menu item when the presentation is a menu item.
+   *             menu item when the presentation is a menu item.
    */
   public AnAction(@Nullable @ActionText String text) {
     this(text, null, null);
@@ -109,9 +112,9 @@ public abstract class AnAction implements PossiblyDumbAware {
    * set to {@code null}.
    *
    * @param dynamicText Serves as a tooltip when the presentation is a button and the name of the
-   * menu item when the presentation is a menu item.
-   *
-   *  Use it if you need to localize action text.
+   *                    menu item when the presentation is a menu item.
+   *                    <p>
+   *                    Use it if you need to localize action text.
    */
   public AnAction(@NotNull Supplier<@ActionText String> dynamicText) {
     this(dynamicText, Presentation.NULL_STRING, null);
@@ -120,13 +123,11 @@ public abstract class AnAction implements PossiblyDumbAware {
   /**
    * Constructs a new action with the specified text, description and icon.
    *
-   * @param text Serves as a tooltip when the presentation is a button and the name of the
-   *  menu item when the presentation is a menu item
-   *
+   * @param text        Serves as a tooltip when the presentation is a button and the name of the
+   *                    menu item when the presentation is a menu item
    * @param description Describes current action, this description will appear on
-   *  the status bar when presentation has focus
-   *
-   * @param icon Action's icon
+   *                    the status bar when presentation has focus
+   * @param icon        Action's icon
    */
   public AnAction(@Nullable @ActionText String text,
                   @Nullable @ActionDescription String description,
@@ -138,9 +139,8 @@ public abstract class AnAction implements PossiblyDumbAware {
    * Constructs a new action with the specified dynamicText, dynamicDescription and icon.
    *
    * @param dynamicText Serves as a tooltip when the presentation is a button and the name of the
-   *  menu item when the presentation is a menu item. Use it if you need to localize action text.
-   *
-   * @param icon Action's icon
+   *                    menu item when the presentation is a menu item. Use it if you need to localize action text.
+   * @param icon        Action's icon
    */
   public AnAction(@NotNull Supplier<@ActionText String> dynamicText, @Nullable Icon icon) {
     this(dynamicText, Presentation.NULL_STRING, icon);
@@ -149,13 +149,11 @@ public abstract class AnAction implements PossiblyDumbAware {
   /**
    * Constructs a new action with the specified dynamicText, dynamicDescription and icon.
    *
-   * @param dynamicText Serves as a tooltip when the presentation is a button and the name of the
-   *  menu item when the presentation is a menu item. Use it if you need to localize action text.
-   *
+   * @param dynamicText        Serves as a tooltip when the presentation is a button and the name of the
+   *                           menu item when the presentation is a menu item. Use it if you need to localize action text.
    * @param dynamicDescription Describes current action, this dynamicDescription will appear on
-   *  the status bar when presentation has focus. Use it if you need to localize description.
-   *
-   * @param icon Action's icon
+   *                           the status bar when presentation has focus. Use it if you need to localize description.
+   * @param icon               Action's icon
    */
   public AnAction(@NotNull Supplier<@ActionText String> dynamicText,
                   @NotNull Supplier<@ActionDescription String> dynamicDescription,
@@ -166,13 +164,40 @@ public abstract class AnAction implements PossiblyDumbAware {
     presentation.setIcon(icon);
   }
 
+  @Override
+  public boolean isDumbAware() {
+    if (PossiblyDumbAware.super.isDumbAware()) {
+      return true;
+    }
+    return updateNotOverridden();
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    if (this instanceof UpdateInBackground && ((UpdateInBackground)this).isUpdateInBackground()) {
+      return ActionUpdateThread.BGT;
+    }
+    if (updateNotOverridden()) {
+      return ActionUpdateThread.BGT;
+    }
+    return ActionUpdateThreadAware.super.getActionUpdateThread();
+  }
+
+  private boolean updateNotOverridden() {
+    if (myUpdateNotOverridden != null) {
+      return myUpdateNotOverridden;
+    }
+    Class<?> declaringClass = ReflectionUtil.getMethodDeclaringClass(getClass(), "update", AnActionEvent.class);
+    myUpdateNotOverridden = AnAction.class.equals(declaringClass);
+    return myUpdateNotOverridden;
+  }
+
   /**
    * Returns the shortcut set associated with this action.
    *
    * @return shortcut set associated with this action
    */
-  @NotNull
-  public final ShortcutSet getShortcutSet(){
+  public final @NotNull ShortcutSet getShortcutSet() {
     return myShortcutSet;
   }
 
@@ -192,7 +217,9 @@ public abstract class AnAction implements PossiblyDumbAware {
     registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(keyCode, modifiers)), component);
   }
 
-  public final void registerCustomShortcutSet(@NotNull ShortcutSet shortcutSet, @Nullable JComponent component, @Nullable Disposable parentDisposable) {
+  public final void registerCustomShortcutSet(@NotNull ShortcutSet shortcutSet,
+                                              @Nullable JComponent component,
+                                              @Nullable Disposable parentDisposable) {
     setShortcutSet(shortcutSet);
     registerCustomShortcutSet(component, parentDisposable);
   }
@@ -201,8 +228,9 @@ public abstract class AnAction implements PossiblyDumbAware {
     if (component == null) return;
     List<AnAction> actionList = ComponentUtil.getClientProperty(component, ACTIONS_KEY);
     if (actionList == null) {
-      List<AnAction> value = actionList = new SmartList<>();
+      List<AnAction> value = new CopyOnWriteArrayList<>();
       ComponentUtil.putClientProperty(component, ACTIONS_KEY, value);
+      actionList = Objects.requireNonNullElse(ComponentUtil.getClientProperty(component, ACTIONS_KEY), value);
     }
     if (!actionList.contains(this)) {
       actionList.add(this);
@@ -227,7 +255,8 @@ public abstract class AnAction implements PossiblyDumbAware {
   public final void copyFrom(@NotNull AnAction sourceAction) {
     Presentation sourcePresentation = sourceAction.getTemplatePresentation();
     Presentation presentation = getTemplatePresentation();
-    presentation.copyFrom(sourcePresentation);
+    boolean allFlags = this instanceof ActionGroup && sourceAction instanceof ActionGroup;
+    presentation.copyFrom(sourcePresentation, null, allFlags);
     copyShortcutFrom(sourceAction);
   }
 
@@ -259,12 +288,12 @@ public abstract class AnAction implements PossiblyDumbAware {
   }
 
   /**
-   * Updates the state of the action. Default implementation does nothing.
+   * Updates the presentation of the action. Default implementation does nothing.
    * Override this method to provide the ability to dynamically change action's
    * state and(or) presentation depending on the context (For example
    * when your action state depends on the selection you can check for
    * selection and change the state accordingly).<p></p>
-   *
+   * <p>
    * This method can be called frequently, and on UI thread.
    * This means that this method is supposed to work really fast,
    * no real work should be done at this phase. For example, checking selection in a tree or a list,
@@ -272,32 +301,32 @@ public abstract class AnAction implements PossiblyDumbAware {
    * If you cannot determine the state of the action fast enough,
    * you should do it in the {@link #actionPerformed(AnActionEvent)} method and notify
    * the user that action cannot be executed if it's the case.<p></p>
-   *
+   * <p>
    * If the action is added to a toolbar, its "update" can be called twice a second, but only if there was
    * any user activity or a focus transfer. If your action's availability is changed
    * in absence of any of these events, please call {@code ActivityTracker.getInstance().inc()} to notify
    * action subsystem to update all toolbar actions when your subsystem's determines that its actions' visibility might be affected.
    *
-   * @param e Carries information on the invocation place and data available
+   * @see #getActionUpdateThread()
    */
   public void update(@NotNull AnActionEvent e) {
   }
 
   /**
-   * Same as {@link #update(AnActionEvent)} but is calls immediately before actionPerformed() as final check guard.
-   * Default implementation delegates to {@link #update(AnActionEvent)}.
+   * Updates the presentation of the action just before the {@link #actionPerformed(AnActionEvent)} method is called.
+   * The default implementation simply delegates to the {@link #update(AnActionEvent)} method.
+   * <p/>
+   * It is called on the UI thread with all data in the provided {@link DataContext} instance.
    *
-   * @param e Carries information on the invocation place and data available
+   * @see #actionPerformed(AnActionEvent)
    */
   public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
     update(e);
   }
 
   /**
-   * Returns a template presentation that will be used
-   * as a template for created presentations.
-   *
-   * @return template presentation
+   * Returns the template presentation of the action that is cloned each time
+   * a new presentation of the action is needed.
    */
   public final @NotNull Presentation getTemplatePresentation() {
     Presentation presentation = myTemplatePresentation;
@@ -305,6 +334,11 @@ public abstract class AnAction implements PossiblyDumbAware {
       presentation = createTemplatePresentation();
       LOG.assertTrue(presentation.isTemplate(), "Not a template presentation");
       myTemplatePresentation = presentation;
+      if (this instanceof ActionGroup) { // init group flags from deprecated methods
+        //myTemplatePresentation.setPopupGroup(((ActionGroup)this).isPopup());
+        myTemplatePresentation.setHideGroupIfEmpty(((ActionGroup)this).hideIfNoVisibleChildren());
+        myTemplatePresentation.setDisableGroupIfEmpty(((ActionGroup)this).disableIfNoVisibleChildren());
+      }
     }
     return presentation;
   }
@@ -315,9 +349,11 @@ public abstract class AnAction implements PossiblyDumbAware {
   }
 
   /**
-   * Implement this method to provide your action handler.
+   * Performs the action logic.
+   * <p/>
+   * It is called on the UI thread with all data in the provided {@link DataContext} instance.
    *
-   * @param e Carries information on the invocation place
+   * @see #beforeActionPerformedUpdate(AnActionEvent)
    */
   public abstract void actionPerformed(@NotNull AnActionEvent e);
 
@@ -337,6 +373,7 @@ public abstract class AnAction implements PossiblyDumbAware {
 
   /**
    * Sets the flag indicating whether the action has an internal or a user-customized icon.
+   *
    * @param isDefaultIconSet true if the icon is internal, false if the icon is customized by the user.
    */
   public void setDefaultIcon(boolean isDefaultIconSet) {
@@ -345,6 +382,7 @@ public abstract class AnAction implements PossiblyDumbAware {
 
   /**
    * Returns true if the action has an internal, not user-customized icon.
+   *
    * @return true if the icon is internal, false if the icon is customized by the user.
    */
   public boolean isDefaultIcon() {
@@ -369,10 +407,8 @@ public abstract class AnAction implements PossiblyDumbAware {
     return this instanceof TransparentUpdate;
   }
 
-  /**
-   * @deprecated unused
-   */
-  @Deprecated
+  /** @deprecated unused */
+  @Deprecated(forRemoval = true)
   public boolean startInTransaction() {
     return false;
   }
@@ -394,8 +430,6 @@ public abstract class AnAction implements PossiblyDumbAware {
     }
     myActionTextOverrides = myActionTextOverrides.plus(toPlace, value);
   }
-
-
 
   @ApiStatus.Internal
   public void applyTextOverride(@NotNull AnActionEvent event) {
@@ -435,14 +469,12 @@ public abstract class AnAction implements PossiblyDumbAware {
   public interface TransparentUpdate {
   }
 
-  @Nullable
-  public static Project getEventProject(AnActionEvent e) {
+  public static @Nullable Project getEventProject(AnActionEvent e) {
     return e == null ? null : e.getData(CommonDataKeys.PROJECT);
   }
 
   @Override
-  @Nls
-  public String toString() {
+  public @Nls String toString() {
     return getTemplatePresentation().toString();
   }
 
@@ -453,9 +485,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    *
    * @return action presentable text without private user data
    */
-  @Nullable
-  @ActionText
-  public String getTemplateText() {
+  public @Nullable @ActionText String getTemplateText() {
     return getTemplatePresentation().getText();
   }
 }

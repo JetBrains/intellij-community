@@ -371,6 +371,9 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitMethod(this);
     }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @Override

@@ -18,7 +18,7 @@ class TransientChangeTrackingValueContainer<Value> extends ChangeTrackingValueCo
   void dropAssociatedValue(int inputId) {
     myMerged = null;
 
-    if (myAdded != null) myAdded.removeAssociatedValue(inputId);
+    removeFromAdded(inputId);
     if (myInvalidated != null) myInvalidated.remove(inputId);
   }
 

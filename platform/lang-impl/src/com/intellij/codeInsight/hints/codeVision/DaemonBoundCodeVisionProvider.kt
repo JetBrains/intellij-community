@@ -19,14 +19,27 @@ import org.jetbrains.annotations.NonNls
  */
 interface DaemonBoundCodeVisionProvider {
   companion object {
-    const val EP_NAME = "com.intellij.codeInsight.daemonBoundCodeVisionProvider"
-    val extensionPoint = ExtensionPointName.create<DaemonBoundCodeVisionProvider>(EP_NAME)
+    const val EP_NAME: String = "com.intellij.codeInsight.daemonBoundCodeVisionProvider"
+    val extensionPoint: ExtensionPointName<DaemonBoundCodeVisionProvider> = ExtensionPointName.create(EP_NAME)
+  }
+
+  @JvmDefault
+  fun preparePreview(editor: Editor, file: PsiFile) {
+
   }
 
   /**
    * Computes code lens data in read action in background for a given editor.
    */
-  fun computeForEditor(editor: Editor): List<Pair<TextRange, CodeVisionEntry>>
+  @Deprecated("Use overload with file")
+  fun computeForEditor(editor: Editor): List<Pair<TextRange, CodeVisionEntry>> = emptyList()
+
+  /**
+   * Computes code lens data in read action in background for a given editor.
+   */
+  @Suppress("DEPRECATION")
+  @JvmDefault
+  fun computeForEditor(editor: Editor, file: PsiFile): List<Pair<TextRange, CodeVisionEntry>> = emptyList()
 
   fun handleClick(editor: Editor, textRange: TextRange, entry: CodeVisionEntry){
     if (entry is CodeVisionPredefinedActionEntry) entry.onClick(editor)

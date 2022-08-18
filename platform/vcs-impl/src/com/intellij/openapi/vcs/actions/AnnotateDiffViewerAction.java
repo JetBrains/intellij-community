@@ -7,6 +7,7 @@ import com.intellij.diff.DiffExtension;
 import com.intellij.diff.FrameDiffTool.DiffViewer;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.FileContent;
+import com.intellij.diff.merge.MergeThreesideViewer;
 import com.intellij.diff.merge.TextMergeViewer;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
@@ -164,7 +165,7 @@ public class AnnotateDiffViewerAction {
           if (exception != null) {
             Notification notification = VcsNotifier.IMPORTANT_ERROR_NOTIFICATION
               .createNotification(VcsBundle.message("notification.title.cant.load.annotations"), exception.getMessage(), NotificationType.ERROR)
-              .setDisplayId("vcs.cannot.load.annotations");
+              .setDisplayId(VcsNotificationIdsHolder.CANNOT_LOAD_ANNOTATIONS);
             showNotification(viewer, notification);
             LOG.warn(exception);
             return;
@@ -527,7 +528,7 @@ public class AnnotateDiffViewerAction {
     @Override
     @NotNull
     public Class<? extends ThreesideTextDiffViewerEx> getViewerClass() {
-      return TextMergeViewer.MyThreesideViewer.class;
+      return MergeThreesideViewer.class;
     }
 
     @Nullable

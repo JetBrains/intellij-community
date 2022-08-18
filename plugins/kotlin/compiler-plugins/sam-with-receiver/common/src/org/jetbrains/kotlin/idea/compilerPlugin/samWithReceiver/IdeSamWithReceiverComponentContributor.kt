@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.compilerPlugin.samWithReceiver
 
@@ -13,19 +13,19 @@ import org.jetbrains.kotlin.container.StorageComponentContainer
 import org.jetbrains.kotlin.container.useInstance
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.extensions.StorageComponentContainerContributor
-import org.jetbrains.kotlin.idea.caches.project.ModuleProductionSourceInfo
-import org.jetbrains.kotlin.idea.caches.project.ScriptDependenciesInfo
-import org.jetbrains.kotlin.idea.caches.project.ScriptModuleInfo
+import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
+import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleProductionSourceInfo
 import org.jetbrains.kotlin.idea.compilerPlugin.getSpecialAnnotations
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.isJvm
-import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverCommandLineProcessor.Companion.ANNOTATION_OPTION
-import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverCommandLineProcessor.Companion.PLUGIN_ID
+import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverPluginNames.ANNOTATION_OPTION_NAME
+import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverPluginNames.PLUGIN_ID
 import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverResolverExtension
 
 class IdeSamWithReceiverComponentContributor(val project: Project) : StorageComponentContainerContributor {
     private companion object {
-        val ANNOTATION_OPTION_PREFIX = "plugin:$PLUGIN_ID:${ANNOTATION_OPTION.optionName}="
+        val ANNOTATION_OPTION_PREFIX = "plugin:$PLUGIN_ID:${ANNOTATION_OPTION_NAME}="
     }
 
     private val cache = CachedValuesManager.getManager(project).createCachedValue({
@@ -49,9 +49,8 @@ class IdeSamWithReceiverComponentContributor(val project: Project) : StorageComp
     ) {
         if (!platform.isJvm()) return
 
-        val moduleInfo = moduleDescriptor.getCapability(ModuleInfo.Capability)
         val annotations =
-            when (moduleInfo) {
+            when (val moduleInfo = moduleDescriptor.getCapability(ModuleInfo.Capability)) {
                 is ScriptModuleInfo -> moduleInfo.scriptDefinition.annotationsForSamWithReceivers
                 is ScriptDependenciesInfo.ForFile -> moduleInfo.scriptDefinition.annotationsForSamWithReceivers
                 is ModuleProductionSourceInfo -> getAnnotationsForModule(moduleInfo.module)

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.typing
 
 import com.google.common.cache.Cache
@@ -45,17 +45,9 @@ private class PyStubPackagesAdvertiser : PyInspection() {
                                 "traits" to "traits") // top-level package to package on PyPI, sorted by the latter
 
     private val BALLOON_SHOWING = Key.create<Boolean>("showingStubPackagesAdvertiserBalloon")
-    private val BALLOON_NOTIFICATIONS = NotificationGroup(
-      "Python Stub Packages Advertiser",
-      NotificationDisplayType.STICKY_BALLOON,
-      true,
-      null,
-      null,
-      PyBundle.message("code.insight.stub.package.advertiser.notifications.group.title"),
-      null)
+    private val BALLOON_NOTIFICATIONS = NotificationGroupManager.getInstance().getNotificationGroup("Python Stub Packages Advertiser")
   }
 
-  @Suppress("MemberVisibilityCanBePrivate")
   var ignoredPackages: MutableList<String> = mutableListOf()
 
   override fun createOptionsPanel(): JComponent = ListEditForm(PyPsiBundle.message("INSP.stub.packages.compatibility.ignored.packages"),
@@ -181,6 +173,7 @@ private class PyStubPackagesAdvertiser : PyInspection() {
             PyBundle.message("code.insight.type.hints.are.not.installed"),
             PyBundle.message("code.insight.install.type.hints.content"),
             NotificationType.INFORMATION)
+          .setSuggestionType(true)
           .addAction(
             NotificationAction.createSimpleExpiring(
               if (plural) PyBundle.message("code.insight.install.type.hints.action")

@@ -8,6 +8,8 @@ import com.intellij.ide.actions.WindowAction;
 import com.intellij.ide.ui.PopupLocationTracker;
 import com.intellij.ide.ui.PopupLocator;
 import com.intellij.ide.ui.ScreenAreaConsumer;
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -20,6 +22,7 @@ import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.popup.*;
@@ -47,6 +50,7 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicHTML;
 import java.awt.*;
 import java.awt.event.*;
@@ -440,8 +444,9 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     if (StringUtil.isEmpty(hint)) return hint;
 
     Dimension size = myContent.getSize();
-    if (size.width == 0 && size.height == 0)
+    if (size.width == 0 && size.height == 0) {
       size = myContent.computePreferredSize();
+    }
 
     JBInsets.removeFrom(size, myContent.getInsets());
     JBInsets.removeFrom(size, myAdComponent.getInsets());
@@ -1096,6 +1101,19 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     final boolean popupIsSimpleWindow = "TRUE".equals(getContent().getClientProperty("BookmarkPopup"));
     myContent.getRootPane().putClientProperty("SIMPLE_WINDOW", "SIMPLE_WINDOW".equals(data) || popupIsSimpleWindow);
 
+    if (SystemInfoRt.isMac && ExperimentalUI.isNewUI()) {
+      PopupCornerType cornerType = getUserData(PopupCornerType.class);
+      if (cornerType == null) {
+        cornerType = PopupCornerType.RoundedWindow;
+      }
+      if (cornerType != PopupCornerType.None) {
+        JBValue radius =
+          cornerType == PopupCornerType.RoundedTooltip ? JBUI.CurrentTheme.Tooltip.CORNER_RADIUS : IdeaPopupMenuUI.CORNER_RADIUS;
+        myContent.getRootPane().putClientProperty("apple.awt.windowCornerRadius", Float.valueOf(radius.getFloat()));
+        myContent.setBorder(myPopupBorder = PopupBorder.Factory.createEmpty());
+      }
+    }
+
     myWindow = window;
     if (myNormalWindowLevel) {
       myWindow.setType(Window.Type.NORMAL);
@@ -1284,10 +1302,13 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     if (ExperimentalUI.isNewUI()) {
       mySpeedSearchPatternField.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
       textField.setOpaque(false);
-      JBEmptyBorder outsideBorder = new JBEmptyBorder(JBUI.CurrentTheme.Popup.searchFieldBorderInsets());
+      textField.putClientProperty("TextFieldWithoutMargins", true);
+      textField.putClientProperty(DarculaUIUtil.COMPACT_PROPERTY, true);
+      textField.putClientProperty("TextField.NoMinHeightBounds", true);
+      EmptyBorder outsideBorder = new EmptyBorder(JBUI.CurrentTheme.Popup.searchFieldBorderInsets());
       Border lineBorder = JBUI.Borders.customLine(JBUI.CurrentTheme.Popup.separatorColor(), 0, 0, 1, 0);
       mySpeedSearchPatternField.setBorder(JBUI.Borders.compound(outsideBorder, lineBorder,
-                                                                JBUI.Borders.empty(JBUI.CurrentTheme.Popup.searchFieldInputInsets())));
+                                                                new EmptyBorder(JBUI.CurrentTheme.Popup.searchFieldInputInsets())));
       textField.setBorder(JBUI.Borders.empty());
     } else {
       if (mySpeedSearchAlwaysShown) {
@@ -2052,7 +2073,28 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   }
 
   public static boolean isCloseRequest(KeyEvent e) {
-    return e != null && e.getID() == KeyEvent.KEY_PRESSED && e.getKeyCode() == KeyEvent.VK_ESCAPE && e.getModifiers() == 0;
+    if (e != null && e.getID() == KeyEvent.KEY_PRESSED) {
+      KeymapManager keymapManager = KeymapManager.getInstance();
+      if (keymapManager != null) {
+        Shortcut[] shortcuts = keymapManager.getActiveKeymap().getShortcuts(IdeActions.ACTION_EDITOR_ESCAPE);
+        for (Shortcut shortcut : shortcuts) {
+          if (shortcut instanceof KeyboardShortcut) {
+            KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
+            if (keyboardShortcut.getFirstKeyStroke().getKeyCode() == e.getKeyCode() &&
+                keyboardShortcut.getSecondKeyStroke() == null) {
+              int m1 = keyboardShortcut.getFirstKeyStroke().getModifiers() & (InputEvent.SHIFT_MASK | InputEvent.CTRL_MASK | InputEvent.META_MASK | InputEvent.ALT_MASK);
+              int m2 = e.getModifiers();
+              return m1 == m2;
+            }
+          }
+        }
+        return false;
+      }
+      else {
+        return e.getKeyCode() == KeyEvent.VK_ESCAPE && e.getModifiers() == 0;
+      }
+    }
+    return false;
   }
 
   private @NotNull Point fixLocateByContent(@NotNull Point location, boolean save) {
@@ -2178,7 +2220,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     return pane.getHorizontalScrollBar();
   }
 
-  private void forHorizontalScrollBar(@NotNull Consumer<JScrollBar> consumer) {
+  private void forHorizontalScrollBar(@NotNull Consumer<? super JScrollBar> consumer) {
     JScrollBar bar = findHorizontalScrollBar();
     if (bar != null) consumer.consume(bar);
   }

@@ -14,18 +14,13 @@ import java.util.Collection;
 
 public class PropertiesProviderImpl implements PropertiesProvider {
   @Override
-  public @Nullable Property hasProperty(@NotNull String propertyKey,
-                                        @NotNull String propertyValue,
-                                        @NotNull GlobalSearchScope scope) {
+  public @Nullable String getPropertyValue(@NotNull String propertyKey, @NotNull GlobalSearchScope scope) {
     Project project = scope.getProject();
     if (project == null) return null;
     Collection<Property> property =
       PropertyKeyIndex.getInstance().get(propertyKey, project, scope);
     if (property == null) return null;
     Property item = ContainerUtil.getFirstItem(property);
-    if (item == null) return null;
-    String value = item.getValue();
-    if (propertyValue.equalsIgnoreCase(value)) return item;
-    else return null;
+    return item != null ? item.getValue() : null;
   }
 }

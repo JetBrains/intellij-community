@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.observable
 
 import com.intellij.openapi.Disposable
@@ -17,8 +17,12 @@ abstract class CompoundParallelOperationTraceTestCase : TestCase() {
   }
 
   override fun tearDown() {
-    Disposer.dispose(testDisposable)
-    super.tearDown()
+    try {
+      Disposer.dispose(testDisposable)
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   protected fun <R> generate(times: Int, action: (Int) -> R): Iterable<R> {

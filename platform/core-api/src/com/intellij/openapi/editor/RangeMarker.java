@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -95,7 +96,14 @@ public interface RangeMarker extends UserDataHolder, Segment {
 
   Comparator<? super RangeMarker> BY_START_OFFSET = BY_START_OFFSET_THEN_END_OFFSET;
 
+  /**
+   * @return true if the range marker should increase its length when a character is inserted at the {@link #getEndOffset()} offset.
+   */
   boolean isGreedyToRight();
+
+  /**
+   * @return true if the range marker should increase its length when a character is inserted at the {@link #getStartOffset()} offset.
+   */
   boolean isGreedyToLeft();
 
   /**
@@ -106,4 +114,16 @@ public interface RangeMarker extends UserDataHolder, Segment {
    * but could help performance in case of high GC pressure (see {@link RangeMarker} javadoc).
    */
   void dispose();
+
+  /**
+   * @return a {@link TextRange} with offsets of this range marker.
+   * Implementations will try to construct this {@link TextRange} atomically to the best of their efforts,
+   * to guarantee this range marker offsets won't change inside this method execution.
+   * Therefore, please use this method instead of two consecutive calls to {@link #getStartOffset()}, {@link #getEndOffset()} when accessing the range marker
+   * from the background thread, to avoid changing offsets between these calls and returning inconsistent text range as a result.
+   */
+  @NotNull
+  default TextRange getTextRange() {
+    return new TextRange(getStartOffset(), getEndOffset());
+  }
 }

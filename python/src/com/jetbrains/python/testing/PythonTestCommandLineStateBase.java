@@ -88,6 +88,9 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
     return null;  // by default, the IDE will use a "file://" protocol locator
   }
 
+  /**
+   * <i>To be deprecated. The part of the legacy implementation based on {@link GeneralCommandLine}.</i>
+   */
   @NotNull
   @Override
   public GeneralCommandLine generateCommandLine() {
@@ -150,7 +153,7 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
   }
 
   @Override
-  public @NotNull ExecutionResult execute(Executor executor, @NotNull PythonScriptTargetedCommandLineBuilder converter)
+  public @Nullable ExecutionResult execute(@NotNull Executor executor, @NotNull PythonScriptTargetedCommandLineBuilder converter)
     throws ExecutionException {
     ProcessHandler processHandler = startProcess(converter);
     ConsoleView console = invokeAndWait(() -> createAndAttachConsole(myConfiguration.getProject(), processHandler, executor));

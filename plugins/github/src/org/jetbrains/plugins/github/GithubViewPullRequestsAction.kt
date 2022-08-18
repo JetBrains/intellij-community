@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
@@ -14,6 +15,10 @@ class GithubViewPullRequestsAction :
   DumbAwareAction(GithubBundle.messagePointer("pull.request.view.list"),
                   Supplier { null },
                   AllIcons.Vcs.Vendors.Github) {
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = isEnabledAndVisible(e)

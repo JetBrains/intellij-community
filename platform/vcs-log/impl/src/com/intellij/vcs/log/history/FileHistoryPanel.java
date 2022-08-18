@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history;
 
 import com.intellij.openapi.Disposable;
@@ -102,12 +102,11 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
         return Unit.INSTANCE;
       });
     });
-    myDetailsPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
     VcsLogCommitSelectionListenerForDetails.install(myGraphTable, myDetailsPanel, this,
                                                     new VcsLogColorManagerImpl(Collections.singleton(myRoot)));
 
     myDetailsSplitter = new OnePixelSplitter(true, "vcs.log.history.details.splitter.proportion", 0.7f);
-    JComponent tableWithProgress = VcsLogUiUtil.installProgress(VcsLogUiUtil.setupScrolledGraph(myGraphTable, SideBorder.LEFT),
+    JComponent tableWithProgress = VcsLogUiUtil.installProgress(VcsLogUiUtil.setupScrolledGraph(myGraphTable, 0),
                                                                 logData, logUi.getId(), this);
     myDetailsSplitter.setFirstComponent(tableWithProgress);
     myDetailsSplitter.setSecondComponent(myProperties.get(CommonUiProperties.SHOW_DETAILS) ? myDetailsPanel : null);
@@ -116,6 +115,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     EditorTabDiffPreviewManager.getInstance(myProject).subscribeToPreviewVisibilityChange(this, this::setEditorDiffPreview);
 
     JComponent actionsToolbar = createActionsToolbar();
+    actionsToolbar.setBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT));
     JBPanel tablePanel = new JBPanel(new BorderLayout()) {
       @Override
       public Dimension getMinimumSize() {
@@ -144,19 +144,19 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   private void setEditorDiffPreview() {
     FileHistoryEditorDiffPreview preview = myEditorDiffPreview;
 
-    boolean isEditorDiffPreview = VcsLogUiUtil.isDiffPreviewInEditor(myProject);
-    if (isEditorDiffPreview && preview == null) {
+    boolean isEditorPreview = VcsLogUiUtil.isDiffPreviewInEditor(myProject);
+    if (isEditorPreview && preview == null) {
       preview = new FileHistoryEditorDiffPreview(myProject, this);
       myEditorDiffPreview = preview;
     }
-    else if (!isEditorDiffPreview && preview != null) {
+    else if (!isEditorPreview && preview != null) {
       preview.closePreview();
       myEditorDiffPreview = null;
     }
   }
 
   private void invokeOnDoubleClick(@NotNull AnAction action, @NotNull JComponent component) {
-    new EmptyAction.MyDelegatingAction(action) {
+    new AnActionWrapper(action) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         if (e.getInputEvent() instanceof MouseEvent && myGraphTable.isResizingColumns()) {
@@ -230,18 +230,18 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
       })
       .ifEq(VcsLogInternalDataKeys.LOG_UI_PROPERTIES).then(myProperties)
       .ifEq(VcsDataKeys.VCS_FILE_REVISION).thenGet(() -> {
-        List<VcsCommitMetadata> details = getSelectedMetadata();
+        List<VcsCommitMetadata> details = myGraphTable.getSelection().getCachedMetadata();
         if (details.isEmpty()) return null;
         return myFileHistoryModel.createRevision(getFirstItem(details));
       })
       .ifEq(VcsDataKeys.VCS_FILE_REVISIONS).thenGet(() -> {
-        List<VcsCommitMetadata> details = getSelectedMetadata();
+        List<VcsCommitMetadata> details = myGraphTable.getSelection().getCachedMetadata();
         if (details.isEmpty() || details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
         return ContainerUtil.mapNotNull(details, myFileHistoryModel::createRevision).toArray(new VcsFileRevision[0]);
       })
       .ifEq(VcsDataKeys.FILE_PATH).then(myFilePath)
       .ifEq(VcsDataKeys.VCS_VIRTUAL_FILE).thenGet(() -> {
-        List<VcsCommitMetadata> details = getSelectedMetadata();
+        List<VcsCommitMetadata> details = myGraphTable.getSelection().getCachedMetadata();
         if (details.isEmpty()) return null;
         VcsCommitMetadata detail = Objects.requireNonNull(getFirstItem(details));
         return FileHistoryUtil.createVcsVirtualFile(myFileHistoryModel.createRevision(detail));
@@ -257,11 +257,6 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
   @Nullable
   Change getSelectedChange() {
     return myFileHistoryModel.getSelectedChange(myGraphTable.getSelectedRows());
-  }
-
-  @NotNull
-  private List<VcsCommitMetadata> getSelectedMetadata() {
-    return myGraphTable.getModel().getCommitMetadata(myGraphTable.getSelectedRows());
   }
 
   @NotNull

@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiElement
 import com.intellij.psi.util.siblings
 import com.intellij.refactoring.suggested.startOffset
 import com.intellij.ui.LightweightHint
@@ -31,7 +30,7 @@ import org.intellij.plugins.markdown.editor.tables.ui.presentation.GraphicsUtils
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
-import org.intellij.plugins.markdown.util.hasType
+import org.intellij.plugins.markdown.lang.psi.util.hasType
 import java.awt.*
 import java.awt.event.MouseEvent
 import java.lang.ref.WeakReference
@@ -48,10 +47,11 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
   private var boundsState = emptyBoundsState
 
   init {
-    invokeLater(ModalityState.stateForComponent(editor.contentComponent)) {
-      PsiDocumentManager.getInstance(table.project).performForCommittedDocument(editor.document) {
+    val document = editor.document
+    PsiDocumentManager.getInstance(table.project).performForCommittedDocument(document) {
+      invokeLater(ModalityState.stateForComponent(editor.contentComponent)) {
         if (!isInvalid && !table.isSoftWrapping(editor)) {
-          val calculated = calculateCurrentBoundsState()
+          val calculated = calculateCurrentBoundsState(document)
           boundsState = calculated
           fireSizeChanged(Dimension(0, 0), Dimension(calculated.width, calculated.height))
         }
@@ -98,11 +98,11 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
     updateSelectedIndexIfNeeded(null)
   }
 
-  private fun calculateCurrentBoundsState(): BoundsState {
+  private fun calculateCurrentBoundsState(document: Document): BoundsState {
     if (isInvalid) {
       return emptyBoundsState
     }
-    val document = obtainCommittedDocument(table) ?: return emptyBoundsState
+    //val document = obtainCommittedDocument(table) ?: return emptyBoundsState
     val fontsMetrics = obtainFontMetrics(editor)
     val width = calculateRowWidth(fontsMetrics, document)
     val barsModel = buildBarsModel(fontsMetrics, document)
@@ -272,11 +272,6 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
     private fun obtainFontMetrics(editor: Editor): FontMetrics {
       val font = editor.colorsScheme.getFont(EditorFontType.PLAIN)
       return editor.contentComponent.getFontMetrics(font)
-    }
-
-    private fun obtainCommittedDocument(element: PsiElement): Document? {
-      val file = element.containingFile
-      return file?.let { PsiDocumentManager.getInstance(element.project).getLastCommittedDocument(it) }
     }
 
     private fun createDataProvider(table: MarkdownTable, columnIndex: Int): DataProvider {

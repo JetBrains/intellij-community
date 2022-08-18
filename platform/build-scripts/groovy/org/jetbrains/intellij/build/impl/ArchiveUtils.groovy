@@ -1,77 +1,76 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.util.io.Compressor
+import com.intellij.util.io.Decompressor
 import groovy.transform.CompileStatic
-import org.apache.tools.tar.TarEntry
-import org.apache.tools.tar.TarInputStream
 import org.jetbrains.annotations.Nullable
 
-import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.zip.GZIPInputStream
-import java.util.zip.ZipFile
+import java.nio.file.Paths
+import java.util.concurrent.TimeUnit
 
 @CompileStatic
 final class ArchiveUtils {
-  static boolean archiveContainsEntry(Path archivePath, String entryPath) {
-    File archiveFile = archivePath.toFile()
-    String fileName = archiveFile.name
-    if (isZipFile(fileName)) {
-      return new ZipFile(archiveFile).withCloseable {
-        it.getEntry(entryPath) != null
-      }
+  static void tar(Path archive, String rootDir, List<String> paths, long buildDateInSeconds) {
+    if (rootDir.endsWith("/")) {
+      def trailingSlash = rootDir.lastIndexOf("/")
+      rootDir = rootDir.substring(0, trailingSlash)
     }
-
-    if (fileName.endsWith(".tar.gz")) {
-      return Files.newInputStream(archivePath).withCloseable {
-        TarInputStream inputStream = new TarInputStream(new GZIPInputStream(it, 32 * 1024))
-        TarEntry entry
-        String altEntryPath = "./$entryPath"
-        while (null != (entry = inputStream.nextEntry)) {
-          if (entry.name == entryPath || entry.name == altEntryPath) {
-            return true
-          }
+    new Compressor.Tar(archive.toFile(), Compressor.Tar.Compression.GZIP).withCloseable { compressor ->
+      paths.each {
+        def path = Paths.get(it)
+        if (Files.isDirectory(path)) {
+          compressor.addDirectory(rootDir, path, buildDateInSeconds)
         }
-        return false
-      }
-    }
-    return false
-  }
-
-  static @Nullable String loadEntry(Path archiveFile, String entryPath) {
-    String fileName = archiveFile.fileName.toString()
-    if (isZipFile(fileName)) {
-      ZipFile zipFile = new ZipFile(archiveFile.toFile())
-      try {
-        def zipEntry = zipFile.getEntry(entryPath)
-        if (zipEntry == null) return null
-        InputStream inputStream = zipFile.getInputStream(zipEntry)
-        return inputStream == null ? null : new String(inputStream.readAllBytes(), StandardCharsets.UTF_8)
-      }
-      finally {
-        zipFile.close()
-      }
-    }
-    else if (fileName.endsWith(".tar.gz")) {
-      TarInputStream inputStream = new TarInputStream(new GZIPInputStream(Files.newInputStream(archiveFile)))
-      try {
-        TarEntry entry
-        String altEntryPath = "./$entryPath"
-        while (null != (entry = inputStream.getNextEntry())) {
-          if (entry.name == entryPath || entry.name == altEntryPath) {
-            return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8)
-          }
+        else {
+          compressor.addFile("$rootDir/${path.fileName}", path, buildDateInSeconds)
         }
       }
-      finally {
-        inputStream.close()
-      }
     }
-    return null
   }
 
-  private static boolean isZipFile(String fileName) {
-    return fileName.endsWith(".zip") || fileName.endsWith(".jar")
+  static void unTar(Path archive, Path destination, @Nullable String rootDirToBeStripped = null) {
+    if (SystemInfoRt.isWindows) {
+      Decompressor.Tar decompressor = new Decompressor.Tar(archive)
+      if (rootDirToBeStripped != null) {
+        decompressor.removePrefixPath(rootDirToBeStripped)
+      }
+      decompressor.extract(destination)
+    }
+    else {
+      // 'tar' command is used for performance reasons
+      // both GNU Tar and BSD Tar will suffice
+      Files.createDirectories(destination)
+      List<String> args = new ArrayList<>()
+      args.add("tar")
+      args.add("--extract")
+      args.add("--gzip")
+      args.add("--file=${archive.fileName}".toString())
+      if (rootDirToBeStripped != null) {
+        args.add("--strip")
+        args.add("1")
+      }
+      args.add("--directory")
+      args.add(destination.toString())
+      callProcess(args, archive.parent)
+    }
+  }
+
+  private static callProcess(List<String> args, Path workDir) {
+    ProcessBuilder builder = new ProcessBuilder(args)
+      .directory(workDir.toFile())
+      .inheritIO()
+    Process process = builder.start()
+    if (!process.waitFor(10, TimeUnit.MINUTES)) {
+      process.destroyForcibly().waitFor()
+      throw new IllegalStateException("Cannot execute $args: 10 min timeout")
+    }
+    int exitCode = process.exitValue()
+    if (exitCode != 0) {
+      throw new RuntimeException("Cannot execute $args (exitCode=$exitCode)")
+    }
   }
 }

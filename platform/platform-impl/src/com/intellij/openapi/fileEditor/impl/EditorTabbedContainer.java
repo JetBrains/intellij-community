@@ -27,7 +27,6 @@ import com.intellij.openapi.fileEditor.impl.tabActions.CloseTab;
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.NlsContexts;
@@ -48,8 +47,6 @@ import com.intellij.ui.docking.impl.DockManagerImpl;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.*;
-import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
-import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutSettingsManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.concurrency.NonUrgentExecutor;
@@ -136,11 +133,6 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     });
 
     setTabPlacement(UISettings.getInstance().getEditorTabPlacement());
-
-    if (JBTabsImpl.NEW_TABS) {
-      TabsLayoutInfo tabsLayoutInfo = TabsLayoutSettingsManager.getInstance().getSelectedTabsLayoutInfo();
-      myTabs.updateTabsLayout(tabsLayoutInfo);
-    }
   }
 
   public int getTabCount() {
@@ -256,10 +248,6 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     }
   }
 
-  void updateTabsLayout(@NotNull TabsLayoutInfo newTabsLayoutInfo) {
-    myTabs.updateTabsLayout(newTabsLayoutInfo);
-  }
-
   /**
    * @param ignorePopup if {@code false} and context menu is shown currently for some tab,
    *                    component for which menu is invoked will be returned
@@ -283,7 +271,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
 
     TabInfo tab = new TabInfo(component)
       .setText(file.getPresentableName())
-      .setTabColor(ExperimentalUI.isNewEditorTabs() ? null : EditorTabPresentationUtil.getEditorTabBackgroundColor(myProject, file))
+      .setTabColor(EditorTabPresentationUtil.getEditorTabBackgroundColor(myProject, file))
       .setIcon(UISettings.getInstance().getShowFileIconInTabs() ? icon : null)
       .setTooltipText(tooltip)
       .setObject(file)
@@ -712,17 +700,26 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
 
     @Override
     protected void paintChildren(Graphics g) {
-      if (!isHideTabs() && ExperimentalUI.isNewEditorTabs()) {
+      if (!isHideTabs() && ExperimentalUI.isNewUI() && paintBorder()) {
         TabLabel label = getSelectedLabel();
         if (label != null) {
           int h = label.getHeight();
           Color color = JBColor.namedColor("EditorTabs.underTabsBorderColor", myTabPainter.getTabTheme().getBorderColor());
           g.setColor(color);
-          LinePainter2D.paint(((Graphics2D)g), 0, h, getWidth(), h);
+          LinePainter2D.paint(((Graphics2D)g), 0, h, getWidth(), h); // XXX
         }
       }
       super.paintChildren(g);
       drawBorder(g);
+    }
+
+    private boolean paintBorder() {
+      TabInfo info = getSelectedInfo();
+      if (info == null) {
+        return true;
+      }
+      EditorComposite composite = ((EditorWindow.TComp)info.getComponent()).myComposite;
+      return !composite.selfBorder();
     }
 
     @Override
@@ -744,7 +741,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
           insets.top += layoutInsets.top;
           insets.bottom += layoutInsets.bottom;
 
-          if (ExperimentalUI.isNewEditorTabs()) {
+          if (ExperimentalUI.isNewUI()) {
             insets.top -= 7;
           }
           return super.getPreferredHeight() - insets.top - insets.bottom;
@@ -752,10 +749,9 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
 
         @Override
         public void paint(Graphics g) {
-          if (ExperimentalUI.isNewEditorTabs() && getSelectedInfo() != info && !isHoveredTab(this)) {
-            GraphicsConfig config = GraphicsUtil.paintWithAlpha(g, JBUI.getFloat("EditorTabs.hoverAlpha", 0.75f));
-            super.paint(g);
-            config.restore();
+          if (ExperimentalUI.isNewUI() && getSelectedInfo() != info && !isHoveredTab(this)) {
+            float alpha = JBUI.getFloat("EditorTabs.hoverAlpha", 0.75f);
+            GraphicsUtil.paintWithAlpha(g, alpha, () -> super.paint(g));
           } else {
             super.paint(g);
           }

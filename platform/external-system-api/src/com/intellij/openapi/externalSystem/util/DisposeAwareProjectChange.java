@@ -5,8 +5,10 @@ import com.intellij.openapi.components.ComponentManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * @deprecated Use instead invokeLater with expire condition or use coroutines with component scope.
  * @author Vladislav.Soroka
  */
+@Deprecated(forRemoval = true)
 public abstract class DisposeAwareProjectChange implements Runnable {
   private final ComponentManager myComponentManager;
 

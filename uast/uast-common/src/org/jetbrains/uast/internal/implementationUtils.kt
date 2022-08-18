@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.internal
 
 import com.intellij.diagnostic.AttachmentFactory
@@ -30,7 +16,7 @@ fun List<UElement>.acceptList(visitor: UastVisitor) {
   }
 }
 
-@Suppress("unused")
+@Suppress("UnusedReceiverParameter")
 inline fun <reified T : UElement> T.log(text: String = ""): String {
   val className = T::class.java.simpleName
   return if (text.isEmpty()) className else "$className ($text)"
@@ -42,6 +28,15 @@ fun <U : UElement> Array<out Class<out UElement>>.accommodate(vararg makers: UEl
     .flatMap { requiredType -> makersSeq.filter { requiredType.isAssignableFrom(it.uType) } }
     .distinct()
     .mapNotNull { it.make.invoke() }
+}
+fun <U : UElement> Class<out UElement>.accommodate(a1: UElementAlternative<out U>, a2: UElementAlternative<out U>): U? {
+  return if (this.isAssignableFrom(a1.uType)) {
+    a1.make.invoke()
+  }
+  else if (this.isAssignableFrom(a2.uType)) {
+    a2.make.invoke()
+  }
+  else null
 }
 
 inline fun <reified U : UElement> alternative(noinline make: () -> U?) = UElementAlternative(U::class.java, make)

@@ -1,4 +1,4 @@
-// "Replace with 'put()'" "true"
+// "Replace with 'put()'" "true-preview"
 import java.util.*;
 
 class Test {

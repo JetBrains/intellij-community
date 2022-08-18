@@ -10,7 +10,7 @@ class MavenProjectsManagerNewFlowTest : MavenMultiVersionImportingTestCase() {
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
-    Assume.assumeTrue(Registry.`is`("maven.new.import"))
+    Assume.assumeTrue(Registry.`is`("maven.linear.import"))
   }
 
   @Test

@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.html.embedding
 
+import com.intellij.lang.HtmlScriptContentProvider
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageHtmlScriptContentProvider
 import com.intellij.lang.LanguageUtil
@@ -17,6 +18,9 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.TestOnly
 import java.util.stream.Stream
 
+/**
+ * @see HtmlScriptContentProvider
+ */
 interface HtmlEmbeddedContentSupport {
   @JvmDefault
   fun isEnabled(lexer: BaseHtmlLexer): Boolean = true
@@ -27,16 +31,15 @@ interface HtmlEmbeddedContentSupport {
   companion object {
     @JvmField
     @ApiStatus.Internal
-    val EP_NAME: ExtensionPointName<HtmlEmbeddedContentSupport> = ExtensionPointName.create(
-      "com.intellij.html.embeddedContentSupport")
+    val EP_NAME: ExtensionPointName<HtmlEmbeddedContentSupport> = ExtensionPointName("com.intellij.html.embeddedContentSupport")
 
     fun getContentSupports(): @NotNull Stream<HtmlEmbeddedContentSupport> {
-      return EP_NAME.extensions()
+      return EP_NAME.extensionList.stream()
     }
 
     @JvmStatic
-    fun getStyleTagEmbedmentInfo(language: Language): HtmlEmbedmentInfo? =
-      if (LanguageUtil.isInjectableLanguage(language))
+    fun getStyleTagEmbedmentInfo(language: Language): HtmlEmbedmentInfo? {
+      return if (LanguageUtil.isInjectableLanguage(language))
         EmbeddedTokenTypesProvider.getProviders()
           .map { it.elementType }
           .filter { language.`is`(it.language) }
@@ -45,18 +48,20 @@ interface HtmlEmbeddedContentSupport {
           }
           .firstOrNull()
       else null
+    }
 
     @JvmStatic
-    fun getScriptTagEmbedmentInfo(language: Language): HtmlEmbedmentInfo? =
-      if (LanguageUtil.isInjectableLanguage(language))
+    fun getScriptTagEmbedmentInfo(language: Language): HtmlEmbedmentInfo? {
+      return if (LanguageUtil.isInjectableLanguage(language))
         LanguageHtmlScriptContentProvider.getScriptContentProvider(language)
           ?.let { provider ->
-            object: HtmlEmbedmentInfo {
+            object: HtmlEmbedmentInfo { // weird debug name
               override fun getElementType(): IElementType?  = provider.scriptElementType
               override fun createHighlightingLexer(): Lexer?  = provider.highlightingLexer
             }
           }
       else null
+    }
 
     /**
      * Use this method to register support in ParsingTestCases only

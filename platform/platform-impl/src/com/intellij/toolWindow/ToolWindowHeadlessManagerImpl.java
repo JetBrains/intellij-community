@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
@@ -436,6 +437,10 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
     @Override
     public void addContentManagerListener(final @NotNull ContentManagerListener l) {
+      if (Registry.is("ide.content.manager.listeners.order.fix")) {
+        myDispatcher.getListeners().add(l);
+        return;
+      }
       myDispatcher.getListeners().add(0, l);
     }
 

@@ -568,13 +568,21 @@ public final class ReflectionUtil {
   }
 
   public static <T> boolean comparePublicNonFinalFields(@NotNull T first, @NotNull T second) {
+    return comparePublicNonFinalFields(first, second, null);
+  }
+
+  public static <T> boolean comparePublicNonFinalFields(
+    @NotNull T first,
+    @NotNull T second,
+    @Nullable Predicate<Field> acceptPredicate
+  ) {
     Class<?> defaultClass = first.getClass();
     Field[] fields = defaultClass.getDeclaredFields();
     if (defaultClass != second.getClass()) {
       fields = ArrayUtil.mergeArrays(fields, second.getClass().getDeclaredFields());
     }
     for (Field field : fields) {
-      if (!isPublic(field) || isFinal(field)) continue;
+      if (!isPublic(field) || isFinal(field) || (acceptPredicate != null && !acceptPredicate.test(field))) continue;
       field.setAccessible(true);
       try {
         if (!Comparing.equal(field.get(second), field.get(first))) {

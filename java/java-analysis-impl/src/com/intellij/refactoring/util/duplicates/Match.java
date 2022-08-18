@@ -85,8 +85,6 @@ public final class Match {
 
   /**
    * Returns either local variable declaration or expression
-   * @param outputParameter
-   * @return
    */
   public ReturnValue getOutputVariableValue(PsiVariable outputParameter) {
     final PsiElement decl = myDeclarationCorrespondence.get(outputParameter);
@@ -110,7 +108,7 @@ public final class Match {
       final boolean [] valueDependsOnReplacedScope = new boolean[1];
       value.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitReferenceExpression(final PsiReferenceExpression expression) {
+        public void visitReferenceExpression(final @NotNull PsiReferenceExpression expression) {
           super.visitReferenceExpression(expression);
           final PsiElement resolved = expression.resolve();
           if (resolved != null && Comparing.equal(resolved.getContainingFile(), getMatchEnd().getContainingFile())) {

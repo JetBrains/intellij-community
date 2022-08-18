@@ -7,8 +7,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentReader
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsModuleListSerializer
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import org.jetbrains.jps.util.JpsPathUtil
@@ -37,7 +37,7 @@ class ModuleRelativePathResolver(private val moduleListSerializer: JpsModuleList
   }
 }
 
-class ModulePathShortener(private val storage: WorkspaceEntityStorage) {
+class ModulePathShortener(private val storage: EntityStorage) {
   private val contentRootsToModule by lazy {
     storage.entities(ContentRootEntity::class.java).associateBy({ it.url.url }, { it.module.name })
   }

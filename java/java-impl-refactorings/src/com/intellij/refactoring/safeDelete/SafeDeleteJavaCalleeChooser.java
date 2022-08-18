@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
@@ -76,7 +76,7 @@ abstract class SafeDeleteJavaCalleeChooser extends CallerChooserBase<PsiElement>
       final Set<PsiElement> elementsToCheck = new HashSet<>();
       body.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitReferenceExpression(PsiReferenceExpression expression) {
+        public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
           super.visitReferenceExpression(expression);
           PsiElement resolved = expression.resolve();
           if (resolved instanceof PsiMethod || resolved instanceof PsiField) {
@@ -85,7 +85,7 @@ abstract class SafeDeleteJavaCalleeChooser extends CallerChooserBase<PsiElement>
         }
 
         @Override
-        public void visitLiteralExpression(PsiLiteralExpression expression) {
+        public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
           super.visitLiteralExpression(expression);
           PsiReference @NotNull [] references = expression.getReferences();
           for (PsiReference reference : references) {
@@ -110,6 +110,7 @@ abstract class SafeDeleteJavaCalleeChooser extends CallerChooserBase<PsiElement>
 
       return elementsToCheck
         .stream()
+        .filter(m -> !PsiTreeUtil.isAncestor(psiMember, m, true))
         .filter(m -> !(m instanceof PsiMember) || containingClass != null && containingClass.equals(((PsiMember)m).getContainingClass()) && !psiMember.equals(m))
         .filter(m -> !(m instanceof PsiMethod) || ((PsiMethod)m).findDeepestSuperMethods().length == 0)
         .filter(m -> m.isPhysical())

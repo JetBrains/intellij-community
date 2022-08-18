@@ -6,10 +6,9 @@ import com.intellij.psi.impl.source.tree.CompositeElement
 import com.intellij.psi.impl.source.tree.LeafElement
 import com.intellij.psi.tree.IElementType
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
+import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceContent
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
+import org.intellij.plugins.markdown.lang.psi.impl.*
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -17,14 +16,18 @@ class MarkdownAstFactory: ASTFactory() {
   override fun createComposite(type: IElementType): CompositeElement? {
     return when (type) {
       MarkdownElementTypes.CODE_FENCE -> MarkdownCodeFence(type)
+      MarkdownElementTypes.FRONT_MATTER_HEADER -> MarkdownFrontMatterHeader(type)
       else -> super.createComposite(type)
     }
   }
 
   override fun createLeaf(type: IElementType, text: CharSequence): LeafElement? {
     return when {
+      type == MarkdownTokenTypes.LIST_NUMBER -> MarkdownListNumber(type, text)
       type == MarkdownTokenTypes.CODE_FENCE_CONTENT -> MarkdownCodeFenceContent(type, text)
+      type == MarkdownElementTypes.FRONT_MATTER_HEADER_CONTENT -> MarkdownFrontMatterHeaderContent(type, text)
       type == MarkdownTokenTypes.TABLE_SEPARATOR && text.length > 1 -> MarkdownTableSeparatorRow(text)
+      type in MarkdownTokenTypeSets.AUTO_LINKS -> MarkdownAutoLink(type, text)
       else -> super.createLeaf(type, text)
     }
   }

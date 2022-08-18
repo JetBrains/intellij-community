@@ -10,6 +10,7 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.actionSystem.impl.segmentedActionBar.ToolbarActionsUpdatedListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -17,6 +18,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension
+import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -24,10 +26,11 @@ import com.intellij.util.messages.Topic
 import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
-import java.awt.Dimension
 import java.awt.Graphics
 import java.util.concurrent.CompletableFuture
-import javax.swing.*
+import javax.swing.BorderFactory
+import javax.swing.JComponent
+import javax.swing.JPanel
 
 @FunctionalInterface
 fun interface ExperimentalToolbarStateListener {
@@ -62,6 +65,14 @@ internal class NewToolbarRootPaneManager(private val project: Project) : SimpleM
         startUpdateActionGroups(extension)
       }
     }
+    ApplicationManager.getApplication().messageBus.connect(project).subscribe(ToolbarActionsUpdatedListener.TOPIC, ToolbarActionsUpdatedListener {
+      IdeRootPaneNorthExtension.EP_NAME.findExtension(NewToolbarRootPaneExtension::class.java, project)?.let { extension ->
+        application.invokeLater {
+          extension.panel.revalidate()
+          extension.panel.doLayout()
+        }
+      }
+    })
   }
 
   override fun dispose() {
@@ -71,7 +82,7 @@ internal class NewToolbarRootPaneManager(private val project: Project) : SimpleM
     incModificationCount()
 
     val panel = extension.panel
-    if (panel.isEnabled && panel.isVisible && ToolbarSettings.getInstance().isEnabled) {
+    if (panel.isEnabled && panel.isVisible && ToolbarSettings.getInstance().isAvailable) {
       CompletableFuture.supplyAsync(::correctedToolbarActions, AppExecutorUtil.getAppExecutorService())
         .thenAcceptAsync({ placeToActionGroup ->
                            applyTo(placeToActionGroup, panel, extension.layout)
@@ -92,7 +103,7 @@ internal class NewToolbarRootPaneManager(private val project: Project) : SimpleM
           null
         }
       getToolbarGroup()?.let {
-        CustomizationUtil.installToolbarCustomizationHandler(it, IdeActions.GROUP_EXPERIMENTAL_TOOLBAR, panel, ActionPlaces.MAIN_TOOLBAR)
+        CustomizationUtil.installToolbarCustomizationHandler(it, mainGroupName(), panel, ActionPlaces.MAIN_TOOLBAR)
       }
     }
   }
@@ -103,8 +114,14 @@ internal class NewToolbarRootPaneManager(private val project: Project) : SimpleM
 
     val children = toolbarGroup.getChildren(null)
 
-    val leftGroup = children.firstOrNull { it.templateText.equals(ActionsBundle.message("group.LeftToolbarSideGroup.text")) }
-    val rightGroup = children.firstOrNull { it.templateText.equals(ActionsBundle.message("group.RightToolbarSideGroup.text")) }
+    val leftGroup = children.firstOrNull {
+      it.templateText.equals(ActionsBundle.message("group.LeftToolbarSideGroup.text")) || it.templateText.equals(
+        ActionsBundle.message("group.LeftToolbarSideGroupXamarin.text"))
+    }
+    val rightGroup = children.firstOrNull {
+      it.templateText.equals(ActionsBundle.message("group.RightToolbarSideGroup.text")) || it.templateText.equals(
+        ActionsBundle.message("group.RightToolbarSideGroupXamarin.text"))
+    }
     val restGroup = DefaultActionGroup(children.filter { it != leftGroup && it != rightGroup })
 
     val map = mutableMapOf<String, ActionGroup?>()
@@ -116,13 +133,28 @@ internal class NewToolbarRootPaneManager(private val project: Project) : SimpleM
   }
 
   private fun getToolbarGroup(): ActionGroup? {
-    val mainGroupName = if (RunWidgetAvailabilityManager.getInstance(project).isAvailable()) {
-      IdeActions.GROUP_EXPERIMENTAL_TOOLBAR
-    }
-    else {
-      IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_WITHOUT_RIGHT_PART
-    }
+    val mainGroupName = mainGroupName()
     return CustomActionsSchema.getInstance().getCorrectedAction(mainGroupName) as? ActionGroup
+  }
+
+  private fun mainGroupName() = if (RunWidgetAvailabilityManager.getInstance(project).isAvailable()) {
+    IdeActions.GROUP_EXPERIMENTAL_TOOLBAR
+  }
+  else {
+    IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_XAMARIN
+  }
+
+  private class MyActionToolbarImpl(place: String,
+                                    actionGroup: ActionGroup,
+                                    horizontal: Boolean, decorateButtons: Boolean,
+                                    popupActionGroup: ActionGroup?,
+                                    popupActionId: String?) : ActionToolbarImpl(place, actionGroup, horizontal, decorateButtons,
+                                                                                popupActionGroup, popupActionId) {
+
+    override fun addNotify() {
+      super.addNotify()
+      updateActionsImmediately()
+    }
   }
 
   @RequiresEdt
@@ -134,8 +166,8 @@ internal class NewToolbarRootPaneManager(private val project: Project) : SimpleM
 
     actions.mapValues { (_, actionGroup) ->
       if (actionGroup != null) {
-        val toolbar = ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, actionGroup, true, false, getToolbarGroup(),
-                                        IdeActions.GROUP_EXPERIMENTAL_TOOLBAR)
+        val toolbar = MyActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, actionGroup, true, false, getToolbarGroup(),
+                                          mainGroupName())
         ApplicationManager.getApplication().messageBus.syncPublisher(ActionManagerListener.TOPIC).toolbarCreated(ActionPlaces.MAIN_TOOLBAR,
                                                                                                                  actionGroup, true, toolbar)
         toolbar
@@ -153,8 +185,6 @@ internal class NewToolbarRootPaneManager(private val project: Project) : SimpleM
         toolbar.targetComponent = null
         toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
         component.add(toolbar.component, layoutConstraints)
-
-        toolbar.updateActionsImmediately()
       }
     }
     component.revalidate()
@@ -194,7 +224,7 @@ internal class NewToolbarRootPaneExtension(private val project: Project) : IdeRo
     logger.info("Show new main toolbar: ${ToolbarSettings.getInstance().isVisible}")
 
     val toolbarSettings = ToolbarSettings.getInstance()
-    panel.isEnabled = toolbarSettings.isEnabled
+    panel.isEnabled = toolbarSettings.isAvailable
     panel.isVisible = toolbarSettings.isVisible && !settings.presentationMode
     project.messageBus.syncPublisher(ExperimentalToolbarStateListener.TOPIC).refreshVisibility()
 
@@ -204,7 +234,7 @@ internal class NewToolbarRootPaneExtension(private val project: Project) : IdeRo
     NewToolbarRootPaneManager.getInstance(project).startUpdateActionGroups(this)
   }
 
-  override fun copy() = NewToolbarRootPaneExtension(project)
+  override fun copy() = null//NewToolbarRootPaneExtension(project)
 
   override fun revalidate() {
     NewToolbarRootPaneManager.getInstance(project).startUpdateActionGroups(this)

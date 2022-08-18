@@ -1,3 +1,4 @@
+// INTENTION_TEXT: "Replace size zero check with 'isEmpty'"
 // WITH_STDLIB
 
 fun foo() {

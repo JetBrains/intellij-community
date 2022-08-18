@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.rename
 
@@ -14,7 +14,8 @@ import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -33,8 +34,9 @@ class RenameKotlinFileProcessor : RenamePsiFileProcessor() {
         override fun getSourceElement(): PsiElement? = psiClass.sourceElement
     }
 
-    override fun canProcessElement(element: PsiElement) =
-        element is KtFile && ProjectRootsUtil.isInProjectSource(element, includeScriptsOutsideSourceRoots = true)
+    override fun canProcessElement(element: PsiElement): Boolean {
+        return element is KtFile && RootKindFilter.projectSources.copy(includeScriptsOutsideSourceRoots = true).matches(element)
+    }
 
     override fun prepareRenaming(
         element: PsiElement,

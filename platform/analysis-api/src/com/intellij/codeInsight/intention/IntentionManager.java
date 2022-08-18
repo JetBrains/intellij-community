@@ -56,7 +56,7 @@ public abstract class IntentionManager  {
    * Returns all registered intention actions which are available now
    * (not disabled via Settings|Intentions or Alt-Enter|Disable intention quick fix)
    *
-   * @return array of actions.
+   * @return list of actions.
    */
   public abstract @NotNull List<IntentionAction> getAvailableIntentions();
 

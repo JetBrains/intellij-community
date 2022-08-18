@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.pull
 
 import com.intellij.codeInsight.hint.HintUtil
@@ -38,7 +38,7 @@ import git4idea.merge.GIT_REF_PROTOTYPE_VALUE
 import git4idea.merge.createRepositoryField
 import git4idea.merge.createSouthPanelWithOptionsDropDown
 import git4idea.merge.dialog.*
-import git4idea.merge.validateBranchField
+import git4idea.merge.validateBranchExists
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
@@ -89,8 +89,16 @@ class GitPullDialog(private val project: Project,
     setOKButtonText(GitBundle.message("pull.button"))
     loadSettings()
     updateRemotesField()
+
+    // We call pack() manually.
+    isAutoAdjustable = false
+
     init()
+    window.minimumSize = JBDimension(200, 60)
+
     updateUi()
+    validate()
+    pack()
   }
 
   override fun createCenterPanel() = panel
@@ -157,7 +165,7 @@ class GitPullDialog(private val project: Project,
       ValidationInfo(GitBundle.message("pull.remote.not.selected"), remoteField)
   }
 
-  private fun validateBranchField() = validateBranchField(branchField, "pull.branch.not.selected.error")
+  private fun validateBranchField() = validateBranchExists(branchField, GitBundle.message("pull.branch.not.selected.error"))
 
   private fun getSelectedRepository(): GitRepository? = repositoryField.item
 
@@ -214,6 +222,8 @@ class GitPullDialog(private val project: Project,
       selectedOptions -= option
     }
     updateUi()
+    validate()
+    pack()
   }
 
   private fun performFetch() {
@@ -274,14 +284,7 @@ class GitPullDialog(private val project: Project,
 
   private fun updateUi() {
     optionsPanel.rerender(selectedOptions)
-    rerender()
-  }
-
-  private fun rerender() {
-    window.pack()
-    window.revalidate()
-    pack()
-    repaint()
+    panel.invalidate()
   }
 
   private fun isOptionEnabled(option: GitPullOption) = selectedOptions.all { it.isOptionSuitable(option) }
@@ -358,7 +361,6 @@ class GitPullDialog(private val project: Project,
     renderer = SimpleListCellRenderer.create(
       HtmlChunk.text(GitBundle.message("util.remote.renderer.none")).italic().wrapWith(html()).toString()
     ) { it.name }
-    @Suppress("UsePropertyAccessSyntax")
     setUI(FlatComboBoxUI(
       outerInsets = Insets(BW.get(), 0, BW.get(), 0),
       popupEmptyText = GitBundle.message("pull.branch.no.matching.remotes")))
@@ -387,7 +389,6 @@ class GitPullDialog(private val project: Project,
       }
     }.registerCustomShortcutSet(getFetchActionShortcut(), this)
 
-    @Suppress("UsePropertyAccessSyntax")
     setUI(FlatComboBoxUI(
       Insets(1, 0, 1, 1),
       Insets(BW.get(), 0, BW.get(), BW.get()),

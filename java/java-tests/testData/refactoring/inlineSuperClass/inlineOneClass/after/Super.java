@@ -1,3 +1,3 @@
 abstract class Super {
-   public abstract void method() {}
+   public abstract void method();
 }

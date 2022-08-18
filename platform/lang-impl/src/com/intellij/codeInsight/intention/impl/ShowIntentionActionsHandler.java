@@ -33,6 +33,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -85,7 +86,8 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
 
     TemplateState state = TemplateManagerImpl.getTemplateState(editor);
     if (state != null && !state.isFinished()) {
-      state.gotoEnd(false);
+      CommandProcessor.getInstance().executeCommand(project, () -> state.gotoEnd(false),
+                                                    LangBundle.message("command.name.finish.template"), null);
     }
 
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);

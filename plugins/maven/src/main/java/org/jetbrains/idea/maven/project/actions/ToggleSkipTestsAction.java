@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.project.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -39,5 +40,10 @@ public class ToggleSkipTestsAction extends MavenToggleAction {
     MavenRunner mavenRunner = MavenRunner.getInstanceIfCreated(project);
     if(mavenRunner == null) return;
     mavenRunner.getState().setSkipTests(state);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

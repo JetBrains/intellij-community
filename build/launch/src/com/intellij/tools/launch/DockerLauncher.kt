@@ -87,7 +87,7 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
                            paths.configFolder,
                            paths.systemFolder,
                            paths.outputRootFolder, // classpath index making a lot of noise
-                           paths.sourcesRootFolder.resolve("platform/cwm-tests/general/data"), // classpath index making a lot of noise in stderr
+                           paths.sourcesRootFolder.resolve("remote-dev/cwm-tests/general/data"), // classpath index making a lot of noise in stderr
                            paths.communityRootFolder.resolve("build/download")) // quiche lib
 
     // docker can create these under root, so we create them ourselves
@@ -185,7 +185,7 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
 
       if (containerIdFile.exists() && containerIdFile.length() > 0) {
           logger.info("Container ID file with non-zero length detected at ${containerIdPath}")
-          break;
+          break
       }
 
       val sleepMillis = 100L * 2.0.pow(i).toLong()
@@ -205,7 +205,7 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
 
         if (isInDockerPs()) {
           logger.info("Container with name $containerName detected in docker ps output")
-          break;
+          break
         }
 
         val sleepMillis = 100L * 2.0.pow(i).toLong()

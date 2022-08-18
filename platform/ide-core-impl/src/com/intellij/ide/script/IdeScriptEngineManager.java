@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class IdeScriptEngineManager {
+
   public static IdeScriptEngineManager getInstance() {
     return ApplicationManager.getApplication().getService(IdeScriptEngineManager.class);
   }
@@ -25,8 +26,6 @@ public abstract class IdeScriptEngineManager {
 
   @Nullable
   public abstract IdeScriptEngine getEngineByFileExtension(@NotNull String extension, @Nullable ClassLoader loader);
-
-  public abstract boolean isInitialized();
 
   public static class EngineInfo {
     public final @NonNls String engineName;

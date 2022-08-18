@@ -119,10 +119,10 @@ fun loggedError(canThrow: Semaphore): Throwable {
   }
   try {
     LoggedErrorProcessor.executeWith<Nothing>(object : LoggedErrorProcessor() {
-      override fun processError(category: String, message: String?, t: Throwable, details: Array<out String>): Boolean {
-        throwable = t
+      override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> {
+        throwable = t!!
         gotIt.up()
-        return false
+        return Action.NONE
       }
     }) {
       canThrow.up()
@@ -137,7 +137,7 @@ fun loggedError(canThrow: Semaphore): Throwable {
 
 fun currentJobTest(test: (Job) -> Unit) {
   val job = Job()
-  withJob(job) {
+  withCurrentJob(job) {
     test(job)
   }
   assertTrue(job.isActive)

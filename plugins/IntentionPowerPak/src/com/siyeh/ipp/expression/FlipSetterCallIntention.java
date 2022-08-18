@@ -1,5 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.expression;
 
 import com.intellij.openapi.editor.Editor;
@@ -8,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ipp.base.Intention;
@@ -23,6 +23,16 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class FlipSetterCallIntention extends Intention {
+
+  @Override
+  public @NotNull String getFamilyName() {
+    return IntentionPowerPackBundle.message("flip.setter.call.intention.family.name");
+  }
+
+  @Override
+  public @NotNull String getText() {
+    return IntentionPowerPackBundle.message("flip.setter.call.intention.name");
+  }
 
   @Override
   protected void processIntention(@NotNull PsiElement element) {

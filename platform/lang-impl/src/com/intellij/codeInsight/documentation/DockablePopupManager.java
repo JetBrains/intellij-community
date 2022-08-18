@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -35,6 +35,10 @@ import java.awt.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+/**
+ * @deprecated Not supported anymore.
+ */
+@Deprecated
 public abstract class DockablePopupManager<T extends JComponent & Disposable> {
   private final static Logger LOG = Logger.getInstance(DockablePopupManager.class);
   protected ToolWindow myToolWindow;
@@ -161,7 +165,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
     ContentManager contentManager = toolWindow.getContentManager();
     String displayName = element != null ? getTitle(element) : "";
-    contentManager.addContent(ContentFactory.SERVICE.getInstance().createContent(component, displayName, false));
+    contentManager.addContent(ContentFactory.getInstance().createContent(component, displayName, false));
     contentManager.addContentManagerListener(new ContentManagerListener() {
       @Override
       public void contentRemoved(@NotNull ContentManagerEvent event) {
@@ -213,6 +217,10 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
                                                             getAutoUpdateDefault());
       }
 
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
       @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
         PropertiesComponent.getInstance().setValue(getAutoUpdateEnabledProperty(), state, getAutoUpdateDefault());

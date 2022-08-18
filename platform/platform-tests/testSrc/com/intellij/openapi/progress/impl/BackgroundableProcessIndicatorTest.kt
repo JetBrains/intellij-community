@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.impl
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -14,12 +15,14 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.SkipInHeadlessEnvironment
 import com.intellij.util.concurrency.Semaphore
 import kotlinx.coroutines.*
+import org.junit.Assume.assumeFalse
 
 @SkipInHeadlessEnvironment
 class BackgroundableProcessIndicatorTest : ProgressWindowTestCase<Pair<Task.Backgroundable, BackgroundableProcessIndicator>>() {
   private lateinit var statusBar: IdeStatusBarImpl
 
   override fun setUp(): Unit = super.setUp().also {
+    assumeFalse("Cannot run headless", ApplicationManager.getApplication().isHeadlessEnvironment)
     val frameHelper = ProjectFrameHelper(IdeFrameImpl(), null)
     Disposer.register(testRootDisposable, frameHelper)
     frameHelper.init()

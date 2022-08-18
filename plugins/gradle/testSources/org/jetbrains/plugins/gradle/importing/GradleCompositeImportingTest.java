@@ -55,7 +55,7 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
                        "includeBuild '../my-app'\n" +
                        "includeBuild '../my-utils'");
 
-    createProjectSubFile("../my-app/settings.gradle", "rootProject.name = 'my-app'\n");
+    createProjectSubFile("../my-app/settings.gradle", "rootProject.name = 'my-app-name'\n");
     createProjectSubFile("../my-app/build.gradle",
                          createBuildScriptBuilder()
                            .addGroup("org.sample")
@@ -86,27 +86,27 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     importProject();
 
     assertModules("adhoc",
-                  "my-app", "my-app.main", "my-app.test",
+                  "my-app-name", "my-app-name.main", "my-app-name.test",
                   "my-utils",
                   "my-utils.string-utils", "my-utils.string-utils.test", "my-utils.string-utils.main",
                   "my-utils.number-utils", "my-utils.number-utils.main", "my-utils.number-utils.test");
 
-    String[] rootModules = new String[]{"adhoc", "my-app", "my-utils", "my-utils.string-utils", "my-utils.number-utils"};
+    String[] rootModules = new String[]{"adhoc", "my-app-name", "my-utils", "my-utils.string-utils", "my-utils.number-utils"};
     for (String rootModule : rootModules) {
       assertModuleLibDeps(rootModule);
       assertModuleModuleDeps(rootModule);
     }
-    assertModuleModuleDeps("my-app.main", "my-utils.number-utils.main", "my-utils.string-utils.main");
-    assertModuleModuleDepScope("my-app.main", "my-utils.number-utils.main", COMPILE);
-    assertModuleModuleDepScope("my-app.main", "my-utils.string-utils.main", COMPILE);
-    assertModuleLibDepScope("my-app.main", "Gradle: org.apache.commons:commons-lang3:3.4", COMPILE);
+    assertModuleModuleDeps("my-app-name.main", "my-utils.number-utils.main", "my-utils.string-utils.main");
+    assertModuleModuleDepScope("my-app-name.main", "my-utils.number-utils.main", COMPILE);
+    assertModuleModuleDepScope("my-app-name.main", "my-utils.string-utils.main", COMPILE);
+    assertModuleLibDepScope("my-app-name.main", "Gradle: org.apache.commons:commons-lang3:3.4", COMPILE);
 
     assertTasksProjectPath("adhoc", getProjectPath());
     if (isGradleNewerOrSameAs("6.8")) {
-      assertTasksProjectPath("my-app", getProjectPath(), ":my-app:");
+      assertTasksProjectPath("my-app-name", getProjectPath(), ":my-app-name:");
       assertTasksProjectPath("my-utils", getProjectPath(), ":my-utils:");
     } else {
-      assertTasksProjectPath("my-app", path("../my-app"));
+      assertTasksProjectPath("my-app-name", path("../my-app"));
       assertTasksProjectPath("my-utils", path("../my-utils"));
     }
   }
@@ -353,9 +353,9 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
         // generated modules by gradle import
         "adhoc",
         "my-app", "my-app_main", "my-app_test",
-        myAppApiModuleName, myAppApiMainModuleName, "org.sample-api_test",
+        myAppApiModuleName, myAppApiMainModuleName, "api_test",
         "my-utils",
-        "org.sample-api", myUtilsApiMainModuleName, "api_test",
+        "org.sample-api", myUtilsApiMainModuleName, "org.sample-api_test",
         "string-utils", "string-utils_main", "string-utils_test",
         "number-utils", "number-utils_main", "number-utils_test"
       );

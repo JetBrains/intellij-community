@@ -15,7 +15,7 @@ Even big fragment with injected code.
 <tag>This is <warning descr="EN_A_VS_AN">a</warning> error in article, making this paragraph so damn big!</tag>
 ```
 
-## Now bad part have <warning descr="HAVE_PART_AGREEMENT">go</warning> there
+## Now <warning descr="EN_A_VS_AN">an</warning> bad part
 
 It <warning descr="IT_VBZ">are</warning> written not many good .
 
@@ -40,6 +40,8 @@ val b = "It is friend."
 За весь вечер она <warning descr="ne_proronila_ni">не проронила и слово</warning>.
 Собрание состоится в <warning descr="RU_COMPOUNDS">конференц зале</warning>.
 <warning descr="WORD_REPEAT_RULE">Он он</warning> ошибка.
+
+Я предлагаю в&nbsp;своём приложении создавать что-нибудь.
 
 Er überprüfte die Rechnungen noch <TYPO descr="Typo: In word 'einal'">einal</TYPO>, um ganz <warning descr="COMPOUND_INFINITIV_RULE">sicher zu gehen</warning>.
 das ist <warning descr="FUEHR_FUER">führ</warning> Dich!

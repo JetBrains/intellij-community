@@ -7,26 +7,21 @@ import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.impl.DataValidators;
 import com.intellij.ide.impl.FreezingDataContext;
-import com.intellij.ide.impl.dataRules.FileEditorRule;
-import com.intellij.ide.impl.dataRules.GetDataRule;
+import com.intellij.ide.impl.GetDataRuleType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ConcurrentBitSet;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FList;
-import com.intellij.util.containers.UnsafeWeakList;
+import com.intellij.util.containers.*;
 import com.intellij.util.keyFMap.KeyFMap;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
@@ -40,12 +35,14 @@ import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static com.intellij.ide.impl.DataManagerImpl.getDataProviderEx;
+import static com.intellij.openapi.actionSystem.CustomizedDataContext.EXPLICIT_NULL;
 
 /**
  * @author gregsh
@@ -59,28 +56,30 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
   private static final Collection<PreCachedDataContext> ourInstances = new UnsafeWeakList<>();
   private static final Map<String, Integer> ourDataKeysIndices = new ConcurrentHashMap<>();
   private static final AtomicInteger ourDataKeysCount = new AtomicInteger();
-  private static final Object ourExplicitNull = ObjectUtils.sentinel("explicit.null");
+  private static final Interner<String> ourEDTWarnsInterner = Interner.createStringInterner();
 
   private final ComponentRef myComponentRef;
   private final AtomicReference<KeyFMap> myUserData;
   private final FList<ProviderData> myCachedData;
   private final Consumer<? super String> myMissedKeysIfFrozen;
+  private final DataManagerImpl myDataManager;
   private final int myDataKeysCount;
 
   PreCachedDataContext(@Nullable Component component) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     myComponentRef = new ComponentRef(component);
     myMissedKeysIfFrozen = null;
     myUserData = new AtomicReference<>(KeyFMap.EMPTY_MAP);
+    myDataManager = (DataManagerImpl)DataManager.getInstance();
     if (component == null) {
       myCachedData = FList.emptyList();
       myDataKeysCount = 0;
       return;
     }
 
+    ApplicationManager.getApplication().assertIsDispatchThread();
     try (AccessToken ignored = ProhibitAWTEvents.start("getData")) {
       int count = ActivityTracker.getInstance().getCount();
-      if (ourPrevMapEventCount != count) {
+      if (ourPrevMapEventCount != count || ApplicationManager.getApplication().isUnitTestMode()) {
         ourPrevMaps.clear();
       }
       List<Component> components = ContainerUtil.reverse(
@@ -94,13 +93,10 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
       }
       else {
         DataKey<?>[] keys = DataKey.allKeys();
-        myDataKeysCount = keys.length;
-        if (ourDataKeysIndices.size() < myDataKeysCount) {
-          for (DataKey<?> key : keys) {
-            ourDataKeysIndices.computeIfAbsent(key.getName(), __ -> ourDataKeysCount.getAndIncrement());
-          }
+        myDataKeysCount = updateDataKeyIndices(keys);
+        try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.FORCE_ASSERT)) {
+          myCachedData = cacheComponentsData(components, initial, myDataManager, keys);
         }
-        myCachedData = preGetAllData(components, initial, keys);
         ourInstances.add(this);
       }
       //noinspection AssignmentToStaticFieldFromInstanceMethod
@@ -112,25 +108,27 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
                                @NotNull FList<ProviderData> cachedData,
                                @NotNull AtomicReference<KeyFMap> userData,
                                @Nullable Consumer<? super String> missedKeys,
+                               @NotNull DataManagerImpl dataManager,
                                int dataKeysCount) {
     myComponentRef = compRef;
     myCachedData = cachedData;
     myUserData = userData;
     myMissedKeysIfFrozen = missedKeys;
+    myDataManager = dataManager;
     myDataKeysCount = dataKeysCount;
   }
 
   final @NotNull PreCachedDataContext frozenCopy(@Nullable Consumer<? super String> missedKeys) {
     Consumer<? super String> missedKeysNotNull = missedKeys == null ? s -> { } : missedKeys;
     return this instanceof InjectedDataContext
-           ? new InjectedDataContext(myComponentRef, myCachedData, myUserData, missedKeysNotNull, myDataKeysCount)
-           : new PreCachedDataContext(myComponentRef, myCachedData, myUserData, missedKeysNotNull, myDataKeysCount);
+           ? new InjectedDataContext(myComponentRef, myCachedData, myUserData, missedKeysNotNull, myDataManager, myDataKeysCount)
+           : new PreCachedDataContext(myComponentRef, myCachedData, myUserData, missedKeysNotNull, myDataManager, myDataKeysCount);
   }
 
   @Override
   public final @NotNull DataContext getInjectedDataContext() {
     return this instanceof InjectedDataContext ? this :
-           new InjectedDataContext(myComponentRef, myCachedData, myUserData, myMissedKeysIfFrozen, myDataKeysCount);
+           new InjectedDataContext(myComponentRef, myCachedData, myUserData, myMissedKeysIfFrozen, myDataManager, myDataKeysCount);
   }
 
   @Override
@@ -140,12 +138,14 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
 
   @NotNull PreCachedDataContext prependProvider(@NotNull DataProvider dataProvider) {
     DataKey<?>[] keys = DataKey.allKeys();
-    DataManagerImpl dataManager = (DataManagerImpl)DataManager.getInstance();
-    ProviderData cachedData = new ProviderData();
     Component component = SoftReference.dereference(myComponentRef.ref);
-    doPreGetAllData(dataProvider, cachedData, component, dataManager, keys, myCachedData.getHead());
-    return new PreCachedDataContext(myComponentRef, myCachedData.prepend(cachedData),
-                                    new AtomicReference<>(KeyFMap.EMPTY_MAP), myMissedKeysIfFrozen, myDataKeysCount);
+    int dataKeysCount = updateDataKeyIndices(keys);
+    ProviderData cachedData = cacheProviderData(dataProvider, component, myDataManager, keys);
+    FList<ProviderData> newCachedData = cachedData == null ? myCachedData : myCachedData.prepend(cachedData);
+    AtomicReference<KeyFMap> userData = new AtomicReference<>(KeyFMap.EMPTY_MAP);
+    return this instanceof InjectedDataContext
+           ? new InjectedDataContext(myComponentRef, newCachedData, userData, myMissedKeysIfFrozen, myDataManager, dataKeysCount)
+           : new PreCachedDataContext(myComponentRef, newCachedData, userData, myMissedKeysIfFrozen, myDataManager, dataKeysCount);
   }
 
   @Override
@@ -155,40 +155,28 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     if (PlatformDataKeys.MODALITY_STATE.is(dataId)) return myComponentRef.modalityState;
     if (myCachedData.isEmpty()) return null;
 
-    int keyIndex = ourDataKeysIndices.getOrDefault(dataId, -1);
-    if (keyIndex == -1) return null; // a newly created data key => no data provider => no value
+    boolean isEDT = EDT.isCurrentThreadEdt();
+    boolean noRulesSection = isEDT && ActionUpdater.isNoRulesInEDTSection();
+    boolean rulesSuppressed = isEDT && Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt");
+    boolean rulesAllowed = myMissedKeysIfFrozen == null && !CommonDataKeys.PROJECT.is(dataId) && !rulesSuppressed && !noRulesSection;
+    Object answer = getDataInner(dataId, rulesAllowed, !noRulesSection);
 
-    boolean rulesSuppressed = EDT.isCurrentThreadEdt() && Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt");
-    boolean rulesAllowed = myMissedKeysIfFrozen == null && !CommonDataKeys.PROJECT.is(dataId) && keyIndex < myDataKeysCount && !rulesSuppressed;
-    DataManagerImpl dataManager = null;
-    GetDataRule rule = null;
-    Object answer = null;
-    for (ProviderData map : myCachedData) {
-      ProgressManager.checkCanceled();
-      answer = map.get(dataId);
-      if (answer == ourExplicitNull) break;
+    int keyIndex; // for use with `nullsByContextRules` only, always != -1
+    ProviderData map = myCachedData.get(0);
+    if (answer == null && rulesAllowed && !map.nullsByContextRules.get(keyIndex = ourDataKeysIndices.getOrDefault(dataId, -1))) {
+      answer = myDataManager.getDataFromRules(dataId, GetDataRuleType.CONTEXT, id -> {
+        return getDataInner(id, !CommonDataKeys.PROJECT.is(id), true);
+      });
       if (answer != null) {
-        answer = DataValidators.validOrNull(answer, dataId, this);
-        if (answer != null) break;
-        // allow slow data providers and rules to re-calc the value
-        map.remove(dataId);
+        map.nullsByRules.clear(keyIndex);
+        map.valueByRules.set(keyIndex);
+        map.put(dataId, answer);
       }
-      if (!rulesAllowed || map.nullsByRules.get(keyIndex)) continue;
-
-      if (dataManager == null) {
-        dataManager = (DataManagerImpl)DataManager.getInstance();
-        rule = dataManager.getDataRule(dataId);
+      else {
+        map.nullsByContextRules.set(keyIndex);
       }
-      answer = rule == null ? null : dataManager.getDataFromProvider(dataId2 -> {
-        Object o = dataId2 == dataId ? null : map.get(dataId2);
-        return o == ourExplicitNull ? null : o;
-      }, dataId, null, rule);
-
-      if (answer == null) map.nullsByRules.set(keyIndex);
-      else map.put(dataId, answer);
-      if (answer != null) break;
     }
-    if (myMissedKeysIfFrozen != null && answer == null) {
+    if (answer == null && myMissedKeysIfFrozen != null) {
       myMissedKeysIfFrozen.accept(dataId);
       return null;
     }
@@ -198,18 +186,73 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
         if (ReadAction.compute(() -> getData(dataId)) != null) {
           LOG.warn(dataId + " is not available on EDT. " +
                    "Code that depends on data rules and slow data providers must be run in background. " +
-                   "For example, an action must be `UpdateInBackground`.", throwable);
+                   "For example, an action must use `ActionUpdateThread.BGT`.", throwable);
         }
       });
     }
-    return answer == ourExplicitNull ? null : answer;
+    return answer == EXPLICIT_NULL ? null : answer;
+  }
+
+  private @Nullable Object getDataInner(@NotNull String dataId, boolean rulesAllowedBase, boolean ruleValuesAllowed) {
+    int keyIndex = ourDataKeysIndices.getOrDefault(dataId, -1);
+    if (keyIndex == -1) return EXPLICIT_NULL; // newly created data key => no data provider => no value
+    boolean rulesAllowed = rulesAllowedBase && keyIndex < myDataKeysCount;
+
+    Object answer = null;
+    for (ProviderData map : myCachedData) {
+      ProgressManager.checkCanceled();
+      answer = map.get(dataId);
+      if (answer == EXPLICIT_NULL) break;
+      if (answer != null) {
+        if (map.valueByRules.get(keyIndex)) {
+          reportValueProvidedByRulesUsage(dataId, !ruleValuesAllowed);
+          if (!ruleValuesAllowed) return null;
+        }
+        answer = DataValidators.validOrNull(answer, dataId, this);
+        if (answer != null) break;
+        // allow slow data providers and rules to re-calc the value
+        map.remove(dataId);
+        map.valueByRules.clear(keyIndex);
+      }
+      if (!rulesAllowed || map.nullsByRules.get(keyIndex)) continue;
+
+      answer = myDataManager.getDataFromRules(dataId, GetDataRuleType.PROVIDER, id -> {
+        return Objects.equals(id, dataId) ? null : map.get(id);
+      });
+
+      if (answer == null) {
+        map.nullsByRules.set(keyIndex);
+      }
+      else {
+        map.put(dataId, answer);
+        map.valueByRules.set(keyIndex);
+        break;
+      }
+    }
+    return answer;
+  }
+
+  private static void reportValueProvidedByRulesUsage(@NotNull String dataId, boolean error) {
+    if (!Registry.is("actionSystem.update.actions.warn.dataRules.on.edt")) return;
+    if (EDT.isCurrentThreadEdt() && SlowOperations.isInsideActivity(SlowOperations.ACTION_UPDATE) &&
+        ActionUpdater.currentInEDTOperationName() != null && !SlowOperations.isAlwaysAllowed()) {
+      String message = "'" + dataId + "' is requested on EDT by " + ActionUpdater.currentInEDTOperationName() + ". See ActionUpdateThread javadoc.";
+      //noinspection StringEquality
+      if (message != ourEDTWarnsInterner.intern(message)) return;
+      if (error) {
+        LOG.error(message);
+      }
+      else {
+        LOG.warn(message);
+      }
+    }
   }
 
   @Nullable Object getRawDataIfCached(@NotNull String dataId) {
     for (ProviderData map : myCachedData) {
       Object answer = map.get(dataId);
       if (answer != null) {
-        return answer == ourExplicitNull ? null : answer;
+        return answer == EXPLICIT_NULL ? null : answer;
       }
     }
     return null;
@@ -226,20 +269,28 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     ourInstances.clear();
   }
 
-  private static @NotNull FList<ProviderData> preGetAllData(@NotNull List<Component> components,
-                                                            @NotNull FList<ProviderData> initial,
-                                                            DataKey<?> @NotNull [] keys) {
-    DataManagerImpl dataManager = (DataManagerImpl)DataManager.getInstance();
-    FList<ProviderData> result = initial;
+  private static int updateDataKeyIndices(DataKey<?> @NotNull [] keys) {
+    if (ourDataKeysIndices.size() >= keys.length) {
+      return ourDataKeysIndices.size();
+    }
+    for (DataKey<?> key : keys) {
+      ourDataKeysIndices.computeIfAbsent(key.getName(), __ -> ourDataKeysCount.getAndIncrement());
+    }
+    return ourDataKeysIndices.size();
+  }
 
+  private static @NotNull FList<ProviderData> cacheComponentsData(@NotNull List<Component> components,
+                                                                  @NotNull FList<ProviderData> initial,
+                                                                  @NotNull DataManagerImpl dataManager,
+                                                                  DataKey<?> @NotNull [] keys) {
+    FList<ProviderData> result = initial;
     long start = System.currentTimeMillis();
     for (Component comp : components) {
       DataProvider dataProvider = getDataProviderEx(comp);
       if (dataProvider == null && hideEditor(comp)) dataProvider = dataId -> null;
       if (dataProvider == null) continue;
-      ProviderData cachedData = new ProviderData();
-      doPreGetAllData(dataProvider, cachedData, comp, dataManager, keys, result.getHead());
-      result = result.prepend(cachedData);
+      ProviderData cachedData = cacheProviderData(dataProvider, comp, dataManager, keys);
+      result = cachedData == null ? result : result.prepend(cachedData);
       ourPrevMaps.put(comp, result);
     }
     long time = System.currentTimeMillis() - start;
@@ -249,38 +300,25 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     return result;
   }
 
-  private static void doPreGetAllData(@NotNull DataProvider dataProvider,
-                                      @NotNull ProviderData cachedData,
-                                      @Nullable Component c,
-                                      @NotNull DataManagerImpl dataManager,
-                                      DataKey<?> @NotNull [] keys,
-                                      @Nullable Map<String, Object> parentMap) {
+  private static @Nullable ProviderData cacheProviderData(@NotNull DataProvider dataProvider,
+                                                          @Nullable Component c,
+                                                          @NotNull DataManagerImpl dataManager,
+                                                          DataKey<?> @NotNull [] keys) {
+    ProviderData cachedData = null;
     boolean hideEditor = hideEditor(c);
     for (DataKey<?> key : keys) {
       if (key == PlatformCoreDataKeys.IS_MODAL_CONTEXT ||
           key == PlatformCoreDataKeys.CONTEXT_COMPONENT ||
-          key == PlatformDataKeys.MODALITY_STATE ||
-          key == PlatformCoreDataKeys.SLOW_DATA_PROVIDERS) {
+          key == PlatformDataKeys.MODALITY_STATE) {
         continue;
       }
       Object data = hideEditor && (key == CommonDataKeys.EDITOR || key == CommonDataKeys.HOST_EDITOR || key == InjectedDataKeys.EDITOR) ?
-                    ourExplicitNull : dataManager.getDataFromProvider(dataProvider, key.getName(), null, getFastDataRule(key));
+                    EXPLICIT_NULL : dataManager.getDataFromProviderAndRules(key.getName(), GetDataRuleType.FAST, dataProvider);
       if (data == null) continue;
+      if (cachedData == null) cachedData = new ProviderData();
       cachedData.put(key.getName(), data);
     }
-    String slowProvidersKeyName = PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.getName();
-    Object slowProviders = dataManager.getDataFromProvider(dataProvider, slowProvidersKeyName, null, null);
-    if (slowProviders != null) {
-      Object parentProviders = parentMap == null ? null : parentMap.get(slowProvidersKeyName);
-      cachedData.put(slowProvidersKeyName, parentProviders == null ? slowProviders :
-                                           ContainerUtil.concat((Iterable<?>)slowProviders, (Iterable<?>)parentProviders));
-    }
-  }
-
-  private static final GetDataRule ourFileEditorRule = new FileEditorRule();
-
-  private static @Nullable GetDataRule getFastDataRule(@NotNull DataKey<?> key) {
-    return key == PlatformCoreDataKeys.FILE_EDITOR ? ourFileEditorRule : null;
+    return cachedData;
   }
 
   private static boolean hideEditor(@Nullable Component component) {
@@ -316,8 +354,9 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
                         @NotNull FList<ProviderData> cachedData,
                         @NotNull AtomicReference<KeyFMap> userData,
                         @Nullable Consumer<? super String> missedKeys,
+                        @NotNull DataManagerImpl dataManager,
                         int dataKeysCount) {
-      super(compRef, cachedData, userData, missedKeys, dataKeysCount);
+      super(compRef, cachedData, userData, missedKeys, dataManager, dataKeysCount);
     }
 
     @Override
@@ -330,6 +369,8 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
 
   private static class ProviderData extends ConcurrentHashMap<String, Object> {
     final ConcurrentBitSet nullsByRules = ConcurrentBitSet.create();
+    final ConcurrentBitSet nullsByContextRules = ConcurrentBitSet.create();
+    final ConcurrentBitSet valueByRules = ConcurrentBitSet.create();
   }
 
   private static class ComponentRef {
@@ -340,7 +381,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     ComponentRef(@Nullable Component component) {
       ref = component == null ? null : new WeakReference<>(component);
       modalityState = component == null ? ModalityState.NON_MODAL : ModalityState.stateForComponent(component);
-      modalContext = component == null ? null : IdeKeyEventDispatcher.isModalContext(component);
+      modalContext = component == null ? null : Utils.isModalContext(component);
     }
   }
 }

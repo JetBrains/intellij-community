@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.test
 
 import com.intellij.openapi.module.Module
@@ -6,10 +6,9 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.testFramework.IdeaTestUtil
-import org.jetbrains.kotlin.idea.framework.JSLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.platform.js.JsPlatform
-import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
 import java.io.File
 
 data class MockLibraryFacility(
@@ -43,7 +42,7 @@ data class MockLibraryFacility(
             classpath = classpath
         ).compile()
 
-        val kind = if (platform is JsPlatform) JSLibraryKind else null
+        val kind = if (platform is JsPlatform) KotlinJavaScriptLibraryKind else null
         ConfigLibraryUtil.addLibrary(module, MOCK_LIBRARY_NAME, kind) {
             addRoot(libraryJar, OrderRootType.CLASSES)
 
@@ -61,7 +60,7 @@ data class MockLibraryFacility(
         get() = object : KotlinLightProjectDescriptor() {
             override fun configureModule(module: Module, model: ModifiableRootModel) = this@MockLibraryFacility.setUp(module)
 
-            override fun getSdk(): Sdk = if (this@MockLibraryFacility.platform is JsPlatform)
+            override fun getSdk(): Sdk = if (this@MockLibraryFacility.platform is KotlinCompilerStandalone.Platform.JavaScript)
                 KotlinSdkType.INSTANCE.createSdkWithUniqueName(emptyList())
             else
                 IdeaTestUtil.getMockJdk18()

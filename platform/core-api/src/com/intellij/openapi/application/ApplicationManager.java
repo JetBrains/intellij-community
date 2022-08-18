@@ -34,11 +34,11 @@ public class ApplicationManager {
   }
 
   public static void setApplication(@NotNull Application instance,
-                                    @NotNull Supplier<FileTypeRegistry> fileTypeRegistryGetter,
+                                    @NotNull Supplier<? extends FileTypeRegistry> fileTypeRegistryGetter,
                                     @NotNull Disposable parent) {
     Application old = ourApplication;
     setApplication(instance);
-    Supplier<FileTypeRegistry> oldFileTypeRegistry = FileTypeRegistry.setInstanceSupplier(fileTypeRegistryGetter);
+    Supplier<? extends FileTypeRegistry> oldFileTypeRegistry = FileTypeRegistry.setInstanceSupplier(fileTypeRegistryGetter);
     Disposer.register(parent, () -> {
       if (old != null) {
         // to prevent NPEs in threads still running

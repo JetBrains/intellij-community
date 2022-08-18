@@ -14,7 +14,7 @@ public class JavaLanguageRuntimeUIFactoryImpl implements JavaLanguageRuntimeUIFa
   @Override
   public @NotNull BoundConfigurable create(@NotNull JavaLanguageRuntimeConfiguration config,
                                            @NotNull TargetEnvironmentType<? extends TargetEnvironmentConfiguration> targetType,
-                                           @NotNull Supplier<TargetEnvironmentConfiguration> targetSupplier,
+                                           @NotNull Supplier<? extends TargetEnvironmentConfiguration> targetSupplier,
                                            @NotNull Project project) {
     return new JavaLanguageRuntimeUI(config, targetType, targetSupplier, project);
   }

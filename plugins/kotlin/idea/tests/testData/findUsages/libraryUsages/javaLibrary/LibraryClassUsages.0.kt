@@ -9,3 +9,4 @@ import library.Foo
 fun test() {
     val foo: <caret>Foo
 }
+// FIR_COMPARISON

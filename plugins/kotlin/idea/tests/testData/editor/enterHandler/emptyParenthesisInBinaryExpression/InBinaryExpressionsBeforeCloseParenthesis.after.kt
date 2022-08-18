@@ -1,5 +1,5 @@
 val somelong = 3 + 4 - (3 +
-                       <caret>)
+                        <caret>)
 
 // SET_TRUE: ALIGN_MULTILINE_BINARY_OPERATION
-// WITHOUT_CUSTOM_LINE_INDENT_PROVIDER
+// IGNORE_FORMATTER

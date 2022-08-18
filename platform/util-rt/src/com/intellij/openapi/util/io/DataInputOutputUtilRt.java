@@ -104,8 +104,8 @@ public final class DataInputOutputUtilRt {
    */
   public static <K, V> void writeMap(@NotNull DataOutput out,
                                      @NotNull Map<? extends K, ? extends V> map,
-                                     @NotNull ThrowableConsumer<K, ? extends IOException> writeKey,
-                                     @NotNull ThrowableConsumer<V, ? extends IOException> writeValue) throws IOException {
+                                     @NotNull ThrowableConsumer<? super K, ? extends IOException> writeKey,
+                                     @NotNull ThrowableConsumer<? super V, ? extends IOException> writeValue) throws IOException {
     writeINT(out, map.size());
     for (Map.Entry<? extends K, ? extends V> e : map.entrySet()) {
       writeKey.consume(e.getKey());

@@ -6,9 +6,7 @@ package com.intellij.openapi.wm.impl
 import com.intellij.configurationStore.serialize
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.wm.RegisterToolWindowTask
-import com.intellij.openapi.wm.ToolWindowAnchor
-import com.intellij.openapi.wm.WindowInfo
+import com.intellij.openapi.wm.*
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -17,17 +15,18 @@ import org.jetbrains.annotations.NonNls
 @Internal
 class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = HashMap()) {
   companion object {
-    @NonNls internal const val TAG = "layout"
+    @NonNls const val TAG = "layout"
   }
 
   constructor(descriptors: List<WindowInfoImpl>) : this(descriptors.associateByTo(HashMap()) { it.id!! })
 
   /**
+   * @param paneId the ID of the tool window pane that this anchor is attached to
    * @param anchor anchor of the stripe.
    * @return maximum ordinal number in the specified stripe. Returns `-1` if there is no tool window with the specified anchor.
    */
-  internal fun getMaxOrder(anchor: ToolWindowAnchor): Int {
-    return idToInfo.values.asSequence().filter { anchor == it.anchor }.maxOfOrNull { it.order } ?: -1
+  internal fun getMaxOrder(paneId: String, anchor: ToolWindowAnchor): Int {
+    return idToInfo.values.asSequence().filter { paneId == it.safeToolWindowPaneId && anchor == it.anchor }.maxOfOrNull { it.order } ?: -1
   }
 
   fun copy(): DesktopLayout {
@@ -49,6 +48,7 @@ class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = H
       info.isSplit = task.sideTool
     }
 
+    info.toolWindowPaneId = WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
     info.anchor = task.anchor
 
     task.contentFactory?.anchor?.let {
@@ -58,6 +58,7 @@ class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = H
   }
 
   fun getInfo(id: String) = idToInfo.get(id)
+  fun getInfos() = idToInfo.toMap()
 
   internal fun addInfo(id: String, info: WindowInfoImpl) {
     val old = idToInfo.put(id, info)
@@ -69,6 +70,7 @@ class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = H
    * Also, the method properly updates order of all other tool windows.
    */
   fun setAnchor(info: WindowInfoImpl,
+                newPaneId: String,
                 newAnchor: ToolWindowAnchor,
                 suppliedNewOrder: Int): List<WindowInfoImpl> {
     var newOrder = suppliedNewOrder
@@ -76,12 +78,13 @@ class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = H
 
     // if order isn't defined then the window will be the last in the stripe
     if (newOrder == -1) {
-      newOrder = getMaxOrder(newAnchor) + 1
+      newOrder = getMaxOrder(newPaneId, newAnchor) + 1
     }
     else {
       // shift order to the right in the target stripe
       for (otherInfo in idToInfo.values) {
-        if (otherInfo !== info && otherInfo.anchor == newAnchor && otherInfo.order != -1 && otherInfo.order >= newOrder) {
+        if (otherInfo !== info && otherInfo.safeToolWindowPaneId == newPaneId && otherInfo.anchor == newAnchor
+            && otherInfo.order != -1 && otherInfo.order >= newOrder) {
           otherInfo.order++
           affected.add(otherInfo)
         }
@@ -89,6 +92,7 @@ class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = H
     }
 
     info.order = newOrder
+    info.toolWindowPaneId = newPaneId
     info.anchor = newAnchor
     return affected
   }
@@ -108,7 +112,7 @@ class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = H
         continue
       }
 
-      if (info.isSplit && isNewUi) {
+      if (isNewUi && info.isSplit && info.anchor != ToolWindowAnchor.BOTTOM) {
         info.isSplit = false
       }
 
@@ -140,11 +144,13 @@ class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = H
       return null
     }
 
-    val state = Element(tagName)
+    var state: Element? = null
     for (info in getSortedList()) {
-      serialize(info)?.let {
-        state.addContent(it)
+      val child = serialize(info) ?: continue
+      if (state == null) {
+        state = Element(tagName)
       }
+      state.addContent(child)
     }
     return state
   }

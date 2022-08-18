@@ -6,8 +6,11 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,13 +30,15 @@ public final class VcsTestUtil {
   public static VirtualFile createFile(@NotNull Project project, @NotNull final VirtualFile parent, @NotNull final String name,
                                        @Nullable final String content) {
     try {
-      return WriteCommandAction.writeCommandAction(project).compute(() -> {
-        VirtualFile file = parent.createChildData(parent, name);
-        if (content != null) {
-          file.setBinaryContent(content.getBytes(StandardCharsets.UTF_8));
-        }
-        return file;
-      });
+      return WriteCommandAction.writeCommandAction(project)
+        .withName("VcsTestUtil CreateFile") //NON-NLS
+        .compute(() -> {
+          VirtualFile file = parent.createChildData(parent, name);
+          if (content != null) {
+            file.setBinaryContent(content.getBytes(StandardCharsets.UTF_8));
+          }
+          return file;
+        });
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -50,13 +55,15 @@ public final class VcsTestUtil {
    */
   public static VirtualFile findOrCreateDir(@NotNull final Project project, @NotNull final VirtualFile parent, @NotNull final String name) {
     try {
-      return WriteCommandAction.writeCommandAction(project).compute(() -> {
-        VirtualFile dir = parent.findChild(name);
-        if (dir == null) {
-          dir = parent.createChildDirectory(parent, name);
-        }
-        return dir;
-      });
+      return WriteCommandAction.writeCommandAction(project)
+        .withName("VcsTestUtil FindOrCreateDir") //NON-NLS
+        .compute(() -> {
+          VirtualFile dir = parent.findChild(name);
+          if (dir == null) {
+            dir = parent.createChildDirectory(parent, name);
+          }
+          return dir;
+        });
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -64,66 +71,84 @@ public final class VcsTestUtil {
   }
 
   public static void renameFileInCommand(@NotNull Project project, @NotNull final VirtualFile file, @NotNull final String newName) {
-    WriteCommandAction.writeCommandAction(project).run(() -> {
-      try {
-        file.rename(file, newName);
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    });
+    WriteCommandAction.writeCommandAction(project)
+      .withName("VcsTestUtil RenameFileInCommand") //NON-NLS
+      .run(() -> {
+        try {
+          file.rename(file, newName);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      });
   }
 
   public static void deleteFileInCommand(@NotNull Project project, @NotNull final VirtualFile file) {
-    WriteCommandAction.writeCommandAction(project).run(() -> {
-      try {
-        file.delete(file);
-      }
-      catch (IOException ex) {
-        throw new RuntimeException(ex);
-      }
-    });
+    WriteCommandAction.writeCommandAction(project)
+      .withName("VcsTestUtil DeleteFileInCommand") //NON-NLS
+      .run(() -> {
+        try {
+          file.delete(file);
+        }
+        catch (IOException ex) {
+          throw new RuntimeException(ex);
+        }
+      });
   }
 
   public static void editFileInCommand(@NotNull Project project, @NotNull final VirtualFile file, @NotNull final String newContent) {
     assertTrue(file.isValid());
     file.getTimeStamp();
-    WriteCommandAction.writeCommandAction(project).run(() -> {
-      try {
-        final long newTs = Math.max(System.currentTimeMillis(), file.getTimeStamp() + 1100);
-        file.setBinaryContent(newContent.getBytes(StandardCharsets.UTF_8), -1, newTs);
-        final File file1 = new File(file.getPath());
-        FileUtil.writeToFile(file1, newContent.getBytes(StandardCharsets.UTF_8));
-        file.refresh(false, false);
-        assertTrue(file1 + " / " + newTs, file1.setLastModified(newTs));
-      }
-      catch (IOException ex) {
-        throw new RuntimeException(ex);
-      }
-    });
+    WriteCommandAction.writeCommandAction(project)
+      .withName("VcsTestUtil EditFileInCommand") //NON-NLS
+      .run(() -> {
+        try {
+          final long newTs = Math.max(System.currentTimeMillis(), file.getTimeStamp() + 1100);
+          file.setBinaryContent(newContent.getBytes(StandardCharsets.UTF_8), -1, newTs);
+          final File file1 = new File(file.getPath());
+          FileUtil.writeToFile(file1, newContent.getBytes(StandardCharsets.UTF_8));
+          file.refresh(false, false);
+          assertTrue(file1 + " / " + newTs, file1.setLastModified(newTs));
+        }
+        catch (IOException ex) {
+          throw new RuntimeException(ex);
+        }
+      });
   }
 
   @NotNull
   public static VirtualFile copyFileInCommand(@NotNull Project project, @NotNull final VirtualFile file,
                                               @NotNull final VirtualFile newParent, @NotNull final String newName) {
     try {
-      return WriteCommandAction.writeCommandAction(project).compute(() -> file.copy(file, newParent, newName));
+      return WriteCommandAction.writeCommandAction(project)
+        .withName("VcsTestUtil CopyFileInCommand") //NON-NLS
+        .compute(() -> file.copy(file, newParent, newName));
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  public static void moveFileInCommand(@NotNull  Project project, @NotNull final VirtualFile file, @NotNull final VirtualFile newParent) {
+  public static void moveFileInCommand(@NotNull Project project, @NotNull final VirtualFile file, @NotNull final VirtualFile newParent) {
+    // Workaround for IDEA-182560, try to wait until ongoing refreshes are finished
+    VfsUtil.markDirty(true, true, file);
+    var semaphore = new Semaphore(1);
+    LocalFileSystem.getInstance().refreshFiles(List.of(file), true, true, () -> semaphore.up());
+    semaphore.waitFor();
+
     try {
-      WriteCommandAction.writeCommandAction(project).run(() -> file.move(file, newParent));
+      WriteCommandAction.writeCommandAction(project)
+        .withName("VcsTestUtil MoveFileInCommand") //NON-NLS
+        .run(() -> file.move(file, newParent));
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  public static <T> void assertEqualCollections(@NotNull String message, @NotNull Collection<? extends T> actual, @NotNull Collection<? extends T> expected) {
+  public static <T> void assertEqualCollections(@NotNull String message,
+                                                @NotNull Collection<? extends T> actual,
+                                                @NotNull Collection<? extends T> expected) {
     if (!StringUtil.isEmptyOrSpaces(message) && !message.endsWith(":") && !message.endsWith(": ")) {
       message += ": ";
     }

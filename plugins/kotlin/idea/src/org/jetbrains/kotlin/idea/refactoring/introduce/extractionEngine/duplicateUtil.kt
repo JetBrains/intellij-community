@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine
 
@@ -15,11 +15,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler
 import com.intellij.ui.ReplacePromptDialog
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
 import org.jetbrains.kotlin.idea.refactoring.introduce.getPhysicalTextRange
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.psi.patternMatching.KotlinPsiRange
 
 fun KotlinPsiRange.highlight(project: Project, editor: Editor): RangeHighlighter? {
     val textRange = getPhysicalTextRange()
@@ -87,7 +87,7 @@ fun processDuplicates(
     duplicateReplacersLoop@
     for ((i, entry) in duplicateReplacers.entries.withIndex()) {
         val (pattern, replacer) = entry
-        if (!pattern.isValid()) continue
+        if (!pattern.isValid) continue
 
         val highlighter = pattern.preview(project, editor)
         if (!isUnitTestMode()) {

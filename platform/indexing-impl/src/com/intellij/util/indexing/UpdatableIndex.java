@@ -13,7 +13,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 
-public interface UpdatableIndex<Key, Value, Input, FileCachedData> extends InvertedIndex<Key, Value, Input> {
+public interface UpdatableIndex<Key, Value, Input, FileIndexMetaData> extends InvertedIndex<Key, Value, Input>{
 
   boolean processAllKeys(@NotNull Processor<? super Key> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) throws
                                                                                                                                    StorageException;
@@ -25,14 +25,12 @@ public interface UpdatableIndex<Key, Value, Input, FileCachedData> extends Inver
   Map<Key, Value> getIndexedFileData(int fileId) throws StorageException;
 
   /**
-   * Goal of {@link UpdatableIndex#instantiateFileData()} and {@link UpdatableIndex#writeData(Object, IndexedFile)} is to allow
+   * Goal of {@code getFileIndexMetaData()} is to allow
    * saving important data to a cache to use later without read lock in analog of {@link UpdatableIndex#setIndexedStateForFile(int, IndexedFile)}
    */
-  @NotNull FileCachedData instantiateFileData();
+  @Nullable FileIndexMetaData getFileIndexMetaData(@NotNull IndexedFile file);
 
-  void writeData(@NotNull FileCachedData data, @NotNull IndexedFile file);
-
-  void setIndexedStateForFileOnCachedData(int fileId, @NotNull FileCachedData data);
+  void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable FileIndexMetaData data);
 
   void setIndexedStateForFile(int fileId, @NotNull IndexedFile file);
 
@@ -60,11 +58,4 @@ public interface UpdatableIndex<Key, Value, Input, FileCachedData> extends Inver
 
   @TestOnly
   void cleanupForNextTest();
-
-  class EmptyData {
-    @SuppressWarnings("InstantiationOfUtilityClass")
-    public static final EmptyData INSTANCE = new EmptyData();
-
-    private EmptyData() { }
-  }
 }

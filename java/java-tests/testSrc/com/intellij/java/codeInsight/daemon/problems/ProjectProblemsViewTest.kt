@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.problems
 
 import com.intellij.codeInsight.codeVision.CodeVisionHost
@@ -19,7 +19,7 @@ internal abstract class ProjectProblemsViewTest : LightJavaCodeInsightFixtureTes
 
   protected fun doTest(targetClass: PsiClass, testBody: () -> Unit) {
     myFixture.openFileInEditor(targetClass.containingFile.virtualFile)
-    editor.putUserData(CodeVisionHost.isCodeVisionTestKey, true)
+    project.putUserData(CodeVisionHost.isCodeVisionTestKey, true)
     myFixture.doHighlighting()
 
     assertEmpty(getProblems())
@@ -27,8 +27,20 @@ internal abstract class ProjectProblemsViewTest : LightJavaCodeInsightFixtureTes
     testBody()
   }
 
+  override fun tearDown() {
+    try {
+      project.putUserData(CodeVisionHost.isCodeVisionTestKey, null)
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
+  }
+
   override fun getProjectDescriptor(): LightProjectDescriptor {
-    return JAVA_16
+    return JAVA_LATEST_WITH_LATEST_JDK
   }
 
   protected fun getProblems(editor: Editor = myFixture.editor) =

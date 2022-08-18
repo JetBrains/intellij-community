@@ -10,6 +10,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Allows customizing initial commit message for specific commits.
  * If several providers are available, first non-null commit message value will be used.
+ *
+ * @see com.intellij.vcs.commit.DelayedCommitMessageProvider
  */
 public interface CommitMessageProvider {
 

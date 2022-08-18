@@ -84,11 +84,11 @@ public class UnnecessaryContinueInspection extends BaseInspection {
         final PsiBlockStatement blockStatement = (PsiBlockStatement)body;
         final PsiCodeBlock block = blockStatement.getCodeBlock();
         if (ControlFlowUtils.blockCompletesWithStatement(block, statement)) {
-          registerStatementError(statement);
+          registerError(statement.getFirstChild());
         }
       }
       else if (ControlFlowUtils.statementCompletesWithStatement(body, statement)) {
-        registerStatementError(statement);
+        registerError(statement.getFirstChild());
       }
     }
   }

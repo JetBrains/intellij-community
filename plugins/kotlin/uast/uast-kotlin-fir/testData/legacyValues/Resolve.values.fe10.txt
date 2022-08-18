@@ -104,8 +104,8 @@ UFile (package = ) [public final class ResolveKt {...]
                         UIdentifier (Identifier (setValue)) [UIdentifier (Identifier (setValue))]
                         USimpleNameReferenceExpression (identifier = setValue, resolvesTo = null) [setValue] = external setValue("123")("123")
                         ULiteralExpression (value = "123") ["123"] = "123"
-                UDeclarationsExpression [var intRange: kotlin.ranges.LongRange = 0 .. 3] = Undetermined
-                    ULocalVariable (name = intRange) [var intRange: kotlin.ranges.LongRange = 0 .. 3]
+                UDeclarationsExpression [var intRange: kotlin.ranges.ClosedRange<java.lang.Long> = 0 .. 3] = Undetermined
+                    ULocalVariable (name = intRange) [var intRange: kotlin.ranges.ClosedRange<java.lang.Long> = 0 .. 3]
                         UBinaryExpression (operator = ..) [0 .. 3] = (long)0..(long)3
                             ULiteralExpression (value = 0) [0] = (long)0
                             ULiteralExpression (value = 3) [3] = (long)3

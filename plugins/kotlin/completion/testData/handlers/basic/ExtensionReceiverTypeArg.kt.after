@@ -1,0 +1,7 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
+
+fun List<String<caret>>foo() {}
+
+// ELEMENT: String
+// TAIL_TEXT: " (kotlin)"

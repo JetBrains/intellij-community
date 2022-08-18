@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.KeywordLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.codeInsight.template.SmartCompletionContextType;
+import com.intellij.codeInsight.template.impl.TemplateContextTypes;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.util.text.StringUtil;
@@ -54,10 +55,11 @@ public final class BasicExpressionCompletionContributor {
       ClassLiteralGetter.addCompletions(parameters, result, matcher);
 
       final PsiElement position = parameters.getPosition();
-        final PsiType expectedType = parameters.getExpectedType();
+      final PsiType expectedType = parameters.getExpectedType();
 
+        SmartCompletionContextType smartCompletionContextType = TemplateContextTypes.getByClass(SmartCompletionContextType.class);
         for (final TemplateImpl template : TemplateSettings.getInstance().getTemplates()) {
-          if (!template.isDeactivated() && template.getTemplateContext().isEnabled(new SmartCompletionContextType())) {
+          if (!template.isDeactivated() && template.getTemplateContext().isEnabled(smartCompletionContextType)) {
             result.consume(new SmartCompletionTemplateItem(template, position));
           }
         }
@@ -73,7 +75,6 @@ public final class BasicExpressionCompletionContributor {
 
         processDataflowExpressionTypes(parameters, expectedType, matcher, result);
     }
-
   }
 
   static void processDataflowExpressionTypes(JavaSmartCompletionParameters parameters, @Nullable PsiType expectedType, final PrefixMatcher matcher, Consumer<? super LookupElement> consumer) {

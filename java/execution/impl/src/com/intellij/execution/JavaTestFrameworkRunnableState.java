@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
@@ -23,6 +23,7 @@ import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.execution.util.ProgramParametersUtil;
@@ -269,9 +270,16 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     final SMTRunnerConsoleProperties testConsoleProperties = getConfiguration().createTestConsoleProperties(executor);
     testConsoleProperties.setIfUndefined(TestConsoleProperties.HIDE_PASSED_TESTS, false);
 
-    final BaseTestsOutputConsoleView consoleView =
+    final BaseTestsOutputConsoleView testConsole =
       UIUtil.invokeAndWaitIfNeeded(() -> SMTestRunnerConnectionUtil.createConsole(getFrameworkName(), testConsoleProperties));
-    final SMTestRunnerResultsForm viewer = ((SMTRunnerConsoleView)consoleView).getResultsViewer();
+    final SMTestRunnerResultsForm viewer = ((SMTRunnerConsoleView)testConsole).getResultsViewer();
+
+    final ConsoleView consoleView = JavaRunConfigurationExtensionManager.getInstance().decorateExecutionConsole(
+      getConfiguration(),
+      getRunnerSettings(),
+      testConsole,
+      executor
+    );
     Disposer.register(getConfiguration().getProject(), consoleView);
 
     OSProcessHandler handler = createHandler(viewer);
@@ -306,7 +314,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       }
     });
 
-    AbstractRerunFailedTestsAction rerunFailedTestsAction = testConsoleProperties.createRerunFailedTestsAction(consoleView);
+    AbstractRerunFailedTestsAction rerunFailedTestsAction = testConsoleProperties.createRerunFailedTestsAction(testConsole);
     LOG.assertTrue(rerunFailedTestsAction != null);
     rerunFailedTestsAction.setModelProvider(() -> viewer);
 
@@ -497,7 +505,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   protected static PsiJavaModule findJavaModule(Module module, boolean inTests) {
     return DumbService.getInstance(module.getProject())
-      .computeWithAlternativeResolveEnabled(() -> JavaModuleGraphUtil.findDescriptorByModule(module, inTests));
+      .computeWithAlternativeResolveEnabled(() -> JavaModuleGraphUtil.findNonAutomaticDescriptorByModule(module, inTests));
   }
 
   private void configureModulePath(JavaParameters javaParameters, @NotNull Module module) {

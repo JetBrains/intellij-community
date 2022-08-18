@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.MultiRequestPositionManager;
@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
@@ -590,7 +591,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       myMethodSignature = methodSignature;
     }
 
-    @Override public void visitClass(PsiClass aClass) {
+    @Override public void visitClass(@NotNull PsiClass aClass) {
       if (myCompiledMethod == null) {
         if (getClassReferences(aClass, SourcePosition.createFromElement(aClass)).anyMatch(referenceType -> referenceType.name().equals(myClassName))) {
           myCompiledClass = aClass;
@@ -600,22 +601,30 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       }
     }
 
-    @Override public void visitMethod(PsiMethod method) {
+    @Override public void visitMethod(@NotNull PsiMethod method) {
       if (myCompiledMethod == null) {
         try {
-          String methodName = JVMNameUtil.getJVMMethodName(method);
           PsiClass containingClass = method.getContainingClass();
 
           if (containingClass != null &&
               containingClass.equals(myCompiledClass) &&
-              methodName.equals(myMethodName) &&
-              JVMNameUtil.getJVMSignature(method).getName(myDebugProcess).equals(myMethodSignature)) {
+              JVMNameUtil.getJVMMethodName(method).equals(myMethodName) &&
+              checkSignature(method)) {
             myCompiledMethod = method;
           }
         }
         catch (EvaluateException e) {
           LOG.debug(e);
         }
+      }
+    }
+
+    private boolean checkSignature(@NotNull PsiMethod method) throws EvaluateException {
+      try {
+        return JVMNameUtil.getJVMSignature(method).getName(myDebugProcess).equals(myMethodSignature);
+      }
+      catch (IndexNotReadyException e) {
+        return true; // fallback: do not care about the signature
       }
     }
 

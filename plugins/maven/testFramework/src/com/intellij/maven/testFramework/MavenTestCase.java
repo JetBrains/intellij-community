@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.testFramework;
 
 import com.intellij.execution.wsl.WSLDistribution;
@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
@@ -34,6 +35,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.server.MavenServerConnector;
@@ -77,6 +79,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
   protected VirtualFile myProjectPom;
   protected List<VirtualFile> myAllPoms = new ArrayList<>();
+
 
   @Override
   protected void setUp() throws Exception {
@@ -149,14 +152,11 @@ public abstract class MavenTestCase extends UsefulTestCase {
   protected void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
       @Override
-      public boolean processError(@NotNull String category, String message, Throwable t, String @NotNull [] details) {
-        if (t.getMessage().contains("The network name cannot be found") && message.contains("Couldn't read shelf information")) {
-          return false;
-        }
-        if ("JDK annotations not found".equals(t.getMessage()) && "#com.intellij.openapi.projectRoots.impl.JavaSdkImpl".equals(category)) {
-          return false;
-        }
-        return super.processError(category, message, t, details);
+      public @NotNull Set<Action> processError(@NotNull String category, @NotNull String message, String @NotNull [] details, @Nullable Throwable t) {
+        boolean intercept = t != null && (
+          StringUtil.notNullize(t.getMessage()).contains("The network name cannot be found") && message.contains("Couldn't read shelf information") ||
+          "JDK annotations not found".equals(t.getMessage()) && "#com.intellij.openapi.projectRoots.impl.JavaSdkImpl".equals(category));
+        return intercept ? Action.NONE : Action.ALL;
       }
     }, () -> super.runBare(testRunnable));
   }
@@ -189,7 +189,6 @@ public abstract class MavenTestCase extends UsefulTestCase {
       () -> checkAllMavenConnectorsDisposed(),
       () -> MavenArtifactDownloader.awaitQuiescence(100, TimeUnit.SECONDS),
       () -> myProject = null,
-      () -> EdtTestUtil.runInEdtAndWait(() -> tearDownFixtures()),
       () -> {
         Project defaultProject = ProjectManager.getInstance().getDefaultProject();
         MavenIndicesManager mavenIndicesManager = defaultProject.getServiceIfCreated(MavenIndicesManager.class);
@@ -197,6 +196,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
           Disposer.dispose(mavenIndicesManager);
         }
       },
+      () -> EdtTestUtil.runInEdtAndWait(() -> tearDownFixtures()),
       () -> deleteDirOnTearDown(myDir),
       () -> {
         if (myWSLDistribution != null) {
@@ -209,7 +209,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
   private void tearDownEmbedders() {
     MavenProjectsManager manager = MavenProjectsManager.getInstanceIfCreated(myProject);
-    if(manager == null) return;
+    if (manager == null) return;
     manager.getEmbeddersManager().releaseInTests();
   }
 
@@ -271,7 +271,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     File[] files = dir.listFiles();
     if (files == null) return;
 
-    for (File file: files) {
+    for (File file : files) {
       System.out.println(file.getAbsolutePath());
 
       if (file.isDirectory()) {
@@ -509,14 +509,19 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   protected void createStdProjectFolders() {
-    createProjectSubDirs("src/main/java",
-                         "src/main/resources",
-                         "src/test/java",
-                         "src/test/resources");
+    createStdProjectFolders("");
+  }
+
+  protected void createStdProjectFolders(String subdir) {
+    if (!subdir.isEmpty()) subdir += "/";
+    createProjectSubDirs(subdir + "src/main/java",
+                         subdir + "src/main/resources",
+                         subdir + "src/test/java",
+                         subdir + "src/test/resources");
   }
 
   protected void createProjectSubDirs(String... relativePaths) {
-    for (String path: relativePaths) {
+    for (String path : relativePaths) {
       createProjectSubDir(path);
     }
   }

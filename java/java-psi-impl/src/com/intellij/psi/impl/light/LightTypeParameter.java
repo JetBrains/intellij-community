@@ -42,7 +42,7 @@ public class LightTypeParameter extends LightClass implements PsiTypeParameter {
       ((JavaElementVisitor)visitor).visitTypeParameter(this);
     }
     else {
-      super.accept(visitor);
+      visitor.visitElement(this);
     }
   }
 

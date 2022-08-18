@@ -11,6 +11,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.WindowMoveListener;
 import com.intellij.ui.components.AnActionLink;
 import com.intellij.ui.components.JBLabel;
@@ -68,6 +69,25 @@ public abstract class XDebuggerPopupPanel {
         myActionsUpdatedOnce = true;
       }
     }, disposable);
+  }
+
+  protected static void updatePopupBounds(@NotNull Window popupWindow, int newWidth, int newHeight) {
+    final Rectangle screenRectangle = ScreenUtil.getScreenRectangle(popupWindow);
+
+    // shift the x coordinate if there is not enough space on the right
+    Point location = popupWindow.getLocation();
+    int delta = (location.x + newWidth) - (screenRectangle.x + screenRectangle.width);
+    location.x -= Math.max(delta, 0);
+    location.x = Math.max(location.x, screenRectangle.x);
+
+    final Rectangle targetBounds = new Rectangle(location.x, location.y, newWidth, newHeight);
+
+    ScreenUtil.cropRectangleToFitTheScreen(targetBounds);
+    if (targetBounds.height != popupWindow.getHeight() || targetBounds.width != popupWindow.getWidth()) {
+      popupWindow.setBounds(targetBounds);
+      popupWindow.validate();
+      popupWindow.repaint();
+    }
   }
 
   protected final void setContent(@NotNull JComponent content,
@@ -169,7 +189,6 @@ public abstract class XDebuggerPopupPanel {
     ActionLinkButton(@NotNull AnAction action,
                      @NotNull Presentation presentation,
                      @Nullable DataProvider contextComponent) {
-      //noinspection ConstantConditions
       super(StringUtil.capitalize(presentation.getText().toLowerCase(Locale.ROOT)), action);
       setDataProvider(contextComponent);
       setFont(UIUtil.getToolTipFont());
@@ -210,6 +229,11 @@ public abstract class XDebuggerPopupPanel {
       Presentation presentation = e.getPresentation();
       presentation.setEnabled(presentation.isEnabled() && shouldBeVisible(myDelegate));
       presentation.setVisible(presentation.isVisible() && shouldBeVisible(myDelegate));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return myDelegate.getActionUpdateThread();
     }
 
     @Override

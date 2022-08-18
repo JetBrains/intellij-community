@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.Disposable;
@@ -57,19 +57,17 @@ public class DefaultLogger extends Logger {
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void dumpExceptionsToStderr(String message, @Nullable Throwable t, String @NotNull ... details) {
     if (shouldDumpExceptionToStderr()) {
-      System.err.println("ERROR: " + message);
+      System.err.println("ERROR: " + message + detailsToString(details));
       if (t != null) t.printStackTrace(System.err);
-      if (details.length > 0) {
-        System.err.println("details: ");
-        for (String detail : details) {
-          System.err.println(detail);
-        }
-      }
     }
   }
 
   @Override
   public void setLevel(@NotNull Level level) { }
+
+  public static @NotNull String detailsToString(String @NotNull ... details) {
+    return details.length > 0 ? "\nDetails:\n" + String.join("\n", details) : "";
+  }
 
   public static @NotNull String attachmentsToString(@Nullable Throwable t) {
     if (t != null) {
@@ -90,10 +88,9 @@ public class DefaultLogger extends Logger {
   }
 
   public static void disableStderrDumping(@NotNull Disposable parentDisposable) {
-    final boolean prev = ourMirrorToStderr;
+    boolean prev = ourMirrorToStderr;
     ourMirrorToStderr = false;
     Disposer.register(parentDisposable, () -> {
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
       ourMirrorToStderr = prev;
     });
   }

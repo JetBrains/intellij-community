@@ -26,6 +26,7 @@ import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
+import com.intellij.util.ObjectUtils;
 import org.editorconfig.EditorConfigNotifier;
 import org.editorconfig.Utils;
 import org.editorconfig.configmanagement.EditorConfigFilesCollector;
@@ -224,8 +225,14 @@ public final class EditorConfigCodeStyleSettingsModifier implements CodeStyleSet
                                         @NotNull MyContext context,
                                         @NotNull String optionKey,
                                         @NotNull String optionValue) {
-    if ("indent_size".equals(optionKey) && "tab".equals(optionValue)) {
-      return context.getTabSize();
+    if ("indent_size".equals(optionKey)) {
+      String explicitTabSize = context.getExplicitTabSize();
+      if ("tab".equals(optionValue)) {
+        return ObjectUtils.notNull(explicitTabSize, context.getDefaultTabSize());
+      }
+      else if (context.isTabIndent() && explicitTabSize != null) {
+        return explicitTabSize;
+      }
     }
     else if (EditorConfigValueUtil.EMPTY_LIST_VALUE.equals(optionValue) &&
              CodeStylePropertiesUtil.isAccessorAllowingEmptyList(accessor)) {
@@ -301,19 +308,32 @@ public final class EditorConfigCodeStyleSettingsModifier implements CodeStyleSet
       return myFile.getLanguage();
     }
 
-    private String getTabSize() {
+    private @NotNull String getDefaultTabSize() {
+      CommonCodeStyleSettings.IndentOptions indentOptions = mySettings.getIndentOptions(myFile.getFileType());
+      return String.valueOf(indentOptions.TAB_SIZE);
+    }
+
+    private @Nullable String getExplicitTabSize() {
       for (OutPair pair : getOptions()) {
         if ("tab_width".equals(pair.getKey())) {
           return pair.getVal();
         }
       }
-      CommonCodeStyleSettings.IndentOptions indentOptions = mySettings.getIndentOptions(myFile.getFileType());
-      return String.valueOf(indentOptions.TAB_SIZE);
+      return null;
+    }
+
+    private boolean isTabIndent() {
+      for (OutPair pair : getOptions()) {
+        if ("indent_style".equals(pair.getKey())) {
+          return "tab".equals(pair.getVal());
+        }
+      }
+      return false;
     }
   }
 
   @Override
-  public @NotNull Consumer<CodeStyleSettings> getDisablingFunction() {
+  public @NotNull Consumer<CodeStyleSettings> getDisablingFunction(@NotNull Project project) {
     return settings -> {
       EditorConfigSettings editorConfigSettings = settings.getCustomSettings(EditorConfigSettings.class);
       editorConfigSettings.ENABLED = false;

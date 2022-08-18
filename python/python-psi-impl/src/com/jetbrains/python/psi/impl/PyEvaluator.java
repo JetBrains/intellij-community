@@ -137,7 +137,7 @@ public class PyEvaluator {
   }
 
   @Nullable
-  private Object evaluateBinary(@NotNull PyBinaryExpression expression) {
+  protected Object evaluateBinary(@NotNull PyBinaryExpression expression) {
     final PyElementType op = expression.getOperator();
     final Object lhs = evaluate(expression.getLeftExpression());
     final Object rhs = evaluate(expression.getRightExpression());
@@ -192,6 +192,9 @@ public class PyEvaluator {
   @Nullable
   private static Boolean evaluateBoolean(@NotNull PyExpression expression) {
     if (expression instanceof PyBoolLiteralExpression) {
+      if (PyNames.DEBUG.equals(expression.getText())) {
+        return null;
+      }
       return ((PyBoolLiteralExpression)expression).getValue();
     }
     else if (expression instanceof PyReferenceExpression && LanguageLevel.forElement(expression).isPython2()) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.content;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,12 +24,20 @@ public interface ContentFactory {
   @NotNull
   ContentManager createContentManager(boolean canCloseContents, @NotNull Project project);
 
+  static ContentFactory getInstance() {
+    return ApplicationManager.getApplication().getService(ContentFactory.class);
+  }
+
+  /**
+   * @deprecated use {@link ContentFactory#getInstance()} instead
+   */
+  @Deprecated(forRemoval = true)
   final class SERVICE {
     private SERVICE() {
     }
 
     public static ContentFactory getInstance() {
-      return ApplicationManager.getApplication().getService(ContentFactory.class);
+      return ContentFactory.getInstance();
     }
   }
 }

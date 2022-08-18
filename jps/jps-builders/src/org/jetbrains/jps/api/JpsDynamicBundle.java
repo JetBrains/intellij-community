@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.api;
 
 import com.intellij.AbstractBundle;
@@ -52,21 +52,23 @@ public abstract class JpsDynamicBundle extends AbstractBundle {
   }
 
   @Override
-  protected ResourceBundle findBundle(@NotNull @NonNls String pathToBundle, @NotNull ClassLoader loader, @NotNull ResourceBundle.Control control) {
+  protected @NotNull ResourceBundle findBundle(
+    @NotNull @NonNls String pathToBundle,
+    @NotNull ClassLoader loader,
+    @NotNull ResourceBundle.Control control
+  ) {
     final ResourceBundle base = super.findBundle(pathToBundle, loader, control);
     final ClassLoader languageBundleLoader = ourLangBundleLoader;
     if (languageBundleLoader != null) {
       ResourceBundle languageBundle = super.findBundle(pathToBundle, languageBundleLoader, control);
-      if (languageBundle != null) {
-        try {
-          if (SET_PARENT != null) {
-            SET_PARENT.invoke(languageBundle, base);
-          }
-          return languageBundle;
+      try {
+        if (SET_PARENT != null) {
+          SET_PARENT.invoke(languageBundle, base);
         }
-        catch (Throwable e) {
-          LOG.warn(e);
-        }
+        return languageBundle;
+      }
+      catch (Throwable e) {
+        LOG.warn(e);
       }
     }
     

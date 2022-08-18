@@ -7,7 +7,6 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.FontUtil
-import java.util.stream.Collectors
 
 
 class ChangesBrowserConflictsNode(val project: Project) : ChangesBrowserNode<Unit>(Unit) {
@@ -19,7 +18,7 @@ class ChangesBrowserConflictsNode(val project: Project) : ChangesBrowserNode<Uni
   }
 
   private fun showResolveConflictsDialog() {
-    AbstractVcsHelper.getInstance(project).showMergeDialog(ChangesUtil.getFiles(allChangesUnder.stream()).collect(Collectors.toList()))
+    AbstractVcsHelper.getInstance(project).showMergeDialog(ChangesUtil.iterateFiles(allChangesUnder).toList())
   }
 
   override fun getTextPresentation(): String {

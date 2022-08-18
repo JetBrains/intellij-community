@@ -49,7 +49,7 @@ public class NewMethodNamingConventionInspection extends AbstractNamingConventio
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitMethod(PsiMethod method) {
+      public void visitMethod(@NotNull PsiMethod method) {
         if (method.isConstructor()) {
           return;
         }

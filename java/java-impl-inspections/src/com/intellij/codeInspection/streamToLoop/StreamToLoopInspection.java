@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamToLoop;
 
 import com.intellij.codeInspection.*;
@@ -60,7 +60,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
     }
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         super.visitMethodCallExpression(call);
         PsiReferenceExpression expression = call.getMethodExpression();
         PsiElement nameElement = expression.getReferenceNameElement();
@@ -126,7 +126,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
       return false;
     }
     if(elementType instanceof PsiImmediateClassType) {
-      PsiResolveHelper helper = PsiResolveHelper.SERVICE.getInstance(context.getProject());
+      PsiResolveHelper helper = PsiResolveHelper.getInstance(context.getProject());
       if (helper.resolveReferencedClass(elementType.getCanonicalText(), context) == null) {
         return false;
       }

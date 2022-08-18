@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.fileActions.importFrom.googleDocs
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.util.registry.Registry
@@ -16,5 +17,9 @@ class GoogleDocsImportAction: AnAction(MarkdownBundle.message("markdown.google.d
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = Registry.`is`("markdown.google.docs.import.action.enable")
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 }

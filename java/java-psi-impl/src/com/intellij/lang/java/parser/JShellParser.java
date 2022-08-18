@@ -18,6 +18,7 @@ package com.intellij.lang.java.parser;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JShellElementType;
@@ -37,7 +38,7 @@ import java.util.function.Predicate;
 public class JShellParser extends JavaParser {
   public static final JShellParser INSTANCE = new JShellParser();
 
-  private static final Set<IElementType> TOP_LEVEL_DECLARATIONS = ContainerUtil.set(
+  private static final TokenSet TOP_LEVEL_DECLARATIONS = TokenSet.create(
     JavaElementType.FIELD, JavaElementType.METHOD, JavaElementType.CLASS
   );
   private static final Predicate<IElementType> IMPORT_PARSED_CONDITION = tokenType -> JavaElementType.IMPORT_STATEMENT.equals(tokenType);
@@ -77,7 +78,8 @@ public class JShellParser extends JavaParser {
             revert(marker);
             marker = getExpressionParser().parse(builder);
             // in case of reference expression try other options and only if they fail, parse as expression again
-            if (isParsed(marker, builder, EXPRESSION_PARSED_CONDITION)) {
+            if (isParsed(marker, builder, EXPRESSION_PARSED_CONDITION) &&
+                !((PsiBuilderImpl)builder).hasErrorsAfter(marker)) { // ensure that it is error-free expression to avoid parsing Iterable<?> as condition
               wrapperType = JShellElementType.STATEMENTS_HOLDER;
             }
             else {

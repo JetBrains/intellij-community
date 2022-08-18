@@ -42,6 +42,8 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
   private val countOfFilesToDelete: Int = 5
 
   override val lessonContent: LessonContext.() -> Unit = {
+    sdkConfigurationTasks()
+
     setInitialPosition()
 
     task("GotoDeclaration") {
@@ -60,7 +62,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
           LessonsBundle.message("recent.files.dialog.title"),
           CommonBundle.message("button.ok"),
           LearnBundle.message("learn.stop.lesson"),
-          FeaturesTrainerIcons.Img.PluginIcon
+          FeaturesTrainerIcons.PluginIcon
         )
         if (userDecision != Messages.OK) {
           LessonManager.instance.stopLesson()
@@ -139,7 +141,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
       text(LessonsBundle.message("recent.files.show.recent.locations", action(it)))
       val recentLocationsText = IdeBundle.message("recent.locations.popup.title")
       triggerUI().component { ui: SimpleColoredComponent ->
-        ui.getCharSequence(true).contains(recentLocationsText)
+        ui.getCharSequence(true) == recentLocationsText
       }
       test { actions(it) }
     }
@@ -166,7 +168,9 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
       restoreState {
         !checkRecentLocationsSearch(stringForRecentFilesSearch) || previous.ui?.isShowing != true
       }
-      test { invokeActionViaShortcut("ENTER") }
+      test {
+        waitAndUsePreviouslyFoundListItem { it.doubleClick() }
+      }
     }
   }
 
@@ -216,7 +220,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
   private fun TaskContext.triggerOnRecentFilesShown() {
     val recentFilesText = IdeBundle.message("title.popup.recent.files")
     triggerUI().component { ui: JLabel ->
-      ui.text.isToStringContains(recentFilesText)
+      ui.text == recentFilesText
     }
   }
 

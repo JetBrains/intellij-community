@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
-import com.intellij.application.options.RegistryManager;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
@@ -34,9 +33,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 
 public final class PluginDownloader {
@@ -315,16 +312,14 @@ public final class PluginDownloader {
   }
 
   public void install() throws IOException {
-    boolean loaded = LoadingState.COMPONENTS_LOADED.isOccurred();
+    PluginInstaller.installAfterRestartAndKeepIfNecessary(myDescriptor, getFilePath(),
+                                                          myOldFile
+    );
 
-    PluginInstaller.installAfterRestart(getFilePath(),
-                                        !loaded || RegistryManager.getInstance().is("ide.plugins.keep.archive"),
-                                        myOldFile,
-                                        myDescriptor);
-
-    if (loaded) {
+    if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
       InstalledPluginsState.getInstance().onPluginInstall(myDescriptor,
-                                                          PluginManagerCore.isPluginInstalled(myDescriptor.getPluginId()), true);
+                                                          PluginManagerCore.isPluginInstalled(myDescriptor.getPluginId()),
+                                                          true);
     }
     else {
       InstalledPluginsState.addPreInstalledPlugin(myDescriptor);
@@ -377,8 +372,9 @@ public final class PluginDownloader {
                                                            @Nullable String host,
                                                            @Nullable BuildNumber buildNumber) throws IOException {
     String url = descriptor instanceof PluginNode && host != null ?
-                 getDownloadUrl((PluginNode)descriptor, host) :
-                 getUrl(descriptor.getPluginId(), buildNumber);
+                 toAbsoluteUrl(((PluginNode)descriptor).getDownloadUrl(), host) :
+                 getMarketplaceBuildUrl(descriptor, buildNumber);
+
     return new PluginDownloader(descriptor,
                                 url,
                                 buildNumber,
@@ -410,21 +406,34 @@ public final class PluginDownloader {
     return node;
   }
 
-  private static String getDownloadUrl(PluginNode pluginNode, String host) throws IOException {
-    String url = pluginNode.getDownloadUrl();
+  private static @NotNull String toAbsoluteUrl(@NotNull String downloadUrl,
+                                               @NotNull String host) throws IOException {
     try {
-      return new URI(url).isAbsolute() ? url : new URL(new URL(host), url).toExternalForm();
+      return new URI(downloadUrl).isAbsolute() ?
+             downloadUrl :
+             new URL(new URL(host), downloadUrl).toExternalForm();
     }
     catch (URISyntaxException e) {
       throw new IOException(e);
     }
   }
 
-  private static String getUrl(PluginId pluginId, @Nullable BuildNumber buildNumber) {
+  private static @NotNull String getMarketplaceBuildUrl(@NotNull IdeaPluginDescriptor descriptor,
+                                                        @Nullable BuildNumber buildNumber) {
+    Map<String, String> parameters = new LinkedHashMap<>();
+    parameters.put("id", descriptor.getPluginId().getIdString());
+    parameters.put("build", ApplicationInfoImpl.orFromPluginsCompatibleBuild(buildNumber));
+    parameters.put("uuid", getMarketplaceDownloadsUUID());
+
+    if (descriptor instanceof PluginNode) {
+      String channel = ((PluginNode)descriptor).getChannel();
+      if (channel != null) {
+        parameters.put("channel", channel);
+      }
+    }
+
     return Urls.newFromEncoded(ApplicationInfoImpl.getShadowInstance().getPluginsDownloadUrl())
-      .addParameters(Map.of("id", pluginId.getIdString(),
-                            "build", ApplicationInfoImpl.orFromPluginsCompatibleBuild(buildNumber),
-                            "uuid", getMarketplaceDownloadsUUID()))
+      .addParameters(Collections.unmodifiableMap(parameters))
       .toExternalForm();
   }
 }

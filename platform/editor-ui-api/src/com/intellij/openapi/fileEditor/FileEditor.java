@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -47,7 +47,7 @@ public interface FileEditor extends UserDataHolder, Disposable {
 
   /**
    * Returns editor's name - a string that identifies the editor among others
-   * (e.g.: "GUI Designer" for graphical editing and "Text" for textual representation of a GUI form editors).
+   * (e.g.: "GUI Designer" for graphical editing and "Text" for textual representation of a GUI form editor).
    */
   @Nls(capitalization = Nls.Capitalization.Title) @NotNull String getName();
 
@@ -59,14 +59,14 @@ public interface FileEditor extends UserDataHolder, Disposable {
   }
 
   /**
-   * Applies given state to the editor.
+   * Applies a given state to the editor.
    */
   void setState(@NotNull FileEditorState state);
 
   /**
-   * In some cases, it's desirable to set state exactly as requested (e.g. on tab splitting), in other cases different behaviour is
-   * preferred, e.g. bringing caret into view on text editor opening. This method passes additional flag to FileEditor to indicate
-   * the desired way to set state.
+   * In some cases, it's desirable to set state exactly as requested (e.g. on tab splitting), while in other cases different behaviour is
+   * preferred, e.g. bringing caret into view on text editor opening.
+   * This method passes an additional flag to {@link FileEditor} to indicate the desired way to set state.
    */
   default void setState(@NotNull FileEditorState state, boolean exactState) {
     setState(state);
@@ -108,7 +108,7 @@ public interface FileEditor extends UserDataHolder, Disposable {
 
   /**
    * A highlighter object to perform background analysis and highlighting activities on.
-   * Return {@code null} if no background highlighting activity necessary for this file editor.
+   * Returns {@code null} if no background highlighting activity is necessary for this file editor.
    */
   default @Nullable BackgroundEditorHighlighter getBackgroundHighlighter() {
     return null;
@@ -118,7 +118,9 @@ public interface FileEditor extends UserDataHolder, Disposable {
    * The method is optional. Currently, it is used only by the Find Usages subsystem.
    * Expected to return a location of user's focus - a caret or any other form of selection start.
    */
-  @Nullable FileEditorLocation getCurrentLocation();
+  default @Nullable FileEditorLocation getCurrentLocation() {
+    return null;
+  }
 
   default @Nullable StructureViewBuilder getStructureViewBuilder() {
     return null;
@@ -128,7 +130,7 @@ public interface FileEditor extends UserDataHolder, Disposable {
   Key<VirtualFile> FILE_KEY = Key.create("FILE_KEY");
 
   /**
-   * Returns the file for which {@link FileEditorProvider#createEditor)} was called.
+   * Returns the file for which {@link FileEditorProvider#createEditor} was called.
    * The default implementation is temporary, and shall be dropped in the future.
    */
   default VirtualFile getFile() {
@@ -137,7 +139,7 @@ public interface FileEditor extends UserDataHolder, Disposable {
   }
 
   /**
-   * Returns the files for which {@link com.intellij.ide.SaveAndSyncHandler)} should be called on frame activation.
+   * Returns the files for which {@link com.intellij.ide.SaveAndSyncHandler} should be called on frame activation.
    */
   default @NotNull List<@NotNull VirtualFile> getFilesToRefresh() {
     VirtualFile file = getFile();

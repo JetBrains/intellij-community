@@ -3,74 +3,88 @@ package org.jetbrains.idea.maven.project.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
-import com.intellij.openapi.externalSystem.dependency.analyzer.AbstractDependencyAnalyzerAction
-import com.intellij.openapi.externalSystem.dependency.analyzer.DAArtifact
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView
+import com.intellij.openapi.externalSystem.dependency.analyzer.*
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.project.Project
-import com.intellij.ui.treeStructure.SimpleNode
+import com.intellij.openapi.module.Module
 import com.intellij.ui.treeStructure.SimpleTree
-import org.jetbrains.idea.maven.navigator.MavenProjectsStructure
-import org.jetbrains.idea.maven.project.MavenDependencyAnalyzerContributor
+import org.jetbrains.idea.maven.navigator.MavenProjectsStructure.*
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenUtil
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 
-class MavenDependencyAnalyzerAction : AbstractDependencyAnalyzerAction() {
+
+class ViewDependencyAnalyzerAction : AbstractDependencyAnalyzerAction<MavenSimpleNode>() {
+
   override fun getSystemId(e: AnActionEvent): ProjectSystemId = MavenUtil.SYSTEM_ID
 
-  override fun setSelectedState(e: AnActionEvent, view: DependencyAnalyzerView) {
-    val project = e.project ?: return
-    val selectedNode = getSelectedNode(e) ?: return
-    val externalProjectPath = getExternalProjectPath(project, selectedNode) ?: return
-    val dependencyData = getDependencyData(selectedNode)
-    val dependencyScope = getDependencyScope(selectedNode)
-    if (dependencyData != null && dependencyScope != null) {
-      view.setSelectedDependency(externalProjectPath, dependencyData, dependencyScope)
-    }
-    else if (dependencyData != null) {
-      view.setSelectedDependency(externalProjectPath, dependencyData)
-    }
-    else {
-      view.setSelectedExternalProject(externalProjectPath)
-    }
-  }
-
-  private fun getSelectedNode(e: AnActionEvent): SimpleNode? {
+  override fun getSelectedData(e: AnActionEvent): MavenSimpleNode? {
     val data = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
-    return (data as? SimpleTree)?.selectedNode
+    return (data as? SimpleTree)?.selectedNode as? MavenSimpleNode
   }
 
-  private fun getExternalProjectPath(project: Project, selectedNode: SimpleNode): String? {
-    if (selectedNode is MavenProjectsStructure.ProjectNode) {
-      return selectedNode.mavenProject.path
-    }
-    if (selectedNode is MavenProjectsStructure.MavenSimpleNode) {
-      val projectNode = selectedNode.findParent(MavenProjectsStructure.ProjectNode::class.java)
-      if (projectNode != null) {
-        return projectNode.mavenProject.path
+  override fun getModule(e: AnActionEvent, selectedData: MavenSimpleNode): Module? {
+    val project = e.project ?: return null
+    val projectNode = selectedData.findNode(ProjectNode::class.java) ?: return null
+    val mavenProjectsManager = MavenProjectsManager.getInstance(project)
+    return mavenProjectsManager.findModule(projectNode.mavenProject)
+  }
+
+  override fun getDependencyData(e: AnActionEvent, selectedData: MavenSimpleNode): DependencyAnalyzerDependency.Data? {
+    return when (selectedData) {
+      is DependencyNode -> {
+        DAArtifact(
+          selectedData.artifact.groupId,
+          selectedData.artifact.artifactId,
+          selectedData.artifact.version
+        )
       }
+      is ProjectNode -> {
+        DAModule(selectedData.mavenProject.displayName)
+      }
+      else -> null
     }
-    return MavenProjectsManager.getInstance(project).rootProjects.firstOrNull()?.path
   }
 
-  private fun getDependencyData(selectedNode: SimpleNode): Dependency.Data? {
-    if (selectedNode is MavenProjectsStructure.DependencyNode) {
-      return DAArtifact(
-        selectedNode.artifact.groupId,
-        selectedNode.artifact.artifactId,
-        selectedNode.artifact.version
-      )
+  override fun getDependencyScope(e: AnActionEvent, selectedData: MavenSimpleNode): String? {
+    if (selectedData is DependencyNode) {
+      return selectedData.artifact.scope
+    }
+    return null
+  }
+}
+
+class NavigatorDependencyAnalyzerAction : DependencyAnalyzerAction() {
+
+  private val viewAction = ViewDependencyAnalyzerAction()
+
+  override fun getSystemId(e: AnActionEvent): ProjectSystemId = MavenUtil.SYSTEM_ID
+
+  override fun isEnabledAndVisible(e: AnActionEvent) = true
+
+  override fun setSelectedState(view: DependencyAnalyzerView, e: AnActionEvent) {
+    viewAction.setSelectedState(view, e)
+  }
+}
+
+class ProjectViewDependencyAnalyzerAction : AbstractDependencyAnalyzerAction<Module>() {
+
+  override fun getSystemId(e: AnActionEvent): ProjectSystemId = MavenUtil.SYSTEM_ID
+
+  override fun getSelectedData(e: AnActionEvent): Module? {
+    val project = e.project ?: return null
+    val module = e.getData(PlatformCoreDataKeys.MODULE) ?: return null
+    if (MavenProjectsManager.getInstance(project).isMavenizedModule(module)) {
+      return module
     }
     return null
   }
 
-  private fun getDependencyScope(selectedNode: SimpleNode): Dependency.Scope? {
-    if (selectedNode is MavenProjectsStructure.DependencyNode) {
-      return MavenDependencyAnalyzerContributor.scope(
-        selectedNode.artifact.scope
-      )
-    }
-    return null
+  override fun getModule(e: AnActionEvent, selectedData: Module): Module {
+    return selectedData
   }
+
+  override fun getDependencyData(e: AnActionEvent, selectedData: Module): DependencyAnalyzerDependency.Data {
+    return DAModule(selectedData.name)
+  }
+
+  override fun getDependencyScope(e: AnActionEvent, selectedData: Module) = null
 }

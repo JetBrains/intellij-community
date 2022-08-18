@@ -7,7 +7,7 @@ import javax.swing.AbstractAction
 import javax.swing.Action
 
 open class GHRetryLoadingErrorHandler(protected val resetRunnable: () -> Unit) : GHLoadingErrorHandler {
-  override fun getActionForError(error: Throwable): Action? = RetryAction()
+  override fun getActionForError(error: Throwable): Action = RetryAction()
 
   protected inner class RetryAction : AbstractAction(GithubBundle.message("retry.action")) {
     override fun actionPerformed(e: ActionEvent?) {

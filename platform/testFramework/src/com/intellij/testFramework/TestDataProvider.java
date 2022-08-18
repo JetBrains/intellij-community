@@ -2,13 +2,12 @@
 package com.intellij.testFramework;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
+import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
@@ -18,12 +17,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.HashSet;
+
+import static com.intellij.openapi.actionSystem.DataContext.EMPTY_CONTEXT;
 
 /**
  * @author peter
  */
-public class TestDataProvider implements DataProvider, DataContext {
+public class TestDataProvider implements DataProvider {
   private final Project myProject;
   private final boolean myWithRules;
   private final TestDataProvider myDelegateWithoutRules;
@@ -69,23 +69,25 @@ public class TestDataProvider implements DataProvider, DataContext {
       return editor == null ? null : TextEditorProvider.getInstance().getTextEditor(editor);
     }
     else {
-      Editor editor = getData(CommonDataKeys.EDITOR);
+      Editor editor = CommonDataKeys.EDITOR.getData(this);
       if (editor != null) {
         Object managerData = manager.getData(dataId, editor, editor.getCaretModel().getCurrentCaret());
         if (managerData != null) {
           return managerData;
         }
-        JComponent component = editor.getContentComponent();
-        if (component instanceof EditorComponentImpl) {
-          Object editorComponentData = ((EditorComponentImpl)component).getData(dataId);
-          if (editorComponentData != null) {
-            return editorComponentData;
+        if (!(editor instanceof ImaginaryEditor)) {
+          JComponent component = editor.getContentComponent();
+          if (component instanceof EditorComponentImpl) {
+            Object editorComponentData = ((EditorComponentImpl)component).getData(dataId);
+            if (editorComponentData != null) {
+              return editorComponentData;
+            }
           }
         }
       }
 
       if (myWithRules) {
-        return ((DataManagerImpl)DataManager.getInstance()).getDataFromProvider(myDelegateWithoutRules, dataId, new HashSet<>());
+        return DataManager.getInstance().getCustomizedData(dataId, EMPTY_CONTEXT, myDelegateWithoutRules);
       }
       return null;
     }

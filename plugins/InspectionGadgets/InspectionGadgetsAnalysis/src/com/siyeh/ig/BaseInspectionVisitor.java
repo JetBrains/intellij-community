@@ -132,6 +132,13 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
   }
 
   protected final void registerModifierError(@NotNull String modifier, @NotNull PsiModifierListOwner parameter, Object... infos) {
+    registerModifierError(modifier, parameter, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, infos);
+  }
+
+  protected final void registerModifierError(@NotNull String modifier,
+                                             @NotNull PsiModifierListOwner parameter,
+                                             final ProblemHighlightType highlightType,
+                                             Object... infos) {
     final PsiModifierList modifiers = parameter.getModifierList();
     if (modifiers == null) {
       return;
@@ -140,7 +147,7 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
     for (final PsiElement child : children) {
       final String text = child.getText();
       if (modifier.equals(text)) {
-        registerError(child, infos);
+        registerError(child, highlightType, infos);
       }
     }
   }
@@ -223,7 +230,7 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitReferenceExpression(PsiReferenceExpression expression) {
+  public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     visitExpression(expression);
   }
 

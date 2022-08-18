@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,14 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.ObjectUtils;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -35,8 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-public class UnnecessaryTemporaryOnConversionToStringInspection
-  extends BaseInspection {
+public class UnnecessaryTemporaryOnConversionToStringInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @Override
   public boolean isEnabledByDefault() {
@@ -46,23 +47,18 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    final String replacementString = calculateReplacementExpression((PsiMethodCallExpression)infos[0], new CommentTracker());
-    return InspectionGadgetsBundle.message(
-      "unnecessary.temporary.on.conversion.from.string.problem.descriptor",
-      replacementString);
+    final String replacementString = calculateReplacementExpression((PsiNewExpression)infos[0], new CommentTracker());
+    return InspectionGadgetsBundle.message("unnecessary.temporary.on.conversion.to.string.display.name", replacementString);
   }
 
   @Nullable
   @NonNls
-  static String calculateReplacementExpression(@NotNull PsiMethodCallExpression expression, @NotNull CommentTracker commentTracker) {
-    final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-    final PsiNewExpression qualifier = ObjectUtils.tryCast(methodExpression.getQualifierExpression(), PsiNewExpression.class);
-    if (qualifier == null) return null;
-    final PsiExpressionList argumentList = qualifier.getArgumentList();
+  static String calculateReplacementExpression(@NotNull PsiNewExpression expression, @NotNull CommentTracker commentTracker) {
+    final PsiExpressionList argumentList = expression.getArgumentList();
     if (argumentList == null) return null;
     final PsiExpression[] arguments = argumentList.getExpressions();
     if (arguments.length != 1) return null;
-    final PsiType type = qualifier.getType();
+    final PsiType type = expression.getType();
     if (type == null) return null;
     final String argumentText = commentTracker.text(arguments[0]);
     final String qualifierType = type.getPresentableText();
@@ -71,7 +67,7 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
 
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
-    final String replacement = calculateReplacementExpression((PsiMethodCallExpression)infos[0], new CommentTracker());
+    final String replacement = calculateReplacementExpression((PsiNewExpression)infos[0], new CommentTracker());
     final String name = CommonQuickFixBundle.message("fix.replace.with.x", replacement);
     return new UnnecessaryTemporaryObjectFix(name);
   }
@@ -98,11 +94,13 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiMethodCallExpression expression = (PsiMethodCallExpression)descriptor.getPsiElement();
+      final PsiNewExpression expression = (PsiNewExpression)descriptor.getPsiElement().getParent();
       CommentTracker commentTracker = new CommentTracker();
       final String newExpression = calculateReplacementExpression(expression, commentTracker);
       if (newExpression == null) return;
-      PsiReplacementUtil.replaceExpression(expression, newExpression, commentTracker);
+      final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class);
+      if (methodCallExpression == null) return;
+      PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression, commentTracker);
     }
   }
 
@@ -111,11 +109,8 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
     return new UnnecessaryTemporaryObjectVisitor();
   }
 
-  private static class UnnecessaryTemporaryObjectVisitor
-    extends BaseInspectionVisitor {
+  private static class UnnecessaryTemporaryObjectVisitor extends BaseInspectionVisitor {
 
-    /**
-     */
     private static final Set<String> s_basicTypes = new HashSet<>(8);
 
     static {
@@ -130,24 +125,19 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
     }
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
-      @NonNls final String methodName =
-        methodExpression.getReferenceName();
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+      @NonNls final String methodName = methodExpression.getReferenceName();
       if (!HardcodedMethodConstants.TO_STRING.equals(methodName)) {
         return;
       }
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
+      final PsiExpression qualifier = PsiUtil.deparenthesizeExpression(methodExpression.getQualifierExpression());
       if (!(qualifier instanceof PsiNewExpression)) {
         return;
       }
       final PsiNewExpression newExpression = (PsiNewExpression)qualifier;
-      final PsiExpressionList argumentList =
-        newExpression.getArgumentList();
+      final PsiExpressionList argumentList = newExpression.getArgumentList();
       if (argumentList == null) {
         return;
       }
@@ -157,9 +147,7 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
       }
       final PsiExpression argument = arguments[0];
       final PsiType argumentType = argument.getType();
-      if (argumentType != null &&
-          argumentType.equalsToText(
-            CommonClassNames.JAVA_LANG_STRING)) {
+      if (argumentType != null && argumentType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         return;
       }
       final PsiType type = qualifier.getType();
@@ -170,7 +158,7 @@ public class UnnecessaryTemporaryOnConversionToStringInspection
       if (!s_basicTypes.contains(typeName)) {
         return;
       }
-      registerError(expression, expression);
+      registerNewExpressionError(newExpression, newExpression);
     }
   }
 }

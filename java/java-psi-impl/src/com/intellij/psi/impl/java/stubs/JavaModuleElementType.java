@@ -57,7 +57,7 @@ public class JavaModuleElementType extends JavaStubElementType<PsiJavaModuleStub
 
   @NotNull
   @Override
-  public PsiJavaModuleStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement parentStub) {
+  public PsiJavaModuleStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
     LighterASTNode ref = LightTreeUtil.requiredChildOfType(tree, node, JavaElementType.MODULE_REFERENCE);
     return new PsiJavaModuleStubImpl(parentStub, JavaSourceUtil.getReferenceText(tree, ref));
   }

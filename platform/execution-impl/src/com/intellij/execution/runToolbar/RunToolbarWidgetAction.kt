@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runToolbar
 
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -9,8 +9,9 @@ import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedBarAct
 import javax.swing.BorderFactory
 import javax.swing.JComponent
 
-class RunToolbarWidgetAction : SegmentedBarActionComponent() {
-  val TOOLBAR_GAP = 4
+private const val TOOLBAR_GAP = 4
+
+internal class RunToolbarWidgetAction : SegmentedBarActionComponent() {
 
   init {
     ActionManager.getInstance().getAction("RunToolbarMainActionsGroup")?.let {
@@ -28,6 +29,7 @@ class RunToolbarWidgetAction : SegmentedBarActionComponent() {
 
     return component
   }
+
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     return super.createCustomComponent(presentation, place).apply {
       border = BorderFactory.createEmptyBorder(0, TOOLBAR_GAP, 0, TOOLBAR_GAP)

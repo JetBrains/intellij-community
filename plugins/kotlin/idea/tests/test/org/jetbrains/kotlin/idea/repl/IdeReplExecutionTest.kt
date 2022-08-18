@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.repl
 
 import com.intellij.execution.console.LanguageConsoleImpl
 import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.testFramework.PlatformTestCase
+import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.console.KotlinConsoleKeeper
@@ -20,13 +20,13 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 @RunWith(JUnit38ClassRunner::class)
-class IdeReplExecutionTest : PlatformTestCase() {
+class IdeReplExecutionTest : LightPlatformTestCase() {
     private lateinit var consoleRunner: KotlinConsoleRunner
     private var commandsSent = 0
 
     override fun setUp() {
         super.setUp()
-        consoleRunner = KotlinConsoleKeeper.getInstance(project).run(module)!!
+        consoleRunner = KotlinConsoleKeeper.getInstance(project).run(module)
     }
 
     override fun tearDown() {
@@ -101,7 +101,7 @@ class IdeReplExecutionTest : PlatformTestCase() {
         ModuleRootModificationUtil.addDependency(module, createLibraryWithLongPaths(project))
 
         consoleRunner.dispose()
-        consoleRunner = KotlinConsoleKeeper.getInstance(project).run(module)!!
+        consoleRunner = KotlinConsoleKeeper.getInstance(project).run(module)
 
         testRunPossibility()
     }

@@ -2,6 +2,8 @@
 package training.learn.lesson.general.assistance
 
 import com.intellij.CommonBundle
+import com.intellij.history.integration.ui.actions.LocalHistoryGroup
+import com.intellij.history.integration.ui.actions.ShowHistoryAction
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -49,7 +51,6 @@ import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiHighlightingManager.HighlightingOptions
 import training.ui.LearningUiUtil
 import training.util.LessonEndInfo
-import training.util.isToStringContains
 import java.awt.Component
 import java.awt.Point
 import java.awt.Rectangle
@@ -148,7 +149,7 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
           LessonsBundle.message("recent.files.dialog.title"),
           CommonBundle.message("button.ok"),
           LearnBundle.message("learn.stop.lesson"),
-          FeaturesTrainerIcons.Img.PluginIcon
+          FeaturesTrainerIcons.PluginIcon
         )
         if (userDecision != Messages.OK) {
           LessonManager.instance.stopLesson()
@@ -165,7 +166,7 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
       text(LessonsBundle.message("local.history.invoke.context.menu", strong(localHistoryActionText)))
       triggerAndBorderHighlight().component { ui: EditorComponentImpl -> ui.editor == editor }
       triggerAndFullHighlight().component { ui: ActionMenu ->
-        ui.text.isToStringContains(localHistoryActionText)
+        isClassEqual(ui.anAction, LocalHistoryGroup::class.java)
       }
       test {
         ideFrame { robot().rightClick(editor.component) }
@@ -176,14 +177,14 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
       val showHistoryActionText = ActionsBundle.actionText(it).dropMnemonic()
       text(LessonsBundle.message("local.history.show.history", strong(localHistoryActionText), strong(showHistoryActionText)))
       triggerAndFullHighlight { clearPreviousHighlights = false }.component { ui: ActionMenuItem ->
-        ui.text == showHistoryActionText
+        isClassEqual(ui.anAction, ShowHistoryAction::class.java)
       }
       trigger(it)
       restoreByUi()
       test {
         ideFrame {
-          jMenuItem { item: ActionMenu -> item.text.isToStringContains(localHistoryActionText) }.click()
-          jMenuItem { item: ActionMenuItem -> item.text == showHistoryActionText }.click()
+          jMenuItem { item: ActionMenu -> isClassEqual(item.anAction, LocalHistoryGroup::class.java) }.click()
+          jMenuItem { item: ActionMenuItem -> isClassEqual(item.anAction, ShowHistoryAction::class.java) }.click()
         }
       }
     }
@@ -298,6 +299,10 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
         }
       }
     }
+  }
+
+  private fun isClassEqual(value: Any, expectedClass: Class<*>): Boolean {
+    return value.javaClass.name == expectedClass.name
   }
 
   private fun findDiffGutterRect(ui: EditorGutterComponentEx): Rectangle? {

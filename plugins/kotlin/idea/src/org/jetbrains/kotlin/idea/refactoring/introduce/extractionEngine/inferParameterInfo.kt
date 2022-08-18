@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine
 
@@ -13,12 +13,13 @@ import org.jetbrains.kotlin.cfg.pseudocode.getExpectedTypePredicate
 import org.jetbrains.kotlin.cfg.pseudocode.instructions.eval.InstructionWithReceivers
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
-import org.jetbrains.kotlin.idea.core.NewDeclarationNameValidator
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
-import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
+import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtToken
 import org.jetbrains.kotlin.psi.*
@@ -30,7 +31,6 @@ import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoAfter
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.hasBothReceivers
-import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowValueFactory
 import org.jetbrains.kotlin.resolve.calls.tasks.isSynthesizedInvoke
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
@@ -124,10 +124,10 @@ internal fun ExtractionData.inferParametersInfo(
         }
     }
 
-    val varNameValidator = NewDeclarationNameValidator(
+    val varNameValidator = Fe10KotlinNewDeclarationNameValidator(
         commonParent.getNonStrictParentOfType<KtExpression>()!!,
         physicalElements.firstOrNull(),
-        NewDeclarationNameValidator.Target.VARIABLES
+        KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER
     )
 
     val existingParameterNames = hashSetOf<String>()
@@ -139,7 +139,7 @@ internal fun ExtractionData.inferParametersInfo(
 
         with(parameter) {
             if (currentName == null) {
-                currentName = KotlinNameSuggester.suggestNamesByType(parameterType, varNameValidator, "p").first()
+                currentName = Fe10KotlinNameSuggester.suggestNamesByType(parameterType, varNameValidator, "p").first()
             }
 
             require(currentName != null)
@@ -152,7 +152,7 @@ internal fun ExtractionData.inferParametersInfo(
                 currentName = "$currentName$index"
             }
 
-            mirrorVarName = if (descriptorToExtract in modifiedVarDescriptors) KotlinNameSuggester.suggestNameByName(
+            mirrorVarName = if (descriptorToExtract in modifiedVarDescriptors) Fe10KotlinNameSuggester.suggestNameByName(
                 name,
                 varNameValidator
             ) else null
@@ -372,7 +372,7 @@ private fun suggestParameterType(
             val typeByDataFlowInfo = if (useSmartCastsIfPossible) {
                 val callElement = resolvedCall!!.call.callElement
                 val dataFlowInfo = bindingContext.getDataFlowInfoAfter(callElement)
-                val dataFlowValueFactory = callElement.getResolutionFacade().getDataFlowValueFactory()
+                val dataFlowValueFactory = callElement.getResolutionFacade().dataFlowValueFactory
                 val possibleTypes = dataFlowInfo.getCollectedTypes(
                     dataFlowValueFactory.createDataFlowValueForStableReceiver(receiverToExtract),
                     callElement.languageVersionSettings

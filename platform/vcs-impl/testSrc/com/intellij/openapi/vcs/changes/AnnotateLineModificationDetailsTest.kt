@@ -4,17 +4,12 @@ package com.intellij.openapi.vcs.changes
 import com.intellij.openapi.vcs.annotate.AnnotatedLineModificationDetails.InnerChange
 import com.intellij.openapi.vcs.annotate.AnnotatedLineModificationDetails.InnerChangeType
 import com.intellij.openapi.vcs.annotate.DefaultLineModificationDetailsProvider
-import com.intellij.testFramework.ApplicationExtension
+import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.RegisterExtension
 
+@TestApplication
 class AnnotateLineModificationDetailsTest {
-  companion object {
-    @JvmField
-    @RegisterExtension
-    val appRule = ApplicationExtension()
-  }
 
   @Test
   fun testSimpleModifications() {

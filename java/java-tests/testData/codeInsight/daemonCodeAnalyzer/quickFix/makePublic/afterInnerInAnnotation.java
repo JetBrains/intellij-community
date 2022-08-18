@@ -1,4 +1,4 @@
-// "Make 'Inner' protected" "true"
+// "Make 'Inner' protected" "true-preview"
 @MyAnnotation(Outer.Inner.class)
 public class Outer {
 

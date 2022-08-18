@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.missingApi.update
 
 import com.intellij.openapi.application.Application
@@ -13,7 +13,7 @@ import org.jetbrains.idea.devkit.projectRoots.IdeaJdk
 /**
  * Startup activity that updates external annotations of IDEA JDKs configured in the project.
  */
-class IntelliJSdkExternalAnnotationsUpdateStartupActivity : StartupActivity {
+internal class IntelliJSdkExternalAnnotationsUpdateStartupActivity : StartupActivity {
   override fun runActivity(project: Project) {
     val application = ApplicationManager.getApplication()
     if (application.isUnitTestMode) {

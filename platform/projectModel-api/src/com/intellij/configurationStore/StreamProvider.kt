@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.InputStream
 
@@ -17,7 +16,7 @@ interface StreamProvider {
   /**
    * Whether is exclusive and cannot be used alongside another provider.
    *
-   * Doesn't imply [enabled], callers should check [enabled] also if need.
+   * Doesn't imply [enabled], callers should check [enabled] also if needed.
    */
   val isExclusive: Boolean
 

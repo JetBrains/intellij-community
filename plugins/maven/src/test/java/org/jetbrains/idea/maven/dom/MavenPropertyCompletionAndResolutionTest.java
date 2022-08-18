@@ -242,7 +242,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   @Test
   public void testResolutionToInheritedModelPropertiesForManagedParent() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>parent</artifactId>" +
+                     "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
                      "<packaging>pom</packaging>" +
 
@@ -257,7 +257,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
 
                                         "<parent>" +
                                         "  <groupId>test</groupId>" +
-                                        "  <artifactId>parent</artifactId>" +
+                                        "  <artifactId>project</artifactId>" +
                                         "  <version>1</version>" +
                                         "</parent>" +
 
@@ -271,7 +271,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
 
                     "<parent>" +
                     "  <groupId>test</groupId>" +
-                    "  <artifactId>parent</artifactId>" +
+                    "  <artifactId>project</artifactId>" +
                     "  <version>1</version>" +
                     "</parent>" +
 
@@ -1017,14 +1017,14 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   private void readWithProfilesViaImportFlow(String... profiles) {
     MavenImportFlow flow = new MavenImportFlow();
     MavenInitialImportContext initialImportContext =
-      flow.prepareNewImport(myProject, getMavenProgressIndicator(),
+      flow.prepareNewImport(myProject,
                             new FilesList(myAllPoms),
                             getMavenGeneralSettings(),
                             getMavenImporterSettings(),
                             Arrays.asList(profiles),
                             Collections.emptyList());
     myProjectsManager.initForTests();
-    myReadContext = flow.readMavenFiles(initialImportContext, null, null);
+    myReadContext = flow.readMavenFiles(initialImportContext, getMavenProgressIndicator());
     myProjectsManager.setProjectsTree(myReadContext.getProjectsTree());
   }
 }

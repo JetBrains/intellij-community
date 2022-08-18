@@ -72,7 +72,7 @@ public class LiteralExpressionTokenizer extends EscapeSequenceTokenizer<PsiLiter
   }
 
   public static void processTextWithEscapeSequences(PsiLiteralExpression element, String text, TokenConsumer consumer) {
-    StringBuilder unescapedText = new StringBuilder();
+    StringBuilder unescapedText = new StringBuilder(text.length());
     int[] offsets = new int[text.length() + 1];
     CodeInsightUtilCore.parseStringCharacters(text, unescapedText, offsets);
 

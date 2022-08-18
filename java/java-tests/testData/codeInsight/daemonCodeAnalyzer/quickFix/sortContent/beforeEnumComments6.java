@@ -1,4 +1,4 @@
-// "Sort content" "true"
+// "Sort content" "true-preview"
 
 enum Attribute {
   Width<caret>, // 7

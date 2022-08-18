@@ -4,6 +4,7 @@ package com.intellij.ide.ui;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -15,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
@@ -52,8 +54,15 @@ public class IdeUiService {
 
   }
 
-  @NotNull
-  public DataContext createUiDataContext(Component component) {
+  public @NotNull DataContext createUiDataContext(@Nullable Component component) {
+    return DataContext.EMPTY_CONTEXT;
+  }
+
+  public @NotNull DataContext createAsyncDataContext(@NotNull DataContext dataContext) {
+    return DataContext.EMPTY_CONTEXT;
+  }
+
+  public @NotNull DataContext createCustomizedDataContext(@NotNull DataContext dataContext, @NotNull DataProvider dataProvider) {
     return DataContext.EMPTY_CONTEXT;
   }
 

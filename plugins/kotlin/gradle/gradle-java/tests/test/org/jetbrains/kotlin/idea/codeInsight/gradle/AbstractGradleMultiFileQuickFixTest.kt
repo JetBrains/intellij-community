@@ -10,6 +10,7 @@ import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.io.readText
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
+import org.jetbrains.kotlin.idea.test.waitIndexingComplete
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 import java.nio.file.Files
@@ -74,6 +75,8 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
                     },
                 )
             }
+
+            myProject.waitIndexingComplete("indexing new created modules")
 
             codeInsightTestFixture.doHighlighting()
             DirectiveBasedActionUtils.checkAvailableActionsAreExpected(ktFile, action?.let { actions - it } ?: actions)

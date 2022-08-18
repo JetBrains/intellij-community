@@ -10,21 +10,27 @@ import com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilde
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.json.JsonLanguage
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 
-class GenerateEventsScheme : DumbAwareAction(ActionsBundle.message("action.GenerateEventsScheme.text"),
-                                             ActionsBundle.message("action.GenerateEventsScheme.description"),
-                                             AllIcons.FileTypes.Json) {
+internal class GenerateEventsScheme(private val recorderId: String = StatisticsDevKitUtil.DEFAULT_RECORDER) : DumbAwareAction(
+  ActionsBundle.message("action.GenerateEventsScheme.text"),
+  ActionsBundle.message("action.GenerateEventsScheme.description"),
+  AllIcons.FileTypes.Json) {
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = StatisticsRecorderUtil.isTestModeEnabled("FUS") && e.project != null
+    e.presentation.isEnabled = e.project != null
+                               && StatisticsRecorderUtil.isTestModeEnabled("FUS")
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
 
-    val eventsScheme = EventsSchemeBuilder.buildEventsScheme()
+    val eventsScheme = EventsSchemeBuilder.buildEventsScheme(recorderId)
     val text = GsonBuilder().setPrettyPrinting().create().toJson(eventsScheme)
     val scratchFile = ScratchRootType.getInstance().createScratchFile(project, "statistics_events_scheme.json", JsonLanguage.INSTANCE, text)
     if (scratchFile == null) {

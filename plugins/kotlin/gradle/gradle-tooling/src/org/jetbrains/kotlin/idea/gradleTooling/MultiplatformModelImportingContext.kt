@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.gradleTooling
 
@@ -70,7 +70,6 @@ internal fun Project.getProperty(property: GradleImportProperties): Boolean {
 internal enum class GradleImportProperties(val id: String, val defaultValue: Boolean) {
     IS_HMPP_ENABLED("kotlin.mpp.enableGranularSourceSetsMetadata", false),
     COERCE_ROOT_SOURCE_SETS_TO_COMMON("kotlin.mpp.coerceRootSourceSetsToCommon", true),
-    ENABLE_NATIVE_DEPENDENCY_PROPAGATION("kotlin.native.enableDependencyPropagation", true),
     BUILD_METADATA_DEPENDENCIES("build_metadata_dependencies_for_actualised_source_sets", true),
     IMPORT_ORPHAN_SOURCE_SETS("import_orphan_source_sets", true),
     INCLUDE_ANDROID_DEPENDENCIES("kotlin.include.android.dependencies", false)

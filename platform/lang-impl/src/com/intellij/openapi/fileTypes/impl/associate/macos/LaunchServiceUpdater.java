@@ -21,7 +21,7 @@ import java.util.*;
  * </a>
  */
 final class LaunchServiceUpdater {
-  public final static String UPDATE_FAILURE_MSG = "Launch services PList updated failed, the error is logged.";
+  private final static String UPDATE_FAILURE_MSG = "Launch services PList updated failed, the error is logged.";
 
   private final static Logger LOG = Logger.getInstance(LaunchServiceUpdater.class);
 
@@ -35,9 +35,9 @@ final class LaunchServiceUpdater {
 
   void addFileTypes(@NotNull List<? extends FileType> fileTypes) throws OSFileAssociationException {
     for (FileType fileType : fileTypes) {
-      String[] uri = UniformIdentifierUtil.getURIs(fileType);
-      if (uri.length > 0) {
-        Collections.addAll(myUriSet, UniformIdentifierUtil.getURIs(fileType));
+      String[] uris = UniformIdentifierUtil.getURIs(fileType);
+      if (uris.length > 0) {
+        Collections.addAll(myUriSet, uris);
       }
       else {
         myExtensionSet.addAll(OSAssociateFileTypesUtil.getExtensions(fileType));

@@ -6,3 +6,5 @@ fun foo(n: Int): Boolean {
         return@foo 1
     }
 }
+
+/* IGNORE_FIR */

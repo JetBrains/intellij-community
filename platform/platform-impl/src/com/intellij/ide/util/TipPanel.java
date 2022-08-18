@@ -4,21 +4,25 @@ package com.intellij.ide.util;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.TipsOfTheDayUsagesCollector;
+import com.intellij.ide.ui.text.StyledTextPane;
+import com.intellij.ide.ui.text.paragraph.TextParagraph;
+import com.intellij.ide.ui.text.parts.RegularTextPart;
+import com.intellij.ide.ui.text.parts.TextPart;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DoNotAskOption;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
-import org.jetbrains.annotations.Nls;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,11 +32,8 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static com.intellij.openapi.util.SystemInfo.isWin10OrNewer;
-import static com.intellij.openapi.util.text.StringUtil.isEmpty;
 import static com.intellij.ui.Gray.xD0;
 
 public final class TipPanel extends JPanel implements DoNotAskOption {
@@ -41,9 +42,8 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   private static final int DEFAULT_HEIGHT = 200;
   private static final Logger LOG = Logger.getInstance(TipPanel.class);
 
-  private @Nullable final Project myProject;
-  private final TipUIUtil.Browser myBrowser;
-  private final JLabel myPoweredByLabel;
+  private @NotNull final Project myProject;
+  private final StyledTextPane myTextPane;
   final AbstractAction myPreviousTipAction;
   final AbstractAction myNextTipAction;
   private @NotNull String myAlgorithm = "unknown";
@@ -52,28 +52,25 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   private TipAndTrickBean myCurrentTip = null;
   private JPanel myCurrentPromotion = null;
 
-  public TipPanel(@Nullable final Project project) {
+  public TipPanel(@NotNull final Project project, @NotNull final List<TipAndTrickBean> tips, @NotNull Disposable parentDisposable) {
     setLayout(new BorderLayout());
     if (isWin10OrNewer && !StartupUiUtil.isUnderDarcula()) {
       setBorder(JBUI.Borders.customLine(xD0, 1, 0, 0, 0));
     }
     myProject = project;
-    myBrowser = TipUIUtil.createBrowser();
-    myBrowser.getComponent().setBorder(JBUI.Borders.empty(8, 12));
-    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myBrowser.getComponent(), true);
+    myTextPane = new StyledTextPane();
+    myTextPane.setBackground(UIUtil.getTextFieldBackground());
+    myTextPane.setBorder(JBUI.Borders.empty(16, 24, 20, 24));
+    Disposer.register(parentDisposable, myTextPane);
+
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTextPane, true);
     scrollPane.setBorder(JBUI.Borders.customLine(DIVIDER_COLOR, 0, 0, 1, 0));
     add(scrollPane, BorderLayout.CENTER);
-
-    myPoweredByLabel = new JBLabel();
-    myPoweredByLabel.setBorder(JBUI.Borders.empty(0, 10));
-    myPoweredByLabel.setForeground(SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES.getFgColor());
-
-    add(myPoweredByLabel, BorderLayout.SOUTH);
 
     myPreviousTipAction = new PreviousTipAction();
     myNextTipAction = new NextTipAction();
 
-    setTips(TipAndTrickBean.EP_NAME.getExtensionList());
+    setTips(tips);
   }
 
   void setTips(@NotNull List<TipAndTrickBean> list) {
@@ -103,7 +100,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
 
   private void showNext(boolean forward) {
     if (myTips.size() == 0) {
-      myBrowser.setText(IdeBundle.message("error.tips.not.found", ApplicationNamesInfo.getInstance().getFullProductName()));
+      setTipsNotFoundText();
       return;
     }
     int index = myCurrentTip != null ? myTips.indexOf(myCurrentTip) : -1;
@@ -121,10 +118,10 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   private void setTip(@NotNull TipAndTrickBean tip) {
     myCurrentTip = tip;
 
-    TipUIUtil.openTipInBrowser(myCurrentTip, myBrowser);
-    myPoweredByLabel.setText(TipUIUtil.getPoweredByText(myCurrentTip));
-    myPoweredByLabel.setVisible(!isEmpty(myPoweredByLabel.getText()));
+    List<TextParagraph> tipContent = TipUIUtil.loadAndParseTip(tip);
+    myTextPane.setParagraphs(tipContent);
     setPromotionForCurrentTip();
+
     TipsOfTheDayUsagesCollector.triggerTipShown(tip, myAlgorithm, myAlgorithmVersion);
     TipsUsageManager.getInstance().fireTipShown(myCurrentTip);
 
@@ -133,11 +130,10 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   }
 
   private void setPromotionForCurrentTip() {
-    if (myProject == null || myProject.isDisposed()) return;
+    if (myProject.isDisposed()) return;
     if (myCurrentPromotion != null) {
       remove(myCurrentPromotion);
       myCurrentPromotion = null;
-      myBrowser.getComponent().setBorder(JBUI.Borders.empty(8, 12));
     }
     List<JPanel> promotions = ContainerUtil.mapNotNull(TipAndTrickPromotionFactory.getEP_NAME().getExtensionList(),
                                                        factory -> factory.createPromotionPanel(myProject, myCurrentTip));
@@ -147,24 +143,15 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
       }
       myCurrentPromotion = promotions.get(0);
       add(myCurrentPromotion, BorderLayout.NORTH);
-      myBrowser.getComponent().setBorder(JBUI.Borders.empty(0, 12, 8, 12));
-      removeTopMarginFromTipContent();
     }
     revalidate();
     repaint();
   }
 
-  // Removes the top margin from first tag inside <body> of TipAndTrick text
-  // to reduce the indent between promotion panel and Tip content
-  private void removeTopMarginFromTipContent() {
-    @Nls String tipText = myBrowser.getText();
-    Matcher firstTagMatcher = Pattern.compile("<body>\\s*<\\w+", Pattern.CASE_INSENSITIVE).matcher(tipText);
-    if (firstTagMatcher.find()) {
-      int endOffset = firstTagMatcher.end();
-      @SuppressWarnings("HardCodedStringLiteral")
-      @Nls String editedTipText = new StringBuilder(tipText).insert(endOffset, " style=\"margin-top: 0px\"").toString();
-      myBrowser.setText(editedTipText);
-    }
+  private void setTipsNotFoundText() {
+    String text = IdeBundle.message("error.tips.not.found", ApplicationNamesInfo.getInstance().getFullProductName());
+    List<TextPart> parts = List.of(new RegularTextPart(text, false));
+    myTextPane.setParagraphs(List.of(new TextParagraph(parts)));
   }
 
   @Override

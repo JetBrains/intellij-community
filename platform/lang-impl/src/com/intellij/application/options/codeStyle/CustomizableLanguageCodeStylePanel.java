@@ -33,8 +33,6 @@ import java.util.*;
 
 /**
  * Base class for code style settings panels supporting multiple programming languages.
- *
- * @author rvishnyakov
  */
 public abstract class CustomizableLanguageCodeStylePanel extends CodeStyleAbstractPanel implements CodeStyleSettingsCustomizable {
   private static final Logger LOG = Logger.getInstance(CustomizableLanguageCodeStylePanel.class);
@@ -75,7 +73,7 @@ public abstract class CustomizableLanguageCodeStylePanel extends CodeStyleAbstra
   }
 
   @Override
-  protected String getFileExt() {
+  protected @NotNull String getFileExt() {
     String fileExt = LanguageCodeStyleSettingsProvider.getFileExt(getDefaultLanguage());
     if (fileExt != null) return fileExt;
     return super.getFileExt();
@@ -95,7 +93,7 @@ public abstract class CustomizableLanguageCodeStylePanel extends CodeStyleAbstra
 
   @Override
   @Nullable
-  protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
+  protected EditorHighlighter createHighlighter(final @NotNull EditorColorsScheme scheme) {
     FileType fileType = getFileType();
     return FileTypeEditorHighlighterProviders.INSTANCE.forFileType(fileType).getEditorHighlighter(
       ProjectUtil.guessCurrentProject(getPanel()), fileType, null, scheme);
@@ -103,7 +101,7 @@ public abstract class CustomizableLanguageCodeStylePanel extends CodeStyleAbstra
 
 
   @Override
-  protected PsiFile doReformat(final Project project, final PsiFile psiFile) {
+  protected @NotNull PsiFile doReformat(final Project project, final @NotNull PsiFile psiFile) {
     final String text = psiFile.getText();
     final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
     final Document doc = manager.getDocument(psiFile);

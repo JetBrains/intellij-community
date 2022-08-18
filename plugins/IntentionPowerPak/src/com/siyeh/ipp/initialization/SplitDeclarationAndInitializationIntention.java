@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2019 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -34,6 +35,16 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class SplitDeclarationAndInitializationIntention extends Intention {
+
+  @Override
+  public @NotNull String getFamilyName() {
+    return IntentionPowerPackBundle.message("split.declaration.and.initialization.intention.family.name");
+  }
+
+  @Override
+  public @NotNull String getText() {
+    return IntentionPowerPackBundle.message("split.declaration.and.initialization.intention.name");
+  }
 
   @Override
   @NotNull
@@ -97,7 +108,7 @@ public class SplitDeclarationAndInitializationIntention extends Intention {
       classInitializer = (PsiClassInitializer)containingClass.addAfter(elementFactory.createClassInitializer(), field);
 
       // add some whitespace between the field and the class initializer
-      final PsiElement whitespace = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n");
+      final PsiElement whitespace = PsiParserFacade.getInstance(project).createWhiteSpaceFromText("\n");
       containingClass.addAfter(whitespace, field);
     }
     final PsiCodeBlock body = classInitializer.getBody();

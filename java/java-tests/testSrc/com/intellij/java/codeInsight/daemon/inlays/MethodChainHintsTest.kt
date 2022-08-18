@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.inlays
 
 import com.intellij.codeInsight.hints.MethodChainsInlayProvider
@@ -7,7 +7,7 @@ import org.intellij.lang.annotations.Language
 
 class MethodChainHintsTest : InlayHintsProviderTestCase() {
   fun check(@Language("Java") text: String) {
-    testProvider("A.java", text, MethodChainsInlayProvider())
+    doTestProvider("A.java", text, MethodChainsInlayProvider())
   }
 
   fun `test plain builder`() {
@@ -32,9 +32,9 @@ public class Chains {
   public static void main(String[] args) {
     new A()
     new A()
-      .b()<# [[temp:///src/A.java:1]Chains . [temp:///src/A.java:99]B] #>
-                .c()<# [[temp:///src/A.java:1]Chains . [temp:///src/A.java:173]C] #>
-                .a()<# [[temp:///src/A.java:1]Chains . [temp:///src/A.java:25]A] #>
+      .b()<# [temp:///src/A.java:99]B #>
+                .c()<# [temp:///src/A.java:173]C #>
+                .a()<# [temp:///src/A.java:25]A #>
                 .c();
   }
 }""")
@@ -60,13 +60,13 @@ public class Chains {
 
   @SuppressWarnings("UnusedLabel")
   public static void main(String[] args) {
-    new A()
-      .b()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:98]B] #>
-      .c().b()
-      .a()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:24]A] #>
-      .c()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:172]C] #>
-      .b()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:98]B] #>
-      .c();
+    A a = new A();
+    a.b().c() // comment
+     .a()<# [temp:///src/A.java:24]A #>
+     .b()<# [temp:///src/A.java:98]B #>
+     .a() // comment
+     .c()<# [temp:///src/A.java:172]C #>
+     .b();
   }
 }
 """)
@@ -92,11 +92,11 @@ public class Chains {
   @SuppressWarnings("UnusedLabel")
   public static void main(String[] args) {
     A a = new A();
-    a.b().c()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:172]C] #>
-     .a()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:24]A] #>
-     .b()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:98]B] #>
-     .a()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:24]A] #>
-     .c()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:172]C] #>
+    a.b().c()<# [temp:///src/A.java:172]C #>
+     .a()<# [temp:///src/A.java:24]A #>
+     .b()<# [temp:///src/A.java:98]B #>
+     .a()<# [temp:///src/A.java:24]A #>
+     .c()<# [temp:///src/A.java:172]C #>
      .b();
   }
 }
@@ -124,10 +124,10 @@ public class Chains {
   public static void main(String[] args) {
     A a = new A();
     a.b().c() // comment
-     .a()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:24]A] #>
-     .b()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:98]B] #>
+     .a()<# [temp:///src/A.java:24]A #>
+     .b()<# [temp:///src/A.java:98]B #>
      .a() // comment
-     .c()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:172]C] #>
+     .c()<# [temp:///src/A.java:172]C #>
      .b();
   }
 }
@@ -154,15 +154,15 @@ public class Chains {
   @SuppressWarnings("UnusedLabel")
   public static void main(String[] args) {
     new A()
-      .b()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:98]B] #>
-                .c()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:172]C] #>
-                .a()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:24]A] #>
+      .b()<# [temp:///src/A.java:98]B #>
+                .c()<# [temp:///src/A.java:172]C #>
+                .a()<# [temp:///src/A.java:24]A #>
                 .c();
 
     new A()
-      .b()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:98]B] #>
-                .c()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:172]C] #>
-                .a()<# [[temp:///src/A.java:0]Chains . [temp:///src/A.java:24]A] #>
+      .b()<# [temp:///src/A.java:98]B #>
+                .c()<# [temp:///src/A.java:172]C #>
+                .a()<# [temp:///src/A.java:24]A #>
                 .c();
   }
 }
@@ -196,13 +196,13 @@ public class Chains {
     new A()
       .b(() -> {
         new B()
-          .a()<# [[temp:///src/A.java:1]Chains . [temp:///src/A.java:70]A] #>
-          .c()<# [[temp:///src/A.java:1]Chains . [temp:///src/A.java:235]C] #>
-          .b()<# [[temp:///src/A.java:1]Chains . [temp:///src/A.java:161]B] #>
+          .a()<# [temp:///src/A.java:70]A #>
+          .c()<# [temp:///src/A.java:235]C #>
+          .b()<# [temp:///src/A.java:161]B #>
           .a();
-      })<# [[temp:///src/A.java:1]Chains . [temp:///src/A.java:161]B] #>
-      .c()<# [[temp:///src/A.java:1]Chains . [temp:///src/A.java:235]C] #>
-      .a()<# [[temp:///src/A.java:1]Chains . [temp:///src/A.java:70]A] #>
+      })<# [temp:///src/A.java:161]B #>
+      .c()<# [temp:///src/A.java:235]C #>
+      .a()<# [temp:///src/A.java:70]A #>
       .c();
   }
 }

@@ -37,7 +37,7 @@ class JavaSdkPathRelativizer implements PathRelativizer {
     if (myJavaSdkPathMap == null || myJavaSdkPathMap.isEmpty()) return null;
     Optional<Map.Entry<String, String>> optionalEntry = myJavaSdkPathMap.entrySet().stream()
       .filter(entry -> FileUtil.startsWith(path, entry.getValue())).findFirst();
-    if (!optionalEntry.isPresent()) return null;
+    if (optionalEntry.isEmpty()) return null;
 
     Map.Entry<String, String> javaSdkEntry = optionalEntry.get();
     return javaSdkEntry.getKey() + path.substring(javaSdkEntry.getValue().length());
@@ -49,7 +49,7 @@ class JavaSdkPathRelativizer implements PathRelativizer {
     if (myJavaSdkPathMap == null || myJavaSdkPathMap.isEmpty()) return null;
     Optional<Map.Entry<String, String>> optionalEntry = myJavaSdkPathMap.entrySet().stream()
       .filter(it -> path.startsWith(it.getKey())).findFirst();
-    if (!optionalEntry.isPresent()) return null;
+    if (optionalEntry.isEmpty()) return null;
 
     Map.Entry<String, String> javaSdkEntry = optionalEntry.get();
     return javaSdkEntry.getValue() + path.substring(javaSdkEntry.getKey().length());

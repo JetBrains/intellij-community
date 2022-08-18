@@ -2,9 +2,11 @@
 package com.intellij.ui;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
 
@@ -17,7 +19,7 @@ public class GroupHeaderSeparator extends SeparatorWithText {
 
   private boolean myHideLine;
   private final Insets myLabelInsets;
-  private final JBInsets lineInsets;
+  private Insets lineInsets;
 
   public GroupHeaderSeparator(Insets labelInsets) {
     myLabelInsets = labelInsets;
@@ -34,6 +36,13 @@ public class GroupHeaderSeparator extends SeparatorWithText {
     myHideLine = hideLine;
   }
 
+  public void useComboLineInsets() {
+    if (ExperimentalUI.isNewUI()) {
+      final int hInsets = JBUIScale.scale(UIUtil.getListCellHPadding());
+      lineInsets = JBUI.insets(1, 12 - hInsets, 4, 12 - hInsets);
+    }
+  }
+
   @Override
   protected Dimension getPreferredElementSize() {
     Dimension size;
@@ -43,7 +52,7 @@ public class GroupHeaderSeparator extends SeparatorWithText {
     else {
       size = getLabelSize(myLabelInsets);
     }
-    if (!myHideLine) size.height += lineInsets.height() + 1;
+    if (!myHideLine) size.height += lineInsets.top + lineInsets.bottom + 1;
 
     JBInsets.addTo(size, getInsets());
     return size;
@@ -58,7 +67,7 @@ public class GroupHeaderSeparator extends SeparatorWithText {
 
     if (!myHideLine) {
       paintLine(g, bounds);
-      int lineHeight = lineInsets.height() + 1;
+      int lineHeight = lineInsets.top + lineInsets.bottom + 1;
       bounds.y += lineHeight;
       bounds.height -= lineHeight;
     }
@@ -82,7 +91,7 @@ public class GroupHeaderSeparator extends SeparatorWithText {
 
   private void paintLine(Graphics g, Rectangle bounds) {
     int x = bounds.x + lineInsets.left;
-    int width = bounds.width - lineInsets.width();
+    int width = bounds.width - lineInsets.left - lineInsets.right;
     int y = bounds.y + lineInsets.top;
     FILL.paint((Graphics2D)g, x, y, width, 1, null);
   }

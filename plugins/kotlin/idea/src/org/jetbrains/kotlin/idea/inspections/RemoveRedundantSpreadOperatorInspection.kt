@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -9,9 +9,9 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.intentions.isArrayOfMethod
+import org.jetbrains.kotlin.idea.intentions.isArrayOfFunction
 import org.jetbrains.kotlin.idea.refactoring.replaceWithCopyWithResolveCheck
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -19,6 +19,8 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class RemoveRedundantSpreadOperatorInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
@@ -31,19 +33,23 @@ class RemoveRedundantSpreadOperatorInspection : AbstractKotlinInspection() {
             val endOffset =
                 when (argumentExpression) {
                     is KtCallExpression -> {
-                        if (!argumentExpression.isArrayOfMethod()) return
-                        if (argumentExpression.valueArguments.isEmpty()) {
-                            val call = argument.getStrictParentOfType<KtCallExpression>()
-                            if (call != null) {
-                                val bindingContext = call.analyze(BodyResolveMode.PARTIAL)
-                                if (call.replaceWithCopyWithResolveCheck(
-                                        resolveStrategy = { expr, context -> expr.getResolvedCall(context)?.resultingDescriptor },
-                                        context = bindingContext,
-                                        preHook = { valueArgumentList?.removeArgument(call.valueArguments.indexOfFirst { it == argument }) }
-                                    ) == null
-                                ) return
-                            }
-                        }
+                        if (!argumentExpression.isArrayOfFunction()) return
+                        val call = argument.getStrictParentOfType<KtCallExpression>() ?: return
+                        val bindingContext = call.analyze(BodyResolveMode.PARTIAL)
+                        val argumentIndex = call.valueArguments.indexOfFirst { it == argument }
+                        if (call.replaceWithCopyWithResolveCheck(
+                                resolveStrategy = { expr, context -> expr.getResolvedCall(context)?.resultingDescriptor },
+                                context = bindingContext,
+                                preHook = {
+                                    val anchor = valueArgumentList?.arguments?.getOrNull(argumentIndex)
+                                    argumentExpression.valueArguments.reversed().forEach {
+                                        valueArgumentList?.addArgumentAfter(it, anchor)
+                                    }
+                                    valueArgumentList?.removeArgument(argumentIndex)
+                                }
+                            ) == null
+                        ) return
+
                         argumentExpression.calleeExpression!!.endOffset - argumentOffset
                     }
                     is KtCollectionLiteralExpression -> startOffset + 1
@@ -54,7 +60,7 @@ class RemoveRedundantSpreadOperatorInspection : AbstractKotlinInspection() {
                 argument,
                 TextRange(startOffset, endOffset),
                 KotlinBundle.message("remove.redundant.spread.operator.quickfix.text"),
-                ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                 isOnTheFly,
                 RemoveRedundantSpreadOperatorQuickfix()
             )

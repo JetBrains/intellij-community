@@ -6,7 +6,6 @@ import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiNameIdentifierOwner
-import com.intellij.util.containers.isNullOrEmpty
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
@@ -57,7 +56,7 @@ class PyProtocolInspection : PyInspection() {
           inspectProtocolSubclass(protocol, type, myTypeEvalContext).forEach {
             val subclassElements = it.second
             if (!subclassElements.isNullOrEmpty()) {
-              checkMemberCompatibility(it.first, subclassElements!!, type, protocol)
+              checkMemberCompatibility(it.first, subclassElements, type, protocol)
             }
           }
         }

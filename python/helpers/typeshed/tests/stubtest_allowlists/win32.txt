@@ -7,6 +7,9 @@ distutils.msvccompiler.HKEYS
 locale.[A-Z0-9_]+  # Constants that should be moved to _locale and re-exported conditionally
 locale.nl_langinfo  # Function that should be moved to _locale and re-exported conditionally
 mmap.PAGESIZE
+# alias for a class defined elsewhere, 
+# mypy infers the variable has type `(*args) -> DupHandle` but stubtest infers the runtime type as <class DupHandle>
+multiprocessing.reduction.AbstractReducer.DupHandle
 msilib.MSI[A-Z_]+
 msilib.text.dirname
 msilib.PID_[A-Z_]+
@@ -62,13 +65,10 @@ pathlib.Path.group
 
 # Exists at runtime, but missing from stubs
 _msi.MSIError
-asyncio.windows_utils.Popen
 distutils.msvccompiler.MSVCCompiler.manifest_get_embed_info
 distutils.msvccompiler.MSVCCompiler.manifest_setup_ldargs
 distutils.msvccompiler.OldMSVCCompiler
 msvcrt.SetErrorMode
-os.get_handle_inheritable
-os.set_handle_inheritable
 socket.MsgFlag.MSG_BCAST
 socket.MsgFlag.MSG_MCAST
 ssl.SSLSocket.recvmsg

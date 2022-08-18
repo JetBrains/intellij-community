@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.internal
 
@@ -25,11 +25,12 @@ import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.core.KotlinCompilerIde
-import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.InfinitePeriodicalTask
 import org.jetbrains.kotlin.idea.util.LongRunningReadTask
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.join
 import java.awt.BorderLayout
@@ -67,7 +68,7 @@ class KotlinBytecodeToolWindow(private val myProject: Project, private val toolW
             }
 
             val file = location.kFile
-            return if (file == null || !ProjectRootsUtil.isInProjectSource(file)) {
+            return if (file == null || !RootKindFilter.projectSources.matches(file)) {
                 null
             } else location
 
@@ -191,7 +192,7 @@ class KotlinBytecodeToolWindow(private val myProject: Project, private val toolW
         enableInline = JCheckBox(KotlinJvmBundle.message("checkbox.text.inline"), true)
         enableOptimization = JCheckBox(KotlinJvmBundle.message("checkbox.text.optimization"), true)
         enableAssertions = JCheckBox(KotlinJvmBundle.message("checkbox.text.assertions"), true)
-        jvmTargets = ComboBox(JvmTarget.values().map { it.description }.toTypedArray())
+        jvmTargets = ComboBox(JvmTarget.supportedValues().map { it.description }.toTypedArray())
         @NlsSafe
         val description = JvmTarget.DEFAULT.description
         jvmTargets.selectedItem = description

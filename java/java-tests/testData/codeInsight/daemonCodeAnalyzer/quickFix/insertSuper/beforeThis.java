@@ -1,4 +1,4 @@
-// "Insert 'this();'" "true"
+// "Insert 'this();'" "true-preview"
 import java.io.*;
 
 class c {

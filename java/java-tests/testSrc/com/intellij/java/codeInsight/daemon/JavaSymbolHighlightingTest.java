@@ -1,25 +1,18 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.JavaExpectedHighlightingData;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ReassignedVariableInspection;
 import com.intellij.testFramework.ExpectedHighlightingData;
+import org.jetbrains.annotations.NotNull;
 
 public class JavaSymbolHighlightingTest extends LightDaemonAnalyzerTestCase {
+  @Override
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
+    return new LocalInspectionTool[] {new ReassignedVariableInspection()};
+  }
 
   public void testImplicitAnonymousClassParameterHighlighting_InsideLambda() {
     configureFromFileText("Test.java",
@@ -42,18 +35,20 @@ public class JavaSymbolHighlightingTest extends LightDaemonAnalyzerTestCase {
     configureFromFileText("Test.java",
                           "class Test {\n" +
                           "  void foo() {\n" +
-                          "    int <symbolName type=\"REASSIGNED_LOCAL_VARIABLE\">x</symbolName> = 0;\n" +
-                          "    x = 1;\n" +
+                          "    @SuppressWarnings(\"ReassignedVariable\") int y = 0;\n" +
+                          "    y = 7; " +
+                          "    int x = 0;\n" +
+                          "    <text_attr descr=\"Reassigned local variable\">x</text_attr> = 1;\n" +
                           "  }\n" +
                           "  \n" +
                           "  String loop() {\n" +
-                          "    String <symbolName type=\"REASSIGNED_LOCAL_VARIABLE\">a</symbolName>;\n" +
+                          "    String <text_attr descr=\"Reassigned local variable\">a</text_attr>;\n" +
                           "\n" +
                           "    do {\n" +
-                          "      a = \"aaaa\";\n" +
+                          "      <text_attr descr=\"Reassigned local variable\">a</text_attr> = \"aaaa\";\n" +
                           "    }\n" +
-                          "    while (a.equals(\"bbb\"));\n" +
-                          "    return a;\n" +
+                          "    while (<text_attr descr=\"Reassigned local variable\">a</text_attr>.equals(\"bbb\"));\n" +
+                          "    return <text_attr descr=\"Reassigned local variable\">a</text_attr>;\n" +
                           "  }\n" +
                           "}");
     doTestConfiguredFile(true, true, true, null);
@@ -61,7 +56,7 @@ public class JavaSymbolHighlightingTest extends LightDaemonAnalyzerTestCase {
   
   @Override
   protected ExpectedHighlightingData getExpectedHighlightingData(boolean checkWarnings, boolean checkWeakWarnings, boolean checkInfos) {
-    JavaExpectedHighlightingData data = new JavaExpectedHighlightingData(getEditor().getDocument(), false, false, false, true);
+    JavaExpectedHighlightingData data = new JavaExpectedHighlightingData(getEditor().getDocument(), checkWarnings, checkWeakWarnings, checkInfos, true);
     data.checkSymbolNames();
     return data;
   }

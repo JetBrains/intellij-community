@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.application.options.RegistryManager;
@@ -50,7 +50,7 @@ public final class JBCefClient implements JBCefDisposable {
      * corresponds to a single {@link JBCefJSQuery} instance. The pool is not created by default unless it is explicitly
      * requested via this property. The property should be added to a client before the first browser associated
      * with the client is added to a UI hierarchy, otherwise it will have no effect.
-     *
+     * <p>
      * When a {@link JBCefJSQuery} is disposed, its JS query function ({@link JBCefJSQuery#getFuncName}) is returned
      * to the pool as a free slot and is then reused by a newly created {@link JBCefJSQuery}.
      */

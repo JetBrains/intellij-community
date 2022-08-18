@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
@@ -7,16 +7,29 @@ import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.codeInsight.hints.InlayGroup
 import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.ui.layout.*
-import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import javax.swing.JComponent
 
-@Suppress("UnstableApiUsage")
 class KotlinLambdasHintsProvider : KotlinAbstractHintsProvider<KotlinLambdasHintsProvider.Settings>() {
 
     data class Settings(
         var returnExpressions: Boolean = true,
         var implicitReceiversAndParams: Boolean = true,
-    )
+    ): HintsSettings() {
+        override fun isEnabled(hintType: HintType): Boolean =
+            when(hintType) {
+                HintType.LAMBDA_RETURN_EXPRESSION -> returnExpressions
+                HintType.LAMBDA_IMPLICIT_PARAMETER_RECEIVER -> implicitReceiversAndParams
+                else -> false
+            }
+
+        override fun enable(hintType: HintType, enable: Boolean) =
+            when(hintType) {
+                HintType.LAMBDA_RETURN_EXPRESSION -> returnExpressions = enable
+                HintType.LAMBDA_IMPLICIT_PARAMETER_RECEIVER -> implicitReceiversAndParams = enable
+                else -> Unit
+            }
+    }
 
     override val key: SettingsKey<Settings> = SettingsKey("kotlin.lambdas.hints")
     override val name: String = KotlinBundle.message("hints.settings.lambdas")
@@ -25,17 +38,15 @@ class KotlinLambdasHintsProvider : KotlinAbstractHintsProvider<KotlinLambdasHint
     override val group: InlayGroup
         get() = InlayGroup.LAMBDAS_GROUP
 
-    override fun getProperty(key: String): String {
-        return KotlinBundle.getMessage(key)
-    }
-
-    override fun isElementSupported(resolved: HintType?, settings: Settings): Boolean {
-        return when (resolved) {
+    override fun isElementSupported(resolved: HintType?, settings: Settings): Boolean =
+        when (resolved) {
             HintType.LAMBDA_RETURN_EXPRESSION -> settings.returnExpressions
             HintType.LAMBDA_IMPLICIT_PARAMETER_RECEIVER -> settings.implicitReceiversAndParams
             else -> false
         }
-    }
+
+    override fun isHintSupported(hintType: HintType): Boolean =
+        hintType == HintType.LAMBDA_RETURN_EXPRESSION || hintType == HintType.LAMBDA_IMPLICIT_PARAMETER_RECEIVER
 
     override fun createConfigurable(settings: Settings): ImmediateConfigurable {
         return object : ImmediateConfigurable {
@@ -66,16 +77,5 @@ class KotlinLambdasHintsProvider : KotlinAbstractHintsProvider<KotlinLambdasHint
 
     override fun createSettings(): Settings = Settings()
 
-    override val previewText: String = """
-        val lambda = { i: Int ->
-            i + 10
-            i + 20
-        }
-
-        fun someFun() {    
-            GlobalScope.launch {
-                // someSuspendingFun()
-            }
-        }
-    """.trimIndent()
+    override val previewText: String? = null
 }

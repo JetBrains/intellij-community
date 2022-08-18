@@ -105,7 +105,15 @@ public class YAMLEnterAtIndentHandler extends EnterHandlerDelegateAdapter {
     }
     else {
       // don't insert a second '-' before already existing '-'
-      if (isEmptySequenceItem(element.getPrevSibling())) {
+      PsiElement prevSibling = element.getPrevSibling();
+      if (isEmptySequenceItem(prevSibling)) {
+        return Result.Continue;
+      }
+      while (YAMLElementTypes.BLANK_ELEMENTS.contains(PsiUtilCore.getElementType(prevSibling))) {
+        prevSibling = prevSibling.getPrevSibling();
+      }
+      if (PsiUtilCore.getElementType(prevSibling) == YAMLElementTypes.SEQUENCE_ITEM &&
+          PsiUtilCore.getElementType(prevSibling.getLastChild()) == YAMLElementTypes.MAPPING) {
         return Result.Continue;
       }
     }

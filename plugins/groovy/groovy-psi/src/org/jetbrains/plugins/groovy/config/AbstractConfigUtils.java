@@ -49,8 +49,6 @@ public abstract class AbstractConfigUtils {
   /**
    * Define, whether  given home is appropriate SDK home
    *
-   * @param file
-   * @return
    */
   public abstract boolean isSDKHome(final VirtualFile file);
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -38,9 +38,9 @@ import static com.intellij.ui.jcef.JBCefEventUtils.isUpDownKeyEvent;
  * <p>
  * Use {@link #loadURL(String)} or {@link #loadHTML(String)} for loading.
  *
+ * @author tav
  * @see #createBuilder
  * @see JBCefOsrHandlerBrowser
- * @author tav
  */
 public class JBCefBrowser extends JBCefBrowserBase {
   /**
@@ -49,14 +49,14 @@ public class JBCefBrowser extends JBCefBrowserBase {
   public static class Properties extends JBCefBrowserBase.Properties {
     /**
      * Defines whether the browser component should take focus on navigation (loading a new URL).
-     * <p></p>
+     * <p>
      * Accepts {@link Boolean} values. The default value is {@link Boolean#FALSE}.
      */
     public static final @NotNull String FOCUS_ON_NAVIGATION = "JBCefBrowser.focusOnNavigation";
 
     /**
      * Defines whether the browser component should take focus on show.
-     * <p></p>
+     * <p>
      * Accepts {@link Boolean} values. The default value is {@link Boolean#FALSE}.
      */
     public static final @NotNull String FOCUS_ON_SHOW ="JBCefBrowser.focusOnShow";

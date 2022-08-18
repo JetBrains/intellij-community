@@ -3,7 +3,8 @@
            xsi:noNamespaceSchemaLocation="Example.xsd">
     <orderperson><TYPO descr="Typo: In word 'johnn'">johnn</TYPO> Smith</orderperson>
     <shipto>
-        <name>First sentence. <warning descr="PRP_THE">it</warning> <warning descr="EN_A_VS_AN">an</warning> friend. Last sentence.</name>
+        <name>First sentence. it <warning descr="EN_A_VS_AN">an</warning> friend. Last sentence.</name>
         <address>Some street 23</address>
     </shipto>
+  <russian_with_newline>Не удалось авторизоваться.\nПопробуйте ещё раз. И <warning descr="Sklonenije_NUM_NN">пять карандаша</warning>.</russian_with_newline>
 </shiporder>

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.openapi.diagnostic.thisLogger
@@ -43,8 +43,7 @@ internal class MutableEntityFamily<E : WorkspaceEntity>(
   private val copiedToModify: IntSet = IntOpenHashSet()
 
   fun remove(id: Int) {
-    if (availableSlots.contains(id)) {
-      thisLogger().error("id $id is already removed")
+    if (availableSlots.contains(id) || entities[id] == null) {
       return
     }
 
@@ -164,7 +163,6 @@ internal class MutableEntityFamily<E : WorkspaceEntity>(
 
   companion object {
     // Do not remove parameter. Kotlin fails with compilation without it
-    @Suppress("RemoveExplicitTypeArguments")
     fun <T: WorkspaceEntity> createEmptyMutable() = MutableEntityFamily<T>(ArrayList(), false)
   }
 }

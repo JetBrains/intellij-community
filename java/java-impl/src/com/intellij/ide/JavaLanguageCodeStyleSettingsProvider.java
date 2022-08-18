@@ -15,7 +15,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.*;
-import com.intellij.psi.codeStyle.presentation.CodeStyleSettingPresentation;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
@@ -28,16 +27,13 @@ import java.util.List;
 import static com.intellij.application.options.JavaDocFormattingPanel.*;
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
 
-/**
- * @author rvishnyakov
- */
 public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
   @NotNull
   @Override
   public CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings modelSettings) {
     return new CodeStyleAbstractConfigurable(settings, modelSettings, JavaLanguage.INSTANCE.getDisplayName()) {
       @Override
-      protected CodeStyleAbstractPanel createPanel(final CodeStyleSettings settings) {
+      protected @NotNull CodeStyleAbstractPanel createPanel(final @NotNull CodeStyleSettings settings) {
         return new JavaCodeStyleMainPanel(getCurrentSettings(), settings);
       }
       @Override
@@ -49,7 +45,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
   @Nullable
   @Override
-  public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
+  public CustomCodeStyleSettings createCustomSettings(@NotNull CodeStyleSettings settings) {
     return new JavaCodeStyleSettings(settings);
   }
 
@@ -84,6 +80,8 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 JavaBundle.message("checkbox.spaces.around.annotation.eq"), getInstance().SPACES_OTHER);
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_WITHIN_RECORD_HEADER",
                                 JavaBundle.message("checkbox.spaces.record.header"), getInstance().SPACES_WITHIN);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_WITHIN_DECONSTRUCTION_LIST",
+                                JavaBundle.message("checkbox.spaces.within.deconstruction.list"), getInstance().SPACES_WITHIN);
 
       String groupName = getInstance().SPACES_IN_TYPE_ARGUMENTS;
       consumer.moveStandardOption("SPACE_AFTER_COMMA_IN_TYPE_ARGUMENTS", groupName);
@@ -101,6 +99,9 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
         "checkbox.spaces.before.colon.in.foreach"), groupName);
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_INSIDE_ONE_LINE_ENUM_BRACES", JavaBundle.message(
         "checkbox.spaces.inside.one.line.enum"), groupName);
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_BEFORE_DECONSTRUCTION_LIST", JavaBundle.message(
+        "checkbox.spaces.before.deconstruction.list"), getInstance().SPACES_BEFORE_PARENTHESES);
     }
     else if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
       consumer.showStandardOptions("RIGHT_MARGIN",
@@ -249,6 +250,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 ApplicationBundle.message("wrapping.rpar.on.new.line"),
                                 recordComponentsGroup);
 
+      // Try statement
       consumer.showCustomOption(JavaCodeStyleSettings.class,
                                 "MULTI_CATCH_TYPES_WRAP",
                                 JavaBundle.message("wrapping.multi.catch.types"),
@@ -258,6 +260,27 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
                                 "ALIGN_TYPES_IN_MULTI_CATCH",
                                 JavaBundle.message("align.types.in.multi.catch"),
                                 ApplicationBundle.message("wrapping.try.statement"));
+
+      // Deconstruction patterns
+      String deconstructionComponentsGroup = JavaBundle.message("wrapping.deconstruction.patterns");
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "DECONSTRUCTION_LIST_WRAP",
+                                deconstructionComponentsGroup,
+                                null,
+                                getInstance().WRAP_OPTIONS, CodeStyleSettingsCustomizable.WRAP_VALUES);
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "ALIGN_MULTILINE_DECONSTRUCTION_LIST_COMPONENTS",
+                                ApplicationBundle.message("wrapping.align.when.multiline"),
+                                deconstructionComponentsGroup);
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "NEW_LINE_AFTER_LPAREN_IN_DECONSTRUCTION_PATTERN",
+                                ApplicationBundle.message("wrapping.new.line.after.lpar"),
+                                deconstructionComponentsGroup);
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "RPAREN_ON_NEW_LINE_IN_DECONSTRUCTION_PATTERN",
+                                ApplicationBundle.message("wrapping.rpar.on.new.line"),
+                                deconstructionComponentsGroup);
     }
     else if (settingsType == SettingsType.BLANK_LINES_SETTINGS) {
       consumer.showAllStandardOptions();
@@ -333,7 +356,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
   }
 
   @Override
-  public PsiFile createFileFromText(final Project project, final String text) {
+  public PsiFile createFileFromText(final @NotNull Project project, final @NotNull String text) {
     final PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(
       "sample.java", JavaFileType.INSTANCE, text, LocalTimeCounter.currentTime(), false, false
     );
@@ -574,6 +597,11 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "      }\n" +
     "    }\n" +
     "    while (true);\n" +
+    "    \n" +
+    "    switch (o) {\n" +
+    "      case Rec(String s, int i) r -> {}\n" +
+    "    }\n" +
+    "\n" +
     "  }\n" +
     "  void bar(){{return;}}\n" +
     "}\n" +
@@ -582,9 +610,11 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "        return null;\n" +
     "    }\n" +
     "}\n" +
-    "interface Abba {}";
+    "interface Abba {}\n" +
+    "record Rec(String s, int i) {}";
 
-  private static final String WRAPPING_CODE_SAMPLE =
+  @SuppressWarnings({"UnusedLabel", "InnerClassMayBeStatic"})
+  @org.intellij.lang.annotations.Language("JAVA") private static final String WRAPPING_CODE_SAMPLE =
     "/*\n" +
     " * This is a sample file.\n" +
     " */\n" +

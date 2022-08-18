@@ -1,13 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.diagnostic.Logger;
 
 /**
+ * Please use the registry to enable/disable experimental features, see {@code com.intellij.registryKey} extension point
+ *
  * @author Konstantin Bulenkov
- * @deprecated Please use the registry to enable/disable experimental features, see {@code com.intellij.registryKey} extension point
  */
-@Deprecated(forRemoval = true)
 public final class ExperimentalFeatureImpl extends ExperimentalFeature{
   @Override
   public boolean isEnabled() {

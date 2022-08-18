@@ -62,7 +62,7 @@ class HeaderReferenceCompletionTest : BasePlatformTestCase() {
   }
 
   fun testGfmSpecial() {
-    myFixture.testCompletionVariants(getBeforeFileName(), "get-method", "get-call")
+    myFixture.testCompletionVariants(getBeforeFileName(), "get-method", "-get----call")
   }
 
 

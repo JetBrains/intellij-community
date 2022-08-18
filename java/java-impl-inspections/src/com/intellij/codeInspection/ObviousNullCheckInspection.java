@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.jdk.AutoBoxingInspection;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
@@ -28,7 +29,7 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
         PsiExpression[] args = call.getArgumentList().getExpressions();
         // Avoid method resolve if no argument is a candidate for obvious non-null warning
         // (checking this is easier than resolving and calls without arguments are excluded at all)
@@ -68,12 +69,22 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
       if (method == null || method.isConstructor()) return null;
       if (!JavaMethodContractUtil.isPure(method)) return null;
       List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(method, call);
-      if (contracts.isEmpty() || contracts.size() > 2) return null;
-
+      if (contracts.isEmpty()) return null;
       MethodContract contract = contracts.get(0);
-      if (contract == null || !contract.getReturnValue().isFail()) return null;
+      if (contract == null) return null;
+      ContractReturnValue firstReturn = contract.getReturnValue();
       ContractValue condition = ContainerUtil.getOnlyItem(contract.getConditions());
       if (condition == null) return null;
+      if (firstReturn instanceof ParameterReturnValue) {
+        // first contract is like "!null -> param1"; ignore other contracts
+        int index = ((ParameterReturnValue)firstReturn).getParameterNumber();
+        int nullIndex = condition.getNullCheckedArgument(false).orElse(-1);
+        if (nullIndex != index) return null;
+        return new NullCheckParameter(nullIndex, false, true);
+      }
+
+      if (contracts.size() > 2) return null;
+      if (!firstReturn.isFail()) return null;
       boolean isNull = false;
       int nullIndex = condition.getNullCheckedArgument(true).orElse(-1);
       if (nullIndex == -1) {
@@ -139,7 +150,14 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
         }
         ct.deleteAndRestoreComments(parent);
       } else {
-        ct.replaceAndRestoreComments(call, startElement);
+        boolean objectCall = call.getType() instanceof PsiClassType;
+        PsiExpression result = (PsiExpression)ct.replaceAndRestoreComments(call, startElement);
+        if (objectCall && result.getType() instanceof PsiPrimitiveType) {
+          PsiElement resultParent = result.getParent();
+          if (resultParent instanceof PsiReferenceExpression) {
+            AutoBoxingInspection.replaceWithBoxing(result);
+          }
+        }
       }
     }
   }

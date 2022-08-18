@@ -34,8 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class RefactoringUiServiceImpl extends RefactoringUiService {
-
+public final class RefactoringUiServiceImpl extends RefactoringUiService {
   @Override
   public RenameRefactoringDialog createRenameRefactoringDialog(Project project,
                                                                PsiElement element,

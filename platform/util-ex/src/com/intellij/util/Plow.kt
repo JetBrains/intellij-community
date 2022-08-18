@@ -3,7 +3,6 @@ package com.intellij.util
 
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * A Processor + Flow, or the Poor man's Flow: a reactive-stream-like wrapper around [Processor].

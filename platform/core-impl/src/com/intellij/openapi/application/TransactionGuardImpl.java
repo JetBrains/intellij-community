@@ -15,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Map;
 import java.util.Objects;
 
@@ -107,13 +106,8 @@ public final class TransactionGuardImpl extends TransactionGuard {
       return;
     }
 
-    if (allowWriting) {
-      ApplicationManager.getApplication().assertIsWriteThread();
-    }
-    else if (!EventQueue.isDispatchThread()) {
-      LOG.error("must be swing thread");
-    }
-    final boolean prev = myWritingAllowed;
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    boolean prev = myWritingAllowed;
     myWritingAllowed = allowWriting;
     try {
       runnable.run();

@@ -1,10 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.maven.testFramework.MavenDomTestCase;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.maven.testFramework.MavenDomTestCase;
 import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -81,7 +81,7 @@ public class MavenConfigImportingTest extends MavenDomTestCase {
     MavenProject mavenProject = myProjectsManager.findProject(getModule("project"));
     assertEquals("1", mavenProject.getMavenId().getVersion());
 
-    MavenProject module = myProjectsManager.findProject(getModule("m1"));
+    MavenProject module = myProjectsManager.findProject(getModule(mn("project", "m1")));
     assertNotNull(module);
 
     assertEquals("m1", module.getMavenId().getArtifactId());

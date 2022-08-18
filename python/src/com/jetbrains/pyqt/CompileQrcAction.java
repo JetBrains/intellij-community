@@ -7,10 +7,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -19,6 +16,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.viewModel.extraction.ToolWindowContentExtractor;
 import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +26,7 @@ import javax.swing.*;
 public class CompileQrcAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getData(CommonDataKeys.PROJECT);
+    Project project = e.getProject();
     VirtualFile[] vFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     assert vFiles != null;
     Module module = e.getData(PlatformCoreDataKeys.MODULE);
@@ -55,6 +53,7 @@ public class CompileQrcAction extends AnAction {
     try {
       ProcessHandler process = new OSProcessHandler(cmdLine);
       ProcessTerminatedListener.attach(process);
+      process.putUserData(ToolWindowContentExtractor.SYNC_TAB_TO_GUEST, true);
       new RunContentExecutor(project, process)
         .withTitle(PyBundle.message("qt.run.tab.title.compile.qrc"))
         .run();
@@ -64,6 +63,11 @@ public class CompileQrcAction extends AnAction {
       Messages.showErrorDialog(project, PyBundle.message("qt.run.error", path, ex.getMessage()),
                                PyBundle.message("qt.compile.qrc.file"));
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

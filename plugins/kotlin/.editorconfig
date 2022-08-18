@@ -26,3 +26,4 @@ ij_java_finally_on_new_line = false
 
 [{*.kt,*.kts}]
 ij_kotlin_code_style_defaults = KOTLIN_OFFICIAL
+ij_kotlin_line_break_after_multiline_when_entry = true

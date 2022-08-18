@@ -70,4 +70,13 @@ public final class UnknownFeature {
     result = 31 * result + myImplementationName.hashCode();
     return result;
   }
+
+  @Override
+  public String toString() {
+    return "UnknownFeature{" + "myFeatureType='" + myFeatureType + '\'' +
+           ", myFeatureDisplayName='" + myFeatureDisplayName + '\'' +
+           ", myImplementationName='" + myImplementationName + '\'' +
+           ", myImplementationDisplayName='" + myImplementationDisplayName + '\'' +
+           '}';
+  }
 }

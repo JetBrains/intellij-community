@@ -13,6 +13,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
@@ -38,6 +39,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.idea.maven.MavenDisposable;
 import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.project.*;
@@ -55,11 +57,13 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 @State(name = "MavenProjectNavigator", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
-public final class MavenProjectsNavigator extends MavenSimpleProjectComponent implements PersistentStateComponent<MavenProjectsNavigatorState>, Disposable {
+public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
+  implements PersistentStateComponent<MavenProjectsNavigatorState>, Disposable {
   public static final String TOOL_WINDOW_ID = "Maven";
   public static final String TOOL_WINDOW_PLACE_ID = "Maven tool window";
 
@@ -74,6 +78,15 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
 
   public MavenProjectsNavigator(@NotNull Project project) {
     super(project);
+    project.getMessageBus()
+      .connect(MavenDisposable.getInstance(project))
+      .subscribe(MavenImportListener.TOPIC, new MavenImportListener() {
+
+        @Override
+        public void importFinished(@NotNull Collection<MavenProject> importedProjects, @NotNull List<Module> newModules) {
+          scheduleStructureUpdate();
+        }
+      });
   }
 
   @Override
@@ -280,10 +293,10 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
       builder.canCloseContent = false;
       builder.contentFactory = new ToolWindowFactory() {
         @Override
-        public void createToolWindowContent (@NotNull Project project,
-          @NotNull ToolWindow toolWindow){
+        public void createToolWindowContent(@NotNull Project project,
+                                            @NotNull ToolWindow toolWindow) {
         }
-      } ;
+      };
       return Unit.INSTANCE;
     });
 
@@ -422,7 +435,9 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
   }
 
   private void initStructure() {
-    myStructure = new MavenProjectsStructure(myProject, MavenProjectsManager.getInstance(myProject), MavenTasksManager.getInstance(myProject), MavenShortcutsManager.getInstance(myProject), this, myTree);
+    myStructure =
+      new MavenProjectsStructure(myProject, MavenProjectsManager.getInstance(myProject), MavenTasksManager.getInstance(myProject),
+                                 MavenShortcutsManager.getInstance(myProject), this, myTree);
   }
 
   @ApiStatus.Internal
@@ -432,7 +447,9 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent im
 
   private final class MyProjectsListener implements MavenProjectsTree.Listener {
     @Override
-    public void projectsIgnoredStateChanged(@NotNull final List<MavenProject> ignored, @NotNull final List<MavenProject> unignored, boolean fromImport) {
+    public void projectsIgnoredStateChanged(@NotNull final List<MavenProject> ignored,
+                                            @NotNull final List<MavenProject> unignored,
+                                            boolean fromImport) {
       scheduleStructureRequest(() -> myStructure.updateIgnored(ContainerUtil.concat(ignored, unignored)));
     }
 

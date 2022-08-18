@@ -26,6 +26,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.ExecutionConsoleEx;
 import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.execution.ui.UIExperiment;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -95,7 +96,7 @@ public class JavaDebugProcess extends XDebugProcess {
     final DebugProcessImpl process = javaSession.getProcess();
 
     myBreakpointHandlers = StreamEx.of(ourDefaultBreakpointHandlerFactories)
-      .append(JavaBreakpointHandlerFactory.EP_NAME.extensions())
+      .append(JavaBreakpointHandlerFactory.EP_NAME.getExtensionList().stream())
       .map(factory -> factory.createHandler(process))
       .toArray(XBreakpointHandler[]::new);
 
@@ -417,7 +418,7 @@ public class JavaDebugProcess extends XDebugProcess {
   public void registerAdditionalActions(@NotNull DefaultActionGroup leftToolbar,
                                         @NotNull DefaultActionGroup topToolbar,
                                         @NotNull DefaultActionGroup settings) {
-    if (!Registry.is("debugger.new.tool.window.layout")) {
+    if (!UIExperiment.isNewDebuggerUIEnabled()) {
       Constraints beforeRunner = new Constraints(Anchor.BEFORE, "Runner.Layout");
       leftToolbar.add(Separator.getInstance(), beforeRunner);
       leftToolbar.add(ActionManager.getInstance().getAction("DumpThreads"), beforeRunner);

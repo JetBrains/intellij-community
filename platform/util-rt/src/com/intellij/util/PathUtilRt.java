@@ -20,42 +20,43 @@ public final class PathUtilRt {
       return "";
     }
 
-    int end = getEnd(path);
-    int start = getLastIndexOfPathSeparator(path, end);
+    int end = lastNonSeparatorIndex(path);
+    int start = lastSeparatorIndex(path, end);
     if (isWindowsUNCRoot(path, start)) {
       start = -1;
     }
-    return path.substring(start + 1, end);
+    return path.substring(start + 1, end+1);
   }
 
-  @Nullable
+  @Nullable("null means no extension (e.g. 'xxx'), empty string means empty extension (e.g. 'xxx.')")
   public static String getFileExtension(@Nullable String path) {
     if (StringUtilRt.isEmpty(path)) {
       return null;
     }
 
-    int end = getEnd(path);
-    int start = getLastIndexOfPathSeparator(path, end) + 1;
-    int index = StringUtilRt.lastIndexOf(path, '.', Math.max(start, 0), end);
-    return index < 0 ? null : path.substring(index + 1, end);
+    int end = lastNonSeparatorIndex(path);
+    if (end == -1) return null;
+    int start = lastSeparatorIndex(path, end) + 1;
+    int index = StringUtilRt.lastIndexOf(path, '.', Math.max(start, 0), end+1);
+    return index < 0 ? null : path.substring(index + 1, end+1);
   }
 
-  private static int getEnd(@NotNull String path) {
+  private static int lastNonSeparatorIndex(@NotNull String path) {
     for (int index = path.length() - 1; index >= 0; --index) {
       char c = path.charAt(index);
-      if (c != '/' && c != '\\') {
-        return index + 1;
+      if (!isSeparator(c)) {
+        return index;
       }
     }
-    return path.length() - 1;
+    return -1;
   }
 
   @NotNull
   public static String getParentPath(@NotNull String path) {
     if (path.isEmpty()) return "";
-    int end = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
-    if (end == path.length() - 1) {
-      end = getLastIndexOfPathSeparator(path, end);
+    int end = lastSeparatorIndex(path, path.length()-1);
+    if (end == path.length() - 1 && end >= 1) {
+      end = lastSeparatorIndex(path, end-1);
     }
     if (end == -1 || end == 0) {
       return "";
@@ -65,20 +66,26 @@ public final class PathUtilRt {
     }
     // parent of '//host' is root
     char prev = path.charAt(end - 1);
-    if (prev == '/' || prev == '\\') {
+    if (isSeparator(prev)) {
       end--;
     }
     return path.substring(0, end);
   }
 
-  private static int getLastIndexOfPathSeparator(@NotNull CharSequence path, int end) {
-    return Math.max(StringUtilRt.lastIndexOf(path,'/', 0,end - 1), StringUtilRt.lastIndexOf(path, '\\', 0,end - 1));
-  }
-
   public static boolean isWindowsUNCRoot(@NotNull CharSequence path, int lastPathSeparatorPosition) {
     return Platform.CURRENT == Platform.WINDOWS &&
-           (StringUtilRt.startsWith(path, "//") || StringUtilRt.startsWith(path, "\\\\"))
-           && getLastIndexOfPathSeparator(path, lastPathSeparatorPosition) == 1;
+           startsWithSeparatorSeparator(path) && lastPathSeparatorPosition >= 1
+           && !hasFileSeparatorsOrNavigatableDots(path, 2, lastPathSeparatorPosition);
+  }
+
+  private static boolean hasFileSeparatorsOrNavigatableDots(@NotNull CharSequence path, int start, int end) {
+    for (int i = end - 1; i >= start; i--) {
+      char c = path.charAt(i);
+      if (isSeparator(c)) return true;
+      // contains '.' or '..' surrounded by slashes
+      if (c == '.' && (i==2 || i==3 && path.charAt(2)=='.')) return true;
+    }
+    return false;
   }
 
   @NotNull
@@ -107,6 +114,21 @@ public final class PathUtilRt {
    */
   public static boolean isValidFileName(@NotNull String fileName, boolean strict) {
     return isValidFileName(fileName, Platform.CURRENT, strict, FS_CHARSET);
+  }
+
+  public static boolean startsWithSeparatorSeparator(@NotNull CharSequence path) {
+    return path.length() > 1 && isSeparator(path.charAt(0)) && path.charAt(1) == path.charAt(0);
+  }
+
+  public static boolean isSeparator(char c) {
+    return c == '/' || c == '\\';
+  }
+
+  public static int lastSeparatorIndex(@NotNull CharSequence s, int endInclusive) {
+    for (int i = endInclusive; i >= 0; i--) {
+      if (isSeparator(s.charAt(i))) return i;
+    }
+    return -1;
   }
 
   public enum Platform {
@@ -147,7 +169,7 @@ public final class PathUtilRt {
   }
 
   private static boolean isValidFileNameChar(char c, Platform os, boolean strict) {
-    if (c == '/' || c == '\\') return false;
+    if (isSeparator(c)) return false;
     if ((strict || os == Platform.WINDOWS) && (c < 32 || WINDOWS_INVALID_CHARS.indexOf(c) >= 0)) return false;
     return !strict || c != ';';
   }

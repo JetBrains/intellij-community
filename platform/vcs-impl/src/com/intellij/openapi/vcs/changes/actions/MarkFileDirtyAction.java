@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.vcs.changes.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -20,5 +21,10 @@ public class MarkFileDirtyAction extends AnAction implements DumbAware {
     if (file != null) {
       VcsDirtyScopeManager.getInstance(project).fileDirty(file);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 }

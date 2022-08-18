@@ -87,7 +87,7 @@ public class MoveJavaClassHandler implements MoveClassHandler {
     final Set<PsiImportStatementBase> importsToDelete = new HashSet<>();
     newClass.getContainingFile().accept(new JavaRecursiveElementVisitor() {
       @Override
-      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         if (reference.isValid() && reference.isReferenceTo(oldClass)) {
           final PsiImportStatementBase importStatement = PsiTreeUtil.getParentOfType(reference, PsiImportStatementBase.class);
           if (importStatement != null) {
@@ -114,7 +114,7 @@ public class MoveJavaClassHandler implements MoveClassHandler {
     if (aPackage != null) {
       aClass.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
-        public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+        public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
           if (reference.isQualified() && reference.isReferenceTo(aClass)) {
             final PsiElement qualifier = reference.getQualifier();
             if (qualifier instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifier).isReferenceTo(aPackage)) {

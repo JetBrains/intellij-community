@@ -1,4 +1,4 @@
-// "Add missing annotation parameters - value3, value2, value1" "true"
+// "Add missing annotation parameters - value3, value2, value1" "true-preview"
 class Test {
 
   @MyAnnotation(value3 = "", value2 = "", value1 = "")

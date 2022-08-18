@@ -74,13 +74,13 @@ public class PrimitiveArrayArgumentToVariableArgMethodInspection extends BaseIns
   private static class PrimitiveArrayArgumentToVariableArgVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitEnumConstant(PsiEnumConstant enumConstant) {
+    public void visitEnumConstant(@NotNull PsiEnumConstant enumConstant) {
       super.visitEnumConstant(enumConstant);
       visitCall(enumConstant);
     }
 
     @Override
-    public void visitCallExpression(PsiCallExpression callExpression) {
+    public void visitCallExpression(@NotNull PsiCallExpression callExpression) {
       super.visitCallExpression(callExpression);
       visitCall(callExpression);
     }

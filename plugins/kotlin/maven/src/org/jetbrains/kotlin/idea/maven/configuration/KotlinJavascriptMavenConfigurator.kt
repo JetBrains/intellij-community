@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.maven.configuration
 
 import com.intellij.openapi.module.Module
 import org.jetbrains.idea.maven.dom.model.MavenDomPlugin
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.hasKotlinJsRuntimeInScope
 import org.jetbrains.kotlin.idea.maven.KotlinMavenBundle
 import org.jetbrains.kotlin.idea.maven.PomFile
@@ -13,7 +14,7 @@ import org.jetbrains.kotlin.platform.js.JsPlatforms
 
 class KotlinJavascriptMavenConfigurator : KotlinMavenConfigurator(null, false, NAME, PRESENTABLE_TEXT) {
 
-    override fun getStdlibArtifactId(module: Module, version: String) = MAVEN_JS_STDLIB_ID
+    override fun getStdlibArtifactId(module: Module, version: IdeKotlinVersion) = MAVEN_JS_STDLIB_ID
 
     override fun isKotlinModule(module: Module): Boolean {
         return hasKotlinJsRuntimeInScope(module)
@@ -30,9 +31,6 @@ class KotlinJavascriptMavenConfigurator : KotlinMavenConfigurator(null, false, N
 
     override val targetPlatform: TargetPlatform
         get() = JsPlatforms.defaultJsPlatform
-
-    @Suppress("DEPRECATION_ERROR")
-    override fun getTargetPlatform() = JsPlatforms.CompatJsPlatform
 
     override fun getMinimumSupportedVersion() = "1.1.0"
 

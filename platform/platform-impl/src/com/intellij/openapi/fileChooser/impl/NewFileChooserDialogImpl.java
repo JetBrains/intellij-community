@@ -2,7 +2,6 @@
 package com.intellij.openapi.fileChooser.impl;
 
 import com.intellij.ide.dnd.FileCopyPasteUtil;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,7 +13,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.NioFiles;
-import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,7 +21,7 @@ import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem;
 import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.Consumer;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.UriUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,22 +30,21 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.dnd.*;
-import java.net.URI;
+import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.NotNullLazyValue.lazy;
 import static java.util.Objects.requireNonNullElseGet;
 
 final class NewFileChooserDialogImpl extends DialogWrapper implements FileChooserDialog, PathChooserDialog {
-  private static final String RECENT_FILES_KEY = "file.chooser.recent.files";  // only local paths, VFS format
-  private static final int RECENT_FILES_LIMIT = 30;
+  @SuppressWarnings("SpellCheckingInspection") private static final String ZIP_FS_TYPE = "zipfs";
 
   private final FileChooserDescriptor myDescriptor;
+  private Project myProject;
   private FileChooserPanelImpl myPanel;
   private final NotNullLazyValue<VirtualFileSystem> myLocalFs =
     lazy(() -> ApplicationManager.getApplication() != null ? StandardFileSystems.local() : new CoreLocalFileSystem());
@@ -58,6 +55,7 @@ final class NewFileChooserDialogImpl extends DialogWrapper implements FileChoose
   NewFileChooserDialogImpl(FileChooserDescriptor descriptor, @Nullable Component parent, @Nullable Project project) {
     super(project, parent, true, IdeModalityType.PROJECT);
     myDescriptor = descriptor;
+    myProject = project;
     setTitle(requireNonNullElseGet(descriptor.getTitle(), () -> UIBundle.message("file.chooser.default.title")));
     init();
   }
@@ -69,14 +67,15 @@ final class NewFileChooserDialogImpl extends DialogWrapper implements FileChoose
 
   @Override
   public VirtualFile @NotNull [] choose(@Nullable Project project, VirtualFile @NotNull ... toSelect) {
-    myPanel.load(initialPath(toSelect.length > 0 ? toSelect[0] : null));
+    if (myProject == null) myProject = project;
+    myPanel.load(FileChooserUtil.getInitialPath(myDescriptor, myProject, toSelect.length > 0 ? toSelect[0] : null));
     show();
     return myResults != null ? VfsUtilCore.toVirtualFileArray(myResults) : VirtualFile.EMPTY_ARRAY;
   }
 
   @Override
   public void choose(@Nullable VirtualFile toSelect, @NotNull Consumer<? super List<VirtualFile>> callback) {
-    myPanel.load(initialPath(toSelect));
+    myPanel.load(FileChooserUtil.getInitialPath(myDescriptor, myProject, toSelect));
     show();
     if (myResults != null) {
       callback.consume(myResults);
@@ -86,19 +85,10 @@ final class NewFileChooserDialogImpl extends DialogWrapper implements FileChoose
     }
   }
 
-  private static @Nullable Path initialPath(@Nullable VirtualFile provided) {
-    if (provided != null) {
-      var path = provided.getFileSystem().getNioPath(provided);
-      if (path != null) return path;
-    }
-
-    return NioFiles.toPath(recentPaths().findFirst().orElse(SystemProperties.getUserHome()));
-  }
-
   @Override
   protected JComponent createCenterPanel() {
-    Path[] recentPaths = recentPaths().map(NioFiles::toPath).filter(Objects::nonNull).toArray(Path[]::new);
-    myPanel = new FileChooserPanelImpl(myDescriptor, this::doOKAction, recentPaths);
+    Path[] recentPaths = FileChooserUtil.getRecentPaths().stream().map(NioFiles::toPath).filter(Objects::nonNull).toArray(Path[]::new);
+    myPanel = new FileChooserPanelImpl(myDescriptor, this::doOKAction, this::setErrorText, recentPaths);
     myPanel.setPreferredSize(JBUI.size(400));
 
     var dndLabel = new JLabel(UIBundle.message("file.chooser.tooltip.drag.drop"), SwingConstants.CENTER);
@@ -136,7 +126,6 @@ final class NewFileChooserDialogImpl extends DialogWrapper implements FileChoose
       var urls = misses.stream().map(s -> "&nbsp;&nbsp;&nbsp;" + s).collect(Collectors.joining("<br>"));
       var message = UIBundle.message("file.chooser.vfs.lookup", urls);
       Messages.showErrorDialog(myPanel, message, getTitle());
-      myPanel.reload(null);
       return;
     }
 
@@ -149,48 +138,31 @@ final class NewFileChooserDialogImpl extends DialogWrapper implements FileChoose
     }
 
     myResults = results;
-    updateRecentPaths(results.get(0));
+    FileChooserUtil.updateRecentPaths(myProject, results.get(0));
 
     super.doOKAction();
   }
 
   private @Nullable VirtualFile toVirtualFile(Path path) {
-    var scheme = path.toUri().getScheme();
-
-    if ("file".equals(scheme)) {
+    if (path.getFileSystem() == FileSystems.getDefault()) {
       return myLocalFs.get().refreshAndFindFileByPath(path.toString());
     }
 
-    if ("jar".equals(scheme)) {
-      try {
-        var localUri = Strings.trimEnd(path.getRoot().toUri().getRawSchemeSpecificPart(), "!/");
-        var localFile = toVirtualFile(Path.of(new URI(localUri)));
+    try {
+      var store = path.getFileSystem().getFileStores().iterator().next();
+      if (ZIP_FS_TYPE.equals(store.type())) {
+        var localPath = UriUtil.trimTrailingSlashes(store.name());
+        var localFile = toVirtualFile(Path.of(localPath));
         if (localFile != null) {
           return myJarFs.get().refreshAndFindFileByPath(localFile.getPath() + '!' + path);
         }
       }
-      catch (Exception e) {
-        Logger.getInstance(NewFileChooserDialogImpl.class).warn(e);
-      }
+    }
+    catch (Exception e) {
+      Logger.getInstance(NewFileChooserDialogImpl.class).warn(e);
     }
 
     return null;
-  }
-
-  private static Stream<String> recentPaths() {
-    List<String> values = PropertiesComponent.getInstance().getList(RECENT_FILES_KEY);
-    return values != null ? values.stream() : Stream.empty();
-  }
-
-  private static void updateRecentPaths(VirtualFile file) {
-    if (file.isInLocalFileSystem()) {
-      List<String> newValues = Stream.concat(Stream.of(file.getPath()), recentPaths())
-        .filter(p -> NioFiles.toPath(p) != null)
-        .distinct()
-        .limit(RECENT_FILES_LIMIT)
-        .collect(Collectors.toList());
-      PropertiesComponent.getInstance().setList(RECENT_FILES_KEY, newValues);
-    }
   }
 
   @Override

@@ -1,0 +1,13 @@
+package com.intellij.workspaceModel.test.api
+
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
+
+interface ReferredEntity : WorkspaceEntity {
+  val version: Int
+  val name: String
+  val contentRoot: @Child ContentRootEntity?
+}
+
+val ContentRootEntity.ref: ReferredEntity
+  by WorkspaceEntity.extension()

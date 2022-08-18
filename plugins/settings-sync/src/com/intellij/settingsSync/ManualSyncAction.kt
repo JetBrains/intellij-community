@@ -1,5 +1,6 @@
 package com.intellij.settingsSync
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -13,8 +14,7 @@ class ManualSyncAction : DumbAwareAction() {
     // todo don't allow to start several tasks at once, including the automated ones
     object: Task.Backgroundable(e.project, SettingsSyncBundle.message("progress.title.updating.settings.from.server"), false) {
       override fun run(indicator: ProgressIndicator) {
-        val updateResult = facade.controls.updateChecker.scheduleUpdateFromServer()
-        when (updateResult) {
+        when (val updateResult = facade.controls.updateChecker.scheduleUpdateFromServer()) {
           is UpdateResult.Success -> Unit // received the update pack successfully, it will be applied async via the SettingsSyncBridge
           is UpdateResult.Error -> {
             // todo remove the error notification after next successful update
@@ -30,6 +30,8 @@ class ManualSyncAction : DumbAwareAction() {
       }
     }.queue()
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = isSettingsSyncEnabledByKey() && SettingsSyncMain.isAvailable() && isSettingsSyncEnabledInSettings()

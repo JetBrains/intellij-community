@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model
 
 import com.intellij.testFramework.rules.TempDirectory
@@ -12,7 +12,7 @@ import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
 
 class JdkVariantDetectorTest {
-  @Suppress("SpellCheckingInspection") private val RELEASE_ORACLE_OPEN_1_8_0_41 =
+  private val RELEASE_ORACLE_OPEN_1_8_0_41 =
     """|JAVA_VERSION="1.8.0_41"
        |OS_NAME="Windows"
        |OS_VERSION="5.1"
@@ -20,7 +20,7 @@ class JdkVariantDetectorTest {
        |SOURCE=""
     """.trimMargin()
 
-  @Suppress("SpellCheckingInspection") private val MANIFEST_ORACLE_OPEN_1_8_0_41 =
+  private val MANIFEST_ORACLE_OPEN_1_8_0_41 =
     """|Manifest-Version: 1.0
        |Implementation-Vendor: N/A
        |Implementation-Title: Java Runtime Environment
@@ -31,7 +31,7 @@ class JdkVariantDetectorTest {
        |Specification-Version: 1.8
     """.trimMargin()
 
-  @Suppress("SpellCheckingInspection") private val RELEASE_ORACLE_1_8_0_291 =
+  private val RELEASE_ORACLE_1_8_0_291 =
     """|JAVA_VERSION="1.8.0_291"
        |OS_NAME="Linux"
        |OS_VERSION="2.6"
@@ -40,7 +40,7 @@ class JdkVariantDetectorTest {
        |BUILD_TYPE="commercial"
     """.trimMargin()
 
-  @Suppress("SpellCheckingInspection") private val MANIFEST_ORACLE_1_8_0_291 =
+  private val MANIFEST_ORACLE_1_8_0_291 =
     """|Manifest-Version: 1.0
        |Implementation-Vendor: Oracle Corporation
        |Implementation-Title: Java Runtime Environment
@@ -106,7 +106,7 @@ class JdkVariantDetectorTest {
        |LIBC=""
     """.trimMargin()
 
-  @Suppress("SpellCheckingInspection") private val MANIFEST_CORRETTO_1_8_0_292 =
+  private val MANIFEST_CORRETTO_1_8_0_292 =
     """|Manifest-Version: 1.0
        |Implementation-Title: Java Runtime Environment
        |Implementation-Version: 1.8.0_292
@@ -170,7 +170,7 @@ class JdkVariantDetectorTest {
        |SOURCE=" .:ddbdd8cb2baa hotspot:19eb9031626c ..."
     """.trimMargin()
 
-  @Suppress("SpellCheckingInspection") private val MANIFEST_ZULU_1_8_0_292 =
+  private val MANIFEST_ZULU_1_8_0_292 =
     """|Manifest-Version: 1.0
        |Implementation-Title: Java Runtime Environment
        |Implementation-Version: 1.8.0_292
@@ -191,7 +191,7 @@ class JdkVariantDetectorTest {
        |JAVA_VERSION="11.0.10"
     """.trimMargin()
 
-  @Suppress("SpellCheckingInspection") private val RELEASE_IBM_1_8_0_291 =
+  private val RELEASE_IBM_1_8_0_291 =
     """|JAVA_VERSION="1.8.0_291"
        |OS_NAME="Windows"
        |OS_VERSION="5.2"
@@ -199,7 +199,7 @@ class JdkVariantDetectorTest {
        |SOURCE=""
     """.trimMargin()
 
-  @Suppress("SpellCheckingInspection") private val MANIFEST_IBM_1_8_0_291 =
+  private val MANIFEST_IBM_1_8_0_291 =
     """|Manifest-Version: 1.0
        |Ant-Version: Apache Ant 1.7.1
        |Created-By: 1.8.0 (IBM Corporation)

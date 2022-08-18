@@ -8,8 +8,8 @@ import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.impl.DefaultKeymapImpl
 import training.statistic.FeatureUsageStatisticConsts.KEYMAP_SCHEME
 
-private class KeymapSchemeRuleValidator : CustomValidationRule() {
-  override fun acceptRuleId(ruleId: String?): Boolean = (KEYMAP_SCHEME == ruleId)
+class KeymapSchemeRuleValidator : CustomValidationRule() {
+  override fun getRuleId(): String = KEYMAP_SCHEME
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
     val keymap = KeymapManager.getInstance().getKeymap(data)

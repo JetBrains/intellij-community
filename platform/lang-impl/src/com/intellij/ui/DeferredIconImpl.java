@@ -1,8 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
-import com.google.common.annotations.VisibleForTesting;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,6 +24,7 @@ import com.intellij.util.ui.JBScalableIcon;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.awt.*;
@@ -243,7 +245,8 @@ public final class DeferredIconImpl<T> extends JBScalableIcon implements Deferre
   @Override
   public Icon evaluate() {
     Icon result;
-    try {
+    // Icon evaluation is not something that should be related to any client
+    try (AccessToken ignored = ClientId.withClientId((ClientId)null)) {
       result = nonNull(myEvaluator.apply(myParam));
     }
     catch (IndexNotReadyException e) {

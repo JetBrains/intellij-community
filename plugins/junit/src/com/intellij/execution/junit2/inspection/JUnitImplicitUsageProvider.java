@@ -28,14 +28,15 @@ import static com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_
 import static com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE;
 
 public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
-  private static final String MOCK = "org.mockito.Mock";
+  private static final String MOCKITO_MOCK = "org.mockito.Mock";
   private static final String KOTLIN_JVM_STATIC = "kotlin.jvm.JvmStatic";
 
   private static final List<String> INJECTED_FIELD_ANNOTATIONS = Arrays.asList(
-    MOCK,
+    MOCKITO_MOCK,
     "org.mockito.Spy",
     "org.mockito.Captor",
     "org.mockito.InjectMocks",
+    "org.easymock.Mock",
     "org.assertj.core.api.junit.jupiter.InjectSoftAssertions", 
     "org.junit.jupiter.api.io.TempDir");
 
@@ -119,7 +120,7 @@ public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
         PsiAnnotation annotation = PsiTreeUtil.getParentOfType(referenceElement, PsiAnnotation.class, true, PsiStatement.class, PsiMember.class);
         if (annotation != null) {
           String annotationName = annotation.getQualifiedName();
-          if (JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_ENUM_SOURCE.equals(annotationName) && annotation.getAttributes().size() == 1) {
+          if (JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ENUM_SOURCE.equals(annotationName) && annotation.getAttributes().size() == 1) {
             return true;
           }
         }
@@ -150,7 +151,7 @@ public class JUnitImplicitUsageProvider implements ImplicitUsageProvider {
 
   @Override
   public boolean isImplicitWrite(@NotNull PsiElement element) {
-    return element instanceof PsiParameter && AnnotationUtil.isAnnotated((PsiParameter)element, MOCK, 0) ||
+    return element instanceof PsiParameter && AnnotationUtil.isAnnotated((PsiParameter)element, MOCKITO_MOCK, 0) ||
            element instanceof PsiField && AnnotationUtil.isAnnotated((PsiField)element, INJECTED_FIELD_ANNOTATIONS, 0);
   }
 

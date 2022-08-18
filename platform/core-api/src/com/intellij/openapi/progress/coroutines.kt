@@ -3,11 +3,13 @@
 
 package com.intellij.openapi.progress
 
-import com.intellij.concurrency.resetThreadContext
+import com.intellij.concurrency.currentThreadContext
+import com.intellij.concurrency.replaceThreadContext
 import com.intellij.openapi.util.Computable
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
+import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
 
@@ -71,13 +73,11 @@ fun <T> runBlockingCancellable(action: suspend CoroutineScope.() -> T): T {
     return runBlockingCancellable(indicator, action)
   }
   return ensureCurrentJob { currentJob ->
-    // TODO put currentThreadContext() into the runBlocking context
-    val context = currentJob +
+    val context = currentThreadContext() +
+                  currentJob +
                   CoroutineName("job run blocking")
-    runBlocking(context) {
-      resetThreadContext(EmptyCoroutineContext).use {
-        action()
-      }
+    replaceThreadContext(EmptyCoroutineContext).use {
+      runBlocking(context, action)
     }
   }
 }
@@ -101,14 +101,12 @@ fun <T> runBlockingMaybeCancellable(action: suspend CoroutineScope.() -> T): T {
 @Internal
 fun <T> runBlockingCancellable(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
   return ensureCurrentJob(indicator) { currentJob ->
-    // TODO put currentThreadContext() into the runBlocking context
-    val context = currentJob +
+    val context = currentThreadContext() +
+                  currentJob +
                   CoroutineName("indicator run blocking") +
                   ProgressIndicatorSink(indicator).asContextElement()
-    runBlocking(context) {
-      resetThreadContext(EmptyCoroutineContext).use {
-        action()
-      }
+    replaceThreadContext(EmptyCoroutineContext).use {
+      runBlocking(context, action)
     }
   }
 }
@@ -134,8 +132,11 @@ fun <T> runBlockingCancellable(indicator: ProgressIndicator, action: suspend Cor
  * @see com.intellij.concurrency.currentThreadContext
  */
 suspend fun <T> blockingContext(action: () -> T): T {
-  return resetThreadContext(coroutineContext).use {
-    withJob(coroutineContext.job, action)
+  val currentContext = coroutineContext.minusKey(ContinuationInterceptor.Key)
+  return replaceThreadContext(currentContext).use {
+    // this will catch com.intellij.openapi.progress.JobCanceledException
+    // and throw original java.util.concurrent.CancellationException instead
+    withCurrentJob(currentContext.job, action)
   }
 }
 

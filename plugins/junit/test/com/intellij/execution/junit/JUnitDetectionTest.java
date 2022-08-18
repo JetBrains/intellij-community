@@ -47,6 +47,24 @@ public class JUnitDetectionTest extends LightJavaCodeInsightFixtureTestCase {
     assertFalse(framework.isTestClass(innerClass));
     assertFalse(framework.isTestMethod(innerClass.getMethods()[0]));
   }
+  
+  public void testJUnit3TestCase() {
+    myFixture.addClass("package junit.framework; public class TestCase {}");
+    PsiFile file = myFixture.configureByText("Foo.java", "public class Foo extends junit.framework.TestCase {\n" +
+                                                         "    public class Bar extends Foo {\n" +
+                                                         "        public void testFoo() {\n" +
+                                                         "        }\n" +
+                                                         "    }\n" +
+                                                         "    public void testFoo2() {\n" +
+                                                         "    }\n" +
+                                                         "}");
+    PsiClass aClass = ((PsiClassOwner)file).getClasses()[0];
+    TestFramework framework = TestFrameworks.detectFramework(aClass);
+    assertNotNull(framework);
+    assertTrue(framework.isTestClass(aClass));
+    PsiClass innerClass = aClass.getInnerClasses()[0];
+    assertFalse(framework.isTestClass(innerClass));
+  }
 
   public void testKnownClassInheritor() {
     myFixture.addClass("package p; import org.junit.*; import org.junit.runners.*; public class Theories extends Parameterized {}");

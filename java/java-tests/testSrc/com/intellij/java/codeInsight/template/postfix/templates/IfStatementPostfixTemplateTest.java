@@ -57,6 +57,10 @@ public class IfStatementPostfixTemplateTest extends PostfixTemplateTestCase {
     doTest();
   }
 
+  public void testExtraParentheses() {
+    doTest();
+  }
+
   public void testInstanceofBeforeReturnStatement() {
     doTest();
   }

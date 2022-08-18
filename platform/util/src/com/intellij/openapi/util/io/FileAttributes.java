@@ -86,6 +86,9 @@ public class FileAttributes {
     if (flags != -1 && (flags & 0b10000000) != 0) {
       throw new IllegalArgumentException("Invalid flags: " + Integer.toBinaryString(flags));
     }
+    if (length < 0) {
+      throw new IllegalArgumentException("Invalid length: " + length);
+    }
     this.flags = flags;
     this.length = length;
     this.lastModified = lastModified;

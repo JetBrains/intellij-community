@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
@@ -10,10 +9,7 @@ import org.cef.handler.CefResourceHandler;
 import org.cef.network.CefRequest;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 /**
  * A factory for the custom "file" scheme handler.
@@ -30,7 +26,7 @@ final class JBCefFileSchemeHandlerFactory implements CefSchemeHandlerFactory  {
   public static final String FILE_SCHEME_NAME = "file";
   public static final String LOADHTML_RANDOM_URL_PREFIX = FILE_SCHEME_NAME + ":///jbcefbrowser/";
 
-  public static final Map<CefBrowser, Map<String/* url */, String /* html */>> LOADHTML_REQUEST_MAP = ContainerUtil.createWeakMap();
+  public static final Map<CefBrowser, Map<String/* url */, String /* html */>> LOADHTML_REQUEST_MAP = new WeakHashMap<>();
 
   @Override
   public CefResourceHandler create(@NotNull CefBrowser browser, CefFrame frame, String schemeName, CefRequest request) {

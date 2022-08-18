@@ -115,9 +115,9 @@
       <scope>test</scope>
     </dependency>#end
     #if ($context.hasLanguage("groovy"))<dependency>
-      <groupId>org.codehaus.groovy</groupId>
+      <groupId>org.apache.groovy</groupId>
       <artifactId>groovy</artifactId>
-      <version>${context.getVersion("org.codehaus.groovy", "groovy")}</version>
+      <version>${context.getVersion("org.apache.groovy", "groovy")}</version>
     </dependency>#end
     #if ($context.hasLanguage("kotlin"))<dependency>
       <groupId>org.jetbrains.kotlin</groupId>

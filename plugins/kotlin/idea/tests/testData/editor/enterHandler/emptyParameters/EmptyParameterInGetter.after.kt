@@ -1,8 +1,8 @@
 class Test {
     val a: Boolean get(
-    <caret>
+        <caret>
     )
 }
 
 // SET_FALSE: ALIGN_MULTILINE_METHOD_BRACKETS
-// KT-39444
+// IGNORE_FORMATTER

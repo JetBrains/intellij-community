@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -23,12 +24,14 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class GistManagerImpl extends GistManager {
   private static final Logger LOG = Logger.getInstance(GistManagerImpl.class);
   private static final Map<String, VirtualFileGist<?>> ourGists = ContainerUtil.createConcurrentWeakValueMap();
   private static final String ourPropertyName = "file.gist.reindex.count";
+  private static final Key<AtomicInteger> GIST_INVALIDATION_COUNT_KEY = Key.create("virtual.file.gist.invalidation.count");
   private final AtomicInteger myReindexCount = new AtomicInteger(PropertiesComponent.getInstance().getInt(ourPropertyName, 0));
   private final MergingUpdateQueue myDropCachesQueue = new MergingUpdateQueue("gist-manager-drop-caches", 500, true, null).setRestartTimerOnAdd(true);
   private final AtomicInteger myMergingDropCachesRequestors = new AtomicInteger();
@@ -87,7 +90,7 @@ public final class GistManagerImpl extends GistManager {
     if (LOG.isTraceEnabled()) {
       LOG.trace("Invalidating gist " + file);
     }
-    file.putUserDataIfAbsent(VirtualFileGistImpl.GIST_INVALIDATION_COUNT_KEY, new AtomicInteger()).incrementAndGet();
+    file.putUserDataIfAbsent(GIST_INVALIDATION_COUNT_KEY, new AtomicInteger()).incrementAndGet();
     invalidateDependentCaches();
   }
 
@@ -124,6 +127,13 @@ public final class GistManagerImpl extends GistManager {
         myDropCachesQueue.sendFlush();
       }
     }
+  }
+
+  public static int getGistStamp(@NotNull VirtualFile file) {
+    AtomicInteger invalidationCount = file.getUserData(GIST_INVALIDATION_COUNT_KEY);
+    return Objects.hash(file.getModificationCount(),
+                        ((GistManagerImpl)getInstance()).getReindexCount(),
+                        invalidationCount != null ? invalidationCount.get() : 0);
   }
 
   @TestOnly

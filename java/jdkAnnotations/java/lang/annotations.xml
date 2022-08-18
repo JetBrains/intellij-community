@@ -1384,7 +1384,12 @@
       <val name="pure" val="true"/>
     </annotation>
   </item>
-  <item name='java.lang.System void arraycopy(java.lang.Object, int, java.lang.Object, int, int) 0'>
+    <item name='java.lang.System void arraycopy(java.lang.Object, int, java.lang.Object, int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="mutates" val="&quot;param3&quot;"/>
+        </annotation>
+    </item>
+    <item name='java.lang.System void arraycopy(java.lang.Object, int, java.lang.Object, int, int) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
     <annotation name='org.intellij.lang.annotations.Flow'>
       <val name="sourceIsContainer" val="true"/>

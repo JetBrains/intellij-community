@@ -1,9 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInspection;
 
+import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.java.codeInsight.completion.NormalCompletionDfaTest;
 import com.intellij.java.codeInsight.completion.SmartTypeCompletionDfaTest;
-import com.intellij.java.codeInsight.daemon.quickFix.*;
 import com.intellij.java.slicer.SliceBackwardTest;
 import com.intellij.java.slicer.SliceTreeTest;
 import com.siyeh.ig.redundancy.RedundantOperationOnEmptyContainerInspectionTest;
@@ -17,6 +17,9 @@ import org.junit.platform.suite.api.Suite;
   DataFlowInspection9Test.class,
   DataFlowInspection10Test.class,
   DataFlowInspection16Test.class,
+  DataFlowInspection17Test.class,
+  DataFlowInspection18Test.class,
+  DataFlowInspection19Test.class,
   DataFlowInspectionHeavyTest.class,
   DataFlowInspectionAncientTest.class,
   DataFlowInspectionCancellingTest.class,

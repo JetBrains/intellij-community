@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.migration;
 
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -21,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class BigDecimalLegacyMethodInspection extends BaseInspection {
+public class BigDecimalLegacyMethodInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @NotNull
   @Override
@@ -56,10 +57,9 @@ public class BigDecimalLegacyMethodInspection extends BaseInspection {
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement grandParent = element.getParent().getParent();
-      if (!(grandParent instanceof PsiMethodCallExpression)) {
+      if (!(grandParent instanceof PsiMethodCallExpression methodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       if (arguments.length != 2 && arguments.length != 3) {
@@ -73,30 +73,14 @@ public class BigDecimalLegacyMethodInspection extends BaseInspection {
       CommentTracker commentTracker = new CommentTracker();
       final int roundingMode = (Integer)value;
       switch (roundingMode) {
-        case 0:
-          PsiReplacementUtil.replaceExpressionAndShorten(argument, "java.math.RoundingMode.UP", commentTracker);
-          break;
-        case 1:
-          PsiReplacementUtil.replaceExpressionAndShorten(argument, "java.math.RoundingMode.DOWN", commentTracker);
-          break;
-        case 2:
-          PsiReplacementUtil.replaceExpressionAndShorten(argument, "java.math.RoundingMode.CEILING", commentTracker);
-          break;
-        case 3:
-          PsiReplacementUtil.replaceExpressionAndShorten(argument, "java.math.RoundingMode.FLOOR", commentTracker);
-          break;
-        case 4:
-          PsiReplacementUtil.replaceExpressionAndShorten(argument, "java.math.RoundingMode.HALF_UP", commentTracker);
-          break;
-        case 5:
-          PsiReplacementUtil.replaceExpressionAndShorten(argument, "java.math.RoundingMode.HALF_DOWN", commentTracker);
-          break;
-        case 6:
-          PsiReplacementUtil.replaceExpressionAndShorten(argument, "java.math.RoundingMode.HALF_EVEN", commentTracker);
-          break;
-        case 7:
-          PsiReplacementUtil.replaceExpressionAndShorten(argument, "java.math.RoundingMode.UNNECESSARY", commentTracker);
-          break;
+        case 0 -> PsiReplacementUtil.replaceExpressionAndShorten(argument, "java.math.RoundingMode.UP", commentTracker);
+        case 1 -> PsiReplacementUtil.replaceExpressionAndShorten(argument, "java.math.RoundingMode.DOWN", commentTracker);
+        case 2 -> PsiReplacementUtil.replaceExpressionAndShorten(argument, "java.math.RoundingMode.CEILING", commentTracker);
+        case 3 -> PsiReplacementUtil.replaceExpressionAndShorten(argument, "java.math.RoundingMode.FLOOR", commentTracker);
+        case 4 -> PsiReplacementUtil.replaceExpressionAndShorten(argument, "java.math.RoundingMode.HALF_UP", commentTracker);
+        case 5 -> PsiReplacementUtil.replaceExpressionAndShorten(argument, "java.math.RoundingMode.HALF_DOWN", commentTracker);
+        case 6 -> PsiReplacementUtil.replaceExpressionAndShorten(argument, "java.math.RoundingMode.HALF_EVEN", commentTracker);
+        case 7 -> PsiReplacementUtil.replaceExpressionAndShorten(argument, "java.math.RoundingMode.UNNECESSARY", commentTracker);
       }
     }
   }
@@ -114,7 +98,7 @@ public class BigDecimalLegacyMethodInspection extends BaseInspection {
   private static class BigDecimalLegacyMethodVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final @NonNls String name = methodExpression.getReferenceName();

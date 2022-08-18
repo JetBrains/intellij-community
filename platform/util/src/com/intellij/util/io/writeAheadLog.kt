@@ -10,6 +10,7 @@ import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.indexing.impl.IndexStorageUtil
 import it.unimi.dsi.fastutil.ints.IntLinkedOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
+import org.apache.commons.compress.utils.IOUtils
 import java.io.*
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
@@ -394,7 +395,7 @@ private class WalRecord(val opCode: WalOpCode,
       val checksum = DataInputOutputUtil.readLONG(input)
       val payloadLength = DataInputOutputUtil.readINT(input)
       val cis = ChecksumInputStream(input, checksumGen)
-      val data = cis.readNBytes(payloadLength)
+      val data = IOUtils.readRange(cis, payloadLength)
       val actualChecksum = cis.checksum()
       if (actualChecksum != checksum) {
         throw CorruptionException("checksum is wrong for log record: expected = $checksum but actual = $actualChecksum")

@@ -75,7 +75,7 @@ class LightTestMigration {
     FileUtil.delete(myDir.toFile());
     Files.createDirectories(myDir);
     for (Pair<Path, String> file : resultFiles) {
-      Files.write(file.getFirst(), file.getSecond().getBytes(StandardCharsets.UTF_8));
+      Files.writeString(file.getFirst(), file.getSecond());
       System.out.println("Written: " + file.getFirst());
     }
   }

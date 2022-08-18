@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -7,6 +7,7 @@ import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.refactoring.InlineHandler;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -307,6 +308,14 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     }
 
     return PsiUtil.isAccessedForWriting(expr);
+  }
+
+  @Override
+  protected Set<UnloadedModuleDescription> computeUnloadedModulesFromUseScope(UsageViewDescriptor descriptor) {
+    if (myInlineThisOnly) {
+      return Collections.emptySet();
+    }
+    return super.computeUnloadedModulesFromUseScope(descriptor);
   }
 
   @Override

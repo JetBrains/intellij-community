@@ -15,7 +15,7 @@ class WelcomeScreenEventCollector : CounterUsagesCollector() {
 
   override fun getGroup() = GROUP
 
-  internal companion object {
+  companion object {
 
     private val GROUP = EventLogGroup("welcomescreen.interaction", 3)
 

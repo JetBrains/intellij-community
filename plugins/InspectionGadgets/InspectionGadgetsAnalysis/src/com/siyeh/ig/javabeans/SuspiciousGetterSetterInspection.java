@@ -61,7 +61,7 @@ public class SuspiciousGetterSetterInspection extends BaseInspection {
   private class SuspiciousGetterSetterVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethod(PsiMethod method) {
+    public void visitMethod(@NotNull PsiMethod method) {
       super.visitMethod(method);
       final String name = method.getName();
       final String fieldName;

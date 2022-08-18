@@ -55,7 +55,7 @@ public class JavaRecordHeaderElementType extends JavaStubElementType<PsiRecordHe
 
   @NotNull
   @Override
-  public PsiRecordHeaderStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement parentStub) {
+  public PsiRecordHeaderStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
     return new PsiRecordHeaderStubImpl(parentStub);
   }
 }

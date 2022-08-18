@@ -23,10 +23,12 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.ScrollPaneFactory;
@@ -38,13 +40,13 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
-import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,13 +60,11 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
 import java.io.File;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 
 public class FileChooserDialogImpl extends DialogWrapper implements FileChooserDialog, PathChooserDialog {
   public static final String FILE_CHOOSER_SHOW_PATH_PROPERTY = "FileChooser.ShowPath";
-  private static final String RECENT_FILES_KEY = "file.chooser.recent.files";
 
   private final FileChooserDescriptor myChooserDescriptor;
   protected FileSystemTreeImpl myFileSystemTree;
@@ -142,45 +142,18 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   }
 
   protected void restoreSelection(@Nullable VirtualFile toSelect) {
-    final VirtualFile lastOpenedFile = FileChooserUtil.getLastOpenedFile(myProject);
-    final VirtualFile file = FileChooserUtil.getFileToSelect(myChooserDescriptor, myProject, toSelect, lastOpenedFile);
-
+    VirtualFile file = FileChooserUtil.getFileToSelect(myChooserDescriptor, myProject, toSelect);
     if (file != null && file.isValid()) {
       myPathTextField.setText(VfsUtil.getReadableUrl(file), true, () ->
         selectInTree(new VirtualFile[]{file}, false, false));
     }
   }
 
+  @ApiStatus.Internal
   void storeSelection(@Nullable VirtualFile file) {
     if (file != null) {
-      Pair<String, String> pair = file.getFileSystem().getProtocol() == StandardFileSystems.JAR_PROTOCOL ? URLUtil.splitJarUrl(file.getPath()) : null;
-      FileChooserUtil.setLastOpenedFile(myProject, pair == null ? file.toNioPath() : Paths.get(pair.getFirst()));
+      FileChooserUtil.updateRecentPaths(myProject, file);
     }
-    if (file != null && file.getFileSystem() instanceof LocalFileSystem) {
-      saveRecent(file.getPath());
-    }
-  }
-
-  private void saveRecent(String path) {
-    List<String> files = new ArrayList<>(getRecentFiles());
-    files.remove(path);
-    files.add(0, path);
-    while (files.size() > 30) {
-      files.remove(files.size() - 1);
-    }
-    PropertiesComponent.getInstance().setList(RECENT_FILES_KEY, files);
-  }
-
-  private @NotNull List<String> getRecentFiles() {
-    List<String> array = PropertiesComponent.getInstance().getList(RECENT_FILES_KEY);
-    if (array == null) {
-      return Collections.emptyList();
-    }
-
-    if (array.size() > 0 && myPathTextField != null && myPathTextField.getField().getText().replace('\\', '/').equals(array.get(0))) {
-      return array.subList(1, array.size());
-    }
-    return array;
   }
 
   protected DefaultActionGroup createActionGroup() {
@@ -239,7 +212,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       toolbarPanel.add(extraToolbarPanel, BorderLayout.SOUTH);
     }
 
-    myPath = new ComboBox<>(getRecentFiles().toArray(ArrayUtilRt.EMPTY_STRING_ARRAY));
+    myPath = new ComboBox<>(FileChooserUtil.getRecentPaths().toArray(ArrayUtilRt.EMPTY_STRING_ARRAY));
     myPath.setEditable(true);
     myPath.setRenderer(SimpleListCellRenderer.create((var label, @NlsContexts.Label var value, var index) -> {
       label.setText(value);
@@ -478,6 +451,11 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
   protected final class MyPanel extends JPanel implements DataProvider {
     final PasteProvider myPasteProvider = new PasteProvider() {
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
+
       @Override
       public void performPaste(@NotNull DataContext dataContext) {
         if (myPathTextField != null) {

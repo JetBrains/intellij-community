@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.ide.actions.QuickSwitchSchemeAction;
@@ -25,7 +25,6 @@ import java.util.List;
 public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements DumbAware {
   public VcsQuickListPopupAction() {
     myActionPlace = ActionPlaces.ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION;
-    getTemplatePresentation().setText(VcsBundle.messagePointer("vcs.quicklist.popup.title"));
   }
 
   @Override
@@ -88,6 +87,11 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
       }
       return actions.toList().toArray(EMPTY_ARRAY);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
   }
 
   public final static class VcsNameSeparator extends ActionGroup implements DumbAware {
@@ -102,6 +106,11 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
       else {
         return EMPTY_ARRAY;
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 
@@ -122,6 +131,11 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
         e.getPresentation().setVisible(false);
       }
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
   }
 
   public static class NonVcsAware extends DefaultActionGroup implements DumbAware {
@@ -129,6 +143,11 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
     public void update(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       e.getPresentation().setVisible(project != null && !isUnderVcs(project));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 }

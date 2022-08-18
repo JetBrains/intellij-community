@@ -4,6 +4,8 @@ package org.intellij.lang.regexp.inspection;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalInspectionTool;
 import org.intellij.lang.annotations.Language;
+import org.intellij.lang.regexp.RegExpFileType;
+import org.intellij.lang.regexp.ecmascript.EcmaScriptRegexpLanguage;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -20,19 +22,19 @@ public class RegExpSimplifiableInspectionTest extends RegExpInspectionTestCase {
   }
 
   public void testNegatedDigitRange() {
-    doTest("[^0-9]", "\\D");
+    highlightTest("[^0-9]"); // no warn; replacing with \D is not equivalent in Unicode context
   }
 
   public void testNegatedWordClassCharExpression() {
-    doTest("[^0-9a-zA-Z_]", "\\W");
+    highlightTest("[^0-9a-zA-Z_]"); // no warn; replacing with \W is not equivalent in Unicode context
   }
 
   public void testDigitRange() {
-    doTest("[^0-9abc]", 2, 3, "\\d", "[^\\dabc]");
+    highlightTest("[^0-9abc]"); // no warn; replacing with [^\dabc] is not equivalent in Unicode context
   }
 
   public void testDigitRange2() {
-    doTest("[0-9abc]", 1, 3, "\\d", "[\\dabc]");
+    highlightTest("[0-9abc]"); // no warn; replacing with \d is not equivalent in Unicode context
   }
 
   public void testSingleElementClass() {
@@ -44,11 +46,15 @@ public class RegExpSimplifiableInspectionTest extends RegExpInspectionTestCase {
   }
 
   public void testSimpleDigitRange() {
-    doTest("[0-9]", "\\d");
+    highlightTest("[0-9]"); // no warn; replacing with \d is not equivalent in Unicode context
   }
 
   public void testWordCharClassExpression() {
-    doTest("[0-9a-zA-Z_]", "\\w");
+    highlightTest("[0-9a-zA-Z_]"); // no warn; replacing with \w is not equivalent in Unicode context
+  }
+
+  public void testProperty() {
+    doTest("\\p{IsDigit}", "\\d");
   }
 
   public void testStarToPlusNoWarm() {
@@ -82,6 +88,10 @@ public class RegExpSimplifiableInspectionTest extends RegExpInspectionTestCase {
 
   public void testFixedRepetitionRange() {
     doTest("a{3,3}", 1, 5, "{3}", "a{3}");
+  }
+
+  public void testSinglePosixBracketExpressionInClass() {
+    highlightTest("[[:upper:]]", RegExpFileType.forLanguage(EcmaScriptRegexpLanguage.INSTANCE));
   }
 
   private void doTest(@Language("RegExp") String code, @Language("RegExp") String replacement) {

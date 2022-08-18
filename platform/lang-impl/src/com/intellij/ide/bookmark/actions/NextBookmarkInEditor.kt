@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.actions
 
 import com.intellij.ide.bookmark.BookmarkBundle.messagePointer
+import com.intellij.ide.bookmark.BookmarkOccurrence
 import com.intellij.ide.bookmark.BookmarksManager
 import com.intellij.ide.bookmark.LineBookmark
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -55,9 +56,10 @@ private class NextBookmarkInEditor(val forward: Boolean) : EditorActionHandler()
           if (bookmark.line < line) return bookmark
         }
       }
-      // cyclic selection
-      val bookmark = bookmarks[0]
-      if (bookmark.line != line) return bookmark
+      if (BookmarkOccurrence.cyclic) {
+        val bookmark = bookmarks[0]
+        if (bookmark.line != line) return bookmark
+      }
     }
     return null
   }

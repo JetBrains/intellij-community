@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.test
 
@@ -10,13 +10,15 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.assertEqualsToFile
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
-import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
-
+import java.io.File
+import kotlin.test.assertTrue
 
 
 object DirectiveBasedActionUtils {
@@ -40,7 +42,8 @@ object DirectiveBasedActionUtils {
         diagnosticsProvider: (KtFile) -> Diagnostics = { it.analyzeWithContent().diagnostics }
     ) {
         if (disabledByDefault && InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, ENABLE_WARNINGS_DIRECTIVE).isEmpty() ||
-                !disabledByDefault && InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, DISABLE_WARNINGS_DIRECTIVE).isNotEmpty()) {
+            !disabledByDefault && InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, DISABLE_WARNINGS_DIRECTIVE).isNotEmpty()
+        ) {
             return
         }
 
@@ -52,7 +55,7 @@ object DirectiveBasedActionUtils {
         diagnosticsProvider: (KtFile) -> Diagnostics,
         directive: String,
         name: String,
-        severity: Severity
+        severity: Severity,
     ) {
         val expected = InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, directive)
             .sorted()
@@ -70,64 +73,114 @@ object DirectiveBasedActionUtils {
             "All actual $name should be mentioned in test data with '$directive' directive. " +
                     "But no unnecessary $name should be me mentioned, file:\n${file.text}",
             actual,
-            expected
+            expected,
         )
     }
 
     fun inspectionChecks(name: String, file: PsiFile) {
-        InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, "// INSPECTION-CLASS:").takeIf { it.isNotEmpty() }?.let { inspectionNames ->
-            val inspectionManager = InspectionManager.getInstance(file.project)
-            val inspections = inspectionNames.map { Class.forName(it).getDeclaredConstructor().newInstance() as AbstractKotlinInspection }
+        val inspectionNames = InTextDirectivesUtils.findLinesWithPrefixesRemoved(
+            /* fileText = */ file.text,
+            /* ...prefixes = */ "// INSPECTION-CLASS:",
+        ).ifEmpty { return }
 
-            val problems = mutableListOf<ProblemDescriptor>()
-            ProgressManager.getInstance().executeProcessUnderProgress(
-                {
-                    for (inspection in inspections) {
-                        problems += inspection.processFile(
-                            file,
-                            inspectionManager
-                        )
+        val inspectionManager = InspectionManager.getInstance(file.project)
+        val inspections = inspectionNames.map { Class.forName(it).getDeclaredConstructor().newInstance() as AbstractKotlinInspection }
+        val problems = mutableListOf<ProblemDescriptor>()
+        ProgressManager.getInstance().executeProcessUnderProgress(
+            /* process = */ {
+                for (inspection in inspections) {
+                    problems += inspection.processFile(
+                        file,
+                        inspectionManager
+                    )
+                }
+            },
+            /* progress = */ DaemonProgressIndicator(),
+        )
+
+        val directive = "INSPECTION"
+        val expected = InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, "// $directive:")
+            .sorted()
+            .map { "$directive $it" }
+
+        val noInspectionOutputDirective = "NO-INSPECTION-OUTPUT"
+        val noInspectionOutput = InTextDirectivesUtils.isDirectiveDefined(file.text, "// $noInspectionOutputDirective")
+
+        val actual = problems
+            // lineNumber is 0-based
+            .map { "$directive [${it.highlightType.name}:${it.lineNumber + 1}] $it" }
+            .sorted()
+
+        if (actual.isEmpty() && expected.isEmpty()) {
+            assertTrue(noInspectionOutput, "`$noInspectionOutputDirective` directive has to be defined if there is nothing to report")
+            return
+        }
+
+        KotlinLightCodeInsightFixtureTestCaseBase.assertOrderedEquals(
+            "All actual $name should be mentioned in test data with '$directive' directive. " +
+                    "But no unnecessary $name should be me mentioned, file:\n${file.text}",
+            actual,
+            expected,
+        )
+    }
+
+    fun checkAvailableActionsAreExpected(file: File, availableActions: Collection<IntentionAction>) {
+        val fileText = file.readText()
+        checkAvailableActionsAreExpected(
+            fileText,
+            availableActions,
+        ) { expectedActionsDirectives, actualActionsDirectives ->
+            if (expectedActionsDirectives != actualActionsDirectives) {
+                assertEqualsToFile(
+                    description = "Some unexpected actions available at current position. Use '$ACTION_DIRECTIVE' directive",
+                    expected = file,
+                    actual = fileText.let { text ->
+                        val lines = text.split('\n')
+                        val firstActionIndex = lines.indexOfFirst { it.startsWith(ACTION_DIRECTIVE) }.takeIf { it != -1 }
+                        val textWithoutActions = lines.filterNot { it.startsWith(ACTION_DIRECTIVE) }
+                        textWithoutActions.subList(0, firstActionIndex ?: 1)
+                            .plus(actualActionsDirectives)
+                            .plus(textWithoutActions.drop(firstActionIndex ?: 1))
+                            .joinToString("\n")
                     }
-                }, DaemonProgressIndicator()
-            )
-            val directive = "// INSPECTION:"
-            val expected = InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, directive)
-                .sorted()
-                .map { "$directive $it" }
-
-            val actual = problems
-                // lineNumber is 0-based
-                .map { "$directive [${it.highlightType.name}:${it.lineNumber + 1}] $it" }
-                .sorted()
-
-            if (actual.isEmpty() && expected.isEmpty()) return
-
-            KotlinLightCodeInsightFixtureTestCaseBase.assertOrderedEquals(
-                "All actual $name should be mentioned in test data with '$directive' directive. " +
-                        "But no unnecessary $name should be me mentioned, file:\n${file.text}",
-                actual,
-                expected
-            )
+                )
+            }
         }
     }
 
     fun checkAvailableActionsAreExpected(file: PsiFile, availableActions: Collection<IntentionAction>) {
-        val expectedActions = InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, ACTION_DIRECTIVE).sorted()
+        checkAvailableActionsAreExpected(
+            file.text,
+            availableActions,
+        ) { expectedDirectives, actualActionsDirectives ->
+            UsefulTestCase.assertOrderedEquals(
+                "Some unexpected actions available at current position. Use '$ACTION_DIRECTIVE' directive\n",
+                actualActionsDirectives,
+                expectedDirectives
+            )
+        }
+    }
 
-        UsefulTestCase.assertEmpty("Irrelevant actions should not be specified in $ACTION_DIRECTIVE directive for they are not checked anyway",
-                                   expectedActions.filter { isIrrelevantAction(it) })
+    private fun checkAvailableActionsAreExpected(
+        fileText: String,
+        availableActions: Collection<IntentionAction>,
+        assertion: (expectedDirectives: List<String>, actualActionsDirectives: List<String>) -> Unit,
+    ) {
+        val expectedActions = InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, ACTION_DIRECTIVE).sorted()
 
-        if (InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.text, "// IGNORE_IRRELEVANT_ACTIONS").isNotEmpty()) {
+        UsefulTestCase.assertEmpty(
+            "Irrelevant actions should not be specified in $ACTION_DIRECTIVE directive for they are not checked anyway",
+            expectedActions.filter(::isIrrelevantAction),
+        )
+
+        if (InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, "// IGNORE_IRRELEVANT_ACTIONS").isNotEmpty()) {
             return
         }
 
         val actualActions = availableActions.map { it.text }.sorted()
-
-        UsefulTestCase.assertOrderedEquals(
-            "Some unexpected actions available at current position. Use '$ACTION_DIRECTIVE' directive",
-            filterOutIrrelevantActions(actualActions).map { "$ACTION_DIRECTIVE $it" },
-            expectedActions.map { "$ACTION_DIRECTIVE $it" }
-        )
+        val actualActionsDirectives = filterOutIrrelevantActions(actualActions).map { "$ACTION_DIRECTIVE $it" }
+        val expectedActionsDirectives = expectedActions.map { "$ACTION_DIRECTIVE $it" }
+        assertion(expectedActionsDirectives, actualActionsDirectives)
     }
 
     //TODO: hack, implemented because irrelevant actions behave in different ways on build server and locally

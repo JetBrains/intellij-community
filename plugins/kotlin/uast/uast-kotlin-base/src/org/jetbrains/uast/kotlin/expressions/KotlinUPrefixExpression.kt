@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiMethod
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtPrefixExpression
 import org.jetbrains.uast.UElement
@@ -10,6 +11,7 @@ import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.UPrefixExpression
 import org.jetbrains.uast.UastPrefixOperator
 
+@ApiStatus.Internal
 class KotlinUPrefixExpression(
     override val sourcePsi: KtPrefixExpression,
     givenParent: UElement?
@@ -19,7 +21,7 @@ class KotlinUPrefixExpression(
     }
 
     override val operatorIdentifier: UIdentifier
-        get() = KotlinUIdentifier(sourcePsi.operationReference, this)
+        get() = KotlinUIdentifier(sourcePsi.operationReference.getReferencedNameElement(), this)
 
     override fun resolveOperator(): PsiMethod? =
         baseResolveProviderService.resolveCall(sourcePsi)

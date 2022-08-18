@@ -605,6 +605,11 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     public Object getData(@NotNull String dataId) {
       if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
         return new TextCopyProvider() {
+          @Override
+          public @NotNull ActionUpdateThread getActionUpdateThread() {
+            return ActionUpdateThread.EDT;
+          }
+
           @Nullable
           @Override
           public Collection<String> getTextLinesToCopy() {

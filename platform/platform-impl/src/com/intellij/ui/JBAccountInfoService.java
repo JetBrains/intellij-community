@@ -6,6 +6,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 public interface JBAccountInfoService {
@@ -28,7 +30,42 @@ public interface JBAccountInfoService {
   @Nullable
   JBAccountInfoService.JBAData getUserData();
 
-  void invokeJBALogin(@Nullable Consumer<String> userIdConsumer, @Nullable Runnable onFailure);
+  @Nullable
+  default String getIdToken() {
+    return null;
+  }
+
+  @NotNull
+  default Future<String> getAccessToken() {
+    return new Future<String>() {
+      @Override
+      public boolean cancel(boolean mayInterruptIfRunning) {
+        return false;
+      }
+
+      @Override
+      public boolean isCancelled() {
+        return false;
+      }
+
+      @Override
+      public boolean isDone() {
+        return true;
+      }
+
+      @Override
+      public String get() {
+        return null;
+      }
+
+      @Override
+      public String get(long timeout, @NotNull TimeUnit unit) {
+        return null;
+      }
+    };
+  }
+
+  void invokeJBALogin(@Nullable Consumer<? super String> userIdConsumer, @Nullable Runnable onFailure);
 
   @Nullable
   static JBAccountInfoService getInstance() {

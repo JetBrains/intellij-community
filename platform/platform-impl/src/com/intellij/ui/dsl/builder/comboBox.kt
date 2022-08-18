@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.bind
@@ -8,7 +9,9 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.dsl.builder.impl.CellImpl.Companion.installValidationRequestor
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.JComboBox
 import kotlin.reflect.KMutableProperty0
+import com.intellij.openapi.observable.util.whenItemSelectedFromUi as whenItemSelectedFromUiImpl
 
 @Deprecated("Use overloaded method")
 fun <T, C : ComboBox<T>> Cell<C>.bindItem(binding: PropertyBinding<T?>): Cell<C> {
@@ -68,4 +71,9 @@ fun <T, C : ComboBox<T>> C.columns(columns: Int) = apply {
   // See JTextField.getColumnWidth implementation
   val columnWidth = getFontMetrics(font).charWidth('m')
   setMinimumAndPreferredWidth(columns * columnWidth + insets.left + insets.right)
+}
+
+@ApiStatus.Experimental
+fun <T, C : JComboBox<T>> Cell<C>.whenItemSelectedFromUi(parentDisposable: Disposable? = null, listener: (T) -> Unit): Cell<C> {
+  return applyToComponent { whenItemSelectedFromUiImpl(parentDisposable, listener) }
 }

@@ -71,7 +71,17 @@ public interface EditorColors {
 
   ColorKey TEARLINE_COLOR = ColorKey.createColorKey("TEARLINE_COLOR");
   ColorKey SELECTED_TEARLINE_COLOR = ColorKey.createColorKey("SELECTED_TEARLINE_COLOR");
+
+  /**
+   * @deprecated use {@link #TEARLINE_COLOR}
+   */
+  @Deprecated(forRemoval = true)
   ColorKey SEPARATOR_ABOVE_COLOR = ColorKey.createColorKey("SEPARATOR_ABOVE_COLOR");
+
+  /**
+   * @deprecated use {@link #TEARLINE_COLOR}
+   */
+  @Deprecated(forRemoval = true)
   ColorKey SEPARATOR_BELOW_COLOR = ColorKey.createColorKey("SEPARATOR_BELOW_COLOR");
 
   ColorKey ADDED_LINES_COLOR = ColorKey.createColorKey("ADDED_LINES_COLOR");
@@ -89,6 +99,7 @@ public interface EditorColors {
   TextAttributesKey BREADCRUMBS_HOVERED  = TextAttributesKey.createTextAttributesKey("BREADCRUMBS_HOVERED");
   TextAttributesKey BREADCRUMBS_CURRENT  = TextAttributesKey.createTextAttributesKey("BREADCRUMBS_CURRENT");
   TextAttributesKey BREADCRUMBS_INACTIVE = TextAttributesKey.createTextAttributesKey("BREADCRUMBS_INACTIVE");
+  ColorKey BREADCRUMBS_BORDER_COLOR = ColorKey.createColorKeyWithFallback("BREADCRUMBS_BORDER_COLOR", INDENT_GUIDE_COLOR);
 
   TextAttributesKey CODE_LENS_BORDER_COLOR = TextAttributesKey.createTextAttributesKey("CODE_LENS_BORDER_COLOR");
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2020 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.index;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,8 +26,7 @@ class RegistrationIndexer {
     myPlugin = plugin;
   }
 
-  @NotNull
-  Map<String, List<RegistrationEntry>> indexFile() {
+  @NotNull Map<String, List<RegistrationEntry>> indexFile() {
     process(myPlugin);
 
     return myValueMap;
@@ -50,51 +35,86 @@ class RegistrationIndexer {
   private void process(IdeaPlugin ideaPlugin) {
     processActions(ideaPlugin);
 
-    processComponents(ideaPlugin.getApplicationComponents(), components -> components.getComponents(),
-                      RegistrationEntry.RegistrationType.APPLICATION_COMPONENT);
-    processComponents(ideaPlugin.getProjectComponents(), components -> components.getComponents(),
-                      RegistrationEntry.RegistrationType.PROJECT_COMPONENT);
-    processComponents(ideaPlugin.getModuleComponents(), components -> components.getComponents(),
-                      RegistrationEntry.RegistrationType.MODULE_COMPONENT);
+    processComponents(RegistrationEntry.RegistrationType.APPLICATION_COMPONENT,
+                      ideaPlugin.getApplicationComponents(),
+                      ApplicationComponents::getComponents);
+
+    processComponents(RegistrationEntry.RegistrationType.PROJECT_COMPONENT,
+                      ideaPlugin.getProjectComponents(),
+                      ProjectComponents::getComponents);
+
+    processComponents(RegistrationEntry.RegistrationType.MODULE_COMPONENT,
+                      ideaPlugin.getModuleComponents(),
+                      ModuleComponents::getComponents);
+
+
+    processListeners(RegistrationEntry.RegistrationType.APPLICATION_LISTENER,
+                     ideaPlugin.getApplicationListeners());
+    processListeners(RegistrationEntry.RegistrationType.PROJECT_LISTENER,
+                     ideaPlugin.getProjectListeners());
   }
 
-  private <T extends DomElement> void processComponents(List<T> componentWrappers,
-                                                        Function<T, List<? extends Component>> componentGetter,
-                                                        RegistrationEntry.RegistrationType type) {
-    for (T wrapper : componentWrappers) {
-      for (Component component : componentGetter.fun(wrapper)) {
-        addEntry(component, component.getImplementationClass(), type);
+  private <T extends DomElement, U extends Component>
+  void processComponents(RegistrationEntry.RegistrationType componentType,
+                         List<T> componentContainer,
+                         Function<T, List<? extends U>> componentGetter) {
+    processElements(componentType,
+                    componentContainer,
+                    componentGetter,
+                    Component::getImplementationClass, Component::getHeadlessImplementationClass
+    );
+    processElements(RegistrationEntry.RegistrationType.COMPONENT_INTERFACE,
+                    componentContainer,
+                    componentGetter,
+                    Component::getInterfaceClass
+    );
+  }
+
+  private void processListeners(@NotNull RegistrationEntry.RegistrationType listenerType,
+                                @NotNull List<? extends Listeners> listenerContainer) {
+    processElements(listenerType,
+                    listenerContainer,
+                    Listeners::getListeners,
+                    Listeners.Listener::getListenerClassName
+    );
+    processElements(RegistrationEntry.RegistrationType.LISTENER_TOPIC,
+                    listenerContainer,
+                    Listeners::getListeners,
+                    Listeners.Listener::getTopicClassName);
+  }
+
+  private <T extends DomElement, U extends DomElement>
+  void processElements(RegistrationEntry.RegistrationType type,
+                       List<T> elementContainer,
+                       Function<T, List<? extends U>> elementGetter,
+                       Function<U, GenericDomValue<PsiClass>>... psiClassGetters) {
+    for (T wrapper : elementContainer) {
+      for (U element : elementGetter.fun(wrapper)) {
+        for (Function<U, GenericDomValue<PsiClass>> psiClassGetter : psiClassGetters) {
+          addEntry(element, psiClassGetter.fun(element), type);
+        }
       }
     }
   }
 
   private void processActions(IdeaPlugin ideaPlugin) {
     for (Actions actions : ideaPlugin.getActions()) {
-      for (Action action : actions.getActions()) {
-        processAction(action);
-      }
-
-      for (Group group : actions.getGroups()) {
-        processGroup(group);
-      }
+      processActionContainer(actions);
     }
   }
 
-  private void processGroup(Group group) {
-    addEntry(group, group.getClazz(), RegistrationEntry.RegistrationType.ACTION);
-    addIdEntry(group, group.getId(), RegistrationEntry.RegistrationType.ACTION_GROUP_ID);
-
-    for (Action action : group.getActions()) {
-      processAction(action);
+  private void processActionContainer(ActionContainer actionContainer) {
+    for (Action action : actionContainer.getActions()) {
+      addEntry(action, action.getClazz(), RegistrationEntry.RegistrationType.ACTION);
+      addIdEntry(action, action.getId(), RegistrationEntry.RegistrationType.ACTION_ID);
     }
-    for (Group nestedGroup : group.getGroups()) {
-      processGroup(nestedGroup);
-    }
-  }
 
-  private void processAction(Action action) {
-    addEntry(action, action.getClazz(), RegistrationEntry.RegistrationType.ACTION);
-    addIdEntry(action, action.getId(), RegistrationEntry.RegistrationType.ACTION_ID);
+    for (Group group : actionContainer.getGroups()) {
+      addEntry(group, group.getClazz(), RegistrationEntry.RegistrationType.ACTION);
+      addIdEntry(group, group.getId(), RegistrationEntry.RegistrationType.ACTION_GROUP_ID);
+
+      processActionContainer(group);
+    }
   }
 
   private void addIdEntry(DomElement domElement,
@@ -102,7 +122,7 @@ class RegistrationIndexer {
                           RegistrationEntry.RegistrationType type) {
     if (!DomUtil.hasXml(domElement)) return;
     String id = idValue.getStringValue();
-    if (StringUtil.isEmpty(id)) return;
+    if (StringUtil.isEmptyOrSpaces(id)) return;
 
     storeEntry(id, domElement, type);
   }
@@ -112,7 +132,7 @@ class RegistrationIndexer {
                         RegistrationEntry.RegistrationType type) {
     if (!DomUtil.hasXml(clazzValue)) return;
     final String clazz = clazzValue.getStringValue();
-    if (clazz == null) return;
+    if (StringUtil.isEmptyOrSpaces(clazz)) return;
 
     final String className = clazz.replace('$', '.');
 

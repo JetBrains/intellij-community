@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.util.PsiUtilCore;
@@ -60,6 +61,10 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
                                        @NotNull Language language) {
     super(manager, virtualFile, eventSystemEnabled);
     myBaseLanguage = language;
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(manager.getProject());
+    if (documentManager instanceof PsiDocumentManagerBase) {
+      ((PsiDocumentManagerBase)documentManager).assertFileIsFromCorrectProject(virtualFile);
+    }
   }
 
   @Override

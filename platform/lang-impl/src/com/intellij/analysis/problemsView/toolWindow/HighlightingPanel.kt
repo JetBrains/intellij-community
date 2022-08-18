@@ -2,10 +2,8 @@
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.codeWithMe.ClientId
-import com.intellij.icons.AllIcons.Toolwindows
 import com.intellij.ide.PowerSaveMode
 import com.intellij.ide.TreeExpander
-import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
 import com.intellij.openapi.application.ApplicationManager.getApplication
@@ -17,10 +15,10 @@ import com.intellij.openapi.editor.markup.AnalyzingType
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.Nls
-import javax.swing.Icon
 
 class HighlightingPanel(project: Project, state: ProblemsViewState)
   : ProblemsViewPanel(project, ID, state, ProblemsViewBundle.messagePointer("problems.view.highlighting")),
@@ -30,7 +28,7 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
     const val ID = "CurrentFile"
   }
 
-  private val statusUpdateAlarm = SingleAlarm(Runnable(this::updateStatus), 200, stateForComponent(this), this)
+  private val statusUpdateAlarm = SingleAlarm(Runnable(this::updateStatus), 200, this, ThreadToUse.SWING_THREAD, stateForComponent(this))
   private var previousStatus: Status? = null
 
   init {

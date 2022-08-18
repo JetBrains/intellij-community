@@ -1,4 +1,4 @@
-// "Simplify 'b' to true" "true"
+// "Simplify 'b' to true" "true-preview"
 class A {
     void foo(boolean b) {
         if (b) {

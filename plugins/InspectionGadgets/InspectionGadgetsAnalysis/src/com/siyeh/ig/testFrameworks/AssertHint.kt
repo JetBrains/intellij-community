@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.testFrameworks
 
 import com.intellij.psi.*
@@ -104,11 +104,11 @@ private fun <E> getMessage(parameters: Array<PsiParameter>,
                            arguments: Array<E>,
                            messageOnFirstPosition: Boolean,
                            minimumParamCount: Int): Pair<Int, E>? = if (messageOnFirstPosition) {
-  if (parameters.isNotEmpty() && parameters.first().type.equalsToText(
-      CommonClassNames.JAVA_LANG_STRING) && parameters.size > minimumParamCount) 1 to arguments.first()
-  else {
-    null
-  }
+  if (parameters.isNotEmpty()
+      && parameters.first().type.equalsToText(CommonClassNames.JAVA_LANG_STRING)
+      && parameters.size > minimumParamCount
+  ) 1 to arguments.first()
+  else null
 }
 else {
   if (parameters.size > minimumParamCount && minimumParamCount >= 0) {
@@ -116,13 +116,9 @@ else {
     if (parameters[lastParameterIdx].type is PsiClassType) {
       0 to arguments[lastParameterIdx]
     }
-    else {
-      null
-    }
+    else null
   }
-  else {
-    null
-  }
+  else null
 }
 
 class AssertHint private constructor(override val argIndex: Int,
@@ -139,42 +135,27 @@ class AssertHint private constructor(override val argIndex: Int,
   companion object {
     @JvmStatic
     fun createAssertEqualsHint(expression: PsiMethodCallExpression): AssertHint? = create(expression) { methodName ->
-      if ("assertEquals" == methodName) 2
-      else {
-        null
-      }
+      if ("assertEquals" == methodName) 2 else null
     }
 
     @JvmStatic
     fun createAssertNotEqualsHint(expression: PsiMethodCallExpression): AssertHint? = create(expression) { methodName ->
-      if ("assertNotEquals" == methodName) 2
-      else {
-        null
-      }
+      if ("assertNotEquals" == methodName) 2 else null
     }
 
     @JvmStatic
     fun createAssertTrueFalseHint(expression: PsiMethodCallExpression): AssertHint? = create(expression) { methodName ->
-      if ("assertTrue" == methodName || "assertFalse" == methodName) 1
-      else {
-        null
-      }
+      if ("assertTrue" == methodName || "assertFalse" == methodName) 1 else null
     }
 
     @JvmStatic
     fun createAssertSameHint(expression: PsiMethodCallExpression): AssertHint? = create(expression) { methodName ->
-      if ("assertSame" == methodName) 2
-      else {
-        null
-      }
+      if ("assertSame" == methodName) 2 else null
     }
 
     @JvmStatic
     fun createAssertNotSameHint(expression: PsiMethodCallExpression): AssertHint? = create(expression) { methodName ->
-      if ("assertNotSame" == methodName) 2
-      else {
-        null
-      }
+      if ("assertNotSame" == methodName) 2 else null
     }
 
     @JvmStatic
@@ -250,6 +231,25 @@ class UAssertHint private constructor(override val argIndex: Int,
   private fun getArgument(index: Int): UExpression = (originalExpression as UCallExpression).valueArguments[index]
 
   companion object {
+    @JvmStatic
+    fun createAssertEqualsUHint(expression: UCallExpression): UAssertHint? = create(expression) { methodName ->
+      if ("assertEquals" == methodName) 2 else null
+    }
+
+    @JvmStatic
+    fun createAssertNotEqualsUHint(expression: UCallExpression): UAssertHint? = create(expression) { methodName ->
+      if ("assertNotEquals" == methodName) 2 else null
+    }
+
+    @JvmStatic
+    fun createAssertSameUHint(expression: UCallExpression): UAssertHint? = create(expression) { methodName ->
+      if ("assertSame" == methodName) 2 else null
+    }
+
+    @JvmStatic
+    fun createAssertNotSameUHint(expression: UCallExpression): UAssertHint? = create(expression) { methodName ->
+      if ("assertNotSame" == methodName) 2 else null
+    }
     @JvmStatic
     fun create(expression: UCallExpression, methodNameToParamCount: (String) -> Int?): UAssertHint? {
       val methodName = expression.methodName ?: return null

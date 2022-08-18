@@ -10,9 +10,7 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
 
 @ApiStatus.Internal
-abstract class JavaAbstractUElement(
-  givenParent: UElement?
-) : JavaUElementWithComments, UElement {
+abstract class JavaAbstractUElement(var givenParent: UElement?) : JavaUElementWithComments, UElement {
 
   override fun equals(other: Any?): Boolean {
     if (other !is UElement || other.javaClass != this.javaClass) return false
@@ -27,7 +25,15 @@ abstract class JavaAbstractUElement(
 
   override fun toString(): String = asRenderString()
 
-  override val uastParent: UElement? by lz { givenParent ?: convertParent() }
+  override val uastParent: UElement?
+    get() {
+      var parent = givenParent
+      if (parent == null) {
+        parent = convertParent()
+        givenParent = parent
+      }
+      return parent
+    }
 
   protected open fun convertParent(): UElement? =
     getPsiParentForLazyConversion()
@@ -67,9 +73,7 @@ private fun JavaAbstractUElement.wrapSingleExpressionLambda(uParent: UElement): 
 private fun JavaAbstractUElement.unwrapSwitch(uParent: UElement): UElement {
   when (uParent) {
     is UBlockExpression -> {
-      val codeBlockParent = uParent.uastParent
-      when (codeBlockParent) {
-
+      when (val codeBlockParent = uParent.uastParent) {
         is JavaUSwitchEntryList -> {
           if (branchHasElement(sourcePsi, codeBlockParent.sourcePsi) { it is PsiSwitchLabelStatementBase }) {
             return codeBlockParent

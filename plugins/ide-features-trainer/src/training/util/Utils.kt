@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.util
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder
@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.lang.Language
 import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationGroupManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
@@ -175,7 +176,7 @@ fun scaledRigid(width: Int, height: Int): Component {
 
 internal fun getLearnToolWindowForProject(project: Project): LearnToolWindow? {
   val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(LearnToolWindowFactory.LEARN_TOOL_WINDOW) ?: return null
-  val jComponent = toolWindow.contentManager.contents.singleOrNull()?.component
+  val jComponent = toolWindow.contentManagerIfCreated?.contents?.singleOrNull()?.component
   return jComponent as? LearnToolWindow
 }
 
@@ -265,5 +266,4 @@ internal fun filterUnseenLessons(newLessons: List<Lesson>): List<Lesson> {
 }
 
 val iftNotificationGroup: NotificationGroup get() =
-  NotificationGroup.findRegisteredGroup("IDE Features Trainer")
-  ?: error("Not found notificationGroup for IDE Features Trainer")
+  NotificationGroupManager.getInstance().getNotificationGroup("IDE Features Trainer")

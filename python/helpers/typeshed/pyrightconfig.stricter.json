@@ -9,10 +9,10 @@
         "**/@python2",
         "stdlib/distutils/command",
         "stdlib/lib2to3/refactor.pyi",
+        "stdlib/multiprocessing/reduction.pyi",
         "stdlib/sqlite3/dbapi2.pyi",
         "stdlib/_tkinter.pyi",
         "stdlib/tkinter",
-        "stdlib/unittest/mock.pyi",
         "stdlib/xml/dom/NodeFilter.pyi",
         "stdlib/xml/dom/expatbuilder.pyi",
         "stdlib/xml/dom/minidom.pyi",
@@ -44,11 +44,13 @@
         "stubs/mock",
         "stubs/mysqlclient",
         "stubs/oauthlib",
+        "stubs/openpyxl",
         "stubs/Pillow",
         "stubs/paramiko",
         "stubs/prettytable",
         "stubs/protobuf",
         "stubs/google-cloud-ndb",
+        "stubs/passlib",
         "stubs/pep8-naming",
         "stubs/psutil",
         "stubs/psycopg2",
@@ -110,12 +112,10 @@
     "reportInvalidTypeVarUse": "error",
     "reportPropertyTypeMismatch": "error",
     "reportSelfClsParameterName": "error",
+    "reportUnsupportedDunderAll": "error",
     // Overlapping overloads cannot be enabled at this time because
-    // of the "factions.Fraction.__pow__" method and "tasks.gather" function.
+    // of the "fractions.Fraction.__pow__" method and "tasks.gather" function.
     // Mypy's overlapping overload logic misses these issues (see mypy
     // issue #10143 and #10157).
     "reportOverlappingOverload": "none",
-    // Several stubs refer to symbols in __all__ that are conditionally
-    // declared based on platform or version checks.
-    "reportUnsupportedDunderAll": "none",
 }

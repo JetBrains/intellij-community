@@ -16,10 +16,10 @@
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.ui.colorpicker
 
-import com.google.common.annotations.VisibleForTesting
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.picker.ColorListener
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.VisibleForTesting
 import sun.awt.AWTPermissions
 import java.awt.*
 import javax.swing.BoxLayout

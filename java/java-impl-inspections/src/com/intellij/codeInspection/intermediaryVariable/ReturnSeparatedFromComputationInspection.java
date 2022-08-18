@@ -18,10 +18,7 @@ import com.intellij.refactoring.util.CommonJavaInlineUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.HighlightUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +37,7 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitReturnStatement(PsiReturnStatement returnStatement) {
+      public void visitReturnStatement(@NotNull PsiReturnStatement returnStatement) {
         super.visitReturnStatement(returnStatement);
         final ReturnContext context = createReturnContext(returnStatement);
         if (context != null && isApplicable(context)) {
@@ -419,7 +416,7 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
     private boolean moveToSwitch(@NotNull PsiSwitchStatement targetStatement) {
       moveToBreaks(targetStatement, false);
       PsiCodeBlock body = targetStatement.getBody();
-      return body != null && moveToBlockBody(body, false) && hasDefaultSwitchLabel(body);
+      return body != null && moveToBlockBody(body, false) && hasTotalSwitchLabel(body);
     }
 
     private boolean moveToTry(@NotNull PsiTryStatement targetStatement, boolean returnAtTheEnd) {
@@ -483,9 +480,9 @@ public final class ReturnSeparatedFromComputationInspection extends AbstractBase
       }
     }
 
-    private static boolean hasDefaultSwitchLabel(@NotNull PsiCodeBlock switchBody) {
+    private static boolean hasTotalSwitchLabel(@NotNull PsiCodeBlock switchBody) {
       for (PsiStatement statement : switchBody.getStatements()) {
-        if (statement instanceof PsiSwitchLabelStatement && ((PsiSwitchLabelStatement)statement).isDefaultCase()) {
+        if (statement instanceof PsiSwitchLabelStatement && SwitchUtils.isTotalLabel((PsiSwitchLabelStatement)statement)) {
           return true;
         }
       }

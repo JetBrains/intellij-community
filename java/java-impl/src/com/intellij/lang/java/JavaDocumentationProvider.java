@@ -43,6 +43,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.beanProperties.BeanPropertyElement;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
@@ -166,6 +167,14 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       PsiExpression constantInitializer = JavaDocInfoGenerator.calcInitializerExpression(variable);
       if (constantInitializer != null) {
         generator.appendExpressionValue(buffer, constantInitializer);
+      }
+    }
+    else if (variable instanceof PsiEnumConstant) {
+      PsiEnumConstant enumConstant = (PsiEnumConstant)variable;
+      PsiExpressionList list = enumConstant.getArgumentList();
+      if (JavaDocInfoGenerator.canComputeArguments(list)) {
+        JavaDocInfoGenerator generator = JavaDocInfoGeneratorFactory.create(variable.getProject(), null);
+        generator.generateExpressionText(enumConstant.getArgumentList(), buffer);
       }
     }
   }
@@ -736,6 +745,13 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     }
     if (element instanceof PsiMethodCallExpression) {
       return getMethodCandidateInfo((PsiMethodCallExpression)element);
+    }
+
+    if (element instanceof FakePsiElement) {
+      PsiDocCommentBase docCommentBase = PsiTreeUtil.getParentOfType(originalElement, PsiDocCommentBase.class);
+      if (docCommentBase != null) {
+        element = docCommentBase.getOwner();
+      }
     }
 
     // Try hard for documentation of incomplete new Class instantiation

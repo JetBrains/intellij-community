@@ -10,13 +10,18 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.function.Supplier;
 
-public abstract class ChangeHierarchyViewActionBase extends ToggleAction implements UpdateInBackground {
+public abstract class ChangeHierarchyViewActionBase extends ToggleAction {
   public ChangeHierarchyViewActionBase(String text, String description, Icon icon) {
     this(() -> text, () -> description, icon);
   }
 
   public ChangeHierarchyViewActionBase(@NotNull Supplier<String> text, @NotNull Supplier<String> description, Icon icon) {
     super(text, description, icon);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

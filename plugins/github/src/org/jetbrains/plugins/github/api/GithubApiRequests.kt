@@ -10,6 +10,7 @@ import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.api.util.GithubApiSearchQueryBuilder
 import org.jetbrains.plugins.github.api.util.GithubApiUrlQueryBuilder
 import java.awt.Image
+import java.awt.image.BufferedImage
 
 /**
  * Collection of factory methods for API requests used in plugin
@@ -24,8 +25,8 @@ object GithubApiRequests {
     fun get(url: String) = Get.json<GithubAuthenticatedUser>(url).withOperationName("get profile information")
 
     @JvmStatic
-    fun getAvatar(url: String) = object : Get<Image>(url) {
-      override fun extractResult(response: GithubApiResponse): Image {
+    fun getAvatar(url: String) = object : Get<BufferedImage>(url) {
+      override fun extractResult(response: GithubApiResponse): BufferedImage {
         return response.handleBody(ThrowableConvertor {
           GithubApiContentHelper.loadImage(it)
         })
@@ -452,27 +453,6 @@ object GithubApiRequests {
       @JvmStatic
       fun get(url: String) = Get.jsonSearchPage<GithubSearchedIssue>(url).withOperationName("search issues in repository")
     }
-  }
-
-  object Auth : Entity("/authorizations") {
-    @JvmStatic
-    fun create(server: GithubServerPath, scopes: List<String>, note: String) =
-      Post.json<GithubAuthorization>(getUrl(server, urlSuffix),
-                                     GithubAuthorizationCreateRequest(scopes, note, null))
-        .withOperationName("create authorization $note")
-
-    @JvmStatic
-    fun get(server: GithubServerPath, pagination: GithubRequestPagination? = null) =
-      get(getUrl(server, urlSuffix,
-                 GithubApiUrlQueryBuilder.urlQuery { param(pagination) }))
-
-    @JvmStatic
-    fun get(url: String) = Get.jsonPage<GithubAuthorization>(url)
-      .withOperationName("get authorizations")
-
-    @JvmStatic
-    fun pages(server: GithubServerPath, pagination: GithubRequestPagination? = null) =
-      GithubApiPagesLoader.Request(get(server, pagination), ::get)
   }
 
   abstract class Entity(val urlSuffix: String)

@@ -28,7 +28,7 @@
                      enabledByDefault="true" level="WARNING" groupKey="group.name.javafx"
                      key="inspection.java.fx.unresolved.fx.id.reference.display.name"/>
     <localInspection language="XML" shortName="JavaFxUnusedImports" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxUnusedImportsInspection"
-                     enabledByDefault="true" level="WARNING" groupKey="group.name.javafx" key="inspection.java.fx.unused.imports.display.name"/>
+                     enabledByDefault="true" level="WARNING" groupKey="group.name.javafx" key="inspection.java.fx.unused.imports.display.name" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"/>
     <localInspection language="XML" shortName="JavaFxRedundantPropertyValue" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxRedundantPropertyValueInspection"
                      enabledByDefault="true" level="WARNING" groupKey="group.name.javafx"
                      key="inspection.java.fx.redundant.property.value.display.name"/>

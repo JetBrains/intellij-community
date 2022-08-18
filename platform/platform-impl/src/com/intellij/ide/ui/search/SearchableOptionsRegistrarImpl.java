@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.search;
 
 import com.intellij.ide.plugins.DynamicPluginListener;
@@ -131,9 +131,9 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
     identifierTable = processor.getIdentifierTable();
   }
 
-  static void processSearchableOptions(@NotNull Predicate<String> fileNameFilter, @NotNull BiConsumer<String, Element> consumer) {
+  static void processSearchableOptions(@NotNull Predicate<? super String> fileNameFilter, @NotNull BiConsumer<? super String, ? super Element> consumer) {
     Set<ClassLoader> visited = Collections.newSetFromMap(new IdentityHashMap<>());
-    for (IdeaPluginDescriptor plugin : PluginManagerCore.getPluginSet().getRawListOfEnabledModules()) {
+    for (IdeaPluginDescriptor plugin : PluginManagerCore.getPluginSet().getEnabledModules()) {
       ClassLoader classLoader = plugin.getPluginClassLoader();
       if (!(classLoader instanceof UrlClassLoader) || !visited.add(classLoader)) {
         continue;

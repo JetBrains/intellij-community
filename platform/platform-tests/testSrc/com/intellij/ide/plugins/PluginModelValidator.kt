@@ -4,10 +4,10 @@ package com.intellij.ide.plugins
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.openapi.application.PathManager.getHomePath
-import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.getErrorsAsString
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
+import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
 import java.io.StringWriter
 import java.nio.file.Files
@@ -33,9 +33,10 @@ private val moduleSkipList = java.util.Set.of(
   "intellij.javaFX.community",
   "intellij.lightEdit",
   "intellij.webstorm",
-  "intellij.cwm.plugin", /* platform/cwm-plugin/resources/META-INF/plugin.xml doesn't have `id` - ignore for now */
+  "intellij.cwm.plugin", /* remote-dev/cwm-plugin/resources/META-INF/plugin.xml doesn't have `id` - ignore for now */
   "intellij.osgi", /* no particular package prefix to choose */
   "intellij.hunspell", /* MP-3656 Marketplace doesn't allow uploading plugins without dependencies */
+  "intellij.android.device-explorer", /* android plugin doesn't follow new plugin model yet, $modulename$.xml is not a module descriptor */
 )
 
 class PluginModelValidator(sourceModules: List<Module>) {
@@ -127,7 +128,7 @@ class PluginModelValidator(sourceModules: List<Module>) {
     for (pluginInfo in pluginIdToInfo.values) {
       val descriptor = pluginInfo.descriptor
 
-      val dependenciesElements = descriptor.getChildren("dependencies")
+      val dependenciesElements = descriptor.children("dependencies").toList()
       if (dependenciesElements.size > 1) {
         _errors.add(PluginValidationError(
           "The only `dependencies` tag is expected",
@@ -339,7 +340,10 @@ class PluginModelValidator(sourceModules: List<Module>) {
             continue
           }
         }
-        _errors.add(PluginValidationError("Module not found: $moduleName", getErrorInfo()))
+        if (!moduleName.startsWith("kotlin.")) {
+           // kotlin modules are loaded via conditional includes and the test cannot detect them
+          _errors.add(PluginValidationError("Module not found: $moduleName", getErrorInfo()))
+        }
         continue
       }
 

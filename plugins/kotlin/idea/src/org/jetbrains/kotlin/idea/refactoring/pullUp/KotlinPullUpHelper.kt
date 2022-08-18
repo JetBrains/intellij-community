@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.pullUp
 
@@ -19,7 +19,8 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addToShorteningWaitSet
 import org.jetbrains.kotlin.idea.core.dropDefaultValue
 import org.jetbrains.kotlin.idea.core.getOrCreateCompanionObject
-import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.core.setType
 import org.jetbrains.kotlin.idea.inspections.CONSTRUCTOR_VAL_VAR_MODIFIERS
 import org.jetbrains.kotlin.idea.refactoring.createJavaField
@@ -32,7 +33,6 @@ import org.jetbrains.kotlin.idea.refactoring.safeDelete.removeOverrideModifier
 import org.jetbrains.kotlin.idea.util.anonymousObjectSuperTypeOrNull
 import org.jetbrains.kotlin.idea.util.hasComments
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.KotlinPsiUnifier
-import org.jetbrains.kotlin.idea.util.reformatted
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -114,12 +114,12 @@ class KotlinPullUpHelper(
                         initializerCandidate = statement
                         elementsToRemove.add(statement)
                     } else {
-                        if (!KotlinPsiUnifier.DEFAULT.unify(statement, currentInitializer).matched) return null
+                        if (!KotlinPsiUnifier.DEFAULT.unify(statement, currentInitializer).isMatched) return null
 
                         initializerCandidate = currentInitializer
                         elementsToRemove.add(statement)
                     }
-                } else if (!KotlinPsiUnifier.DEFAULT.unify(statement, initializerCandidate).matched) return null
+                } else if (!KotlinPsiUnifier.DEFAULT.unify(statement, initializerCandidate).isMatched) return null
             }
         }
 
@@ -156,8 +156,7 @@ class KotlinPullUpHelper(
                 val resolvedCall = expression.getResolvedCall(context) ?: return
                 val receiver = (resolvedCall.getExplicitReceiverValue() as? ExpressionReceiver)?.expression
                 if (receiver != null && receiver !is KtThisExpression) return
-                val target = (resolvedCall.resultingDescriptor as? DeclarationDescriptorWithSource)?.source?.getPsi()
-                when (target) {
+                when (val target = (resolvedCall.resultingDescriptor as? DeclarationDescriptorWithSource)?.source?.getPsi()) {
                     is KtParameter -> usedParameters.add(target)
                     is KtProperty -> usedProperties.add(target)
                 }

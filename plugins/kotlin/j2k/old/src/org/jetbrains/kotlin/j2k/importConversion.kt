@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.j2k
 
@@ -73,8 +73,7 @@ private fun Converter.convertStaticImportOnDemand(fqName: FqName, target: PsiEle
         is KtLightClassForFacade -> return listOf(target.facadeClassFqName.parent().render() + ".*")
 
         is KtLightClass -> {
-            val kotlinOrigin = target.kotlinOrigin
-            val importFromObject = when (kotlinOrigin) {
+            val importFromObject = when (val kotlinOrigin = target.kotlinOrigin) {
                 is KtObjectDeclaration -> kotlinOrigin
                 is KtClass -> kotlinOrigin.getCompanionObjects().singleOrNull()
                 else -> null
@@ -110,8 +109,7 @@ private fun convertStaticExplicitImport(fqName: FqName, target: PsiElement?): Li
             fqName.shortName()
 
         if (nameToImport != null) {
-            val originParent = kotlinOrigin?.parent
-            when (originParent) {
+            when (val originParent = kotlinOrigin?.parent) {
                 is KtFile -> { // import of function or property accessor from file facade
                     return listOf(originParent.packageFqName.child(nameToImport).render())
                 }

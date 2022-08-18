@@ -1,4 +1,4 @@
-// "Cast to 'int[]'" "true"
+// "Cast expression to 'int[]'" "true-preview"
 import java.lang.annotation.*;
 import static java.lang.annotation.ElementType.*;
 

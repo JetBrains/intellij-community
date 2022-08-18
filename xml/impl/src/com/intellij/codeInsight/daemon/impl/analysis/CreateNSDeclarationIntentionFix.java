@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.application.options.XmlSettings;
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.daemon.impl.VisibleHighlightingPassFactory;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.HintAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -33,6 +34,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import com.intellij.psi.meta.PsiMetaData;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtilRt;
@@ -117,6 +119,30 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
   @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    return doPreview(project, previewDescriptor.getPsiElement(), null);
+  }
+
+  @Override
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+    PsiElement element = myElement.retrieve();
+    if (element == null) return IntentionPreviewInfo.EMPTY;
+    return doPreview(project, PsiTreeUtil.findSameElementInCopy(element, file), editor);
+  }
+
+  @NotNull
+  private IntentionPreviewInfo doPreview(@NotNull Project project, PsiElement element, @Nullable Editor editor) {
+    PsiFile file = element.getContainingFile();
+    if (!(file instanceof XmlFile)) return IntentionPreviewInfo.EMPTY;
+    XmlFile xmlFile = (XmlFile)file;
+    List<String> namespaces = getNamespaces(element, xmlFile);
+    String namespace = namespaces.isEmpty() ? "" : namespaces.get(0);
+    new MyStringToAttributeProcessor(element, project, editor, xmlFile)
+      .doSomethingWithGivenStringToProduceXmlAttributeNowPlease(namespace);
+    return IntentionPreviewInfo.DIFF;
+  }
+
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof XmlFile)) return false;
     PsiElement element = myElement.retrieve();
@@ -154,37 +180,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     runActionOverSeveralAttributeValuesAfterLettingUserSelectTheNeededOne(
       namespaces,
       project,
-      new StringToAttributeProcessor() {
-        @Override
-        public void doSomethingWithGivenStringToProduceXmlAttributeNowPlease(@NotNull final String namespace)
-          throws IncorrectOperationException {
-          String prefix = myNamespacePrefix;
-          if (StringUtil.isEmpty(prefix)) {
-            final XmlFile xmlFile = XmlExtension.getExtension(file).getContainingFile(element);
-            prefix = ExtendedTagInsertHandler.getPrefixByNamespace(xmlFile, namespace);
-            if (StringUtil.isNotEmpty(prefix)) {
-              // namespace already declared
-              ExtendedTagInsertHandler.qualifyWithPrefix(prefix, element);
-              return;
-            }
-            else {
-              prefix = ExtendedTagInsertHandler.suggestPrefix(xmlFile, namespace);
-              if (!StringUtil.isEmpty(prefix)) {
-                ExtendedTagInsertHandler.qualifyWithPrefix(prefix, element);
-                PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
-              }
-            }
-          }
-          final int offset = editor.getCaretModel().getOffset();
-          final RangeMarker marker = editor.getDocument().createRangeMarker(offset, offset);
-          final XmlNamespaceHelper helper = XmlNamespaceHelper.getHelper(xmlFile);
-          helper.insertNamespaceDeclaration(xmlFile, editor, Collections.singleton(namespace), prefix, __ -> {
-            if (!namespace.isEmpty()) {
-              editor.getCaretModel().moveToOffset(marker.getStartOffset());
-            }
-          });
-        }
-      }, getSelectNSActionTitle(),
+      new MyStringToAttributeProcessor(element, project, editor, xmlFile), getSelectNSActionTitle(),
       this,
       editor);
   }
@@ -422,5 +418,60 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
 
   public interface ExternalUriProcessor {
     void process(@NotNull String uri, @Nullable final String url);
+  }
+
+  private class MyStringToAttributeProcessor implements StringToAttributeProcessor {
+    private final @NotNull PsiElement myElement;
+    private final @NotNull Project myProject;
+    private final @Nullable Editor myEditor;
+    private final @NotNull XmlFile myXmlFile;
+
+    private MyStringToAttributeProcessor(@NotNull PsiElement element,
+                                         @NotNull Project project,
+                                         @Nullable Editor editor,
+                                         @NotNull XmlFile xmlFile) {
+      myElement = element;
+      myProject = project;
+      myEditor = editor;
+      myXmlFile = xmlFile;
+    }
+
+    @Override
+    public void doSomethingWithGivenStringToProduceXmlAttributeNowPlease(@NotNull final String namespace)
+      throws IncorrectOperationException {
+      String prefix = myNamespacePrefix;
+      if (StringUtil.isEmpty(prefix)) {
+        final XmlFile xmlFile = XmlExtension.getExtension(myXmlFile).getContainingFile(myElement);
+        prefix = ExtendedTagInsertHandler.getPrefixByNamespace(xmlFile, namespace);
+        if (StringUtil.isNotEmpty(prefix)) {
+          // namespace already declared
+          ExtendedTagInsertHandler.qualifyWithPrefix(prefix, myElement);
+          return;
+        }
+        else {
+          prefix = ExtendedTagInsertHandler.suggestPrefix(xmlFile, namespace);
+          if (!StringUtil.isEmpty(prefix)) {
+            ExtendedTagInsertHandler.qualifyWithPrefix(prefix, myElement);
+            if (myEditor != null) {
+              PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myEditor.getDocument());
+            }
+          }
+        }
+      }
+      final RangeMarker marker;
+      if (myEditor != null) {
+        final int offset = myEditor.getCaretModel().getOffset();
+        marker = myEditor.getDocument().createRangeMarker(offset, offset);
+      }
+      else {
+        marker = null;
+      }
+      final XmlNamespaceHelper helper = XmlNamespaceHelper.getHelper(myXmlFile);
+      helper.insertNamespaceDeclaration(myXmlFile, myEditor, Collections.singleton(namespace), prefix, __ -> {
+        if (myEditor != null && !namespace.isEmpty()) {
+          myEditor.getCaretModel().moveToOffset(marker.getStartOffset());
+        }
+      });
+    }
   }
 }

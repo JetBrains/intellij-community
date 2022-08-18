@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui
 
 import com.intellij.application.options.RegistryManager
@@ -20,12 +20,8 @@ import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
-import com.intellij.openapi.wm.impl.GlobalMenuLinux
-import com.intellij.openapi.wm.impl.IdeFrameDecorator
-import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
-import com.intellij.openapi.wm.impl.IdeMenuBar
+import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.LinuxIdeMenuBar.Companion.doBindAppMenuOfParent
-import com.intellij.openapi.wm.impl.ProjectFrameHelper.appendTitlePart
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent
 import com.intellij.ui.*
 import com.intellij.ui.mac.touchbar.TouchbarSupport
@@ -33,14 +29,14 @@ import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.JBR
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.resolvedPromise
 import java.awt.*
 import java.awt.event.ActionListener
 import java.awt.event.KeyEvent
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
+import java.util.function.Supplier
 import javax.swing.*
 
 open class FrameWrapper @JvmOverloads constructor(project: Project?,
@@ -102,7 +98,8 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
 
     UIUtil.decorateWindowHeader((frame as RootPaneContainer).rootPane)
     if (frame is JFrame) {
-      ToolbarUtil.setTransparentTitleBar(frame, frame.rootPane) { runnable ->
+      val handlerProvider = Supplier { FullScreeSupport.NEW.apply("com.intellij.ui.mac.MacFullScreenSupport") }
+      ToolbarUtil.setTransparentTitleBar(frame, frame.rootPane, handlerProvider) { runnable ->
         Disposer.register(this, Disposable { runnable.run() })
       }
     }
@@ -319,7 +316,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
 
     override fun isInFullScreen() = false
 
-    override fun toggleFullScreen(state: Boolean): Promise<*> = resolvedPromise<Any>()
+    override fun toggleFullScreen(state: Boolean): CompletableFuture<*> = CompletableFuture.completedFuture(null)
 
     override fun addNotify() {
       if (IdeFrameDecorator.isCustomDecorationActive()) {
@@ -366,8 +363,8 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
       }
 
       val builder = StringBuilder()
-      appendTitlePart(builder, frameTitle)
-      appendTitlePart(builder, fileTitle)
+      ProjectFrameHelper.appendTitlePart(builder, frameTitle)
+      ProjectFrameHelper.appendTitlePart(builder, fileTitle)
       title = builder.toString()
     }
 

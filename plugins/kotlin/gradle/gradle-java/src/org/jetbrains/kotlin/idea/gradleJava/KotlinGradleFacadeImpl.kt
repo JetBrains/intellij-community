@@ -1,16 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.gradleJava
 
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.module.Module
-import com.intellij.psi.PsiFile
 import icons.GradleIcons
-import org.jetbrains.kotlin.idea.gradle.configuration.GradleVersionProviderImpl
+import org.jetbrains.kotlin.idea.base.externalSystem.KotlinGradleFacade
+import org.jetbrains.kotlin.idea.base.externalSystem.findAll
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.extensions.gradle.*
 import org.jetbrains.kotlin.idea.gradleJava.inspections.getResolvedVersionByModuleData
-import org.jetbrains.kotlin.idea.roots.findAll
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
@@ -34,12 +34,12 @@ object KotlinGradleFacadeImpl : KotlinGradleFacade {
         return GradleProjectSettings.isDelegatedBuildEnabled(module)
     }
 
-    override fun findKotlinPluginVersion(node: DataNode<ModuleData>): String? {
+    override fun findKotlinPluginVersion(node: DataNode<ModuleData>): IdeKotlinVersion? {
         val buildScriptClasspathData = node.findAll(BuildScriptClasspathData.KEY).firstOrNull()?.data ?: return null
         return findKotlinPluginVersion(buildScriptClasspathData)
     }
 
-    fun findKotlinPluginVersion(classpathData: BuildScriptClasspathData): String? {
+    fun findKotlinPluginVersion(classpathData: BuildScriptClasspathData): IdeKotlinVersion? {
         for (classPathEntry in classpathData.classpathEntries.asReversed()) {
             for (path in classPathEntry.classesFile) {
                 val uniformedPath = path.replace('\\', '/')
@@ -47,13 +47,13 @@ object KotlinGradleFacadeImpl : KotlinGradleFacade {
                 if (uniformedPath.contains(KOTLIN_PLUGIN_PATH_MARKER)) {
                     val versionSubstring = uniformedPath.substringAfter(KOTLIN_PLUGIN_PATH_MARKER).substringBefore('/', "<error>")
                     if (versionSubstring != "<error>") {
-                        return versionSubstring
+                        return IdeKotlinVersion.opt(versionSubstring)
                     }
                 } else if (uniformedPath.contains(KOTLIN_PLUGIN_PATH_MARKER_FOR_MAVEN_LOCAL_REPO)) {
                     val versionSubstring =
                         uniformedPath.substringAfter(KOTLIN_PLUGIN_PATH_MARKER_FOR_MAVEN_LOCAL_REPO).substringBefore('/', "<error>")
                     if (versionSubstring != "<error>") {
-                        return versionSubstring
+                        return IdeKotlinVersion.opt(versionSubstring)
                     }
                 }
             }
@@ -64,13 +64,5 @@ object KotlinGradleFacadeImpl : KotlinGradleFacade {
 
     override fun findLibraryVersionByModuleData(node: DataNode<*>, groupId: String, libraryIds: List<String>): String? {
         return node.getResolvedVersionByModuleData(groupId, libraryIds)
-    }
-
-    override fun findManipulator(file: PsiFile, preferNewSyntax: Boolean): GradleBuildScriptManipulator<*>? {
-        for (extension in GradleBuildScriptSupport.EP_NAME.extensionList) {
-            return extension.createManipulator(file, preferNewSyntax, GradleVersionProviderImpl) ?: continue
-        }
-
-        return null
     }
 }

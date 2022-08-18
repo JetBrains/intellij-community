@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Eugene Zhuravlev
  */
 @Tag("resource")
-public class ResourceRootConfiguration extends FilePattern {
+public final class ResourceRootConfiguration extends FilePattern {
   @Tag("directory")
   @NotNull
   public String directory;

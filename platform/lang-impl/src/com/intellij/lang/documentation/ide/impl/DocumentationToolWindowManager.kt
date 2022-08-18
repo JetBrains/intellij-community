@@ -147,7 +147,7 @@ internal class DocumentationToolWindowManager(private val project: Project) : Di
     val reusableContent = getReusableContent()
     if (reusableContent == null) {
       val browser = DocumentationBrowser.createBrowser(project, initialRequest = request)
-      showInToolWindow(DocumentationUI(project, browser), addNewContent())
+      showInNewTab(DocumentationUI(project, browser))
     }
     else {
       reusableContent.toolWindowUI.browser.resetBrowser(request)
@@ -162,23 +162,28 @@ internal class DocumentationToolWindowManager(private val project: Project) : Di
   fun showInToolWindow(ui: DocumentationUI) {
     EDT.assertIsEdt()
     val reusableContent = getReusableContent()
-    val content = if (reusableContent == null) {
-      addNewContent()
+    if (reusableContent == null) {
+      showInNewTab(ui)
     }
     else {
       Disposer.dispose(reusableContent.toolWindowUI)
-      reusableContent
+      initUI(ui, reusableContent)
+      makeVisible(reusableContent)
     }
-    showInToolWindow(ui, content)
   }
 
-  private fun showInToolWindow(ui: DocumentationUI, content: Content) {
+  private fun showInNewTab(ui: DocumentationUI) {
+    val content = addNewContent()
+    initUI(ui, content)
+    makeVisible(content)
+  }
+
+  private fun initUI(ui: DocumentationUI, content: Content) {
     val newUI = DocumentationToolWindowUI(project, ui, content)
     if (autoUpdate) {
       newUI.toggleAutoUpdate(state = true)
     }
     content.component = newUI.contentComponent
-    makeVisible(content)
   }
 
   private fun makeVisible(content: Content) {
@@ -194,7 +199,7 @@ internal class DocumentationToolWindowManager(private val project: Project) : Di
   }
 
   private fun addNewContent(): Content {
-    val content = ContentFactory.SERVICE.getInstance().createContent(JPanel(), null, false).also {
+    val content = ContentFactory.getInstance().createContent(JPanel(), null, false).also {
       it.isCloseable = true
       it.putUserData(ToolWindow.SHOW_CONTENT_ICON, true)
     }

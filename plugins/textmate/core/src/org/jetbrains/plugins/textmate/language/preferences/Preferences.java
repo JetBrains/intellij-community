@@ -10,13 +10,16 @@ public class Preferences implements TextMateScopeSelectorOwner {
   @NotNull private final CharSequence myScopeRule;
   @Nullable private final Set<TextMateBracePair> myHighlightingPairs;
   @Nullable private final Set<TextMateBracePair> mySmartTypingPairs;
+  @NotNull private final IndentationRules myIndentationRules;
 
   public Preferences(@NotNull CharSequence scopeRule,
                      @Nullable Set<TextMateBracePair> highlightingPairs,
-                     @Nullable Set<TextMateBracePair> smartTypingPairs) {
+                     @Nullable Set<TextMateBracePair> smartTypingPairs,
+                     @NotNull IndentationRules indentationRules) {
     myScopeRule = scopeRule;
     myHighlightingPairs = highlightingPairs;
     mySmartTypingPairs = smartTypingPairs;
+    myIndentationRules = indentationRules;
   }
 
   @Nullable
@@ -34,4 +37,7 @@ public class Preferences implements TextMateScopeSelectorOwner {
   public CharSequence getScopeSelector() {
     return myScopeRule;
   }
+
+  @NotNull
+  public IndentationRules getIndentationRules() { return myIndentationRules; }
 }

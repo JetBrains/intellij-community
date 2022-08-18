@@ -116,7 +116,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
     final List<ProblemDescriptor> problems = new ArrayList<>();
     final HashSet<PsiVariable> result = new HashSet<>();
     body.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitCodeBlock(PsiCodeBlock block) {
+      @Override public void visitCodeBlock(@NotNull PsiCodeBlock block) {
         if (block.getParent() instanceof PsiLambdaExpression && block != body) {
           final List<ProblemDescriptor> descriptors = checkCodeBlock(block, manager, onTheFly);
           if (descriptors != null) {
@@ -157,7 +157,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
       }
 
       @Override
-      public void visitResourceVariable(PsiResourceVariable variable) {
+      public void visitResourceVariable(@NotNull PsiResourceVariable variable) {
         if (PsiTreeUtil.getParentOfType(variable, PsiClass.class) != PsiTreeUtil.getParentOfType(body, PsiClass.class)) {
           return;
         }
@@ -165,7 +165,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
       }
 
       @Override
-      public void visitCatchSection(PsiCatchSection section) {
+      public void visitCatchSection(@NotNull PsiCatchSection section) {
         super.visitCatchSection(section);
         if (!REPORT_CATCH_PARAMETERS) return;
         final PsiParameter parameter = section.getParameter();
@@ -182,7 +182,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
         }
       }
 
-      @Override public void visitForeachStatement(PsiForeachStatement statement) {
+      @Override public void visitForeachStatement(@NotNull PsiForeachStatement statement) {
         super.visitForeachStatement(statement);
         if (!REPORT_FOREACH_PARAMETERS) return;
         final PsiParameter param = statement.getIterationParameter();
@@ -204,11 +204,11 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
         PsiElement[] children = block.getChildren();
         for (PsiElement child : children) {
           child.accept(new JavaElementVisitor() {
-            @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+            @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
               visitReferenceElement(expression);
             }
 
-            @Override public void visitDeclarationStatement(PsiDeclarationStatement statement) {
+            @Override public void visitDeclarationStatement(@NotNull PsiDeclarationStatement statement) {
               PsiElement[] declaredElements = statement.getDeclaredElements();
               for (PsiElement declaredElement : declaredElements) {
                 if (declaredElement instanceof PsiVariable) result.add((PsiVariable)declaredElement);
@@ -216,7 +216,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
             }
 
             @Override
-            public void visitForStatement(PsiForStatement statement) {
+            public void visitForStatement(@NotNull PsiForStatement statement) {
               super.visitForStatement(statement);
               final PsiStatement initialization = statement.getInitialization();
               if (!(initialization instanceof PsiDeclarationStatement)) {
@@ -236,17 +236,21 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
         return result;
       }
 
-      @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
+      @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         if (expression.getParent() instanceof PsiMethodCallExpression) {
           super.visitReferenceExpression(expression);
         }
       }
     });
 
-    if (body.getParent() instanceof PsiMethod && REPORT_PARAMETERS) {
-      final PsiMethod method = (PsiMethod)body.getParent();
-      if (!(method instanceof SyntheticElement)) { // e.g. JspHolderMethod
-        Collections.addAll(result, method.getParameterList().getParameters());
+    if (body.getParent() instanceof PsiParameterListOwner && REPORT_PARAMETERS) {
+      final PsiParameterListOwner methodOrLambda = (PsiParameterListOwner)body.getParent();
+      if (!(methodOrLambda instanceof SyntheticElement)) { // e.g. JspHolderMethod
+        for (PsiParameter parameter : methodOrLambda.getParameterList().getParameters()) {
+          if (parameter.getTypeElement() != null) {
+            result.add(parameter);
+          }
+        }
       }
     }
 

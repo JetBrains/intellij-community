@@ -46,7 +46,12 @@
       <with tag="className" implements="com.intellij.codeInsight.intention.IntentionAction"/>
     </extensionPoint>
 
-    <extensionPoint name="liveTemplateContext" interface="com.intellij.codeInsight.template.TemplateContextType" dynamic="true"/>
+    <extensionPoint name="liveTemplateContext" beanClass="com.intellij.codeInsight.template.LiveTemplateContextBean" dynamic="true">
+      <with attribute="implementation" implements="com.intellij.codeInsight.template.TemplateContextType"/>
+    </extensionPoint>
+
+    <extensionPoint name="liveTemplateContextProvider" interface="com.intellij.codeInsight.template.LiveTemplateContextProvider" dynamic="true"/>
+
     <extensionPoint name="liveTemplateMacro" interface="com.intellij.codeInsight.template.Macro" dynamic="true"/>
 
     <extensionPoint name="documentationProvider" interface="com.intellij.lang.documentation.DocumentationProvider" dynamic="true"/>

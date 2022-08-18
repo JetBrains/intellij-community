@@ -44,6 +44,9 @@ class DummyMavenServerConnector(project: @NotNull Project,
   override fun removeDownloadListener(listener: MavenServerDownloadListener?) {
   }
 
+  override fun stop(wait: Boolean) {
+  }
+
   override fun getSupportType() = MavenConfigurableBundle.message("connector.ui.dummy")
 
   override fun getState() = State.RUNNING
@@ -214,6 +217,12 @@ class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
                                    remoteRepositories: List<MavenRemoteRepository>,
                                    token: MavenToken?): List<MavenArtifact> {
     return emptyList()
+  }
+
+  override fun resolveArtifactTransitively(artifacts: MutableList<MavenArtifactInfo>,
+                                           remoteRepositories: MutableList<MavenRemoteRepository>,
+                                           token: MavenToken?): MavenArtifactResolveResult {
+    return MavenArtifactResolveResult(emptyList(), null)
   }
 
   override fun resolvePlugin(plugin: MavenPlugin,
