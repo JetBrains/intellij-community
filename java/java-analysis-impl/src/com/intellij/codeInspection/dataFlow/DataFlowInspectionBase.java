@@ -905,20 +905,19 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   }
 
   private void reportConstantBoolean(ProblemReporter reporter, PsiElement psiAnchor, boolean evaluatesToTrue) {
-    while (psiAnchor instanceof PsiParenthesizedExpression) {
-      psiAnchor = ((PsiParenthesizedExpression)psiAnchor).getExpression();
+    while (psiAnchor instanceof PsiParenthesizedExpression parenthesized) {
+      psiAnchor = parenthesized.getExpression();
     }
     if (psiAnchor == null || shouldBeSuppressed(psiAnchor)) return;
-    boolean isAssertion = isAssertionEffectively(psiAnchor, evaluatesToTrue);
+    boolean isAssertion = psiAnchor instanceof PsiExpression expr && isAssertionEffectively(expr, evaluatesToTrue);
     if (DONT_REPORT_TRUE_ASSERT_STATEMENTS && isAssertion) return;
 
-    PsiElement parent = PsiUtil.skipParenthesizedExprUp(psiAnchor.getParent());
-    if (parent instanceof PsiAssignmentExpression &&
-        PsiTreeUtil.isAncestor(((PsiAssignmentExpression)parent).getLExpression(), psiAnchor, false)) {
+    if (PsiUtil.skipParenthesizedExprUp(psiAnchor.getParent()) instanceof PsiAssignmentExpression assignment &&
+        PsiTreeUtil.isAncestor(assignment.getLExpression(), psiAnchor, false)) {
       reporter.registerProblem(
         psiAnchor,
         JavaAnalysisBundle.message("dataflow.message.pointless.assignment.expression", Boolean.toString(evaluatesToTrue)),
-        createConditionalAssignmentFixes(evaluatesToTrue, (PsiAssignmentExpression)parent, reporter.isOnTheFly())
+        createConditionalAssignmentFixes(evaluatesToTrue, assignment, reporter.isOnTheFly())
       );
       return;
     }
@@ -1001,7 +1000,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       }
     }
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-    // Don't report "x" in "x == null" as will be anyways reported as "always true"
+    // Don't report "x" in "x == null" as will be anyway reported as "always true"
     if (parent instanceof PsiBinaryExpression && ExpressionUtils.getValueComparedWithNull((PsiBinaryExpression)parent) != null) return true;
     // Dereference of null will be covered by other warning
     if (ExpressionUtils.isVoidContext(expression) || isDereferenceContext(expression)) return true;
@@ -1124,7 +1123,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     }
   }
 
-  private static boolean isAssertionEffectively(@NotNull PsiElement anchor, ConstantResult result) {
+  private static boolean isAssertionEffectively(@NotNull PsiExpression anchor, ConstantResult result) {
     Object value = result.value();
     if (value instanceof Boolean) {
       return isAssertionEffectively(anchor, (Boolean)value);
@@ -1133,32 +1132,37 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     return isAssertCallArgument(anchor, ContractValue.nullValue());
   }
 
-  private static boolean isAssertionEffectively(@NotNull PsiElement anchor, boolean evaluatesToTrue) {
+  /**
+   * @param anchor boolean expression
+   * @param expectedValue the expected result of boolean expression
+   * @return true if this boolean expression is effectively an assertion (code throws if its value is not equal to expectedValue)
+   */
+  public static boolean isAssertionEffectively(@NotNull PsiExpression anchor, boolean expectedValue) {
     PsiElement parent;
     while (true) {
       parent = anchor.getParent();
-      if (parent instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)parent)) {
-        evaluatesToTrue = !evaluatesToTrue;
-        anchor = parent;
+      if (parent instanceof PsiExpression parentExpr && BoolUtils.isNegation(parentExpr)) {
+        expectedValue = !expectedValue;
+        anchor = parentExpr;
         continue;
       }
-      if (parent instanceof PsiParenthesizedExpression) {
-        anchor = parent;
+      if (parent instanceof PsiParenthesizedExpression parenthesized) {
+        anchor = parenthesized;
         continue;
       }
-      if (parent instanceof PsiPolyadicExpression) {
-        IElementType tokenType = ((PsiPolyadicExpression)parent).getOperationTokenType();
+      if (parent instanceof PsiPolyadicExpression polyadic) {
+        IElementType tokenType = polyadic.getOperationTokenType();
         if (tokenType.equals(JavaTokenType.ANDAND) || tokenType.equals(JavaTokenType.OROR)) {
           // always true operand makes always true OR-chain and does not affect the result of AND-chain
           // Note that in `assert unknownExpression && trueExpression;` the trueExpression should not be reported
           // because this assertion is essentially the shortened `assert unknownExpression; assert trueExpression;`
           // which is not reported.
-          boolean causesShortCircuit = (tokenType.equals(JavaTokenType.OROR) == evaluatesToTrue) &&
-                                       ArrayUtil.getLastElement(((PsiPolyadicExpression)parent).getOperands()) != anchor;
+          boolean causesShortCircuit = (tokenType.equals(JavaTokenType.OROR) == expectedValue) &&
+                                       ArrayUtil.getLastElement(polyadic.getOperands()) != anchor;
           if (!causesShortCircuit) {
             // We still report `assert trueExpression || unknownExpression`, because here `unknownExpression` is never checked
             // which is probably not intended.
-            anchor = parent;
+            anchor = polyadic;
             continue;
           }
         }
@@ -1166,15 +1170,15 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       break;
     }
     if (parent instanceof PsiAssertStatement) {
-      return evaluatesToTrue;
+      return expectedValue;
     }
-    if (parent instanceof PsiIfStatement && anchor == ((PsiIfStatement)parent).getCondition()) {
-      PsiStatement thenBranch = ControlFlowUtils.stripBraces(((PsiIfStatement)parent).getThenBranch());
+    if (parent instanceof PsiIfStatement ifStatement && anchor == ifStatement.getCondition()) {
+      PsiStatement thenBranch = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
       if (thenBranch instanceof PsiThrowStatement) {
-        return !evaluatesToTrue;
+        return !expectedValue;
       }
     }
-    return isAssertCallArgument(anchor, ContractValue.booleanValue(evaluatesToTrue));
+    return isAssertCallArgument(anchor, ContractValue.booleanValue(expectedValue));
   }
 
   private static boolean isAssertCallArgument(@NotNull PsiElement anchor, @NotNull ContractValue wantedConstraint) {
