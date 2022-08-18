@@ -19,11 +19,10 @@ var CommitContext.commitWithoutChangesRoots: Collection<VcsRoot> by commitProper
 
 open class LocalChangesCommitter(
   project: Project,
-  changes: List<Change>,
-  commitMessage: String,
+  val commitState: ChangeListCommitState,
   commitContext: CommitContext,
   private val localHistoryActionName: @Nls String = message("commit.changes")
-) : VcsCommitter(project, changes, commitMessage, commitContext) {
+) : VcsCommitter(project, commitState.changes, commitState.commitMessage, commitContext) {
 
   protected var isSuccess = false
 
@@ -84,6 +83,10 @@ open class LocalChangesCommitter(
   }
 
   protected open fun afterRefreshChanges() {
+    if (isSuccess) {
+      ChangeListManagerEx.getInstanceEx(project).editChangeListData(commitState.changeList.name, null)
+    }
+
     val cache = CommittedChangesCache.getInstance(project)
     // in background since commit must have authorized
     cache.refreshAllCachesAsync(false, true)

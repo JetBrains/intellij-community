@@ -12,10 +12,10 @@ class ChangeListCommitState(val changeList: LocalChangeList, val changes: List<C
 
 open class SingleChangeListCommitter(
   project: Project,
-  private val commitState: ChangeListCommitState,
+  commitState: ChangeListCommitState,
   commitContext: CommitContext,
   localHistoryActionName: @Nls String,
-) : LocalChangesCommitter(project, commitState.changes, commitState.commitMessage, commitContext, localHistoryActionName) {
+) : LocalChangesCommitter(project, commitState, commitContext, localHistoryActionName) {
 
   @Deprecated("Use another constructor")
   constructor(project: Project,
@@ -38,8 +38,6 @@ open class SingleChangeListCommitter(
     val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
     val listName = changeList.name
     val localList = changeListManager.findChangeList(listName) ?: return
-
-    changeListManager.editChangeListData(listName, null)
 
     if (!localList.isDefault) {
       changeListManager.scheduleAutomaticEmptyChangeListDeletion(localList)

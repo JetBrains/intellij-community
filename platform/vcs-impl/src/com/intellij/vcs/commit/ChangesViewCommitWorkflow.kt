@@ -40,9 +40,8 @@ class ChangesViewCommitWorkflow(project: Project) : NonModalCommitWorkflow(proje
   private fun doCommit() {
     LOG.debug("Do actual commit")
 
-    with(object : LocalChangesCommitter(project, commitState.changes, commitState.commitMessage, commitContext) {
+    with(object : LocalChangesCommitter(project, commitState, commitContext) {
       override fun afterRefreshChanges() = endExecution {
-        if (isSuccess) clearChangeListData()
         super.afterRefreshChanges()
       }
     }) {
@@ -64,9 +63,5 @@ class ChangesViewCommitWorkflow(project: Project) : NonModalCommitWorkflow(proje
 
       runCommit(sessionInfo.executor.actionText)
     }
-  }
-
-  private fun clearChangeListData() {
-    changeListManager.editChangeListData(commitState.changeList.name, null)
   }
 }
