@@ -830,9 +830,9 @@ public final class HighlightUtil {
 
     TextRange textRange = computeRange(element);
     String description = getUnhandledExceptionsDescriptor(unhandled);
-    HighlightInfo errorResult = HighlightInfo.newHighlightInfo(highlightType).range(textRange).descriptionAndTooltip(description).create();
-    HighlightFixUtil.registerUnhandledExceptionFixes(element, errorResult);
-    return errorResult;
+    HighlightInfo info = HighlightInfo.newHighlightInfo(highlightType).range(textRange).descriptionAndTooltip(description).create();
+    HighlightFixUtil.registerUnhandledExceptionFixes(element, info);
+    return info;
   }
 
   private static TextRange computeRange(@NotNull PsiElement element) {
@@ -3205,7 +3205,7 @@ public final class HighlightUtil {
           problem.second.forEach(fix -> QuickFixAction.registerQuickFixAction(info, fix));
         }
         else if (result.isStaticsScopeCorrect() && resolved instanceof PsiJvmMember) {
-          HighlightFixUtil.registerAccessQuickFixAction((PsiJvmMember)resolved, ref, info, result.getCurrentFileResolveScope(), null);
+          HighlightFixUtil.registerAccessQuickFixAction(info, (PsiJvmMember)resolved, ref, result.getCurrentFileResolveScope(), null);
           if (ref instanceof PsiReferenceExpression) {
             QuickFixAction.registerQuickFixAction(info, getFixFactory().createRenameWrongRefFix((PsiReferenceExpression)ref));
           }
@@ -3220,7 +3220,7 @@ public final class HighlightUtil {
         String description = staticContextProblemDescription(resolved);
         HighlightInfo info =
           HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refName).descriptionAndTooltip(description).create();
-        HighlightFixUtil.registerStaticProblemQuickFixAction(resolved, info, ref);
+        HighlightFixUtil.registerStaticProblemQuickFixAction(info, resolved, ref);
         if (ref instanceof PsiReferenceExpression) {
           QuickFixAction.registerQuickFixAction(info, getFixFactory().createRenameWrongRefFix((PsiReferenceExpression)ref));
         }

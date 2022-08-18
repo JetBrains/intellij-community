@@ -651,7 +651,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         JavaResolveResult[] results = resolveOptimised(referenceExpression);
         if (results == null) return;
         JavaResolveResult result = results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
-        PsiElement resolved = result.getElement();
 
         if ((!result.isAccessible() || !result.isStaticsScopeCorrect()) &&
             !HighlightMethodUtil.isDummyConstructorCall(expression, getResolveHelper(myHolder.getProject()), list, referenceExpression) &&
@@ -659,6 +658,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
             referenceExpression.getParent() == expression) {
           try {
             if (PsiTreeUtil.findChildrenOfType(expression.getArgumentList(), PsiLambdaExpression.class).isEmpty()) {
+              PsiElement resolved = result.getElement();
               myHolder.add(HighlightMethodUtil.checkAmbiguousMethodCallArguments(referenceExpression, results, list, resolved, result, expression, getResolveHelper(myHolder.getProject()), list));
             }
           }
@@ -904,7 +904,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkRecursiveConstructorInvocation(method));
     if (!myHolder.hasErrorResults()) myHolder.add(GenericsHighlightUtil.checkSafeVarargsAnnotation(method, myLanguageLevel));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightMethodUtil.checkRecordAccessorDeclaration(method));
-    if (!myHolder.hasErrorResults()) myHolder.addAll(HighlightMethodUtil.checkRecordConstructorDeclaration(method));
+    if (!myHolder.hasErrorResults()) HighlightMethodUtil.checkRecordConstructorDeclaration(method, myHolder);
 
     PsiClass aClass = method.getContainingClass();
     if (!myHolder.hasErrorResults() && method.isConstructor()) {
@@ -1391,7 +1391,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (method instanceof PsiJvmMember && !result.isAccessible()) {
       String accessProblem = HighlightUtil.accessProblemDescription(expression, method, result);
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(accessProblem).create();
-      HighlightFixUtil.registerAccessQuickFixAction((PsiJvmMember)method, expression, info, result.getCurrentFileResolveScope(), null);
+      HighlightFixUtil.registerAccessQuickFixAction(info, (PsiJvmMember)method, expression, result.getCurrentFileResolveScope(), null);
       myHolder.add(info);
     }
 

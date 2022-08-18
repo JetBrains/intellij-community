@@ -77,18 +77,18 @@ public final class HighlightFixUtil {
    * Make element protected/package-private/public suggestion.
    * For private method in the interface it should add default modifier as well.
    */
-  static void registerAccessQuickFixAction(@NotNull PsiJvmMember refElement,
+  static void registerAccessQuickFixAction(@Nullable HighlightInfo info,
+                                           @NotNull PsiJvmMember refElement,
                                            @NotNull PsiJavaCodeReferenceElement place,
-                                           @Nullable HighlightInfo errorResult,
-                                           PsiElement fileResolveScope,
-                                           TextRange parentFixRange) {
-    if (errorResult == null) return;
+                                           @Nullable PsiElement fileResolveScope,
+                                           @Nullable TextRange parentFixRange) {
+    if (info == null) return;
     PsiClass accessObjectClass = null;
     PsiElement qualifier = place.getQualifier();
     if (qualifier instanceof PsiExpression) {
       accessObjectClass = (PsiClass)PsiUtil.getAccessObjectClass((PsiExpression)qualifier).getElement();
     }
-    registerReplaceInaccessibleFieldWithGetterSetterFix(refElement, place, accessObjectClass, errorResult, parentFixRange);
+    registerReplaceInaccessibleFieldWithGetterSetterFix(info, refElement, place, accessObjectClass, parentFixRange);
 
     if (refElement instanceof PsiCompiledElement) return;
     PsiModifierList modifierList = refElement.getModifierList();
@@ -98,7 +98,7 @@ public final class HighlightFixUtil {
     if (packageLocalClassInTheMiddle != null) {
       List<IntentionAction> fixes =
         JvmElementActionFactories.createModifierActions(packageLocalClassInTheMiddle, MemberRequestsKt.modifierRequest(JvmModifier.PUBLIC, true));
-      QuickFixAction.registerQuickFixActions(errorResult, parentFixRange, fixes);
+      QuickFixAction.registerQuickFixActions(info, parentFixRange, fixes);
       return;
     }
 
@@ -127,12 +127,12 @@ public final class HighlightFixUtil {
         if (facade.getResolveHelper().isAccessible(refElement, modifierListCopy, place, accessObjectClass, fileResolveScope)) {
           List<IntentionAction> fixes = JvmElementActionFactories
             .createModifierActions(refElement, MemberRequestsKt.modifierRequest(JvmUtil.getAccessModifier(level), true));
-          TextRange fixRange = new TextRange(errorResult.startOffset, errorResult.endOffset);
+          TextRange fixRange = new TextRange(info.startOffset, info.endOffset);
           PsiElement ref = place.getReferenceNameElement();
           if (ref != null) {
             fixRange = fixRange.union(ref.getTextRange());
           }
-          QuickFixAction.registerQuickFixActions(errorResult, fixRange, fixes);
+          QuickFixAction.registerQuickFixActions(info, fixRange, fixes);
         }
       }
     }
@@ -187,31 +187,31 @@ public final class HighlightFixUtil {
     }
   }
 
-  static void registerUnhandledExceptionFixes(PsiElement element, HighlightInfo errorResult) {
-    QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createAddExceptionFromFieldInitializerToConstructorThrowsFix(element));
-    QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createAddExceptionToCatchFix());
-    QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createAddExceptionToExistingCatch(element));
-    QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createAddExceptionToThrowsFix(element));
-    QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createSurroundWithTryCatchFix(element));
+  static void registerUnhandledExceptionFixes(@NotNull PsiElement element, @Nullable HighlightInfo info) {
+    QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddExceptionFromFieldInitializerToConstructorThrowsFix(element));
+    QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddExceptionToCatchFix());
+    QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddExceptionToExistingCatch(element));
+    QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddExceptionToThrowsFix(element));
+    QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createSurroundWithTryCatchFix(element));
   }
 
-  static void registerStaticProblemQuickFixAction(@NotNull PsiElement refElement, HighlightInfo errorResult, @NotNull PsiJavaCodeReferenceElement place) {
+  static void registerStaticProblemQuickFixAction(@Nullable HighlightInfo info, @NotNull PsiElement refElement, @NotNull PsiJavaCodeReferenceElement place) {
     if (place instanceof PsiReferenceExpression && place.getParent() instanceof PsiMethodCallExpression) {
-      ReplaceGetClassWithClassLiteralFix.registerFix((PsiMethodCallExpression)place.getParent(), errorResult);
+      ReplaceGetClassWithClassLiteralFix.registerFix((PsiMethodCallExpression)place.getParent(), info);
     }
     if (refElement instanceof PsiJvmModifiersOwner) {
       List<IntentionAction> fixes =
         JvmElementActionFactories.createModifierActions((PsiJvmModifiersOwner)refElement, MemberRequestsKt.modifierRequest(JvmModifier.STATIC, true));
-      QuickFixAction.registerQuickFixActions(errorResult, null, fixes);
+      QuickFixAction.registerQuickFixActions(info, null, fixes);
     }
-    // make context non static
+    // make context non-static
     PsiModifierListOwner staticParent = PsiUtil.getEnclosingStaticElement(place, null);
     if (staticParent != null && isInstanceReference(place)) {
       QuickFixAction.registerQuickFixAction(
-        errorResult, QUICK_FIX_FACTORY.createModifierListFix(staticParent, PsiModifier.STATIC, false, false));
+        info, QUICK_FIX_FACTORY.createModifierListFix(staticParent, PsiModifier.STATIC, false, false));
     }
     if (place instanceof PsiReferenceExpression && refElement instanceof PsiField) {
-      QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createCreateFieldFromUsageFix((PsiReferenceExpression)place));
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createCreateFieldFromUsageFix((PsiReferenceExpression)place));
     }
   }
 
@@ -227,7 +227,7 @@ public final class HighlightFixUtil {
   }
 
   static void registerChangeVariableTypeFixes(@NotNull PsiVariable parameter,
-                                              PsiType itemType,
+                                              @Nullable PsiType itemType,
                                               @Nullable PsiExpression expr,
                                               @Nullable HighlightInfo highlightInfo) {
     for (IntentionAction action : getChangeVariableTypeFixes(parameter, itemType)) {
@@ -252,7 +252,7 @@ public final class HighlightFixUtil {
    * @return a list of created fix actions
    */
   @NotNull
-  public static List<IntentionAction> getChangeVariableTypeFixes(@NotNull PsiVariable variable, PsiType itemType) {
+  public static List<IntentionAction> getChangeVariableTypeFixes(@NotNull PsiVariable variable, @Nullable PsiType itemType) {
     if (itemType instanceof PsiMethodReferenceType) return Collections.emptyList();
     List<IntentionAction> result = new ArrayList<>();
     if (itemType != null && PsiTypesUtil.allTypeParametersResolved(variable, itemType)) {
@@ -279,7 +279,7 @@ public final class HighlightFixUtil {
   }
 
   @Nullable
-  static IntentionAction getChangeParameterClassFix(PsiType lType, PsiType rType) {
+  private static IntentionAction getChangeParameterClassFix(@NotNull PsiType lType, @NotNull PsiType rType) {
     PsiClass lClass = PsiUtil.resolveClassInClassTypeOnly(lType);
     PsiClass rClass = PsiUtil.resolveClassInClassTypeOnly(rType);
 
@@ -292,11 +292,11 @@ public final class HighlightFixUtil {
     return QUICK_FIX_FACTORY.createChangeParameterClassFix(rClass, (PsiClassType)lType);
   }
 
-  private static void registerReplaceInaccessibleFieldWithGetterSetterFix(PsiMember refElement,
-                                                                          PsiJavaCodeReferenceElement place,
-                                                                          PsiClass accessObjectClass,
-                                                                          HighlightInfo error,
-                                                                          TextRange parentFixRange) {
+  private static void registerReplaceInaccessibleFieldWithGetterSetterFix(@Nullable HighlightInfo info,
+                                                                          @NotNull PsiMember refElement,
+                                                                          @NotNull PsiJavaCodeReferenceElement place,
+                                                                          @Nullable PsiClass accessObjectClass,
+                                                                          @Nullable TextRange parentFixRange) {
     if (refElement instanceof PsiField && place instanceof PsiReferenceExpression) {
       PsiField psiField = (PsiField)refElement;
       PsiClass containingClass = psiField.getContainingClass();
@@ -307,7 +307,7 @@ public final class HighlightFixUtil {
           if (setter != null && PsiUtil.isAccessible(setter, place, accessObjectClass)) {
             PsiElement element = PsiTreeUtil.skipParentsOfType(place, PsiParenthesizedExpression.class);
             if (element instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)element).getOperationTokenType() == JavaTokenType.EQ) {
-              QuickFixAction.registerQuickFixAction(error, parentFixRange, QUICK_FIX_FACTORY.createReplaceInaccessibleFieldWithGetterSetterFix(place, setter, true));
+              QuickFixAction.registerQuickFixAction(info, parentFixRange, QUICK_FIX_FACTORY.createReplaceInaccessibleFieldWithGetterSetterFix(place, setter, true));
             }
           }
         }
@@ -315,7 +315,7 @@ public final class HighlightFixUtil {
           PsiMethod getterPrototype = PropertyUtilBase.generateGetterPrototype(psiField);
           PsiMethod getter = containingClass.findMethodBySignature(getterPrototype, true);
           if (getter != null && PsiUtil.isAccessible(getter, place, accessObjectClass)) {
-            QuickFixAction.registerQuickFixAction(error, parentFixRange, QUICK_FIX_FACTORY.createReplaceInaccessibleFieldWithGetterSetterFix(place, getter, false));
+            QuickFixAction.registerQuickFixAction(info, parentFixRange, QUICK_FIX_FACTORY.createReplaceInaccessibleFieldWithGetterSetterFix(place, getter, false));
           }
         }
       }
@@ -330,13 +330,13 @@ public final class HighlightFixUtil {
     }
   }
 
-  static void registerChangeParameterClassFix(PsiType lType, PsiType rType, HighlightInfo info) {
+  static void registerChangeParameterClassFix(@NotNull PsiType lType, @NotNull PsiType rType, @Nullable HighlightInfo info) {
     QuickFixAction.registerQuickFixAction(info, getChangeParameterClassFix(lType, rType));
   }
 
-  static PsiSwitchStatement findInitializingSwitch(@NotNull PsiVariable variable,
-                                                   @NotNull PsiElement topBlock,
-                                                   @NotNull PsiElement readPoint) {
+  private static PsiSwitchStatement findInitializingSwitch(@NotNull PsiVariable variable,
+                                                           @NotNull PsiElement topBlock,
+                                                           @NotNull PsiElement readPoint) {
     PsiSwitchStatement switchForAll = null;
     for (PsiReferenceExpression reference : VariableAccessUtils.getVariableReferences(variable, topBlock)) {
       if (PsiUtil.isAccessedForWriting(reference)) {
@@ -466,10 +466,10 @@ public final class HighlightFixUtil {
     });
   }
 
-  public static void registerQualifyMethodCallFix(CandidateInfo @NotNull [] methodCandidates,
-                                                  @NotNull PsiMethodCallExpression methodCall,
-                                                  @NotNull PsiExpressionList exprList,
-                                                  @Nullable HighlightInfo highlightInfo) {
+  static void registerQualifyMethodCallFix(CandidateInfo @NotNull [] methodCandidates,
+                                           @NotNull PsiMethodCallExpression methodCall,
+                                           @NotNull PsiExpressionList exprList,
+                                           @Nullable HighlightInfo highlightInfo) {
     for (CandidateInfo methodCandidate : methodCandidates) {
       PsiMethod method = (PsiMethod)methodCandidate.getElement();
       if (methodCandidate.isAccessible() && PsiUtil.isApplicable(method, methodCandidate.getSubstitutor(), exprList)) {
