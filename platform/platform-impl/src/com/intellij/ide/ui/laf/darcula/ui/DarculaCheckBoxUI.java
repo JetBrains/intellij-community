@@ -9,6 +9,7 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.LafIconLookup;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.ThreeStateCheckBox;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -73,10 +74,16 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
   public void paint(Graphics g2d, JComponent c) {
     Graphics2D g = (Graphics2D)g2d;
     AbstractButton button = (AbstractButton)c;
-    AbstractButtonLayout layout = new AbstractButtonLayout(button, button.getSize(), removeInsetsBeforeLayout(button), getDefaultIcon());
+    AbstractButtonLayout layout = createLayout(button, button.getSize());
 
     layout.paint(g, getDisabledTextColor(), getMnemonicIndex(button));
     drawCheckIcon(c, g, button, layout.iconRect, button.isSelected(), button.isEnabled());
+  }
+
+  @Override
+  public int getBaseline(JComponent c, int width, int height) {
+    AbstractButtonLayout layout = createLayout(c, new Dimension(width, height));
+    return layout.getBaseline();
   }
 
   protected boolean removeInsetsBeforeLayout(AbstractButton b) {
@@ -119,9 +126,7 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
 
   @Override
   public Dimension getPreferredSize(JComponent c) {
-    AbstractButton button = (AbstractButton)c;
-    AbstractButtonLayout layout = new AbstractButtonLayout(button, new Dimension(Short.MAX_VALUE, Short.MAX_VALUE),
-                                                           removeInsetsBeforeLayout(button), getDefaultIcon());
+    AbstractButtonLayout layout = createLayout(c, new Dimension(Short.MAX_VALUE, Short.MAX_VALUE));
     return layout.getPreferredSize();
   }
 
@@ -138,5 +143,10 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
   protected boolean isIndeterminate(AbstractButton checkBox) {
     return "indeterminate".equals(checkBox.getClientProperty("JButton.selectedState")) ||
            checkBox instanceof ThreeStateCheckBox && ((ThreeStateCheckBox)checkBox).getState() == ThreeStateCheckBox.State.DONT_CARE;
+  }
+
+  private @NotNull AbstractButtonLayout createLayout(JComponent c, Dimension size) {
+    AbstractButton button = (AbstractButton)c;
+    return new AbstractButtonLayout(button, size, removeInsetsBeforeLayout(button), getDefaultIcon());
   }
 }

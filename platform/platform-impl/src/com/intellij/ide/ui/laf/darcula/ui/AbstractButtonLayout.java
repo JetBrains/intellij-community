@@ -2,7 +2,9 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.UIUtilities;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicHTML;
@@ -25,7 +27,7 @@ class AbstractButtonLayout {
    *                                 CheckBox.borderInsets (RadioButton as well) property ignores top/bottom offsets while vertical align.
    *                                 Normally should be always true and removed later
    */
-  AbstractButtonLayout(AbstractButton button, Dimension size, boolean removeInsetsBeforeLayout, Icon defaultIcon) {
+  AbstractButtonLayout(@NotNull AbstractButton button, @NotNull Dimension size, boolean removeInsetsBeforeLayout, Icon defaultIcon) {
     this.button = button;
     this.size = size;
     this.removeInsetsBeforeLayout = removeInsetsBeforeLayout;
@@ -53,7 +55,7 @@ class AbstractButtonLayout {
     drawText(g, disabledTextColor, mnemonicIndex);
   }
 
-  public Dimension getPreferredSize() {
+  public @NotNull Dimension getPreferredSize() {
     Insets insets = button.getInsets();
     Rectangle iconRectResult;
     // todo a strange logic that should be revised together with removeInsetsBeforeLayout
@@ -73,6 +75,13 @@ class AbstractButtonLayout {
     JBInsets.addTo(textRectResult, insets);
     Rectangle rect = iconRectResult.union(textRectResult);
     return new Dimension(rect.width, rect.height);
+  }
+
+  public int getBaseline() {
+    if (button.getText() == null) {
+      return -1;
+    }
+    return UIUtil.getBaseline(button, textRect.y, fontMetrics.getAscent(), textRect.width, textRect.height);
   }
 
   private void drawText(Graphics g, Color disabledTextColor, int mnemonicIndex) {

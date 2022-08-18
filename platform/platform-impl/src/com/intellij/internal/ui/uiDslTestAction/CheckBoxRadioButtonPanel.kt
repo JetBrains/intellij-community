@@ -82,6 +82,17 @@ internal class CheckBoxRadioButtonPanel {
       }
       cell(panel)
     }
+
+    buttonsGroup {
+      row {
+        checkBox("Base line check")
+        comment("Some comment")
+      }
+      row {
+        radioButton("Base line check")
+        comment("Some comment")
+      }
+    }
   }
 }
 
