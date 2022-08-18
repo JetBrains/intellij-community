@@ -1365,5 +1365,9 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
             model("kdoc/highlighting", pattern = pattern)
         }
+
+        testClass<AbstractQuickFixTest> {
+            model("quickfix", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$"))
+        }
     }
 }

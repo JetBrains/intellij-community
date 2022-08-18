@@ -1,15 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.codeinsight.utils
 
-package org.jetbrains.kotlin.idea.inspections
-
-import com.intellij.codeInspection.*
-import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.util.isLineBreak
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
@@ -18,27 +13,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-
-class RedundantSemicolonInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
-        return object : PsiElementVisitor() {
-            override fun visitElement(element: PsiElement) {
-                super.visitElement(element)
-
-                if (element.node.elementType == KtTokens.SEMICOLON && isRedundantSemicolon(element)) {
-                    holder.registerProblem(
-                        element,
-                        KotlinBundle.message("redundant.semicolon"),
-                        Fix
-                    )
-                }
-            }
-        }
-    }
-}
-
-internal fun isRedundantSemicolon(semicolon: PsiElement): Boolean {
+fun isRedundantSemicolon(semicolon: PsiElement): Boolean {
     val nextLeaf = semicolon.nextLeaf { it !is PsiWhiteSpace && it !is PsiComment || it.isLineBreak() }
     val isAtEndOfLine = nextLeaf == null || nextLeaf.isLineBreak()
     if (!isAtEndOfLine) {
@@ -130,14 +105,4 @@ private fun isRequiredForCompanion(semicolon: PsiElement): Boolean {
     return true
 }
 
-private object Fix : LocalQuickFix {
-    override fun getName() = KotlinBundle.message("fix.text")
-    override fun getFamilyName() = name
-
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        descriptor.psiElement.delete()
-    }
-}
-
 private val softModifierKeywords: List<String> = KtTokens.SOFT_KEYWORDS.types.mapNotNull { (it as? KtModifierKeywordToken)?.toString() }
-

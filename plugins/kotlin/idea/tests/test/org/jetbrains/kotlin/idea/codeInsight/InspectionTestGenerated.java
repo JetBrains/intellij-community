@@ -273,11 +273,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/redundantSamConstructor/inspectionData/inspections.test");
         }
 
-        @TestMetadata("redundantSemicolon/inspectionData/inspections.test")
-        public void testRedundantSemicolon_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/redundantSemicolon/inspectionData/inspections.test");
-        }
-
         @TestMetadata("redundantSuspendModifier/inspectionData/inspections.test")
         public void testRedundantSuspendModifier_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/redundantSuspendModifier/inspectionData/inspections.test");
