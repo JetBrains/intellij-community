@@ -138,12 +138,6 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       .getOrThrow()
   }
 
-  internal fun endExecution(block: () -> Unit) =
-    continueExecution {
-      block()
-      false
-    }
-
   @RequiresEdt
   internal fun endExecution() {
     check(isExecuting)

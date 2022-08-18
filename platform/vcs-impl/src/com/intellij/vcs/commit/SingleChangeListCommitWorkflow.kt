@@ -64,9 +64,7 @@ class SingleChangeListCommitWorkflow(
   private fun doCommit(commitState: ChangeListCommitState) {
     LOG.debug("Do actual commit")
 
-    with(object : SingleChangeListCommitter(project, commitState, commitContext, DIALOG_TITLE) {
-      override fun afterRefreshChanges() = endExecution { super.afterRefreshChanges() }
-    }) {
+    with(SingleChangeListCommitter(project, commitState, commitContext, DIALOG_TITLE)) {
       addResultHandler(CommitHandlersNotifier(this, commitHandlers))
       addResultHandler(getCommitEventDispatcher(this))
       if (resultHandler != null) {
@@ -75,6 +73,11 @@ class SingleChangeListCommitWorkflow(
       else {
         addResultHandler(ShowNotificationCommitResultHandler(this))
       }
+      addResultHandler(object : CommitterResultHandler {
+        override fun onAfterRefresh() {
+          endExecution()
+        }
+      })
 
       runCommit(DIALOG_TITLE, false)
     }

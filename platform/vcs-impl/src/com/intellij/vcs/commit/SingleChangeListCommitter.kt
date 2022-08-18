@@ -29,23 +29,21 @@ open class SingleChangeListCommitter(
     addResultHandler(CommitResultHandlerNotifier(this, resultHandler))
   }
 
-  private val changeList get() = commitState.changeList
-
-  override fun afterRefreshChanges() {
-    if (isSuccess) {
-      updateChangeListAfterRefresh()
-    }
-
-    super.afterRefreshChanges()
+  init {
+    addResultHandler(EmptyChangeListDeleter(this))
   }
 
-  private fun updateChangeListAfterRefresh() {
-    val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
-    val listName = changeList.name
-    val localList = changeListManager.findChangeList(listName) ?: return
+  private class EmptyChangeListDeleter(val committer: LocalChangesCommitter) : CommitterResultHandler {
+    override fun onAfterRefresh() {
+      if (committer.isSuccess) {
+        val changeListManager = ChangeListManagerImpl.getInstanceImpl(committer.project)
+        val listName = committer.commitState.changeList.name
+        val localList = changeListManager.findChangeList(listName) ?: return
 
-    if (!localList.isDefault) {
-      changeListManager.scheduleAutomaticEmptyChangeListDeletion(localList)
+        if (!localList.isDefault) {
+          changeListManager.scheduleAutomaticEmptyChangeListDeletion(localList)
+        }
+      }
     }
   }
 }

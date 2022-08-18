@@ -24,7 +24,13 @@ open class LocalChangesCommitter(
   private val localHistoryActionName: @Nls String = message("commit.changes")
 ) : VcsCommitter(project, commitState.changes, commitState.commitMessage, commitContext, true) {
 
-  protected var isSuccess = false
+  init {
+    addResultHandler(CommittedChangesCacheListener(project))
+    addResultHandler(ChangeListDataCleaner(this))
+  }
+
+  var isSuccess = false
+    private set
 
   override fun commit() {
     try {
@@ -82,24 +88,24 @@ open class LocalChangesCommitter(
       LocalHistory.getInstance().putSystemLabel(project, "$localHistoryActionName: $commitMessage")
     }
     finally {
-      ChangeListManager.getInstance(project).invokeAfterUpdate(true) { afterRefreshChanges() }
+      ChangeListManager.getInstance(project).invokeAfterUpdate(true) { fireAfterRefresh() }
     }
   }
+}
 
-  protected open fun afterRefreshChanges() {
-    try {
-      if (isSuccess) {
-        ChangeListManagerEx.getInstanceEx(project).editChangeListData(commitState.changeList.name, null)
-      }
+private class CommittedChangesCacheListener(val project: Project) : CommitterResultHandler {
+  override fun onAfterRefresh() {
+    val cache = CommittedChangesCache.getInstance(project)
+    // in background since commit must have authorized
+    cache.refreshAllCachesAsync(false, true)
+    cache.refreshIncomingChangesAsync()
+  }
+}
 
-      val cache = CommittedChangesCache.getInstance(project)
-      // in background since commit must have authorized
-      cache.refreshAllCachesAsync(false, true)
-      // after vcs refresh is completed, outdated notifiers should be removed if some exists...
-      cache.refreshIncomingChangesAsync()
-    }
-    finally {
-      fireAfterRefresh()
+private class ChangeListDataCleaner(val committer: LocalChangesCommitter) : CommitterResultHandler {
+  override fun onAfterRefresh() {
+    if (committer.isSuccess) {
+      ChangeListManagerEx.getInstanceEx(committer.project).editChangeListData(committer.commitState.changeList.name, null)
     }
   }
 }

@@ -40,14 +40,15 @@ class ChangesViewCommitWorkflow(project: Project) : NonModalCommitWorkflow(proje
   private fun doCommit() {
     LOG.debug("Do actual commit")
 
-    with(object : LocalChangesCommitter(project, commitState, commitContext) {
-      override fun afterRefreshChanges() = endExecution {
-        super.afterRefreshChanges()
-      }
-    }) {
+    with(LocalChangesCommitter(project, commitState, commitContext)) {
       addResultHandler(CommitHandlersNotifier(this, commitHandlers))
       addResultHandler(getCommitEventDispatcher(this))
       addResultHandler(ShowNotificationCommitResultHandler(this))
+      addResultHandler(object : CommitterResultHandler {
+        override fun onAfterRefresh() {
+          endExecution()
+        }
+      })
 
       runCommit(VcsBundle.message("commit.changes"), false)
     }
