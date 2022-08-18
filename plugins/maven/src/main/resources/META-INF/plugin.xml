@@ -507,6 +507,7 @@
     <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.MavenEncodingImporter"/>
     <importer implementation="org.jetbrains.idea.maven.importing.MavenIdeaPluginImporter"/>
     <importer implementation="org.jetbrains.idea.maven.importing.MavenWslTargetImporter"/>
+    <importing.workspaceConfigurator implementation="org.jetbrains.idea.maven.importing.MavenWslTargetImporter"/>
 
     <compiler implementation="org.jetbrains.idea.maven.importing.MavenCompilerJavacExtension"/>
     <compiler implementation="org.jetbrains.idea.maven.importing.MavenCompilerEclipseExtension"/>
