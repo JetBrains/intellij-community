@@ -64,30 +64,28 @@ class SingleChangeListCommitWorkflow(
   private fun doCommit(sessionInfo: CommitSessionInfo) {
     LOG.debug("Do actual commit")
 
-    with(SingleChangeListCommitter(project, commitState, commitContext, DIALOG_TITLE)) {
-      addCommonResultHandlers(sessionInfo, this)
-      if (resultHandler != null) {
-        addResultHandler(CommitResultHandlerNotifier(this, resultHandler))
-      }
-      else {
-        addResultHandler(ShowNotificationCommitResultHandler(this))
-      }
-
-      runCommit(DIALOG_TITLE, false)
+    val committer = SingleChangeListCommitter(project, commitState, commitContext, DIALOG_TITLE)
+    addCommonResultHandlers(sessionInfo, committer)
+    if (resultHandler != null) {
+      committer.addResultHandler(CommitResultHandlerNotifier(committer, resultHandler))
     }
+    else {
+      committer.addResultHandler(ShowNotificationCommitResultHandler(committer))
+    }
+
+    committer.runCommit(DIALOG_TITLE, false)
   }
 
   private fun doCommitCustom(sessionInfo: CommitSessionInfo) {
     sessionInfo as CommitSessionInfo.Custom
 
-    with(CustomCommitter(project, sessionInfo.session, commitState.changes, commitState.commitMessage)) {
-      addCommonResultHandlers(sessionInfo, this)
-      if (resultHandler != null) {
-        addResultHandler(CommitResultHandlerNotifier(this, resultHandler))
-      }
-
-      runCommit(sessionInfo.executor.actionText)
+    val committer = CustomCommitter(project, sessionInfo.session, commitState.changes, commitState.commitMessage)
+    addCommonResultHandlers(sessionInfo, committer)
+    if (resultHandler != null) {
+      committer.addResultHandler(CommitResultHandlerNotifier(committer, resultHandler))
     }
+
+    committer.runCommit(sessionInfo.executor.actionText)
   }
 }
 

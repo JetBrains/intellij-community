@@ -41,11 +41,10 @@ class GitStageCommitWorkflow(project: Project) : NonModalCommitWorkflow(project)
     commitContext.isCleanupCommitMessage = project.service<GitCommitTemplateTracker>().exists()
 
     val fullyStaged = trackerState.rootStates.filter { commitState.roots.contains(it.key) }.mapValues { it.value.getFullyStagedPaths() }
-    with(GitStageCommitter(project, commitState, fullyStaged, commitContext)) {
-      addCommonResultHandlers(sessionInfo, this)
-      addResultHandler(GitStageShowNotificationCommitResultHandler(this))
+    val committer = GitStageCommitter(project, commitState, fullyStaged, commitContext)
+    addCommonResultHandlers(sessionInfo, committer)
+    committer.addResultHandler(GitStageShowNotificationCommitResultHandler(committer))
 
-      runCommit(message("stage.commit.process"), false)
-    }
+    committer.runCommit(message("stage.commit.process"), false)
   }
 }

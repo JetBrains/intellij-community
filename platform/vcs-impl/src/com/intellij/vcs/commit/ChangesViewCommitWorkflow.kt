@@ -40,21 +40,19 @@ class ChangesViewCommitWorkflow(project: Project) : NonModalCommitWorkflow(proje
   private fun doCommit(sessionInfo: CommitSessionInfo) {
     LOG.debug("Do actual commit")
 
-    with(LocalChangesCommitter(project, commitState, commitContext)) {
-      addCommonResultHandlers(sessionInfo, this)
-      addResultHandler(ShowNotificationCommitResultHandler(this))
+    val committer = LocalChangesCommitter(project, commitState, commitContext)
+    addCommonResultHandlers(sessionInfo, committer)
+    committer.addResultHandler(ShowNotificationCommitResultHandler(committer))
 
-      runCommit(VcsBundle.message("commit.changes"), false)
-    }
+    committer.runCommit(VcsBundle.message("commit.changes"), false)
   }
 
   private fun doCommitCustom(sessionInfo: CommitSessionInfo) {
     sessionInfo as CommitSessionInfo.Custom
 
-    with(CustomCommitter(project, sessionInfo.session, commitState.changes, commitState.commitMessage)) {
-      addCommonResultHandlers(sessionInfo, this)
+    val committer = CustomCommitter(project, sessionInfo.session, commitState.changes, commitState.commitMessage)
+    addCommonResultHandlers(sessionInfo, committer)
 
-      runCommit(sessionInfo.executor.actionText)
-    }
+    committer.runCommit(sessionInfo.executor.actionText)
   }
 }

@@ -24,11 +24,10 @@ class AlienCommitWorkflow(val vcs: AbstractVcs, @Nls changeListName: String, val
   override fun canExecute(sessionInfo: CommitSessionInfo, changes: Collection<Change>) = sessionInfo.isVcsCommit
 
   override fun performCommit(sessionInfo: CommitSessionInfo) {
-    with(AlienCommitter(vcs, commitState.changes, commitState.commitMessage, commitContext)) {
-      addCommonResultHandlers(sessionInfo, this)
-      addResultHandler(ShowNotificationCommitResultHandler(this))
+    val committer = AlienCommitter(vcs, commitState.changes, commitState.commitMessage, commitContext)
+    addCommonResultHandlers(sessionInfo, committer)
+    committer.addResultHandler(ShowNotificationCommitResultHandler(committer))
 
-      runCommit(DIALOG_TITLE, false)
-    }
+    committer.runCommit(DIALOG_TITLE, false)
   }
 }
