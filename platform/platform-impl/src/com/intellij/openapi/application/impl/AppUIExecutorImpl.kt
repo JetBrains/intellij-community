@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.constraints.ConstrainedExecution.ContextConstraint
 import com.intellij.openapi.application.constraints.Expiration
-import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
@@ -19,7 +18,6 @@ import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.Executor
 import java.util.function.BooleanSupplier
 import kotlin.coroutines.ContinuationInterceptor
@@ -121,55 +119,9 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
     return withConstraint(WithDocumentsCommitted(project, modality), project)
   }
 
-  @Deprecated("Beware, context might be infectious, if coroutine resumes other waiting coroutines. " +
-              "Use runUndoTransparentWriteAction instead.", ReplaceWith("this"))
-  @ApiStatus.ScheduledForRemoval
-  fun inUndoTransparentAction(): AppUIExecutorImpl {
-    return withConstraint(object : ContextConstraint {
-      override fun isCorrectContext(): Boolean =
-        CommandProcessor.getInstance().isUndoTransparentActionInProgress
-
-      override fun schedule(runnable: Runnable) {
-        CommandProcessor.getInstance().runUndoTransparentAction(runnable)
-      }
-
-      override fun toString() = "inUndoTransparentAction"
-    })
-  }
-
-  @Deprecated("Beware, context might be infectious, if coroutine resumes other waiting coroutines. " +
-              "Use runWriteAction instead.", ReplaceWith("this"))
-  @ApiStatus.ScheduledForRemoval
-  fun inWriteAction(): AppUIExecutorImpl {
-    return withConstraint(object : ContextConstraint {
-      override fun isCorrectContext(): Boolean =
-        ApplicationManager.getApplication().isWriteAccessAllowed
-
-      override fun schedule(runnable: Runnable) {
-        ApplicationManager.getApplication().runWriteAction(runnable)
-      }
-
-      override fun toString() = "inWriteAction"
-    })
-  }
-
   override fun inSmartMode(project: Project): AppUIExecutorImpl {
     return withConstraint(InSmartMode(project), project)
   }
-}
-
-@Deprecated("Beware, context might be infectious, if coroutine resumes other waiting coroutines. " +
-            "Use runUndoTransparentWriteAction instead.", ReplaceWith("this"))
-@ApiStatus.ScheduledForRemoval
-fun AppUIExecutor.inUndoTransparentAction(): AppUIExecutor {
-  return (this as AppUIExecutorImpl).inUndoTransparentAction()
-}
-
-@Deprecated("Beware, context might be infectious, if coroutine resumes other waiting coroutines. " +
-            "Use runWriteAction instead.", ReplaceWith("this"))
-@ApiStatus.ScheduledForRemoval
-fun AppUIExecutor.inWriteAction():AppUIExecutor {
-  return (this as AppUIExecutorImpl).inWriteAction()
 }
 
 fun AppUIExecutor.withConstraint(constraint: ContextConstraint): AppUIExecutor {
