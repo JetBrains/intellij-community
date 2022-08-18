@@ -46,6 +46,7 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -419,11 +420,14 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
 
   private Set<PsiFile> getSelectedScope(final Tree tree) {
     TreePath[] paths = tree.getSelectionPaths();
-    if (paths == null ) return EMPTY_FILE_SET;
+    return getSelectedScope(paths != null ? ContainerUtil.map2Array(paths, p -> p.getLastPathComponent()) : null);
+  }
+
+  private Set<PsiFile> getSelectedScope(Object[] nodes) {
+    if (nodes == null ) return EMPTY_FILE_SET;
     Set<PsiFile> result = new HashSet<>();
-    for (TreePath path : paths) {
-      PackageDependenciesNode node = (PackageDependenciesNode)path.getLastPathComponent();
-      node.fillFiles(result, !mySettings.UI_FLATTEN_PACKAGES);
+    for (Object n : nodes) {
+      ((PackageDependenciesNode)n).fillFiles(result, !mySettings.UI_FLATTEN_PACKAGES);
     }
     return result;
   }
@@ -449,12 +453,8 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
   @Nullable
   @NonNls
   public Object getData(@NotNull @NonNls String dataId) {
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      final PackageDependenciesNode selectedNode = myRightTree.getSelectedNode();
-      if (selectedNode != null) {
-        final PsiElement element = selectedNode.getPsiElement();
-        return element != null && element.isValid() ? element : null;
-      }
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      return myRightTree.getData(dataId);
     }
     if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return "dependency.viewer.tool.window";
@@ -622,6 +622,11 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
       setEmptyText(flag);
       rebuild();
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private void setEmptyText(boolean flag) {
@@ -709,6 +714,11 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       DependenciesToolWindow.getInstance(myProject).closeContent(myContent);
       mySettings.copyToApplicationDependencySettings();
@@ -736,9 +746,22 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
       if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
         return node;
       }
-      if (CommonDataKeys.PSI_ELEMENT.is(dataId) && node != null)  {
-        final PsiElement element = node.getPsiElement();
-        return element != null && element.isValid() ? element : null;
+      if (node != null && PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+        return (DataProvider)slowDataId -> {
+          if (CommonDataKeys.PSI_ELEMENT.is(slowDataId)) {
+            final PsiElement element = node.getPsiElement();
+            return element != null && element.isValid() ? element : null;
+          }
+          return null;
+        };
+      }
+      if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
+        TreePath[] paths = getSelectionPaths();
+        return paths != null ? ContainerUtil.map(paths, p -> p.getLastPathComponent()) : null;
+      }
+      if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
+        TreePath path = getSelectionPath();
+        return path != null ? path.getLastPathComponent() : null;
       }
       return null;
     }
@@ -795,7 +818,12 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
 
     @Override
     public void update(@NotNull final AnActionEvent e) {
-      e.getPresentation().setEnabled(!getSelectedScope(myLeftTree).isEmpty());
+      e.getPresentation().setEnabled(!getSelectedScope(e.getData(PlatformCoreDataKeys.SELECTED_ITEMS)).isEmpty());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -872,8 +900,13 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      PackageDependenciesNode node = myRightTree.getSelectedNode();
+      PackageDependenciesNode node = (PackageDependenciesNode)e.getData(PlatformCoreDataKeys.SELECTED_ITEM);
       e.getPresentation().setEnabled(node != null && node.canSelectInLeftTree(myDependencies));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -993,6 +1026,11 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
         });
       }
       return group;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
