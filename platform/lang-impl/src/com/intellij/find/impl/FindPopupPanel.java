@@ -1302,7 +1302,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     header.infoLabel.setText(null);
   }
 
-  private void showEmptyText(@Nullable @NlsContexts.StatusText @NotNull String message) {
+  private void showEmptyText(@NlsContexts.StatusText @NotNull String message) {
     StatusText emptyText = myResultsPreviewTable.getEmptyText();
     emptyText.clear();
     FindModel model = myHelper.getModel();

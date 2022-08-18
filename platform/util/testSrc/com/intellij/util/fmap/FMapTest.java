@@ -72,7 +72,6 @@ public class FMapTest {
     assertValues(map);
     testPlus(map);
     testMinus(map);
-    assertEquals(FMap.from(map.toMap()), map);
   }
 
   private static FMap<String, String> createMap(int size) {

@@ -136,7 +136,6 @@ public class ChangesViewManager implements ChangesViewEx,
   }
 
   final static class ContentPredicate implements Predicate<Project> {
-    @NotNull
     @Override
     public boolean test(Project project) {
       return ProjectLevelVcsManager.getInstance(project).hasActiveVcss() &&

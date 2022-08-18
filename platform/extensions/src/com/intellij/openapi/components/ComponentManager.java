@@ -152,10 +152,10 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
                                         @Nullable Map<String, String> attachments);
 
   @ApiStatus.Internal
-  <@NotNull T> @NotNull Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException;
+  <T> @NotNull Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException;
 
   @ApiStatus.Internal
-  default @NotNull <@NotNull T> T instantiateClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) {
+  default @NotNull <T> T instantiateClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) {
     try {
       return ReflectionUtil.newInstance(loadClass(className, pluginDescriptor));
     }

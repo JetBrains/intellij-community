@@ -44,7 +44,6 @@ public final class WorkingCopiesContent implements ChangesViewContentProvider {
   }
 
   final static class VisibilityPredicate implements Predicate<Project> {
-    @NotNull
     @Override
     public boolean test(@NotNull Project project) {
       return ProjectLevelVcsManager.getInstance(project).checkVcsIsActive(SvnVcs.VCS_NAME);
