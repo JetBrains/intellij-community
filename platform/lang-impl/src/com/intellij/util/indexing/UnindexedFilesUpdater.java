@@ -313,6 +313,12 @@ public class UnindexedFilesUpdater extends DumbModeTask {
       scheduleInitialVfsRefresh();
     }
 
+    indexFiles(projectIndexingHistory, indicator, providerToFiles);
+  }
+
+  private void indexFiles(@NotNull ProjectIndexingHistoryImpl projectIndexingHistory,
+                         @NotNull ProgressIndicator indicator,
+                         Map<IndexableFilesIterator, List<VirtualFile>> providerToFiles) {
     int totalFiles = providerToFiles.values().stream().mapToInt(List::size).sum();
     if (totalFiles == 0) {
       LOG.info("Finished for " + myProject.getName() + ". No files to index with loading content.");
@@ -323,7 +329,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
       return;
     }
 
-    snapshot = PerformanceWatcher.takeSnapshot();
+    PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
 
     ProgressIndicator poweredIndicator = PoweredProgressIndicator.wrap(indicator, getPowerForSmoothProgressIndicator());
     poweredIndicator.setIndeterminate(false);
@@ -334,7 +340,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
 
     projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.Indexing);
     try {
-      indexFiles(providerToFiles, projectIndexingHistory, poweredIndicator);
+      doIndexFiles(providerToFiles, projectIndexingHistory, poweredIndicator);
     }
     finally {
       projectIndexingHistory.stopStage(ProjectIndexingHistoryImpl.Stage.Indexing);
@@ -345,9 +351,9 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     projectIndexingHistory.addSnapshotInputMappingStatistics(snapshotInputMappingsStatistics);
   }
 
-  private void indexFiles(@NotNull Map<IndexableFilesIterator, List<VirtualFile>> providerToFiles,
-                          @NotNull ProjectIndexingHistoryImpl projectIndexingHistory,
-                          @NotNull ProgressIndicator progressIndicator) {
+  private void doIndexFiles(@NotNull Map<IndexableFilesIterator, List<VirtualFile>> providerToFiles,
+                            @NotNull ProjectIndexingHistoryImpl projectIndexingHistory,
+                            @NotNull ProgressIndicator progressIndicator) {
     int totalFiles = providerToFiles.values().stream().mapToInt(List::size).sum();
     ConcurrentTasksProgressManager concurrentTasksProgressManager = new ConcurrentTasksProgressManager(progressIndicator, totalFiles);
 
