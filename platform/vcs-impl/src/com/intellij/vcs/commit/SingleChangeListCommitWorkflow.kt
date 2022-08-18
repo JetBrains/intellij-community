@@ -64,7 +64,7 @@ class SingleChangeListCommitWorkflow(
   private fun doCommit(sessionInfo: CommitSessionInfo) {
     LOG.debug("Do actual commit")
 
-    val committer = SingleChangeListCommitter(project, commitState, commitContext, DIALOG_TITLE)
+    val committer = SingleChangeListCommitter.create(project, commitState, commitContext, DIALOG_TITLE)
     addCommonResultHandlers(sessionInfo, committer)
     if (resultHandler != null) {
       committer.addResultHandler(CommitResultHandlerNotifier(committer, resultHandler))

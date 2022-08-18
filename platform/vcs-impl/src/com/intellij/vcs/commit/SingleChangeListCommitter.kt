@@ -10,19 +10,16 @@ class ChangeListCommitState(val changeList: LocalChangeList, val changes: List<C
     if (this.commitMessage == commitMessage) this else ChangeListCommitState(changeList, changes, commitMessage)
 }
 
-open class SingleChangeListCommitter(
+class SingleChangeListCommitter
+@Deprecated("Prefer using SingleChangeListCommitter.create",
+            replaceWith = ReplaceWith("SingleChangeListCommitter.create(project, commitState, commitContext, localHistoryActionName)"))
+constructor(
   project: Project,
   commitState: ChangeListCommitState,
   commitContext: CommitContext,
   localHistoryActionName: @Nls String,
+  isDefaultChangeListFullyIncluded: Boolean
 ) : LocalChangesCommitter(project, commitState, commitContext, localHistoryActionName) {
-
-  @Deprecated("Use another constructor")
-  constructor(project: Project,
-              commitState: ChangeListCommitState,
-              commitContext: CommitContext,
-              localHistoryActionName: @Nls String,
-              isDefaultChangeListFullyIncluded: Boolean) : this(project, commitState, commitContext, localHistoryActionName)
 
   @Deprecated("Prefer using CommitterResultHandler")
   fun addResultHandler(resultHandler: CommitResultHandler) {
@@ -33,16 +30,28 @@ open class SingleChangeListCommitter(
     addResultHandler(EmptyChangeListDeleter(this))
   }
 
-  private class EmptyChangeListDeleter(val committer: LocalChangesCommitter) : CommitterResultHandler {
-    override fun onAfterRefresh() {
-      if (committer.isSuccess) {
-        val changeListManager = ChangeListManagerImpl.getInstanceImpl(committer.project)
-        val listName = committer.commitState.changeList.name
-        val localList = changeListManager.findChangeList(listName) ?: return
+  companion object {
+    @JvmStatic
+    fun create(project: Project,
+               commitState: ChangeListCommitState,
+               commitContext: CommitContext,
+               localHistoryActionName: @Nls String): LocalChangesCommitter {
+      val committer = LocalChangesCommitter(project, commitState, commitContext, localHistoryActionName)
+      committer.addResultHandler(EmptyChangeListDeleter(committer))
+      return committer
+    }
+  }
+}
 
-        if (!localList.isDefault) {
-          changeListManager.scheduleAutomaticEmptyChangeListDeletion(localList)
-        }
+private class EmptyChangeListDeleter(val committer: LocalChangesCommitter) : CommitterResultHandler {
+  override fun onAfterRefresh() {
+    if (committer.isSuccess) {
+      val changeListManager = ChangeListManagerImpl.getInstanceImpl(committer.project)
+      val listName = committer.commitState.changeList.name
+      val localList = changeListManager.findChangeList(listName) ?: return
+
+      if (!localList.isDefault) {
+        changeListManager.scheduleAutomaticEmptyChangeListDeletion(localList)
       }
     }
   }
