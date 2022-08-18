@@ -175,7 +175,7 @@ class KotlinGradleLibraryDataService : AbstractProjectDataService<LibraryData, V
 
             val modifiableModel = modelsProvider.getModifiableLibraryModel(ideLibrary) as LibraryEx.ModifiableModelEx
             if (anyNonJvmModules || ideLibrary.looksAsNonJvmLibrary()) {
-                detectLibraryKind(modifiableModel.getFiles(OrderRootType.CLASSES))?.let { modifiableModel.kind = it }
+                detectLibraryKind(ideLibrary, project)?.let { modifiableModel.kind = it }
             } else if (ideLibrary is LibraryEx && ideLibrary.kind in NON_JVM_LIBRARY_KINDS) {
                 modifiableModel.forgetKind()
             }

@@ -75,7 +75,7 @@ class LibraryInfoCache(project: Project): SynchronizedFineGrainedEntityCache<Lib
 
     private fun getPlatform(library: Library): TargetPlatform =
         if (library is LibraryEx && !library.isDisposed) {
-            LibraryEffectiveKindProvider.getInstance(project).getEffectiveKind(library).platform
+            project.service<LibraryEffectiveKindProvider>().getEffectiveKind(library).platform
         } else {
             JvmPlatforms.defaultJvmPlatform
         }

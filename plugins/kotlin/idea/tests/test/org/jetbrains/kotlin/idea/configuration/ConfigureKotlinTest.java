@@ -188,7 +188,7 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
             return true;
         });
 
-        LibraryEffectiveKindProvider effectiveKindProvider = LibraryEffectiveKindProvider.getInstance(myProject);
+        LibraryEffectiveKindProvider effectiveKindProvider = myProject.getService(LibraryEffectiveKindProvider.class);
 
         assertEquals(RepositoryLibraryType.REPOSITORY_LIBRARY_KIND, jsTest.get().getKind());
         assertEquals(KotlinJavaScriptLibraryKind.INSTANCE, effectiveKindProvider.getEffectiveKind(jsTest.get()));
