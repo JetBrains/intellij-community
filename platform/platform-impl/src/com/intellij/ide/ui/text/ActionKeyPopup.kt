@@ -10,6 +10,7 @@ import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.scale.JBUIScale
@@ -36,7 +37,9 @@ fun showActionKeyPopup(parent: Component,
   val jPanel = JPanel()
   jPanel.layout = VerticalLayout(JBUIScale.scale(UIUtil.DEFAULT_VGAP), 250)
   jPanel.isOpaque = false
-  jPanel.add(JLabel(action.templatePresentation.text))
+  jPanel.add(JLabel(action.templatePresentation.text).also {
+    it.foreground = UIUtil.getToolTipForeground()
+  })
   val shortcuts = KeymapManager.getInstance().activeKeymap.getShortcuts(actionId)
   for (shortcut in shortcuts) {
     if (shortcut is KeyboardShortcut) {
@@ -56,6 +59,8 @@ fun showActionKeyPopup(parent: Component,
                                     KeymapManager.getInstance().activeKeymap, parent)
     balloon.hide()
     parent.repaint()
+  }.also {
+    it.foreground = JBColor.namedColor("ToolTip.linkForeground", JBUI.CurrentTheme.Link.Foreground.ENABLED)
   })
   val builder = JBPopupFactory.getInstance()
     .createBalloonBuilder(jPanel)
