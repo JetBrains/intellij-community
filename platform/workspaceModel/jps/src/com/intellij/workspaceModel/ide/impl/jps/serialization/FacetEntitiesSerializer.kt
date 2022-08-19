@@ -77,27 +77,37 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
     }
   }
 
-  internal fun saveFacetEntities(facets: List<FacetEntity>, writer: JpsFileContentWriter) {
+  internal fun saveFacetEntities(moduleEntity: ModuleEntity?, facets: List<FacetEntity>, writer: JpsFileContentWriter) {
     val fileUrl = imlFileUrl.url
-    if (facets.isEmpty()) {
+
+    val externalFacetStates = ModuleImlFileEntitiesSerializer.CUSTOM_MODULE_RELATED_ENTITY_SERIALIZER_EP.extensionList
+      .mapNotNull { entitySerializer ->
+        entitySerializer.saveEntities(moduleEntity, writer, imlFileUrl)
+      }
+    if (facets.isEmpty() && externalFacetStates.isEmpty()) {
       writer.saveComponent(fileUrl, componentName, null)
       return
     }
 
     val facetManagerState = FacetManagerState()
-    val facetStates = HashMap<String, FacetState>()
-    val facetsByName = facets.groupByTo(HashMap()) { it.name }
-    val orderOfFacets = facets.first().module.facetOrder?.orderOfFacets ?: emptyList()
-    for (facetName in orderOfFacets) {
-      facetsByName.remove(facetName)?.forEach {
-        saveFacet(it, facetStates, facetManagerState.facets)
+
+    if (facets.isNotEmpty()) {
+      val facetStates = HashMap<String, FacetState>()
+      val facetsByName = facets.groupByTo(HashMap()) { it.name }
+      val orderOfFacets = facets.first().module.facetOrder?.orderOfFacets ?: emptyList()
+      for (facetName in orderOfFacets) {
+        facetsByName.remove(facetName)?.forEach {
+          saveFacet(it, facetStates, facetManagerState.facets)
+        }
+      }
+      facetsByName.values.forEach {
+        it.forEach {
+          saveFacet(it, facetStates, facetManagerState.facets)
+        }
       }
     }
-    facetsByName.values.forEach {
-      it.forEach {
-        saveFacet(it, facetStates, facetManagerState.facets)
-      }
-    }
+    facetManagerState.facets.addAll(externalFacetStates)
+
     val componentTag = JDomSerializationUtil.createComponentElement(componentName)
     XmlSerializer.serializeInto(facetManagerState, componentTag)
     if (externalStorage && FileUtil.extensionEquals(fileUrl, "iml")) {

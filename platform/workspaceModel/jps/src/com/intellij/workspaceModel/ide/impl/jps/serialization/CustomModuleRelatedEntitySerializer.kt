@@ -5,6 +5,7 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jps.model.serialization.facet.FacetState
 
 /**
  * The goal of this extension point is supporting serialization/deserialization of custom entities
@@ -14,5 +15,5 @@ import org.jetbrains.annotations.ApiStatus
 interface CustomModuleRelatedEntitySerializer {
   fun loadEntities(builder: MutableEntityStorage, moduleEntity: ModuleEntity, reader: JpsFileContentReader, imlFileUrl: VirtualFileUrl)
 
-  fun saveEntities(moduleEntity: ModuleEntity, writer: JpsFileContentWriter, imlFileUrl: VirtualFileUrl,)
+  fun saveEntities(moduleEntity: ModuleEntity?, writer: JpsFileContentWriter, imlFileUrl: VirtualFileUrl): FacetState?
 }

@@ -70,9 +70,9 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       val moduleEntity = loadModuleEntity(reader, builder, errorReporter, virtualFileManager)
       if (moduleEntity != null) {
         createFacetSerializer().loadFacetEntities(builder, moduleEntity, reader)
-        CUSTOM_MODULE_RELATED_ENTITY_SERIALIZER_EP.extensionList.forEach { entitySerializer ->
-          entitySerializer.loadEntities(builder, moduleEntity, reader, fileUrl)
-        }
+        //CUSTOM_MODULE_RELATED_ENTITY_SERIALIZER_EP.extensionList.forEach { entitySerializer ->
+        //  entitySerializer.loadEntities(builder, moduleEntity, reader, fileUrl)
+        //}
       }
     }
     else {
@@ -374,13 +374,9 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     }
 
     @Suppress("UNCHECKED_CAST")
+    //TODO:: Add check for custome entities accept by source
     val facets = (entities[FacetEntity::class.java] as List<FacetEntity>?)?.filter { acceptsSource(it.entitySource) } ?: emptyList()
-    createFacetSerializer().saveFacetEntities(facets, writer)
-    if (module != null) {
-      CUSTOM_MODULE_RELATED_ENTITY_SERIALIZER_EP.extensionList.forEach { entitySerializer ->
-        //entitySerializer.saveEntities(module, writer)
-      }
-    }
+    createFacetSerializer().saveFacetEntities(module, facets, writer)
   }
 
   protected open fun createFacetSerializer(): FacetEntitiesSerializer {
@@ -647,7 +643,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     }.reversed()
 
     private val CUSTOM_MODULE_COMPONENT_SERIALIZER_EP = ExtensionPointName.create<CustomModuleComponentSerializer>("com.intellij.workspaceModel.customModuleComponentSerializer")
-    private val CUSTOM_MODULE_RELATED_ENTITY_SERIALIZER_EP = ExtensionPointName.create<CustomModuleRelatedEntitySerializer>("com.intellij.workspaceModel.customModuleRelatedEntitySerializer")
+    val CUSTOM_MODULE_RELATED_ENTITY_SERIALIZER_EP = ExtensionPointName.create<CustomModuleRelatedEntitySerializer>("com.intellij.workspaceModel.customModuleRelatedEntitySerializer")
   }
 }
 
