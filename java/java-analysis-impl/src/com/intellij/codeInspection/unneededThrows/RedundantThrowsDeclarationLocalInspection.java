@@ -22,6 +22,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -127,7 +128,7 @@ public final class RedundantThrowsDeclarationLocalInspection extends AbstractBas
           final PsiClassType exceptionType = throwRefType.myType;
 
           final String description = JavaErrorBundle.message("exception.is.never.thrown", JavaHighlightUtil.formatType(exceptionType));
-          final RedundantThrowsQuickFix fix = new RedundantThrowsQuickFix(exceptionType.getCanonicalText(), method.getName());
+          final RedundantThrowsQuickFix fix = new RedundantThrowsQuickFix(exceptionType.getCanonicalText(), PsiFormatUtil.formatSimple(method));
           myHolder.registerProblem(reference, description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
         });
     }

@@ -1,4 +1,4 @@
-// "Replace method call with Test.nnn" "true"
+// "Replace method call with 'Test.nnn()'" "true"
 class Test<T> {
   static void example() {
     Test<String> t = new Test<>();

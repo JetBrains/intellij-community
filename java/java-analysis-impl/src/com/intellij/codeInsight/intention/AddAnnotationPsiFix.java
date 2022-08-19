@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.JavaElementKind;
+import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -90,7 +91,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements On
   public static @IntentionName String calcText(PsiModifierListOwner modifierListOwner, @Nullable String annotation) {
     final String shortName = annotation == null ? null : annotation.substring(annotation.lastIndexOf('.') + 1);
     if (modifierListOwner instanceof PsiNamedElement) {
-      final String name = ((PsiNamedElement)modifierListOwner).getName();
+      final String name = PsiFormatUtil.formatSimple((PsiNamedElement)modifierListOwner);
       if (name != null) {
         JavaElementKind type = JavaElementKind.fromElement(modifierListOwner).lessDescriptive();
         if (shortName == null) {

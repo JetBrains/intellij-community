@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -144,7 +144,7 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
         }
 
       }""");
-    IntentionAction action = myFixture.findSingleIntention("Remove 'IOException' from 'test' throws list");
+    IntentionAction action = myFixture.findSingleIntention("Remove 'IOException' from 'test()' throws list");
     assertPreviewText(action, """
       import java.io.IOException;
 
@@ -160,7 +160,7 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
         }
 
       }""");
-    action = myFixture.findSingleIntention("Add 'IOException' to 'A.test' throws list");
+    action = myFixture.findSingleIntention("Add 'IOException' to 'A.test()' throws list");
     assertPreviewText(action, """
       import java.io.IOException;
 

@@ -1,4 +1,4 @@
-// "Make 'condition' return 'java.lang.Object'" "false"
+// "Make 'condition()' return 'java.lang.Object'" "false"
 abstract class Test {
   private Child2 condition(boolean flag) {
     return flag ? foo<caret>() : bar();

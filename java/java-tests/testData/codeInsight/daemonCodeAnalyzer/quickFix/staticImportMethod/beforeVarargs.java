@@ -1,4 +1,4 @@
-// "Import static method 'foo.B.aaaaaaa'" "true-preview"
+// "Import static method 'foo.B.aaaaaaa()'" "true-preview"
 package foo;
 
 public class X {

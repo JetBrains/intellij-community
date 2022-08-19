@@ -1,5 +1,5 @@
 // FILE: bar/Foo.before.java
-// "/(Static import|Import static) method 'foo.Bar.setVariable'/" "true"
+// "/(Static import|Import static) method 'foo.Bar.setVariable\(\)'/" "true"
 // ERROR: Unresolved reference: setVariable
 // ACTION: Create method 'foobar'
 // WITH_STDLIB
@@ -28,7 +28,7 @@ class Bar {
 }
 
 // FILE: bar/Foo.after.java
-// "/(Static import|Import static) method 'foo.Bar.setVariable'/" "true"
+// "/(Static import|Import static) method 'foo.Bar.setVariable\(\)'/" "true"
 // ERROR: Unresolved reference: setVariable
 // ACTION: Create method 'foobar'
 // WITH_STDLIB

@@ -1,4 +1,4 @@
-// "Make 'test' return 'int'" "true-preview"
+// "Make 'test()' return 'int'" "true-preview"
 
 class Test {
   int test(int val) {
