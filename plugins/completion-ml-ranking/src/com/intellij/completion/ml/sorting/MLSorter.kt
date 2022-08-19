@@ -95,6 +95,8 @@ class MLSorter : CompletionFinalSorter() {
 
     lookupStorage.performanceTracker.sortingPerformed(itemsForScoring.size, System.currentTimeMillis() - startedTimestamp)
 
+    LOG.assertTrue(elements.size == finalRanking.size, "MLSorter shouldn't filter items")
+
     return finalRanking
   }
 
@@ -183,7 +185,7 @@ class MLSorter : CompletionFinalSorter() {
                              element2score: Map<LookupElement, Double?>,
                              positionsBefore: Map<LookupElement, Int>,
                              lookupStorage: MutableLookupStorage,
-                             lookup: LookupImpl): Iterable<LookupElement> {
+                             lookup: LookupImpl): List<LookupElement> {
     val shouldSort = element2score.values.none { it == null } && lookupStorage.shouldReRank()
     if (LOG.isDebugEnabled) {
       LOG.debug("ML sorting in completion used=$shouldSort for language=${lookupStorage.language.id}")
@@ -233,7 +235,7 @@ class MLSorter : CompletionFinalSorter() {
     return result
   }
 
-  private fun Iterable<LookupElement>.insertIgnoredItems(allItems: Iterable<LookupElement>): Iterable<LookupElement> {
+  private fun Iterable<LookupElement>.insertIgnoredItems(allItems: Iterable<LookupElement>): List<LookupElement> {
     val sortedItems = this.iterator()
     return allItems.mapNotNull { item ->
       when {
@@ -247,7 +249,9 @@ class MLSorter : CompletionFinalSorter() {
   private fun Iterable<LookupElement>.removeDuplicatesIfNeeded(): Iterable<LookupElement> =
     if (Registry.`is`("completion.ml.reorder.without.duplicates", false)) this.distinctBy { it.lookupString } else this
 
-  private fun Iterable<LookupElement>.addDiagnosticsIfNeeded(positionsBefore: Map<LookupElement, Int>, reordered: Int, lookup: LookupImpl): Iterable<LookupElement> {
+  private fun List<LookupElement>.addDiagnosticsIfNeeded(positionsBefore: Map<LookupElement, Int>,
+                                                         reordered: Int,
+                                                         lookup: LookupImpl): List<LookupElement> {
     if (CompletionMLRankingSettings.getInstance().isShowDiffEnabled) {
       var positionChanged = false
       this.forEachIndexed { position, element ->
@@ -264,9 +268,9 @@ class MLSorter : CompletionFinalSorter() {
     return this
   }
 
-  private fun Iterable<LookupElement>.markRelevantItemsIfNeeded(element2score: Map<LookupElement, Double?>,
-                                                                lookup: LookupImpl,
-                                                                decoratingItemsPolicy: DecoratingItemsPolicy): Iterable<LookupElement> {
+  private fun List<LookupElement>.markRelevantItemsIfNeeded(element2score: Map<LookupElement, Double?>,
+                                                            lookup: LookupImpl,
+                                                            decoratingItemsPolicy: DecoratingItemsPolicy): List<LookupElement> {
     if (CompletionMLRankingSettings.getInstance().isDecorateRelevantEnabled) {
       val relevantItems = decoratingItemsPolicy.itemsToDecorate(this.map { element2score[it] ?: 0.0 })
       for (index in relevantItems) {
