@@ -22,8 +22,8 @@ public final class CharTableImpl implements CharTable {
 
   @NotNull
   @Override
-  public CharSequence intern(@NotNull final CharSequence text) {
-    return text.length() > INTERN_THRESHOLD ? createSequence(text) : doIntern(text);
+  public CharSequence intern(@NotNull CharSequence text) {
+    return text.length() > INTERN_THRESHOLD ? text : doIntern(text);
   }
 
   @NotNull
@@ -38,7 +38,6 @@ public final class CharTableImpl implements CharTable {
     }
 
     synchronized(entries) {
-      // We need to create separate string just to prevent referencing all character data when original is string or char sequence over string
       return entries.getOrAddSubSequenceWithHashCode(hashCode, text, startOffset, endOffset);
     }
   }
@@ -50,22 +49,17 @@ public final class CharTableImpl implements CharTable {
 
   @NotNull
   @Override
-  public CharSequence intern(@NotNull final CharSequence baseText, final int startOffset, final int endOffset) {
+  public CharSequence intern(@NotNull CharSequence baseText, int startOffset, int endOffset) {
     CharSequence result;
     if (endOffset - startOffset == baseText.length()) result = intern(baseText);
-    else if (endOffset - startOffset > INTERN_THRESHOLD) result = createSequence(baseText, startOffset, endOffset);
+    else if (endOffset - startOffset > INTERN_THRESHOLD) result = substring(baseText, startOffset, endOffset);
     else result = doIntern(baseText, startOffset, endOffset);
 
     return result;
   }
 
   @NotNull
-  private static String createSequence(@NotNull CharSequence text) {
-    return createSequence(text, 0, text.length());
-  }
-
-  @NotNull
-  private static String createSequence(@NotNull CharSequence text, int startOffset, int endOffset) {
+  private static String substring(@NotNull CharSequence text, int startOffset, int endOffset) {
     if (text instanceof String) {
       return ((String)text).substring(startOffset, endOffset);
     }
@@ -85,7 +79,7 @@ public final class CharTableImpl implements CharTable {
 
   @NotNull
   private static StringHashToCharSequencesMap newStaticSet() {
-    final StringHashToCharSequencesMap r = new StringHashToCharSequencesMap(10, 0.9f);
+    StringHashToCharSequencesMap r = new StringHashToCharSequencesMap(10, 0.9f);
     r.add("==" );
     r.add("!=" );
     r.add("||" );
@@ -254,7 +248,7 @@ public final class CharTableImpl implements CharTable {
       String addedSequence;
 
       if (value == null) {
-        addedSequence = createSequence(sequence, startOffset, endOffset);
+        addedSequence = substring(sequence, startOffset, endOffset);
         put(hashCode, addedSequence);
       }
       else if (value instanceof CharSequence) {
@@ -262,7 +256,7 @@ public final class CharTableImpl implements CharTable {
         if (charSequenceSubSequenceEquals(existingSequence, sequence, startOffset, endOffset)) {
           return existingSequence;
         }
-        addedSequence = createSequence(sequence, startOffset, endOffset);
+        addedSequence = substring(sequence, startOffset, endOffset);
         put(hashCode, new CharSequence[]{existingSequence, addedSequence});
       }
       else if (value instanceof CharSequence[]) {
@@ -272,7 +266,7 @@ public final class CharTableImpl implements CharTable {
             return cs;
           }
         }
-        addedSequence = createSequence(sequence, startOffset, endOffset);
+        addedSequence = substring(sequence, startOffset, endOffset);
         CharSequence[] newSequenceArray = ArrayUtil.append(existingSequenceArray, addedSequence, CharSequence[]::new);
         put(hashCode, newSequenceArray);
       }
