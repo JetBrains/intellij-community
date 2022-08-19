@@ -5,15 +5,14 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.util.indexing.IndexableSetContributor
 import com.intellij.util.indexing.roots.kind.*
 
 internal data class ModuleRootOriginImpl(override val module: Module,
                                          override val roots: List<VirtualFile>) : ModuleRootOrigin
 
-internal data class LibraryOriginImpl(override val classRootUrls: List<VirtualFilePointer>,
-                                      override val sourceRootUrls: List<VirtualFilePointer>) : LibraryOrigin
+internal data class LibraryOriginImpl(override val classRoots: List<VirtualFile>,
+                                      override val sourceRoots: List<VirtualFile>) : LibraryOrigin
 
 internal data class SyntheticLibraryOriginImpl(override val syntheticLibrary: SyntheticLibrary,
                                                override val rootsToIndex: Collection<VirtualFile>) : SyntheticLibraryOrigin
