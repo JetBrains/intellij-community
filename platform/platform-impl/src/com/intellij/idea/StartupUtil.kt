@@ -6,7 +6,6 @@ package com.intellij.idea
 
 import com.intellij.BundleBase
 import com.intellij.accessibility.AccessibilityUtils
-import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.*
 import com.intellij.diagnostic.opentelemetry.TraceManager
 import com.intellij.ide.*
@@ -123,10 +122,6 @@ fun start(args: Array<String>) {
     val isHeadless = AppMode.isHeadless()
 
     val asyncDispatcher = Dispatchers.Default + StartupAbortedExceptionHandler()
-
-    launch(CoroutineName("ForkJoin CommonPool configuration") + asyncDispatcher) {
-      IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(isHeadless)
-    }
 
     // not IO-, but CPU-bound due to descrambling, don't use here IO dispatcher
     val appStarterDeferred = async(CoroutineName("main class loading") + asyncDispatcher) {

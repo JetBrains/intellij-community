@@ -3,6 +3,7 @@
 @file:Suppress("ReplacePutWithAssignment")
 package com.intellij.idea
 
+import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.startup.StartupActionScriptManager
@@ -20,6 +21,7 @@ fun main(rawArgs: Array<String>) {
   AppMode.setFlags(args)
   try {
     bootstrap(startupTimings)
+    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(AppMode.isHeadless())
     start(args)
   }
   catch (e: Throwable) {
