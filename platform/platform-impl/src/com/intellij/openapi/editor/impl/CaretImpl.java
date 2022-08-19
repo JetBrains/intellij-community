@@ -1035,7 +1035,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     SelectionMarker marker = mySelectionMarker;
     if (hasSelection(marker)) {
-      return TextRange.create(marker.getStartOffset(), marker.getEndOffset());
+      return marker.getTextRange();
     }
     else {
       int offset = getOffset();
