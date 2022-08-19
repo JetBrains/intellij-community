@@ -597,7 +597,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
         }
         else {
           markName = e.getMarkName();
-          promise = markers.markValueAsync(value, new ValueMarkup(markName, new JBColor(0, 0), null));
+          promise = markers.markValue(value, new ValueMarkup(markName, new JBColor(0, 0), null));
         }
         res = promise.then(__ -> ReadAction.nonBlocking(() -> JavaPsiFacade.getElementFactory(myProject)
           .createExpressionFromText(markName + CodeFragmentFactoryContextWrapper.DEBUG_LABEL_SUFFIX,
