@@ -5,7 +5,6 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.Function;
 import com.intellij.util.ResourceUtil;
@@ -26,7 +25,7 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
   private final List<FeatureUsageEvent.Action> myActionEvents = new ArrayList<>();
   private final List<FeatureUsageEvent.Intention> myIntentionEvents = new ArrayList<>();
   private final Map<String, GroupDescriptor> myGroups = new HashMap<>();
-  private final List<Pair<String, ApplicabilityFilter>> myApplicabilityFilters = new ArrayList<>();
+  private final List<ApplicabilityFiltersData> myApplicabilityFilters = new ArrayList<>();
 
   private boolean myAdditionalFeaturesLoaded;
 
@@ -109,9 +108,7 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
       }
       final ApplicabilityFilter[] applicabilityFilters = provider.getApplicabilityFilters();
       if (applicabilityFilters != null) {
-        for (ApplicabilityFilter applicabilityFilter : applicabilityFilters) {
-          myApplicabilityFilters.add(Pair.create(applicabilityFilter.getPrefix(), applicabilityFilter));
-        }
+        myApplicabilityFilters.add(new ApplicabilityFiltersData(provider, applicabilityFilters));
       }
     });
   }
@@ -179,13 +176,16 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
   @Override
   public ApplicabilityFilter @NotNull [] getMatchingFilters(@NotNull String featureId) {
     lazyLoadFromPluginsFeaturesProviders();
-    List<ApplicabilityFilter> filters = new ArrayList<>();
-    for (Pair<String, ApplicabilityFilter> pair : myApplicabilityFilters) {
-      if (featureId.startsWith(pair.getFirst())) {
-        filters.add(pair.getSecond());
-      }
+    FeatureDescriptor descriptor = myFeatures.get(featureId);
+    if (descriptor != null) {
+      Class<? extends ProductivityFeaturesProvider> providerClass = descriptor.getProvider();
+      return myApplicabilityFilters.stream()
+        .filter(it -> it.provider.getClass() == providerClass)
+        .findFirst()
+        .map(it -> it.filters)
+        .orElse(new ApplicabilityFilter[0]);
     }
-    return filters.toArray(new ApplicabilityFilter[0]);
+    return new ApplicabilityFilter[0];
   }
 
   @Override
@@ -202,6 +202,9 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
   @NonNls
   public String toString() {
     return super.toString() + "; myAdditionalFeaturesLoaded=" + myAdditionalFeaturesLoaded;
+  }
+
+  private record ApplicabilityFiltersData(@NotNull ProductivityFeaturesProvider provider, ApplicabilityFilter @NotNull [] filters) {
   }
 
   @TestOnly
