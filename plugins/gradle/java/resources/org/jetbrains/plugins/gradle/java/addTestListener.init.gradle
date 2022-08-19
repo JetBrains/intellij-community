@@ -5,7 +5,7 @@ gradle.allprojects { project ->
     loggerTask.outputs.upToDateWhen { false }
 
     from(project.tasks.withType(Test)) {
-      include("**/*.xml")
+      include("**/ijLog*.xml")
     }
     into(loggerTask.temporaryDir)
 

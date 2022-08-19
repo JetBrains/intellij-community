@@ -123,8 +123,24 @@ class IJTestEventLogger {
       }
     }
 
+    // make sure that the logs are ordered by when they 'should' happen, because the test data doesn't always
+    // contain a start/end time, and currentTimeMillis might return the same timestamp for multiple events per test.
+    int order = 999
+    switch (testEventType) {
+      case "beforeSuite": order = 100
+        break;
+      case "beforeTest": order = 300
+        break;
+      case "afterTest": order = 600
+        break;
+      case "afterSuite": order = 800
+        break;
+      case "onOutput": order = 900
+        break;
+    }
+
     String log = writeLog(writer.toString())
-    File xmlFile = testReportDir.toPath().resolve(System.currentTimeMillis() + "-" + log.md5() + ".xml").toFile()
+    File xmlFile = testReportDir.toPath().resolve("ijLog_" + System.currentTimeMillis() + "_" + order + "_" + log.md5() + ".xml").toFile()
     xmlFile.write(log)
   }
 
