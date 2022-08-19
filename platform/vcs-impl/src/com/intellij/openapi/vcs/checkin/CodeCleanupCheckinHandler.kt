@@ -63,11 +63,9 @@ private class CodeCleanupCheckinHandler(private val panel: CheckinProjectPanel) 
       val globalContext = InspectionManager.getInstance(project).createNewGlobalContext() as GlobalInspectionContextBase
       val profile = getProfile()
 
-      globalContext.codeCleanup(AnalysisScope(project, filesToProcess), profile, null, runnable, true)
+      globalContext.codeCleanup(AnalysisScope(project, filesToProcess), profile, null, null, true)
     }
-    else {
-      runnable.run()
-    }
+    runnable.run()
   }
 
   override fun isEnabled(): Boolean = settings.CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT

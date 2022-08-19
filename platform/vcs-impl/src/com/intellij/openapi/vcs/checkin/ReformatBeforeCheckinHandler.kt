@@ -36,18 +36,11 @@ open class ReformatBeforeCheckinHandler(
     BooleanCommitOption(panel, message("checkbox.checkin.options.reformat.code"), true, settings::REFORMAT_BEFORE_PROJECT_COMMIT)
 
   override fun runCheckinHandlers(runnable: Runnable) {
-    val saveAndContinue = {
-      FileDocumentManager.getInstance().saveAllDocuments()
-      runnable.run()
-    }
-
     if (settings.REFORMAT_BEFORE_PROJECT_COMMIT && !DumbService.isDumb(myProject)) {
-      ReformatCodeProcessor(myProject, getPsiFiles(myProject, panel.virtualFiles), getReformatBeforeCommitCommandName(), saveAndContinue,
-                            true).run()
+      ReformatCodeProcessor(myProject, getPsiFiles(myProject, panel.virtualFiles), getReformatBeforeCommitCommandName(), null, true).run()
+      FileDocumentManager.getInstance().saveAllDocuments()
     }
-    else {
-      saveAndContinue() // TODO just runnable.run()?
-    }
+    runnable.run()
   }
 }
 

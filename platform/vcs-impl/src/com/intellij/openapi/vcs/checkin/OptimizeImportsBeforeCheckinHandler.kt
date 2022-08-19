@@ -40,17 +40,11 @@ open class OptimizeImportsBeforeCheckinHandler(
                         settings::OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT)
 
   override fun runCheckinHandlers(runnable: Runnable) {
-    val saveAndContinue = {
-      FileDocumentManager.getInstance().saveAllDocuments()
-      runnable.run()
-    }
-
     if (settings.OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT && !DumbService.isDumb(myProject)) {
-      OptimizeImportsProcessor(myProject, getPsiFiles(myProject, panel.virtualFiles), COMMAND_NAME, saveAndContinue).run()
+      OptimizeImportsProcessor(myProject, getPsiFiles(myProject, panel.virtualFiles), COMMAND_NAME, null).run()
+      FileDocumentManager.getInstance().saveAllDocuments()
     }
-    else {
-      runnable.run()
-    }
+    runnable.run()
   }
 
   companion object {

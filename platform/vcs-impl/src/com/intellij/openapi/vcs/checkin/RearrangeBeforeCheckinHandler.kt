@@ -39,17 +39,11 @@ open class RearrangeBeforeCheckinHandler(
                         settings::REARRANGE_BEFORE_PROJECT_COMMIT)
 
   override fun runCheckinHandlers(runnable: Runnable) {
-    val saveAndContinue = {
-      FileDocumentManager.getInstance().saveAllDocuments()
-      runnable.run()
-    }
-
     if (settings.REARRANGE_BEFORE_PROJECT_COMMIT && !DumbService.isDumb(project)) {
-      RearrangeCodeProcessor(project, getPsiFiles(project, panel.virtualFiles), COMMAND_NAME, saveAndContinue, true).run()
+      RearrangeCodeProcessor(project, getPsiFiles(project, panel.virtualFiles), COMMAND_NAME, null, true).run()
+      FileDocumentManager.getInstance().saveAllDocuments()
     }
-    else {
-      saveAndContinue() // TODO just runnable.run()?
-    }
+    runnable.run()
   }
 
   companion object {
