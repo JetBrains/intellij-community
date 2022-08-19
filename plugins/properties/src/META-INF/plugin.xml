@@ -137,12 +137,14 @@
     <psi.referenceContributor language="Properties" implementation="com.intellij.lang.properties.PropertiesWebReferenceContributor"/>
 
     <intentionAction>
+      <language>Properties</language>
       <className>com.intellij.lang.properties.actions.CopyPropertyValueToClipboardIntention</className>
       <bundleName>messages.PropertiesBundle</bundleName>
       <categoryKey>intention.category.properties</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>Properties</language>
       <className>com.intellij.lang.properties.actions.CopyPropertyKeyToClipboardIntention</className>
       <bundleName>messages.PropertiesBundle</bundleName>
       <categoryKey>intention.category.properties</categoryKey>
