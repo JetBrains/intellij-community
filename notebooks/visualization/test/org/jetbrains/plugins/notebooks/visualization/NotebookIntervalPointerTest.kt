@@ -1,5 +1,8 @@
 package org.jetbrains.plugins.notebooks.visualization
 
+import com.intellij.mock.MockDocument
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.event.MockDocumentEvent
 import com.intellij.util.EventDispatcher
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.catchThrowable
@@ -137,7 +140,7 @@ class NotebookIntervalPointerTest {
 }
 
 
-private class TestEnv(intervals: List<Interval>) {
+private class TestEnv(intervals: List<Interval>, val document: Document = MockDocument()) {
   val notebookCellLines = MockNotebookCellLines(intervals = mutableListOf(*intervals.toTypedArray()))
   val pointersFactory = NotebookIntervalPointerFactoryImpl(notebookCellLines)
 
@@ -150,7 +153,8 @@ private class TestEnv(intervals: List<Interval>) {
 
     notebookCellLines.intervals.clear()
     notebookCellLines.intervals.addAll(allIntervals)
-    val event = NotebookCellLinesEvent(old, old, new, new)
+    val documentEvent = MockDocumentEvent(document, 0)
+    val event = NotebookCellLinesEvent(documentEvent, old, old, new, new, 0)
     notebookCellLines.intervalListeners.multicaster.segmentChanged(event)
   }
 

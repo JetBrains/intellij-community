@@ -37,30 +37,35 @@ class NonIncrementalCellLines private constructor(private val document: Document
   private fun notifyChanged(oldCells: List<NotebookCellLines.Interval>,
                             oldAffectedCells: List<NotebookCellLines.Interval>,
                             newCells: List<NotebookCellLines.Interval>,
-                            newAffectedCells: List<NotebookCellLines.Interval>) {
-    if (oldCells == newCells) {
-      val event = NotebookCellLinesEvent(emptyList(), oldAffectedCells, emptyList(), newAffectedCells)
-      intervalListeners.multicaster.segmentChanged(event)
-      return
-    }
+                            newAffectedCells: List<NotebookCellLines.Interval>,
+                            documentEvent: DocumentEvent) {
+    val (trimmedOldCells, trimmedNewCells) =
+      if (oldCells == newCells) {
+        Pair(emptyList(), emptyList())
+      }
+      else {
+        ++modificationStamp
 
-    val trimAtBegin = oldCells.zip(newCells).takeWhile { (oldCell, newCell) ->
-      oldCell == newCell &&
-      oldCell != oldAffectedCells.firstOrNull() && newCell != newAffectedCells.firstOrNull()
-    }.count()
+        val trimAtBegin = oldCells.zip(newCells).takeWhile { (oldCell, newCell) ->
+          oldCell == newCell &&
+          oldCell != oldAffectedCells.firstOrNull() && newCell != newAffectedCells.firstOrNull()
+        }.count()
 
-    val trimAtEnd = oldCells.asReversed().zip(newCells.asReversed()).takeWhile { (oldCell, newCell) ->
-      oldCell.type == newCell.type && oldCell.size == newCell.size &&
-      oldCell != oldAffectedCells.lastOrNull() && newCell != newAffectedCells.lastOrNull()
-    }.count()
+        val trimAtEnd = oldCells.asReversed().zip(newCells.asReversed()).takeWhile { (oldCell, newCell) ->
+          oldCell.type == newCell.type && oldCell.size == newCell.size &&
+          oldCell != oldAffectedCells.lastOrNull() && newCell != newAffectedCells.lastOrNull()
+        }.count()
 
-    ++modificationStamp
+        Pair(trimmed(oldCells, trimAtBegin, trimAtEnd), trimmed(newCells, trimAtBegin, trimAtEnd))
+      }
 
     val event = NotebookCellLinesEvent(
-      trimmed(oldCells, trimAtBegin, trimAtEnd),
-      oldAffectedCells,
-      trimmed(newCells, trimAtBegin, trimAtEnd),
-      newAffectedCells,
+      documentEvent = documentEvent,
+      oldIntervals = trimmedOldCells,
+      oldAffectedIntervals = oldAffectedCells,
+      newIntervals = trimmedNewCells,
+      newAffectedIntervals = newAffectedCells,
+      modificationStamp = modificationStamp,
     )
     intervalListeners.multicaster.segmentChanged(event)
   }
@@ -78,7 +83,7 @@ class NonIncrementalCellLines private constructor(private val document: Document
       intervals = intervalsGenerator.makeIntervals(document)
 
       val newAffectedCells = getAffectedCells(intervals, document, TextRange(event.offset, event.offset + event.newLength))
-      notifyChanged(oldIntervals, oldAffectedCells, intervals, newAffectedCells)
+      notifyChanged(oldIntervals, oldAffectedCells, intervals, newAffectedCells, event)
     }
   }
 
