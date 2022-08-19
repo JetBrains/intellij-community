@@ -369,7 +369,7 @@ class RootIndex {
         VirtualFile libraryClass = myRootSupplier.correctRoot(root, entity, provider);
         if (libraryClass == null) continue;
 
-        info.libraryOrSdkSources.add(libraryClass);
+        info.libraryOrSdkClasses.add(libraryClass);
         info.classAndSourceRoots.add(libraryClass);
         info.classOfLibraries.putValue(libraryClass, entity);
       }
