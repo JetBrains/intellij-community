@@ -383,21 +383,25 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
   private static Collection<String> getLanguagesForIntentions(@NotNull PsiFile hostFile,
                                                               @Nullable PsiElement psiElementAtOffset,
                                                               @Nullable PsiFile injectedFile) {
-    FileViewProvider viewProvider = hostFile.getViewProvider();
-    Set<Language> languages = new HashSet<>(viewProvider.getLanguages());
+    Set<String> languageIds = new HashSet<>();
+    for (Language language : hostFile.getViewProvider().getLanguages()) {
+      languageIds.add(language.getID());
+    }
 
     if (injectedFile != null) {
-      languages.addAll(injectedFile.getViewProvider().getLanguages());
+      for (Language language : injectedFile.getViewProvider().getLanguages()) {
+        languageIds.add(language.getID());
+      }
     }
 
     if (psiElementAtOffset != null) {
       SequencesKt.forEach(parents(psiElementAtOffset, true), p -> {
-        languages.add(p.getLanguage());
+        languageIds.add(p.getLanguage().getID());
         return null;
       });
     }
 
-    return ContainerUtil.map2Set(languages, Language::getID);
+    return languageIds;
   }
 
   public static void fillIntentionsInfoForHighlightInfo(@NotNull HighlightInfo infoAtCursor,

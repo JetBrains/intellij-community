@@ -8,6 +8,7 @@ import com.intellij.codeInsight.intention.impl.CachedIntentions
 import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings
+import com.intellij.codeInsight.intention.impl.config.IntentionsMetadataService
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeInspection.ex.QuickFixWrapper
@@ -44,7 +45,7 @@ internal class IntentionPreviewComputable(private val project: Project,
 
   private fun tryCreateFallbackDescriptionContent(): IntentionPreviewInfo {
     val originalAction = IntentionActionDelegate.unwrap(action)
-    val actionMetaData = IntentionManagerSettings.getInstance().getMetaData().singleOrNull {
+    val actionMetaData = IntentionsMetadataService.getInstance().getMetaData().singleOrNull {
       md -> IntentionActionDelegate.unwrap(md.action).javaClass === originalAction.javaClass
     } ?: return IntentionPreviewInfo.EMPTY
     return try {

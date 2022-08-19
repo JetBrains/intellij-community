@@ -12,7 +12,6 @@ import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.util.containers.Interner
 import java.util.AbstractMap
-import java.util.HashMap
 import java.util.LinkedHashMap
 
 @Service(Service.Level.APP)
@@ -25,14 +24,13 @@ internal class IntentionsMetadataService {
   }
 
   // guarded by this
-  private val metadataMap: MutableMap<MetaDataKey, IntentionActionMetaData>
-  // guarded by this
-  private val extensionMapping: MutableMap<IntentionActionBean, MetaDataKey>
+  private val extensionMetaMap: MutableMap<IntentionActionBean, IntentionActionMetaData>
+  // guarded by this, used only for legacy programmatically registered intentions
+  private val dynamicRegistrationMeta: MutableList<IntentionActionMetaData>
 
   init {
-    val size = IntentionManagerImpl.EP_INTENTION_ACTIONS.point.size()
-    metadataMap = LinkedHashMap(size)
-    extensionMapping = HashMap(size)
+    dynamicRegistrationMeta = ArrayList()
+    extensionMetaMap = LinkedHashMap(IntentionManagerImpl.EP_INTENTION_ACTIONS.point.size())
     IntentionManagerImpl.EP_INTENTION_ACTIONS.forEachExtensionSafe { registerMetaDataForEp(it) }
     IntentionManagerImpl.EP_INTENTION_ACTIONS.addExtensionPointListener(object : ExtensionPointListener<IntentionActionBean?> {
       override fun extensionAdded(extension: IntentionActionBean, pluginDescriptor: PluginDescriptor) {
@@ -58,16 +56,15 @@ internal class IntentionsMetadataService {
     val descriptionDirectoryName = extension.getDescriptionDirectoryName() ?: instance.descriptionDirectoryName
     try {
       val metadata = IntentionActionMetaData(instance, extension.loaderForClass, categories, descriptionDirectoryName)
-      val key = MetaDataKey(metadata.myCategory, metadata.family)
       synchronized(this) {
-        metadataMap.put(key, metadata)
-        extensionMapping.put(extension, key)
+        extensionMetaMap.put(extension, metadata)
       }
     }
     catch (ignore: ExtensionNotApplicableException) {
     }
   }
 
+  @Deprecated("Use intentionAction extension point instead")
   fun registerIntentionMetaData(intentionAction: IntentionAction,
                                 category: Array<String?>,
                                 descriptionDirectoryName: String) {
@@ -78,33 +75,41 @@ internal class IntentionsMetadataService {
       intentionAction.javaClass.classLoader
     }
     val metadata = IntentionActionMetaData(intentionAction, classLoader, category, descriptionDirectoryName)
-    val key = MetaDataKey(metadata.myCategory, metadata.family)
     synchronized(this) {
       // not added as searchable option - this method is deprecated and intentionAction extension point must be used instead
-      metadataMap.put(key, metadata)
+      dynamicRegistrationMeta.add(metadata)
     }
   }
 
   @Synchronized
   fun getMetaData(): List<IntentionActionMetaData> {
-    return java.util.List.copyOf(metadataMap.values)
+    if (dynamicRegistrationMeta.isEmpty()) return java.util.List.copyOf(extensionMetaMap.values)
+
+    return java.util.List.copyOf(extensionMetaMap.values + dynamicRegistrationMeta)
+  }
+
+  fun getUniqueMetadata(): List<IntentionActionMetaData> {
+    val allIntentions = getMetaData()
+    val unique = LinkedHashMap<MetaDataKey, IntentionActionMetaData>(allIntentions.size)
+
+    for (metadata in allIntentions) {
+      val key = MetaDataKey(metadata.myCategory, metadata.family)
+      unique[key] = metadata
+    }
+
+    return allIntentions
   }
 
   @Synchronized
   fun unregisterMetaData(intentionAction: IntentionAction) {
-    for ((key, value) in metadataMap) {
-      if (value.action === intentionAction) {
-        metadataMap.remove(key)
-        break
-      }
+    dynamicRegistrationMeta.removeIf { meta ->
+      meta.action === intentionAction
     }
   }
 
   @Synchronized
   private fun unregisterMetaDataForEP(extension: IntentionActionBean) {
-    extensionMapping.remove(extension)?.let { key ->
-      metadataMap.remove(key)
-    }
+    extensionMetaMap.remove(extension)
   }
 
   companion object {

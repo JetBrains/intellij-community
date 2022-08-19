@@ -26,15 +26,17 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import static java.util.Collections.emptySet;
+
 public final class IntentionActionWrapper implements IntentionAction, ShortcutProvider, IntentionActionDelegate, PossiblyDumbAware,
                                                      Comparable<IntentionAction> {
   private final IntentionActionBean extension;
+  private final Set<String> applicableToLanguages;
   private String fullFamilyName;
-
-  private volatile @Nullable Set<String> applicableToLanguages;
 
   public IntentionActionWrapper(@NotNull IntentionActionBean extension) {
     this.extension = extension;
+    this.applicableToLanguages = getLanguageWithDialects(extension.language);
   }
 
   public @NotNull String getDescriptionDirectoryName() {
@@ -55,19 +57,13 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
     return getDelegate().getFamilyName();
   }
 
-  public @Nullable Set<String> getLanguages() {
-    if (extension.language == null) return null;
-    if ("any".equals(extension.language)) return null;
-    if (applicableToLanguages != null) return applicableToLanguages;
-
-    Set<String> languageIds = getLanguageWithDialects(extension.language);
-
-    applicableToLanguages = languageIds;
-
-    return languageIds;
+  public @NotNull Set<String> getLanguages() {
+    return applicableToLanguages;
   }
 
-  private static @NotNull Set<String> getLanguageWithDialects(@NotNull String langId) {
+  private static @NotNull Set<String> getLanguageWithDialects(@Nullable String langId) {
+    if (langId == null || "any".equals(langId) || langId.isBlank()) return emptySet();
+
     Language language = Language.findLanguageByID(langId);
     Set<String> result;
     if (language == null) {
@@ -84,7 +80,7 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
     else {
       result = InspectionEngine.getLanguageWithDialects(language, true);
     }
-    return result;
+    return Set.copyOf(result);
   }
 
   @Override
