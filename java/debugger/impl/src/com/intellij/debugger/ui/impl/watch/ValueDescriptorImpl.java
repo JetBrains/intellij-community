@@ -738,7 +738,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   public boolean canSetValue() {
-    return myValueReady && !myIsSynthetic && isLvalue();
+    return myValueReady && isLvalue();
   }
 
   public XValueModifier getModifier(JavaValue value) {

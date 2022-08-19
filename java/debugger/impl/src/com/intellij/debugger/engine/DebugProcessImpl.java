@@ -1322,9 +1322,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                     final int invocationOptions,
                                     boolean internalEvaluate) throws EvaluateException {
     final ThreadReference thread = getEvaluationThread(evaluationContext);
-    return new InvokeCommand<Value>(method, args) {
+    return new InvokeCommand<>(method, args) {
       @Override
-      protected Value invokeMethod(int invokePolicy, Method method, List<? extends Value> args) throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
+      protected Value invokeMethod(int invokePolicy, Method method, List<? extends Value> args)
+        throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Invoking " + objRef.type().name() + "." + method.name());
         }
@@ -1364,12 +1365,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                             int extraInvocationOptions,
                             boolean internalEvaluate) throws EvaluateException {
     final ThreadReference thread = getEvaluationThread(evaluationContext);
-    return new InvokeCommand<Value>(method, args) {
+    return new InvokeCommand<>(method, args) {
       @Override
       protected Value invokeMethod(int invokePolicy, Method method, List<? extends Value> args) throws InvocationException,
-                                                                             ClassNotLoadedException,
-                                                                             IncompatibleThreadStateException,
-                                                                             InvalidTypeException {
+                                                                                                       ClassNotLoadedException,
+                                                                                                       IncompatibleThreadStateException,
+                                                                                                       InvalidTypeException {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Invoking " + classType.name() + "." + method.name());
         }
@@ -1383,12 +1384,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                             Method method,
                             List<? extends Value> args) throws EvaluateException {
     final ThreadReference thread = getEvaluationThread(evaluationContext);
-    return new InvokeCommand<Value>(method, args) {
+    return new InvokeCommand<>(method, args) {
       @Override
       protected Value invokeMethod(int invokePolicy, Method method, List<? extends Value> args) throws InvocationException,
-                                                                                      ClassNotLoadedException,
-                                                                                      IncompatibleThreadStateException,
-                                                                                      InvalidTypeException {
+                                                                                                       ClassNotLoadedException,
+                                                                                                       IncompatibleThreadStateException,
+                                                                                                       InvalidTypeException {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Invoking " + interfaceType.name() + "." + method.name());
         }
