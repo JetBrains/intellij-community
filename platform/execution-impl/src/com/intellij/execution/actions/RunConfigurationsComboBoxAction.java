@@ -442,7 +442,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   }
 
   @ApiStatus.Internal
-  public static final class SelectConfigAction extends DefaultActionGroup implements DumbAware {
+  public static class SelectConfigAction extends DefaultActionGroup implements DumbAware {
     private final RunnerAndConfigurationSettings myConfiguration;
     private final Project myProject;
     private final @NotNull Function<? super Executor, Boolean> myExecutorFilter;

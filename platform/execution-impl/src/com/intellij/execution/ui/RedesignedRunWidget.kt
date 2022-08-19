@@ -218,17 +218,17 @@ private class OtherRunOptions : TogglePopupAction(
   }
 }
 
-internal fun createOtherRunnersSubgroup(runConfiguration: RunnerAndConfigurationSettings?, project: Project): ActionGroup? {
-  val executorFilter: (Executor) -> Boolean = {
-    // Cannot use DefaultDebugExecutor.EXECUTOR_ID because of module dependencies
-    it.id != ToolWindowId.RUN && it.id != ToolWindowId.DEBUG
-  }
+internal val excludeRunAndDebug: (Executor) -> Boolean = {
+  // Cannot use DefaultDebugExecutor.EXECUTOR_ID because of module dependencies
+  it.id != ToolWindowId.RUN && it.id != ToolWindowId.DEBUG
+}
 
+private fun createOtherRunnersSubgroup(runConfiguration: RunnerAndConfigurationSettings?, project: Project): ActionGroup? {
   if (runConfiguration != null) {
-    return RunConfigurationsComboBoxAction.SelectConfigAction(runConfiguration, project, executorFilter)
+    return RunConfigurationsComboBoxAction.SelectConfigAction(runConfiguration, project, excludeRunAndDebug)
   }
   if (RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
-    return RunConfigurationsComboBoxAction.RunCurrentFileAction(executorFilter)
+    return RunConfigurationsComboBoxAction.RunCurrentFileAction(excludeRunAndDebug)
   }
   return ActionGroup.EMPTY_GROUP
 }

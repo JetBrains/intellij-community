@@ -2,6 +2,7 @@
 package com.intellij.execution.ui
 
 import com.intellij.execution.*
+import com.intellij.execution.actions.RunConfigurationsComboBoxAction
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.executors.ExecutorGroup
@@ -10,7 +11,6 @@ import com.intellij.execution.impl.ExecutionManagerImpl.Companion.isProcessRunni
 import com.intellij.execution.impl.isOfSameType
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ActivityTracker
 import com.intellij.ide.DataManager
@@ -33,7 +33,10 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.ui.popup.*
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindowId
@@ -248,17 +251,7 @@ internal fun createRunConfigurationsActionGroup(project: Project, addHeader: Boo
     inlineActions.add(RunToolbarWidgetRunAction(runExecutor) { conf })
     inlineActions.add(RunToolbarWidgetRunAction(debugExecutor) { conf })
 
-    actions.add(ActionGroupWithInlineActions(conf.shortenName(), true, inlineActions).apply {
-      templatePresentation.icon = conf.configuration.icon
-      if (conf.isRunning(project)) {
-        templatePresentation.icon = ExecutionUtil.getLiveIndicator(templatePresentation.icon)
-      }
-
-      val subgroup = createOtherRunnersSubgroup(conf, project)
-      if (subgroup != null) {
-        addAll(subgroup)
-      }
-    })
+    actions.add(ActionGroupWithInlineActions(inlineActions, conf, project))
   }
   actions.add(Separator.create())
   actions.add(DelegateAction({ ExecutionBundle.message("run.toolbar.widget.all.configurations") },
@@ -302,7 +295,9 @@ private class DelegateAction(val string: Supplier<@Nls String>, delegate: AnActi
   }
 }
 
-private class ActionGroupWithInlineActions(@NlsActions.ActionText name: String, popup: Boolean, private val actions: List<AnAction>) : DefaultActionGroup(name, popup), InlineActionsHolder {
+private class ActionGroupWithInlineActions(
+  private val actions: List<AnAction>, configuration: RunnerAndConfigurationSettings, project: Project
+) : RunConfigurationsComboBoxAction.SelectConfigAction(configuration, project, excludeRunAndDebug), InlineActionsHolder {
   override fun getInlineActions(): List<AnAction> = actions
 }
 
