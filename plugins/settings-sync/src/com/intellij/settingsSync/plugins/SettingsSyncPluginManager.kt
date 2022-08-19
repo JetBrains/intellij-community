@@ -43,24 +43,37 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
   }
 
   private val disabledListener = Runnable {
-    val disabledPlugins = DisabledPluginsState.getDisabledIds()
-    val disabledIds = HashSet<String>()
-    disabledPlugins.forEach {
-      disabledIds.add(it.idString)
+    val disabledIds = DisabledPluginsState.getDisabledIds()
+    val disabledIdStrings = HashSet<String>()
+    disabledIds.forEach {
+      disabledIdStrings.add(it.idString)
       if (!state.plugins.containsKey(it.idString)) {
         PluginManagerCore.getPlugin(it)?.let { descriptor ->
-          if (shouldSaveState(descriptor)) {
+          if (isPluginSyncEnabled(
+              descriptor.pluginId.idString, descriptor.isBundled, SettingsSyncPluginCategoryFinder.getPluginCategory(descriptor))) {
             savePluginState(descriptor)
           }
         }
       }
     }
+    val droppedKeys = ArrayList<String>()
     state.plugins.forEach { entry ->
       val pluginId = PluginId.getId(entry.key)
       PluginManagerCore.findPlugin(pluginId)?.let {
-        entry.value.isEnabled = !disabledIds.contains(entry.key)
+        if (disabledIdStrings.contains(entry.key)) {
+          entry.value.isEnabled = false
+        }
+        else {
+          if (it.isBundled) {
+            droppedKeys.add(entry.key)
+          }
+          else {
+            entry.value.isEnabled = true
+          }
+        }
       }
     }
+    droppedKeys.forEach { state.plugins.remove(it) }
   }
 
   init {
