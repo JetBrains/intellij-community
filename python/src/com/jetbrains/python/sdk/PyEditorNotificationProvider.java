@@ -186,7 +186,7 @@ public final class PyEditorNotificationProvider implements DumbAware, EditorNoti
     }
 
     return (Function<FileEditor, JComponent>)editor -> {
-      EditorNotificationPanel result = new EditorNotificationPanel(editor);
+      EditorNotificationPanel result = new EditorNotificationPanel(editor, EditorNotificationPanel.Status.Warning);
       result.setText(message);
       FileProblemDescriptor descriptor = new FileProblemDescriptor(node.getContainingFile());
       for (LocalQuickFix fix : fixes) {

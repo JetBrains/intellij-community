@@ -20,7 +20,7 @@ internal class KotlinHighlightingSuspendNotificationProvider : EditorNotificatio
         if (!KotlinHighlightingSuspender.getInstance(project).isSuspended(file)) return EditorNotificationProvider.CONST_NULL
 
         return Function {
-            EditorNotificationPanel(it).apply {
+            EditorNotificationPanel(it, EditorNotificationPanel.Status.Warning).apply {
                 text = KotlinBaseHighlightingBundle.message("highlighting.for.0.is.suspended", file.name)
                 createActionLabel(KotlinBaseHighlightingBundle.message("highlighting.action.text.ignore")) {
                     KotlinHighlightingSuspender.getInstance(project).unsuspend(file)

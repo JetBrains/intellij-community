@@ -17,7 +17,7 @@ class GitIndexVirtualFileEditorNotificationProvider : EditorNotifications.Provid
 
   override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
     if (file !is GitIndexVirtualFile) return null
-    return EditorNotificationPanel(HintUtil.INFORMATION_COLOR_KEY).apply {
+    return EditorNotificationPanel(HintUtil.INFORMATION_COLOR_KEY, EditorNotificationPanel.Status.Info).apply {
       text = GitBundle.message("stage.vfs.editor.notification.text", file.name)
       if (file.filePath.virtualFile != null) {
         createActionLabel(GitBundle.message("stage.vfs.editor.notification.link"), "Git.Stage.Show.Local")

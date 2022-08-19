@@ -32,7 +32,7 @@ class GitEditorPromo : EditorNotifications.Provider<EditorNotificationPanel>() {
                                        project: Project): EditorNotificationPanel? {
     return if (isEnabled() && CommandLineWaitingManager.getInstance().hasHookFor(file)
                && file.name == GitRepositoryFiles.COMMIT_EDITMSG) {
-      EditorNotificationPanel(HintUtil.PROMOTION_PANE_KEY).apply {
+      EditorNotificationPanel(HintUtil.PROMOTION_PANE_KEY, EditorNotificationPanel.Status.Info).apply {
         icon(AllIcons.Ide.Gift)
         text = GitBundle.message("editor.promo.commit.text", ApplicationNamesInfo.getInstance().fullProductName)
         val repository = GitRepositoryManager.getInstance(project).repositories.find { it.repositoryFiles.isCommitMessageFile(file.path) }

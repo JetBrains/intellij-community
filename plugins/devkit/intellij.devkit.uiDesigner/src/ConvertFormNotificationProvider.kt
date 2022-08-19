@@ -30,7 +30,7 @@ class ConvertFormNotificationProvider : EditorNotifications.Provider<EditorNotif
     val classToBind = fileEditor.editor.rootContainer.classToBind ?: return null
     val psiClass = JavaPsiFacade.getInstance(project).findClass(classToBind, ProjectScope.getProjectScope(project)) ?: return null
 
-    return EditorNotificationPanel(LightColors.RED).apply {
+    return EditorNotificationPanel(LightColors.RED, EditorNotificationPanel.Status.Error).apply {
       setText(DevKitUIDesignerBundle.message("convert.form.editor.notification.label"))
       /* todo IDEA-282478
       createActionLabel(DevKitBundle.message("convert.form.editor.notification.link.convert")) {

@@ -33,7 +33,7 @@ class JavaOutsideModuleDetector : EditorNotificationProvider {
         if (nonKotlinPath.any { filePath.startsWith(it) }) return CONST_NULL
 
         return Function {
-            EditorNotificationPanel(it).apply {
+            EditorNotificationPanel(it, EditorNotificationPanel.Status.Warning).apply {
                 text(KotlinJvmBundle.message("this.java.file.is.outside.of.java.source.roots.and.won.t.be.added.to.the.classpath"))
                 icon(AllIcons.General.Warning)
             }

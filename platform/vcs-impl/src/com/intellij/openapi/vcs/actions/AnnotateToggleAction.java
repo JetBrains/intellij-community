@@ -382,7 +382,7 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
     private final Runnable myShowAnnotations;
 
     MyEditorNotificationPanel(@NotNull Editor editor, @NotNull AbstractVcs vcs, @NotNull Runnable doShowAnnotations) {
-      super(LightColors.RED);
+      super(LightColors.RED, Status.Error);
       myEditor = editor;
       myShowAnnotations = doShowAnnotations;
 

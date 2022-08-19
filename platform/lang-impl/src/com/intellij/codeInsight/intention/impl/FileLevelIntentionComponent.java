@@ -41,7 +41,7 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
                                      @Nullable List<? extends Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> intentions,
                                      @NotNull final PsiFile psiFile,
                                      @NotNull final Editor editor, @NlsContexts.Tooltip @Nullable String tooltip) {
-    super(getColor(psiFile.getProject(), severity));
+    super(getColor(psiFile.getProject(), severity), getStatus(psiFile.getProject(), severity));
     Project project = psiFile.getProject();
     final ShowIntentionsPass.IntentionsInfo info = new ShowIntentionsPass.IntentionsInfo();
 
@@ -111,5 +111,17 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
     }
 
     return LightColors.GREEN;
+  }
+
+  private static @NotNull Status getStatus(@NotNull Project project, @NotNull HighlightSeverity severity) {
+    if (SeverityRegistrar.getSeverityRegistrar(project).compare(severity, HighlightSeverity.ERROR) >= 0) {
+      return Status.Error;
+    }
+
+    if (SeverityRegistrar.getSeverityRegistrar(project).compare(severity, HighlightSeverity.WARNING) >= 0) {
+      return Status.Warning;
+    }
+
+    return Status.Success;
   }
 }
