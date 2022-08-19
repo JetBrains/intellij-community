@@ -12,7 +12,7 @@ import com.intellij.openapi.externalSystem.ExternalSystemManager
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.INTERNAL
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings.AutoReloadType
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings.AutoReloadType.*
-import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.RefreshCollisionPassType
+import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.ReloadCollisionPassType
 import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy
 import com.intellij.openapi.externalSystem.service.project.autoimport.ProjectAware
 import com.intellij.openapi.externalSystem.util.*
@@ -256,15 +256,16 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
   }
 
   protected fun assertProjectAware(projectAware: MockProjectAware,
-                                   refresh: Int? = null,
-                                   settingsAccess: Int? = null,
-                                   subscribe: Int? = null,
-                                   unsubscribe: Int? = null,
+                                   numReload: Int? = null,
+                                   numSettingsAccess: Int? = null,
+                                   numSubscribing: Int? = null,
+                                   numUnsubscribing: Int? = null,
                                    event: String) {
-    if (refresh != null) assertCountEvent(refresh, projectAware.refreshCounter.get(), "project refresh", event)
-    if (settingsAccess != null) assertCountEvent(settingsAccess, projectAware.settingsAccessCounter.get(), "access to settings", event)
-    if (subscribe != null) assertCountEvent(subscribe, projectAware.subscribeCounter.get(), "subscribe", event)
-    if (unsubscribe != null) assertCountEvent(unsubscribe, projectAware.unsubscribeCounter.get(), "unsubscribe", event)
+    if (numReload != null) assertCountEvent(numReload, projectAware.reloadCounter.get(), "project reload", event)
+    if (numSettingsAccess != null) assertCountEvent(numSettingsAccess, projectAware.settingsAccessCounter.get(), "access to settings",
+                                                    event)
+    if (numSubscribing != null) assertCountEvent(numSubscribing, projectAware.subscribeCounter.get(), "subscribe", event)
+    if (numUnsubscribing != null) assertCountEvent(numUnsubscribing, projectAware.unsubscribeCounter.get(), "unsubscribe", event)
   }
 
   private fun assertCountEvent(expected: Int, actual: Int, countEvent: String, event: String) {
@@ -396,20 +397,20 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
 
       SimpleTestBench(projectAware).apply {
         assertState(
-          refresh = 1,
-          settingsAccess = 1,
+          numReload = 1,
+          numSettingsAccess = 1,
           notified = false,
-          subscribe = 2,
-          unsubscribe = 0,
+          numSubscribing = 2,
+          numUnsubscribing = 0,
           autoReloadType = SELECTIVE,
           event = "project is registered without cache"
         )
 
         val settingsFile = createSettingsVirtualFile(relativePath)
-        assertState(refresh = 1, settingsAccess = 2, notified = true, event = "settings file is created")
+        assertState(numReload = 1, numSettingsAccess = 2, notified = true, event = "settings file is created")
 
         scheduleProjectReload()
-        assertState(refresh = 2, settingsAccess = 3, notified = false, event = "project is reloaded")
+        assertState(numReload = 2, numSettingsAccess = 3, notified = false, event = "project is reloaded")
 
         resetAssertionCounters()
 
@@ -425,7 +426,7 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
 
     fun markDirty() = markDirty(projectAware.projectId)
 
-    fun forceRefreshProject() = projectAware.forceReloadProject()
+    fun forceReloadProject() = projectAware.forceReloadProject()
 
     fun registerProjectAware() = register(projectAware)
 
@@ -441,24 +442,36 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
     fun ignoreSettingsFileWhen(relativePath: String, condition: (ExternalSystemSettingsFilesModificationContext) -> Boolean) =
       projectAware.ignoreSettingsFileWhen(getAbsolutePath(relativePath), condition)
 
-    fun onceDuringRefresh(action: (ExternalSystemProjectReloadContext) -> Unit) = projectAware.onceDuringRefresh(action)
-    fun duringRefresh(times: Int, action: (ExternalSystemProjectReloadContext) -> Unit) = projectAware.duringRefresh(times, action)
-    fun duringRefresh(action: (ExternalSystemProjectReloadContext) -> Unit, parentDisposable: Disposable) =
-      projectAware.duringRefresh(action, parentDisposable)
+    fun whenReloadStarted(parentDisposable: Disposable, action: () -> Unit) =
+      projectAware.whenReloadStarted(action, parentDisposable)
 
-    fun onceAfterRefresh(action: (ExternalSystemRefreshStatus) -> Unit) = projectAware.onceAfterRefresh(action)
-    fun afterRefresh(times: Int, action: (ExternalSystemRefreshStatus) -> Unit) = projectAware.afterRefresh(times, action)
-    fun afterRefresh(action: (ExternalSystemRefreshStatus) -> Unit, parentDisposable: Disposable) =
-      projectAware.afterRefresh(action, parentDisposable)
+    fun whenReloadStarted(times: Int, action: () -> Unit) =
+      projectAware.whenReloadStarted(times, action)
 
-    fun onceBeforeRefresh(action: () -> Unit) = projectAware.onceBeforeRefresh(action)
-    fun beforeRefresh(times: Int, action: () -> Unit) = projectAware.beforeRefresh(times, action)
-    fun beforeRefresh(action: () -> Unit, parentDisposable: Disposable) =
-      projectAware.beforeRefresh(action, parentDisposable)
+    fun onceWhenReloadStarted(action: () -> Unit) =
+      projectAware.onceWhenReloadStarted(action)
 
-    fun setRefreshStatus(status: ExternalSystemRefreshStatus) = projectAware.refreshStatus.set(status)
+    fun whenReloading(parentDisposable: Disposable, action: (ExternalSystemProjectReloadContext) -> Unit) =
+      projectAware.whenReloading(action, parentDisposable)
 
-    fun setRefreshCollisionPassType(type: RefreshCollisionPassType) = projectAware.refreshCollisionPassType.set(type)
+    fun whenReloading(times: Int, action: (ExternalSystemProjectReloadContext) -> Unit) =
+      projectAware.whenReloading(times, action)
+
+    fun onceWhenReloading(action: (ExternalSystemProjectReloadContext) -> Unit) =
+      projectAware.onceWhenReloading(action)
+
+    fun whenReloadFinished(parentDisposable: Disposable, action: (ExternalSystemRefreshStatus) -> Unit) =
+      projectAware.whenReloadFinished(action, parentDisposable)
+
+    fun whenReloadFinished(times: Int, action: (ExternalSystemRefreshStatus) -> Unit) =
+      projectAware.whenReloadFinished(times, action)
+
+    fun onceWhenReloadFinished(action: (ExternalSystemRefreshStatus) -> Unit) =
+      projectAware.onceWhenReloadFinished(action)
+
+    fun setReloadStatus(status: ExternalSystemRefreshStatus) = projectAware.reloadStatus.set(status)
+
+    fun setReloadCollisionPassType(type: ReloadCollisionPassType) = projectAware.reloadCollisionPassType.set(type)
 
     fun resetAssertionCounters() = projectAware.resetAssertionCounters()
 
@@ -478,14 +491,16 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
       }
     }
 
-    fun assertState(refresh: Int? = null,
-                    settingsAccess: Int? = null,
-                    subscribe: Int? = null,
-                    unsubscribe: Int? = null,
-                    autoReloadType: AutoReloadType = SELECTIVE,
-                    notified: Boolean,
-                    event: String) {
-      assertProjectAware(projectAware, refresh, settingsAccess, subscribe, unsubscribe, event)
+    fun assertState(
+      numReload: Int? = null,
+      numSettingsAccess: Int? = null,
+      numSubscribing: Int? = null,
+      numUnsubscribing: Int? = null,
+      autoReloadType: AutoReloadType = SELECTIVE,
+      notified: Boolean,
+      event: String
+    ) {
+      assertProjectAware(projectAware, numReload, numSettingsAccess, numSubscribing, numUnsubscribing, event)
       assertProjectTrackerSettings(autoReloadType, event = event)
       when (notified) {
         true -> assertNotificationAware(projectAware.projectId, event = event)
@@ -493,16 +508,16 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
       }
     }
 
-    fun waitForProjectRefresh(expectedRefreshes: Int = 1, action: () -> Unit) {
-      require(expectedRefreshes > 0)
-      Disposer.newDisposable(testDisposable, "waitForProjectRefresh").use { parentDisposable ->
+    fun waitForProjectReloadFinish(numExpectedReloads: Int = 1, action: () -> Unit) {
+      require(numExpectedReloads > 0)
+      Disposer.newDisposable(testDisposable, "waitForProjectReloadFinish").use { parentDisposable ->
         val promise = AsyncPromise<ExternalSystemRefreshStatus>()
-        val uncompletedRefreshes = AtomicInteger(expectedRefreshes)
-        afterRefresh({ status ->
-          if (uncompletedRefreshes.decrementAndGet() == 0) {
+        val uncompletedReloads = AtomicInteger(numExpectedReloads)
+        whenReloadFinished(parentDisposable) { status ->
+          if (uncompletedReloads.decrementAndGet() == 0) {
             promise.setResult(status)
           }
-        }, parentDisposable)
+        }
         action()
         invokeAndWaitIfNeeded {
           PlatformTestUtil.waitForPromise(promise, TimeUnit.SECONDS.toMillis(10))
@@ -512,29 +527,19 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
   }
 
   inner class DummyExternalSystemTestBench(val projectAware: ProjectAwareWrapper) {
-    fun assertState(refresh: Int? = null,
-                    beforeRefresh: Int? = null,
-                    afterRefresh: Int? = null,
-                    subscribe: Int? = null,
-                    unsubscribe: Int? = null,
+    fun assertState(numReload: Int? = null,
+                    numReloadStarted: Int? = null,
+                    numReloadFinished: Int? = null,
+                    numSubscribing: Int? = null,
+                    numUnsubscribing: Int? = null,
                     autoReloadType: AutoReloadType = SELECTIVE,
                     event: String) {
-      assertProjectAware(projectAware, refresh, beforeRefresh, afterRefresh, subscribe, unsubscribe, event)
+      if (numReload != null) assertCountEvent(numReload, projectAware.reloadCounter.get(), "project reload", event)
+      if (numReloadStarted != null) assertCountEvent(numReloadStarted, projectAware.startReloadCounter.get(), "project before reload", event)
+      if (numReloadFinished != null) assertCountEvent(numReloadFinished, projectAware.finishReloadCounter.get(), "project after reload", event)
+      if (numSubscribing != null) assertCountEvent(numSubscribing, projectAware.subscribeCounter.get(), "subscribe", event)
+      if (numUnsubscribing != null) assertCountEvent(numUnsubscribing, projectAware.unsubscribeCounter.get(), "unsubscribe", event)
       assertProjectTrackerSettings(autoReloadType, event = event)
-    }
-
-    private fun assertProjectAware(projectAware: ProjectAwareWrapper,
-                                   refresh: Int? = null,
-                                   beforeRefresh: Int? = null,
-                                   afterRefresh: Int? = null,
-                                   subscribe: Int? = null,
-                                   unsubscribe: Int? = null,
-                                   event: String) {
-      if (refresh != null) assertCountEvent(refresh, projectAware.refreshCounter.get(), "project refresh", event)
-      if (beforeRefresh != null) assertCountEvent(beforeRefresh, projectAware.beforeRefreshCounter.get(), "project before refresh", event)
-      if (afterRefresh != null) assertCountEvent(afterRefresh, projectAware.afterRefreshCounter.get(), "project after refresh", event)
-      if (subscribe != null) assertCountEvent(subscribe, projectAware.subscribeCounter.get(), "subscribe", event)
-      if (unsubscribe != null) assertCountEvent(unsubscribe, projectAware.unsubscribeCounter.get(), "unsubscribe", event)
     }
   }
 

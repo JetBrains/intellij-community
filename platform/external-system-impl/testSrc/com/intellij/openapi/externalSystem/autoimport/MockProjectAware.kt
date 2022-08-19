@@ -3,7 +3,7 @@ package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.SUCCESS
-import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.RefreshCollisionPassType.*
+import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.ReloadCollisionPassType.*
 import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace
 import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace.Companion.task
 import com.intellij.openapi.observable.operations.onceAfterOperation
@@ -25,13 +25,13 @@ class MockProjectAware(
   val subscribeCounter = AtomicInteger(0)
   val unsubscribeCounter = AtomicInteger(0)
   val settingsAccessCounter = AtomicInteger(0)
-  val refreshCounter = AtomicInteger(0)
+  val reloadCounter = AtomicInteger(0)
 
-  val refreshCollisionPassType = AtomicReference(DUPLICATE)
-  val refreshStatus = AtomicReference(SUCCESS)
+  val reloadCollisionPassType = AtomicReference(DUPLICATE)
+  val reloadStatus = AtomicReference(SUCCESS)
 
   private val eventDispatcher = EventDispatcher.create(Listener::class.java)
-  private val refresh = AnonymousParallelOperationTrace(debugName = "$projectId MockProjectAware.refreshProject")
+  private val reloadProject = AnonymousParallelOperationTrace(debugName = "$projectId MockProjectAware.reloadProject")
 
   private val _settingsFiles = LinkedHashSet<String>()
   override val settingsFiles: Set<String>
@@ -43,7 +43,7 @@ class MockProjectAware(
 
   fun resetAssertionCounters() {
     settingsAccessCounter.set(0)
-    refreshCounter.set(0)
+    reloadCounter.set(0)
     subscribeCounter.set(0)
     unsubscribeCounter.set(0)
   }
@@ -81,35 +81,35 @@ class MockProjectAware(
     })
   }
 
-  fun notifySettingsFilesListChanged() = background { eventDispatcher.multicaster.onSettingsFilesListChange() }
+  fun fireSettingsFilesListChanged() = background { eventDispatcher.multicaster.onSettingsFilesListChange() }
 
   override fun reloadProject(context: ExternalSystemProjectReloadContext) {
-    when (refreshCollisionPassType.get()!!) {
+    when (reloadCollisionPassType.get()!!) {
       DUPLICATE -> {
-        doRefreshProject(context)
+        reloadProjectImpl(context)
       }
       CANCEL -> {
-        val task = once { doRefreshProject(context) }
-        refresh.onceAfterOperation({ task.run() }, parentDisposable)
-        if (refresh.isOperationCompleted()) task.run()
+        val task = once { reloadProjectImpl(context) }
+        reloadProject.onceAfterOperation({ task.run() }, parentDisposable)
+        if (reloadProject.isOperationCompleted()) task.run()
       }
       IGNORE -> {
-        if (refresh.isOperationCompleted()) {
-          doRefreshProject(context)
+        if (reloadProject.isOperationCompleted()) {
+          reloadProjectImpl(context)
         }
       }
     }
   }
 
-  private fun doRefreshProject(context: ExternalSystemProjectReloadContext) {
+  private fun reloadProjectImpl(context: ExternalSystemProjectReloadContext) {
     background {
-      val refreshStatus = refreshStatus.get()
+      val reloadStatus = reloadStatus.get()
       eventDispatcher.multicaster.onProjectReloadStart()
-      refresh.task {
-        refreshCounter.incrementAndGet()
+      reloadProject.task {
+        reloadCounter.incrementAndGet()
         eventDispatcher.multicaster.insideProjectRefresh(context)
       }
-      eventDispatcher.multicaster.onProjectReloadFinish(refreshStatus)
+      eventDispatcher.multicaster.onProjectReloadFinish(reloadStatus)
     }
   }
 
@@ -122,43 +122,43 @@ class MockProjectAware(
     }
   }
 
-  fun onceBeforeRefresh(action: () -> Unit) {
-    beforeRefresh(times = 1, action)
+  fun onceWhenReloadStarted(action: () -> Unit) {
+    whenReloadStarted(times = 1, action)
   }
 
-  fun beforeRefresh(times: Int, action: () -> Unit) {
-    subscribe(times, action, ::beforeRefresh, parentDisposable)
+  fun whenReloadStarted(times: Int, action: () -> Unit) {
+    subscribe(times, action, ::whenReloadStarted, parentDisposable)
   }
 
-  fun beforeRefresh(action: () -> Unit, parentDisposable: Disposable) {
+  fun whenReloadStarted(action: () -> Unit, parentDisposable: Disposable) {
     eventDispatcher.addListener(object : Listener {
       override fun onProjectReloadStart() = action()
     }, parentDisposable)
   }
 
-  fun onceDuringRefresh(action: (ExternalSystemProjectReloadContext) -> Unit) {
-    duringRefresh(times = 1, action)
+  fun onceWhenReloading(action: (ExternalSystemProjectReloadContext) -> Unit) {
+    whenReloading(times = 1, action)
   }
 
-  fun duringRefresh(times: Int, action: (ExternalSystemProjectReloadContext) -> Unit) {
-    subscribe(times, action, ::duringRefresh, parentDisposable)
+  fun whenReloading(times: Int, action: (ExternalSystemProjectReloadContext) -> Unit) {
+    subscribe(times, action, ::whenReloading, parentDisposable)
   }
 
-  fun duringRefresh(action: (ExternalSystemProjectReloadContext) -> Unit, parentDisposable: Disposable) {
+  fun whenReloading(action: (ExternalSystemProjectReloadContext) -> Unit, parentDisposable: Disposable) {
     eventDispatcher.addListener(object : Listener {
       override fun insideProjectRefresh(context: ExternalSystemProjectReloadContext) = action(context)
     }, parentDisposable)
   }
 
-  fun onceAfterRefresh(action: (ExternalSystemRefreshStatus) -> Unit) {
-    afterRefresh(times = 1, action)
+  fun onceWhenReloadFinished(action: (ExternalSystemRefreshStatus) -> Unit) {
+    whenReloadFinished(times = 1, action)
   }
 
-  fun afterRefresh(times: Int, action: (ExternalSystemRefreshStatus) -> Unit) {
-    subscribe(times, action, ::afterRefresh, parentDisposable)
+  fun whenReloadFinished(times: Int, action: (ExternalSystemRefreshStatus) -> Unit) {
+    subscribe(times, action, ::whenReloadFinished, parentDisposable)
   }
 
-  fun afterRefresh(action: (ExternalSystemRefreshStatus) -> Unit, parentDisposable: Disposable) {
+  fun whenReloadFinished(action: (ExternalSystemRefreshStatus) -> Unit, parentDisposable: Disposable) {
     eventDispatcher.addListener(object : Listener {
       override fun onProjectReloadFinish(status: ExternalSystemRefreshStatus) = action(status)
     }, parentDisposable)
@@ -176,5 +176,5 @@ class MockProjectAware(
     }
   }
 
-  enum class RefreshCollisionPassType { DUPLICATE, CANCEL, IGNORE }
+  enum class ReloadCollisionPassType { DUPLICATE, CANCEL, IGNORE }
 }
