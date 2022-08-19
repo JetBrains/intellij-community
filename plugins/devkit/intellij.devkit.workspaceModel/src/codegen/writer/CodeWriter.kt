@@ -6,8 +6,6 @@ import com.intellij.lang.ASTNode
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -42,15 +40,9 @@ object CodeWriter {
                module: Module,
                sourceFolder: VirtualFile,
                targetFolderGenerator: () -> VirtualFile?) {
-    val documentManager = FileDocumentManager.getInstance()
-    val ktSrcs = mutableListOf<Pair<VirtualFile, Document>>()
-    val fileMapping = mutableMapOf<String, VirtualFile>()
     val ktClasses = HashMap<String, KtClass>()
     VfsUtilCore.processFilesRecursively(sourceFolder) {
       if (it.extension == "kt") {
-        val document = documentManager.getDocument(it) ?: return@processFilesRecursively true
-        ktSrcs.add(it to document)
-        fileMapping[it.name] = it
         val ktFile = PsiManager.getInstance(project).findFile(it) as? KtFile?
         ktFile?.declarations?.filterIsInstance<KtClass>()?.filter { clazz -> clazz.name != null }?.associateByTo(ktClasses) { clazz ->
           clazz.fqName!!.asString()
@@ -218,7 +210,6 @@ object CodeWriter {
   private fun reformatCodeInGeneratedRegions(file: PsiFile, nodes: List<ASTNode>) {
     val generatedRegions = nodes.flatMap { findGeneratedRegions(it) }
     val regions = generatedRegions.map { TextRange.create(it.first.startOffset, it.second.startOffset + it.second.textLength) }
-    //CodeStyleManager.getInstance(file.project).reformat(file)
     CodeStyleManager.getInstance(file.project).reformatText(file, joinAdjacentRegions(regions))
   }
 
