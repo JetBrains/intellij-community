@@ -1,8 +1,5 @@
-/*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
-package org.jetbrains.kotlin.test
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.base.test
 
 import com.intellij.openapi.application.PathManager
 import java.io.File
@@ -17,5 +14,5 @@ object KotlinRoot {
         ?: File(PathManager.getCommunityHomePath()).resolve("plugins/kotlin").canonicalFile
 
     @JvmField
-    val DIR_PATH: Path = DIR.toPath()
+    val PATH: Path = DIR.toPath()
 }

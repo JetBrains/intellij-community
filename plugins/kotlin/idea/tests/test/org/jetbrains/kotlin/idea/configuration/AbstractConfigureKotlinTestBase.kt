@@ -10,7 +10,7 @@ import com.intellij.testFramework.IdeaTestUtil
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase.addJdk
-import org.jetbrains.kotlin.test.KotlinRoot
+import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import java.io.File
 import java.nio.file.Path
 

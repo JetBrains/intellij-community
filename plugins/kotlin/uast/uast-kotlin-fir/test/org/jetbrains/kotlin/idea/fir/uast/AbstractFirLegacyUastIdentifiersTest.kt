@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.fir.uast
 
-import org.jetbrains.kotlin.test.KotlinRoot
+import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.test.common.kotlin.LegacyUastIdentifiersTestBase
 import kotlin.io.path.absolute
@@ -17,7 +17,7 @@ abstract class AbstractFirLegacyUastIdentifiersTest : AbstractFirUastIdentifiers
 
         // TODO: this file fails 'testIdentifiersParents' check
         "uast-kotlin/tests/testData/DataClassInheritsAbstractClassWithEquals.kt",
-    ).mapTo(mutableSetOf()) { KotlinRoot.DIR_PATH.resolve("uast").resolve(it).absolute().normalize().toString() }
+    ).mapTo(mutableSetOf()) { KotlinRoot.PATH.resolve("uast").resolve(it).absolute().normalize().toString() }
 
     override fun isExpectedToFail(filePath: String): Boolean {
         return filePath in whitelist

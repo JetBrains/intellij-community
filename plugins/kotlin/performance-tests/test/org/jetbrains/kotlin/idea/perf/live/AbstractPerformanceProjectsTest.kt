@@ -34,7 +34,7 @@ import org.jetbrains.kotlin.idea.test.invalidateLibraryCache
 import org.jetbrains.kotlin.idea.test.waitIndexingComplete
 import org.jetbrains.kotlin.idea.testFramework.*
 import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.openFixture
-import org.jetbrains.kotlin.test.KotlinRoot
+import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import java.io.File
 
 abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {

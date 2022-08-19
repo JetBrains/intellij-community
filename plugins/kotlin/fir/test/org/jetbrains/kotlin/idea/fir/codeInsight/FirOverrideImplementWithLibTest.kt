@@ -6,7 +6,7 @@ import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.codeInsight.OverrideImplementWithLibTest
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtClassMember
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
-import org.jetbrains.kotlin.idea.test.TestRoot
+import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.internal.runners.JUnit38ClassRunner

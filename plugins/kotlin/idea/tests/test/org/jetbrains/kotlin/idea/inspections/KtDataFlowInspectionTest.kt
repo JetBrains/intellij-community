@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.inspections
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinConstantConditionsInspection
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.TestRoot
+import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.test.TestMetadata
 
 @TestRoot("idea/tests")

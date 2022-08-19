@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.builtins.StandardNames.ENUM_VALUE_OF
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertContainsElements
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertDoesntContain
-import org.jetbrains.kotlin.idea.test.util.JUnit4Assertions.assertSameElements
+import org.jetbrains.kotlin.idea.base.test.JUnit4Assertions.assertSameElements
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.utils.addToStdlib.cast

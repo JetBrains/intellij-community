@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.performance.tests.utils.TeamCity
 import org.jetbrains.kotlin.idea.performance.tests.utils.logMessage
 import org.jetbrains.kotlin.idea.testFramework.Stats
 import org.jetbrains.kotlin.idea.testFramework.suggestOsNeutralFileName
-import org.jetbrains.kotlin.test.KotlinRoot
+import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import java.io.BufferedWriter
 import java.io.File
 

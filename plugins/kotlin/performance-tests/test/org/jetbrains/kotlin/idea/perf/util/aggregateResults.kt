@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.perf.util
 
 import org.jetbrains.kotlin.idea.performance.tests.utils.logMessage
-import org.jetbrains.kotlin.test.KotlinRoot
+import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import java.io.File
 
 fun main(args: Array<String>) {

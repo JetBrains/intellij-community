@@ -7,7 +7,7 @@ import com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
-import org.jetbrains.kotlin.test.KotlinRoot
+import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 

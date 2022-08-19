@@ -1,16 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.test.util
+package org.jetbrains.kotlin.idea.base.test
 
+import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.test.Assertions
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase
 import org.junit.Assert
 import java.io.File
 
 object JUnit4Assertions : Assertions() {
     override fun assertEqualsToFile(expectedFile: File, actual: String, sanitizer: (String) -> String, message: () -> String) {
-        KotlinTestUtils.assertEqualsToFile(expectedFile, actual, sanitizer)
+        KotlinTestHelpers.assertEqualsToPath(expectedFile.toPath(), actual, sanitizer, message)
     }
 
     override fun assertEquals(expected: Any?, actual: Any?, message: (() -> String)?) {
@@ -34,7 +33,7 @@ object JUnit4Assertions : Assertions() {
     }
 
     override fun <T> assertSameElements(expected: Collection<T>, actual: Collection<T>, message: (() -> String)?) {
-        KtUsefulTestCase.assertSameElements(message?.invoke() ?: "", expected, actual)
+        UsefulTestCase.assertSameElements(message?.invoke() ?: "Collections are different", actual, expected)
     }
 
     override fun assertAll(exceptions: List<Throwable>) {

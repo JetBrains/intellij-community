@@ -4,7 +4,7 @@
 
 package org.jetbrains.kotlin.test
 
-import org.jetbrains.kotlin.idea.test.util.JUnit4Assertions
+import org.jetbrains.kotlin.idea.base.test.JUnit4Assertions
 import java.io.File
 
 object MockLibraryUtilExt {

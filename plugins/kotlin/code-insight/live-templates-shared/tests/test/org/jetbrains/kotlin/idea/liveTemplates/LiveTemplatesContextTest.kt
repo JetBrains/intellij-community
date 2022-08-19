@@ -6,7 +6,7 @@ import com.intellij.codeInsight.template.impl.TemplateContextTypes
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType.*
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.TestRoot
+import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith

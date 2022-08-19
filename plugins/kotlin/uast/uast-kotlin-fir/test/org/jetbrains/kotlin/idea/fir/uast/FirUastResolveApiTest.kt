@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.uast.*
 import org.jetbrains.kotlin.idea.fir.uast.env.kotlin.AbstractFirUastTest
-import org.jetbrains.kotlin.test.KotlinRoot
+import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.uast.test.common.kotlin.UastResolveApiTestBase
 import org.junit.runner.RunWith
 
@@ -15,7 +15,7 @@ import org.junit.runner.RunWith
 open class FirUastResolveApiTest : AbstractFirUastTest() {
     override val isFirUastPlugin: Boolean = true
 
-    override val basePath = KotlinRoot.DIR_PATH.resolve("uast")
+    override val basePath = KotlinRoot.PATH.resolve("uast")
 
     override fun check(filePath: String, file: UFile) {
         // Bogus
