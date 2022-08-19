@@ -566,10 +566,12 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
 
     if (options.project != null && isProjectOpened(options.project as Project)) {
+      LOG.info("Project is already opened -> return null")
       return null
     }
 
     if (!checkTrustedState(projectStoreBaseDir)) {
+      LOG.info("Project is not trusted -> return null")
       return null
     }
 
@@ -619,6 +621,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         }
 
         if (checkExistingProjectOnOpen(projectToClose, options, projectStoreBaseDir)) {
+          LOG.info("Project check is not succeeded -> return null")
           return null
         }
       }
