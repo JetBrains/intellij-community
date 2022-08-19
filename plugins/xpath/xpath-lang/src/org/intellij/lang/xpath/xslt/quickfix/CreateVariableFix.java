@@ -51,7 +51,7 @@ public class CreateVariableFix extends AbstractFix {
     }
 
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
         return XPathBundle.message("intention.family.name.create.variable");
     }
 

@@ -8,7 +8,6 @@ class KtFile(val module: KtObjModule, val content: () -> CharSequence, val name:
   fun asSrc() = Src(name, content)
 
   lateinit var pkg: KtPackage private set
-  lateinit var imports: KtImports private set
   val scope = KtScope(null, this)
   val block = KtBlock(asSrc(), null)
 
@@ -23,13 +22,8 @@ class KtFile(val module: KtObjModule, val content: () -> CharSequence, val name:
     pkg.scope.parts.add(scope)
   }
 
-  fun setImports(imports: KtImports) {
-    this.imports = imports
-    import()
-  }
-
-  private fun import() {
-    imports.list.forEach {
+  fun setImports(imports: Set<String>) {
+    imports.forEach {
       val pt = it.lastIndexOf('.')
       val pkg: String?
       val name: String

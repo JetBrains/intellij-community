@@ -13,6 +13,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToAbstractManyChildren
@@ -124,6 +125,18 @@ open class CustomPackagingElementEntityImpl : CustomPackagingElementEntity, Work
 
     override fun connectionIdList(): List<ConnectionId> {
       return connections
+    }
+
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as CustomPackagingElementEntity
+      this.typeId = dataSource.typeId
+      this.entitySource = dataSource.entitySource
+      this.propertiesXmlTag = dataSource.propertiesXmlTag
+      if (parents != null) {
+        this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
+        this.artifact = parents.filterIsInstance<ArtifactEntity>().singleOrNull()
+      }
     }
 
 
@@ -307,6 +320,18 @@ class CustomPackagingElementEntityData : WorkspaceEntityData<CustomPackagingElem
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return CustomPackagingElementEntity(typeId, propertiesXmlTag, entitySource) {
+      this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
+      this.artifact = parents.filterIsInstance<ArtifactEntity>().singleOrNull()
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
@@ -335,5 +360,16 @@ class CustomPackagingElementEntityData : WorkspaceEntityData<CustomPackagingElem
     result = 31 * result + typeId.hashCode()
     result = 31 * result + propertiesXmlTag.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + typeId.hashCode()
+    result = 31 * result + propertiesXmlTag.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.sameForAllEntities = true
   }
 }

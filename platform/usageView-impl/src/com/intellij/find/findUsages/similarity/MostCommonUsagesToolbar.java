@@ -5,11 +5,9 @@ import com.intellij.ide.actions.RefreshAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.components.ActionLink;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -19,8 +17,7 @@ import static com.intellij.openapi.actionSystem.ActionPlaces.SIMILAR_USAGES_PREV
 public class MostCommonUsagesToolbar extends JPanel {
   private final @NotNull SimpleColoredComponent myResultsText;
 
-  public MostCommonUsagesToolbar(@NotNull JComponent targetComponent, @Nls String usagesMessage, @NotNull RefreshAction refreshAction,
-                                 @Nullable ActionLink exportClusteringDataActionLink) {
+  public MostCommonUsagesToolbar(@NotNull JComponent targetComponent, @Nls String usagesMessage, @NotNull RefreshAction refreshAction) {
     super(new FlowLayout(FlowLayout.LEFT));
     setBackground(UIUtil.getTextFieldBackground());
     myResultsText = new SimpleColoredComponent();
@@ -32,9 +29,6 @@ public class MostCommonUsagesToolbar extends JPanel {
     actionToolbar.setTargetComponent(targetComponent);
     add(myResultsText);
     add(actionToolbar.getComponent());
-    if (exportClusteringDataActionLink != null) {
-      add(exportClusteringDataActionLink);
-    }
   }
 
   public void updateResultsText(@NotNull @Nls String message) {

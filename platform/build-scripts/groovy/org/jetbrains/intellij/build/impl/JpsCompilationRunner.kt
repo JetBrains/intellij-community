@@ -18,6 +18,7 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope
 import org.jetbrains.jps.api.GlobalOptions
+import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter
 import org.jetbrains.jps.build.Standalone
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
@@ -63,6 +64,9 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
       // Produces Kotlin compiler incremental cache which can be reused later.
       // Unrelated to force rebuild controlled by JPS.
       setSystemPropertyIfUndefined("kotlin.incremental.compilation", "true")
+
+      // Required for JPS Portable Caches
+      setSystemPropertyIfUndefined(JavaBackwardReferenceIndexWriter.PROP_KEY, "true")
     }
   }
 

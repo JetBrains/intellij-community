@@ -36,6 +36,7 @@ internal fun generateMultiPlatformProductJson(relativePathToBin: String,
     productCode = appInfo.productCode,
     dataDirectoryName = context.systemSelector,
     svgIconPath = if (appInfo.svgRelativePath == null) null else "$relativePathToBin/${context.productProperties.baseFileName}.svg",
+    productVendor = appInfo.shortCompanyName,
     launch = launch,
     customProperties = context.productProperties.generateCustomPropertiesForProductInfo(),
     bundledPlugins = builtinModules?.bundledPlugins ?: emptyList(),
@@ -58,7 +59,8 @@ data class ProductInfoData(
   val productCode: String,
   val dataDirectoryName: String,
   val svgIconPath: String?,
-  val launch: List<ProductInfoLaunchData> = emptyList(),
+  val productVendor: String,
+  val launch: List<ProductInfoLaunchData>,
   val customProperties: List<CustomProperty> = emptyList(),
   val bundledPlugins: List<String>,
   val modules: List<String>,
@@ -72,6 +74,8 @@ data class ProductInfoLaunchData(
   val javaExecutablePath: String?,
   val vmOptionsFilePath: String,
   val startupWmClass: String? = null,
+  val bootClassPathJarNames: List<String>,
+  val additionalJvmArguments: List<String>
 )
 
 @Serializable

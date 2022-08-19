@@ -13,6 +13,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
@@ -106,6 +107,20 @@ open class JavaModuleSettingsEntityImpl : JavaModuleSettingsEntity, WorkspaceEnt
 
     override fun connectionIdList(): List<ConnectionId> {
       return connections
+    }
+
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as JavaModuleSettingsEntity
+      this.entitySource = dataSource.entitySource
+      this.inheritedCompilerOutput = dataSource.inheritedCompilerOutput
+      this.excludeOutput = dataSource.excludeOutput
+      this.compilerOutput = dataSource.compilerOutput
+      this.compilerOutputForTests = dataSource.compilerOutputForTests
+      this.languageLevelId = dataSource.languageLevelId
+      if (parents != null) {
+        this.module = parents.filterIsInstance<ModuleEntity>().single()
+      }
     }
 
 
@@ -245,6 +260,21 @@ class JavaModuleSettingsEntityData : WorkspaceEntityData<JavaModuleSettingsEntit
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return JavaModuleSettingsEntity(inheritedCompilerOutput, excludeOutput, entitySource) {
+      this.compilerOutput = this@JavaModuleSettingsEntityData.compilerOutput
+      this.compilerOutputForTests = this@JavaModuleSettingsEntityData.compilerOutputForTests
+      this.languageLevelId = this@JavaModuleSettingsEntityData.languageLevelId
+      this.module = parents.filterIsInstance<ModuleEntity>().single()
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(ModuleEntity::class.java)
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
@@ -282,5 +312,21 @@ class JavaModuleSettingsEntityData : WorkspaceEntityData<JavaModuleSettingsEntit
     result = 31 * result + compilerOutputForTests.hashCode()
     result = 31 * result + languageLevelId.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + inheritedCompilerOutput.hashCode()
+    result = 31 * result + excludeOutput.hashCode()
+    result = 31 * result + compilerOutput.hashCode()
+    result = 31 * result + compilerOutputForTests.hashCode()
+    result = 31 * result + languageLevelId.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    this.compilerOutputForTests?.let { collector.add(it::class.java) }
+    this.compilerOutput?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = false
   }
 }

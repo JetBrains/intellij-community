@@ -11,6 +11,9 @@
     <orderEntry type="module" module-name="kotlin.plugin.common" scope="RUNTIME" />
     <orderEntry type="library" scope="RUNTIME" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="kotlinc.kotlin-compiler-fe10" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="kotlinc.high-level-api" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="kotlinc.high-level-api-impl-base" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="kotlinc.high-level-api-fe10" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="module" module-name="kotlin.base.util" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.plugin" scope="RUNTIME" />
@@ -62,6 +65,9 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.scripting" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.completion.api" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.completion.impl-shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.completion.impl-k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.copyright" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.coverage" scope="RUNTIME" />
@@ -85,7 +91,7 @@
     <orderEntry type="module" module-name="kotlin.j2k.idea" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.j2k.new" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.j2k.old" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.j2k.services" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.j2k.post-processing" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.run-configurations.jvm" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.run-configurations.junit" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.run-configurations.junit-fe10" scope="RUNTIME" />
@@ -103,6 +109,8 @@
     <orderEntry type="module" module-name="kotlin.inspections-fe10" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.ml-completion" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.live-templates-shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.live-templates-k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.native" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.idea" scope="RUNTIME" />
@@ -129,5 +137,8 @@
     <orderEntry type="module" module-name="kotlin.code-insight.impl-base" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.descriptions" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.override-implement-k1" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.override-implement-shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.intentions-k1" scope="RUNTIME" />
   </component>
 </module>

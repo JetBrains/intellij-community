@@ -2,6 +2,6 @@
 class Test {
 
     private Runnable r = () -> {
-    field = "foo";
+        String field = "foo";
   }
 }

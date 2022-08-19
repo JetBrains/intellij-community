@@ -133,7 +133,11 @@
     },
 
     "Bookmark": {
-      "Mnemonic.iconForeground": "Grey1"
+      "Mnemonic.iconForeground": "Grey1",
+      "MnemonicAvailable.borderColor": "Grey9",
+      "MnemonicAssigned.background": "Orange7",
+      "MnemonicCurrent.background": "Blue7",
+      "MnemonicCurrent.foreground": "Grey11"
     },
 
     "Borders.color": "Grey11",
@@ -257,7 +261,12 @@
 
     "List": {
       "rowHeight": "24",
-      "border": "4,0,4,0"
+      "border": "4,0,4,0",
+      "Button": {
+        "separatorColor": "Grey13",
+        "hoverBackground": "Blue12",
+        "leftRightInset": 8
+      }
     },
 
     "Menu": {
@@ -265,10 +274,19 @@
       "borderColor": {
         "os.default": "Grey11",
         "os.windows": "windowsPopupBorder"
+      },
+      "borderInsets": "6,1,6,1",
+      "Selection": {
+        "innerInsets": "0,6,0,6"
       }
     },
 
-    "PopupMenu.background": "Grey13",
+    "PopupMenu": {
+      "background": "Grey13",
+      "Selection": {
+        "innerInsets": "0,6,0,6"
+      }
+    },
 
     "MenuItem.background": "Grey13",
 
@@ -517,7 +535,7 @@
       "inactiveBackground": "Grey12",
       "Button": {
         "hoverBackground": "#00000000",
-        "preferredSize": "36,40"
+        "preferredSize": "44,40"
       }
     },
 

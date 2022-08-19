@@ -16,9 +16,7 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
-
-import static org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.debug;
-import static org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.info;
+import java.util.logging.Logger;
 
 /**
  * Clean-up local download cache in two stages:
@@ -30,6 +28,8 @@ import static org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloa
  * Without the marking they would be removed and re-downloaded again, which we do not want.
  */
 public final class BuildDependenciesDownloaderCleanup {
+  private static final Logger LOG = Logger.getLogger(BuildDependenciesDownloaderCleanup.class.getName());
+
   private static final Duration MAXIMUM_ACCESS_TIME_AGE = Duration.ofDays(22);
   private static final Duration CLEANUP_EVERY_DURATION = Duration.ofDays(1);
 
@@ -69,7 +69,7 @@ public final class BuildDependenciesDownloaderCleanup {
 
   private void cleanupCachesDir() throws IOException {
     if (!Files.exists(myCachesDir)) {
-      debug("Caches directory '" + myCachesDir + "' is missing, skipping cleanup");
+      LOG.fine("Caches directory '" + myCachesDir + "' is missing, skipping cleanup");
       return;
     }
 
@@ -77,7 +77,7 @@ public final class BuildDependenciesDownloaderCleanup {
       throw new IllegalStateException("Caches directory '" + myCachesDir + "' is not a directory");
     }
 
-    Set<Path> cacheFiles = new HashSet<Path>(BuildDependenciesUtil.listDirectory(myCachesDir));
+    Set<Path> cacheFiles = new HashSet<>(BuildDependenciesUtil.listDirectory(myCachesDir));
 
     long maxTimeMs = MAXIMUM_ACCESS_TIME_AGE.toMillis();
     long currentTime = System.currentTimeMillis();
@@ -91,7 +91,7 @@ public final class BuildDependenciesDownloaderCleanup {
       if (fileName.endsWith(MARKED_FOR_CLEANUP_SUFFIX)) {
         Path realFile = myCachesDir.resolve(fileName.substring(0, fileName.length() - MARKED_FOR_CLEANUP_SUFFIX.length()));
         if (!cacheFiles.contains(realFile)) {
-          info("CACHE-CLEANUP: Removing orphan marker: " + file);
+          LOG.info("CACHE-CLEANUP: Removing orphan marker: " + file);
           Files.delete(file);
         }
 
@@ -112,7 +112,7 @@ public final class BuildDependenciesDownloaderCleanup {
 
       if (Files.exists(markFile)) {
         // File is old AND already marked for cleanup - delete
-        info("CACHE-CLEANUP: Deleting file/directory '" + file + "': it's too old and marked for cleanup");
+        LOG.info("CACHE-CLEANUP: Deleting file/directory '" + file + "': it's too old and marked for cleanup");
 
         // Renaming file to a temporary name to prevent deletion of currently opened files, just in case
         Path toRemove = myCachesDir.resolve(fileName + ".toRemove." + UUID.randomUUID());
@@ -125,13 +125,13 @@ public final class BuildDependenciesDownloaderCleanup {
           StringWriter writer = new StringWriter();
           t.printStackTrace(new PrintWriter(writer));
 
-          BuildDependenciesDownloader.warn("Unable to delete file '" + file + "': " + t.getMessage() + "\n" + writer);
+          LOG.warning("Unable to delete file '" + file + "': " + t.getMessage() + "\n" + writer);
         }
 
         Files.delete(markFile);
       }
       else {
-        info("CACHE-CLEANUP: Marking File '" + file + "' for deletion, it'll be removed on the next cleanup run");
+        LOG.info("CACHE-CLEANUP: Marking File '" + file + "' for deletion, it'll be removed on the next cleanup run");
         Files.writeString(markFile, "");
       }
     }

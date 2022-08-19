@@ -4,6 +4,7 @@ package com.intellij.openapi.ui.impl;
 import com.intellij.application.options.RegistryManager;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.impl.DataValidators;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
@@ -501,6 +502,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
     private boolean hasNoEditingTreesOrTablesUpward(Component comp) {
       while (comp != null) {
         if (isEditingTreeOrTable(comp)) return false;
@@ -590,8 +595,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     @Override
     public Object getData(@NotNull String dataId) {
       DialogWrapper wrapper = myDialogWrapper.get();
-      if (wrapper instanceof DataProvider) {
-        return ((DataProvider)wrapper).getData(dataId);
+      Object wrapperData = wrapper instanceof DataProvider ? ((DataProvider)wrapper).getData(dataId) : null;
+      if (wrapperData != null) {
+        return DataValidators.validOrNull(wrapperData, dataId, wrapper);
       }
       return null;
     }
@@ -1046,13 +1052,18 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       return false;
     }
 
-    RegistryManager registryManager = ApplicationManager.getApplication().getServiceIfCreated(RegistryManager.class);
+    RegistryManager registryManager = getRegistryManager();
     return registryManager != null && registryManager.is("ide.perProjectModality");
   }
 
   public static boolean isDisableAutoRequestFocus() {
-    RegistryManager registryManager = ApplicationManager.getApplication().getServiceIfCreated(RegistryManager.class);
+    RegistryManager registryManager = getRegistryManager();
     return (registryManager == null || registryManager.is("suppress.focus.stealing.disable.auto.request.focus"))
            && !(SystemInfo.isXfce || SystemInfo.isI3);
+  }
+
+  private static @Nullable RegistryManager getRegistryManager() {
+    Application application = ApplicationManager.getApplication();
+    return application != null ? application.getServiceIfCreated(RegistryManager.class) : null;
   }
 }

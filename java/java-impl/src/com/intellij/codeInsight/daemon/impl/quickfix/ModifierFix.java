@@ -5,6 +5,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
@@ -43,13 +44,6 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement imp
                      boolean shouldHave,
                      boolean showContainingClass) {
     super(ObjectUtils.tryCast(modifierList.getParent(), PsiModifierListOwner.class));
-    if (modifierList.getContainingFile().getVirtualFile() == null) {
-      LOG.error("Supplied modifierList is not physical: " +
-                modifierList.getClass() + "; " +
-                modifierList.getParent().getClass() + "; " +
-                modifierList.getContainingFile().getClass() + "\n" +
-                "Modifier = " + modifier + "; shouldHave = " + shouldHave);
-    }
     myModifier = modifier;
     myShouldHave = shouldHave;
     myShowContainingClass = showContainingClass;
@@ -131,6 +125,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement imp
                              @NotNull PsiElement endElement) {
     final PsiModifierList modifierList = ((PsiModifierListOwner)startElement).getModifierList();
     if (modifierList == null) return false;
+    if (modifierList.getContainingFile().getVirtualFile() == null) return false;
     PsiVariable variable = ObjectUtils.tryCast(startElement, PsiVariable.class);
     boolean isAvailable = BaseIntentionAction.canModify(modifierList) &&
                           modifierList.hasExplicitModifier(myModifier) != myShouldHave &&
@@ -172,7 +167,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement imp
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    if (myStartInWriteAction) {
+    if (myStartInWriteAction || IntentionPreviewUtils.isPreviewElement(startElement)) {
       PsiModifierList modifierList;
       PsiVariable variable = ObjectUtils.tryCast(startElement, PsiVariable.class);
       if (variable != null && variable.isValid()) {

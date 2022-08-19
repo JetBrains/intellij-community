@@ -16,10 +16,21 @@ import java.awt.event.MouseEvent
 
 abstract class CodeVisionProviderBase : DaemonBoundCodeVisionProvider {
 
+  /**
+   * WARNING! This method is executed also before the file is open. It must be fast! During it users see no editor.
+   * @return true iff this provider may provide lenses for this file.
+   */
   abstract fun acceptsFile(file: PsiFile): Boolean
 
+  /**
+   * WARNING! This method is executed also before the file is open. It must be fast! During it users see no editor.
+   * @return true iff this provider may provide lenses for this element.
+   */
   abstract fun acceptsElement(element: PsiElement): Boolean
 
+  /**
+   * @return text that user sees for a given element as a code lens
+   */
   abstract fun getHint(element: PsiElement, file: PsiFile): String?
 
   open fun logClickToFUS(element: PsiElement) {}

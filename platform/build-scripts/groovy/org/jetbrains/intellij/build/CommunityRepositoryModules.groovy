@@ -80,16 +80,11 @@ final class CommunityRepositoryModules {
     simplePlugin("intellij.platform.tracing.ide"),
     plugin("intellij.maven") {
       withModule("intellij.maven.jps")
-      withModule("intellij.maven.server", "maven-server-api.jar")
-      withModule("intellij.maven.server.m2.impl", "maven2-server.jar")
       withModule("intellij.maven.server.m3.common", "maven3-server-common.jar")
       withModule("intellij.maven.server.m30.impl", "maven30-server.jar")
       withModule("intellij.maven.server.m3.impl", "maven3-server.jar")
       withModule("intellij.maven.server.m36.impl", "maven36-server.jar")
       withModule("intellij.maven.errorProne.compiler")
-
-      withModule("intellij.maven.artifactResolver.m2", "artifact-resolver-m2.jar")
-      withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m2.jar")
 
       withModule("intellij.maven.artifactResolver.m3", "artifact-resolver-m3.jar")
       withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m3.jar")
@@ -98,17 +93,10 @@ final class CommunityRepositoryModules {
       withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m31.jar")
 
       withArtifact("maven-event-listener", "")
-      [
-        "archetype-common-2.0-alpha-4-SNAPSHOT.jar",
-        "commons-beanutils.jar",
-        "maven-dependency-tree-1.2.jar",
-        "mercury-artifact-1.0-alpha-6.jar",
-        "nexus-indexer-1.2.3.jar"
-      ].each { withResource("maven2-server-impl/lib/$it", "lib/maven2-server-lib") }
       doNotCopyModuleLibrariesAutomatically([
-        "intellij.maven.server.m2.impl", "intellij.maven.server.m3.common", "intellij.maven.server.m36.impl", "intellij.maven.server.m3.impl", "intellij.maven.server.m30.impl",
-        "intellij.maven.server.m2.impl", "intellij.maven.server.m36.impl", "intellij.maven.server.m3.impl", "intellij.maven.server.m30.impl",
-        "intellij.maven.artifactResolver.common", "intellij.maven.artifactResolver.m2", "intellij.maven.artifactResolver.m3", "intellij.maven.artifactResolver.m31"
+        "intellij.maven.server.m3.common", "intellij.maven.server.m36.impl", "intellij.maven.server.m3.impl", "intellij.maven.server.m30.impl",
+        "intellij.maven.server.m36.impl", "intellij.maven.server.m3.impl", "intellij.maven.server.m30.impl",
+        "intellij.maven.artifactResolver.common",  "intellij.maven.artifactResolver.m3", "intellij.maven.artifactResolver.m31"
       ])
       withGeneratedResources({ Path targetDir, BuildContext context ->
         Path targetLib = targetDir.resolve("lib")
@@ -236,7 +224,9 @@ final class CommunityRepositoryModules {
     simplePlugin("intellij.copyright"),
     simplePlugin("intellij.editorconfig"),
     simplePlugin("intellij.settingsRepository"),
-    simplePlugin("intellij.settingsSync"),
+    plugin("intellij.settingsSync") {
+      withModule("intellij.settingsSync.git")
+    },
     simplePlugin("intellij.configurationScript"),
     simplePlugin("intellij.yaml"),
     simplePlugin("intellij.repository.search"),
@@ -246,6 +236,7 @@ final class CommunityRepositoryModules {
     simplePlugin("intellij.color.scheme.warmNeon"),
     simplePlugin("intellij.reStructuredText"),
     simplePlugin("intellij.maven.model"),
+    simplePlugin("intellij.maven.server"),
     simplePlugin("intellij.vcs.hg"),
     simplePlugin("intellij.vcs.github"),
     simplePlugin("intellij.java.i18n"),
@@ -258,7 +249,10 @@ final class CommunityRepositoryModules {
     plugin("intellij.vcs.git.featuresTrainer") {
       withProjectLibrary("git-learning-project")
     },
-    simplePlugin("intellij.searchEverywhereMl"),
+    plugin("intellij.searchEverywhereMl") {
+      withModule("intellij.searchEverywhereMl.yaml")
+      withModule("intellij.searchEverywhereMl.vcs")
+    },
     simplePlugin("intellij.keymap.eclipse"),
     simplePlugin("intellij.keymap.visualStudio"),
     simplePlugin("intellij.keymap.netbeans"),
@@ -357,6 +351,9 @@ final class CommunityRepositoryModules {
       // android-extensions-ide.jar
       withModule("intellij.android.kotlin.extensions.common", "android-extensions-ide.jar") // <= ADDED
       withModule("intellij.android.kotlin.extensions", "android-extensions-ide.jar")
+      
+      // android-kotlin-extensions-tooling.jar
+      withModule("intellij.android.kotlin.extensions.tooling", "android-kotlin-extensions-tooling.jar")
 
       // android-kotlin.jar
       withModule("intellij.android.kotlin.idea", "android-kotlin.jar")
@@ -402,8 +399,6 @@ final class CommunityRepositoryModules {
       withModule("intellij.android.deploy", "android.jar")
       withModule("intellij.android.device-explorer", "android.jar")
       withModule("intellij.android.emulator", "android.jar")
-      withModule("intellij.android.gradle-tooling.api", "android.jar")
-      withModule("intellij.android.gradle-tooling.impl", "android.jar")
       //tools/adt/idea/gradle-dsl:intellij.android.gradle.dsl <= REMOVED
       //tools/adt/idea/gradle-dsl-kotlin:intellij.android.gradle.dsl.kotlin <= REMOVED
       withModule("intellij.android.lang-databinding", "android.jar")
@@ -438,6 +433,10 @@ final class CommunityRepositoryModules {
       withModule("intellij.android.app-inspection.inspectors.network.view", "android.jar")
       withModule("intellij.android.server-flags", "android.jar")
       withModule("intellij.android.codenavigation", "android.jar")
+
+      //android-gradle-tooling.jar
+      withModule("intellij.android.gradle-tooling.api", "android-gradle-tooling.jar")
+      withModule("intellij.android.gradle-tooling.impl", "android-gradle-tooling.jar")
 
       // artwork.jar
       withModule("intellij.android.artwork", "artwork.jar")

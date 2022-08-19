@@ -1,24 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.util
 
+import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
-import com.intellij.openapi.project.Project
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.xdebugger.XDebuggerUtil
-import com.intellij.xdebugger.XSourcePosition
 import com.sun.jdi.*
-import org.jetbrains.kotlin.idea.debugger.base.util.SUSPEND_LAMBDA_CLASSES
 import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.core.canRunEvaluation
 import org.jetbrains.kotlin.idea.debugger.core.invokeInManagerThread
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.SuspendExitMode
-import org.jetbrains.kotlin.idea.debugger.evaluate.DefaultExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 
@@ -108,24 +103,8 @@ fun StackTraceElement.isCreationSeparatorFrame() =
     className.startsWith(CREATION_STACK_TRACE_SEPARATOR) ||
     className == CREATION_CLASS_NAME
 
-fun Location.findPosition(project: Project) =
-    runReadAction {
-        if (declaringType() != null)
-            getPosition(project, declaringType().name(), lineNumber())
-        else
-            null
-    }
-
-private fun getPosition(project: Project, className: String, lineNumber: Int): XSourcePosition? {
-    val psiFacade = JavaPsiFacade.getInstance(project)
-    val psiClass = psiFacade.findClass(
-        className.substringBefore("$"), // find outer class, for which psi exists TODO
-        GlobalSearchScope.everythingScope(project)
-    )
-    val classFile = psiClass?.containingFile?.virtualFile
-    // to convert to 0-based line number or '-1' to do not move
-    val localLineNumber = if (lineNumber > 0) lineNumber - 1 else return null
-    return XDebuggerUtil.getInstance().createPosition(classFile, localLineNumber)
+fun Location.findPosition(debugProcess: DebugProcessImpl) = runReadAction {
+    DebuggerUtilsEx.toXSourcePosition(debugProcess.positionManager.getSourcePosition(this))
 }
 
 fun SuspendContextImpl.executionContext() =

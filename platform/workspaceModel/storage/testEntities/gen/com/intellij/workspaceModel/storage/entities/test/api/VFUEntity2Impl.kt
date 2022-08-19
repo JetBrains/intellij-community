@@ -10,6 +10,7 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
@@ -99,6 +100,18 @@ open class VFUEntity2Impl : VFUEntity2, WorkspaceEntityBase() {
 
     override fun connectionIdList(): List<ConnectionId> {
       return connections
+    }
+
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as VFUEntity2
+      this.data = dataSource.data
+      this.entitySource = dataSource.entitySource
+      this.filePath = dataSource.filePath
+      this.directoryPath = dataSource.directoryPath
+      this.notNullRoots = dataSource.notNullRoots.toMutableList()
+      if (parents != null) {
+      }
     }
 
 
@@ -213,6 +226,17 @@ class VFUEntity2Data : WorkspaceEntityData<VFUEntity2>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return VFUEntity2(data, directoryPath, notNullRoots, entitySource) {
+      this.filePath = this@VFUEntity2Data.filePath
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
@@ -247,5 +271,21 @@ class VFUEntity2Data : WorkspaceEntityData<VFUEntity2>() {
     result = 31 * result + directoryPath.hashCode()
     result = 31 * result + notNullRoots.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + data.hashCode()
+    result = 31 * result + filePath.hashCode()
+    result = 31 * result + directoryPath.hashCode()
+    result = 31 * result + notNullRoots.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    this.notNullRoots?.let { collector.add(it::class.java) }
+    this.filePath?.let { collector.add(it::class.java) }
+    this.directoryPath?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = false
   }
 }

@@ -10,7 +10,7 @@ import git4idea.config.GitConfigUtil
 import git4idea.repo.GitRepository
 import git4idea.test.GitHttpAuthTestService
 import git4idea.test.git
-import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
+import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 import org.jetbrains.plugins.github.util.GithubUtil
 
 abstract class GithubGitRepoTest : GithubTest() {
@@ -60,7 +60,8 @@ abstract class GithubGitRepoTest : GithubTest() {
 
   protected fun checkRemoteConfigured() {
     assertNotNull(repository)
-    assertTrue("GitHub remote is not configured", project.service<GHProjectRepositoriesManager>().knownRepositories.any {
+    val mappings = project.service<GHHostedRepositoriesManager>().knownRepositories
+    assertTrue("GitHub remote is not configured, current mappings: $mappings", mappings.any {
       it.gitRemoteUrlCoordinates.repository == repository
     })
   }

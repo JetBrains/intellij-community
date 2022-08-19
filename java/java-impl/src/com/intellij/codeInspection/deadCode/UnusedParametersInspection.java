@@ -106,14 +106,17 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
             PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
           return;
         }
+
+        List<RefParameter> unusedParameters = getUnusedParameters(refMethod);
+        if (unusedParameters.isEmpty()) return;
+        if (scope != null && scope.isTotalScope()) return;
+
         UDeclaration uastElement = refMethod.getUastElement();
         if (uastElement == null) return;
         PsiMethod element = (PsiMethod)uastElement.getJavaPsi();
         if (element == null) {
           return;
         }
-        List<RefParameter> unusedParameters = getUnusedParameters(refMethod);
-        if (unusedParameters.isEmpty()) return;
         PsiMethod[] derived = OverridingMethodsSearch.search(element).toArray(PsiMethod.EMPTY_ARRAY);
         for (RefParameter refParameter : unusedParameters) {
           if (refMethod.isAbstract() && derived.length == 0) {

@@ -5,17 +5,22 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.DigestUtil
 import org.intellij.markdown.MarkdownElementTypes
+import org.intellij.markdown.html.GeneratingProvider
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.parser.LinkMap
 import org.intellij.markdown.parser.MarkdownParser
+import org.intellij.plugins.markdown.extensions.CodeFenceGeneratingProvider
+import org.intellij.plugins.markdown.extensions.MarkdownCodeFenceCacheableProvider
 import org.intellij.plugins.markdown.lang.parser.MarkdownParserManager
 import org.intellij.plugins.markdown.ui.preview.html.links.IntelliJImageGeneratingProvider
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.io.File
 import java.math.BigInteger
 import java.util.*
 
 object MarkdownUtil {
+  @ApiStatus.Internal
   fun md5(buffer: String?, @NonNls key: String): String {
     val md5 = DigestUtil.md5()
     Objects.requireNonNull(md5).update(buffer?.toByteArray(Charsets.UTF_8))
@@ -33,7 +38,7 @@ object MarkdownUtil {
 
     val linkMap = LinkMap.buildLinkMap(parsedTree, text)
     val map = MarkdownParserManager.FLAVOUR.createHtmlGeneratingProviders(linkMap, baseUri).toMutableMap()
-    map.putAll(MarkdownParserManager.CODE_FENCE_PLUGIN_FLAVOUR.createHtmlGeneratingProviders(cacheCollector, project, file))
+    map[MarkdownElementTypes.CODE_FENCE] = createCodeFenceProvider(project, file, cacheCollector)
     if (project != null) {
       map[MarkdownElementTypes.IMAGE] = IntelliJImageGeneratingProvider(linkMap, baseUri)
       map[MarkdownElementTypes.PARAGRAPH] = ParagraphGeneratingProvider()
@@ -45,5 +50,18 @@ object MarkdownUtil {
     MarkdownCodeFenceHtmlCache.getInstance().registerCacheProvider(cacheCollector)
 
     return html
+  }
+
+  @ApiStatus.Internal
+  fun createCodeFenceProvider(
+    project: Project?,
+    file: VirtualFile?,
+    collector: MarkdownCodeFencePluginCacheCollector
+  ): GeneratingProvider {
+    val providers = CodeFenceGeneratingProvider.collectProviders()
+    for (provider in providers.asSequence().filterIsInstance<MarkdownCodeFenceCacheableProvider>()) {
+      provider.collector = collector
+    }
+    return DefaultCodeFenceGeneratingProvider(providers.toTypedArray(), project, file)
   }
 }

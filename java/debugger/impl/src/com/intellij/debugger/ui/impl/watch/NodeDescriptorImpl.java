@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -27,7 +27,6 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
   public boolean myIsExpanded = false;
   public boolean myIsSelected = false;
   public boolean myIsVisible  = false;
-  public boolean myIsSynthetic = false;
 
   private EvaluateException myEvaluateException;
   private @NlsContexts.Label String myLabel = UNKNOWN_VALUE_MESSAGE;

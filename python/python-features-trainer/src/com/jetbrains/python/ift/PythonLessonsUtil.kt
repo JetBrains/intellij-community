@@ -2,13 +2,12 @@ package com.jetbrains.python.ift
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
-import com.jetbrains.python.inspections.PyInterpreterInspection
+import com.jetbrains.python.inspections.quickfix.sdk.InterpreterSettingsQuickFix
 import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
 import com.jetbrains.python.sdk.findBaseSdks
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -34,7 +33,7 @@ object PythonLessonsUtil {
   fun LessonContext.showWarningIfPython3NotFound() {
     task {
       val callbackId = LearningUiManager.addCallback {
-        PyInterpreterInspection.InterpreterSettingsQuickFix.showPythonInterpreterSettings(project, project.modules.first())
+        InterpreterSettingsQuickFix.showPythonInterpreterSettings(project, project.modules.first())
       }
       stateCheck { isPython3Installed(project) }
       showWarning(PythonLessonsBundle.message("python.3.required.warning.message", callbackId)) {
@@ -47,14 +46,9 @@ object PythonLessonsUtil {
                                              configPropertyName: String,
                                              reportTitle: String,
                                              feedbackReportId: String,
-                                             primaryLanguage: LangSupport?,
+                                             primaryLanguage: LangSupport,
                                              lessonEndInfo: LessonEndInfo,
                                              usedInterpreterAtStart: String) {
-    if (primaryLanguage == null) {
-      thisLogger().error("Onboarding lesson has no language support for some magical reason")
-      return
-    }
-
     if (PropertiesComponent.getInstance().getBoolean(configPropertyName, false)) {
       return
     }

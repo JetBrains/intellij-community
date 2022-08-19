@@ -112,6 +112,7 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
         val tooltip = LazyIdeToolTip(it) {
           createTitledList(tagGroup) { label, tag, _ ->
             label.text = tag.name
+            label.foreground = UIUtil.getToolTipForeground()
             val color = tag.color
             if (color != null) {
               //TODO: need a separate untinted icon to color properly
@@ -200,6 +201,7 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
         createTitledList(users) { label, user, _ ->
           label.text = user.getPresentableName()
           label.icon = user.avatarIcon
+          label.foreground = UIUtil.getToolTipForeground()
         }
       }
       toolTipManager.setCustomTooltip(label, tooltip)

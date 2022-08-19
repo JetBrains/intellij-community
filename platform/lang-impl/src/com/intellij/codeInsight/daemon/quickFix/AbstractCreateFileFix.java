@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
@@ -72,6 +73,13 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
     mySubPath = newFileLocation.getSubPath();
     myKey = fixLocaleKey;
   }
+
+  /**
+   * {@inheritDoc}
+   * Must be implemented, as default implementation won't work anyway
+   */
+  @Override
+  abstract public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file);
 
   @Override
   public boolean isAvailable(@NotNull Project project,

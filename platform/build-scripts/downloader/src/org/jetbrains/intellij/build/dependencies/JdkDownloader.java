@@ -6,8 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Locale;
-
-import static org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.info;
+import java.util.logging.Logger;
 
 /**
  * Provides a reasonable stable version of JDK for current platform
@@ -16,6 +15,7 @@ import static org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloa
  * It's currently fixed here to be the same on all build agents and also in Docker images
  */
 public final class JdkDownloader {
+  private static final Logger LOG = Logger.getLogger(JdkDownloader.class.getName());
   public static Path getJdkHome(BuildDependenciesCommunityRoot communityRoot) {
     OS os = OS.getCurrent();
     Arch arch = Arch.getCurrent();
@@ -27,7 +27,7 @@ public final class JdkDownloader {
 
     Path jdkArchive = BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, jdkUrl);
     Path jdkExtracted = BuildDependenciesDownloader.extractFileToCacheLocation(communityRoot, jdkArchive, BuildDependenciesExtractOptions.STRIP_ROOT);
-    info("jps-bootstrap JDK is at " + jdkExtracted);
+    LOG.info("jps-bootstrap JDK is at " + jdkExtracted);
 
     Path jdkHome;
     if (os == OS.MACOSX) {
@@ -38,7 +38,7 @@ public final class JdkDownloader {
     }
 
     Path executable = getJavaExecutable(jdkHome);
-    info("JDK home is at " + jdkHome + ", executable at " + executable);
+    LOG.info("JDK home is at " + jdkHome + ", executable at " + executable);
 
     return jdkHome;
   }
@@ -86,8 +86,8 @@ public final class JdkDownloader {
         throw new IllegalStateException("Unsupported arch: " + arch);
     }
 
-    var dependenciesProperties = BuildDependenciesDownloader.getDependenciesProperties(communityRoot);
-    var jdkBuild = dependenciesProperties.get("jdkBuild");
+    var dependenciesProperties = BuildDependenciesDownloader.getCommunityDependenciesProperties(communityRoot);
+    var jdkBuild = dependenciesProperties.property("jdkBuild");
     var jdkBuildSplit = jdkBuild.split("b");
     if (jdkBuildSplit.length != 2) {
       throw new IllegalStateException("Malformed jdkBuild property: " + jdkBuild);

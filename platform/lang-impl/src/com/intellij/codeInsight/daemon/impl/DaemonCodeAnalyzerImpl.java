@@ -376,6 +376,20 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       fileStatusMap.markFileUpToDate(document, ignoreId);
     }
 
+    try {
+      doRunPasses(textEditors, passesToIgnore, canChangeDocument, callbackWhileWaiting);
+    }
+    finally {
+      DaemonProgressIndicator.setDebug(false);
+      fileStatusMap.allowDirt(true);
+    }
+  }
+
+  @TestOnly
+  private void doRunPasses(@NotNull List<? extends TextEditor> textEditors,
+                           int @NotNull [] passesToIgnore,
+                           boolean canChangeDocument,
+                           @Nullable Runnable callbackWhileWaiting) {
     ((CoreProgressManager)ProgressManager.getInstance()).suppressAllDeprioritizationsDuringLongTestsExecutionIn(() -> {
       HighlightingSession session = queuePassesCreation(textEditors, passesToIgnore);
 
@@ -429,8 +443,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
         ExceptionUtil.rethrow(unwrapped);
       }
       finally {
-        DaemonProgressIndicator.setDebug(false);
-        fileStatusMap.allowDirt(true);
         progress.cancel();
         waitForTermination();
       }

@@ -36,8 +36,8 @@ interface Placeholder : CellBase<Placeholder> {
    * [DialogPanel.apply]/[DialogPanel.reset]/[DialogPanel.isModified] and validation mechanism is delegated from [component]
    * to parent [DialogPanel] that contains this placeholder.
    *
-   * The property is reset automatically when the component is removed from the panel by other methods like [java.awt.Container.remove] or
-   * by adding the component to another parent
+   * The property is not reset automatically when the component is removed from the panel by other methods like [java.awt.Container.remove]
+   * or by adding the component to another parent
    */
   var component: JComponent?
 }

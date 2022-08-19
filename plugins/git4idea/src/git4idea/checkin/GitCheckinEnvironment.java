@@ -797,7 +797,6 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
    * @param added      added/modified files to commit
    * @param removed    removed files to commit
    * @param exceptions a list of exceptions to update
-   * @return true if index was updated successfully
    */
   private static void updateIndex(final Project project,
                                   final VirtualFile root,

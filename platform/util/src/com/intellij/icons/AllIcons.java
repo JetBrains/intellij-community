@@ -597,6 +597,9 @@ public class AllIcons {
 
   public static final class Ide {
     /** 16x16 */ public static final @NotNull Icon ConfigFile = load("ide/configFile.svg", -170575912, 2);
+    /** 20x20 */ public static final @NotNull Icon Dislike = load("ide/dislike.svg", 1759391914, 2);
+    /** 20x20 */ public static final @NotNull Icon DislikeDimmed = load("ide/dislikeDimmed.svg", 585883274, 2);
+    /** 20x20 */ public static final @NotNull Icon DislikeSelected = load("ide/dislikeSelected.svg", -924234289, 2);
     /** 6x6 */ public static final @NotNull Icon ErrorPoint = load("ide/errorPoint.svg", 1899475559, 2);
     /** 14x14 */ public static final @NotNull Icon External_link_arrow = load("ide/external_link_arrow.svg", 425782437, 0);
     /** 16x16 */ public static final @NotNull Icon FatalErrorRead = load("ide/fatalError-read.svg", -716280782, 2);
@@ -611,6 +614,9 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon HectorOn = load("ide/hectorOn.svg", 1056820765, 2);
     /** 16x16 */ public static final @NotNull Icon HectorSyntax = load("ide/hectorSyntax.svg", 1917397148, 2);
     /** 16x16 */ public static final @NotNull Icon IncomingChangesOn = load("ide/incomingChangesOn.svg", 682827200, 2);
+    /** 20x20 */ public static final @NotNull Icon Like = load("ide/like.svg", -637362778, 2);
+    /** 20x20 */ public static final @NotNull Icon LikeDimmed = load("ide/likeDimmed.svg", 1182004021, 2);
+    /** 20x20 */ public static final @NotNull Icon LikeSelected = load("ide/likeSelected.svg", 1328910833, 2);
     /** 12x12 */ public static final @NotNull Icon Link = load("ide/link.svg", 1119728065, 2);
     /** 16x16 */ public static final @NotNull Icon LocalScope = load("ide/localScope.svg", -1788752276, 0);
     /** 16x16 */ public static final @NotNull Icon LocalScopeAction = load("ide/localScopeAction.svg", -1396890428, 2);
@@ -997,6 +1003,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Impala = load("providers/impala.svg", -616852615, 2);
     /** 16x16 */ public static final @NotNull Icon Informix = load("providers/informix.svg", 2065426356, 0);
     /** 16x16 */ public static final @NotNull Icon IntersystemCache = load("providers/intersystemCache.svg", -366365267, 2);
+    /** 16x16 */ public static final @NotNull Icon Liquibase = load("providers/liquibase.svg", -191128344, 0);
     /** 16x16 */ public static final @NotNull Icon Mariadb = load("providers/mariadb.svg", -1504561111, 2);
     /** 16x16 */ public static final @NotNull Icon Microsoft = load("providers/microsoft.svg", -288792143, 0);
     /** 16x17 */ public static final @NotNull Icon MimerSQL = load("providers/mimerSQL.svg", -1308901116, 2);

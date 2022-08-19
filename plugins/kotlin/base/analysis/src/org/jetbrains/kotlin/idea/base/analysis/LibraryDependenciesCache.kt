@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.MultiMap
+import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
@@ -42,6 +43,7 @@ import org.jetbrains.kotlin.idea.base.util.caching.FineGrainedEntityCache.Compan
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
 import org.jetbrains.kotlin.idea.base.util.caching.WorkspaceEntityChangeListener
 import org.jetbrains.kotlin.idea.caches.project.*
+import org.jetbrains.kotlin.idea.configuration.isMavenized
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -70,7 +72,12 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
     private fun computeLibrariesAndSdksUsedWith(libraryInfo: LibraryInfo): LibraryDependencies {
         val (dependencyCandidates, sdks) = computeLibrariesAndSdksUsedWithNoFilter(libraryInfo)
-        val libraryDependenciesFilter = DefaultLibraryDependenciesFilter union SharedNativeLibraryToNativeInteropFallbackDependenciesFilter
+
+        // Maven is Gradle Metadata unaware, and therefore needs stricter filter. See KTIJ-15758
+        val libraryDependenciesFilter = if (project.isMavenized)
+            StrictEqualityForPlatformSpecificCandidatesFilter
+        else
+            DefaultLibraryDependenciesFilter union SharedNativeLibraryToNativeInteropFallbackDependenciesFilter
         val libraries = libraryDependenciesFilter(libraryInfo.platform, dependencyCandidates).flatMap { it.libraries }
         return LibraryDependencies(libraries, sdks.toList())
     }
@@ -263,7 +270,10 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             override val entityClass: Class<ModuleEntity>
                 get() = ModuleEntity::class.java
 
-            override fun map(storage: EntityStorage, entity: ModuleEntity): Module? = entity.findModule(storage)
+            override fun map(storage: EntityStorage, entity: ModuleEntity): Module? =
+                entity.findModule(storage) ?:
+                // TODO: workaround to bypass bug with new modules not present in storageAfter
+                WorkspaceModel.getInstance(project).entityStorage.current.findModuleByEntity(entity)
 
             override fun entitiesChanged(outdated: List<Module>) {
                 invalidateKeys(outdated) { _, _ -> false }
@@ -362,7 +372,10 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             val modulesFromNewLibs = libraryChanges.mapNotNull { change ->
                 val newEntity = newEntity(change) ?: return@mapNotNull null
                 val referrers = storageAfter.referrers(newEntity.persistentId, ModuleEntity::class.java)
-                referrers.mapNotNull { storageAfter.findModuleByEntity(it) }
+                referrers.mapNotNull { storageAfter.findModuleByEntity(it) ?:
+                    // TODO: workaround to bypass bug with new modules not present in storageAfter
+                    WorkspaceModel.getInstance(project).entityStorage.current.findModuleByEntity(it)
+                }
             }.flatMapTo(hashSetOf()) { it }
 
             val modulesToInvalidate = modulesChange.old.toHashSet() + modulesFromNewLibs
@@ -401,7 +414,12 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             val newModules = mutableListOf<Module>()
             for (change in moduleChanges) {
                 oldEntity(change)?.let { oldModules.addIfNotNull(storageBefore.findModuleByEntity(it)) }
-                newEntity(change)?.let { newModules.addIfNotNull(storageAfter.findModuleByEntity(it)) }
+                newEntity(change)?.let {
+                    val moduleBridge = storageAfter.findModuleByEntity(it) ?:
+                        // TODO: workaround to bypass bug with new modules not present in storageAfter
+                        WorkspaceModel.getInstance(project).entityStorage.current.findModuleByEntity(it)
+                    newModules.addIfNotNull(moduleBridge)
+                }
             }
             return Change(oldModules, newModules)
         }
@@ -415,7 +433,12 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             val newLibraries = mutableListOf<Library>()
             for (change in moduleChanges) {
                 oldEntity(change)?.let { oldLibraries.addIfNotNull(it.findLibraryBridge(storageBefore)) }
-                newEntity(change)?.let { newLibraries.addIfNotNull(it.findLibraryBridge(storageAfter)) }
+                newEntity(change)?.let {
+                    val libraryBridge = it.findLibraryBridge(storageAfter) ?:
+                        // TODO: workaround to bypass bug with new modules not present in storageAfter
+                        it.findLibraryBridge(WorkspaceModel.getInstance(project).entityStorage.current)
+                    newLibraries.addIfNotNull(libraryBridge)
+                }
             }
             return Change(oldLibraries, newLibraries)
         }
@@ -447,4 +470,5 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             }
         }
     }
+
 }

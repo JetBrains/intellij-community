@@ -1,11 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
+import com.intellij.collaboration.async.DisposingMainScope
 import com.intellij.collaboration.auth.AccountsListener
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.defaultButton
 import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.ActionLink
@@ -13,6 +13,7 @@ import com.intellij.util.castSafelyTo
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.launch
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.layout.PlatformDefaults
@@ -26,8 +27,7 @@ import org.jetbrains.plugins.github.ui.component.GHAccountSelectorComponentFacto
 import org.jetbrains.plugins.github.ui.component.GHRepositorySelectorComponentFactory
 import org.jetbrains.plugins.github.ui.util.getName
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
-import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
-import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager.ListChangeListener
+import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 import java.awt.event.ActionEvent
 import javax.swing.*
 import javax.swing.event.ListDataEvent
@@ -35,7 +35,7 @@ import javax.swing.event.ListDataListener
 
 class GHPRRepositorySelectorComponentFactory(private val project: Project,
                                              private val authManager: GithubAuthenticationManager,
-                                             private val repositoryManager: GHProjectRepositoriesManager) {
+                                             private val repositoryManager: GHHostedRepositoriesManager) {
   fun create(disposable: Disposable, onSelected: (GHGitRepositoryMapping, GithubAccount) -> Unit): JComponent {
     val repositoriesModel = ComboBoxWithActionsModel<GHGitRepositoryMapping>().apply {
       //todo: add remote action
@@ -72,7 +72,7 @@ class GHPRRepositorySelectorComponentFactory(private val project: Project,
       }
     }
 
-    Controller(project = project, authManager = authManager, repositoryManager = repositoryManager,
+    Controller(project = project, authManager = authManager, repositoriesManager = repositoryManager,
                repositoriesModel = repositoriesModel, accountsModel = accountsModel,
                applyAction = applyAction, githubLoginAction = githubLoginAction, tokenLoginAction = tokenLoginAction,
                gheLoginActon = gheLoginAction,
@@ -126,7 +126,7 @@ class GHPRRepositorySelectorComponentFactory(private val project: Project,
 
   private class Controller(private val project: Project,
                            private val authManager: GithubAuthenticationManager,
-                           private val repositoryManager: GHProjectRepositoriesManager,
+                           private val repositoriesManager: GHHostedRepositoriesManager,
                            private val repositoriesModel: ComboBoxWithActionsModel<GHGitRepositoryMapping>,
                            private val accountsModel: ComboBoxWithActionsModel<GithubAccount>,
                            private val applyAction: Action,
@@ -135,31 +135,28 @@ class GHPRRepositorySelectorComponentFactory(private val project: Project,
                            private val gheLoginActon: Action,
                            disposable: Disposable) {
 
+    private val scope = DisposingMainScope(disposable)
+
     init {
-      ApplicationManager.getApplication().messageBus.connect(disposable)
-        .subscribe(GHProjectRepositoriesManager.LIST_CHANGES_TOPIC, object : ListChangeListener {
-          override fun repositoryListChanged(newList: Set<GHGitRepositoryMapping>, project: Project) {
-            updateRepositories()
-          }
-        })
+      repositoriesModel.addSelectionChangeListener(::updateAccounts)
+      repositoriesModel.addSelectionChangeListener(::updateActions)
+      accountsModel.addSelectionChangeListener(::updateActions)
+
+      scope.launch {
+        repositoriesManager.knownRepositoriesState.collect {
+          repositoriesModel.items = it.toList()
+          repositoriesModel.preSelect()
+        }
+      }
+
       authManager.addListener(disposable, object : AccountsListener<GithubAccount> {
         override fun onAccountListChanged(old: Collection<GithubAccount>, new: Collection<GithubAccount>) {
           invokeAndWaitIfNeeded(runnable = ::updateAccounts)
         }
       })
 
-      repositoriesModel.addSelectionChangeListener(::updateAccounts)
-      repositoriesModel.addSelectionChangeListener(::updateActions)
-      accountsModel.addSelectionChangeListener(::updateActions)
-
-      updateRepositories()
       updateAccounts()
       updateActions()
-    }
-
-    private fun updateRepositories() {
-      repositoriesModel.items = repositoryManager.knownRepositories.sortedBy { it.gitRemoteUrlCoordinates.remote.name }
-      repositoriesModel.preSelect()
     }
 
     private fun updateAccounts() {

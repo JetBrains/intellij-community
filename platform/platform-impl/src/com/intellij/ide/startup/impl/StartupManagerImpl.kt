@@ -199,7 +199,11 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
       coroutineContext.ensureActive()
 
       val pluginId = adapter.pluginDescriptor.pluginId
-      if (!isCorePlugin(adapter.pluginDescriptor) && pluginId.idString != "com.jetbrains.performancePlugin") {
+      if (!isCorePlugin(adapter.pluginDescriptor) && pluginId.idString != "com.jetbrains.performancePlugin"
+                                                  && pluginId.idString != "com.intellij.clion-makefile"
+                                                  && pluginId.idString != "com.intellij.clion-swift"
+                                                  && pluginId.idString != "com.intellij.appcode"
+                                                  && pluginId.idString != "com.intellij.clion-compdb") {
         LOG.error("Only bundled plugin can define ${extensionPoint.name}: ${adapter.pluginDescriptor}")
         continue
       }

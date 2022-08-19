@@ -17,13 +17,15 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 /**
-* @author irengrig
-*/
+ * @author irengrig
+ */
 class DummyChangesView implements ChangesViewEx {
   DummyChangesView(Project project) {
   }
@@ -59,5 +61,10 @@ class DummyChangesView implements ChangesViewEx {
   @Override
   public boolean isAllowExcludeFromCommit() {
     return false;
+  }
+
+  @Override
+  public @Nullable ChangesViewCommitWorkflowHandler getCommitWorkflowHandler() {
+    return null;
   }
 }

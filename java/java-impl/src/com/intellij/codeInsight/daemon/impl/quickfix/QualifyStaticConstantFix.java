@@ -2,15 +2,13 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -37,10 +35,10 @@ public class QualifyStaticConstantFix extends StaticImportConstantFix {
 
   @NotNull
   @Override
-  protected StaticImportMethodQuestionAction<PsiField> createQuestionAction(@NotNull List<? extends PsiField> fieldsToImport,
-                                                                            @NotNull Project project,
-                                                                            Editor editor) {
-    return new StaticImportMethodQuestionAction<>(project, editor, fieldsToImport, myRef) {
+  protected QuestionAction createQuestionAction(@NotNull List<? extends PsiField> fieldsToImport,
+                                                @NotNull Project project,
+                                                Editor editor) {
+    return new StaticImportMemberQuestionAction<PsiField>(project, editor, fieldsToImport, myReferencePointer) {
       @NotNull
       @Override
       protected String getPopupTitle() {
@@ -48,8 +46,8 @@ public class QualifyStaticConstantFix extends StaticImportConstantFix {
       }
 
       @Override
-      protected void doImport(PsiField toImport) {
-        PsiJavaCodeReferenceElement element = myRef.getElement();
+      protected void doImport(@NotNull PsiField toImport) {
+        PsiElement element = myReferencePointer.getElement();
         if (!(element instanceof PsiReferenceExpression)) return;
         WriteCommandAction.runWriteCommandAction(project, JavaBundle.message("qualify.static.access.command.name"), null,
                                                  () -> QualifyStaticMethodCallFix.qualifyStatically(toImport, project, (PsiReferenceExpression)element)
@@ -59,7 +57,7 @@ public class QualifyStaticConstantFix extends StaticImportConstantFix {
   }
 
   @Override
-  protected boolean toAddStaticImports() {
+  boolean toAddStaticImports() {
     return false;
   }
 }

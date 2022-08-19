@@ -72,8 +72,8 @@ class Interpreter(private val invoker: CompletionInvoker,
           sessionHandler(session)
           isCanceled = handler.onSessionFinished(fileActions.path)
         }
-        is CodeGolfSession -> {
-          session = invoker.emulateCodeGolfSession(action.expectedText, position, action.nodeProperties)
+        is CompletionGolfSession -> {
+          session = invoker.emulateCompletionGolfSession(action.expectedText, position, action.nodeProperties)
           sessions.add(session)
           isCanceled = handler.onSessionFinished(filePath)
         }

@@ -42,6 +42,9 @@ class JavaUSimpleNameReferenceExpression(
     if (parent is PsiReferenceExpression && parent.parent is PsiMethodCallExpression) {
       return parent.parent
     }
+    else if (parent is PsiAnonymousClass){
+      return parent.parent
+    }
     return parent
   }
 

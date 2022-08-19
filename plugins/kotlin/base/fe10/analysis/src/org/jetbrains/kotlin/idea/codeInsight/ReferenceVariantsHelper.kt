@@ -22,10 +22,10 @@ import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoBefore
-import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowValueFactory
 import org.jetbrains.kotlin.resolve.calls.smartcasts.SmartCastManager
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationResolver
 import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
+import org.jetbrains.kotlin.resolve.descriptorUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.scopes.*
 import org.jetbrains.kotlin.resolve.scopes.receivers.ClassQualifier
 import org.jetbrains.kotlin.resolve.scopes.utils.collectAllFromMeAndParent
@@ -35,9 +35,12 @@ import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.synthetic.JavaSyntheticScopes
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.TypeConstructor
 import org.jetbrains.kotlin.types.expressions.DoubleColonLHS
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.util.suppressedByNotPropertyList
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.*
 
 @OptIn(FrontendInternals::class)
@@ -313,10 +316,26 @@ class ReferenceVariantsHelper(
                     .flatMapTo(descriptors) { it.collectStaticMembers(resolutionFacade, kindFilter, nameFilter) }
             }
         } else {
+            val constructorFilter: (ClassDescriptor) -> Boolean = { !it.isInner }
+
+            resolutionScope.ownerDescriptor.parentsWithSelf.firstIsInstanceOrNull<ClassDescriptor>()?.let { classDescriptor ->
+                // process instance members, class constructors and companion object
+                listOfNotNull(classDescriptor, classDescriptor.companionObjectDescriptor).forEach {
+                    descriptors.addNonExtensionMembers(
+                        it.unsubstitutedMemberScope,
+                        it.typeConstructor,
+                        kindFilter,
+                        nameFilter,
+                        constructorFilter
+                    )
+                }
+            }
             // process non-instance members and class constructors
             descriptors.addNonExtensionCallablesAndConstructors(
                 resolutionScope,
-                kindFilter, nameFilter, constructorFilter = { !it.isInner },
+                kindFilter,
+                nameFilter,
+                constructorFilter = constructorFilter,
                 classesOnly = false
             )
         }
@@ -377,18 +396,31 @@ class ReferenceVariantsHelper(
         constructorFilter: (ClassDescriptor) -> Boolean
     ) {
         for (receiverType in receiverTypes) {
-            addNonExtensionCallablesAndConstructors(
-                receiverType.memberScope.memberScopeAsImportingScope(),
-                kindFilter, nameFilter, constructorFilter,
-                false
-            )
-            receiverType.constructor.supertypes.forEach {
-                addNonExtensionCallablesAndConstructors(
-                    it.memberScope.memberScopeAsImportingScope(),
-                    kindFilter, nameFilter, constructorFilter,
-                    true
-                )
+            addNonExtensionMembers(receiverType.memberScope, receiverType.constructor, kindFilter, nameFilter, constructorFilter)
+            receiverType.constructor.declarationDescriptor.safeAs<ClassDescriptor>()?.companionObjectDescriptor?.let {
+                addNonExtensionMembers(it.unsubstitutedMemberScope, it.typeConstructor, kindFilter, nameFilter, constructorFilter)
             }
+        }
+    }
+
+    private fun MutableSet<DeclarationDescriptor>.addNonExtensionMembers(
+        memberScope: MemberScope,
+        typeConstructor: TypeConstructor,
+        kindFilter: DescriptorKindFilter,
+        nameFilter: (Name) -> Boolean,
+        constructorFilter: (ClassDescriptor) -> Boolean
+    ) {
+        addNonExtensionCallablesAndConstructors(
+            memberScope.memberScopeAsImportingScope(),
+            kindFilter, nameFilter, constructorFilter,
+            false
+        )
+        typeConstructor.supertypes.forEach {
+            addNonExtensionCallablesAndConstructors(
+                it.memberScope.memberScopeAsImportingScope(),
+                kindFilter, nameFilter, constructorFilter,
+                true
+            )
         }
     }
 

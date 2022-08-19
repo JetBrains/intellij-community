@@ -54,7 +54,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -784,14 +783,12 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
               g.drawString(s, textOffset,y + myEditor.getAscent());
             } else if (hoverIcon != null && iconOnTheLine == null) {
-              hoverIcon = scaleIcon(hoverIcon);
-              int iconX = offset - hoverIcon.getIconWidth();
-              int iconY = y + (visLinesIterator.getLineHeight() - hoverIcon.getIconHeight()) / 2;
+              Icon icon = scaleIcon(hoverIcon);
+              int iconX = offset - icon.getIconWidth();
+              int iconY = y + (visLinesIterator.getLineHeight() - icon.getIconHeight()) / 2;
               float alpha = JBUI.getFloat("Breakpoint.iconHoverAlpha", 0.5f);
               alpha = alpha > 1f ? 1f : Math.max(alpha, 0f);
-              GraphicsConfig config = GraphicsUtil.paintWithAlpha(g, alpha);
-              hoverIcon.paintIcon(this, g, iconX, iconY);
-              config.restore();
+              GraphicsUtil.paintWithAlpha(g, alpha, () -> icon.paintIcon(this, g, iconX, iconY));
             }
           }
         }

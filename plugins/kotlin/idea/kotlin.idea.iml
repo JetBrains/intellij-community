@@ -2,17 +2,11 @@
 <module type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
-    <content url="file://$MODULE_DIR$/../completion">
-      <sourceFolder url="file://$MODULE_DIR$/../completion/resources" type="java-resource" />
-      <sourceFolder url="file://$MODULE_DIR$/../completion/src" isTestSource="false" />
-    </content>
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/resources-en" type="java-resource" />
-    </content>
-    <content url="file://$MODULE_DIR$/../live-templates">
-      <sourceFolder url="file://$MODULE_DIR$/../live-templates/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/resources-completion" type="java-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -20,7 +14,7 @@
     <orderEntry type="library" name="kotlinc.kotlin-compiler-fe10" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-ir" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-stdlib" level="project" />
-    <orderEntry type="library" name="kotlinc.kotlin-reflect" level="project" />
+    <orderEntry type="library" name="kotlin-reflect" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
@@ -76,6 +70,8 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.diff.impl" />
     <orderEntry type="module" module-name="intellij.jvm.analysis" />
+    <orderEntry type="module" module-name="kotlin.code-insight.live-templates-shared" />
+    <orderEntry type="module" module-name="kotlin.code-insight.live-templates-k1" />
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="intellij.java.impl" />
     <orderEntry type="module" module-name="intellij.java.ui" />
@@ -103,5 +99,11 @@
     <orderEntry type="module" module-name="kotlin.code-insight.utils" />
     <orderEntry type="module" module-name="kotlin.code-insight.impl-base" />
     <orderEntry type="module" module-name="kotlin.code-insight.descriptions" />
+    <orderEntry type="module" module-name="kotlin.completion.api" />
+    <orderEntry type="module" module-name="kotlin.completion.impl-shared" />
+    <orderEntry type="module" module-name="kotlin.completion.impl-k1" />
+    <orderEntry type="module" module-name="kotlin.code-insight.override-implement-shared" />
+    <orderEntry type="module" module-name="kotlin.code-insight.override-implement-k1" />
+    <orderEntry type="module" module-name="kotlin.code-insight.intentions-k1" />
   </component>
 </module>

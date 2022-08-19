@@ -12,6 +12,7 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import org.jetbrains.deft.ObjBuilder
@@ -78,6 +79,17 @@ open class DefaultValueEntityImpl : DefaultValueEntity, WorkspaceEntityBase() {
 
     override fun connectionIdList(): List<ConnectionId> {
       return connections
+    }
+
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as DefaultValueEntity
+      this.name = dataSource.name
+      this.entitySource = dataSource.entitySource
+      this.isGenerated = dataSource.isGenerated
+      this.anotherName = dataSource.anotherName
+      if (parents != null) {
+      }
     }
 
 
@@ -159,6 +171,18 @@ class DefaultValueEntityData : WorkspaceEntityData<DefaultValueEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return DefaultValueEntity(name, entitySource) {
+      this.isGenerated = this@DefaultValueEntityData.isGenerated
+      this.anotherName = this@DefaultValueEntityData.anotherName
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
@@ -190,5 +214,17 @@ class DefaultValueEntityData : WorkspaceEntityData<DefaultValueEntity>() {
     result = 31 * result + isGenerated.hashCode()
     result = 31 * result + anotherName.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + name.hashCode()
+    result = 31 * result + isGenerated.hashCode()
+    result = 31 * result + anotherName.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.sameForAllEntities = true
   }
 }

@@ -104,6 +104,8 @@
       <reference id="Vcs.ShowHistoryForBlock"/>
     </group>
 
+    <action id="Git.CompareWithTag" class="git4idea.actions.GitCompareWithTagAction"/>
+
     <group id="Git.MainMenu.FileActions" class="git4idea.actions.GitFileActionGroup" popup="true">
       <reference ref="Git.FileActions"/>
     </group>

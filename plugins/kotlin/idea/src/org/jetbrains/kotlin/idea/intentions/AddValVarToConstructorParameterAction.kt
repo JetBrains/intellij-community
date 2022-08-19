@@ -83,7 +83,7 @@ interface AddValVarToConstructorParameterAction {
         }
     }
 
-    object QuickFixFactory : KotlinSingleIntentionActionFactory() {
+    object DataClassVsPropertyQuickFixFactory : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic) = QuickFix(Errors.DATA_CLASS_NOT_PROPERTY_PARAMETER.cast(diagnostic).psiElement)
     }
 }

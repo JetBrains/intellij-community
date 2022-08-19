@@ -5,29 +5,34 @@
 package com.intellij.idea
 
 import com.intellij.diagnostic.*
-import com.intellij.diagnostic.StartUpMeasurer.Activities
+import com.intellij.history.LocalHistory
 import com.intellij.icons.AllIcons
 import com.intellij.ide.*
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
 import com.intellij.ide.ui.LafManager
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
-import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.ui.DialogEarthquakeShaker
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.AppIcon
@@ -36,7 +41,6 @@ import com.intellij.util.io.URLUtil
 import com.intellij.util.io.createDirectories
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.ui.AsyncProcessIcon
-import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.asDeferred
@@ -56,29 +60,21 @@ import kotlin.system.exitProcess
 @Suppress("SSBasedInspection")
 private val LOG = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
 
-fun initApplication(rawArgs: List<String>, setBaseLafJob: Job, telemetryInitJob: Job) {
-  val job = Main.mainScope.launch(Dispatchers.Default) {
-    doInitApplication(rawArgs, setBaseLafJob, telemetryInitJob)
-  }
-
-  // block the thread
-  runBlocking {
-    job.join()
+fun initApplication(rawArgs: List<String>, appDeferred: Deferred<Any>) {
+  runBlocking(rootTask()) {
+    doInitApplication(rawArgs, appDeferred)
   }
 }
 
-suspend fun doInitApplication(rawArgs: List<String>, setBaseLafJob: Job, telemetryInitJob: Job): Unit = coroutineScope {
-  val initAppActivity = startupStart!!.endAndStart(Activities.INIT_APP)
-  val app = initAppActivity.runChild("app instantiation") {
-    val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
-    ApplicationImpl(isInternal, Main.isHeadless(), Main.isCommandLine(), EDT.getEventDispatchThread())
-  }
+suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Any>) {
+  val initAppActivity = appInitPreparationActivity!!.endAndStart("app initialization")
   val pluginSet = initAppActivity.runChild("plugin descriptor init waiting") {
     PluginManagerCore.getInitPluginFuture().await()
   }
 
-  initAppActivity.runChild("telemetry waiting") {
-    telemetryInitJob.join()
+  val (app, setBaseLaFJob) = initAppActivity.runChild("app waiting") {
+    @Suppress("UNCHECKED_CAST")
+    appDeferred.await() as Pair<ApplicationImpl, Job>
   }
 
   initAppActivity.runChild("app component registration") {
@@ -92,26 +88,45 @@ suspend fun doInitApplication(rawArgs: List<String>, setBaseLafJob: Job, telemet
     initConfigurationStore(app)
   }
 
-  val args = processProgramArguments(rawArgs)
-  val deferredStarter = initAppActivity.runChild("app starter creation") {
-    createAppStarterAsync(args)
-  }
+  coroutineScope {
+    launch {
+      setBaseLaFJob.join()
 
-  launch {
-    // ensure that base laf is set before initialization of LafManagerImpl
-    runActivity("base laf waiting") {
-      setBaseLafJob.join()
-    }
-
-    withContext(SwingDispatcher) {
-      runActivity("laf initialization") {
+      val lafManagerDeferred = launch(CoroutineName("laf initialization") + SwingDispatcher) {
         // don't wait for result - we just need to trigger initialization if not yet created
         app.getServiceAsync(LafManager::class.java)
       }
+      if (!app.isHeadlessEnvironment) {
+        // preload only when LafManager is ready
+        lafManagerDeferred.join()
+        app.getServiceAsync(EditorColorsManager::class.java)
+      }
+    }
+
+    withContext(Dispatchers.Default) {
+      val args = processProgramArguments(rawArgs)
+
+      val deferredStarter = initAppActivity.runChild("app starter creation") {
+        createAppStarterAsync(args)
+      }
+
+      initApplicationImpl(args = args,
+                          initAppActivity = initAppActivity,
+                          pluginSet = pluginSet,
+                          app = app,
+                          deferredStarter = deferredStarter)
     }
   }
+}
 
+private suspend fun initApplicationImpl(args: List<String>,
+                                        initAppActivity: Activity,
+                                        pluginSet: PluginSet,
+                                        app: ApplicationImpl,
+                                        deferredStarter: Deferred<ApplicationStarter>) {
   val appInitializedListeners = coroutineScope {
+    preloadCriticalServices(app)
+
     app.preloadServices(modules = pluginSet.getEnabledModules(), activityPrefix = "", syncScope = this)
 
     launch {
@@ -142,22 +157,12 @@ suspend fun doInitApplication(rawArgs: List<String>, setBaseLafJob: Job, telemet
 
   initAppActivity.end()
 
-  launch {
+  asyncScope.launch {
     addActivateAndWindowsCliListeners()
   }
 
   val starter = deferredStarter.await()
-  if (starter.requiredModality != ApplicationStarter.NOT_IN_EDT) {
-    ApplicationManager.getApplication().invokeLater {
-      (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
-        starter.main(args)
-      }
-    }
-    ZipFilePool.POOL = null
-    return@coroutineScope
-  }
-
-  asyncScope.launch {
+  if (starter.requiredModality == ApplicationStarter.NOT_IN_EDT) {
     if (starter is ModernApplicationStarter) {
       starter.start(args)
     }
@@ -167,8 +172,37 @@ suspend fun doInitApplication(rawArgs: List<String>, setBaseLafJob: Job, telemet
         starter.main(args)
       }
     }
-    // no need to use pool once started
-    ZipFilePool.POOL = null
+  }
+  else {
+    withContext(Dispatchers.EDT) {
+      (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
+        starter.main(args)
+      }
+    }
+  }
+  // no need to use pool once started
+  ZipFilePool.POOL = null
+}
+
+fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl) {
+  launch {
+    // LocalHistory wants ManagingFS, it should be fixed somehow, but for now, to avoid thread contention, preload it in a controlled manner
+    app.getServiceAsync(ManagingFS::class.java).join()
+    // PlatformVirtualFileManager also wants ManagingFS
+    launch { app.getServiceAsync(VirtualFileManager::class.java) }
+    launch { app.getServiceAsyncIfDefined(LocalHistory::class.java) }
+  }
+  launch {
+    // required for indexing tasks (see JavaSourceModuleNameIndex for example)
+    // FileTypeManager by mistake uses PropertiesComponent instead of own state - it should be fixed someday
+    app.getServiceAsync(PropertiesComponent::class.java).join()
+    app.getServiceAsync(FileTypeManager::class.java).join()
+
+    // ProjectJdkTable wants FileTypeManager
+    launch { app.getServiceAsync(ProjectJdkTable::class.java) }
+
+    // wants PropertiesComponent
+    launch { app.getServiceAsync(DebugLogManager::class.java) }
   }
 }
 
@@ -181,13 +215,13 @@ fun getAppInitializedListeners(app: Application): List<ApplicationInitializedLis
 }
 
 private fun CoroutineScope.runPostAppInitTasks(app: ApplicationImpl) {
-  launchAndMeasure("create locator file", Dispatchers.IO) {
+  launch(CoroutineName("create locator file") + Dispatchers.IO) {
     createAppLocatorFile()
   }
 
-  if (!Main.isLightEdit()) {
+  if (!AppMode.isLightEdit()) {
     // this functionality should be used only by plugin functionality that is used after start-up
-    launchAndMeasure("system properties setting") {
+    launch(CoroutineName("system properties setting")) {
       SystemPropertyBean.initSystemProperties()
     }
   }
@@ -207,7 +241,7 @@ private fun CoroutineScope.runPostAppInitTasks(app: ApplicationImpl) {
     return
   }
 
-  launchAndMeasure("icons preloading", Dispatchers.IO) {
+  launch(CoroutineName("icons preloading") + Dispatchers.IO) {
     if (app.isInternal) {
       IconLoader.setStrictGlobally(true)
     }
@@ -245,7 +279,7 @@ private fun CoroutineScope.createAppStarterAsync(args: List<String>): Deferred<A
   }
 
   val starter = findStarter(first) ?: createDefaultAppStarter()
-  if (Main.isHeadless() && !starter.isHeadless) {
+  if (AppMode.isHeadless() && !starter.isHeadless) {
     @Suppress("DEPRECATION") val commandName = starter.commandName
     val message = IdeBundle.message(
       "application.cannot.start.in.a.headless.mode",
@@ -259,8 +293,8 @@ private fun CoroutineScope.createAppStarterAsync(args: List<String>): Deferred<A
       if (args.isEmpty()) 0 else 1,
       args.joinToString(" ")
     )
-    Main.showMessage(IdeBundle.message("main.startup.error"), message, true)
-    exitProcess(Main.NO_GRAPHICS)
+    StartupErrorReporter.showMessage(IdeBundle.message("main.startup.error"), message, true)
+    exitProcess(AppExitCodes.NO_GRAPHICS)
   }
 
   // must be executed before container creation
@@ -299,13 +333,13 @@ private fun addActivateAndWindowsCliListeners() {
       return@BiFunction 0
     }
     val result = runBlocking { handleExternalCommand(args.asList(), currentDirectory) }
-    CliResult.unmap(result.future, Main.ACTIVATE_ERROR).exitCode
+    CliResult.unmap(result.future, AppExitCodes.ACTIVATE_ERROR).exitCode
   }
 
   ApplicationManager.getApplication().messageBus.simpleConnect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
     override fun appWillBeClosed(isRestart: Boolean) {
-      addExternalInstanceListener { CliResult.error(Main.ACTIVATE_DISPOSING, IdeBundle.message("activation.shutting.down")) }
-      EXTERNAL_LISTENER = BiFunction { _, _ -> Main.ACTIVATE_DISPOSING }
+      addExternalInstanceListener { CliResult.error(AppExitCodes.ACTIVATE_DISPOSING, IdeBundle.message("activation.shutting.down")) }
+      EXTERNAL_LISTENER = BiFunction { _, _ -> AppExitCodes.ACTIVATE_DISPOSING }
     }
   })
 }

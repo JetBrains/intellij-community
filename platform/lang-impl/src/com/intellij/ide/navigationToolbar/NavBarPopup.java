@@ -108,13 +108,15 @@ public class NavBarPopup extends LightweightHint implements Disposable{
 
     final RelativePoint point = new RelativePoint(item, new Point(0, relativeY));
     final Point p = point.getPoint(myPanel);
-    if (p.x == 0 && p.y == 0 && checkRepaint) { // need repaint of nav bar panel
+    if ((p.x == 0 || p.y == 0) && checkRepaint) { // need repaint of nav bar panel
       //noinspection SSBasedInspection
       SwingUtilities.invokeLater(() -> {
         myPanel.getUpdateQueue().rebuildUi();
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(() -> {
-          show(item, false); // end-less loop protection
+          NavBarItem updatedItem = myPanel.getItemWithObject(item.getObject());
+          if (updatedItem == null) updatedItem = item;
+          show(updatedItem, false); // end-less loop protection
         });
       });
     } else {

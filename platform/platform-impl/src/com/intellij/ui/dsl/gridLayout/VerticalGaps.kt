@@ -2,6 +2,7 @@
 package com.intellij.ui.dsl.gridLayout
 
 import com.intellij.ui.dsl.checkNonNegative
+import com.intellij.ui.scale.JBUIScale
 
 data class VerticalGaps(val top: Int = 0, val bottom: Int = 0) {
   companion object {
@@ -16,4 +17,8 @@ data class VerticalGaps(val top: Int = 0, val bottom: Int = 0) {
 
   val height: Int
     get() = top + bottom
+}
+
+fun JBVerticalGaps(top: Int = 0, bottom: Int = 0): VerticalGaps {
+  return VerticalGaps(JBUIScale.scale(top), JBUIScale.scale(bottom))
 }

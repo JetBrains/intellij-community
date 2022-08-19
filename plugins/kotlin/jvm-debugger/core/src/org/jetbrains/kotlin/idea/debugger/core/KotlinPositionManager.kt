@@ -53,6 +53,7 @@ import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.core.*
 import org.jetbrains.kotlin.idea.debugger.core.AnalysisApiBasedInlineUtil.getResolvedFunctionCall
 import org.jetbrains.kotlin.idea.debugger.core.AnalysisApiBasedInlineUtil.getValueArgumentForExpression
+import org.jetbrains.kotlin.idea.debugger.core.AnalysisApiBasedInlineUtil.isInlinedArgument
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.getBorders
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.SourcePositionRefiner
@@ -67,7 +68,6 @@ import org.jetbrains.kotlin.load.java.JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_A
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
-import java.util.*
 
 class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiRequestPositionManager, PositionManagerWithMultipleStackFrames {
     private val stackFrameInterceptor: StackFrameInterceptor? = debugProcess.project.serviceOrNull()
@@ -299,16 +299,16 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         location: Location,
         currentLocationClassName: String
     ): KtFunction? {
-        for (literal in this) {
-            if (AnalysisApiBasedInlineUtil.isInlinedArgument(literal, true)) {
-                if (isInsideInlineArgument(literal, location, debugProcess as DebugProcessImpl)) {
+        val firstLiteral = firstOrNull() ?: return null
+        analyze(firstLiteral) {
+            forEach { literal ->
+                if (isInlinedArgument(literal, true)) {
+                    if (isInsideInlineArgument(literal, location, debugProcess as DebugProcessImpl)) {
+                        return literal
+                    }
+                } else if (literal.firstChild.calculatedClassNameMatches(currentLocationClassName)) {
                     return literal
                 }
-                continue
-            }
-
-            if (literal.firstChild.calculatedClassNameMatches(currentLocationClassName)) {
-                return literal
             }
         }
 

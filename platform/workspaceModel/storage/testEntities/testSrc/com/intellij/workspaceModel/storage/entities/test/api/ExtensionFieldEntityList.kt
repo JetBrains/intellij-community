@@ -56,8 +56,8 @@ interface AttachedEntityList : WorkspaceEntity {
   companion object : Type<AttachedEntityList, Builder>() {
     operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): AttachedEntityList {
       val builder = builder()
-      builder.entitySource = entitySource
       builder.data = data
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }

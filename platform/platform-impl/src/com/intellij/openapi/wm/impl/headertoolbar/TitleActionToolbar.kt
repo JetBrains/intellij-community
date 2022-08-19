@@ -1,13 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.headertoolbar
 
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
-import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ScalableIcon
@@ -15,6 +11,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.Header
 import com.intellij.util.ui.JBUI
 import java.awt.Dimension
 import javax.swing.Icon
+import javax.swing.JComponent
 import javax.swing.UIManager
 
 private val iconSize: Int
@@ -23,20 +20,18 @@ private val iconSize: Int
 internal class TitleActionToolbar(place: String, actionGroup: ActionGroup, horizontal: Boolean)
   : ActionToolbarImpl(place, actionGroup, horizontal) {
 
-  override fun createToolbarButton(action: AnAction,
-                                   look: ActionButtonLook?,
-                                   place: String,
-                                   presentation: Presentation,
-                                   minimumSize: Dimension): ActionButton {
-    scalePresentationIcons(presentation)
-    if (presentation.icon == null) presentation.icon = AllIcons.Toolbar.Unknown
-
+  init {
+    setCustomButtonLook(HeaderToolbarButtonLook())
     val insets = UIManager.getInsets("MainToolbar.Icon.borderInsets") ?: JBUI.insets(10)
     val size = Dimension(iconSize + insets.left + insets.right,
                          iconSize + insets.top + insets.bottom)
-    val button = ActionButton(action, presentation, ActionPlaces.MAIN_TOOLBAR, size)
-    button.setLook(HeaderToolbarButtonLook())
-    return button
+    setMinimumButtonSize(size)
+    setActionButtonBorder(JBUI.Borders.empty())
+  }
+
+  override fun applyToolbarLook(look: ActionButtonLook?, presentation: Presentation, component: JComponent) {
+    super.applyToolbarLook(look, presentation, component)
+    scalePresentationIcons(presentation)
   }
 
   override fun isAlignmentEnabled(): Boolean = false

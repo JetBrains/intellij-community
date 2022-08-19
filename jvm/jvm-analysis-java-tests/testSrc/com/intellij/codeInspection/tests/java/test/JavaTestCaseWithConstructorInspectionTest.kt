@@ -56,7 +56,7 @@ class JavaTestCaseWithConstructorInspectionTest : TestCaseWithConstructorInspect
       import junit.framework.TestCase;
 
       public class TestCaseWithConstructorInspection1 extends TestCase {
-          public <warning descr="Initialization logic in constructor 'TestCaseWithConstructorInspection1()' instead of 'setup' life cycle method">TestCaseWithConstructorInspection1</warning>() {
+          public <warning descr="Initialization logic in constructor 'TestCaseWithConstructorInspection1()' instead of 'setup()' life cycle method">TestCaseWithConstructorInspection1</warning>() {
               System.out.println("");
           }
       }
@@ -68,7 +68,7 @@ class JavaTestCaseWithConstructorInspectionTest : TestCaseWithConstructorInspect
       import junit.framework.TestCase;
       
       public class TestCaseWithConstructorInspection3 extends TestCase {
-          public <warning descr="Initialization logic in constructor 'TestCaseWithConstructorInspection3()' instead of 'setup' life cycle method">TestCaseWithConstructorInspection3</warning>() {
+          public <warning descr="Initialization logic in constructor 'TestCaseWithConstructorInspection3()' instead of 'setup()' life cycle method">TestCaseWithConstructorInspection3</warning>() {
               super();
               System.out.println("TestCaseWithConstructorInspection3.TestCaseWithConstructorInspection3");
           }
@@ -80,7 +80,7 @@ class JavaTestCaseWithConstructorInspectionTest : TestCaseWithConstructorInspect
   fun `test highlighting Junit 4`() {
     myFixture.testHighlighting(ULanguage.JAVA, """
       public class JUnit4TestCaseWithConstructor {
-        public <warning descr="Initialization logic in constructor 'JUnit4TestCaseWithConstructor()' instead of 'setup' life cycle method">JUnit4TestCaseWithConstructor</warning>() {
+        public <warning descr="Initialization logic in constructor 'JUnit4TestCaseWithConstructor()' instead of 'setup()' life cycle method">JUnit4TestCaseWithConstructor</warning>() {
           System.out.println();
           System.out.println();
           System.out.println();

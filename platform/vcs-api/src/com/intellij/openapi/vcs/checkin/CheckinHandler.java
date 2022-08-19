@@ -77,6 +77,7 @@ public abstract class CheckinHandler {
    * @param executor the commit executor, or {@code null} if the standard commit operation is executed.
    * @return the code indicating whether the check-in operation should be performed or aborted.
    */
+  @Nullable
   public ReturnResult beforeCheckin(@Nullable CommitExecutor executor, PairConsumer<Object, Object> additionalDataConsumer) {
     return beforeCheckin();
   }

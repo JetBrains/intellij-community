@@ -4,8 +4,8 @@ package com.intellij.java.codeInsight;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import org.intellij.lang.annotations.Language;
 import org.intellij.lang.regexp.inspection.DuplicateCharacterInClassInspection;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,13 +23,12 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
                           "  }\n" +
                           "}");
     IntentionAction action = myFixture.findSingleIntention("Split into declaration and assignment");
-    String text = myFixture.getIntentionPreviewText(action);
-    assertEquals("class Test {\n" +
-                 "  public void test() {\n" +
-                 "    int variable;\n" +
-                 "      variable = 2;\n" +
-                 "  }\n" +
-                 "}", text);
+    assertPreviewText(action, "class Test {\n" +
+                              "  public void test() {\n" +
+                              "    int variable;\n" +
+                              "      variable = 2;\n" +
+                              "  }\n" +
+                              "}");
   }
 
   public void testStaticImportsIntentionPreview() {
@@ -40,14 +39,13 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
                           "    }\n" +
                           "  }");
     IntentionAction action = myFixture.findSingleIntention("Add on-demand static import for 'java.lang.Math'");
-    String text = myFixture.getIntentionPreviewText(action);
-    assertEquals("import static java.lang.Math.*;\n" +
-                 "\n" +
-                 "class Computer {\n" +
-                 "    void f() {\n" +
-                 "      double pi = PI;\n" +
-                 "    }\n" +
-                 "  }", text);
+    assertPreviewText(action, "import static java.lang.Math.*;\n" +
+                              "\n" +
+                              "class Computer {\n" +
+                              "    void f() {\n" +
+                              "      double pi = PI;\n" +
+                              "    }\n" +
+                              "  }");
   }
 
   public void testIntentionPreviewWithTemplate() {
@@ -62,13 +60,12 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
                           "    }\n" +
                           "  }");
     IntentionAction action = myFixture.findSingleIntention("Initialize variable 'i'");
-    String text = myFixture.getIntentionPreviewText(action);
-    assertEquals("class Computer {\n" +
-                 "    void f() {\n" +
-                 "      int i = 0;\n" +
-                 "      int j = i;\n" +
-                 "    }\n" +
-                 "  }", text);
+    assertPreviewText(action, "class Computer {\n" +
+                              "    void f() {\n" +
+                              "      int i = 0;\n" +
+                              "      int j = i;\n" +
+                              "    }\n" +
+                              "  }");
   }
 
   public void testIntentionPreviewIterate() {
@@ -80,15 +77,14 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
                           "  }");
     IntentionAction action = myFixture.findSingleIntention("Iterate over Iterable<String>");
 
-    String text = myFixture.getIntentionPreviewText(action);
-    assertEquals("class Test {\n" +
-                 "    void f(Iterable<String> it) {\n" +
-                 "        for (String s : it) {\n" +
-                 "\n" +
-                 "        }\n" +
-                 "\n" +
-                 "    }\n" +
-                 "  }", text);
+    assertPreviewText(action, "class Test {\n" +
+                              "    void f(Iterable<String> it) {\n" +
+                              "        for (String s : it) {\n" +
+                              "\n" +
+                              "        }\n" +
+                              "\n" +
+                              "    }\n" +
+                              "  }");
   }
 
   public void testIntentionPreviewInjection() {
@@ -101,8 +97,7 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
                           "}");
     myFixture.enableInspections(new DuplicateCharacterInClassInspection());
     IntentionAction action = myFixture.findSingleIntention("Remove duplicate '1' from character class");
-    String text = myFixture.getIntentionPreviewText(action);
-    assertEquals("[\"123]", text);
+    assertEquals("[\"123]", myFixture.getIntentionPreviewText(action));
   }
 
   public void testBindFieldsFromParameters() {
@@ -113,17 +108,16 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
                           "    }\n" +
                           "}\n");
     IntentionAction action = myFixture.findSingleIntention("Bind constructor parameters to fields");
-    String text = myFixture.getIntentionPreviewText(action);
-    assertEquals("public    class    Test {\n" +
-                 "    private final int a;\n" +
-                 "    private final String b;\n" +
-                 "\n" +
-                 "    Test(int a, String b) {\n" +
-                 "\n" +
-                 "        this.a = a;\n" +
-                 "        this.b = b;\n" +
-                 "    }\n" +
-                 "}\n", text);
+    assertPreviewText(action, "public    class    Test {\n" +
+                              "    private final int a;\n" +
+                              "    private final String b;\n" +
+                              "\n" +
+                              "    Test(int a, String b) {\n" +
+                              "\n" +
+                              "        this.a = a;\n" +
+                              "        this.b = b;\n" +
+                              "    }\n" +
+                              "}\n");
   }
 
   public void testAddRemoveException() {
@@ -143,35 +137,35 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
                           "\n" +
                           "}");
     IntentionAction action = myFixture.findSingleIntention("Remove 'IOException' from 'test' throws list");
-    assertEquals("import java.io.IOException;\n" +
-                 "\n" +
-                 "public class A {\n" +
-                 "  String test() {\n" +
-                 "    return \"\";\n" +
-                 "  }\n" +
-                 "}\n" +
-                 "\n" +
-                 "class B extends A {\n" +
-                 "  String test() {\n" +
-                 "    return \"\";\n" +
-                 "  }\n" +
-                 "\n" +
-                 "}", myFixture.getIntentionPreviewText(action));
+    assertPreviewText(action, "import java.io.IOException;\n" +
+                              "\n" +
+                              "public class A {\n" +
+                              "  String test() {\n" +
+                              "    return \"\";\n" +
+                              "  }\n" +
+                              "}\n" +
+                              "\n" +
+                              "class B extends A {\n" +
+                              "  String test() {\n" +
+                              "    return \"\";\n" +
+                              "  }\n" +
+                              "\n" +
+                              "}");
     action = myFixture.findSingleIntention("Add 'IOException' to 'A.test' throws list");
-    assertEquals("import java.io.IOException;\n" +
-                 "\n" +
-                 "public class A {\n" +
-                 "  String test() throws IOException {\n" +
-                 "    return \"\";\n" +
-                 "  }\n" +
-                 "}\n" +
-                 "\n" +
-                 "class B extends A {\n" +
-                 "  String test() throws IOException {\n" +
-                 "    return \"\";\n" +
-                 "  }\n" +
-                 "\n" +
-                 "}", myFixture.getIntentionPreviewText(action));
+    assertPreviewText(action, "import java.io.IOException;\n" +
+                              "\n" +
+                              "public class A {\n" +
+                              "  String test() throws IOException {\n" +
+                              "    return \"\";\n" +
+                              "  }\n" +
+                              "}\n" +
+                              "\n" +
+                              "class B extends A {\n" +
+                              "  String test() throws IOException {\n" +
+                              "    return \"\";\n" +
+                              "  }\n" +
+                              "\n" +
+                              "}");
   }
 
   public void testDefineDefaultValues() {
@@ -182,16 +176,19 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
                           "    }\n" +
                           "}\n");
     IntentionAction action = myFixture.findSingleIntention("Generate overloaded method with default parameter values");
-    String text = myFixture.getIntentionPreviewText(action);
-    assertEquals("public class Test {\n" +
-                 "    void test() {\n" +
-                 "        test(0, null);\n" +
-                 "    }\n" +
-                 "\n" +
-                 "    void test(int a, String b) {\n" +
-                 "\n" +
-                 "    }\n" +
-                 "}\n", text);
+    assertPreviewText(action, "public class Test {\n" +
+                              "    void test() {\n" +
+                              "        test(0, null);\n" +
+                              "    }\n" +
+                              "\n" +
+                              "    void test(int a, String b) {\n" +
+                              "\n" +
+                              "    }\n" +
+                              "}\n");
+  }
+
+  private void assertPreviewText(@NotNull IntentionAction action, @Language("JAVA") @NotNull String expectedText) {
+    assertEquals(expectedText, myFixture.getIntentionPreviewText(action));
   }
 
   public void testRenameFile() {

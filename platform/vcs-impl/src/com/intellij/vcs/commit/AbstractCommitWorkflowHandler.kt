@@ -4,6 +4,8 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.FilePath
@@ -11,9 +13,12 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ChangesUtil.getFilePath
+import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction
+import com.intellij.openapi.vcs.changes.ui.SessionDialog
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.ui.Refreshable
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.forEachLoggingErrors
 import com.intellij.util.containers.mapNotNullLoggingErrors
 import com.intellij.util.ui.UIUtil.replaceMnemonicAmpersand
@@ -102,80 +107,65 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   override fun execute(executor: CommitExecutor) = executorCalled(executor)
   override fun executorCalled(executor: CommitExecutor?) =
     workflow.startExecution {
-      val session = executor?.createCommitSession(commitContext)
+      val sessionInfo = if (executor != null) {
+        val session = executor.createCommitSession(commitContext)
+        CommitSessionInfo.Custom(executor, session)
+      }
+      else {
+        CommitSessionInfo.Default
+      }
 
-      if (session == null || session === CommitSession.VCS_COMMIT) executeDefault(executor)
-      else executeCustom(executor, session)
+      executeSession(sessionInfo)
     }
 
-  override fun executionStarted() = Unit
-  override fun executionEnded() = Unit
+  override fun beforeCommitChecksStarted(sessionInfo: CommitSessionInfo) = ui.startBeforeCommitChecks()
+  override fun beforeCommitChecksEnded(sessionInfo: CommitSessionInfo, result: CommitChecksResult) = ui.endBeforeCommitChecks(result)
 
-  override fun beforeCommitChecksStarted() = ui.startBeforeCommitChecks()
-  override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CommitChecksResult) = ui.endBeforeCommitChecks(result)
-
-  private fun executeDefault(executor: CommitExecutor?): Boolean {
-    val proceed = checkCommit(executor) &&
-                  addUnversionedFiles() &&
+  @RequiresEdt
+  private fun executeSession(sessionInfo: CommitSessionInfo): Boolean {
+    val proceed = checkCommit(sessionInfo) &&
+                  prepareForCommitExecution(sessionInfo) &&
                   saveCommitOptionsOnCommit()
     if (!proceed) return false
 
     saveCommitMessage(true)
-    logCommitEvent(executor)
+    logCommitEvent(sessionInfo)
 
     refreshChanges {
       workflow.continueExecution {
-        updateWorkflow()
-        doExecuteDefault(executor)
+        updateWorkflow(sessionInfo) &&
+        doExecuteSession(sessionInfo)
       }
     }
     return true
   }
 
-  private fun executeCustom(executor: CommitExecutor, session: CommitSession): Boolean {
-    val proceed = checkCommit(executor) &&
-                  canExecute(executor) &&
-                  saveCommitOptionsOnCommit()
-    if (!proceed) return false
-
-    saveCommitMessage(true)
-    logCommitEvent(executor)
-
-    refreshChanges {
-      workflow.continueExecution {
-        updateWorkflow()
-        doExecuteCustom(executor, session)
-      }
-    }
-    return true
-  }
-
-  private fun logCommitEvent(executor: CommitExecutor?) {
-    CommitSessionCollector.getInstance(project).logCommit(executor?.id,
+  private fun logCommitEvent(sessionInfo: CommitSessionInfo) {
+    CommitSessionCollector.getInstance(project).logCommit(sessionInfo.executor?.id,
                                                           ui.getIncludedChanges().size,
                                                           ui.getIncludedUnversionedFiles().size)
   }
 
-  protected open fun updateWorkflow() = Unit
+  protected abstract fun updateWorkflow(sessionInfo: CommitSessionInfo): Boolean
 
-  protected abstract fun checkCommit(executor: CommitExecutor?): Boolean
-
-  protected abstract fun addUnversionedFiles(): Boolean
-
-  protected fun addUnversionedFiles(changeList: LocalChangeList, inclusionModel: InclusionModel): Boolean {
-    val unversionedFiles = getIncludedUnversionedFiles().mapNotNull { it.virtualFile }
-    return workflow.addUnversionedFiles(changeList, unversionedFiles) { newChanges ->
-      inclusionModel.addInclusion(newChanges)
-    }
+  /**
+   * Check that commit can be performed with given parameters.
+   */
+  @RequiresEdt
+  protected open fun checkCommit(sessionInfo: CommitSessionInfo): Boolean {
+    return workflow.canExecute(sessionInfo, getIncludedChanges())
   }
 
-  protected open fun doExecuteDefault(executor: CommitExecutor?): Boolean {
-    return workflow.executeDefault(executor)
-  }
+  /**
+   * Prepare for the commit operation. Ex: add selected unversioned files into VCS.
+   *
+   * @return false if commit operation should be cancelled.
+   */
+  @RequiresEdt
+  protected open fun prepareForCommitExecution(sessionInfo: CommitSessionInfo): Boolean = true
 
-  private fun canExecute(executor: CommitExecutor): Boolean = workflow.canExecute(executor, getIncludedChanges())
-  private fun doExecuteCustom(executor: CommitExecutor, session: CommitSession): Boolean {
-    return workflow.executeCustom(executor, session)
+  protected open fun doExecuteSession(sessionInfo: CommitSessionInfo): Boolean {
+    return workflow.executeSession(sessionInfo)
   }
 
   protected open fun saveCommitOptionsOnCommit(): Boolean {
@@ -208,4 +198,29 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     }
 
   override fun dispose() = Unit
+
+  companion object {
+    fun configureCommitSession(project: Project,
+                               sessionInfo: CommitSessionInfo,
+                               changes: List<Change>,
+                               commitMessage: String): Boolean {
+      if (sessionInfo is CommitSessionInfo.Custom) {
+        val title = sessionInfo.executor.getPresentableText()
+        return SessionDialog.configureCommitSession(project, title, sessionInfo.session, changes, commitMessage)
+      }
+      return true
+    }
+
+    fun addUnversionedFiles(project: Project,
+                            unversionedFilePaths: Iterable<FilePath>,
+                            changeList: LocalChangeList,
+                            inclusionModel: InclusionModel): Boolean {
+      val unversionedFiles = unversionedFilePaths.mapNotNull { it.virtualFile }
+      if (unversionedFiles.isEmpty()) return true
+
+      FileDocumentManager.getInstance().saveAllDocuments()
+      return ScheduleForAdditionAction.addUnversionedFilesToVcs(project, changeList, unversionedFiles,
+                                                                { newChanges -> inclusionModel.addInclusion(newChanges) }, null)
+    }
+  }
 }

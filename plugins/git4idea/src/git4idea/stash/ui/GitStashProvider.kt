@@ -207,6 +207,9 @@ class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesP
 
     override fun getFilePath(): FilePath = ChangesUtil.getFilePath(change)
 
+    override val originalFilePath: FilePath?
+      get() = ChangesUtil.getBeforePath(change)
+
     override fun getFileStatus(): FileStatus = change.fileStatus
 
     override fun getTag(): ChangesBrowserNode.Tag? = changeTag

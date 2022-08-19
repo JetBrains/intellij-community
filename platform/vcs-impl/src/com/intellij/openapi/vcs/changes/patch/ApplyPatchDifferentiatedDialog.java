@@ -158,7 +158,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     myRecentPathFileChange = new AtomicReference<>();
     myBinaryShelvedPatches = binaryShelvedPatches;
     myPreselectedChanges = preselectedChanges;
-    myErrorNotificationPanel = new EditorNotificationPanel(LightColors.RED);
+    myErrorNotificationPanel = new EditorNotificationPanel(LightColors.RED, EditorNotificationPanel.Status.Error);
     cleanNotifications();
     myChangesTreeList = new MyChangeTreeList(project,
                                              new Runnable() {

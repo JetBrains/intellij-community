@@ -220,14 +220,14 @@ public abstract class ArchiveHandler {
    */
   protected final void processEntry(@NotNull Map<String, EntryInfo> map,
                                     @NotNull String entryName,
-                                    @Nullable BiFunction<@NotNull EntryInfo, @NotNull String, @NotNull ? extends EntryInfo> entryFun) {
+                                    @Nullable BiFunction<@NotNull EntryInfo, @NotNull String, ? extends @NotNull EntryInfo> entryFun) {
     processEntry(map, null, entryName, entryFun);
   }
 
   protected final void processEntry(@NotNull Map<String, EntryInfo> map,
                                     @Nullable Logger logger,
                                     @NotNull String entryName,
-                                    @SuppressWarnings("BoundedWildcard") @Nullable BiFunction<@NotNull EntryInfo, @NotNull String, @NotNull ? extends EntryInfo> entryFun) {
+                                    @SuppressWarnings("BoundedWildcard") @Nullable BiFunction<@NotNull EntryInfo, @NotNull String, ? extends @NotNull EntryInfo> entryFun) {
     String normalizedName = normalizeName(entryName);
     if (normalizedName.isEmpty() || normalizedName.contains("..") && ArrayUtil.contains("..", normalizedName.split("/"))) {
       if (logger != null) logger.trace("invalid entry: " + getFile() + "!/" + entryName);

@@ -14,7 +14,7 @@ open class DefaultCodeVisionPainter<T>(
   private val textPainter: ICodeVisionEntryBasePainter<T>,
   theme: CodeVisionTheme? = null
 ) : ICodeVisionEntryBasePainter<T> {
-  val theme = theme ?: CodeVisionTheme()
+  val theme: CodeVisionTheme = theme ?: CodeVisionTheme()
 
   private val iconPainter = CodeVisionScaledIconPainter()
 

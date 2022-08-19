@@ -34,10 +34,10 @@ class AddLibraryDependencyFix extends OrderEntryFix {
   private final DependencyScope myScope;
   private final boolean myExported;
 
-  AddLibraryDependencyFix(PsiReference reference,
-                          Module currentModule,
-                          Map<Library, String> libraries,
-                          DependencyScope scope,
+  AddLibraryDependencyFix(@NotNull PsiReference reference,
+                          @NotNull Module currentModule,
+                          @NotNull Map<Library, String> libraries,
+                          @NotNull DependencyScope scope,
                           boolean exported) {
     super(reference);
     myCurrentModule = currentModule;

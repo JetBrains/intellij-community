@@ -17,7 +17,6 @@ class LombokGradleProjectResolverExtension : AbstractProjectResolverExtension() 
 
     override fun getToolingExtensionsClasses() = setOf(
         modelClass,
-        LombokGradleProjectResolverExtension::class.java,
         Unit::class.java
     )
 

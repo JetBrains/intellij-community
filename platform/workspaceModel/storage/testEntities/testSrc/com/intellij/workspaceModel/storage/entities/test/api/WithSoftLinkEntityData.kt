@@ -230,8 +230,8 @@ interface WithListSoftLinksEntity : WorkspaceEntityWithPersistentId {
                         init: (Builder.() -> Unit)? = null): WithListSoftLinksEntity {
       val builder = builder()
       builder.myName = myName
-      builder.entitySource = entitySource
       builder.links = links.toMutableWorkspaceList()
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }
@@ -280,8 +280,8 @@ interface ComposedIdSoftRefEntity : WorkspaceEntityWithPersistentId {
                         init: (Builder.() -> Unit)? = null): ComposedIdSoftRefEntity {
       val builder = builder()
       builder.myName = myName
-      builder.entitySource = entitySource
       builder.link = link
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }

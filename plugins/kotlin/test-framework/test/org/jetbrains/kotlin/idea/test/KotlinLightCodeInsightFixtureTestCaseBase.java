@@ -49,6 +49,7 @@ public abstract class KotlinLightCodeInsightFixtureTestCaseBase extends LightJav
 
     @Override
     protected void setUp() throws Exception {
+        System.setProperty("idea.kotlin.plugin.use.k2", Boolean.toString(isFirPlugin()));
         super.setUp();
         checkPluginIsCorrect(isFirPlugin());
     }

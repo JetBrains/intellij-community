@@ -1,4 +1,4 @@
-// "Cast to 'long'" "true-preview"
+// "Cast lambda return to 'long'" "true-preview"
 import java.util.function.*;
 
 class Demo {

@@ -1,7 +1,5 @@
 package com.intellij.workspaceModel.codegen.deft.model
 
-import com.intellij.workspaceModel.codegen.SKIPPED_TYPES
-import com.intellij.workspaceModel.storage.EntitySource
 import org.jetbrains.deft.Obj
 import org.jetbrains.deft.ObjBuilder
 import com.intellij.workspaceModel.codegen.deft.ObjModule
@@ -26,8 +24,6 @@ class DefType(
     abstract = def.abstract
     sealed = def.sealed
   }
-
-  val utilityType get() = superTypes.any { it.name == EntitySource::class.simpleName } || name in SKIPPED_TYPES
 
   fun verify(diagnostics: Diagnostics) {
     val base = base

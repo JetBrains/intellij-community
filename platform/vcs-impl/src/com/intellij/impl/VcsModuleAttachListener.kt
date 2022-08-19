@@ -30,12 +30,15 @@ class VcsModuleAttachListener : ModuleAttachListener {
     val project = primaryModule.project
     val vcsManager = ProjectLevelVcsManager.getInstance(project)
     val mappings = vcsManager.directoryMappings
-    if (mappings.size == 1) {
+    val singleMapping = mappings.singleOrNull()
+    if (singleMapping != null) {
       val contentRoots = ModuleRootManager.getInstance(primaryModule).contentRoots
+      val singleContentRoot = contentRoots.singleOrNull()
       // if we had one mapping for the root of the primary module and the added module uses the same VCS, change mapping to <Project Root>
-      if (contentRoots.size == 1 && FileUtil.filesEqual(File(contentRoots[0].path), File(mappings[0].directory))) {
+      if (singleContentRoot != null && singleContentRoot.isInLocalFileSystem &&
+          FileUtil.filesEqual(File(singleContentRoot.path), File(singleMapping.directory))) {
         val vcs = vcsManager.findVersioningVcs(addedModuleContentRoot)
-        if (vcs != null && vcs.name == mappings[0].vcs) {
+        if (vcs != null && vcs.name == singleMapping.vcs) {
           vcsManager.directoryMappings = listOf(VcsDirectoryMapping.createDefault(vcs.name))
           return
         }
@@ -56,7 +59,7 @@ class VcsModuleAttachListener : ModuleAttachListener {
     val newMappings = ArrayList(mappings)
     for (mapping in mappings) {
       for (root in ModuleRootManager.getInstance(module).contentRoots) {
-        if (FileUtil.filesEqual(File(root.path), File(mapping.directory))) {
+        if (root.isInLocalFileSystem && FileUtil.filesEqual(File(root.path), File(mapping.directory))) {
           newMappings.remove(mapping)
         }
       }

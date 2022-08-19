@@ -1,4 +1,4 @@
-// "Replace Optional.isPresent() condition with functional style expression" "true-preview"
+// "Replace Optional presence condition with functional style expression" "true-preview"
 
 import java.util.Collection;
 import java.util.Collections;

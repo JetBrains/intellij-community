@@ -19,5 +19,12 @@ class KotlinLineBreakpointHandlerFactory : JavaBreakpointHandlerFactory {
     }
 }
 
+class KotlinFunctionBreakpointHandlerFactory : JavaBreakpointHandlerFactory {
+    override fun createHandler(process: DebugProcessImpl): JavaBreakpointHandler {
+        return KotlinFunctionBreakpointHandler(process)
+    }
+}
+
+class KotlinFunctionBreakpointHandler(process: DebugProcessImpl) : JavaBreakpointHandler(KotlinFunctionBreakpointType::class.java, process)
 class KotlinFieldBreakpointHandler(process: DebugProcessImpl) : JavaBreakpointHandler(KotlinFieldBreakpointType::class.java, process)
 class KotlinLineBreakpointHandler(process: DebugProcessImpl) : JavaBreakpointHandler(KotlinLineBreakpointType::class.java, process)

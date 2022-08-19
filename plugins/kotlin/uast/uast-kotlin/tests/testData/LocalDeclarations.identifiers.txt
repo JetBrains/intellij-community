@@ -7,7 +7,7 @@ Boolean -> USimpleNameReferenceExpression (identifier = Boolean)
         Local -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))
     Int -> USimpleNameReferenceExpression (identifier = Int)
     someLocalFun -> ULambdaExpression
-    text -> [!] UnknownKotlinExpression (VALUE_PARAMETER)
+    text -> UParameter (name = text)
     String -> USimpleNameReferenceExpression (identifier = String)
     bar -> UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
     == -> USimpleNameReferenceExpression (identifier = ==)

@@ -408,6 +408,9 @@ public class RegExpParser implements PsiParser, LightPsiParser {
     else if (type == RegExpTT.PYTHON_NAMED_GROUP_REF || type == RegExpTT.PCRE_RECURSIVE_NAMED_GROUP_REF) {
       parseNamedGroupRef(builder, marker, RegExpTT.GROUP_END);
     }
+    else if (type == RegExpTT.PCRE_NUMBERED_GROUP_REF) {
+      parseNumberedGroupRef(builder, marker);
+    }
     else if (type == RegExpTT.RUBY_NAMED_GROUP_REF || type == RegExpTT.RUBY_NAMED_GROUP_CALL) {
       parseNamedGroupRef(builder, marker, RegExpTT.GT);
     }
@@ -456,7 +459,13 @@ public class RegExpParser implements PsiParser, LightPsiParser {
     }
     else {
       if (RegExpTT.GROUP_BEGIN == type) {
-        parseGroupReferenceCondition(builder, RegExpTT.GROUP_END);
+        IElementType lookAhead = builder.lookAhead(1);
+        if (RegExpTT.PCRE_CONDITIONS.contains(lookAhead)) {
+          parsePcreConditionalGroup(builder);
+        }
+        else {
+          parseGroupReferenceCondition(builder, RegExpTT.GROUP_END);
+        }
       }
       else if (RegExpTT.QUOTED_CONDITION_BEGIN == type) {
         parseGroupReferenceCondition(builder, RegExpTT.QUOTED_CONDITION_END);
@@ -502,10 +511,25 @@ public class RegExpParser implements PsiParser, LightPsiParser {
     checkMatches(builder, RegExpTT.GROUP_END, RegExpBundle.message("parse.error.unclosed.group"));
   }
 
+  private static void parsePcreConditionalGroup(PsiBuilder builder) {
+    final PsiBuilder.Marker marker = builder.mark();
+    builder.advanceLexer();
+    builder.advanceLexer();
+    checkMatches(builder, RegExpTT.GROUP_END, RegExpBundle.message("parse.error.unclosed.group.reference"));
+    marker.done(RegExpElementTypes.GROUP);
+  }
+
   private static void parseNamedGroupRef(PsiBuilder builder, PsiBuilder.Marker marker, IElementType type) {
     builder.advanceLexer();
     checkMatches(builder, RegExpTT.NAME, RegExpBundle.message("parse.error.group.name.expected"));
     checkMatches(builder, type, RegExpBundle.message("parse.error.unclosed.group.reference"));
+    marker.done(RegExpElementTypes.NAMED_GROUP_REF);
+  }
+
+  private static void parseNumberedGroupRef(PsiBuilder builder, PsiBuilder.Marker marker) {
+    builder.advanceLexer();
+    checkMatches(builder, RegExpTT.NUMBER, RegExpBundle.message("parse.error.group.number.expected"));
+    checkMatches(builder, RegExpTT.GROUP_END, RegExpBundle.message("parse.error.unclosed.group.reference"));
     marker.done(RegExpElementTypes.NAMED_GROUP_REF);
   }
 

@@ -34,8 +34,8 @@ interface VFUEntity : WorkspaceEntity {
                         init: (Builder.() -> Unit)? = null): VFUEntity {
       val builder = builder()
       builder.data = data
-      builder.entitySource = entitySource
       builder.fileProperty = fileProperty
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }
@@ -71,9 +71,9 @@ interface VFUWithTwoPropertiesEntity : WorkspaceEntity {
                         init: (Builder.() -> Unit)? = null): VFUWithTwoPropertiesEntity {
       val builder = builder()
       builder.data = data
-      builder.entitySource = entitySource
       builder.fileProperty = fileProperty
       builder.secondFileProperty = secondFileProperty
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }
@@ -137,8 +137,8 @@ interface ListVFUEntity : WorkspaceEntity {
                         init: (Builder.() -> Unit)? = null): ListVFUEntity {
       val builder = builder()
       builder.data = data
-      builder.entitySource = entitySource
       builder.fileProperty = fileProperty.toMutableWorkspaceList()
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }
@@ -171,8 +171,8 @@ interface SetVFUEntity : WorkspaceEntity {
                         init: (Builder.() -> Unit)? = null): SetVFUEntity {
       val builder = builder()
       builder.data = data
-      builder.entitySource = entitySource
       builder.fileProperty = fileProperty.toMutableWorkspaceSet()
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }

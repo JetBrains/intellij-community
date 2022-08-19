@@ -34,6 +34,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebugSession
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.checkKotlinPluginKind
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinEvaluator
 import org.jetbrains.kotlin.idea.debugger.test.preference.*
 import org.jetbrains.kotlin.idea.debugger.test.util.BreakpointCreator
@@ -45,8 +46,10 @@ import org.jetbrains.kotlin.idea.test.KotlinTestUtils.*
 import org.jetbrains.kotlin.idea.test.TestFiles.TestFileFactory
 import org.jetbrains.kotlin.idea.test.TestFiles.createTestFiles
 import org.jetbrains.kotlin.test.TargetBackend
+import org.jetbrains.kotlin.test.utils.IgnoreTests
 import org.junit.ComparisonFailure
 import java.io.File
+import java.nio.file.Paths
 
 internal const val KOTLIN_LIBRARY_NAME = "KotlinJavaRuntime"
 internal const val TEST_LIBRARY_NAME = "TestLibrary"
@@ -81,8 +84,21 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
         librarySrcDirectory = File(testAppDirectory, "libSrc").apply { mkdirs() }
         libraryOutputDirectory = File(testAppDirectory, "lib").apply { mkdirs() }
 
-        super.runBare(testRunnable)
+        if (isK2Plugin) {
+            IgnoreTests.runTestIfNotDisabledByFileDirective(
+                dataFile().toPath(),
+                getK2IgnoreDirective(),
+                directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE
+            ) {
+                super.runBare(testRunnable)
+            }
+        } else {
+            super.runBare(testRunnable)
+        }
+
     }
+
+    protected open fun getK2IgnoreDirective(): String = IgnoreTests.DIRECTIVES.IGNORE_K2
 
     var originalUseIrBackendForEvaluation = true
 
@@ -99,6 +115,8 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
             .setValue(originalUseIrBackendForEvaluation)
     }
 
+    protected open val isK2Plugin: Boolean get() = false
+
     override fun setUp() {
         super.setUp()
 
@@ -106,6 +124,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
 
         KotlinEvaluator.LOG_COMPILATIONS = true
         logPropagator = LogPropagator(::systemLogger).apply { attach() }
+        checkPluginIsCorrect(isK2Plugin)
     }
 
     override fun tearDown() {
@@ -149,6 +168,9 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
     protected open fun configureProjectByTestFiles(testFiles: List<TestFileWithModule>) {
     }
 
+    protected open fun createDebuggerTestCompilerFacility(testFiles: TestFiles, jvmTarget: JvmTarget, useIrBackend: Boolean) =
+        DebuggerTestCompilerFacility(testFiles, jvmTarget, useIrBackend)
+
     @Suppress("UNUSED_PARAMETER")
     fun doTest(unused: String) {
         val wholeFile = dataFile()
@@ -164,7 +186,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
         val rawJvmTarget = preferences[DebuggerPreferenceKeys.JVM_TARGET]
         val jvmTarget = JvmTarget.fromString(rawJvmTarget) ?: error("Invalid JVM target value: $rawJvmTarget")
 
-        val compilerFacility = DebuggerTestCompilerFacility(testFiles, jvmTarget, useIrBackend())
+        val compilerFacility = createDebuggerTestCompilerFacility(testFiles, jvmTarget, useIrBackend())
 
         for (library in preferences[DebuggerPreferenceKeys.ATTACH_LIBRARY]) {
             if (library.startsWith("maven("))

@@ -12,7 +12,7 @@ private val Empty = object : PopupInlineActionsSupport {
   override fun hasExtraButtons(element: Any): Boolean = false
   override fun calcExtraButtonsCount(element: Any): Int = 0
   override fun calcButtonIndex(element: Any?, point: Point): Int? = null
-  override fun runInlineAction(element: Any, index: Int, event: InputEvent?) {}
+  override fun runInlineAction(element: Any, index: Int, event: InputEvent?) = false
   override fun getExtraButtons(list: JList<*>, value: Any, isSelected: Boolean): List<JComponent> = emptyList()
 }
 
@@ -24,7 +24,7 @@ internal interface PopupInlineActionsSupport {
 
   fun calcButtonIndex(element: Any?, point: Point): Int?
 
-  fun runInlineAction(element: Any, index: Int, event: InputEvent? = null)
+  fun runInlineAction(element: Any, index: Int, event: InputEvent? = null) : Boolean
 
   fun getExtraButtons(list: JList<*>, value: Any, isSelected: Boolean): List<JComponent>
 

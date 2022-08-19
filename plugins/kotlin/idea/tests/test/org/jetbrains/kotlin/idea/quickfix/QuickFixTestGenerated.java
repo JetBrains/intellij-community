@@ -1024,11 +1024,6 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/addGenericUpperBound/inferenceTwoParams.kt");
         }
 
-        @TestMetadata("kClassRuntime.kt")
-        public void testKClassRuntime() throws Exception {
-            runTest("testData/quickfix/addGenericUpperBound/kClassRuntime.kt");
-        }
-
         @TestMetadata("paramAsBound.kt")
         public void testParamAsBound() throws Exception {
             runTest("testData/quickfix/addGenericUpperBound/paramAsBound.kt");
@@ -1261,6 +1256,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         @TestMetadata("suspend.kt")
         public void testSuspend() throws Exception {
             runTest("testData/quickfix/addNoinline/suspend.kt");
+        }
+
+        @TestMetadata("withCrossinline.kt")
+        public void testWithCrossinline() throws Exception {
+            runTest("testData/quickfix/addNoinline/withCrossinline.kt");
         }
     }
 
@@ -1626,6 +1626,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             @TestMetadata("array.kt")
             public void testArray() throws Exception {
                 runTest("testData/quickfix/addStarProjections/checkType/array.kt");
+            }
+
+            @TestMetadata("arrayInWhen.kt")
+            public void testArrayInWhen() throws Exception {
+                runTest("testData/quickfix/addStarProjections/checkType/arrayInWhen.kt");
             }
 
             @TestMetadata("changeToStarProjectionMultipleParameters.kt")
@@ -11715,6 +11720,19 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         @TestMetadata("suspend.kt")
         public void testSuspend() throws Exception {
             runTest("testData/quickfix/removeNoConstructor/suspend.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/removePrivateFromSealedConstructor")
+    public static class RemovePrivateFromSealedConstructor extends AbstractQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("base.kt")
+        public void testBase() throws Exception {
+            runTest("testData/quickfix/removePrivateFromSealedConstructor/base.kt");
         }
     }
 

@@ -156,7 +156,6 @@ public final class JavaBuilderUtil {
    * @param filesToCompile   files compiled in this round
    * @param markDirtyRound   compilation round at which dirty files should be visible to builders
    * @return true if additional compilation pass is required, false otherwise
-   * @throws Exception
    */
   private static boolean updateMappings(CompileContext context,
                                         final Mappings delta,

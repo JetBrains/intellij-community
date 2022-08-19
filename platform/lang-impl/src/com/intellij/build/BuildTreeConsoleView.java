@@ -1221,6 +1221,11 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       Editor editor = myConsoleViewHandler.getEditor();
       if (editor == null) return;

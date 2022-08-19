@@ -151,19 +151,17 @@ class PreviewStaticServer : HttpRequestHandler() {
         HttpResponseStatus.NOT_FOUND.send(channel, request)
         return
       }
-      val response: FullHttpResponse = DefaultFullHttpResponse(
+      val response = DefaultFullHttpResponse(
         HttpVersion.HTTP_1_1,
         HttpResponseStatus.OK,
         Unpooled.wrappedBuffer(resource.content)
       )
       with(response) {
-        if (resource.type != null) {
-          headers()[HttpHeaderNames.CONTENT_TYPE] = resource.type
+        headers()[HttpHeaderNames.CONTENT_TYPE] = when (val type = resource.type) {
+          null -> guessContentType(resourceName)
+          else -> type
         }
-        else {
-          headers()[HttpHeaderNames.CONTENT_TYPE] = guessContentType(resourceName)
-        }
-        headers()[HttpHeaderNames.CACHE_CONTROL] = "private, must-revalidate"
+        headers()[HttpHeaderNames.CACHE_CONTROL] = "no-cache"
         headers()[HttpHeaderNames.LAST_MODIFIED] = Date(lastModified)
         send(channel, request)
       }

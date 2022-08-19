@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
-import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
+import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 import org.jetbrains.plugins.github.util.GithubNotificationIdsHolder
 import org.jetbrains.plugins.github.util.GithubNotifications
 import org.jetbrains.plugins.github.util.GithubUtil
@@ -42,6 +42,8 @@ open class GHOpenInBrowserActionGroup
   : ActionGroup(GithubBundle.messagePointer("open.on.github.action"),
                 GithubBundle.messagePointer("open.on.github.action.description"),
                 AllIcons.Vcs.Vendors.Github), DumbAware {
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
     val data = getData(e.dataContext)
@@ -87,7 +89,7 @@ open class GHOpenInBrowserActionGroup
     val repository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(fileRevision.path)
     if (repository == null) return null
 
-    val accessibleRepositories = project.service<GHProjectRepositoriesManager>().findKnownRepositories(repository)
+    val accessibleRepositories = project.service<GHHostedRepositoriesManager>().findKnownRepositories(repository)
     if (accessibleRepositories.isEmpty()) return null
 
     return accessibleRepositories.map { Data.Revision(project, it.ghRepositoryCoordinates, fileRevision.revisionNumber.asString()) }
@@ -105,7 +107,7 @@ open class GHOpenInBrowserActionGroup
     if (repository == null) return null
 
 
-    val accessibleRepositories = project.service<GHProjectRepositoriesManager>().findKnownRepositories(repository)
+    val accessibleRepositories = project.service<GHHostedRepositoriesManager>().findKnownRepositories(repository)
     if (accessibleRepositories.isEmpty()) return null
 
     return accessibleRepositories.map { Data.Revision(project, it.ghRepositoryCoordinates, commit.hash.asString()) }
@@ -118,7 +120,7 @@ open class GHOpenInBrowserActionGroup
     if (repository == null) return null
 
 
-    val accessibleRepositories = project.service<GHProjectRepositoriesManager>().findKnownRepositories(repository)
+    val accessibleRepositories = project.service<GHHostedRepositoriesManager>().findKnownRepositories(repository)
     if (accessibleRepositories.isEmpty()) return null
 
     val changeListManager = ChangeListManager.getInstance(project)
@@ -161,6 +163,8 @@ open class GHOpenInBrowserActionGroup
   private companion object {
     class GithubOpenInBrowserAction(val data: Data)
       : DumbAwareAction({ data.getName() }) {
+
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
       override fun actionPerformed(e: AnActionEvent) {
         when (data) {

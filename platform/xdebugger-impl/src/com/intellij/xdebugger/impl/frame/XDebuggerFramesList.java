@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -25,6 +26,8 @@ import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBScalableIcon;
 import com.intellij.util.ui.TextTransferable;
@@ -49,7 +52,7 @@ import java.util.*;
 
 public class XDebuggerFramesList extends DebuggerFramesList implements DataProvider {
   private final Project myProject;
-  private final Map<VirtualFile, Color> myFileColors = new HashMap<>();
+  private final FileColorsCache myFileColorsCache;
   private static final DataKey<XDebuggerFramesList> FRAMES_LIST = DataKey.create("FRAMES_LIST");
 
   private void copyStack() {
@@ -89,6 +92,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
 
   public XDebuggerFramesList(@NotNull Project project) {
     myProject = project;
+    myFileColorsCache = new FileColorsCache(project);
 
     doInit();
 
@@ -134,10 +138,10 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
       }
       return null;
     }
-    if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
       XStackFrame frame = getSelectedFrame();
       if (frame != null) {
-        return List.<DataProvider>of(realDataId -> getSlowData(frame, realDataId));
+        return (DataProvider)realDataId -> getSlowData(frame, realDataId);
       }
     }
     return null;
@@ -163,7 +167,6 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
   @Override
   public void clear() {
     super.clear();
-    myFileColors.clear();
   }
 
   public boolean selectFrame(@NotNull XStackFrame toSelect) {
@@ -237,7 +240,7 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
   }
 
   private class XDebuggerGroupedFrameListRenderer extends GroupedItemsListRenderer {
-    private final XDebuggerFrameListRenderer myOriginalRenderer = new XDebuggerFrameListRenderer(myProject);
+    private final XDebuggerFrameListRenderer myOriginalRenderer = new XDebuggerFrameListRenderer();
 
     XDebuggerGroupedFrameListRenderer() {
       super(new ListItemDescriptorAdapter() {
@@ -279,19 +282,14 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
     @Override
     protected JComponent createItemComponent() {
       createLabel();
-      return new XDebuggerFrameListRenderer(myProject);
+      return new XDebuggerFrameListRenderer();
     }
   }
 
   private class XDebuggerFrameListRenderer extends ColoredListCellRenderer {
-    private final FileColorManager myColorsManager;
     private final XDebuggerPopFrameIcon myPopFrameIcon = JBUIScale.scaleIcon(
       new XDebuggerPopFrameIcon(AllIcons.Actions.InlineDropFrame, AllIcons.Actions.InlineDropFrameSelected, 16, 16)
     );
-
-    XDebuggerFrameListRenderer(@NotNull Project project) {
-      myColorsManager = FileColorManager.getInstance(project);
-    }
 
     @Override
     protected void customizeCellRenderer(@NotNull final JList list,
@@ -386,22 +384,57 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
       if (stackFrame instanceof ItemWithCustomBackgroundColor) {
         return ((ItemWithCustomBackgroundColor)stackFrame).getBackgroundColor();
       }
-      VirtualFile virtualFile = getFile(stackFrame);
+      return myFileColorsCache.get(getFile(stackFrame));
+    }
+  }
+
+  private class FileColorsCache {
+    private static final Color NULL_COLOR = JBColor.marker("NULL_COLOR");
+    private static final Color COMPUTING_COLOR = JBColor.marker("COMPUTING_COLOR");
+    private final FileColorManager myColorsManager;
+    private volatile Map<VirtualFile, Color> myFileColors = new HashMap<>();
+
+    private FileColorsCache(Project project) {
+      myColorsManager = FileColorManager.getInstance(project);
+    }
+
+    @RequiresEdt
+    @Nullable
+    Color get(@Nullable VirtualFile virtualFile) {
       if (virtualFile != null) {
-        // handle null value
-        if (myFileColors.containsKey(virtualFile)) {
-          return myFileColors.get(virtualFile);
+        Color res = myFileColors.get(virtualFile);
+        if (res != null) {
+          return res == NULL_COLOR || res == COMPUTING_COLOR ? null : res;
         }
         else if (virtualFile.isValid()) {
-          Color color = myColorsManager.getFileColor(virtualFile);
-          myFileColors.put(virtualFile, color);
-          return color;
+          Map<VirtualFile, Color> fileColors = myFileColors;
+          fileColors.put(virtualFile, COMPUTING_COLOR);
+          ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            if (fileColors == myFileColors) { // check if it is obsolete already
+              Color color = myColorsManager.getFileColor(virtualFile);
+              EdtExecutorService.getInstance().execute(() -> {
+                if (fileColors == myFileColors) { // check if it is obsolete already
+                  fileColors.put(virtualFile, color == null ? NULL_COLOR : color);
+                  if (!fileColors.containsValue(COMPUTING_COLOR)) {
+                    repaint();
+                  }
+                }
+              });
+            }
+          });
         }
       }
       else {
         return myColorsManager.getScopeColor(NonProjectFilesScope.NAME);
       }
       return null;
+    }
+
+    // for now cache file colors for the whole session duration
+    @SuppressWarnings("unused")
+    @RequiresEdt
+    void clear() {
+      myFileColors = new HashMap<>();
     }
   }
 
@@ -419,7 +452,6 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
     @Override
     public void update(@NotNull AnActionEvent e) {
       XDebuggerFramesList framesList = e.getData(FRAMES_LIST);
-      //noinspection unchecked
       e.getPresentation().setEnabledAndVisible(framesList != null && ContainerUtil.getLastItem(framesList.getModel().getItems()) != null);
     }
 
@@ -462,7 +494,6 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
      * For a mouse click event it tries to find {@link XDebuggerFrameListRenderer}
      * and call {@link XDebuggerFrameListRenderer#onMouseEvent(MouseEvent, int)}.
      *
-     * @param list
      */
     private void installListeners(@NotNull XDebuggerFramesList list) {
       addTo(list);

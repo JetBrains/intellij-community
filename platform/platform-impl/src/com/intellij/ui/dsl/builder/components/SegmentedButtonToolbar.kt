@@ -153,6 +153,10 @@ internal class DeprecatedSegmentedButtonAction<T>(val option: T,
       property.set(option)
     }
   }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 }
 
 @Deprecated("Use Row.segmentedButton")

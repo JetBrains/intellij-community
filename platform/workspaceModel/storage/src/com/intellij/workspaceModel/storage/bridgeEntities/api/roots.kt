@@ -1,16 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.bridgeEntities.api
 
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.annotations.Child
 import org.jetbrains.deft.Type
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.MutableEntityStorage
+import org.jetbrains.deft.annotations.Child
 
 
 
@@ -19,6 +19,7 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 interface ContentRootEntity : WorkspaceEntity {
     val module: ModuleEntity
 
+    @EqualsBy
     val url: VirtualFileUrl
     val excludedUrls: List<VirtualFileUrl>
     val excludedPatterns: List<String>
@@ -44,10 +45,10 @@ interface ContentRootEntity : WorkspaceEntity {
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): ContentRootEntity {
       val builder = builder()
-      builder.entitySource = entitySource
       builder.url = url
       builder.excludedUrls = excludedUrls.toMutableWorkspaceList()
       builder.excludedPatterns = excludedPatterns.toMutableWorkspaceList()
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }
@@ -89,9 +90,9 @@ interface SourceRootEntity : WorkspaceEntity {
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): SourceRootEntity {
       val builder = builder()
-      builder.entitySource = entitySource
       builder.url = url
       builder.rootType = rootType
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }
@@ -123,8 +124,8 @@ interface SourceRootOrderEntity : WorkspaceEntity {
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): SourceRootOrderEntity {
       val builder = builder()
-      builder.entitySource = entitySource
       builder.orderOfSourceRoots = orderOfSourceRoots.toMutableWorkspaceList()
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }
@@ -156,8 +157,8 @@ interface CustomSourceRootPropertiesEntity: WorkspaceEntity {
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): CustomSourceRootPropertiesEntity {
       val builder = builder()
-      builder.entitySource = entitySource
       builder.propertiesXmlTag = propertiesXmlTag
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }
@@ -193,9 +194,9 @@ interface JavaSourceRootEntity : WorkspaceEntity {
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): JavaSourceRootEntity {
       val builder = builder()
-      builder.entitySource = entitySource
       builder.generated = generated
       builder.packagePrefix = packagePrefix
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }
@@ -230,9 +231,9 @@ interface JavaResourceRootEntity: WorkspaceEntity {
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): JavaResourceRootEntity {
       val builder = builder()
-      builder.entitySource = entitySource
       builder.generated = generated
       builder.relativeOutputPath = relativeOutputPath
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }

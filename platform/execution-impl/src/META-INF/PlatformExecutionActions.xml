@@ -47,6 +47,8 @@
   </actions>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.execution.runToolbar.RunToolbarSlotManager"/>
+    <projectService serviceImplementation="com.intellij.execution.runToolbar.RunWidgetResizeController"/>
+    <projectService serviceImplementation="com.intellij.execution.runToolbar.RunWidgetWidthHelper"/>
     <actionPromoter implementation="com.intellij.execution.runToolbar.RunToolbarActionPromoter"/>
     <projectService serviceImplementation="com.intellij.execution.runToolbar.RunToolbarSettings"/>
     <projectConfigurable groupId="build" provider="com.intellij.execution.runToolbar.RunToolbarSettingsConfigurableProvider" />
@@ -57,6 +59,10 @@
     <projectService serviceImplementation="com.intellij.execution.ui.RunConfigurationStartHistory"/>
     <customizableActionGroupProvider implementation="com.intellij.execution.ui.RunToolbarWidgetCustomizableActionGroupProvider"/>
     <postStartupActivity implementation="com.intellij.execution.ui.ExecutionReasonableHistoryManager" order="last"/>
+    <registryKey key="ide.experimental.ui.redesigned.run.widget"
+                 description="Use redesigned run widget"
+                 defaultValue="FALSE"
+                 restartRequired="false"/>
   </extensions>
   <project-components>
     <component>

@@ -668,9 +668,10 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   }
 
   /**
-   * file parameterized tests support
+   * File parameterized tests support.
+   * <p>
+   * &#064;Parameterized.Parameter  fields are injected on parameterized test creation.
    * @see FileBasedTestCaseHelperEx
-   * @Parameterized.Parameter fields are injected on parameterized test creation.
    */
   @Parameterized.Parameter
   public String myFileSuffix;

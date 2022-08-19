@@ -276,7 +276,7 @@ object WrapWithSafeLetCallFixFactories {
                     else -> true
                 }
             }
-            // Qualified expression can always just be updated with a safe call operator to to make it accept nullable receiver. Hence we
+            // Qualified expression can always be updated with a safe call operator to make it accept nullable receiver. Hence, we
             // don't want to offer the wrap with let call quickfix.
             parent is KtQualifiedExpression && parent.receiverExpression == expression -> true
             // Ideally we should do more analysis on the control structure to determine if the type can actually allow null here. But that

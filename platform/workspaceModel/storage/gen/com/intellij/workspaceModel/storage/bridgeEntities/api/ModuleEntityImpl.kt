@@ -15,6 +15,7 @@ import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
@@ -159,6 +160,17 @@ open class ModuleEntityImpl : ModuleEntity, WorkspaceEntityBase() {
 
     override fun connectionIdList(): List<ConnectionId> {
       return connections
+    }
+
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as ModuleEntity
+      this.name = dataSource.name
+      this.entitySource = dataSource.entitySource
+      this.type = dataSource.type
+      this.dependencies = dataSource.dependencies.toMutableList()
+      if (parents != null) {
+      }
     }
 
 
@@ -624,6 +636,17 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ModuleEntity(name, dependencies, entitySource) {
+      this.type = this@ModuleEntityData.type
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
@@ -655,5 +678,32 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
     result = 31 * result + type.hashCode()
     result = 31 * result + dependencies.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + name.hashCode()
+    result = 31 * result + type.hashCode()
+    result = 31 * result + dependencies.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.add(ModuleId::class.java)
+    collector.add(ModuleDependencyItem.Exportable.LibraryDependency::class.java)
+    collector.add(LibraryId::class.java)
+    collector.add(ModuleDependencyItem.Exportable::class.java)
+    collector.add(ModuleDependencyItem.DependencyScope::class.java)
+    collector.add(ModuleDependencyItem::class.java)
+    collector.add(LibraryTableId.ModuleLibraryTableId::class.java)
+    collector.add(ModuleDependencyItem.SdkDependency::class.java)
+    collector.add(LibraryTableId.GlobalLibraryTableId::class.java)
+    collector.add(LibraryTableId::class.java)
+    collector.add(ModuleDependencyItem.Exportable.ModuleDependency::class.java)
+    collector.addObject(ModuleDependencyItem.ModuleSourceDependency::class.java)
+    collector.addObject(ModuleDependencyItem.InheritedSdkDependency::class.java)
+    collector.addObject(LibraryTableId.ProjectLibraryTableId::class.java)
+    this.dependencies?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = false
   }
 }

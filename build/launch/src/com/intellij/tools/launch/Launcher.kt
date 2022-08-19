@@ -68,6 +68,8 @@ object Launcher {
       "-XX:MaxJavaStackTraceDepth=10000",
       "-XX:ReservedCodeCacheSize=240m",
       "-XX:SoftRefLRUPolicyMSPerMB=50",
+      "-XX:+UnlockDiagnosticVMOptions",
+      "-XX:+BytecodeVerificationLocal",
       "-Dshared.indexes.download.auto.consent=true"
     )
 

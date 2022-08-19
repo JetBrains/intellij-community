@@ -1113,7 +1113,6 @@ public final class EditorUtil {
 
   /**
    * Tells whether maximum allowed number of carets is reached in editor. If it's the case, notification is shown
-   * ({@link #checkMaxCarets(Editor)}).
    */
   public static boolean checkMaxCarets(@NotNull Editor editor) {
     CaretModel caretModel = editor.getCaretModel();

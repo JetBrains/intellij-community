@@ -67,11 +67,6 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
         }
 
-        @TestMetadata("checkArgumentTypes.test")
-        public void testCheckArgumentTypes() throws Exception {
-            runTest("../idea/tests/testData/quickfix/autoImports/mismatchingArgs/checkArgumentTypes.test");
-        }
-
         @TestMetadata("constantExpectedTypeMismatch.test")
         public void testConstantExpectedTypeMismatch() throws Exception {
             runTest("../idea/tests/testData/quickfix/autoImports/mismatchingArgs/constantExpectedTypeMismatch.test");
@@ -120,11 +115,6 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
         @TestMetadata("ignoreErrorsOutsideCall.test")
         public void testIgnoreErrorsOutsideCall() throws Exception {
             runTest("../idea/tests/testData/quickfix/autoImports/mismatchingArgs/ignoreErrorsOutsideCall.test");
-        }
-
-        @TestMetadata("lambdaArgument.test")
-        public void testLambdaArgument() throws Exception {
-            runTest("../idea/tests/testData/quickfix/autoImports/mismatchingArgs/lambdaArgument.test");
         }
 
         @TestMetadata("namedArgument.test")

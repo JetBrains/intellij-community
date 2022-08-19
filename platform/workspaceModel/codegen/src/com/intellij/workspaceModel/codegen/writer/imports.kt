@@ -34,7 +34,7 @@ private val KFunction<*>.fqn: QualifiedName
 fun wsFqn(name: QualifiedName): QualifiedName {
   val packageName = when (name.decoded) {
     "VirtualFileUrl" -> "com.intellij.workspaceModel.storage.url"
-    "EntitySource", "referrersx", "referrersy"-> "com.intellij.workspaceModel.storage"
+    "EntitySource" -> "com.intellij.workspaceModel.storage"
     else -> return name
   }
 

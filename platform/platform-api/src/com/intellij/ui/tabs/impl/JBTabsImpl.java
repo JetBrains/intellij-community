@@ -533,7 +533,7 @@ public class JBTabsImpl extends JComponent
       Color tabBg = myTabPainter.getBackgroundColor();
       Color transparent = ColorUtil.withAlpha(tabBg, 0);
       if (showLeftFadeout) {
-        Rectangle leftSide = new Rectangle(0, more.getY() - 1, width, more.getHeight() - 1);
+        Rectangle leftSide = new Rectangle(0, moreY, width, moreHeight - 1);
         ((Graphics2D)g).setPaint(
           new GradientPaint(leftSide.x, leftSide.y, tabBg, leftSide.x + leftSide.width,
                             leftSide.y, transparent));
@@ -1241,7 +1241,7 @@ public class JBTabsImpl extends JComponent
         LOG.debug("preferred focusable component: " + toFocus);
       }
 
-      if (toFocus == null) {
+      if (toFocus == null || !toFocus.isShowing()) {
         return null;
       }
       final JComponent policyToFocus = myFocusManager.getFocusTargetFor(toFocus);
@@ -1446,15 +1446,12 @@ public class JBTabsImpl extends JComponent
     }
 
     if (myRequestFocusOnLastFocusedComponent && mySelectedInfo != null && isMyChildIsFocusedNow()) {
-      mySelectedInfo.setLastFocusOwner(getFocusOwner());
+      mySelectedInfo.setLastFocusOwner(getFocusOwnerToStore());
     }
 
     TabInfo oldInfo = mySelectedInfo;
     mySelectedInfo = info;
     TabInfo newInfo = getSelectedInfo();
-    if (myRequestFocusOnLastFocusedComponent && newInfo != null) {
-      newInfo.setLastFocusOwner(null);
-    }
 
     TabLabel label = myInfo2Label.get(info);
     if (label != null) {
@@ -1505,6 +1502,15 @@ public class JBTabsImpl extends JComponent
     }
   }
 
+  @Nullable
+  protected JComponent getFocusOwnerToStore() {
+    JComponent owner = getFocusOwner();
+    if (owner == null) return null;
+    JBTabsImpl tabs = ComponentUtil.getParentOfType(JBTabsImpl.class, owner.getParent());
+    if (tabs != this) return null;
+    return owner;
+  }
+
   private void fireBeforeSelectionChanged(@Nullable TabInfo oldInfo, TabInfo newInfo) {
     if (oldInfo != newInfo) {
       myOldSelection = oldInfo;
@@ -1551,15 +1557,17 @@ public class JBTabsImpl extends JComponent
     if (toFocus == null) return ActionCallback.DONE;
 
     if (isShowing()) {
+      ActionCallback res = new ActionCallback();
       ApplicationManager.getApplication().invokeLater(() -> {
         if (inWindow) {
           toFocus.requestFocusInWindow();
+          res.setDone();
         }
         else {
-          myFocusManager.requestFocusInProject(toFocus, myProject);
+          myFocusManager.requestFocusInProject(toFocus, myProject).notifyWhenDone(res);
         }
-      }, ModalityState.NON_MODAL);
-      return ActionCallback.DONE;
+      });
+      return res;
     }
     return ActionCallback.REJECTED;
   }
@@ -2995,6 +3003,10 @@ public class JBTabsImpl extends JComponent
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+    @Override
     protected boolean borderIndex(List<TabInfo> infos, int index) {
       return index == infos.size() - 1;
     }
@@ -3061,6 +3073,10 @@ public class JBTabsImpl extends JComponent
       super(IdeActions.ACTION_PREVIOUS_TAB, tabs, parentDisposable);
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
     @Override
     protected void _update(final AnActionEvent e, final JBTabsImpl tabs, int selectedIndex) {
       e.getPresentation().setEnabled(tabs.findEnabledBackward(selectedIndex, true) != null);
@@ -4014,6 +4030,11 @@ public class JBTabsImpl extends JComponent
       myLabel.setIcon(pair.first);
       //noinspection HardCodedStringLiteral
       myLabel.setText(pair.second);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

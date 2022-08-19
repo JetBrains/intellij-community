@@ -11,6 +11,7 @@ import java.util.*;
  * <p/>
  * Copied from {@link AbstractList} with modCount field removed, because the implementations are supposed to be immutable, so
  * it makes no sense to waste memory on modCount.
+ * @param <E> the list element type
  */
 public abstract class ImmutableList<E> extends AbstractCollection<E> implements List<E> {
   @NotNull
@@ -96,8 +97,7 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
   public ImmutableList<E> subList(int fromIndex, int toIndex) {
     // optimization: do not excessively nest SubLists one into the other
     if (this instanceof SubList) {
-      //noinspection unchecked
-      List<E> original = ((SubList)this).l;
+      List<? extends E> original = ((SubList<? extends E>)this).l;
       int originalOffset = ((SubList<?>)this).offset;
       return new SubList<>(original, fromIndex + originalOffset, toIndex + originalOffset);
     }
@@ -114,10 +114,11 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
     }
 
     ListIterator<E> e1 = listIterator();
-    ListIterator e2 = ((List)o).listIterator();
+    //noinspection unchecked
+    ListIterator<E> e2 = ((List<E>)o).listIterator();
     while (e1.hasNext() && e2.hasNext()) {
       E o1 = e1.next();
-      Object o2 = e2.next();
+      E o2 = e2.next();
       if (!Objects.equals(o1, o2)) {
         return false;
       }
@@ -251,9 +252,12 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
     }
   }
 
+  /**
+   * @see ContainerUtil#immutableSingletonList(Object) for explanation
+   */
   @NotNull
   @Contract("_ -> new")
-  public static <T> ImmutableList<T> singleton(T element) {
+  static <T> ImmutableList<T> singleton(T element) {
     return new Singleton<>(element);
   }
   private static class Singleton<E> extends ImmutableList<E> {

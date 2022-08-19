@@ -2,11 +2,12 @@
 package org.jetbrains.kotlin.idea.inspections.dfa
 
 import com.intellij.codeInspection.dataFlow.value.RelationType
-import org.jetbrains.kotlin.idea.codeInsight.hints.RangeBinaryKtExpressionType
+import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType
+import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType.*
 
-fun RangeBinaryKtExpressionType.getRelationType() =
+fun RangeKtExpressionType.getRelationType() =
     when (this) {
-        RangeBinaryKtExpressionType.rangeTo -> RelationType.GE to RelationType.LE
-        RangeBinaryKtExpressionType.rangeUntil, RangeBinaryKtExpressionType.until -> RelationType.GE to RelationType.LT
-        RangeBinaryKtExpressionType.downTo -> RelationType.LE to RelationType.GE
+        RANGE_TO -> RelationType.GE to RelationType.LE
+        RANGE_UNTIL, UNTIL -> RelationType.GE to RelationType.LT
+        DOWN_TO -> RelationType.LE to RelationType.GE
     }

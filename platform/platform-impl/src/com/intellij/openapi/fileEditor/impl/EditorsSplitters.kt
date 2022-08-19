@@ -117,6 +117,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
       return getSplittersToFocus(project)?.currentWindow?.selectedComposite?.preferredFocusedComponent
     }
 
+    @JvmStatic
     fun focusDefaultComponentInSplittersIfPresent(project: Project): Boolean {
       findDefaultComponentInSplitters(project)?.let {
         // not requestFocusInWindow because if floating or windowed tool window is deactivated (or, ESC pressed to focus editor),

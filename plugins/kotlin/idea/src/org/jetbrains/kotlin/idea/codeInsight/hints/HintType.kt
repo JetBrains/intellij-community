@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType.*
 import org.jetbrains.kotlin.idea.parameterInfo.*
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.getReturnTypeReference
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 enum class HintType(
@@ -175,25 +174,24 @@ enum class HintType(
             val leftExp = binaryExpression.left ?: return emptyList()
             val rightExp = binaryExpression.right ?: return emptyList()
             val operationReference: KtOperationReferenceExpression = binaryExpression.operationReference
-            val operation = operationReference.resolveToCall()?.candidateDescriptor?.fqNameSafe?.asString() ?: return emptyList()
-            val (leftText: String?, rightText: String?) = when (operation) {
-                "kotlin.ranges.downTo" -> {
+            val type = binaryExpression.getRangeBinaryExpressionType() ?: return emptyList()
+            val (leftText: String, rightText: String?) = when (type) {
+                RANGE_TO -> {
+                    KotlinBundle.message("hints.ranges.lessOrEqual") to KotlinBundle.message("hints.ranges.lessOrEqual")
+                }
+                RANGE_UNTIL -> {
+                    KotlinBundle.message("hints.ranges.lessOrEqual") to null
+                }
+                DOWN_TO -> {
                     if (operationReference.hasIllegalLiteralPrefixOrSuffix()) return emptyList()
 
                     KotlinBundle.message("hints.ranges.greaterOrEqual") to KotlinBundle.message("hints.ranges.greaterOrEqual")
                 }
-                "kotlin.ranges.until" -> {
+                UNTIL -> {
                     if (operationReference.hasIllegalLiteralPrefixOrSuffix()) return emptyList()
 
                     KotlinBundle.message("hints.ranges.lessOrEqual") to KotlinBundle.message("hints.ranges.less")
                 }
-                in rangeToTypes -> {
-                    KotlinBundle.message("hints.ranges.lessOrEqual") to KotlinBundle.message("hints.ranges.lessOrEqual")
-                }
-                "kotlin.ranges.rangeUntil" -> {
-                    KotlinBundle.message("hints.ranges.lessOrEqual") to null
-                }
-                else -> return emptyList()
             }
             val leftInfo = InlayInfo(text = leftText, offset = leftExp.endOffset)
             val rightInfo = rightText?.let { InlayInfo(text = it, offset = rightExp.startOffset) }
@@ -242,14 +240,3 @@ sealed class InlayInfoDetail(val text: String)
 class TextInlayInfoDetail(text: String, val smallText: Boolean = true): InlayInfoDetail(text)
 class TypeInlayInfoDetail(text: String, val fqName: String?): InlayInfoDetail(text)
 class PsiInlayInfoDetail(text: String, val element: PsiElement): InlayInfoDetail(text)
-
-private val rangeToTypes = setOf(
-    "kotlin.Byte.rangeTo",
-    "kotlin.Short.rangeTo",
-    "kotlin.Char.rangeTo",
-    "kotlin.Int.rangeTo",
-    "kotlin.Long.rangeTo",
-    "kotlin.UInt.rangeTo",
-    "kotlin.ULong.rangeTo",
-    "kotlin.ranges.rangeTo",
-)

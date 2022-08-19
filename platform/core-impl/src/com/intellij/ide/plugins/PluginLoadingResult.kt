@@ -84,12 +84,6 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
 
   private fun add(descriptor: IdeaPluginDescriptorImpl, overrideUseIfCompatible: Boolean, productBuildNumber: BuildNumber) {
     val pluginId = descriptor.pluginId
-    if (java.lang.Boolean.getBoolean("ide.per.project.instance")
-        && !PathManager.getPluginsDir().name.startsWith("perProject_")
-        && !ApplicationInfoImpl.getShadowInstance().isEssentialPlugin(pluginId)) {
-      return
-    }
-
     descriptor.isIncomplete?.let { error ->
       addIncompletePlugin(descriptor, error.takeIf { !it.isDisabledError })
       return
@@ -108,7 +102,7 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
     // remove any error that occurred for plugin with the same `id`
     pluginErrors.remove(pluginId)
     incompletePlugins.remove(pluginId)
-    val prevDescriptor = if (descriptor.onDemand) null else enabledPluginsById.put(pluginId, descriptor)
+    val prevDescriptor = enabledPluginsById.put(pluginId, descriptor)
     if (prevDescriptor == null) {
       idMap.put(pluginId, descriptor)
       for (module in descriptor.modules) {

@@ -640,12 +640,8 @@ public final class PsiVFSListener implements BulkFileListener {
       ApplicationManager.getApplication().runWriteAction(
         (ExternalChangeAction)() -> {
           depthCounter--;
+          assert depthCounter >= 0 : depthCounter;
           if (depthCounter > 0) return;
-          if (depthCounter < 0) {
-            //FIXME: Project root manager should not send unbalanced events!
-            LOG.warn(new Throwable("Unbalanced beforeRootsChange/rootsChanged events: " + depthCounter));
-            depthCounter = 0;
-          }
 
           DebugUtil.performPsiModification(null, fileManager::possiblyInvalidatePhysicalPsi);
 

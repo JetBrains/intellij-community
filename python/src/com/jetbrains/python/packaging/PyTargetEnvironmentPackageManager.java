@@ -14,7 +14,6 @@ import com.intellij.execution.target.TargetedCommandLine;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.util.ExecUtil;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -22,8 +21,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.HelperPackage;
@@ -178,12 +177,16 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
   @Nullable
   @Override
   public List<PyPackage> getPackages() {
+    if (!Registry.is("python.use.targets.api")) {
+      return Collections.emptyList();
+    }
     final List<PyPackage> packages = myPackagesCache;
     return packages != null ? Collections.unmodifiableList(packages) : null;
   }
 
   @Override
   protected @NotNull List<PyPackage> collectPackages() throws ExecutionException {
+    assertUseTargetsAPIFlagEnabled();
     if (getSdk() instanceof PyLazySdk) {
       return List.of();
     }
@@ -210,6 +213,12 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
     }
 
     return parsePackagingToolOutput(output);
+  }
+
+  private static void assertUseTargetsAPIFlagEnabled() throws ExecutionException {
+    if (!Registry.is("python.use.targets.api")) {
+      throw new ExecutionException(PySdkBundle.message("python.sdk.please.reconfigure.interpreter"));
+    }
   }
 
   @Override

@@ -122,39 +122,39 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   public boolean supportModuleGroups() {
-    return !MavenProjectImporter.isImportToWorkspaceModelEnabled()
+    return !MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject)
            && !MavenProjectImporter.isLegacyImportToTreeStructureEnabled(myProject);
   }
 
   public boolean supportsKeepingManualChanges() {
-    return !MavenProjectImporter.isImportToWorkspaceModelEnabled();
+    return !MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject);
   }
 
   public boolean supportsImportOfNonExistingFolders() {
-    return MavenProjectImporter.isImportToWorkspaceModelEnabled();
+    return MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject);
   }
 
   public boolean supportsKeepingModulesFromPreviousImport() {
-    return !MavenProjectImporter.isImportToWorkspaceModelEnabled()
+    return !MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject)
            && !MavenProjectImporter.isLegacyImportToTreeStructureEnabled(myProject);
   }
 
   public boolean supportsLegacyKeepingFoldersFromPreviousImport() {
-    return !MavenProjectImporter.isImportToWorkspaceModelEnabled();
+    return !MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject);
   }
 
   public boolean supportsKeepingFacetsFromPreviousImport() {
-    return !MavenProjectImporter.isImportToWorkspaceModelEnabled();
+    return !MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject);
   }
 
   public boolean supportsCreateAggregatorOption() {
-    return !MavenProjectImporter.isImportToWorkspaceModelEnabled()
+    return !MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject)
            && !MavenProjectImporter.isLegacyImportToTreeStructureEnabled(myProject);
   }
 
   public boolean supportsZeroEventsOnNoProjectChange() {
     // IDEA-297902 WorkspaceModel#updateProjectModel should not trigger VersionedStorageChange events, if nothing actually changes
-    return !MavenProjectImporter.isImportToWorkspaceModelEnabled();
+    return !MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject);
   }
 
   protected void stopMavenImportManager() {

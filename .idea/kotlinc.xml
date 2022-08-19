@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="Kotlin2JvmCompilerArguments">
-    <option name="jvmTarget" value="11" />
+    <option name="jvmTarget" value="17" />
   </component>
   <component name="KotlinCommonCompilerArguments">
     <option name="apiVersion" value="1.7" />
     <option name="languageVersion" value="1.7" />
   </component>
   <component name="KotlinCompilerSettings">
-    <option name="additionalArguments" value="-version -Xjvm-default=enable -Xopt-in=com.intellij.openapi.util.IntellijInternalApi" />
+    <option name="additionalArguments" value="-Xjvm-default=enable -opt-in=com.intellij.openapi.util.IntellijInternalApi" />
   </component>
   <component name="KotlinJpsPluginSettings">
     <option name="version" value="1.7.0-release-282" />

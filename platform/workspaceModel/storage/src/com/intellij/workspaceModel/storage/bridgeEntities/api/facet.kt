@@ -45,9 +45,9 @@ interface FacetEntity: WorkspaceEntityWithPersistentId {
                         init: (Builder.() -> Unit)? = null): FacetEntity {
       val builder = builder()
       builder.name = name
-      builder.entitySource = entitySource
       builder.facetType = facetType
       builder.moduleId = moduleId
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }

@@ -1,4 +1,4 @@
-// COMPILER_ARGUMENTS: -XXLanguage:-NewInference
+// WITH_STDLIB
 
 class A
 
@@ -9,5 +9,5 @@ open class X<T : A>(x: List<T>, f: (T) -> Int) {
 class Y : X<A>(listOf(A()), { 1 })
 
 fun test() {
-    X(listOf(A())) { 1 }
+    X<A>(listOf(A())) { 1 }
 }

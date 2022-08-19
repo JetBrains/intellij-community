@@ -17,3 +17,5 @@ fun lambdaInPlaceCall() {
 
     }
 }
+
+var lambdaVarWithType: (String) -> Int = { it.length }

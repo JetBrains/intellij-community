@@ -1,12 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
-import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.intention.FileModifier;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -25,7 +25,8 @@ import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
 
 public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implements LocalQuickFix {
   protected static final Logger LOG = Logger.getInstance(BaseConvertToLocalQuickFix.class);
@@ -41,6 +42,11 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
     return false;
   }
 
+  @Override
+  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
+    return LocalQuickFix.super.getFileModifierForPreview(target);
+  }
+
   @Nullable
   protected abstract V getVariable(@NotNull ProblemDescriptor descriptor);
 
@@ -54,7 +60,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final V variable = getVariable(descriptor);
     if (variable == null || !variable.isValid()) return; //weird. should not get here when field becomes invalid
-    if (!FileModificationService.getInstance().prepareFileForWrite(descriptor.getPsiElement().getContainingFile())) return;
+    if (!IntentionPreviewUtils.prepareElementForWrite(descriptor.getPsiElement())) return;
     final PsiFile myFile = variable.getContainingFile();
     try {
       final List<PsiElement> newDeclarations = moveDeclaration(project, variable);
@@ -74,7 +80,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
       final PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(newVariable.getInitializer());
       if (VariableAccessUtils.isLocalVariableCopy(newVariable, initializer)) {
         Collection<PsiReference> references = ReferencesSearch.search(newVariable).findAll();
-        WriteAction.run(() -> {
+        IntentionPreviewUtils.write(() -> {
           for (PsiReference reference : references) {
             CommonJavaInlineUtil.getInstance().inlineVariable(newVariable, initializer, (PsiJavaCodeReferenceElement)reference, null);
           }

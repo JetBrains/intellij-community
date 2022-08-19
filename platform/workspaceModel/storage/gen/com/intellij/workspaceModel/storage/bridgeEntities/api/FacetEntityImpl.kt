@@ -15,6 +15,7 @@ import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToManyParent
@@ -123,6 +124,20 @@ open class FacetEntityImpl : FacetEntity, WorkspaceEntityBase() {
 
     override fun connectionIdList(): List<ConnectionId> {
       return connections
+    }
+
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as FacetEntity
+      this.name = dataSource.name
+      this.entitySource = dataSource.entitySource
+      this.facetType = dataSource.facetType
+      this.configurationXmlTag = dataSource.configurationXmlTag
+      this.moduleId = dataSource.moduleId
+      if (parents != null) {
+        this.module = parents.filterIsInstance<ModuleEntity>().single()
+        this.underlyingFacet = parents.filterIsInstance<FacetEntity>().singleOrNull()
+      }
     }
 
 
@@ -336,6 +351,20 @@ class FacetEntityData : WorkspaceEntityData.WithCalculablePersistentId<FacetEnti
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return FacetEntity(name, facetType, moduleId, entitySource) {
+      this.configurationXmlTag = this@FacetEntityData.configurationXmlTag
+      this.module = parents.filterIsInstance<ModuleEntity>().single()
+      this.underlyingFacet = parents.filterIsInstance<FacetEntity>().singleOrNull()
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(ModuleEntity::class.java)
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
@@ -370,5 +399,19 @@ class FacetEntityData : WorkspaceEntityData.WithCalculablePersistentId<FacetEnti
     result = 31 * result + configurationXmlTag.hashCode()
     result = 31 * result + moduleId.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + name.hashCode()
+    result = 31 * result + facetType.hashCode()
+    result = 31 * result + configurationXmlTag.hashCode()
+    result = 31 * result + moduleId.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.add(ModuleId::class.java)
+    collector.sameForAllEntities = true
   }
 }

@@ -41,8 +41,7 @@ import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
-import org.jetbrains.kotlin.idea.codeInsight.hints.RangeBinaryKtExpressionType
-import org.jetbrains.kotlin.idea.codeInsight.hints.RangeBinaryKtExpressionType.*
+import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType.*
 import org.jetbrains.kotlin.idea.codeInsight.hints.getRangeBinaryExpressionType
 import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.*
@@ -1279,8 +1278,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             if (range is KtBinaryExpression) {
                 val type = range.getRangeBinaryExpressionType()
                 val pair = when (type) {
-                    rangeTo, until, rangeUntil -> range.left to range.right
-                    null, downTo -> null
+                    RANGE_TO, UNTIL, RANGE_UNTIL -> range.left to range.right
+                    null, DOWN_TO -> null
                 }
                 if (type != null && pair != null) {
                     val (left, right) = pair
@@ -1376,6 +1375,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val right = expr.right
         val endOffset = DeferredOffset()
         processExpression(left)
+        val targetType = expr.getKotlinType() // Boolean
+        addImplicitConversion(left, targetType)
         val nextOffset = DeferredOffset()
         addInstruction(ConditionalGotoInstruction(nextOffset, DfTypes.booleanValue(and), left))
         val anchor = KotlinExpressionAnchor(expr)
@@ -1384,6 +1385,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         setOffset(nextOffset)
         addInstruction(FinishElementInstruction(null))
         processExpression(right)
+        addImplicitConversion(right, targetType)
         setOffset(endOffset)
         addInstruction(ResultOfInstruction(anchor))
     }

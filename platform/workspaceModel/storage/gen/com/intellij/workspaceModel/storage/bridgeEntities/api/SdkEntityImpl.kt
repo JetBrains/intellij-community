@@ -13,6 +13,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
@@ -97,6 +98,16 @@ open class SdkEntityImpl : SdkEntity, WorkspaceEntityBase() {
 
     override fun connectionIdList(): List<ConnectionId> {
       return connections
+    }
+
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as SdkEntity
+      this.entitySource = dataSource.entitySource
+      this.homeUrl = dataSource.homeUrl
+      if (parents != null) {
+        this.library = parents.filterIsInstance<LibraryEntity>().single()
+      }
     }
 
 
@@ -195,6 +206,18 @@ class SdkEntityData : WorkspaceEntityData<SdkEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return SdkEntity(homeUrl, entitySource) {
+      this.library = parents.filterIsInstance<LibraryEntity>().single()
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(LibraryEntity::class.java)
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
@@ -220,5 +243,16 @@ class SdkEntityData : WorkspaceEntityData<SdkEntity>() {
     var result = entitySource.hashCode()
     result = 31 * result + homeUrl.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + homeUrl.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    this.homeUrl?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = false
   }
 }

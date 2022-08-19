@@ -1008,16 +1008,22 @@ private fun buildCrossPlatformZip(distResults: List<DistributionForOsTaskResult>
       ProductInfoLaunchData(os = OsFamily.WINDOWS.osName,
                             launcherPath = "bin/${executableName}.bat",
                             javaExecutablePath = null,
-                            vmOptionsFilePath = "bin/win/${executableName}64.exe.vmoptions"),
+                            vmOptionsFilePath = "bin/win/${executableName}64.exe.vmoptions",
+                            bootClassPathJarNames = context.bootClassPathJarNames,
+                            additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS)),
       ProductInfoLaunchData(os = OsFamily.LINUX.osName,
                             launcherPath = "bin/${executableName}.sh",
                             javaExecutablePath = null,
                             vmOptionsFilePath = "bin/linux/${executableName}64.vmoptions",
-                            startupWmClass = getLinuxFrameClass(context)),
+                            startupWmClass = getLinuxFrameClass(context),
+                            bootClassPathJarNames = context.bootClassPathJarNames,
+                            additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX)),
       ProductInfoLaunchData(os = OsFamily.MACOS.osName,
                             launcherPath = "MacOS/$executableName",
                             javaExecutablePath = null,
-                            vmOptionsFilePath = "bin/mac/${executableName}.vmoptions")
+                            vmOptionsFilePath = "bin/mac/${executableName}.vmoptions",
+                            bootClassPathJarNames = context.bootClassPathJarNames,
+                            additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.MACOS))
     ), context)
 
   val zipFileName = context.productProperties.getCrossPlatformZipFileName(context.applicationInfo, context.buildNumber)
@@ -1057,7 +1063,7 @@ private fun checkClassFiles(targetFile: Path, context: BuildContext) {
     (versionCheckerConfig.isNotEmpty() || forbiddenSubPaths.isNotEmpty())
 
   if (classFileCheckRequired) {
-    checkClassFiles(versionCheckerConfig, forbiddenSubPaths, targetFile)
+    checkClassFiles(versionCheckerConfig, forbiddenSubPaths, targetFile, context.messages)
   }
 }
 

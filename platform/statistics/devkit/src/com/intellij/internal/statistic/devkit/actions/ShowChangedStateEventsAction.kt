@@ -32,7 +32,7 @@ internal class ShowChangedStateEventsAction(private val recorderId: String) : Du
     runBackgroundableTask(message, project, false) { indicator ->
       FeatureUsageLogger.rollOver()
       val oldState = FusStatesRecorder.getCurrentState()
-      val newState = FusStatesRecorder.recordStateAndWait(project, indicator, recorderId)
+      val newState = FusStatesRecorder.recordStateAndWait(project, recorderId)
       if (newState == null) {
         StatisticsDevKitUtil.showNotification(project, NotificationType.ERROR, StatisticsBundle.message("stats.failed.recording.state"))
       }

@@ -585,7 +585,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @NotNull
   @Override
   public String getName() {
-    return IdeUICustomization.getInstance().getProjectViewTitle();
+    return IdeUICustomization.getInstance().getProjectViewTitle(myProject);
   }
 
   @NotNull
@@ -656,6 +656,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       e.getPresentation().setIcon(mySubId != null ? pane.getPresentableSubIdIcon(mySubId) : pane.getIcon());
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       changeView(myId, mySubId);
@@ -1253,11 +1257,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     @Override
     public Object getData(@NotNull String dataId) {
       AbstractProjectViewPane selectedPane = getCurrentProjectViewPane();
-      if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
-        Iterable<DataProvider> paneProviders = selectedPane == null ? null : PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.getData(selectedPane);
-        DataProvider paneProvider = paneProviders == null ? null : CompositeDataProvider.compose(paneProviders);
-        DataProvider provider = slowId -> getSlowData(slowId, paneProvider);
-        return paneProvider == null ? Collections.singletonList(provider) : List.of(provider, paneProvider);
+      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+        DataProvider paneProvider = selectedPane == null ? null : PlatformCoreDataKeys.BGT_DATA_PROVIDER.getData(selectedPane);
+        return CompositeDataProvider.compose(slowId -> getSlowData(slowId, paneProvider), paneProvider);
       }
       Object paneData = selectedPane == null ? null : selectedPane.getData(dataId);
       if (paneData != null) {

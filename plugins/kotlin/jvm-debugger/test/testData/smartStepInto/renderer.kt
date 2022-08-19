@@ -27,3 +27,4 @@ val propFoo: Int
 // EXISTS: constructor FooClass()
 // EXISTS: constructor FooClass(Int)
 // EXISTS: constructor FooClass(Int\, Int)
+// IGNORE_K2

@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.daemon.DaemonBundle.message
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil.createProjectConfigurableForProvider
@@ -13,6 +14,8 @@ class ConfigureInspectionsAction : DumbAwareAction(message("popup.action.configu
   override fun update(event: AnActionEvent) {
     event.presentation.isEnabled = event.project != null
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.project ?: return

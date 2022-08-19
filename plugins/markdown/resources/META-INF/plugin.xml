@@ -88,26 +88,31 @@ Includes the following features:</p>
                      implementationClass="org.intellij.plugins.markdown.editor.tables.inspections.MarkdownNoTableBordersInspection"/>
 
     <intentionAction>
+      <language>Markdown</language>
       <className>org.intellij.plugins.markdown.editor.tables.intentions.MarkdownInsertTableColumnIntention$InsertBefore</className>
       <bundleName>messages.MarkdownBundle</bundleName>
       <categoryKey>markdown.intention.category</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>Markdown</language>
       <className>org.intellij.plugins.markdown.editor.tables.intentions.MarkdownInsertTableColumnIntention$InsertAfter</className>
       <bundleName>messages.MarkdownBundle</bundleName>
       <categoryKey>markdown.intention.category</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>Markdown</language>
       <className>org.intellij.plugins.markdown.editor.tables.intentions.MarkdownSetColumnAlignmentIntention</className>
       <bundleName>messages.MarkdownBundle</bundleName>
       <categoryKey>markdown.intention.category</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>Markdown</language>
       <className>org.intellij.plugins.markdown.editor.tables.intentions.MarkdownRemoveColumnIntention</className>
       <bundleName>messages.MarkdownBundle</bundleName>
       <categoryKey>markdown.intention.category</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>Markdown</language>
       <className>org.intellij.plugins.markdown.editor.tables.intentions.MarkdownRemoveRowIntention</className>
       <bundleName>messages.MarkdownBundle</bundleName>
       <categoryKey>markdown.intention.category</categoryKey>
@@ -321,11 +326,13 @@ Includes the following features:</p>
                                     implementationClass="org.intellij.plugins.markdown.editor.images.ConfigureTextHtmlImageLineMarkerProvider"/>
 
     <intentionAction>
+      <language>Markdown</language>
       <className>org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention</className>
       <bundleName>messages.MarkdownBundle</bundleName>
       <categoryKey>markdown.intention.category</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>Markdown</language>
       <className>org.intellij.plugins.markdown.editor.images.MarkdownConfigureImageIntention</className>
       <bundleName>messages.MarkdownBundle</bundleName>
       <categoryKey>markdown.intention.category</categoryKey>
@@ -410,7 +417,7 @@ Includes the following features:</p>
     <listener topic="com.intellij.ide.ui.LafManagerListener"
               class="org.intellij.plugins.markdown.settings.SettingsChangeLafListener"/>
     <listener topic="com.intellij.ide.ui.LafManagerListener"
-              class="org.intellij.plugins.markdown.extensions.common.highlighter.MarkdownCodeFencePreviewHighlighter$InvalidateCacheLafListener"/>
+              class="org.intellij.plugins.markdown.extensions.common.highlighter.HtmlCacheManager$InvalidateHtmlCacheLafListener"/>
   </applicationListeners>
 
   <projectListeners>

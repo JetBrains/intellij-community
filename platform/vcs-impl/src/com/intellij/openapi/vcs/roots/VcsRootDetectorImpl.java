@@ -47,7 +47,8 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
   @Override
   @NotNull
   public Collection<VcsRoot> detect(@Nullable VirtualFile startDir) {
-    return startDir == null ? Collections.emptyList() : Collections.unmodifiableSet(scanForDirectory(startDir));
+    if (startDir == null || !startDir.isInLocalFileSystem()) return Collections.emptyList();
+    return Collections.unmodifiableSet(scanForDirectory(startDir));
   }
 
   @Override
@@ -80,7 +81,8 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
       return Collections.emptyList();
     }
 
-    List<VirtualFile> contentRoots = new ArrayList<>(Arrays.asList(ProjectRootManager.getInstance(myProject).getContentRoots()));
+    List<VirtualFile> contentRoots = ContainerUtil.filter(ProjectRootManager.getInstance(myProject).getContentRoots(),
+                                                          file -> file.isInLocalFileSystem());
 
     VirtualFile baseDir = myProject.getBaseDir();
     if (baseDir != null && !contentRoots.contains(baseDir)) {
@@ -223,6 +225,7 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
   private VcsRoot detectVcsRootBy(@NotNull VirtualFile maybeRoot,
                                   @Nullable VirtualFile dirToCheckForIgnore,
                                   @NotNull VcsRootChecker checker) {
+    if (!maybeRoot.isInLocalFileSystem()) return null;
     if (!checker.isRoot(maybeRoot)) return null;
     if (dirToCheckForIgnore != null && checker.isIgnored(maybeRoot, dirToCheckForIgnore)) return null;
 

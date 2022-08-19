@@ -244,6 +244,8 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Try to find String array initializer expressions", 0,
                  findMatchesCount(s9, "new '_{0,0}:String [] { '_* }"));
 
+    assertEquals("Find empty array initializers", 2, findMatchesCount(s9, "new Object[] {}"));
+
     String arrays = "class X {{" +
                     "int[] a = new int[20];\n" +
                     "byte[] b = new @Q byte[30];" +
@@ -1914,6 +1916,19 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Find all equivalent annotations", 4, findMatchesCount(source7, "@Annotation(\"Hello\")"));
     assertEquals("Find all annotations with a specific value", 5, findMatchesCount(source7, "@Annotation({\"Hello\", '_O*})"));
     assertEquals("Find all annotations", 6, findMatchesCount(source7, "@Annotation('_V)"));
+
+    String source8 = "@java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE) " +
+                     "@interface NotNull {}" +
+                     "class X {" +
+                     "  boolean a(@NotNull String s, @NotNull String t, String u) {" +
+                     "    java.util.Objects.equals(s, t);" +
+                     "    return java.util.Objects.equals(t, u);" +
+                     "  }" +
+                     "}";
+    assertEquals("Call with @NotNull annotated argument", 1,
+                 findMatchesCount(source8, "Objects.equals('_a:[exprtype( ~@NotNull.* )], '_b:[exprtype( ~@NotNull.* )])"));
+    assertEquals("Call with arguments with @NotNull String type", 1,
+                 findMatchesCount(source8, "Objects.equals('_a:[exprtype(  @NotNull String  )], '_b:[exprtype(  @NotNull String  )])"));
   }
 
   public void testBoxingAndUnboxing() {
@@ -3030,7 +3045,10 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "    new <String>X();" +
                     "    new <String>X();" +
                     "    new X();" +
-                    "    new X(s);" +
+                    "    new X() {};" +
+                    "    new <String>X(\"\") {};" +
+                    "    new <String>X(s);" +
+                    "    new <String, Integer>X(s);" +
                     "  }" +
                     "}";
     assertEquals("find parameterized method calls 1", 1, findMatchesCount(source, "foo.<Integer>bar()"));
@@ -3040,7 +3058,10 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     assertEquals("find parameterized constructor calls 1", 2, findMatchesCount(source, "new <String>X()"));
     assertEquals("find parameterized constructor calls 2", 1, findMatchesCount(source, "new <String>X(s)"));
-    assertEquals("find constructor calls 3", 3, findMatchesCount(source, "new X()"));
+    assertEquals("find parameterized constructor calls 3", 5, findMatchesCount(source, "new <'_a+>'_b('_c*)"));
+    assertEquals("find parameterized constructor calls 4", 4, findMatchesCount(source, "new <'_a>'_b('_c*)"));
+    assertEquals("find parameterized anonymous class", 1, findMatchesCount(source, "new <'_a>'_b('_c*) {}"));
+    assertEquals("find constructor calls 3", 7, findMatchesCount(source, "new X('_a*)"));
   }
 
   public void testFindDiamondTypes() {
@@ -3246,8 +3267,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "}";
     assertEquals("find code ignoring comments 2", 2,
                  findMatchesCount(source2, "new int['_a]"));
-    assertEquals("find code ignoring comments 2a", 1,
-                 findMatchesCount(source2, "new int/*1*/['_a]"));
 
     String source3 = "class X {{" +
                      "  new java.util.ArrayList(/**/1);" +
@@ -3385,6 +3404,24 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("should match any generic type", 6, findMatchesCount(in, "'_A<'_B>"));
     assertEquals("should match generic and raw types", 7, findMatchesCount(in, "List '_x;"));
     assertEquals("should match generic and raw types 2", 7, findMatchesCount(in, "'_A:List <'_B? >"));
+  }
+
+  public void testIfStatements() {
+    String in = "class X {" +
+                "  void x(boolean b) {" +
+                "    if (b) {" +
+                "      System.out.println();" +
+                "      System.out.println();" +
+                "    }" +
+                "    if (b) {" +
+                "      System.out.println();" +
+                "    }" +
+                "    else {" +
+                "      System.out.println();" +
+                "    }" +
+                "  }" +
+                "}";
+    assertEquals("Should find if without else", 1, findMatchesCount(in, "if ('_a) '_b; else '_c{0,0};"));
   }
 
   public void testSwitchStatements() {

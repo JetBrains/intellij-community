@@ -9,7 +9,7 @@ import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.GitUtil
-import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
+import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 
 class GithubCopyPathProvider: DumbAwareCopyPathProvider() {
   override fun getPathToElement(project: Project, virtualFile: VirtualFile?, editor: Editor?): String? {
@@ -21,7 +21,7 @@ class GithubCopyPathProvider: DumbAwareCopyPathProvider() {
     val repository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(virtualFile)
     if (repository == null) return null
 
-    val accessibleRepositories = project.service<GHProjectRepositoriesManager>().findKnownRepositories(repository)
+    val accessibleRepositories = project.service<GHHostedRepositoriesManager>().findKnownRepositories(repository)
     if (accessibleRepositories.isEmpty()) return null
 
     val refs = accessibleRepositories

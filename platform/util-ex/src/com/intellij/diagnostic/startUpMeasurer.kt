@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NonNls
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
-
 inline fun <T> Activity?.runChild(name: String, task: () -> T): T {
   val activity = this?.startChild(name)
   val result = task()

@@ -2,10 +2,17 @@
 <module type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="kotlin-language" name="Kotlin">
-      <configuration version="5" useProjectSettings="false">
+      <configuration version="5" platform="JVM 17" allPlatforms="JVM [17]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-version -opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi" />
+          <option name="additionalArguments" value="-Xjvm-default=enable -opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi" />
         </compilerSettings>
+        <compilerArguments>
+          <stringArguments>
+            <stringArg name="jvmTarget" arg="17" />
+            <stringArg name="apiVersion" arg="1.7" />
+            <stringArg name="languageVersion" arg="1.7" />
+          </stringArguments>
+        </compilerArguments>
       </configuration>
     </facet>
   </component>

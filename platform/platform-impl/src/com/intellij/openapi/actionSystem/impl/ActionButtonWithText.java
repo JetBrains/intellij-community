@@ -111,8 +111,8 @@ public class ActionButtonWithText extends ActionButton {
     }
   }
 
-  protected Insets getMargins() {
-    return JBUI.insets(0);
+  protected @NotNull Insets getMargins() {
+    return JBUI.insets(0, BUTTONS_GAP);
   }
 
   @Override
@@ -140,7 +140,6 @@ public class ActionButtonWithText extends ActionButton {
     int y2 = Math.max(iconR.y + iconR.height, textR.y + textR.height);
     Dimension rv = new Dimension(x2 - x1 + dx, y2 - y1 + dy);
 
-    rv.width += 2 * JBUI.scale(BUTTONS_GAP);
     if (shallPaintDownArrow()) {
       rv.width += AllIcons.General.LinkDropTriangle.getIconWidth()  + JBUI.scale(TEXT_ARROW_SPACE);
     }
@@ -221,6 +220,7 @@ public class ActionButtonWithText extends ActionButton {
     super.presentationPropertyChanged(e);
     if (Presentation.PROP_TEXT_WITH_SUFFIX.equals(e.getPropertyName())) {
       revalidate(); // recalc preferred size & repaint instantly
+      repaint();
     }
   }
 

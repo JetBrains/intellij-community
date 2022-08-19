@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -425,12 +425,18 @@ public final class StringToConstraintsTransformer {
       }
     }
     else if (option.equals(EXPRTYPE)) {
+      boolean regex = false;
       if (argument.charAt(0) == '*') {
         argument = argument.substring(1);
         constraint.setExprTypeWithinHierarchy(true);
       }
+      if (argument.charAt(0) == '~') {
+        argument = argument.substring(1);
+        regex = true;
+      }
       argument = unescape(argument);
-      constraint.setExpressionTypes(argument);
+      if (regex) constraint.setNameOfExprType(argument);
+      else constraint.setExpressionTypes(argument);
       constraint.setInvertExprType(invert);
     }
     else if (option.equals(FORMAL)) {

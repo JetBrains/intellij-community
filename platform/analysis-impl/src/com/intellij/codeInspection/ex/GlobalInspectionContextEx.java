@@ -225,7 +225,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
         try {
           Path file = InspectionsResultUtil.getInspectionResultPath(outputDir, sameTools.getShortName());
           inspectionsResults.add(file);
-          Files.write(file, ("</" + PROBLEMS_TAG_NAME + ">").getBytes(StandardCharsets.UTF_8), StandardOpenOption.APPEND);
+          Files.writeString(file, "</" + PROBLEMS_TAG_NAME + ">", StandardOpenOption.APPEND);
         }
         catch (IOException e) {
           LOG.error(e);

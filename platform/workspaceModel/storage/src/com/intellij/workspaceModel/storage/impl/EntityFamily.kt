@@ -43,8 +43,7 @@ internal class MutableEntityFamily<E : WorkspaceEntity>(
   private val copiedToModify: IntSet = IntOpenHashSet()
 
   fun remove(id: Int) {
-    if (availableSlots.contains(id)) {
-      thisLogger().error("id $id is already removed")
+    if (availableSlots.contains(id) || entities[id] == null) {
       return
     }
 

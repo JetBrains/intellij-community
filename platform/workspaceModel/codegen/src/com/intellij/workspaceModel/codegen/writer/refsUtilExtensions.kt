@@ -10,12 +10,12 @@ import org.jetbrains.deft.Obj
 import com.intellij.workspaceModel.codegen.deft.ValueType as OldValueType
 
 val TStructure<*, *>.refsFields: List<Field<out Obj, Any?>>
-  get() = newFields.filter { it.name != "parent" && it.type.isRefType() }
+  get() = newFields.filter { it.type.isRefType() }
 val ObjClass<*>.refsFields: List<OwnProperty<*, *>>
-  get() = fields.filter { !it.isOverride && it.name != "parent" && it.valueType.isRefType() }
+  get() = fields.filter { !it.isOverride && it.valueType.isRefType() }
 
 val ObjClass<*>.allRefsFields: List<OwnProperty<*, *>>
-  get() = allFields.filter { it.name != "parent" && it.valueType.isRefType() }
+  get() = allFields.filter { it.valueType.isRefType() }
 
 val ObjClass<*>.vfuFields: List<OwnProperty<*, *>>
   get() = fields.filter { !it.isOverride && it.valueType.isVfuType() }

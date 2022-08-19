@@ -11,3 +11,5 @@ fun main(args: Array<String>) {
     //Breakpoint!
     a.bar()
 }
+
+// IGNORE_K2_SMART_STEP_INTO

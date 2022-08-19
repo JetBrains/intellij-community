@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.storage.impl
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.ObjectUtils
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -17,6 +18,7 @@ import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMa
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.reflect.KClass
@@ -82,6 +84,18 @@ internal class MutableEntityStorageImpl(
 
   @Volatile
   private var threadName: String? = null
+
+  // --------------- Replace By Source stuff -----------
+  internal var useNewRbs = Registry.`is`("ide.workspace.model.rbs.as.tree", true)
+
+  @TestOnly
+  internal var keepLastRbsEngine = false
+  internal var engine: ReplaceBySourceOperation? = null
+
+  @set:TestOnly
+  internal var upgradeEngine: ((ReplaceBySourceOperation) -> Unit)? = null
+
+  // --------------- Replace By Source stuff -----------
 
   override fun <E : WorkspaceEntity> entities(entityClass: Class<E>): Sequence<E> {
     @Suppress("UNCHECKED_CAST")
@@ -268,19 +282,28 @@ internal class MutableEntityStorageImpl(
     newSource.virtualFileUrl?.let { indexes.virtualFileIndex.index(entityId, VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY, it) }
   }
 
-  override fun removeEntity(e: WorkspaceEntity) {
+  override fun removeEntity(e: WorkspaceEntity): Boolean {
     try {
       lockWrite()
 
       LOG.debug { "Removing ${e.javaClass}..." }
       e as WorkspaceEntityBase
-      removeEntity(e.id)
+      return removeEntityByEntityId(e.id)
 
       // NB: This method is called from `createEntity` inside persistent id checking. It's possible that after the method execution
       //  the store is in inconsistent state, so we can't call assertConsistency here.
     }
     finally {
       unlockWrite()
+    }
+  }
+
+  private fun getRbsEngine(): ReplaceBySourceOperation {
+    if (useNewRbs) {
+      return ReplaceBySourceAsTree()
+    }
+    else {
+      return ReplaceBySourceAsGraph()
     }
   }
 
@@ -291,7 +314,12 @@ internal class MutableEntityStorageImpl(
     try {
       lockWrite()
       replaceWith as AbstractEntityStorage
-      ReplaceBySourceAsGraph.replaceBySourceAsGraph(this, replaceWith, sourceFilter)
+      val rbsEngine = getRbsEngine()
+      if (keepLastRbsEngine) {
+        engine = rbsEngine
+      }
+      upgradeEngine?.let { it(rbsEngine) }
+      rbsEngine.replace(this, replaceWith, sourceFilter)
     }
     finally {
       unlockWrite()
@@ -416,8 +444,12 @@ internal class MutableEntityStorageImpl(
   }
 
   // modificationCount is not incremented
-  internal fun removeEntity(idx: EntityId, entityFilter: (EntityId) -> Boolean = { true }) {
+  internal fun removeEntityByEntityId(idx: EntityId, entityFilter: (EntityId) -> Boolean = { true }): Boolean {
     val accumulator: MutableSet<EntityId> = mutableSetOf(idx)
+
+    if (!entitiesByType.exists(idx)) {
+      return false
+    }
 
     accumulateEntitiesToRemove(idx, accumulator, entityFilter)
 
@@ -439,6 +471,7 @@ internal class MutableEntityStorageImpl(
       LOG.debug { "Cascade removing: ${ClassToIntConverter.INSTANCE.getClassOrDie(it.clazz)}-${it.arrayId}" }
       this.changeLog.addRemoveEvent(it, originals[it]!!.first, originals[it]!!.second)
     }
+    return true
   }
 
   private fun lockWrite() {

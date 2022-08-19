@@ -107,7 +107,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
     }
   }
 
-  override fun getProjectWorkspaceId() = ProjectIdManager.getInstance(project).state.id
+  override fun getProjectWorkspaceId() = ProjectIdManager.getInstance(project).id
 
   override fun setPath(file: Path, isRefreshVfsNeeded: Boolean, template: Project?) {
     dirOrFile = file
@@ -165,16 +165,18 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
       return
     }
 
-    val productSpecificWorkspaceParentDir = PathManager.getConfigDir().resolve("workspace")
     val projectIdManager = ProjectIdManager.getInstance(project)
-    var projectId = projectIdManager.state.id
-    if (projectId == null) {
-      // do not use project name as part of id, to ensure that project dir renaming also will not cause data loss
-      projectId = Ksuid.generate()
-      projectIdManager.state.id = projectId
+    var projectWorkspaceId = projectIdManager.id
+    if (projectWorkspaceId == null) {
+      // do not use the project name as part of id, to ensure a project dir rename does not cause data loss
+      projectWorkspaceId = Ksuid.generate()
+      projectIdManager.id = projectWorkspaceId
     }
 
-    macros.add(Macro(StoragePathMacros.PRODUCT_WORKSPACE_FILE, productSpecificWorkspaceParentDir.resolve("$projectId.xml")))
+    val productWorkspaceFile = PathManager.getConfigDir()
+      .resolve("workspace")
+      .resolve("$projectWorkspaceId.xml")
+    macros.add(Macro(StoragePathMacros.PRODUCT_WORKSPACE_FILE, productWorkspaceFile))
     storageManager.setMacros(macros)
   }
 

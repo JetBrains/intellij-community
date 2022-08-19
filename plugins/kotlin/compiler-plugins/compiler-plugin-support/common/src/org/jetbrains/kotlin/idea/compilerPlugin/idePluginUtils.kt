@@ -3,21 +3,19 @@
 package org.jetbrains.kotlin.idea.compilerPlugin
 
 import com.intellij.openapi.module.Module
-import org.jetbrains.kotlin.idea.macros.KOTLIN_BUNDLED
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
+import org.jetbrains.kotlin.idea.facet.getInstance
+import org.jetbrains.kotlin.idea.macros.KOTLIN_BUNDLED
 import java.io.File
 
-fun Module.getSpecialAnnotations(prefix: String): List<String> {
-    val kotlinFacet = KotlinFacet.get(this) ?: return emptyList()
-    val commonArgs = kotlinFacet.configuration.settings.compilerArguments ?: return emptyList()
-
-    return commonArgs.pluginOptions
+fun Module.getSpecialAnnotations(prefix: String): List<String> =
+    KotlinCommonCompilerArgumentsHolder.getInstance(this).pluginOptions
         ?.filter { it.startsWith(prefix) }
         ?.map { it.substring(prefix.length) }
         ?: emptyList()
-}
 
 class CompilerPluginSetup(val options: List<PluginOption>, val classpath: List<String>) {
     class PluginOption(val key: String, val value: String)

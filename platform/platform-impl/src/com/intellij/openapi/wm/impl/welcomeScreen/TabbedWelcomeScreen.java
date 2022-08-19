@@ -89,7 +89,6 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
 
   /**
    * Prefer to use addSelectionListener(Disposable, Consumer)
-   * @param action
    */
   public void addSelectionListener(@NotNull Consumer<WelcomeScreenTab> action) {
     myLeftSidebar.addSelectionListener(this, action);

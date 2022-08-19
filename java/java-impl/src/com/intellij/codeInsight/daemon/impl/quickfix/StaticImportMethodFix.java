@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.editor.Editor;
@@ -40,44 +41,38 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod, PsiM
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return generatePreview(file, (expression, method) -> AddSingleMemberStaticImportAction.bindAllClassRefs(file, method, method.getName(), method.getContainingClass()));
+    return generatePreview(file, (__, method) -> AddSingleMemberStaticImportAction.bindAllClassRefs(file, method, method.getName(), method.getContainingClass()));
   }
 
   @NotNull
   @Override
-  protected List<PsiMethod> getMembersToImport(boolean applicableOnly, @NotNull StaticMembersProcessor.SearchMode searchMode) {
-    Project project = myRef.getProject();
+  List<PsiMethod> getMembersToImport(boolean applicableOnly, int maxResults) {
+    Project project = myReferencePointer.getProject();
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
-    PsiMethodCallExpression element = myRef.getElement();
+    PsiMethodCallExpression element = myReferencePointer.getElement();
     PsiReferenceExpression reference = element == null ? null : element.getMethodExpression();
     String name = reference == null ? null : reference.getReferenceName();
     if (name == null) return Collections.emptyList();
-    StaticMembersProcessor<PsiMethod> processor = new MyStaticMethodProcessor(element, toAddStaticImports(), searchMode);
+    StaticMembersProcessor<PsiMethod> processor = new MyStaticMethodProcessor(element, toAddStaticImports(), maxResults);
     cache.processMethodsWithName(name, element.getResolveScope(), processor);
     return processor.getMembersToImport(applicableOnly);
   }
 
   @Override
-  protected boolean toAddStaticImports() {
+  boolean toAddStaticImports() {
     return true;
   }
 
   @Override
   @NotNull
-  protected StaticImportMethodQuestionAction<PsiMethod> createQuestionAction(@NotNull List<? extends PsiMethod> methodsToImport, @NotNull Project project, Editor editor) {
-    return new StaticImportMethodQuestionAction<>(project, editor, methodsToImport, myRef);
-  }
-
-  @Nullable
-  @Override
-  protected PsiElement getElement() {
-    return myRef.getElement();
+  protected QuestionAction createQuestionAction(@NotNull List<? extends PsiMethod> methodsToImport, @NotNull Project project, Editor editor) {
+    return new StaticImportMemberQuestionAction<>(project, editor, methodsToImport, myReferencePointer);
   }
 
   @Nullable
   @Override
   protected PsiElement getQualifierExpression() {
-    PsiMethodCallExpression element = myRef.getElement();
+    PsiMethodCallExpression element = myReferencePointer.getElement();
     return element != null ? element.getMethodExpression().getQualifierExpression() : null;
   }
 
@@ -89,13 +84,12 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod, PsiM
   }
 
   private static final class MyStaticMethodProcessor extends StaticMembersProcessor<PsiMethod> {
-
-    private MyStaticMethodProcessor(@NotNull PsiMethodCallExpression place, boolean showMembersFromDefaultPackage, @NotNull SearchMode mode) {
-      super(place, showMembersFromDefaultPackage, mode);
+    private MyStaticMethodProcessor(@NotNull PsiMethodCallExpression place, boolean showMembersFromDefaultPackage, int maxResults) {
+      super(place, showMembersFromDefaultPackage, maxResults);
     }
 
     @Override
-    protected boolean isApplicable(PsiMethod method, PsiElement place) {
+    protected boolean isApplicable(@NotNull PsiMethod method, @NotNull PsiElement place) {
       ProgressManager.checkCanceled();
       PsiExpressionList argumentList = ((PsiMethodCallExpression)place).getArgumentList();
       MethodCandidateInfo candidateInfo =

@@ -42,6 +42,11 @@ public final class FindAllAction extends AnAction implements ShortcutProvider, D
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public void actionPerformed(final @NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     EditorSearchSession search = e.getRequiredData(EditorSearchSession.SESSION_KEY);

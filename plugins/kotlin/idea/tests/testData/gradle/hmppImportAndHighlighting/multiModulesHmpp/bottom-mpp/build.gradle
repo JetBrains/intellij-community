@@ -45,7 +45,7 @@ kotlin {
         compilations.all {
             kotlinOptions {
                 freeCompilerArgs +=
-                        ["-Xprogressive", "-XXLanguage:+NewInference", "-XXLanguage:+SamConversionForKotlinFunctions", "-Xuse-experimental=kotlin.ExperimentalMultiplatform", "-Xskip-prerelease-check"]
+                        ["-Xprogressive", "-Xuse-experimental=kotlin.ExperimentalMultiplatform", "-Xskip-prerelease-check"]
             }
         }
     }

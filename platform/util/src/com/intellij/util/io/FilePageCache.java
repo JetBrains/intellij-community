@@ -4,14 +4,15 @@ package com.intellij.util.io;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.containers.hash.LongLinkedHashMap;
 import com.intellij.util.io.stats.FilePageCacheStatistics;
 import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.system.CpuArch;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -148,7 +149,7 @@ final class FilePageCache {
     }
   }
 
-  private final Int2ObjectMap<PagedFileStorage> myIndex2Storage = Int2ObjectMaps.synchronize(new Int2ObjectOpenHashMap<>());
+  private final Int2ObjectMap<PagedFileStorage> myIndex2Storage = new Int2ObjectOpenHashMap<>();
 
   private final LongLinkedHashMap<DirectBufferWrapper> mySegments;
 
@@ -210,11 +211,10 @@ final class FilePageCache {
 
   long registerPagedFileStorage(@NotNull PagedFileStorage storage) {
     synchronized (myIndex2Storage) {
-      int registered = myIndex2Storage.size();
-      int value = registered << 16;
+      // assume that storages never closed (or closed but not so often)
+      int value = myIndex2Storage.size();
       while(myIndex2Storage.get(value) != null) {
-        ++registered;
-        value = registered << 16;
+        value++;
       }
       myIndex2Storage.put(value, storage);
       myMaxRegisteredFiles = Math.max(myMaxRegisteredFiles, myIndex2Storage.size());
@@ -225,7 +225,9 @@ final class FilePageCache {
   @NotNull("Seems accessed storage has been closed")
   private PagedFileStorage getRegisteredPagedFileStorageByIndex(long key) {
     int storageIndex = (int)((key & FILE_INDEX_MASK) >> 32);
-    return myIndex2Storage.get(storageIndex);
+    synchronized (myIndex2Storage) {
+      return myIndex2Storage.get(storageIndex);
+    }
   }
 
   DirectBufferWrapper get(Long key, boolean read, boolean checkAccess) throws IOException {
@@ -453,6 +455,8 @@ final class FilePageCache {
   }
 
   void removeStorage(long index) {
-    myIndex2Storage.remove((int)(index >> 32));
+    synchronized (myIndex2Storage) {
+      myIndex2Storage.remove((int)(index >> 32));
+    }
   }
 }

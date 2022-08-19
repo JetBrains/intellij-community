@@ -74,7 +74,7 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
     companion object {
         private fun createSetupSdkPanel(project: Project, file: PsiFile): Function<in FileEditor, out JComponent?> =
             Function { fileEditor: FileEditor ->
-                EditorNotificationPanel(fileEditor).apply {
+                EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Warning).apply {
                     text = JavaUiBundle.message("project.sdk.not.defined")
                     createActionLabel(ProjectBundle.message("project.sdk.setup")) {
                         ProjectSettingsService.getInstance(project).chooseAndSetSdk() ?: return@createActionLabel
@@ -91,7 +91,7 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
 
         private fun createKotlinNotConfiguredPanel(module: Module, configurators: List<KotlinProjectConfigurator>): Function<in FileEditor, out JComponent?> =
             Function { fileEditor: FileEditor ->
-                EditorNotificationPanel(fileEditor).apply {
+                EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Warning).apply {
                 text = KotlinProjectConfigurationBundle.message("kotlin.not.configured")
                 if (configurators.isNotEmpty()) {
                     val project = module.project

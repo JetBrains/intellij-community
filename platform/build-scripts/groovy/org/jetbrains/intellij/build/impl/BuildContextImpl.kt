@@ -12,6 +12,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
+import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
@@ -62,7 +63,6 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
         AttributeKey.stringArrayKey("stepsToSkip"), options.buildStepsToSkip.toImmutableList()
       ))
     }
-    configureProjectorPlugin(productProperties)
   }
 
   companion object {
@@ -263,11 +263,8 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
     val classLoader = productProperties.classLoader
     if (classLoader != null) {
       jvmArgs.add("-Djava.system.class.loader=$classLoader")
-      if (classLoader == "com.intellij.util.lang.PathClassLoader") {
-        jvmArgs.add("-Didea.strict.classpath=true")
-      }
     }
-    jvmArgs.add("-Didea.vendor.name=" + applicationInfo.shortCompanyName)
+    jvmArgs.add("-Didea.vendor.name=${applicationInfo.shortCompanyName}")
     jvmArgs.add("-Didea.paths.selector=$systemSelector")
     if (productProperties.platformPrefix != null) {
       jvmArgs.add("-Didea.platform.prefix=${productProperties.platformPrefix}")
@@ -312,19 +309,6 @@ private fun getSourceRootsWithPrefixes(module: JpsModule): Sequence<Pair<Path, S
       }
       Pair(Path.of(JpsPathUtil.urlToPath(moduleSourceRoot.url)), prefix.trimStart('/'))
     }
-}
-
-private const val projectorPlugin = "intellij.cwm.plugin.projector"
-private const val projectorJar = "plugins/cwm-plugin-projector/lib/projector/projector.jar"
-
-private fun configureProjectorPlugin(properties: ProductProperties) {
-  // configure only if versionCheckerConfig is not empty -
-  // otherwise will be an error because versionCheckerConfig expected to contain a default version (e.g. "" to "11")
-  if (properties.versionCheckerConfig.isNotEmpty() &&
-      properties.productLayout.bundledPluginModules.contains(projectorPlugin) &&
-      !properties.versionCheckerConfig.containsKey(projectorJar)) {
-    properties.versionCheckerConfig = properties.versionCheckerConfig.put(projectorJar, "17")
-  }
 }
 
 private fun readSnapshotBuildNumber(communityHome: BuildDependenciesCommunityRoot): String {

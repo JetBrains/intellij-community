@@ -30,8 +30,8 @@ interface SampleEntity2 : WorkspaceEntity {
     operator fun invoke(data: String, boolData: Boolean, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SampleEntity2 {
       val builder = builder()
       builder.data = data
-      builder.entitySource = entitySource
       builder.boolData = boolData
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }
@@ -69,9 +69,9 @@ interface VFUEntity2 : WorkspaceEntity {
                         init: (Builder.() -> Unit)? = null): VFUEntity2 {
       val builder = builder()
       builder.data = data
-      builder.entitySource = entitySource
       builder.directoryPath = directoryPath
       builder.notNullRoots = notNullRoots.toMutableWorkspaceList()
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }

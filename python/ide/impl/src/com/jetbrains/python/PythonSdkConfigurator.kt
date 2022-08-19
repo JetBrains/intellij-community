@@ -21,9 +21,12 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.DirectoryProjectConfigurator
+import com.intellij.util.EnvironmentUtil
+import com.jetbrains.python.PySdkFromEnvironmentVariableConfigurator.Companion.PYCHARM_PYTHON_PATH_ENVIRONMENT_VARIABLE
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setReadyToUseSdk
@@ -56,6 +59,9 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
     val sdk = project.pythonSdk
     LOGGER.debug { "Input: $sdk, $isProjectCreatedWithWizard" }
     if (sdk != null || isProjectCreatedWithWizard) {
+      return
+    }
+    if (!Strings.isEmptyOrSpaces(EnvironmentUtil.getValue(PYCHARM_PYTHON_PATH_ENVIRONMENT_VARIABLE))) {
       return
     }
 

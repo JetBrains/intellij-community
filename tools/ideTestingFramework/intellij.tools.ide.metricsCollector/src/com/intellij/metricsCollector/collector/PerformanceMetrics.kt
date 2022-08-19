@@ -13,7 +13,7 @@ data class PerformanceMetrics(
   val os: String,
   val metrics: List<Metric<*>>
 ) {
-  sealed class MetricId<T: Number> {
+  sealed class MetricId<T : Number> {
     abstract val name: String
 
     /**
@@ -27,7 +27,7 @@ data class PerformanceMetrics(
     data class Counter(override val name: String) : MetricId<Int>()
   }
 
-  data class Metric<T: Number>(val id: MetricId<T>, val value: T)
+  data class Metric<T : Number>(val id: MetricId<T>, val value: T)
 }
 
 fun PerformanceMetrics.Metric<*>.toJson() = ApplicationMetricDto(

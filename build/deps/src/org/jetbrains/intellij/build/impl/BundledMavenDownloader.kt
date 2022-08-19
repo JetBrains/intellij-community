@@ -48,8 +48,8 @@ object BundledMavenDownloader {
   }
 
   fun downloadMavenDistribution(communityRoot: BuildDependenciesCommunityRoot): Path {
-    val properties = BuildDependenciesDownloader.getDependenciesProperties(communityRoot)
-    val bundledMavenVersion = properties.get("bundledMavenVersion")
+    val properties = BuildDependenciesDownloader.getCommunityDependenciesProperties(communityRoot)
+    val bundledMavenVersion = properties.property("bundledMavenVersion")
 
     val uri = BuildDependenciesDownloader.getUriForMavenArtifact(
       BuildDependenciesConstants.MAVEN_CENTRAL_URL,

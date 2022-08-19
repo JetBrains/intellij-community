@@ -14,6 +14,7 @@ import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.SLRUMap;
 import com.intellij.util.ui.*;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.Nls;
@@ -53,6 +54,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   public static final int FRAGMENT_ICON = -2;
 
+  private static final SLRUMap<WidthKey, Float> ourWidthCache = new SLRUMap<>(128, 128);
   private final List<ColoredFragment> myFragments;
   private ColoredFragment myCurrentFragment;
   private Font myLayoutFont;
@@ -528,7 +530,17 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   private static float getFragmentWidth(@NotNull ColoredFragment fragment, Font font, FontRenderContext frc) {
-    return fragment.getAndCacheRenderer(font, frc).getWidth();
+    WidthKey key = new WidthKey(fragment.text, fragment.attributes, font, frc);
+    Float result;
+    synchronized (ourWidthCache) {
+      result = ourWidthCache.get(key);
+      if (result != null) {
+        return result;
+      }
+      result = fragment.getAndCacheRenderer(font, frc).getWidth();
+      ourWidthCache.put(key, result);
+    }
+    return result;
   }
 
   @NotNull
@@ -1401,6 +1413,49 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     @Override
     public void draw(Graphics2D g2, float x, float y) {
       g2.drawString(myText, x, y);
+    }
+  }
+
+  private static class WidthKey {
+    private final String text;
+    private final Font font;
+    private final FontRenderContext frc;
+    private final int style;
+
+    private WidthKey(@NotNull String text,
+                     @NotNull SimpleTextAttributes attributes,
+                     Font font,
+                     FontRenderContext frc) {
+      this.text = text;
+      this.font = font;
+      this.frc = frc;
+      // colors in attributes are mutable, ignore them since they don't affect text width
+      this.style = attributes.getStyle();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      WidthKey key = (WidthKey)o;
+      return style == key.style &&
+             Objects.equals(text, key.text) &&
+             Objects.equals(font, key.font) &&
+             Objects.equals(frc, key.frc);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(text, font, frc, style);
+    }
+
+    @Override
+    public String toString() {
+      return "WidthKey{text='" + text + '\'' +
+             ", font=" + font +
+             ", frc=" + frc +
+             ", style=" + style +
+             '}';
     }
   }
 }

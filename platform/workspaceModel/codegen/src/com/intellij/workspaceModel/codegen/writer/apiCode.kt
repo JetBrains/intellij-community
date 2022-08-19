@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.codegen
 import com.intellij.workspaceModel.codegen.classes.*
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
+import com.intellij.workspaceModel.codegen.deft.meta.OwnProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.fields.javaMutableType
 import com.intellij.workspaceModel.codegen.fields.javaType
@@ -15,14 +16,17 @@ import com.intellij.workspaceModel.codegen.writer.allFields
 import com.intellij.workspaceModel.codegen.writer.isStandardInterface
 import com.intellij.workspaceModel.codegen.writer.javaName
 import com.intellij.workspaceModel.codegen.writer.type
-import com.intellij.workspaceModel.storage.CodeGeneratorVersions
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
+
+val SKIPPED_TYPES: Set<String> = setOfNotNull(WorkspaceEntity::class.simpleName,
+                                              ReferableWorkspaceEntity::class.simpleName,
+                                              ModifiableWorkspaceEntity::class.simpleName,
+                                              ModifiableReferableWorkspaceEntity::class.simpleName,
+                                              WorkspaceEntityWithPersistentId::class.simpleName)
 
 fun ObjClass<*>.generateBuilderCode(): String = lines {
   line("@${GeneratedCodeApiVersion::class.fqn}(${CodeGeneratorVersions.API_VERSION})")
@@ -49,9 +53,9 @@ fun ObjClass<*>.generateCompanionObject(): String = lines {
       append(base.javaFullName)
     append(")")
   }
-  val mandatoryFields = allFields.noRefs().noOptional().noPersistentId().noDefaultValue()
-  if (!mandatoryFields.isEmpty()) {
-    val fields = (mandatoryFields.noEntitySource() + mandatoryFields.first { it.name == "entitySource" }).joinToString { "${it.name}: ${it.type.javaType}" }
+  val mandatoryFields = allFields.mandatoryFields()
+  if (mandatoryFields.isNotEmpty()) {
+    val fields = mandatoryFields.joinToString { "${it.name}: ${it.type.javaType}" }
     section(companionObjectHeader) {
       section("operator fun invoke($fields, init: (Builder$builderGeneric.() -> Unit)? = null): $javaFullName") {
         line("val builder = builder()")
@@ -80,6 +84,13 @@ fun ObjClass<*>.generateCompanionObject(): String = lines {
   }
 }
 
+fun List<OwnProperty<*, *>>.mandatoryFields(): List<ObjProperty<*, *>> {
+  var fields = this.noRefs().noOptional().noPersistentId().noDefaultValue()
+  if (fields.isNotEmpty()) {
+    fields = fields.noEntitySource() + fields.single { it.name == "entitySource" }
+  }
+  return fields
+}
 
 fun ObjClass<*>.generateExtensionCode(): String? {
   val fields = module.extensions.filter { it.receiver == this || it.receiver.module != module && it.valueType.isRefType() && it.valueType.getRefType().target == this }

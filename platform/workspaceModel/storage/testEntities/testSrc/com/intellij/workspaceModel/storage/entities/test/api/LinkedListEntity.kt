@@ -38,8 +38,8 @@ interface LinkedListEntity : WorkspaceEntityWithPersistentId {
                         init: (Builder.() -> Unit)? = null): LinkedListEntity {
       val builder = builder()
       builder.myName = myName
-      builder.entitySource = entitySource
       builder.next = next
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }

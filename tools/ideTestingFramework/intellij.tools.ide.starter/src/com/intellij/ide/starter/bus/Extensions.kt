@@ -23,8 +23,9 @@ inline fun <reified T : Any> FlowBus.getFlow() = getFlow(T::class.java)
  * @param callback The callback function
  * @return This instance of [EventsReceiver] for chaining
  */
-inline fun <reified T : Any> EventsReceiver.subscribe(skipRetained: Boolean = false, noinline callback: suspend (event: T) -> Unit): EventsReceiver {
-    return subscribeTo(T::class.java, skipRetained, callback)
+inline fun <reified T : Any> EventsReceiver.subscribe(skipRetained: Boolean = false,
+                                                      noinline callback: suspend (event: T) -> Unit): EventsReceiver {
+  return subscribeTo(T::class.java, skipRetained, callback)
 }
 
 /**
@@ -36,5 +37,5 @@ inline fun <reified T : Any> EventsReceiver.subscribe(skipRetained: Boolean = fa
  * @see [subscribe]
  */
 inline fun <reified T : Any> EventsReceiver.subscribe(callback: EventCallback<T>, skipRetained: Boolean = false): EventsReceiver {
-    return subscribeTo(T::class.java, callback, skipRetained)
+  return subscribeTo(T::class.java, callback, skipRetained)
 }

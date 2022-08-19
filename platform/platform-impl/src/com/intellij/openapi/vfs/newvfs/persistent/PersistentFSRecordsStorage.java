@@ -26,6 +26,8 @@ abstract class PersistentFSRecordsStorage {
   static PersistentFSRecordsStorage createStorage(@NotNull Path file) throws IOException {
     ResizeableMappedFile resizeableMappedFile = createFile(file, recordsLength());
 
+    FSRecords.LOG.info("using " + (useLockFreeRecordsStorage ? "synchronized" : "lock-free") + " storage for VFS records");
+
     return useLockFreeRecordsStorage
            ? new PersistentFSLockFreeRecordsStorage(resizeableMappedFile)
            : new PersistentFSSynchronizedRecordsStorage(resizeableMappedFile);
@@ -81,7 +83,13 @@ abstract class PersistentFSRecordsStorage {
 
   abstract @PersistentFS.Attributes int getFlags(int fileId) throws IOException;
 
-  abstract void setAttributesAndIncModCount(int fileId, long timestamp, long length, int flags, int nameId, int parentId, boolean overwriteMissed) throws IOException;
+  abstract void setAttributesAndIncModCount(int fileId,
+                                            long timestamp,
+                                            long length,
+                                            int flags,
+                                            int nameId,
+                                            int parentId,
+                                            boolean overwriteMissed) throws IOException;
 
   abstract boolean isDirty();
 

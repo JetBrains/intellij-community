@@ -36,12 +36,9 @@ open class ModuleDefaultVcsRootPolicy(project: Project) : DefaultVcsRootPolicy(p
     val modules = runReadAction { ModuleManager.getInstance(myProject).modules }
     for (module in modules) {
       val moduleRootManager = ModuleRootManager.getInstance(module)
-      val files = moduleRootManager.contentRoots
-      for (file in files) {
-        if (file.isDirectory) {
-          result.add(file)
-        }
-      }
+      result += moduleRootManager.contentRoots.asSequence()
+        .filter { it.isInLocalFileSystem }
+        .filter { it.isDirectory }
     }
     return result
   }

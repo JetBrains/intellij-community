@@ -1,12 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceExpressionAction;
-import com.intellij.codeInsight.daemon.impl.quickfix.WrapExpressionFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -17,10 +18,11 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import one.util.streamex.MoreCollectors;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -30,32 +32,44 @@ import static com.intellij.util.ObjectUtils.tryCast;
  */
 class AdaptExpressionTypeFixUtil {
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
-  private AdaptExpressionTypeFixUtil() {}
 
-  static void registerPatchParametersFixes(@NotNull HighlightInfo info,
-                                           @NotNull PsiMethodCallExpression call,
-                                           @NotNull PsiMethod method,
-                                           @NotNull PsiType expectedTypeByParent) {
+  private AdaptExpressionTypeFixUtil() { }
+
+  private static void registerPatchParametersFixes(@NotNull HighlightInfo info,
+                                                   @NotNull PsiMethodCallExpression call,
+                                                   @NotNull PsiMethod method,
+                                                   @NotNull PsiType expectedTypeByParent,
+                                                   @NotNull PsiType actualType) {
     JavaResolveResult result = call.resolveMethodGenerics();
     if (!(result instanceof MethodCandidateInfo)) return;
     PsiType methodType = method.getReturnType();
-    PsiType actualType = ((MethodCandidateInfo)result).getSubstitutor(false).substitute(methodType);
-    Map.Entry<PsiTypeParameter, PsiType> substitution = findDesiredSubstitution(expectedTypeByParent, actualType, methodType);
+    Substitution.TypeParameterSubstitution substitution =
+      tryCast(findDesiredSubstitution(expectedTypeByParent, actualType, methodType, 0), Substitution.TypeParameterSubstitution.class);
     if (substitution == null) return;
-    PsiTypeParameter typeParameter = substitution.getKey();
-    if (!PsiTreeUtil.isAncestor(method, typeParameter, true)) return;
-    PsiType expectedTypeValue = substitution.getValue();
-
+    PsiTypeParameter typeParameter = substitution.myTypeParameter;
+    PsiType expectedTypeValue = substitution.myDesiredType;
     PsiParameter[] parameters = method.getParameterList().getParameters();
     Set<PsiTypeParameter> set = Set.of(typeParameter);
+
+    if (!PsiTreeUtil.isAncestor(method, typeParameter, true)) {
+      registerPatchQualifierFixes(info, call, method, typeParameter, expectedTypeValue, parameters, set);
+      return;
+    }
+
     PsiParameter parameter =
       StreamEx.of(parameters).collect(MoreCollectors.onlyOne(p -> PsiTypesUtil.mentionsTypeParameters(p.getType(), set))).orElse(null);
     if (parameter == null) return;
     PsiExpression arg = PsiUtil.skipParenthesizedExprDown(MethodCallUtils.getArgumentForParameter(call, parameter));
     if (arg == null) return;
-    PsiClassType parameterType = tryCast(parameter.getType(), PsiClassType.class);
-    if (parameterType == null) return;
-    if (parameterType.rawType().equalsToText(CommonClassNames.JAVA_LANG_CLASS) && typeParameter == getSoleTypeParameter(parameterType)) {
+    PsiType parameterType = parameter.getType();
+    if (parameterType instanceof PsiEllipsisType && MethodCallUtils.isVarArgCall(call)) {
+      // Replace vararg only if there's single value
+      if (call.getArgumentList().getExpressionCount() != parameters.length) return;
+      parameterType = ((PsiEllipsisType)parameterType).getComponentType();
+    }
+    if (parameterType instanceof PsiClassType &&
+        ((PsiClassType)parameterType).rawType().equalsToText(CommonClassNames.JAVA_LANG_CLASS) &&
+        typeParameter == getSoleTypeParameter(parameterType)) {
       if (expectedTypeValue instanceof PsiClassType && JavaGenericsUtil.isReifiableType(expectedTypeValue)) {
         ReplaceExpressionAction fix = new ReplaceExpressionAction(
           arg, ((PsiClassType)expectedTypeValue).rawType().getCanonicalText() + ".class",
@@ -63,12 +77,42 @@ class AdaptExpressionTypeFixUtil {
         QuickFixAction.registerQuickFixAction(info, fix);
       }
     }
-    PsiType expectedArgType = PsiSubstitutor.EMPTY.put(typeParameter, expectedTypeValue).substitute(parameterType);
-    if (arg instanceof PsiLambdaExpression) {
-      registerLambdaReturnFixes(info, (PsiLambdaExpression)arg, parameterType, expectedArgType, typeParameter);
+    PsiSubstitutor substitutor = ((MethodCandidateInfo)result).getSubstitutor(false);
+    PsiType expectedArgType = substitutor.put(typeParameter, expectedTypeValue).substitute(parameterType);
+    if (arg instanceof PsiLambdaExpression && parameterType instanceof PsiClassType) {
+      registerLambdaReturnFixes(info, (PsiLambdaExpression)arg, (PsiClassType)parameterType, expectedArgType, typeParameter);
       return;
     }
-    registerExpectedTypeFixes(info, arg, expectedArgType);
+    PsiType actualArgType = PsiPolyExpressionUtil.isPolyExpression(arg) ?
+                            substitutor.put(typeParameter, substitution.myActualType).substitute(parameterType) :
+                            arg.getType();
+    registerExpectedTypeFixes(info, arg, expectedArgType, actualArgType);
+  }
+
+  private static void registerPatchQualifierFixes(@NotNull HighlightInfo info,
+                                                  @NotNull PsiMethodCallExpression call,
+                                                  @NotNull PsiMethod method,
+                                                  @NotNull PsiTypeParameter typeParameter,
+                                                  @NotNull PsiType expectedTypeValue,
+                                                  @NotNull PsiParameter @NotNull [] parameters,
+                                                  @NotNull Set<PsiTypeParameter> set) {
+    PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
+    if (qualifierCall == null) return;
+    JavaResolveResult qualifierResolve = qualifierCall.resolveMethodGenerics();
+    PsiMethod qualifierMethod = tryCast(qualifierResolve.getElement(), PsiMethod.class);
+    if (qualifierMethod == null) return;
+    PsiClassType qualifierType = tryCast(qualifierMethod.getReturnType(), PsiClassType.class);
+    if (qualifierType == null) return;
+    if (ContainerUtil.exists(parameters, p -> PsiTypesUtil.mentionsTypeParameters(p.getType(), set))) return;
+    PsiClassType.ClassResolveResult classResolveResult = qualifierType.resolveGenerics();
+    PsiClass qualifierClass = classResolveResult.getElement();
+    if (qualifierClass == null) return;
+    PsiType expectedQualifierType = JavaPsiFacade.getElementFactory(method.getProject())
+      .createType(qualifierClass, classResolveResult.getSubstitutor().put(typeParameter, expectedTypeValue));
+    PsiType actualType = qualifierCall.getType();
+    if (actualType != null && !expectedQualifierType.equals(actualType)) {
+      registerPatchParametersFixes(info, qualifierCall, qualifierMethod, expectedQualifierType, actualType);
+    }
   }
 
   private static void registerLambdaReturnFixes(@NotNull HighlightInfo info,
@@ -103,73 +147,191 @@ class AdaptExpressionTypeFixUtil {
     registerExpectedTypeFixes(info, lambdaBody, expectedFnReturnType);
   }
 
-  static void registerExpectedTypeFixes(@NotNull HighlightInfo info, @NotNull PsiExpression arg, @Nullable PsiType expectedType) {
-    if (expectedType == null) return;
+  /**
+   * Registers fixes (if any) that update code to match the expression type with the desired type.
+   *
+   * @param info         error highlighting to attach fixes to
+   * @param expression   expression whose type is incorrect
+   * @param expectedType desired expression type.
+   */
+  static void registerExpectedTypeFixes(@NotNull HighlightInfo info, @NotNull PsiExpression expression, @Nullable PsiType expectedType) {
+    PsiType actualType;
+    if (PsiPolyExpressionUtil.isPolyExpression(expression)) {
+      actualType = ((PsiExpression)expression.copy()).getType();
+    }
+    else {
+      actualType = expression.getType();
+    }
+    registerExpectedTypeFixes(info, expression, expectedType, actualType);
+  }
+
+  /**
+   * Registers fixes (if any) that update code to match the expression type with the desired type.
+   *
+   * @param info         error highlighting to attach fixes to
+   * @param expression   expression whose type is incorrect
+   * @param expectedType desired expression type
+   * @param actualType   actual expression type
+   */
+  static void registerExpectedTypeFixes(@NotNull HighlightInfo info,
+                                        @NotNull PsiExpression expression,
+                                        @Nullable PsiType expectedType,
+                                        @Nullable PsiType actualType) {
+    if (actualType == null || expectedType == null) return;
     expectedType = GenericsUtil.getVariableTypeByExpressionType(expectedType);
-    QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createWrapWithAdapterFix(expectedType, arg));
-    QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createWrapWithOptionalFix(expectedType, arg));
-    QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createWrapExpressionFix(expectedType, arg));
-    PsiType argType = arg.getType();
-    if (arg instanceof PsiMethodCallExpression) {
-      JavaResolveResult result = ((PsiMethodCallExpression)arg).resolveMethodGenerics();
-      if (result instanceof MethodCandidateInfo) {
-        argType = ((MethodCandidateInfo)result).getSubstitutor(false).substitute(argType);
+    TextRange range = expression.getTextRange();
+    String role = info.startOffset == range.getStartOffset() && info.endOffset == range.getEndOffset() ? null : getRole(expression);
+    QuickFixAction.registerQuickFixAction(info, new WrapWithAdapterMethodCallFix(expectedType, expression, role));
+    QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createWrapWithOptionalFix(expectedType, expression));
+    QuickFixAction.registerQuickFixAction(info, new WrapExpressionFix(expectedType, expression, role));
+    if (expectedType instanceof PsiArrayType) {
+      PsiType erasedValueType = TypeConversionUtil.erasure(actualType);
+      if (erasedValueType != null &&
+          TypeConversionUtil.isAssignable(((PsiArrayType)expectedType).getComponentType(), erasedValueType)) {
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createSurroundWithArrayFix(null, expression));
       }
     }
-    PsiType castToType = suggestCastTo(expectedType, argType);
+    HighlightFixUtil.registerCollectionToArrayFixAction(info, actualType, expectedType, expression);
+    PsiType castToType = suggestCastTo(expectedType, actualType);
     if (castToType != null) {
-      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddTypeCastFix(castToType, arg));
+      QuickFixAction.registerQuickFixAction(info, new AddTypeCastFix(castToType, expression, role));
     }
-    if (arg instanceof PsiMethodCallExpression) {
-      PsiMethod argMethod = ((PsiMethodCallExpression)arg).resolveMethod();
+    if (expression instanceof PsiMethodCallExpression) {
+      PsiMethod argMethod = ((PsiMethodCallExpression)expression).resolveMethod();
       if (argMethod != null) {
-        registerPatchParametersFixes(info, (PsiMethodCallExpression)arg, argMethod, expectedType);
+        registerPatchParametersFixes(info, (PsiMethodCallExpression)expression, argMethod, expectedType, actualType);
       }
     }
   }
 
-  private static @Nullable Map.Entry<PsiTypeParameter, PsiType> findDesiredSubstitution(@Nullable PsiType expected,
-                                                                                        @Nullable PsiType actual,
-                                                                                        @Nullable PsiType methodType) {
-    if (expected == null || actual == null || methodType == null) return null;
+  @Nls
+  private static String getRole(@NotNull PsiExpression expression) {
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+    if (parent instanceof PsiExpressionList) {
+      int count = ((PsiExpressionList)parent).getExpressionCount();
+      if (count > 1) {
+        long index = StreamEx.of(((PsiExpressionList)parent).getExpressions())
+          .map(PsiUtil::skipParenthesizedExprDown).indexOf(expression).orElse(-1);
+        if (index != -1) {
+          return QuickFixBundle.message("fix.expression.role.nth.argument", index + 1);
+        }
+      }
+      return QuickFixBundle.message("fix.expression.role.argument");
+    }
+    if (parent instanceof PsiLambdaExpression) {
+      return QuickFixBundle.message("fix.expression.role.lambda.return");
+    }
+    return null;
+  }
+
+  private interface Substitution {
+    Substitution TOP = new Substitution() {
+      @Override
+      public String toString() {
+        return "TOP";
+      }
+    };
+    Substitution BOTTOM = new Substitution() {
+      @Override
+      public String toString() {
+        return "BOTTOM";
+      }
+    };
+
+    class TypeParameterSubstitution implements Substitution {
+      final @NotNull PsiTypeParameter myTypeParameter;
+      final @NotNull PsiType myActualType;
+      final @NotNull PsiType myDesiredType;
+
+      public TypeParameterSubstitution(@NotNull PsiTypeParameter parameter, @NotNull PsiType actualType, @NotNull PsiType desiredType) {
+        myTypeParameter = parameter;
+        myActualType = actualType;
+        myDesiredType = desiredType;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TypeParameterSubstitution that = (TypeParameterSubstitution)o;
+        return myTypeParameter.equals(that.myTypeParameter) && myDesiredType.equals(that.myDesiredType);
+      }
+
+      @Override
+      public int hashCode() {
+        return Objects.hash(myTypeParameter, myDesiredType);
+      }
+
+      @Override
+      public String toString() {
+        return myTypeParameter.getName() + "->" + myDesiredType.getCanonicalText();
+      }
+    }
+  }
+
+
+  private static @NotNull Substitution findDesiredSubstitution(@Nullable PsiType expected,
+                                                               @Nullable PsiType actual,
+                                                               @Nullable PsiType methodType,
+                                                               int level) {
+    if (expected == null || actual == null || methodType == null) return Substitution.BOTTOM;
     if (expected instanceof PsiArrayType && actual instanceof PsiArrayType && methodType instanceof PsiArrayType) {
       return findDesiredSubstitution(((PsiArrayType)expected).getComponentType(),
                                      ((PsiArrayType)actual).getComponentType(),
-                                     ((PsiArrayType)methodType).getComponentType());
+                                     ((PsiArrayType)methodType).getComponentType(),
+                                     level);
     }
-    if (expected instanceof PsiWildcardType && ((PsiWildcardType)expected).isExtends()) {
-      expected = ((PsiWildcardType)expected).getExtendsBound();
-    }
-    if (!(methodType instanceof PsiClassType) || !(expected instanceof PsiClassType) || !(actual instanceof PsiClassType)) return null;
+    if (expected.equals(actual)) return Substitution.TOP;
+    if (!(methodType instanceof PsiClassType)) return Substitution.BOTTOM;
     PsiClass methodClass = ((PsiClassType)methodType).resolve();
+    if (methodClass == null) return Substitution.BOTTOM;
+    if (methodClass instanceof PsiTypeParameter) {
+      if (!(expected instanceof PsiPrimitiveType)) {
+        for (PsiClassType superType : methodClass.getSuperTypes()) {
+          PsiSubstitutor substitutor = PsiSubstitutor.EMPTY.put((PsiTypeParameter)methodClass, expected);
+          if (!substitutor.substitute(superType).isAssignableFrom(expected)) return Substitution.BOTTOM;
+        }
+        return new Substitution.TypeParameterSubstitution((PsiTypeParameter)methodClass, actual, expected);
+      }
+      return Substitution.BOTTOM;
+    }
+    if (!(expected instanceof PsiClassType) || !(actual instanceof PsiClassType)) return Substitution.BOTTOM;
     PsiClass expectedClass = ((PsiClassType)expected).resolve();
     PsiClass actualClass = ((PsiClassType)actual).resolve();
-    if (methodClass == null || expectedClass == null || actualClass == null) return null;
-    if (methodClass instanceof PsiTypeParameter) {
-      if (!expected.equals(actual)) {
-        return Map.entry((PsiTypeParameter)methodClass, expected);
-      }
-      return null;
+    if (expectedClass == null || actualClass == null || !actualClass.isEquivalentTo(methodClass)) return Substitution.BOTTOM;
+    if (!expectedClass.isEquivalentTo(actualClass)) {
+      if (level > 0) return Substitution.BOTTOM;
+      methodType = trySubstitute(methodType, expectedClass);
+      actual = trySubstitute(actual, expectedClass);
+      if (methodType == null || actual == null) return Substitution.BOTTOM;
     }
-    if (!expectedClass.isEquivalentTo(actualClass) || !expectedClass.isEquivalentTo(methodClass)) return null;
     PsiType[] methodTypeParameters = ((PsiClassType)methodType).getParameters();
     PsiType[] expectedTypeParameters = ((PsiClassType)expected).getParameters();
     PsiType[] actualTypeParameters = ((PsiClassType)actual).getParameters();
     if (methodTypeParameters.length != expectedTypeParameters.length || methodTypeParameters.length != actualTypeParameters.length) {
-      return null;
+      return Substitution.BOTTOM;
     }
-    Map.Entry<PsiTypeParameter, PsiType> existing = null;
+    Substitution existing = Substitution.TOP;
     for (int i = 0; i < methodTypeParameters.length; i++) {
-      Map.Entry<PsiTypeParameter, PsiType> substitution =
-        findDesiredSubstitution(expectedTypeParameters[i], actualTypeParameters[i], methodTypeParameters[i]);
-      if (existing == null) {
+      Substitution substitution = findDesiredSubstitution(expectedTypeParameters[i], actualTypeParameters[i], methodTypeParameters[i], level+1);
+      if (existing == Substitution.TOP) {
         existing = substitution;
       }
-      else if (!existing.equals(substitution)) {
-        return null;
+      else if (substitution != Substitution.TOP && !existing.equals(substitution)) {
+        return Substitution.BOTTOM;
       }
     }
     return existing;
+  }
+
+  private static @Nullable PsiType trySubstitute(@NotNull PsiType type, @NotNull PsiClass superClass) {
+    if (!(type instanceof PsiClassType)) return null;
+    PsiClassType.ClassResolveResult result = ((PsiClassType)type).resolveGenerics();
+    PsiClass psiClass = result.getElement();
+    if (psiClass == null) return null;
+    if (!psiClass.isInheritor(superClass, true)) return null;
+    PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, psiClass, result.getSubstitutor());
+    return JavaPsiFacade.getElementFactory(superClass.getProject()).createType(superClass, substitutor);
   }
 
   private static @Nullable PsiTypeParameter getSoleTypeParameter(@Nullable PsiType type) {

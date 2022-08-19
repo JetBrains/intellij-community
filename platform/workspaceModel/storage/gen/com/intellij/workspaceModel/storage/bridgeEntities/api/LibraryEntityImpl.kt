@@ -15,6 +15,7 @@ import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
@@ -131,6 +132,18 @@ open class LibraryEntityImpl : LibraryEntity, WorkspaceEntityBase() {
 
     override fun connectionIdList(): List<ConnectionId> {
       return connections
+    }
+
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as LibraryEntity
+      this.name = dataSource.name
+      this.entitySource = dataSource.entitySource
+      this.tableId = dataSource.tableId
+      this.roots = dataSource.roots.toMutableList()
+      this.excludedRoots = dataSource.excludedRoots.toMutableList()
+      if (parents != null) {
+      }
     }
 
     private fun indexLibraryRoots(libraryRoots: List<LibraryRoot>) {
@@ -470,6 +483,16 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return LibraryEntity(name, tableId, roots, excludedRoots, entitySource) {
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
@@ -504,5 +527,28 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
     result = 31 * result + roots.hashCode()
     result = 31 * result + excludedRoots.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + name.hashCode()
+    result = 31 * result + tableId.hashCode()
+    result = 31 * result + roots.hashCode()
+    result = 31 * result + excludedRoots.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.add(ModuleId::class.java)
+    collector.add(LibraryRoot.InclusionOptions::class.java)
+    collector.add(LibraryRootTypeId::class.java)
+    collector.add(LibraryTableId.ModuleLibraryTableId::class.java)
+    collector.add(LibraryTableId.GlobalLibraryTableId::class.java)
+    collector.add(LibraryRoot::class.java)
+    collector.add(LibraryTableId::class.java)
+    collector.addObject(LibraryTableId.ProjectLibraryTableId::class.java)
+    this.roots?.let { collector.add(it::class.java) }
+    this.excludedRoots?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = false
   }
 }

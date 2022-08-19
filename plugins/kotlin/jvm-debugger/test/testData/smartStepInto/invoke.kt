@@ -8,3 +8,4 @@ class A {
 }
 
 // EXISTS: invoke()
+// IGNORE_K2

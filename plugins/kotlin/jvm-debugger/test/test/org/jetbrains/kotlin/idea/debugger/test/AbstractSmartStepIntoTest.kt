@@ -14,7 +14,7 @@ abstract class AbstractSmartStepIntoTest : KotlinLightCodeInsightFixtureTestCase
     private val fixture: JavaCodeInsightTestFixture
         get() = myFixture
 
-    protected fun doTest(path: String) {
+    protected open fun doTest(path: String) {
         fixture.configureByFile(fileName())
 
         val offset = fixture.caretOffset

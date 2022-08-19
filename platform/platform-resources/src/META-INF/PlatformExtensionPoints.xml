@@ -487,5 +487,9 @@
 
     <extensionPoint name="projectIndexesWarmupSupport" interface="com.intellij.warmup.ProjectIndexesWarmupSupport" area="IDEA_PROJECT" />
     <extensionPoint name="projectBuildWarmupSupport" interface="com.intellij.warmup.ProjectBuildWarmupSupport" area="IDEA_PROJECT" />
+
+    <extensionPoint name="internal.ml.featureProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.internal.ml.MLFeatureProvider"/>
+    </extensionPoint>
   </extensionPoints>
 </idea-plugin>

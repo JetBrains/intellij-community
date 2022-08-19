@@ -13,6 +13,7 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import org.jetbrains.deft.ObjBuilder
@@ -79,6 +80,17 @@ open class FinalFieldsEntityImpl : FinalFieldsEntity, WorkspaceEntityBase() {
 
     override fun connectionIdList(): List<ConnectionId> {
       return connections
+    }
+
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as FinalFieldsEntity
+      this.descriptor = dataSource.descriptor
+      this.entitySource = dataSource.entitySource
+      this.description = dataSource.description
+      this.anotherVersion = dataSource.anotherVersion
+      if (parents != null) {
+      }
     }
 
 
@@ -161,6 +173,18 @@ class FinalFieldsEntityData : WorkspaceEntityData<FinalFieldsEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return FinalFieldsEntity(descriptor, entitySource) {
+      this.description = this@FinalFieldsEntityData.description
+      this.anotherVersion = this@FinalFieldsEntityData.anotherVersion
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
@@ -192,5 +216,18 @@ class FinalFieldsEntityData : WorkspaceEntityData<FinalFieldsEntity>() {
     result = 31 * result + description.hashCode()
     result = 31 * result + anotherVersion.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + descriptor.hashCode()
+    result = 31 * result + description.hashCode()
+    result = 31 * result + anotherVersion.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.add(AnotherDataClass::class.java)
+    collector.sameForAllEntities = true
   }
 }

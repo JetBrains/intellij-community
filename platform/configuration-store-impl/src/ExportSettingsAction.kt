@@ -82,8 +82,15 @@ open class ExportSettingsAction : AnAction(), DumbAware {
       }
 
       exportSettings(saveFile, markedComponents)
-      RevealFileAction.showDialog(getEventProject(e), ConfigurationStoreBundle.message("message.settings.exported.successfully"),
-                                  ConfigurationStoreBundle.message("title.export.successful"), saveFile.toFile(), null)
+      if (showOkCancelDialog(
+          title = ConfigurationStoreBundle.message("title.export.successful"),
+          message = ConfigurationStoreBundle.message("message.settings.exported.successfully"),
+          okText = RevealFileAction.getActionName(null),
+          cancelText = IdeBundle.message("action.close"),
+          icon = Messages.getInformationIcon(),
+          project = getEventProject(e)) == Messages.OK) {
+        RevealFileAction.openFile(saveFile.toFile())
+      }
     }
     catch (e: IOException) {
       Messages.showErrorDialog(ConfigurationStoreBundle.message("error.writing.settings", e.toString()),

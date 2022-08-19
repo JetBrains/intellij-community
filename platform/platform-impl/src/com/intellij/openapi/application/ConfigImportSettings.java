@@ -2,7 +2,6 @@
 package com.intellij.openapi.application;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +46,7 @@ public interface ConfigImportSettings {
                                        @NotNull Path oldConfigDir,
                                        @NotNull List<IdeaPluginDescriptor> pluginsToMigrate,
                                        @NotNull List<IdeaPluginDescriptor> pluginsToDownload,
-                                       @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap) { }
+                                       @NotNull Map<? super PluginId, ? extends IdeaPluginDescriptor> pluginIdMap) { }
 
   /**
    * @param prefix is a platform prefix of {@code configDirectory}

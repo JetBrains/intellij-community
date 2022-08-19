@@ -5,13 +5,13 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
@@ -96,7 +96,8 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
           final LocalQuickFix quickFix = SpecialAnnotationsUtilBase.createAddToSpecialAnnotationsListQuickFix(
             InspectionGadgetsBundle.message("add.0.to.ignore.if.annotated.by.list.quickfix", qualifiedName),
             QuickFixBundle.message("fix.add.special.annotation.family"),
-            EXCLUDE_ANNOS, qualifiedName, field);
+            JavaBundle.message("special.annotations.annotations.list"), EXCLUDE_ANNOS, qualifiedName
+          );
           fixes.add(quickFix);
           return true;
         });
@@ -425,6 +426,12 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
       return CommonJavaRefactoringUtil.suggestUniqueVariableName(localName, scope, field);
     }
 
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      applyFix(project, previewDescriptor);
+      return IntentionPreviewInfo.DIFF;
+    }
+
     @NotNull
     @Override
     protected List<PsiElement> moveDeclaration(@NotNull final Project project, @NotNull final PsiField variable) {
@@ -433,19 +440,17 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
       final PsiClass containingClass = variable.getContainingClass();
       if (containingClass == null) return newDeclarations;
       final PsiClass scope = findVariableScope(containingClass);
-      if (!groupByCodeBlocks(ReferencesSearch.search(variable, new LocalSearchScope(scope)).findAll(), refs)) return newDeclarations;
+      if (!groupByCodeBlocks(ReferencesSearch.search(variable,  new LocalSearchScope(scope)).findAll(), refs)) return newDeclarations;
       PsiElement declaration;
       for (Collection<PsiReference> psiReferences : refs.values()) {
-        declaration = WriteAction.compute(() -> copyVariableToMethodBody(variable, psiReferences));
+        declaration = IntentionPreviewUtils.writeAndCompute(() -> copyVariableToMethodBody(variable, psiReferences));
         if (declaration != null) newDeclarations.add(declaration);
       }
-      return WriteAction.compute(() -> {
-        if (!newDeclarations.isEmpty()) {
-          final PsiElement lastDeclaration = newDeclarations.get(newDeclarations.size() - 1);
-          deleteField(variable, lastDeclaration);
-        }
-        return newDeclarations;
-      });
+      if (!newDeclarations.isEmpty()) {
+        final PsiElement lastDeclaration = newDeclarations.get(newDeclarations.size() - 1);
+        IntentionPreviewUtils.write(() -> deleteField(variable, lastDeclaration));
+      }
+      return newDeclarations;
     }
 
     private static void deleteField(@NotNull PsiField variable, PsiElement newDeclaration) {
@@ -453,14 +458,6 @@ public class FieldCanBeLocalInspection extends AbstractBaseJavaLocalInspectionTo
       variable.normalizeDeclaration();
       tracker.delete(variable);
       tracker.insertCommentsBefore(newDeclaration);
-    }
-
-    @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      PsiField field = getVariable(previewDescriptor);
-      if (field == null) return IntentionPreviewInfo.EMPTY;
-      field.delete();
-      return IntentionPreviewInfo.DIFF;
     }
   }
 }

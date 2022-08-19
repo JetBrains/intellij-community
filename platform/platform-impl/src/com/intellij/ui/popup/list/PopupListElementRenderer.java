@@ -29,9 +29,6 @@ import java.awt.*;
 
 public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
-  static final int INLINE_BUTTONS_GAP = 8;
-  static final int INLINE_BUTTON_WIDTH = 20;
-
   public static final Key<@NlsSafe String> CUSTOM_KEY_STROKE_TEXT = new Key<>("CUSTOM_KEY_STROKE_TEXT");
   protected final ListPopupImpl myPopup;
   private JLabel myShortcutLabel;
@@ -240,8 +237,8 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
   @NotNull
   protected static JComponent createButtonsSeparator() {
-    SeparatorComponent separator = new SeparatorComponent(UIUtil.getListBackground(), SeparatorOrientation.VERTICAL);
-    separator.setHGap(0);
+    SeparatorComponent separator = new SeparatorComponent(JBUI.CurrentTheme.List.buttonSeparatorColor(), SeparatorOrientation.VERTICAL);
+    separator.setHGap(1);
     separator.setVGap(0);
     return separator;
   }
@@ -382,13 +379,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     java.util.List<JComponent> extraButtons = myInlineActionsSupport.getExtraButtons(list, value, isSelected);
     if (!extraButtons.isEmpty()) {
       myButtonsSeparator.setVisible(true);
-      int size = extraButtons.size();
-      for (int i = 0; i < size; i++) {
-        JComponent comp = extraButtons.get(i);
-        gb.next();
-        if (i < size - 1) gb.insetRight(INLINE_BUTTONS_GAP);
-        myButtonPane.add(comp, gb);
-      }
+      extraButtons.forEach(comp -> myButtonPane.add(comp, gb.next()));
     }
     else {
       myButtonsSeparator.setVisible(false);

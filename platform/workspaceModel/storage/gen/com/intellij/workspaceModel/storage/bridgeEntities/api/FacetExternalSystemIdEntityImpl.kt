@@ -13,6 +13,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
@@ -94,6 +95,16 @@ open class FacetExternalSystemIdEntityImpl : FacetExternalSystemIdEntity, Worksp
 
     override fun connectionIdList(): List<ConnectionId> {
       return connections
+    }
+
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as FacetExternalSystemIdEntity
+      this.externalSystemId = dataSource.externalSystemId
+      this.entitySource = dataSource.entitySource
+      if (parents != null) {
+        this.facet = parents.filterIsInstance<FacetEntity>().single()
+      }
     }
 
 
@@ -190,6 +201,18 @@ class FacetExternalSystemIdEntityData : WorkspaceEntityData<FacetExternalSystemI
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return FacetExternalSystemIdEntity(externalSystemId, entitySource) {
+      this.facet = parents.filterIsInstance<FacetEntity>().single()
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(FacetEntity::class.java)
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
@@ -215,5 +238,15 @@ class FacetExternalSystemIdEntityData : WorkspaceEntityData<FacetExternalSystemI
     var result = entitySource.hashCode()
     result = 31 * result + externalSystemId.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + externalSystemId.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.sameForAllEntities = true
   }
 }

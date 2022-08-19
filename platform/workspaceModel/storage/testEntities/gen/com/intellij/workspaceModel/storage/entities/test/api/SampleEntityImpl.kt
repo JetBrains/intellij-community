@@ -12,6 +12,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
@@ -132,6 +133,21 @@ open class SampleEntityImpl : SampleEntity, WorkspaceEntityBase() {
 
     override fun connectionIdList(): List<ConnectionId> {
       return connections
+    }
+
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as SampleEntity
+      this.booleanProperty = dataSource.booleanProperty
+      this.entitySource = dataSource.entitySource
+      this.stringProperty = dataSource.stringProperty
+      this.stringListProperty = dataSource.stringListProperty.toMutableList()
+      this.stringMapProperty = dataSource.stringMapProperty.toMutableMap()
+      this.fileProperty = dataSource.fileProperty
+      this.nullableData = dataSource.nullableData
+      this.randomUUID = dataSource.randomUUID
+      if (parents != null) {
+      }
     }
 
 
@@ -316,6 +332,18 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return SampleEntity(booleanProperty, stringProperty, stringListProperty, stringMapProperty, fileProperty, entitySource) {
+      this.nullableData = this@SampleEntityData.nullableData
+      this.randomUUID = this@SampleEntityData.randomUUID
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
@@ -359,5 +387,25 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
     result = 31 * result + nullableData.hashCode()
     result = 31 * result + randomUUID.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + booleanProperty.hashCode()
+    result = 31 * result + stringProperty.hashCode()
+    result = 31 * result + stringListProperty.hashCode()
+    result = 31 * result + stringMapProperty.hashCode()
+    result = 31 * result + fileProperty.hashCode()
+    result = 31 * result + nullableData.hashCode()
+    result = 31 * result + randomUUID.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.add(UUID::class.java)
+    this.stringMapProperty?.let { collector.add(it::class.java) }
+    this.stringListProperty?.let { collector.add(it::class.java) }
+    this.fileProperty?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = false
   }
 }

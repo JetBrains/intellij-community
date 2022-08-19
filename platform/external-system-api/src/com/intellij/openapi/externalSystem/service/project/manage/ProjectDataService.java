@@ -76,8 +76,6 @@ public interface ProjectDataService<E, I> {
    * </ul>
    * </pre>
    * are created, updated or left as-is if they have the
-   *  @param toImport
-   * @param project
    */
   void importData(Collection<? extends DataNode<E>> toImport,
                   @Nullable ProjectData projectData,

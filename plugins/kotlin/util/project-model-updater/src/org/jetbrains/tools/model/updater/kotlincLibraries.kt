@@ -61,13 +61,6 @@ internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommu
         kotlincWithStandardNaming("kotlinc.kotlin-dist", jpsPluginCoordinates, postfix = "-for-ide")
         kotlincWithStandardNaming("kotlinc.kotlin-jps-plugin-classpath", jpsPluginCoordinates)
 
-        kotlincWithStandardNaming(
-            "kotlinc.kotlin-reflect",
-            kotlincCoordinates,
-            transitive = true,
-            excludes = listOf(MavenId(ktGroup, "kotlin-stdlib"))
-        )
-
         run {
             val mavenIds = listOf(
                 MavenId.parse("$ktGroup:kotlin-stdlib-jdk8:${kotlincCoordinates.version}"),

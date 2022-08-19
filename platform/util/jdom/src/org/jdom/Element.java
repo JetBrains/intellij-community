@@ -364,7 +364,6 @@ public class Element extends Content implements Parent, Serializable {
    * declarations higher in the tree than they would have to be.
    *
    * @param additionalNamespace namespace to add
-   * @return true if the namespace is added (false if it was previously added)
    * @throws IllegalAddException if the namespace prefix collides with another
    *                             namespace prefix on the element
    */

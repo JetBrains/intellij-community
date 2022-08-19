@@ -2,15 +2,16 @@
 package com.intellij.debugger.ui.impl;
 
 import com.intellij.application.Topics;
-import com.intellij.ide.FrameStateListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.util.Alarm;
@@ -88,9 +89,9 @@ public final class TipManager implements Disposable, PopupMenuListener {
     }
   }
 
-  private class MyFrameStateListener implements FrameStateListener {
+  private class MyFrameStateListener implements ApplicationActivationListener {
     @Override
-    public void onFrameDeactivated() {
+    public void applicationDeactivated(@NotNull IdeFrame ideFrame) {
       hideTooltip(true);
     }
   }
@@ -291,7 +292,7 @@ public final class TipManager implements Disposable, PopupMenuListener {
 
     myHideCanceller = new MyAwtPreprocessor();
     Toolkit.getDefaultToolkit().addAWTEventListener(myHideCanceller, AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.KEY_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK);
-    Topics.subscribe(FrameStateListener.TOPIC, this, new MyFrameStateListener());
+    Topics.subscribe(ApplicationActivationListener.TOPIC, this, new MyFrameStateListener());
   }
 
   @Override

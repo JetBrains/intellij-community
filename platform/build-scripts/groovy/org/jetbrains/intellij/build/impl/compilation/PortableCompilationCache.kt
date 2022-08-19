@@ -22,7 +22,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
   private val git = Git(context.paths.projectHome)
 
   /**
-   * JPS data structures allowing incremental compilation for {@link org.jetbrains.intellij.build.impl.compilation.cache.CompilationOutput}
+   * JPS data structures allowing incremental compilation for [CompilationOutput]
    */
   internal class JpsCaches(context: CompilationContext) {
     val skipDownload = bool(SKIP_DOWNLOAD_PROPERTY)
@@ -37,7 +37,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
   }
 
   /**
-   * Server which stores {@link PortableCompilationCache}
+   * Server which stores [PortableCompilationCache]
    */
   private class RemoteCache(context: CompilationContext) {
     val url  by lazy { require(URL_PROPERTY, "Remote Cache url", context) }
@@ -70,12 +70,12 @@ class PortableCompilationCache(private val context: CompilationContext) {
   }
 
   /**
-   * Download the latest available {@link PortableCompilationCache} and perform incremental compilation if necessary
+   * Download the latest available [PortableCompilationCache] and perform incremental compilation if necessary
    *
    * When force rebuilding incremental compilation flag has to be set to false otherwise backward-refs won't be created.
-   * During rebuild JPS checks {@code CompilerReferenceIndex.exists(buildDir) || isRebuild} and if
-   * incremental compilation is enabled JPS won't create {@link JavaBackwardReferenceIndexWriter}.
-   * For more details see {@link JavaBackwardReferenceIndexWriter#initialize}
+   * During rebuild JPS checks condition [org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndex.exists] || [org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter.isRebuildInAllJavaModules]
+   * and if incremental compilation is enabled JPS won't create [org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter].
+   * For more details see [org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter.initialize]
    */
   fun downloadCacheAndCompileProject() {
     //noinspection GroovySynchronizationOnNonFinalField
@@ -109,7 +109,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
   private fun isRemoteCacheStale() = !downloader.availableForHeadCommit || downloader.anyLocalChanges
 
   /**
-   * Upload local {@link PortableCompilationCache} to {@link RemoteCache}
+   * Upload local [PortableCompilationCache] to [PortableCompilationCache.RemoteCache]
    */
   fun upload() {
     if (!forceRebuild && downloader.availableForHeadCommit) {
@@ -121,7 +121,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
   }
 
   /**
-   * Publish already uploaded {@link PortableCompilationCache} to {@link RemoteCache}
+   * Publish already uploaded [PortableCompilationCache] to [PortableCompilationCache.RemoteCache]
    */
   fun publish() {
     uploader.updateCommitHistory()
@@ -130,7 +130,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
   fun buildJpsCacheZip(): Path = uploader.buildJpsCacheZip()
 
   /**
-   * Publish already uploaded {@link PortableCompilationCache} to {@link RemoteCache} overriding existing {@link CommitsHistory}.
+   * Publish already uploaded [PortableCompilationCache] to [PortableCompilationCache.RemoteCache] overriding existing [CommitsHistory].
    * Used in force rebuild and cleanup.
    */
   fun overrideCommitHistory(forceRebuiltCommits: Set<String>) {
@@ -189,13 +189,13 @@ class PortableCompilationCache(private val context: CompilationContext) {
 }
 
 /**
- * {@link JpsCaches} archive upload may be skipped if only {@link org.jetbrains.intellij.build.impl.compilation.cache.CompilationOutput}s are required
+ * [PortableCompilationCache.JpsCaches] archive upload may be skipped if only [CompilationOutput]s are required
  * without any incremental compilation (for tests execution as an example)
  */
 private const val SKIP_UPLOAD_PROPERTY = "intellij.jps.remote.cache.uploadCompilationOutputsOnly"
 
 /**
- * {@link JpsCaches} archive download may be skipped if only {@link org.jetbrains.intellij.build.impl.compilation.cache.CompilationOutput}s are required
+ * [PortableCompilationCache.JpsCaches] archive download may be skipped if only [CompilationOutput]s are required
  * without any incremental compilation (for tests execution as an example)
  */
 private const val SKIP_DOWNLOAD_PROPERTY = "intellij.jps.remote.cache.downloadCompilationOutputsOnly"
@@ -211,7 +211,7 @@ private const val UPLOAD_URL_PROPERTY = "intellij.jps.remote.cache.upload.url"
 private const val URL_PROPERTY = "intellij.jps.remote.cache.url"
 
 /**
- * If true then {@link RemoteCache} is configured to be used
+ * If true then [PortableCompilationCache.RemoteCache] is configured to be used
  */
 private val IS_CONFIGURED = !System.getProperty(URL_PROPERTY).isNullOrBlank()
 
@@ -221,30 +221,28 @@ private val IS_CONFIGURED = !System.getProperty(URL_PROPERTY).isNullOrBlank()
 private const val GIT_REPOSITORY_URL_PROPERTY = "intellij.remote.url"
 
 /**
- * If true then {@link PortableCompilationCache} for head commit is expected to exist and search in
- * {@link org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory#JSON_FILE} is skipped.
- * Required for temporary branch caches which are uploaded but not published in
- * {@link org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory#JSON_FILE}.
+ * If true then [PortableCompilationCache] for head commit is expected to exist and search in [CommitsHistory.JSON_FILE] is skipped.
+ * Required for temporary branch caches which are uploaded but not published in [CommitsHistory.JSON_FILE].
  */
 private const val AVAILABLE_FOR_HEAD_PROPERTY = "intellij.jps.cache.availableForHeadCommit"
 
 /**
- * Download {@link PortableCompilationCache} even if there are caches available locally
+ * Download [PortableCompilationCache] even if there are caches available locally
  */
 private const val FORCE_DOWNLOAD_PROPERTY = "intellij.jps.cache.download.force"
 
 /**
- * If true then {@link PortableCompilationCache} will be rebuilt from scratch
+ * If true then [PortableCompilationCache] will be rebuilt from scratch
  */
 private const val FORCE_REBUILD_PROPERTY = "intellij.jps.cache.rebuild.force"
 /**
- * Folder to store {@link PortableCompilationCache} for later upload to AWS S3 bucket.
+ * Folder to store [PortableCompilationCache] for later upload to AWS S3 bucket.
  * Upload performed in a separate process on CI.
  */
 private const val AWS_SYNC_FOLDER_PROPERTY = "jps.caches.aws.sync.folder"
 
 /**
- * Commit hash for which {@link PortableCompilationCache} is to be built/downloaded
+ * Commit hash for which [PortableCompilationCache] is to be built/downloaded
  */
 private const val COMMIT_HASH_PROPERTY = "build.vcs.number"
 
@@ -261,7 +259,7 @@ private fun bool(systemProperty: String): Boolean {
 }
 
 /**
- * Compiled bytecode of project module, cannot be used for incremental compilation without {@link org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache.JpsCaches}
+ * Compiled bytecode of project module, cannot be used for incremental compilation without [PortableCompilationCache.JpsCaches]
  */
 internal class CompilationOutput(
   name: String,

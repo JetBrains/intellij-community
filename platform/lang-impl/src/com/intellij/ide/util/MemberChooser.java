@@ -11,17 +11,16 @@ import com.intellij.openapi.editor.PlatformEditorBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -665,12 +664,9 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   @Nullable
   @Override
   public Object getData(@NotNull String dataId) {
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      if (mySelectedElements != null && !mySelectedElements.isEmpty()) {
-        T selectedElement = mySelectedElements.iterator().next();
-        return selectedElement instanceof ClassMemberWithElement ?
-               ((ClassMemberWithElement)selectedElement).getElement() : null;
-      }
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      if (!(ContainerUtil.getFirstItem(mySelectedElements) instanceof ClassMemberWithElement member)) return null;
+      return (DataProvider) slowId -> CommonDataKeys.PSI_ELEMENT.is(slowId) ? member.getElement() : null;
     }
     return null;
   }
@@ -811,6 +807,11 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       myAlphabeticallySorted = flag;
       setSortComparator(flag ? new AlphaComparator() : new OrderComparator());
@@ -835,6 +836,10 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
       return myShowClasses;
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
     @Override
     public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       setShowClasses(flag);

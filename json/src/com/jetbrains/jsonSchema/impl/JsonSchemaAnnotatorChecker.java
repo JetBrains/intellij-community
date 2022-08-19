@@ -579,7 +579,7 @@ public final class JsonSchemaAnnotatorChecker implements JsonValidationHost {
 
       if (allTypes.size() == 1) return errors.iterator().next();
 
-      List<String> actualInfos = errors.stream().map(e -> e.getMessage()).map(JsonSchemaAnnotatorChecker::fetchActual).distinct().collect(Collectors.toList());
+      List<String> actualInfos = errors.stream().map(e -> e.getMessage()).map(JsonSchemaAnnotatorChecker::fetchActual).distinct().toList();
       String actualInfo = actualInfos.size() == 1 ? (" " + JsonBundle.message("schema.validation.actual") + actualInfos.get(0) + ".") : "";
       String commonTypeMessage = JsonBundle.message("schema.validation.incompatible.types") + "\n" +
                                  JsonBundle.message("schema.validation.required.one.of",

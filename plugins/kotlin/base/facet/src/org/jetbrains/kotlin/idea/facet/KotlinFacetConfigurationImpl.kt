@@ -16,7 +16,7 @@ class KotlinFacetConfigurationImpl : KotlinFacetConfiguration {
 
     @Suppress("OVERRIDE_DEPRECATION")
     override fun readExternal(element: Element) {
-        settings = deserializeFacetSettings(element)
+        settings = deserializeFacetSettings(element).also { it.updateMergedArguments() }
     }
 
     @Suppress("OVERRIDE_DEPRECATION")

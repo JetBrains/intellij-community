@@ -17,17 +17,17 @@ class ProjectCodeVisionModel private constructor(val project: Project) {
   companion object {
     fun getInstance(project: Project): ProjectCodeVisionModel = project.service()
 
-    const val MORE_PROVIDER_ID = "!More"
-    const val HIDE_PROVIDER_ID = "!Hide"
-    const val HIDE_ALL = "!HideAll"
+    const val MORE_PROVIDER_ID: String = "!More"
+    const val HIDE_PROVIDER_ID: String = "!Hide"
+    const val HIDE_ALL: String = "!HideAll"
   }
 
-  val maxVisibleLensCount = ViewableMap<CodeVisionAnchorKind, Int>()
-  val hoveredInlay = Property<Inlay<*>?>(null)
-  val hoveredEntry = Property<CodeVisionEntry?>(null)
-  val lensPopupActive = Property(false)
+  val maxVisibleLensCount: ViewableMap<CodeVisionAnchorKind, Int> = ViewableMap<CodeVisionAnchorKind, Int>()
+  val hoveredInlay: Property<Inlay<*>?> = Property<Inlay<*>?>(null)
+  val hoveredEntry: Property<CodeVisionEntry?> = Property<CodeVisionEntry?>(null)
+  val lensPopupActive: Property<Boolean> = Property(false)
 
-  val moreEntry = AdditionalCodeVisionEntry(MORE_PROVIDER_ID, "More...")
+  val moreEntry: AdditionalCodeVisionEntry = AdditionalCodeVisionEntry(MORE_PROVIDER_ID, "More...")
 
 
   private fun getCodeVisionHost() = CodeVisionInitializer.getInstance(project).getCodeVisionHost()

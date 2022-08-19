@@ -16,6 +16,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
@@ -134,6 +135,22 @@ open class EclipseProjectPropertiesEntityImpl : EclipseProjectPropertiesEntity, 
 
     override fun connectionIdList(): List<ConnectionId> {
       return connections
+    }
+
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as EclipseProjectPropertiesEntity
+      this.entitySource = dataSource.entitySource
+      this.variablePaths = dataSource.variablePaths.toMutableMap()
+      this.eclipseUrls = dataSource.eclipseUrls.toMutableList()
+      this.unknownCons = dataSource.unknownCons.toMutableList()
+      this.knownCons = dataSource.knownCons.toMutableList()
+      this.forceConfigureJdk = dataSource.forceConfigureJdk
+      this.expectedModuleSourcePlace = dataSource.expectedModuleSourcePlace
+      this.srcPlace = dataSource.srcPlace.toMutableMap()
+      if (parents != null) {
+        this.module = parents.filterIsInstance<ModuleEntity>().single()
+      }
     }
 
 
@@ -333,6 +350,19 @@ class EclipseProjectPropertiesEntityData : WorkspaceEntityData<EclipseProjectPro
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return EclipseProjectPropertiesEntity(variablePaths, eclipseUrls, unknownCons, knownCons, forceConfigureJdk, expectedModuleSourcePlace,
+                                          srcPlace, entitySource) {
+      this.module = parents.filterIsInstance<ModuleEntity>().single()
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(ModuleEntity::class.java)
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
@@ -376,5 +406,26 @@ class EclipseProjectPropertiesEntityData : WorkspaceEntityData<EclipseProjectPro
     result = 31 * result + expectedModuleSourcePlace.hashCode()
     result = 31 * result + srcPlace.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + variablePaths.hashCode()
+    result = 31 * result + eclipseUrls.hashCode()
+    result = 31 * result + unknownCons.hashCode()
+    result = 31 * result + knownCons.hashCode()
+    result = 31 * result + forceConfigureJdk.hashCode()
+    result = 31 * result + expectedModuleSourcePlace.hashCode()
+    result = 31 * result + srcPlace.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    this.knownCons?.let { collector.add(it::class.java) }
+    this.eclipseUrls?.let { collector.add(it::class.java) }
+    this.unknownCons?.let { collector.add(it::class.java) }
+    this.variablePaths?.let { collector.add(it::class.java) }
+    this.srcPlace?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = false
   }
 }

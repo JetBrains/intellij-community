@@ -19,8 +19,8 @@ import org.jetbrains.annotations.NonNls
  */
 interface DaemonBoundCodeVisionProvider {
   companion object {
-    const val EP_NAME = "com.intellij.codeInsight.daemonBoundCodeVisionProvider"
-    val extensionPoint = ExtensionPointName.create<DaemonBoundCodeVisionProvider>(EP_NAME)
+    const val EP_NAME: String = "com.intellij.codeInsight.daemonBoundCodeVisionProvider"
+    val extensionPoint: ExtensionPointName<DaemonBoundCodeVisionProvider> = ExtensionPointName.create(EP_NAME)
   }
 
   @JvmDefault

@@ -245,12 +245,30 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       if (shortcuts.length != 0) {
         String newActionId = newQuickList.getActionId();
         for (Shortcut shortcut : shortcuts) {
-          keymap.removeShortcut(actionId, shortcut);
-          keymap.addShortcut(newActionId, shortcut);
+          removeShortcut(keymap, actionId, shortcut);
+          addShortcut(keymap, newActionId, shortcut);
         }
       }
     });
     myQuickListsModified = true;
+  }
+
+  private static void addShortcut(Keymap keymap, String actionId, Shortcut shortcut) {
+    if (keymap instanceof KeymapImpl) {
+      ((KeymapImpl)keymap).addShortcut(actionId, shortcut, true);
+    }
+    else {
+      keymap.addShortcut(actionId, shortcut);
+    }
+  }
+
+  private static void removeShortcut(Keymap keymap, String actionId, Shortcut shortcut) {
+    if (keymap instanceof KeymapImpl) {
+      ((KeymapImpl)keymap).removeShortcut(actionId, shortcut, true);
+    }
+    else {
+      keymap.removeShortcut(actionId, shortcut);
+    }
   }
 
   @Override
@@ -343,6 +361,11 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       @Override
       public boolean isSelected(AnActionEvent e) {
         return myShowOnlyConflicts;
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
       }
 
       @Override
@@ -778,9 +801,9 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
           return;
         }
       }
-      keymap.addShortcut(actionId, newShortcut);
+      addShortcut(keymap, actionId, newShortcut);
       if (StringUtil.startsWithChar(actionId, '$')) {
-        keymap.addShortcut(KeyMapBundle.message("editor.shortcut", actionId.substring(1)), newShortcut);
+        addShortcut(keymap, KeyMapBundle.message("editor.shortcut", actionId.substring(1)), newShortcut);
       }
       if (manager != null) manager.apply();
     }
@@ -816,6 +839,10 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       editSelection(e.getInputEvent(), false);
     }
@@ -838,6 +865,11 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       myFilterComponent.reset();
       currentKeymapChanged();
@@ -856,6 +888,11 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       Presentation presentation = event.getPresentation();
       presentation.setEnabled(enabled);
       presentation.setIcon(enabled ? AllIcons.Actions.Cancel : EmptyIcon.ICON_16);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override

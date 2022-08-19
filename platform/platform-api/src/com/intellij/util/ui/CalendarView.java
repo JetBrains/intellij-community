@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ui;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -249,6 +250,10 @@ public class CalendarView extends JPanel {
         e.getPresentation().setEnabled(!myMonths.isPopupVisible() && !myDays.isPopupVisible());
       }
 
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         runnable.run();

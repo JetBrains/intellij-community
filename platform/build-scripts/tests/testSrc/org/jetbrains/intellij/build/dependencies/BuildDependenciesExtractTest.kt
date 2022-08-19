@@ -32,6 +32,8 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
     @JvmStatic
     fun data(): Collection<Array<Any>> =
       listOf(arrayOf(TestArchiveType.ZIP), arrayOf(TestArchiveType.TAR_GZ))
+
+    private val isWindows = System.getProperty("os.name").lowercase().startsWith("windows")
   }
 
   @Rule
@@ -125,33 +127,38 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
   }
 
   @Test
-  fun `extractFileToCacheLocation - __index__ excluded`() {
+  fun `extractFileToCacheLocation - symlink pointing to outside location`() {
     val testArchive = createTestFile(archiveType, listOf(
-      TestFile("dir/__index__"),
-      TestFile("__index__"),
-      TestFile("__index__2"),
+      TestFile("dir/test.symlink", symlinkTarget = "../dir/.///../../test.txt"),
+      TestFile("dir/test.symlink2"),
     ))
 
     val root = BuildDependenciesDownloader.extractFileToCacheLocation(
       BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive)
 
-    Assert.assertTrue(root.resolve("__index__2").exists())
-    Assert.assertFalse(root.resolve("__index__").exists())
-    Assert.assertTrue(root.resolve("dir/__index__").exists())
+    // will be skipped
+    Assert.assertFalse(root.resolve("dir/test.symlink").exists())
+    Assert.assertTrue(root.resolve("dir/test.symlink2").exists())
   }
 
   @Test
-  fun `extractFileToCacheLocation - fail on symlink pointing to outside location`() {
+  fun `extractFileToCacheLocation - symlink pointing to directory`() {
     val testArchive = createTestFile(archiveType, listOf(
-      TestFile("dir/test.symlink", symlinkTarget = "../dir/.///../../test.txt"),
+      TestFile("dir/test.symlink", symlinkTarget = "sub"),
+      TestFile("dir/sub/test.file"),
     ))
 
-    try {
-      BuildDependenciesDownloader.extractFileToCacheLocation(
-        BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive)
-      Assert.fail()
-    } catch (e: Throwable) {
-      Assert.assertTrue(e.message, e.message!!.contains("symlink entry 'dir/test.symlink' points to outside of archive extraction directory"))
+    val root = BuildDependenciesDownloader.extractFileToCacheLocation(
+      BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive)
+
+    val target = root.resolve("dir/test.symlink/test.file")
+
+    if (isWindows) {
+      // On Windows directory symlinks are not supported
+      Assert.assertFalse(target.exists())
+    }
+    else {
+      Assert.assertTrue(target.exists())
     }
   }
 

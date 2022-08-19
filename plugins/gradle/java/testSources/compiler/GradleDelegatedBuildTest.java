@@ -193,7 +193,7 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
       @Override
       public void finished(@NotNull ProjectTaskManager.Result result) {
         result.getContext().getDirtyOutputPaths()
-          .ifPresent(paths -> dirtyOutputRoots.addAll(paths.map(PathUtil::toSystemIndependentName).collect(Collectors.toList())));
+          .ifPresent(paths -> dirtyOutputRoots.addAll(paths.map(PathUtil::toSystemIndependentName).toList()));
       }
     });
 

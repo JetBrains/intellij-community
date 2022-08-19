@@ -44,9 +44,10 @@ public class JpsBootstrapMain {
   private static final Option OPT_SYSTEM_PROPERTY = Option.builder("D").hasArgs().valueSeparator('=').desc("Pass system property to the build script").build();
   private static final Option OPT_PROPERTIES_FILE = Option.builder().longOpt("properties-file").hasArg().desc("Pass system properties to the build script from specified properties file https://en.wikipedia.org/wiki/.properties").build();
   private static final Option OPT_BUILD_TARGET_XMX = Option.builder().longOpt("build-target-xmx").hasArg().desc("Specify Xmx to run build script. default: " + DEFAULT_BUILD_SCRIPT_XMX).build();
-  private static final Option OPT_JAVA_ARGFILE_TARGET = Option.builder().longOpt("java-argfile-target").required().hasArg().desc("Write java argfile to this file").build();
+  private static final Option OPT_JAVA_ARGFILE_TARGET = Option.builder().longOpt("java-argfile-target").hasArg().desc("Write java argfile to this file").build();
+  private static final Option OPT_ONLY_DOWNLOAD_JDK = Option.builder().longOpt("download-jdk").desc("Download project JDK and exit").build();
   private static final List<Option> ALL_OPTIONS =
-    Arrays.asList(OPT_HELP, OPT_VERBOSE, OPT_SYSTEM_PROPERTY, OPT_PROPERTIES_FILE, OPT_JAVA_ARGFILE_TARGET, OPT_BUILD_TARGET_XMX);
+    Arrays.asList(OPT_HELP, OPT_VERBOSE, OPT_SYSTEM_PROPERTY, OPT_PROPERTIES_FILE, OPT_JAVA_ARGFILE_TARGET, OPT_BUILD_TARGET_XMX, OPT_ONLY_DOWNLOAD_JDK);
 
   private static Options createCliOptions() {
     Options opts = new Options();
@@ -91,6 +92,7 @@ public class JpsBootstrapMain {
   private final List<String> mainArgsToRun;
   private final Properties additionalSystemProperties;
   private final Properties additionalSystemPropertiesFromPropertiesFile;
+  private final boolean onlyDownloadJdk;
 
   public JpsBootstrapMain(String[] args) throws IOException {
     initLogging();
@@ -106,14 +108,24 @@ public class JpsBootstrapMain {
     }
 
     final List<String> freeArgs = Arrays.asList(cmdline.getArgs());
-    if (cmdline.hasOption(OPT_HELP) || freeArgs.size() < 2) {
+    if (cmdline.hasOption(OPT_HELP) || freeArgs.size() < 1) {
       showUsagesAndExit();
     }
 
     projectHome = Path.of(freeArgs.get(0)).normalize();
-    moduleNameToRun = freeArgs.get(1);
-    classNameToRun = freeArgs.get(2);
-    mainArgsToRun = freeArgs.subList(3, freeArgs.size());
+    onlyDownloadJdk = cmdline.hasOption(OPT_ONLY_DOWNLOAD_JDK);
+    if (onlyDownloadJdk) {
+      moduleNameToRun = null;
+      classNameToRun = null;
+      mainArgsToRun = Collections.emptyList();
+      javaArgsFileTarget = null;
+    }
+    else {
+      moduleNameToRun = freeArgs.get(1);
+      classNameToRun = freeArgs.get(2);
+      mainArgsToRun = freeArgs.subList(3, freeArgs.size());
+      javaArgsFileTarget = Path.of(cmdline.getOptionValue(OPT_JAVA_ARGFILE_TARGET));
+    }
 
     additionalSystemProperties = cmdline.getOptionProperties("D");
 
@@ -140,37 +152,44 @@ public class JpsBootstrapMain {
     info("Working directory: " + jpsBootstrapWorkDir);
     Files.createDirectories(jpsBootstrapWorkDir);
 
-    javaArgsFileTarget = Path.of(cmdline.getOptionValue(OPT_JAVA_ARGFILE_TARGET));
     buildTargetXmx = cmdline.hasOption(OPT_BUILD_TARGET_XMX) ? cmdline.getOptionValue(OPT_BUILD_TARGET_XMX) : DEFAULT_BUILD_SCRIPT_XMX;
   }
 
-  private void main() throws Throwable {
+  private Path downloadJdk() {
     Path jdkHome;
     if (JpsBootstrapUtil.underTeamCity) {
       jdkHome = JdkDownloader.getJdkHome(communityHome);
+      SetParameterServiceMessage setParameterServiceMessage = new SetParameterServiceMessage(
+        "jps.bootstrap.java.home", jdkHome.toString()
+      );
+      System.out.println(setParameterServiceMessage.asString());
+      setParameterServiceMessage = new SetParameterServiceMessage(
+        "jps.bootstrap.java.executable", JdkDownloader.getJavaExecutable(jdkHome).toString());
+      System.out.println(setParameterServiceMessage.asString());
     }
     else {
       // On local run JDK was already downloaded via jps-bootstrap.{sh,cmd}
       jdkHome = Path.of(System.getProperty("java.home"));
     }
+    return jdkHome;
+  }
 
+  private void main() throws Throwable {
+    Path jdkHome = downloadJdk();
+    if (onlyDownloadJdk) {
+      return;
+    }
     Path kotlincHome = KotlinCompiler.downloadAndExtractKotlinCompiler(communityHome);
 
     JpsModel model = JpsProjectUtils.loadJpsProject(projectHome, jdkHome, kotlincHome);
     JpsModule module = JpsProjectUtils.getModuleByName(model, moduleNameToRun);
 
-    loadClasses(module, model, kotlincHome);
+    downloadOrBuildClasses(module, model, kotlincHome);
 
     List<File> moduleRuntimeClasspath = JpsProjectUtils.getModuleRuntimeClasspath(module);
     verbose("Module " + module.getName() + " classpath:\n  " + moduleRuntimeClasspath.stream().map(JpsBootstrapMain::fileDebugInfo).collect(Collectors.joining("\n  ")));
 
     writeJavaArgfile(moduleRuntimeClasspath);
-
-    if (underTeamCity) {
-      SetParameterServiceMessage setParameterServiceMessage = new SetParameterServiceMessage(
-        "jps.bootstrap.java.executable", JdkDownloader.getJavaExecutable(jdkHome).toString());
-      System.out.println(setParameterServiceMessage.asString());
-    }
   }
 
   private void writeJavaArgfile(List<File> moduleRuntimeClasspath) throws IOException {
@@ -212,7 +231,7 @@ public class JpsBootstrapMain {
     info("java argfile:\n" + Files.readString(javaArgsFileTarget));
   }
 
-  private void loadClasses(JpsModule module, JpsModel model, Path kotlincHome) throws Throwable {
+  private void downloadOrBuildClasses(JpsModule module, JpsModel model, Path kotlincHome) throws Throwable {
     String fromJpsBuildEnvValue = System.getenv(JpsBuild.CLASSES_FROM_JPS_BUILD_ENV_NAME);
     boolean runJpsBuild = fromJpsBuildEnvValue != null && JpsBootstrapUtil.toBooleanChecked(fromJpsBuildEnvValue);
 

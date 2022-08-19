@@ -42,8 +42,7 @@ public final class BuildDependenciesUtil {
 
   private static final boolean isPosix = FileSystems.getDefault().supportedFileAttributeViews().contains("posix");
   private static final int octal_0111 = Integer.parseInt("111", 8);
-  private static final String _OS_NAME = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
-  private static final boolean isWindows = _OS_NAME.startsWith("windows");
+  private static final boolean isWindows = System.getProperty("os.name").toLowerCase(Locale.ENGLISH).startsWith("windows");
 
   @SuppressWarnings("HttpUrlsUsage")
   private static DocumentBuilder createDocumentBuilder() {
@@ -273,12 +272,6 @@ public final class BuildDependenciesUtil {
         break;
       }
 
-      if (entry.getName().equals("__index__")) {
-        // don't unpack a special index file for JetBrains ZIP
-        // TODO: to be removed from here, it's not the place to add arbitrary exclusions
-        continue;
-      }
-
       Entry.Type type = entry.getType();
 
       Path entryPath = converter.getOutputPath(entry.getName(), type == Entry.Type.DIR);
@@ -433,7 +426,7 @@ public final class BuildDependenciesUtil {
         "Normalized entry name should not contain '" + doubleForwardSlashString + "': " + normalizedEntryName);
     }
     if (normalizedEntryName.contains("..") &&
-        Arrays.stream(normalizedEntryName.split(forwardSlashString)).collect(Collectors.toList()).contains("..")) {
+        Arrays.asList(normalizedEntryName.split(forwardSlashString)).contains("..")) {
       throw new IllegalStateException("Invalid entry name: " + normalizedEntryName);
     }
   }

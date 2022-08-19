@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.codegen.deft.meta.impl
 
 import com.intellij.workspaceModel.codegen.deft.meta.*
-import com.intellij.workspaceModel.codegen.deft.meta.impl.ObjTypeImpl
 
 private val fieldObjType = ObjTypeImpl<ObjProperty<*, *>>()
 
@@ -33,7 +32,8 @@ class OwnPropertyImpl<T : Obj, V>(
   open: Boolean,
   content: Boolean,
   override val constructorParameter: Boolean,
-  override val classLocalId: Int
+  override val classLocalId: Int,
+  override val isKey: Boolean,
 ) : ObjPropertyBase<T, V>(receiver, name, valueType, valueKind, open, content), OwnProperty<T, V> {
 
   override fun toString(): String = "$name (${receiver.name})"

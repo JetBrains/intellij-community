@@ -1,10 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions;
 
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -12,6 +9,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.ui.ExperimentalUI;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -22,7 +20,9 @@ public class RefreshAction extends AnAction implements DumbAware {
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     boolean isEnabled = project != null && ProjectLevelVcsManager.getInstance(project).hasActiveVcss();
-    e.getPresentation().setEnabledAndVisible(isEnabled);
+    boolean disableInNewUI = ExperimentalUI.isNewUI() && e.getPlace().equals(ActionPlaces.CHANGES_VIEW_TOOLBAR);
+
+    e.getPresentation().setEnabledAndVisible(isEnabled && !disableInNewUI);
   }
 
   @Override

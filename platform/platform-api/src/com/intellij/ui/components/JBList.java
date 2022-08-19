@@ -35,7 +35,7 @@ import java.util.Collection;
  * @author Anton Makeev
  * @author Konstantin Bulenkov
  */
-public class JBList<E> extends JList<E> implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>{
+public class JBList<E> extends JList<E> implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer> {
   private StatusText myEmptyText;
   private ExpandableItemsHandler<Integer> myExpandableItemsHandler;
 
@@ -76,8 +76,9 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
   public void removeNotify() {
     super.removeNotify();
 
-    if (!ScreenUtil.isStandardAddRemoveNotify(this))
+    if (!ScreenUtil.isStandardAddRemoveNotify(this)) {
       return;
+    }
 
     if (myBusyIcon != null) {
       remove(myBusyIcon);
@@ -243,12 +244,17 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
   private @Nullable String itemToText(int index, E value) {
     ListCellRenderer<? super E> renderer = getCellRenderer();
     Component c = renderer == null ? null : renderer.getListCellRendererComponent(this, value, index, true, true);
+    if (c != null) {
+      c = ExpandedItemRendererComponentWrapper.unwrap(c);
+    }
+
     SimpleColoredComponent coloredComponent = null;
     if (c instanceof JComponent) {
       coloredComponent = UIUtil.findComponentOfType((JComponent)c, SimpleColoredComponent.class);
     }
     return coloredComponent != null ? coloredComponent.getCharSequence(true).toString() :
            c instanceof JTextComponent ? ((JTextComponent)c).getText() :
+           c instanceof JLabel ? ((JLabel)c).getText() :
            value != null ? value.toString() : null;
   }
 

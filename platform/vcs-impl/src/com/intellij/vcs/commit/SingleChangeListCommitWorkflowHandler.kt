@@ -4,7 +4,6 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
-import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcsesForFilePaths
@@ -13,9 +12,9 @@ import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 
 class SingleChangeListCommitWorkflowHandler(
-  override val workflow: SingleChangeListCommitWorkflow,
+  override val workflow: CommitChangeListDialogWorkflow,
   override val ui: SingleChangeListCommitWorkflowUi
-) : AbstractCommitWorkflowHandler<SingleChangeListCommitWorkflow, SingleChangeListCommitWorkflowUi>(),
+) : AbstractCommitWorkflowHandler<CommitChangeListDialogWorkflow, SingleChangeListCommitWorkflowUi>(),
     CommitWorkflowUiStateListener,
     SingleChangeListCommitWorkflowUi.ChangeListListener {
 
@@ -48,8 +47,6 @@ class SingleChangeListCommitWorkflowHandler(
     ui.addChangeListListener(this, this)
   }
 
-  override fun vcsesChanged() = Unit
-
   fun activate(): Boolean {
     initCommitHandlers()
 
@@ -75,30 +72,38 @@ class SingleChangeListCommitWorkflowHandler(
     updateCommitOptions()
   }
 
-  override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CommitChecksResult) {
-    super.beforeCommitChecksEnded(isDefaultCommit, result)
+  override fun beforeCommitChecksEnded(sessionInfo: CommitSessionInfo, result: CommitChecksResult) {
+    super.beforeCommitChecksEnded(sessionInfo, result)
     if (result.shouldCommit) {
       // commit message could be changed during before-commit checks - ensure updated commit message is used for commit
       workflow.commitState = workflow.commitState.copy(getCommitMessage())
 
-      if (isDefaultCommit) ui.deactivate()
+      if (sessionInfo.isVcsCommit) ui.deactivate()
     }
   }
 
   override fun isExecutorEnabled(executor: CommitExecutor): Boolean =
     super.isExecutorEnabled(executor) && (!executor.areChangesRequired() || !isCommitEmpty())
 
-  override fun checkCommit(executor: CommitExecutor?): Boolean =
-    getCommitMessage().isNotEmpty() ||
-    !VcsConfiguration.getInstance(project).FORCE_NON_EMPTY_COMMENT ||
-    ui.confirmCommitWithEmptyMessage()
+  override fun checkCommit(sessionInfo: CommitSessionInfo): Boolean =
+    super.checkCommit(sessionInfo) &&
+    (
+      getCommitMessage().isNotEmpty() ||
+      ui.confirmCommitWithEmptyMessage()
+    )
 
-  override fun updateWorkflow() {
+  override fun updateWorkflow(sessionInfo: CommitSessionInfo): Boolean {
     workflow.commitState = getCommitState()
+    return configureCommitSession(project, sessionInfo,
+                                  workflow.commitState.changes,
+                                  workflow.commitState.commitMessage)
   }
 
-  override fun addUnversionedFiles(): Boolean {
-    return addUnversionedFiles(getChangeList(), ui.getInclusionModel())
+  override fun prepareForCommitExecution(sessionInfo: CommitSessionInfo): Boolean {
+    if (sessionInfo.isVcsCommit) {
+      if (!addUnversionedFiles(project, getIncludedUnversionedFiles(), getChangeList(), ui.getInclusionModel())) return false
+    }
+    return super.prepareForCommitExecution(sessionInfo)
   }
 
   private fun initCommitMessage() {

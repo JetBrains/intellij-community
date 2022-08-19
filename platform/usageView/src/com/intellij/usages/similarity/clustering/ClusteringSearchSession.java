@@ -11,13 +11,11 @@ import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
 import com.intellij.util.MathUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -40,12 +38,12 @@ public class ClusteringSearchSession {
   }
 
   @RequiresBackgroundThread
-  public synchronized Usage clusterUsage(@NotNull Bag usageFeatures, @NotNull Usage similarUsageAdapter) {
-    UsageCluster cluster = getTheMostSimilarCluster(usageFeatures);
+  public synchronized @NotNull SimilarUsage clusterUsage(@NotNull SimilarUsage similarUsageAdapter) {
+    UsageCluster cluster = getTheMostSimilarCluster(similarUsageAdapter.getFeatures());
     if (cluster == null) {
       cluster = createNewCluster();
     }
-    cluster.addUsage((SimilarUsage)similarUsageAdapter);
+    cluster.addUsage(similarUsageAdapter);
     return similarUsageAdapter;
   }
 
@@ -63,9 +61,18 @@ public class ClusteringSearchSession {
     return null;
   }
 
+  public @Nullable UsageCluster findCluster(@NotNull List<? extends UsageInfo> infos) {
+    UsageInfo selectedInfo = ContainerUtil.getFirstItem(infos);
+    if (selectedInfo != null) {
+      return findCluster(selectedInfo);
+    }
+    return null;
+  }
+
   @RequiresBackgroundThread
   @RequiresReadLock
-  public @NotNull List<UsageCluster> getClustersForSelectedUsages(@NotNull ProgressIndicator indicator, @NotNull Set<Usage> selectedUsages) {
+  public @NotNull List<UsageCluster> getClustersForSelectedUsages(@NotNull ProgressIndicator indicator,
+                                                                  @NotNull Set<Usage> selectedUsages) {
     //create new ArrayList from clusters to avoid concurrent modification and do all the needed sorting and filtering in non-blocking way
     return new ArrayList<>(getClusters()).stream()
       .map(cluster -> new UsageCluster(cluster.getOnlySelectedUsages(selectedUsages)))
@@ -73,6 +80,13 @@ public class ClusteringSearchSession {
         indicator.checkCanceled();
         return Integer.compare(o2.getUsages().size(), o1.getUsages().size());
       }).collect(Collectors.toList());
+  }
+
+  public void updateClusters(@NotNull List<UsageCluster> clusters) {
+    synchronized (myClusters) {
+      myClusters.clear();
+      myClusters.addAll(clusters);
+    }
   }
 
   private @NotNull UsageCluster createNewCluster() {
@@ -110,7 +124,7 @@ public class ClusteringSearchSession {
   private static double findMinimalSimilarity(@NotNull UsageCluster usageCluster, @NotNull Bag newUsageFeatures, double threshold) {
     double min = MAXIMUM_SIMILARITY;
     for (SimilarUsage usage : usageCluster.getUsages()) {
-      final double similarity = jaccardSimilarity(usage.getFeatures(), newUsageFeatures);
+      final double similarity = jaccardSimilarityWithThreshold(usage.getFeatures(), newUsageFeatures, threshold);
       if (lessThen(similarity, min)) {
         min = similarity;
       }
@@ -129,9 +143,12 @@ public class ClusteringSearchSession {
     return Registry.is("similarity.find.usages.enable") && ApplicationManager.getApplication().isInternal();
   }
 
-  public static double jaccardSimilarity(@NotNull Bag bag1, @NotNull Bag bag2) {
+  public static double jaccardSimilarityWithThreshold(@NotNull Bag bag1, @NotNull Bag bag2, double similarityThreshold) {
     final int cardinality1 = bag1.getCardinality();
     final int cardinality2 = bag2.getCardinality();
+    if (lessThen(Math.min(cardinality1, cardinality2), Math.max(cardinality1, cardinality2) * similarityThreshold)) {
+      return 0;
+    }
     int intersectionSize = Bag.intersectionSize(bag1, bag2);
     return intersectionSize / (double)(cardinality1 + cardinality2 - intersectionSize);
   }

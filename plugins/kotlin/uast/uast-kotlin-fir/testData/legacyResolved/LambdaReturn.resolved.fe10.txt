@@ -6,33 +6,33 @@ UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = je
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = uast) -> PsiPackage:org.jetbrains.uast: uast
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = kotlin) -> PsiPackage:org.jetbrains.uast.kotlin: kotlin
     UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
-        UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = a) -> VALUE_PARAMETER: a
+        UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Value_Parameter: a
         UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> null: null
         UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = b) -> Kotlin_Light_Variable: b
     UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
-        UBinaryExpression (operator = >) -> USimpleNameReferenceExpression (identifier = a) -> VALUE_PARAMETER: a
+        UBinaryExpression (operator = >) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Value_Parameter: a
         UBinaryExpression (operator = >) -> USimpleNameReferenceExpression (identifier = >) -> null: null
-        UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = a) -> VALUE_PARAMETER: a
+        UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Value_Parameter: a
         UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> null: null
         UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = c) -> Kotlin_Light_Variable: c
-        UBinaryExpression (operator = -) -> USimpleNameReferenceExpression (identifier = a) -> VALUE_PARAMETER: a
+        UBinaryExpression (operator = -) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Value_Parameter: a
         UBinaryExpression (operator = -) -> USimpleNameReferenceExpression (identifier = -) -> null: null
         UBinaryExpression (operator = -) -> USimpleNameReferenceExpression (identifier = c) -> Kotlin_Light_Variable: c
     ULabeledExpression (label = lbd) -> USimpleNameReferenceExpression (identifier = lbd) -> null: null
     UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
         UReturnExpression -> USimpleNameReferenceExpression (identifier = lbd) -> null: null
-        UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = a) -> VALUE_PARAMETER: a
+        UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Value_Parameter: a
         UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> null: null
         UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = d) -> Kotlin_Light_Variable: d
     UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
     UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
-        UBinaryExpression (operator = <) -> USimpleNameReferenceExpression (identifier = a) -> VALUE_PARAMETER: a
+        UBinaryExpression (operator = <) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Value_Parameter: a
         UBinaryExpression (operator = <) -> USimpleNameReferenceExpression (identifier = <) -> null: null
-        UBinaryExpression (operator = >) -> USimpleNameReferenceExpression (identifier = a) -> VALUE_PARAMETER: a
+        UBinaryExpression (operator = >) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Value_Parameter: a
         UBinaryExpression (operator = >) -> USimpleNameReferenceExpression (identifier = >) -> null: null
     UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
     UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = +) -> Kotlin_Light_Method: plus
-    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = a) -> VALUE_PARAMETER: a
+    UBinaryExpression (operator = +) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Value_Parameter: a
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = bar) -> Kotlin_Light_Method: bar
         UBinaryExpression (operator = >) -> USimpleNameReferenceExpression (identifier = it) -> Kotlin_Light_Value_Parameter: it
         UBinaryExpression (operator = >) -> USimpleNameReferenceExpression (identifier = >) -> null: null

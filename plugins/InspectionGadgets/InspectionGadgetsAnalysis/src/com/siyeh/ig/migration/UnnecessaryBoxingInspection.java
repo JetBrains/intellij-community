@@ -104,7 +104,10 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
       if (arguments.length != 1) {
         return;
       }
-      final PsiExpression unboxedExpression = arguments[0];
+      final PsiExpression unboxedExpression = PsiUtil.skipParenthesizedExprDown(arguments[0]);
+      if (unboxedExpression == null) {
+        return;
+      }
       final PsiType unboxedExpressionType = unboxedExpression.getType();
       if (unboxedExpressionType == null) {
         return;
@@ -120,7 +123,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
         return;
       }
       final Object value = ExpressionUtils.computeConstantExpression(unboxedExpression);
-      if (value != null) {
+      if (value != null && !(unboxedExpression instanceof PsiReferenceExpression)) {
         if (value == Boolean.TRUE) {
           PsiReplacementUtil.replaceExpression(expression, "java.lang.Boolean.TRUE", commentTracker);
           return;

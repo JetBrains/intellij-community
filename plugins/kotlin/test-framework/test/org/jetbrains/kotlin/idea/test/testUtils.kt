@@ -112,7 +112,7 @@ fun Document.extractMultipleMarkerOffsets(project: Project, caretMarker: String 
     return offsets
 }
 
-internal fun checkPluginIsCorrect(isFirPlugin: Boolean){
+fun checkPluginIsCorrect(isFirPlugin: Boolean){
     if (isFirPlugin) {
         checkKotlinPluginKind(KotlinPluginKind.FIR_PLUGIN)
     } else {

@@ -627,6 +627,11 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public final void setSelected(@NotNull AnActionEvent event, boolean flag) {
       HierarchyBrowserManager.getSettings(myProject).SORT_ALPHABETICALLY = flag;
       Comparator<NodeDescriptor<?>> comparator = getComparator();
@@ -752,6 +757,11 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       //noinspection HardCodedStringLiteral
       String scopeType = getCurrentScopeType();
       presentation.setText(myI18nMap.getOrDefault(scopeType, () -> scopeType));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     protected boolean isEnabled(){

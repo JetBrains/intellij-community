@@ -227,7 +227,7 @@ public class LookupItem<T> extends MutableLookupElement implements Comparable {
   }
 
   @Override
-  public void renderElement(LookupElementPresentation presentation) {
+  public void renderElement(@NotNull LookupElementPresentation presentation) {
     for (ElementLookupRenderer renderer : ElementLookupRenderer.EP_NAME.getExtensionList()) {
       T object = getObject();
       if (renderer.handlesItem(object)) {

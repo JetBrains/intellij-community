@@ -11,8 +11,8 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyzeWithReadAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.idea.codeinsight.api.*
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import kotlin.reflect.KClass
@@ -105,7 +105,7 @@ private fun <PSI : PsiElement, INPUT : KotlinApplicatorInput> KotlinApplicator<P
         val element = descriptor.psiElement as PSI
 
         if (isApplicableByPsi(element, project) && input.isValidFor(element)) {
-            applyTo(element, input, project, editor = null)
+            applyTo(element, input, project, element.findExistingEditor())
         }
     }
 

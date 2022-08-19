@@ -154,6 +154,10 @@ private class MoveToAction(private val toolWindow: ToolWindowImpl,
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = targetAnchor.anchor != toolWindow.anchor || toolWindow.isSplitMode != targetAnchor.isSplit
   }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 }
 
 private class HideAction(private val toolWindow: ToolWindowImpl)
@@ -172,6 +176,10 @@ private class SquareAnActionButton(private val window: ToolWindowImpl) : ToggleA
     e.presentation.icon = window.icon ?: AllIcons.Toolbar.Unknown
     scaleIcon(e.presentation)
     return window.isVisible
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {

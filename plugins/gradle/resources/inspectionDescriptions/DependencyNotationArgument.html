@@ -1,6 +1,6 @@
 <html>
 <body>                                            
-<p>Detects incorrect dependency notations. <br>
+<p>Detects incorrect dependency notations. </p>
   The following types/formats are supported by Gradle:
   <ul>
   <li> Instances of <code>Dependency</code>; </li>
@@ -13,6 +13,12 @@
   <li> (Gradle 7.0+) <a href="https://docs.gradle.org/current/userguide/platforms.html">Version catalog accessors</a>, for example <code>libs.groovy.core</code>. </li>
 </ul>
   <a href="https://docs.gradle.org/current/userguide/declaring_dependencies.html#sec:dependency-types">See Gradle documentation</a>
-</p>
+
+<p><b>Example:</b></p>
+<pre><code>
+dependencies {
+  implementation(1) // reports '1'
+}
+</code></pre>
 </body>
 </html>

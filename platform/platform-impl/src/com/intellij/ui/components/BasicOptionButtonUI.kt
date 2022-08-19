@@ -399,6 +399,10 @@ open class BasicOptionButtonUI : OptionButtonUI() {
       event.presentation.isEnabled = action.isEnabled
     }
 
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.BGT;
+    }
+
     override fun actionPerformed(event: AnActionEvent) {
       action.actionPerformed(ActionEvent(optionButton, ActionEvent.ACTION_PERFORMED, null))
     }

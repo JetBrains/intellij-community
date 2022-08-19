@@ -6,10 +6,7 @@ import com.intellij.idea.ExcludeFromTestDiscovery;
 import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.RunFirst;
-import com.intellij.testFramework.SelfSeedingTestCase;
-import com.intellij.testFramework.TestFrameworkUtil;
-import com.intellij.testFramework.TestSorter;
+import com.intellij.testFramework.*;
 import com.intellij.util.MathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -112,7 +109,10 @@ public class TestCaseLoader {
       }
     }
 
-    System.out.println("Loading test groups from: " + groupingFileUrls);
+    List<URL> finalGroupingFileUrls = groupingFileUrls;
+    TeamCityLogger.block("Loading test groups from ...", () -> {
+      System.out.println("Loading test groups from: " + finalGroupingFileUrls);
+    });
     MultiMap<String, String> groups = MultiMap.createLinked();
     for (URL fileUrl : groupingFileUrls) {
       try (InputStreamReader reader = new InputStreamReader(fileUrl.openStream(), StandardCharsets.UTF_8)) {

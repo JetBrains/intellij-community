@@ -227,8 +227,8 @@ internal class ChangesViewCommitWorkflowHandler(
     super.inclusionChanged()
   }
 
-  override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CommitChecksResult) {
-    super.beforeCommitChecksEnded(isDefaultCommit, result)
+  override fun beforeCommitChecksEnded(sessionInfo: CommitSessionInfo, result: CommitChecksResult) {
+    super.beforeCommitChecksEnded(sessionInfo, result)
     if (result.shouldCommit) {
       // commit message could be changed during before-commit checks - ensure updated commit message is used for commit
       workflow.commitState = workflow.commitState.copy(getCommitMessage())
@@ -242,13 +242,19 @@ internal class ChangesViewCommitWorkflowHandler(
     return commitMode is CommitMode.NonModalCommitMode && commitMode.isToggleMode
   }
 
-  override fun updateWorkflow() {
+  override fun updateWorkflow(sessionInfo: CommitSessionInfo): Boolean {
     workflow.commitState = getCommitState()
+    return configureCommitSession(project, sessionInfo,
+                                  workflow.commitState.changes,
+                                  workflow.commitState.commitMessage)
   }
 
-  override fun addUnversionedFiles(): Boolean {
-    val changeList = workflow.getAffectedChangeList(getIncludedChanges())
-    return addUnversionedFiles(changeList, inclusionModel)
+  override fun prepareForCommitExecution(sessionInfo: CommitSessionInfo): Boolean {
+    if (sessionInfo.isVcsCommit) {
+      val changeList = workflow.getAffectedChangeList(getIncludedChanges())
+      if (!addUnversionedFiles(project, getIncludedUnversionedFiles(), changeList, inclusionModel)) return false
+    }
+    return super.prepareForCommitExecution(sessionInfo)
   }
 
   override fun saveCommitMessage(success: Boolean) = commitMessagePolicy.save(currentChangeList, getCommitMessage(), success)

@@ -221,7 +221,7 @@ public final class DfaPsiUtil {
 
   private static boolean shouldIgnoreAnnotation(PsiAnnotation annotation) {
     PsiClass containingClass = ClassUtils.getContainingClass(annotation);
-    if (containingClass == null) return false;
+    if (containingClass == null || !containingClass.isValid()) return false;
     String qualifiedName = containingClass.getQualifiedName();
     // We deliberately ignore nullability annotations on Guava functional interfaces to avoid noise warnings
     // See IDEA-170548 for details

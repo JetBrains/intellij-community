@@ -29,6 +29,7 @@ import org.intellij.markdown.flavours.gfm.GFMElementTypes
 import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor
 import org.intellij.markdown.flavours.gfm.GFMTokenTypes
 import org.intellij.markdown.parser.MarkdownParser
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.highlighting.textAttributesKeyForKtElement
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -49,10 +50,10 @@ import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 
 object KDocRenderer {
 
-    fun StringBuilder.appendKDocContent(docComment: KDocTag): StringBuilder =
+    private fun StringBuilder.appendKDocContent(docComment: KDocTag): StringBuilder =
         append(markdownToHtml(docComment, allowSingleParagraph = true))
 
-    fun StringBuilder.appendKDocSections(sections: List<KDocSection>) {
+    private fun StringBuilder.appendKDocSections(sections: List<KDocSection>) {
         fun findTagsByName(name: String) =
             sequence { sections.forEach { yieldAll(it.findTagsByName(name)) } }
 
@@ -148,6 +149,7 @@ object KDocRenderer {
         return getChildrenOfType<KDocName>().last().references.firstOrNull { it is KDocReference }?.resolve()
     }
 
+    @Nls
     fun generateJavadoc(psiMethod: PsiMethod): String {
         val javaDocInfoGenerator = JavaDocInfoGeneratorFactory.create(psiMethod.project, psiMethod)
         val builder = StringBuilder()

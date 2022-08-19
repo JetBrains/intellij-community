@@ -41,7 +41,7 @@ public class CreateParameterFix extends AddParamBase {
     }
 
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
         return XPathBundle.message("intention.family.name.create.parameter");
     }
 

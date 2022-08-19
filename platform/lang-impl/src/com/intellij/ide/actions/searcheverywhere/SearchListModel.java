@@ -40,6 +40,10 @@ abstract class SearchListModel extends AbstractListModel<Object> {
     return listElements.get(index).getElement();
   }
 
+  public @NotNull SearchEverywhereFoundElementInfo getRawFoundElementAt(int index) {
+    return listElements.get(index);
+  }
+
   public int getWeightAt(int index) {
     return listElements.get(index).getPriority();
   }

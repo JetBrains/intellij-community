@@ -649,11 +649,7 @@ public final class IconLoader {
 
       @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {
-        Graphics2D g2 = (Graphics2D)g;
-        Composite saveComposite = g2.getComposite();
-        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, alpha));
-        icon.paintIcon(c, g2, x, y);
-        g2.setComposite(saveComposite);
+        GraphicsUtil.paintWithAlpha(g, alpha,() -> icon.paintIcon(c, g, x, y));
       }
     };
   }

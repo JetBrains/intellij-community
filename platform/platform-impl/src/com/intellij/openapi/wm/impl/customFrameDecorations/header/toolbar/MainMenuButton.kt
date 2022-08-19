@@ -38,6 +38,10 @@ internal class MainMenuButton {
       e.presentation.text = IdeBundle.message("main.toolbar.menu.button")
     }
 
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.BGT
+    }
+
     override fun actionPerformed(e: AnActionEvent) = createPopup(e.dataContext).showUnderneathOf(button)
 
     private fun createPopup(context: DataContext): JBPopup {

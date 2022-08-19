@@ -128,6 +128,12 @@ public class TestAll implements Test {
   }
 
   public static List<Path> getClassRoots() {
+    return TeamCityLogger.block("Collecting tests from ...", () -> {
+      return doGetClassRoots();
+    });
+  }
+
+  private static List<Path> doGetClassRoots() {
     String jarsToRunTestsFrom = System.getProperty("jar.dependencies.to.tests");
     if (jarsToRunTestsFrom != null) {
       String[] jars = jarsToRunTestsFrom.split(";");
@@ -500,5 +506,10 @@ public class TestAll implements Test {
       String description = myBombed.description().isEmpty() ? "" : " (" + myBombed.description() + ")";
       fail("Bomb created by " + myBombed.user() + description + " now explodes!");
     }
+  }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName();
   }
 }

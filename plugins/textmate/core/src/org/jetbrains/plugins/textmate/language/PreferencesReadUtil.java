@@ -15,7 +15,6 @@ import java.util.*;
 
 public final class PreferencesReadUtil {
   /**
-   * @param rootPlist
    * @return pair <scopeName, settingsPlist> or null if rootPlist doesn't contain 'settings' child
    * or scopeName is null or empty
    */

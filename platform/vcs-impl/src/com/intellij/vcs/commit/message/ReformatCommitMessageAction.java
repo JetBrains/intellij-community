@@ -58,7 +58,7 @@ public class ReformatCommitMessageAction extends DumbAwareAction {
 
   @RequiresWriteLock
   public static void reformat(@NotNull Project project, @NotNull Document document) {
-    List<BaseCommitMessageInspection> inspections = getEnabledInspections(project).collect(toList());
+    List<BaseCommitMessageInspection> inspections = getEnabledInspections(project).toList();
 
     inspections.forEach(inspection -> inspection.reformat(project, document));
   }

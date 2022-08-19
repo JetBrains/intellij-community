@@ -45,6 +45,8 @@ dependencies {
   implementation 'com.jetbrains.intellij.performanceTesting:performance-testing-commands:LATEST-TRUNK-SNAPSHOT'
 
   testImplementation 'com.jetbrains.intellij.tools:ide-starter:LATEST-TRUNK-SNAPSHOT'
+  testImplementation 'com.jetbrains.intellij.tools:ide-starter-junit4:LATEST-TRUNK-SNAPSHOT'
+  testImplementation 'com.jetbrains.intellij.tools:ide-starter-junit5:LATEST-TRUNK-SNAPSHOT'
 
   testImplementation 'junit:junit:4.13.2'
 
@@ -67,10 +69,10 @@ configurations {
 
 compileKotlin {
   sourceCompatibility = JavaVersion.VERSION_11
-  targetCompatibility = JavaVersion.VERSION_11
+  targetCompatibility = JavaVersion.VERSION_17
 
   kotlinOptions {
-    jvmTarget = JavaVersion.VERSION_11.toString()
+    jvmTarget = JavaVersion.VERSION_17.toString()
     freeCompilerArgs += [
       "-version",
       "-Xjvm-default=enable",
@@ -81,10 +83,10 @@ compileKotlin {
 
 compileTestKotlin {
   sourceCompatibility = JavaVersion.VERSION_11
-  targetCompatibility = JavaVersion.VERSION_11
+  targetCompatibility = JavaVersion.VERSION_17
 
   kotlinOptions {
-    jvmTarget = JavaVersion.VERSION_11.toString()
+    jvmTarget = JavaVersion.VERSION_17.toString()
     freeCompilerArgs += [
       "-version",
       "-Xjvm-default=enable",

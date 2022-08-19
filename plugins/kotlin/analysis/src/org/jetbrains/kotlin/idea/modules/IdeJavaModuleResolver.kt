@@ -41,7 +41,7 @@ class IdeJavaModuleResolver(private val project: Project) : JavaModuleResolver {
     override fun checkAccessibility(
         fileFromOurModule: VirtualFile?, referencedFile: VirtualFile, referencedPackage: FqName?
     ): JavaModuleResolver.AccessError? {
-        val ourModule = fileFromOurModule?.let(this::findJavaModule)
+        val ourModule = fileFromOurModule?.let(::findJavaModule)?.also { if (it is LightJavaModule) return null }
         val theirModule = findJavaModule(referencedFile)
 
         if (ourModule?.name == theirModule?.name) return null

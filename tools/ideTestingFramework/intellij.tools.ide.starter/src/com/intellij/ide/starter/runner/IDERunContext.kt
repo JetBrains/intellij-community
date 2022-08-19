@@ -3,9 +3,6 @@ package com.intellij.ide.starter.runner
 import com.intellij.ide.starter.bus.EventState
 import com.intellij.ide.starter.bus.StarterBus
 import com.intellij.ide.starter.di.di
-import com.intellij.ide.starter.exec.ExecOutputRedirect
-import com.intellij.ide.starter.exec.ExecTimeoutException
-import com.intellij.ide.starter.exec.exec
 import com.intellij.ide.starter.ide.CodeInjector
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.ide.command.MarshallableCommand
@@ -14,12 +11,16 @@ import com.intellij.ide.starter.models.VMOptions
 import com.intellij.ide.starter.models.andThen
 import com.intellij.ide.starter.process.collectJavaThreadDump
 import com.intellij.ide.starter.process.destroyGradleDaemonProcessIfExists
+import com.intellij.ide.starter.process.exec.ExecOutputRedirect
+import com.intellij.ide.starter.process.exec.ExecTimeoutException
+import com.intellij.ide.starter.process.exec.ProcessExecutor
 import com.intellij.ide.starter.process.getJavaProcessId
 import com.intellij.ide.starter.profiler.ProfilerInjector
 import com.intellij.ide.starter.profiler.ProfilerType
 import com.intellij.ide.starter.report.ErrorReporter
 import com.intellij.ide.starter.system.SystemInfo
 import com.intellij.ide.starter.utils.*
+import kotlinx.coroutines.delay
 import org.kodein.di.direct
 import org.kodein.di.instance
 import java.io.Closeable
@@ -27,8 +28,10 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import kotlin.concurrent.thread
-import kotlin.io.path.*
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.createDirectories
+import kotlin.io.path.div
+import kotlin.io.path.listDirectoryEntries
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -45,7 +48,7 @@ data class IDERunContext(
   val commands: Iterable<MarshallableCommand> = listOf(),
   val codeBuilder: (CodeInjector.() -> Unit)? = null,
   val runTimeout: Duration = 10.minutes,
-  val traceStacksEvery: Duration = 10.minutes,
+  val dumpThreadInterval: Duration = 10.minutes,
   val useStartupScript: Boolean = true,
   val closeHandlers: List<IDERunCloseContext.() -> Unit> = listOf(),
   val verboseOutput: Boolean = false,
@@ -72,12 +75,12 @@ data class IDERunContext(
 
   fun addCompletionHandler(handler: IDERunCloseContext.() -> Unit) = this.copy(closeHandlers = closeHandlers + handler)
 
-  fun uploadProfileResultsToTeamCity(profilerSnapshotsDir: Path, artifactName: String) =
+  fun uploadProfilerResultsToCIServer(profilerSnapshotsDir: Path, artifactName: String) =
     this.addCompletionHandler {
       testContext.publishArtifact(source = profilerSnapshotsDir, artifactName = artifactName)
     }
 
-  fun installProfiler(): IDERunContext {
+  private fun installProfiler(): IDERunContext {
     return when (val profilerType = testContext.profilerType) {
       ProfilerType.ASYNC, ProfilerType.YOURKIT -> {
         val profiler = di.direct.instance<ProfilerInjector>(tag = profilerType)
@@ -91,7 +94,7 @@ data class IDERunContext(
     }
   }
 
-  // TODO: refactor this
+  // TODO: refactor this https://youtrack.jetbrains.com/issue/AT-18/Simplify-refactor-code-for-starting-IDE-in-IdeRunContext
   private fun prepareToRunIDE(): IDEStartResult {
     StarterBus.post(IdeLaunchEvent(EventState.BEFORE, this))
 
@@ -109,7 +112,7 @@ data class IDERunContext(
     val stdout = if (verboseOutput) ExecOutputRedirect.ToStdOut("[ide-${contextName}-out]") else ExecOutputRedirect.ToString()
     val stderr = ExecOutputRedirect.ToStdOut("[ide-${contextName}-err]")
 
-    var successfulRun = true
+    var isRunSuccessful = true
     val host by lazy { di.direct.instance<CodeInjector>() }
 
     try {
@@ -182,8 +185,8 @@ data class IDERunContext(
       File(finalArgs.first()).setExecutable(true)
 
       val executionTime = measureTime {
-        exec(
-          presentablePurpose = "run-ide-$contextName",
+        ProcessExecutor(
+          presentableName = "run-ide-$contextName",
           workDir = startConfig.workDir,
           environmentVariables = extendedEnvVariablesWithJavaHome,
           timeout = runTimeout,
@@ -193,17 +196,16 @@ data class IDERunContext(
           stderrRedirect = stderr,
           onProcessCreated = { process, pid ->
             val javaProcessId by lazy { getJavaProcessId(jdkHome, startConfig.workDir, pid, process) }
-            thread(name = "jstack-${testContext.testName}", isDaemon = true) {
-              var cnt = 0
-              while (process.isAlive) {
-                Thread.sleep(traceStacksEvery.inWholeMilliseconds)
-                if (!process.isAlive) break
+            val monitoringThreadDumpDir = logsDir.resolve("monitoring-thread-dumps").createDirectories()
 
-                val dumpFile = logsDir.resolve("threadDump-${++cnt}-${System.currentTimeMillis()}" + ".txt")
-                logOutput("Dumping threads to $dumpFile")
-                logOutput(Runtime.getRuntime().getRuntimeInfo())
-                catchAll { collectJavaThreadDump(jdkHome, startConfig.workDir, javaProcessId, dumpFile, false) }
-              }
+            var cnt = 0
+            while (process.isAlive) {
+              delay(dumpThreadInterval)
+              if (!process.isAlive) break
+
+              val dumpFile = monitoringThreadDumpDir.resolve("threadDump-${++cnt}-${System.currentTimeMillis()}" + ".txt")
+              logOutput("Dumping threads to $dumpFile")
+              catchAll { collectJavaThreadDump(jdkHome, startConfig.workDir, javaProcessId, dumpFile, false) }
             }
           },
           onBeforeKilled = { process, pid ->
@@ -212,7 +214,7 @@ data class IDERunContext(
               if (collectNativeThreads) {
                 val fileToStoreNativeThreads = logsDir.resolve("native-thread-dumps.txt")
                 startProfileNativeThreads(javaProcessId.toString())
-                Thread.sleep(15.seconds.inWholeMilliseconds)
+                delay(15.seconds)
                 stopProfileNativeThreads(javaProcessId.toString(), fileToStoreNativeThreads.toAbsolutePath().toString())
               }
               val dumpFile = logsDir.resolve("threadDump-before-kill-${System.currentTimeMillis()}" + ".txt")
@@ -220,7 +222,7 @@ data class IDERunContext(
             }
             takeScreenshot(logsDir)
           }
-        )
+        ).start()
       }
 
       logOutput("IDE run $contextName completed in $executionTime")
@@ -247,7 +249,7 @@ data class IDERunContext(
       return IDEStartResult(runContext = this, executionTime = executionTime, vmOptionsDiff = vmOptionsDiff, logsDir = logsDir)
     }
     catch (t: Throwable) {
-      successfulRun = false
+      isRunSuccessful = false
       if (t is ExecTimeoutException && !expectedKill) {
         error("Timeout of IDE run $contextName for $runTimeout")
       }
@@ -271,6 +273,8 @@ data class IDERunContext(
     }
     finally {
 
+      collectJBRDiagnosticFilesIfExist(testContext)
+
       try {
         if (SystemInfo.isWindows) {
           destroyGradleDaemonProcessIfExists()
@@ -280,15 +284,15 @@ data class IDERunContext(
           dir.listDirectoryEntries().isEmpty()
         }.forEach { it.toFile().deleteRecursively() }
 
-        ErrorReporter.reportErrorsAsFailedTests(logsDir / "script-errors", contextName)
-        val (artifactPath, artifactName) = if (successfulRun) contextName to "logs" else "run/$contextName" to "crash"
-        testContext.publishArtifact(logsDir, artifactPath, formatArtifactName(artifactName, testContext.testName))
+        ErrorReporter.reportErrorsAsFailedTests(logsDir / "script-errors", this)
+        publishArtifacts(isRunSuccessful)
+
         if (codeBuilder != null) {
           host.tearDown(testContext)
         }
 
         val closeContext = object : IDERunCloseContext {
-          override val wasRunSuccessful: Boolean = successfulRun
+          override val wasRunSuccessful: Boolean = isRunSuccessful
         }
 
         closeHandlers.forEach {
@@ -307,9 +311,24 @@ data class IDERunContext(
     }
   }
 
+  private fun publishArtifacts(isRunSuccessful: Boolean) {
+    // publish artifacts to directory with a test in any case
+    testContext.publishArtifact(
+      source = testContext.paths.logsDir,
+      artifactPath = contextName,
+      artifactName = formatArtifactName("logs", testContext.testName)
+    )
+
+    if (!isRunSuccessful)
+      testContext.publishArtifact(
+        source = testContext.paths.logsDir,
+        artifactPath = "_crashes/$contextName",
+        artifactName = formatArtifactName("crash", testContext.testName)
+      )
+  }
+
   fun runIDE(): IDEStartResult {
-    return installProfiler()
-      .prepareToRunIDE()
+    return installProfiler().prepareToRunIDE()
   }
 
   private fun deleteSavedAppStateOnMac() {

@@ -1,11 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.ide.FrameStateListener
 import com.intellij.ide.IdeBundle
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.PreloadingActivity
@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.wm.IdeFrame
 import java.nio.file.Path
 
 private const val AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY = "idea.auto.reload.plugins"
@@ -105,8 +106,8 @@ internal class DynamicPluginVfsListener : AsyncFileListener {
   }
 }
 
-class DynamicPluginsFrameStateListener : FrameStateListener {
-  override fun onFrameActivated() {
+class DynamicPluginsFrameStateListener : ApplicationActivationListener {
+  override fun applicationActivated(ideFrame: IdeFrame) {
     if (!java.lang.Boolean.getBoolean(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY)) return
 
     val pluginsRoot = LocalFileSystem.getInstance().findFileByPath(PathManager.getPluginsPath())

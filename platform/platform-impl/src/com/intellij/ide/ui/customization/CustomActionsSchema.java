@@ -476,7 +476,6 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
 
   /**
    * @param path absolute path to the icon file, url of the icon file or url of the icon file inside jar.
-   * @throws IOException
    */
   @ApiStatus.Internal
   public static @Nullable Icon loadCustomIcon(@NotNull String path) throws IOException {

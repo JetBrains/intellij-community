@@ -106,7 +106,7 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
         Arrays.stream(x509TrustManager.getAcceptedIssuers())
         .map(certificate -> certificate.getSubjectX500Principal().toString())
         .sorted()
-        .collect(Collectors.toList());
+        .toList();
       LOG.debug("Accepted trusted certificate roots from the system: \n" + StringUtil.join(acceptedRoots, "\n"));
 
       return x509TrustManager;

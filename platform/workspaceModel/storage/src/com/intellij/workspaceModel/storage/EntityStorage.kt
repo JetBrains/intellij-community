@@ -94,6 +94,13 @@ interface WorkspaceEntity : Obj {
 }
 
 /**
+ * Add this annotation to the field to mark this fields as a key field for replaceBySource operation.
+ * Entities will be compared based on these fields.
+ */
+@Target(AnnotationTarget.PROPERTY, AnnotationTarget.TYPE)
+annotation class EqualsBy
+
+/**
  * Base interface for modifiable variant of [Unmodifiable] entity. The implementation can be used to [create a new entity][MutableEntityStorage.addEntity]
  * or [modify an existing value][MutableEntityStorage.modifyEntity].
  *
@@ -243,7 +250,11 @@ interface MutableEntityStorage : EntityStorage {
 
   fun <M : ModifiableWorkspaceEntity<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T
 
-  fun removeEntity(e: WorkspaceEntity)
+  /**
+   * Remove the entity from the builder.
+   * Returns true if the entity was removed, false if the entity was not in the storage
+   */
+  fun removeEntity(e: WorkspaceEntity): Boolean
   fun replaceBySource(sourceFilter: (EntitySource) -> Boolean, replaceWith: EntityStorage)
 
   /**
@@ -299,3 +310,7 @@ sealed class EntityChange<T : WorkspaceEntity> {
   }
   data class Replaced<T : WorkspaceEntity>(override val oldEntity: T, override val newEntity: T) : EntityChange<T>()
 }
+
+open class NotGeneratedRuntimeException(message: String) : RuntimeException(message)
+class NotGeneratedMethodRuntimeException(val methodName: String)
+  : NotGeneratedRuntimeException("Method `$methodName` uses default implementation. Please regenerate entities")

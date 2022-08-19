@@ -5,6 +5,7 @@ package com.intellij.analysis;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -78,6 +79,11 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
       protected void setSelected(boolean state) {
         GROUP_BY_SEVERITY = state;
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
     };
   }
 
@@ -97,6 +103,11 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
       public void setSelected(boolean state) {
         FILTER_RESOLVED_ITEMS = state;
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
     };
   }
 
@@ -112,6 +123,11 @@ public class AnalysisUIOptions implements PersistentStateComponent<AnalysisUIOpt
       @Override
       public void setSelected(boolean state) {
         SHOW_STRUCTURE = state;
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
       }
     };
   }

@@ -94,6 +94,14 @@ public class JavaCommandLineTest extends BareTestFixtureTestCase {
     
     parameters.setJdk(IdeaTestUtil.getMockJdk17());
     assertFalse(parameters.toCommandLine().getCommandLineString().contains("-Dsun.stdout.encoding="));
+    
+    parameters.setJdk(IdeaTestUtil.getMockJdk(JavaVersion.compose(18)));
+    String consoleEncoding = "-Dsun.stdout.encoding=UTF-8";
+    parameters.getVMParametersList().add(consoleEncoding);
+    String commandLineString = parameters.toCommandLine().getCommandLineString();
+    int i = commandLineString.indexOf(consoleEncoding);
+    assertTrue(i > 0);
+    assertFalse(commandLineString.indexOf(consoleEncoding, i + consoleEncoding.length()) > 0);
   }
 
   private static boolean containsClassPath(String commandLineString) {

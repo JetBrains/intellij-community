@@ -4,9 +4,7 @@ package com.intellij.ui.dsl.builder
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBTextField
 import org.junit.Test
-import javax.swing.JComponent
 import javax.swing.JLabel
-import javax.swing.JPanel
 import javax.swing.SwingUtilities
 import javax.swing.text.AbstractDocument
 import kotlin.test.assertEquals
@@ -39,57 +37,47 @@ class PlaceholderTest {
 
 
   @Test
-  fun testMovingComponent() {
-    lateinit var placeholder1: Placeholder
-    lateinit var placeholder2: Placeholder
-    val component1 = JLabel("1")
-    val component2 = JLabel("2")
-
-    fun testConsistency(placeholder1Component: JComponent?, placeholder2Component: JComponent?, invokeLater: Boolean) {
-      assertEquals(placeholder1.component, placeholder1Component)
-      assertEquals(placeholder2.component, placeholder2Component)
-
-      val runnable = Runnable {
-        assertEquals(component1.hierarchyListeners.size, if (component1.parent == null) 0 else 1)
-        assertEquals(component2.hierarchyListeners.size, if (component2.parent == null) 0 else 1)
-      }
-
-      if (invokeLater) {
-        SwingUtilities.invokeAndWait(runnable)
-      } else {
-        runnable.run()
+  fun testEnableVisible() {
+    lateinit var placeholder: Placeholder
+    lateinit var row: Row
+    panel {
+      row = row {
+        placeholder = placeholder()
       }
     }
 
-    val panel = panel {
-      row {
-        placeholder1 = placeholder()
-        placeholder1.component = component1
+    val label = JLabel("Enabled")
+    placeholder.component = label
+    assertTrue(label.isVisible)
+    assertTrue(label.isEnabled)
 
-        placeholder2 = placeholder()
-      }
+    val disabledInvisibleLabel = JLabel("Disabled").apply {
+      isVisible = false
+      isEnabled = false
     }
 
-    testConsistency(component1, null, false)
+    placeholder.component = disabledInvisibleLabel
+    assertFalse(disabledInvisibleLabel.isVisible)
+    assertFalse(disabledInvisibleLabel.isEnabled)
 
-    placeholder1.component = null
-    testConsistency(null, null, true)
+    placeholder.component = label
+    assertTrue(label.isVisible)
+    assertTrue(label.isEnabled)
 
-    placeholder2.component = component2
-    testConsistency(null, component2, false)
+    row.enabled(false)
+    row.visible(false)
+    assertFalse(label.isVisible)
+    assertFalse(label.isEnabled)
 
-    placeholder1.component = component2
-    // placeholder2.component must be updated
-    testConsistency(component2, null, true)
+    placeholder.visible(true)
+    placeholder.enabled(true)
+    assertFalse(label.isVisible)
+    assertFalse(label.isEnabled)
 
-    panel.remove(component2)
-    // placeholder1.component must be updated
-    testConsistency(null, null, true)
-
-    placeholder1.component = component1
-    testConsistency(component1, null, true)
-    JPanel().add(panel) // force hierarchyEvent with another parent
-    testConsistency(component1, null, true)
+    row.enabled(true)
+    row.visible(true)
+    assertTrue(label.isVisible)
+    assertTrue(label.isEnabled)
   }
 
   @Test

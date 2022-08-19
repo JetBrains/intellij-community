@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.convertToStatic;
 
 import com.intellij.codeInspection.InspectionManager;
@@ -25,7 +25,7 @@ public class TypeChecker extends GroovyStaticTypeCheckVisitorBase {
                                @NotNull ProblemHighlightType highlightType) {
 
     if (highlightType == ProblemHighlightType.GENERIC_ERROR) {
-      if (fixes != null && fixes.length > 0) {
+      if (fixes != null && fixes.length > 0 && location.isPhysical()) {
         final InspectionManager manager = InspectionManager.getInstance(location.getProject());
         final ProblemDescriptor descriptor =
           manager.createProblemDescriptor(location, description, fixes, highlightType, fixes.length == 1, false);

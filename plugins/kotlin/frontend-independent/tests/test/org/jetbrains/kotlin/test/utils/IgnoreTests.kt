@@ -236,6 +236,7 @@ object IgnoreTests {
         const val IGNORE_FIR_LOG = "// IGNORE_FIR_LOG"
 
         const val IGNORE_FIR = "// IGNORE_FIR"
+        const val IGNORE_K2 = "// IGNORE_K2"
         const val IGNORE_FIR_MULTILINE_COMMENT = "/* IGNORE_FIR */"
 
         const val FIX_ME = "// FIX_ME: "

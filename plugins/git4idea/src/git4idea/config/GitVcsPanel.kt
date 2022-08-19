@@ -219,7 +219,8 @@ internal class GitVcsPanel(private val project: Project) :
       val roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(GitVcs.getInstance(project)).toSet()
       val model = VcsLogClassicFilterUi.FileFilterModel(roots, currentUpdateInfoFilterProperties, null)
       val component = object : StructureFilterPopupComponent(currentUpdateInfoFilterProperties, model, VcsLogColorManagerImpl(roots)) {
-        override fun shouldDrawLabel(): Boolean = false
+        override fun shouldDrawLabel(): DrawLabelMode = DrawLabelMode.NEVER
+
         override fun shouldIndicateHovering(): Boolean = false
 
         override fun getEmptyFilterValue(): String {

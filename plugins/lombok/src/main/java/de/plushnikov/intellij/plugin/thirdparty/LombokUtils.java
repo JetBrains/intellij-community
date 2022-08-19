@@ -405,7 +405,6 @@ public final class LombokUtils {
    * For example if {@code isBoolean} is true, then a field named {@code isRunning} would produce:<br />
    * {@code [isRunning, getRunning, isIsRunning, getIsRunning]}
    *
-   * @param accessorsInfo
    * @param fieldName     the name of the field.
    * @param isBoolean     if the field is of type 'boolean'. For fields of type 'java.lang.Boolean', you should provide {@code false}.
    */
@@ -419,7 +418,6 @@ public final class LombokUtils {
    * For example if {@code isBoolean} is true, then a field named {@code isRunning} would produce:<br />
    * {@code [setRunning, setIsRunning]}
    *
-   * @param accessorsInfo
    * @param fieldName     the name of the field.
    * @param isBoolean     if the field is of type 'boolean'. For fields of type 'java.lang.Boolean', you should provide {@code false}.
    */
@@ -433,7 +431,6 @@ public final class LombokUtils {
    * For example if {@code isBoolean} is true, then a field named {@code isRunning} would produce:<br />
    * {@code [withRunning, withIsRunning]}
    *
-   * @param accessorsInfo
    * @param fieldName     the name of the field.
    * @param isBoolean     if the field is of type 'boolean'. For fields of type 'java.lang.Boolean', you should provide {@code false}.
    */

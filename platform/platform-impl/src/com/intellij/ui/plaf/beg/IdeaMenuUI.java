@@ -2,16 +2,19 @@
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder;
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -29,7 +32,6 @@ public class IdeaMenuUI extends BasicMenuUI {
   private int myMaxGutterIconWidth;
   private int myMaxGutterIconWidth2;
   private int a;
-  private static Rectangle ourPreferredSizeRect = new Rectangle();
   private int k;
   private int e;
   private static final Rectangle ourAcceleratorRect = new Rectangle();
@@ -40,6 +42,39 @@ public class IdeaMenuUI extends BasicMenuUI {
   /** invoked by reflection */
   public static ComponentUI createUI(JComponent component) {
     return new IdeaMenuUI();
+  }
+
+  public static void paintRoundSelection(Graphics g, Component c, int width, int height) {
+    GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+    int radius;
+    JBInsets outerInsets;
+    if (IdeaPopupMenuUI.isPartOfPopupMenu(c)) {
+      radius = JBUI.CurrentTheme.PopupMenu.Selection.ARC.get();
+      outerInsets = JBUI.CurrentTheme.PopupMenu.Selection.outerInsets();
+    }
+    else if (IdeaPopupMenuUI.isMenuBarItem(c)) {
+      outerInsets = DarculaMenuItemBorder.menuBarItemOuterInsets();
+      radius = 0;
+    }
+    else {
+      radius = JBUI.CurrentTheme.Menu.Selection.ARC.get();
+      outerInsets = JBUI.CurrentTheme.Menu.Selection.outerInsets();
+    }
+
+    g.fillRoundRect(outerInsets.left, outerInsets.top, width - outerInsets.width(),
+                    height - outerInsets.height(), radius, radius);
+    config.restore();
+  }
+
+  public static @NotNull Dimension patchPreferredSize(Component c, Dimension preferredSize) {
+    if (ExperimentalUI.isNewUI() && !IdeaPopupMenuUI.isMenuBarItem(c)) {
+      JBInsets outerInsets = IdeaPopupMenuUI.isPartOfPopupMenu(c)
+                             ? JBUI.CurrentTheme.PopupMenu.Selection.outerInsets()
+                             : JBUI.CurrentTheme.Menu.Selection.outerInsets();
+      return new Dimension(preferredSize.width, JBUI.CurrentTheme.List.rowHeight() + outerInsets.height());
+    }
+
+    return preferredSize;
   }
 
   public IdeaMenuUI() {
@@ -208,11 +243,8 @@ public class IdeaMenuUI extends BasicMenuUI {
     if (allowedIcon != null && !(UIUtil.isUnderIntelliJLaF() || StartupUiUtil.isUnderDarcula())) {
       g.fillRect(k, 0, jMenu.getWidth() - k, jMenu.getHeight());
     }
-    else if (IdeaPopupMenuUI.isRoundSelectionEnabled(comp)) {
-      GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-      int radius = JBUI.getInt("MenuItem.Selection.arc", 8);
-      g.fillRoundRect(4, 1, jMenu.getWidth() - 8, jMenu.getHeight() - 2, radius, radius);
-      config.restore();
+    else if (ExperimentalUI.isNewUI() || IdeaPopupMenuUI.isRoundBorder()) {
+      paintRoundSelection(g, comp, jMenu.getWidth(), jMenu.getHeight());
     }
     else {
       g.fillRect(0, 0, jMenu.getWidth(), jMenu.getHeight());
@@ -301,16 +333,16 @@ public class IdeaMenuUI extends BasicMenuUI {
 
     // Position the Accelerator text rect
 
-    acceleratorRect.x += viewRect.width - arrowIconRect.width - menuItemGap - acceleratorRect.width;
+    acceleratorRect.x = viewRect.x + viewRect.width - arrowIconRect.width - menuItemGap - acceleratorRect.width;
     acceleratorRect.y = (viewRect.y + viewRect.height / 2) - acceleratorRect.height / 2;
 
     // Position the Check and Arrow Icons
 
     if (useCheckAndArrow()){
-      arrowIconRect.x += viewRect.width - arrowIconRect.width;
-      arrowIconRect.y = (viewRect.y + labelRect.height / 2) - arrowIconRect.height / 2;
+      arrowIconRect.x = viewRect.x + viewRect.width - arrowIconRect.width;
+      arrowIconRect.y = (labelRect.y + labelRect.height / 2) - arrowIconRect.height / 2;
       if (checkIcon != null){
-        checkIconRect.y = (viewRect.y + labelRect.height / 2) - checkIconRect.height / 2;
+        checkIconRect.y = (labelRect.y + labelRect.height / 2) - checkIconRect.height / 2;
         checkIconRect.x += (viewRect.x + myMaxGutterIconWidth / 2) - checkIcon.getIconWidth() / 2;
         a = viewRect.x;
         e = (viewRect.y + labelRect.height / 2) - myMaxGutterIconWidth / 2;
@@ -365,8 +397,9 @@ public class IdeaMenuUI extends BasicMenuUI {
       text != null ? defaultTextIconGap : 0,
       defaultTextIconGap
     );
+    Rectangle ourPreferredSizeRect = new Rectangle();
     ourPreferredSizeRect.setBounds(ourTextRect);
-    ourPreferredSizeRect = SwingUtilities.computeUnion(ourIconRect.x, ourIconRect.y, ourIconRect.width, ourIconRect.height, ourPreferredSizeRect);
+    SwingUtilities.computeUnion(ourIconRect.x, ourIconRect.y, ourIconRect.width, ourIconRect.height, ourPreferredSizeRect);
     if (useCheckAndArrow()){
       ourPreferredSizeRect.width += myMaxGutterIconWidth;
       ourPreferredSizeRect.width += defaultTextIconGap;
@@ -385,7 +418,8 @@ public class IdeaMenuUI extends BasicMenuUI {
     if (ourPreferredSizeRect.height % 2 == 0){
       ourPreferredSizeRect.height++;
     }
-    return ourPreferredSizeRect.getSize();
+
+    return patchPreferredSize(comp, ourPreferredSizeRect.getSize());
   }
 
   private void drawIconBorder(Graphics g) {
@@ -408,7 +442,6 @@ public class IdeaMenuUI extends BasicMenuUI {
     ourCheckIconRect.setBounds(ourZeroRect);
     ourArrowIconRect.setBounds(ourZeroRect);
     ourViewRect.setBounds(0, 0, Short.MAX_VALUE, Short.MAX_VALUE);
-    ourPreferredSizeRect.setBounds(ourZeroRect);
   }
 
   private Icon getAllowedIcon() {

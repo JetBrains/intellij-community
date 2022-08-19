@@ -72,6 +72,10 @@ class ButtonSelectorAction<T> @JvmOverloads constructor(private val option: T,
       property.set(option)
     }
   }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.BGT
+  }
 }
 
 @Deprecated("Use Kotlin UI DSL Version 2")

@@ -10,12 +10,10 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.tasks.ArchiveKt
-import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 
-import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.BiConsumer
 import java.util.function.UnaryOperator
@@ -102,6 +100,10 @@ final class KotlinPluginBuilder {
     "kotlin.compiler-plugins.lombok.maven",
     "kotlin.compiler-plugins.scripting",
     "kotlin.compiler-plugins.android-extensions-stubs",
+    "kotlin.completion.api",
+    "kotlin.completion.impl-shared",
+    "kotlin.completion.impl-k1",
+    "kotlin.completion.impl-k2",
     "kotlin.maven",
     "kotlin.gradle.gradle-tooling",
     "kotlin.gradle.gradle",
@@ -125,7 +127,7 @@ final class KotlinPluginBuilder {
     "kotlin.spellchecker",
     "kotlin.jvm-decompiler",
     "kotlin.properties",
-    "kotlin.j2k.services",
+    "kotlin.j2k.post-processing",
     "kotlin.j2k.idea",
     "kotlin.j2k.old",
     "kotlin.j2k.new",
@@ -163,9 +165,18 @@ final class KotlinPluginBuilder {
     "kotlin.code-insight.inspections-shared",
     "kotlin.code-insight.impl-base",
     "kotlin.code-insight.descriptions",
+    "kotlin.code-insight.intentions-k1",
     "kotlin.code-insight.intentions-k2",
     "kotlin.code-insight.inspections-k2",
+    "kotlin.code-insight.k2",
+    "kotlin.code-insight.override-implement-shared",
+    "kotlin.code-insight.override-implement-k1",
+    "kotlin.code-insight.override-implement-k2",
+    "kotlin.code-insight.live-templates-shared",
+    "kotlin.code-insight.live-templates-k1",
+    "kotlin.code-insight.live-templates-k2",
     "kotlin.fir",
+    "kotlin.highlighting",
     "kotlin.uast.uast-kotlin-fir",
     "kotlin.uast.uast-kotlin-idea-fir",
     "kotlin.fir.fir-low-level-api-ide-impl",
@@ -270,7 +281,6 @@ final class KotlinPluginBuilder {
       withProjectLibrary("kotlinc.kotlin-compiler-ir")
 
       withProjectLibrary("kotlinc.kotlin-jps-plugin-classpath", "jps/kotlin-jps-plugin.jar")
-      withProjectLibrary("kotlinc.kotlin-reflect", "kotlinc-lib.jar")
       withProjectLibrary("kotlinc.kotlin-stdlib", "kotlinc-lib.jar")
       withProjectLibrary("kotlinc.kotlin-jps-common")
       //noinspection SpellCheckingInspection

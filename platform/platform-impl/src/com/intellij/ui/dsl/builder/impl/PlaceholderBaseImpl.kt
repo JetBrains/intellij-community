@@ -4,14 +4,9 @@ package com.intellij.ui.dsl.builder.impl
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.CellBase
 import com.intellij.ui.dsl.builder.SpacingConfiguration
-import com.intellij.ui.dsl.checkNull
 import com.intellij.ui.dsl.gridLayout.Constraints
 import org.jetbrains.annotations.ApiStatus
-import java.awt.event.HierarchyEvent
-import java.awt.event.HierarchyListener
 import javax.swing.JComponent
-import javax.swing.JPanel
-import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
 internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent: RowImpl) : CellBaseImpl<T>() {
@@ -28,8 +23,8 @@ internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent:
       if (componentField !== value) {
         removeComponent()
         if (value != null) {
-          value.isVisible = visible && parent.isVisible()
-          value.isEnabled = enabled && parent.isEnabled()
+          value.isVisible = value.isVisible && visible && parent.isVisible()
+          value.isEnabled = value.isEnabled && enabled && parent.isEnabled()
 
           componentField = value
 
@@ -39,12 +34,6 @@ internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent:
         }
       }
     }
-
-  /**
-   * The listener catches [component] removing from parent bypassing [component] property (e.g. with [JPanel.remove] or directly adding
-   * the component into another panel). So we can reset [component] field to keep consistency
-   */
-  private var hierarchyListener: HierarchyListener? = null
 
   override fun enabledFromParent(parentEnabled: Boolean) {
     doEnabled(parentEnabled && enabled)
@@ -67,7 +56,6 @@ internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent:
     if (parent.isVisible()) {
       doVisible(visible)
     }
-    component?.isVisible = isVisible
     return this
   }
 
@@ -87,16 +75,6 @@ internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent:
 
     componentField = null
 
-    hierarchyListener?.let {
-      hierarchyListener = null
-
-      // We cannot remove listener while hierarchyListener is processing hierarchyChanged event, otherwise
-      // JDK can throw IndexOutOfBoundsException. So postpone it
-      SwingUtilities.invokeLater {
-        installedComponent.removeHierarchyListener(it)
-      }
-    }
-
     placeholderCellData?.let {
       if (installedComponent is DialogPanel) {
         it.panel.unregisterIntegratedPanel(installedComponent)
@@ -107,7 +85,6 @@ internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent:
   }
 
   private fun initInstalledComponent() {
-    checkNull(hierarchyListener)
     checkNotNull(placeholderCellData)
     val installedComponent = checkNotNull(componentField)
 
@@ -121,14 +98,6 @@ internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent:
       if (installedComponent is DialogPanel) {
         it.panel.registerIntegratedPanel(installedComponent)
       }
-
-      hierarchyListener = HierarchyListener { event ->
-        if (event.changeFlags and HierarchyEvent.PARENT_CHANGED.toLong() != 0L
-            && event.changedParent === it.panel) {
-          removeComponent()
-        }
-      }
-      installedComponent.addHierarchyListener(hierarchyListener)
 
       invalidate()
     }

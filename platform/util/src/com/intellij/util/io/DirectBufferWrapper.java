@@ -179,7 +179,7 @@ public final class DirectBufferWrapper {
     assert buffer.limit() > 0;
     return myFile.useChannel(ch -> {
       int readBytes = ch.read(buffer, myPosition);
-      if (myFile.isFillBuffersWithZeros() && readBytes < bufferSize) {
+      if (readBytes < bufferSize) {
         for (int i = Math.max(0, readBytes); i < bufferSize; i++) {
           buffer.put(i, (byte) 0);
         }

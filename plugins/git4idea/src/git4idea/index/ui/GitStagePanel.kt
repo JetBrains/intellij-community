@@ -37,11 +37,13 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.Processor
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.*
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.JBUI.Panels.simplePanel
+import com.intellij.util.ui.ProportionKey
+import com.intellij.util.ui.ThreeStateCheckBox
+import com.intellij.util.ui.TwoKeySplitter
 import com.intellij.util.ui.tree.TreeUtil
-import com.intellij.vcs.commit.CommitChecksResult
 import com.intellij.vcs.commit.CommitStatusPanel
 import com.intellij.vcs.commit.CommitWorkflowListener
 import com.intellij.vcs.commit.EditedCommitNode
@@ -84,13 +86,15 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
   private val _tree: MyChangesTree
   val tree: ChangesTree get() = _tree
-  private val treeMessageSplitter: Splitter
-  private val commitPanel: GitStageCommitPanel
-  private val commitWorkflowHandler: GitStageCommitWorkflowHandler
   private val progressStripe: ProgressStripe
-  private val commitDiffSplitter: OnePixelSplitter
   private val toolbar: ActionToolbar
+  private val commitPanel: GitStageCommitPanel
   private val changesStatusPanel: Wrapper
+
+  private val treeMessageSplitter: Splitter
+  private val commitDiffSplitter: OnePixelSplitter
+
+  private val commitWorkflowHandler: GitStageCommitWorkflowHandler
 
   private var diffPreviewProcessor: GitStageDiffPreview? = null
   private var editorTabPreview: GitStageEditorDiffPreview? = null
@@ -244,7 +248,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
     installSelectionHandler(tree, false)
     installNextDiffActionOn(this@GitStagePanel)
-    UIUtil.putClientProperty(tree, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true)
+    tree.putClientProperty(ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true)
   }
 
   override fun dispose() {
@@ -471,11 +475,6 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
         update()
       }
     }
-
-    override fun vcsesChanged() = Unit
-    override fun executionStarted() = Unit
-    override fun beforeCommitChecksStarted() = Unit
-    override fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CommitChecksResult) = Unit
   }
 
   companion object {

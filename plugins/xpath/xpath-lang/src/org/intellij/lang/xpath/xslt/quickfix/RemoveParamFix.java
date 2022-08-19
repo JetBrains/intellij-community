@@ -42,7 +42,7 @@ public class RemoveParamFix extends AbstractFix {
     }
 
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
         return XPathBundle.message("intention.family.name.remove.argument");
     }
 

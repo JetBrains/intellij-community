@@ -28,7 +28,7 @@ internal class CreateMethodFromGroovyUsageRequest(
 
   private fun getRefExpression() : GrReferenceExpression? = if (super.isValid()) call.invokedExpression as? GrReferenceExpression else null
 
-  override fun getMethodName() = getRefExpression()?.referenceName!!
+  override fun getMethodName() = getRefExpression()?.referenceName ?: "sample"
 
   override fun getReturnType() : List<ExpectedType> {
     val expected = GroovyExpectedTypesProvider.getDefaultExpectedTypes(call)

@@ -15,12 +15,9 @@ internal class A( // comment for field2 setter
     // comment before field3
     var field3 = 0 // comment for field3
 
-    // comment for setProperty
-    // end of setProperty
-    // comment for getProperty
-    // end of getProperty
     var property: Int
-        get() = 1
-        set(value) {}
-
+        // comment for getProperty
+        get() = 1 // end of getProperty
+        // comment for setProperty
+        set(value) {} // end of setProperty
 }

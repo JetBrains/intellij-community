@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicReference;
 class ChainResolver {
   private static final Logger LOG = Logger.getInstance(ChainResolver.class);
 
-  private AtomicReference<ChainsSearchResult> mySearchResult = new AtomicReference<>(new ChainsSearchResult(0, -1, null));
+  private final AtomicReference<ChainsSearchResult> mySearchResult = new AtomicReference<>(new ChainsSearchResult(0, -1, null));
   private final ExecutorService myExecutor =
     SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Stream debugger chains detector");
 

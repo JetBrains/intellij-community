@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.util.FileContentUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.*;
@@ -1127,7 +1128,76 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     assertTrue(myProjectsManager.isIgnored(myProjectsManager.findProject(m)));
   }
 
-  @Test 
+  @Test
+  public void testDoNotIgnoreProjectWhenModuleDeletedDuringImport() {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<modules>" +
+                     "  <module>m</module>" +
+                     "</modules>");
+
+    VirtualFile m = createModulePom("m",
+                                    "<groupId>test</groupId>" +
+                                    "<artifactId>m</artifactId>" +
+                                    "<version>1</version>");
+    importProject();
+
+    assertModules("project", "m");
+    assertSize(1, myProjectsManager.getRootProjects());
+    assertEmpty(myProjectsManager.getIgnoredFilesPaths());
+
+    configConfirmationForYesAnswer();
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<packaging>pom</packaging>");
+
+    assertModules("project");
+    assertSize(1, myProjectsManager.getRootProjects());
+    assertEmpty(myProjectsManager.getIgnoredFilesPaths());
+  }
+
+  @Test
+  public void testDoNotIgnoreProjectWhenSeparateMainAndTestModulesDeletedDuringImport() {
+    Assume.assumeTrue(MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject));
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<properties>" +
+                  "  <maven.compiler.release>8</maven.compiler.release>" +
+                  "  <maven.compiler.testRelease>11</maven.compiler.testRelease>" +
+                  "</properties>" +
+                  "" +
+                  " <build>\n" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <artifactId>maven-compiler-plugin</artifactId>" +
+                  "      <version>3.10.0</version>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>"
+    );
+
+    assertModules("project", "project.main", "project.test");
+    assertSize(1, myProjectsManager.getRootProjects());
+    assertEmpty(myProjectsManager.getIgnoredFilesPaths());
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertModules("project");
+    assertSize(1, myProjectsManager.getRootProjects());
+    assertEmpty(myProjectsManager.getIgnoredFilesPaths());
+  }
+
+  @Test
   public void testDoNotRemoveMavenProjectsOnReparse() {
     // this pom file doesn't belong to any of the modules, this is won't be processed
     // by MavenProjectProjectsManager and won't occur in its projects list.

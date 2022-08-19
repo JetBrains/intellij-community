@@ -438,7 +438,7 @@ public final class InspectionEngine {
     return result;
   }
 
-  private static @NotNull Set<String> getLanguageWithDialects(@NotNull Language language, boolean applyToDialects) {
+  public static @NotNull Set<String> getLanguageWithDialects(@NotNull Language language, boolean applyToDialects) {
     List<Language> dialects = language.getDialects();
     if (!applyToDialects || dialects.isEmpty()) return Collections.singleton(language.getID());
 

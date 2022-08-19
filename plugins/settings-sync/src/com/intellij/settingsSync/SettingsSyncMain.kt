@@ -9,11 +9,13 @@ import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 private const val SETTINGS_SYNC_ENABLED_PROPERTY = "idea.settings.sync.enabled"
 
-internal fun isSettingsSyncEnabledByKey(): Boolean =
+@ApiStatus.Internal
+fun isSettingsSyncEnabledByKey(): Boolean =
   SystemProperties.getBooleanProperty(SETTINGS_SYNC_ENABLED_PROPERTY, false)
 
 internal fun isSettingsSyncEnabledInSettings(): Boolean =
@@ -21,9 +23,10 @@ internal fun isSettingsSyncEnabledInSettings(): Boolean =
 
 internal const val SETTINGS_SYNC_STORAGE_FOLDER = "settingsSync"
 
-internal class SettingsSyncMain : Disposable {
+@ApiStatus.Internal
+class SettingsSyncMain : Disposable {
 
-  internal val controls: SettingsSyncControls
+  val controls: SettingsSyncControls
   private val componentStore: ComponentStoreImpl
 
   init {
@@ -70,7 +73,7 @@ internal class SettingsSyncMain : Disposable {
     controls.ideMediator.removeStreamProvider()
   }
 
-  internal companion object {
+  companion object {
 
     fun isAvailable(): Boolean {
       return ApplicationManager.getApplication().getServiceIfCreated(SettingsSyncMain::class.java) != null
@@ -88,16 +91,16 @@ internal class SettingsSyncMain : Disposable {
       val settingsLog = GitSettingsLog(settingsSyncStorage, appConfigPath, parentDisposable,
                                        ideMediator.collectFilesToExportFromSettings(appConfigPath))
       val updateChecker = SettingsSyncUpdateChecker(remoteCommunicator)
-      val bridge = SettingsSyncBridge(parentDisposable, settingsLog, ideMediator, remoteCommunicator, updateChecker)
+      val bridge = SettingsSyncBridge(parentDisposable, appConfigPath, settingsLog, ideMediator, remoteCommunicator, updateChecker)
       return SettingsSyncControls(ideMediator, updateChecker, bridge, remoteCommunicator, settingsSyncStorage)
     }
 
     private val LOG = logger<SettingsSyncMain>()
   }
 
-  internal class SettingsSyncControls(val ideMediator: SettingsSyncIdeMediator,
-                                      val updateChecker: SettingsSyncUpdateChecker,
-                                      val bridge: SettingsSyncBridge,
-                                      val remoteCommunicator: SettingsSyncRemoteCommunicator,
-                                      val settingsSyncStorage: Path)
+  class SettingsSyncControls(val ideMediator: SettingsSyncIdeMediator,
+                             val updateChecker: SettingsSyncUpdateChecker,
+                             val bridge: SettingsSyncBridge,
+                             val remoteCommunicator: SettingsSyncRemoteCommunicator,
+                             val settingsSyncStorage: Path)
 }

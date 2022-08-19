@@ -8,8 +8,6 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.util.messages.Topic
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import org.jetbrains.jps.util.JpsPathUtil

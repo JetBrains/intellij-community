@@ -221,7 +221,7 @@ public class MavenRunnerPanel implements MavenSettingsObservable {
     if (!localTarget) {
       List<String> items = IntStream.range(0, myTargetJdkCombo.getItemCount())
         .mapToObj(i -> myTargetJdkCombo.getItemAt(i))
-        .collect(Collectors.toList());
+        .toList();
 
       List<String> targetItems = new ArrayList<>();
       TargetEnvironmentConfiguration targetEnvironmentConfiguration = TargetEnvironmentsManager.getInstance(myProject)

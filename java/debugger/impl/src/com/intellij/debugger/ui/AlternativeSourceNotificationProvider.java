@@ -163,7 +163,7 @@ public final class AlternativeSourceNotificationProvider implements EditorNotifi
                                        @NotNull VirtualFile file,
                                        ComboBoxClassElement[] alternatives,
                                        @Nullable String locationDeclName) {
-      super(fileEditor);
+      super(fileEditor, EditorNotificationPanel.Status.Info);
 
       setText(text);
 

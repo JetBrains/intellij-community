@@ -188,5 +188,6 @@ class SavedPatchesChangesBrowser(project: Project, private val focusMainUi: (Com
   private class ChangeObjectNode(change: SavedPatchesProvider.ChangeObject) :
     AbstractChangesBrowserFilePathNode<SavedPatchesProvider.ChangeObject>(change, change.fileStatus) {
     override fun filePath(userObject: SavedPatchesProvider.ChangeObject): FilePath = userObject.filePath
+    override fun originPath(userObject: SavedPatchesProvider.ChangeObject): FilePath? = userObject.originalFilePath
   }
 }

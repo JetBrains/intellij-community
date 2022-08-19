@@ -22,7 +22,7 @@ abstract class AbstractBreakpointApplicabilityTest : KotlinLightCodeInsightFixtu
         return KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
     }
 
-    protected fun doTest(unused: String) {
+    protected open fun doTest(unused: String) {
         val ktFile = myFixture.configureByFile(fileName()) as KtFile
 
         val actualContents = checkBreakpoints(ktFile, BreakpointChecker())

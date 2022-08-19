@@ -53,7 +53,7 @@ class ChangeToStarProjectionFix(element: KtTypeElement) : KotlinQuickFixAction<K
             val psiElement = diagnostic.psiElement
 
             // We don't suggest this quick-fix for array instance checks because there is ConvertToIsArrayOfCallFix
-            if (diagnostic.isArrayInstanceCheck() && psiElement.isOnJvm()) return null
+            if (psiElement.parent is KtIsExpression && diagnostic.isArrayInstanceCheck() && psiElement.isOnJvm()) return null
 
             val binaryExpr = psiElement.getNonStrictParentOfType<KtBinaryExpressionWithTypeRHS>()
             val typeReference = binaryExpr?.right ?: psiElement.getNonStrictParentOfType()

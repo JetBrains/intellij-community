@@ -419,7 +419,7 @@ public class LongRangeSetTest {
       assertEquals(point(0), JvmPsiRangeSetUtil.castTo(point(0), type));
     }
     assertEquals(point(0x1234_5678_9ABC_DEF0L), JvmPsiRangeSetUtil.castTo(point(0x1234_5678_9ABC_DEF0L), PsiType.LONG));
-    assertEquals(point(0x9ABC_DEF0), JvmPsiRangeSetUtil.castTo(point(0x1234_5678_9ABC_DEF0L), PsiType.INT));
+    assertEquals(point(0xffff_ffff_9abc_def0L), JvmPsiRangeSetUtil.castTo(point(0x1234_5678_9ABC_DEF0L), PsiType.INT));
     assertEquals(point(0xDEF0), JvmPsiRangeSetUtil.castTo(point(0x1234_5678_9ABC_DEF0L), PsiType.CHAR));
     assertEquals(point(-8464), JvmPsiRangeSetUtil.castTo(point(0x1234_5678_9ABC_DEF0L), PsiType.SHORT));
     assertEquals(point(-16), JvmPsiRangeSetUtil.castTo(point(0x1234_5678_9ABC_DEF0L), PsiType.BYTE));

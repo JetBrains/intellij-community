@@ -9,6 +9,7 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.render.RendererPanelsUtils;
+import com.intellij.ui.render.RendererPanelsUtilsKt;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
@@ -81,9 +82,7 @@ public class RunAnythingItemBase extends RunAnythingItem {
     component.setIcon(ObjectUtils.notNull(icon, EmptyIcon.ICON_16));
     if (ExperimentalUI.isNewUI()) {
       component.setIconTextGap(RendererPanelsUtils.getIconTextGap());
-      Insets ipads = component.getIpad();
-      //noinspection UseDPIAwareInsets
-      component.setIpad(new Insets(ipads.top, 0, ipads.bottom, 0));
+      RendererPanelsUtilsKt.resetHorizontalInsets(component);
     } else {
       component.setIpad(JBUI.insets(0, 10, 0, 0));
     }

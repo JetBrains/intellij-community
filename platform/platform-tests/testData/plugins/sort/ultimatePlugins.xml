@@ -983,12 +983,6 @@
     <depends>-com-jetbrains-plugins-webDeployment-</depends>
     <depends>-org-jetbrains-plugins-remote-run-</depends>
   </idea-plugin>
-  <idea-plugin url="file://out/intellij.vaadin/META-INF/plugin.xml">
-    <id>-com-intellij-vaadin-</id>
-    <name>Vaadin</name>
-    <depends>-com-intellij-gwt-</depends>
-    <depends optional="true">-org-jetbrains-idea-maven-</depends>
-  </idea-plugin>
   <idea-plugin url="file://out/intellij.tasks.timeTracking/META-INF/plugin.xml">
     <id>-com-intellij-tasks-timeTracking-</id>
     <name>Time Tracking</name>

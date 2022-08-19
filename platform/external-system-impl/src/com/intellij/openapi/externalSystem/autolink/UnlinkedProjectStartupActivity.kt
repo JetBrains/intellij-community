@@ -74,7 +74,9 @@ class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
           val projectId = unlinkedProjectAware.getProjectId(externalProjectPath)
           LOG.debug("Auto-linked ${projectId.debugName} project")
         }
-        unlinkedProjectAware.linkAndLoadProjectWithLoadingConfirmation(project, externalProjectPath)
+        withContext(Dispatchers.EDT) {
+          unlinkedProjectAware.linkAndLoadProjectWithLoadingConfirmation(project, externalProjectPath)
+        }
         return
       }
       for ((unlinkedProjectAware, buildFiles) in unlinkedProjects) {
@@ -156,7 +158,9 @@ class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
     unlinkedProjectAware.subscribe(project, object : ExternalSystemProjectLinkListener {
       override fun onProjectUnlinked(externalProjectPath: String) {
         project.coroutineScope.launch {
-          showNotificationIfUnlinkedProjectsFound(project, externalProjectPath)
+          coroutineScope(extensionDisposable) {
+            showNotificationIfUnlinkedProjectsFound(project, externalProjectPath)
+          }
         }
       }
     }, extensionDisposable)
@@ -166,8 +170,11 @@ class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
     EP_NAME.addExtensionPointListener(
       object : ExtensionPointListener<ExternalSystemUnlinkedProjectAware> {
         override fun extensionAdded(extension: ExternalSystemUnlinkedProjectAware, pluginDescriptor: PluginDescriptor) {
+          val extensionDisposable = createExtensionDisposable(project, extension)
           project.coroutineScope.launch {
-            showNotificationIfUnlinkedProjectsFound(project, externalProjectPath, extension)
+            coroutineScope(extensionDisposable) {
+              showNotificationIfUnlinkedProjectsFound(project, externalProjectPath, extension)
+            }
           }
         }
       }, project)
@@ -191,7 +198,7 @@ class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
     unlinkedProjectAware: ExternalSystemUnlinkedProjectAware
   ) {
     val extensionDisposable = createExtensionDisposable(project, unlinkedProjectAware)
-    val listener = NewBuildFilesListener(project, externalProjectPath, unlinkedProjectAware)
+    val listener = NewBuildFilesListener(project, externalProjectPath, unlinkedProjectAware, extensionDisposable)
     installAsyncVirtualFileListener(listener, extensionDisposable)
   }
 
@@ -205,6 +212,7 @@ class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
     private val project: Project,
     private val externalProjectPath: String,
     private val unlinkedProjectAware: ExternalSystemUnlinkedProjectAware,
+    private val parentDisposable: Disposable
   ) : VirtualFileChangesListener {
     private lateinit var buildFiles: MutableSet<VirtualFile>
 
@@ -214,7 +222,9 @@ class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
 
     override fun apply() {
       project.coroutineScope.launch {
-        showUnlinkedProjectsNotification(project, externalProjectPath, unlinkedProjectAware, buildFiles.toSet())
+        coroutineScope(parentDisposable) {
+          showUnlinkedProjectsNotification(project, externalProjectPath, unlinkedProjectAware, buildFiles.toSet())
+        }
       }
     }
 
@@ -239,17 +249,25 @@ class UnlinkedProjectStartupActivity : ProjectPostStartupActivity {
     }
 
     private suspend fun <R> readAction(parentDisposable: Disposable, action: () -> R): R {
+      return coroutineScope(parentDisposable) {
+        readAction {
+          action()
+        }
+      }
+    }
+
+    private suspend fun <R> coroutineScope(parentDisposable: Disposable, action: suspend CoroutineScope.() -> R): R {
       return coroutineScope {
-        val task = async(start = CoroutineStart.LAZY) {
-          readAction {
+        Disposer.newDisposable(parentDisposable, "CoroutineScope").use { disposable ->
+          val task = async(start = CoroutineStart.LAZY) {
             action()
           }
+          Disposer.register(disposable, Disposable {
+            task.cancel("disposed")
+          })
+          task.start()
+          task.await()
         }
-        Disposer.register(parentDisposable, Disposable {
-          task.cancel("disposed")
-        })
-        task.start()
-        task.await()
       }
     }
   }

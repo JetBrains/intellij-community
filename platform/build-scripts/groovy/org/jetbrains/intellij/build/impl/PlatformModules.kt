@@ -29,6 +29,7 @@ private val PLATFORM_API_MODULES: List<String> = java.util.List.of(
   "intellij.platform.lang.core",
   "intellij.platform.lang",
   "intellij.platform.lvcs",
+  "intellij.platform.ml",
   "intellij.platform.ide",
   "intellij.platform.ide.core",
   "intellij.platform.projectModel",
@@ -322,6 +323,7 @@ object PlatformModules {
     }
 
     layout.projectLibrariesToUnpack.putValue(UTIL_JAR, "Trove4j")
+    layout.projectLibrariesToUnpack.putValue(UTIL_RT_JAR, "ion")
 
     for (item in additionalProjectLevelLibraries) {
       val name = item.libraryName

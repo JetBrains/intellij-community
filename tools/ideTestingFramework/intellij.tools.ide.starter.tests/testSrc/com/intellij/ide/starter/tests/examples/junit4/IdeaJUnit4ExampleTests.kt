@@ -1,6 +1,8 @@
 package com.intellij.ide.starter.tests.examples.junit4
 
 import com.intellij.ide.starter.ide.command.CommandChain
+import com.intellij.ide.starter.junit4.hyphenateWithClass
+import com.intellij.ide.starter.junit4.initStarterRule
 import com.intellij.ide.starter.sdk.JdkDownloaderFacade
 import com.intellij.ide.starter.sdk.JdkVersion
 import com.intellij.ide.starter.tests.examples.data.TestCases

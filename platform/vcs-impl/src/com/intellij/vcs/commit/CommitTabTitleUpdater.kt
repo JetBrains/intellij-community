@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.content.Content
 import com.intellij.util.ui.update.UiNotifyConnector.doWhenFirstShown
 
@@ -33,7 +34,12 @@ open class CommitTabTitleUpdater(val tree: ChangesTree,
     val tab = getTab() ?: return
 
     val branch = branchComponent.text
-    tab.displayName = if (branch?.isNotBlank() == true) message("tab.title.commit.to.branch", branch) else message("tab.title.commit")
+    tab.displayName = when {
+      ExperimentalUI.isNewUI() -> message("tab.title.commit")
+      branch?.isNotBlank() == true -> message("tab.title.commit.to.branch", branch)
+      else -> message("tab.title.commit")
+    }
+
     tab.description = branchComponent.toolTipText
   }
 

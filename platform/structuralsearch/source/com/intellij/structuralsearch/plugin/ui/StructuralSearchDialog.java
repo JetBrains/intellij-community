@@ -205,6 +205,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         if (myNewEditor instanceof TextEditor) {
           myEditor = ((TextEditor)myNewEditor).getEditor();
           addMatchHighlights();
+          addRestartHighlightingListenerToCurrentEditor();
         }
         else {
           myEditor = null;
@@ -418,7 +419,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     myExistingTemplatesComponent.onConfigurationSelected(configuration -> {
       loadConfiguration(configuration);
     });
-    myExistingTemplatesComponent.setConfigurationProducer(() -> myConfiguration);
+    myExistingTemplatesComponent.setConfigurationProducer(() -> getConfiguration());
     myExistingTemplatesComponent.setSearchEditorProducer(() -> mySearchCriteriaEdit);
     myExistingTemplatesComponent.setExportRunnable(() -> exportToClipboard());
     myExistingTemplatesComponent.setImportRunnable(() -> importFromClipboard());
@@ -486,6 +487,12 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
                                                                    SSRBundle.message("templates.button.description"),
                                                                    AllIcons.Actions.PreviewDetails) {
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+
+      @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
         return isExistingTemplatesPanelVisible();
       }
@@ -501,6 +508,10 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     final AnAction filterAction = new DumbAwareToggleAction(SSRBundle.message("filter.button"),
                                                             SSRBundle.message("filter.button.description"),
                                                             filterModifiedIcon) {
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
 
       @Override
       public void update(@NotNull AnActionEvent e) {
@@ -528,6 +539,10 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     // Pin action
     final DumbAwareToggleAction pinAction =
       new DumbAwareToggleAction(SSRBundle.message("pin.button"), SSRBundle.message("pin.button.description"), AllIcons.General.Pin_tab) {
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
+        }
 
         @Override
         public boolean isSelected(@NotNull AnActionEvent e) {
@@ -771,7 +786,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     }
 
     FindSettings.getInstance().setShowResultsInSeparateView(myOpenInNewTab.isSelected());
-    ConfigurationManager.getInstance(getProject()).addHistoryConfiguration(myConfiguration);
+    ConfigurationManager.getInstance(getProject()).addHistoryConfiguration(getConfiguration());
     startSearching();
   }
 
@@ -993,7 +1008,6 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   public void showFilterPanel(String variableName) {
     myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration));
     setFilterPanelVisible(true);
-    myConfiguration.setCurrentVariableName(variableName);
   }
 
   private void setFilterPanelVisible(boolean visible) {
@@ -1008,7 +1022,6 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     else {
       if (isFilterPanelVisible()) {
         mySearchEditorPanel.setSecondComponent(null);
-        myConfiguration.setCurrentVariableName(null);
       }
     }
   }
@@ -1343,9 +1356,6 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         }
         else{
           myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration));
-        }
-        if (isFilterPanelVisible()) {
-          myConfiguration.setCurrentVariableName(variableName);
         }
       }, myDisposable, myReplace);
       editor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);

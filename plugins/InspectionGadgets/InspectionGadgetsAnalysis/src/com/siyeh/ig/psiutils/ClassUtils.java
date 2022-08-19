@@ -366,7 +366,7 @@ public final class ClassUtils {
                                       .filter(innerClass -> innerClass.hasModifierProperty(PsiModifier.STATIC))
                                       .flatMap(innerClass -> Arrays.stream(innerClass.getFields())));
 
-    final List<PsiField> fields = fieldStream.filter(field -> resolveToSingletonField(aClass, field)).limit(2).collect(Collectors.toList());
+    final List<PsiField> fields = fieldStream.filter(field -> resolveToSingletonField(aClass, field)).limit(2).toList();
     return fields.size() == 1 ? fields.get(0) : null;
   }
 

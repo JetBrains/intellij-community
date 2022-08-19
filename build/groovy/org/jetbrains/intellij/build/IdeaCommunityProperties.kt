@@ -28,7 +28,9 @@ open class IdeaCommunityProperties(private val communityHome: BuildDependenciesC
       "intellij.platform.externalSystem.testFramework",
       "intellij.maven.testFramework",
       "intellij.tools.ide.starter",
-      "intellij.tools.ide.metricsCollector"
+      "intellij.tools.ide.metricsCollector",
+      "intellij.tools.ide.starter.junit4",
+      "intellij.tools.ide.starter.junit5"
     )
   }
 

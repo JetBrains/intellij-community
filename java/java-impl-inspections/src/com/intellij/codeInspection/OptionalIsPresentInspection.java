@@ -34,6 +34,9 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
   private static final CallMatcher OPTIONAL_IS_PRESENT =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "isPresent").parameterCount(0);
 
+  private static final CallMatcher OPTIONAL_IS_EMPTY =
+    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "isEmpty").parameterCount(0);
+
   private static final OptionalIsPresentCase[] CASES = OptionalIsPresentCase.values();
 
   private enum ProblemType {
@@ -64,14 +67,9 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
         super.visitConditionalExpression(expression);
         PsiExpression condition = PsiUtil.skipParenthesizedExprDown(expression.getCondition());
         if (condition == null) return;
-        boolean invert = false;
-        PsiExpression strippedCondition = condition;
-        if (BoolUtils.isNegation(condition)) {
-          strippedCondition = BoolUtils.getNegated(condition);
-          invert = true;
-        }
-        PsiReferenceExpression optionalRef = extractOptionalFromIsPresentCheck(strippedCondition);
+        PsiReferenceExpression optionalRef = extractOptionalFromPresenceCheck(condition);
         if (optionalRef == null) return;
+        boolean invert = isEmptyCheck(condition);
         PsiExpression thenExpression = invert ? expression.getElseExpression() : expression.getThenExpression();
         PsiExpression elseExpression = invert ? expression.getThenExpression() : expression.getElseExpression();
         check(condition, optionalRef, thenExpression, elseExpression);
@@ -82,14 +80,9 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
         super.visitIfStatement(statement);
         PsiExpression condition = PsiUtil.skipParenthesizedExprDown(statement.getCondition());
         if (condition == null) return;
-        boolean invert = false;
-        PsiExpression strippedCondition = condition;
-        if (BoolUtils.isNegation(condition)) {
-          strippedCondition = BoolUtils.getNegated(condition);
-          invert = true;
-        }
-        PsiReferenceExpression optionalRef = extractOptionalFromIsPresentCheck(strippedCondition);
+        PsiReferenceExpression optionalRef = extractOptionalFromPresenceCheck(condition);
         if (optionalRef == null) return;
+        boolean invert = isEmptyCheck(condition);
         PsiStatement thenStatement = extractThenStatement(statement, invert);
         PsiStatement elseStatement = extractElseStatement(statement, invert);
         check(condition, optionalRef, thenStatement, elseStatement);
@@ -132,15 +125,31 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
 
   @Nullable
   @Contract("null -> null")
-  static PsiReferenceExpression extractOptionalFromIsPresentCheck(PsiExpression expression) {
-    PsiMethodCallExpression call = ObjectUtils.tryCast(expression, PsiMethodCallExpression.class);
-    if (!OPTIONAL_IS_PRESENT.matches(call)) return null;
+  private static PsiReferenceExpression extractOptionalFromPresenceCheck(PsiExpression condition) {
+    while (condition != null && BoolUtils.isNegation(condition)) {
+      condition = BoolUtils.getNegated(condition);
+    }
+    PsiMethodCallExpression call = ObjectUtils.tryCast(condition, PsiMethodCallExpression.class);
+    if (!OPTIONAL_IS_PRESENT.matches(call) && !OPTIONAL_IS_EMPTY.matches(call)) return null;
     PsiReferenceExpression qualifier =
       ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(call.getMethodExpression().getQualifierExpression()), PsiReferenceExpression.class);
     if (qualifier == null) return null;
     PsiElement element = qualifier.resolve();
     if (!(element instanceof PsiVariable) || isRaw((PsiVariable)element)) return null;
     return qualifier;
+  }
+
+  /**
+   * @param condition condition which is known to represent either isPresent() or isEmpty() check
+   * @return true if condition represents isEmpty() check; false if it's isPresent() check
+   */
+  private static boolean isEmptyCheck(PsiExpression condition) {
+    boolean invert = false;
+    while (condition != null && BoolUtils.isNegation(condition)) {
+      condition = BoolUtils.getNegated(condition);
+      invert = !invert;
+    }
+    return OPTIONAL_IS_EMPTY.matches(condition) != invert;
   }
 
   @Contract("null, _ -> false")
@@ -263,16 +272,12 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
       PsiElement element = descriptor.getStartElement();
       if (!(element instanceof PsiExpression)) return;
       PsiExpression condition = (PsiExpression)element;
-      boolean invert = false;
-      if (BoolUtils.isNegation(condition)) {
-        condition = BoolUtils.getNegated(condition);
-        invert = true;
-      }
-      PsiReferenceExpression optionalRef = extractOptionalFromIsPresentCheck(condition);
+      PsiReferenceExpression optionalRef = extractOptionalFromPresenceCheck(condition);
       if (optionalRef == null) return;
       PsiElement cond = PsiTreeUtil.getParentOfType(element, PsiIfStatement.class, PsiConditionalExpression.class);
       PsiElement thenElement;
       PsiElement elseElement;
+      boolean invert = isEmptyCheck(condition);
       if (cond instanceof PsiIfStatement) {
         thenElement = extractThenStatement((PsiIfStatement)cond, invert);
         elseElement = extractElseStatement((PsiIfStatement)cond, invert);

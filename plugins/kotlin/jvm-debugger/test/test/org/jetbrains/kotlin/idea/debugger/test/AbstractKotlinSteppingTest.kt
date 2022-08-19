@@ -33,6 +33,13 @@ abstract class AbstractKotlinSteppingTest : KotlinDescriptorTestCaseWithStepping
         super.doTest(path)
     }
 
+    override fun getK2IgnoreDirective(): String {
+        return when {
+            this::class.java.simpleName.endsWith("SmartStepInto") -> "// IGNORE_K2_SMART_STEP_INTO"
+            else -> super.getK2IgnoreDirective()
+        }
+    }
+
     override fun doMultiFileTest(files: TestFiles, preferences: DebuggerPreferences) {
         val category = this.category ?: error("Category is not specified")
         val specificKind = category.instruction

@@ -45,6 +45,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     if (instanceOfExpression == null) return false;
     PsiTypeElement checkType = instanceOfExpression.getCheckType();
     if (checkType == null) return false;
+    if (instanceOfExpression.getPattern() != null) return false;
     PsiExpression operand = instanceOfExpression.getOperand();
     PsiType operandType = operand.getType();
     if (TypeConversionUtil.isPrimitiveAndNotNull(operandType)) return false;
@@ -260,7 +261,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
             if (declarationStatement != null) {
               caretModel.moveToOffset(declarationStatement.getTextRange().getEndOffset());
             }
-            new EnterAction().getHandler().execute(editor, null, DataManager.getInstance().getDataContext());
+            new EnterAction().getHandler().execute(editor, null, null);
           };
           if (file.isPhysical()) {
             ApplicationManager.getApplication().runWriteAction(action);

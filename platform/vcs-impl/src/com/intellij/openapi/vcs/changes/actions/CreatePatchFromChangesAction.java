@@ -11,7 +11,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
@@ -80,7 +79,8 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
     ShelvedChangeList shelvedChangeList = ContainerUtil.getOnlyItem(ShelvedChangesViewManager.getShelvedLists(e.getDataContext()));
     if (shelvedChangeList != null) {
       boolean entireList = ContainerUtil.getOnlyItem(ShelvedChangesViewManager.getExactlySelectedLists(e.getDataContext())) != null;
-      List<String> selectedPaths = entireList ? ContainerUtil.emptyList() : ShelvedChangesViewManager.getSelectedShelvedChangeNames(e.getDataContext());
+      List<String> selectedPaths = entireList ? ContainerUtil.emptyList()
+                                              : ShelvedChangesViewManager.getSelectedShelvedChangeNames(e.getDataContext());
       patchBuilder = new CreatePatchCommitExecutor.ShelfPatchBuilder(project, shelvedChangeList, selectedPaths);
     }
     else {
@@ -139,14 +139,13 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
 
   private static void createWithDialog(@NotNull Project project,
                                        @Nullable String commitMessage,
-                                       @NotNull List<? extends Change> changes, @NotNull PatchBuilder patchBuilder, @NotNull CommitContext commitContext) {
+                                       @NotNull List<? extends Change> changes,
+                                       @NotNull PatchBuilder patchBuilder,
+                                       @NotNull CommitContext commitContext) {
     CommitSession commitSession = CreatePatchCommitExecutor.createCommitSession(project, patchBuilder, commitContext);
-    DialogWrapper sessionDialog = new SessionDialog(VcsBundle.message("action.name.create.patch"),
-                                                    project,
-                                                    commitSession,
-                                                    changes,
-                                                    commitMessage);
-    if (!sessionDialog.showAndGet()) return;
+
+    String title = VcsBundle.message("action.name.create.patch");
+    if (!SessionDialog.configureCommitSession(project, title, commitSession, changes, commitMessage)) return;
 
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       //noinspection unchecked

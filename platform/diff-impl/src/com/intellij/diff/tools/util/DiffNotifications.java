@@ -86,7 +86,8 @@ public final class DiffNotifications {
 
   @NotNull
   public static JPanel createNotification(@NotNull @Nls String text, @Nullable final Color background, boolean showHideAction) {
-    final EditorNotificationPanel panel = new EditorNotificationPanel(background);
+    // TODO: add status parameter or replace color parameter to status
+    final EditorNotificationPanel panel = new EditorNotificationPanel(background, EditorNotificationPanel.Status.Warning);
     panel.text(text);
     if (showHideAction) {
       HyperlinkLabel link = panel.createActionLabel(DiffBundle.message("button.hide.notification"), () -> hideNotification(panel));

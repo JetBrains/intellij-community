@@ -527,7 +527,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
     @Override
     public String getText() {
       List<String> names = myMemberValuePointers.stream().map(SmartPsiElementPointer::getElement).filter(Objects::nonNull)
-                                                .map(PsiElement::getText).collect(Collectors.toList());
+        .map(PsiElement::getText).toList();
       String expression = StringUtil.join(names, " | ");
       return CommonQuickFixBundle.message("fix.replace.with.x", expression);
     }

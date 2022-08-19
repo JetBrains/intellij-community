@@ -152,6 +152,10 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
   }
 
   override fun delete(fileSpec: String, roamingType: RoamingType): Boolean {
+    if (roamingType == RoamingType.DISABLED) {
+      return false
+    }
+
     val adjustedSpec = getFileRelativeToRootConfig(fileSpec)
     val file = rootConfig.resolve(adjustedSpec)
     if (!file.exists()) {

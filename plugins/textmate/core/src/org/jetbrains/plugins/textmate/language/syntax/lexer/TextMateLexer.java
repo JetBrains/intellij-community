@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 public final class TextMateLexer {
   /**
    * Count of {@link #lastSuccessState} that can be occurred again without offset changing.
-   * If {@link #lastSuccessStateOccursCount} reaches {@link #MAX_LOOPS_COUNT}
+   * If {@link #lastSuccessStateOccursCount} reaches {@code MAX_LOOPS_COUNT}
    * then lexing of current line stops and lexer moved to the EOL.
    */
   private static final int MAX_LOOPS_COUNT = 10;
@@ -253,8 +253,7 @@ public final class TextMateLexer {
     if (captures != null) {
       List<CaptureMatchData> matches = SyntaxMatchUtils.matchCaptures(captures, matchData, string, line);
       //noinspection SSBasedInspection
-      List<CaptureMatchData> nonEmptyMatches = matches.stream().filter(m -> m.selectorName.length() > 0 && !m.range.isEmpty())
-        .collect(Collectors.toList());
+      List<CaptureMatchData> nonEmptyMatches = matches.stream().filter(m -> m.selectorName.length() > 0 && !m.range.isEmpty()).toList();
       LinkedList<CaptureMatchData> starts = new LinkedList<>(nonEmptyMatches);
       Collections.sort(starts, CaptureMatchData.START_OFFSET_ORDERING);
 

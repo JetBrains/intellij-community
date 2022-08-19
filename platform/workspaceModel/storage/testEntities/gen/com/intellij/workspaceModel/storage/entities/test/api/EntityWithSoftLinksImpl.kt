@@ -14,6 +14,7 @@ import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
@@ -187,6 +188,27 @@ open class EntityWithSoftLinksImpl : EntityWithSoftLinks, WorkspaceEntityBase() 
 
     override fun connectionIdList(): List<ConnectionId> {
       return connections
+    }
+
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as EntityWithSoftLinks
+      this.link = dataSource.link
+      this.entitySource = dataSource.entitySource
+      this.manyLinks = dataSource.manyLinks.toMutableList()
+      this.optionalLink = dataSource.optionalLink
+      this.inContainer = dataSource.inContainer
+      this.inOptionalContainer = dataSource.inOptionalContainer
+      this.inContainerList = dataSource.inContainerList.toMutableList()
+      this.deepContainer = dataSource.deepContainer.toMutableList()
+      this.sealedContainer = dataSource.sealedContainer
+      this.listSealedContainer = dataSource.listSealedContainer.toMutableList()
+      this.justProperty = dataSource.justProperty
+      this.justNullableProperty = dataSource.justNullableProperty
+      this.justListProperty = dataSource.justListProperty.toMutableList()
+      this.deepSealedClass = dataSource.deepSealedClass
+      if (parents != null) {
+      }
     }
 
 
@@ -1091,6 +1113,20 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return EntityWithSoftLinks(link, manyLinks, inContainer, inContainerList, deepContainer, sealedContainer, listSealedContainer,
+                               justProperty, justListProperty, deepSealedClass, entitySource) {
+      this.optionalLink = this@EntityWithSoftLinksData.optionalLink
+      this.inOptionalContainer = this@EntityWithSoftLinksData.inOptionalContainer
+      this.justNullableProperty = this@EntityWithSoftLinksData.justNullableProperty
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
@@ -1152,5 +1188,46 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
     result = 31 * result + justListProperty.hashCode()
     result = 31 * result + deepSealedClass.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + link.hashCode()
+    result = 31 * result + manyLinks.hashCode()
+    result = 31 * result + optionalLink.hashCode()
+    result = 31 * result + inContainer.hashCode()
+    result = 31 * result + inOptionalContainer.hashCode()
+    result = 31 * result + inContainerList.hashCode()
+    result = 31 * result + deepContainer.hashCode()
+    result = 31 * result + sealedContainer.hashCode()
+    result = 31 * result + listSealedContainer.hashCode()
+    result = 31 * result + justProperty.hashCode()
+    result = 31 * result + justNullableProperty.hashCode()
+    result = 31 * result + justListProperty.hashCode()
+    result = 31 * result + deepSealedClass.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.add(DeepContainer::class.java)
+    collector.add(SealedContainer.SmallContainer::class.java)
+    collector.add(SealedContainer.BigContainer::class.java)
+    collector.add(SealedContainer.EmptyContainer::class.java)
+    collector.add(DeepSealedOne.DeepSealedTwo.DeepSealedThree.DeepSealedFour::class.java)
+    collector.add(DeepSealedOne.DeepSealedTwo::class.java)
+    collector.add(Container::class.java)
+    collector.add(DeepSealedOne::class.java)
+    collector.add(DeepSealedOne.DeepSealedTwo.DeepSealedThree::class.java)
+    collector.add(OnePersistentId::class.java)
+    collector.add(TooDeepContainer::class.java)
+    collector.add(SealedContainer::class.java)
+    collector.add(SealedContainer.ContainerContainer::class.java)
+    this.inContainerList?.let { collector.add(it::class.java) }
+    this.sealedContainer?.let { collector.add(it::class.java) }
+    this.justListProperty?.let { collector.add(it::class.java) }
+    this.listSealedContainer?.let { collector.add(it::class.java) }
+    this.manyLinks?.let { collector.add(it::class.java) }
+    this.deepContainer?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = false
   }
 }

@@ -1,5 +1,5 @@
-// ERROR: [CONFLICTING_OVERLOADS] Conflicting overloads: [public final override fun foo(): R|kotlin/Unit|]
-// ERROR: [CONFLICTING_OVERLOADS] Conflicting overloads: [public final override fun foo(): R|kotlin/Unit|]
+// ERROR: [CONFLICTING_OVERLOADS] Conflicting overloads: [fun foo(): Unit]
+// ERROR: [CONFLICTING_OVERLOADS] Conflicting overloads: [fun foo(): Unit]
 interface I {
     open fun foo(){}
 }

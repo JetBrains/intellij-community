@@ -100,7 +100,7 @@ final class SceneBuilderUtil {
           .filter(path -> {
             String name = path.toFile().getName();
             return name.startsWith(artifact + "-" + JAVAFX_VERSION) && name.endsWith(".jar"); //include os-specific jars
-          }).collect(Collectors.toList());
+          }).toList();
 
         for (Path path : paths) {
           urls.add(path.toUri().toURL());

@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.util.findCancellableContinua
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.findCoroutineMetadataType
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.findDispatchedContinuationReferenceType
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
-import org.jetbrains.kotlin.idea.debugger.evaluate.DefaultExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 
 class CoroutineNoLibraryProxy(private val executionContext: DefaultExecutionContext) : CoroutineInfoProvider {
     companion object {

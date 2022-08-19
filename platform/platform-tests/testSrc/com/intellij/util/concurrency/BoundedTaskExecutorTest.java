@@ -52,7 +52,7 @@ public class BoundedTaskExecutorTest extends CatchLogErrorsInAllThreadsTestCase 
         .filter(thread -> thread.getName().startsWith(AppScheduledExecutorService.POOLED_THREAD_PREFIX))
         .filter(thread -> thread.getState() == Thread.State.RUNNABLE)
         .filter(thread -> thread.getStackTrace().length != 0) // there can be RUNNABLE zombies with empty stacktrace
-        .collect(Collectors.toList());
+        .toList();
 
       long finish = System.currentTimeMillis();
       if (alive.isEmpty()) break;

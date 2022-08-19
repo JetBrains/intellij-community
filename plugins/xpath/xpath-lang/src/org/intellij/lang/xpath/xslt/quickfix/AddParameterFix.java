@@ -42,7 +42,7 @@ public class AddParameterFix extends AddParamBase {
     }
 
     @Override
-    public String getFamilyName() {
+    public @NotNull String getFamilyName() {
         return XPathBundle.message("intention.family.name.add.parameter.to.template");
     }
 

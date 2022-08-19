@@ -46,12 +46,13 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
-import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -65,6 +66,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BooleanSupplier;
 
 @DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
 public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
@@ -106,30 +108,39 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
 
   @Override
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    AtomicBoolean resolveHappened = new AtomicBoolean();
-    // we run the test in EDT under this fake progress which is needed for one thing only: to be able to assert that no resolve happens in EDT.
-    // Since resolve calls checkCanceled() a lot, we intercept these calls and check is we are being called from within resolve and are in EDT
-    class MyPingProgressIndicator extends ProgressIndicatorBase implements PingProgress {
-      @Override
-      public void interact() {
-        boolean isFromResolve = isFromResolve();
-        if (isFromResolve) resolveHappened.set(true);
-        assert !isFromResolve
-               || !ApplicationManager.getApplication().isDispatchThread() && ApplicationManager.getApplication().isReadAccessAllowed() // allow resolve from the background thread
-               || ApplicationManager.getApplication().isWriteAccessAllowed(); // allow resolve in the write action because that's how PsiReference.bindToElement() works
-      }
-    }
-    ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+    assertResolveNotCalledInEDTDuring(ImportHelperTest::isFromJavaCodeReferenceElementResolve, () -> {
       try {
         super.runTestRunnable(testRunnable);
       }
       catch (Throwable e) {
-        throw new RuntimeException(e);
+        ExceptionUtil.rethrow(e);
       }
-    }, new MyPingProgressIndicator());
-    assertTrue("We must do resolve during auto-import, but it seems this test"+getTestName(false)+
-               " didn't sense any resolve at all. `isFromResolve()` method is broken?", resolveHappened.get());
+    });
+  }
+
+  public static void assertResolveNotCalledInEDTDuring(@NotNull BooleanSupplier isInsideResolve, @NotNull Runnable runnable) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    AtomicBoolean resolveHappened = new AtomicBoolean();
+    // we run the test in EDT under this fake progress which is needed for one thing only: to be able to assert that no resolve happens in EDT.
+    // Since resolve calls checkCanceled() a lot, we intercept these calls and check is we are being called from outside of EDT
+    class MyPingProgressIndicator extends ProgressIndicatorBase implements PingProgress {
+      @Override
+      public void interact() {
+        if (resolveHappened.get()
+            && (!ApplicationManager.getApplication().isDispatchThread() && ApplicationManager.getApplication().isReadAccessAllowed()
+                || ApplicationManager.getApplication().isWriteAccessAllowed())) {
+          return; // optimization: try not to call getStackTrace() if we can
+        }
+        boolean isFromResolve = isInsideResolve.getAsBoolean(); ;
+        if (isFromResolve) resolveHappened.set(true);
+        assertTrue("Resolve in EDT happened",
+          !isFromResolve
+               || !ApplicationManager.getApplication().isDispatchThread() && ApplicationManager.getApplication().isReadAccessAllowed() // allow resolve from the background thread
+               || ApplicationManager.getApplication().isWriteAccessAllowed()); // allow resolve in the write action because that's how PsiReference.bindToElement() works
+      }
+    }
+    ProgressManager.getInstance().executeProcessUnderProgress(runnable, new MyPingProgressIndicator());
+    assertTrue("It seems there wasn't any resolve in this test at all. (or maybe `isFromJavaCodeReferenceElementResolve()` method is broken?)", resolveHappened.get());
   }
 
   public void testImportsInsertedAlphabetically() {
@@ -229,7 +240,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     assertOrder(file, expectedOrder);
   }
 
-  private static void assertOrder(PsiJavaFile file, @NonNls String... expectedOrder) {
+  private static void assertOrder(@NotNull PsiJavaFile file, @NonNls String @NotNull ... expectedOrder) {
     PsiImportStatementBase[] statements = file.getImportList().getAllImportStatements();
 
     assertEquals(expectedOrder.length, statements.length);
@@ -604,10 +615,10 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
     assertOneImportAdded("java.util.ArrayList");
   }
 
-  private static boolean isFromResolve() {
+  public static boolean isFromJavaCodeReferenceElementResolve() {
     Throwable currentStack = new Throwable();
     return ContainerUtil.exists(currentStack.getStackTrace(),
-                                stackElement -> stackElement.getClassName().equals(PsiJavaCodeReferenceElementImpl.class.getName())
-                                                && stackElement.getMethodName().equals("resolve"));
+       stackElement -> stackElement.getClassName().equals(PsiImplUtil.class.getName())
+                       && stackElement.getMethodName().equals("multiResolveImpl"));
   }
 }

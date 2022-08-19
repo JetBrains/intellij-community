@@ -3,6 +3,7 @@ package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
@@ -60,7 +61,7 @@ public class MakeMethodFinalFix extends InspectionGadgetsFix {
 
   private static @Nullable PsiMethod findMethodToFix(PsiElement element) {
     if (element instanceof PsiMethod) {
-      if (element.isPhysical() && !FileModificationService.getInstance().preparePsiElementsForWrite(element)) {
+      if (!IntentionPreviewUtils.prepareElementForWrite(element)) {
         return null;
       }
       return (PsiMethod)element;

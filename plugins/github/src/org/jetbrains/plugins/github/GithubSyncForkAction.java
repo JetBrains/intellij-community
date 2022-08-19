@@ -90,7 +90,7 @@ public class GithubSyncForkAction extends DumbAwareAction {
       return;
     }
 
-    GHProjectRepositoriesManager ghRepositoriesManager = project.getServiceIfCreated(GHProjectRepositoriesManager.class);
+    GHHostedRepositoriesManager ghRepositoriesManager = project.getServiceIfCreated(GHHostedRepositoriesManager.class);
     if (ghRepositoriesManager == null) {
       LOG.warn("Unable to get the GHProjectRepositoriesManager service");
       return;
@@ -158,7 +158,7 @@ public class GithubSyncForkAction extends DumbAwareAction {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null || project.isDefault()) return false;
 
-    GHProjectRepositoriesManager repositoriesManager = project.getServiceIfCreated(GHProjectRepositoriesManager.class);
+    GHHostedRepositoriesManager repositoriesManager = project.getServiceIfCreated(GHHostedRepositoriesManager.class);
     if (repositoriesManager == null) return false;
 
     return !repositoriesManager.getKnownRepositories().isEmpty();

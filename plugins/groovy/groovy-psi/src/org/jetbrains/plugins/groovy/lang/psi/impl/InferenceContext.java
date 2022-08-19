@@ -31,7 +31,7 @@ public interface InferenceContext {
   PsiType getVariableType(@NotNull GrReferenceExpression ref);
 
   <E extends @NotNull GroovyPsiElement, T>
-  T getCachedValue(E element, @NotNull Function<@NotNull ? super E, ? extends T> computation);
+  T getCachedValue(E element, @NotNull Function<? super @NotNull E, ? extends T> computation);
 
   <T extends PsiReference, R>
   R[] resolveWithCaching(@NotNull T ref, @NotNull AbstractResolver<T, R[]> resolver, boolean incomplete);

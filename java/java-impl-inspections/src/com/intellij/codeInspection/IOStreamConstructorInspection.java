@@ -223,7 +223,7 @@ public class IOStreamConstructorInspection extends AbstractBaseJavaLocalInspecti
       // maybe we can reuse already created file.toPath() / Path.of(...) variable
       List<PsiVariable> pathVars = Arrays.stream(occurrences).map(o -> findVariableAssignedTo(o))
         .filter(var -> var != null && HighlightControlFlowUtil.isEffectivelyFinal(var, toPathConversion, null))
-        .collect(Collectors.toList());
+        .toList();
       if (!pathVars.isEmpty()) {
         PsiCodeBlock body = containingMethod.getBody();
         if (body == null) return;

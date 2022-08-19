@@ -43,6 +43,7 @@ import javax.swing.plaf.ComboBoxUI;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicComboBoxUI;
+import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.*;
@@ -145,6 +146,23 @@ public final class UIUtil {
       return (Integer)property;
     }
     return 500;
+  }
+
+  /**
+   * A public method from BasicHTML
+   *
+   * @see BasicHTML#getBaseline(JComponent, int, int, int, int)
+   */
+  public static int getBaseline(@NotNull JComponent c, int y, int ascent, int w, int h) {
+    View view = (View)c.getClientProperty(BasicHTML.propertyKey);
+    if (view != null) {
+      int baseline = BasicHTML.getHTMLBaseline(view, w, h);
+      if (baseline < 0) {
+        return baseline;
+      }
+      return y + baseline;
+    }
+    return y + ascent;
   }
 
   private static final NotNullLazyValue<Boolean> X_RENDER_ACTIVE = NotNullLazyValue.atomicLazy(() -> {
@@ -983,7 +1001,7 @@ public final class UIUtil {
   }
 
   public static Color getLabelTextForeground() {
-    return UIManager.getColor("Label.textForeground");
+    return UIManager.getColor("Label.foreground");
   }
 
   public static Color getControlColor() {
@@ -3357,7 +3375,19 @@ public final class UIUtil {
    */
   @ApiStatus.Experimental
   public static boolean isShowing(@NotNull Component component) {
-    if (Boolean.getBoolean("java.awt.headless") || component.isShowing()) {
+    return isShowing(component, true);
+  }
+
+  /**
+   * An overload of {@link UIUtil#isShowing(Component)} allowing to ignore headless mode.
+   * @param checkHeadless when {@code true}, the {@code component} will always be considered visible in headless mode.
+   */
+  @ApiStatus.Experimental
+  public static boolean isShowing(@NotNull Component component, boolean checkHeadless) {
+    if (checkHeadless && Boolean.getBoolean("java.awt.headless")) {
+      return true;
+    }
+    if (component.isShowing()) {
       return true;
     }
 

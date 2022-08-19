@@ -8,6 +8,7 @@ import com.intellij.util.indexing.impl.AbstractUpdateData;
 import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.indexing.snapshot.EmptyValueContainer;
+import com.intellij.util.io.MeasurableIndexStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,7 +17,7 @@ import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-final class EmptyIndex<Key, Value, Input> implements UpdatableIndex<Key, Value, Input, Void> {
+final class EmptyIndex<Key, Value, Input> implements UpdatableIndex<Key, Value, Input, Void>, MeasurableIndexStore {
   private final ReadWriteLock myLock = new ReentrantReadWriteLock();
   private final IndexExtension<Key, Value, Input> myExtension;
 
@@ -127,5 +128,10 @@ final class EmptyIndex<Key, Value, Input> implements UpdatableIndex<Key, Value, 
 
   @Override
   public void dispose() {
+  }
+
+  @Override
+  public int keysCountApproximately() {
+    return 0;
   }
 }

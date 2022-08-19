@@ -548,14 +548,26 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
       handler("summingInt", 1, "mapToInt({0}).sum()", false),
       handler("summingLong", 1, "mapToLong({0}).sum()", false),
       handler("summingDouble", 1, "mapToDouble({0}).sum()", false),
-      CallHandler.of(collectorMatcher("toUnmodifiableList", 0).withLanguageLevelAtLeast(LanguageLevel.JDK_16),
-                     call -> new ReplaceCollectorFix("toUnmodifiableList", "toList()", false)),
+      CallHandler.of(collectorMatcher("toUnmodifiableList", 0).withLanguageLevelAtLeast(LanguageLevel.JDK_16), call -> {
+        return elementTypeMatches(PsiTreeUtil.getParentOfType(call, PsiMethodCallExpression.class))
+               ? new ReplaceCollectorFix("toUnmodifiableList", "toList()", false) : null;
+      }),
       CallHandler.of(collectorMatcher("toList", 0).withLanguageLevelAtLeast(LanguageLevel.JDK_16), call -> {
         PsiMethodCallExpression collectCall = PsiTreeUtil.getParentOfType(call, PsiMethodCallExpression.class);
-        return MismatchedCollectionQueryUpdateInspection.isUnmodified(collectCall)
+        return MismatchedCollectionQueryUpdateInspection.isUnmodified(collectCall) && elementTypeMatches(collectCall)
                ? new ReplaceCollectorFix("toList", "toList()", false)
                : null;
       }));
+
+    @Contract("null -> false")
+    private static boolean elementTypeMatches(@Nullable PsiMethodCallExpression collect) {
+      if (collect == null) return false;
+      PsiExpression qualifier = collect.getMethodExpression().getQualifierExpression();
+      if (qualifier == null) return false;
+      PsiType streamElementType = PsiUtil.substituteTypeParameter(qualifier.getType(), JAVA_UTIL_STREAM_STREAM, 0, false);
+      PsiType collectionElementType = PsiUtil.substituteTypeParameter(collect.getType(), JAVA_UTIL_COLLECTION, 0, false);
+      return streamElementType != null && collectionElementType != null && streamElementType.equals(collectionElementType);
+    }
 
     private final String myCollector;
     private final String myStreamSequence;
@@ -590,8 +602,15 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
         PsiExpression[] collectorArgs = collectorCall.getArgumentList().getExpressions();
         String result = MessageFormat.format(myStreamSequence, Arrays.stream(collectorArgs).map(PsiExpression::getText).toArray());
         PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-        PsiExpression replacement = factory.createExpressionFromText(qualifierExpression.getText() + "." + result, collectCall);
-        addBoxingIfNecessary(factory, collectCall.replace(replacement));
+        PsiMethodCallExpression mock = (PsiMethodCallExpression)factory.createExpressionFromText(result, collectCall);
+        if (mock.getMethodExpression().getQualifierExpression() == null) {
+          ExpressionUtils.bindCallTo(collectCall, Objects.requireNonNull(mock.getMethodExpression().getReferenceName()));
+          collectCall.getArgumentList().replace(mock.getArgumentList());
+        } else {
+          PsiExpression replacement = factory.createExpressionFromText(qualifierExpression.getText() + "." + result, collectCall);
+          collectCall = (PsiMethodCallExpression)collectCall.replace(replacement);
+        }
+        addBoxingIfNecessary(factory, collectCall);
       }
     }
 

@@ -20,13 +20,16 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.messages.MessageBusConnection
+import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
+import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity
 import org.jetbrains.kotlin.caches.project.cacheInvalidatingOnRootModifications
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryWrapper
@@ -36,6 +39,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceIn
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
 import org.jetbrains.kotlin.idea.base.util.caching.FineGrainedEntityCache
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
+import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
@@ -202,7 +206,11 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
             modules.forEach(::get)
         }
 
-        override fun calculate(key: Module): List<ModuleSourceInfo> = key.sourceModuleInfos
+        override fun calculate(key: Module): List<ModuleSourceInfo> {
+            val sourceModuleInfos = key.sourceModuleInfos
+            println("${key.name} -> $sourceModuleInfos")
+            return sourceModuleInfos
+        }
 
         override fun checkKeyValidity(key: Module) {
             key.checkValidity()
@@ -211,26 +219,73 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
         override fun changed(event: VersionedStorageChange) {
             val storageBefore = event.storageBefore
             val storageAfter = event.storageAfter
-            val moduleChanges = event.getChanges(ModuleEntity::class.java).ifEmpty { return }
 
-            val outdatedModules: List<Module> = moduleChanges.asSequence()
-                .mapNotNull { it.oldEntity }
-                .mapNotNull { storageBefore.findModuleByEntity(it) }
-                .toList()
+            val moduleChanges = event.getChanges(ModuleEntity::class.java)
+            val sourceRootChanges = event.getChanges(SourceRootEntity::class.java)
 
-            val updatedModules = moduleChanges.asSequence()
-                .mapNotNull { it.newEntity }
-                .mapNotNull { storageAfter.findModuleByEntity(it) }
-                .toList()
-
-            if (outdatedModules.isNotEmpty()) {
-                invalidateKeys(outdatedModules)
+            if (moduleChanges.isEmpty() && sourceRootChanges.isEmpty()) {
+                return
             }
 
-            // force calculations
-            updatedModules.forEach(::get)
+            val modulesToRegister = LinkedHashSet<Module>()
+            val modulesToRemove = LinkedHashSet<Module>()
 
-            modificationTracker.incModificationCount()
+            fun Module.scheduleRegister() = modulesToRegister.add(this)
+            fun Module.scheduleRemove() = modulesToRemove.add(this)
+
+            for (moduleChange in moduleChanges) {
+                when (moduleChange) {
+                    is EntityChange.Added -> {
+                        val moduleBridge =
+                            storageAfter.findModuleByEntity(moduleChange.newEntity) ?:
+                            // TODO: workaround to bypass bug with new modules not present in storageAfter
+                            WorkspaceModel.getInstance(project).entityStorage.current.findModuleByEntity(moduleChange.newEntity)
+                        moduleBridge?.scheduleRegister()
+                    }
+                    is EntityChange.Removed -> storageBefore.findModuleByEntity(moduleChange.entity)?.scheduleRemove()
+                    is EntityChange.Replaced -> {
+                        storageBefore.findModuleByEntity(moduleChange.oldEntity)?.scheduleRemove()
+                        storageAfter.findModuleByEntity(moduleChange.newEntity)?.scheduleRegister()
+                    }
+                }
+            }
+
+            val modulesToUpdate = mutableListOf<Module>()
+
+            for (sourceRootChange in sourceRootChanges) {
+                val modules: List<Module> = when (sourceRootChange) {
+                    is EntityChange.Added -> listOfNotNull(
+                        storageAfter.findModuleByEntity(sourceRootChange.newEntity.contentRoot.module) ?:
+                        // TODO: workaround to bypass bug with new modules not present in storageAfter
+                        WorkspaceModel.getInstance(project).entityStorage.current.findModuleByEntity(sourceRootChange.newEntity.contentRoot.module)
+                    )
+                    is EntityChange.Removed -> listOfNotNull(storageBefore.findModuleByEntity(sourceRootChange.entity.contentRoot.module))
+                    is EntityChange.Replaced -> listOfNotNull(
+                        storageBefore.findModuleByEntity(sourceRootChange.oldEntity.contentRoot.module),
+                        storageAfter.findModuleByEntity(sourceRootChange.newEntity.contentRoot.module)
+                    )
+                }
+
+                for (module in modules) {
+                    if (module in modulesToRemove && module !in modulesToRegister) {
+                        // The module itself is gone. No need in updating it because of source root modification.
+                        // Note that on module deletion, both module and source root deletion events arrive.
+                        continue
+                    }
+
+                    modulesToUpdate.add(module)
+                }
+            }
+
+            for (module in modulesToUpdate) {
+                module.scheduleRemove()
+                module.scheduleRegister()
+            }
+
+            invalidateKeys(modulesToRemove)
+            modulesToRegister.forEach { get(it) }
+
+            incModificationCount()
         }
     }
 
@@ -264,7 +319,7 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
             // force calculations
             project.ideaModules().forEach(::calculateLibrariesForModule)
 
-            modificationTracker.incModificationCount()
+            incModificationCount()
         }
 
         private fun calculateLibrariesForModule(module: Module) {
@@ -296,13 +351,13 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
         override fun jdkAdded(jdk: Sdk) {
             get(jdk)
 
-            modificationTracker.incModificationCount()
+            incModificationCount()
         }
 
         override fun jdkRemoved(jdk: Sdk) {
             invalidateKeys(listOf(jdk))
 
-            modificationTracker.incModificationCount()
+            incModificationCount()
         }
 
         override fun jdkNameChanged(jdk: Sdk, previousName: String) {
@@ -310,18 +365,18 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
 
             // force calculation
             get(jdk)
-            modificationTracker.incModificationCount()
+            incModificationCount()
         }
 
         override fun rootsChanged(event: ModuleRootEvent) {
             // SDK could be changed (esp in tests) out of message bus subscription
-            val sdks = project.allSdks()
+            val sdks = runReadAction { ProjectJdkTable.getInstance().allJdks }
             invalidateEntries({ k, _ -> k !in sdks  })
 
             // force calculation
             sdks.forEach(::get)
 
-            modificationTracker.incModificationCount()
+            incModificationCount()
         }
 
         override fun changed(event: VersionedStorageChange) {
@@ -340,13 +395,22 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
 
             val updatedModuleSdks: Set<Sdk> = moduleChanges.asSequence()
                 .mapNotNull { it.newEntity }
-                .mapNotNull { storageAfter.findModuleByEntity(it) }
+                .mapNotNull {
+                    storageAfter.findModuleByEntity(it) ?:
+                    // TODO: workaround to bypass bug with new modules not present in storageAfter
+                    WorkspaceModel.getInstance(project).entityStorage.current.findModuleByEntity(it)
+                }
                 .flatMapTo(hashSetOf(), ::moduleSdks)
 
             updatedModuleSdks.forEach(::get)
 
-            modificationTracker.incModificationCount()
+            incModificationCount()
         }
+    }
+
+    private fun incModificationCount() {
+        modificationTracker.incModificationCount()
+        KotlinCodeBlockModificationListener.getInstance(project).incModificationCount()
     }
 
     override fun forPlatform(platform: TargetPlatform): List<IdeaModuleInfo> =
@@ -358,6 +422,7 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
                 val libraryInfos = libraryCache.values().flatten()
                 val sdkInfos = sdkCache.values()
                 val ideaModuleInfos = platformModules + libraryInfos + sdkInfos
+
                 ideaModuleInfos
             }
         }

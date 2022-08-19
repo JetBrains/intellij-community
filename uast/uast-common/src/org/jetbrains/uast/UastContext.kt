@@ -1,7 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast
 
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.lang.Language
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.util.containers.CollectionFactory
@@ -14,10 +17,6 @@ import java.util.*
 
 @Deprecated("use UastFacade or UastLanguagePlugin instead", ReplaceWith("UastFacade"))
 class UastContext(val project: Project) : UastLanguagePlugin by UastFacade {
-
-  val languagePlugins: Collection<UastLanguagePlugin>
-    get() = UastFacade.languagePlugins
-
   fun findPlugin(element: PsiElement): UastLanguagePlugin? = UastFacade.findPlugin(element)
 
   fun getMethod(method: PsiMethod): UMethod = convertWithParent(method)!!
@@ -41,8 +40,16 @@ object UastFacade : UastLanguagePlugin {
 
   val languagePlugins: Collection<UastLanguagePlugin>
     get() = UastLanguagePlugin.getInstances()
+  private var cachedLastPlugin: UastLanguagePlugin = this
 
-  fun findPlugin(element: PsiElement): UastLanguagePlugin? = UastLanguagePlugin.byLanguage(element.language)
+  fun findPlugin(element: PsiElement): UastLanguagePlugin? = findPlugin(element.language)
+  fun findPlugin(language: Language): UastLanguagePlugin? {
+    val cached = cachedLastPlugin
+    if (language === cached.language) return cached
+    val plugin = languagePlugins.firstOrNull { it.language === language }
+    if (plugin != null) cachedLastPlugin = plugin
+    return plugin
+  }
 
   override fun isFileSupported(fileName: String): Boolean = languagePlugins.any { it.isFileSupported(fileName) }
 
@@ -74,7 +81,7 @@ object UastFacade : UastLanguagePlugin {
 
   override fun isExpressionValueUsed(element: UExpression): Boolean {
     val language = element.getLanguage()
-    return UastLanguagePlugin.byLanguage(language)?.isExpressionValueUsed(element) ?: false
+    return findPlugin(language)?.isExpressionValueUsed(element) ?: false
   }
 
   private tailrec fun UElement.getLanguage(): Language {
@@ -96,6 +103,12 @@ object UastFacade : UastLanguagePlugin {
   private val exposedListeners = Collections.newSetFromMap(CollectionFactory.createConcurrentWeakIdentityMap<UastPluginListener, Boolean>())
 
   init {
+    ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(DynamicPluginListener.TOPIC, object: DynamicPluginListener {
+      override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+        // avoid Language mem-leak on its plugin unload
+        cachedLastPlugin = this@UastFacade
+      }
+    })
     UastLanguagePlugin.extensionPointName.addChangeListener({ exposedListeners.forEach(UastPluginListener::onPluginsChanged) }, null)
   }
 
@@ -124,7 +137,7 @@ object UastFacade : UastLanguagePlugin {
 /**
  * Converts the element to UAST.
  */
-fun PsiElement?.toUElement(): UElement? = this?.let { UastFacade.convertElementWithParent(this, null) }
+fun PsiElement?.toUElement(): UElement? = if (this == null) null else UastFacade.convertElementWithParent(this, null)
 
 /**
  * Converts the element to an UAST element of the given type. Returns null if the PSI element type does not correspond
@@ -132,7 +145,7 @@ fun PsiElement?.toUElement(): UElement? = this?.let { UastFacade.convertElementW
  */
 @Suppress("UNCHECKED_CAST")
 @Contract("null, _ -> null")
-fun <T : UElement> PsiElement?.toUElement(cls: Class<out T>): T? = this?.let { UastFacade.convertElementWithParent(this, cls) as T? }
+fun <T : UElement> PsiElement?.toUElement(cls: Class<out T>): T? = if (this == null) null else UastFacade.convertElementWithParent(this, cls) as T?
 
 @Suppress("UNCHECKED_CAST")
 @SafeVarargs
@@ -202,14 +215,7 @@ val DEFAULT_EXPRESSION_TYPES_LIST: Array<Class<out UExpression>> = arrayOf(UExpr
  * @see UastFacade.getPossiblePsiSourceTypes
  */
 fun getPossiblePsiSourceTypes(language: Language, vararg uastTypes: Class<out UElement>): ClassSet<PsiElement> =
-  UastLanguagePlugin.byLanguage(language)?.getPossiblePsiSourceTypes(*uastTypes) ?: emptyClassSet()
-
-/**
- * @return types of possible source PSI elements of [language], which instances in principle
- *         can be converted to the specified `U` type
- */
-inline fun <reified U : UElement> getPossiblePsiSourceTypesFor(language: Language): ClassSet<PsiElement> =
-  UastLanguagePlugin.byLanguage(language)?.getPossiblePsiSourceTypes(U::class.java) ?: emptyClassSet()
+  UastFacade.findPlugin(language)?.getPossiblePsiSourceTypes(*uastTypes) ?: emptyClassSet()
 
 private fun getFirstUElement(psiElement: PsiElement, strict: Boolean = false): UElement? {
   val startingElement = if (strict) psiElement.parent else psiElement

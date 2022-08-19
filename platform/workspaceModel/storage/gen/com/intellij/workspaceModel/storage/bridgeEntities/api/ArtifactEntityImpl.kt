@@ -14,6 +14,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToAbstractOneChild
@@ -68,8 +69,8 @@ open class ArtifactEntityImpl : ArtifactEntity, WorkspaceEntityBase() {
   override val outputUrl: VirtualFileUrl?
     get() = _outputUrl
 
-  override val rootElement: CompositePackagingElementEntity
-    get() = snapshot.extractOneToAbstractOneChild(ROOTELEMENT_CONNECTION_ID, this)!!
+  override val rootElement: CompositePackagingElementEntity?
+    get() = snapshot.extractOneToAbstractOneChild(ROOTELEMENT_CONNECTION_ID, this)
 
   override val customProperties: List<ArtifactPropertiesEntity>
     get() = snapshot.extractOneToManyChildren<ArtifactPropertiesEntity>(CUSTOMPROPERTIES_CONNECTION_ID, this)!!.toList()
@@ -117,16 +118,6 @@ open class ArtifactEntityImpl : ArtifactEntity, WorkspaceEntityBase() {
       if (!getEntityData().isArtifactTypeInitialized()) {
         error("Field ArtifactEntity#artifactType should be initialized")
       }
-      if (_diff != null) {
-        if (_diff.extractOneToAbstractOneChild<WorkspaceEntityBase>(ROOTELEMENT_CONNECTION_ID, this) == null) {
-          error("Field ArtifactEntity#rootElement should be initialized")
-        }
-      }
-      else {
-        if (this.entityLinks[EntityLink(true, ROOTELEMENT_CONNECTION_ID)] == null) {
-          error("Field ArtifactEntity#rootElement should be initialized")
-        }
-      }
       // Check initialization for list with ref type
       if (_diff != null) {
         if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(CUSTOMPROPERTIES_CONNECTION_ID, this) == null) {
@@ -142,6 +133,18 @@ open class ArtifactEntityImpl : ArtifactEntity, WorkspaceEntityBase() {
 
     override fun connectionIdList(): List<ConnectionId> {
       return connections
+    }
+
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as ArtifactEntity
+      this.name = dataSource.name
+      this.entitySource = dataSource.entitySource
+      this.artifactType = dataSource.artifactType
+      this.includeInProjectBuild = dataSource.includeInProjectBuild
+      this.outputUrl = dataSource.outputUrl
+      if (parents != null) {
+      }
     }
 
 
@@ -188,15 +191,15 @@ open class ArtifactEntityImpl : ArtifactEntity, WorkspaceEntityBase() {
         if (_diff != null) index(this, "outputUrl", value)
       }
 
-    override var rootElement: CompositePackagingElementEntity
+    override var rootElement: CompositePackagingElementEntity?
       get() {
         val _diff = diff
         return if (_diff != null) {
           _diff.extractOneToAbstractOneChild(ROOTELEMENT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
-                                                                                                             ROOTELEMENT_CONNECTION_ID)]!! as CompositePackagingElementEntity
+                                                                                                             ROOTELEMENT_CONNECTION_ID)] as? CompositePackagingElementEntity
         }
         else {
-          this.entityLinks[EntityLink(true, ROOTELEMENT_CONNECTION_ID)]!! as CompositePackagingElementEntity
+          this.entityLinks[EntityLink(true, ROOTELEMENT_CONNECTION_ID)] as? CompositePackagingElementEntity
         }
       }
       set(value) {
@@ -352,6 +355,17 @@ class ArtifactEntityData : WorkspaceEntityData.WithCalculablePersistentId<Artifa
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ArtifactEntity(name, artifactType, includeInProjectBuild, entitySource) {
+      this.outputUrl = this@ArtifactEntityData.outputUrl
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
@@ -386,5 +400,19 @@ class ArtifactEntityData : WorkspaceEntityData.WithCalculablePersistentId<Artifa
     result = 31 * result + includeInProjectBuild.hashCode()
     result = 31 * result + outputUrl.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + name.hashCode()
+    result = 31 * result + artifactType.hashCode()
+    result = 31 * result + includeInProjectBuild.hashCode()
+    result = 31 * result + outputUrl.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    this.outputUrl?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = false
   }
 }

@@ -25,22 +25,24 @@ import java.awt.image.BufferedImage
 import javax.swing.*
 
 @OptIn(FlowPreview::class)
-open class LoadingDecorator @JvmOverloads constructor(content: JComponent?,
-                                                      parent: Disposable,
-                                                      startDelayMs: Int,
-                                                      useMinimumSize: Boolean = false,
-                                                      icon: AsyncProcessIcon = AsyncProcessIcon.Big("Loading")) {
+open class LoadingDecorator @JvmOverloads constructor(
+  content: JComponent?,
+  parent: Disposable,
+  private val startDelayMs: Int,
+  useMinimumSize: Boolean = false,
+  icon: AsyncProcessIcon = AsyncProcessIcon.Big("Loading")
+) {
   companion object {
     @JvmField
     val OVERLAY_BACKGROUND: Color = JBColor.namedColor("BigSpinner.background", JBColor.PanelBackground)
   }
 
   var overlayBackground: Color? = null
-  var pane: JLayeredPane
-  var loadingLayer: LoadingLayer
-  var fadeOutAnimator: Animator
-  var delay: Int
-  private val startRequests = MutableSharedFlow<Boolean>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+  private val pane: JLayeredPane = MyLayeredPane(if (useMinimumSize) content else null)
+  private val loadingLayer: LoadingLayer = LoadingLayer(icon)
+  private val fadeOutAnimator: Animator
+  private val startRequests = MutableSharedFlow<Boolean>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private var startRequestsJob: Job? = null
 
   var loadingText: @Nls String?
@@ -54,9 +56,6 @@ open class LoadingDecorator @JvmOverloads constructor(content: JComponent?,
     get() = loadingLayer.isLoading
 
   init {
-    pane = MyLayeredPane(if (useMinimumSize) content else null)
-    loadingLayer = LoadingLayer(icon)
-    delay = startDelayMs
     loadingText = CommonBundle.getLoadingTreeNodeText()
     fadeOutAnimator = object : Animator("Loading", 10, if (RemoteDesktopService.isRemoteSession()) 2500 else 500, false) {
       override fun paintNow(frame: Int, totalFrames: Int, cycle: Int) {
@@ -133,7 +132,7 @@ open class LoadingDecorator @JvmOverloads constructor(content: JComponent?,
       return
     }
 
-    if (delay > 0) {
+    if (startDelayMs > 0) {
       startListening()
       check(startRequests.tryEmit(takeSnapshot))
     }
@@ -161,13 +160,19 @@ open class LoadingDecorator @JvmOverloads constructor(content: JComponent?,
     pane.repaint()
   }
 
-  inner class LoadingLayer internal constructor(processIcon: AsyncProcessIcon) : JPanel() {
-    internal val text = JLabel("", SwingConstants.CENTER)
+  private inner class LoadingLayer(processIcon: AsyncProcessIcon) : JPanel() {
+    val text = JLabel("", SwingConstants.CENTER)
+
     private var snapshot: BufferedImage? = null
     private var snapshotBg: Color? = null
-    internal val progress: AsyncProcessIcon
-    var isLoading = false
-      private set
+
+    val progress: AsyncProcessIcon
+
+    val isLoading: Boolean
+      get() = _visible
+
+    private var _visible = false
+
     private var currentAlpha = 0f
     private val textComponent: NonOpaquePanel
 
@@ -181,13 +186,13 @@ open class LoadingDecorator @JvmOverloads constructor(content: JComponent?,
     }
 
     fun setVisible(visible: Boolean, takeSnapshot: Boolean) {
-      if (isVisible == visible || (visible && currentAlpha != -1f)) {
+      if (_visible == visible || (_visible && currentAlpha != -1f)) {
         return
       }
 
-      isVisible = visible
+      _visible = visible
       fadeOutAnimator.reset()
-      if (visible) {
+      if (_visible) {
         isVisible = true
         currentAlpha = -1f
         if (takeSnapshot && width > 0 && height > 0) {

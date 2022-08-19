@@ -2,7 +2,6 @@
 package git4idea.index.vfs
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.vfs.CustomisableUniqueNameEditorTabTitleProvider
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsUtil

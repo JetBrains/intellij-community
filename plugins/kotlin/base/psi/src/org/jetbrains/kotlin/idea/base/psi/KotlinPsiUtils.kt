@@ -12,10 +12,9 @@ import com.intellij.psi.util.parentsOfType
 import com.intellij.util.text.CharArrayUtil
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtBlockExpression
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 
 val KtClassOrObject.classIdIfNonLocal: ClassId?
     get() {
@@ -121,3 +120,17 @@ private fun <T> Array<out Class<out T>>.anyIsInstance(element: PsiElement): Bool
 
 private fun PsiElement.isSuitableTopmostElementAtOffset(offset: Int): Boolean =
     textOffset >= offset && this !is KtBlockExpression && this !is PsiFile
+
+
+fun KtExpression.safeDeparenthesize(): KtExpression = KtPsiUtil.safeDeparenthesize(this)
+
+fun KtDeclaration.isExpectDeclaration(): Boolean =
+    when {
+        hasExpectModifier() -> true
+        else -> containingClassOrObject?.isExpectDeclaration() == true
+    }
+
+fun KtPropertyAccessor.deleteBody() {
+    val leftParenthesis = leftParenthesis ?: return
+    deleteChildRange(leftParenthesis, lastChild)
+}

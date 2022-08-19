@@ -4,10 +4,7 @@ package com.intellij.ide.plugins.newui;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.MultiPanel;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.util.Disposer;
@@ -154,6 +151,11 @@ public abstract class PluginsTab {
           @Override
           public void update(@NotNull AnActionEvent e) {
             e.getPresentation().setEnabled(!getText().isEmpty());
+          }
+
+          @Override
+          public @NotNull ActionUpdateThread getActionUpdateThread() {
+            return ActionUpdateThread.EDT;
           }
 
           @Override

@@ -75,13 +75,7 @@ class ClassLoaderConfigurator(
     val mainClassLoader = mainDescriptor.pluginClassLoader as PluginClassLoader
     mainToClassPath[pluginId] = MainInfo(mainClassLoader)
 
-    return if (mainDescriptor.packagePrefix == null) {
-      moduleDescriptor.pluginClassLoader = mainClassLoader
-      true
-    }
-    else {
-      configureModule(moduleDescriptor)
-    }
+    return configureModule(moduleDescriptor)
   }
 
   fun configure() {

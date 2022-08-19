@@ -262,9 +262,10 @@ private fun CoroutineScope.showModalIndicatorForProjectLoading(
           awaitCancellation()
         }
         finally {
-          dialog.close(DialogWrapper.OK_EXIT_CODE)
           previousFocusOwner?.requestFocusInWindow()
         }
+      }.invokeOnCompletion {
+        dialog.close(DialogWrapper.OK_EXIT_CODE)
       }
       window.isVisible = true
       // will spin an inner event loop

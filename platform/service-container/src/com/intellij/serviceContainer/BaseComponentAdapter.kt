@@ -9,10 +9,7 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressIndicatorProvider
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.picocontainer.ComponentAdapter
@@ -51,7 +48,7 @@ internal sealed class BaseComponentAdapter(
 
   protected abstract fun isImplementationEqualsToInterface(): Boolean
 
-  final override fun getComponentImplementation() = getImplementationClass()
+  final override fun getComponentImplementation(): Class<*> = getImplementationClass()
 
   @Synchronized
   fun getImplementationClass(): Class<*> {
@@ -68,7 +65,7 @@ internal sealed class BaseComponentAdapter(
     return result
   }
 
-  fun getInitializedInstance() = if (deferred.isCompleted) deferred.getCompleted() else null
+  fun getInitializedInstance(): Any? = if (deferred.isCompleted) deferred.getCompleted() else null
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Do not use")
@@ -94,7 +91,7 @@ internal sealed class BaseComponentAdapter(
     val beforeLockTime = if (activityCategory == null) -1 else StartUpMeasurer.getCurrentTime()
 
     if (IS_DEFERRED_PREPARED.compareAndSet(this, false, true)) {
-      return createInstance(keyClass, componentManager, activityCategory, indicator)
+      return createInstance(keyClass, componentManager, activityCategory)
     }
 
     // without this check, will be a deadlock if during createInstance we call createInstance again (cyclic initialization)
@@ -119,18 +116,14 @@ internal sealed class BaseComponentAdapter(
   @Synchronized
   private fun <T : Any> createInstance(keyClass: Class<T>?,
                                        componentManager: ComponentManagerImpl,
-                                       activityCategory: ActivityCategory?,
-                                       indicator: ProgressIndicator?): T {
+                                       activityCategory: ActivityCategory?): T {
     check(!deferred.isCompleted)
-    check(INITIALIZING.compareAndSet(this, false, true)) { PluginException("Cyclic service initialization: ${toString()}", pluginId) }
-
-    if (indicator == null || ProgressManager.getInstance().isInNonCancelableSection) {
-      return doCreateInstance(keyClass, componentManager, activityCategory)
+    check(INITIALIZING.compareAndSet(this, false, true)) {
+      PluginException("Cyclic service initialization: ${toString()}", pluginId)
     }
-    else {
-      return ProgressManager.getInstance().computeInNonCancelableSection<T, RuntimeException> {
-        doCreateInstance(keyClass, componentManager, activityCategory)
-      }
+
+    return Cancellation.computeInNonCancelableSection<T, RuntimeException> {
+      doCreateInstance(keyClass, componentManager, activityCategory)
     }
   }
 
@@ -162,12 +155,6 @@ internal sealed class BaseComponentAdapter(
       deferred.complete(instance)
       return instance
     }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
-    catch (e: CancellationException) {
-      throw e
-    }
     catch (e: Throwable) {
       deferred.completeExceptionally(e)
       throw e
@@ -188,7 +175,6 @@ internal sealed class BaseComponentAdapter(
         keyClass = keyClass,
         componentManager = componentManager,
         activityCategory = if (StartUpMeasurer.isEnabled()) getActivityCategory(componentManager) else null,
-        indicator = null,
       )
       deferred as Deferred<T>
     }

@@ -27,14 +27,13 @@ internal class PersistentFSLockFreeRecordsStorage @Throws(IOException::class) co
   private val recordCount: AtomicInteger
 
   init {
-    file.pagedFileStorage.isFillBuffersWithZeros = true
     _globalModCount = AtomicInteger(readGlobalModCount())
     recordCount = AtomicInteger((length() / RECORD_SIZE).toInt())
 
     val corruptedRecordIds = checkCorruptedRecords()
     if (corruptedRecordIds.isNotEmpty()) {
-      thisLogger().error("Storage corrupted, corrupted ids: $corruptedRecordIds")
-      throw IOException("Storage corrupted") // todo replace with granular rebuild
+      thisLogger().error("Storage $file corrupted, corrupted ids: ${corruptedRecordIds.contentToString()}")
+      throw IOException("Storage $file corrupted") // todo replace with granular rebuild
     }
   }
 
@@ -204,23 +203,21 @@ internal class PersistentFSLockFreeRecordsStorage @Throws(IOException::class) co
     file.force()
     // skip header
     file.readChannel { ch: ReadableByteChannel ->
-      val buffer = ByteBuffer.allocateDirect(RECORD_SIZE * 1024)
+      val buffer = ByteBuffer.allocateDirect(RECORD_SIZE)
       try {
-        var id = 1
-        var limit: Int
-        var offset: Int
-        while (ch.read(buffer).also { limit = it } >= RECORD_SIZE) {
-          offset = if (id == 1) RECORD_SIZE else 0 // skip header
-          while (offset < limit) {
+        var id = 0
+        while (ch.read(buffer) >= RECORD_SIZE) {
+          if (id != 0) {
+            buffer.position(0)
+            val record = LockFreeRecord(buffer)
 
-            val recordBuffer = buffer.duplicate().order(buffer.order()).limit(offset + RECORD_SIZE).position(offset).mark().slice()
-            val record = LockFreeRecord(recordBuffer)
-
-            operator.process(id, record.nameId(), record.flags(), record.parent(), record.isSaved())
-            id++
-            offset += RECORD_SIZE
+            operator.process(id, record.nameId(), record.flags(), record.parent(), !record.isSaved())
           }
-          buffer.position(0)
+          else {
+            // metadata record
+          }
+          id++
+          buffer.rewind()
         }
       }
       catch (ignore: IOException) {
@@ -229,7 +226,7 @@ internal class PersistentFSLockFreeRecordsStorage @Throws(IOException::class) co
     }
   }
 
-  fun checkCorruptedRecords(): IntArray {
+  private fun checkCorruptedRecords(): IntArray {
     val corruptedIds = IntArrayList()
     processAllRecords { fileId, _, _, _, corrupted ->
       if (corrupted) {
@@ -411,6 +408,7 @@ internal class PersistentFSLockFreeRecordsStorage @Throws(IOException::class) co
     }
 
     private inline fun <V> read(eval: ByteBuffer.() -> V): V {
+      var attempt = 0
       while (true) {
         val modCountPre = modCountPre()
 

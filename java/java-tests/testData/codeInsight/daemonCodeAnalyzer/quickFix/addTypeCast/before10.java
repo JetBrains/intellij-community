@@ -1,4 +1,4 @@
-// "Cast to 'A.Iterator<java.lang.String>'" "true-preview"
+// "Cast expression to 'A.Iterator<java.lang.String>'" "true-preview"
 class A {
     interface Iterator<T> {        
     }

@@ -10,7 +10,6 @@ import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
 import com.intellij.notification.*
-import com.intellij.notification.impl.NotificationsConfigurationImpl
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -661,8 +660,9 @@ object UpdateChecker {
   }
 
   private fun notificationsEnabled(): Boolean =
-    NotificationsConfigurationImpl.getInstanceImpl().SHOW_BALLOONS &&
-    NotificationsConfigurationImpl.getSettings(getNotificationGroup().displayId).displayType != NotificationDisplayType.NONE
+    NotificationsConfiguration.getNotificationsConfiguration().let {
+      it.areNotificationsEnabled() && it.getDisplayType(getNotificationGroup().displayId) != NotificationDisplayType.NONE
+    }
 
   private fun showNotification(project: Project?,
                                kind: NotificationKind,

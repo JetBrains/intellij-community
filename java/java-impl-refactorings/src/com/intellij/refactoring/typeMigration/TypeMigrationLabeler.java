@@ -92,6 +92,8 @@ public class TypeMigrationLabeler {
     myNewExpressionTypeChange = new LinkedHashMap<>();
     myClassTypeArgumentsChange = new LinkedHashMap<>();
     myProject = project;
+    myMigrationRoots = new LinkedList<>();
+    myTypeEvaluator = new TypeEvaluator(myMigrationRoots, this, myProject);
   }
 
   public boolean hasFailedConversions() {

@@ -1,4 +1,4 @@
-// "Cast to 'java.util.List<java.lang.String>'" "false"
+// "Cast expression to 'java.util.List<java.lang.String>'" "false"
 import java.util.*;
 
 class a {

@@ -26,6 +26,7 @@ import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.InstanceOfUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1593,7 +1594,9 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final PsiInstanceOfExpression other = getExpression(PsiInstanceOfExpression.class, expression);
     if (other == null) return;
     if (!myMatchingVisitor.setResult(myMatchingVisitor.match(expression.getOperand(), other.getOperand()))) return;
-    if (!myMatchingVisitor.setResult(myMatchingVisitor.match(expression.getCheckType(), other.getCheckType()))) return;
+    PsiTypeElement expressionType = InstanceOfUtils.findCheckTypeElement(expression);
+    PsiTypeElement otherType = InstanceOfUtils.findCheckTypeElement(other);
+    if (!myMatchingVisitor.setResult(myMatchingVisitor.match(expressionType, otherType))) return;
     final PsiPattern pattern = expression.getPattern();
     PsiPattern otherPattern = other.getPattern();
     if (pattern instanceof PsiTypeTestPattern) {
@@ -1601,7 +1604,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       otherPattern = skipParenthesesDown(otherPattern);
       if (otherPattern instanceof PsiTypeTestPattern) {
         final PsiTypeTestPattern otherVariable = (PsiTypeTestPattern)otherPattern;
-        myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(typeTestPattern.getPatternVariable(), otherVariable.getPatternVariable()));
+        myMatchingVisitor.setResult(
+          myMatchingVisitor.matchOptionally(typeTestPattern.getPatternVariable(), otherVariable.getPatternVariable()));
       }
       else {
         myMatchingVisitor.setResult(myMatchingVisitor.allowsAbsenceOfMatch(typeTestPattern.getPatternVariable()));
@@ -1664,7 +1668,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       if (myMatchingVisitor.getResult()) {
         final PsiArrayInitializerExpression initializer = expression.getArrayInitializer();
         if (initializer != null) {
-          myMatchingVisitor.matchSons(initializer, other);
+          myMatchingVisitor.setResult(myMatchingVisitor.matchSons(initializer, other));
         }
         else {
           myMatchingVisitor.setResult(((PsiArrayInitializerExpression)other).getInitializers().length == 0);
@@ -1700,16 +1704,27 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       }
     }
 
+    final PsiAnonymousClass anonymousClass = expression.getAnonymousClass();
     if (classReference == otherClassReference) {
-      // probably anonymous class or array of primitive type
-      myMatchingVisitor.setResult(myMatchingVisitor.matchSons(expression, new2));
+      //myMatchingVisitor.setResult(myMatchingVisitor.matchSons(expression, new2));
+      if (anonymousClass != null) { // anonymous class
+        myMatchingVisitor.setResult(matchTypeParameters(expression, new2) &&
+                                    myMatchingVisitor.matchSons(expression.getArgumentList(), new2.getArgumentList()) &&
+                                    myMatchingVisitor.match(anonymousClass, new2.getAnonymousClass()));
+      }
+      else { // array of primitive type
+        final PsiType type1 = expression.getType();
+        final PsiType type2 = new2.getType();
+        if (myMatchingVisitor.setResult(type1 != null && type2 != null && type1.getDeepComponentType() == type2.getDeepComponentType())) {
+          matchArrayOrArguments(expression, new2);
+        }
+      }
     }
-    else if (expression.getAnonymousClass() == null &&
-             classReference != null &&
-             new2.getAnonymousClass() != null) {
+    else if (anonymousClass == null && classReference != null && new2.getAnonymousClass() != null) {
       // allow matching anonymous class without pattern
       myMatchingVisitor.setResult(myMatchingVisitor.match(classReference, new2.getAnonymousClass().getBaseClassReference()) &&
-                                  myMatchingVisitor.matchSons(expression.getArgumentList(), new2.getArgumentList()));
+                                  myMatchingVisitor.matchSons(expression.getArgumentList(), new2.getArgumentList()) &&
+                                  matchTypeParameters(expression, new2));
     }
     else {
       myMatchingVisitor.setResult(false);

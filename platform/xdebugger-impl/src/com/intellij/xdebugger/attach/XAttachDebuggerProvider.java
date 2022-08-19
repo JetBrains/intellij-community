@@ -43,7 +43,7 @@ public interface XAttachDebuggerProvider {
   boolean isAttachHostApplicable(@NotNull XAttachHost attachHost);
 
   /**
-   * Attach to Process action invokes {@link #getAvailableDebuggers} method for every running process on the given host.
+   * Attach to Process action invokes {@code getAvailableDebuggers()} method for every running process on the given host.
    * The host is either local or selected by user among available ones (see {@link XAttachHostProvider})
    * <p>
    * If there are several debuggers that can attach to a process, the user will have a choice between them.

@@ -15,3 +15,4 @@ public class MyJavaClass {
     public MyJavaClass() {}
     public MyJavaClass(Runnable runnable) {}
 }
+// IGNORE_K2_SMART_STEP_INTO

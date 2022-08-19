@@ -11,10 +11,11 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 
-class JavaDependencyCollector : DependencyCollector {
-  override fun collectDependencies(project: Project): List<String> {
-    val result = mutableSetOf<String>()
-    runReadAction {
+internal class JavaDependencyCollector : DependencyCollector {
+
+  override fun collectDependencies(project: Project): Set<String> {
+    return runReadAction {
+      val result = mutableSetOf<String>()
       val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
       for (library in projectLibraryTable.libraries) {
         val properties = (library as? LibraryEx)?.properties as? RepositoryLibraryProperties ?: continue
@@ -29,7 +30,8 @@ class JavaDependencyCollector : DependencyCollector {
           }
         }
       }
+
+      result
     }
-    return result.toList()
   }
 }

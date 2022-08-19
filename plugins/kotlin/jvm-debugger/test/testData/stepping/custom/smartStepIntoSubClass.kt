@@ -18,3 +18,4 @@ class Impl: Base() {
         val b = 1
     }
 }
+// IGNORE_K2

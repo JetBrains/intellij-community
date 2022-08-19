@@ -133,6 +133,11 @@ public class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
         runTest("testData/quickDoc/KotlinClassUsedFromJava.java");
     }
 
+    @TestMetadata("Lateinit.kt")
+    public void testLateinit() throws Exception {
+        runTest("testData/quickDoc/Lateinit.kt");
+    }
+
     @TestMetadata("LateinitName.kt")
     public void testLateinitName() throws Exception {
         runTest("testData/quickDoc/LateinitName.kt");
@@ -291,6 +296,11 @@ public class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
     @TestMetadata("Samples.kt")
     public void testSamples() throws Exception {
         runTest("testData/quickDoc/Samples.kt");
+    }
+
+    @TestMetadata("Tailrec.kt")
+    public void testTailrec() throws Exception {
+        runTest("testData/quickDoc/Tailrec.kt");
     }
 
     @TestMetadata("TailrecName.kt")

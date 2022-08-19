@@ -59,7 +59,7 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
   private final boolean myAllowStaticWithInstanceQualifier;
   private final NotNullLazyValue<Collection<PsiType>> myExpectedGroundTypes;
 
-  public JavaCompletionProcessor(@NotNull PsiElement element, ElementFilter filter, Options options, @NotNull Condition<? super String> nameCondition) {
+  public JavaCompletionProcessor(@NotNull PsiElement element, @NotNull ElementFilter filter, @NotNull Options options, @NotNull Condition<? super String> nameCondition) {
     myOptions = options;
     myElement = element;
     myMatcher = nameCondition;
@@ -114,7 +114,7 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
   }
 
   @ApiStatus.Internal
-  public static boolean seemsInternal(PsiClass clazz) {
+  public static boolean seemsInternal(@NotNull PsiClass clazz) {
     String name = clazz.getName();
     return name != null && name.startsWith("$");
   }
@@ -267,7 +267,7 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
     return elementParent instanceof PsiQualifiedReference && ((PsiQualifiedReference)elementParent).getQualifier() != null;
   }
 
-  private StaticProblem getStaticProblem(PsiElement element) {
+  private StaticProblem getStaticProblem(@NotNull PsiElement element) {
     if (myOptions.showInstanceInStaticContext && !isQualifiedContext()) {
       return StaticProblem.none;
     }
@@ -298,12 +298,10 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
         myElement.getParent() instanceof PsiMethodReferenceExpression) {
       name = PsiKeyword.NEW;
     }
-    if (name != null && StringUtil.isNotEmpty(name) && myMatcher.value(name)) {
-      if (myFilter.isClassAcceptable(element.getClass()) && myFilter.isAcceptable(new CandidateInfo(element, state.get(PsiSubstitutor.KEY)), myElement)) {
-        return true;
-      }
-    }
-    return false;
+    return StringUtil.isNotEmpty(name) &&
+           myMatcher.value(name) &&
+           myFilter.isClassAcceptable(element.getClass()) &&
+           myFilter.isAcceptable(new CandidateInfo(element, state.get(PsiSubstitutor.KEY)), myElement);
   }
 
   public void setQualifierType(@Nullable PsiType qualifierType) {

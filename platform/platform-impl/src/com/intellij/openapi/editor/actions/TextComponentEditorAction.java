@@ -10,6 +10,8 @@ import com.intellij.openapi.editor.textarea.TextComponentEditorImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.SpeedSearchBase;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
+import com.intellij.util.SlowOperations;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,21 +37,24 @@ public abstract class TextComponentEditorAction extends EditorAction {
   }
 
   @Override
-  @Nullable
-  protected Editor getEditor(@NotNull final DataContext dataContext) {
+  protected @Nullable Editor getEditor(@NotNull DataContext dataContext) {
     return getEditorFromContext(dataContext, allowSpeedSearch);
   }
 
-  @Nullable
-  public static Editor getEditorFromContext(@NotNull DataContext dataContext) {
+  public static @Nullable Editor getEditorFromContext(@NotNull DataContext dataContext) {
     return getEditorFromContext(dataContext, true);
   }
 
   private static @Nullable Editor getEditorFromContext(@NotNull DataContext dataContext, boolean allowSpeedSearch) {
-    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    // try to get host editor in case of injections during action update in EDT
+    Editor editor = EDT.isCurrentThreadEdt() && !SlowOperations.isInsideActivity(SlowOperations.ACTION_PERFORM) ?
+                    CommonDataKeys.HOST_EDITOR.getData(dataContext) : null;
+    if (editor == null) {
+      editor = CommonDataKeys.EDITOR.getData(dataContext);
+    }
     if (editor != null) return editor;
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    final Object data = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    Object data = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     if (data instanceof EditorComponentImpl) {
       // can happen if editor is already disposed, or if it's in renderer mode
       return null;
@@ -58,7 +63,7 @@ public abstract class TextComponentEditorAction extends EditorAction {
       return new TextComponentEditorImpl(project, (JTextComponent)data);
     }
     if (allowSpeedSearch && data instanceof JComponent) {
-      final JTextField field = findActiveSpeedSearchTextField((JComponent)data);
+      JTextField field = findActiveSpeedSearchTextField((JComponent)data);
       if (field != null) {
         return new TextComponentEditorImpl(project, field);
       }
@@ -67,12 +72,12 @@ public abstract class TextComponentEditorAction extends EditorAction {
   }
 
   private static JTextField findActiveSpeedSearchTextField(JComponent c) {
-    final SpeedSearchSupply supply = SpeedSearchSupply.getSupply(c);
+    SpeedSearchSupply supply = SpeedSearchSupply.getSupply(c);
     if (supply instanceof SpeedSearchBase) {
       return ((SpeedSearchBase<?>)supply).getSearchField();
     }
     if (c instanceof DataProvider) {
-      final Object component = PlatformDataKeys.SPEED_SEARCH_COMPONENT.getData((DataProvider)c);
+      Object component = PlatformDataKeys.SPEED_SEARCH_COMPONENT.getData((DataProvider)c);
       if (component instanceof JTextField) {
         return (JTextField)component;
       }

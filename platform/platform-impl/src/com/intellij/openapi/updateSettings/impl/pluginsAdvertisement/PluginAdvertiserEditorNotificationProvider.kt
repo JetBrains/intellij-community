@@ -94,7 +94,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider,
 
     override fun apply(fileEditor: FileEditor): EditorNotificationPanel? {
       lateinit var label: JLabel
-      val panel = object : EditorNotificationPanel(fileEditor) {
+      val panel = object : EditorNotificationPanel(fileEditor, Status.Info) {
         init {
           label = myLabel
         }

@@ -224,7 +224,7 @@ public class TextMateCustomLiveTemplate extends CustomLiveTemplateBase {
     }
 
     @Override
-    public void renderElement(LookupElementPresentation presentation) {
+    public void renderElement(@NotNull LookupElementPresentation presentation) {
       super.renderElement(presentation);
       presentation.setTypeText(mySnippet.getName());
       presentation.setTypeGrayed(true);

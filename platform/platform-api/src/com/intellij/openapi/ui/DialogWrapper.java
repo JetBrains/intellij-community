@@ -444,6 +444,7 @@ public abstract class DialogWrapper {
    * @throws IllegalStateException if the dialog is invoked not on the event dispatch thread
    */
   public final void close(int exitCode, boolean isOk) {
+    logCloseDialogEvent(exitCode);
     ensureEventDispatchThread();
     if (myClosed) return;
     myClosed = true;
@@ -465,7 +466,6 @@ public abstract class DialogWrapper {
   }
 
   public final void close(int exitCode) {
-    logCloseDialogEvent(exitCode);
     close(exitCode, exitCode != CANCEL_EXIT_CODE);
   }
 
@@ -1370,6 +1370,11 @@ public abstract class DialogWrapper {
       public void update(@NotNull AnActionEvent e) {
         Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         e.getPresentation().setEnabled(owner instanceof JButton && owner.isEnabled());
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER"), root, disposable);
   }
