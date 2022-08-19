@@ -10,13 +10,8 @@ import com.intellij.openapi.editor.impl.ImaginaryEditor
 import com.intellij.psi.PsiFile
 import kotlin.math.min
 
-internal class IntentionPreviewEditor(psiFileCopy: PsiFile, caretOffset: Int, private val settings: EditorSettings)
+internal class IntentionPreviewEditor(psiFileCopy: PsiFile, private val settings: EditorSettings)
   : ImaginaryEditor(psiFileCopy.project, psiFileCopy.viewProvider.document!!) {
-
-  init {
-    caretModel.moveToOffset(caretOffset)
-  }
-
   override fun notImplemented(): RuntimeException = IntentionPreviewUnsupportedOperationException()
 
   override fun isViewer(): Boolean = true
