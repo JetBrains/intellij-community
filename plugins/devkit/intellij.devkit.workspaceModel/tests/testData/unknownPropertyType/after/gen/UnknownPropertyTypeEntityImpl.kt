@@ -62,11 +62,11 @@ open class UnknownPropertyTypeEntityImpl : UnknownPropertyTypeEntity, WorkspaceE
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isDateInitialized()) {
         error("Field UnknownPropertyTypeEntity#date should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field UnknownPropertyTypeEntity#entitySource should be initialized")
       }
     }
 
@@ -77,21 +77,12 @@ open class UnknownPropertyTypeEntityImpl : UnknownPropertyTypeEntity, WorkspaceE
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as UnknownPropertyTypeEntity
-      this.date = dataSource.date
       this.entitySource = dataSource.entitySource
+      this.date = dataSource.date
       if (parents != null) {
       }
     }
 
-
-    override var date: Date
-      get() = getEntityData().date
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().date = value
-        changedProperty.add("date")
-
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -99,6 +90,15 @@ open class UnknownPropertyTypeEntityImpl : UnknownPropertyTypeEntity, WorkspaceE
         checkModificationAllowed()
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
+
+      }
+
+    override var date: Date
+      get() = getEntityData().date
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().date = value
+        changedProperty.add("date")
 
       }
 
@@ -159,8 +159,8 @@ class UnknownPropertyTypeEntityData : WorkspaceEntityData<UnknownPropertyTypeEnt
 
     other as UnknownPropertyTypeEntityData
 
-    if (this.date != other.date) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.date != other.date) return false
     return true
   }
 

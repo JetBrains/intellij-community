@@ -19,8 +19,8 @@ interface EntityWithUrls : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : EntityWithUrls, ModifiableWorkspaceEntity<EntityWithUrls>, ObjBuilder<EntityWithUrls> {
-    override var simpleUrl: VirtualFileUrl
     override var entitySource: EntitySource
+    override var simpleUrl: VirtualFileUrl
     override var nullableUrl: VirtualFileUrl?
     override var listOfUrls: MutableList<VirtualFileUrl>
     override var dataClassWithUrl: DataClassWithUrl

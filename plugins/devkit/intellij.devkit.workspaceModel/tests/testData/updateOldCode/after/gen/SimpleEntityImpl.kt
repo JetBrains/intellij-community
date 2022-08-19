@@ -66,7 +66,7 @@ open class SimpleEntityImpl : SimpleEntity, WorkspaceEntityBase() {
     fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field SimpleEntity#entitySource should be initialized")
+        error("Field WorkspaceEntity#entitySource should be initialized")
       }
       if (!getEntityData().isNameInitialized()) {
         error("Field SimpleEntity#name should be initialized")
@@ -80,22 +80,14 @@ open class SimpleEntityImpl : SimpleEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SimpleEntity
-      this.version = dataSource.version
       this.entitySource = dataSource.entitySource
+      this.version = dataSource.version
       this.name = dataSource.name
       this.isSimple = dataSource.isSimple
       if (parents != null) {
       }
     }
 
-
-    override var version: Int
-      get() = getEntityData().version
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().version = value
-        changedProperty.add("version")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -104,6 +96,14 @@ open class SimpleEntityImpl : SimpleEntity, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var version: Int
+      get() = getEntityData().version
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().version = value
+        changedProperty.add("version")
       }
 
     override var name: String
@@ -185,8 +185,8 @@ class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
 
     other as SimpleEntityData
 
-    if (this.version != other.version) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.version != other.version) return false
     if (this.name != other.name) return false
     if (this.isSimple != other.isSimple) return false
     return true

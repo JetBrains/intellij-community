@@ -82,11 +82,11 @@ open class EntityWithUrlsImpl : EntityWithUrls, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isSimpleUrlInitialized()) {
         error("Field EntityWithUrls#simpleUrl should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field EntityWithUrls#entitySource should be initialized")
       }
       if (!getEntityData().isListOfUrlsInitialized()) {
         error("Field EntityWithUrls#listOfUrls should be initialized")
@@ -103,8 +103,8 @@ open class EntityWithUrlsImpl : EntityWithUrls, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as EntityWithUrls
-      this.simpleUrl = dataSource.simpleUrl
       this.entitySource = dataSource.entitySource
+      this.simpleUrl = dataSource.simpleUrl
       this.nullableUrl = dataSource.nullableUrl
       this.listOfUrls = dataSource.listOfUrls.toMutableList()
       this.dataClassWithUrl = dataSource.dataClassWithUrl
@@ -112,6 +112,15 @@ open class EntityWithUrlsImpl : EntityWithUrls, WorkspaceEntityBase() {
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var simpleUrl: VirtualFileUrl
       get() = getEntityData().simpleUrl
@@ -121,15 +130,6 @@ open class EntityWithUrlsImpl : EntityWithUrls, WorkspaceEntityBase() {
         changedProperty.add("simpleUrl")
         val _diff = diff
         if (_diff != null) index(this, "simpleUrl", value)
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override var nullableUrl: VirtualFileUrl?
@@ -242,8 +242,8 @@ class EntityWithUrlsData : WorkspaceEntityData<EntityWithUrls>() {
 
     other as EntityWithUrlsData
 
-    if (this.simpleUrl != other.simpleUrl) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.simpleUrl != other.simpleUrl) return false
     if (this.nullableUrl != other.nullableUrl) return false
     if (this.listOfUrls != other.listOfUrls) return false
     if (this.dataClassWithUrl != other.dataClassWithUrl) return false

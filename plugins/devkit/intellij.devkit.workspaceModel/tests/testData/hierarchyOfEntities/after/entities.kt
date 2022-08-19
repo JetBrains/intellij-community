@@ -17,8 +17,8 @@ interface GrandParentEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder<T : GrandParentEntity> : GrandParentEntity, ModifiableWorkspaceEntity<T>, ObjBuilder<T> {
-    override var data1: String
     override var entitySource: EntitySource
+    override var data1: String
   }
 
   companion object : Type<GrandParentEntity, Builder<GrandParentEntity>>() {
@@ -41,9 +41,9 @@ interface ParentEntity : GrandParentEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ParentEntity, GrandParentEntity.Builder<ParentEntity>, ModifiableWorkspaceEntity<ParentEntity>, ObjBuilder<ParentEntity> {
+    override var entitySource: EntitySource
     override var data1: String
     override var data2: String
-    override var entitySource: EntitySource
   }
 
   companion object : Type<ParentEntity, Builder>(GrandParentEntity) {
@@ -70,10 +70,10 @@ interface ChildEntity: ParentEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ChildEntity, ParentEntity.Builder<ChildEntity>, ModifiableWorkspaceEntity<ChildEntity>, ObjBuilder<ChildEntity> {
+    override var entitySource: EntitySource
     override var data1: String
     override var data2: String
     override var data3: String
-    override var entitySource: EntitySource
   }
 
   companion object : Type<ChildEntity, Builder>(ParentEntity) {
