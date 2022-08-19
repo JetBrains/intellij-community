@@ -1,21 +1,34 @@
 //file:noinspection GrPackage
-
+//@formatter:off
 String[] ijTestIncludes = ${TEST_NAME_INCLUDES}
+//@formatter:on
+
+logger.lifecycle("[testFilterInit.gradle] ijTestIncludes = " + ijTestIncludes.join(", "))
 
 Class abstractTestTaskClass = null
 try {
   abstractTestTaskClass = Class.forName("org.gradle.api.tasks.testing.AbstractTestTask")
 } catch (ClassNotFoundException ex) {
- // ignore, class not available
+  // ignore, class not available
 }
 
 gradle.taskGraph.whenReady { taskGraph ->
   taskGraph.allTasks.each { Task task ->
     if (task instanceof Test || (abstractTestTaskClass != null && abstractTestTaskClass.isAssignableFrom(task.class))) {
+
+      logger.lifecycle("[testFilterInit.gradle] configuring " + task.name + " to have input: " + ijTestIncludes.join(", "))
+      task.inputs.property("ijTestIncludes", ijTestIncludes)
+
       try {
-        task.outputs.upToDateWhen { false }
+        if (task.extensions.extraProperties.has("disableIntellijForceTests")){
+          logger.warn("[testFilterInit.gradle] NOT forcing tests to run")
+        } else (!task.hasProperty("disableIntellijForceTests")) {
+          logger.warn("[testFilterInit.gradle] forcing tests to run")
+
+          task.outputs.upToDateWhen { false }
+        }
         String[] strings = ['*']
-        if(ijTestIncludes.size() > 0 && ijTestIncludes != strings) {
+        if (ijTestIncludes.size() > 0 && ijTestIncludes != strings) {
           def filter = task.getFilter()
           filter.setIncludePatterns(new String[0])
           ijTestIncludes.each() {

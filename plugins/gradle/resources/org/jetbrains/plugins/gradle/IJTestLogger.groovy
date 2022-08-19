@@ -2,6 +2,8 @@
 
 
 import groovy.xml.MarkupBuilder
+import org.gradle.api.Task
+import org.gradle.api.logging.Logging
 import org.gradle.api.tasks.testing.TestDescriptor
 import org.gradle.api.tasks.testing.TestListener
 import org.gradle.api.tasks.testing.TestOutputEvent
@@ -9,27 +11,41 @@ import org.gradle.api.tasks.testing.TestOutputListener
 import org.gradle.api.tasks.testing.TestResult
 
 class IJTestEventLogger {
-  static def configureTestEventLogging(def task) {
+
+  static def logger = Logging.getLogger("IJTestEventLogger")
+
+  static def configureTestEventLogging(Task task) {
+    def testReportDir = task.temporaryDir.toPath().resolve("ijTestEvents/").toFile()
+
+    task.outputs.dir(testReportDir)
+      .withPropertyName("ijTestEvents")
+      .optional(true)
+
+    task.doFirst {
+      testReportDir.deleteDir()
+      testReportDir.mkdirs()
+    }
+
     task.addTestListener(
       new TestListener() {
         @Override
         void beforeSuite(TestDescriptor descriptor) {
-          logTestEvent("beforeSuite", descriptor, null, null)
+          logTestEvent("beforeSuite", descriptor, null, null, testReportDir)
         }
 
         @Override
         void afterSuite(TestDescriptor descriptor, TestResult result) {
-          logTestEvent("afterSuite", descriptor, null, result)
+          logTestEvent("afterSuite", descriptor, null, result, testReportDir)
         }
 
         @Override
         void beforeTest(TestDescriptor descriptor) {
-          logTestEvent("beforeTest", descriptor, null, null)
+          logTestEvent("beforeTest", descriptor, null, null, testReportDir)
         }
 
         @Override
         void afterTest(TestDescriptor descriptor, TestResult result) {
-          logTestEvent("afterTest", descriptor, null, result)
+          logTestEvent("afterTest", descriptor, null, result, testReportDir)
         }
       }
     )
@@ -37,12 +53,12 @@ class IJTestEventLogger {
     task.addTestOutputListener(new TestOutputListener() {
       @Override
       void onOutput(TestDescriptor descriptor, TestOutputEvent event) {
-        logTestEvent("onOutput", descriptor, event, null)
+        logTestEvent("onOutput", descriptor, event, null, testReportDir)
       }
     })
   }
 
-  static def logTestEvent(testEventType, TestDescriptor testDescriptor, testEvent, testResult) {
+  static def logTestEvent(testEventType, TestDescriptor testDescriptor, testEvent, testResult, File testReportDir) {
     def writer = new StringWriter()
     def xml = new MarkupBuilder(writer)
     xml.event(type: testEventType) {
@@ -110,7 +126,9 @@ class IJTestEventLogger {
       }
     }
 
-    writeLog(writer.toString())
+    String log = writeLog(writer.toString())
+    File xmlFile = testReportDir.toPath().resolve(System.currentTimeMillis() + "-" + log.md5() + ".xml").toFile()
+    xmlFile.write(log)
   }
 
   static String escapeCdata(String s) {
@@ -122,8 +140,11 @@ class IJTestEventLogger {
     s.replaceAll("\r\n|\n\r|\n|\r","<ijLogEol/>")
   }
 
-  static def writeLog(s) {
-    println String.format("<ijLog>%s</ijLog>", wrap(s))
+  static String writeLog(s) {
+    logger.lifecycle("[IJTestEventLogger] " + s)
+    def msg = String.format("<ijLog>%s</ijLog>", wrap(s))
+    println msg
+    return msg
   }
 
   static def logTestReportLocation(def report) {

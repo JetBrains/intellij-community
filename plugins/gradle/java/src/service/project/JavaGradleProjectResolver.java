@@ -177,7 +177,7 @@ public class JavaGradleProjectResolver extends AbstractProjectResolverExtension 
     boolean testsWillBeExecuted = Boolean.parseBoolean(parameters.get(TEST_EXECUTION_EXPECTED_KEY));
     boolean testLauncherWillBeUsed = Boolean.parseBoolean(parameters.get(TEST_LAUNCHER_WILL_BE_USED_KEY));
     if (testsWillBeExecuted && !testLauncherWillBeUsed) {
-      String name = "/org/jetbrains/plugins/gradle/java/addTestListener.groovy";
+      String name = "/org/jetbrains/plugins/gradle/java/addTestListener.init.gradle";
       try (Reader reader = new InputStreamReader(getClass().getResourceAsStream(name), StandardCharsets.UTF_8)) {
         initScriptConsumer.consume(StreamUtil.readText(reader));
       }
