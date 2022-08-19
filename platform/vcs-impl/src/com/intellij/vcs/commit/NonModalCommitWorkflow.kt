@@ -8,8 +8,6 @@ import com.intellij.openapi.project.DumbService.isDumb
 import com.intellij.openapi.project.DumbService.isDumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.changes.CommitExecutor
-import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
 import com.intellij.openapi.vcs.checkin.CommitCheck
 import com.intellij.openapi.vcs.checkin.CommitProblem
@@ -19,36 +17,21 @@ import kotlin.coroutines.resume
 private val LOG = logger<NonModalCommitWorkflow>()
 
 abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow(project) {
-  override fun runBeforeCommitHandler(handler: CheckinHandler, executor: CommitExecutor?): CheckinHandler.ReturnResult {
-    if (!handler.acceptExecutor(executor)) return CheckinHandler.ReturnResult.COMMIT
-    LOG.debug("CheckinHandler.beforeCheckin: $handler")
-
-    if (handler is CommitCheck<*>) {
-      if (!handler.isEnabled())
-        return CheckinHandler.ReturnResult.COMMIT.also { LOG.debug("Commit check disabled $handler") }
-
-      if (isDumb(project) && !isDumbAware(handler))
-        return CheckinHandler.ReturnResult.COMMIT.also { LOG.debug("Skipped commit check in dumb mode $handler") }
-    }
-
-    return handler.beforeCheckin(executor, commitContext.additionalDataConsumer)
-  }
-
-  suspend fun executeDefault(checker: suspend () -> CommitChecksResult) {
+  suspend fun executeBackgroundSession(sessionInfo: CommitSessionInfo, checker: suspend () -> CommitChecksResult) {
     var result: CommitChecksResult = CommitChecksResult.ExecutionError
     try {
-      result = checkCommit(checker)
-      processExecuteDefaultChecksResult(result)
+      result = checkCommit(sessionInfo, checker)
+      processExecuteChecksResult(sessionInfo, result)
     }
     finally {
       if (!result.shouldCommit) endExecution()
     }
   }
 
-  private suspend fun checkCommit(checker: suspend () -> CommitChecksResult): CommitChecksResult {
+  private suspend fun checkCommit(sessionInfo: CommitSessionInfo, checker: suspend () -> CommitChecksResult): CommitChecksResult {
     var result: CommitChecksResult = CommitChecksResult.ExecutionError
 
-    fireBeforeCommitChecksStarted()
+    fireBeforeCommitChecksStarted(sessionInfo)
     try {
       result = checker()
     }
@@ -56,7 +39,7 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
       result = CommitChecksResult.Cancelled
     }
     finally {
-      fireBeforeCommitChecksEnded(true, result)
+      fireBeforeCommitChecksEnded(sessionInfo, result)
     }
 
     return result

@@ -35,7 +35,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
-import org.jetbrains.kotlin.idea.core.completion.DeclarationLookupObject
+import org.jetbrains.kotlin.idea.core.completion.DescriptorBasedDeclarationLookupObject
 import org.jetbrains.kotlin.idea.decompiler.navigation.SourceNavigationHelper
 import org.jetbrains.kotlin.idea.kdoc.*
 import org.jetbrains.kotlin.idea.kdoc.KDocRenderer.appendCodeSnippetHighlightedByLexer
@@ -201,7 +201,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
     }
 
     override fun getDocumentationElementForLookupItem(psiManager: PsiManager, `object`: Any?, element: PsiElement?): PsiElement? {
-        if (`object` is DeclarationLookupObject) {
+        if (`object` is DescriptorBasedDeclarationLookupObject) {
             `object`.psiElement?.let { return it }
             `object`.descriptor?.let { descriptor ->
                 return DescriptorToSourceUtilsIde.getAnyDeclaration(psiManager.project, descriptor)

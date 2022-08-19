@@ -23,24 +23,86 @@ import com.jetbrains.python.psi.types.PyCallableTypeImpl
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 
-const val DATACLASSES_INITVAR_TYPE: String = "dataclasses.InitVar"
-const val DUNDER_POST_INIT: String = "__post_init__"
-const val DUNDER_ATTRS_POST_INIT: String = "__attrs_post_init__"
+object PyDataclassNames {
+  object Dataclasses {
+    const val DATACLASSES_MISSING = "dataclasses.MISSING"
+    const val DATACLASSES_INITVAR = "dataclasses.InitVar"
+    const val DATACLASSES_FIELDS = "dataclasses.fields"
+    const val DATACLASSES_ASDICT = "dataclasses.asdict"
+    const val DATACLASSES_FIELD = "dataclasses.field"
+    const val DATACLASSES_REPLACE = "dataclasses.replace"
+    const val DUNDER_POST_INIT = "__post_init__"
+    val DECORATOR_PARAMETERS = listOf("init", "repr", "eq", "order", "unsafe_hash", "frozen")
+    val HELPER_FUNCTIONS = setOf(DATACLASSES_FIELDS, DATACLASSES_ASDICT, "dataclasses.astuple", DATACLASSES_REPLACE)
+  }
 
-private val STD_PARAMETERS = listOf("init", "repr", "eq", "order", "unsafe_hash", "frozen")
-private val ATTRS_PARAMETERS = listOf("these", "repr_ns", "repr", "cmp", "hash", "init", "slots", "frozen", "weakref_slot", "str",
-                                      "auto_attribs", "kw_only", "cache_hash", "auto_exc", "eq", "order")
+  object Attrs {
+    val ATTRS_NOTHING = setOf("attr.NOTHING", "attrs.NOTHING")
+    val ATTRS_FACTORY = setOf("attr.Factory", "attrs.Factory")
+    val ATTRS_ASSOC = setOf("attr.assoc", "attrs.assoc")
+    val ATTRS_EVOLVE = setOf("attr.evolve", "attrs.evolve")
+    val ATTRS_FROZEN = setOf("attr.frozen", "attrs.frozen")
+    const val DUNDER_POST_INIT = "__attrs_post_init__"
+    val DECORATOR_PARAMETERS = listOf(
+      "these",
+      "repr_ns",
+      "repr",
+      "cmp",
+      "hash",
+      "init",
+      "slots",
+      "frozen",
+      "weakref_slot",
+      "str",
+      "auto_attribs",
+      "kw_only",
+      "cache_hash",
+      "auto_exc",
+      "eq",
+      "order",
+    )
+    val FIELD_FUNCTIONS = setOf(
+      "attr.ib",
+      "attr.attr",
+      "attr.attrib",
+      "attr.field",
+      "attrs.field",
+    )
+    val INSTANCE_HELPER_FUNCTIONS = setOf(
+      "attr.asdict",
+      "attr.astuple",
+      "attr.assoc",
+      "attr.evolve",
+      "attrs.asdict",
+      "attrs.astuple",
+      "attrs.assoc",
+      "attrs.evolve",
+    )
+    val CLASS_HELPERS_FUNCTIONS = setOf(
+      "attr.fields",
+      "attr.fields_dict",
+      "attrs.fields",
+      "attrs.fields_dict",
+    )
+  }
+}
 
 /**
  * It should be used only to map arguments to parameters and
  * determine what settings dataclass has.
  */
 private val DECORATOR_AND_TYPE_AND_PARAMETERS = listOf(
-  Triple(KnownDecorator.DATACLASSES_DATACLASS, PyDataclassParameters.PredefinedType.STD, STD_PARAMETERS),
-  Triple(KnownDecorator.ATTR_S, PyDataclassParameters.PredefinedType.ATTRS, ATTRS_PARAMETERS),
-  Triple(KnownDecorator.ATTR_ATTRS, PyDataclassParameters.PredefinedType.ATTRS, ATTRS_PARAMETERS),
-  Triple(KnownDecorator.ATTR_ATTRIBUTES, PyDataclassParameters.PredefinedType.ATTRS, ATTRS_PARAMETERS),
-  Triple(KnownDecorator.ATTR_DATACLASS, PyDataclassParameters.PredefinedType.ATTRS, ATTRS_PARAMETERS)
+  Triple(KnownDecorator.DATACLASSES_DATACLASS, PyDataclassParameters.PredefinedType.STD, PyDataclassNames.Dataclasses.DECORATOR_PARAMETERS),
+  Triple(KnownDecorator.ATTR_S, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
+  Triple(KnownDecorator.ATTR_ATTRS, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
+  Triple(KnownDecorator.ATTR_ATTRIBUTES, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
+  Triple(KnownDecorator.ATTR_DATACLASS, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
+  Triple(KnownDecorator.ATTR_DEFINE, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
+  Triple(KnownDecorator.ATTR_MUTABLE, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
+  Triple(KnownDecorator.ATTR_FROZEN, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
+  Triple(KnownDecorator.ATTRS_DEFINE, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
+  Triple(KnownDecorator.ATTRS_MUTABLE, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
+  Triple(KnownDecorator.ATTRS_FROZEN, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
 )
 
 
@@ -72,8 +134,8 @@ fun resolvesToOmittedDefault(expression: PyExpression, type: Type): Boolean {
     val qNames = PyResolveUtil.resolveImportedElementQNameLocally(expression)
 
     return when (type.asPredefinedType) {
-      PyDataclassParameters.PredefinedType.STD -> QualifiedName.fromComponents("dataclasses", "MISSING") in qNames
-      PyDataclassParameters.PredefinedType.ATTRS -> QualifiedName.fromComponents("attr", "NOTHING") in qNames
+      PyDataclassParameters.PredefinedType.STD -> qNames.any { it.toString() == PyDataclassNames.Dataclasses.DATACLASSES_MISSING }
+      PyDataclassParameters.PredefinedType.ATTRS -> qNames.any { it.toString() in PyDataclassNames.Attrs.ATTRS_NOTHING }
       else -> false
     }
   }
@@ -223,7 +285,7 @@ private class PyDataclassParametersBuilder(private val type: Type, decorator: Qu
   private var eq = DEFAULT_EQ
   private var order = if (type.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS) DEFAULT_EQ else DEFAULT_ORDER
   private var unsafeHash = DEFAULT_UNSAFE_HASH
-  private var frozen = DEFAULT_FROZEN
+  private var frozen = decorator.toString() in PyDataclassNames.Attrs.ATTRS_FROZEN || DEFAULT_FROZEN
   private var kwOnly = DEFAULT_KW_ONLY
 
   private var initArgument: PyExpression? = null

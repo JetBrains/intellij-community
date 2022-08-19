@@ -62,7 +62,7 @@ class SearchEverywhereFileFeaturesProvider
     val data = arrayListOf<EventPair<*>>(
       IS_BOOKMARK_DATA_KEY.with(isBookmark(item)),
       IS_DIRECTORY_DATA_KEY.with(item.isDirectory),
-      IS_EXACT_MATCH_DATA_KEY.with(elementPriority == GotoFileItemProvider.EXACT_MATCH_DEGREE)
+      IS_EXACT_MATCH_DATA_KEY.with(isExactMatch(item, searchQuery, elementPriority))
     )
 
     data.putIfValueNotNull(IS_TOP_LEVEL_DATA_KEY, isTopLevel(item))
@@ -90,6 +90,42 @@ class SearchEverywhereFileFeaturesProvider
   private fun isBookmark(item: PsiFileSystemItem): Boolean {
     val bookmarkManager = BookmarkManager.getInstance(item.project)
     return ReadAction.compute<Boolean, Nothing> { item.virtualFile?.let { bookmarkManager.findFileBookmark(it) } != null }
+  }
+
+  private fun isExactMatch(item: PsiFileSystemItem, searchQuery: String, elementPriority: Int): Boolean {
+    /*
+    The exact match feature is based on the same logic that is used in GotoFileItemProvider to add the
+    exact match degree on top of the matching score. Note that even though the score gets added on top
+    of the matching degree, the priority can be lower than EXACT_MATCH_DEGREE, but we can still have
+    an exact match. This is because the score also contains a gap penalty, which can lower the final priority.
+
+    There are two cases where an exact match can occur:
+      1. Search query is an absolute path. In that case, there will be just one element in the results
+         which will be the matching file (given, of course, that it exists).
+         In that case, the priority is always exactly equal to EXACT_MATCH_DEGREE.
+
+      2. Search query contains at least the last character of the parent directory, along with the complete
+         filename and extension.
+         For example, if a file "foo" with extension "ext" exists in a directory called "dir", then
+         'r/foo.ext' - is an exact match
+         'dir/foo.ext' - is an exact match
+         but
+         '/foo.ext' and 'foo.ext' are not
+    */
+    if (elementPriority == GotoFileItemProvider.EXACT_MATCH_DEGREE) return true  // Absolute path
+
+    val filePath = item.virtualFile.path
+    val fileName = item.virtualFile.name
+
+    return searchQuery.asSequence()
+      .map { if (it == '\\') '/' else it }
+      .filterIndexed { index, c ->
+        // check if query starts with slash and contains just the filename (i.e. "/foo.ext")
+        // by comparing query length and filename length we can check we should expect any more slashes in the query
+        if ((index == 0 && c == '/') && (searchQuery.length - 1) == fileName.length) return@filterIndexed true
+
+        filePath[filePath.length - searchQuery.length + index] != c
+      }.none()
   }
 
   private fun isTopLevel(item: PsiFileSystemItem): Boolean? {

@@ -129,7 +129,11 @@
     },
 
     "Bookmark": {
-      "Mnemonic.iconForeground": "Grey14"
+      "Mnemonic.iconForeground": "Grey14",
+      "MnemonicAvailable.borderColor": "Grey5",
+      "MnemonicAssigned.background": "Orange6",
+      "MnemonicAssigned.foreground": "Grey1",
+      "MnemonicCurrent.background": "Blue7"
     },
 
     "Borders.color": "Grey1",
@@ -265,7 +269,11 @@
 
     "Menu": {
       "separatorColor": "Grey4",
-      "borderColor": "Grey4"
+      "borderColor": "Grey4",
+      "borderInsets": "6,1,6,1",
+      "Selection": {
+        "innerInsets": "0,6,0,6"
+      }
     },
 
     "Notification": {

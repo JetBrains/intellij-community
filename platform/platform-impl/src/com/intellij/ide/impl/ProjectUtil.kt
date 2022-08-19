@@ -556,20 +556,16 @@ object ProjectUtil {
     return Files.isDirectory(projectDir.resolve(Project.DIRECTORY_STORE_FOLDER))
   }
 
-  @JvmOverloads
-  fun openOrCreateProject(name: String, projectCreatedCallback: ProjectCreatedCallback? = null): Project? {
-    return openOrCreateProject(name, getProjectPath(name), projectCreatedCallback)
-  }
-
   @JvmStatic
-  fun openOrCreateProject(name: String, file: Path, projectCreatedCallback: ProjectCreatedCallback?): Project? {
-    return ProgressManager.getInstance().computeInNonCancelableSection<Project?, RuntimeException> {
-      openOrCreateProjectInner(name, file, projectCreatedCallback)
+  fun openOrCreateProject(name: String, file: Path): Project? {
+    return runBlockingUnderModalProgress {
+      openOrCreateProjectInner(name, file)
     }
   }
 
-  private fun openOrCreateProjectInner(name: String, file: Path, projectCreatedCallback: ProjectCreatedCallback?): Project? {
+  private suspend fun openOrCreateProjectInner(name: String, file: Path): Project? {
     val existingFile = if (isProjectFile(file)) file else null
+    val projectManager = ProjectManagerEx.getInstanceEx()
     if (existingFile != null) {
       val openProjects = ProjectManager.getInstance().openProjects
       for (p in openProjects) {
@@ -578,10 +574,14 @@ object ProjectUtil {
           return p
         }
       }
-      return ProjectManagerEx.getInstanceEx().openProject(existingFile, OpenProjectTask().copy(runConfigurators = true))
+      return projectManager.openProjectAsync(existingFile, OpenProjectTask { runConfigurators = true })
     }
+
+    @Suppress("BlockingMethodInNonBlockingContext")
     val created = try {
-      !Files.exists(file) && Files.createDirectories(file) != null || Files.isDirectory(file)
+      withContext(Dispatchers.IO) {
+        !Files.exists(file) && Files.createDirectories(file) != null || Files.isDirectory(file)
+      }
     }
     catch (e: IOException) {
       false
@@ -589,25 +589,27 @@ object ProjectUtil {
 
     var projectFile: Path? = null
     if (created) {
-      val options = OpenProjectTask().asNewProject().copy(runConfigurators = true, projectName = name)
-      val project = ProjectManagerEx.getInstanceEx().newProject(file, options)
-      if (project != null) {
-        projectCreatedCallback?.projectCreated(project)
-        runInAutoSaveDisabledMode {
-          runBlocking {
-            saveSettings(componentManager = project, forceSavingAllSettings = true)
-          }
-        }
-        ApplicationManager.getApplication().invokeAndWait { WriteAction.run<RuntimeException> { Disposer.dispose(project) } }
-        projectFile = file
+      val options = OpenProjectTask {
+        isNewProject = true
+        runConfigurators = true
+        projectName = name
       }
+
+      val project = projectManager.newProjectAsync(file = file, options = options)
+      runInAutoSaveDisabledMode {
+        saveSettings(componentManager = project, forceSavingAllSettings = true)
+      }
+      writeAction {
+        Disposer.dispose(project)
+      }
+      projectFile = file
     }
 
     if (projectFile == null) {
       return null
     }
 
-    return ProjectManagerEx.getInstanceEx().openProject(projectStoreBaseDir = projectFile, options = OpenProjectTask {
+    return projectManager.openProjectAsync(projectStoreBaseDir = projectFile, options = OpenProjectTask {
       runConfigurators = true
       isProjectCreatedWithWizard = true
       isRefreshVfsNeeded = false

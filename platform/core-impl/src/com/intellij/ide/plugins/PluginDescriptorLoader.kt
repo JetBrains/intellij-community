@@ -5,7 +5,7 @@
 
 package com.intellij.ide.plugins
 
-import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.idea.AppMode
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
@@ -56,7 +56,7 @@ fun loadDescriptor(file: Path, parentContext: DescriptorListLoadingContext): Ide
 
 internal fun loadForCoreEnv(pluginRoot: Path, fileName: String): IdeaPluginDescriptorImpl? {
   val pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER
-  val parentContext = DescriptorListLoadingContext(disabledPlugins = DisabledPluginsState.getDisabledIds())
+  val parentContext = DescriptorListLoadingContext()
   if (Files.isDirectory(pluginRoot)) {
     return loadDescriptorFromDir(file = pluginRoot,
                                  descriptorRelativePath = "${PluginManagerCore.META_INF}$fileName",
@@ -374,15 +374,13 @@ private fun CoroutineScope.loadDescriptorsFromProperty(context: DescriptorListLo
 
 @Suppress("DeferredIsResult")
 internal fun CoroutineScope.scheduleLoading(zipFilePoolDeferred: Deferred<ZipFilePool>?): Deferred<PluginSet> {
-  val resultDeferred = async(Dispatchers.Default) {
-    val activity = StartUpMeasurer.startActivity("plugin descriptor loading")
+  val resultDeferred = async(CoroutineName("plugin descriptor loading") + Dispatchers.Default) {
     val isUnitTestMode = PluginManagerCore.isUnitTestMode
     val isRunningFromSources = PluginManagerCore.isRunningFromSources()
     val result = DescriptorListLoadingContext(
       isMissingSubDescriptorIgnored = true,
       isMissingIncludeIgnored = isUnitTestMode,
       checkOptionalConfigFileUniqueness = isUnitTestMode || isRunningFromSources,
-      disabledPlugins = DisabledPluginsState.getDisabledIds(),
     ).use { context ->
       context to loadDescriptors(
         context = context,
@@ -391,7 +389,6 @@ internal fun CoroutineScope.scheduleLoading(zipFilePoolDeferred: Deferred<ZipFil
         zipFilePoolDeferred = zipFilePoolDeferred,
       )
     }
-    activity.end()
     result
   }
   val pluginSetDeferred = async(Dispatchers.Default) {
@@ -410,7 +407,7 @@ internal fun CoroutineScope.scheduleLoading(zipFilePoolDeferred: Deferred<ZipFil
 private fun logPlugins(plugins: Collection<IdeaPluginDescriptorImpl>,
                        context: DescriptorListLoadingContext,
                        loadingResult: PluginLoadingResult) {
-  if (IdeaPluginDescriptorImpl.disableNonBundledPlugins) {
+  if (AppMode.isDisableNonBundledPlugins()) {
     LOG.info("Running with disableThirdPartyPlugins argument, third-party plugins will be disabled")
   }
 
@@ -480,7 +477,6 @@ suspend fun getLoadedPluginsForRider(): List<IdeaPluginDescriptorImpl?> {
     isMissingSubDescriptorIgnored = true,
     isMissingIncludeIgnored = isUnitTestMode,
     checkOptionalConfigFileUniqueness = isUnitTestMode || isRunningFromSources,
-    disabledPlugins = DisabledPluginsState.getDisabledIds(),
   ).use { context ->
     val result = loadDescriptors(context = context, isUnitTestMode = isUnitTestMode, isRunningFromSources = isRunningFromSources)
     PluginManagerCore.initializeAndSetPlugins(context, result, PluginManagerCore::class.java.classLoader).enabledPlugins
@@ -497,7 +493,6 @@ fun loadDescriptorsForDeprecatedWizard(): PluginLoadingResult {
       isMissingSubDescriptorIgnored = true,
       isMissingIncludeIgnored = isUnitTestMode,
       checkOptionalConfigFileUniqueness = isUnitTestMode || isRunningFromSources,
-      disabledPlugins = DisabledPluginsState.getDisabledIds(),
     ).use { context ->
       loadDescriptors(context = context, isUnitTestMode = isUnitTestMode, isRunningFromSources = isRunningFromSources)
     }
@@ -706,7 +701,6 @@ private fun collectPluginFilesInClassPath(loader: ClassLoader): Map<URL, String>
 @Throws(IOException::class)
 fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPluginDescriptorImpl? {
   val context = DescriptorListLoadingContext(isMissingSubDescriptorIgnored = true,
-                                             disabledPlugins = DisabledPluginsState.getDisabledIds(),
                                              productBuildNumber = { buildNumber ?: PluginManagerCore.getBuildNumber() },
                                              transient = true)
 
@@ -753,20 +747,23 @@ fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPlugi
   return null
 }
 
-fun loadDescriptor(file: Path,
-                   disabledPlugins: Set<PluginId>,
-                   isBundled: Boolean,
-                   pathResolver: PathResolver): IdeaPluginDescriptorImpl? {
-  DescriptorListLoadingContext(disabledPlugins = disabledPlugins).use { context ->
+fun loadDescriptor(
+  file: Path,
+  isBundled: Boolean,
+  pathResolver: PathResolver,
+): IdeaPluginDescriptorImpl? {
+  DescriptorListLoadingContext().use { context ->
     return runBlocking {
-      loadDescriptorFromFileOrDir(file = file,
-                                  context = context,
-                                  pathResolver = pathResolver,
-                                  isBundled = isBundled,
-                                  isEssential = false,
-                                  isDirectory = Files.isDirectory(file),
-                                  useCoreClassLoader = false,
-                                  pool = null)
+      loadDescriptorFromFileOrDir(
+        file = file,
+        context = context,
+        pathResolver = pathResolver,
+        isBundled = isBundled,
+        isEssential = false,
+        isDirectory = Files.isDirectory(file),
+        useCoreClassLoader = false,
+        pool = null,
+      )
     }
   }
 }

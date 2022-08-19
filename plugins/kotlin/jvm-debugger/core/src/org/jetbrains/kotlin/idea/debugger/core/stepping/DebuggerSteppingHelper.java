@@ -26,7 +26,7 @@ public class DebuggerSteppingHelper {
 
         return debugProcess.new ResumeCommand(suspendContext) {
             @Override
-            public void contextAction() {
+            public void contextAction(@NotNull SuspendContextImpl suspendContext) {
                 StackFrameProxyImpl frameProxy = suspendContext.getFrameProxy();
                 Location location = frameProxy == null ? null : SafeUtilKt.safeLocation(frameProxy);
 
@@ -41,7 +41,7 @@ public class DebuggerSteppingHelper {
                     }
                 }
 
-                debugProcess.createStepOutCommand(suspendContext).contextAction();
+                debugProcess.createStepOutCommand(suspendContext).contextAction(suspendContext);
             }
         };
     }
@@ -74,7 +74,7 @@ public class DebuggerSteppingHelper {
         DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
         return debugProcess.new ResumeCommand(suspendContext) {
             @Override
-            public void contextAction() {
+            public void contextAction(@NotNull SuspendContextImpl suspendContext) {
                 StackFrameProxyImpl frameProxy = suspendContext.getFrameProxy();
                 Location location = frameProxy == null ? null : SafeUtilKt.safeLocation(frameProxy);
 
@@ -89,7 +89,7 @@ public class DebuggerSteppingHelper {
                     }
                 }
 
-                debugProcess.createStepOverCommand(suspendContext, ignoreBreakpoints).contextAction();
+                debugProcess.createStepOverCommand(suspendContext, ignoreBreakpoints).contextAction(suspendContext);
             }
         };
     }
@@ -102,13 +102,13 @@ public class DebuggerSteppingHelper {
         DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
         return debugProcess.new ResumeCommand(suspendContext) {
             @Override
-            public void contextAction() {
+            public void contextAction(@NotNull SuspendContextImpl suspendContext) {
                 try {
                     new KotlinStepAction.KotlinStepInto(methodFilter)
                             .createCommand(debugProcess, suspendContext, ignoreBreakpoints)
                             .contextAction(suspendContext);
                 } catch (Exception e) {
-                    debugProcess.createStepIntoCommand(suspendContext, ignoreBreakpoints, methodFilter).contextAction();
+                    debugProcess.createStepIntoCommand(suspendContext, ignoreBreakpoints, methodFilter).contextAction(suspendContext);
                 }
             }
         };

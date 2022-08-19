@@ -7,6 +7,7 @@ import com.intellij.util.lang.JavaVersion
 import io.opentelemetry.api.trace.Span
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel
+import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import java.io.BufferedInputStream
 import java.io.DataInputStream
@@ -34,7 +35,7 @@ import java.util.zip.ZipException
  * </p>
  * <p>Example: <code>["": "1.8", "lib/idea_rt.jar": "1.3"]</code>.</p>
  */
-internal fun checkClassFiles(versionCheckConfig: Map<String, String>, forbiddenSubPaths: List<String>, root: Path) {
+internal fun checkClassFiles(versionCheckConfig: Map<String, String>, forbiddenSubPaths: List<String>, root: Path, messages: BuildMessages) {
   spanBuilder("verify class files")
     .setAttribute("ruleCount", versionCheckConfig.size.toLong())
     .setAttribute("forbiddenSubpathCount", forbiddenSubPaths.size.toLong())
@@ -46,7 +47,14 @@ internal fun checkClassFiles(versionCheckConfig: Map<String, String>, forbiddenS
       }
       rules.sortWith { o1, o2 -> (-o1.path.length).compareTo(-o2.path.length) }
       check(rules.isEmpty() || rules.last().path.isEmpty()) {
-        "Invalid configuration: missing default version $rules"
+        throw ClassFileCheckError("Invalid configuration: missing default version $rules")
+      }
+
+      val defaultVersion = rules.lastOrNull()?.version
+      check(defaultVersion == null || rules.dropLast(1).none { it.version == defaultVersion }) {
+        throw ClassFileCheckError("Redundant rules with default version: " + rules.dropLast(1).filter {
+          it.version == defaultVersion
+        })
       }
 
       val checker = ClassFileChecker(rules, forbiddenSubPaths)
@@ -59,7 +67,7 @@ internal fun checkClassFiles(versionCheckConfig: Map<String, String>, forbiddenS
       }
 
       check(rules.isEmpty() || checker.checkedClassCount.get() != 0) {
-        "No classes found under $root - please check the configuration"
+        throw ClassFileCheckError("No classes found under $root - please check the configuration")
       }
 
       val errorCount = errors.size
@@ -67,17 +75,22 @@ internal fun checkClassFiles(versionCheckConfig: Map<String, String>, forbiddenS
         .setAttribute("checkedClasses", checker.checkedClassCount.get().toLong())
         .setAttribute("checkedJarCount", checker.checkedJarCount.get().toLong())
         .setAttribute("errorCount", errorCount.toLong())
+      for (error in errors) {
+        messages.warning("---\n$error")
+      }
       check(errorCount == 0) {
-        "Failed with $errorCount problems: ${errors.joinToString(separator = "\n---\n")}}"
+        throw ClassFileCheckError("Failed with $errorCount problems", errors)
       }
 
       val unusedRules = rules.filter { !it.wasUsed }
       check(unusedRules.isEmpty()) {
-        "Class version check rules for the following paths don't match any files, probably entries in " +
-        "ProductProperties::versionCheckerConfig are out of date:\n${unusedRules.joinToString(separator = "\n")}"
+        throw ClassFileCheckError("Class version check rules for the following paths don't match any files, probably entries in " +
+                                  "ProductProperties::versionCheckerConfig are out of date:\n${unusedRules.joinToString(separator = "\n")}")
       }
     }
 }
+
+class ClassFileCheckError(message: String, val errors: Collection<String> = emptyList()) : Exception(message)
 
 private val READ = EnumSet.of(StandardOpenOption.READ)
 
@@ -173,7 +186,7 @@ private class ClassFileChecker(private val versionRules: List<Rule>, private val
       return
     }
 
-    var major = dataStream.readUnsignedByte()
+    val major = dataStream.readUnsignedByte()
     if (major < 44 || major >= 100) {
       errors.add("$path: suspicious .class file version: $major")
       return

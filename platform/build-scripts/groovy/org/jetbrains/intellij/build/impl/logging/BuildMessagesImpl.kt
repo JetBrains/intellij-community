@@ -17,9 +17,7 @@ import java.util.*
 import java.util.function.Consumer
 
 class BuildMessagesImpl private constructor(private val logger: BuildMessageLogger,
-                                            private val debugLogger: DebugLogger,
-                                            private val parentInstance: BuildMessagesImpl?) : BuildMessages {
-  private val delayedMessages = ArrayList<LogMessage>()
+                                            private val debugLogger: DebugLogger) : BuildMessages {
   private val blockNames = Stack<String>()
 
   companion object {
@@ -31,8 +29,7 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
         CompositeBuildMessageLogger(listOf(mainLoggerFactory(), debugLogger.createLogger()))
       }
       return BuildMessagesImpl(logger = loggerFactory(),
-                               debugLogger = debugLogger,
-                               parentInstance = null)
+                               debugLogger = debugLogger)
     }
   }
 
@@ -104,13 +101,7 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
   }
 
   override fun progress(message: String) {
-    if (parentInstance != null) {
-      //progress messages should be shown immediately, there are no problems with that since they aren't organized into groups
-      parentInstance.progress(message)
-    }
-    else {
-      logger.processMessage(LogMessage(LogMessage.Kind.PROGRESS, message))
-    }
+    logger.processMessage(LogMessage(LogMessage.Kind.PROGRESS, message))
   }
 
   override fun buildStatus(message: String) {
@@ -149,14 +140,7 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
   }
 
   private fun processMessage(message: LogMessage) {
-    if (parentInstance == null) {
-      logger.processMessage(message)
-    }
-    else {
-      //It appears that TeamCity currently cannot properly handle log messages from parallel tasks (https://youtrack.jetbrains.com/issue/TW-46515)
-      //Until it is fixed we need to delay delivering of messages from the tasks running in parallel until all tasks have been finished.
-      delayedMessages.add(message)
-    }
+    logger.processMessage(message)
   }
 }
 

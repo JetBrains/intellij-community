@@ -102,7 +102,7 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
     // remove any error that occurred for plugin with the same `id`
     pluginErrors.remove(pluginId)
     incompletePlugins.remove(pluginId)
-    val prevDescriptor = if (descriptor.onDemand) null else enabledPluginsById.put(pluginId, descriptor)
+    val prevDescriptor = enabledPluginsById.put(pluginId, descriptor)
     if (prevDescriptor == null) {
       idMap.put(pluginId, descriptor)
       for (module in descriptor.modules) {

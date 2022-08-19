@@ -35,10 +35,17 @@ abstract class AbstractJavaUClass(
       JavaPsiFacade.getElementFactory(referenceElement.project).createType(referenceElement)
     }
 
-  override val uastSuperTypes: List<UTypeReferenceExpression> by lazy {
-    javaPsi.extendsList?.referenceElements?.map { createJavaUTypeReferenceExpression(it) }.orEmpty() +
-    javaPsi.implementsList?.referenceElements?.map { createJavaUTypeReferenceExpression(it) }.orEmpty()
-  }
+  internal var cachedSuperTypes: List<UTypeReferenceExpression>? = null
+  override val uastSuperTypes: List<UTypeReferenceExpression>
+    get() {
+      var types = cachedSuperTypes
+      if (types == null) {
+        types = javaPsi.extendsList?.referenceElements?.map { createJavaUTypeReferenceExpression(it) }.orEmpty() +
+                javaPsi.implementsList?.referenceElements?.map { createJavaUTypeReferenceExpression(it) }.orEmpty()
+        cachedSuperTypes = types
+      }
+      return types
+    }
 
   override val uastAnchor: UIdentifier?
     get() = UIdentifier(javaPsi.nameIdentifier, this)
@@ -53,7 +60,7 @@ abstract class AbstractJavaUClass(
 @ApiStatus.Internal
 class JavaUClass(
   override val sourcePsi: PsiClass,
-  val givenParent: UElement?
+  givenParent: UElement?
 ) : AbstractJavaUClass(givenParent), UAnchorOwner, PsiClass by sourcePsi {
 
   override val javaPsi: PsiClass = unwrap<UClass, PsiClass>(sourcePsi)
@@ -86,9 +93,17 @@ class JavaUAnonymousClass(
 
   override val javaPsi: PsiAnonymousClass = sourcePsi
 
-  override val uastSuperTypes: List<UTypeReferenceExpression> by lazy {
-    listOf(createJavaUTypeReferenceExpression(sourcePsi.baseClassReference)) + super.uastSuperTypes
-  }
+  override val uastSuperTypes: List<UTypeReferenceExpression>
+    get() {
+      var types = cachedSuperTypes
+      if (types == null) {
+        types = listOf(createJavaUTypeReferenceExpression(sourcePsi.baseClassReference)) +
+                javaPsi.extendsList?.referenceElements?.map { createJavaUTypeReferenceExpression(it) }.orEmpty() +
+                javaPsi.implementsList?.referenceElements?.map { createJavaUTypeReferenceExpression(it) }.orEmpty()
+        cachedSuperTypes = types
+      }
+      return types
+    }
 
   override fun convertParent(): UElement? = sourcePsi.parent.toUElementOfType<UObjectLiteralExpression>() ?: super.convertParent()
 

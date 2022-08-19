@@ -47,6 +47,8 @@ import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.ui.switcher.ShowQuickActionPopupAction
 import com.intellij.util.KeyedLazyInstanceEP
 import com.intellij.util.io.Ksuid
+import com.intellij.util.io.directoryContent
+import com.intellij.util.io.java.classFile
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import org.junit.Rule
@@ -145,16 +147,24 @@ class DynamicPluginsTest {
   fun testSaveSettingsOnPluginUnload() {
     val data = System.currentTimeMillis().toString()
 
-    val extensionTag = "<applicationService serviceImplementation=\"${MyPersistentComponent::class.java.name}\"/>"
-    val disposable = loadExtensionWithText(extensionTag)
-    val service = ApplicationManager.getApplication().getService(MyPersistentComponent::class.java)
-    service.myState.stateData = data
-    Disposer.dispose(disposable)
+    val extensionTag = """<applicationService serviceInterface="${MyPersistentComponent::class.java.name}" 
+      |serviceImplementation="${MyPersistentComponentImpl::class.java.name}"/>""".trimMargin()
 
-    val disposable2 = loadExtensionWithText(extensionTag)
-    val service2 = ApplicationManager.getApplication().getService(MyPersistentComponent::class.java)
-    assertThat(service2.myState.stateData).isEqualTo(data)
-    Disposer.dispose(disposable2)
+    loadExtensionWithText(extensionTag).use {
+      val service = ApplicationManager.getApplication()
+        .getService(MyPersistentComponent::class.java)
+      assertThat(service).isInstanceOf(MyPersistentComponentImpl::class.java)
+
+      (service as MyPersistentComponentImpl).state.stateData = data
+    }
+
+    loadExtensionWithText(extensionTag).use {
+      val service = ApplicationManager.getApplication()
+        .getService(MyPersistentComponent::class.java)
+      assertThat(service).isNotNull
+
+      assertThat(service.data).isEqualTo(data)
+    }
   }
 
   @Test
@@ -318,27 +328,119 @@ class DynamicPluginsTest {
   }
 
   @Test
+  fun loadModuleClassloader() {
+    val fooJar = "foo.jar"
+    val barJar = "bar.jar"
+
+    val pluginsPath = directoryContent {
+      zip(fooJar) {
+        dir("META-INF") {
+          file(
+            name = "plugin.xml",
+            text = """<idea-plugin package="foo">
+                     |  <id>foo</id>
+                     |  <content>
+                     |    <module name="foo.bar"/>
+                     |  </content>
+                     |</idea-plugin>""".trimIndent(),
+          )
+        }
+        file(
+          name = "foo.bar.xml",
+          text = """<idea-plugin package="foo.bar">
+                   |  <dependencies>
+                   |    <plugin id="bar"/>
+                   |  </dependencies>
+                   |</idea-plugin>""".trimIndent(),
+        )
+        classFile("foo.Foo") {}
+        classFile("foo.bar.BarImpl") {}
+      }
+      zip(barJar) {
+        dir("META-INF") {
+          file(
+            name = "plugin.xml",
+            text = """<idea-plugin> <!-- no package prefix -->
+                     |  <id>bar</id>
+                     |  <content>
+                     |    <module name="bar.foo"/>
+                     |  </content>
+                     |</idea-plugin>""".trimIndent(),
+          )
+        }
+        file(
+          name = "bar.foo.xml",
+          text = """<idea-plugin package="bar.foo">
+                   |  <dependencies>
+                   |    <plugin id="foo"/>
+                   |  </dependencies>
+                   |</idea-plugin>""".trimIndent(),
+        )
+        classFile("bar.Bar") {}
+        classFile("bar.foo.FooImpl") {}
+      }
+    }.generateInTempDir()
+
+    fun forNameInModuleClassloader(className: String, moduleName: String): Class<*>? {
+      return findEnabledModuleByName(moduleName)?.classLoader?.let {
+        Class.forName(className, true, it)
+      }
+    }
+
+    val barDescriptor = loadDescriptorInTest(pluginsPath.resolve(barJar))
+    try {
+      assertThat(DynamicPlugins.loadPlugin(barDescriptor)).isTrue()
+
+      val fooDescriptor = loadDescriptorInTest(pluginsPath.resolve(fooJar))
+      try {
+        assertThat(DynamicPlugins.loadPlugin(fooDescriptor)).isTrue()
+
+        assertThat(forNameInModuleClassloader("bar.foo.FooImpl", "bar.foo")).isNotNull
+        assertThat(forNameInModuleClassloader("foo.bar.BarImpl", "foo.bar")).isNotNull
+      }
+      finally {
+        unloadAndUninstallPlugin(fooDescriptor)
+      }
+    }
+    finally {
+      unloadAndUninstallPlugin(barDescriptor)
+    }
+  }
+
+  @Test
   fun loadOptionalDependencyOwnExtension() {
-    val barBuilder = PluginBuilder().randomId("bar").packagePrefix("bar")
-    val fooBuilder = PluginBuilder().randomId("foo").packagePrefix("foo")
+    val barBuilder = PluginBuilder()
+      .randomId("bar")
+      .packagePrefix("bar")
+
+    val fooBuilder = PluginBuilder()
+      .randomId("foo")
+      .packagePrefix("foo")
       .extensionPoints(
         """<extensionPoint qualifiedName="foo.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true"/>""")
-      .module("intellij.foo.sub",
+      .module("intellij.foo.bar",
               PluginBuilder()
                 .extensions("""<barExtension key="foo" implementationClass="y"/>""", "foo")
-                .packagePrefix("foo1")
+                .packagePrefix("foo.bar")
                 .pluginDependency(barBuilder.id)
       )
+
     loadPluginWithText(fooBuilder).use {
       val ep = ApplicationManager.getApplication().extensionArea.getExtensionPointIfRegistered<KeyedLazyInstanceEP<*>>("foo.barExtension")
       assertThat(ep).isNotNull()
+
       loadPluginWithText(barBuilder).use {
-        val extension = ep!!.extensionList.single()
+        assertThat(ep.extensionList).hasSize(1)
+
+        val extension = ep.extensionList.single()
         assertThat(extension.key).isEqualTo("foo")
+
         assertThat(extension.pluginDescriptor)
-          .isEqualTo(findEnabledModuleByName("intellij.foo.sub")!!)
+          .isNotNull
+          .isEqualTo(findEnabledModuleByName("intellij.foo.bar"))
       }
-      assertThat(ep!!.extensionList).isEmpty()
+
+      assertThat(ep.extensionList).isEmpty()
     }
   }
 
@@ -470,7 +572,8 @@ class DynamicPluginsTest {
       val pluginTwoId = "optionalDependencyDescriptor-two_${Ksuid.generate()}"
       loadPluginWithOptionalDependency(
         PluginBuilder().id(pluginTwoId),
-        PluginBuilder().extensions("""<applicationService serviceImplementation="${MyPersistentComponent::class.java.name}"/>"""),
+        PluginBuilder().extensions("""<applicationService serviceInterface="${MyPersistentComponent::class.java.name}" 
+          |serviceImplementation="${MyPersistentComponentImpl::class.java.name}"/>""".trimMargin()),
         pluginOneBuilder
       ).use {
         assertThat(app.getService(MyPersistentComponent::class.java)).isNotNull()
@@ -658,7 +761,8 @@ class DynamicPluginsTest {
   fun disableWithoutRestart() {
     val pluginBuilder = PluginBuilder()
       .randomId("disableWithoutRestart")
-      .extensions("""<applicationService serviceImplementation="${MyPersistentComponent::class.java.name}"/>""")
+      .extensions("""<applicationService serviceInterface="${MyPersistentComponent::class.java.name}"
+        |serviceImplementation="${MyPersistentComponentImpl::class.java.name}"/>""".trimMargin())
     val disposable = loadPluginWithText(pluginBuilder)
     val app = ApplicationManager.getApplication()
     assertThat(app.getService(MyPersistentComponent::class.java)).isNotNull()
@@ -724,14 +828,31 @@ private class MyUISettingsListener2 : UISettingsListener {
 
 private data class MyPersistentState(@Attribute var stateData: String? = "")
 
-@State(name = "MyTestState", storages = [Storage("other.xml")], allowLoadInTests = true)
-private class MyPersistentComponent : PersistentStateComponent<MyPersistentState> {
-  var myState = MyPersistentState("")
+private interface MyPersistentComponent {
 
-  override fun getState() = myState
+  var data: String?
+}
+
+@State(name = "MyTestState", storages = [Storage("other.xml")], allowLoadInTests = true)
+private class MyPersistentComponentImpl : MyPersistentComponent,
+                                          PersistentStateComponent<MyPersistentState> {
+
+  private var _state = MyPersistentState("")
+
+  override var data: String?
+    get() = _state.stateData
+    set(value) {
+      _state.stateData = value
+    }
+
+  override fun getState() = _state
+
+  fun setState(state: MyPersistentState) {
+    _state = state
+  }
 
   override fun loadState(state: MyPersistentState) {
-    myState = state
+    this.state = state
   }
 }
 

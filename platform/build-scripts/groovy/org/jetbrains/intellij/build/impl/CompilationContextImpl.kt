@@ -17,6 +17,7 @@ import org.jetbrains.intellij.build.TracerProviderManager.flush
 import org.jetbrains.intellij.build.TracerProviderManager.setOutput
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
+import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.dependencies.JdkDownloader
 import org.jetbrains.intellij.build.impl.JdkUtils.defineJdk
 import org.jetbrains.intellij.build.impl.JdkUtils.readModulesFromReleaseFile
@@ -151,11 +152,6 @@ class CompilationContextImpl private constructor(model: JpsModel,
                        "\' is specified, so the archive with the compiled project output metadata won\'t be used to fetch compile output")
       options.pathToCompiledClassesArchivesMetadata = null
     }
-    if (options.incrementalCompilation && "false" == System.getProperty("teamcity.build.branch.is_default")) {
-      messages.warning(
-        "Incremental builds for feature branches have no sense because JPS caches are out of date, so 'incremental compilation' option will be ignored")
-      options.incrementalCompilation = false
-    }
   }
 
   override fun findRequiredModule(name: String): JpsModule {
@@ -237,8 +233,7 @@ class CompilationContextImpl private constructor(model: JpsModel,
   override val stableJdkHome: Path
 
   companion object {
-    @JvmStatic
-    fun printEnvironmentDebugInfo() {
+    private fun printEnvironmentDebugInfo() {
       // print it to the stdout since TeamCity will remove any sensitive fields from build log automatically
       // don't write it to debug log file!
       val env = System.getenv()
@@ -263,7 +258,13 @@ class CompilationContextImpl private constructor(model: JpsModel,
       if (sequenceOf("platform/build-scripts", "bin/idea.properties", "build.txt").any { !Files.exists(communityHome.communityRoot.resolve(it)) }) {
         messages.error("communityHome ($communityHome) doesn\'t point to a directory containing IntelliJ Community sources")
       }
-      printEnvironmentDebugInfo()
+      if (options.printEnvironmentInfo) {
+        messages.block("Environment info") {
+          messages.info("Community home: ${communityHome.communityRoot}")
+          messages.info("Project home: $projectHome")
+          printEnvironmentDebugInfo()
+        }
+      }
       logFreeDiskSpace(dir = projectHome, phase = "before downloading dependencies")
       val kotlinBinaries = KotlinBinaries(communityHome, options, messages)
       val model = loadProject(projectHome, kotlinBinaries)
@@ -276,7 +277,9 @@ class CompilationContextImpl private constructor(model: JpsModel,
                                            buildOutputRootEvaluator = buildOutputRootEvaluator,
                                            options = options)
       defineJavaSdk(context)
-      context.prepareForBuild()
+      messages.block("Preparing for build") {
+        context.prepareForBuild()
+      }
 
       // not as part of prepareForBuild because prepareForBuild may be called several times per each product or another flavor
       // (see createCopyForProduct)
@@ -299,7 +302,13 @@ class CompilationContextImpl private constructor(model: JpsModel,
     val buildOut = options.outputRootPath?.let { Path.of(it) } ?: buildOutputRootEvaluator(project)
     val logDir = options.logPath?.let { Path.of(it).toAbsolutePath().normalize() } ?: buildOut.resolve("log")
     paths = BuildPathsImpl(communityHome, projectHome, buildOut, logDir)
-    dependenciesProperties = DependenciesProperties(paths)
+    val projectDependenciesProperties = paths.projectHome.resolve("build/dependencies.properties")
+    dependenciesProperties = if (Files.exists(projectDependenciesProperties)) {
+      DependenciesProperties(paths.communityHomeDir, projectDependenciesProperties)
+    }
+    else {
+      DependenciesProperties(paths.communityHomeDir)
+    }
     bundledRuntime = BundledRuntimeImpl(options, paths, dependenciesProperties, messages::error, messages::info)
     stableJdkHome = JdkDownloader.getJdkHome(paths.communityHomeDir)
     stableJavaExecutable = JdkDownloader.getJavaExecutable(stableJdkHome)
@@ -367,18 +376,25 @@ private fun defineJavaSdk(context: CompilationContext) {
   val jbrVersionName = "11"
   defineJdk(context.projectModel.global, jbrVersionName, jbrHome, context.messages)
   readModulesFromReleaseFile(context.projectModel, jbrVersionName, jbrHome)
+
+  // Validate all modules have proper SDK reference
+  context.projectModel.project.modules
+    .asSequence()
+    .forEach { module ->
+      val sdkName = module.getSdkReference(JpsJavaSdkType.INSTANCE)?.sdkName ?: return@forEach
+      val vendorPrefixEnd = sdkName.indexOf('-')
+      val sdkNameWithoutVendor = if (vendorPrefixEnd == -1) sdkName else sdkName.substring(vendorPrefixEnd + 1)
+      check(sdkNameWithoutVendor == "17") {
+        "Project model at ${context.paths.projectHome} [module ${module.name}] requested SDK $sdkNameWithoutVendor, " +
+        "but only '17' is supported as SDK in intellij project"
+      }
+    }
+
   context.projectModel.project.modules
     .asSequence()
     .mapNotNull { it.getSdkReference(JpsJavaSdkType.INSTANCE)?.sdkName }
     .distinct()
     .forEach { sdkName ->
-      val vendorPrefixEnd = sdkName.indexOf('-')
-      val sdkNameWithoutVendor = if (vendorPrefixEnd == -1) sdkName else sdkName.substring(vendorPrefixEnd + 1)
-      check(sdkNameWithoutVendor == "17") {
-        "Project model at ${context.paths.projectHome} requested SDK $sdkNameWithoutVendor, " +
-        "but only '17' is supported as SDK in intellij project"
-      }
-
       if (context.projectModel.global.libraryCollection.findLibrary(sdkName) == null) {
         defineJdk(context.projectModel.global, sdkName, jbrHome, context.messages)
         readModulesFromReleaseFile(context.projectModel, sdkName, jbrHome)

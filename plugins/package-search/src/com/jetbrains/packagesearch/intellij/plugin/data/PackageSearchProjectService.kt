@@ -24,8 +24,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiManager
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.PluginEnvironment
-import com.jetbrains.packagesearch.intellij.plugin.api.PackageSearchApiClient
-import com.jetbrains.packagesearch.intellij.plugin.api.ServerURLs
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
@@ -38,7 +36,6 @@ import com.jetbrains.packagesearch.intellij.plugin.util.batchAtIntervals
 import com.jetbrains.packagesearch.intellij.plugin.util.catchAndLog
 import com.jetbrains.packagesearch.intellij.plugin.util.filesChangedEventFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
-import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
 import com.jetbrains.packagesearch.intellij.plugin.util.mapLatestTimedWithLoading
 import com.jetbrains.packagesearch.intellij.plugin.util.modifiedBy
@@ -63,7 +60,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.consumeAsFlow
@@ -80,6 +76,7 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import kotlinx.serialization.json.Json
+import org.jetbrains.idea.packagesearch.api.PackageSearchProvider
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.seconds
 
@@ -89,7 +86,7 @@ internal class PackageSearchProjectService(private val project: Project) {
     private val retryFromErrorChannel = Channel<Unit>()
     private val restartChannel = Channel<Unit>()
     val dataProvider = ProjectDataProvider(
-        PackageSearchApiClient(ServerURLs.base),
+        PackageSearchProvider(),
         project.packageSearchProjectCachesService.installedDependencyCache
     )
 

@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.ui.ExperimentalUI
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
 import com.intellij.vcs.commit.NonModalCommitWorkflowHandler
 
@@ -21,6 +22,10 @@ class ShowCommitOptionsAction : DumbAwareAction() {
         is NonModalCommitWorkflowHandler<*, *> -> true
         else -> false
       }
+    if (ExperimentalUI.isNewUI()) {
+      e.presentation.icon = AllIcons.General.GearPlain
+      e.presentation.hoveredIcon = AllIcons.General.GearPlain
+    }
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {

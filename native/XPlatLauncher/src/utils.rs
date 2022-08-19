@@ -4,8 +4,8 @@ use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
 use log::debug;
-use crate::{err_from_string};
-use crate::errors::{Result};
+use crate::err_from_string;
+use crate::errors::Result;
 
 #[cfg(target_os = "windows")]
 pub fn canonical_non_unc(path: &Path) -> Result<String> {
@@ -24,7 +24,7 @@ pub fn canonical_non_unc(path: &Path) -> Result<String> {
 
 pub fn get_readable_file_from_env_var<S:AsRef<OsStr>>(env_var_name: S) -> Result<PathBuf> {
     let file = get_path_from_env_var(env_var_name)?;
-    is_readable(&file)?;
+    let _path_buf = is_readable(&file)?;
     Ok(file)
 }
 
@@ -44,7 +44,7 @@ pub fn is_readable<P: AsRef<Path>>(file: P) -> Result<PathBuf> {
     // TODO: seems like the best possible x-plat way to verify whether the file is readable
     // note: file is closed when we exit the scope
     {
-        fs::OpenOptions::new().read(true).open(&file)?;
+        let _file = fs::OpenOptions::new().read(true).open(&file)?;
     }
 
     Ok(file.as_ref().to_path_buf())

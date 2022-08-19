@@ -60,9 +60,13 @@ final public class BuildDependenciesDownloader {
   @NotNull
   public static BuildDependenciesTracer TRACER = BuildDependenciesNoopTracer.INSTANCE;
 
-  public static Map<String, String> getDependenciesProperties(BuildDependenciesCommunityRoot communityRoot) {
-    Path propertiesFile = communityRoot.getCommunityRoot().resolve("build").resolve("dependencies").resolve("dependencies.properties");
-    return BuildDependenciesUtil.loadPropertiesFile(propertiesFile);
+  public static DependenciesProperties getCommunityDependenciesProperties(BuildDependenciesCommunityRoot communityRoot) {
+    try {
+      return new DependenciesProperties(communityRoot);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public static URI getUriForMavenArtifact(String mavenRepository, String groupId, String artifactId, String version, String packaging) {

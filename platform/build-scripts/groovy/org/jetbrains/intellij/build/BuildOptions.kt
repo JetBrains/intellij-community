@@ -268,6 +268,12 @@ class BuildOptions {
   var skipDependencySetup = false
 
   /**
+   * If 'true' print system properties and environment variables to stdout.
+   * Mostly useful for build scripts debugging.
+   */
+  var printEnvironmentInfo = SystemProperties.getBooleanProperty("intellij.print.environment", false)
+
+  /**
    * Specifies list of names of directories of bundled plugins which shouldn't be included into the product distribution. This option can be
    * used to speed up updating the IDE from sources.
    */
@@ -283,7 +289,7 @@ class BuildOptions {
   val nonBundledPluginDirectoriesToInclude = getSetProperty("intellij.build.non.bundled.plugin.dirs.to.include")
 
   /**
-   * Specifies [org.jetbrains.intellij.build.JetBrainsRuntimeDistribution] build to be bundled with distributions. If `null` then `runtimeBuild` from dependencies.properties will be used.
+   * Specifies [org.jetbrains.intellij.build.JetBrainsRuntimeDistribution] build to be bundled with distributions. If `null` then `runtimeBuild` from [org.jetbrains.intellij.build.dependencies.DependenciesProperties] will be used.
    */
   var bundledRuntimeBuild: String? = System.getProperty("intellij.build.bundled.jre.build")
 

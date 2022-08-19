@@ -419,10 +419,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   @Deprecated
-  protected void startTask(@NotNull Task task,
-                           @NotNull ProgressIndicator indicator,
-                           @Nullable Runnable continuation) {
-
+  protected void startTask(@NotNull Task task, @NotNull ProgressIndicator indicator, @Nullable Runnable continuation) {
     try {
       task.run(indicator);
     }

@@ -1,4 +1,33 @@
-extern crate core;
+#![warn(
+absolute_paths_not_starting_with_crate,
+elided_lifetimes_in_paths,
+explicit_outlives_requirements,
+keyword_idents,
+macro_use_extern_crate,
+meta_variable_misuse,
+missing_abi,
+missing_copy_implementations,
+missing_debug_implementations,
+non_ascii_idents,
+noop_method_call,
+pointer_structural_match,
+rust_2021_incompatible_closure_captures,
+rust_2021_incompatible_or_patterns,
+rust_2021_prefixes_incompatible_syntax,
+rust_2021_prelude_collisions,
+single_use_lifetimes,
+trivial_numeric_casts,
+unsafe_op_in_unsafe_fn,
+unstable_features,
+unused_crate_dependencies,
+unused_extern_crates,
+unused_import_braces,
+unused_lifetimes,
+unused_macro_rules,
+unused_qualifications,
+unused_results,
+variant_size_differences
+)]
 
 mod errors;
 mod java;
@@ -7,27 +36,20 @@ mod remote_dev;
 mod default;
 
 use serde::{Deserialize, Serialize};
-use std::{env};
-use std::fs::{File};
-use std::io::{BufReader};
-use std::path::{Path, PathBuf};
-use log::{debug, error, info, LevelFilter, Log, warn};
+use std::env;
+use std::fs::File;
+use std::path::PathBuf;
+use log::{debug, error, LevelFilter};
 use native_dialog::{MessageDialog, MessageType};
 use simplelog::{ColorChoice, CombinedLogger, Config, TerminalMode, TermLogger, WriteLogger};
 use crate::default::DefaultLaunchConfiguration;
 use crate::errors::{err_from_string, LauncherError, Result};
 use crate::remote_dev::RemoteDevLaunchConfiguration;
-use crate::utils::{canonical_non_unc};
+use crate::utils::canonical_non_unc;
 
 pub fn main_lib() {
     let main_result = main_impl();
     unwrap_with_human_readable_error(main_result);
-    match main_impl() {
-        Ok(_) => {}
-        Err(e) => {
-
-        }
-    }
 }
 
 fn main_impl() -> Result<()> {
@@ -78,13 +100,20 @@ fn main_impl() -> Result<()> {
 }
 
 #[allow(non_snake_case)]
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct ProductInfo {
     pub productCode: String,
-    pub bootClassPathJarNames: Vec<String>,
     pub productVendor: String,
     pub dataDirectoryName: String,
-    pub vmOptionsBaseFileName: String
+    pub launch: Vec<ProductInfoLaunchField>,
+}
+
+#[allow(non_snake_case)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct ProductInfoLaunchField {
+    pub vmOptionsFilePath: String,
+    pub bootClassPathJarNames: Vec<String>,
+    pub additionalJvmArguments: Vec<String>
 }
 
 trait LaunchConfiguration {
@@ -128,6 +157,8 @@ fn get_configuration() -> Result<Box<dyn LaunchConfiguration>> {
     }
 }
 
+pub const DO_NOT_SHOW_ERROR_UI_ENV_VAR: &str = "DO_NOT_SHOW_ERROR_UI";
+
 fn unwrap_with_human_readable_error<S>(result: Result<S>) -> S {
     match result {
         Ok(x) => { x }
@@ -145,8 +176,10 @@ fn unwrap_with_human_readable_error<S>(result: Result<S>) -> S {
             eprintln!("{}", message);
             error!("{}", message);
 
-            // TODO: detect if there's no UI?
-            show_fail_to_start_message("Failed to start", format!("{message:?}").as_str());
+            match env::var(DO_NOT_SHOW_ERROR_UI_ENV_VAR) {
+                Ok(_) => {  }
+                Err(_) => { show_fail_to_start_message("Failed to start", format!("{message:?}").as_str()) }
+            }
 
             std::process::exit(1);
         }
@@ -164,7 +197,7 @@ fn get_full_vm_options(configuration: &Box<dyn LaunchConfiguration>) -> Result<V
             let vm_option = format!("-Didea.properties.file={path_string}");
             full_vm_options.push(vm_option);
         }
-        Err(e) => {
+        Err(_) => {
             debug!("IDE properties file is not set, skipping setting vm option")
         }
     };

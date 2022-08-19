@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 public class PyStringLiteralExpressionImpl extends PyElementImpl implements PyStringLiteralExpression, PsiLiteralValue, ContributedReferenceHost {
@@ -64,7 +63,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
           return node.getContentRange().shiftRight(nodeRelativeOffset);
         })
         .toList();
-      myValueTextRanges = result = Collections.unmodifiableList(ranges);
+      myValueTextRanges = result = ranges;
     }
     return result;
   }
@@ -82,7 +81,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
             return Pair.create(pair.getFirst().shiftRight(nodeRelativeOffset), pair.getSecond());
           }))
         .toList();
-      myDecodedFragments = result = Collections.unmodifiableList(combined);
+      myDecodedFragments = result = combined;
     }
     return result;
   }
@@ -169,7 +168,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     final ASTNode firstNode = ContainerUtil.getFirstItem(getStringNodes());
     if (firstNode != null) {
       if (firstNode.getElementType() == PyElementTypes.FSTRING_NODE) {
-        // f-strings can't have "b" prefix so they are always unicode
+        // f-strings can't have "b" prefix, so they are always unicode
         return builtinCache.getUnicodeType(languageLevel);
       }
       else if (firstNode.getElementType() == PyTokenTypes.DOCSTRING) {
@@ -204,9 +203,8 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   @Override
   public ItemPresentation getPresentation() {
     return new ItemPresentation() {
-      @Nullable
       @Override
-      public String getPresentableText() {
+      public @NotNull String getPresentableText() {
         return getStringValue();
       }
 
@@ -217,9 +215,8 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
         return packageForFile != null ? String.format("(%s)", packageForFile) : null;
       }
 
-      @Nullable
       @Override
-      public Icon getIcon(boolean unused) {
+      public @NotNull Icon getIcon(boolean unused) {
         return AllIcons.Nodes.Variable;
       }
     };

@@ -323,6 +323,7 @@ object PlatformModules {
     }
 
     layout.projectLibrariesToUnpack.putValue(UTIL_JAR, "Trove4j")
+    layout.projectLibrariesToUnpack.putValue(UTIL_RT_JAR, "ion")
 
     for (item in additionalProjectLevelLibraries) {
       val name = item.libraryName

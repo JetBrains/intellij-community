@@ -9,6 +9,7 @@ import com.intellij.workspaceModel.codegen.deft.meta.impl.KtInterfaceType
 import com.intellij.workspaceModel.codegen.fields.implWsDataFieldCode
 import com.intellij.workspaceModel.codegen.fields.implWsDataFieldInitializedCode
 import com.intellij.workspaceModel.codegen.fields.javaType
+import com.intellij.workspaceModel.codegen.utils.LinesBuilder
 import com.intellij.workspaceModel.codegen.utils.fqn
 import com.intellij.workspaceModel.codegen.utils.fqn7
 import com.intellij.workspaceModel.codegen.utils.lines
@@ -17,6 +18,7 @@ import com.intellij.workspaceModel.codegen.writer.hasSetter
 import com.intellij.workspaceModel.codegen.writer.type
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
@@ -174,6 +176,7 @@ fun ObjClass<*>.implWsDataClassCode(): String {
       }
 
       // --- equals
+      val keyFields = allFields.filter { it.isKey }
       sectionNl("override fun equals(other: Any?): Boolean") {
         line("if (other == null) return false")
         line("if (this::class != other::class) return false")
@@ -218,6 +221,32 @@ fun ObjClass<*>.implWsDataClassCode(): String {
         }
         line("return result")
       }
+
+      if (keyFields.isNotEmpty()) {
+        line()
+        section("override fun equalsByKey(other: Any?): Boolean") {
+          line("if (other == null) return false")
+          line("if (this::class != other::class) return false")
+
+          lineWrapped("other as $javaDataName")
+
+          list(keyFields) {
+            "if (this.$name != other.$name) return false"
+          }
+
+          line("return true")
+        }
+        line()
+        section("override fun hashCodeByKey(): Int") {
+          line("var result = javaClass.hashCode()")
+          list(keyFields) {
+            "result = 31 * result + $name.hashCode()"
+          }
+          line("return result")
+        }
+      }
+
+      cacheCollector(this@lines)
     }
   }
 }
@@ -227,3 +256,97 @@ fun List<ObjProperty<*, *>>.noEntitySource() = this.filter { it.name != "entityS
 fun List<ObjProperty<*, *>>.noPersistentId() = this.filter { it.name != "persistentId" }
 fun List<ObjProperty<*, *>>.noOptional() = this.filter { it.valueType !is com.intellij.workspaceModel.codegen.deft.meta.ValueType.Optional<*> }
 fun List<ObjProperty<*, *>>.noDefaultValue() = this.filter { it.valueKind == ObjProperty.ValueKind.Plain }
+
+private fun ObjClass<*>.cacheCollector(linesBuilder: LinesBuilder) {
+  val clazzes = HashSet<String>()
+  val accessors = HashSet<String>()
+  val objects = HashSet<String>()
+  val res = allFields.map {
+    it.valueType.getClasses(it.name, clazzes, accessors, objects)
+  }.all{ it }
+  linesBuilder.section("override fun collectClassUsagesData(collector: ${UsedClassesCollector::class.fqn})") {
+    clazzes.forEach {
+      line("collector.add($it::class.java)")
+    }
+    objects.forEach {
+      line("collector.addObject($it::class.java)")
+    }
+    accessors.forEach {
+      line(it)
+    }
+    line("collector.sameForAllEntities = $res")
+  }
+}
+
+private fun ValueType<*>.getClasses(fieldName: String, clazzes: HashSet<String>, accessors: HashSet<String>, objects: HashSet<String>): Boolean {
+  var res = true
+  when (this) {
+    is ValueType.List<*> -> {
+      if (!this.isRefType()) {
+        accessors.add("this.$fieldName?.let { collector.add(it::class.java) }")
+        res = false
+      }
+      this.elementType.getClasses(fieldName, clazzes, accessors, objects)
+      return res
+    }
+    is ValueType.Set<*> -> {
+      if (!this.isRefType()) {
+        accessors.add("this.$fieldName?.let { collector.add(it::class.java) }")
+        res = false
+      }
+      this.elementType.getClasses(fieldName, clazzes, accessors, objects)
+      return res
+    }
+    is ValueType.Blob -> {
+      val className = this.javaClassName
+      if ("VirtualFileUrl" !in className && "EntitySource" !in className && "PersistentEntityId" !in className) {
+        clazzes.add(className)
+        return res
+      }
+      if ("VirtualFileUrl" in className) {
+        accessors.add("this.$fieldName?.let { collector.add(it::class.java) }")
+        return false
+      }
+      return true
+    }
+    is ValueType.DataClass -> {
+      // Here we might filter PersistentIds and get them from the index, but in this case we would need to inspect their fields on the fly
+      // Here we have all the information about the persistent ids and it's fields, so let's keep them here (at least for a while).
+      clazzes.add(javaClassName)
+      properties.forEach { property ->
+        property.type.getClasses(fieldName, clazzes, accessors, objects)
+      }
+      return true
+    }
+    is ValueType.SealedClass -> {
+      clazzes.add(javaClassName)
+      this.subclasses.forEach { subclass ->
+        subclass.getClasses(fieldName, clazzes, accessors, objects)
+      }
+      return true
+    }
+    is ValueType.Map<*, *> -> {
+      if (!this.isRefType()) {
+        accessors.add("this.$fieldName?.let { collector.add(it::class.java) }")
+        res = false
+      }
+      this.keyType.getClasses(fieldName, clazzes, accessors, objects)
+      this.valueType.getClasses(fieldName, clazzes, accessors, objects)
+      return res
+    }
+    is ValueType.Optional -> {
+      return this.type.getClasses(fieldName, clazzes, accessors, objects)
+    }
+    is ValueType.Structure -> {
+      this.fields.forEach {
+        it.getClasses(fieldName, clazzes, accessors, objects)
+      }
+      return true
+    }
+    is ValueType.Object<*> -> {
+      objects.add(javaClassName)
+      return true
+    }
+    else -> return true
+  }
+}

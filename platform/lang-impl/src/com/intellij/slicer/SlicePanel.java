@@ -361,6 +361,11 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
         }
 
         @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
+        }
+
+        @Override
         public void setSelected(@NotNull AnActionEvent e, boolean state) {
           setPreview(state);
           layoutPanel();

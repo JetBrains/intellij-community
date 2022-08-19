@@ -263,7 +263,7 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : Styled
         continue
       }
       val icon = if (lessonMessage.state == MessageState.PASSED) {
-        FeaturesTrainerIcons.Img.GreenCheckmark
+        FeaturesTrainerIcons.GreenCheckmark
       }
       else if (!LessonManager.instance.lessonIsRunning()) {
         AllIcons.General.Information

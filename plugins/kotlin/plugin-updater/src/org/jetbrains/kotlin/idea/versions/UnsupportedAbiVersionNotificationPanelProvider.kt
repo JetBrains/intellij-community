@@ -294,7 +294,7 @@ class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvide
         override fun isSpeedSearchEnabled(): Boolean = true
     }
 
-    private class ErrorNotificationPanel(fileEditor: FileEditor) : EditorNotificationPanel(fileEditor) {
+    private class ErrorNotificationPanel(fileEditor: FileEditor) : EditorNotificationPanel(fileEditor, Status.Error) {
         init {
             myLabel.icon = AllIcons.General.Error
         }

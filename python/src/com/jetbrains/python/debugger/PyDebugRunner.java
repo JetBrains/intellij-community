@@ -68,7 +68,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.jetbrains.python.inspections.PyInterpreterInspection.InterpreterSettingsQuickFix.showPythonInterpreterSettings;
+import static com.jetbrains.python.inspections.quickfix.sdk.InterpreterSettingsQuickFix.showPythonInterpreterSettings;
 
 
 public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
@@ -188,7 +188,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     }
   }
 
-  private static int findAvailableSocketPort() {
+  public static int findAvailableSocketPort() {
     try {
       return NetUtils.findAvailableSocketPort();
     }

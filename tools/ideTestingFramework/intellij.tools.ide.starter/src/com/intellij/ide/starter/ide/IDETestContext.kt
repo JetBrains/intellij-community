@@ -178,8 +178,8 @@ data class IDETestContext(
       .addSystemProperty("shared.indexes.download.auto.consent", enable)
   }
 
-  fun skipIndicesInitialization() = addVMOptionsPatch {
-    addSystemProperty("idea.skip.indices.initialization", true)
+  fun skipIndicesInitialization(value: Boolean = true) = addVMOptionsPatch {
+    addSystemProperty("idea.skip.indices.initialization", value)
   }
 
   fun collectImportProjectPerfMetrics() = addVMOptionsPatch {

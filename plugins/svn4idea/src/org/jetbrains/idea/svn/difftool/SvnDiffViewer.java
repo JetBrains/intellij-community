@@ -161,7 +161,7 @@ public class SvnDiffViewer implements DiffViewer {
   @Nullable
   private JComponent createNotification() {
     if (myPropertyRequest instanceof ErrorDiffRequest) {
-      return createNotification(((ErrorDiffRequest)myPropertyRequest).getMessage());
+      return createNotification(((ErrorDiffRequest)myPropertyRequest).getMessage(), EditorNotificationPanel.Status.Error);
     }
 
     List<DiffContent> contents = ((SvnPropertiesDiffRequest)myPropertyRequest).getContents();
@@ -172,11 +172,13 @@ public class SvnDiffViewer implements DiffViewer {
     if (before.isEmpty() && after.isEmpty()) return null;
 
     if (!before.keySet().equals(after.keySet())) {
-      return createNotification(message("label.svn.properties.changed"));
+      return createNotification(message("label.svn.properties.changed"), EditorNotificationPanel.Status.Info);
     }
 
     for (String key : before.keySet()) {
-      if (!Comparing.equal(before.get(key), after.get(key))) return createNotification(message("label.svn.properties.changed"));
+      if (!Comparing.equal(before.get(key), after.get(key))) {
+        return createNotification(message("label.svn.properties.changed"), EditorNotificationPanel.Status.Info);
+      }
     }
 
     return null;
@@ -199,8 +201,8 @@ public class SvnDiffViewer implements DiffViewer {
   }
 
   @NotNull
-  private static JPanel createNotification(@NlsContexts.Label @NotNull String text) {
-    return new EditorNotificationPanel().text(text);
+  private static JPanel createNotification(@NlsContexts.Label @NotNull String text, @NotNull EditorNotificationPanel.Status status) {
+    return new EditorNotificationPanel(status).text(text);
   }
 
   //

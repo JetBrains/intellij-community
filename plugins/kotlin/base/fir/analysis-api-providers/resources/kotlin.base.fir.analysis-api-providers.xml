@@ -1,4 +1,5 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.base.fir.analysisApiProviders">
+
   <extensions defaultExtensionNs="com.intellij">
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory"
@@ -8,4 +9,9 @@
     <psi.treeChangePreprocessor
             implementation="org.jetbrains.kotlin.idea.base.fir.analysisApiProviders.FirIdeOutOfBlockPsiTreeChangePreprocessor"/>
   </extensions>
+
+  <dependencies>
+    <module name="kotlin.base.analysis-api-providers"/>
+  </dependencies>
+
 </idea-plugin>

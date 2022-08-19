@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineInfoProvider
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.MirrorOfCoroutineContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
-import org.jetbrains.kotlin.idea.debugger.evaluate.DefaultExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class CoroutinesInfoFromJsonAndReferencesProvider(

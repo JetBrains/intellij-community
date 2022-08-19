@@ -2,6 +2,7 @@ blockmap
 codestyle
 controlflow
 darcula
+datavis
 decapitalize
 decapitalized
 descr
@@ -12,6 +13,7 @@ findusages
 foldable
 goide
 grammarkit
+grazi
 ijperf
 indexable
 inplace
@@ -37,5 +39,6 @@ undisposed
 unicodes
 unsafety
 versionable
+xdebugger
 yybegin
 yystate

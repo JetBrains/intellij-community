@@ -212,10 +212,8 @@ class InspectionRunner {
       LocalInspectionTool tool = toolWrapper.getTool();
       for (ProblemDescriptor descriptor : context.holder.getResults()) {
         PsiElement element = descriptor.getPsiElement();
-        if (element != null) {
-          if (tool.isSuppressedFor(element)) {
-            registerSuppressedElements(element, toolWrapper.getID(), toolWrapper.getAlternativeID());
-          }
+        if (element != null && tool.isSuppressedFor(element)) {
+          registerSuppressedElements(element, toolWrapper.getID(), toolWrapper.getAlternativeID());
         }
       }
     }

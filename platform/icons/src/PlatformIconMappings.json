@@ -298,7 +298,6 @@
     },
     "image": {
       "colorPicker_dark.svg": "ide/pipette.svg",
-      "chessboard.svg": "org/intellij/images/icons/ToggleTransparencyChessboard.svg",
       "actualZoom.svg": "graph/actualZoom.svg",
       "colorPicker.svg": "ide/pipette.svg",
       "grid.svg": "graph/grid.svg",

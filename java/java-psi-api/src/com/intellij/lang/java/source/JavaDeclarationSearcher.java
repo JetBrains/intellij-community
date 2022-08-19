@@ -23,7 +23,9 @@ public class JavaDeclarationSearcher implements JvmDeclarationSearcher {
   }
 
   @Override
-  public @Nullable PsiElement adjustIdentifierElement(PsiElement identifierElement) {
-    return identifierElement instanceof PsiAnonymousClass ? identifierElement : null;
+  public @Nullable PsiElement adjustIdentifierElement(@NotNull PsiElement identifierElement) {
+    PsiElement parent = identifierElement.getParent();
+    return parent instanceof PsiAnonymousClass &&
+           ((PsiAnonymousClass)parent).getBaseClassReference() == identifierElement ? parent : null;
   }
 }

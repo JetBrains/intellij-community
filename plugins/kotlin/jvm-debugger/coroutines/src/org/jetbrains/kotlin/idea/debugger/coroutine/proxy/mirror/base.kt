@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror
 import com.sun.jdi.*
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.isSubTypeOrSame
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
-import org.jetbrains.kotlin.idea.debugger.evaluate.DefaultExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 
 abstract class BaseMirror<T: ObjectReference, F>(val name: String, context: DefaultExecutionContext) : ReferenceTypeProvider, MirrorProvider<T, F> {
     val log by logger

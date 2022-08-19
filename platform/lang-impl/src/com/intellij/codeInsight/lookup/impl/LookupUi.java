@@ -105,7 +105,7 @@ class LookupUi {
     myMenuButton = new ActionButton(menuAction, presentation, ActionPlaces.EDITOR_POPUP, ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
 
     AnAction hintAction = new HintAction();
-    myHintButton = new ActionButton(hintAction, hintAction.getTemplatePresentation(),
+    myHintButton = new ActionButton(hintAction, hintAction.getTemplatePresentation().clone(),
                                     ActionPlaces.EDITOR_POPUP, ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
     myHintButton.setVisible(false);
 

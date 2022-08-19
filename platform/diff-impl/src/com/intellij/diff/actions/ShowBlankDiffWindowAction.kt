@@ -55,6 +55,7 @@ import java.awt.datatransfer.Transferable
 import java.awt.event.MouseEvent
 import java.io.File
 import javax.swing.JComponent
+import javax.swing.text.StyleConstants.setIcon
 import kotlin.math.max
 
 class ShowBlankDiffWindowAction : DumbAwareAction() {
@@ -509,7 +510,7 @@ private fun createBlankNotificationProvider(viewer: DiffViewer?, content: Docume
   }
   if (editor.document.textLength != 0) return null
 
-  val panel = EditorNotificationPanel(editor, null, null)
+  val panel = EditorNotificationPanel(editor, null, null, EditorNotificationPanel.Status.Info)
   panel.createActionLabel(DiffBundle.message("notification.action.text.blank.diff.select.file")) {
     SwitchToFileEditorAction().perform(editor, viewer, helper)
   }

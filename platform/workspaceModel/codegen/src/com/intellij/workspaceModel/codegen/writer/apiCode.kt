@@ -16,14 +16,17 @@ import com.intellij.workspaceModel.codegen.writer.allFields
 import com.intellij.workspaceModel.codegen.writer.isStandardInterface
 import com.intellij.workspaceModel.codegen.writer.javaName
 import com.intellij.workspaceModel.codegen.writer.type
-import com.intellij.workspaceModel.storage.CodeGeneratorVersions
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
+
+val SKIPPED_TYPES: Set<String> = setOfNotNull(WorkspaceEntity::class.simpleName,
+                                              ReferableWorkspaceEntity::class.simpleName,
+                                              ModifiableWorkspaceEntity::class.simpleName,
+                                              ModifiableReferableWorkspaceEntity::class.simpleName,
+                                              WorkspaceEntityWithPersistentId::class.simpleName)
 
 fun ObjClass<*>.generateBuilderCode(): String = lines {
   line("@${GeneratedCodeApiVersion::class.fqn}(${CodeGeneratorVersions.API_VERSION})")

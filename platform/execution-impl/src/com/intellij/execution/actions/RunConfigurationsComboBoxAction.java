@@ -27,6 +27,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -194,7 +195,6 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     );
   }
 
-
   @Override
   @NotNull
   protected DefaultActionGroup createPopupActionGroup(final JComponent button) {
@@ -213,7 +213,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
     addTargetGroup(project, allActionsGroup);
 
-    allActionsGroup.add(new RunCurrentFileAction());
+    allActionsGroup.add(new RunCurrentFileAction(executor -> true));
     allActionsGroup.addSeparator(ExecutionBundle.message("run.configurations.popup.existing.configurations.separator.text"));
 
     for (Map<String, List<RunnerAndConfigurationSettings>> structure : RunManagerImpl.getInstanceImpl(project).getConfigurationsGroupedByTypeAndFolder(true).values()) {
@@ -252,7 +252,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   }
 
   protected AnAction createFinalAction(@NotNull final RunnerAndConfigurationSettings configuration, @NotNull final Project project) {
-    return new SelectConfigAction(configuration, project);
+    return new SelectConfigAction(configuration, project, executor -> true);
   }
 
   public class RunConfigurationsComboBoxButton extends ComboBoxButton {
@@ -351,25 +351,33 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
 
   private static void addExecutorActions(@NotNull DefaultActionGroup group,
-                                         @NotNull Function<? super Executor, ? extends ExecutorRegistryImpl.ExecutorAction> actionCreator) {
+                                         @NotNull Function<? super Executor, ? extends ExecutorRegistryImpl.ExecutorAction> actionCreator,
+                                         @NotNull Function<? super Executor, Boolean> executorFilter) {
     for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensionList()) {
       if (executor instanceof ExecutorGroup) {
         for (Executor childExecutor : ((ExecutorGroup<?>)executor).childExecutors()) {
-          group.addAction(actionCreator.apply(childExecutor));
+          if (executorFilter.apply(childExecutor)) {
+            group.addAction(actionCreator.apply(childExecutor));
+          }
         }
       }
       else {
-        group.addAction(actionCreator.apply(executor));
+        if (executorFilter.apply(executor)) {
+          group.addAction(actionCreator.apply(executor));
+        }
       }
     }
   }
 
-  private static class RunCurrentFileAction extends DefaultActionGroup implements DumbAware {
-    private RunCurrentFileAction() {
+  @ApiStatus.Internal
+  public static class RunCurrentFileAction extends DefaultActionGroup implements DumbAware {
+    private final @NotNull Function<? super Executor, Boolean> myExecutorFilter;
+
+    public RunCurrentFileAction(@NotNull Function<? super Executor, Boolean> executorFilter) {
       super(ExecutionBundle.messagePointer("run.configurations.combo.run.current.file.item.in.dropdown"),
             ExecutionBundle.messagePointer("run.configurations.combo.run.current.file.description"),
             null);
-
+      myExecutorFilter = executorFilter;
       setPopup(true);
       getTemplatePresentation().setPerformGroup(true);
 
@@ -378,7 +386,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
     private void addSubActions() {
       // Add actions similar to com.intellij.execution.actions.ChooseRunConfigurationPopup.ConfigurationActionsStep#buildActions
-      addExecutorActions(this, ExecutorRegistryImpl.RunCurrentFileExecutorAction::new);
+      addExecutorActions(this, ExecutorRegistryImpl.RunCurrentFileExecutorAction::new, myExecutorFilter);
       addSeparator();
       addAction(new ExecutorRegistryImpl.EditRunConfigAndRunCurrentFileExecutorAction(DefaultRunExecutor.getRunExecutorInstance()));
     }
@@ -433,13 +441,16 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
   }
 
-  private static final class SelectConfigAction extends DefaultActionGroup implements DumbAware {
+  @ApiStatus.Internal
+  public static final class SelectConfigAction extends DefaultActionGroup implements DumbAware {
     private final RunnerAndConfigurationSettings myConfiguration;
     private final Project myProject;
+    private final @NotNull Function<? super Executor, Boolean> myExecutorFilter;
 
-    SelectConfigAction(final RunnerAndConfigurationSettings configuration, final Project project) {
+    public SelectConfigAction(final RunnerAndConfigurationSettings configuration, final Project project, @NotNull Function<? super Executor, Boolean> executorFilter) {
       myConfiguration = configuration;
       myProject = project;
+      myExecutorFilter = executorFilter;
 
       setPopup(true);
       getTemplatePresentation().setPerformGroup(true);
@@ -466,7 +477,9 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
     private void addSubActions() {
       // Add actions similar to com.intellij.execution.actions.ChooseRunConfigurationPopup.ConfigurationActionsStep#buildActions
-      addExecutorActions(this, executor -> new ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(executor, myConfiguration, false));
+      addExecutorActions(this,
+                         executor -> new ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(executor, myConfiguration, false),
+                         myExecutorFilter);
       addSeparator();
 
       Executor runExecutor = DefaultRunExecutor.getRunExecutorInstance();

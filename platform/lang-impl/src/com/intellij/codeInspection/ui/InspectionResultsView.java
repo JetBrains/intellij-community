@@ -649,8 +649,8 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
       return ContainerUtil.map2Array(paths, p -> p.getLastPathComponent());
     }
-    if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
-      return Collections.<DataProvider>singletonList(slowId -> getSlowData(slowId, paths));
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      return (DataProvider)slowId -> getSlowData(slowId, paths);
     }
     return null;
   }

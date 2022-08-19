@@ -534,9 +534,9 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
   }
 
   private static GroovyCompletionConsumer getCompletionConsumer(CompletionResultSet resultSet, CompletionParameters completionParameters) {
-    PsiFile file = completionParameters.getOriginalFile();
+    PsiElement position = completionParameters.getPosition();
     for (GroovyCompletionCustomizer customizer : GroovyCompletionContributor.EP_NAME.getExtensionList()) {
-      GroovyCompletionConsumer consumer = customizer.generateCompletionConsumer(file, resultSet);
+      GroovyCompletionConsumer consumer = customizer.generateCompletionConsumer(position, resultSet);
       if (consumer != null) {
         return consumer;
       }

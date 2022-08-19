@@ -1,5 +1,6 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntityInformation
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -11,6 +12,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToOneChild
@@ -41,8 +43,8 @@ open class ChildSubEntityImpl : ChildSubEntity, WorkspaceEntityBase() {
   override val parentEntity: ParentSubEntity
     get() = snapshot.extractOneToOneParent(PARENTENTITY_CONNECTION_ID, this)!!
 
-  override val child: ChildSubSubEntity
-    get() = snapshot.extractOneToOneChild(CHILD_CONNECTION_ID, this)!!
+  override val child: ChildSubSubEntity?
+    get() = snapshot.extractOneToOneChild(CHILD_CONNECTION_ID, this)
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -86,16 +88,6 @@ open class ChildSubEntityImpl : ChildSubEntity, WorkspaceEntityBase() {
       }
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field ChildSubEntity#entitySource should be initialized")
-      }
-      if (_diff != null) {
-        if (_diff.extractOneToOneChild<WorkspaceEntityBase>(CHILD_CONNECTION_ID, this) == null) {
-          error("Field ChildSubEntity#child should be initialized")
-        }
-      }
-      else {
-        if (this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] == null) {
-          error("Field ChildSubEntity#child should be initialized")
-        }
       }
     }
 
@@ -157,15 +149,15 @@ open class ChildSubEntityImpl : ChildSubEntity, WorkspaceEntityBase() {
 
       }
 
-    override var child: ChildSubSubEntity
+    override var child: ChildSubSubEntity?
       get() {
         val _diff = diff
         return if (_diff != null) {
           _diff.extractOneToOneChild(CHILD_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
-                                                                                               CHILD_CONNECTION_ID)]!! as ChildSubSubEntity
+                                                                                               CHILD_CONNECTION_ID)] as? ChildSubSubEntity
         }
         else {
-          this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)]!! as ChildSubSubEntity
+          this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? ChildSubSubEntity
         }
       }
       set(value) {
@@ -269,5 +261,9 @@ class ChildSubEntityData : WorkspaceEntityData<ChildSubEntity>() {
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
     return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.sameForAllEntities = true
   }
 }

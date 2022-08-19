@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.openapi.editor.Document
-import com.intellij.psi.PsiElement
 import com.intellij.testFramework.ExpectedHighlightingData
 import org.jetbrains.kotlin.codeMetaInfo.model.CodeMetaInfo
 import org.jetbrains.kotlin.codeMetaInfo.renderConfigurations.AbstractCodeMetaInfoRenderConfiguration
@@ -16,30 +15,21 @@ class KotlinExpectedHighlightingData(document: Document) :
                              /* checkInfos = */ false
     ) {
 
-    override fun containsLineMarker(info: LineMarkerInfo<*>?, where: MutableCollection<out LineMarkerInfo<PsiElement>>?): Boolean {
-        val originalTooltip = info!!.lineMarkerTooltip
-        val infoTooltip = sanitizeLineMarker(originalTooltip)
-        val icon = info.icon
-        try {
-            for (markerInfo in where!!) {
-                if (!(markerInfo.startOffset == info.startOffset && markerInfo.endOffset == info.endOffset)) continue
-                val lineMarkerTooltip = markerInfo.lineMarkerTooltip
-                val sanitizeLineMarker = sanitizeLineMarker(lineMarkerTooltip)
-                if ((matchDescriptions(false, originalTooltip, lineMarkerTooltip) ||
-                            matchDescriptions(false, infoTooltip, lineMarkerTooltip) ||
-                            matchDescriptions(false, originalTooltip, sanitizeLineMarker) ||
-                            matchDescriptions(false, infoTooltip, sanitizeLineMarker)) &&
-                    matchIcons(icon, markerInfo.icon)
-                ) {
-                    return true
-                }
-            }
-        } catch (e: Exception) {
-            throw Exception("infoTooltip\n$infoTooltip\n-> ${e.message}", e)
-        }
-
-        return false
+    override fun sanitizedLineMarkerTooltip(info: LineMarkerInfo<*>): String {
+        return sanitizeLineMarker(info.lineMarkerTooltip)
     }
+
+    override fun matchLineMarkersTooltip(info: LineMarkerInfo<*>, markerInfo: LineMarkerInfo<*>): Boolean {
+        val originalTooltip = info.lineMarkerTooltip
+        val infoTooltip = sanitizeLineMarker(originalTooltip)
+        val lineMarkerTooltip = markerInfo.lineMarkerTooltip
+        val sanitizeLineMarker = sanitizeLineMarker(lineMarkerTooltip)
+        return matchDescriptions(false, originalTooltip, lineMarkerTooltip) ||
+                matchDescriptions(false, infoTooltip, lineMarkerTooltip) ||
+                matchDescriptions(false, originalTooltip, sanitizeLineMarker) ||
+                matchDescriptions(false, infoTooltip, sanitizeLineMarker)
+    }
+
 }
 
 class InnerLineMarkerConfiguration: AbstractCodeMetaInfoRenderConfiguration() {

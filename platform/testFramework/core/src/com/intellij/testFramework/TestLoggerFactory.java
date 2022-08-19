@@ -314,15 +314,10 @@ public final class TestLoggerFactory implements Logger.Factory {
       }
 
       if (System.getenv("TEAMCITY_VERSION") != null) {
-        // printing in several small statements to avoid service messages tearing, causing this fold to expand
-        // using .out instead of .err by the advice from Nikita Skvortsov
-        System.out.flush();
-        System.out.println("##teamcity[blockOpened name='DEBUG log']");
-        System.out.flush();
-        System.out.println(buffer);
-        System.out.flush();
-        System.out.println("##teamcity[blockClosed name='DEBUG log']");
-        System.out.flush();
+        String finalBuffer = buffer;
+        TeamCityLogger.block("DEBUG log", () -> {
+          System.out.println(finalBuffer);
+        });
       }
       else {
         // mark each line in IDEA console with this hidden mark to be able to fold it automatically

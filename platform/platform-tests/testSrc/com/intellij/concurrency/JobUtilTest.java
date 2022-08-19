@@ -528,13 +528,7 @@ public class JobUtilTest extends LightPlatformTestCase {
       }
       assertTrue(started.get());
       job.cancel();
-      try {
-        job.waitForCompletion(100_000);
-      }
-      catch (TimeoutException e) {
-        System.err.println(ThreadDumper.dumpThreadsToString());
-        throw e;
-      }
+      assertTrue(job.waitForCompletion(100_000));
       assertTrue(finished.get());
     }
   }
@@ -577,13 +571,7 @@ public class JobUtilTest extends LightPlatformTestCase {
     job.cancel();
     while (!job.isDone()) {
       UIUtil.dispatchAllInvocationEvents();
-      try {
-        job.waitForCompletion(1000);
-        UIUtil.dispatchAllInvocationEvents();
-        break;
-      }
-      catch (TimeoutException ignored) {
-      }
+      job.waitForCompletion(1000);
     }
   }
 

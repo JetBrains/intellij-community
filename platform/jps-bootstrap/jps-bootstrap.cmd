@@ -16,7 +16,7 @@ set SCRIPT_VERSION=jps-bootstrap-cmd-v1
 set COMPANY_NAME=JetBrains
 set TARGET_DIR=%LOCALAPPDATA%\Temp\%COMPANY_NAME%\
 set JVM_TARGET_DIR=%TARGET_DIR%%JBR_VERSION%%JBR_BUILD%-%JBR_ARCH%-%SCRIPT_VERSION%\
-set JVM_TEMP_FILE=jvm-windows-x64.zip
+set JVM_TEMP_FILE=jvm-windows-x64.tar.gz
 set JVM_URL=https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-%JBR_VERSION%-%JBR_ARCH%-%JBR_BUILD%.tar.gz
 
 set POWERSHELL=%SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe
@@ -55,7 +55,7 @@ cd /d "%JVM_TARGET_DIR%"
 if errorlevel 1 goto fail
 
 echo Extracting %TARGET_DIR%%JVM_TEMP_FILE% to %JVM_TARGET_DIR%
-"%POWERSHELL%" -nologo -noprofile -command "Set-StrictMode -Version 3.0; $ErrorActionPreference = \"Stop\"; Add-Type -A 'System.IO.Compression.FileSystem'; [IO.Compression.ZipFile]::ExtractToDirectory('..\\%JVM_TEMP_FILE%', '.');"
+"%POWERSHELL%" -nologo -noprofile -command "Set-StrictMode -Version 3.0; $ErrorActionPreference = \"Stop\"; (Get-Location) -split '\\' | ForEach { $dir='' } { $dir=Get-Item \"$dir$_\\\" -Force -ErrorAction SilentlyContinue; if ($dir.Attributes -band [System.IO.FileAttributes]::ReparsePoint) { $dir=\"$($dir.Target)\\\" } } { Set-Location $dir }; & tar -x -f \"..\%JVM_TEMP_FILE%\" -C .; if ($LastExitCode -ne 0) { throw \"Exec: tar exited with code $LastExitCode\" }"
 if errorlevel 1 goto fail
 
 del /F "..\%JVM_TEMP_FILE%"

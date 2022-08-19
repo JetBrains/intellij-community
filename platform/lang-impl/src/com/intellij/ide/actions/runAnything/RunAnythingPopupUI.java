@@ -855,6 +855,11 @@ public class RunAnythingPopupUI extends BigPopupUI {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     protected boolean isActive() {
       return myTemplateGroups.size() != getVisibleGroups().size();
     }

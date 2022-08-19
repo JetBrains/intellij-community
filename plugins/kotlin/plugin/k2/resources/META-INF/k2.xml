@@ -30,9 +30,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <beforeResolveHighlightingVisitor implementation="org.jetbrains.kotlin.idea.fir.highlighter.beforeResolve.DeclarationHighlightingExtension"/>
-    <beforeResolveHighlightingVisitor implementation="org.jetbrains.kotlin.idea.fir.highlighter.beforeResolve.AnnotationsHighlightingExtension"/>
-
     <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling.FirJvmIdePlatformKindTooling"/>
     <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling.FirJsIdePlatformKindTooling"/>
     <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling.FirNativeIdePlatformKindTooling"/>
@@ -57,8 +54,6 @@
     <applicationService serviceInterface="org.jetbrains.kotlin.idea.references.KotlinReferenceProviderContributor"
                         serviceImplementation="org.jetbrains.kotlin.idea.references.KotlinFirReferenceContributor"/>
     <statusBarWidgetFactory implementation="org.jetbrains.kotlin.idea.fir.FirStatusBarWidgetFactory"/>
-    <highlightRangeExtension implementation="org.jetbrains.kotlin.idea.fir.highlighter.KotlinFirPsiChecker"/>
-    <annotator language="kotlin" implementationClass="org.jetbrains.kotlin.idea.fir.highlighter.KotlinFirPsiChecker"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirResolveSessionService"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade"/>
 
@@ -81,7 +76,6 @@
                             implementationClass="org.jetbrains.kotlin.idea.completion.KotlinFirCompletionContributor"/>
     <codeInsight.typeInfo language="kotlin"
                           implementationClass="org.jetbrains.kotlin.idea.codeInsight.KotlinHighLevelExpressionTypeProvider"/>
-    <highlightingPassFactory implementation="org.jetbrains.kotlin.idea.fir.highlighter.KotlinDiagnosticHighlightingPassFactory"/>
 
     <codeInsight.implementMethod language="kotlin" implementationClass="org.jetbrains.kotlin.idea.core.overrideImplement.KtImplementMembersHandler"/>
     <codeInsight.overrideMethod language="kotlin" implementationClass="org.jetbrains.kotlin.idea.core.overrideImplement.KtOverrideMembersHandler"/>
@@ -121,7 +115,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.completion.FirCompletionDummyIdentifierProviderService"
-                        serviceInterface="org.jetbrains.kotlin.idea.completion.CompletionDummyIdentifierProviderService"/>
+                        serviceInterface="org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService"/>
 
     <applicationService
             serviceInterface="org.jetbrains.kotlin.psi.KotlinReferenceProvidersService"
@@ -196,7 +190,7 @@
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer"/>
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.script.standalone.KotlinStandaloneScriptRunConfigurationProducer"/>
 
-    <runLineMarkerContributor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.fir.highlighter.KotlinFirMainRunLineMarkerContributor"/>
+    <runLineMarkerContributor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.highlighting.KotlinFirMainRunLineMarkerContributor"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.configuration.ui.KotlinConfigurationCheckerService"/>
 
     <fileBasedIndex implementation="org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelCallableByPackageShortNameIndex"/>
@@ -229,9 +223,13 @@
 
     <module name="kotlin.code-insight.intentions-shared"/>
     <module name="kotlin.code-insight.inspections-shared"/>
+    <module name="kotlin.code-insight.live-templates-shared"/>
     <module name="kotlin.code-insight.intentions-k2"/>
     <module name="kotlin.code-insight.inspections-k2"/>
+    <module name="kotlin.code-insight.k2"/>
+    <module name="kotlin.code-insight.live-templates-k2"/>
 
     <module name="kotlin.navigation"/>
+    <module name="kotlin.highlighting"/>
   </content>
 </idea-plugin>

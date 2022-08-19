@@ -1254,7 +1254,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     String commitMessage = StringUtil.isEmpty(changeList.getComment()) ? changeList.getName() : changeList.getComment();
     ChangeListCommitState commitState = new ChangeListCommitState(changeList, changes, commitMessage);
     SingleChangeListCommitter committer =
-      new SingleChangeListCommitter(myProject, commitState, new CommitContext(), changeList.getName(), false);
+      new SingleChangeListCommitter(myProject, commitState, new CommitContext(), changeList.getName());
 
     committer.addResultHandler(new ShowNotificationCommitResultHandler(committer));
     committer.runCommit(changeList.getName(), synchronously);

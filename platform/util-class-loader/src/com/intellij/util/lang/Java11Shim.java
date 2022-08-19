@@ -27,9 +27,9 @@ public abstract class Java11Shim {
     }
   };
 
-  public abstract <@NotNull K, @NotNull V> Map<K, V> copyOf(Map<? extends K, ? extends V> map);
+  public abstract <K, V> Map<K, V> copyOf(Map<? extends @NotNull K, ? extends @NotNull V> map);
 
-  public abstract <@NotNull E> @NotNull Set<E> copyOf(Set<? extends E> collection);
+  public abstract <E> @NotNull Set<E> copyOf(Set<? extends @NotNull E> collection);
 
-  public abstract <@NotNull E> @NotNull List<E> copyOfCollection(Collection<? extends E> collection);
+  public abstract <E> @NotNull List<E> copyOfCollection(Collection<? extends @NotNull E> collection);
 }

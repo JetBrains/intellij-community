@@ -339,10 +339,6 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
-  public void load() {
-  }
-
-  @Override
   public void restart(boolean exitConfirmed) {
   }
 

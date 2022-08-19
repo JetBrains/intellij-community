@@ -305,7 +305,7 @@ public abstract class MergeRequestProcessor implements Disposable {
       if (myDisposed) return;
       if (!myNotificationPanel.isNull()) return;
 
-      EditorNotificationPanel notification = new EditorNotificationPanel(LightColors.RED);
+      EditorNotificationPanel notification = new EditorNotificationPanel(LightColors.RED, EditorNotificationPanel.Status.Error);
       notification.setText(DiffBundle.message("error.conflict.is.not.valid.and.no.longer.can.be.resolved"));
       notification.createActionLabel(DiffBundle.message("button.abort.resolve"), () -> {
         applyRequestResult(MergeResult.CANCEL);

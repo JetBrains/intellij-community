@@ -40,7 +40,7 @@ class ScriptingSupportChecker: EditorNotificationProvider {
             ) && providers.none { it.isSupportedUnderSourceRoot(file) }
         ) {
             return Function {
-                EditorNotificationPanel(it).apply {
+                EditorNotificationPanel(it, EditorNotificationPanel.Status.Info).apply {
                     text = KotlinBundle.message("kotlin.script.in.project.sources")
                     createActionLabel(
                         KotlinBundle.message("kotlin.script.warning.more.info"),
@@ -56,7 +56,7 @@ class ScriptingSupportChecker: EditorNotificationProvider {
 
         if (providers.none { it.isSupportedScriptExtension(file) }) {
             return Function {
-                EditorNotificationPanel(it).apply {
+                EditorNotificationPanel(it, EditorNotificationPanel.Status.Info).apply {
                     text = KotlinBundle.message("kotlin.script.in.beta.stage")
                     createActionLabel(
                         KotlinBundle.message("kotlin.script.warning.more.info"),

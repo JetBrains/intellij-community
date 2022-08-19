@@ -5,6 +5,7 @@ package com.intellij.ide.plugins
 import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.core.CoreBundle
+import com.intellij.idea.AppMode
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
@@ -22,9 +23,22 @@ import java.util.*
 private val LOG: Logger
   get() = PluginManagerCore.getLogger()
 
+
+fun Collection<String>.toPluginIds(): Set<PluginId> = PluginManagerCore.toPluginIds(this)
+
 fun Iterable<IdeaPluginDescriptor>.toPluginIdSet(): Set<PluginId> = mapTo(LinkedHashSet()) { it.pluginId }
 
-fun Iterable<PluginId>.toPluginDescriptors(): List<IdeaPluginDescriptorImpl> = mapNotNull(PluginManagerCore::findPlugin)
+fun Iterable<PluginId>.toPluginDescriptors(): List<IdeaPluginDescriptorImpl> {
+  val pluginIdMap = PluginManagerCore.buildPluginIdMap()
+  return mapNotNull { pluginIdMap[it] }
+}
+
+internal fun Iterable<PluginId>.joinedPluginIds(operation: String): String {
+  return joinToString(
+    prefix = "Plugins to $operation: [",
+    postfix = "]",
+  ) { it.idString }
+}
 
 @ApiStatus.Internal
 class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
@@ -81,10 +95,6 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   }
 
   companion object {
-    @ApiStatus.Internal
-    @JvmField
-    var disableNonBundledPlugins = false
-
     @VisibleForTesting
     const val ON_DEMAND_ENABLED_KEY = "idea.on.demand.plugins"
 
@@ -294,7 +304,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
       isEnabled = false
     }
 
-    if (disableNonBundledPlugins) {
+    if (AppMode.isDisableNonBundledPlugins()) {
       markAsIncompatible(PluginLoadingError(
         plugin = this,
         detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.custom.plugin.loading.disabled", getName()) },

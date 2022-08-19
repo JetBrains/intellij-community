@@ -36,7 +36,7 @@ internal class WorkspaceModuleImporter(
   private val importingSettings: MavenImportingSettings,
   private val dependenciesImportingContext: DependenciesImportingContext,
   private val folderImportingContext: WorkspaceFolderImporter.FolderImportingContext,
-  private val configuratorTimings: ConfiguratorTimings
+  private val stats: WorkspaceImportStats
 ) {
   private val externalSource = ExternalProjectSystemRegistry.getInstance().getSourceById(EXTERNAL_SOURCE_ID)
 
@@ -76,7 +76,7 @@ internal class WorkspaceModuleImporter(
                                     folderImportingContext: WorkspaceFolderImporter.FolderImportingContext) {
     val folderImporter = WorkspaceFolderImporter(builder, virtualFileUrlManager, importingSettings, folderImportingContext)
     val importFolderHolder = folderImporter.createContentRoots(importData.mavenProject, importData.moduleData.type, moduleEntity,
-                                                               configuratorTimings)
+                                                               stats)
 
     when (importData.moduleData.type) {
       MavenModuleType.MAIN_ONLY -> importJavaSettingsMain(moduleEntity, importData, importFolderHolder)

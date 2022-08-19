@@ -372,11 +372,13 @@ To create an EditorConfig file in a directory, right-click this directory and se
 
     <!-- Intention actions -->
     <intentionAction>
+      <language>EditorConfig</language>
       <className>org.editorconfig.language.codeinsight.actions.intention.EditorConfigInvertValueIntention</className>
       <bundleName>messages.EditorConfigBundle</bundleName>
       <categoryKey>editorconfig</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>EditorConfig</language>
       <className>org.editorconfig.language.codeinsight.actions.intention.EditorConfigAddDeclarationPartIntention</className>
       <bundleName>messages.EditorConfigBundle</bundleName>
       <categoryKey>editorconfig</categoryKey>

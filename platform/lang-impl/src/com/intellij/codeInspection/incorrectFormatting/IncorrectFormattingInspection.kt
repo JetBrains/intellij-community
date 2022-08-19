@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.lang.LangBundle
 import com.intellij.lang.Language
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
@@ -25,6 +26,7 @@ class IncorrectFormattingInspection(
   val isKotlinPlugged: Boolean by lazy { PluginManagerCore.getPlugin(PluginId.getId("org.jetbrains.kotlin")) != null }
 
   override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
+    file.project.service<IncorrectFormattingInspectionCodeStyleSettingsListenerService>()
 
     // Skip files we are not able to fix
     if (!file.isWritable) return null
@@ -47,17 +49,16 @@ class IncorrectFormattingInspection(
     }
 
     val document = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return null
-    val scope = CheckingScope(file, document, manager, isOnTheFly)
-    val changes = scope
-                    .getChanges()
-                    .takeIf { it.isNotEmpty() }
-                  ?: return null
 
+    val formattingChanges = detectFormattingChanges(file) ?: return null
+    if (formattingChanges.mismatches.isEmpty()) return null
+
+    val helper = IncorrectFormattingInspectionHelper(formattingChanges, file, document, manager, isOnTheFly)
     return if (reportPerFile) {
-      arrayOf(scope.createGlobalReport())
+      arrayOf(helper.createGlobalReport())
     }
     else {
-      scope.createAllReports(changes)
+      helper.createAllReports()
     }
   }
 

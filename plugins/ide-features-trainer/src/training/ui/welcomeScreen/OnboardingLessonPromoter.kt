@@ -36,7 +36,7 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String,
                                     @Nls private val lessonName: String,
                                     @NonNls private val languageName: String) : BannerStartPagePromoter() {
   override val promoImage: Icon
-    get() = FeaturesTrainerIcons.Img.PluginIcon
+    get() = FeaturesTrainerIcons.PluginIcon
 
   override fun getPromotion(isEmptyState: Boolean): JPanel? {
     scheduleOnboardingFeedback()

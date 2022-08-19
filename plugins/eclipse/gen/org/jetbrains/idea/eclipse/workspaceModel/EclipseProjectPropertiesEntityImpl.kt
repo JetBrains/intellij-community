@@ -16,6 +16,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
@@ -417,5 +418,14 @@ class EclipseProjectPropertiesEntityData : WorkspaceEntityData<EclipseProjectPro
     result = 31 * result + expectedModuleSourcePlace.hashCode()
     result = 31 * result + srcPlace.hashCode()
     return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    this.knownCons?.let { collector.add(it::class.java) }
+    this.eclipseUrls?.let { collector.add(it::class.java) }
+    this.unknownCons?.let { collector.add(it::class.java) }
+    this.variablePaths?.let { collector.add(it::class.java) }
+    this.srcPlace?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = false
   }
 }

@@ -110,10 +110,9 @@ abstract class ToolWindowHeader internal constructor(
               val contentActions = singleContentLayout.getSupplier()?.getContentActions()
               if (!contentActions.isNullOrEmpty()) {
                 extraActions.addAll(0, contentActions)
+                extraActions.add(0, Separator.create())
+                extraActions.add(0, singleContentLayout.CloseCurrentContentAction())
               }
-
-              extraActions.add(0, Separator.create())
-              extraActions.add(0, singleContentLayout.CloseCurrentContentAction())
             }
           }
 
@@ -274,10 +273,6 @@ abstract class ToolWindowHeader internal constructor(
       actionGroup.addSeparator()
     }
     toolbar.updateActionsImmediately()
-  }
-
-  override fun getComponentGraphics(g: Graphics): Graphics {
-    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g))
   }
 
   override fun paintComponent(g: Graphics) {

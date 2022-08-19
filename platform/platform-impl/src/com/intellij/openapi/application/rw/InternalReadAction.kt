@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction.CannotReadException
 import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.ex.ApplicationEx
+import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.blockingContext
 import kotlinx.coroutines.*
 import kotlin.coroutines.coroutineContext
@@ -73,7 +74,8 @@ internal class InternalReadAction<T>(
     }
   }
   catch (e: CancellationException) {
-    if (e.cause is CannotReadException) {
+    val cause = Cancellation.getCause(e)
+    if (cause is CannotReadException) {
       ReadResult.WritePending
     }
     else {

@@ -1,5 +1,6 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntityInformation
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -11,6 +12,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToAbstractOneChild
@@ -35,8 +37,8 @@ open class ParentSingleAbEntityImpl : ParentSingleAbEntity, WorkspaceEntityBase(
 
   }
 
-  override val child: ChildSingleAbstractBaseEntity
-    get() = snapshot.extractOneToAbstractOneChild(CHILD_CONNECTION_ID, this)!!
+  override val child: ChildSingleAbstractBaseEntity?
+    get() = snapshot.extractOneToAbstractOneChild(CHILD_CONNECTION_ID, this)
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -68,16 +70,6 @@ open class ParentSingleAbEntityImpl : ParentSingleAbEntity, WorkspaceEntityBase(
 
     fun checkInitialization() {
       val _diff = diff
-      if (_diff != null) {
-        if (_diff.extractOneToAbstractOneChild<WorkspaceEntityBase>(CHILD_CONNECTION_ID, this) == null) {
-          error("Field ParentSingleAbEntity#child should be initialized")
-        }
-      }
-      else {
-        if (this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] == null) {
-          error("Field ParentSingleAbEntity#child should be initialized")
-        }
-      }
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field ParentSingleAbEntity#entitySource should be initialized")
       }
@@ -96,15 +88,15 @@ open class ParentSingleAbEntityImpl : ParentSingleAbEntity, WorkspaceEntityBase(
     }
 
 
-    override var child: ChildSingleAbstractBaseEntity
+    override var child: ChildSingleAbstractBaseEntity?
       get() {
         val _diff = diff
         return if (_diff != null) {
           _diff.extractOneToAbstractOneChild(CHILD_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
-                                                                                                       CHILD_CONNECTION_ID)]!! as ChildSingleAbstractBaseEntity
+                                                                                                       CHILD_CONNECTION_ID)] as? ChildSingleAbstractBaseEntity
         }
         else {
-          this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)]!! as ChildSingleAbstractBaseEntity
+          this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] as? ChildSingleAbstractBaseEntity
         }
       }
       set(value) {
@@ -215,5 +207,9 @@ class ParentSingleAbEntityData : WorkspaceEntityData<ParentSingleAbEntity>() {
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
     return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.sameForAllEntities = true
   }
 }

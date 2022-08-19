@@ -192,7 +192,7 @@ class PythonOnboardingTourLesson :
                                                                                 LessonUtil.returnToWelcomeScreenRemark()))
         .yesText(PythonLessonsBundle.message("python.onboarding.finish.exit"))
         .noText(PythonLessonsBundle.message("python.onboarding.finish.modules"))
-        .icon(FeaturesTrainerIcons.Img.PluginIcon)
+        .icon(FeaturesTrainerIcons.PluginIcon)
         .show(project)
 
       when (result) {

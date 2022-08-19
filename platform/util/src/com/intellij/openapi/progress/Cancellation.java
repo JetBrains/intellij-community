@@ -50,9 +50,9 @@ public final class Cancellation {
    * Installs the given job as {@link Cancellation#currentJob() current}, runs {@code action}, and returns its result.
    * If the given job becomes cancelled, then {@code ProgressManager#checkCanceled} will throw an instance
    * of the special {@link ProcessCanceledException} subclass inside the given action,
-   * and this method will throw the original cancellation exception of the job.
+   * and this method will throw the cancellation exception wrapping PCE.
    */
-  public static <T, E extends Throwable> T withJob(
+  public static <T, E extends Throwable> T withCurrentJob(
     @NotNull Job job,
     @NotNull ThrowableComputable<T, E> action
   ) throws E, CancellationException {
@@ -65,7 +65,16 @@ public final class Cancellation {
       if (!job.isCancelled()) {
         throw new IllegalStateException("JobCanceledException must be thrown by ProgressManager.checkCanceled()", e);
       }
-      throw e.getCause();
+      throw new CurrentJobCancellationException(e);
+    }
+  }
+
+  public static @Nullable Throwable getCause(@NotNull CancellationException ce) {
+    if (ce instanceof CurrentJobCancellationException) {
+      return ((CurrentJobCancellationException)ce).getOriginalCancellationException().getCause();
+    }
+    else {
+      return ce.getCause();
     }
   }
 

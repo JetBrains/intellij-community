@@ -353,6 +353,9 @@ final class CommunityRepositoryModules {
       // android-extensions-ide.jar
       withModule("intellij.android.kotlin.extensions.common", "android-extensions-ide.jar") // <= ADDED
       withModule("intellij.android.kotlin.extensions", "android-extensions-ide.jar")
+      
+      // android-kotlin-extensions-tooling.jar
+      withModule("intellij.android.kotlin.extensions.tooling", "android-kotlin-extensions-tooling.jar")
 
       // android-kotlin.jar
       withModule("intellij.android.kotlin.idea", "android-kotlin.jar")
@@ -400,8 +403,6 @@ final class CommunityRepositoryModules {
       withModule("intellij.android.device-monitor", "android.jar")
       withModule("intellij.android.device-manager", "android.jar")
       withModule("intellij.android.emulator", "android.jar")
-      withModule("intellij.android.gradle-tooling.api", "android.jar")
-      withModule("intellij.android.gradle-tooling.impl", "android.jar")
       //tools/adt/idea/gradle-dsl:intellij.android.gradle.dsl <= REMOVED
       //tools/adt/idea/gradle-dsl-kotlin:intellij.android.gradle.dsl.kotlin <= REMOVED
       //withModule("intellij.android.gradle.dsl.toml", "android.jar")  <= REMOVED
@@ -440,6 +441,10 @@ final class CommunityRepositoryModules {
       withModule("intellij.android.app-inspection.inspectors.network.view", "android.jar")
       withModule("intellij.android.server-flags", "android.jar")
       withModule("intellij.android.codenavigation", "android.jar")
+
+      //android-gradle-tooling.jar
+      withModule("intellij.android.gradle-tooling.api", "android-gradle-tooling.jar")
+      withModule("intellij.android.gradle-tooling.impl", "android-gradle-tooling.jar")
 
       // artwork.jar
       withModule("intellij.android.artwork", "artwork.jar")

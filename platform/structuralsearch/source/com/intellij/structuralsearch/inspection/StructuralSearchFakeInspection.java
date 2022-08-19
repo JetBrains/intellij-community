@@ -68,7 +68,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
   @NotNull
   @Override
   public String getShortName() {
-    return myMainConfiguration.getShortName();
+    return myMainConfiguration.getUuid();
   }
 
   @Override

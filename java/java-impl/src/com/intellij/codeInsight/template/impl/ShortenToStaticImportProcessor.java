@@ -102,7 +102,7 @@ public class ShortenToStaticImportProcessor implements TemplateOptionalProcessor
 
   @Override
   public boolean isVisible(@NotNull Template template, @NotNull TemplateContext context) {
-    for (TemplateContextType contextType : TemplateContextType.EP_NAME.getExtensions()) {
+    for (TemplateContextType contextType : TemplateContextTypes.getAllContextTypes()) {
       if (!context.isEnabled(contextType)) continue;
       if (contextType instanceof JavaCodeContextType || contextType instanceof JavaCommentContextType) {
         return true;

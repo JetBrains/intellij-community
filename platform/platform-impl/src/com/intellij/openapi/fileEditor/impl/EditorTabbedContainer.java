@@ -27,7 +27,6 @@ import com.intellij.openapi.fileEditor.impl.tabActions.CloseTab;
 import com.intellij.openapi.fileEditor.impl.text.FileDropHandler;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.NlsContexts;
@@ -701,17 +700,26 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
 
     @Override
     protected void paintChildren(Graphics g) {
-      if (!isHideTabs() && ExperimentalUI.isNewUI()) {
+      if (!isHideTabs() && ExperimentalUI.isNewUI() && paintBorder()) {
         TabLabel label = getSelectedLabel();
         if (label != null) {
           int h = label.getHeight();
           Color color = JBColor.namedColor("EditorTabs.underTabsBorderColor", myTabPainter.getTabTheme().getBorderColor());
           g.setColor(color);
-          LinePainter2D.paint(((Graphics2D)g), 0, h, getWidth(), h);
+          LinePainter2D.paint(((Graphics2D)g), 0, h, getWidth(), h); // XXX
         }
       }
       super.paintChildren(g);
       drawBorder(g);
+    }
+
+    private boolean paintBorder() {
+      TabInfo info = getSelectedInfo();
+      if (info == null) {
+        return true;
+      }
+      EditorComposite composite = ((EditorWindow.TComp)info.getComponent()).myComposite;
+      return !composite.selfBorder();
     }
 
     @Override
@@ -742,9 +750,8 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
         @Override
         public void paint(Graphics g) {
           if (ExperimentalUI.isNewUI() && getSelectedInfo() != info && !isHoveredTab(this)) {
-            GraphicsConfig config = GraphicsUtil.paintWithAlpha(g, JBUI.getFloat("EditorTabs.hoverAlpha", 0.75f));
-            super.paint(g);
-            config.restore();
+            float alpha = JBUI.getFloat("EditorTabs.hoverAlpha", 0.75f);
+            GraphicsUtil.paintWithAlpha(g, alpha, () -> super.paint(g));
           } else {
             super.paint(g);
           }

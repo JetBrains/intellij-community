@@ -73,16 +73,16 @@ public class DefaultInspectionToolPresentation extends DefaultInspectionToolResu
 
   @Override
   @Nullable
-  public QuickFix<?> findQuickFixes(@NotNull final CommonProblemDescriptor problemDescriptor,
-                                 RefEntity entity,
-                                 final String hint) {
+  public QuickFix<?> findQuickFixes(@NotNull CommonProblemDescriptor problemDescriptor,
+                                    RefEntity entity,
+                                    String hint) {
     InspectionProfileEntry tool = getToolWrapper().getTool();
     return !(tool instanceof GlobalInspectionTool) ? null : ((GlobalInspectionTool)tool).getQuickFix(hint);
   }
 
   @Override
   public CommonProblemDescriptor @Nullable [] getDescriptions(@NotNull RefEntity refEntity) {
-    final CommonProblemDescriptor[] problems = getProblemElements().getOrDefault(refEntity, null);
+    CommonProblemDescriptor[] problems = getProblemElements().getOrDefault(refEntity, null);
     if (problems == null) return null;
 
     if (!refEntity.isValid()) {
@@ -95,7 +95,7 @@ public class DefaultInspectionToolPresentation extends DefaultInspectionToolResu
 
 
   @Override
-  public void ignoreElement(@NotNull final RefEntity refEntity) {
+  public void ignoreElement(@NotNull RefEntity refEntity) {
     myProblemElements.remove(refEntity);
   }
 
@@ -105,7 +105,7 @@ public class DefaultInspectionToolPresentation extends DefaultInspectionToolResu
                                 CommonProblemDescriptor @NotNull ... descriptors) {
     super.addProblemElement(refElement, filterSuppressed, descriptors);
 
-    final GlobalInspectionContextImpl context = getContext();
+    GlobalInspectionContextImpl context = getContext();
     if (context.isViewClosed() || !(refElement instanceof RefElement)) {
       return;
     }

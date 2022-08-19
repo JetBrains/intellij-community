@@ -138,10 +138,10 @@ public class XDebuggerFramesList extends DebuggerFramesList implements DataProvi
       }
       return null;
     }
-    if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
       XStackFrame frame = getSelectedFrame();
       if (frame != null) {
-        return List.<DataProvider>of(realDataId -> getSlowData(frame, realDataId));
+        return (DataProvider)realDataId -> getSlowData(frame, realDataId);
       }
     }
     return null;

@@ -12,5 +12,6 @@ public interface RegExpNamedGroupRef extends RegExpAtom {
 
   boolean isPythonNamedGroupRef();
   boolean isRubyNamedGroupRef();
+  boolean isPcreNumberedGroupRef();
   boolean isNamedGroupRef();
 }

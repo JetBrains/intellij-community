@@ -19,16 +19,8 @@ public abstract class SuspendContextCommandImpl extends DebuggerCommandImpl {
     mySuspendContext = suspendContext;
   }
 
-  /**
-   * @deprecated override {@link #contextAction(SuspendContextImpl)}
-   */
-  @Deprecated(forRemoval = true)
-  public void contextAction() throws Exception {
-    throw new AbstractMethodError();
-  }
-
   public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
-    contextAction();
+    throw new AbstractMethodError();
   }
 
   @Override

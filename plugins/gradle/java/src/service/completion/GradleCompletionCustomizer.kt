@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gradle.service.completion
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionSorter
-import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.gradle.config.GradleFileType
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.groovy.GroovyFileType
@@ -24,9 +24,10 @@ class GradleCompletionCustomizer : GroovyCompletionCustomizer {
     }
   }
 
-  override fun generateCompletionConsumer(file: PsiFile, resultSet: CompletionResultSet): GroovyCompletionConsumer? {
+  override fun generateCompletionConsumer(element: PsiElement, resultSet: CompletionResultSet): GroovyCompletionConsumer? {
+    val file = element.containingFile
     if (file.name.endsWith(GradleConstants.EXTENSION)) {
-      return GradleCompletionConsumer(AccumulatingGroovyCompletionConsumer(resultSet))
+      return GradleCompletionConsumer(element, AccumulatingGroovyCompletionConsumer(resultSet))
     }
     else {
       return null

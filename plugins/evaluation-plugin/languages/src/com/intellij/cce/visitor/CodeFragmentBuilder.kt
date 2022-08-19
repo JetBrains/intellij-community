@@ -14,7 +14,7 @@ abstract class CodeFragmentBuilder {
 
       return when {
         isCompletionGolf -> CompletionGolfFragmentBuilder(project, language)
-        language == Language.ANOTHER -> CodeFragmentFromPsiBuilder(project, language)
+        language != Language.ANOTHER -> CodeFragmentFromPsiBuilder(project, language)
         else -> CodeFragmentFromTextBuilder()
       }
     }

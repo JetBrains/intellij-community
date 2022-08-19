@@ -342,9 +342,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       if (selection.isEmpty()) return null;
       return ContainerUtil.map2Array(selection, Object.class, SearchEverywhereFoundElementInfo::getElement);
     }
-    if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
       List<SearchEverywhereFoundElementInfo> selection = getSelectedInfos();
-      return List.<DataProvider>of(slowId -> getSlowData(slowId, selection));
+      return (DataProvider)slowId -> getSlowData(slowId, selection);
     }
     return null;
   }
@@ -375,6 +375,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   private static @Nullable Object getDataFromElementInfo(@NotNull String dataId, SearchEverywhereFoundElementInfo info) {
     //noinspection unchecked
     SearchEverywhereContributor<Object> contributor = (SearchEverywhereContributor<Object>)info.getContributor();
+    if (contributor == null) return null;
+
     return contributor.getDataForItem(info.getElement(), dataId);
   }
 

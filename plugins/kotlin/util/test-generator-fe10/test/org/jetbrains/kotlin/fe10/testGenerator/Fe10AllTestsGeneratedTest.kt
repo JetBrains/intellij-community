@@ -5,6 +5,6 @@ import junit.framework.TestCase
 
 class Fe10AllTestsGeneratedTest : TestCase() {
     fun testAllTestsIsUpToDate() {
-        generateTests(isUpToDateCheck = true)
+        generateK1Tests(isUpToDateCheck = true)
     }
 }

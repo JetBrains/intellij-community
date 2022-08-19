@@ -15,6 +15,7 @@ import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
@@ -134,7 +135,11 @@ class ModulesByLinkedKeyCache(private val project: Project): Disposable, Workspa
 
         val newModuleNames = changes.asSequence()
             .mapNotNull(EntityChange<ModuleEntity>::newEntity)
-            .mapNotNull { storageAfter.findModuleByEntity(it) }
+            .mapNotNull {
+                storageAfter.findModuleByEntity(it) ?:
+                // TODO: workaround to bypass bug with new modules not present in storageAfter
+                WorkspaceModel.getInstance(project).entityStorage.current.findModuleByEntity(it)
+            }
             .associateBy(stableNameProvider::getStableModuleName)
 
         useCache { cache ->

@@ -9,7 +9,6 @@ import com.intellij.internal.statistic.eventLog.fus.FeatureUsageStateEventTracke
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import kotlinx.coroutines.async
@@ -23,12 +22,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 internal object FusStatesRecorder {
   private val log = logger<FusStatesRecorder>()
-  private val statesLogger = FUStateUsagesLogger()
   private val state = ConcurrentLinkedQueue<LogEvent>()
   private var isRecordingInProgress = AtomicBoolean(false)
   private val lock = Any()
 
-  fun recordStateAndWait(project: Project, indicator: ProgressIndicator, recorderId: String): List<LogEvent>? {
+  fun recordStateAndWait(project: Project, recorderId: String): List<LogEvent>? {
     synchronized(lock) {
       state.clear()
       isRecordingInProgress.getAndSet(true)
@@ -42,11 +40,12 @@ internal object FusStatesRecorder {
         project.coroutineScope.async {
           coroutineScope {
             launch {
-              statesLogger.logApplicationStates()
-              statesLogger.logProjectStates(project, indicator)
+              val stateLogger = FUStateUsagesLogger.getInstance()
+              stateLogger.logApplicationStates()
+              stateLogger.logProjectStates(project)
             }
 
-            for (extension in FeatureUsageStateEventTracker.EP_NAME.extensions) {
+            for (extension in FeatureUsageStateEventTracker.EP_NAME.extensionList) {
               launch {
                 extension.reportNow()
               }

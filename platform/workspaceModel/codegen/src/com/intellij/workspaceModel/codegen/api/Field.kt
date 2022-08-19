@@ -11,6 +11,8 @@ class Field<T : Obj, V>(
   type: ValueType<V>
 ) : MemberOrExtField<T, V>(owner, name, type) {
 
+  var isKey: Boolean = false
+
   init {
     owner.structure.addField(this)
   }

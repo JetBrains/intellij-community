@@ -8,7 +8,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Map;
 
 @ApiStatus.Internal
 public final class BuildDependenciesManualRunOnly {
@@ -29,9 +28,5 @@ public final class BuildDependenciesManualRunOnly {
     }
 
     throw new IllegalStateException("IDEA Community root was not found from current working directory " + workingDirectory);
-  }
-
-  public static @NotNull Map<String, String> getDependenciesPropertiesFromWorkingDirectory() {
-    return BuildDependenciesDownloader.getDependenciesProperties(getCommunityRootFromWorkingDirectory());
   }
 }

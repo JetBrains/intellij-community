@@ -403,6 +403,8 @@ private fun generateProductJson(targetDir: Path, isJreIncluded: Boolean, context
         javaExecutablePath = javaExecutablePath,
         vmOptionsFilePath = vmOptionsPath,
         startupWmClass = null,
+        bootClassPathJarNames = context.bootClassPathJarNames,
+        additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS)
       )
     ), context)
   Files.writeString(file, json)

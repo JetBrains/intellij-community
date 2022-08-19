@@ -116,6 +116,162 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/redundantReturnLabel")
+    public static class RedundantReturnLabel extends AbstractSharedK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("inAnonymousFunction.kt")
+        public void testInAnonymousFunction() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantReturnLabel/inAnonymousFunction.kt");
+        }
+
+        @TestMetadata("inFunction.kt")
+        public void testInFunction() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantReturnLabel/inFunction.kt");
+        }
+
+        @TestMetadata("inFunction2.kt")
+        public void testInFunction2() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantReturnLabel/inFunction2.kt");
+        }
+
+        @TestMetadata("inLambda.kt")
+        public void testInLambda() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantReturnLabel/inLambda.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/removeEmptyClassBody")
+    public static class RemoveEmptyClassBody extends AbstractSharedK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("anonymousInterfaceObject.kt")
+        public void testAnonymousInterfaceObject() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/anonymousInterfaceObject.kt");
+        }
+
+        @TestMetadata("anonymousObject.kt")
+        public void testAnonymousObject() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/anonymousObject.kt");
+        }
+
+        @TestMetadata("companionBeforeFun.kt")
+        public void testCompanionBeforeFun() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/companionBeforeFun.kt");
+        }
+
+        @TestMetadata("companionBeforeInit.kt")
+        public void testCompanionBeforeInit() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/companionBeforeInit.kt");
+        }
+
+        @TestMetadata("companionBeforePrivateFun.kt")
+        public void testCompanionBeforePrivateFun() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/companionBeforePrivateFun.kt");
+        }
+
+        @TestMetadata("companionBeforeVal.kt")
+        public void testCompanionBeforeVal() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/companionBeforeVal.kt");
+        }
+
+        @TestMetadata("companionInLast.kt")
+        public void testCompanionInLast() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/companionInLast.kt");
+        }
+
+        @TestMetadata("companionWithName.kt")
+        public void testCompanionWithName() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/companionWithName.kt");
+        }
+
+        @TestMetadata("companionWithSemicolon.kt")
+        public void testCompanionWithSemicolon() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/companionWithSemicolon.kt");
+        }
+
+        @TestMetadata("emptyClass.kt")
+        public void testEmptyClass() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/emptyClass.kt");
+        }
+
+        @TestMetadata("emptyDataClass.kt")
+        public void testEmptyDataClass() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/emptyDataClass.kt");
+        }
+
+        @TestMetadata("emptyInterface.kt")
+        public void testEmptyInterface() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/emptyInterface.kt");
+        }
+
+        @TestMetadata("enumEntry.kt")
+        public void testEnumEntry() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/enumEntry.kt");
+        }
+
+        @TestMetadata("innerClass.kt")
+        public void testInnerClass() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/innerClass.kt");
+        }
+
+        @TestMetadata("lastEnumEntry.kt")
+        public void testLastEnumEntry() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/lastEnumEntry.kt");
+        }
+
+        @TestMetadata("lastEnumEntry2.kt")
+        public void testLastEnumEntry2() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/lastEnumEntry2.kt");
+        }
+
+        @TestMetadata("lastEnumEntry3.kt")
+        public void testLastEnumEntry3() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/lastEnumEntry3.kt");
+        }
+
+        @TestMetadata("nestedAnonymous.kt")
+        public void testNestedAnonymous() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/nestedAnonymous.kt");
+        }
+
+        @TestMetadata("nestedClassFollowedByFunction.kt")
+        public void testNestedClassFollowedByFunction() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/nestedClassFollowedByFunction.kt");
+        }
+
+        @TestMetadata("nestedClassFollowedByMember.kt")
+        public void testNestedClassFollowedByMember() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/nestedClassFollowedByMember.kt");
+        }
+
+        @TestMetadata("nestedClassFollowedBySecondaryConstructor.kt")
+        public void testNestedClassFollowedBySecondaryConstructor() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/nestedClassFollowedBySecondaryConstructor.kt");
+        }
+
+        @TestMetadata("nestedClassFollowedBySecondaryConstructor2.kt")
+        public void testNestedClassFollowedBySecondaryConstructor2() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/nestedClassFollowedBySecondaryConstructor2.kt");
+        }
+
+        @TestMetadata("noneEmptyClass.kt")
+        public void testNoneEmptyClass() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/noneEmptyClass.kt");
+        }
+
+        @TestMetadata("object.kt")
+        public void testObject() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/object.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/inspectionsLocal/removeEmptySecondaryConstructorBody")
     public static class RemoveEmptySecondaryConstructorBody extends AbstractSharedK2LocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -203,6 +359,54 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @TestMetadata("yield.kt")
         public void testYield() throws Exception {
             runTest("../testData/inspectionsLocal/removeRedundantBackticks/yield.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/sortModifiers")
+    public static class SortModifiers extends AbstractSharedK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("annotatedBefore.kt")
+        public void testAnnotatedBefore() throws Exception {
+            runTest("../testData/inspectionsLocal/sortModifiers/annotatedBefore.kt");
+        }
+
+        @TestMetadata("annotatedBefore2.kt")
+        public void testAnnotatedBefore2() throws Exception {
+            runTest("../testData/inspectionsLocal/sortModifiers/annotatedBefore2.kt");
+        }
+
+        @TestMetadata("annotation.kt")
+        public void testAnnotation() throws Exception {
+            runTest("../testData/inspectionsLocal/sortModifiers/annotation.kt");
+        }
+
+        @TestMetadata("annotation2.kt")
+        public void testAnnotation2() throws Exception {
+            runTest("../testData/inspectionsLocal/sortModifiers/annotation2.kt");
+        }
+
+        @TestMetadata("annotationGroup.kt")
+        public void testAnnotationGroup() throws Exception {
+            runTest("../testData/inspectionsLocal/sortModifiers/annotationGroup.kt");
+        }
+
+        @TestMetadata("annotationOverrideFinal.kt")
+        public void testAnnotationOverrideFinal() throws Exception {
+            runTest("../testData/inspectionsLocal/sortModifiers/annotationOverrideFinal.kt");
+        }
+
+        @TestMetadata("overrideFinal.kt")
+        public void testOverrideFinal() throws Exception {
+            runTest("../testData/inspectionsLocal/sortModifiers/overrideFinal.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../testData/inspectionsLocal/sortModifiers/simple.kt");
         }
     }
 }

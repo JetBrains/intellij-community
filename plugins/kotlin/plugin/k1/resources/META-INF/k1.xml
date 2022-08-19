@@ -78,11 +78,14 @@
     <module name="kotlin.compiler-plugins.lombok.gradle"/>
     <module name="kotlin.compiler-plugins.lombok.maven"/>
     <module name="kotlin.features-trainer"/>
+    <module name="kotlin.j2k.post-processing"/>
 
     <module name="kotlin.copyright"/>
     <module name="kotlin.injection"/>
 
     <module name="kotlin.code-insight.intentions-shared"/>
     <module name="kotlin.code-insight.inspections-shared"/>
+    <module name="kotlin.code-insight.live-templates-shared"/>
+    <module name="kotlin.code-insight.live-templates-k1"/>
   </content>
 </idea-plugin>

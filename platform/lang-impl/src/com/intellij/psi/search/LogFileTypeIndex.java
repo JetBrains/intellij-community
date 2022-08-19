@@ -2,12 +2,10 @@
 package com.intellij.psi.search;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
@@ -46,8 +44,6 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
                                                MeasurableIndexStore {
   private static final Logger LOG = Logger.getInstance(LogFileTypeIndex.class);
 
-  private final @NotNull Disposable myDisposable;
-
   private final @NotNull LogBasedIntIntIndex myPersistentLog;
   private final @NotNull SimpleStringPersistentEnumerator myFileTypeEnumerator;
   private final @NotNull ConcurrentIntObjectMap<Ref<FileType>> myId2FileTypeCache = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
@@ -72,8 +68,6 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
     if (myExtension.dependsOnFileContent()) {
       throw new IllegalArgumentException(myExtension.getName() + " should not depend on content");
     }
-
-    myDisposable = Disposer.newDisposable();
 
     mySnapshot = loadIndexToMemory(myPersistentLog);
   }
@@ -289,7 +283,6 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
 
   @Override
   public void dispose() {
-    Disposer.dispose(myDisposable);
     try {
       myPersistentLog.close();
     }

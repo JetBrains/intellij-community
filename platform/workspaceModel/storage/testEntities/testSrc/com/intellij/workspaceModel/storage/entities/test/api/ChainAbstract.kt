@@ -1,24 +1,24 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Abstract
 import org.jetbrains.deft.annotations.Child
-import com.intellij.workspaceModel.storage.MutableEntityStorage
 
 
 
 interface ParentChainEntity : WorkspaceEntity {
-  val root: @Child CompositeAbstractEntity
+  val root: @Child CompositeAbstractEntity?
 
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ParentChainEntity, ModifiableWorkspaceEntity<ParentChainEntity>, ObjBuilder<ParentChainEntity> {
-    override var root: CompositeAbstractEntity
+    override var root: CompositeAbstractEntity?
     override var entitySource: EntitySource
   }
 

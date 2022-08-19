@@ -2,6 +2,7 @@
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ModalityState;
@@ -363,6 +364,11 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
             return;
           }
           chooser.get().show();
+        }
+
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
         }
       };
 

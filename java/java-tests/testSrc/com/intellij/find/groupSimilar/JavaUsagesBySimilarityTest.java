@@ -102,7 +102,7 @@ public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testDistance() {
-    assertEquals(0.6, ClusteringSearchSession.jaccardSimilarity(new Bag("a", "b", "c", "d", "e", "f", "g", "h"),
-                                                                new Bag("a", "z", "c", "y", "e", "f", "g", "h")));
+    assertEquals(0.6, ClusteringSearchSession.jaccardSimilarityWithThreshold(new Bag("a", "b", "c", "d", "e", "f", "g", "h"),
+                                                                             new Bag("a", "z", "c", "y", "e", "f", "g", "h"), 0.6));
   }
 }

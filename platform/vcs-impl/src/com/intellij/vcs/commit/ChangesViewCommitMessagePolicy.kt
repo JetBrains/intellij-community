@@ -3,6 +3,7 @@ package com.intellij.vcs.commit
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.LocalChangeList
 
 internal class ChangesViewCommitMessagePolicy(project: Project) : AbstractCommitMessagePolicy(project) {
@@ -14,6 +15,7 @@ internal class ChangesViewCommitMessagePolicy(project: Project) : AbstractCommit
 
   fun save(changeList: LocalChangeList?, commitMessage: String, saveToHistory: Boolean) {
     if (saveToHistory) vcsConfiguration.saveCommitMessage(commitMessage)
+    if (!ChangeListManager.getInstance(project).areChangeListsEnabled()) return // Disposal of ChangesViewCommitWorkflowHandler
     changeList?.let { save(it.name, commitMessage) }
   }
 }

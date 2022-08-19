@@ -124,7 +124,7 @@ public class ClusteringSearchSession {
   private static double findMinimalSimilarity(@NotNull UsageCluster usageCluster, @NotNull Bag newUsageFeatures, double threshold) {
     double min = MAXIMUM_SIMILARITY;
     for (SimilarUsage usage : usageCluster.getUsages()) {
-      final double similarity = jaccardSimilarity(usage.getFeatures(), newUsageFeatures);
+      final double similarity = jaccardSimilarityWithThreshold(usage.getFeatures(), newUsageFeatures, threshold);
       if (lessThen(similarity, min)) {
         min = similarity;
       }
@@ -143,9 +143,12 @@ public class ClusteringSearchSession {
     return Registry.is("similarity.find.usages.enable") && ApplicationManager.getApplication().isInternal();
   }
 
-  public static double jaccardSimilarity(@NotNull Bag bag1, @NotNull Bag bag2) {
+  public static double jaccardSimilarityWithThreshold(@NotNull Bag bag1, @NotNull Bag bag2, double similarityThreshold) {
     final int cardinality1 = bag1.getCardinality();
     final int cardinality2 = bag2.getCardinality();
+    if (lessThen(Math.min(cardinality1, cardinality2), Math.max(cardinality1, cardinality2) * similarityThreshold)) {
+      return 0;
+    }
     int intersectionSize = Bag.intersectionSize(bag1, bag2);
     return intersectionSize / (double)(cardinality1 + cardinality2 - intersectionSize);
   }

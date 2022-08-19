@@ -224,27 +224,34 @@ public final class JobLauncherImpl extends JobLauncher {
 
     // waits for the job to finish execution (when called on a canceled job in the middle of the execution, wait for finish)
     @Override
-    public void waitForCompletion(int millis) throws InterruptedException, TimeoutException {
-      long timeout = System.currentTimeMillis() + millis;
+    public boolean waitForCompletion(int millis) throws InterruptedException {
+      if (millis <= 0) {
+        return isDone();
+      }
+      long deadline = System.currentTimeMillis() + millis;
       while (!isDone()) {
-        long toWait = timeout - System.currentTimeMillis();
+        long toWait = deadline - System.currentTimeMillis();
         if (toWait < 0) {
-          throw new TimeoutException();
+          return false;
         }
-        try {
-          myForkJoinTask.get(toWait, TimeUnit.MILLISECONDS);
-        }
-        catch (CancellationException e) {
-          // was canceled in the middle of execution
-        }
-        catch (ExecutionException e) {
-          ExceptionUtil.rethrow(e.getCause());
-        }
-        // can't do anything but wait. help other tasks in the meantime
+        // wait while helping other tasks in the meantime, but not for too long
         if (!isDone()) {
-          ForkJoinPool.commonPool().awaitQuiescence(toWait, TimeUnit.MILLISECONDS);
+          ForkJoinPool.commonPool().awaitQuiescence(Math.min(toWait, 10), TimeUnit.MILLISECONDS);
+        }
+        // we are avoiding calling timed myForkJoinTask.get() because it's very expensive when timed out (bc of TimeoutException)
+        if (myForkJoinTask.isDone()) {
+          try {
+            myForkJoinTask.get();
+          }
+          catch (CancellationException e) {
+            // was canceled in the middle of execution
+          }
+          catch (ExecutionException e) {
+            ExceptionUtil.rethrow(e.getCause());
+          }
         }
       }
+      return true;
     }
   }
 

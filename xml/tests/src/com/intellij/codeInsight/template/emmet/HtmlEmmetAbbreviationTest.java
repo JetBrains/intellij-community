@@ -8,6 +8,7 @@ import com.intellij.codeInsight.template.HtmlTextContextType;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.codeInsight.template.impl.TemplateContextTypes;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInspection.htmlInspections.HtmlUnknownBooleanAttributeInspection;
@@ -15,7 +16,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.HtmlUtil;
 import junit.framework.Test;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +57,7 @@ public class HtmlEmmetAbbreviationTest extends EmmetAbbreviationTestSuite {
   protected void setUp(@NotNull Project project) throws Exception {
     super.setUp(project);    
     final TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(project);
-    TemplateContextType contextType = ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), HtmlTextContextType.class);
+    TemplateContextType contextType = TemplateContextTypes.getByClass(HtmlTextContextType.class);
 
     final Template al = templateManager.createTemplate("al", "testing", "<a !href=\"http://|\"></a>");
     ((TemplateImpl)al).getTemplateContext().setEnabled(contextType, true);

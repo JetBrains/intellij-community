@@ -13,7 +13,6 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiLiteralUtil;
@@ -67,11 +66,20 @@ public class EditRangeIntention extends BaseIntentionAction implements LowPriori
     final PsiModifierListOwner owner = getTarget(editor, file);
     if (owner != null) {
       boolean hasRange = !JvmPsiRangeSetUtil.fromPsiElement(owner).equals(LongRangeSet.all());
-      String name = ((PsiNamedElement)owner).getName();
-      setText(hasRange ? JavaBundle.message("intention.text.edit.range.of.0", name) : JavaBundle.message("intention.text.add.range.to.0", name));
+      String name = getElementName(owner);
+      setText(hasRange
+              ? JavaBundle.message("intention.text.edit.range.of.0", name)
+              : JavaBundle.message("intention.text.add.range.to.0", name));
       return true;
     }
     return false;
+  }
+
+  @Nullable
+  private static String getElementName(PsiModifierListOwner owner) {
+    String name = ((PsiNamedElement)owner).getName();
+    if (owner instanceof PsiMethod) name += "()";
+    return name;
   }
 
   @Override
@@ -86,7 +94,7 @@ public class EditRangeIntention extends BaseIntentionAction implements LowPriori
     String max = existingRange.max() < fromType.max() ? String.valueOf(existingRange.max()) : "";
     JBTextField minText = new JBTextField(min);
     JBTextField maxText = new JBTextField(max);
-    DialogBuilder builder = createDialog(project, minText, maxText);
+    DialogBuilder builder = createDialog(project, minText, maxText, getElementName(owner));
     DocumentAdapter validator = new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
@@ -111,14 +119,12 @@ public class EditRangeIntention extends BaseIntentionAction implements LowPriori
     }
   }
 
-  private static DialogBuilder createDialog(@NotNull Project project,
-                                            JBTextField minText,
-                                            JBTextField maxText) {
+  private static DialogBuilder createDialog(@NotNull Project project, JBTextField minText, JBTextField maxText, @Nullable String name) {
     JPanel panel = new JPanel(new GridBagLayout());
 
     GridBag c = new GridBag().setDefaultAnchor(GridBagConstraints.WEST).setDefaultFill(GridBagConstraints.HORIZONTAL)
       .setDefaultInsets(JBUI.insets(2)).setDefaultWeightX(0, 1.0).setDefaultWeightX(1, 3.0).setDefaultWeightY(1.0);
-    panel.add(Messages.configureMessagePaneUi(new JTextPane(), JavaBundle.message("edit.range.dialog.message")), c.nextLine().next().coverLine());
+    panel.add(new JLabel(JavaBundle.message("edit.range.dialog.message", name)), c.nextLine().next().coverLine());
 
     JLabel fromLabel = new JLabel(JavaBundle.message("label.from.inclusive"));
     fromLabel.setLabelFor(minText);
@@ -199,11 +205,10 @@ public class EditRangeIntention extends BaseIntentionAction implements LowPriori
   @Nullable
   private static Long parseValue(String text, LongRangeSet fromType, boolean isMin) {
     text = text.trim();
-    Long value;
     if (text.isEmpty()) {
       return isMin ? fromType.min() : fromType.max();
     }
-    value = PsiLiteralUtil.parseLong(text);
+    Long value = PsiLiteralUtil.parseLong(text);
     if (value != null) return value;
     Integer intValue = PsiLiteralUtil.parseInteger(text);
     return intValue != null ? Long.valueOf(intValue.longValue()) : value;

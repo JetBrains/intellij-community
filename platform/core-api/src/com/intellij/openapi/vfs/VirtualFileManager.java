@@ -84,6 +84,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
 
   /**
    * Looks for a related {@link VirtualFile} for a given {@link Path}
+   *
    * @return <code>{@link VirtualFile}</code> if the file was found, {@code null} otherwise
    * @see VirtualFile#getUrl
    * @see VirtualFileSystem#findFileByPath
@@ -129,19 +130,20 @@ public abstract class VirtualFileManager implements ModificationTracker {
   }
 
   /**
-   * @deprecated Use {@link #VFS_CHANGES} message bus topic.
+   * @deprecated Prefer {@link #addVirtualFileListener(VirtualFileListener, Disposable)} or other VFS listeners.
    */
   @Deprecated
   public abstract void addVirtualFileListener(@NotNull VirtualFileListener listener);
 
   /**
-   * @deprecated Use {@link #VFS_CHANGES} message bus topic.
+   * @deprecated When possible, migrate to {@link AsyncFileListener} to process events on a pooled thread.
+   * Otherwise, consider using {@link #VFS_CHANGES} message bus topic to avoid early initialization of {@link VirtualFileManager}.
    */
   @Deprecated
   public abstract void addVirtualFileListener(@NotNull VirtualFileListener listener, @NotNull Disposable parentDisposable);
 
   /**
-   * @deprecated Use {@link #VFS_CHANGES} message bus topic.
+   * @deprecated Prefer {@link #addVirtualFileListener(VirtualFileListener, Disposable)} or other VFS listeners.
    */
   @Deprecated
   public abstract void removeVirtualFileListener(@NotNull VirtualFileListener listener);

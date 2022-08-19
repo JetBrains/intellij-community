@@ -47,6 +47,16 @@ public class JavaUsageTypeProviderTest extends LightJavaCodeInsightFixtureTestCa
     assertUsageType(UsageType.CLASS_PERMITS_LIST, myFixture.findClass("Foo"));
   }
 
+  public void testPatternInSwitch() {
+    myFixture.configureByFiles("PatternInSwitch.java");
+    assertUsageType(UsageType.PATTERN, myFixture.findClass("Rec"));
+  }
+
+  public void testPatternInInstanceof() {
+    myFixture.configureByFiles("PatternInInstanceof.java");
+    assertUsageType(UsageType.PATTERN, myFixture.findClass("Rec"));
+  }
+
   private void assertUsageType(UsageType expected, PsiClass target) {
     UsageTarget[] targets = {new PsiElement2UsageTargetAdapter(target)};
     PsiElement element = myFixture.getReferenceAtCaretPositionWithAssertion().getElement();

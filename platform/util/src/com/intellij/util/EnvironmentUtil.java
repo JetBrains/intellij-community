@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
-import com.intellij.diagnostic.Activity;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.execution.process.WinProcessManager;
 import com.intellij.openapi.application.PathManager;
@@ -96,7 +95,7 @@ public final class EnvironmentUtil {
   }
 
   @ApiStatus.Internal
-  public static @Nullable Boolean loadEnvironment(@NotNull Activity activity) {
+  public static @Nullable Boolean loadEnvironment() {
     if (!shouldLoadShellEnv()) {
       ourEnvGetter.set(CompletableFuture.completedFuture(getSystemEnv()));
       return null;
@@ -118,9 +117,6 @@ public final class EnvironmentUtil {
           LOG.warn(attachment.getPath() + ":\n" + attachment.getDisplayText());
         }
       }
-    }
-    finally {
-      activity.end();
     }
 
     // execution time of 'envFuture' handlers should not be included in the "load environment" activity

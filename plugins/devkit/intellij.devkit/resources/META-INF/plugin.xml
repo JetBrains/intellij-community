@@ -1,5 +1,6 @@
 <!--suppress PluginXmlValidity -->
-<idea-plugin package="org.jetbrains.idea.devkit.dummy">
+<idea-plugin package="org.jetbrains.idea.devkit.dummy"
+             on-demand="true">
   <id>DevKit</id>
   <name>Plugin DevKit</name>
   <category>Plugin Development</category>

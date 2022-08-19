@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.base.util.caching
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
 import com.intellij.workspaceModel.storage.EntityChange
@@ -52,5 +53,8 @@ abstract class ModuleEntityChangeListener(project: Project) : WorkspaceEntityCha
     override val entityClass: Class<ModuleEntity>
         get() = ModuleEntity::class.java
 
-    override fun map(storage: EntityStorage, entity: ModuleEntity): Module? = storage.findModuleByEntity(entity)
+    override fun map(storage: EntityStorage, entity: ModuleEntity): Module? =
+        storage.findModuleByEntity(entity) ?:
+        // TODO: workaround to bypass bug with new modules not present in storageAfter
+        WorkspaceModel.getInstance(project).entityStorage.current.findModuleByEntity(entity)
 }

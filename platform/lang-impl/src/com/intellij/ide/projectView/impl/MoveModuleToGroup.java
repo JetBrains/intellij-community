@@ -17,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class MoveModuleToGroup extends ActionGroup {
   private final ModuleGroup myModuleGroup;
@@ -36,6 +35,11 @@ public class MoveModuleToGroup extends ActionGroup {
     final Presentation presentation = e.getPresentation();
     presentation.setVisible(active);
     presentation.setText(StringUtil.escapeMnemonics(myModuleGroup.presentableText()));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

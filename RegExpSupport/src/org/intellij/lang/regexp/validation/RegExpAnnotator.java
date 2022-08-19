@@ -29,6 +29,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.regexp.*;
 import org.intellij.lang.regexp.psi.*;
@@ -231,9 +232,22 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
 
   @Override
   public void visitRegExpGroup(RegExpGroup group) {
+    if (RegExpGroupImpl.isPcreConditionalGroup(group.getNode())) {
+      if (RegExpGroupImpl.isPcreDefine(group.getNode())) {
+        RegExpConditional conditional = ObjectUtils.tryCast(group.getParent(), RegExpConditional.class);
+        if (conditional != null) {
+          RegExpBranch[] branches = PsiTreeUtil.getChildrenOfType(conditional, RegExpBranch.class);
+          if (branches != null && branches.length > 1) {
+            myHolder.newAnnotation(HighlightSeverity.ERROR,
+                                   RegExpBundle.message("error.define.subpattern.contains.more.than.one.branch")).create();
+          }
+        }
+      }
+      return;
+    }
     final RegExpPattern pattern = group.getPattern();
     final RegExpBranch[] branches = pattern.getBranches();
-    if (!RegExpGroupImpl.isPcreConditionalGroup(group.getNode()) && isEmpty(branches) && group.getNode().getLastChildNode().getElementType() == RegExpTT.GROUP_END) {
+    if (isEmpty(branches) && group.getNode().getLastChildNode().getElementType() == RegExpTT.GROUP_END) {
       // catches "()" as well as "(|)"
       myHolder.newAnnotation(HighlightSeverity.WARNING, RegExpBundle.message("error.empty.group")).create();
     }
@@ -294,7 +308,7 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
         .create();
       return;
     }
-    if (groupRef.getGroupName() == null) {
+    if (!groupRef.isPcreNumberedGroupRef() && groupRef.getGroupName() == null) {
       return;
     }
     final RegExpGroup group = groupRef.resolve();
@@ -303,6 +317,13 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
       if (node != null) {
         myHolder.newAnnotation(HighlightSeverity.ERROR, RegExpBundle.message("error.unresolved.named.group.reference")).range(node)
         .highlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL).create();
+      }
+      else {
+        final ASTNode number = groupRef.getNode().findChildByType(RegExpTT.NUMBER);
+        if (number != null) {
+          myHolder.newAnnotation(HighlightSeverity.ERROR, RegExpBundle.message("error.unresolved.numbered.group.reference")).range(number)
+            .highlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL).create();
+        }
       }
     }
     else if (PsiTreeUtil.isAncestor(group, groupRef, true)) {

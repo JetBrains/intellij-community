@@ -62,12 +62,6 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
   }
 
   @Override
-  public void saveRootModel(@NotNull JpsModule module, @NotNull Element rootModel) {
-    saveExplodedDirectoryExtension(module, rootModel);
-    saveJavaModuleExtension(module, rootModel);
-  }
-
-  @Override
   public void loadModuleOptions(@NotNull JpsModule module, @NotNull Element rootElement) {
     Element testModuleProperties = JDomSerializationUtil.findComponent(rootElement, "TestModuleProperties");
     if (testModuleProperties != null) {
@@ -117,21 +111,7 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
     extension.setExported(exported);
     extension.setScope(scope);
   }
-
-  @Override
-  public void saveModuleDependencyProperties(JpsDependencyElement dependency, Element orderEntry) {
-    JpsJavaDependencyExtension extension = getService().getDependencyExtension(dependency);
-    if (extension != null) {
-      if (extension.isExported()) {
-        orderEntry.setAttribute(EXPORTED_ATTRIBUTE, "");
-      }
-      JpsJavaDependencyScope scope = extension.getScope();
-      if (scope != JpsJavaDependencyScope.COMPILE) {
-        orderEntry.setAttribute(SCOPE_ATTRIBUTE, scope.name());
-      }
-    }
-  }
-
+  
   @Override
   public List<JpsLibraryRootTypeSerializer> getLibraryRootTypeSerializers() {
     return Arrays.asList(new JpsLibraryRootTypeSerializer("JAVADOC", JpsOrderRootType.DOCUMENTATION, true),
@@ -169,16 +149,6 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
     }
   }
 
-  private static void saveExplodedDirectoryExtension(JpsModule module, Element rootModelElement) {
-    ExplodedDirectoryModuleExtension extension = getService().getExplodedDirectoryExtension(module);
-    if (extension != null) {
-      if (extension.isExcludeExploded()) {
-        rootModelElement.addContent(0, new Element(EXCLUDE_EXPLODED_TAG));
-      }
-      rootModelElement.addContent(0, new Element(EXPLODED_TAG).setAttribute(URL_ATTRIBUTE, extension.getExplodedUrl()));
-    }
-  }
-
   private static void loadJavaModuleExtension(JpsModule module, Element rootModelComponent) {
     final JpsJavaModuleExtension extension = getService().getOrCreateModuleExtension(module);
     final Element outputTag = rootModelComponent.getChild(OUTPUT_TAG);
@@ -200,51 +170,10 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
     loadAdditionalRoots(rootModelComponent, JAVADOC_PATHS_TAG, extension.getJavadocRoots());
   }
 
-  private static void saveJavaModuleExtension(JpsModule module, Element rootModelComponent) {
-    JpsJavaModuleExtension extension = getService().getModuleExtension(module);
-    if (extension == null) return;
-    if (extension.isExcludeOutput()) {
-      rootModelComponent.addContent(0, new Element(EXCLUDE_OUTPUT_TAG));
-    }
-
-    String testOutputUrl = extension.getTestOutputUrl();
-    if (testOutputUrl != null) {
-      rootModelComponent.addContent(0, new Element(TEST_OUTPUT_TAG).setAttribute(URL_ATTRIBUTE, testOutputUrl));
-    }
-
-    String outputUrl = extension.getOutputUrl();
-    if (outputUrl != null) {
-      rootModelComponent.addContent(0, new Element(OUTPUT_TAG).setAttribute(URL_ATTRIBUTE, outputUrl));
-    }
-
-    LanguageLevel languageLevel = extension.getLanguageLevel();
-    if (languageLevel != null) {
-      rootModelComponent.setAttribute(MODULE_LANGUAGE_LEVEL_ATTRIBUTE, languageLevel.name());
-    }
-
-    if (extension.isInheritOutput()) {
-      rootModelComponent.setAttribute(INHERIT_COMPILER_OUTPUT_ATTRIBUTE, "true");
-    }
-
-    saveAdditionalRoots(rootModelComponent, ANNOTATION_PATHS_TAG, extension.getAnnotationRoots());
-    saveAdditionalRoots(rootModelComponent, JAVADOC_PATHS_TAG, extension.getJavadocRoots());
-  }
-
   private static void loadAdditionalRoots(Element rootModelComponent, final String rootsTagName, final JpsUrlList result) {
     final Element roots = rootModelComponent.getChild(rootsTagName);
     for (Element root : JDOMUtil.getChildren(roots, ROOT_TAG)) {
       result.addUrl(root.getAttributeValue(URL_ATTRIBUTE));
-    }
-  }
-
-  private static void saveAdditionalRoots(Element rootModelComponent, final String rootsTagName, final JpsUrlList list) {
-    List<String> urls = list.getUrls();
-    if (!urls.isEmpty()) {
-      Element roots = new Element(rootsTagName);
-      for (String url : urls) {
-        roots.addContent(new Element(ROOT_TAG).setAttribute(URL_ATTRIBUTE, url));
-      }
-      rootModelComponent.addContent(roots);
     }
   }
 

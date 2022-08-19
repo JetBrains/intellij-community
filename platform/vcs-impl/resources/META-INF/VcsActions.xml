@@ -380,9 +380,9 @@
 
     <group id="ChangesView.CommitToolbar">
       <action id="Vcs.ToggleAmendCommitMode" class="com.intellij.vcs.commit.ToggleAmendCommitModeAction"/>
-      <action id="ChangesView.ShowCommitOptions" class="com.intellij.openapi.vcs.actions.ShowCommitOptionsAction"/>
-      <reference id="Vcs.MessageActionGroup"/>
     </group>
+
+    <action id="ChangesView.ShowCommitOptions" class="com.intellij.openapi.vcs.actions.ShowCommitOptionsAction"/>
 
     <action id="Vcs.RunCommitChecks" class="com.intellij.vcs.commit.RunCommitChecksAction"/>
 

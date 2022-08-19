@@ -40,6 +40,7 @@ import org.jetbrains.kotlin.types.expressions.DoubleColonLHS
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.util.suppressedByNotPropertyList
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.*
 
 @OptIn(FrontendInternals::class)
@@ -318,16 +319,16 @@ class ReferenceVariantsHelper(
             val constructorFilter: (ClassDescriptor) -> Boolean = { !it.isInner }
 
             resolutionScope.ownerDescriptor.parentsWithSelf.firstIsInstanceOrNull<ClassDescriptor>()?.let { classDescriptor ->
-                val typeConstructor = classDescriptor.typeConstructor
-
-                // process instance members and class constructors
-                descriptors.addNonExtensionMembers(
-                    classDescriptor.unsubstitutedMemberScope,
-                    typeConstructor,
-                    kindFilter,
-                    nameFilter,
-                    constructorFilter
-                )
+                // process instance members, class constructors and companion object
+                listOfNotNull(classDescriptor, classDescriptor.companionObjectDescriptor).forEach {
+                    descriptors.addNonExtensionMembers(
+                        it.unsubstitutedMemberScope,
+                        it.typeConstructor,
+                        kindFilter,
+                        nameFilter,
+                        constructorFilter
+                    )
+                }
             }
             // process non-instance members and class constructors
             descriptors.addNonExtensionCallablesAndConstructors(
@@ -396,6 +397,9 @@ class ReferenceVariantsHelper(
     ) {
         for (receiverType in receiverTypes) {
             addNonExtensionMembers(receiverType.memberScope, receiverType.constructor, kindFilter, nameFilter, constructorFilter)
+            receiverType.constructor.declarationDescriptor.safeAs<ClassDescriptor>()?.companionObjectDescriptor?.let {
+                addNonExtensionMembers(it.unsubstitutedMemberScope, it.typeConstructor, kindFilter, nameFilter, constructorFilter)
+            }
         }
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
 import kotlinx.coroutines.CompletableDeferred;
@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Callable;
 
-import static com.intellij.openapi.progress.Cancellation.withJob;
+import static com.intellij.openapi.progress.Cancellation.withCurrentJob;
 
 /**
  * A Callable, which, when called, associates the calling thread with a job,
@@ -30,7 +30,7 @@ public final class CancellationCallable<V> implements Callable<V> {
   @Override
   public V call() throws Exception {
     try {
-      V result = withJob(myDeferred, myCallable::call);
+      V result = withCurrentJob(myDeferred, myCallable::call);
       myDeferred.complete(result);
       return result;
     }

@@ -51,6 +51,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupOwner;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -240,6 +241,10 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
   public NavBarUpdateQueue getUpdateQueue() {
     return myUpdateQueue;
+  }
+
+  boolean isNodePopupSpeedSearchActive() {
+    return isNodePopupActive() && SpeedSearchSupply.getSupply(myNodePopup.getList()) != null;
   }
 
   public void escape() {
@@ -820,9 +825,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return !myProject.isDisposed() ? myProject : null;
     }
-    if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
       JBIterable<?> finalSelection = selection.get();
-      return Collections.<DataProvider>singletonList(o -> getSlowData(o, myProject, finalSelection));
+      return (DataProvider)slowId -> getSlowData(slowId, myProject, finalSelection);
     }
     if (LangDataKeys.IDE_VIEW.is(dataId)) {
       return myIdeView;

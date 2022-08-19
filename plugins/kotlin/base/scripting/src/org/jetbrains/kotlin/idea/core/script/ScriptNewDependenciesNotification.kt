@@ -82,7 +82,7 @@ private class NewScriptDependenciesNotificationPanel(
     val compilationConfigurationResult: ScriptCompilationConfigurationWrapper,
     project: Project,
     file: VirtualFile
-) : EditorNotificationPanel() {
+) : EditorNotificationPanel(Status.Info) {
 
     init {
         text = KotlinBaseScriptingBundle.message("notification.text.there.is.a.new.script.context.available")

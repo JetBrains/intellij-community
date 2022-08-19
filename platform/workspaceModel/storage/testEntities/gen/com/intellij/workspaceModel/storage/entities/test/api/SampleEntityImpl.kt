@@ -12,6 +12,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
@@ -398,5 +399,13 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
     result = 31 * result + nullableData.hashCode()
     result = 31 * result + randomUUID.hashCode()
     return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.add(UUID::class.java)
+    this.stringMapProperty?.let { collector.add(it::class.java) }
+    this.stringListProperty?.let { collector.add(it::class.java) }
+    this.fileProperty?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = false
   }
 }

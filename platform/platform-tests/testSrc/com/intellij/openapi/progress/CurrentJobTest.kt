@@ -2,7 +2,6 @@
 package com.intellij.openapi.progress
 
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import org.junit.jupiter.api.Assertions.*
@@ -17,7 +16,7 @@ class CurrentJobTest : CancellationTest() {
   fun context() {
     val job = Job()
     assertNull(Cancellation.currentJob())
-    withJob(job) {
+    withCurrentJob(job) {
       assertSame(job, Cancellation.currentJob())
     }
     assertNull(Cancellation.currentJob())
@@ -27,9 +26,9 @@ class CurrentJobTest : CancellationTest() {
   @Test
   fun cancellation() {
     val t = object : Throwable() {}
-    val ce = assertThrows<CancellationException> {
+    val ce = assertThrows<CurrentJobCancellationException> {
       val job = Job()
-      withJob(job) {
+      withCurrentJob<Unit>(job) {
         testNoExceptions()
         job.cancel("", t)
         testExceptionsAndNonCancellableSection()
@@ -37,7 +36,7 @@ class CurrentJobTest : CancellationTest() {
     }
     //suppressed until this one is fixed: https://youtrack.jetbrains.com/issue/KT-52379
     @Suppress("AssertBetweenInconvertibleTypes")
-    assertSame(t, ce.cause)
+    assertSame(t, ce.cause.cause.cause)
   }
 
   @Disabled("an orphan job is created")
@@ -53,7 +52,7 @@ class CurrentJobTest : CancellationTest() {
   @Test
   fun `checkCancelledEvenWithPCEDisabled checks job`() {
     val job = Job()
-    withJob(job) {
+    withCurrentJob(job) {
       assertDoesNotThrow {
         ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(null)
       }

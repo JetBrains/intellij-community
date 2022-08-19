@@ -7,7 +7,7 @@ import com.intellij.debugger.jdi.GeneratedLocation
 import com.sun.jdi.AbsentInformationException
 import com.sun.jdi.Location
 import com.sun.jdi.ReferenceType
-import org.jetbrains.kotlin.idea.debugger.evaluate.DefaultExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
 
 class LocationCache(val context: DefaultExecutionContext) {
     fun createLocation(stackTraceElement: StackTraceElement): Location {

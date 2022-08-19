@@ -554,6 +554,14 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, Serializabl
       .all { it.get(this) == it.get(other) }
   }
 
+  open fun equalsByKey(other: Any?): Boolean {
+    return equalsIgnoringEntitySource(other)
+  }
+
+  open fun hashCodeByKey(): Int {
+    return hashCodeIgnoringEntitySource()
+  }
+
   override fun hashCode(): Int {
     return ReflectionUtil.collectFields(this.javaClass).filterNot { it.name == WorkspaceEntityData<*>::id.name }
       .onEach { it.isAccessible = true }
@@ -584,6 +592,10 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, Serializabl
     throw NotImplementedError()
   }
 
+  open fun collectClassUsagesData(collector: UsedClassesCollector) {
+    throw NotGeneratedMethodRuntimeException("collectClassUsagesData")
+  }
+
   /**
    * Temporally solution.
    * Get persistent Id without creating of TypedEntity. Should be in sync with TypedEntityWithPersistentId.
@@ -611,4 +623,18 @@ fun WorkspaceEntityData<*>.persistentId(): PersistentEntityId<*>? = when (this) 
  */
 interface WithAssertableConsistency {
   fun assertConsistency(storage: EntityStorage)
+}
+
+class UsedClassesCollector(
+  var sameForAllEntities: Boolean = false,
+  var collection: MutableSet<Class<out Any>> = HashSet(),
+  var collectionObjects: MutableSet<Class<out Any>> = HashSet(),
+) {
+  fun add(clazz: Class<out Any>) {
+    collection.add(clazz)
+  }
+
+  fun addObject(clazz: Class<out Any>) {
+    collectionObjects.add(clazz)
+  }
 }

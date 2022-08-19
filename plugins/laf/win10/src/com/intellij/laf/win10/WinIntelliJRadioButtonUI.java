@@ -4,7 +4,6 @@ package com.intellij.laf.win10;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonUI;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBInsets;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -17,14 +16,8 @@ public final class WinIntelliJRadioButtonUI extends DarculaRadioButtonUI {
   private static final Icon DEFAULT_ICON = JBUIScale.scaleIcon(EmptyIcon.create(13)).asUIResource();
 
   @Override
-  protected Rectangle updateViewRect(AbstractButton b, Rectangle viewRect) {
-    JBInsets.removeFrom(viewRect, b.getInsets());
-    return viewRect;
-  }
-
-  @Override
-  protected Dimension computeOurPreferredSize(JComponent c) {
-    return null;
+  protected boolean removeInsetsBeforeLayout(AbstractButton b) {
+    return true;
   }
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
@@ -35,7 +28,7 @@ public final class WinIntelliJRadioButtonUI extends DarculaRadioButtonUI {
   }
 
   @Override
-  protected void paintIcon(JComponent c, Graphics2D g, Rectangle viewRect, Rectangle iconRect) {
+  protected void paintIcon(JComponent c, Graphics2D g, Rectangle iconRect) {
     AbstractButton b = (AbstractButton)c;
     ButtonModel bm = b.getModel();
     boolean focused = c.hasFocus() || bm.isRollover();

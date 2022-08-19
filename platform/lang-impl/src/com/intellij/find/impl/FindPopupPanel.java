@@ -1302,7 +1302,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
     header.infoLabel.setText(null);
   }
 
-  private void showEmptyText(@Nullable @NlsContexts.StatusText @NotNull String message) {
+  private void showEmptyText(@NlsContexts.StatusText @NotNull String message) {
     StatusText emptyText = myResultsPreviewTable.getEmptyText();
     emptyText.clear();
     FindModel model = myHelper.getModel();
@@ -1655,8 +1655,8 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
 
         ActionButtonWithText result = new ActionButtonWithText(action, presentation, place, minimumSize){
           @Override
-          protected Insets getMargins() {
-            return new JBInsets(4, 2, 4, 2);
+          protected @NotNull Insets getMargins() {
+            return JBInsets.addInsets(super.getMargins(), new JBInsets(4, 2, 4, 2));
           }
         };
 

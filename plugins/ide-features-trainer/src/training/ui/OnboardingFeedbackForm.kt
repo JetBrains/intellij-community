@@ -7,6 +7,7 @@ import com.intellij.feedback.common.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
 import com.intellij.feedback.common.dialog.CommonFeedbackSystemInfoData
 import com.intellij.feedback.common.dialog.showFeedbackSystemInfoDialog
 import com.intellij.feedback.common.submitGeneralFeedback
+import com.intellij.icons.AllIcons
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.notification.Notification
@@ -31,12 +32,10 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.util.IconUtil
 import com.intellij.util.ui.*
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
 import org.jetbrains.annotations.Nls
-import training.FeaturesTrainerIcons
 import training.dsl.LessonUtil
 import training.lang.LangSupport
 import training.learn.LearnBundle
@@ -307,8 +306,8 @@ private fun showSystemData(project: Project?,
 
 private fun createLikenessPanel(): Pair<NonOpaquePanel, () -> FeedbackLikenessAnswer> {
   val votePanel = NonOpaquePanel()
-  val likeIcon = getLikenessIcon(FeaturesTrainerIcons.Img.Like)
-  val dislikeIcon = getLikenessIcon(FeaturesTrainerIcons.Img.Dislike)
+  val likeIcon = getLikenessIcon(AllIcons.Ide.Like)
+  val dislikeIcon = getLikenessIcon(AllIcons.Ide.Dislike)
   votePanel.layout = BoxLayout(votePanel, BoxLayout.X_AXIS)
   val likeAnswer = FeedbackOption(likeIcon)
   votePanel.add(likeAnswer)
@@ -353,9 +352,7 @@ private fun installSubPanelLogic(feedbackOption: FeedbackOption, feedbackSubPane
   }
 }
 
-private fun getLikenessIcon(icon: Icon): Icon {
-  return IndentedIcon(IconUtil.scale(icon, null, 0.25f), JBUI.insets(6))
-}
+private fun getLikenessIcon(icon: Icon): Icon = IndentedIcon(icon, JBUI.insets(6))
 
 private class FeedbackOption(@NlsContexts.Label text: String?, icon: Icon?) : JButton() {
   var isChosen = false

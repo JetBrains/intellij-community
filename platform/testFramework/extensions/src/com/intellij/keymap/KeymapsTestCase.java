@@ -14,7 +14,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
   private static final Map<String, String[][]> DEFAULT_DUPLICATES = Map.ofEntries(
     Map.entry("$default", new String[][]{
       {"ADD",                      "ExpandTreeNode", "Graph.ZoomIn"},
-      {"BACK_SPACE",               "EditorBackSpace", "FileChooserList.LevelUp", "JupyterNotebookDeleteCellCommandModeAction"},
+      {"BACK_SPACE",               "EditorBackSpace", "FileChooserList.LevelUp"},
       {"C",                        "Uml.CollapseNodes", "JupyterNotebookCopyCellCommandModeAction"},
       {"DELETE",                   "$Delete", "DatabaseView.DropAction", "JupyterNotebookDeleteCellCommandModeAction"},
       {"ENTER",                    "Console.Execute", "Console.TableResult.EditValue", "DirDiffMenu.SynchronizeDiff", "EditorChooseLookupItem",
@@ -144,7 +144,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift ctrl alt UP",        "ResizeToolWindowUp", "VcsShowPrevChangeMarker"},
     }),
     Map.entry("Mac OS X 10.5+", new String[][]{
-      {"BACK_SPACE",               "$Delete", "EditorBackSpace", "JupyterNotebookDeleteCellCommandModeAction"},
+      {"BACK_SPACE",               "$Delete", "EditorBackSpace"},
       {"F1",                       "QuickJavaDoc", "org.jetbrains.r.actions.REditorHelpAction"},
       {"Force touch",              "GotoDeclaration", "RunToCursor"},
       {"alt DOWN",                 "EditorUnSelectWord", "MethodOverloadSwitchDown", "ShowSearchHistory", "JupyterNotebookMoveCellDownCommandModeAction"},
@@ -182,7 +182,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift meta R",             "PoBrowserRefresh", "ReplaceInPath"},
     }),
     Map.entry("Mac OS X", new String[][]{
-      {"BACK_SPACE",               "$Delete", "EditorBackSpace", "JupyterNotebookDeleteCellCommandModeAction"},
+      {"BACK_SPACE",               "$Delete", "EditorBackSpace"},
       {"Force touch",              "GotoDeclaration", "RunToCursor"},
       {"alt R",                    "Django.RunManageTaskAction", "org.jetbrains.plugins.ruby.tasks.rake.actions.RakeTasksPopupAction"},
       {"control DOWN",             "EditorLookupDown", "NotebookSelectCellBelowAction", "MethodDown"},

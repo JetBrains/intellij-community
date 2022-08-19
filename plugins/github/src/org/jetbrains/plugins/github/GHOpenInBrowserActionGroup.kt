@@ -43,6 +43,8 @@ open class GHOpenInBrowserActionGroup
                 GithubBundle.messagePointer("open.on.github.action.description"),
                 AllIcons.Vcs.Vendors.Github), DumbAware {
 
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
   override fun update(e: AnActionEvent) {
     val data = getData(e.dataContext)
     e.presentation.isEnabledAndVisible = !data.isNullOrEmpty()
@@ -161,6 +163,8 @@ open class GHOpenInBrowserActionGroup
   private companion object {
     class GithubOpenInBrowserAction(val data: Data)
       : DumbAwareAction({ data.getName() }) {
+
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
       override fun actionPerformed(e: AnActionEvent) {
         when (data) {

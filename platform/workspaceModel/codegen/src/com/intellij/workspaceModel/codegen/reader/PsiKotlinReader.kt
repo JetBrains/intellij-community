@@ -4,14 +4,15 @@ package com.intellij.workspaceModel.codegen.patcher
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
-import org.jetbrains.deft.annotations.Abstract
-import org.jetbrains.deft.annotations.Child
-import org.jetbrains.deft.annotations.Open
 import com.intellij.workspaceModel.codegen.deft.model.*
 import com.intellij.workspaceModel.codegen.deft.model.KtAnnotation
 import com.intellij.workspaceModel.codegen.deft.model.KtConstructor
 import com.intellij.workspaceModel.codegen.deft.model.KtFile
 import com.intellij.workspaceModel.deft.api.annotations.Default
+import com.intellij.workspaceModel.storage.EqualsBy
+import org.jetbrains.deft.annotations.Abstract
+import org.jetbrains.deft.annotations.Child
+import org.jetbrains.deft.annotations.Open
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -209,7 +210,8 @@ class PsiKotlinReader(val file: KtFile) {
 
   private fun `annotation`(annotationEntries: List<KtAnnotationEntry>, parentElement: PsiElement): KtAnnotations {
     val annotations = KtAnnotations()
-    listOf(Open::class.simpleName, Child::class.simpleName, Abstract::class.simpleName, Default::class.simpleName).forEach { annotationName ->
+    listOf(Open::class.simpleName, Child::class.simpleName, Abstract::class.simpleName, Default::class.simpleName,
+           EqualsBy::class.simpleName).forEach { annotationName ->
       val annotation = annotationEntries.find { it.shortName?.identifier == annotationName }
       if (annotation != null) {
         val intRange = (annotation.textRange.startOffset + 1) until annotation.textRange.endOffset

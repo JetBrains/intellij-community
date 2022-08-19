@@ -15,6 +15,10 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.resolve.BindingContext
 
+/**
+ * Tests:
+ * [org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated.ReplaceUntilWithRangeUntil]
+ */
 class ReplaceUntilWithRangeUntilInspection : AbstractRangeInspection() {
     override fun visitRange(range: KtExpression, context: Lazy<BindingContext>, type: RangeKtExpressionType, holder: ProblemsHolder) {
         when (type) {
@@ -24,7 +28,7 @@ class ReplaceUntilWithRangeUntilInspection : AbstractRangeInspection() {
         if (!range.isPossibleToUseRangeUntil(context)) return
         holder.registerProblem(
             range,
-            KotlinBundle.message("until.is.an.old.way.replace.with.rangeUntil.operator"),
+            KotlinBundle.message("until.can.be.replaced.with.rangeUntil.operator"),
             ReplaceFix()
         )
     }

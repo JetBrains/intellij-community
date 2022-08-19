@@ -382,7 +382,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
   @NotNull
   static ChainIterable<String> describeClass(@NotNull PyClass cls,
                                              @NotNull Function<? super String, String> escapedNameMapper,
-                                             @NotNull Function<@NotNull ? super String, @NotNull String> escaper,
+                                             @NotNull Function<? super @NotNull String, @NotNull String> escaper,
                                              boolean link,
                                              boolean linkAncestors,
                                              @NotNull TypeEvalContext context) {

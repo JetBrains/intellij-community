@@ -9,67 +9,60 @@ import com.intellij.psi.util.parents
 import com.intellij.psi.util.parentsOfType
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.sun.jdi.Location
-import org.jetbrains.kotlin.backend.common.descriptors.isSuspend
-import org.jetbrains.kotlin.builtins.isSuspendFunctionType
-import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager
 import org.jetbrains.kotlin.idea.debugger.base.util.safeGetSourcePosition
-import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
+import org.jetbrains.kotlin.idea.debugger.core.AnalysisApiBasedInlineUtil.getResolvedFunctionCall
+import org.jetbrains.kotlin.idea.debugger.core.AnalysisApiBasedInlineUtil.getValueArgumentForExpression
+import org.jetbrains.kotlin.idea.debugger.core.AnalysisApiBasedInlineUtil.isInlinedArgument
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.util.getType
-import org.jetbrains.kotlin.resolve.inline.InlineUtil
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 internal class KotlinVariableNameFinder(val debugProcess: DebugProcessImpl) {
     @RequiresReadLock
     fun findVisibleVariableNames(location: Location): List<String> {
         val sourcePosition = KotlinPositionManager(debugProcess).safeGetSourcePosition(location) ?: return emptyList()
         ProgressManager.checkCanceled()
-        return sourcePosition.elementAt.findVisibleVariableNames()
+        return findVisibleVariableNamesFrom(sourcePosition.elementAt)
     }
 
-    private fun PsiElement.findVisibleVariableNames(): List<String> {
-        val enclosingBlockExpression = findEnclosingBlockExpression() ?: return emptyList()
+    private fun findVisibleVariableNamesFrom(element: PsiElement): List<String> {
+        val enclosingBlockExpression = findEnclosingBlockExpression(element) ?: return emptyList()
         val blockParents = enclosingBlockExpression.parentsOfType<KtBlockExpression>()
         if (blockParents.none()) {
             return emptyList()
         }
 
         ProgressManager.checkCanceled()
-        val bindingContext = blockParents.last().analyze(BodyResolveMode.PARTIAL)
+        analyze(enclosingBlockExpression) {
+            val expressionToStartAnalysisFrom = findExpressionToStartAnalysisFrom(enclosingBlockExpression)
+            if (!isCoroutineContextAvailable(expressionToStartAnalysisFrom)) {
+                return emptyList()
+            }
 
-        ProgressManager.checkCanceled()
-        val expressionToStartAnalysisFrom =
-            enclosingBlockExpression.findExpressionToStartAnalysisFrom(bindingContext)
-        if (!expressionToStartAnalysisFrom.isCoroutineContextAvailable(bindingContext)) {
-            return emptyList()
+            ProgressManager.checkCanceled()
+            val parentFunction = expressionToStartAnalysisFrom.parentOfType<KtFunction>(withSelf = true) ?: return emptyList()
+            val namesInParameterList = findVariableNamesInParameterList(parentFunction)
+            val namesVisibleInExpression = findVariableNames(expressionToStartAnalysisFrom, element, blockParents)
+
+            return namesVisibleInExpression + namesInParameterList
         }
-
-        ProgressManager.checkCanceled()
-        val parentFunction = expressionToStartAnalysisFrom.parentOfType<KtFunction>(true)
-        val namesInParameterList =
-            parentFunction?.findVariableNamesInParameterList() ?: emptyList()
-        val namesVisibleInExpression = expressionToStartAnalysisFrom.findVariableNames(
-            bindingContext, this, blockParents
-        )
-        return namesVisibleInExpression + namesInParameterList
     }
 
-    private fun KtExpression.findVariableNames(
-        bindingContext: BindingContext,
+    private fun KtAnalysisSession.findVariableNames(
+        expression: KtExpression,
         boundaryElement: PsiElement,
         blocksToVisit: Sequence<KtBlockExpression>
     ): List<String> {
         val names = mutableListOf<String>()
-        accept(object : KtTreeVisitorVoid() {
+        expression.accept(object : KtTreeVisitorVoid() {
             var stopTraversal = false
 
             override fun visitBlockExpression(expression: KtBlockExpression) {
-                if (expression.isInlined(bindingContext) || expression in blocksToVisit) {
+                if (isInlined(expression) || expression in blocksToVisit) {
                     expression.acceptChildren(this)
                 }
             }
@@ -90,46 +83,52 @@ internal class KotlinVariableNameFinder(val debugProcess: DebugProcessImpl) {
                 element.acceptChildren(this)
             }
         })
+
         return names
     }
 
-    private fun KtFunction.findVariableNamesInParameterList(): List<String> {
-        val parameterList = getChildOfType<KtParameterList>() ?: return emptyList()
+    private fun findVariableNamesInParameterList(function: KtFunction): List<String> {
+        val parameterList = function.getChildOfType<KtParameterList>() ?: return emptyList()
         return parameterList.parameters.mapNotNull { it.name }
     }
 
-    private fun KtExpression.findExpressionToStartAnalysisFrom(bindingContext: BindingContext): KtExpression {
-        var lastSeenBlockExpression = this
-        for (parent in parents(true)) {
+    private fun KtAnalysisSession.findExpressionToStartAnalysisFrom(expression: KtExpression): KtExpression {
+        var lastSeenBlockExpression = expression
+        for (parent in expression.parents(withSelf = true)) {
             when (parent) {
                 is KtNamedFunction -> return parent
                 is KtBlockExpression -> {
-                    if (!parent.isInlined(bindingContext) && parent.parent !is KtWhenEntry) {
+                    if (!isInlined(parent) && parent.parent !is KtWhenEntry) {
                         return parent
                     }
                     lastSeenBlockExpression = parent
                 }
             }
         }
+
         return lastSeenBlockExpression
     }
 
-    private fun KtExpression.isCoroutineContextAvailable(bindingContext: BindingContext) =
-        isCoroutineContextAvailableFromFunction() || isCoroutineContextAvailableFromLambda(bindingContext)
+    private fun KtAnalysisSession.isCoroutineContextAvailable(expression: KtExpression) =
+        isCoroutineContextAvailableFromFunction(expression) || isCoroutineContextAvailableFromLambda(expression)
 
-    private fun KtExpression.isCoroutineContextAvailableFromFunction(): Boolean {
-        val functionParent = parentOfType<KtFunction>(true) ?: return false
-        val descriptor = functionParent.descriptor as? CallableDescriptor ?: return false
-        return descriptor.isSuspend
+    private fun KtAnalysisSession.isCoroutineContextAvailableFromFunction(expression: KtExpression): Boolean {
+        val functionParent = expression.parentOfType<KtFunction>(withSelf = true) ?: return false
+        val symbol = functionParent.getSymbol() as? KtFunctionSymbol ?: return false
+        return symbol.isSuspend
     }
 
-    private fun KtExpression.isCoroutineContextAvailableFromLambda(bindingContext: BindingContext): Boolean {
-        val type = getType(bindingContext) ?: return false
-        return type.isSuspendFunctionType
+    private fun KtAnalysisSession.isCoroutineContextAvailableFromLambda(expression: KtExpression): Boolean {
+        val literalParent = expression.parentOfType<KtFunctionLiteral>(withSelf = true) ?: return false
+        val parentCall = KtPsiUtil.getParentCallIfPresent(literalParent) as? KtCallExpression ?: return false
+        val call = getResolvedFunctionCall(parentCall) ?: return false
+        val valueArgument = parentCall.getValueArgumentForExpression(expression) ?: return false
+        val argumentSymbol = call.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return false
+        return argumentSymbol.returnType.isSuspendFunctionType
     }
 
-    private fun PsiElement.findEnclosingBlockExpression(): KtBlockExpression? {
-        for (parent in parents(false)) {
+    private fun findEnclosingBlockExpression(element: PsiElement): KtBlockExpression? {
+        for (parent in element.parents(withSelf = false)) {
             when (parent) {
                 is KtFunction, is KtWhenEntry, is KtLambdaExpression ->
                     return parent.getChildOfType()
@@ -137,6 +136,7 @@ internal class KotlinVariableNameFinder(val debugProcess: DebugProcessImpl) {
                     return parent
             }
         }
+
         return null
     }
 
@@ -147,8 +147,8 @@ internal class KotlinVariableNameFinder(val debugProcess: DebugProcessImpl) {
             false
         }
 
-    private fun KtBlockExpression.isInlined(bindingContext: BindingContext): Boolean {
-        val parentFunction = parentOfType<KtFunction>() ?: return false
-        return InlineUtil.isInlinedArgument(parentFunction, bindingContext, false)
+    private fun KtAnalysisSession.isInlined(expression: KtBlockExpression): Boolean {
+        val parentFunction = expression.parentOfType<KtFunction>() ?: return false
+        return isInlinedArgument(parentFunction, false)
     }
 }

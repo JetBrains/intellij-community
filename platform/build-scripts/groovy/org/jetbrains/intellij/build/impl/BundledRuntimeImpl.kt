@@ -8,6 +8,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesExtractOptions
+import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import java.net.URI
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes

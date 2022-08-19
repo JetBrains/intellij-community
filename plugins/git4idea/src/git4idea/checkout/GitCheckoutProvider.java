@@ -3,7 +3,6 @@ package git4idea.checkout;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.ui.DvcsBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -112,9 +111,7 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
           File directory = new File(parentDirectory, directoryName);
           LOG.debug(String.format("Cloned into %s with success=%s", directory, result));
 
-          ApplicationManager.getApplication().invokeLater(() -> {
-            DvcsUtil.addMappingIfSubRoot(project, directory.getPath(), GitVcs.NAME);
-          });
+          DvcsUtil.addMappingIfSubRoot(project, directory.getPath(), GitVcs.NAME);
           destinationParent.refresh(true, true);
 
           listener.directoryCheckedOut(directory, GitVcs.getKey());
@@ -179,7 +176,9 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
 
   @NotNull
   @Override
-  public VcsCloneComponent buildVcsCloneComponent(@NotNull Project project, @NotNull ModalityState modalityState, @NotNull VcsCloneDialogComponentStateListener dialogStateListener) {
+  public VcsCloneComponent buildVcsCloneComponent(@NotNull Project project,
+                                                  @NotNull ModalityState modalityState,
+                                                  @NotNull VcsCloneDialogComponentStateListener dialogStateListener) {
     return new GitCloneDialogComponent(project, modalityState, dialogStateListener);
   }
 }

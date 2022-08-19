@@ -33,7 +33,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   @NonNls public static final String PATCH = "patch";
   @NonNls public static final String DIFF = "diff";
 
-  public boolean OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT = false;
   public boolean CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT =
     !PlatformUtils.isPyCharm() && !PlatformUtils.isRubyMine() && !PlatformUtils.isCLion();
   public String CODE_SMELLS_PROFILE = null;
@@ -44,8 +43,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean CHECK_NEW_TODO = true;
   public TodoPanelSettings myTodoPanelSettings = new TodoPanelSettings();
   public volatile boolean CHECK_LOCALLY_CHANGED_CONFLICTS_IN_BACKGROUND = false;
-  @OptionTag(tag = "confirmMoveToFailedCommit", nameAttribute = "")
-  public VcsShowConfirmationOption.Value MOVE_TO_FAILED_COMMIT_CHANGELIST = VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY;
   @OptionTag(tag = "confirmRemoveEmptyChangelist", nameAttribute = "")
   public VcsShowConfirmationOption.Value REMOVE_EMPTY_INACTIVE_CHANGELISTS = VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
   public int CHANGED_ON_SERVER_INTERVAL = 60;
@@ -65,7 +62,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   @NlsSafe public String UPDATE_FILTER_SCOPE_NAME = null;
   public boolean USE_COMMIT_MESSAGE_MARGIN = true;
   public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = false;
-  public boolean SHOW_UNVERSIONED_FILES_WHILE_COMMIT = true;
   public boolean LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = true;
   public boolean SHELVE_DETAILS_PREVIEW_SHOWN = false;
   public boolean RELOAD_CONTEXT = true;
@@ -127,7 +123,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     }
   }
 
-  public boolean FORCE_NON_EMPTY_COMMENT = false;
   public boolean CLEAR_INITIAL_COMMIT_MESSAGE = false;
 
   @Property(surroundWithTag = false)

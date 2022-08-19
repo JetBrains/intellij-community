@@ -15,6 +15,7 @@ import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
@@ -685,5 +686,24 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
     result = 31 * result + type.hashCode()
     result = 31 * result + dependencies.hashCode()
     return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.add(ModuleId::class.java)
+    collector.add(ModuleDependencyItem.Exportable.LibraryDependency::class.java)
+    collector.add(LibraryId::class.java)
+    collector.add(ModuleDependencyItem.Exportable::class.java)
+    collector.add(ModuleDependencyItem.DependencyScope::class.java)
+    collector.add(ModuleDependencyItem::class.java)
+    collector.add(LibraryTableId.ModuleLibraryTableId::class.java)
+    collector.add(ModuleDependencyItem.SdkDependency::class.java)
+    collector.add(LibraryTableId.GlobalLibraryTableId::class.java)
+    collector.add(LibraryTableId::class.java)
+    collector.add(ModuleDependencyItem.Exportable.ModuleDependency::class.java)
+    collector.addObject(ModuleDependencyItem.ModuleSourceDependency::class.java)
+    collector.addObject(ModuleDependencyItem.InheritedSdkDependency::class.java)
+    collector.addObject(LibraryTableId.ProjectLibraryTableId::class.java)
+    this.dependencies?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = false
   }
 }

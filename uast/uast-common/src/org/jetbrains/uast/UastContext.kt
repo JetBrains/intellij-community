@@ -17,10 +17,6 @@ import java.util.*
 
 @Deprecated("use UastFacade or UastLanguagePlugin instead", ReplaceWith("UastFacade"))
 class UastContext(val project: Project) : UastLanguagePlugin by UastFacade {
-
-  val languagePlugins: Collection<UastLanguagePlugin>
-    get() = UastFacade.languagePlugins
-
   fun findPlugin(element: PsiElement): UastLanguagePlugin? = UastFacade.findPlugin(element)
 
   fun getMethod(method: PsiMethod): UMethod = convertWithParent(method)!!
@@ -50,7 +46,7 @@ object UastFacade : UastLanguagePlugin {
   fun findPlugin(language: Language): UastLanguagePlugin? {
     val cached = cachedLastPlugin
     if (language === cached.language) return cached
-    val plugin = UastLanguagePlugin.getInstances().firstOrNull { it.language === language }
+    val plugin = languagePlugins.firstOrNull { it.language === language }
     if (plugin != null) cachedLastPlugin = plugin
     return plugin
   }
@@ -141,7 +137,7 @@ object UastFacade : UastLanguagePlugin {
 /**
  * Converts the element to UAST.
  */
-fun PsiElement?.toUElement(): UElement? = this?.let { UastFacade.convertElementWithParent(this, null) }
+fun PsiElement?.toUElement(): UElement? = if (this == null) null else UastFacade.convertElementWithParent(this, null)
 
 /**
  * Converts the element to an UAST element of the given type. Returns null if the PSI element type does not correspond
@@ -149,7 +145,7 @@ fun PsiElement?.toUElement(): UElement? = this?.let { UastFacade.convertElementW
  */
 @Suppress("UNCHECKED_CAST")
 @Contract("null, _ -> null")
-fun <T : UElement> PsiElement?.toUElement(cls: Class<out T>): T? = this?.let { UastFacade.convertElementWithParent(this, cls) as T? }
+fun <T : UElement> PsiElement?.toUElement(cls: Class<out T>): T? = if (this == null) null else UastFacade.convertElementWithParent(this, cls) as T?
 
 @Suppress("UNCHECKED_CAST")
 @SafeVarargs

@@ -6,7 +6,7 @@ This directory contains the IJ plugin for Package Search.
 
 By default, the plugin will use the production backend. If you ever needed to test against a different deployment of the APIs, you can temporarily
 change the `ServerURLs.base` property value in the
-[`PackageSearchApiClient.kt`](src/com/jetbrains/packagesearch/intellij/plugin/api/PackageSearchApiClient.kt) file, for example pointing it to a local
+[`DefaultPackageServiceConfig.kt`](community/plugins/repository-search/src/main/kotlin/org/jetbrains/idea/packagesearch/DefaultPackageServiceConfig.kt) file, for example pointing it to a local
 instance of the backend such as `http://localhost:7676`, or a staging environment.
 
 Please note that some tests in the project are not unit tests, but rather integration tests that hit the backend. By default, those tests will be run

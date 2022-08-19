@@ -19,14 +19,13 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.MultiMap
-import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.messages.MessageBusConnection
+import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
 import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
@@ -207,7 +206,11 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
             modules.forEach(::get)
         }
 
-        override fun calculate(key: Module): List<ModuleSourceInfo> = key.sourceModuleInfos
+        override fun calculate(key: Module): List<ModuleSourceInfo> {
+            val sourceModuleInfos = key.sourceModuleInfos
+            println("${key.name} -> $sourceModuleInfos")
+            return sourceModuleInfos
+        }
 
         override fun checkKeyValidity(key: Module) {
             key.checkValidity()
@@ -232,7 +235,13 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
 
             for (moduleChange in moduleChanges) {
                 when (moduleChange) {
-                    is EntityChange.Added -> storageAfter.findModuleByEntity(moduleChange.entity)?.scheduleRegister()
+                    is EntityChange.Added -> {
+                        val moduleBridge =
+                            storageAfter.findModuleByEntity(moduleChange.newEntity) ?:
+                            // TODO: workaround to bypass bug with new modules not present in storageAfter
+                            WorkspaceModel.getInstance(project).entityStorage.current.findModuleByEntity(moduleChange.newEntity)
+                        moduleBridge?.scheduleRegister()
+                    }
                     is EntityChange.Removed -> storageBefore.findModuleByEntity(moduleChange.entity)?.scheduleRemove()
                     is EntityChange.Replaced -> {
                         storageBefore.findModuleByEntity(moduleChange.oldEntity)?.scheduleRemove()
@@ -245,7 +254,11 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
 
             for (sourceRootChange in sourceRootChanges) {
                 val modules: List<Module> = when (sourceRootChange) {
-                    is EntityChange.Added -> listOfNotNull(storageAfter.findModuleByEntity(sourceRootChange.entity.contentRoot.module))
+                    is EntityChange.Added -> listOfNotNull(
+                        storageAfter.findModuleByEntity(sourceRootChange.newEntity.contentRoot.module) ?:
+                        // TODO: workaround to bypass bug with new modules not present in storageAfter
+                        WorkspaceModel.getInstance(project).entityStorage.current.findModuleByEntity(sourceRootChange.newEntity.contentRoot.module)
+                    )
                     is EntityChange.Removed -> listOfNotNull(storageBefore.findModuleByEntity(sourceRootChange.entity.contentRoot.module))
                     is EntityChange.Replaced -> listOfNotNull(
                         storageBefore.findModuleByEntity(sourceRootChange.oldEntity.contentRoot.module),
@@ -382,7 +395,11 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
 
             val updatedModuleSdks: Set<Sdk> = moduleChanges.asSequence()
                 .mapNotNull { it.newEntity }
-                .mapNotNull { storageAfter.findModuleByEntity(it) }
+                .mapNotNull {
+                    storageAfter.findModuleByEntity(it) ?:
+                    // TODO: workaround to bypass bug with new modules not present in storageAfter
+                    WorkspaceModel.getInstance(project).entityStorage.current.findModuleByEntity(it)
+                }
                 .flatMapTo(hashSetOf(), ::moduleSdks)
 
             updatedModuleSdks.forEach(::get)

@@ -700,6 +700,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/binaryExpression/stringConcatenation.java");
         }
 
+        @TestMetadata("stringConcatenation-ktij-14561.java")
+        public void testStringConcatenation_ktij_14561() throws Exception {
+            runTest("testData/newJ2k/binaryExpression/stringConcatenation-ktij-14561.java");
+        }
+
         @TestMetadata("unsignedRightShift.java")
         public void testUnsignedRightShift() throws Exception {
             runTest("testData/newJ2k/binaryExpression/unsignedRightShift.java");
@@ -784,6 +789,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("object.java")
         public void testObject() throws Exception {
             runTest("testData/newJ2k/boxedType/object.java");
+        }
+
+        @TestMetadata("redundantConversion.java")
+        public void testRedundantConversion() throws Exception {
+            runTest("testData/newJ2k/boxedType/redundantConversion.java");
         }
 
         @TestMetadata("short.java")

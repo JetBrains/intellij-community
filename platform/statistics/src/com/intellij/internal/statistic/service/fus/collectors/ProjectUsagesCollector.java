@@ -2,8 +2,8 @@
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.internal.statistic.beans.MetricEvent;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator;
+import com.intellij.openapi.application.NonBlockingReadAction;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -57,8 +57,7 @@ public abstract class ProjectUsagesCollector extends FeatureUsagesCollector {
   public static final ExtensionPointName<ProjectUsagesCollector> EP_NAME =
     ExtensionPointName.create("com.intellij.statistics.projectUsagesCollector");
 
-  @NotNull
-  public static Set<ProjectUsagesCollector> getExtensions(@NotNull UsagesCollectorConsumer invoker) {
+  public static @NotNull Set<ProjectUsagesCollector> getExtensions(@NotNull UsagesCollectorConsumer invoker) {
     return getExtensions(invoker, EP_NAME);
   }
 
@@ -68,11 +67,13 @@ public abstract class ProjectUsagesCollector extends FeatureUsagesCollector {
    * {@link MetricEvent#eventId} should indicate what we measure, e.g. "configured.vcs", "module.jdk".<br/>
    * {@link MetricEvent#data} should contain the value of the measurement, e.g. {"name":"Git"}, {"version":"1.8", "vendor":"OpenJdk"}
    */
-  @NotNull
-  public CancellablePromise<? extends Set<MetricEvent>> getMetrics(@NotNull Project project, @NotNull ProgressIndicator indicator) {
+  public @NotNull CancellablePromise<? extends Set<MetricEvent>> getMetrics(@NotNull Project project, @Nullable ProgressIndicator indicator) {
     if (requiresReadAccess()) {
-      return ReadAction.nonBlocking(() -> getMetrics(project))
-        .wrapProgress(indicator)
+      NonBlockingReadAction<Set<MetricEvent>> action = ReadAction.nonBlocking(() -> getMetrics(project));
+      if (indicator != null) {
+        action = action.wrapProgress(indicator);
+      }
+      return action
         .expireWith(project)
         .submit(NonUrgentExecutor.getInstance());
     }
@@ -84,8 +85,7 @@ public abstract class ProjectUsagesCollector extends FeatureUsagesCollector {
    * consider using {@link #getMetrics(Project, ProgressIndicator)} along with ReadAction#nonBlocking if needed,
    * or override {@link #requiresReadAccess()} method to wrap metrics gathering with non-blocking read action automatically.
    */
-  @NotNull
-  protected Set<MetricEvent> getMetrics(@NotNull Project project) {
+  protected @NotNull Set<MetricEvent> getMetrics(@NotNull Project project) {
     return Collections.emptySet();
   }
 

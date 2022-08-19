@@ -17,12 +17,20 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <debugger.asyncStackTraceProvider implementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineAsyncStackTraceProvider"/>
+
+    <runConfigurationExtension implementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineDebugConfigurationExtension"/>
+
     <applicationService
             serviceImplementation="org.jetbrains.kotlin.idea.debugger.core.ToggleKotlinVariablesState"/>
 
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.extensions.KotlinJvmDebuggerFacade"
             serviceImplementation="org.jetbrains.kotlin.idea.debugger.core.KotlinJvmDebuggerFacadeImpl"/>
+
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.idea.debugger.core.StackFrameInterceptor"
+            serviceImplementation="org.jetbrains.kotlin.idea.debugger.coroutine.CoroutineStackFrameInterceptor"/>
 
     <xdebugger.settings implementation="org.jetbrains.kotlin.idea.debugger.KotlinDebuggerSettings"/>
     <xdebugger.breakpointType implementation="org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinFieldBreakpointType"/>

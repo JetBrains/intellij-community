@@ -186,10 +186,14 @@
     <orderEntry type="module" module-name="intellij.keymap.netbeans" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.evaluationPlugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.evaluationPlugin.languages.java" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.devkit.jps.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.groovy.jps.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.ant.jps.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.vcs.gitlab" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.warmup" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.workspaceModel.codegen.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.devkit.workspaceModel.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.remoteControl" scope="RUNTIME" />
   </component>
 </module>

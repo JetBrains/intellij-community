@@ -9420,34 +9420,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/inspectionsLocal/redundantReturnLabel")
-    public static class RedundantReturnLabel extends AbstractLocalInspectionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("inAnonymousFunction.kt")
-        public void testInAnonymousFunction() throws Exception {
-            runTest("testData/inspectionsLocal/redundantReturnLabel/inAnonymousFunction.kt");
-        }
-
-        @TestMetadata("inFunction.kt")
-        public void testInFunction() throws Exception {
-            runTest("testData/inspectionsLocal/redundantReturnLabel/inFunction.kt");
-        }
-
-        @TestMetadata("inFunction2.kt")
-        public void testInFunction2() throws Exception {
-            runTest("testData/inspectionsLocal/redundantReturnLabel/inFunction2.kt");
-        }
-
-        @TestMetadata("inLambda.kt")
-        public void testInLambda() throws Exception {
-            runTest("testData/inspectionsLocal/redundantReturnLabel/inLambda.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/redundantSamConstructor")
     public static class RedundantSamConstructor extends AbstractLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -14594,54 +14566,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/inspectionsLocal/sortModifiers")
-    public static class SortModifiers extends AbstractLocalInspectionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("annotatedBefore.kt")
-        public void testAnnotatedBefore() throws Exception {
-            runTest("testData/inspectionsLocal/sortModifiers/annotatedBefore.kt");
-        }
-
-        @TestMetadata("annotatedBefore2.kt")
-        public void testAnnotatedBefore2() throws Exception {
-            runTest("testData/inspectionsLocal/sortModifiers/annotatedBefore2.kt");
-        }
-
-        @TestMetadata("annotation.kt")
-        public void testAnnotation() throws Exception {
-            runTest("testData/inspectionsLocal/sortModifiers/annotation.kt");
-        }
-
-        @TestMetadata("annotation2.kt")
-        public void testAnnotation2() throws Exception {
-            runTest("testData/inspectionsLocal/sortModifiers/annotation2.kt");
-        }
-
-        @TestMetadata("annotationGroup.kt")
-        public void testAnnotationGroup() throws Exception {
-            runTest("testData/inspectionsLocal/sortModifiers/annotationGroup.kt");
-        }
-
-        @TestMetadata("annotationOverrideFinal.kt")
-        public void testAnnotationOverrideFinal() throws Exception {
-            runTest("testData/inspectionsLocal/sortModifiers/annotationOverrideFinal.kt");
-        }
-
-        @TestMetadata("overrideFinal.kt")
-        public void testOverrideFinal() throws Exception {
-            runTest("testData/inspectionsLocal/sortModifiers/overrideFinal.kt");
-        }
-
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("testData/inspectionsLocal/sortModifiers/simple.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/suspiciousAsDynamic")
     public static class SuspiciousAsDynamic extends AbstractLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -15412,6 +15336,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("noArguments.kt")
         public void testNoArguments() throws Exception {
             runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/noArguments.kt");
+        }
+
+        @TestMetadata("recursive.kt")
+        public void testRecursive() throws Exception {
+            runTest("testData/inspectionsLocal/unnecessaryOptInAnnotation/recursive.kt");
         }
 
         @TestMetadata("redundantClassTwoMarkers.kt")

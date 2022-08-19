@@ -40,10 +40,6 @@ public final class IdeaPopupMenuUI extends BasicPopupMenuUI {
     return false;
   }
 
-  public static boolean isRoundSelectionEnabled(Component c) {
-    return isPartOfPopupMenu(c) && (ExperimentalUI.isNewUI() || isRoundBorder());
-  }
-
   public static boolean isPartOfPopupMenu(Component c) {
     if (c == null) {
       return false;
@@ -54,6 +50,10 @@ public final class IdeaPopupMenuUI extends BasicPopupMenuUI {
     return isPartOfPopupMenu(c.getParent());
   }
 
+  public static boolean isMenuBarItem(Component c) {
+    return c.getParent() instanceof JMenuBar;
+  }
+
   @Override
   public boolean isPopupTrigger(final MouseEvent event) {
     return event.isPopupTrigger();
@@ -62,7 +62,9 @@ public final class IdeaPopupMenuUI extends BasicPopupMenuUI {
   @Override
   public void paint(final Graphics g, final JComponent jcomponent) {
     if (!isUnderPopup(jcomponent) || isRoundBorder()) {
-      super.paint(g, jcomponent);
+      Rectangle bounds = popupMenu.getBounds();
+      g.setColor(popupMenu.getBackground());
+      g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
       return;
     }
 
@@ -79,7 +81,7 @@ public final class IdeaPopupMenuUI extends BasicPopupMenuUI {
   }
 
   public static boolean isRoundBorder() {
-    return SystemInfoRt.isMac;
+    return SystemInfoRt.isMac && ExperimentalUI.isNewUI();
   }
 
   public static boolean hideEmptyIcon(Component c) {

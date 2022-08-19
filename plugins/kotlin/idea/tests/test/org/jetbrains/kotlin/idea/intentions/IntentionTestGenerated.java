@@ -7374,9 +7374,19 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("differentTypes.kt")
+        public void testDifferentTypes() throws Exception {
+            runTest("testData/intentions/convertRangeCheckToTwoComparisons/differentTypes.kt");
+        }
+
         @TestMetadata("double.kt")
         public void testDouble() throws Exception {
             runTest("testData/intentions/convertRangeCheckToTwoComparisons/double.kt");
+        }
+
+        @TestMetadata("downTo.kt")
+        public void testDownTo() throws Exception {
+            runTest("testData/intentions/convertRangeCheckToTwoComparisons/downTo.kt");
         }
 
         @TestMetadata("forLoop.kt")
@@ -7407,6 +7417,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("otherOp.kt")
         public void testOtherOp() throws Exception {
             runTest("testData/intentions/convertRangeCheckToTwoComparisons/otherOp.kt");
+        }
+
+        @TestMetadata("rangeUntil.kt")
+        public void testRangeUntil() throws Exception {
+            runTest("testData/intentions/convertRangeCheckToTwoComparisons/rangeUntil.kt");
+        }
+
+        @TestMetadata("until.kt")
+        public void testUntil() throws Exception {
+            runTest("testData/intentions/convertRangeCheckToTwoComparisons/until.kt");
         }
 
         @TestMetadata("withSideEffects.kt")
@@ -14485,6 +14505,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/operatorToFunction/binaryRangeTo.kt");
         }
 
+        @TestMetadata("binaryRangeUntil.kt")
+        public void testBinaryRangeUntil() throws Exception {
+            runTest("testData/intentions/operatorToFunction/binaryRangeUntil.kt");
+        }
+
         @TestMetadata("binaryTimesEquals.kt")
         public void testBinaryTimesEquals() throws Exception {
             runTest("testData/intentions/operatorToFunction/binaryTimesEquals.kt");
@@ -14917,134 +14942,6 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("withProperties.kt")
         public void testWithProperties() throws Exception {
             runTest("testData/intentions/removeConstructorKeyword/withProperties.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/intentions/removeEmptyClassBody")
-    public static class RemoveEmptyClassBody extends AbstractIntentionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("anonymousInterfaceObject.kt")
-        public void testAnonymousInterfaceObject() throws Exception {
-            runTest("testData/intentions/removeEmptyClassBody/anonymousInterfaceObject.kt");
-        }
-
-        @TestMetadata("anonymousObject.kt")
-        public void testAnonymousObject() throws Exception {
-            runTest("testData/intentions/removeEmptyClassBody/anonymousObject.kt");
-        }
-
-        @TestMetadata("companionBeforeFun.kt")
-        public void testCompanionBeforeFun() throws Exception {
-            runTest("testData/intentions/removeEmptyClassBody/companionBeforeFun.kt");
-        }
-
-        @TestMetadata("companionBeforeInit.kt")
-        public void testCompanionBeforeInit() throws Exception {
-            runTest("testData/intentions/removeEmptyClassBody/companionBeforeInit.kt");
-        }
-
-        @TestMetadata("companionBeforePrivateFun.kt")
-        public void testCompanionBeforePrivateFun() throws Exception {
-            runTest("testData/intentions/removeEmptyClassBody/companionBeforePrivateFun.kt");
-        }
-
-        @TestMetadata("companionBeforeVal.kt")
-        public void testCompanionBeforeVal() throws Exception {
-            runTest("testData/intentions/removeEmptyClassBody/companionBeforeVal.kt");
-        }
-
-        @TestMetadata("companionInLast.kt")
-        public void testCompanionInLast() throws Exception {
-            runTest("testData/intentions/removeEmptyClassBody/companionInLast.kt");
-        }
-
-        @TestMetadata("companionWithName.kt")
-        public void testCompanionWithName() throws Exception {
-            runTest("testData/intentions/removeEmptyClassBody/companionWithName.kt");
-        }
-
-        @TestMetadata("companionWithSemicolon.kt")
-        public void testCompanionWithSemicolon() throws Exception {
-            runTest("testData/intentions/removeEmptyClassBody/companionWithSemicolon.kt");
-        }
-
-        @TestMetadata("emptyClass.kt")
-        public void testEmptyClass() throws Exception {
-            runTest("testData/intentions/removeEmptyClassBody/emptyClass.kt");
-        }
-
-        @TestMetadata("emptyDataClass.kt")
-        public void testEmptyDataClass() throws Exception {
-            runTest("testData/intentions/removeEmptyClassBody/emptyDataClass.kt");
-        }
-
-        @TestMetadata("emptyInterface.kt")
-        public void testEmptyInterface() throws Exception {
-            runTest("testData/intentions/removeEmptyClassBody/emptyInterface.kt");
-        }
-
-        @TestMetadata("enumEntry.kt")
-        public void testEnumEntry() throws Exception {
-            runTest("testData/intentions/removeEmptyClassBody/enumEntry.kt");
-        }
-
-        @TestMetadata("innerClass.kt")
-        public void testInnerClass() throws Exception {
-            runTest("testData/intentions/removeEmptyClassBody/innerClass.kt");
-        }
-
-        @TestMetadata("lastEnumEntry.kt")
-        public void testLastEnumEntry() throws Exception {
-            runTest("testData/intentions/removeEmptyClassBody/lastEnumEntry.kt");
-        }
-
-        @TestMetadata("lastEnumEntry2.kt")
-        public void testLastEnumEntry2() throws Exception {
-            runTest("testData/intentions/removeEmptyClassBody/lastEnumEntry2.kt");
-        }
-
-        @TestMetadata("lastEnumEntry3.kt")
-        public void testLastEnumEntry3() throws Exception {
-            runTest("testData/intentions/removeEmptyClassBody/lastEnumEntry3.kt");
-        }
-
-        @TestMetadata("nestedAnonymous.kt")
-        public void testNestedAnonymous() throws Exception {
-            runTest("testData/intentions/removeEmptyClassBody/nestedAnonymous.kt");
-        }
-
-        @TestMetadata("nestedClassFollowedByFunction.kt")
-        public void testNestedClassFollowedByFunction() throws Exception {
-            runTest("testData/intentions/removeEmptyClassBody/nestedClassFollowedByFunction.kt");
-        }
-
-        @TestMetadata("nestedClassFollowedByMember.kt")
-        public void testNestedClassFollowedByMember() throws Exception {
-            runTest("testData/intentions/removeEmptyClassBody/nestedClassFollowedByMember.kt");
-        }
-
-        @TestMetadata("nestedClassFollowedBySecondaryConstructor.kt")
-        public void testNestedClassFollowedBySecondaryConstructor() throws Exception {
-            runTest("testData/intentions/removeEmptyClassBody/nestedClassFollowedBySecondaryConstructor.kt");
-        }
-
-        @TestMetadata("nestedClassFollowedBySecondaryConstructor2.kt")
-        public void testNestedClassFollowedBySecondaryConstructor2() throws Exception {
-            runTest("testData/intentions/removeEmptyClassBody/nestedClassFollowedBySecondaryConstructor2.kt");
-        }
-
-        @TestMetadata("noneEmptyClass.kt")
-        public void testNoneEmptyClass() throws Exception {
-            runTest("testData/intentions/removeEmptyClassBody/noneEmptyClass.kt");
-        }
-
-        @TestMetadata("object.kt")
-        public void testObject() throws Exception {
-            runTest("testData/intentions/removeEmptyClassBody/object.kt");
         }
     }
 

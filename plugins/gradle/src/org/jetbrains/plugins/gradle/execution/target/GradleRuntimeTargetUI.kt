@@ -67,7 +67,7 @@ class GradleRuntimeTargetUI<C : TargetEnvironmentConfiguration>(private val conf
           val configuration = configurationProvider.environmentConfiguration
           val targetType = configuration.getTargetType() as? BrowsableTargetEnvironmentType ?: break
           addTargetActionListener(configurationProvider.pathMapper,
-                                  targetType.createBrowser(project, title, TEXT_FIELD_WHOLE_TEXT, textField, { configuration }, false))
+                                  targetType.createBrowser(project, title, TEXT_FIELD_WHOLE_TEXT, textField, { configuration }, TargetBrowserHints(true)))
           return this
         }
       }

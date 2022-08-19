@@ -293,7 +293,9 @@ private fun generateProductJson(targetDir: Path, javaExecutablePath: String?, co
                                           launcherPath = "bin/$scriptName.sh",
                                           javaExecutablePath = javaExecutablePath,
                                           vmOptionsFilePath = "bin/" + scriptName + "64.vmoptions",
-                                          startupWmClass = getLinuxFrameClass(context))),
+                                          startupWmClass = getLinuxFrameClass(context),
+                                          bootClassPathJarNames = context.bootClassPathJarNames,
+                                          additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.LINUX))),
     context = context
   )
   Files.writeString(file, json)

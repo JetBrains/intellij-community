@@ -13,7 +13,7 @@ import org.jetbrains.deft.annotations.Child
 
 interface HeadAbstractionEntity : WorkspaceEntityWithPersistentId {
   val data: String
-  val child: @Child CompositeBaseEntity
+  val child: @Child CompositeBaseEntity?
 
   override val persistentId: PersistentEntityId<WorkspaceEntityWithPersistentId>
     get() = HeadAbstractionPersistentId(data)
@@ -23,7 +23,7 @@ interface HeadAbstractionEntity : WorkspaceEntityWithPersistentId {
   interface Builder : HeadAbstractionEntity, ModifiableWorkspaceEntity<HeadAbstractionEntity>, ObjBuilder<HeadAbstractionEntity> {
     override var data: String
     override var entitySource: EntitySource
-    override var child: CompositeBaseEntity
+    override var child: CompositeBaseEntity?
   }
 
   companion object : Type<HeadAbstractionEntity, Builder>() {

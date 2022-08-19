@@ -1,13 +1,11 @@
-use std::collections::HashMap;
-use std::{env, fs};
-use std::ffi::OsStr;
+use std::fs;
 use std::fs::File;
 use std::io::{BufWriter, Write};
-use std::path::{Path, PathBuf};
-use log::info;
+use std::path::PathBuf;
+use log::{debug, info};
 use path_absolutize::Absolutize;
-use crate::errors::{Result};
-use crate::{canonical_non_unc, DefaultLaunchConfiguration, err_from_string, LaunchConfiguration};
+use crate::errors::Result;
+use crate::{DefaultLaunchConfiguration, err_from_string, LaunchConfiguration};
 use crate::default::get_config_home;
 use crate::utils::{get_path_from_env_var, PathExt, read_file_to_end};
 
@@ -48,6 +46,11 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
     fn prepare_for_launch(&self) -> Result<PathBuf> {
         self.default.prepare_for_launch()
     }
+
+    #[cfg(target_os = "linux")]
+    fn prepare_for_launch(&self) -> Result<PathBuf> {
+        todo!()
+    }
 }
 
 impl DefaultLaunchConfiguration {
@@ -76,24 +79,37 @@ impl DefaultLaunchConfiguration {
         base_dir_env_var_name: &str,
         per_project_config_dir_name: &str) -> Result<PathBuf> {
 
-        let base_dir = match get_path_from_env_var(base_dir_env_var_name) {
-            Ok(x) => x,
-            Err(_) => get_config_home(),
+        let specific_dir = match get_path_from_env_var(specific_dir_env_var_name) {
+            Ok(x) => {
+                debug!("{human_readable_name}: {specific_dir_env_var_name} is set to {x:?}, will use it as a target dir");
+                x
+            },
+            Err(_) => {
+                let base_dir = match get_path_from_env_var(base_dir_env_var_name) {
+                    Ok(x) => {
+                        debug!("{human_readable_name}: {base_dir_env_var_name} is set to {x:?}, will use it as a base dir");
+                        x
+                    },
+                    Err(_) => get_config_home(),
+                };
+
+                let product_code = &self.product_info.productCode;
+
+                let result = base_dir.join("JetBrains")
+                    .join(format!("RemoteDev-{product_code}"))
+                    .join(per_project_config_dir_name);
+
+                result
+            }
         };
 
-        let product_code = &self.product_info.productCode;
-
-        let result = base_dir.join("JetBrains")
-            .join(format!("RemoteDev-{product_code}"))
-            .join(per_project_config_dir_name);
-
-        let result_string = result.to_string_lossy();
+        let result_string = specific_dir.to_string_lossy();
 
         info!("{human_readable_name}: {result_string}");
 
-        fs::create_dir_all(&result)?;
+        fs::create_dir_all(&specific_dir)?;
 
-        Ok(result)
+        Ok(specific_dir)
     }
 }
 

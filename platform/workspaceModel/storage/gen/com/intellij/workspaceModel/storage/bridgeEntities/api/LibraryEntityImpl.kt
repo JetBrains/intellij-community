@@ -15,6 +15,7 @@ import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
@@ -535,5 +536,19 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
     result = 31 * result + roots.hashCode()
     result = 31 * result + excludedRoots.hashCode()
     return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.add(ModuleId::class.java)
+    collector.add(LibraryRoot.InclusionOptions::class.java)
+    collector.add(LibraryRootTypeId::class.java)
+    collector.add(LibraryTableId.ModuleLibraryTableId::class.java)
+    collector.add(LibraryTableId.GlobalLibraryTableId::class.java)
+    collector.add(LibraryRoot::class.java)
+    collector.add(LibraryTableId::class.java)
+    collector.addObject(LibraryTableId.ProjectLibraryTableId::class.java)
+    this.roots?.let { collector.add(it::class.java) }
+    this.excludedRoots?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = false
   }
 }

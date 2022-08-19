@@ -1,16 +1,34 @@
 use std::{fs, io};
+use std::env::current_dir;
 use std::fs::{create_dir, File};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
 pub fn gradle_command_wrapper(gradle_command: &str) {
-    let command_to_ecxecute = Command::new("./gradlew")
+    let executable_name = get_gradlew_executable_name();
+    let executable = PathBuf::from("./resources/TestProject")
+        .join(executable_name);
+
+    assert!(executable.exists());
+
+    let gradlew = executable.canonicalize().expect("Failed to get canonical path to gradlew");
+    let command_to_execute = Command::new(gradlew)
         .arg(gradle_command)
         .current_dir("resources/TestProject")
         .output()
         .expect(format!("Failed to execute gradlew :{gradle_command}").as_str());
 
-    command_handler(&command_to_ecxecute);
+    command_handler(&command_to_execute);
+}
+
+#[cfg(target_os = "windows")]
+fn get_gradlew_executable_name() -> String {
+    "gradlew.bat".to_string()
+}
+
+#[cfg(any(target_os = "macos", target_os = "linux"))]
+fn get_gradlew_executable_name() -> String {
+    "gradlew".to_string()
 }
 
 fn command_handler(command: &Output) {
@@ -23,18 +41,6 @@ fn command_handler(command: &Output) {
         panic!("{message}")
     }
 }
-
-pub fn get_java_parameter_from_output(java_output: &str, parameter: String) -> String {
-    let split = java_output.split("\n");
-    for s in split {
-        if s.starts_with(&parameter) {
-            return s.to_string();
-        }
-    }
-
-    return "".to_string();
-}
-
 
 pub fn get_child_dir(parent: &Path, prefix: &str) -> io::Result<PathBuf> {
     let read_dir = fs::read_dir(parent)?;
@@ -66,7 +72,7 @@ pub fn layout_into_test_dir(
     // linux:
     // .
     // ├── bin/
-    // │   └── xplat_launcher
+    // │   └── xplat-launcher
     // │   └── idea64.vmoptions
     // ├── lib/
     // │   └── app.jar
@@ -81,13 +87,14 @@ pub fn layout_into_test_dir(
     let launcher = project_root
         .join("target")
         .join("debug")
-        .join("xplat_launcher");
+        .join("xplat-launcher");
     assert!(launcher.exists());
 
-    fs::copy(launcher, "bin/xplat_launcher").expect("Failed to copy launcher");
+    fs::copy(launcher, "bin/xplat-launcher").expect("Failed to copy launcher");
     fs::copy(jar_absolute_path, "lib/app.jar").expect("Failed to move jar");
     std::os::unix::fs::symlink(jbr_absolute_path, "jbr").expect("Failed to create symlink for jbr");
-    File::create("bin/idea.vmoptions").expect("Failed to create idea.vmoptions");
+    File::create("bin/idea64.vmoptions").expect("Failed to create idea.vmoptions");
+    File::create("lib/test.jar").expect("Failed to create test.jar file for classpath test");
 }
 
 #[cfg(target_os = "macos")]
@@ -101,7 +108,7 @@ pub fn layout_into_test_dir(
     // .
     // └── Contents
     //     ├── bin/
-    //     │   └── xplat_launcher
+    //     │   └── xplat-launcher
     //     │   └── idea.vmoptions
     //     ├── Resources/
     //     │   └── product-info.json
@@ -122,13 +129,14 @@ pub fn layout_into_test_dir(
     let launcher = project_root
         .join("target")
         .join("debug")
-        .join("xplat_launcher");
+        .join("xplat-launcher");
     assert!(launcher.exists());
 
-    fs::copy(launcher, "Contents/bin/xplat_launcher").expect("Failed to copy launcher");
+    fs::copy(launcher, "Contents/bin/xplat-launcher").expect("Failed to copy launcher");
     fs::copy(jar_absolute_path, "Contents/lib/app.jar").expect("Failed to move jar");
     std::os::unix::fs::symlink(jbr_absolute_path, "Contents/jbr").expect("Failed to create symlink for jbr");
     File::create("Contents/bin/idea.vmoptions").expect("Failed to create idea.vmoptions");
+    File::create("Contents/lib/test.jar").expect("Failed to create test.jar file for classpath test");
 }
 
 #[cfg(target_os = "windows")]
@@ -141,7 +149,7 @@ pub fn layout_into_test_dir(
     // windows:
     // .
     // ├── bin/
-    // │   └── xplat_launcher
+    // │   └── xplat-launcher
     // │   └── idea64.exe.vmoptions
     // ├── lib/
     // │   └── app.jar
@@ -157,11 +165,20 @@ pub fn layout_into_test_dir(
     let launcher = project_root
         .join("target")
         .join("debug")
-        .join("xplat_launcher");
+        .join("xplat-launcher.exe");
     assert!(launcher.exists());
 
-    fs::copy(launcher, "bin/xplat_launcher").expect("Failed to copy launcher");
+    fs::copy(launcher, "bin/xplat-launcher").expect("Failed to copy launcher");
     fs::copy(jar_absolute_path, "lib/app.jar").expect("Failed to move jar");
-    std::os::windows::fs::symlink_dir(jbr_absolute_path, "jbr").expect("Failed to create symlink for jbr");
-    File::create("bin/ideax64.exe.vmoptions").expect("Failed to create idea.vmoptions");
+    junction::create(jbr_absolute_path, "jbr").expect("Failed to create junction for jbr");
+    File::create("bin/idea64.exe.vmoptions").expect("Failed to create idea.vmoptions");
+    File::create("lib/test.jar").expect("Failed to create test.jar file for classpath test");
+}
+
+pub fn resolve_test_dir() -> PathBuf {
+    if cfg!(target_os = "macos") {
+        current_dir().unwrap().join("Contents").join("bin")
+    } else {
+        current_dir().unwrap().join("bin")
+    }
 }

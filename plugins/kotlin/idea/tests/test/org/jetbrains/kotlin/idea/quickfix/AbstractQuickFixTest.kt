@@ -209,9 +209,11 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
                 UIUtil.dispatchAllInvocationEvents()
 
                 if (!shouldBeAvailableAfterExecution()) {
+                    var action = findActionWithText(actionHint.expectedText)
+                    action = if (action == null) null else IntentionActionDelegate.unwrap(action)
                     assertNull(
-                        "Action '${actionHint.expectedText}' is still available after its invocation in test " + fileName,
-                        findActionWithText(actionHint.expectedText)
+                        "Action '${actionHint.expectedText}' (${action?.javaClass}) is still available after its invocation in test " + fileName,
+                        action
                     )
                 }
             } else {

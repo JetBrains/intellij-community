@@ -236,7 +236,12 @@ private class MarkerCollector(private val resolutionFacade: ResolutionFacade) {
      * @param moduleApiVersion the API version of the current module to check `@WasExperimental` annotations
      */
     private fun KotlinType.collectMarkers(moduleApiVersion: ApiVersion) {
-        arguments.forEach { it.type.collectMarkers(moduleApiVersion) }
+        arguments.forEach {
+            if (!it.isStarProjection) {
+                it.type.collectMarkers(moduleApiVersion)
+            }
+        }
+
         val descriptor = this.constructor.declarationDescriptor ?: return
         descriptor.collectMarkers(moduleApiVersion)
     }

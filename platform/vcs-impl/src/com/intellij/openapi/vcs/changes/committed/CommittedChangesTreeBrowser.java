@@ -250,6 +250,11 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
     return myGroupingStrategy;
   }
 
+  @NotNull
+  public Tree getChangesTree() {
+    return myChangesTree;
+  }
+
   private void updateBySelectionChange() {
     List<CommittedChangeList> selection = new ArrayList<>();
     final TreePath[] selectionPaths = myChangesTree.getSelectionPaths();

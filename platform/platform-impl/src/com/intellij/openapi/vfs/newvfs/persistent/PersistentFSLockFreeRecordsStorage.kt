@@ -27,7 +27,6 @@ internal class PersistentFSLockFreeRecordsStorage @Throws(IOException::class) co
   private val recordCount: AtomicInteger
 
   init {
-    file.pagedFileStorage.isFillBuffersWithZeros = true
     _globalModCount = AtomicInteger(readGlobalModCount())
     recordCount = AtomicInteger((length() / RECORD_SIZE).toInt())
 

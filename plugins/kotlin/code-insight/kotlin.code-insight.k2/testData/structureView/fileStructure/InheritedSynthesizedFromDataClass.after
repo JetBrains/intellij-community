@@ -1,0 +1,8 @@
+-InheritedSynthesizedFromDataClass.kt
+ -class TestData
+  a: Int
+  constructor(a: Int)
+  fun equals(other: Any?): Boolean location=→Any
+  fun hashCode(): Int location=→Any
+  fun some(): Unit
+  fun toString(): String location=→Any

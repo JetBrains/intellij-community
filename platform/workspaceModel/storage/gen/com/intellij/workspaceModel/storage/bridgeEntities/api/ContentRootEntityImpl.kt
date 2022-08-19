@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.bridgeEntities.api
 
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntityInformation
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -12,6 +13,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
@@ -430,5 +432,28 @@ class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() {
     result = 31 * result + excludedUrls.hashCode()
     result = 31 * result + excludedPatterns.hashCode()
     return result
+  }
+
+  override fun equalsByKey(other: Any?): Boolean {
+    if (other == null) return false
+    if (this::class != other::class) return false
+
+    other as ContentRootEntityData
+
+    if (this.url != other.url) return false
+    return true
+  }
+
+  override fun hashCodeByKey(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + url.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    this.excludedUrls?.let { collector.add(it::class.java) }
+    this.url?.let { collector.add(it::class.java) }
+    this.excludedPatterns?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = false
   }
 }

@@ -273,6 +273,8 @@ data class IDERunContext(
     }
     finally {
 
+      collectJBRDiagnosticFilesIfExist(testContext)
+
       try {
         if (SystemInfo.isWindows) {
           destroyGradleDaemonProcessIfExists()
@@ -282,7 +284,7 @@ data class IDERunContext(
           dir.listDirectoryEntries().isEmpty()
         }.forEach { it.toFile().deleteRecursively() }
 
-        ErrorReporter.reportErrorsAsFailedTests(logsDir / "script-errors", contextName)
+        ErrorReporter.reportErrorsAsFailedTests(logsDir / "script-errors", this)
         publishArtifacts(isRunSuccessful)
 
         if (codeBuilder != null) {

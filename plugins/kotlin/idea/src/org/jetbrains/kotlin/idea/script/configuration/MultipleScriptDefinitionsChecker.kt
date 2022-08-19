@@ -66,7 +66,7 @@ class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
     }
 
     private fun createNotification(fileEditor: FileEditor, project: Project, defs: List<ScriptDefinition>): EditorNotificationPanel =
-        EditorNotificationPanel(fileEditor).apply {
+        EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Info).apply {
             text = KotlinBundle.message("script.text.multiple.script.definitions.are.applicable.for.this.script", defs.first().name)
             createComponentActionLabel(
                 KotlinBundle.message("script.action.text.show.all")

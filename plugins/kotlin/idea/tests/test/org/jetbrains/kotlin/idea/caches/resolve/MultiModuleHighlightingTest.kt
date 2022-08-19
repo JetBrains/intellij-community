@@ -19,6 +19,8 @@ import org.jetbrains.kotlin.analyzer.ResolverForModuleComputationTracker
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.ResolutionAnchorCacheService
+import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.withLibraryToSourceAnalysis
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
@@ -38,6 +40,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverPluginNames.ANNOTATION_OPTION_NAME
 import org.jetbrains.kotlin.samWithReceiver.SamWithReceiverPluginNames.PLUGIN_ID
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.junit.Assert.assertNotEquals
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -255,6 +258,22 @@ open class MultiModuleHighlightingTest : AbstractMultiModuleHighlightingTest() {
             checkHighlightingInProject()
             dependencyModule.modifyTheOnlySourceFile()
             checkHighlightingInProject()
+        }
+    }
+
+    private fun withResolutionAnchors(anchors: Map<String, String>, block: () -> Unit) {
+        val resolutionAnchorService = ResolutionAnchorCacheService.getInstance(project).safeAs<ResolutionAnchorCacheServiceImpl>()
+            ?: error("Anchor service missing")
+
+        val oldResolutionAnchorMappingState = resolutionAnchorService.state
+
+        try {
+            resolutionAnchorService.setAnchors(anchors)
+            project.withLibraryToSourceAnalysis {
+                block()
+            }
+        } finally {
+            resolutionAnchorService.loadState(oldResolutionAnchorMappingState)
         }
     }
 

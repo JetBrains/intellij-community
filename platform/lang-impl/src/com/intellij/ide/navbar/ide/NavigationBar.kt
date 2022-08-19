@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.PsiDirectory
@@ -45,6 +46,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JComponent
 import kotlin.coroutines.resume
 
+
+const val REGISTRY_KEY = "ide.navBar.v2"
+val navbarV2Enabled = Registry.`is`(REGISTRY_KEY, false)
 
 internal class UiNavBarItem(
   val pointer: Pointer<out NavBarItem>,
@@ -81,7 +85,7 @@ private sealed class ExpandResult {
 internal class NavigationBar(
   val myProject: Project,
   val cs: CoroutineScope,
-  myEventFlow: SharedFlow<NavBarEvent>
+  myEventFlow: SharedFlow<Unit>
 ) {
 
   // Flag to block external model changes while user click is being processed
@@ -106,12 +110,7 @@ internal class NavigationBar(
     cs.launch(Dispatchers.EDT) {
       myEventFlow
         .throttle(DEFAULT_UI_RESPONSE_TIMEOUT)
-        .collectLatest {
-          when (it) {
-            is NavBarEvent.ModelChangeEvent -> rebuildModel()
-            is NavBarEvent.PresentationChangeEvent -> rebuildModel()
-          }
-        }
+        .collectLatest { rebuildModel() }
     }
 
     // handle clicks on navigation bar

@@ -34,7 +34,7 @@ final class EditorConfigEditorNotificationProvider implements EditorNotification
 
     private MyPanel(@NotNull FileEditor fileEditor,
                     @NotNull Project project) {
-      super(fileEditor);
+      super(fileEditor, EditorNotificationPanel.Status.Warning);
       setText(EditorConfigBundle.message("editor.notification.disabled"));
 
       createActionLabel(EditorConfigBundle.message("editor.notification.enable"), () -> {

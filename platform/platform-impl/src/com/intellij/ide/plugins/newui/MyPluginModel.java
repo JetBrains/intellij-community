@@ -1054,6 +1054,10 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       return List.of();
     }
 
+    if (descriptor.isOnDemand() && !EnabledOnDemandPluginsState.isEnabled(pluginId)) {
+      return List.of(createTextChunk(IdeBundle.message("plugin.manager.on.demand.plugin.not.loaded")));
+    }
+
     PluginLoadingError loadingError = PluginManagerCore.getLoadingError(pluginId);
     PluginId disabledDependency = loadingError != null ? loadingError.disabledDependency : null;
     if (disabledDependency == null) {
