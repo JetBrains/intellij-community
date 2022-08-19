@@ -78,7 +78,6 @@ abstract class NonModalCommitPanel(
     val actions = ActionManager.getInstance().getAction("Vcs.MessageActionGroup") as ActionGroup
 
     val editorToolbar = ActionManager.getInstance().createActionToolbar(COMMIT_EDITOR_PLACE, actions, true).apply {
-      targetComponent = this@NonModalCommitPanel
       setReservePlaceAutoPopupIcon(false)
       component.border = BorderFactory.createEmptyBorder()
       component.isOpaque = false
