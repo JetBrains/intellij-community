@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.util.lang.ZipFilePool
 import org.jetbrains.annotations.ApiStatus
-import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -17,7 +16,7 @@ interface DataLoader {
 
   fun isExcludedFromSubSearch(jarFile: Path): Boolean = false
 
-  fun load(path: String): InputStream?
+  fun load(path: String): ByteArray?
 
   override fun toString(): String
 }
@@ -30,9 +29,9 @@ class LocalFsDataLoader(val basePath: Path) : DataLoader {
   override val emptyDescriptorIfCannotResolve: Boolean
     get() = true
 
-  override fun load(path: String): InputStream? {
+  override fun load(path: String): ByteArray? {
     return try {
-      Files.newInputStream(basePath.resolve(path))
+      Files.readAllBytes(basePath.resolve(path))
     }
     catch (e: NoSuchFileException) {
       null

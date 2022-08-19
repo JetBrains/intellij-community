@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import org.codehaus.stax2.XMLStreamReader2
+import java.io.InputStream
 
 internal class ClassPathXmlPathResolver(private val classLoader: ClassLoader, val isRunningFromSources: Boolean) : PathResolver {
   override val isFlat: Boolean
@@ -36,21 +37,12 @@ internal class ClassPathXmlPathResolver(private val classLoader: ClassLoader, va
                                  dataLoader: DataLoader,
                                  path: String,
                                  readInto: RawPluginDescriptor?): RawPluginDescriptor {
-    val resource: ByteArray?
-    if (classLoader is UrlClassLoader) {
-      resource = classLoader.getResourceAsBytes(path, true)
+    val resource = if (classLoader is UrlClassLoader) {
+      classLoader.getResourceAsBytes(path, true)
     }
     else {
-      classLoader.getResourceAsStream(path)?.let {
-        return readModuleDescriptor(input = it,
-                                    readContext = readContext,
-                                    pathResolver = this,
-                                    dataLoader = dataLoader,
-                                    includeBase = null,
-                                    readInto = readInto,
-                                    locationSource = dataLoader.toString())
-      }
-      resource = null
+      // don't care about performance - UrlClassLoader is expected always
+      classLoader.getResourceAsStream(path)?.use(InputStream::readBytes)
     }
 
     if (resource == null) {
