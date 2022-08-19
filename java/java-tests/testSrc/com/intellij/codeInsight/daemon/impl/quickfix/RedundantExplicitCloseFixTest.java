@@ -6,8 +6,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.RedundantExplicitCloseInspection;
 import org.jetbrains.annotations.NotNull;
 
-
-public class RedundantExplicitCloseInspectionTest extends LightQuickFixParameterizedTestCase {
+public class RedundantExplicitCloseFixTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
