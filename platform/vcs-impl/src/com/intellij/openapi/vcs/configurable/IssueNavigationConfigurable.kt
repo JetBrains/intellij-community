@@ -1,72 +1,52 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.vcs.configurable;
+package com.intellij.openapi.vcs.configurable
 
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsBundle;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.options.Configurable.NoScroll
+import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.VcsBundle
+import javax.swing.JComponent
 
-import javax.swing.*;
-
-
-public class IssueNavigationConfigurable implements SearchableConfigurable, Configurable.NoScroll {
-  private final Project myProject;
-
-  @Nullable private IssueNavigationConfigurationPanel myPanel;
-
-  public IssueNavigationConfigurable(@NotNull Project project) {
-    myProject = project;
+class IssueNavigationConfigurable(private val myProject: Project) : SearchableConfigurable, NoScroll {
+  private var myPanel: IssueNavigationConfigurationPanel? = null
+  override fun getDisplayName(): String {
+    return VcsBundle.message("configurable.IssueNavigationConfigurationPanel.display.name")
   }
 
-  @Override
-  public String getDisplayName() {
-    return VcsBundle.message("configurable.IssueNavigationConfigurationPanel.display.name");
+  override fun getHelpTopic(): String {
+    return "project.propVCSSupport.Issue.Navigation"
   }
 
-  @NotNull
-  @Override
-  public String getHelpTopic() {
-    return "project.propVCSSupport.Issue.Navigation";
+  override fun getId(): String {
+    return helpTopic
   }
 
-  @NotNull
-  @Override
-  public String getId() {
-    return getHelpTopic();
+  override fun createComponent(): JComponent? {
+    if (myPanel == null) myPanel = IssueNavigationConfigurationPanel(myProject)
+    return myPanel
   }
 
-  @Override
-  public JComponent createComponent() {
-    if (myPanel == null) myPanel = new IssueNavigationConfigurationPanel(myProject);
-    return myPanel;
-  }
-
-  @Override
-  public void disposeUIResources() {
+  override fun disposeUIResources() {
     if (myPanel != null) {
-      myPanel = null;
+      myPanel = null
     }
   }
 
-  @Override
-  public void reset() {
+  override fun reset() {
     if (myPanel != null) {
-      myPanel.reset();
+      myPanel!!.reset()
     }
   }
 
-  @Override
-  public void apply() throws ConfigurationException {
+  @Throws(ConfigurationException::class)
+  override fun apply() {
     if (myPanel != null) {
-      myPanel.apply();
+      myPanel!!.apply()
     }
   }
 
-  @Override
-  public boolean isModified() {
-    return myPanel != null && myPanel.isModified();
+  override fun isModified(): Boolean {
+    return myPanel != null && myPanel!!.isModified
   }
 }
