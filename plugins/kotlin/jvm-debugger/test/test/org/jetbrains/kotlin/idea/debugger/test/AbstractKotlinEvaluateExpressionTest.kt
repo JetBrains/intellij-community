@@ -10,6 +10,7 @@ import com.intellij.debugger.engine.evaluation.TextWithImportsImpl
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerContextImpl.createDebuggerContext
+import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.util.io.FileUtil
@@ -293,7 +294,7 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
             return
         }
 
-        val markupMap = NodeDescriptorImpl.getMarkupMap(debugProcess) ?: return
+        val markupMap = DebuggerUtilsImpl.getValueMarkers(debugProcess)?.allMarkers as MutableMap<ObjectReference?, ValueMarkup>? ?: return
 
         for ((name, localName) in labels) {
             val localVariable = evaluationContext.frameProxy!!.visibleVariableByName(localName)
