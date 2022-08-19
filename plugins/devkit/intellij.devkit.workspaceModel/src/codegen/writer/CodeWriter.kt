@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.codegen.writer
 
+import com.intellij.devkit.workspaceModel.DevKitWorkspaceModelBundle
 import com.intellij.devkit.workspaceModel.metaModel.WorkspaceMetaModelProvider
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -63,8 +64,9 @@ object CodeWriter {
       }
 
       CommandProcessor.getInstance().executeCommand(project, Runnable {
-        ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread("Generating Code", project, null) { indicator ->
-          indicator.text = "Removing old code"
+        val title = DevKitWorkspaceModelBundle.message("progress.title.generating.code")
+        ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread(title, project, null) { indicator ->
+          indicator.text = DevKitWorkspaceModelBundle.message("progress.text.removing.old.code")
           val psiFactory = KtPsiFactory(project)
           ktClasses.values.flatMapTo(HashSet()) { listOfNotNull(it.containingFile.node, it.body?.node) }.forEach {
             removeChildrenInGeneratedRegions(it)
@@ -72,7 +74,7 @@ object CodeWriter {
           val topLevelDeclarations = MultiMap.create<KtFile, Pair<KtClass, List<KtDeclaration>>>()
           val importsByFile = FactoryMap.create<KtFile, Imports> { Imports(it.packageFqName.asString()) }
           val generatedFiles = ArrayList<KtFile>()
-          indicator.text = "Writing code"
+          indicator.text = DevKitWorkspaceModelBundle.message("progress.text.writing.code")
           indicator.isIndeterminate = false
           generated.forEachIndexed { i, code ->
             indicator.fraction = 0.2 * i / generated.size
@@ -107,7 +109,7 @@ object CodeWriter {
             }
           }
 
-          indicator.text = "Formatting generated code"
+          indicator.text = DevKitWorkspaceModelBundle.message("progress.text.formatting.generated.code")
           importsByFile.forEach { (file, imports) ->
             addImports(file, imports.set)
           }
@@ -138,7 +140,7 @@ object CodeWriter {
           }
 
         }
-      }, "Generate Code for Workspace Entities in '${sourceFolder.name}'", null)
+      }, DevKitWorkspaceModelBundle.message("command.name.generate.code.for.workspace.entities.in", sourceFolder.name), null)
     } else {
       LOG.info("Not found types for generation")
     }
