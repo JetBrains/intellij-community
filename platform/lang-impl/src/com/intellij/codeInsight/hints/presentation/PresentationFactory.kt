@@ -428,7 +428,7 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
       var hint: LightweightHint? = null
       onHover(base, object : HoverListener {
         override fun onHover(event: MouseEvent, translated: Point) {
-          if (hint?.isVisible != true) {
+          if (hint?.isVisible != true && editor.contentComponent.isShowing) {
             hint = showTooltip(editor, event, tooltip)
           }
         }
