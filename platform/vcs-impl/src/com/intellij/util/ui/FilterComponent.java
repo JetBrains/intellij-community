@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ClickListener;
+import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.dsl.builder.DslComponentProperty;
 import com.intellij.ui.dsl.gridLayout.Gaps;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
@@ -25,7 +26,7 @@ import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-public abstract class FilterComponent extends JPanel {
+public abstract class FilterComponent extends JBPanel<FilterComponent> {
   private static final int GAP_BEFORE_ARROW = 3;
   protected static final int BORDER_SIZE = 2;
   protected static final int ARC_SIZE = 10;

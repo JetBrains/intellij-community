@@ -8,6 +8,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.SystemInfo.isMac
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.JBOptionButton.Companion.getDefaultShowPopupShortcut
+import com.intellij.ui.components.JBPanel
 import com.intellij.util.EventDispatcher
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
@@ -26,7 +27,7 @@ private fun JBOptionButton.getBottomInset(): Int =
   ?: (components.firstOrNull() as? JComponent)?.insets?.bottom
   ?: 0
 
-class CommitActionsPanel : JPanel(null), CommitActionsUi {
+class CommitActionsPanel : JBPanel<CommitActionsPanel>(null), CommitActionsUi {
   private val executorEventDispatcher = EventDispatcher.create(CommitExecutorListener::class.java)
 
   private val defaultCommitAction = object : AbstractAction() {

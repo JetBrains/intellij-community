@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.EventDispatcher
@@ -127,7 +128,7 @@ abstract class NonModalCommitPanel(
     }
     centerPanel
       .addToCenter(commitMessage)
-      .addToBottom(JPanel(VerticalLayout(0)).apply {
+      .addToBottom(JBPanel<JBPanel<*>>(VerticalLayout(0)).apply {
         background = getButtonPanelBackground()
         bottomPanelBuilder()
       })
