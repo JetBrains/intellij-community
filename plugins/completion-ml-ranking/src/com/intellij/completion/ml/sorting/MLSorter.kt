@@ -194,7 +194,7 @@ class MLSorter : CompletionFinalSorter() {
       val decoratingItemsPolicy = lookupStorage.model?.decoratingPolicy() ?: DecoratingItemsPolicy.DISABLED
       val topItemsCount = if (reorderOnlyTopItems) REORDER_ONLY_TOP_K else Int.MAX_VALUE
       return items
-        .filter { it.isIgnored() }
+        .filter { !it.isIgnored() }
         .reorderByMLScores(element2score, topItemsCount)
         .insertIgnoredItems(items)
         .markRelevantItemsIfNeeded(element2score, lookup, decoratingItemsPolicy)
