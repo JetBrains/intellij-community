@@ -43,7 +43,7 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
   }
 
   private val disabledListener = Runnable {
-    val disabledPlugins = DisabledPluginsState.disabledPlugins()
+    val disabledPlugins = DisabledPluginsState.getDisabledIds()
     val disabledIds = HashSet<String>()
     disabledPlugins.forEach {
       disabledIds.add(it.idString)
@@ -161,7 +161,7 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
     installer.installPlugins()
   }
 
-  private fun isPluginEnabled(pluginId: PluginId) = !DisabledPluginsState.disabledPlugins().contains(pluginId)
+  private fun isPluginEnabled(pluginId: PluginId) = !DisabledPluginsState.getDisabledIds().contains(pluginId)
 
   private fun findPlugin(idString: String): IdeaPluginDescriptor? {
     return PluginId.findId(idString)?.let { PluginManagerProxy.getInstance().findPlugin(it) }
