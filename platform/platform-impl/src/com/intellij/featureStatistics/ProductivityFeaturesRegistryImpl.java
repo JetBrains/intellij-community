@@ -60,10 +60,11 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
   }
 
   private boolean readFromXml(@NotNull @NonNls String path) throws JDOMException, IOException {
-    return readFromXml(path, ProductivityFeaturesRegistryImpl.class.getClassLoader());
+    return readFromXml(path, ProductivityFeaturesRegistryImpl.class.getClassLoader(), null);
   }
 
-  private boolean readFromXml(@NotNull String path, @NotNull ClassLoader classLoader) throws JDOMException, IOException {
+  private boolean readFromXml(@NotNull String path, @NotNull ClassLoader classLoader, @Nullable ProductivityFeaturesProvider provider)
+    throws JDOMException, IOException {
     byte[] data = ResourceUtil.getResourceAsBytes(path, classLoader, true);
     if (data == null) {
       return false;
@@ -71,7 +72,7 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
 
     Element root = JDOMUtil.load(data);
     for (Element groupElement : root.getChildren(TAG_GROUP)) {
-      readGroup(groupElement);
+      readGroup(groupElement, provider);
     }
     return true;
   }
@@ -85,7 +86,7 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
     ProductivityFeaturesProvider.EP_NAME.processWithPluginDescriptor((provider, pluginDescriptor) -> {
       for (String xmlUrl : provider.getXmlFilesUrls()) {
         try {
-          readFromXml(Strings.trimStart(xmlUrl, "/"), pluginDescriptor.getClassLoader());
+          readFromXml(Strings.trimStart(xmlUrl, "/"), pluginDescriptor.getClassLoader(), provider);
         }
         catch (Exception e) {
           LOG.error(new PluginException("Error while reading " + xmlUrl + " from " + provider + ": " + e.getMessage(),
@@ -120,17 +121,17 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
     myIntentionEvents.addAll(featureDescriptor.getIntentionEvents());
   }
 
-  private void readGroup(Element groupElement) {
+  private void readGroup(Element groupElement, ProductivityFeaturesProvider provider) {
     GroupDescriptor groupDescriptor = new GroupDescriptor();
     groupDescriptor.readExternal(groupElement);
     String groupId = groupDescriptor.getId();
     myGroups.putIfAbsent(groupId, groupDescriptor);  // do not allow to override groups
-    readFeatures(groupElement, groupDescriptor);
+    readFeatures(groupElement, groupDescriptor, provider);
   }
 
-  private void readFeatures(Element groupElement, GroupDescriptor groupDescriptor) {
+  private void readFeatures(Element groupElement, GroupDescriptor groupDescriptor, ProductivityFeaturesProvider provider) {
     for (Element featureElement : groupElement.getChildren(TAG_FEATURE)) {
-      FeatureDescriptor featureDescriptor = new FeatureDescriptor(groupDescriptor, featureElement);
+      FeatureDescriptor featureDescriptor = new FeatureDescriptor(groupDescriptor, provider, featureElement);
       addFeature(featureDescriptor);
     }
   }
