@@ -39,7 +39,8 @@ class NonIncrementalCellLines private constructor(private val document: Document
                             newCells: List<NotebookCellLines.Interval>,
                             newAffectedCells: List<NotebookCellLines.Interval>) {
     if (oldCells == newCells) {
-      intervalListeners.multicaster.segmentChanged(emptyList(), oldAffectedCells, emptyList(), newAffectedCells)
+      val event = NotebookCellLinesEvent(emptyList(), oldAffectedCells, emptyList(), newAffectedCells)
+      intervalListeners.multicaster.segmentChanged(event)
       return
     }
 
@@ -55,12 +56,13 @@ class NonIncrementalCellLines private constructor(private val document: Document
 
     ++modificationStamp
 
-    intervalListeners.multicaster.segmentChanged(
+    val event = NotebookCellLinesEvent(
       trimmed(oldCells, trimAtBegin, trimAtEnd),
       oldAffectedCells,
       trimmed(newCells, trimAtBegin, trimAtEnd),
       newAffectedCells,
     )
+    intervalListeners.multicaster.segmentChanged(event)
   }
 
   private fun createDocumentListener() = object : DocumentListener {
