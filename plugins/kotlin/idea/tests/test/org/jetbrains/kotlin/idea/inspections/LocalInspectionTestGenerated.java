@@ -2574,6 +2574,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/collections/uselessCallOnNotNull/ListIsNullOrEmpty.kt");
             }
 
+            @TestMetadata("NegatedNullOrEmpty.kt")
+            public void testNegatedNullOrEmpty() throws Exception {
+                runTest("testData/inspectionsLocal/collections/uselessCallOnNotNull/NegatedNullOrEmpty.kt");
+            }
+
             @TestMetadata("NotNullType.kt")
             public void testNotNullType() throws Exception {
                 runTest("testData/inspectionsLocal/collections/uselessCallOnNotNull/NotNullType.kt");
