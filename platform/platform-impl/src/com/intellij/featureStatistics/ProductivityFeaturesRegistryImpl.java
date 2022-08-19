@@ -30,11 +30,8 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
 
   private boolean myAdditionalFeaturesLoaded;
 
-  @NonNls public static final String WELCOME = "features.welcome";
-
   @NonNls private static final String TAG_GROUP = "group";
   @NonNls private static final String TAG_FEATURE = "feature";
-  @NonNls private static final String TODO_HTML_MARKER = "todo.html";
 
   public ProductivityFeaturesRegistryImpl() {
     reloadFromXml();
@@ -134,9 +131,7 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
   private void readFeatures(Element groupElement, GroupDescriptor groupDescriptor) {
     for (Element featureElement : groupElement.getChildren(TAG_FEATURE)) {
       FeatureDescriptor featureDescriptor = new FeatureDescriptor(groupDescriptor, featureElement);
-      if (!TODO_HTML_MARKER.equals(featureDescriptor.getTipFileName())) {
-        addFeature(featureDescriptor);
-      }
+      addFeature(featureDescriptor);
     }
   }
 
@@ -157,7 +152,7 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
       .stream()
       .filter(e -> eventChecker.fun(e))
       .findFirst()
-      .map(e -> getFeatureDescriptorEx(e.featureId()))
+      .map(e -> getFeatureDescriptor(e.featureId()))
       .orElse(null);
   }
 
@@ -171,13 +166,6 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
   @Override
   public FeatureDescriptor getFeatureDescriptor(@NotNull String id) {
     lazyLoadFromPluginsFeaturesProviders();
-    return getFeatureDescriptorEx(id);
-  }
-
-  public FeatureDescriptor getFeatureDescriptorEx(@NotNull String id) {
-    if (WELCOME.equals(id)) {
-      return new FeatureDescriptor(WELCOME, "AdaptiveWelcome.html", FeatureStatisticsBundle.message("feature.statistics.welcome.tip.name"));
-    }
     return myFeatures.get(id);
   }
 

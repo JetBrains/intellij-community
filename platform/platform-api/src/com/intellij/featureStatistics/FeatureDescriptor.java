@@ -50,12 +50,6 @@ public class FeatureDescriptor {
     readExternal(featureElement);
   }
 
-  FeatureDescriptor(@NonNls @NotNull String id, @NonNls @Nullable String tipFileName, @NotNull String displayName) {
-    myId = id;
-    myTipFileName = tipFileName;
-    myDisplayName = displayName;
-  }
-
   public FeatureDescriptor(@NonNls @NotNull String id,
                            @NonNls @Nullable String groupId,
                            @NonNls @Nullable String tipFileName,
