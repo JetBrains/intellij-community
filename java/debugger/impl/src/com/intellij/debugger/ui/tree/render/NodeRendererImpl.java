@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
@@ -129,24 +129,9 @@ public abstract class NodeRendererImpl implements NodeRenderer {
     return getName();
   }
 
-
-  private static final String DEPRECATED_VALUE = "DEPRECATED_VALUE";
-  /**
-   * @deprecated Override {@link #calcIdLabel(ValueDescriptor, DebugProcess, DescriptorLabelListener)}
-   */
-  @Deprecated(forRemoval = true)
-  @Nullable
-  public String getIdLabel(Value value, DebugProcess process) {
-    return DEPRECATED_VALUE;
-  }
-
   @Nullable
   public String calcIdLabel(ValueDescriptor descriptor, DebugProcess process, DescriptorLabelListener labelListener) {
     Value value = descriptor.getValue();
-    String id = getIdLabel(value, process);
-    if (DEPRECATED_VALUE != id) {
-      return id;
-    }
     if (!(value instanceof ObjectReference) || !isShowType()) {
       return null;
     }
