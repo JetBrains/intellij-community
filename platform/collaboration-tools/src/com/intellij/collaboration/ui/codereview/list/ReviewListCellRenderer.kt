@@ -5,9 +5,11 @@ import com.intellij.collaboration.messages.CollaborationToolsBundle.message
 import com.intellij.ide.IdeTooltip
 import com.intellij.ide.IdeTooltipManager
 import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBList
+import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.IconUtil
 import com.intellij.util.containers.nullize
@@ -21,9 +23,10 @@ import javax.swing.*
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
+import kotlin.properties.Delegates
 
 class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPresentation)
-  : ListCellRenderer<T>, JPanel(null) {
+  : ListCellRenderer<T>, SelectablePanel(null) {
 
   private val toolTipManager
     get() = IdeTooltipManager.getInstance()
@@ -46,6 +49,10 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
   private val userGroup2 = JLabel()
   private val comments = JLabel()
 
+  private var isNewUI by Delegates.observable(false) { _, old, new ->
+    if (old != new) updateRendering()
+  }
+
   init {
 
     val firstLinePanel = JPanel(HorizontalSidesLayout(6)).apply {
@@ -62,12 +69,26 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
     }
 
     layout = BorderLayout()
-    border = JBUI.Borders.empty(6)
     add(firstLinePanel, BorderLayout.CENTER)
     add(info, BorderLayout.SOUTH)
 
     UIUtil.forEachComponentInHierarchy(this) {
       it.isFocusable = false
+    }
+    updateRendering()
+  }
+
+  private fun updateRendering() {
+    if (isNewUI) {
+      border = JBUI.Borders.empty(6, 19)
+      selectionArc = JBUI.CurrentTheme.Popup.Selection.ARC.get()
+      selectionArcCorners = SelectionArcCorners.ALL
+      selectionInsets = JBInsets(0, 13, 0, 13)
+    } else {
+      border = JBUI.Borders.empty(6, 13)
+      selectionArc = 0
+      selectionArcCorners = SelectionArcCorners.ALL
+      selectionInsets = JBInsets(0)
     }
   }
 
@@ -76,7 +97,9 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
                                             index: Int,
                                             isSelected: Boolean,
                                             cellHasFocus: Boolean): Component {
-    background = ListUiUtil.WithTallRow.background(list, isSelected, list.hasFocus())
+    isNewUI = ExperimentalUI.isNewUI()
+    background = list.background
+    selectionColor = ListUiUtil.WithTallRow.background(list, isSelected, list.hasFocus())
     val primaryTextColor = ListUiUtil.WithTallRow.foreground(isSelected, list.hasFocus())
     val secondaryTextColor = ListUiUtil.WithTallRow.secondaryForeground(isSelected, list.hasFocus())
 
