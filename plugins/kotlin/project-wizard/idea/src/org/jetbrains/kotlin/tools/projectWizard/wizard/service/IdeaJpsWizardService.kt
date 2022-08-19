@@ -28,7 +28,6 @@ import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle.Companion.I
 import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
-import org.jetbrains.kotlin.idea.versions.LibraryJarDescriptor
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.tools.projectWizard.core.*
 import org.jetbrains.kotlin.tools.projectWizard.core.service.ProjectImportingWizardService
@@ -77,16 +76,22 @@ class IdeaJpsWizardService(
         val kotlinVersion = IdeaKotlinVersionProviderService().getKotlinVersion(ProjectKind.Singleplatform)
         if (kotlinVersion.kind.isStable) return
 
-        val repository = kotlinVersion.repository
         val currentRepositories = RemoteRepositoriesConfiguration.getInstance(project).repositories
-        if (currentRepositories.any { it.url == repository.url }) return
+
+        val repositoriesToAdd = kotlinVersion.repositories.filter { repositoryToAdd ->
+            currentRepositories.none { it.url == repositoryToAdd.url }
+        }
+
+        if (repositoriesToAdd.isEmpty()) return
 
         RemoteRepositoriesConfiguration.getInstance(project).repositories =
-            currentRepositories + RemoteRepositoryDescription(
-                repository.idForMaven,
-                repository.idForMaven,
-                repository.url
-            )
+            currentRepositories + repositoriesToAdd.map {
+                RemoteRepositoryDescription(
+                    it.idForMaven,
+                    it.idForMaven,
+                    it.url
+                )
+            }
     }
 }
 
