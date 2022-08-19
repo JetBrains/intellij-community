@@ -59,4 +59,21 @@ public abstract class SharedK1InspectionTestGenerated extends AbstractSharedK1In
             }
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspections/removeSetterParameterType")
+    public abstract static class RemoveSetterParameterType extends AbstractSharedK1InspectionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/inspections/removeSetterParameterType/inspectionData")
+        public static class InspectionData extends AbstractSharedK1InspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("inspections.test")
+            public void testInspections_test() throws Exception {
+                runTest("../testData/inspections/removeSetterParameterType/inspectionData/inspections.test");
+            }
+        }
+    }
 }

@@ -10765,19 +10765,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/inspectionsLocal/removeSetterParameterType")
-    public static class RemoveSetterParameterType extends AbstractLocalInspectionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("emptyType.kt")
-        public void testEmptyType() throws Exception {
-            runTest("testData/inspectionsLocal/removeSetterParameterType/emptyType.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/removeToStringInStringTemplate")
     public static class RemoveToStringInStringTemplate extends AbstractLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {

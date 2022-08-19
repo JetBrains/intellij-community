@@ -78,6 +78,15 @@ fun removeProperty(ktProperty: KtProperty) {
     }
 }
 
+/**
+ * A function that returns whether this KtParameter is a parameter of a setter or not.
+ *
+ * Since the parent of a KtParameter is KtParameterList and the parent of KtParameterList is the function or
+ * the property accessor, this function checks whether `parent.parent` of KtParameter is a setter or not.
+ */
+val KtParameter.isSetterParameter: Boolean
+    get() = (parent.parent as? KtPropertyAccessor)?.isSetter == true
+
 fun KtPropertyAccessor.isRedundantSetter(): Boolean {
     if (!isSetter) return false
     val expression = bodyExpression ?: return canBeCompletelyDeleted()
