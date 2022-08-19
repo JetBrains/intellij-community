@@ -32,12 +32,9 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
 
   @NonNls public static final String WELCOME = "features.welcome";
 
-  @NonNls private static final String TAG_FILTER = "filter";
   @NonNls private static final String TAG_GROUP = "group";
   @NonNls private static final String TAG_FEATURE = "feature";
   @NonNls private static final String TODO_HTML_MARKER = "todo.html";
-  @NonNls private static final String CLASS_ATTR = "class";
-  @NonNls private static final String PREFIX_ATTR = "prefix";
 
   public ProductivityFeaturesRegistryImpl() {
     reloadFromXml();
@@ -79,7 +76,6 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
     for (Element groupElement : root.getChildren(TAG_GROUP)) {
       readGroup(groupElement);
     }
-    readFilters(root, classLoader);
     return true;
   }
 
@@ -120,25 +116,6 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
         }
       }
     });
-  }
-
-  private void readFilters(Element element, @NotNull ClassLoader classLoader) {
-    for (Element filterElement : element.getChildren(TAG_FILTER)) {
-      String className = filterElement.getAttributeValue(CLASS_ATTR);
-      try {
-        Class<?> aClass = classLoader.loadClass(className);
-        if (!ApplicabilityFilter.class.isAssignableFrom(aClass)) {
-          LOG.error("filter class must implement com.intellij.featureStatistics.ApplicabilityFilter");
-          continue;
-        }
-
-        ApplicabilityFilter filter = (ApplicabilityFilter)aClass.getDeclaredConstructor().newInstance();
-        myApplicabilityFilters.add(new Pair<>(filterElement.getAttributeValue(PREFIX_ATTR), filter));
-      }
-      catch (Exception e) {
-        LOG.error("Cannot instantiate filter " + className, e);
-      }
-    }
   }
 
   private void addUsageEvents(FeatureDescriptor featureDescriptor) {
