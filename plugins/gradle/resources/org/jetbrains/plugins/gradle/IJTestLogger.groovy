@@ -4,11 +4,7 @@
 import groovy.xml.MarkupBuilder
 import org.gradle.api.Task
 import org.gradle.api.logging.Logging
-import org.gradle.api.tasks.testing.TestDescriptor
-import org.gradle.api.tasks.testing.TestListener
-import org.gradle.api.tasks.testing.TestOutputEvent
-import org.gradle.api.tasks.testing.TestOutputListener
-import org.gradle.api.tasks.testing.TestResult
+import org.gradle.api.tasks.testing.*
 
 class IJTestEventLogger {
 
@@ -22,6 +18,7 @@ class IJTestEventLogger {
       .optional(true)
 
     task.doFirst {
+      // delete previous test results
       testReportDir.deleteDir()
       testReportDir.mkdirs()
     }
@@ -136,19 +133,19 @@ class IJTestEventLogger {
   }
 
   static def wrap(String s) {
-    if(!s) return s;
-    s.replaceAll("\r\n|\n\r|\n|\r","<ijLogEol/>")
+    if (!s) return s;
+    s.replaceAll("\r\n|\n\r|\n|\r", "<ijLogEol/>")
   }
 
   static String writeLog(s) {
-    logger.lifecycle("[IJTestEventLogger] " + s)
+    //logger.lifecycle("[IJTestEventLogger] " + s)
     def msg = String.format("<ijLog>%s</ijLog>", wrap(s))
     //println msg
     return msg
   }
 
   static def logTestReportLocation(def report) {
-    if(!report) return
+    if (!report) return
     def writer = new StringWriter()
     def xml = new MarkupBuilder(writer)
     xml.event(type: 'reportLocation', testReport: report)
@@ -166,7 +163,7 @@ class IJTestEventLogger {
   }
 
   static def getStackTrace(Throwable t) {
-    if(!t) return ''
+    if (!t) return ''
     StringWriter sw = new StringWriter()
     t.printStackTrace(new PrintWriter(sw))
     sw.toString()
@@ -175,7 +172,8 @@ class IJTestEventLogger {
   static def getName(TestDescriptor descriptor) {
     try {
       return descriptor.getDisplayName() // available starting from ver. 4.10.3
-    } catch (Throwable ignore) {
+    }
+    catch (Throwable ignore) {
       return descriptor.getName()
     }
   }

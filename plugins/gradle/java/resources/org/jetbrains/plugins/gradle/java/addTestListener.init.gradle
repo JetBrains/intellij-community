@@ -21,7 +21,7 @@ gradle.allprojects { project ->
         .sort { it.name }
         .eachWithIndex { file, i ->
           String msg = file.newReader().readLines().join("")
-          logger.lifecycle("[ijTestEventLogger] " + i + "/" + eventLogFiles.size() + ": " + msg)
+          logger.lifecycle("[ijTestEventLogger] " + (i + 1) + "/" + eventLogFiles.size() + " " + file.name + ": " + msg)
           println msg
         }
     }
