@@ -10,9 +10,11 @@ import com.intellij.workspaceModel.codegen.utils.*
 import com.intellij.workspaceModel.codegen.writer.javaName
 import com.intellij.workspaceModel.codegen.writer.owner
 import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryRoot
 import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceSet
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
 val ObjProperty<*, *>.implWsBuilderFieldCode: String
   get() = valueType.implWsBuilderBlockingCode(this)
@@ -154,11 +156,11 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
     }
     else {
       """
-            private val ${field.javaName}Updater: (value: List<${wsFqn(elementType.javaType)}>) -> Unit = { value ->
+            private val ${field.javaName}Updater: (value: List<${elementType.javaType}>) -> Unit = { value ->
                 ${elementType.addVirtualFileIndex(field)}
                 changedProperty.add("${field.javaName}")
             }
-            override var ${field.javaName}: MutableList<${wsFqn(elementType.javaType)}>
+            override var ${field.javaName}: MutableList<${elementType.javaType}>
                 get() { 
                     val collection_${field.javaName} = getEntityData().${field.javaName}
                     if (collection_${field.javaName} !is ${MutableWorkspaceList::class.fqn}) return collection_${field.javaName}
@@ -180,11 +182,11 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
       error("Set of references is not supported")
     } else {
       """
-            private val ${field.javaName}Updater: (value: Set<${wsFqn(elementType.javaType)}>) -> Unit = { value ->
+            private val ${field.javaName}Updater: (value: Set<${elementType.javaType}>) -> Unit = { value ->
                 ${elementType.addVirtualFileIndex(field)}
                 changedProperty.add("${field.javaName}")
             }
-            override var ${field.javaName}: MutableSet<${wsFqn(elementType.javaType)}>
+            override var ${field.javaName}: MutableSet<${elementType.javaType}>
                 get() { 
                     val collection_${field.javaName} = getEntityData().${field.javaName}
                     if (collection_${field.javaName} !is ${MutableWorkspaceSet::class.fqn}) return collection_${field.javaName}
@@ -213,14 +215,14 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
   is ValueType.Optional<*> -> type.implWsBuilderBlockingCode(field, "?")
   is ValueType.Structure<*> -> "//TODO: ${field.javaName}"
   is ValueType.JvmClass -> """
-            override var ${field.javaName}: ${wsFqn(javaType)}$optionalSuffix
+            override var ${field.javaName}: ${javaType.appendSuffix(optionalSuffix)}
                 get() = getEntityData().${field.javaName}
                 set(value) {
                     checkModificationAllowed()
                     getEntityData().${field.javaName} = value
                     changedProperty.add("${field.javaName}")
                     ${
-    if (javaType.decoded == "VirtualFileUrl")
+    if (javaType.decoded == VirtualFileUrl::class.java.name)
       """val _diff = diff
       |                    if (_diff != null) index(this, "${field.javaName}", value)
                         """.trimMargin()
@@ -324,11 +326,11 @@ private fun LinesBuilder.isInitializedBaseCode(field: ObjProperty<*, *>, express
 
 private fun ValueType<*>.addVirtualFileIndex(field: ObjProperty<*, *>): String {
   return when {
-    this is ValueType.Blob && javaClassName == "VirtualFileUrl" ->
+    this is ValueType.Blob && javaClassName == VirtualFileUrl::class.java.name ->
       """val _diff = diff
 |                    if (_diff != null) index(this, "${field.javaName}", value.toHashSet())
         """.trimMargin()
-    this is ValueType.JvmClass && javaClassName == "LibraryRoot" -> """
+    this is ValueType.JvmClass && javaClassName == LibraryRoot::class.java.name -> """
                     val _diff = diff
                     if (_diff != null) {
                         indexLibraryRoots(value)

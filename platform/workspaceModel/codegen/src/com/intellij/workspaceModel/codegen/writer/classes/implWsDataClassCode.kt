@@ -9,10 +9,7 @@ import com.intellij.workspaceModel.codegen.deft.meta.impl.KtInterfaceType
 import com.intellij.workspaceModel.codegen.fields.implWsDataFieldCode
 import com.intellij.workspaceModel.codegen.fields.implWsDataFieldInitializedCode
 import com.intellij.workspaceModel.codegen.fields.javaType
-import com.intellij.workspaceModel.codegen.utils.LinesBuilder
-import com.intellij.workspaceModel.codegen.utils.fqn
-import com.intellij.workspaceModel.codegen.utils.fqn7
-import com.intellij.workspaceModel.codegen.utils.lines
+import com.intellij.workspaceModel.codegen.utils.*
 import com.intellij.workspaceModel.codegen.writer.allFields
 import com.intellij.workspaceModel.codegen.writer.hasSetter
 import com.intellij.workspaceModel.codegen.writer.type
@@ -22,6 +19,7 @@ import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
 /**
  * - Soft links
@@ -266,10 +264,10 @@ private fun ObjClass<*>.cacheCollector(linesBuilder: LinesBuilder) {
   }.all{ it }
   linesBuilder.section("override fun collectClassUsagesData(collector: ${UsedClassesCollector::class.fqn})") {
     clazzes.forEach {
-      line("collector.add($it::class.java)")
+      line("collector.add(${it.toQualifiedName()}::class.java)")
     }
     objects.forEach {
-      line("collector.addObject($it::class.java)")
+      line("collector.addObject(${it.toQualifiedName()}::class.java)")
     }
     accessors.forEach {
       line(it)
@@ -299,11 +297,11 @@ private fun ValueType<*>.getClasses(fieldName: String, clazzes: HashSet<String>,
     }
     is ValueType.Blob -> {
       val className = this.javaClassName
-      if ("VirtualFileUrl" !in className && "EntitySource" !in className && "PersistentEntityId" !in className) {
+      if (className !in setOf(VirtualFileUrl::class.java.name, EntitySource::class.java.name, PersistentEntityId::class.java.name)) {
         clazzes.add(className)
         return res
       }
-      if ("VirtualFileUrl" in className) {
+      if (className == VirtualFileUrl::class.java.name) {
         accessors.add("this.$fieldName?.let { collector.add(it::class.java) }")
         return false
       }

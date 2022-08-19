@@ -6,6 +6,7 @@ import com.intellij.workspaceModel.codegen.deft.meta.OwnProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.writer.allFields
 import com.intellij.workspaceModel.codegen.writer.isOverride
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.Obj
 import com.intellij.workspaceModel.codegen.deft.ValueType as OldValueType
 
@@ -49,7 +50,7 @@ fun ValueType<*>.isRefType(): Boolean = when (this) {
 }
 
 fun ValueType<*>.isVfuType(): Boolean = when (this) {
-  is ValueType.Blob -> javaClassName == "VirtualFileUrl"
+  is ValueType.Blob -> javaClassName == VirtualFileUrl::class.java.name
   is ValueType.Optional<*> -> type.isVfuType()
   is ValueType.Collection<*, *> -> elementType.isVfuType()
   else -> false

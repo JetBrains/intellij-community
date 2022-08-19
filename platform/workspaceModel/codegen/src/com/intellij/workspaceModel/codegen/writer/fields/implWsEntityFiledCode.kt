@@ -5,6 +5,7 @@ import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.utils.fqn1
 import com.intellij.workspaceModel.codegen.utils.fqn2
+import com.intellij.workspaceModel.codegen.utils.toQualifiedName
 import com.intellij.workspaceModel.codegen.writer.*
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.impl.*
@@ -95,8 +96,8 @@ internal fun ObjProperty<*, *>.implWsBlockCode(fieldType: ValueType<*>, name: St
       else -> implWsBlockCode(fieldType.type, name, "?")
     }
     is ValueType.JvmClass -> """            
-            @JvmField var $implFieldName: ${fieldType.javaClassName}? = null
-            override val $name: ${fieldType.javaClassName}$optionalSuffix
+            @JvmField var $implFieldName: ${fieldType.javaClassName.toQualifiedName()}? = null
+            override val $name: ${fieldType.javaClassName.toQualifiedName()}$optionalSuffix
                 get() = $implFieldName${if (optionalSuffix.isBlank()) "!!" else ""}
                                 
         """.trimIndent()
@@ -141,9 +142,10 @@ internal val ObjProperty<*, *>.referencedField: ObjProperty<*, *>
       error("Reference should be declared at both entities. It exist at ${owner.name}#$name but absent at ${ref.target.name}")
     }
     if (declaredReferenceFromChild.size > 1) {
-      error(
-        "More then one reference to ${owner.name} declared at ${declaredReferenceFromChild[0].owner}#${declaredReferenceFromChild[0].name}," +
-        "${declaredReferenceFromChild[1].owner}#${declaredReferenceFromChild[1].name}")
+      error("""
+        |More then one reference to ${owner.name} declared at ${declaredReferenceFromChild[0].owner.name}#${declaredReferenceFromChild[0].name}, 
+        |${declaredReferenceFromChild[1].owner.name}#${declaredReferenceFromChild[1].name}
+        |""".trimMargin())
     }
     val referencedField = declaredReferenceFromChild[0]
     if (this.type.getRefType().child == referencedField.type.getRefType().child) {
@@ -153,7 +155,7 @@ internal val ObjProperty<*, *>.referencedField: ObjProperty<*, *>
       else {
         "parent" to "Did you forget to add @Child annotation?"
       }
-      error("Both fields ${owner.name}#$name and ${ref.target.name} are marked as $childStr. $fix")
+      error("Both fields ${owner.name}#$name and ${ref.target.name}#${referencedField.name} are marked as $childStr. $fix")
     }
     return referencedField
   }

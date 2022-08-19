@@ -1,12 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.codegen.writer
 
+import com.intellij.devkit.workspaceModel.metaModel.WorkspaceMetaModelProvider
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VfsUtil
@@ -22,11 +24,10 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.FactoryMap
 import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.codegen.SKIPPED_TYPES
-import com.intellij.workspaceModel.codegen.deft.model.KtObjModule
+import com.intellij.workspaceModel.codegen.deft.meta.CompiledObjModule
 import com.intellij.workspaceModel.codegen.engine.GeneratedCode
 import com.intellij.workspaceModel.codegen.engine.impl.CodeGeneratorImpl
 import com.intellij.workspaceModel.codegen.javaFullName
-import com.intellij.workspaceModel.codegen.model.convertToObjModules
 import com.intellij.workspaceModel.codegen.utils.Imports
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -37,7 +38,10 @@ private val LOG = logger<CodeWriter>()
 
 object CodeWriter {
   @RequiresWriteLock
-  fun generate(project: Project, sourceFolder: VirtualFile,  keepUnknownFields: Boolean, targetFolderGenerator: () -> VirtualFile?) {
+  fun generate(project: Project,
+               module: Module,
+               sourceFolder: VirtualFile,
+               targetFolderGenerator: () -> VirtualFile?) {
     val documentManager = FileDocumentManager.getInstance()
     val ktSrcs = mutableListOf<Pair<VirtualFile, Document>>()
     val fileMapping = mutableMapOf<String, VirtualFile>()
@@ -55,12 +59,8 @@ object CodeWriter {
       return@processFilesRecursively true
     }
 
-    val module = KtObjModule(project, keepUnknownFields = keepUnknownFields)
-    ktSrcs.forEach { (vfu, document) ->
-      module.addPsiFile(vfu.name, vfu) { document.text }
-    }
-    val result = module.build()
-    val objModules = convertToObjModules(result.typeDefs, result.simpleTypes, result.extFields)
+    val objModules = loadObjModules(ktClasses, module)
+    
     val codeGenerator = CodeGeneratorImpl()
     val generated = objModules.flatMap { codeGenerator.generate(it) }
     if (generated.isNotEmpty()) {
@@ -84,8 +84,9 @@ object CodeWriter {
           generated.forEachIndexed { i, code ->
             indicator.fraction = 0.2 * i / generated.size
             if (code.target.name in SKIPPED_TYPES) return@forEachIndexed
-            
-            val apiClass = ktClasses[code.target.javaFullName.decoded]!!
+
+            val apiInterfaceName = code.target.javaFullName.decoded
+            val apiClass = ktClasses[apiInterfaceName] ?: error("Cannot find API class by $apiInterfaceName")
             val apiFile = apiClass.containingKtFile
             val apiImports = importsByFile.getValue(apiFile)
             addInnerDeclarations(apiClass, code, apiImports)
@@ -148,6 +149,12 @@ object CodeWriter {
     } else {
       LOG.info("Not found types for generation")
     }
+  }
+
+  private fun loadObjModules(ktClasses: HashMap<String, KtClass>, module: Module): List<CompiledObjModule> {
+    val packages = ktClasses.values.mapTo(LinkedHashSet()) { it.containingKtFile.packageFqName.asString() }
+    val metaModelProvider = WorkspaceMetaModelProvider.getInstance(module.project)
+    return packages.map { metaModelProvider.getObjModule(it, module) }
   }
 
   private fun copyHeaderComment(apiFile: KtFile, implFile: KtFile) {

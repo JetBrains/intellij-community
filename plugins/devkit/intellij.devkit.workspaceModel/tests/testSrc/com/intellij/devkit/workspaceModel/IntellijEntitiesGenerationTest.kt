@@ -11,25 +11,30 @@ import java.io.File
 import java.nio.file.Path
 
 class IntellijEntitiesGenerationTest : CodeGenerationTestBase() {
-  private enum class IntellijEntitiesPackage(val apiRelativePath: String, val implRelativePath: String, val keepPropertiesWithUnknownType: Boolean = false) {
-    Bridges("platform/workspaceModel/storage/src/com/intellij/workspaceModel/storage",
-            "platform/workspaceModel/storage/gen/com/intellij/workspaceModel/storage"),
-    Eclipse("plugins/eclipse/src/org/jetbrains/idea/eclipse/workspaceModel",
-            "plugins/eclipse/gen/org/jetbrains/idea/eclipse/workspaceModel"),
-    Tests("platform/workspaceModel/storage/testEntities/testSrc/com/intellij/workspaceModel/storage/entities/test/api",
-          "platform/workspaceModel/storage/testEntities/gen/com/intellij/workspaceModel/storage/entities/test/api", true),
-    UnknownPropertyType("platform/workspaceModel/storage/testEntities/testSrc/com/intellij/workspaceModel/storage/entities/unknowntypes/test/api",
-          "platform/workspaceModel/storage/testEntities/gen/com/intellij/workspaceModel/storage/entities/unknowntypes/test/api", true);
+  private enum class IntellijEntitiesPackage(val apiRootRelativePath: String, val implRootRelativePath: String, val pathToPackage: String, val keepPropertiesWithUnknownType: Boolean = false) {
+    Bridges("platform/workspaceModel/storage/src",
+            "platform/workspaceModel/storage/gen",
+            "com/intellij/workspaceModel"),
+    Eclipse("plugins/eclipse/src",
+            "plugins/eclipse/gen",
+            "org/jetbrains/idea/eclipse/workspaceModel"),
+    Tests("platform/workspaceModel/storage/testEntities/testSrc",
+          "platform/workspaceModel/storage/testEntities/gen", 
+          "com/intellij/workspaceModel/storage/entities/test/api", true);
     
-    val apiPath: Path
-      get() = Path.of(PlatformTestUtil.getCommunityPath(), apiRelativePath)
+    val apiRootPath: Path
+      get() = Path.of(PlatformTestUtil.getCommunityPath(), apiRootRelativePath, pathToPackage)
 
-    val implPath: Path
-      get() = Path.of(PlatformTestUtil.getCommunityPath(), implRelativePath)
+    val implRootPath: Path
+      get() = Path.of(PlatformTestUtil.getCommunityPath(), implRootRelativePath, pathToPackage)
   }
   
   override val testDataDirectory: File
     get() = File(PlatformTestUtil.getCommunityPath())
+
+  override val shouldAddWorkspaceStorageLibrary: Boolean
+    /** These tests include sources of intellij.platform.workspaceModel.storage module, so adding the same classes as a library will lead to errors */
+    get() = name !in setOf("test bridge entities generation", "test update code")
 
   fun `test bridge entities generation`() {
     doTest(IntellijEntitiesPackage.Bridges)
@@ -43,10 +48,6 @@ class IntellijEntitiesGenerationTest : CodeGenerationTestBase() {
     doTest(IntellijEntitiesPackage.Tests)
   }
 
-  fun `test unknown property type entities generation`() {
-    doTest(IntellijEntitiesPackage.UnknownPropertyType)
-  }
-
   fun `test update code`() {
     val propertyKey = "intellij.workspace.model.update.entities"
     if (!SystemProperties.getBooleanProperty(propertyKey, false)) {
@@ -55,12 +56,12 @@ class IntellijEntitiesGenerationTest : CodeGenerationTestBase() {
     }
     
     for (entitiesPackage in IntellijEntitiesPackage.values()) {
-      val packageName = entitiesPackage.name
-      myFixture.copyDirectoryToProject(entitiesPackage.apiRelativePath, packageName)
-      val (srcRoot, genRoot) = generateCode(packageName, entitiesPackage.keepPropertiesWithUnknownType)
+      val packagePath = entitiesPackage.pathToPackage.replace(".", "/")
+      myFixture.copyDirectoryToProject(entitiesPackage.apiRootRelativePath, "")
+      val (srcRoot, genRoot) = generateCode(packagePath, entitiesPackage.keepPropertiesWithUnknownType)
       runWriteActionAndWait {
-        val apiDir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(entitiesPackage.apiPath)!!
-        val implDir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(entitiesPackage.implPath)!!
+        val apiDir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(entitiesPackage.apiRootPath)!!
+        val implDir = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(entitiesPackage.implRootPath)!!
         VfsUtil.copyDirectory(this, srcRoot, apiDir, VirtualFileFilter { it != genRoot })
         VfsUtil.copyDirectory(this, genRoot, implDir, null)
       }
@@ -68,7 +69,7 @@ class IntellijEntitiesGenerationTest : CodeGenerationTestBase() {
   }
 
   private fun doTest(entitiesPackage: IntellijEntitiesPackage) {
-    myFixture.copyDirectoryToProject(entitiesPackage.apiRelativePath, "")
-    generateAndCompare(entitiesPackage.apiPath, entitiesPackage.implPath, entitiesPackage.keepPropertiesWithUnknownType)
+    myFixture.copyDirectoryToProject(entitiesPackage.apiRootRelativePath, "")
+    generateAndCompare(entitiesPackage.apiRootPath, entitiesPackage.implRootPath, entitiesPackage.keepPropertiesWithUnknownType, entitiesPackage.pathToPackage)
   }
 }
