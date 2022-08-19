@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.notebooks.visualization
 
+import com.intellij.openapi.editor.event.DocumentEvent
+
 /**
  * Passed to NotebookCellLines.IntervalListener when document is changed.
  *
@@ -35,10 +37,12 @@ package org.jetbrains.plugins.notebooks.visualization
  * See `NotebookCellLinesTest` for examples of calls for various changes.
  */
 data class NotebookCellLinesEvent(
+  val documentEvent: DocumentEvent,
   val oldIntervals: List<NotebookCellLines.Interval>,
   val oldAffectedIntervals: List<NotebookCellLines.Interval>,
   val newIntervals: List<NotebookCellLines.Interval>,
   val newAffectedIntervals: List<NotebookCellLines.Interval>,
+  val modificationStamp: Long,
 ) {
 
   fun isIntervalsChanged(): Boolean =
