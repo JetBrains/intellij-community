@@ -143,7 +143,7 @@ class IJTestEventLogger {
   static String writeLog(s) {
     logger.lifecycle("[IJTestEventLogger] " + s)
     def msg = String.format("<ijLog>%s</ijLog>", wrap(s))
-    println msg
+    //println msg
     return msg
   }
 
