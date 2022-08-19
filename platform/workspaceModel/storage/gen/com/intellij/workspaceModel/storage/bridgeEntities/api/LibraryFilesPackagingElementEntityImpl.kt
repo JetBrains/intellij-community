@@ -81,7 +81,7 @@ open class LibraryFilesPackagingElementEntityImpl : LibraryFilesPackagingElement
     fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field LibraryFilesPackagingElementEntity#entitySource should be initialized")
+        error("Field WorkspaceEntity#entitySource should be initialized")
       }
     }
 
@@ -92,13 +92,22 @@ open class LibraryFilesPackagingElementEntityImpl : LibraryFilesPackagingElement
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as LibraryFilesPackagingElementEntity
-      this.library = dataSource.library
       this.entitySource = dataSource.entitySource
+      this.library = dataSource.library
       if (parents != null) {
         this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var parentEntity: CompositePackagingElementEntity?
       get() {
@@ -145,15 +154,6 @@ open class LibraryFilesPackagingElementEntityImpl : LibraryFilesPackagingElement
         checkModificationAllowed()
         getEntityData().library = value
         changedProperty.add("library")
-
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
 
       }
 
@@ -269,8 +269,8 @@ class LibraryFilesPackagingElementEntityData : WorkspaceEntityData<LibraryFilesP
 
     other as LibraryFilesPackagingElementEntityData
 
-    if (this.library != other.library) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.library != other.library) return false
     return true
   }
 
@@ -297,11 +297,11 @@ class LibraryFilesPackagingElementEntityData : WorkspaceEntityData<LibraryFilesP
   }
 
   override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.add(ModuleId::class.java)
     collector.add(LibraryId::class.java)
+    collector.add(LibraryTableId::class.java)
     collector.add(LibraryTableId.ModuleLibraryTableId::class.java)
     collector.add(LibraryTableId.GlobalLibraryTableId::class.java)
-    collector.add(LibraryTableId::class.java)
+    collector.add(ModuleId::class.java)
     collector.addObject(LibraryTableId.ProjectLibraryTableId::class.java)
     collector.sameForAllEntities = true
   }

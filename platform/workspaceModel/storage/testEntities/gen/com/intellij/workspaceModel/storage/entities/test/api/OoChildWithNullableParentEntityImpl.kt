@@ -70,7 +70,7 @@ open class OoChildWithNullableParentEntityImpl : OoChildWithNullableParentEntity
     fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field OoChildWithNullableParentEntity#entitySource should be initialized")
+        error("Field WorkspaceEntity#entitySource should be initialized")
       }
     }
 
@@ -87,6 +87,15 @@ open class OoChildWithNullableParentEntityImpl : OoChildWithNullableParentEntity
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var parentEntity: OoParentEntity?
       get() {
@@ -121,15 +130,6 @@ open class OoChildWithNullableParentEntityImpl : OoChildWithNullableParentEntity
           this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] = value
         }
         changedProperty.add("parentEntity")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override fun getEntityData(): OoChildWithNullableParentEntityData = result

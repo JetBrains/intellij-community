@@ -77,11 +77,11 @@ open class DirectoryCopyPackagingElementEntityImpl : DirectoryCopyPackagingEleme
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isFilePathInitialized()) {
         error("Field FileOrDirectoryPackagingElementEntity#filePath should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field FileOrDirectoryPackagingElementEntity#entitySource should be initialized")
       }
     }
 
@@ -92,13 +92,22 @@ open class DirectoryCopyPackagingElementEntityImpl : DirectoryCopyPackagingEleme
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as DirectoryCopyPackagingElementEntity
-      this.filePath = dataSource.filePath
       this.entitySource = dataSource.entitySource
+      this.filePath = dataSource.filePath
       if (parents != null) {
         this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var parentEntity: CompositePackagingElementEntity?
       get() {
@@ -147,15 +156,6 @@ open class DirectoryCopyPackagingElementEntityImpl : DirectoryCopyPackagingEleme
         changedProperty.add("filePath")
         val _diff = diff
         if (_diff != null) index(this, "filePath", value)
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override fun getEntityData(): DirectoryCopyPackagingElementEntityData = result
@@ -218,8 +218,8 @@ class DirectoryCopyPackagingElementEntityData : WorkspaceEntityData<DirectoryCop
 
     other as DirectoryCopyPackagingElementEntityData
 
-    if (this.filePath != other.filePath) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.filePath != other.filePath) return false
     return true
   }
 

@@ -28,8 +28,8 @@ interface FacetEntity: WorkspaceEntityWithPersistentId {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : FacetEntity, ModifiableWorkspaceEntity<FacetEntity>, ObjBuilder<FacetEntity> {
-    override var name: String
     override var entitySource: EntitySource
+    override var name: String
     override var module: ModuleEntity
     override var facetType: String
     override var configurationXmlTag: String?

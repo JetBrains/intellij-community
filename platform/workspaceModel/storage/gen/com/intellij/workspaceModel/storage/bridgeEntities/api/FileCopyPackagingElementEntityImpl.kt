@@ -82,11 +82,11 @@ open class FileCopyPackagingElementEntityImpl : FileCopyPackagingElementEntity, 
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isFilePathInitialized()) {
         error("Field FileOrDirectoryPackagingElementEntity#filePath should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field FileCopyPackagingElementEntity#entitySource should be initialized")
       }
     }
 
@@ -97,14 +97,23 @@ open class FileCopyPackagingElementEntityImpl : FileCopyPackagingElementEntity, 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as FileCopyPackagingElementEntity
+      this.entitySource = dataSource.entitySource
       this.filePath = dataSource.filePath
       this.renamedOutputFileName = dataSource.renamedOutputFileName
-      this.entitySource = dataSource.entitySource
       if (parents != null) {
         this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var parentEntity: CompositePackagingElementEntity?
       get() {
@@ -161,15 +170,6 @@ open class FileCopyPackagingElementEntityImpl : FileCopyPackagingElementEntity, 
         checkModificationAllowed()
         getEntityData().renamedOutputFileName = value
         changedProperty.add("renamedOutputFileName")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override fun getEntityData(): FileCopyPackagingElementEntityData = result ?: super.getEntityData() as FileCopyPackagingElementEntityData
@@ -233,9 +233,9 @@ class FileCopyPackagingElementEntityData : WorkspaceEntityData<FileCopyPackaging
 
     other as FileCopyPackagingElementEntityData
 
+    if (this.entitySource != other.entitySource) return false
     if (this.filePath != other.filePath) return false
     if (this.renamedOutputFileName != other.renamedOutputFileName) return false
-    if (this.entitySource != other.entitySource) return false
     return true
   }
 

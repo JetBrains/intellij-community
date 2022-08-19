@@ -40,8 +40,8 @@ interface EclipseProjectPropertiesEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : EclipseProjectPropertiesEntity, ModifiableWorkspaceEntity<EclipseProjectPropertiesEntity>, ObjBuilder<EclipseProjectPropertiesEntity> {
-    override var module: ModuleEntity
     override var entitySource: EntitySource
+    override var module: ModuleEntity
     override var variablePaths: Map<String, String>
     override var eclipseUrls: MutableList<VirtualFileUrl>
     override var unknownCons: MutableList<String>

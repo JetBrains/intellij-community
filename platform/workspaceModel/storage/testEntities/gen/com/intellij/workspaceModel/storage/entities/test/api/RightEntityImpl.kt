@@ -87,6 +87,9 @@ open class RightEntityImpl : RightEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       // Check initialization for list with ref type
       if (_diff != null) {
         if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(CHILDREN_CONNECTION_ID, this) == null) {
@@ -97,9 +100,6 @@ open class RightEntityImpl : RightEntity, WorkspaceEntityBase() {
         if (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] == null) {
           error("Field CompositeBaseEntity#children should be initialized")
         }
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field CompositeBaseEntity#entitySource should be initialized")
       }
     }
 
@@ -117,6 +117,15 @@ open class RightEntityImpl : RightEntity, WorkspaceEntityBase() {
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var parentEntity: CompositeBaseEntity?
       get() {
@@ -191,15 +200,6 @@ open class RightEntityImpl : RightEntity, WorkspaceEntityBase() {
           this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] = value
         }
         changedProperty.add("children")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override var parent: HeadAbstractionEntity?

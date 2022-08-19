@@ -73,11 +73,11 @@ open class ParentWithNullsImpl : ParentWithNulls, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isParentDataInitialized()) {
         error("Field ParentWithNulls#parentData should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ParentWithNulls#entitySource should be initialized")
       }
     }
 
@@ -88,20 +88,12 @@ open class ParentWithNullsImpl : ParentWithNulls, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ParentWithNulls
-      this.parentData = dataSource.parentData
       this.entitySource = dataSource.entitySource
+      this.parentData = dataSource.parentData
       if (parents != null) {
       }
     }
 
-
-    override var parentData: String
-      get() = getEntityData().parentData
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().parentData = value
-        changedProperty.add("parentData")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -110,6 +102,14 @@ open class ParentWithNullsImpl : ParentWithNulls, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var parentData: String
+      get() = getEntityData().parentData
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().parentData = value
+        changedProperty.add("parentData")
       }
 
     override var child: ChildWithNulls?
@@ -204,8 +204,8 @@ class ParentWithNullsData : WorkspaceEntityData<ParentWithNulls>() {
 
     other as ParentWithNullsData
 
-    if (this.parentData != other.parentData) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.parentData != other.parentData) return false
     return true
   }
 

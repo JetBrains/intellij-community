@@ -73,11 +73,11 @@ open class CollectionFieldEntityImpl : CollectionFieldEntity, WorkspaceEntityBas
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isVersionsInitialized()) {
         error("Field CollectionFieldEntity#versions should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field CollectionFieldEntity#entitySource should be initialized")
       }
       if (!getEntityData().isNamesInitialized()) {
         error("Field CollectionFieldEntity#names should be initialized")
@@ -91,13 +91,22 @@ open class CollectionFieldEntityImpl : CollectionFieldEntity, WorkspaceEntityBas
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as CollectionFieldEntity
-      this.versions = dataSource.versions.toMutableSet()
       this.entitySource = dataSource.entitySource
+      this.versions = dataSource.versions.toMutableSet()
       this.names = dataSource.names.toMutableList()
       if (parents != null) {
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     private val versionsUpdater: (value: Set<Int>) -> Unit = { value ->
 
@@ -114,15 +123,6 @@ open class CollectionFieldEntityImpl : CollectionFieldEntity, WorkspaceEntityBas
         checkModificationAllowed()
         getEntityData().versions = value
         versionsUpdater.invoke(value)
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     private val namesUpdater: (value: List<String>) -> Unit = { value ->
@@ -210,8 +210,8 @@ class CollectionFieldEntityData : WorkspaceEntityData<CollectionFieldEntity>() {
 
     other as CollectionFieldEntityData
 
-    if (this.versions != other.versions) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.versions != other.versions) return false
     if (this.names != other.names) return false
     return true
   }

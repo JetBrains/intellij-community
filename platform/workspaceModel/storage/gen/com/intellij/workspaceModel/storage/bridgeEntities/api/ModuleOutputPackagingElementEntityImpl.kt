@@ -81,7 +81,7 @@ open class ModuleOutputPackagingElementEntityImpl : ModuleOutputPackagingElement
     fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ModuleOutputPackagingElementEntity#entitySource should be initialized")
+        error("Field WorkspaceEntity#entitySource should be initialized")
       }
     }
 
@@ -92,13 +92,22 @@ open class ModuleOutputPackagingElementEntityImpl : ModuleOutputPackagingElement
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ModuleOutputPackagingElementEntity
-      this.module = dataSource.module
       this.entitySource = dataSource.entitySource
+      this.module = dataSource.module
       if (parents != null) {
         this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var parentEntity: CompositePackagingElementEntity?
       get() {
@@ -145,15 +154,6 @@ open class ModuleOutputPackagingElementEntityImpl : ModuleOutputPackagingElement
         checkModificationAllowed()
         getEntityData().module = value
         changedProperty.add("module")
-
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
 
       }
 
@@ -269,8 +269,8 @@ class ModuleOutputPackagingElementEntityData : WorkspaceEntityData<ModuleOutputP
 
     other as ModuleOutputPackagingElementEntityData
 
-    if (this.module != other.module) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.module != other.module) return false
     return true
   }
 

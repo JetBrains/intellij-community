@@ -68,11 +68,11 @@ open class ArtifactsOrderEntityImpl : ArtifactsOrderEntity, WorkspaceEntityBase(
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isOrderOfArtifactsInitialized()) {
         error("Field ArtifactsOrderEntity#orderOfArtifacts should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ArtifactsOrderEntity#entitySource should be initialized")
       }
     }
 
@@ -83,12 +83,21 @@ open class ArtifactsOrderEntityImpl : ArtifactsOrderEntity, WorkspaceEntityBase(
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ArtifactsOrderEntity
-      this.orderOfArtifacts = dataSource.orderOfArtifacts.toMutableList()
       this.entitySource = dataSource.entitySource
+      this.orderOfArtifacts = dataSource.orderOfArtifacts.toMutableList()
       if (parents != null) {
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     private val orderOfArtifactsUpdater: (value: List<String>) -> Unit = { value ->
 
@@ -105,15 +114,6 @@ open class ArtifactsOrderEntityImpl : ArtifactsOrderEntity, WorkspaceEntityBase(
         checkModificationAllowed()
         getEntityData().orderOfArtifacts = value
         orderOfArtifactsUpdater.invoke(value)
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override fun getEntityData(): ArtifactsOrderEntityData = result ?: super.getEntityData() as ArtifactsOrderEntityData
@@ -180,8 +180,8 @@ class ArtifactsOrderEntityData : WorkspaceEntityData<ArtifactsOrderEntity>() {
 
     other as ArtifactsOrderEntityData
 
-    if (this.orderOfArtifacts != other.orderOfArtifacts) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.orderOfArtifacts != other.orderOfArtifacts) return false
     return true
   }
 

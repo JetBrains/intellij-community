@@ -71,6 +71,9 @@ open class SoftLinkReferencedChildImpl : SoftLinkReferencedChild, WorkspaceEntit
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToManyParent<WorkspaceEntityBase>(PARENTENTITY_CONNECTION_ID, this) == null) {
           error("Field SoftLinkReferencedChild#parentEntity should be initialized")
@@ -80,9 +83,6 @@ open class SoftLinkReferencedChildImpl : SoftLinkReferencedChild, WorkspaceEntit
         if (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] == null) {
           error("Field SoftLinkReferencedChild#parentEntity should be initialized")
         }
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field SoftLinkReferencedChild#entitySource should be initialized")
       }
     }
 
@@ -99,6 +99,15 @@ open class SoftLinkReferencedChildImpl : SoftLinkReferencedChild, WorkspaceEntit
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var parentEntity: EntityWithSoftLinks
       get() {
@@ -137,15 +146,6 @@ open class SoftLinkReferencedChildImpl : SoftLinkReferencedChild, WorkspaceEntit
           this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] = value
         }
         changedProperty.add("parentEntity")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override fun getEntityData(): SoftLinkReferencedChildData = result ?: super.getEntityData() as SoftLinkReferencedChildData

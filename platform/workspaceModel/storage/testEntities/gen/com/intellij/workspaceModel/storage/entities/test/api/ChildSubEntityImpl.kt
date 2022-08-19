@@ -76,6 +76,9 @@ open class ChildSubEntityImpl : ChildSubEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToOneParent<WorkspaceEntityBase>(PARENTENTITY_CONNECTION_ID, this) == null) {
           error("Field ChildSubEntity#parentEntity should be initialized")
@@ -85,9 +88,6 @@ open class ChildSubEntityImpl : ChildSubEntity, WorkspaceEntityBase() {
         if (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] == null) {
           error("Field ChildSubEntity#parentEntity should be initialized")
         }
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ChildSubEntity#entitySource should be initialized")
       }
     }
 
@@ -104,6 +104,15 @@ open class ChildSubEntityImpl : ChildSubEntity, WorkspaceEntityBase() {
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var parentEntity: ParentSubEntity
       get() {
@@ -138,15 +147,6 @@ open class ChildSubEntityImpl : ChildSubEntity, WorkspaceEntityBase() {
           this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] = value
         }
         changedProperty.add("parentEntity")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override var child: ChildSubSubEntity?

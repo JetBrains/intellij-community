@@ -113,11 +113,11 @@ open class LibraryEntityImpl : LibraryEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isNameInitialized()) {
         error("Field LibraryEntity#name should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field LibraryEntity#entitySource should be initialized")
       }
       if (!getEntityData().isTableIdInitialized()) {
         error("Field LibraryEntity#tableId should be initialized")
@@ -137,8 +137,8 @@ open class LibraryEntityImpl : LibraryEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as LibraryEntity
-      this.name = dataSource.name
       this.entitySource = dataSource.entitySource
+      this.name = dataSource.name
       this.tableId = dataSource.tableId
       this.roots = dataSource.roots.toMutableList()
       this.excludedRoots = dataSource.excludedRoots.toMutableList()
@@ -159,14 +159,6 @@ open class LibraryEntityImpl : LibraryEntity, WorkspaceEntityBase() {
     }
 
 
-    override var name: String
-      get() = getEntityData().name
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().name = value
-        changedProperty.add("name")
-      }
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
@@ -174,6 +166,14 @@ open class LibraryEntityImpl : LibraryEntity, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var name: String
+      get() = getEntityData().name
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().name = value
+        changedProperty.add("name")
       }
 
     override var tableId: LibraryTableId
@@ -349,12 +349,12 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
     val result = HashSet<PersistentEntityId<*>>()
     val _tableId = tableId
     when (_tableId) {
+      is LibraryTableId.GlobalLibraryTableId -> {
+      }
       is LibraryTableId.ModuleLibraryTableId -> {
         result.add(_tableId.moduleId)
       }
       is LibraryTableId.ProjectLibraryTableId -> {
-      }
-      is LibraryTableId.GlobalLibraryTableId -> {
       }
     }
     for (item in roots) {
@@ -367,12 +367,12 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
   override fun index(index: WorkspaceMutableIndex<PersistentEntityId<*>>) {
     val _tableId = tableId
     when (_tableId) {
+      is LibraryTableId.GlobalLibraryTableId -> {
+      }
       is LibraryTableId.ModuleLibraryTableId -> {
         index.index(this, _tableId.moduleId)
       }
       is LibraryTableId.ProjectLibraryTableId -> {
-      }
-      is LibraryTableId.GlobalLibraryTableId -> {
       }
     }
     for (item in roots) {
@@ -386,6 +386,8 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
     val mutablePreviousSet = HashSet(prev)
     val _tableId = tableId
     when (_tableId) {
+      is LibraryTableId.GlobalLibraryTableId -> {
+      }
       is LibraryTableId.ModuleLibraryTableId -> {
         val removedItem__tableId_moduleId = mutablePreviousSet.remove(_tableId.moduleId)
         if (!removedItem__tableId_moduleId) {
@@ -393,8 +395,6 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
         }
       }
       is LibraryTableId.ProjectLibraryTableId -> {
-      }
-      is LibraryTableId.GlobalLibraryTableId -> {
       }
     }
     for (item in roots) {
@@ -410,6 +410,9 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
     var changed = false
     val _tableId = tableId
     val res_tableId = when (_tableId) {
+      is LibraryTableId.GlobalLibraryTableId -> {
+        _tableId
+      }
       is LibraryTableId.ModuleLibraryTableId -> {
         val _tableId_moduleId_data = if (_tableId.moduleId == oldLink) {
           changed = true
@@ -425,9 +428,6 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
         _tableId_data
       }
       is LibraryTableId.ProjectLibraryTableId -> {
-        _tableId
-      }
-      is LibraryTableId.GlobalLibraryTableId -> {
         _tableId
       }
     }
@@ -499,8 +499,8 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
 
     other as LibraryEntityData
 
-    if (this.name != other.name) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.name != other.name) return false
     if (this.tableId != other.tableId) return false
     if (this.roots != other.roots) return false
     if (this.excludedRoots != other.excludedRoots) return false
@@ -539,13 +539,13 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
   }
 
   override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.add(ModuleId::class.java)
-    collector.add(LibraryRoot.InclusionOptions::class.java)
     collector.add(LibraryRootTypeId::class.java)
-    collector.add(LibraryTableId.ModuleLibraryTableId::class.java)
-    collector.add(LibraryTableId.GlobalLibraryTableId::class.java)
+    collector.add(LibraryRoot.InclusionOptions::class.java)
     collector.add(LibraryRoot::class.java)
     collector.add(LibraryTableId::class.java)
+    collector.add(LibraryTableId.ModuleLibraryTableId::class.java)
+    collector.add(LibraryTableId.GlobalLibraryTableId::class.java)
+    collector.add(ModuleId::class.java)
     collector.addObject(LibraryTableId.ProjectLibraryTableId::class.java)
     this.roots?.let { collector.add(it::class.java) }
     this.excludedRoots?.let { collector.add(it::class.java) }

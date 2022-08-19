@@ -71,7 +71,7 @@ open class ParentSingleAbEntityImpl : ParentSingleAbEntity, WorkspaceEntityBase(
     fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ParentSingleAbEntity#entitySource should be initialized")
+        error("Field WorkspaceEntity#entitySource should be initialized")
       }
     }
 
@@ -87,6 +87,15 @@ open class ParentSingleAbEntityImpl : ParentSingleAbEntity, WorkspaceEntityBase(
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var child: ChildSingleAbstractBaseEntity?
       get() {
@@ -121,15 +130,6 @@ open class ParentSingleAbEntityImpl : ParentSingleAbEntity, WorkspaceEntityBase(
           this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] = value
         }
         changedProperty.add("child")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override fun getEntityData(): ParentSingleAbEntityData = result ?: super.getEntityData() as ParentSingleAbEntityData

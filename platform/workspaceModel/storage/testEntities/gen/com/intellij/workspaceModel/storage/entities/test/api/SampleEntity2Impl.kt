@@ -71,11 +71,11 @@ open class SampleEntity2Impl : SampleEntity2, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isDataInitialized()) {
         error("Field SampleEntity2#data should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field SampleEntity2#entitySource should be initialized")
       }
     }
 
@@ -86,22 +86,14 @@ open class SampleEntity2Impl : SampleEntity2, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SampleEntity2
-      this.data = dataSource.data
       this.entitySource = dataSource.entitySource
+      this.data = dataSource.data
       this.boolData = dataSource.boolData
       this.optionalData = dataSource.optionalData
       if (parents != null) {
       }
     }
 
-
-    override var data: String
-      get() = getEntityData().data
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().data = value
-        changedProperty.add("data")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -110,6 +102,14 @@ open class SampleEntity2Impl : SampleEntity2, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var data: String
+      get() = getEntityData().data
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().data = value
+        changedProperty.add("data")
       }
 
     override var boolData: Boolean
@@ -191,8 +191,8 @@ class SampleEntity2Data : WorkspaceEntityData<SampleEntity2>() {
 
     other as SampleEntity2Data
 
-    if (this.data != other.data) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.data != other.data) return false
     if (this.boolData != other.boolData) return false
     if (this.optionalData != other.optionalData) return false
     return true

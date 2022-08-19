@@ -69,11 +69,11 @@ open class DefaultValueEntityImpl : DefaultValueEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isNameInitialized()) {
         error("Field DefaultValueEntity#name should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field DefaultValueEntity#entitySource should be initialized")
       }
     }
 
@@ -84,22 +84,14 @@ open class DefaultValueEntityImpl : DefaultValueEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as DefaultValueEntity
-      this.name = dataSource.name
       this.entitySource = dataSource.entitySource
+      this.name = dataSource.name
       this.isGenerated = dataSource.isGenerated
       this.anotherName = dataSource.anotherName
       if (parents != null) {
       }
     }
 
-
-    override var name: String
-      get() = getEntityData().name
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().name = value
-        changedProperty.add("name")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -108,6 +100,14 @@ open class DefaultValueEntityImpl : DefaultValueEntity, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var name: String
+      get() = getEntityData().name
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().name = value
+        changedProperty.add("name")
       }
 
     override var isGenerated: Boolean
@@ -189,8 +189,8 @@ class DefaultValueEntityData : WorkspaceEntityData<DefaultValueEntity>() {
 
     other as DefaultValueEntityData
 
-    if (this.name != other.name) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.name != other.name) return false
     if (this.isGenerated != other.isGenerated) return false
     if (this.anotherName != other.anotherName) return false
     return true

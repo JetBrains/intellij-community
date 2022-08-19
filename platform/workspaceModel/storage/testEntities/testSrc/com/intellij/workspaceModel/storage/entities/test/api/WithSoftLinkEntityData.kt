@@ -48,8 +48,8 @@ interface NamedEntity : WorkspaceEntityWithPersistentId {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : NamedEntity, ModifiableWorkspaceEntity<NamedEntity>, ObjBuilder<NamedEntity> {
-    override var myName: String
     override var entitySource: EntitySource
+    override var myName: String
     override var additionalProperty: String?
     override var children: List<NamedChildEntity>
   }
@@ -101,8 +101,8 @@ interface NamedChildEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : NamedChildEntity, ModifiableWorkspaceEntity<NamedChildEntity>, ObjBuilder<NamedChildEntity> {
-    override var childProperty: String
     override var entitySource: EntitySource
+    override var childProperty: String
     override var parentEntity: NamedEntity
   }
 
@@ -145,8 +145,8 @@ interface WithSoftLinkEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : WithSoftLinkEntity, ModifiableWorkspaceEntity<WithSoftLinkEntity>, ObjBuilder<WithSoftLinkEntity> {
-    override var link: NameId
     override var entitySource: EntitySource
+    override var link: NameId
   }
 
   companion object : Type<WithSoftLinkEntity, Builder>() {
@@ -179,8 +179,8 @@ interface ComposedLinkEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ComposedLinkEntity, ModifiableWorkspaceEntity<ComposedLinkEntity>, ObjBuilder<ComposedLinkEntity> {
-    override var link: ComposedId
     override var entitySource: EntitySource
+    override var link: ComposedId
   }
 
   companion object : Type<ComposedLinkEntity, Builder>() {
@@ -218,8 +218,8 @@ interface WithListSoftLinksEntity : WorkspaceEntityWithPersistentId {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : WithListSoftLinksEntity, ModifiableWorkspaceEntity<WithListSoftLinksEntity>, ObjBuilder<WithListSoftLinksEntity> {
-    override var myName: String
     override var entitySource: EntitySource
+    override var myName: String
     override var links: MutableList<NameId>
   }
 
@@ -268,8 +268,8 @@ interface ComposedIdSoftRefEntity : WorkspaceEntityWithPersistentId {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ComposedIdSoftRefEntity, ModifiableWorkspaceEntity<ComposedIdSoftRefEntity>, ObjBuilder<ComposedIdSoftRefEntity> {
-    override var myName: String
     override var entitySource: EntitySource
+    override var myName: String
     override var link: NameId
   }
 

@@ -92,7 +92,7 @@ open class ArtifactRootElementEntityImpl : ArtifactRootElementEntity, WorkspaceE
     fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field CompositePackagingElementEntity#entitySource should be initialized")
+        error("Field WorkspaceEntity#entitySource should be initialized")
       }
       // Check initialization for list with ref type
       if (_diff != null) {
@@ -121,6 +121,15 @@ open class ArtifactRootElementEntityImpl : ArtifactRootElementEntity, WorkspaceE
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var parentEntity: CompositePackagingElementEntity?
       get() {
@@ -194,15 +203,6 @@ open class ArtifactRootElementEntityImpl : ArtifactRootElementEntity, WorkspaceE
           this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)] = value
         }
         changedProperty.add("artifact")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override var children: List<PackagingElementEntity>

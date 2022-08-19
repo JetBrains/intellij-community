@@ -20,8 +20,8 @@ interface ParentSubEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ParentSubEntity, ModifiableWorkspaceEntity<ParentSubEntity>, ObjBuilder<ParentSubEntity> {
-    override var parentData: String
     override var entitySource: EntitySource
+    override var parentData: String
     override var child: ChildSubEntity?
   }
 
@@ -52,8 +52,8 @@ interface ChildSubEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ChildSubEntity, ModifiableWorkspaceEntity<ChildSubEntity>, ObjBuilder<ChildSubEntity> {
-    override var parentEntity: ParentSubEntity
     override var entitySource: EntitySource
+    override var parentEntity: ParentSubEntity
     override var child: ChildSubSubEntity?
   }
 
@@ -82,8 +82,8 @@ interface ChildSubSubEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ChildSubSubEntity, ModifiableWorkspaceEntity<ChildSubSubEntity>, ObjBuilder<ChildSubSubEntity> {
-    override var parentEntity: ChildSubEntity
     override var entitySource: EntitySource
+    override var parentEntity: ChildSubEntity
     override var childData: String
   }
 

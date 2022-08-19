@@ -73,11 +73,11 @@ open class MainEntityParentListImpl : MainEntityParentList, WorkspaceEntityBase(
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isXInitialized()) {
         error("Field MainEntityParentList#x should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field MainEntityParentList#entitySource should be initialized")
       }
       // Check initialization for list with ref type
       if (_diff != null) {
@@ -99,20 +99,12 @@ open class MainEntityParentListImpl : MainEntityParentList, WorkspaceEntityBase(
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as MainEntityParentList
-      this.x = dataSource.x
       this.entitySource = dataSource.entitySource
+      this.x = dataSource.x
       if (parents != null) {
       }
     }
 
-
-    override var x: String
-      get() = getEntityData().x
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().x = value
-        changedProperty.add("x")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -121,6 +113,14 @@ open class MainEntityParentListImpl : MainEntityParentList, WorkspaceEntityBase(
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var x: String
+      get() = getEntityData().x
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().x = value
+        changedProperty.add("x")
       }
 
     // List of non-abstract referenced types
@@ -219,8 +219,8 @@ class MainEntityParentListData : WorkspaceEntityData<MainEntityParentList>() {
 
     other as MainEntityParentListData
 
-    if (this.x != other.x) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.x != other.x) return false
     return true
   }
 
