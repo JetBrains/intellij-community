@@ -47,44 +47,41 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
     }
   }
 
-  override fun segmentChanged(oldIntervals: List<NotebookCellLines.Interval>,
-                              oldAffectedIntervals: List<NotebookCellLines.Interval>,
-                              newIntervals: List<NotebookCellLines.Interval>,
-                              newAffectedIntervals: List<NotebookCellLines.Interval>) {
+  override fun segmentChanged(e: NotebookCellLinesEvent) {
     when {
-      oldIntervals.isEmpty() && newIntervals.isEmpty() -> {
+      !e.isIntervalsChanged() -> {
         // content edited without affecting intervals values
-        onEdited((oldAffectedIntervals + newAffectedIntervals).distinct().sortedBy { it.ordinal })
+        onEdited((e.oldAffectedIntervals + e.newAffectedIntervals).distinct().sortedBy { it.ordinal })
       }
-      oldIntervals.size == 1 && newIntervals.size == 1 && oldIntervals.first().type == newIntervals.first().type -> {
+      e.oldIntervals.size == 1 && e.newIntervals.size == 1 && e.oldIntervals.first().type == e.newIntervals.first().type -> {
         // only one interval changed size
-        pointers[newIntervals.first().ordinal].interval = newIntervals.first()
-        onEdited(newAffectedIntervals)
-        if (newIntervals.first() !in newAffectedIntervals) {
-          changeListeners.multicaster.onEdited(newIntervals.first().ordinal)
+        pointers[e.newIntervals.first().ordinal].interval = e.newIntervals.first()
+        onEdited(e.newAffectedIntervals)
+        if (e.newIntervals.first() !in e.newAffectedIntervals) {
+          changeListeners.multicaster.onEdited(e.newIntervals.first().ordinal)
         }
       }
       else -> {
-        for (old in oldIntervals.asReversed()) {
+        for (old in e.oldIntervals.asReversed()) {
           pointers[old.ordinal].interval = null
           pointers.removeAt(old.ordinal)
           // called in reversed order, so ordinals of previous cells remain actual
           changeListeners.multicaster.onRemoved(old.ordinal)
         }
 
-        newIntervals.firstOrNull()?.also { firstNew ->
-          pointers.addAll(firstNew.ordinal, newIntervals.map { NotebookIntervalPointerImpl(it) })
+        e.newIntervals.firstOrNull()?.also { firstNew ->
+          pointers.addAll(firstNew.ordinal, e.newIntervals.map { NotebookIntervalPointerImpl(it) })
         }
-        for (newInterval in newIntervals) {
+        for (newInterval in e.newIntervals) {
           changeListeners.multicaster.onInserted(newInterval.ordinal)
         }
-        onEdited(newAffectedIntervals, excluded = newIntervals)
+        onEdited(e.newAffectedIntervals, excluded = e.newIntervals)
       }
     }
 
     val invalidPointersStart =
-      newIntervals.firstOrNull()?.let { it.ordinal + newIntervals.size }
-      ?: oldIntervals.firstOrNull()?.ordinal
+      e.newIntervals.firstOrNull()?.let { it.ordinal + e.newIntervals.size }
+      ?: e.oldIntervals.firstOrNull()?.ordinal
       ?: pointers.size
 
     updatePointersFrom(invalidPointersStart)
