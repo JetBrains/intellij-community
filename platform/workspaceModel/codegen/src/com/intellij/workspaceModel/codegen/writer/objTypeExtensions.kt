@@ -36,18 +36,10 @@ private fun collectFields(objClass: ObjClass<*>, fieldsByName: MutableMap<String
 }
 
 val ObjProperty<*, *>.hasSetter: Boolean
-  get() =
-    if (open) true
-    else valueKind == ObjProperty.ValueKind.Plain
+  get() = open || valueKind == ObjProperty.ValueKind.Plain
 
 val ObjProperty<*, *>.javaName: String
   get() = name
-
-val ObjProperty<*, *>.owner: ObjClass<*>
-  get() = receiver
-
-val ObjProperty<*, *>.type: ValueType<*>
-  get() = valueType
 
 val ObjProperty<*, *>.isOverride: Boolean
   get() = receiver.allSuperClasses.any { name in it.fieldsByName }

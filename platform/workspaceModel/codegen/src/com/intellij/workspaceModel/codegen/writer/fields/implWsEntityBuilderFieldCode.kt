@@ -8,7 +8,6 @@ import com.intellij.workspaceModel.codegen.getRefType
 import com.intellij.workspaceModel.codegen.isRefType
 import com.intellij.workspaceModel.codegen.utils.*
 import com.intellij.workspaceModel.codegen.writer.javaName
-import com.intellij.workspaceModel.codegen.writer.owner
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryRoot
 import com.intellij.workspaceModel.storage.impl.*
@@ -291,7 +290,7 @@ fun LinesBuilder.implWsBuilderIsInitializedCode(field: ObjProperty<*, *>) {
       lineComment("Check initialization for list with ref type")
       ifElse("_diff != null", {
         `if`("_diff.${fqn2(EntityStorage::extractOneToManyChildren)}<${WorkspaceEntityBase::class.fqn}>(${field.refsConnectionId}, this) == null") {
-          line("error(\"Field ${field.owner.name}#$javaName should be initialized\")")
+          line("error(\"Field ${field.receiver.name}#$javaName should be initialized\")")
         }
       }) {
         isInitializedBaseCode(field, "this.entityLinks[${EntityLink::class.fqn}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] == null")
@@ -304,7 +303,7 @@ fun LinesBuilder.implWsBuilderIsInitializedCode(field: ObjProperty<*, *>) {
     is ValueType.ObjRef<*> -> {
       ifElse("_diff != null", {
         `if`("_diff.${field.refsConnectionMethodCode("<${WorkspaceEntityBase::class.fqn}>")} == null") {
-          line("error(\"Field ${field.owner.name}#$javaName should be initialized\")")
+          line("error(\"Field ${field.receiver.name}#$javaName should be initialized\")")
         }
       }) {
         isInitializedBaseCode(field, "this.entityLinks[${EntityLink::class.fqn}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] == null")
@@ -320,7 +319,7 @@ fun LinesBuilder.implWsBuilderIsInitializedCode(field: ObjProperty<*, *>) {
 
 private fun LinesBuilder.isInitializedBaseCode(field: ObjProperty<*, *>, expression: String) {
   section("if ($expression)") {
-    line("error(\"Field ${field.owner.name}#${field.javaName} should be initialized\")")
+    line("error(\"Field ${field.receiver.name}#${field.javaName} should be initialized\")")
   }
 }
 

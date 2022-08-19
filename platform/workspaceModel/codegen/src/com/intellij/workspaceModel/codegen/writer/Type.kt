@@ -7,10 +7,10 @@ import com.intellij.workspaceModel.codegen.utils.fqn
 val ObjClass<*>.javaFullName: QualifiedName
   get() = fqn(module.name, name)
 
-val ObjClass<*>.javaBuilderName
+val ObjClass<*>.javaBuilderName: String
   get() = "$name.Builder"
 
-val ObjClass<*>.javaImplName
+val ObjClass<*>.javaImplName: String
   get() = "${name.replace(".", "")}Impl"
 
 val ObjClass<*>.javaImplBuilderName

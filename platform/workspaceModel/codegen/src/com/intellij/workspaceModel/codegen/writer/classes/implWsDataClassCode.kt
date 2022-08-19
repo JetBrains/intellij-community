@@ -12,7 +12,6 @@ import com.intellij.workspaceModel.codegen.fields.javaType
 import com.intellij.workspaceModel.codegen.utils.*
 import com.intellij.workspaceModel.codegen.writer.allFields
 import com.intellij.workspaceModel.codegen.writer.hasSetter
-import com.intellij.workspaceModel.codegen.writer.type
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
 import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
@@ -151,8 +150,8 @@ fun ObjClass<*>.implWsDataClassCode(): String {
           optionalFields.forEach {
             line("this.${it.name} = this@$javaDataName.${it.name}")
           }
-          allRefsFields.filterNot { it.type.getRefType().child }.forEach {
-            val parentType = it.type
+          allRefsFields.filterNot { it.valueType.getRefType().child }.forEach {
+            val parentType = it.valueType
             if (parentType is ValueType.Optional) {
               line("this.${it.name} = parents.filterIsInstance<${parentType.type.javaType}>().singleOrNull()")
             } else {
@@ -164,8 +163,8 @@ fun ObjClass<*>.implWsDataClassCode(): String {
 
       sectionNl("override fun getRequiredParents(): List<Class<out WorkspaceEntity>>") {
         line("val res = mutableListOf<Class<out WorkspaceEntity>>()")
-        allRefsFields.filterNot { it.type.getRefType().child }.forEach {
-          val parentType = it.type
+        allRefsFields.filterNot { it.valueType.getRefType().child }.forEach {
+          val parentType = it.valueType
           if (parentType !is ValueType.Optional) {
             line("res.add(${parentType.javaType}::class.java)")
           }
