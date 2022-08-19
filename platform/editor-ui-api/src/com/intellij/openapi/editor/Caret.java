@@ -190,7 +190,9 @@ public interface Caret extends UserDataHolderEx, Disposable {
    * @see #getSelectionEnd()
    */
   @NotNull
-  TextRange getSelectionRange();
+  default TextRange getSelectionRange() {
+    return TextRange.create(getSelectionStart(), getSelectionEnd());
+  }
 
   /**
    * Selects the specified range of text.
