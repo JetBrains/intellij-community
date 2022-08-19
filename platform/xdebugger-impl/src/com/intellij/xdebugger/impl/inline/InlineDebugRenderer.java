@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.icons.AllIcons;
@@ -214,9 +214,8 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
     int curX = r.x + metrics.charWidth(' ');
 
     if (backgroundColor != null) {
-      float alpha = BACKGROUND_ALPHA;
       GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-      GraphicsUtil.paintWithAlpha(g, alpha);
+      GraphicsUtil.paintWithAlpha(g, BACKGROUND_ALPHA);
       g.setColor(backgroundColor);
       g.fillRoundRect(curX + margin, r.y + gap, r.width - (2 * margin) - metrics.charWidth(' '), r.height - gap * 2, 6, 6);
       config.restore();
