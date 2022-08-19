@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.template.TemplateContextType;
-import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -67,10 +66,11 @@ public abstract class StructuralSearchProfile {
   public abstract PsiElementVisitor createMatchingVisitor(@NotNull GlobalMatchingVisitor globalVisitor);
 
   /**
-   * Filter to filter out uninteresting elements that should not be matched. Usually white space and error elements.
+   * @return {@code true} for elements that should be matched. Usually {@code false} for white space and error elements.
    */
-  @NotNull
-  public abstract NodeFilter getLexicalNodesFilter();
+  public boolean isMatchNode(PsiElement element) {
+    return !(element instanceof PsiWhiteSpace) && !(element instanceof PsiErrorElement);
+  }
 
   /**
    * Creates language specific compiled pattern.
