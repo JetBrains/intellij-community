@@ -26,6 +26,8 @@ import java.util.Objects;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.util.Predicates.nonNull;
+
 public abstract class FilterComponent extends JBPanel<FilterComponent> {
   private static final int GAP_BEFORE_ARROW = 3;
   protected static final int BORDER_SIZE = 2;
@@ -89,7 +91,7 @@ public abstract class FilterComponent extends JBPanel<FilterComponent> {
     showPopupMenuFromKeyboard();
     if (shouldIndicateHovering()) {
       Stream.of(this, myFilterActionButton, myNameLabel, myValueLabel)
-        .filter(Objects::nonNull)
+        .filter(nonNull())
         .forEach(this::indicateHovering);
     }
     indicateFocusing();

@@ -33,6 +33,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
+import static com.intellij.openapi.util.Predicates.nonNull;
 import static org.junit.Assert.assertNotNull;
 
 @TestOnly
@@ -82,8 +83,9 @@ public class XDebuggerTestUtil {
     XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     WriteAction.runAndWait(() -> {
       XLineBreakpoint<?> breakpoint = Arrays.stream(XDebuggerUtil.getInstance().getLineBreakpointTypes())
-                                            .map(t -> breakpointManager.findBreakpointAtLine(t, file, line)).filter(Objects::nonNull)
-                                            .findFirst().orElse(null);
+        .map(t -> breakpointManager.findBreakpointAtLine(t, file, line))
+        .filter(nonNull())
+        .findFirst().orElse(null);
       assertNotNull(breakpoint);
       breakpointManager.removeBreakpoint(breakpoint);
     });
