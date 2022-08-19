@@ -140,8 +140,23 @@ class IJTestEventLogger {
     }
 
     String log = writeLog(writer.toString())
-    File xmlFile = testReportDir.toPath().resolve("ijLog_" + System.currentTimeMillis() + "_" + order + "_" + log.md5() + ".xml").toFile()
-    xmlFile.write(log)
+    appendTestLogFile(testReportDir, order, log)
+  }
+
+  private static synchronized void appendTestLogFile(File testReportDir, int order, String msg) {
+
+    // group log files together by time so Gradle doesn't get flooded with tiny files,
+    // and large files are too big to work with.
+    String filename = System.currentTimeSeconds().toString().dropRight(2)
+
+    File testXmlFile = testReportDir.toPath().resolve("${filename}.ij.log").toFile()
+    if (!testXmlFile.isFile()) testXmlFile.createNewFile()
+
+    msg = System.currentTimeMillis() + "_" + order + " \t " + msg
+
+    testXmlFile.withWriterAppend {
+      it.writeLine(msg)
+    }
   }
 
   static String escapeCdata(String s) {

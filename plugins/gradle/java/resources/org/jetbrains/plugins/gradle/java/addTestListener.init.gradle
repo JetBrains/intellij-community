@@ -5,24 +5,37 @@ gradle.allprojects { project ->
     loggerTask.outputs.upToDateWhen { false }
 
     from(project.tasks.withType(Test)) {
-      include("**/ijLog*.xml")
+      include("**/*.ij.log")
     }
     into(loggerTask.temporaryDir)
 
     doLast {
       List<File> eventLogFiles = new ArrayList<File>()
       loggerTask.destinationDir.eachFileRecurse(groovy.io.FileType.FILES) { File file ->
-        if (file.name.endsWith(".xml")) {
-          eventLogFiles.add(file)
-        }
+        eventLogFiles.add(file)
       }
 
       eventLogFiles
         .sort { it.name }
         .eachWithIndex { file, i ->
-          String msg = file.newReader().readLines().join("")
-          logger.lifecycle("[ijTestEventLogger] " + (i + 1) + "/" + eventLogFiles.size() + " " + file.name + ": " + msg)
-          println msg
+
+          logger.lifecycle("[ijTestEventLogger] $i " + file.name)
+
+          file.withReader { reader ->
+            reader
+              .readLines()
+              //.sort() // don't need to sort, because the log-writer is synchronized
+              .forEach { line ->
+                int index = line.indexOf('\t')
+                if (index > 0) {
+                  String msg = line.substring(index).trim()
+                  System.out.println(msg)
+                }
+                else {
+                  logger.warn("[ijTestEventLogger] invalid line $index - $line")
+                }
+              }
+          }
         }
     }
   }
