@@ -76,11 +76,13 @@
                      enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.i18n.ConvertToBasicLatinInspection" />
     <intentionAction>
+      <language>JAVA</language>
       <className>com.intellij.codeInspection.capitalization.AnnotateCapitalizationIntention</className>
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.i18n</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>UAST</language>
       <className>com.intellij.codeInspection.i18n.folding.EditPropertyValueIntentionAction</className>
     </intentionAction>
 
