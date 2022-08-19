@@ -2763,6 +2763,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/implicitCasts/bitwise.java");
         }
 
+        @TestMetadata("explicitCastReceiver.java")
+        public void testExplicitCastReceiver() throws Exception {
+            runTest("testData/newJ2k/implicitCasts/explicitCastReceiver.java");
+        }
+
         @TestMetadata("inConstructorCall.java")
         public void testInConstructorCall() throws Exception {
             runTest("testData/newJ2k/implicitCasts/inConstructorCall.java");
