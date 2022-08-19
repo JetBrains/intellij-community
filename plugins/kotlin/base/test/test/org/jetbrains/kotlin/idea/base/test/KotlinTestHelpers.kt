@@ -9,9 +9,37 @@ import junit.framework.TestCase
 import org.jetbrains.kotlin.test.util.trimTrailingWhitespacesAndAddNewlineAtEOF
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
+import kotlin.io.path.extension
+import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.writeText
 
 object KotlinTestHelpers {
+    fun getExpectedPath(path: Path, suffix: String): Path {
+        val parent = path.parent
+
+        val nameWithoutExtension = path.nameWithoutExtension
+        val extension = path.extension
+
+        if (extension.isEmpty()) {
+            return parent.resolve(nameWithoutExtension + suffix)
+        } else {
+            return parent.resolve("$nameWithoutExtension$suffix.$extension")
+        }
+    }
+
+    fun getTestRootPath(testClass: Class<*>): Path {
+        var current = testClass
+        while (true) {
+            // @TestRoot should be defined on a top-level class
+            current = current.enclosingClass ?: break
+        }
+
+        val testRootAnnotation = current.getAnnotation(TestRoot::class.java)
+            ?: throw AssertionError("@${TestRoot::class.java.name} annotation must be defined on a class '${current.name}'")
+
+        return KotlinRoot.PATH.resolve(testRootAnnotation.value)
+    }
+
     fun assertEqualsToPath(expectedPath: Path, actual: String) {
         assertEqualsToPath(expectedPath, actual, { it }, { "Actual data differs from file content" })
     }

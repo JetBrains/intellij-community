@@ -13,70 +13,88 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
-import org.jetbrains.kotlin.idea.base.test.KotlinRoot
-import org.jetbrains.kotlin.idea.test.util.slashedPath
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
+import org.jetbrains.kotlin.idea.base.test.KotlinJvmLightProjectDescriptor
+import org.jetbrains.kotlin.idea.base.test.NewLightKotlinCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.base.test.TestRoot
+import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.util.*
 
+@TestRoot("code-insight/live-templates-k1")
+@TestMetadata("testData/simple")
 @RunWith(JUnit38ClassRunner::class)
-class LiveTemplatesTest : KotlinLightCodeInsightFixtureTestCase() {
+class LiveTemplatesTest : NewLightKotlinCodeInsightFixtureTestCase() {
+    override val pluginKind: KotlinPluginKind
+        get() = KotlinPluginKind.FE10_PLUGIN
+
     override fun setUp() {
         super.setUp()
-        myFixture.testDataPath = KotlinRoot.DIR.resolve("code-insight/live-templates-shared/tests/testData").slashedPath
         TemplateManagerImpl.setTemplateTesting(testRootDisposable)
     }
 
+    @TestMetadata("sout.kt")
     fun testSout() {
         parameterless()
     }
 
+    @TestMetadata("sout_BeforeCall.kt")
     fun testSout_BeforeCall() {
         parameterless()
     }
 
+    @TestMetadata("sout_BeforeCallSpace.kt")
     fun testSout_BeforeCallSpace() {
         parameterless()
     }
 
+    @TestMetadata("sout_BeforeBinary.kt")
     fun testSout_BeforeBinary() {
         parameterless()
     }
 
+    @TestMetadata("sout_InCallArguments.kt")
     fun testSout_InCallArguments() {
         parameterless()
     }
 
+    @TestMetadata("sout_BeforeQualifiedCall.kt")
     fun testSout_BeforeQualifiedCall() {
         parameterless()
     }
 
+    @TestMetadata("sout_AfterSemicolon.kt")
     fun testSout_AfterSemicolon() {
         parameterless()
     }
 
+    @TestMetadata("soutf.kt")
     fun testSoutf() {
         parameterless()
     }
 
+    @TestMetadata("soutf_InCompanion.kt")
     fun testSoutf_InCompanion() {
         parameterless()
     }
 
+    @TestMetadata("serr.kt")
     fun testSerr() {
         parameterless()
     }
 
+    @TestMetadata("main.kt")
     fun testMain() {
         parameterless()
     }
 
+    @TestMetadata("maina.kt")
     fun testMaina() {
         parameterless()
     }
 
+    @TestMetadata("soutv.kt")
     fun testSoutv() {
         start()
 
@@ -86,10 +104,12 @@ class LiveTemplatesTest : KotlinLightCodeInsightFixtureTestCase() {
         checkAfter()
     }
 
+    @TestMetadata("soutp.kt")
     fun testSoutp() {
         parameterless()
     }
 
+    @TestMetadata("fun0.kt")
     fun testFun0() {
         start()
 
@@ -99,6 +119,7 @@ class LiveTemplatesTest : KotlinLightCodeInsightFixtureTestCase() {
         checkAfter()
     }
 
+    @TestMetadata("fun1.kt")
     fun testFun1() {
         start()
 
@@ -108,6 +129,7 @@ class LiveTemplatesTest : KotlinLightCodeInsightFixtureTestCase() {
         checkAfter()
     }
 
+    @TestMetadata("fun2.kt")
     fun testFun2() {
         start()
 
@@ -117,6 +139,7 @@ class LiveTemplatesTest : KotlinLightCodeInsightFixtureTestCase() {
         checkAfter()
     }
 
+    @TestMetadata("exfun.kt")
     fun testExfun() {
         start()
 
@@ -128,6 +151,7 @@ class LiveTemplatesTest : KotlinLightCodeInsightFixtureTestCase() {
         checkAfter()
     }
 
+    @TestMetadata("exval.kt")
     fun testExval() {
         start()
 
@@ -138,6 +162,7 @@ class LiveTemplatesTest : KotlinLightCodeInsightFixtureTestCase() {
         checkAfter()
     }
 
+    @TestMetadata("exvar.kt")
     fun testExvar() {
         start()
 
@@ -148,6 +173,7 @@ class LiveTemplatesTest : KotlinLightCodeInsightFixtureTestCase() {
         checkAfter()
     }
 
+    @TestMetadata("closure.kt")
     fun testClosure() {
         start()
 
@@ -157,6 +183,7 @@ class LiveTemplatesTest : KotlinLightCodeInsightFixtureTestCase() {
         checkAfter()
     }
 
+    @TestMetadata("interface.kt")
     fun testInterface() {
         start()
 
@@ -165,6 +192,7 @@ class LiveTemplatesTest : KotlinLightCodeInsightFixtureTestCase() {
         checkAfter()
     }
 
+    @TestMetadata("singleton.kt")
     fun testSingleton() {
         start()
 
@@ -173,6 +201,7 @@ class LiveTemplatesTest : KotlinLightCodeInsightFixtureTestCase() {
         checkAfter()
     }
 
+    @TestMetadata("void.kt")
     fun testVoid() {
         start()
 
@@ -182,6 +211,7 @@ class LiveTemplatesTest : KotlinLightCodeInsightFixtureTestCase() {
         checkAfter()
     }
 
+    @TestMetadata("iter.kt")
     fun testIter() {
         start()
 
@@ -192,12 +222,14 @@ class LiveTemplatesTest : KotlinLightCodeInsightFixtureTestCase() {
         checkAfter()
     }
 
+    @TestMetadata("iter_ForKeywordVariable.kt")
     fun testIter_ForKeywordVariable() {
         start()
         nextTab(2)
         checkAfter()
     }
 
+    @TestMetadata("anonymous_1.kt")
     fun testAnonymous_1() {
         start()
 
@@ -206,6 +238,7 @@ class LiveTemplatesTest : KotlinLightCodeInsightFixtureTestCase() {
         checkAfter()
     }
 
+    @TestMetadata("anonymous_2.kt")
     fun testAnonymous_2() {
         start()
 
@@ -214,12 +247,23 @@ class LiveTemplatesTest : KotlinLightCodeInsightFixtureTestCase() {
         checkAfter()
     }
 
+    @TestMetadata("object_ForClass.kt")
     fun testObject_ForClass() {
         start()
 
         typeAndNextTab("A")
 
         checkAfter()
+    }
+
+    @TestMetadata("ifn.kt")
+    fun testIfn() {
+        doTestIfnInn()
+    }
+
+    @TestMetadata("inn.kt")
+    fun testInn() {
+        doTestIfnInn()
     }
 
     private fun doTestIfnInn() {
@@ -231,14 +275,6 @@ class LiveTemplatesTest : KotlinLightCodeInsightFixtureTestCase() {
         checkAfter()
     }
 
-    fun testIfn() {
-        doTestIfnInn()
-    }
-
-    fun testInn() {
-        doTestIfnInn()
-    }
-
     private fun parameterless() {
         start()
 
@@ -246,7 +282,7 @@ class LiveTemplatesTest : KotlinLightCodeInsightFixtureTestCase() {
     }
 
     private fun start() {
-        myFixture.configureByFile(getTestName(true) + ".kt")
+        myFixture.configureByMainPath()
         myFixture.type(templateName)
 
         doAction("ExpandLiveTemplateByTab")
@@ -263,7 +299,7 @@ class LiveTemplatesTest : KotlinLightCodeInsightFixtureTestCase() {
 
     private fun checkAfter() {
         TestCase.assertNull(templateState)
-        myFixture.checkResultByFile(getTestName(true) + ".exp.kt", true)
+        myFixture.checkResultByExpectedPath(".exp")
     }
 
     private fun typeAndNextTab(s: String) {
@@ -299,10 +335,10 @@ class LiveTemplatesTest : KotlinLightCodeInsightFixtureTestCase() {
         get() = TemplateManagerImpl.getTemplateState(myFixture.editor)
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
-        return KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+        return KotlinJvmLightProjectDescriptor.DEFAULT
     }
 
-    private fun doAction(actionId: String) {
+    private fun doAction(@Suppress("SameParameterValue") actionId: String) {
         val actionManager = EditorActionManager.getInstance()
         val actionHandler = actionManager.getActionHandler(actionId)
         actionHandler.execute(
