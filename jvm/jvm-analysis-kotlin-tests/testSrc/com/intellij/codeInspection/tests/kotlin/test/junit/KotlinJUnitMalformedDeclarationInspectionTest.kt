@@ -663,7 +663,15 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
           @org.junit.jupiter.api.BeforeAll
           fun beforeAll(foo: String) { println(foo) }
         }
-      }    
+      }
+      
+      @org.junit.jupiter.api.extension.ExtendWith(TestParameterResolver::class)
+      open class AbstractTest { }
+      
+      class TestImplementation: AbstractTest() {
+          @org.junit.jupiter.api.BeforeEach
+          fun beforeEach(valueBox : String){ }
+      }
       
       @org.junit.jupiter.api.extension.ExtendWith(TestParameterResolver::class)
       annotation class CustomTestAnnotation
@@ -675,7 +683,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationI
           @org.junit.jupiter.api.BeforeAll
           fun beforeAll(foo: String) { println(foo) }
         }
-      }      
+      }
     """.trimIndent())
   }
   fun `test malformed before class method that is non-static`() {
