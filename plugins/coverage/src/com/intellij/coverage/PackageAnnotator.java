@@ -63,6 +63,8 @@ public final class PackageAnnotator {
     myAnnotator = annotator;
     myIgnoreEmptyPrivateConstructors = ignoreEmptyPrivateConstructors;
     myIgnoreImplicitConstructor = ignoreImplicitConstructor;
+    IDEACoverageRunner.setExcludeAnnotations(project, myProjectData);
+    IDEACoverageRunner.setExcludeAnnotations(project, myUnloadedClassesProjectData);
   }
 
   public interface Annotator {

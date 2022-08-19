@@ -14,6 +14,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.rt.coverage.instrumentation.SaveHook;
 import com.intellij.rt.coverage.util.ProjectDataLoader;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +25,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.function.Function;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
+import java.util.stream.Stream;
 
 public final class IDEACoverageRunner extends JavaCoverageRunner {
   private static final Logger LOG = Logger.getInstance(IDEACoverageRunner.class);
@@ -63,10 +67,11 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
                                      @Nullable final Project project) {
     String agentPath = handleSpacesInAgentPath(PathUtil.getJarPathForClass(ProjectData.class));
     if (agentPath == null) return;
+    final String[] excludeAnnotations = getExcludeAnnotations(project);
     List<Function<? super TargetEnvironmentRequest, ? extends JavaTargetParameter>> targetParameters =
       javaParameters.getTargetDependentParameters().asTargetParameters();
     targetParameters.add((Function<? super TargetEnvironmentRequest, ? extends JavaTargetParameter>)request -> createArgumentTargetParameter(agentPath, sessionDataFilePath,
-                                                                                                                                           patterns, excludePatterns,
+                                                                                                                                           patterns, excludePatterns, excludeAnnotations,
                                                                                                                                            collectLineInfo, isSampling, sourceMapPath));
     if (!Registry.is("idea.coverage.thread.safe.enabled")) {
       targetParameters.add((Function<? super TargetEnvironmentRequest, ? extends JavaTargetParameter>)request -> JavaTargetParameter.fixed("-Didea.coverage.thread-safe.enabled=false"));
@@ -93,6 +98,7 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
                                                                    String sessionDataFilePath,
                                                                    String @Nullable [] patterns,
                                                                    String[] excludePatterns,
+                                                                   String[] excludeAnnotations,
                                                                    boolean collectLineInfo,
                                                                    boolean isSampling,
                                                                    String sourceMapPath) {
@@ -112,8 +118,9 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
                          targetSessionDataPath -> {
                            if (!writeOnceRef.get()) {
                              try {
-                               writeOptionsToFile(tempFile, targetSessionDataPath, patterns, excludePatterns, collectLineInfo, isSampling,
-                                                  sourceMapPath);
+                               writeOptionsToFile(tempFile, targetSessionDataPath,
+                                                  patterns, excludePatterns, excludeAnnotations,
+                                                  collectLineInfo, isSampling, sourceMapPath);
                              }
                              catch (IOException e) {
                                throw new RuntimeException(e);
@@ -157,6 +164,7 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
                                          String sessionDataFilePath,
                                          String @Nullable [] patterns,
                                          String[] excludePatterns,
+                                         String[] excludeAnnotations,
                                          boolean collectLineInfo,
                                          boolean isSampling,
                                          String sourceMapPath) throws IOException {
@@ -176,16 +184,35 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
       write2file(file, "-exclude");
       writePatterns(file, excludePatterns);
     }
+    if (!ArrayUtil.isEmpty(excludeAnnotations)) {
+      write2file(file, "-excludeAnnotations");
+      writePatterns(file, excludeAnnotations);
+    }
   }
 
-  private static void writePatterns(File tempFile, String[] patterns) throws IOException {
-    for (String coveragePattern : patterns) {
+  private static String[] convertToPatterns(String[] patterns) {
+    final String[] result = new String[patterns.length];
+    for (int i = 0; i < patterns.length; i++) {
+      String coveragePattern = patterns[i];
       coveragePattern = coveragePattern.replace("$", "\\$").replace(".", "\\.").replaceAll("\\*", ".*");
       if (!coveragePattern.endsWith(".*")) { //include inner classes
         coveragePattern += "(\\$.*)*";
       }
+      result[i] = coveragePattern;
+    }
+    return result;
+  }
+
+  private static void writePatterns(File tempFile, String[] patterns) throws IOException {
+    for (String coveragePattern : convertToPatterns(patterns)) {
       write2file(tempFile, coveragePattern);
     }
+  }
+
+  private static String[] getExcludeAnnotations(@Nullable Project project) {
+    if (project == null) return null;
+    final JavaCoverageOptionsProvider optionsProvider = JavaCoverageOptionsProvider.getInstance(project);
+    return ArrayUtil.toStringArray(optionsProvider.getExcludeAnnotationPatterns());
   }
 
 
@@ -210,5 +237,17 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
   @Override
   public boolean isCoverageByTestApplicable() {
     return true;
+  }
+
+  static void setExcludeAnnotations(Project project, ProjectData projectData) {
+    final JavaCoverageOptionsProvider optionsProvider = JavaCoverageOptionsProvider.getInstance(project);
+    try {
+      final String[] patterns = ArrayUtil.toStringArray(optionsProvider.getExcludeAnnotationPatterns());
+      final String[] regexps = convertToPatterns(patterns);
+      projectData.setAnnotationsToIgnore(Stream.of(regexps).map((s) -> Pattern.compile(s)).toList());
+    }
+    catch (PatternSyntaxException e) {
+      LOG.info("Failed to collect exclude annotation patterns", e);
+    }
   }
 }

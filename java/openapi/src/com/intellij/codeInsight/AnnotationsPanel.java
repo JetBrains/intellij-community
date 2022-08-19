@@ -302,6 +302,23 @@ public class AnnotationsPanel {
     return result;
   }
 
+  /** Reset table to contain only annotations from the list. */
+  public void resetAnnotations(List<String> annotations) {
+    final Set<String> set = new HashSet<>(annotations);
+    int row = 0;
+    for (String annotation : getAnnotations()) {
+      if (!set.contains(annotation)) {
+        myTableModel.removeRow(row);
+      } else {
+        set.remove(annotation);
+        row++;
+      }
+    }
+    for (String annotation : set) {
+      addRow(annotation, false);
+    }
+  }
+
   private static class SimpleAnnotationPanelModel implements AnnotationPanelModel {
     private @NonNls final String myName;
     private final String myDefaultAnnotation;
