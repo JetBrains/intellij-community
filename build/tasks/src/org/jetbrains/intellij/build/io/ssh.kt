@@ -8,12 +8,17 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import java.nio.file.attribute.PosixFilePermission
 import java.util.*
 import java.util.concurrent.TimeUnit
 
 internal class NioFileDestination(private val file: Path) : LocalDestFile {
+  override fun getLength(): Long  = Files.size(file)
+
   override fun getOutputStream(): OutputStream = Files.newOutputStream(file)
+
+  override fun getOutputStream(append: Boolean): OutputStream = Files.newOutputStream(file, StandardOpenOption.APPEND)
 
   override fun getChild(name: String?) = throw UnsupportedOperationException()
 
