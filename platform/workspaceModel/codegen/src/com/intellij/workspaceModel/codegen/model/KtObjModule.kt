@@ -2,17 +2,13 @@
 package com.intellij.workspaceModel.codegen.deft.model
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.workspaceModel.codegen.deft.ObjModule
-import com.intellij.workspaceModel.codegen.deft.ExtField
-import com.intellij.workspaceModel.codegen.patcher.PsiKotlinReader
 
 class KtObjModule(
   val project: Project?,
   val keepUnknownFields: Boolean = false,
 ) : ObjModule() {
   val packages = mutableMapOf<String?, KtPackage>()
-  val files = mutableListOf<KtFile>()
   fun getOrCreatePackage(p: String?): KtPackage = packages.getOrPut(p) { KtPackage(p) }
 
   init {
@@ -22,53 +18,7 @@ class KtObjModule(
     }
   }
 
-  fun addPsiFile(name: String, virtualFile: VirtualFile?, content: () -> String): KtFile {
-    val file = KtFile(this, content, name, virtualFile)
-    val reader = PsiKotlinReader(file)
-    reader.read()
-    files.add(file)
-    return file
-  }
-
-  fun build(diagnostics: Diagnostics = Diagnostics()): Built {
-    val simpleTypes = mutableListOf<DefType>()
-    files.forEach {
-      it.scope.visitSimpleTypes(simpleTypes)
-    }
-    simpleTypes.forEach { it.def.buildFields(diagnostics) }
-    simpleTypes.forEach { it.verify(diagnostics) }
-
-    val types = mutableListOf<DefType>()
-    files.forEach {
-      it.scope.visitTypes(types)
-    }
-
-    types.forEach { it.def.buildFields(diagnostics) }
-    types.forEach { it.verify(diagnostics) }
-    if (types.isEmpty()) {
-      beginInit(0)
-    }
-    else {
-      beginInit(types.maxOf { it.id })
-      types.forEach { add(it) }
-    }
-
-    files.forEach { f ->
-      f.block.defs.forEach {
-        it.toExtField(f.scope, this, diagnostics)
-      }
-    }
-
-    require()
-    return Built(types, simpleTypes, extFields)
-  }
-
   private var nextTypeId = 1
   fun nextTypeId() = nextTypeId++
 
-  class Built(
-    val typeDefs: List<DefType>,
-    val simpleTypes: List<DefType>,
-    val extFields: MutableList<ExtField<*, *>>
-  )
 }

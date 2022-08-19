@@ -135,7 +135,7 @@ class KtScope(val parent: KtScope?, var owner: Any? = null) {
     }
     return KtScope(this, KtInterface(module, this,
                                      SrcRange(src, nameRange.startOffset until nameRange.endOffset),
-                                     ktTypes, null, predefinedKind, annotations, true))
+                                     ktTypes, predefinedKind, annotations))
   }
 
   //  val importList = psiFile.importList
@@ -174,24 +174,6 @@ class KtScope(val parent: KtScope?, var owner: Any? = null) {
   //  }
   //}
   //return null
-
-  fun visitTypes(result: MutableList<DefType>) {
-    own.values.forEach { inner ->
-      inner.ktInterface?.objType?.let {
-        result.add(it)
-        inner.visitTypes(result)
-      }
-    }
-  }
-
-  fun visitSimpleTypes(result: MutableList<DefType>) {
-    own.values.forEach { inner ->
-      inner.ktInterface?.simpleType?.let {
-        result.add(it)
-        inner.visitSimpleTypes(result)
-      }
-    }
-  }
 
   private fun KtSuperTypeListEntry.isWorkspaceEntity(): Boolean {
     val resolvedType = typeAsUserType?.referenceExpression?.mainReference?.resolve() ?: return false

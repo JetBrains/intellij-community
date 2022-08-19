@@ -6,8 +6,6 @@ import org.jetbrains.deft.Type
 
 abstract class ObjType<T : Obj, B : ObjBuilder<T>>(private val _module: ObjModule, val id: Int, base: ObjType<*, *>? = null) : Type<T, B>(
   base), Obj {
-  val module: ObjModule
-    get() = _module.require()
 
   data class Id(val id: Int)
 
