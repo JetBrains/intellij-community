@@ -73,6 +73,7 @@ object CodeWriter {
           val importsByFile = FactoryMap.create<KtFile, Imports> { Imports(it.packageFqName.asString()) }
           val generatedFiles = ArrayList<KtFile>()
           indicator.text = "Writing code"
+          indicator.isIndeterminate = false
           generated.forEachIndexed { i, code ->
             indicator.fraction = 0.2 * i / generated.size
             if (code.target.name in SKIPPED_TYPES) return@forEachIndexed
