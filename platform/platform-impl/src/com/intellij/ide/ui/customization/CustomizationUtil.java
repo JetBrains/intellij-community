@@ -600,6 +600,11 @@ public final class CustomizationUtil {
           e.getPresentation().setEnabled(mySelectedSchema.isModified(CustomActionsSchema.getInstance()) ||
                                          mySelectedSchema.isModified(cleanScheme));
         }
+
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
+        }
       };
     }
 
