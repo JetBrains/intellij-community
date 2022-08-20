@@ -49,10 +49,9 @@ fun main(rawArgs: Array<String>) {
 
       withContext(Dispatchers.Default + StartupAbortedExceptionHandler()) {
         StartUpMeasurer.appInitPreparationActivity = appInitPreparationActivity
-        val mainScope = this@runBlocking
         startApplication(args = args,
                          appStarterDeferred = appStarterDeferred,
-                         mainScope = mainScope,
+                         mainScope = this@runBlocking,
                          busyThread = busyThread)
       }
 

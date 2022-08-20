@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.gdpr;
 
 import com.fasterxml.jackson.jr.ob.JSON;
@@ -56,14 +56,12 @@ public final class ConsentOptions {
         }
 
         @Override
-        @NotNull
-        public String readDefaultConsents() throws IOException {
+        public @NotNull String readDefaultConsents() throws IOException {
           return loadText(Files.newInputStream(DEFAULT_CONSENTS_FILE));
         }
 
         @Override
-        @NotNull
-        public String readBundledConsents() {
+        public @NotNull String readBundledConsents() {
           return loadText(ConsentOptions.class.getClassLoader().getResourceAsStream(BUNDLED_CONSENTS_PATH));
         }
 
@@ -74,13 +72,11 @@ public final class ConsentOptions {
         }
 
         @Override
-        @NotNull
-        public String readConfirmedConsents() throws IOException {
+        public @NotNull String readConfirmedConsents() throws IOException {
           return loadText(Files.newInputStream(CONFIRMED_CONSENTS_FILE));
         }
 
-        @NotNull
-        private String loadText(InputStream stream) {
+        private @NotNull String loadText(InputStream stream) {
           if (stream != null) {
             try (InputStream inputStream = CharsetToolkit.inputStreamSkippingBOM(stream)) {
               return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
@@ -94,8 +90,7 @@ public final class ConsentOptions {
       }, appInfo.isEAP() && appInfo.isVendorJetBrains());
     }
 
-    @NotNull @NonNls
-    private static String getBundledResourcePath() {
+    private static @NotNull @NonNls String getBundledResourcePath() {
       final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
       return appInfo.isVendorJetBrains() ? "consents.json" : "consents-" + appInfo.getShortCompanyName() + ".json";
     }
@@ -134,18 +129,15 @@ public final class ConsentOptions {
     myPluginCodes = codes.isEmpty()? Set.of() : Collections.unmodifiableSet(codes);
   }
 
-  @Nullable
-  public Consent getDefaultUsageStatsConsent() {
+  public @Nullable Consent getDefaultUsageStatsConsent() {
     return getDefaultConsent(STATISTICS_OPTION_ID);
   }
 
-  @NotNull
-  public static Predicate<Consent> condUsageStatsConsent() {
+  public static @NotNull Predicate<Consent> condUsageStatsConsent() {
     return consent -> STATISTICS_OPTION_ID.equals(consent.getId());
   }
 
-  @NotNull
-  public static Predicate<Consent> condEAPFeedbackConsent() {
+  public static @NotNull Predicate<Consent> condEAPFeedbackConsent() {
     return consent -> isProductConsentOfKind(EAP_FEEDBACK_OPTION_ID, consent.getId());
   }
 
@@ -173,8 +165,7 @@ public final class ConsentOptions {
     return setPermission(EAP_FEEDBACK_OPTION_ID, allowed);
   }
 
-  @NotNull
-  private Permission getPermission(final String consentId) {
+  private @NotNull Permission getPermission(final String consentId) {
     final ConfirmedConsent confirmedConsent = getConfirmedConsent(consentId);
     return confirmedConsent == null? Permission.UNDEFINED : confirmedConsent.isAccepted()? Permission.YES : Permission.NO;
   }
@@ -304,13 +295,11 @@ public final class ConsentOptions {
     saveConfirmedConsents(result);
   }
 
-  @Nullable
-  private Consent getDefaultConsent(String consentId) {
+  private @Nullable Consent getDefaultConsent(String consentId) {
     return loadDefaultConsents().get(lookupConsentID(consentId));
   }
 
-  @Nullable
-  private ConfirmedConsent getConfirmedConsent(String consentId) {
+  private @Nullable ConfirmedConsent getConfirmedConsent(String consentId) {
     final Consent defConsent = getDefaultConsent(consentId);
     if (defConsent != null && defConsent.isDeleted()) {
       return null;
@@ -409,8 +398,7 @@ public final class ConsentOptions {
     return changes;
   }
 
-  @NotNull
-  private Collection<ConsentAttributes> fromJson(@Nullable String json) {
+  private @NotNull Collection<ConsentAttributes> fromJson(@Nullable String json) {
     try {
       List<ConsentAttributes> data = json == null || json.isEmpty() ? null : JSON.std.listOfFrom(ConsentAttributes.class, json);
       if (data != null) {
@@ -426,8 +414,7 @@ public final class ConsentOptions {
     return Collections.emptyList();
   }
 
-  @NotNull
-  private String consentsToJson(@NotNull Stream<Consent> consents) {
+  private @NotNull String consentsToJson(@NotNull Stream<Consent> consents) {
     Gson gson = new GsonBuilder().disableHtmlEscaping().create();
     return gson.toJson(consents.map(consent -> {
       final ConsentAttributes attribs = consent.toConsentAttributes();
@@ -439,8 +426,7 @@ public final class ConsentOptions {
     }).toArray());
   }
 
-  @NotNull
-  private static String confirmedConsentToExternalString(@NotNull Stream<ConfirmedConsent> consents) {
+  private static @NotNull String confirmedConsentToExternalString(@NotNull Stream<ConfirmedConsent> consents) {
     return consents/*.sorted(Comparator.comparing(confirmedConsent -> confirmedConsent.getId()))*/.map(ConfirmedConsent::toExternalString).collect(Collectors.joining(";"));
   }
 
