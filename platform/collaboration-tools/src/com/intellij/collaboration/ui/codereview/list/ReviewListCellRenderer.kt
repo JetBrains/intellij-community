@@ -83,12 +83,13 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
 
   private fun updateRendering() {
     if (isNewUI) {
-      border = JBUI.Borders.empty(6, 19)
+      border = JBUI.Borders.empty(4, 19, 5, 19)
       selectionArc = JBUI.CurrentTheme.Popup.Selection.ARC.get()
       selectionArcCorners = SelectionArcCorners.ALL
       selectionInsets = JBInsets(0, 13, 0, 13)
-    } else {
-      border = JBUI.Borders.empty(6, 13)
+    }
+    else {
+      border = JBUI.Borders.empty(4, 13, 5, 13)
       selectionArc = 0
       selectionArcCorners = SelectionArcCorners.ALL
       selectionInsets = JBInsets(0)
