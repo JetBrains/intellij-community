@@ -10,8 +10,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.importing.MavenImportUtil;
 import org.jetbrains.idea.maven.importing.MavenModuleNameMapper;
-import org.jetbrains.idea.maven.importing.MavenModuleType;
 import org.jetbrains.idea.maven.importing.ModuleModelProxy;
+import org.jetbrains.idea.maven.importing.StandardMavenModuleType;
 import org.jetbrains.idea.maven.project.MavenImportingSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -61,7 +61,7 @@ public class LegacyMavenProjectImportContextProvider extends MavenProjectImportC
 
   @Override
   protected ModuleData getModuleData(MavenProject project, String moduleName,
-                                     MavenModuleType type,
+                                     StandardMavenModuleType type,
                                      MavenJavaVersionHolder javaVersionHolder,
                                      Map<String, Module> legacyModuleByName) {
     Module module = legacyModuleByName.remove(moduleName);
@@ -79,11 +79,11 @@ public class LegacyMavenProjectImportContextProvider extends MavenProjectImportC
     return new LegacyModuleData(module, type, javaVersionHolder, newModule);
   }
 
-  private static String getModuleDirPath(MavenProject project, MavenModuleType type) {
-    if (type == MavenModuleType.TEST_ONLY) {
+  private static String getModuleDirPath(MavenProject project, StandardMavenModuleType type) {
+    if (type == StandardMavenModuleType.TEST_ONLY) {
       return Path.of(project.getDirectory(), "src", "test").toString();
     }
-    if (type == MavenModuleType.MAIN_ONLY) {
+    if (type == StandardMavenModuleType.MAIN_ONLY) {
       return Path.of(project.getDirectory(), "src", "main").toString();
     }
     return project.getDirectory();

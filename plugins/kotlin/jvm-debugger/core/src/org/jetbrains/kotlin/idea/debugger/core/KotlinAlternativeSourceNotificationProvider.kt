@@ -85,7 +85,7 @@ class KotlinAlternativeSourceNotificationProvider : EditorNotificationProvider {
         alternatives: Collection<KtFile>,
         file: VirtualFile,
         locationDeclName: String?,
-    ) : EditorNotificationPanel(fileEditor) {
+    ) : EditorNotificationPanel(fileEditor, Status.Info) {
         private class ComboBoxFileElement(val ktFile: KtFile) {
             private val label: String by lazy(LazyThreadSafetyMode.NONE) {
                 val factory = ModuleRendererFactory.findInstance(ktFile)

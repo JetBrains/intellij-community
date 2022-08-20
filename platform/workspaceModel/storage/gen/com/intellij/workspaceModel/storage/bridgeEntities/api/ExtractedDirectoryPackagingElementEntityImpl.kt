@@ -82,14 +82,14 @@ open class ExtractedDirectoryPackagingElementEntityImpl : ExtractedDirectoryPack
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isFilePathInitialized()) {
         error("Field FileOrDirectoryPackagingElementEntity#filePath should be initialized")
       }
       if (!getEntityData().isPathInArchiveInitialized()) {
         error("Field ExtractedDirectoryPackagingElementEntity#pathInArchive should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ExtractedDirectoryPackagingElementEntity#entitySource should be initialized")
       }
     }
 
@@ -100,14 +100,23 @@ open class ExtractedDirectoryPackagingElementEntityImpl : ExtractedDirectoryPack
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ExtractedDirectoryPackagingElementEntity
+      this.entitySource = dataSource.entitySource
       this.filePath = dataSource.filePath
       this.pathInArchive = dataSource.pathInArchive
-      this.entitySource = dataSource.entitySource
       if (parents != null) {
         this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var parentEntity: CompositePackagingElementEntity?
       get() {
@@ -164,15 +173,6 @@ open class ExtractedDirectoryPackagingElementEntityImpl : ExtractedDirectoryPack
         checkModificationAllowed()
         getEntityData().pathInArchive = value
         changedProperty.add("pathInArchive")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override fun getEntityData(): ExtractedDirectoryPackagingElementEntityData = result
@@ -238,9 +238,9 @@ class ExtractedDirectoryPackagingElementEntityData : WorkspaceEntityData<Extract
 
     other as ExtractedDirectoryPackagingElementEntityData
 
+    if (this.entitySource != other.entitySource) return false
     if (this.filePath != other.filePath) return false
     if (this.pathInArchive != other.pathInArchive) return false
-    if (this.entitySource != other.entitySource) return false
     return true
   }
 

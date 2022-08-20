@@ -23,7 +23,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.*;
 
-import static org.jetbrains.idea.maven.importing.MavenModuleType.*;
+import static org.jetbrains.idea.maven.importing.StandardMavenModuleType.*;
 
 public class MavenProjectTreeLegacyImporter extends MavenProjectImporterLegacyBase {
   private static final Logger LOG = Logger.getInstance(MavenProjectTreeLegacyImporter.class);
@@ -160,7 +160,7 @@ public class MavenProjectTreeLegacyImporter extends MavenProjectImporterLegacyBa
     private static void configModule(@NotNull MavenTreeModuleImportData importData,
                                      @NotNull MavenLegacyModuleImporter moduleImporter,
                                      @NotNull MavenRootModelAdapter rootModelAdapter) {
-      MavenModuleType type = importData.getModuleData().getType();
+      StandardMavenModuleType type = importData.getModuleData().getType();
       rootModelAdapter.init(importData.getLegacyModuleData().isNewModule());
       if (type == AGGREGATOR || type == SINGLE_MODULE) {
         moduleImporter.config(rootModelAdapter, importData);

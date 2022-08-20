@@ -95,6 +95,10 @@ public class NullityInferrerTest extends LightJavaCodeInsightTestCase {
     doTest(false);
   }
 
+  public void testNullFail() throws Exception {
+    doTest(false);
+  }
+
 
   private void doTest(boolean annotateLocalVariables) throws Exception  {
     final String nullityPath = "/codeInsight/nullityinferrer";

@@ -10,6 +10,7 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.assertions.Assertions.assertThatThrownBy
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.directoryStreamIfExists
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.xxh3.Xxh3
 import org.junit.Rule
@@ -162,9 +163,11 @@ private suspend fun loadDescriptors(dir: Path): PluginLoadingResult {
   // constant order in tests
   val paths = dir.directoryStreamIfExists { it.sorted() }!!
   context.use {
-    result.addAll(descriptors = paths.map { loadDescriptor(file = it, parentContext = context) },
-                  overrideUseIfCompatible = false,
-                  productBuildNumber = buildNumber)
+    coroutineScope {
+      result.addAll(descriptors = paths.map { loadDescriptor(file = it, parentContext = context) },
+                    overrideUseIfCompatible = false,
+                    productBuildNumber = buildNumber)
+    }
   }
   return result
 }

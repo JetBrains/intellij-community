@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui
 
+import com.intellij.execution.Executor
 import com.intellij.execution.RunManager
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.actions.RunConfigurationsComboBoxAction
@@ -52,6 +53,7 @@ internal fun createRunToolbarWithoutStop(project: Project): ActionToolbar {
       setSeparatorCreator { Box.createHorizontalStrut(JBUIScale.scale(8)) }
       setMinimumButtonSize(JBUI.size(36, 30))
       setActionButtonBorder(Borders.empty())
+      border = Borders.empty(5, 0)
     }
   }
 }
@@ -81,6 +83,7 @@ private fun createRunActionToolbar(project: Project): ActionToolbar {
       setActionButtonBorder(Borders.empty())
       setSeparatorCreator { createSeparator() }
       setCustomButtonLook(RunWidgetButtonLook(project))
+      border = null
     }
   }
 }
@@ -158,6 +161,9 @@ private class RunWidgetButtonLook(private val project: Project) : IdeaActionButt
 
 
   override fun paintIcon(g: Graphics, actionButton: ActionButtonComponent, icon: Icon, x: Int, y: Int) {
+    if (icon.iconWidth == 0 || icon.iconHeight == 0) {
+      return
+    }
     // TODO: need more magic about icons
     var targetIcon = icon
     if (targetIcon is DeferredIcon) {
@@ -208,12 +214,23 @@ private class OtherRunOptions : TogglePopupAction(
   override fun getActionGroup(e: AnActionEvent): ActionGroup? {
     val project = e.project ?: return null
     val selectedConfiguration = RunManager.getInstance(project).selectedConfiguration
-
-    return RunConfigurationsComboBoxAction.SelectConfigAction(selectedConfiguration, project) {
-      // Cannot use DefaultDebugExecutor.EXECUTOR_ID because of module dependencies
-      it.id != ToolWindowId.RUN && it.id != ToolWindowId.DEBUG
-    }
+    return createOtherRunnersSubgroup(selectedConfiguration, project)
   }
+}
+
+internal val excludeRunAndDebug: (Executor) -> Boolean = {
+  // Cannot use DefaultDebugExecutor.EXECUTOR_ID because of module dependencies
+  it.id != ToolWindowId.RUN && it.id != ToolWindowId.DEBUG
+}
+
+private fun createOtherRunnersSubgroup(runConfiguration: RunnerAndConfigurationSettings?, project: Project): ActionGroup? {
+  if (runConfiguration != null) {
+    return RunConfigurationsComboBoxAction.SelectConfigAction(runConfiguration, project, excludeRunAndDebug)
+  }
+  if (RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
+    return RunConfigurationsComboBoxAction.RunCurrentFileAction(excludeRunAndDebug)
+  }
+  return ActionGroup.EMPTY_GROUP
 }
 
 private class RunConfigurationSelector : TogglePopupAction(), CustomComponentAction, DumbAware {
@@ -226,10 +243,8 @@ private class RunConfigurationSelector : TogglePopupAction(), CustomComponentAct
   }
 
   override fun getActionGroup(e: AnActionEvent): ActionGroup? {
-    val component = e.inputEvent?.component as? JComponent ?: return null
-    val action = ActionManager.getInstance().getAction("RunConfiguration")
-    val runConfigAction = action as? RunConfigurationsComboBoxAction ?: return null
-    return runConfigAction.createPopupActionGroupOpen(component)
+    val project = e.project ?: return null
+    return createRunConfigurationsActionGroup(project, addHeader = false)
   }
 
   override fun update(e: AnActionEvent) {

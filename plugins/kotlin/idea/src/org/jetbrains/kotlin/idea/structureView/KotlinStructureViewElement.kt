@@ -21,9 +21,9 @@ import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
 class KotlinStructureViewElement(
-    val nElement: NavigatablePsiElement,
+    override val element: NavigatablePsiElement,
     private val isInherited: Boolean = false
-) : PsiTreeElementBase<NavigatablePsiElement>(nElement), Queryable, AbstractKotlinStructureViewElement {
+) : PsiTreeElementBase<NavigatablePsiElement>(element), Queryable, AbstractKotlinStructureViewElement {
 
     private var kotlinPresentation
             by AssignableLazyProperty {
@@ -48,8 +48,6 @@ class KotlinStructureViewElement(
         get() = visibility.accessLevel
     override val isPublic: Boolean
         get() = visibility.isPublic
-    override val element: NavigatablePsiElement
-        get() = nElement
 
     override fun getPresentation(): ItemPresentation = kotlinPresentation
     override fun getLocationString(): String? = kotlinPresentation.locationString
@@ -94,13 +92,9 @@ class KotlinStructureViewElement(
         return result
     }
 
-    private fun isPublic(descriptor: DeclarationDescriptor?) =
-        (descriptor as? DeclarationDescriptorWithVisibility)?.visibility == DescriptorVisibilities.PUBLIC
-
     private fun countDescriptor(): DeclarationDescriptor? {
         val element = element
         return when {
-            element == null -> null
             !element.isValid -> null
             element !is KtDeclaration -> null
             element is KtAnonymousInitializer -> null
@@ -142,7 +136,9 @@ private class AssignableLazyProperty<in R, T : Any>(val init: () -> T) : ReadWri
 }
 
 fun KtClassOrObject.getStructureDeclarations() =
-    (primaryConstructor?.let { listOf(it) } ?: emptyList()) +
-            primaryConstructorParameters.filter { it.hasValOrVar() } +
-            declarations
+     buildList {
+        primaryConstructor?.let { add(it) }
+        primaryConstructorParameters.filterTo(this) { it.hasValOrVar() }
+        addAll(declarations)
+    }
 

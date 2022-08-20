@@ -949,6 +949,10 @@
       "spanForeground": "#F5F5F5",
       "foreground": "#F5F5F5",
       "stepNumberForeground": "#6CA6ED"
+    },
+
+    "TipOfTheDay": {
+      "Image.borderColor": "border"
     }
   }
 }

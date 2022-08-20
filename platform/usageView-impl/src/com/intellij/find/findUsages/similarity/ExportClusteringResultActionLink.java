@@ -119,15 +119,18 @@ public class ExportClusteringResultActionLink extends ActionLink {
 
   public static @NotNull String getUsageId(@NotNull PsiElement element) {
     Ref<String> fileNameRef = new Ref<>();
+    Ref<TextRange> elementTextRange = new Ref<>();
     ApplicationManager.getApplication().runReadAction(() -> {
       VirtualFile containingVirtualFile = element.getContainingFile().getVirtualFile();
       assert containingVirtualFile != null;
       VirtualFile rootForFile = ProjectFileIndex.getInstance(element.getProject()).getSourceRootForFile(containingVirtualFile);
       if (rootForFile != null) {
         fileNameRef.set(VfsUtilCore.getRelativePath(containingVirtualFile, rootForFile));
+        elementTextRange.set(element.getTextRange());
       }
     });
-    return fileNameRef.get() + ":" + element.getTextRange().getStartOffset();
+    TextRange range = elementTextRange.get();
+    return fileNameRef.get() + ":" + (range != null ? range.getStartOffset() : 0);
   }
 
   private static @NotNull String getUsageLineSnippet(@NotNull Project project, @NotNull PsiElement element) {

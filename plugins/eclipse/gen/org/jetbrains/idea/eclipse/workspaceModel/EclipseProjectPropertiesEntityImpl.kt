@@ -103,6 +103,9 @@ open class EclipseProjectPropertiesEntityImpl : EclipseProjectPropertiesEntity, 
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToOneParent<WorkspaceEntityBase>(MODULE_CONNECTION_ID, this) == null) {
           error("Field EclipseProjectPropertiesEntity#module should be initialized")
@@ -112,9 +115,6 @@ open class EclipseProjectPropertiesEntityImpl : EclipseProjectPropertiesEntity, 
         if (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] == null) {
           error("Field EclipseProjectPropertiesEntity#module should be initialized")
         }
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field EclipseProjectPropertiesEntity#entitySource should be initialized")
       }
       if (!getEntityData().isVariablePathsInitialized()) {
         error("Field EclipseProjectPropertiesEntity#variablePaths should be initialized")
@@ -154,6 +154,15 @@ open class EclipseProjectPropertiesEntityImpl : EclipseProjectPropertiesEntity, 
     }
 
 
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
+
     override var module: ModuleEntity
       get() {
         val _diff = diff
@@ -187,15 +196,6 @@ open class EclipseProjectPropertiesEntityImpl : EclipseProjectPropertiesEntity, 
           this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
         }
         changedProperty.add("module")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override var variablePaths: Map<String, String>

@@ -17,8 +17,8 @@ import org.jetbrains.kotlin.idea.codeInsight.shorten.addToBeShortenedDescendants
 import org.jetbrains.kotlin.idea.core.findOrCreateDirectoryForPackage
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.core.overrideImplement.MemberGenerateMode
-import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType.EMPTY_OR_TEMPLATE
-import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType.NO_BODY
+import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType.EmptyOrTemplate
+import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType.NoBody
 import org.jetbrains.kotlin.idea.core.overrideImplement.OverrideMemberChooserObject.Companion.create
 import org.jetbrains.kotlin.idea.core.overrideImplement.generateMember
 import org.jetbrains.kotlin.idea.core.overrideImplement.makeNotActual
@@ -274,7 +274,7 @@ internal fun generateCallable(
     descriptor.checkAccessibility(checker)
     val memberChooserObject = create(
         originalDeclaration, descriptor, descriptor,
-        if (generateExpect || descriptor.modality == Modality.ABSTRACT) NO_BODY else EMPTY_OR_TEMPLATE
+        if (generateExpect || descriptor.modality == Modality.ABSTRACT) NoBody else EmptyOrTemplate
     )
     return memberChooserObject.generateMember(
         targetClass = generatedClass,

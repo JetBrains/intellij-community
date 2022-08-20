@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.ifs
 
+import com.intellij.testFramework.NeedsIndex
 import junit.framework.TestCase
 import training.featuresSuggester.FeatureSuggesterTestUtils.chooseCompletionItem
 import training.featuresSuggester.FeatureSuggesterTestUtils.deleteTextBetweenLogicalPositions
@@ -17,6 +18,7 @@ class ReplaceCompletionSuggesterJavaTest : ReplaceCompletionSuggesterTest() {
 
   override fun getTestDataPath() = JavaSuggestersTestUtils.testDataPath
 
+  @NeedsIndex.SmartMode(reason = "BeforeCompletionChooseItemAction is not DumbAware")
   override fun `testDelete and type dot, complete method call, remove previous identifier and get suggestion`() {
     with(myFixture) {
       moveCaretToLogicalPosition(12, 20)
@@ -31,6 +33,7 @@ class ReplaceCompletionSuggesterJavaTest : ReplaceCompletionSuggesterTest() {
     }
   }
 
+  @NeedsIndex.SmartMode(reason = "BeforeCompletionChooseItemAction is not DumbAware")
   override fun `testCall completion, complete method call, remove previous identifier and get suggestion`() {
     with(myFixture) {
       moveCaretToLogicalPosition(61, 60)
@@ -49,6 +52,7 @@ class ReplaceCompletionSuggesterJavaTest : ReplaceCompletionSuggesterTest() {
     }
   }
 
+  @NeedsIndex.SmartMode(reason = "BeforeCompletionChooseItemAction is not DumbAware")
   override fun `testCall completion, complete with method call, add parameter to method call, remove previous identifier and get suggestion`() {
     with(myFixture) {
       moveCaretToLogicalPosition(61, 60)
@@ -68,6 +72,7 @@ class ReplaceCompletionSuggesterJavaTest : ReplaceCompletionSuggesterTest() {
     }
   }
 
+  @NeedsIndex.SmartMode(reason = "BeforeCompletionChooseItemAction is not DumbAware")
   override fun `testCall completion, complete with property, remove previous identifier and get suggestion`() {
     with(myFixture) {
       moveCaretToLogicalPosition(61, 33)
@@ -81,6 +86,7 @@ class ReplaceCompletionSuggesterJavaTest : ReplaceCompletionSuggesterTest() {
     }
   }
 
+  @NeedsIndex.SmartMode(reason = "BeforeCompletionChooseItemAction is not DumbAware")
   override fun `testCall completion inside arguments list, complete method call, remove previous identifier and get suggestion`() {
     with(myFixture) {
       moveCaretToLogicalPosition(61, 91)
@@ -94,6 +100,7 @@ class ReplaceCompletionSuggesterJavaTest : ReplaceCompletionSuggesterTest() {
     }
   }
 
+  @NeedsIndex.SmartMode(reason = "BeforeCompletionChooseItemAction is not DumbAware")
   override fun `testCall completion, type additional characters, complete, remove previous identifier and get suggestion`() {
     with(myFixture) {
       moveCaretToLogicalPosition(61, 33)

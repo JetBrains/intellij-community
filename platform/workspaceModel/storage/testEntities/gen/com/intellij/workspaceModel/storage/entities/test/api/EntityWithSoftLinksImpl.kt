@@ -140,11 +140,11 @@ open class EntityWithSoftLinksImpl : EntityWithSoftLinks, WorkspaceEntityBase() 
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isLinkInitialized()) {
         error("Field EntityWithSoftLinks#link should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field EntityWithSoftLinks#entitySource should be initialized")
       }
       if (!getEntityData().isManyLinksInitialized()) {
         error("Field EntityWithSoftLinks#manyLinks should be initialized")
@@ -193,8 +193,8 @@ open class EntityWithSoftLinksImpl : EntityWithSoftLinks, WorkspaceEntityBase() 
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as EntityWithSoftLinks
-      this.link = dataSource.link
       this.entitySource = dataSource.entitySource
+      this.link = dataSource.link
       this.manyLinks = dataSource.manyLinks.toMutableList()
       this.optionalLink = dataSource.optionalLink
       this.inContainer = dataSource.inContainer
@@ -212,21 +212,21 @@ open class EntityWithSoftLinksImpl : EntityWithSoftLinks, WorkspaceEntityBase() 
     }
 
 
-    override var link: OnePersistentId
-      get() = getEntityData().link
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().link = value
-        changedProperty.add("link")
-
-      }
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
         checkModificationAllowed()
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
+
+      }
+
+    override var link: OnePersistentId
+      get() = getEntityData().link
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().link = value
+        changedProperty.add("link")
 
       }
 
@@ -476,15 +476,15 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
       is SealedContainer.BigContainer -> {
         result.add(_sealedContainer.id)
       }
-      is SealedContainer.SmallContainer -> {
-        result.add(_sealedContainer.notId)
-      }
-      is SealedContainer.EmptyContainer -> {
-      }
       is SealedContainer.ContainerContainer -> {
         for (item in _sealedContainer.container) {
           result.add(item.id)
         }
+      }
+      is SealedContainer.EmptyContainer -> {
+      }
+      is SealedContainer.SmallContainer -> {
+        result.add(_sealedContainer.notId)
       }
     }
     for (item in listSealedContainer) {
@@ -492,15 +492,15 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
         is SealedContainer.BigContainer -> {
           result.add(item.id)
         }
-        is SealedContainer.SmallContainer -> {
-          result.add(item.notId)
-        }
-        is SealedContainer.EmptyContainer -> {
-        }
         is SealedContainer.ContainerContainer -> {
           for (item in item.container) {
             result.add(item.id)
           }
+        }
+        is SealedContainer.EmptyContainer -> {
+        }
+        is SealedContainer.SmallContainer -> {
+          result.add(item.notId)
         }
       }
     }
@@ -554,15 +554,15 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
       is SealedContainer.BigContainer -> {
         index.index(this, _sealedContainer.id)
       }
-      is SealedContainer.SmallContainer -> {
-        index.index(this, _sealedContainer.notId)
-      }
-      is SealedContainer.EmptyContainer -> {
-      }
       is SealedContainer.ContainerContainer -> {
         for (item in _sealedContainer.container) {
           index.index(this, item.id)
         }
+      }
+      is SealedContainer.EmptyContainer -> {
+      }
+      is SealedContainer.SmallContainer -> {
+        index.index(this, _sealedContainer.notId)
       }
     }
     for (item in listSealedContainer) {
@@ -570,15 +570,15 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
         is SealedContainer.BigContainer -> {
           index.index(this, item.id)
         }
-        is SealedContainer.SmallContainer -> {
-          index.index(this, item.notId)
-        }
-        is SealedContainer.EmptyContainer -> {
-        }
         is SealedContainer.ContainerContainer -> {
           for (item in item.container) {
             index.index(this, item.id)
           }
+        }
+        is SealedContainer.EmptyContainer -> {
+        }
+        is SealedContainer.SmallContainer -> {
+          index.index(this, item.notId)
         }
       }
     }
@@ -657,20 +657,20 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
           index.index(this, _sealedContainer.id)
         }
       }
-      is SealedContainer.SmallContainer -> {
-        val removedItem__sealedContainer_notId = mutablePreviousSet.remove(_sealedContainer.notId)
-        if (!removedItem__sealedContainer_notId) {
-          index.index(this, _sealedContainer.notId)
-        }
-      }
-      is SealedContainer.EmptyContainer -> {
-      }
       is SealedContainer.ContainerContainer -> {
         for (item in _sealedContainer.container) {
           val removedItem_item_id = mutablePreviousSet.remove(item.id)
           if (!removedItem_item_id) {
             index.index(this, item.id)
           }
+        }
+      }
+      is SealedContainer.EmptyContainer -> {
+      }
+      is SealedContainer.SmallContainer -> {
+        val removedItem__sealedContainer_notId = mutablePreviousSet.remove(_sealedContainer.notId)
+        if (!removedItem__sealedContainer_notId) {
+          index.index(this, _sealedContainer.notId)
         }
       }
     }
@@ -682,20 +682,20 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
             index.index(this, item.id)
           }
         }
-        is SealedContainer.SmallContainer -> {
-          val removedItem_item_notId = mutablePreviousSet.remove(item.notId)
-          if (!removedItem_item_notId) {
-            index.index(this, item.notId)
-          }
-        }
-        is SealedContainer.EmptyContainer -> {
-        }
         is SealedContainer.ContainerContainer -> {
           for (item in item.container) {
             val removedItem_item_id = mutablePreviousSet.remove(item.id)
             if (!removedItem_item_id) {
               index.index(this, item.id)
             }
+          }
+        }
+        is SealedContainer.EmptyContainer -> {
+        }
+        is SealedContainer.SmallContainer -> {
+          val removedItem_item_notId = mutablePreviousSet.remove(item.notId)
+          if (!removedItem_item_notId) {
+            index.index(this, item.notId)
           }
         }
       }
@@ -906,23 +906,6 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
         }
         _sealedContainer_data
       }
-      is SealedContainer.SmallContainer -> {
-        val _sealedContainer_notId_data = if (_sealedContainer.notId == oldLink) {
-          changed = true
-          newLink as OnePersistentId
-        }
-        else {
-          null
-        }
-        var _sealedContainer_data = _sealedContainer
-        if (_sealedContainer_notId_data != null) {
-          _sealedContainer_data = _sealedContainer_data.copy(notId = _sealedContainer_notId_data)
-        }
-        _sealedContainer_data
-      }
-      is SealedContainer.EmptyContainer -> {
-        _sealedContainer
-      }
       is SealedContainer.ContainerContainer -> {
         val _sealedContainer_container_data = _sealedContainer.container.map {
           val it_id_data = if (it.id == oldLink) {
@@ -949,6 +932,23 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
         }
         _sealedContainer_data
       }
+      is SealedContainer.EmptyContainer -> {
+        _sealedContainer
+      }
+      is SealedContainer.SmallContainer -> {
+        val _sealedContainer_notId_data = if (_sealedContainer.notId == oldLink) {
+          changed = true
+          newLink as OnePersistentId
+        }
+        else {
+          null
+        }
+        var _sealedContainer_data = _sealedContainer
+        if (_sealedContainer_notId_data != null) {
+          _sealedContainer_data = _sealedContainer_data.copy(notId = _sealedContainer_notId_data)
+        }
+        _sealedContainer_data
+      }
     }
     if (res_sealedContainer != null) {
       sealedContainer = res_sealedContainer
@@ -969,23 +969,6 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
             _it_data = _it_data.copy(id = _it_id_data)
           }
           _it_data
-        }
-        is SealedContainer.SmallContainer -> {
-          val _it_notId_data = if (_it.notId == oldLink) {
-            changed = true
-            newLink as OnePersistentId
-          }
-          else {
-            null
-          }
-          var _it_data = _it
-          if (_it_notId_data != null) {
-            _it_data = _it_data.copy(notId = _it_notId_data)
-          }
-          _it_data
-        }
-        is SealedContainer.EmptyContainer -> {
-          _it
         }
         is SealedContainer.ContainerContainer -> {
           val _it_container_data = _it.container.map {
@@ -1010,6 +993,23 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
           var _it_data = _it
           if (_it_container_data != null) {
             _it_data = _it_data.copy(container = _it_container_data)
+          }
+          _it_data
+        }
+        is SealedContainer.EmptyContainer -> {
+          _it
+        }
+        is SealedContainer.SmallContainer -> {
+          val _it_notId_data = if (_it.notId == oldLink) {
+            changed = true
+            newLink as OnePersistentId
+          }
+          else {
+            null
+          }
+          var _it_data = _it
+          if (_it_notId_data != null) {
+            _it_data = _it_data.copy(notId = _it_notId_data)
           }
           _it_data
         }
@@ -1133,8 +1133,8 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
 
     other as EntityWithSoftLinksData
 
-    if (this.link != other.link) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.link != other.link) return false
     if (this.manyLinks != other.manyLinks) return false
     if (this.optionalLink != other.optionalLink) return false
     if (this.inContainer != other.inContainer) return false
@@ -1209,19 +1209,19 @@ class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks>(), Soft
   }
 
   override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.add(DeepContainer::class.java)
-    collector.add(SealedContainer.SmallContainer::class.java)
-    collector.add(SealedContainer.BigContainer::class.java)
-    collector.add(SealedContainer.EmptyContainer::class.java)
-    collector.add(DeepSealedOne.DeepSealedTwo.DeepSealedThree.DeepSealedFour::class.java)
-    collector.add(DeepSealedOne.DeepSealedTwo::class.java)
-    collector.add(Container::class.java)
+    collector.add(OnePersistentId::class.java)
     collector.add(DeepSealedOne::class.java)
     collector.add(DeepSealedOne.DeepSealedTwo.DeepSealedThree::class.java)
-    collector.add(OnePersistentId::class.java)
+    collector.add(DeepSealedOne.DeepSealedTwo.DeepSealedThree.DeepSealedFour::class.java)
     collector.add(TooDeepContainer::class.java)
-    collector.add(SealedContainer::class.java)
     collector.add(SealedContainer.ContainerContainer::class.java)
+    collector.add(Container::class.java)
+    collector.add(SealedContainer::class.java)
+    collector.add(SealedContainer.BigContainer::class.java)
+    collector.add(DeepContainer::class.java)
+    collector.add(SealedContainer.EmptyContainer::class.java)
+    collector.add(DeepSealedOne.DeepSealedTwo::class.java)
+    collector.add(SealedContainer.SmallContainer::class.java)
     this.inContainerList?.let { collector.add(it::class.java) }
     this.sealedContainer?.let { collector.add(it::class.java) }
     this.justListProperty?.let { collector.add(it::class.java) }

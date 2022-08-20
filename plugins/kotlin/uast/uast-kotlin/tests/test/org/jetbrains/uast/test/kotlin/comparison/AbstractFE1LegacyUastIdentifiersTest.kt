@@ -2,7 +2,7 @@
 
 package org.jetbrains.uast.test.kotlin.comparison
 
-import org.jetbrains.kotlin.test.KotlinRoot
+import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.uast.test.common.kotlin.LegacyUastIdentifiersTestBase
 
 abstract class AbstractFE1LegacyUastIdentifiersTest : AbstractFE1UastIdentifiersTest(), LegacyUastIdentifiersTestBase {

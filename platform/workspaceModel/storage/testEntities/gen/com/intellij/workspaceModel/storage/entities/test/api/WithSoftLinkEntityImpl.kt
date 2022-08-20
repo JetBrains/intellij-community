@@ -69,11 +69,11 @@ open class WithSoftLinkEntityImpl : WithSoftLinkEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isLinkInitialized()) {
         error("Field WithSoftLinkEntity#link should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field WithSoftLinkEntity#entitySource should be initialized")
       }
     }
 
@@ -84,21 +84,12 @@ open class WithSoftLinkEntityImpl : WithSoftLinkEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as WithSoftLinkEntity
-      this.link = dataSource.link
       this.entitySource = dataSource.entitySource
+      this.link = dataSource.link
       if (parents != null) {
       }
     }
 
-
-    override var link: NameId
-      get() = getEntityData().link
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().link = value
-        changedProperty.add("link")
-
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -106,6 +97,15 @@ open class WithSoftLinkEntityImpl : WithSoftLinkEntity, WorkspaceEntityBase() {
         checkModificationAllowed()
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
+
+      }
+
+    override var link: NameId
+      get() = getEntityData().link
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().link = value
+        changedProperty.add("link")
 
       }
 
@@ -203,8 +203,8 @@ class WithSoftLinkEntityData : WorkspaceEntityData<WithSoftLinkEntity>(), SoftLi
 
     other as WithSoftLinkEntityData
 
-    if (this.link != other.link) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.link != other.link) return false
     return true
   }
 

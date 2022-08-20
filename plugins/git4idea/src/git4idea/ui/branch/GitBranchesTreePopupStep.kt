@@ -59,6 +59,8 @@ class GitBranchesTreePopupStep(private val project: Project, internal val reposi
     return _treeModel.getPreferredSelection()
   }
 
+  internal fun isSeparatorAboveRequired(path: TreePath) = path.lastPathComponent == GitBranchType.LOCAL
+
   private val LOCAL_SEARCH_PREFIX = "/l"
   private val REMOTE_SEARCH_PREFIX = "/r"
 

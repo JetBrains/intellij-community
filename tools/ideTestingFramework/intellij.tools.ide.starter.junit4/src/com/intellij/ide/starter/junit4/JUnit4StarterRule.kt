@@ -69,9 +69,8 @@ open class JUnit4StarterRule(
    */
   override fun after() {
     StarterListener.unsubscribe()
-
-    super.after()
     close()
+    super.after()
   }
 }
 

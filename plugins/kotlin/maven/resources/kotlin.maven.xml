@@ -90,11 +90,13 @@
                      level="ERROR" key="inspection.maven.coroutines.deprecation.display.name" bundle="messages.KotlinBundle"/>
 
     <intentionAction>
+      <language>XML</language>
       <className>org.jetbrains.kotlin.idea.maven.actions.MavenPluginSourcesMoveToBuild</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>XML</language>
       <className>org.jetbrains.kotlin.idea.maven.actions.MavenPluginSourcesMoveToExecutionIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>

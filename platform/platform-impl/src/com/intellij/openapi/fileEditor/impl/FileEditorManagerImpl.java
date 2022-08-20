@@ -1740,10 +1740,6 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   }
 
   public @Nullable EditorComposite getComposite(@NotNull FileEditor editor) {
-    if (!ClientId.isCurrentlyUnderLocalId()) {
-      ClientFileEditorManager clientManager = getClientFileEditorManager();
-      return clientManager == null ? null : clientManager.getComposite(editor);
-    }
     for (EditorsSplitters splitters : getAllSplitters()) {
       List<EditorComposite> editorsComposites = splitters.getAllComposites();
       for (int i = editorsComposites.size() - 1; i >= 0; i--) {
@@ -1751,6 +1747,11 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
         if (composite.getAllEditors().contains(editor)) return composite;
       }
     }
+    for (ClientFileEditorManager clientManager: getAllClientFileEditorManagers()) {
+      EditorComposite composite = clientManager.getComposite(editor);
+      if (composite != null) return composite;
+    }
+
     return null;
   }
 

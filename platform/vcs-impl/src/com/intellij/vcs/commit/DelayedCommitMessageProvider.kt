@@ -17,10 +17,10 @@ interface DelayedCommitMessageProvider {
 
     fun init(project: Project,
              commitUi: CommitWorkflowUi,
-             initialCommitMessagePolicy: () -> String?) = EP_DELAYED_COMMIT_MESSAGE_PROVIDER.forEachExtensionSafe { e ->
-      e.init(project, commitUi, initialCommitMessagePolicy)
+             initialCommitMessage: String?) = EP_DELAYED_COMMIT_MESSAGE_PROVIDER.forEachExtensionSafe { e ->
+      e.init(project, commitUi, initialCommitMessage)
     }
   }
 
-  fun init(project: Project, commitUi: CommitWorkflowUi, initialCommitMessagePolicy: () -> String?)
+  fun init(project: Project, commitUi: CommitWorkflowUi, initialCommitMessage: String?)
 }

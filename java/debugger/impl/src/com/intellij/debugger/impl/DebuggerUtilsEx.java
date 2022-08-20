@@ -212,7 +212,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       return false; //is array
     }
 
-    return classFilters.stream().anyMatch(filter -> isFiltered(filter, qName));
+    return ContainerUtil.exists(classFilters, filter -> isFiltered(filter, qName));
   }
 
   public static int getEnabledNumber(ClassFilter[] classFilters) {
@@ -1095,8 +1095,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
           return true;
         }
         if (methodClassName != null) {
-          boolean res = process.getVirtualMachineProxy().classesByName(className).stream().anyMatch(t -> instanceOf(t, methodClassName));
-          if (res) {
+          if (ContainerUtil.exists(process.getVirtualMachineProxy().classesByName(className), t -> instanceOf(t, methodClassName))) {
             return true;
           }
           PsiClass aClass = PositionManagerImpl.findClass(process.getProject(), className, process.getSearchScope(), true);

@@ -532,7 +532,15 @@
 
     "EditorPane.splitBorder": "Grey3",
 
-    "WelcomeScreen.Details.background": "Grey1"
+    "WelcomeScreen.Details.background": "Grey1",
+
+    "TipOfTheDay": {
+      "Image.borderColor": "Grey3"
+    },
+
+    "Lesson": {
+      "shortcutBackground": "Grey5"
+    }
   },
 
   "icons": {

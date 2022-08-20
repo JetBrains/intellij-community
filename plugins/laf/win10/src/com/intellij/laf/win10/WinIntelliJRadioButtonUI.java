@@ -20,11 +20,6 @@ public final class WinIntelliJRadioButtonUI extends DarculaRadioButtonUI {
     return true;
   }
 
-  @Override
-  protected Dimension computeOurPreferredSize(JComponent c) {
-    return null;
-  }
-
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
     AbstractButton b = (AbstractButton)c;

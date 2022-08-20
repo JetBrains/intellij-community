@@ -3,12 +3,13 @@ package org.jetbrains.kotlin.testGenerator.generator
 
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.test.*
 import org.jetbrains.kotlin.testGenerator.model.*
 import org.junit.runner.RunWith
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.TestRoot
+import org.jetbrains.kotlin.idea.base.test.TestRoot
 import java.io.File
 import java.nio.file.Files
 import java.util.*

@@ -20,8 +20,8 @@ interface SampleEntity2 : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : SampleEntity2, ModifiableWorkspaceEntity<SampleEntity2>, ObjBuilder<SampleEntity2> {
-    override var data: String
     override var entitySource: EntitySource
+    override var data: String
     override var boolData: Boolean
     override var optionalData: String?
   }
@@ -54,8 +54,8 @@ interface VFUEntity2 : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : VFUEntity2, ModifiableWorkspaceEntity<VFUEntity2>, ObjBuilder<VFUEntity2> {
-    override var data: String
     override var entitySource: EntitySource
+    override var data: String
     override var filePath: VirtualFileUrl?
     override var directoryPath: VirtualFileUrl
     override var notNullRoots: MutableList<VirtualFileUrl>

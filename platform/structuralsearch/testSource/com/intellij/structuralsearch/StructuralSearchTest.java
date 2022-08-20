@@ -3406,6 +3406,24 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("should match generic and raw types 2", 7, findMatchesCount(in, "'_A:List <'_B? >"));
   }
 
+  public void testIfStatements() {
+    String in = "class X {" +
+                "  void x(boolean b) {" +
+                "    if (b) {" +
+                "      System.out.println();" +
+                "      System.out.println();" +
+                "    }" +
+                "    if (b) {" +
+                "      System.out.println();" +
+                "    }" +
+                "    else {" +
+                "      System.out.println();" +
+                "    }" +
+                "  }" +
+                "}";
+    assertEquals("Should find if without else", 1, findMatchesCount(in, "if ('_a) '_b; else '_c{0,0};"));
+  }
+
   public void testSwitchStatements() {
     final String in = "class X {" +
                       "  void x(int i) {" +

@@ -30,6 +30,7 @@ import java.util.*;
 /**
  * Extension point for customization maven module import process.
  */
+@SuppressWarnings("DeprecatedIsStillUsed")
 public abstract class MavenImporter {
   public static final ExtensionPointName<MavenImporter> EXTENSION_POINT_NAME = ExtensionPointName.create("org.jetbrains.idea.maven.importer");
 
@@ -93,6 +94,10 @@ public abstract class MavenImporter {
     return mavenProject.findPlugin(myPluginGroupID, myPluginArtifactID) != null;
   }
 
+  /**
+   * @deprecated use facets instead of module types
+   */
+  @Deprecated
   public @NotNull ModuleType<? extends ModuleBuilder> getModuleType() {
     return StdModuleTypes.JAVA;
   }
@@ -102,13 +107,23 @@ public abstract class MavenImporter {
 
   public void getSupportedDependencyTypes(Collection<String> result, SupportedRequestType type) { }
 
+  /**
+   * @deprecated this API is not supported anymore, and there is no replacement
+   */
+  @Deprecated
   public void getSupportedDependencyScopes(Collection<String> result) { }
 
+  /**
+   * @deprecated this API is not supported anymore, and there is no replacement
+   */
+  @Deprecated
   public @Nullable Pair<String, String> getExtraArtifactClassifierAndExtension(MavenArtifact artifact, MavenExtraArtifactType type) {
     return null;
   }
 
-  /** @deprecated use {@link #resolve(Project, MavenProject, NativeMavenProjectHolder, MavenEmbedderWrapper, ResolveContext)} */
+  /**
+   * @deprecated use {@link #resolve(Project, MavenProject, NativeMavenProjectHolder, MavenEmbedderWrapper, ResolveContext)}
+   */
   @Deprecated(forRemoval = true)
   @SuppressWarnings("unused")
   public void resolve(Project project,
@@ -144,6 +159,8 @@ public abstract class MavenImporter {
 
   /**
    * Import process callback.
+   *
+   * @param postTasks is deprecated, use {@link org.jetbrains.idea.maven.project.MavenImportListener} instead
    */
   public void process(IdeModifiableModelsProvider modifiableModelsProvider,
                       Module module,
@@ -152,6 +169,7 @@ public abstract class MavenImporter {
                       MavenProject mavenProject,
                       MavenProjectChanges changes,
                       Map<MavenProject, String> mavenProjectToModuleName,
+                      @Deprecated // use {@link org.jetbrains.idea.maven.project.MavenImportListener} instead
                       List<MavenProjectsProcessorTask> postTasks) { }
 
   /**

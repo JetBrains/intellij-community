@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.util.io.createDirectories
 import org.junit.After
 import org.junit.Assert
@@ -28,6 +29,8 @@ internal abstract class SettingsSyncTestBase {
   private val tempDirManager = TemporaryDirectory()
   private val disposableRule = DisposableRule()
   @Rule @JvmField val ruleChain: RuleChain = RuleChain.outerRule(tempDirManager).around(appRule).around(disposableRule)
+
+  @Rule @JvmField val logger = TestLoggerFactory.createTestWatcher()
 
   protected lateinit var application: ApplicationImpl
   protected lateinit var configDir: Path

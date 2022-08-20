@@ -72,6 +72,9 @@ open class AttachedEntityImpl : AttachedEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToOneParent<WorkspaceEntityBase>(REF_CONNECTION_ID, this) == null) {
           error("Field AttachedEntity#ref should be initialized")
@@ -81,9 +84,6 @@ open class AttachedEntityImpl : AttachedEntity, WorkspaceEntityBase() {
         if (this.entityLinks[EntityLink(false, REF_CONNECTION_ID)] == null) {
           error("Field AttachedEntity#ref should be initialized")
         }
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field AttachedEntity#entitySource should be initialized")
       }
       if (!getEntityData().isDataInitialized()) {
         error("Field AttachedEntity#data should be initialized")
@@ -104,6 +104,15 @@ open class AttachedEntityImpl : AttachedEntity, WorkspaceEntityBase() {
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var ref: MainEntity
       get() {
@@ -137,15 +146,6 @@ open class AttachedEntityImpl : AttachedEntity, WorkspaceEntityBase() {
           this.entityLinks[EntityLink(false, REF_CONNECTION_ID)] = value
         }
         changedProperty.add("ref")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override var data: String

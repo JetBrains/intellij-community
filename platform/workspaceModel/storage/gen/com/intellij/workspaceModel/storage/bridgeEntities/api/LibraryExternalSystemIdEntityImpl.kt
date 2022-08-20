@@ -76,11 +76,11 @@ open class LibraryExternalSystemIdEntityImpl : LibraryExternalSystemIdEntity, Wo
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isExternalSystemIdInitialized()) {
         error("Field LibraryExternalSystemIdEntity#externalSystemId should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field LibraryExternalSystemIdEntity#entitySource should be initialized")
       }
       if (_diff != null) {
         if (_diff.extractOneToOneParent<WorkspaceEntityBase>(LIBRARY_CONNECTION_ID, this) == null) {
@@ -101,21 +101,13 @@ open class LibraryExternalSystemIdEntityImpl : LibraryExternalSystemIdEntity, Wo
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as LibraryExternalSystemIdEntity
-      this.externalSystemId = dataSource.externalSystemId
       this.entitySource = dataSource.entitySource
+      this.externalSystemId = dataSource.externalSystemId
       if (parents != null) {
         this.library = parents.filterIsInstance<LibraryEntity>().single()
       }
     }
 
-
-    override var externalSystemId: String
-      get() = getEntityData().externalSystemId
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().externalSystemId = value
-        changedProperty.add("externalSystemId")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -124,6 +116,14 @@ open class LibraryExternalSystemIdEntityImpl : LibraryExternalSystemIdEntity, Wo
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var externalSystemId: String
+      get() = getEntityData().externalSystemId
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().externalSystemId = value
+        changedProperty.add("externalSystemId")
       }
 
     override var library: LibraryEntity
@@ -220,8 +220,8 @@ class LibraryExternalSystemIdEntityData : WorkspaceEntityData<LibraryExternalSys
 
     other as LibraryExternalSystemIdEntityData
 
-    if (this.externalSystemId != other.externalSystemId) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.externalSystemId != other.externalSystemId) return false
     return true
   }
 

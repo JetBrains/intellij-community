@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
@@ -77,7 +77,7 @@ class BorderlessCombBoxUI extends EmbeddedComboBoxUI {
  */
 class EmbeddedComboBoxUI extends DarculaComboBoxUI {
 
-  protected @NotNull NonOpaquePanel myPanel = new NonOpaquePanel();
+  protected final @NotNull NonOpaquePanel myPanel = new NonOpaquePanel();
 
   EmbeddedComboBoxUI(float arc,
                      Insets borderCompensation,

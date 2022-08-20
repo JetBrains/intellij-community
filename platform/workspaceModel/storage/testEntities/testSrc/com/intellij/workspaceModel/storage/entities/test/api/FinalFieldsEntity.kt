@@ -33,8 +33,8 @@ interface FinalFieldsEntity: WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : FinalFieldsEntity, ModifiableWorkspaceEntity<FinalFieldsEntity>, ObjBuilder<FinalFieldsEntity> {
-    override var descriptor: AnotherDataClass
     override var entitySource: EntitySource
+    override var descriptor: AnotherDataClass
     override var description: String
     override var anotherVersion: Int
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.EventDispatcher
@@ -77,7 +78,6 @@ abstract class NonModalCommitPanel(
     val actions = ActionManager.getInstance().getAction("Vcs.MessageActionGroup") as ActionGroup
 
     val editorToolbar = ActionManager.getInstance().createActionToolbar(COMMIT_EDITOR_PLACE, actions, true).apply {
-      targetComponent = this@NonModalCommitPanel
       setReservePlaceAutoPopupIcon(false)
       component.border = BorderFactory.createEmptyBorder()
       component.isOpaque = false
@@ -92,7 +92,12 @@ abstract class NonModalCommitPanel(
   override fun getPreferredFocusableComponent(): JComponent = commitMessage.editorField
 
   override fun getData(dataId: String) = getDataFromProviders(dataId) ?: commitMessage.getData(dataId)
-  fun getDataFromProviders(dataId: String) = dataProviders.asSequence().mapNotNull { it.getData(dataId) }.firstOrNull()
+  fun getDataFromProviders(dataId: String): Any? {
+    for (dataProvider in dataProviders) {
+      return dataProvider.getData(dataId) ?: continue
+    }
+    return null
+  }
 
   override fun addDataProvider(provider: DataProvider) {
     dataProviders += provider
@@ -122,7 +127,7 @@ abstract class NonModalCommitPanel(
     }
     centerPanel
       .addToCenter(commitMessage)
-      .addToBottom(JPanel(VerticalLayout(0)).apply {
+      .addToBottom(JBPanel<JBPanel<*>>(VerticalLayout(0)).apply {
         background = getButtonPanelBackground()
         bottomPanelBuilder()
       })

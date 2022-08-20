@@ -416,7 +416,6 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
   public static class NavBarWrapperPanel extends JPanel {
     public NavBarWrapperPanel(LayoutManager layout) {
       super(layout);
-      setName("navbar");
     }
 
     @Override

@@ -60,7 +60,7 @@ internal class ChangesViewCommitWorkflowHandler(
     Disposer.register(this, ui)
 
     workflow.addListener(this, this)
-    workflow.addCommitListener(GitCommitStateCleaner(), this)
+    workflow.addVcsCommitListener(GitCommitStateCleaner(), this)
 
     ui.addCommitAuthorListener(this, this)
     ui.addExecutorListener(this, this)
@@ -92,7 +92,7 @@ internal class ChangesViewCommitWorkflowHandler(
       }
     })
 
-    DelayedCommitMessageProvider.init(project, ui, ::getCommitMessageFromPolicy)
+    DelayedCommitMessageProvider.init(project, ui, getCommitMessage())
   }
 
   override fun createDataProvider(): DataProvider = object : DataProvider {
@@ -184,13 +184,13 @@ internal class ChangesViewCommitWorkflowHandler(
   private fun changeListChanged(oldChangeList: LocalChangeList?, newChangeList: LocalChangeList?) {
     oldChangeList?.let { commitMessagePolicy.save(it, getCommitMessage(), false) }
 
-    val newCommitMessage = newChangeList?.let(::getCommitMessageFromPolicy)
+    val newCommitMessage = getCommitMessageFromPolicy(newChangeList)
     setCommitMessage(newCommitMessage)
 
     newChangeList?.let { commitOptions.changeListChanged(it) }
   }
 
-  private fun getCommitMessageFromPolicy(changeList: LocalChangeList? = currentChangeList): String? {
+  private fun getCommitMessageFromPolicy(changeList: LocalChangeList?): String? {
     if (changeList == null) return null
 
     return commitMessagePolicy.getCommitMessage(changeList) { getIncludedChanges() }
@@ -286,12 +286,10 @@ internal class ChangesViewCommitWorkflowHandler(
 
   private inner class GitCommitStateCleaner : CommitStateCleaner() {
 
-    private fun initCommitMessage() = setCommitMessage(getCommitMessageFromPolicy())
+    override fun onSuccess() {
+      setCommitMessage(getCommitMessageFromPolicy(currentChangeList))
 
-    override fun onSuccess(commitMessage: String) {
-      initCommitMessage()
-
-      super.onSuccess(commitMessage)
+      super.onSuccess()
     }
   }
 }

@@ -6,6 +6,7 @@ import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.event.EventSet;
 import com.sun.jdi.request.EventRequest;
@@ -86,7 +87,7 @@ public class SuspendManagerImpl implements SuspendManager {
       @Override
       protected void resumeImpl() {
         if (LOG.isDebugEnabled()) {
-          LOG.debug("Start resuming eventSet " + set.toString() + " suspendPolicy = " + set.suspendPolicy() + ",size = " + set.size());
+          LOG.debug("Start resuming eventSet " + set + " suspendPolicy = " + set.suspendPolicy() + ",size = " + set.size());
         }
         myDebugProcess.logThreads();
         DebuggerUtilsAsync.resume(set);
@@ -171,7 +172,7 @@ public class SuspendManagerImpl implements SuspendManager {
       suspended = true;
     }
     else {
-      suspended = myEventContexts.stream().anyMatch(suspendContext -> suspendContext.suspends(thread));
+      suspended = ContainerUtil.exists(myEventContexts, suspendContext -> suspendContext.suspends(thread));
     }
 
     //bug in JDI : newly created thread may be resumed even when suspendPolicy == SUSPEND_ALL

@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -175,11 +174,6 @@ class TextComponentCaret extends UserDataHolderBase implements Caret {
   @Override
   public boolean hasSelection() {
     return getSelectionStart() != getSelectionEnd();
-  }
-
-  @Override
-  public @NotNull TextRange getSelectionRange() {
-    return TextRange.create(getSelectionStart(), getSelectionEnd());
   }
 
   @Override

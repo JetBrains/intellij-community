@@ -63,7 +63,7 @@ open class OptionalIntEntityImpl : OptionalIntEntity, WorkspaceEntityBase() {
     fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field OptionalIntEntity#entitySource should be initialized")
+        error("Field WorkspaceEntity#entitySource should be initialized")
       }
     }
 
@@ -74,20 +74,12 @@ open class OptionalIntEntityImpl : OptionalIntEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as OptionalIntEntity
-      this.data = dataSource.data
       this.entitySource = dataSource.entitySource
+      this.data = dataSource.data
       if (parents != null) {
       }
     }
 
-
-    override var data: Int??
-      get() = getEntityData().data
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().data = value
-        changedProperty.add("data")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -96,6 +88,14 @@ open class OptionalIntEntityImpl : OptionalIntEntity, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var data: Int??
+      get() = getEntityData().data
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().data = value
+        changedProperty.add("data")
       }
 
     override fun getEntityData(): OptionalIntEntityData = result ?: super.getEntityData() as OptionalIntEntityData
@@ -155,8 +155,8 @@ class OptionalIntEntityData : WorkspaceEntityData<OptionalIntEntity>() {
 
     other as OptionalIntEntityData
 
-    if (this.data != other.data) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.data != other.data) return false
     return true
   }
 

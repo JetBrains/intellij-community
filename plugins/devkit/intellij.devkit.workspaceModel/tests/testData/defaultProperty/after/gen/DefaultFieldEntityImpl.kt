@@ -68,7 +68,7 @@ open class DefaultFieldEntityImpl : DefaultFieldEntity, WorkspaceEntityBase() {
     fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field DefaultFieldEntity#entitySource should be initialized")
+        error("Field WorkspaceEntity#entitySource should be initialized")
       }
       if (!getEntityData().isDataInitialized()) {
         error("Field DefaultFieldEntity#data should be initialized")
@@ -82,8 +82,8 @@ open class DefaultFieldEntityImpl : DefaultFieldEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as DefaultFieldEntity
-      this.version = dataSource.version
       this.entitySource = dataSource.entitySource
+      this.version = dataSource.version
       this.data = dataSource.data
       this.anotherVersion = dataSource.anotherVersion
       this.description = dataSource.description
@@ -92,14 +92,6 @@ open class DefaultFieldEntityImpl : DefaultFieldEntity, WorkspaceEntityBase() {
     }
 
 
-    override var version: Int
-      get() = getEntityData().version
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().version = value
-        changedProperty.add("version")
-      }
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
@@ -107,6 +99,14 @@ open class DefaultFieldEntityImpl : DefaultFieldEntity, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var version: Int
+      get() = getEntityData().version
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().version = value
+        changedProperty.add("version")
       }
 
     override var data: TestData
@@ -200,8 +200,8 @@ class DefaultFieldEntityData : WorkspaceEntityData<DefaultFieldEntity>() {
 
     other as DefaultFieldEntityData
 
-    if (this.version != other.version) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.version != other.version) return false
     if (this.data != other.data) return false
     if (this.anotherVersion != other.anotherVersion) return false
     if (this.description != other.description) return false

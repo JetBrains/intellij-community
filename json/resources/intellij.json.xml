@@ -133,6 +133,7 @@
     <copyPastePostProcessor implementation="com.intellij.json.editor.JsonCopyPastePostProcessor"/>
     <highlightVisitor implementation="com.intellij.json.highlighting.JsonRainbowVisitor"/>
     <intentionAction>
+      <language>JSON</language>
       <className>com.intellij.json.intentions.JsonSortPropertiesIntention</className>
       <bundleName>messages.JsonBundle</bundleName>
       <categoryKey>json.intention.category.name</categoryKey>
@@ -169,6 +170,7 @@
     <toolWindowAllowlist id="JSONPathEvaluate"/>
 
     <intentionAction>
+      <language>JSONPath</language>
       <className>com.intellij.jsonpath.ui.JsonPathEvaluateIntentionAction</className>
       <bundleName>messages.JsonBundle</bundleName>
       <categoryKey>json.intention.category.name</categoryKey>

@@ -192,7 +192,7 @@ public final class VcsFileStatusProvider implements FileStatusProvider, VcsBaseC
   }
 
   private static class BaseContentImpl implements BaseContent {
-    @Nullable private final Project myProject;
+    @NotNull private final Project myProject;
     @NotNull private final ContentRevision myContentRevision;
 
     BaseContentImpl(@NotNull Project project, @NotNull ContentRevision contentRevision) {

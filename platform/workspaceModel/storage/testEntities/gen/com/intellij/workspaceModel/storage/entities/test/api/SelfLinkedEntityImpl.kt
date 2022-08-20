@@ -69,7 +69,7 @@ open class SelfLinkedEntityImpl : SelfLinkedEntity, WorkspaceEntityBase() {
     fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field SelfLinkedEntity#entitySource should be initialized")
+        error("Field WorkspaceEntity#entitySource should be initialized")
       }
     }
 
@@ -86,6 +86,15 @@ open class SelfLinkedEntityImpl : SelfLinkedEntity, WorkspaceEntityBase() {
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var parentEntity: SelfLinkedEntity?
       get() {
@@ -124,15 +133,6 @@ open class SelfLinkedEntityImpl : SelfLinkedEntity, WorkspaceEntityBase() {
           this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] = value
         }
         changedProperty.add("parentEntity")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override fun getEntityData(): SelfLinkedEntityData = result ?: super.getEntityData() as SelfLinkedEntityData

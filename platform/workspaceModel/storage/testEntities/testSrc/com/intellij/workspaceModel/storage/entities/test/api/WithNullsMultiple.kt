@@ -21,8 +21,8 @@ interface ParentWithNullsMultiple : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ParentWithNullsMultiple, ModifiableWorkspaceEntity<ParentWithNullsMultiple>, ObjBuilder<ParentWithNullsMultiple> {
-    override var parentData: String
     override var entitySource: EntitySource
+    override var parentData: String
     override var children: List<ChildWithNullsMultiple>
   }
 
@@ -51,8 +51,8 @@ interface ChildWithNullsMultiple : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ChildWithNullsMultiple, ModifiableWorkspaceEntity<ChildWithNullsMultiple>, ObjBuilder<ChildWithNullsMultiple> {
-    override var childData: String
     override var entitySource: EntitySource
+    override var childData: String
   }
 
   companion object : Type<ChildWithNullsMultiple, Builder>() {

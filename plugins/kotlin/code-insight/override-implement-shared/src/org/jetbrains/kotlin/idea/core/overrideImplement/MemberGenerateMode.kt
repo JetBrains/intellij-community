@@ -2,6 +2,9 @@
 
 package org.jetbrains.kotlin.idea.core.overrideImplement
 
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Internal
 enum class MemberGenerateMode {
     OVERRIDE,
     ACTUAL,

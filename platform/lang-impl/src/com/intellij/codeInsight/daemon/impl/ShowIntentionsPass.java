@@ -9,6 +9,7 @@ import com.intellij.codeInsight.intention.impl.*;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewUnsupportedOperationException;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,6 +23,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -30,14 +32,15 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
+
+import static com.intellij.psi.util.PsiTreeUtilKt.parents;
 
 public final class ShowIntentionsPass extends TextEditorHighlightingPass {
   private final Editor myEditor;
@@ -330,7 +333,11 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     if (queryIntentionActions) {
       PsiFile injectedFile = InjectedLanguageUtilBase.findInjectedPsiNoCommit(hostFile, offset);
-      for (IntentionAction action : IntentionManager.getInstance().getAvailableIntentions()) {
+
+      Collection<String> languages = getLanguagesForIntentions(hostFile, psiElement, injectedFile);
+      List<IntentionAction> availableIntentions = IntentionManager.getInstance().getAvailableIntentions(languages);
+
+      for (IntentionAction action : availableIntentions) {
         if (indicator != null) {
           indicator.setText(action.getFamilyName());
         }
@@ -371,6 +378,30 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
     }
 
     intentions.filterActions(hostFile);
+  }
+
+  private static Collection<String> getLanguagesForIntentions(@NotNull PsiFile hostFile,
+                                                              @Nullable PsiElement psiElementAtOffset,
+                                                              @Nullable PsiFile injectedFile) {
+    Set<String> languageIds = new HashSet<>();
+    for (Language language : hostFile.getViewProvider().getLanguages()) {
+      languageIds.add(language.getID());
+    }
+
+    if (injectedFile != null) {
+      for (Language language : injectedFile.getViewProvider().getLanguages()) {
+        languageIds.add(language.getID());
+      }
+    }
+
+    if (psiElementAtOffset != null) {
+      SequencesKt.forEach(parents(psiElementAtOffset, true), p -> {
+        languageIds.add(p.getLanguage().getID());
+        return null;
+      });
+    }
+
+    return languageIds;
   }
 
   public static void fillIntentionsInfoForHighlightInfo(@NotNull HighlightInfo infoAtCursor,

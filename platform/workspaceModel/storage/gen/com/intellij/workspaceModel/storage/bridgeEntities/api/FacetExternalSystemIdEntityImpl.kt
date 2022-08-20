@@ -75,11 +75,11 @@ open class FacetExternalSystemIdEntityImpl : FacetExternalSystemIdEntity, Worksp
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isExternalSystemIdInitialized()) {
         error("Field FacetExternalSystemIdEntity#externalSystemId should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field FacetExternalSystemIdEntity#entitySource should be initialized")
       }
       if (_diff != null) {
         if (_diff.extractOneToOneParent<WorkspaceEntityBase>(FACET_CONNECTION_ID, this) == null) {
@@ -100,21 +100,13 @@ open class FacetExternalSystemIdEntityImpl : FacetExternalSystemIdEntity, Worksp
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as FacetExternalSystemIdEntity
-      this.externalSystemId = dataSource.externalSystemId
       this.entitySource = dataSource.entitySource
+      this.externalSystemId = dataSource.externalSystemId
       if (parents != null) {
         this.facet = parents.filterIsInstance<FacetEntity>().single()
       }
     }
 
-
-    override var externalSystemId: String
-      get() = getEntityData().externalSystemId
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().externalSystemId = value
-        changedProperty.add("externalSystemId")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -123,6 +115,14 @@ open class FacetExternalSystemIdEntityImpl : FacetExternalSystemIdEntity, Worksp
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var externalSystemId: String
+      get() = getEntityData().externalSystemId
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().externalSystemId = value
+        changedProperty.add("externalSystemId")
       }
 
     override var facet: FacetEntity
@@ -219,8 +219,8 @@ class FacetExternalSystemIdEntityData : WorkspaceEntityData<FacetExternalSystemI
 
     other as FacetExternalSystemIdEntityData
 
-    if (this.externalSystemId != other.externalSystemId) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.externalSystemId != other.externalSystemId) return false
     return true
   }
 

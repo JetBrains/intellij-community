@@ -21,8 +21,8 @@ interface FirstEntityWithPId : WorkspaceEntityWithPersistentId {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : FirstEntityWithPId, ModifiableWorkspaceEntity<FirstEntityWithPId>, ObjBuilder<FirstEntityWithPId> {
-    override var data: String
     override var entitySource: EntitySource
+    override var data: String
   }
 
   companion object : Type<FirstEntityWithPId, Builder>() {
@@ -53,8 +53,8 @@ interface SecondEntityWithPId : WorkspaceEntityWithPersistentId {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : SecondEntityWithPId, ModifiableWorkspaceEntity<SecondEntityWithPId>, ObjBuilder<SecondEntityWithPId> {
-    override var data: String
     override var entitySource: EntitySource
+    override var data: String
   }
 
   companion object : Type<SecondEntityWithPId, Builder>() {

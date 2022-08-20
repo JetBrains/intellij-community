@@ -52,7 +52,7 @@ import org.jetbrains.kotlin.lexer.KtTokens;
 import org.jetbrains.kotlin.name.Name;
 import org.jetbrains.kotlin.psi.KtFile;
 import org.jetbrains.kotlin.storage.LockBasedStorageManager;
-import org.jetbrains.kotlin.test.KotlinRoot;
+import org.jetbrains.kotlin.idea.base.test.KotlinRoot;
 import org.jetbrains.kotlin.test.TargetBackend;
 import org.jetbrains.kotlin.test.TestJdkKind;
 import org.jetbrains.kotlin.test.TestMetadata;

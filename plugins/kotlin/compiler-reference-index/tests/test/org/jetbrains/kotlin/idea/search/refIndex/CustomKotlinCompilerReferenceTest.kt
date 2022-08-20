@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.idea.highlighter.markers.SUBCLASSED_CLASS
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
-import org.jetbrains.kotlin.test.KotlinRoot
+import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import kotlin.io.path.Path
 import kotlin.io.path.isDirectory

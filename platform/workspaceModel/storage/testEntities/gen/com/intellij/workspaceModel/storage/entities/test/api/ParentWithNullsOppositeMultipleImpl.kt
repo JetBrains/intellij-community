@@ -65,11 +65,11 @@ open class ParentWithNullsOppositeMultipleImpl : ParentWithNullsOppositeMultiple
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isParentDataInitialized()) {
         error("Field ParentWithNullsOppositeMultiple#parentData should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ParentWithNullsOppositeMultiple#entitySource should be initialized")
       }
     }
 
@@ -80,20 +80,12 @@ open class ParentWithNullsOppositeMultipleImpl : ParentWithNullsOppositeMultiple
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ParentWithNullsOppositeMultiple
-      this.parentData = dataSource.parentData
       this.entitySource = dataSource.entitySource
+      this.parentData = dataSource.parentData
       if (parents != null) {
       }
     }
 
-
-    override var parentData: String
-      get() = getEntityData().parentData
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().parentData = value
-        changedProperty.add("parentData")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -102,6 +94,14 @@ open class ParentWithNullsOppositeMultipleImpl : ParentWithNullsOppositeMultiple
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var parentData: String
+      get() = getEntityData().parentData
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().parentData = value
+        changedProperty.add("parentData")
       }
 
     override fun getEntityData(): ParentWithNullsOppositeMultipleData = result
@@ -163,8 +163,8 @@ class ParentWithNullsOppositeMultipleData : WorkspaceEntityData<ParentWithNullsO
 
     other as ParentWithNullsOppositeMultipleData
 
-    if (this.parentData != other.parentData) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.parentData != other.parentData) return false
     return true
   }
 

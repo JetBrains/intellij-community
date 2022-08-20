@@ -73,10 +73,9 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
     val isMainProcess = java.lang.Boolean.getBoolean("ide.per.project.instance")
                         && !PathManager.getPluginsDir().name.startsWith("perProject_")
 
-    val applicationInfoEx = ApplicationInfoImpl.getShadowInstance()
+    val appInfo = if (isMainProcess) ApplicationInfoImpl.getShadowInstance() else null
     for (descriptor in descriptors) {
-      if (descriptor != null
-          && (!isMainProcess || applicationInfoEx.isEssentialPlugin(descriptor.pluginId))) {
+      if (descriptor != null && (appInfo == null || appInfo.isEssentialPlugin(descriptor.pluginId))) {
         add(descriptor, overrideUseIfCompatible, productBuildNumber)
       }
     }

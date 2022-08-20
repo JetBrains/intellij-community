@@ -11,6 +11,7 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.directoryContent
+import com.intellij.util.io.java.classFile
 import com.intellij.util.io.write
 import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.lang.ZipFilePool
@@ -35,13 +36,14 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 
 class PluginDescriptorTest {
-
   @Rule
   @JvmField
   val inMemoryFs = InMemoryFsRule()
 
-  private val rootPath get() = inMemoryFs.fs.getPath("/")
-  private val pluginDirPath get() = rootPath.resolve("plugin")
+  private val rootPath: Path
+    get() = inMemoryFs.fs.getPath("/")
+  private val pluginDirPath: Path
+    get() = rootPath.resolve("plugin")
 
   @Test
   fun descriptorLoading() {
@@ -70,7 +72,7 @@ class PluginDescriptorTest {
   @Test
   fun testMalformedDescriptor() {
     assertThatThrownBy { loadDescriptorInTest("malformed") }
-      .hasMessageContaining("Unexpected character 'o' (code 111) in prolog")
+      .cause().hasMessageContaining("Unexpected character 'o' (code 111) in prolog")
   }
 
   @Test
@@ -126,7 +128,7 @@ class PluginDescriptorTest {
     IoTestUtil.assumeMacOS()
 
     assumeNotUnderTeamcity()
-    val descriptors = PluginSetTestBuilder(path = Paths.get("/Volumes/data/plugins"))
+    val descriptors = PluginSetTestBuilder(path = Path.of("/Volumes/data/plugins"))
       .build()
       .allPlugins
     assertThat(descriptors).isNotEmpty()
@@ -179,7 +181,7 @@ class PluginDescriptorTest {
   fun testStandaloneMetaInf() {
     val tempDir = directoryContent {
       dir("classes") {
-        file("Empty.class", "") // `com.intellij.util.io.java.classFile` requires dependency on `intellij.java.testFramework`
+        classFile("Empty") {}
       }
       dir("lib") {
         zip("empty.jar") {}
@@ -607,10 +609,7 @@ class PluginDescriptorTest {
 private val testDataPath: String
   get() = "${PlatformTestUtil.getPlatformTestDataPath()}plugins/pluginDescriptor"
 
-private fun loadDescriptorInTest(
-  dirName: String,
-  disabledPlugins: Set<String> = emptySet(),
-): IdeaPluginDescriptorImpl {
+private fun loadDescriptorInTest(dirName: String, disabledPlugins: Set<String> = emptySet()): IdeaPluginDescriptorImpl {
   return loadDescriptorInTest(
     dir = Path.of(testDataPath, dirName),
     disabledPlugins = disabledPlugins,

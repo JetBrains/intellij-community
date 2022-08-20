@@ -82,11 +82,11 @@
     <orderEntry type="module" module-name="intellij.java.impl" />
     <orderEntry type="module" module-name="kotlin.base.fir.analysis-api-providers" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.impl-base" />
+    <orderEntry type="module" module-name="kotlin.code-insight.utils" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
     <orderEntry type="library" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration" />
-    <orderEntry type="module" module-name="kotlin.code-insight.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.override-implement-shared" />
     <orderEntry type="module" module-name="kotlin.code-insight.override-implement-k2" />
     <orderEntry type="module" module-name="kotlin.completion.tests-shared" scope="TEST" />

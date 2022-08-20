@@ -81,6 +81,9 @@ open class ModuleCustomImlDataEntityImpl : ModuleCustomImlDataEntity, WorkspaceE
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToOneParent<WorkspaceEntityBase>(MODULE_CONNECTION_ID, this) == null) {
           error("Field ModuleCustomImlDataEntity#module should be initialized")
@@ -90,9 +93,6 @@ open class ModuleCustomImlDataEntityImpl : ModuleCustomImlDataEntity, WorkspaceE
         if (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] == null) {
           error("Field ModuleCustomImlDataEntity#module should be initialized")
         }
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ModuleCustomImlDataEntity#entitySource should be initialized")
       }
       if (!getEntityData().isCustomModuleOptionsInitialized()) {
         error("Field ModuleCustomImlDataEntity#customModuleOptions should be initialized")
@@ -114,6 +114,15 @@ open class ModuleCustomImlDataEntityImpl : ModuleCustomImlDataEntity, WorkspaceE
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var module: ModuleEntity
       get() {
@@ -148,15 +157,6 @@ open class ModuleCustomImlDataEntityImpl : ModuleCustomImlDataEntity, WorkspaceE
           this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
         }
         changedProperty.add("module")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override var rootManagerTagCustomData: String?

@@ -74,11 +74,11 @@ open class MiddleEntityImpl : MiddleEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isPropertyInitialized()) {
         error("Field MiddleEntity#property should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field MiddleEntity#entitySource should be initialized")
       }
     }
 
@@ -89,13 +89,22 @@ open class MiddleEntityImpl : MiddleEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as MiddleEntity
-      this.property = dataSource.property
       this.entitySource = dataSource.entitySource
+      this.property = dataSource.property
       if (parents != null) {
         this.parentEntity = parents.filterIsInstance<CompositeBaseEntity>().singleOrNull()
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var parentEntity: CompositeBaseEntity?
       get() {
@@ -142,15 +151,6 @@ open class MiddleEntityImpl : MiddleEntity, WorkspaceEntityBase() {
         checkModificationAllowed()
         getEntityData().property = value
         changedProperty.add("property")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override fun getEntityData(): MiddleEntityData = result ?: super.getEntityData() as MiddleEntityData
@@ -211,8 +211,8 @@ class MiddleEntityData : WorkspaceEntityData<MiddleEntity>() {
 
     other as MiddleEntityData
 
-    if (this.property != other.property) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.property != other.property) return false
     return true
   }
 

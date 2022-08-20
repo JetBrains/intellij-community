@@ -19,8 +19,8 @@ interface AssertConsistencyEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : AssertConsistencyEntity, ModifiableWorkspaceEntity<AssertConsistencyEntity>, ObjBuilder<AssertConsistencyEntity> {
-    override var passCheck: Boolean
     override var entitySource: EntitySource
+    override var passCheck: Boolean
   }
 
   companion object : Type<AssertConsistencyEntity, Builder>() {

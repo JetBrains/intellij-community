@@ -182,13 +182,6 @@ internal class SearchEverywhereFileFeaturesProviderTest
       .isEqualTo(expectedValues)
   }
 
-  fun `test exact match is false when priority less than exact match degree`() {
-    checkThatFeature(IS_EXACT_MATCH_DATA_KEY.name)
-      .ofElement(testFile)
-      .withPriority(1000)
-      .isEqualTo(false)
-  }
-
   fun `test exact match is true when priority is exactly exact match degree`() {
     checkThatFeature(IS_EXACT_MATCH_DATA_KEY.name)
       .ofElement(testFile)

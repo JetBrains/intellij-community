@@ -275,10 +275,6 @@ abstract class ToolWindowHeader internal constructor(
     toolbar.updateActionsImmediately()
   }
 
-  override fun getComponentGraphics(g: Graphics): Graphics {
-    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(g))
-  }
-
   override fun paintComponent(g: Graphics) {
     val r = bounds
     val g2d = g as Graphics2D

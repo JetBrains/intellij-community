@@ -4,16 +4,29 @@ package org.jetbrains.intellij.build.io
 import net.schmizz.sshj.xfer.LocalDestFile
 import net.schmizz.sshj.xfer.LocalFileFilter
 import net.schmizz.sshj.xfer.LocalSourceFile
+import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import java.nio.file.attribute.PosixFilePermission
 import java.util.*
 import java.util.concurrent.TimeUnit
 
 internal class NioFileDestination(private val file: Path) : LocalDestFile {
+  override fun getLength(): Long {
+    return try {
+      Files.size(file)
+    }
+    catch (e: IOException) {
+      0
+    }
+  }
+
   override fun getOutputStream(): OutputStream = Files.newOutputStream(file)
+
+  override fun getOutputStream(append: Boolean): OutputStream = Files.newOutputStream(file, StandardOpenOption.APPEND)
 
   override fun getChild(name: String?) = throw UnsupportedOperationException()
 

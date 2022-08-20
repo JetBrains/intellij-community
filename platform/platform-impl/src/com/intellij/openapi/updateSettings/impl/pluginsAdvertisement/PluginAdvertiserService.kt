@@ -82,7 +82,7 @@ open class PluginAdvertiserService {
 
     val descriptorsById = PluginManagerCore.buildPluginIdMap()
     val pluginManagerFilter = PluginManagerFilters.getInstance()
-    val disabledDescriptors = plugins.asSequence()
+    val notLoadedDescriptors = plugins.asSequence()
       .map { it.pluginId }
       .mapNotNull { descriptorsById[it] }
       .filterNot { it.isEnabled }
@@ -103,7 +103,7 @@ open class PluginAdvertiserService {
         project = project,
         bundledPlugins = getBundledPluginToInstall(plugins, descriptorsById),
         suggestionPlugins = suggestToInstall,
-        disabledDescriptors = disabledDescriptors,
+        notLoadedDescriptors = notLoadedDescriptors,
         customPlugins = customPlugins,
         featuresMap = featuresMap,
         allUnknownFeatures = unknownFeatures,
@@ -142,13 +142,30 @@ open class PluginAdvertiserService {
     project: Project,
     bundledPlugins: List<String>,
     suggestionPlugins: List<PluginDownloader>,
-    disabledDescriptors: List<IdeaPluginDescriptorImpl>,
+    notLoadedDescriptors: List<IdeaPluginDescriptorImpl>,
     customPlugins: List<PluginNode>,
     featuresMap: MultiMap<PluginId, UnknownFeature>,
     allUnknownFeatures: Collection<UnknownFeature>,
     dependencies: PluginFeatureMap?,
     includeIgnored: Boolean,
   ) = Runnable {
+    val (onDemandDescriptors, disabledDescriptors) = notLoadedDescriptors.partition { it.isOnDemand }
+    if (onDemandDescriptors.isNotEmpty()) {
+      ApplicationManager.getApplication().invokeLater {
+        PluginBooleanOptionDescriptor.togglePluginState(onDemandDescriptors, true)
+
+        val message = IdeBundle.message(
+          "plugins.advertiser.enabled.on.demand",
+          onDemandDescriptors.size,
+          onDemandDescriptors.map { it.name },
+        )
+
+        notificationGroup.createNotification(message, NotificationType.INFORMATION)
+          .setDisplayId("advertiser.enable.on.demand")
+          .notify(project)
+      }
+    }
+
     val (notificationMessage, notificationActions) = if (suggestionPlugins.isNotEmpty() || disabledDescriptors.isNotEmpty()) {
       val action = if (disabledDescriptors.isEmpty()) {
         NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.configure.plugins")) {
