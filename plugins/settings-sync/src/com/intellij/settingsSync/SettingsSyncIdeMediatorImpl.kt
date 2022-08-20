@@ -88,7 +88,8 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
 
   override fun collectFilesToExportFromSettings(appConfigPath: Path): () -> Collection<Path> {
     return {
-      getExportableItemsFromLocalStorage(getExportableComponentsMap(false), componentStore.storageManager).keys
+      getExportableItemsFromLocalStorage(getExportableComponentsMap(false, componentStore.storageManager, withExportable = false),
+                                         componentStore.storageManager).keys
     }
   }
 

@@ -1,77 +1,61 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen
 
-import com.intellij.workspaceModel.codegen.deft.model.DefType
-import com.intellij.workspaceModel.codegen.deft.model.KtInterfaceKind
-import com.intellij.workspaceModel.codegen.deft.model.WsData
-import com.intellij.workspaceModel.codegen.deft.*
-import com.intellij.workspaceModel.codegen.deft.Field
+import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
+import com.intellij.workspaceModel.codegen.deft.meta.OwnProperty
+import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.fields.javaType
 import com.intellij.workspaceModel.codegen.utils.LinesBuilder
 import org.jetbrains.kotlin.utils.addToStdlib.popLast
 
-class InterfaceTraverser(
-  val simpleTypes: List<DefType>
-) {
-  fun traverse(myInterface: DefType, visitor: InterfaceVisitor): Boolean {
-    for (field in myInterface.structure.declaredFields) {
-      val res = traverseField(field, visitor, field.name, myInterface.def.kind)
+class InterfaceTraverser {
+  fun traverse(myInterface: ObjClass<*>, visitor: InterfaceVisitor): Boolean {
+    for (field in myInterface.fields) {
+      val res = traverseField(field, visitor, field.name)
       if (!res) return false
     }
     return true
   }
 
-  private fun traverseField(field: Field<*, *>, visitor: InterfaceVisitor, varName: String, kind: KtInterfaceKind?): Boolean {
-    return traverseType(field.type, visitor, varName, kind)
+  private fun traverseField(field: OwnProperty<*, *>, visitor: InterfaceVisitor, varName: String): Boolean {
+    return traverseType(field.valueType, visitor, varName)
   }
 
-  private fun traverseType(type: ValueType<*>, visitor: InterfaceVisitor, varName: String, kind: KtInterfaceKind?): Boolean {
+  private fun traverseType(type: ValueType<*>, visitor: InterfaceVisitor, varName: String): Boolean {
     when (type) {
-      is TBoolean -> return visitor.visitBoolean(varName)
-      is TInt -> return visitor.visitInt(varName)
-      is TString -> return visitor.visitString(varName)
-      is TCollection<*, *> -> {
+      is ValueType.Boolean -> return visitor.visitBoolean(varName)
+      is ValueType.Int -> return visitor.visitInt(varName)
+      is ValueType.String -> return visitor.visitString(varName)
+      is ValueType.Collection<*, *> -> {
         val itemVarName = "_$varName"
         val shouldProcessList = visitor.visitListStart(varName, itemVarName, type.elementType)
         if (!shouldProcessList) return false
-        val traversingResult = traverseType(type.elementType, visitor, itemVarName, kind)
+        val traversingResult = traverseType(type.elementType, visitor, itemVarName)
         return visitor.visitListEnd(varName, itemVarName, traversingResult, type.elementType)
       }
 
-      is TMap<*, *> -> {
+      is ValueType.Map<*, *> -> {
         val keyVarName = "key_$varName"
         val valueVarName = "value_$varName"
         val shouldProcessMap = visitor.visitMapStart(varName, keyVarName, valueVarName, type.keyType, type.valueType)
         if (!shouldProcessMap) return false
 
-        val keyTraverseResult = traverseType(type.keyType, visitor, keyVarName, kind)
-        val valueTraverseResult = traverseType(type.valueType, visitor, valueVarName, kind)
+        val keyTraverseResult = traverseType(type.keyType, visitor, keyVarName)
+        val valueTraverseResult = traverseType(type.valueType, visitor, valueVarName)
 
         return visitor.visitMapEnd(varName, keyVarName, valueVarName, type.keyType, type.valueType,
                                    keyTraverseResult && valueTraverseResult)
       }
-      is TOptional<*> -> {
+      is ValueType.Optional<*> -> {
         val notNullVarName = "_$varName"
         var continueProcess = visitor.visitOptionalStart(varName, notNullVarName, type.type)
         if (!continueProcess) return false
 
-        continueProcess = traverseType(type.type, visitor, notNullVarName, kind)
+        continueProcess = traverseType(type.type, visitor, notNullVarName)
         return visitor.visitOptionalEnd(varName, notNullVarName, type.type, continueProcess)
       }
-      is TBlob<*> -> {
-        val foundType = simpleTypes.find { it.name == type.javaSimpleName }
-        if (foundType == null) {
-          return visitor.visitUnknownBlob(varName, type.javaSimpleName)
-        } else {
-
-          if (kind == WsData) {
-            var process = visitor.visitDataClassStart(varName, type.javaSimpleName, foundType)
-            if (!process) return false
-
-            process = traverse(foundType, visitor)
-            return visitor.visitDataClassEnd(varName, type.javaSimpleName, process, foundType)
-          }
-          return false
+      is ValueType.Blob<*> -> {
+        return visitor.visitUnknownBlob(varName, type.javaClassName)
           /*
 
 
@@ -81,7 +65,13 @@ class InterfaceTraverser(
           process = traverse(foundType, visitor)
           return visitor.visitKnownBlobFinish(varName, type.javaSimpleName, process)
           */
-        }
+      }
+      is ValueType.DataClass<*> -> {
+        var process = visitor.visitDataClassStart(varName, type)
+        if (!process) return false
+
+        //process = traverse(type, visitor)
+        return visitor.visitDataClassEnd(varName, type, process)
       }
       else -> {}
     }
@@ -192,11 +182,11 @@ class DeserializationVisitor(linesBuilder: LinesBuilder) : InterfaceVisitor {
     return false
   }
 
-  override fun visitDataClassStart(varName: String, javaSimpleName: String, foundType: DefType): Boolean {
+  override fun visitDataClassStart(varName: String, dataClass: ValueType.DataClass<*>): Boolean {
     TODO("Not yet implemented")
   }
 
-  override fun visitDataClassEnd(varName: String, javaSimpleName: String, traverseResult: Boolean, foundType: DefType): Boolean {
+  override fun visitDataClassEnd(varName: String, dataClass: ValueType.DataClass<*>, traverseResult: Boolean): Boolean {
     TODO("Not yet implemented")
   }
 
@@ -315,11 +305,11 @@ class SerializatorVisitor private constructor(private val linesBuilder: ArrayDeq
     return true
   }
 
-  override fun visitDataClassStart(varName: String, javaSimpleName: String, foundType: DefType): Boolean {
+  override fun visitDataClassStart(varName: String, dataClass: ValueType.DataClass<*>): Boolean {
     TODO("Not yet implemented")
   }
 
-  override fun visitDataClassEnd(varName: String, javaSimpleName: String, traverseResult: Boolean, foundType: DefType): Boolean {
+  override fun visitDataClassEnd(varName: String, dataClass: ValueType.DataClass<*>, traverseResult: Boolean): Boolean {
     TODO("Not yet implemented")
   }
 }
@@ -347,7 +337,7 @@ interface InterfaceVisitor {
   fun visitKnownBlobStart(varName: String, javaSimpleName: String): Boolean
   fun visitKnownBlobFinish(varName: String, javaSimpleName: String, traverseResult: Boolean): Boolean
 
-  fun visitDataClassStart(varName: String, javaSimpleName: String, foundType: DefType): Boolean
-  fun visitDataClassEnd(varName: String, javaSimpleName: String, traverseResult: Boolean, foundType: DefType): Boolean
+  fun visitDataClassStart(varName: String, dataClass: ValueType.DataClass<*>): Boolean
+  fun visitDataClassEnd(varName: String, dataClass: ValueType.DataClass<*>, traverseResult: Boolean): Boolean
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.actions;
 
 import com.intellij.CommonBundle;
@@ -19,6 +19,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.util.gotoByName.ChooseByNameFilter;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
+import com.intellij.lang.InjectableLanguage;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -247,7 +249,8 @@ public class RunInspectionAction extends GotoActionBase implements DataProvider 
       }
     };
 
-    dialog.setShowInspectInjectedCode(true);
+    //don't show if called for regexp inspection which makes no sense without injection
+    dialog.setShowInspectInjectedCode(!(Language.findLanguageByID(toolWrapper.getLanguage()) instanceof InjectableLanguage));
     dialog.showAndGet();
   }
 

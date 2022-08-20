@@ -64,11 +64,11 @@ open class MainEntityImpl : MainEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isXInitialized()) {
         error("Field MainEntity#x should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field MainEntity#entitySource should be initialized")
       }
     }
 
@@ -79,20 +79,12 @@ open class MainEntityImpl : MainEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as MainEntity
-      this.x = dataSource.x
       this.entitySource = dataSource.entitySource
+      this.x = dataSource.x
       if (parents != null) {
       }
     }
 
-
-    override var x: String
-      get() = getEntityData().x
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().x = value
-        changedProperty.add("x")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -101,6 +93,14 @@ open class MainEntityImpl : MainEntity, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var x: String
+      get() = getEntityData().x
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().x = value
+        changedProperty.add("x")
       }
 
     override fun getEntityData(): MainEntityData = result ?: super.getEntityData() as MainEntityData
@@ -160,8 +160,8 @@ class MainEntityData : WorkspaceEntityData<MainEntity>() {
 
     other as MainEntityData
 
-    if (this.x != other.x) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.x != other.x) return false
     return true
   }
 

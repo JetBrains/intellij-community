@@ -67,7 +67,7 @@ final class ConfigureGroovyLibraryNotificationProvider implements EditorNotifica
   @RequiresEdt
   private static @NotNull EditorNotificationPanel createConfigureNotificationPanel(@NotNull Module module,
                                                                                    @NotNull FileEditor fileEditor) {
-    final EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor);
+    final EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Warning);
     panel.setText(GroovyBundle.message("groovy.library.is.not.configured.for.module", module.getName()));
     panel.createActionLabel(GroovyBundle.message("configure.groovy.library"), () -> {
       AddCustomLibraryDialog.createDialog(new GroovyLibraryDescription(), module, null).show();

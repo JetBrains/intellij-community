@@ -52,13 +52,13 @@ class OverrideMembersHandler(private val preferConstructorParameters: Boolean = 
 
                     val bodyType = when {
                         descriptor.kind == ClassKind.INTERFACE && realSuper.builtIns.isMemberOfAny(realSuper) ->
-                            BodyType.NO_BODY
+                            BodyType.NoBody
                         immediateSuperToUse.modality == Modality.ABSTRACT ->
-                            BodyType.FROM_TEMPLATE
+                            BodyType.FromTemplate
                         realSupersToUse.size == 1 ->
-                            BodyType.SUPER
+                            BodyType.Super
                         else ->
-                            BodyType.QUALIFIED_SUPER
+                            BodyType.QualifiedSuper
                     }
 
                     result.add(

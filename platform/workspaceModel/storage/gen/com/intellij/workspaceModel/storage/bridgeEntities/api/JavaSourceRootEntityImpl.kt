@@ -78,6 +78,9 @@ open class JavaSourceRootEntityImpl : JavaSourceRootEntity, WorkspaceEntityBase(
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToManyParent<WorkspaceEntityBase>(SOURCEROOT_CONNECTION_ID, this) == null) {
           error("Field JavaSourceRootEntity#sourceRoot should be initialized")
@@ -87,9 +90,6 @@ open class JavaSourceRootEntityImpl : JavaSourceRootEntity, WorkspaceEntityBase(
         if (this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)] == null) {
           error("Field JavaSourceRootEntity#sourceRoot should be initialized")
         }
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field JavaSourceRootEntity#entitySource should be initialized")
       }
       if (!getEntityData().isPackagePrefixInitialized()) {
         error("Field JavaSourceRootEntity#packagePrefix should be initialized")
@@ -111,6 +111,15 @@ open class JavaSourceRootEntityImpl : JavaSourceRootEntity, WorkspaceEntityBase(
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var sourceRoot: SourceRootEntity
       get() {
@@ -149,15 +158,6 @@ open class JavaSourceRootEntityImpl : JavaSourceRootEntity, WorkspaceEntityBase(
           this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)] = value
         }
         changedProperty.add("sourceRoot")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override var generated: Boolean

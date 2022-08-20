@@ -83,7 +83,7 @@ mod tests {
     use std::{fs, thread, time};
 
     fn start_launcher(test_dir: PathBuf) -> ExitStatus {
-        let mut launcher_process = Command::new(test_dir.join("xplat_launcher")) // for windows xplat_launcher.exe???
+        let mut launcher_process = Command::new(test_dir.join("xplat-launcher")) // for windows xplat-launcher.exe???
             .current_dir(test_dir)
             .args(["test_argument1", "test_argument2"])
             .env(xplat_launcher::DO_NOT_SHOW_ERROR_UI_ENV_VAR, "1")
@@ -184,7 +184,7 @@ mod tests {
         );
 
         let launcher_dir = resolve_test_dir()
-            .join("xplat_launcher")
+            .join("xplat-launcher")
             .into_os_string()
             .into_string()
             .unwrap();

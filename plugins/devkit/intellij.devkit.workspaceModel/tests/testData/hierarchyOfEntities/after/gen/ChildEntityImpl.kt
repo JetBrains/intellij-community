@@ -73,6 +73,9 @@ open class ChildEntityImpl : ChildEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isData1Initialized()) {
         error("Field GrandParentEntity#data1 should be initialized")
       }
@@ -81,9 +84,6 @@ open class ChildEntityImpl : ChildEntity, WorkspaceEntityBase() {
       }
       if (!getEntityData().isData3Initialized()) {
         error("Field ChildEntity#data3 should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ChildEntity#entitySource should be initialized")
       }
     }
 
@@ -94,14 +94,23 @@ open class ChildEntityImpl : ChildEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ChildEntity
+      this.entitySource = dataSource.entitySource
       this.data1 = dataSource.data1
       this.data2 = dataSource.data2
       this.data3 = dataSource.data3
-      this.entitySource = dataSource.entitySource
       if (parents != null) {
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var data1: String
       get() = getEntityData().data1
@@ -125,15 +134,6 @@ open class ChildEntityImpl : ChildEntity, WorkspaceEntityBase() {
         checkModificationAllowed()
         getEntityData().data3 = value
         changedProperty.add("data3")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override fun getEntityData(): ChildEntityData = result ?: super.getEntityData() as ChildEntityData
@@ -199,10 +199,10 @@ class ChildEntityData : WorkspaceEntityData<ChildEntity>() {
 
     other as ChildEntityData
 
+    if (this.entitySource != other.entitySource) return false
     if (this.data1 != other.data1) return false
     if (this.data2 != other.data2) return false
     if (this.data3 != other.data3) return false
-    if (this.entitySource != other.entitySource) return false
     return true
   }
 

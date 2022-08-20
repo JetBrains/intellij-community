@@ -48,6 +48,8 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
+import static com.intellij.openapi.util.Predicates.nonNull;
+
 public class StringConcatenationInLoopsInspection extends BaseInspection {
 
   @org.intellij.lang.annotations.Pattern(VALID_ID_PATTERN)
@@ -567,7 +569,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
           if (operands.length > 1) {
             // s = s + ...;
             if (ExpressionUtils.isReferenceTo(operands[0], variable)) {
-              StreamEx.iterate(operands[1], Objects::nonNull, PsiElement::getNextSibling).forEach(ct::markUnchanged);
+              StreamEx.iterate(operands[1], nonNull(), PsiElement::getNextSibling).forEach(ct::markUnchanged);
               replaceAll(variable, builderVariable, rValue, ct, operands[0]::equals);
               StringBuilder replacement =
                 ChangeToAppendUtil.buildAppendExpression(rValue, false, new StringBuilder(builderName));

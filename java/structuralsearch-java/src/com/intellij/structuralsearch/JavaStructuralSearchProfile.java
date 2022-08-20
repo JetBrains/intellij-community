@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -1022,7 +1022,8 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
         return true;
       }
       if (isCompleteStatement((PsiExpressionStatement)grandParent)) {
-        if (greatGrandParent instanceof PsiLoopStatement || greatGrandParent instanceof PsiIfStatement) return false;
+        if (greatGrandParent instanceof PsiLoopStatement ||
+            (greatGrandParent instanceof PsiIfStatement && ((PsiIfStatement)greatGrandParent).getElseBranch() != grandParent)) return false;
         return !(greatGrandParent instanceof PsiCodeBlock) ||
                !(greatGrandParent.getParent() instanceof JavaDummyHolder) ||
                PsiTreeUtil.getChildrenOfAnyType(greatGrandParent, PsiStatement.class, PsiComment.class).size() > 1;

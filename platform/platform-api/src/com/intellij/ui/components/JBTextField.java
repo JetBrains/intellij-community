@@ -2,10 +2,7 @@
 package com.intellij.ui.components;
 
 import com.intellij.ui.TextAccessor;
-import com.intellij.util.ui.ComponentWithEmptyText;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,6 +32,11 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText, T
   public JBTextField(@Nls String text, int columns) {
     super(text, columns);
     init();
+  }
+
+  @Override
+  protected Graphics getComponentGraphics(Graphics graphics) {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }
 
   private void init() {

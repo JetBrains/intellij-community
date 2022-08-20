@@ -6,10 +6,8 @@ class KtInterface(
   parentScope: KtScope,
   val nameRange: SrcRange,
   val superTypes: List<KtType>,
-  val constructor: KtConstructor?,
   private val predefinedKind: KtInterfaceKind?,
-  val annotations: KtAnnotations = KtAnnotations(),
-  val formExternalModule: Boolean = false
+  val annotations: KtAnnotations = KtAnnotations()
 ) {
   val open: Boolean = annotations.flags.open
   val abstract: Boolean = annotations.flags.abstract
@@ -90,51 +88,4 @@ class KtInterface(
     return type
   }
 
-  fun buildFields(diagnostics: Diagnostics) {
-    val type = objType
-    if (type != null) {
-      val byName = mutableMapOf<String, MutableList<DefField>>()
-      body.defs.forEach {
-        byName.getOrPut(it.name) { mutableListOf() }.add(it)
-      }
-      byName.values.forEachIndexed { index, defFields ->
-        kind?.buildField(index, mergeFieldDefs(defFields, diagnostics), scope, type, diagnostics, module.keepUnknownFields)
-      }
-    }
-    else if (simpleType != null && constructor != null && (kind is WsData || kind is WsSealed)) {
-      constructor.defs.forEach { defField ->
-        kind?.buildField(1, defField, scope, simpleType!!, diagnostics, module.keepUnknownFields)
-      }
-    }
-  }
-
-  private fun mergeFieldDefs(defs: MutableList<DefField>, diagnostics: Diagnostics): DefField {
-    check(defs.isNotEmpty())
-    if (defs.size == 1) return defs.single()
-    check(defs.size == 2) { "only suspend and block expected, but found: ${defs.joinToString()}" }
-
-    val has = arrayOf(false, false)
-    lateinit var suspend: DefField
-    lateinit var blocking: DefField
-    defs.forEach {
-      if (it.receiver == null) {
-        val hasI = if (it.suspend) 1 else 0
-        check(!has[hasI]) { "${it.nameRange}: duplicated suspend/blocking field" }
-        has[hasI] = true
-        if (it.suspend) suspend = it else blocking = it
-      }
-      else {
-        it.todoMemberExtField(diagnostics)
-      }
-    }
-
-    val msg = "suspend/blocking declarations should match"
-    if (suspend.type != blocking.type) diagnostics.add(suspend.nameRange, "$msg. type not matched")
-    if (blocking.expr) diagnostics.add(suspend.nameRange,
-                                       "blocking field cannot have expression with suspend getter")
-    if (suspend.annotations.flags != blocking.annotations.flags)
-      diagnostics.add(suspend.nameRange, "$msg. annotations not matched")
-
-    return suspend
-  }
 }

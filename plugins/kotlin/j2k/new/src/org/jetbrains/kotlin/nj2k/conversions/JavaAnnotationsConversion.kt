@@ -104,7 +104,8 @@ class JavaAnnotationsConversion(context: NewJ2kConverterContext) : RecursiveAppl
             setOf(
                 "deprecation",
                 "unused",
-                "SpellCheckingInspection"
+                "SpellCheckingInspection",
+                "HardCodedStringLiteral"
             )
 
         private val targetMappings: Map<String, List<String>> =

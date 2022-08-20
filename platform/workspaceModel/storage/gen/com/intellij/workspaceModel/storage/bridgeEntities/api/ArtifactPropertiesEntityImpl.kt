@@ -82,6 +82,9 @@ open class ArtifactPropertiesEntityImpl : ArtifactPropertiesEntity, WorkspaceEnt
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToManyParent<WorkspaceEntityBase>(ARTIFACT_CONNECTION_ID, this) == null) {
           error("Field ArtifactPropertiesEntity#artifact should be initialized")
@@ -91,9 +94,6 @@ open class ArtifactPropertiesEntityImpl : ArtifactPropertiesEntity, WorkspaceEnt
         if (this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)] == null) {
           error("Field ArtifactPropertiesEntity#artifact should be initialized")
         }
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ArtifactPropertiesEntity#entitySource should be initialized")
       }
       if (!getEntityData().isProviderTypeInitialized()) {
         error("Field ArtifactPropertiesEntity#providerType should be initialized")
@@ -115,6 +115,15 @@ open class ArtifactPropertiesEntityImpl : ArtifactPropertiesEntity, WorkspaceEnt
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var artifact: ArtifactEntity
       get() {
@@ -153,15 +162,6 @@ open class ArtifactPropertiesEntityImpl : ArtifactPropertiesEntity, WorkspaceEnt
           this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)] = value
         }
         changedProperty.add("artifact")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override var providerType: String

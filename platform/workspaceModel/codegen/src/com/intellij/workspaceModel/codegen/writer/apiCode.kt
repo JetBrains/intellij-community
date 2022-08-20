@@ -15,7 +15,6 @@ import com.intellij.workspaceModel.codegen.utils.lines
 import com.intellij.workspaceModel.codegen.writer.allFields
 import com.intellij.workspaceModel.codegen.writer.isStandardInterface
 import com.intellij.workspaceModel.codegen.writer.javaName
-import com.intellij.workspaceModel.codegen.writer.type
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
@@ -55,14 +54,14 @@ fun ObjClass<*>.generateCompanionObject(): String = lines {
   }
   val mandatoryFields = allFields.mandatoryFields()
   if (mandatoryFields.isNotEmpty()) {
-    val fields = mandatoryFields.joinToString { "${it.name}: ${it.type.javaType}" }
+    val fields = mandatoryFields.joinToString { "${it.name}: ${it.valueType.javaType}" }
     section(companionObjectHeader) {
       section("operator fun invoke($fields, init: (Builder$builderGeneric.() -> Unit)? = null): $javaFullName") {
         line("val builder = builder()")
         list(mandatoryFields) {
-          if (this.type is ValueType.Set<*> && !this.type.isRefType()) {
+          if (this.valueType is ValueType.Set<*> && !this.valueType.isRefType()) {
             "builder.$name = $name.${fqn7(Collection<*>::toMutableWorkspaceSet)}()"
-          } else if (this.type is ValueType.List<*> && !this.type.isRefType()) {
+          } else if (this.valueType is ValueType.List<*> && !this.valueType.isRefType()) {
             "builder.$name = $name.${fqn7(Collection<*>::toMutableWorkspaceList)}()"
           } else {
             "builder.$name = $name"
@@ -106,7 +105,7 @@ fun ObjClass<*>.generateExtensionCode(): String? {
 
 val ObjProperty<*, *>.wsBuilderApi: String
   get() {
-    val returnType = if (type is ValueType.Collection<*, *> && !type.isRefType()) type.javaMutableType else type.javaType
+    val returnType = if (valueType is ValueType.Collection<*, *> && !valueType.isRefType()) valueType.javaMutableType else valueType.javaType
     return "override var $javaName: $returnType"
   }
 

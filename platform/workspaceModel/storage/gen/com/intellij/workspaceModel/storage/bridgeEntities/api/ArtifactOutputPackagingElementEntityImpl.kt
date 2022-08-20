@@ -81,7 +81,7 @@ open class ArtifactOutputPackagingElementEntityImpl : ArtifactOutputPackagingEle
     fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ArtifactOutputPackagingElementEntity#entitySource should be initialized")
+        error("Field WorkspaceEntity#entitySource should be initialized")
       }
     }
 
@@ -92,13 +92,22 @@ open class ArtifactOutputPackagingElementEntityImpl : ArtifactOutputPackagingEle
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ArtifactOutputPackagingElementEntity
-      this.artifact = dataSource.artifact
       this.entitySource = dataSource.entitySource
+      this.artifact = dataSource.artifact
       if (parents != null) {
         this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var parentEntity: CompositePackagingElementEntity?
       get() {
@@ -145,15 +154,6 @@ open class ArtifactOutputPackagingElementEntityImpl : ArtifactOutputPackagingEle
         checkModificationAllowed()
         getEntityData().artifact = value
         changedProperty.add("artifact")
-
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
 
       }
 
@@ -269,8 +269,8 @@ class ArtifactOutputPackagingElementEntityData : WorkspaceEntityData<ArtifactOut
 
     other as ArtifactOutputPackagingElementEntityData
 
-    if (this.artifact != other.artifact) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.artifact != other.artifact) return false
     return true
   }
 

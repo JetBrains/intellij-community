@@ -117,8 +117,8 @@ fun OverrideMemberChooserObject.generateMember(
     val descriptor = immediateSuper
 
     val bodyType = when {
-        targetClass?.hasExpectModifier() == true -> NO_BODY
-        descriptor.extensionReceiverParameter != null && mode == MemberGenerateMode.OVERRIDE -> FROM_TEMPLATE
+        targetClass?.hasExpectModifier() == true -> NoBody
+        descriptor.extensionReceiverParameter != null && mode == MemberGenerateMode.OVERRIDE -> FromTemplate
         else -> bodyType
     }
 
@@ -273,7 +273,7 @@ private fun generateProperty(
     val returnsNotUnit = returnType != null && !KotlinBuiltIns.isUnit(returnType)
 
     val body =
-        if (bodyType != NO_BODY) {
+        if (bodyType != NoBody) {
             buildString {
                 append("\nget()")
                 append(" = ")
@@ -309,7 +309,7 @@ private fun generateFunction(
     val returnType = descriptor.returnType
     val returnsNotUnit = returnType != null && !KotlinBuiltIns.isUnit(returnType)
 
-    val body = if (bodyType != NO_BODY) {
+    val body = if (bodyType != NoBody) {
         val delegation = generateUnsupportedOrSuperCall(project, descriptor, bodyType, !returnsNotUnit)
         val returnPrefix = if (returnsNotUnit && bodyType.requiresReturn) "return " else ""
         "{$returnPrefix$delegation\n}"
@@ -336,8 +336,8 @@ fun generateUnsupportedOrSuperCall(
     canBeEmpty: Boolean = true
 ): String {
     when (bodyType.effectiveBodyType(canBeEmpty)) {
-        EMPTY_OR_TEMPLATE -> return ""
-        FROM_TEMPLATE -> {
+        EmptyOrTemplate -> return ""
+        FromTemplate -> {
             val templateKind = if (descriptor is FunctionDescriptor) TemplateKind.FUNCTION else TemplateKind.PROPERTY_INITIALIZER
             return getFunctionBodyTextFromTemplate(
                 project,
@@ -352,7 +352,7 @@ fun generateUnsupportedOrSuperCall(
                 append(bodyType.receiverName)
             } else {
                 append("super")
-                if (bodyType == QUALIFIED_SUPER) {
+                if (bodyType == QualifiedSuper) {
                     val superClassFqName = IdeDescriptorRenderers.SOURCE_CODE.renderClassifierName(
                         descriptor.containingDeclaration as ClassifierDescriptor
                     )

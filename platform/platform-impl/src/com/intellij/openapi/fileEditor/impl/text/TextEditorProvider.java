@@ -39,7 +39,7 @@ import java.util.Objects;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public class TextEditorProvider implements DefaultPlatformFileEditorProvider, QuickDefinitionProvider, DumbAware {
+public class TextEditorProvider implements DefaultPlatformFileEditorProvider, TextBasedFileEditorProvider, QuickDefinitionProvider, DumbAware {
   protected static final Logger LOG = Logger.getInstance(TextEditorProvider.class);
 
   private static final Key<TextEditor> TEXT_EDITOR_KEY = Key.create("textEditor");

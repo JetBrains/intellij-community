@@ -142,7 +142,7 @@ internal class ImageSvgPreCompiler(private val compilationOutputRoot: Path? = nu
     private fun getSynchronized(): IkvWriter {
       var store = store
       if (store == null) {
-        val file = dbDir.resolve("icons-v1-$scale$classifier.db")
+        val file = dbDir.resolve("icons-v2-$scale$classifier.db")
         this.file = file
         store = sizeUnawareIkvWriter(file)
         this.store = store
@@ -385,7 +385,8 @@ private fun addEntry(map: IkvWriter, image: BufferedImage, imageKey: Int, totalS
   assert(!image.colorModel.isAlphaPremultiplied)
 
   val data = (image.raster.dataBuffer as DataBufferInt).data
-  val buffer = bufferAllocator.allocate(DataUtil.VAR_INT_MAX_SIZE * 2 + data.size * Int.SIZE_BYTES  + 1)
+  val buffer = bufferAllocator.allocate(DataUtil.VAR_INT_MAX_SIZE * 3 + data.size * Int.SIZE_BYTES  + 1)
+  writeVar(buffer, imageKey)
   if (w == h) {
     if (w < 254) {
       buffer.put(w.toByte())

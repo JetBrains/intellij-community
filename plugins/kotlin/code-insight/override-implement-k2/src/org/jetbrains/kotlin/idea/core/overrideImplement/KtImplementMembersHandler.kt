@@ -35,7 +35,7 @@ open class KtImplementMembersHandler : KtGenerateMembersHandler(true) {
     override fun collectMembersToGenerate(classOrObject: KtClassOrObject): Collection<KtClassMember> {
         return allowAnalysisOnEdt {
             analyze(classOrObject) {
-                getUnimplementedMembers(classOrObject).map { createKtClassMember(it, BodyType.FROM_TEMPLATE, false) }
+                getUnimplementedMembers(classOrObject).map { createKtClassMember(it, BodyType.FromTemplate, false) }
             }
         }
     }
@@ -94,7 +94,7 @@ internal class KtImplementMembersQuickfix(private val members: Collection<KtClas
     override fun isAvailable(project: Project, editor: Editor, file: PsiFile) = true
 
     override fun collectMembersToGenerate(classOrObject: KtClassOrObject): Collection<KtClassMember> {
-        return members.map { createKtClassMember(it, BodyType.FROM_TEMPLATE, false) }
+        return members.map { createKtClassMember(it, BodyType.FromTemplate, false) }
     }
 }
 
@@ -107,7 +107,7 @@ internal class KtImplementAsConstructorParameterQuickfix(private val members: Co
     override fun isAvailable(project: Project, editor: Editor, file: PsiFile) = true
 
     override fun collectMembersToGenerate(classOrObject: KtClassOrObject): Collection<KtClassMember> {
-        return members.filter { it.isProperty }.map { createKtClassMember(it, BodyType.FROM_TEMPLATE, true) }
+        return members.filter { it.isProperty }.map { createKtClassMember(it, BodyType.FromTemplate, true) }
     }
 }
 

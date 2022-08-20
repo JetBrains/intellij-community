@@ -568,7 +568,11 @@
       }
     },
 
-    "Plugins.borderColor": "#515151"
+    "Plugins.borderColor": "#515151",
+
+    "TipOfTheDay": {
+      "Image.borderColor": "#515151"
+    }
   },
 
   "WelcomeScreen.Projects.actions.selectionBackground": "#326FC1",

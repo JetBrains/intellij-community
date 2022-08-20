@@ -70,6 +70,9 @@ open class SimpleChildAbstractEntityImpl : SimpleChildAbstractEntity, WorkspaceE
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToAbstractManyParent<WorkspaceEntityBase>(PARENTINLIST_CONNECTION_ID, this) == null) {
           error("Field SimpleAbstractEntity#parentInList should be initialized")
@@ -79,9 +82,6 @@ open class SimpleChildAbstractEntityImpl : SimpleChildAbstractEntity, WorkspaceE
         if (this.entityLinks[EntityLink(false, PARENTINLIST_CONNECTION_ID)] == null) {
           error("Field SimpleAbstractEntity#parentInList should be initialized")
         }
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field SimpleAbstractEntity#entitySource should be initialized")
       }
     }
 
@@ -98,6 +98,15 @@ open class SimpleChildAbstractEntityImpl : SimpleChildAbstractEntity, WorkspaceE
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var parentInList: CompositeAbstractEntity
       get() {
@@ -136,15 +145,6 @@ open class SimpleChildAbstractEntityImpl : SimpleChildAbstractEntity, WorkspaceE
           this.entityLinks[EntityLink(false, PARENTINLIST_CONNECTION_ID)] = value
         }
         changedProperty.add("parentInList")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override fun getEntityData(): SimpleChildAbstractEntityData = result ?: super.getEntityData() as SimpleChildAbstractEntityData

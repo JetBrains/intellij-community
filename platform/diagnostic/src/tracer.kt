@@ -28,31 +28,30 @@ import kotlin.coroutines.coroutineContext
 fun rootTask(): CoroutineContext = MeasureCoroutineTime
 
 /**
- * This function forces child activity for [withContext] blocks,
- * which don't fork [CopyableThreadContextElement] under normal conditions.
- *
- * Example:
- * ```
- * launch(CoroutineName("init stuff")) {
- *   ...
- *   withContext(subtask("init stuff step 1") {
- *     ...
- *   }
- *   ...
- *   withContext(Dispatchers.EDT + subtask("init stuff step 2") {
- *     ...
- *   }
- *   ...
- * }
+ * This function is designed to be used instead of `withContext(CoroutineName("subtask")) { ... }`.
  */
-@OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
-suspend fun subtask(name: String): CoroutineContext {
-  val measurer = coroutineContext[CoroutineTimeMeasurerKey]
-  val childMeasurer = measurer?.copyForChild() ?: EmptyCoroutineContext
-  return CoroutineName(name) + childMeasurer
+suspend fun <X> subtask(
+  name: String,
+  context: CoroutineContext = EmptyCoroutineContext,
+  action: suspend CoroutineScope.() -> X,
+): X {
+  val namedContext = context + CoroutineName(name)
+  if (coroutineContext[CoroutineTimeMeasurerKey] == null) {
+    return withContext(namedContext, action)
+  }
+  return coroutineScope {
+    @OptIn(ExperimentalStdlibApi::class)
+    val start = if (coroutineContext[CoroutineDispatcher] == context[CoroutineDispatcher]) {
+      // mimic withContext behaviour with its UndispatchedCoroutine
+      CoroutineStart.UNDISPATCHED
+    }
+    else {
+      CoroutineStart.DEFAULT
+    }
+    // async forces the framework to call CopyableThreadContextElement#copyForChild
+    async(namedContext, start, action).await()
+  }
 }
-
-private object CoroutineTimeMeasurerKey : CoroutineContext.Key<CoroutineTimeMeasurer>
 
 private val noActivity: Activity = object : Activity {
   override fun end(): Unit = error("must not be invoked")
@@ -61,6 +60,8 @@ private val noActivity: Activity = object : Activity {
   override fun startChild(name: String): Activity = error("must not be invoked")
   override fun updateThreadName(): Unit = error("must not be invoked")
 }
+
+private object CoroutineTimeMeasurerKey : CoroutineContext.Key<CoroutineTimeMeasurer>
 
 private object MeasureCoroutineTime : CopyableThreadContextElement<Unit> {
 
@@ -92,8 +93,10 @@ private class CoroutineTimeMeasurer(
   override val key: CoroutineContext.Key<*> get() = CoroutineTimeMeasurerKey
 
   private val creationTime: Long = StartUpMeasurer.getCurrentTime()
+
   @Suppress("unused")
   private var currentActivity: Activity? = null
+
   @Suppress("unused")
   private var lastSuspensionTime: Long = -1
 

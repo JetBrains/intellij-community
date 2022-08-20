@@ -17,7 +17,6 @@ public class PyTypeAnnotationVisitorFilter implements PythonVisitorFilter {
              visitorClass == PyByteLiteralInspection.class ||
              visitorClass == PyMandatoryEncodingInspection.class ||
              visitorClass == PyNonAsciiCharInspection.class ||
-             visitorClass == PyInterpreterInspection.class ||
              visitorClass == PyPep8Inspection.class ||
              visitorClass == PyCompatibilityInspection.class ||
              visitorClass == PyPackageRequirementsInspection.class);

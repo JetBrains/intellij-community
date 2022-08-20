@@ -9,7 +9,6 @@ import com.intellij.workspaceModel.codegen.fields.javaType
 import com.intellij.workspaceModel.codegen.utils.fqn
 import com.intellij.workspaceModel.codegen.utils.lines
 import com.intellij.workspaceModel.codegen.writer.allFields
-import com.intellij.workspaceModel.codegen.writer.type
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
@@ -71,7 +70,7 @@ ${
       section("override fun relabel(dataSource: ${WorkspaceEntity::class.fqn}, parents: Set<WorkspaceEntity>?)") {
         line("dataSource as $javaFullName")
         list(allFields.noPersistentId().noRefs()) { lineBuilder, field ->
-          var type = field.type
+          var type = field.valueType
           var qm = ""
           if (type is ValueType.Optional<*>) {
             qm = "?"
@@ -86,8 +85,8 @@ ${
         }
 
         `if`("parents != null") {
-          allRefsFields.filterNot { it.type.getRefType().child }.forEach {
-            val parentType = it.type
+          allRefsFields.filterNot { it.valueType.getRefType().child }.forEach {
+            val parentType = it.valueType
             if (parentType is ValueType.Optional) {
               line("this.${it.name} = parents.filterIsInstance<${parentType.type.javaType}>().singleOrNull()")
             } else {

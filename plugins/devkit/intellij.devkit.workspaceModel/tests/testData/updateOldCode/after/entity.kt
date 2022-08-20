@@ -17,8 +17,8 @@ interface SimpleEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : SimpleEntity, ModifiableWorkspaceEntity<SimpleEntity>, ObjBuilder<SimpleEntity> {
-    override var version: Int
     override var entitySource: EntitySource
+    override var version: Int
     override var name: String
     override var isSimple: Boolean
   }

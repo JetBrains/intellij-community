@@ -89,6 +89,9 @@ open class CompositeChildAbstractEntityImpl : CompositeChildAbstractEntity, Work
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToAbstractManyParent<WorkspaceEntityBase>(PARENTINLIST_CONNECTION_ID, this) == null) {
           error("Field SimpleAbstractEntity#parentInList should be initialized")
@@ -110,9 +113,6 @@ open class CompositeChildAbstractEntityImpl : CompositeChildAbstractEntity, Work
           error("Field CompositeAbstractEntity#children should be initialized")
         }
       }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field CompositeAbstractEntity#entitySource should be initialized")
-      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
@@ -129,6 +129,15 @@ open class CompositeChildAbstractEntityImpl : CompositeChildAbstractEntity, Work
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var parentInList: CompositeAbstractEntity
       get() {
@@ -204,15 +213,6 @@ open class CompositeChildAbstractEntityImpl : CompositeChildAbstractEntity, Work
           this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] = value
         }
         changedProperty.add("children")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override var parentEntity: ParentChainEntity?

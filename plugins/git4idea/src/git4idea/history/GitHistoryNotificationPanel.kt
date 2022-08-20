@@ -36,7 +36,7 @@ object GitHistoryNotificationPanel {
       return null
     }
 
-    return EditorNotificationPanel(LightColors.YELLOW).apply {
+    return EditorNotificationPanel(LightColors.YELLOW, EditorNotificationPanel.Status.Warning).apply {
       text = GitBundle.message("history.indexing.disabled.notification.text")
       createActionLabel(GitBundle.message("history.indexing.disabled.notification.resume.link")) {
         VcsLogBigRepositoriesList.getInstance().removeRepository(root)

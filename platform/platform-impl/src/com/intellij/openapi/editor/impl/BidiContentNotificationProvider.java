@@ -41,7 +41,7 @@ public class BidiContentNotificationProvider extends EditorNotifications.Provide
         Boolean.TRUE.equals(editor.getUserData(DISABLE_NOTIFICATION)) ||
         PropertiesComponent.getInstance().isTrueValue(DISABLE_NOTIFICATION.toString())) return null;
 
-    final EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor);
+    final EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Info);
     panel.setText(EditorBundle.message("bidi.content.message"));
     panel.createActionLabel(EditorBundle.message("bidi.content.choose.message"), () -> showChooserPopup(editor));
     panel.createActionLabel(EditorBundle.message("notification.hide.message"), () -> {

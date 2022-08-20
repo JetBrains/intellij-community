@@ -93,7 +93,7 @@ impl DefaultLaunchConfiguration {
                 debug!("Using exe path from XPLAT_LAUNCHER_CURRENT_EXE_PATH: {x:?}");
                 x
             }
-            Err(_) => { env::current_dir()?.join("xplat_launcher.exe") }
+            Err(_) => { env::current_dir()?.join("xplat-launcher.exe") }
         };
 
         debug!("Resolved current executable path as '{current_exe:?}'");
@@ -583,7 +583,7 @@ fn get_xdg_config_home() -> Option<PathBuf> {
     debug!("XDG_CONFIG_HOME={xdg_config_home}");
 
     if xdg_config_home.is_empty() {
-        return Option::None
+        return None
     }
 
     let path = PathBuf::from(xdg_config_home);
@@ -592,7 +592,7 @@ fn get_xdg_config_home() -> Option<PathBuf> {
         warn!("XDG_CONFIG_HOME is not set to an absolute path, this may be a misconfiguration");
     }
 
-    Option::Some(path)
+    Some(path)
 }
 
 

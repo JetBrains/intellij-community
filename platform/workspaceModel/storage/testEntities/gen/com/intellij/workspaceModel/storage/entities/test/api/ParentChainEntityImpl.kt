@@ -70,7 +70,7 @@ open class ParentChainEntityImpl : ParentChainEntity, WorkspaceEntityBase() {
     fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ParentChainEntity#entitySource should be initialized")
+        error("Field WorkspaceEntity#entitySource should be initialized")
       }
     }
 
@@ -86,6 +86,15 @@ open class ParentChainEntityImpl : ParentChainEntity, WorkspaceEntityBase() {
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var root: CompositeAbstractEntity?
       get() {
@@ -120,15 +129,6 @@ open class ParentChainEntityImpl : ParentChainEntity, WorkspaceEntityBase() {
           this.entityLinks[EntityLink(true, ROOT_CONNECTION_ID)] = value
         }
         changedProperty.add("root")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override fun getEntityData(): ParentChainEntityData = result ?: super.getEntityData() as ParentChainEntityData

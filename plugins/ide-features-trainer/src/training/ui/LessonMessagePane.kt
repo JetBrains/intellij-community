@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.text.StyledTextPane
 import com.intellij.ide.ui.text.paragraph.TextParagraph
 import com.intellij.ide.ui.text.parts.*
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.FontPreferences
 import com.intellij.ui.scale.JBUIScale
@@ -143,18 +142,6 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : Styled
 
   var currentAnimation = 0
   var totalAnimation = 0
-
-  override fun addNotify() {
-    super.addNotify()
-    redraw()
-  }
-
-  override fun updateUI() {
-    super.updateUI()
-    ApplicationManager.getApplication().invokeLater(Runnable {
-      redraw()
-    })
-  }
 
   fun messagesNumber(): Int = activeMessages.size
 

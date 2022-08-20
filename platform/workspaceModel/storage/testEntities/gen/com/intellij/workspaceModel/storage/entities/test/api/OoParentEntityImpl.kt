@@ -80,11 +80,11 @@ open class OoParentEntityImpl : OoParentEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isParentPropertyInitialized()) {
         error("Field OoParentEntity#parentProperty should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field OoParentEntity#entitySource should be initialized")
       }
     }
 
@@ -95,20 +95,12 @@ open class OoParentEntityImpl : OoParentEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as OoParentEntity
-      this.parentProperty = dataSource.parentProperty
       this.entitySource = dataSource.entitySource
+      this.parentProperty = dataSource.parentProperty
       if (parents != null) {
       }
     }
 
-
-    override var parentProperty: String
-      get() = getEntityData().parentProperty
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().parentProperty = value
-        changedProperty.add("parentProperty")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -117,6 +109,14 @@ open class OoParentEntityImpl : OoParentEntity, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var parentProperty: String
+      get() = getEntityData().parentProperty
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().parentProperty = value
+        changedProperty.add("parentProperty")
       }
 
     override var child: OoChildEntity?
@@ -245,8 +245,8 @@ class OoParentEntityData : WorkspaceEntityData<OoParentEntity>() {
 
     other as OoParentEntityData
 
-    if (this.parentProperty != other.parentProperty) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.parentProperty != other.parentProperty) return false
     return true
   }
 

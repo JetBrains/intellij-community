@@ -78,6 +78,9 @@ open class JavaResourceRootEntityImpl : JavaResourceRootEntity, WorkspaceEntityB
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToManyParent<WorkspaceEntityBase>(SOURCEROOT_CONNECTION_ID, this) == null) {
           error("Field JavaResourceRootEntity#sourceRoot should be initialized")
@@ -87,9 +90,6 @@ open class JavaResourceRootEntityImpl : JavaResourceRootEntity, WorkspaceEntityB
         if (this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)] == null) {
           error("Field JavaResourceRootEntity#sourceRoot should be initialized")
         }
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field JavaResourceRootEntity#entitySource should be initialized")
       }
       if (!getEntityData().isRelativeOutputPathInitialized()) {
         error("Field JavaResourceRootEntity#relativeOutputPath should be initialized")
@@ -111,6 +111,15 @@ open class JavaResourceRootEntityImpl : JavaResourceRootEntity, WorkspaceEntityB
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var sourceRoot: SourceRootEntity
       get() {
@@ -149,15 +158,6 @@ open class JavaResourceRootEntityImpl : JavaResourceRootEntity, WorkspaceEntityB
           this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)] = value
         }
         changedProperty.add("sourceRoot")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override var generated: Boolean

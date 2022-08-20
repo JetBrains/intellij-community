@@ -197,19 +197,6 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
   }
 
 
-  private Navigatable @NotNull [] getNavigatables() {
-    HierarchyNodeDescriptor[] selectedDescriptors = getSelectedDescriptors();
-    if (selectedDescriptors.length == 0) return Navigatable.EMPTY_NAVIGATABLE_ARRAY;
-    List<Navigatable> result = new ArrayList<>();
-    for (HierarchyNodeDescriptor descriptor : selectedDescriptors) {
-      Navigatable navigatable = getNavigatable(descriptor);
-      if (navigatable != null) {
-        result.add(navigatable);
-      }
-    }
-    return result.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
-  }
-
   private Navigatable getNavigatable(@NotNull HierarchyNodeDescriptor descriptor) {
     if (descriptor instanceof Navigatable && descriptor.isValid()) {
       return (Navigatable)descriptor;
@@ -254,7 +241,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
       return JBIterable.of(selection).filterMap(this::getElementFromDescriptor).toArray(PsiElement.EMPTY_ARRAY);
     }
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      HierarchyNodeDescriptor descriptor = selection.length > 0 ? selection[0] : null;;
+      HierarchyNodeDescriptor descriptor = selection.length > 0 ? selection[0] : null;
       if (descriptor == null) return null;
       return getNavigatable(descriptor);
     }

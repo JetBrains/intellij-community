@@ -11,9 +11,7 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.vcs.commit.removeEllipsisSuffix
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
-import java.awt.BorderLayout
 import javax.swing.JComponent
-import javax.swing.JPanel
 
 class SessionDialog(
   title: @Nls String,
@@ -21,25 +19,22 @@ class SessionDialog(
   private val mySession: CommitSession,
   private val myChanges: List<Change>,
   private val myCommitMessage: String?,
-  private val myConfigurationComponent: JComponent?
+  private val myConfigurationComponent: JComponent
 ) : DialogWrapper(project, true) {
 
-  private val myCenterPanel = JPanel(BorderLayout())
-
   init {
-    val configurationComponentName = myConfigurationComponent?.getClientProperty(VCS_CONFIGURATION_UI_TITLE) as? String
+    val configurationComponentName = myConfigurationComponent.getClientProperty(VCS_CONFIGURATION_UI_TITLE) as? String
     setTitle(if (configurationComponentName.isNullOrBlank()) title.removeEllipsisSuffix() else configurationComponentName)
     init()
     initValidation()
   }
 
   override fun createCenterPanel(): JComponent {
-    myConfigurationComponent?.let { myCenterPanel.add(it, BorderLayout.CENTER) }
-    return myCenterPanel
+    return myConfigurationComponent
   }
 
   override fun getPreferredFocusedComponent(): JComponent? =
-    myConfigurationComponent?.let { IdeFocusTraversalPolicy.getPreferredFocusedComponent(it) }
+    IdeFocusTraversalPolicy.getPreferredFocusedComponent(myConfigurationComponent)
 
   override fun doValidate(): ValidationInfo? {
     isOKActionEnabled = mySession.canExecute(myChanges, myCommitMessage)

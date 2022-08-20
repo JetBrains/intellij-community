@@ -125,11 +125,11 @@ open class ModuleEntityImpl : ModuleEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isNameInitialized()) {
         error("Field ModuleEntity#name should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ModuleEntity#entitySource should be initialized")
       }
       if (!getEntityData().isDependenciesInitialized()) {
         error("Field ModuleEntity#dependencies should be initialized")
@@ -165,22 +165,14 @@ open class ModuleEntityImpl : ModuleEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ModuleEntity
-      this.name = dataSource.name
       this.entitySource = dataSource.entitySource
+      this.name = dataSource.name
       this.type = dataSource.type
       this.dependencies = dataSource.dependencies.toMutableList()
       if (parents != null) {
       }
     }
 
-
-    override var name: String
-      get() = getEntityData().name
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().name = value
-        changedProperty.add("name")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -189,6 +181,14 @@ open class ModuleEntityImpl : ModuleEntity, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var name: String
+      get() = getEntityData().name
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().name = value
+        changedProperty.add("name")
       }
 
     override var type: String?
@@ -454,19 +454,19 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
       when (item) {
         is ModuleDependencyItem.Exportable -> {
           when (item) {
-            is ModuleDependencyItem.Exportable.ModuleDependency -> {
-              result.add(item.module)
-            }
             is ModuleDependencyItem.Exportable.LibraryDependency -> {
               result.add(item.library)
             }
+            is ModuleDependencyItem.Exportable.ModuleDependency -> {
+              result.add(item.module)
+            }
           }
-        }
-        is ModuleDependencyItem.SdkDependency -> {
         }
         is ModuleDependencyItem.InheritedSdkDependency -> {
         }
         is ModuleDependencyItem.ModuleSourceDependency -> {
+        }
+        is ModuleDependencyItem.SdkDependency -> {
         }
       }
     }
@@ -478,19 +478,19 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
       when (item) {
         is ModuleDependencyItem.Exportable -> {
           when (item) {
-            is ModuleDependencyItem.Exportable.ModuleDependency -> {
-              index.index(this, item.module)
-            }
             is ModuleDependencyItem.Exportable.LibraryDependency -> {
               index.index(this, item.library)
             }
+            is ModuleDependencyItem.Exportable.ModuleDependency -> {
+              index.index(this, item.module)
+            }
           }
-        }
-        is ModuleDependencyItem.SdkDependency -> {
         }
         is ModuleDependencyItem.InheritedSdkDependency -> {
         }
         is ModuleDependencyItem.ModuleSourceDependency -> {
+        }
+        is ModuleDependencyItem.SdkDependency -> {
         }
       }
     }
@@ -503,25 +503,25 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
       when (item) {
         is ModuleDependencyItem.Exportable -> {
           when (item) {
-            is ModuleDependencyItem.Exportable.ModuleDependency -> {
-              val removedItem_item_module = mutablePreviousSet.remove(item.module)
-              if (!removedItem_item_module) {
-                index.index(this, item.module)
-              }
-            }
             is ModuleDependencyItem.Exportable.LibraryDependency -> {
               val removedItem_item_library = mutablePreviousSet.remove(item.library)
               if (!removedItem_item_library) {
                 index.index(this, item.library)
               }
             }
+            is ModuleDependencyItem.Exportable.ModuleDependency -> {
+              val removedItem_item_module = mutablePreviousSet.remove(item.module)
+              if (!removedItem_item_module) {
+                index.index(this, item.module)
+              }
+            }
           }
-        }
-        is ModuleDependencyItem.SdkDependency -> {
         }
         is ModuleDependencyItem.InheritedSdkDependency -> {
         }
         is ModuleDependencyItem.ModuleSourceDependency -> {
+        }
+        is ModuleDependencyItem.SdkDependency -> {
         }
       }
     }
@@ -538,20 +538,6 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
         is ModuleDependencyItem.Exportable -> {
           val __it = _it
           val res__it = when (__it) {
-            is ModuleDependencyItem.Exportable.ModuleDependency -> {
-              val __it_module_data = if (__it.module == oldLink) {
-                changed = true
-                newLink as ModuleId
-              }
-              else {
-                null
-              }
-              var __it_data = __it
-              if (__it_module_data != null) {
-                __it_data = __it_data.copy(module = __it_module_data)
-              }
-              __it_data
-            }
             is ModuleDependencyItem.Exportable.LibraryDependency -> {
               val __it_library_data = if (__it.library == oldLink) {
                 changed = true
@@ -566,16 +552,30 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
               }
               __it_data
             }
+            is ModuleDependencyItem.Exportable.ModuleDependency -> {
+              val __it_module_data = if (__it.module == oldLink) {
+                changed = true
+                newLink as ModuleId
+              }
+              else {
+                null
+              }
+              var __it_data = __it
+              if (__it_module_data != null) {
+                __it_data = __it_data.copy(module = __it_module_data)
+              }
+              __it_data
+            }
           }
           res__it
-        }
-        is ModuleDependencyItem.SdkDependency -> {
-          _it
         }
         is ModuleDependencyItem.InheritedSdkDependency -> {
           _it
         }
         is ModuleDependencyItem.ModuleSourceDependency -> {
+          _it
+        }
+        is ModuleDependencyItem.SdkDependency -> {
           _it
         }
       }
@@ -653,8 +653,8 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
 
     other as ModuleEntityData
 
-    if (this.name != other.name) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.name != other.name) return false
     if (this.type != other.type) return false
     if (this.dependencies != other.dependencies) return false
     return true
@@ -689,19 +689,19 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
   }
 
   override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.add(ModuleId::class.java)
     collector.add(ModuleDependencyItem.Exportable.LibraryDependency::class.java)
+    collector.add(ModuleDependencyItem.SdkDependency::class.java)
     collector.add(LibraryId::class.java)
     collector.add(ModuleDependencyItem.Exportable::class.java)
+    collector.add(LibraryTableId::class.java)
     collector.add(ModuleDependencyItem.DependencyScope::class.java)
+    collector.add(ModuleDependencyItem.Exportable.ModuleDependency::class.java)
     collector.add(ModuleDependencyItem::class.java)
     collector.add(LibraryTableId.ModuleLibraryTableId::class.java)
-    collector.add(ModuleDependencyItem.SdkDependency::class.java)
     collector.add(LibraryTableId.GlobalLibraryTableId::class.java)
-    collector.add(LibraryTableId::class.java)
-    collector.add(ModuleDependencyItem.Exportable.ModuleDependency::class.java)
-    collector.addObject(ModuleDependencyItem.ModuleSourceDependency::class.java)
+    collector.add(ModuleId::class.java)
     collector.addObject(ModuleDependencyItem.InheritedSdkDependency::class.java)
+    collector.addObject(ModuleDependencyItem.ModuleSourceDependency::class.java)
     collector.addObject(LibraryTableId.ProjectLibraryTableId::class.java)
     this.dependencies?.let { collector.add(it::class.java) }
     collector.sameForAllEntities = false

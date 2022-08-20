@@ -26,6 +26,7 @@ import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.InstanceOfUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1593,7 +1594,9 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final PsiInstanceOfExpression other = getExpression(PsiInstanceOfExpression.class, expression);
     if (other == null) return;
     if (!myMatchingVisitor.setResult(myMatchingVisitor.match(expression.getOperand(), other.getOperand()))) return;
-    if (!myMatchingVisitor.setResult(myMatchingVisitor.match(expression.getCheckType(), other.getCheckType()))) return;
+    PsiTypeElement expressionType = InstanceOfUtils.findCheckTypeElement(expression);
+    PsiTypeElement otherType = InstanceOfUtils.findCheckTypeElement(other);
+    if (!myMatchingVisitor.setResult(myMatchingVisitor.match(expressionType, otherType))) return;
     final PsiPattern pattern = expression.getPattern();
     PsiPattern otherPattern = other.getPattern();
     if (pattern instanceof PsiTypeTestPattern) {
@@ -1601,7 +1604,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       otherPattern = skipParenthesesDown(otherPattern);
       if (otherPattern instanceof PsiTypeTestPattern) {
         final PsiTypeTestPattern otherVariable = (PsiTypeTestPattern)otherPattern;
-        myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(typeTestPattern.getPatternVariable(), otherVariable.getPatternVariable()));
+        myMatchingVisitor.setResult(
+          myMatchingVisitor.matchOptionally(typeTestPattern.getPatternVariable(), otherVariable.getPatternVariable()));
       }
       else {
         myMatchingVisitor.setResult(myMatchingVisitor.allowsAbsenceOfMatch(typeTestPattern.getPatternVariable()));

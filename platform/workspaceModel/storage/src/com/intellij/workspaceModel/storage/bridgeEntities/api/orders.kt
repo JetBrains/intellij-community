@@ -24,8 +24,8 @@ interface FacetsOrderEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : FacetsOrderEntity, ModifiableWorkspaceEntity<FacetsOrderEntity>, ObjBuilder<FacetsOrderEntity> {
-    override var orderOfFacets: MutableList<String>
     override var entitySource: EntitySource
+    override var orderOfFacets: MutableList<String>
     override var moduleEntity: ModuleEntity
   }
 
@@ -60,8 +60,8 @@ interface FacetExternalSystemIdEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : FacetExternalSystemIdEntity, ModifiableWorkspaceEntity<FacetExternalSystemIdEntity>, ObjBuilder<FacetExternalSystemIdEntity> {
-    override var externalSystemId: String
     override var entitySource: EntitySource
+    override var externalSystemId: String
     override var facet: FacetEntity
   }
 
@@ -99,8 +99,8 @@ interface ArtifactExternalSystemIdEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ArtifactExternalSystemIdEntity, ModifiableWorkspaceEntity<ArtifactExternalSystemIdEntity>, ObjBuilder<ArtifactExternalSystemIdEntity> {
-    override var externalSystemId: String
     override var entitySource: EntitySource
+    override var externalSystemId: String
     override var artifactEntity: ArtifactEntity
   }
 
@@ -138,8 +138,8 @@ interface LibraryExternalSystemIdEntity: WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : LibraryExternalSystemIdEntity, ModifiableWorkspaceEntity<LibraryExternalSystemIdEntity>, ObjBuilder<LibraryExternalSystemIdEntity> {
-    override var externalSystemId: String
     override var entitySource: EntitySource
+    override var externalSystemId: String
     override var library: LibraryEntity
   }
 
@@ -177,8 +177,8 @@ interface ArtifactsOrderEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ArtifactsOrderEntity, ModifiableWorkspaceEntity<ArtifactsOrderEntity>, ObjBuilder<ArtifactsOrderEntity> {
-    override var orderOfArtifacts: MutableList<String>
     override var entitySource: EntitySource
+    override var orderOfArtifacts: MutableList<String>
   }
 
   companion object : Type<ArtifactsOrderEntity, Builder>() {

@@ -2,14 +2,15 @@
 package com.intellij.execution.ui
 
 import com.intellij.execution.*
+import com.intellij.execution.actions.RunConfigurationsComboBoxAction
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.executors.ExecutorGroup
-import com.intellij.execution.impl.*
+import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.impl.ExecutionManagerImpl.Companion.isProcessRunning
+import com.intellij.execution.impl.isOfSameType
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ActivityTracker
 import com.intellij.ide.DataManager
@@ -31,9 +32,11 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.*
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindowId
@@ -71,6 +74,16 @@ import kotlin.concurrent.withLock
 import kotlin.properties.Delegates
 
 private const val RUN_TOOLBAR_WIDGET_GROUP = "RunToolbarWidgetCustomizableActionGroup"
+
+private val CONF: Key<RunnerAndConfigurationSettings> = Key.create("RUNNER_AND_CONFIGURATION_SETTINGS")
+private val COLOR: Key<RunButtonColors> = Key.create("RUN_BUTTON_COLOR")
+private val EXECUTOR_ID: Key<String> = Key.create("RUN_WIDGET_EXECUTOR_ID")
+
+private const val RUN: String = DefaultRunExecutor.EXECUTOR_ID
+private const val DEBUG: String = ToolWindowId.DEBUG
+private const val PROFILER: String = "Profiler"
+private const val LOADING: String = "Loading"
+private const val RESTART: String = "Restart"
 
 internal class RunToolbarWidgetFactory : MainToolbarProjectWidgetFactory {
   override fun createWidget(project: Project): JComponent =
@@ -212,105 +225,80 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
     if (presentation.getClientProperty(CONF) == null) {
       component.dropDownPopup = null
     } else {
-      component.dropDownPopup = { context -> createPopup(context, context.getData(PlatformDataKeys.PROJECT)!!) }
+      component.dropDownPopup = { context -> createRunConfigurationPopup(context, context.getData(PlatformDataKeys.PROJECT)!!) }
     }
     component.toolTipText = presentation.description
     component.invalidate()
   }
+}
 
-  private fun createPopup(context: DataContext, project: Project): JBPopup {
-    val actions = DefaultActionGroup()
-    val registry = ExecutorRegistry.getInstance()
-    val runExecutor = registry.getExecutorById(RUN) ?: error("No '$RUN' executor found")
-    val debugExecutor = registry.getExecutorById(DEBUG) ?: error("No '$DEBUG' executor found")
+internal fun createRunConfigurationsActionGroup(project: Project, addHeader: Boolean = true): ActionGroup {
+  val actions = DefaultActionGroup()
+  val registry = ExecutorRegistry.getInstance()
+  val runExecutor = registry.getExecutorById(RUN) ?: error("No '${RUN}' executor found")
+  val debugExecutor = registry.getExecutorById(DEBUG) ?: error("No '${DEBUG}' executor found")
+  if (addHeader) {
     val profilerExecutor: ExecutorGroup<*>? = registry.getExecutorById(PROFILER) as? ExecutorGroup<*>
     actions.add(RunToolbarWidgetRunAction(runExecutor) { RunManager.getInstance(it).selectedConfiguration })
     actions.add(RunToolbarWidgetRunAction(debugExecutor) { RunManager.getInstance(it).selectedConfiguration })
     if (profilerExecutor != null) {
       actions.add(profilerExecutor.createExecutorActionGroup { RunManager.getInstance(it).selectedConfiguration })
     }
-    actions.add(Separator.create(ExecutionBundle.message("run.toolbar.widget.dropdown.recent.separator.text")))
-    RunConfigurationStartHistory.getInstance(project).history().mapTo(mutableSetOf()) { it.configuration }.forEach { conf ->
-      val inlineActions = mutableListOf<AnAction>()
-      inlineActions.add(RunToolbarWidgetRunAction(runExecutor) { conf })
-      inlineActions.add(RunToolbarWidgetRunAction(debugExecutor) { conf })
-
-      actions.add(ActionGroupWithInlineActions(conf.shortenName(), true, inlineActions).apply {
-        templatePresentation.icon = conf.configuration.icon
-        if (conf.isRunning(project)) {
-          templatePresentation.icon = ExecutionUtil.getLiveIndicator(templatePresentation.icon)
-        }
-
-        if (profilerExecutor != null) {
-          add(profilerExecutor.createExecutorActionGroup { conf })
-        }
-        add(Separator.create())
-        add(DumbAwareAction.create(ExecutionBundle.message("run.toolbar.widget.dropdown.edit.text")) {
-          it.project?.let { project ->
-            EditConfigurationsDialog(project, object: ProjectRunConfigurationConfigurable(project) {
-              override fun getSelectedConfiguration() = conf
-            }).show()
-          }
-        })
-        add(DumbAwareAction.create(ExecutionBundle.message("run.toolbar.widget.dropdown.delete.text")) {
-          val prj = it.project ?: return@create
-          if (Messages.showYesNoDialog(prj, ExecutionBundle.message("run.toolbar.widget.delete.dialog.message", conf.shortenName()), ExecutionBundle.message("run.toolbar.widget.delete.dialog.title"), null) == Messages.YES) {
-            val runManager = RunManagerImpl.getInstanceImpl(prj)
-            runManager.removeConfiguration(conf)
-          }
-        })
-      })
-    }
-    actions.add(Separator.create())
-    actions.add(DelegateAction({ ExecutionBundle.message("run.toolbar.widget.all.configurations") }, ActionManager.getInstance().getAction("ChooseRunConfiguration")))
-    actions.add(ActionManager.getInstance().getAction("editRunConfigurations"))
-    return JBPopupFactory.getInstance().createActionGroupPopup(
-      null,
-      actions,
-      context,
-      JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
-      true,
-      ActionPlaces.getPopupPlace(ActionPlaces.MAIN_TOOLBAR)
-    ).apply { disableExpandableItems(this) }
   }
+  actions.add(Separator.create(ExecutionBundle.message("run.toolbar.widget.dropdown.recent.separator.text")))
+  RunConfigurationStartHistory.getInstance(project).history().mapTo(mutableSetOf()) { it.configuration }.forEach { conf ->
+    val inlineActions = mutableListOf<AnAction>()
+    inlineActions.add(RunToolbarWidgetRunAction(runExecutor) { conf })
+    inlineActions.add(RunToolbarWidgetRunAction(debugExecutor) { conf })
 
-  private fun disableExpandableItems(popup: ListPopup) {
-    val list = (popup as? ListPopupImpl)?.list
-    (list as? JBList<*>)?.setExpandableItemsEnabled(false)
+    actions.add(ActionGroupWithInlineActions(inlineActions, conf, project))
   }
+  actions.add(Separator.create())
+  actions.add(DelegateAction({ ExecutionBundle.message("run.toolbar.widget.all.configurations") },
+                             ActionManager.getInstance().getAction("ChooseRunConfiguration")))
+  actions.add(ActionManager.getInstance().getAction("editRunConfigurations"))
+  return actions
+}
 
-  private fun ExecutorGroup<*>.createExecutorActionGroup(conf: (Project) -> RunnerAndConfigurationSettings?) = DefaultActionGroup().apply {
-    templatePresentation.text = actionName
-    isPopup = true
+private fun createRunConfigurationPopup(context: DataContext, project: Project): JBPopup {
+  val actions = createRunConfigurationsActionGroup(project)
+  return JBPopupFactory.getInstance().createActionGroupPopup(
+    null,
+    actions,
+    context,
+    JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+    true,
+    ActionPlaces.getPopupPlace(ActionPlaces.MAIN_TOOLBAR)
+  ).apply { disableExpandableItems(this) }
+}
 
-    childExecutors().forEach { executor ->
-      add(RunToolbarWidgetRunAction(executor, hideIfDisable = true, conf))
-    }
+
+private fun disableExpandableItems(popup: ListPopup) {
+  val list = (popup as? ListPopupImpl)?.list
+  (list as? JBList<*>)?.setExpandableItemsEnabled(false)
+}
+
+private fun ExecutorGroup<*>.createExecutorActionGroup(conf: (Project) -> RunnerAndConfigurationSettings?) = DefaultActionGroup().apply {
+  templatePresentation.text = actionName
+  isPopup = true
+
+  childExecutors().forEach { executor ->
+    add(RunToolbarWidgetRunAction(executor, hideIfDisable = true, conf))
   }
+}
 
-  private class DelegateAction(val string: Supplier<@Nls String>, delegate: AnAction) : AnActionWrapper(delegate) {
+private class DelegateAction(val string: Supplier<@Nls String>, delegate: AnAction) : AnActionWrapper(delegate) {
 
-    override fun update(e: AnActionEvent) {
-      super.update(e)
-      e.presentation.text = string.get()
-    }
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    e.presentation.text = string.get()
   }
+}
 
-  private class ActionGroupWithInlineActions(@NlsActions.ActionText name: String, popup: Boolean, private val actions: List<AnAction>) : DefaultActionGroup(name, popup), InlineActionsHolder {
-    override fun getInlineActions(): List<AnAction> = actions
-  }
-
-  companion object {
-    private val CONF: Key<RunnerAndConfigurationSettings> = Key.create("RUNNER_AND_CONFIGURATION_SETTINGS")
-    private val COLOR: Key<RunButtonColors> = Key.create("RUN_BUTTON_COLOR")
-    private val EXECUTOR_ID: Key<String> = Key.create("RUN_WIDGET_EXECUTOR_ID")
-
-    const val RUN: String = DefaultRunExecutor.EXECUTOR_ID
-    const val DEBUG: String = ToolWindowId.DEBUG
-    const val PROFILER: String = "Profiler"
-    const val LOADING: String = "Loading"
-    const val RESTART: String = "Restart"
-  }
+private class ActionGroupWithInlineActions(
+  private val actions: List<AnAction>, configuration: RunnerAndConfigurationSettings, project: Project
+) : RunConfigurationsComboBoxAction.SelectConfigAction(configuration, project, excludeRunAndDebug), InlineActionsHolder {
+  override fun getInlineActions(): List<AnAction> = actions
 }
 
 class StopWithDropDownAction : AnAction(), CustomComponentAction, DumbAware {
@@ -433,7 +421,7 @@ private class RunToolbarWidgetRunAction(
     fun reword(executor: Executor, restart: Boolean, configuration: String): String {
       return when {
         !restart -> ExecutionBundle.message("run.toolbar.widget.run.tooltip.text", executor.actionName, configuration)
-        executor.id == RunWithDropDownAction.RUN -> ExecutionBundle.message("run.toolbar.widget.rerun.text", configuration)
+        executor.id == RUN -> ExecutionBundle.message("run.toolbar.widget.rerun.text", configuration)
         else -> ExecutionBundle.message("run.toolbar.widget.restart.text", executor.actionName, configuration)
       }
     }

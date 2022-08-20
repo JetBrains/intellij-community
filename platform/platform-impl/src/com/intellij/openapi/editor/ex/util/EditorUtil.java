@@ -658,12 +658,8 @@ public final class EditorUtil {
 
   @NotNull
   public static TextRange getSelectionInAnyMode(Editor editor) {
-    SelectionModel selection = editor.getSelectionModel();
-    int[] starts = selection.getBlockSelectionStarts();
-    int[] ends = selection.getBlockSelectionEnds();
-    int start = starts.length > 0 ? starts[0] : selection.getSelectionStart();
-    int end = ends.length > 0 ? ends[ends.length - 1] : selection.getSelectionEnd();
-    return TextRange.create(start, end);
+    List<Caret> carets = editor.getCaretModel().getAllCarets();
+    return carets.get(0).getSelectionRange().union(carets.get(carets.size() - 1).getSelectionRange());
   }
 
   public static int logicalToVisualLine(@NotNull Editor editor, int logicalLine) {

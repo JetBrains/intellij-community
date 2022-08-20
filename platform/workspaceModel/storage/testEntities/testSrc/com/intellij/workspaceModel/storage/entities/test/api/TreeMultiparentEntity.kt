@@ -21,8 +21,8 @@ interface TreeMultiparentRootEntity : WorkspaceEntityWithPersistentId {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : TreeMultiparentRootEntity, ModifiableWorkspaceEntity<TreeMultiparentRootEntity>, ObjBuilder<TreeMultiparentRootEntity> {
-    override var data: String
     override var entitySource: EntitySource
+    override var data: String
     override var children: List<TreeMultiparentLeafEntity>
   }
 
@@ -54,8 +54,8 @@ interface TreeMultiparentLeafEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : TreeMultiparentLeafEntity, ModifiableWorkspaceEntity<TreeMultiparentLeafEntity>, ObjBuilder<TreeMultiparentLeafEntity> {
-    override var data: String
     override var entitySource: EntitySource
+    override var data: String
     override var mainParent: TreeMultiparentRootEntity?
     override var leafParent: TreeMultiparentLeafEntity?
     override var children: List<TreeMultiparentLeafEntity>

@@ -9,8 +9,6 @@ open class KtBlock(
 ) {
   val children = mutableListOf<KtBlock>()
   val defs = mutableListOf<DefField>()
-  var _generatedCode: IntRange? = null
-  var _extensionCode: IntRange? = null
   var range: SrcRange? = null
   val text: String? get() = range?.text
 }

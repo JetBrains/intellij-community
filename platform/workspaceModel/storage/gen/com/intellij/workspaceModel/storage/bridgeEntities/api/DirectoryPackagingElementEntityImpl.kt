@@ -96,6 +96,9 @@ open class DirectoryPackagingElementEntityImpl : DirectoryPackagingElementEntity
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       // Check initialization for list with ref type
       if (_diff != null) {
         if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(CHILDREN_CONNECTION_ID, this) == null) {
@@ -110,9 +113,6 @@ open class DirectoryPackagingElementEntityImpl : DirectoryPackagingElementEntity
       if (!getEntityData().isDirectoryNameInitialized()) {
         error("Field DirectoryPackagingElementEntity#directoryName should be initialized")
       }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field DirectoryPackagingElementEntity#entitySource should be initialized")
-      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
@@ -122,14 +122,23 @@ open class DirectoryPackagingElementEntityImpl : DirectoryPackagingElementEntity
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as DirectoryPackagingElementEntity
-      this.directoryName = dataSource.directoryName
       this.entitySource = dataSource.entitySource
+      this.directoryName = dataSource.directoryName
       if (parents != null) {
         this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
         this.artifact = parents.filterIsInstance<ArtifactEntity>().singleOrNull()
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var parentEntity: CompositePackagingElementEntity?
       get() {
@@ -250,15 +259,6 @@ open class DirectoryPackagingElementEntityImpl : DirectoryPackagingElementEntity
         changedProperty.add("directoryName")
       }
 
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
-      }
-
     override fun getEntityData(): DirectoryPackagingElementEntityData = result
                                                                         ?: super.getEntityData() as DirectoryPackagingElementEntityData
 
@@ -320,8 +320,8 @@ class DirectoryPackagingElementEntityData : WorkspaceEntityData<DirectoryPackagi
 
     other as DirectoryPackagingElementEntityData
 
-    if (this.directoryName != other.directoryName) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.directoryName != other.directoryName) return false
     return true
   }
 

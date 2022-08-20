@@ -64,11 +64,11 @@ open class MainEntityListImpl : MainEntityList, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isXInitialized()) {
         error("Field MainEntityList#x should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field MainEntityList#entitySource should be initialized")
       }
     }
 
@@ -79,20 +79,12 @@ open class MainEntityListImpl : MainEntityList, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as MainEntityList
-      this.x = dataSource.x
       this.entitySource = dataSource.entitySource
+      this.x = dataSource.x
       if (parents != null) {
       }
     }
 
-
-    override var x: String
-      get() = getEntityData().x
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().x = value
-        changedProperty.add("x")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -101,6 +93,14 @@ open class MainEntityListImpl : MainEntityList, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var x: String
+      get() = getEntityData().x
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().x = value
+        changedProperty.add("x")
       }
 
     override fun getEntityData(): MainEntityListData = result ?: super.getEntityData() as MainEntityListData
@@ -160,8 +160,8 @@ class MainEntityListData : WorkspaceEntityData<MainEntityList>() {
 
     other as MainEntityListData
 
-    if (this.x != other.x) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.x != other.x) return false
     return true
   }
 

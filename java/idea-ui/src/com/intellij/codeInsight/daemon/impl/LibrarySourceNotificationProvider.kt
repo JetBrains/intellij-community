@@ -47,7 +47,7 @@ class LibrarySourceNotificationProvider : EditorNotificationProvider {
           val clsFile = offender.originalElement.containingFile?.virtualFile
           if (clsFile != null && !clsFile.path.matches(ANDROID_SDK_PATTERN)) {
             return Function {
-              val panel = EditorNotificationPanel(LightColors.RED)
+              val panel = EditorNotificationPanel(LightColors.RED, EditorNotificationPanel.Status.Error)
               panel.text = JavaUiBundle.message("library.source.mismatch", offender.name)
               panel.createActionLabel(JavaUiBundle.message("library.source.open.class")) {
                 if (!project.isDisposed && clsFile.isValid) {

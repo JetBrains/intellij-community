@@ -120,11 +120,11 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
         val substitution = getTypeSubstitution(superClassDescriptor.defaultType, subClassDescriptor.defaultType).orEmpty()
         val descriptorToImplement = superMemberDescriptor.substitute(substitution) as CallableMemberDescriptor
         val chooserObject = OverrideMemberChooserObject.create(
-            member.project,
-            descriptorToImplement,
-            descriptorToImplement,
-            BodyType.FROM_TEMPLATE,
-            preferConstructorParameters
+          member.project,
+          descriptorToImplement,
+          descriptorToImplement,
+          BodyType.FromTemplate,
+          preferConstructorParameters
         )
         GenerateMembersHandler.generateMembers(editor, targetClass, listOf(chooserObject), false)
     }

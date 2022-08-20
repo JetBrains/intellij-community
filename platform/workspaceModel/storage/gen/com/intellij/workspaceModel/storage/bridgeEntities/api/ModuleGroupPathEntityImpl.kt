@@ -77,6 +77,9 @@ open class ModuleGroupPathEntityImpl : ModuleGroupPathEntity, WorkspaceEntityBas
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToOneParent<WorkspaceEntityBase>(MODULE_CONNECTION_ID, this) == null) {
           error("Field ModuleGroupPathEntity#module should be initialized")
@@ -86,9 +89,6 @@ open class ModuleGroupPathEntityImpl : ModuleGroupPathEntity, WorkspaceEntityBas
         if (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] == null) {
           error("Field ModuleGroupPathEntity#module should be initialized")
         }
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ModuleGroupPathEntity#entitySource should be initialized")
       }
       if (!getEntityData().isPathInitialized()) {
         error("Field ModuleGroupPathEntity#path should be initialized")
@@ -109,6 +109,15 @@ open class ModuleGroupPathEntityImpl : ModuleGroupPathEntity, WorkspaceEntityBas
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var module: ModuleEntity
       get() {
@@ -143,15 +152,6 @@ open class ModuleGroupPathEntityImpl : ModuleGroupPathEntity, WorkspaceEntityBas
           this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
         }
         changedProperty.add("module")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     private val pathUpdater: (value: List<String>) -> Unit = { value ->

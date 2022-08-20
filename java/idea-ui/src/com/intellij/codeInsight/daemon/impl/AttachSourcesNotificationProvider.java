@@ -88,7 +88,7 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
 
     String classFileInfo = getTextWithClassFileInfo(file);
     Function<? super FileEditor, ? extends EditorNotificationPanel> notificationPanelCreator = fileEditor ->
-      new EditorNotificationPanel(fileEditor)
+      new EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Info)
         .text(classFileInfo);
 
     VirtualFile sourceFile = JavaEditorFileSwapper.findSourceFile(project, file);

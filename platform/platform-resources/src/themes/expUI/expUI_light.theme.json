@@ -565,7 +565,15 @@
       }
     },
 
-    "WelcomeScreen.Details.background": "Grey13"
+    "WelcomeScreen.Details.background": "Grey13",
+
+    "TipOfTheDay": {
+      "Image.borderColor": "Grey10"
+    },
+
+    "Lesson": {
+      "shortcutBackground": "Grey10"
+    }
   },
 
   "icons": {

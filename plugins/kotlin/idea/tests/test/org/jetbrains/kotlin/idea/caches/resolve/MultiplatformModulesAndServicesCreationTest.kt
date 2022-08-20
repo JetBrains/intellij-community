@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.idea.codeMetaInfo.CodeMetaInfoTestCase
 import org.jetbrains.kotlin.idea.codeMetaInfo.findCorrespondingFileInTestDir
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.TestRoot
+import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.resolve.descriptorUtil.getKotlinTypeRefiner
 import org.jetbrains.kotlin.resolve.descriptorUtil.isTypeRefinementEnabled

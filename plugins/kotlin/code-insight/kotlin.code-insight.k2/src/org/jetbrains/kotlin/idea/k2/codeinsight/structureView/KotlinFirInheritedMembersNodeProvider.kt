@@ -14,19 +14,19 @@ class KotlinFirInheritedMembersNodeProvider : InheritedMembersNodeProvider<TreeE
     override fun provideNodes(node: TreeElement): Collection<TreeElement> {
         if (node !is KotlinFirStructureViewElement) return listOf()
 
-        val element = node.element as? KtClassOrObject ?: return listOf()
+        val ktClassOrObject = node.element as? KtClassOrObject ?: return listOf()
 
-        analyze(element) {
+        analyze(ktClassOrObject) {
             
-            val children = ArrayList<TreeElement>()
-            val descriptor = element.getSymbol() as? KtClassOrObjectSymbol ?: return listOf()
-            
-            descriptor.getMemberScope().getAllSymbols().forEach { memberDescriptor ->
-                if (memberDescriptor.origin == KtSymbolOrigin.INTERSECTION_OVERRIDE) return@forEach
-                if (memberDescriptor is KtClassOrObjectSymbol) return@forEach
-                val psi = memberDescriptor.psi
+            val children = mutableListOf<TreeElement>()
+            val descriptor = ktClassOrObject.getSymbol() as? KtClassOrObjectSymbol ?: return listOf()
+
+            for (memberSymbol in descriptor.getMemberScope().getAllSymbols()) {
+                if (memberSymbol.origin == KtSymbolOrigin.INTERSECTION_OVERRIDE) continue
+                if (memberSymbol is KtClassOrObjectSymbol) continue
+                val psi = memberSymbol.psi
                 if (psi is NavigatablePsiElement) {
-                    children.add(KotlinFirStructureViewElement(psi, element, memberDescriptor.createPointer(), true))
+                    children.add(KotlinFirStructureViewElement(psi, ktClassOrObject, memberSymbol.createPointer(), isInherited = true))
                 }
             }
 

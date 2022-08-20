@@ -14,8 +14,8 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.importing.BuildHelperMavenPluginUtil
 import org.jetbrains.idea.maven.importing.MavenImporter
-import org.jetbrains.idea.maven.importing.MavenModuleType
 import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator
+import org.jetbrains.idea.maven.importing.StandardMavenModuleType
 import org.jetbrains.idea.maven.project.MavenImportingSettings
 import org.jetbrains.idea.maven.project.MavenImportingSettings.GeneratedSourcesFolder.*
 import org.jetbrains.idea.maven.project.MavenProject
@@ -34,7 +34,7 @@ internal class WorkspaceFolderImporter(
   private val importingSettings: MavenImportingSettings,
   private val importingContext: FolderImportingContext) {
 
-  fun createContentRoots(mavenProject: MavenProject, moduleType: MavenModuleType, module: ModuleEntity,
+  fun createContentRoots(mavenProject: MavenProject, moduleType: StandardMavenModuleType, module: ModuleEntity,
                          stats: WorkspaceImportStats): CachedProjectFolders {
     val allFolders = mutableListOf<ContentRootCollector.ImportedFolder>()
 
@@ -70,7 +70,7 @@ internal class WorkspaceFolderImporter(
     importingContext.alreadyRegisteredContentRoots.add(contentRoot)
   }
 
-  private fun addCachedFolders(moduleType: MavenModuleType,
+  private fun addCachedFolders(moduleType: StandardMavenModuleType,
                                cachedFolders: CachedProjectFolders,
                                allFolders: MutableList<ContentRootCollector.ImportedFolder>) {
     fun includeIf(it: ContentRootCollector.ImportedFolder, forTests: Boolean) =
@@ -82,10 +82,10 @@ internal class WorkspaceFolderImporter(
     fun exceptSources(it: ContentRootCollector.ImportedFolder) = it !is ContentRootCollector.UserOrGeneratedSourceFolder
 
     allFolders.addAll(when (moduleType) {
-                        MavenModuleType.MAIN_ONLY -> cachedFolders.folders.filter { includeIf(it, forTests = false) }
-                        MavenModuleType.TEST_ONLY -> cachedFolders.folders.filter { includeIf(it, forTests = true) }
-                        MavenModuleType.COMPOUND_MODULE -> cachedFolders.folders.filter { exceptSources(it) }
-                        MavenModuleType.AGGREGATOR -> emptyList()
+                        StandardMavenModuleType.MAIN_ONLY -> cachedFolders.folders.filter { includeIf(it, forTests = false) }
+                        StandardMavenModuleType.TEST_ONLY -> cachedFolders.folders.filter { includeIf(it, forTests = true) }
+                        StandardMavenModuleType.COMPOUND_MODULE -> cachedFolders.folders.filter { exceptSources(it) }
+                        StandardMavenModuleType.AGGREGATOR -> emptyList()
                         else -> cachedFolders.folders
                       })
   }

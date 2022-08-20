@@ -48,7 +48,7 @@ public final class SdkSetupNotificationProvider implements EditorNotificationPro
   private static @NotNull EditorNotificationPanel createPanel(@NotNull @NlsContexts.LinkLabel String message,
                                                               @NotNull FileEditor fileEditor,
                                                               @NotNull ActionHandler fix) {
-    EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor);
+    EditorNotificationPanel panel = new EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Error);
     panel.setText(message);
     panel.createActionLabel(ProjectBundle.message("project.sdk.setup"), fix, true);
     return panel;

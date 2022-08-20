@@ -221,7 +221,7 @@ public class DebuggerDfaRunner {
     private static Map<Value, JdiValueInfo> requestJdi(@NotNull StackFrameProxyEx proxy, @NotNull Map<Value, List<DfaVariableValue>> map)
       throws EvaluateException {
       ClassLoaderReference classLoader = proxy.getClassLoader();
-      Predicate<ClassLoaderReference> classLoaderFilter = new Predicate<ClassLoaderReference>() {
+      Predicate<ClassLoaderReference> classLoaderFilter = new Predicate<>() {
         private @Nullable List<ClassLoaderReference> myParentLoaders = null;
 
         @Override

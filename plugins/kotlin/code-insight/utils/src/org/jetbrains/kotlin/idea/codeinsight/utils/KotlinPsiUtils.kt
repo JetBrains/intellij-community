@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.base.psi.deleteBody
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -74,5 +75,27 @@ fun removeProperty(ktProperty: KtProperty) {
         commentSaver.restore(replaced)
     } else {
         ktProperty.delete()
+    }
+}
+
+fun KtPropertyAccessor.isRedundantSetter(): Boolean {
+    if (!isSetter) return false
+    val expression = bodyExpression ?: return canBeCompletelyDeleted()
+    if (expression is KtBlockExpression) {
+        val statement = expression.statements.singleOrNull() ?: return false
+        val parameter = valueParameters.singleOrNull() ?: return false
+        val binaryExpression = statement as? KtBinaryExpression ?: return false
+        return binaryExpression.operationToken == KtTokens.EQ
+                && binaryExpression.left?.isBackingFieldReferenceTo(property) == true
+                && binaryExpression.right?.mainReference?.resolve() == parameter
+    }
+    return false
+}
+
+fun removeRedundantSetter(setter: KtPropertyAccessor) {
+    if (setter.canBeCompletelyDeleted()) {
+        setter.delete()
+    } else {
+        setter.deleteBody()
     }
 }

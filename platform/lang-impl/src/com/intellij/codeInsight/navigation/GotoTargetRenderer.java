@@ -15,7 +15,7 @@ final class GotoTargetRenderer implements ListCellRenderer<Object> {
   private final ListCellRenderer<Object> myActionRenderer = new GotoTargetActionRenderer();
   private final ListCellRenderer<Object> myPresentationRenderer;
 
-  GotoTargetRenderer(@NotNull Function<@NotNull ? super Object, @NotNull ? extends TargetPresentation> presentationProvider) {
+  GotoTargetRenderer(@NotNull Function<? super @NotNull Object, ? extends @NotNull TargetPresentation> presentationProvider) {
     myPresentationRenderer = TargetPopup.createTargetPresentationRenderer(presentationProvider);
   }
 

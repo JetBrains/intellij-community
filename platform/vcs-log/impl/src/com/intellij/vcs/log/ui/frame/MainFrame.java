@@ -139,7 +139,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     myGraphTable.getSelectionModel().addListSelectionListener(listenerForDiff);
     Disposer.register(this, () -> myGraphTable.getSelectionModel().removeListSelectionListener(listenerForDiff));
 
-    myNotificationLabel = new EditorNotificationPanel(UIUtil.getPanelBackground());
+    myNotificationLabel = new EditorNotificationPanel(UIUtil.getPanelBackground(), EditorNotificationPanel.Status.Warning);
     myNotificationLabel.setVisible(false);
     myNotificationLabel.setBorder(new CompoundBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 0, 0),
                                                      notNull(myNotificationLabel.getBorder(), JBUI.Borders.empty())));

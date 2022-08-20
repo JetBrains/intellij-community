@@ -29,8 +29,8 @@ interface ContentRootEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ContentRootEntity, ModifiableWorkspaceEntity<ContentRootEntity>, ObjBuilder<ContentRootEntity> {
-    override var module: ModuleEntity
     override var entitySource: EntitySource
+    override var module: ModuleEntity
     override var url: VirtualFileUrl
     override var excludedUrls: MutableList<VirtualFileUrl>
     override var excludedPatterns: MutableList<String>
@@ -75,8 +75,8 @@ interface SourceRootEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : SourceRootEntity, ModifiableWorkspaceEntity<SourceRootEntity>, ObjBuilder<SourceRootEntity> {
-    override var contentRoot: ContentRootEntity
     override var entitySource: EntitySource
+    override var contentRoot: ContentRootEntity
     override var url: VirtualFileUrl
     override var rootType: String
     override var customSourceRootProperties: CustomSourceRootPropertiesEntity?
@@ -114,8 +114,8 @@ interface SourceRootOrderEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : SourceRootOrderEntity, ModifiableWorkspaceEntity<SourceRootOrderEntity>, ObjBuilder<SourceRootOrderEntity> {
-    override var contentRootEntity: ContentRootEntity
     override var entitySource: EntitySource
+    override var contentRootEntity: ContentRootEntity
     override var orderOfSourceRoots: MutableList<VirtualFileUrl>
   }
 
@@ -147,8 +147,8 @@ interface CustomSourceRootPropertiesEntity: WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : CustomSourceRootPropertiesEntity, ModifiableWorkspaceEntity<CustomSourceRootPropertiesEntity>, ObjBuilder<CustomSourceRootPropertiesEntity> {
-    override var sourceRoot: SourceRootEntity
     override var entitySource: EntitySource
+    override var sourceRoot: SourceRootEntity
     override var propertiesXmlTag: String
   }
 
@@ -182,8 +182,8 @@ interface JavaSourceRootEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : JavaSourceRootEntity, ModifiableWorkspaceEntity<JavaSourceRootEntity>, ObjBuilder<JavaSourceRootEntity> {
-    override var sourceRoot: SourceRootEntity
     override var entitySource: EntitySource
+    override var sourceRoot: SourceRootEntity
     override var generated: Boolean
     override var packagePrefix: String
   }
@@ -219,8 +219,8 @@ interface JavaResourceRootEntity: WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : JavaResourceRootEntity, ModifiableWorkspaceEntity<JavaResourceRootEntity>, ObjBuilder<JavaResourceRootEntity> {
-    override var sourceRoot: SourceRootEntity
     override var entitySource: EntitySource
+    override var sourceRoot: SourceRootEntity
     override var generated: Boolean
     override var relativeOutputPath: String
   }

@@ -282,6 +282,8 @@ private fun downloadResult(remoteFile: String,
       var attempt = 1
       do {
         try {
+          Files.deleteIfExists(tempFile)
+          Files.createFile(tempFile)
           ftpClient.get(remoteFile, NioFileDestination(tempFile))
         }
         catch (e: Exception) {

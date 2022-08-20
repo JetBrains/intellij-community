@@ -32,8 +32,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.intellij.openapi.util.Predicates.nonNull;
 
 public final class ClassUtils {
 
@@ -357,7 +358,7 @@ public final class ClassUtils {
     Stream<PsiField> fieldStream = Arrays.stream(aClass.getFields());
 
     StreamEx<PsiField> enclosingClassFields =
-      StreamEx.iterate(aClass.getContainingClass(), Objects::nonNull, c -> c.getContainingClass()).filter(Objects::nonNull)
+      StreamEx.iterate(aClass.getContainingClass(), nonNull(), c -> c.getContainingClass()).filter(nonNull())
               .flatMap(c -> Stream.of(c.getFields()));
     fieldStream = Stream.concat(fieldStream, enclosingClassFields);
 

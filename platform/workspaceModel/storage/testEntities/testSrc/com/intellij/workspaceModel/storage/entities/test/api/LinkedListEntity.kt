@@ -26,8 +26,8 @@ interface LinkedListEntity : WorkspaceEntityWithPersistentId {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : LinkedListEntity, ModifiableWorkspaceEntity<LinkedListEntity>, ObjBuilder<LinkedListEntity> {
-    override var myName: String
     override var entitySource: EntitySource
+    override var myName: String
     override var next: LinkedListEntityId
   }
 

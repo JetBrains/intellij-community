@@ -101,7 +101,7 @@ open class SampleWithPersistentIdEntityImpl : SampleWithPersistentIdEntity, Work
     fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field SampleWithPersistentIdEntity#entitySource should be initialized")
+        error("Field WorkspaceEntity#entitySource should be initialized")
       }
       if (!getEntityData().isStringPropertyInitialized()) {
         error("Field SampleWithPersistentIdEntity#stringProperty should be initialized")
@@ -135,8 +135,8 @@ open class SampleWithPersistentIdEntityImpl : SampleWithPersistentIdEntity, Work
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SampleWithPersistentIdEntity
-      this.booleanProperty = dataSource.booleanProperty
       this.entitySource = dataSource.entitySource
+      this.booleanProperty = dataSource.booleanProperty
       this.stringProperty = dataSource.stringProperty
       this.stringListProperty = dataSource.stringListProperty.toMutableList()
       this.stringMapProperty = dataSource.stringMapProperty.toMutableMap()
@@ -147,14 +147,6 @@ open class SampleWithPersistentIdEntityImpl : SampleWithPersistentIdEntity, Work
     }
 
 
-    override var booleanProperty: Boolean
-      get() = getEntityData().booleanProperty
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().booleanProperty = value
-        changedProperty.add("booleanProperty")
-      }
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
@@ -162,6 +154,14 @@ open class SampleWithPersistentIdEntityImpl : SampleWithPersistentIdEntity, Work
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var booleanProperty: Boolean
+      get() = getEntityData().booleanProperty
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().booleanProperty = value
+        changedProperty.add("booleanProperty")
       }
 
     override var stringProperty: String
@@ -338,8 +338,8 @@ class SampleWithPersistentIdEntityData : WorkspaceEntityData.WithCalculablePersi
 
     other as SampleWithPersistentIdEntityData
 
-    if (this.booleanProperty != other.booleanProperty) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.booleanProperty != other.booleanProperty) return false
     if (this.stringProperty != other.stringProperty) return false
     if (this.stringListProperty != other.stringListProperty) return false
     if (this.stringMapProperty != other.stringMapProperty) return false

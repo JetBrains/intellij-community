@@ -221,6 +221,7 @@ private fun assertDirectoryContentMatches(file: Path,
 }
 
 private fun ByteArray.convertToText(): String? {
+  if (isEmpty()) return ""
   val charset = when (CharsetToolkit(this, Charsets.UTF_8, false).guessFromContent(size)) {
     CharsetToolkit.GuessedEncoding.SEVEN_BIT -> Charsets.US_ASCII
     CharsetToolkit.GuessedEncoding.VALID_UTF8 -> Charsets.UTF_8

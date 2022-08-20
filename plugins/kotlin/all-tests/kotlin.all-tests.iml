@@ -29,7 +29,6 @@
     <orderEntry type="module" module-name="kotlin.project-wizard.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.copyright.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.i18n.tests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.live-templates.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-base" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea.tests" scope="RUNTIME" />
@@ -52,6 +51,7 @@
     <orderEntry type="module" module-name="kotlin.code-insight.intentions-shared.tests.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared.tests.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.impl-base" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.code-insight.live-templates-k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.completion.tests-shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.completion.tests-k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.ml-completion.tests" scope="RUNTIME" />

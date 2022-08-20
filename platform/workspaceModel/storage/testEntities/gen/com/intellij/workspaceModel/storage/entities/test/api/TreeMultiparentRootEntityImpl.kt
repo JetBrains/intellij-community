@@ -76,11 +76,11 @@ open class TreeMultiparentRootEntityImpl : TreeMultiparentRootEntity, WorkspaceE
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isDataInitialized()) {
         error("Field TreeMultiparentRootEntity#data should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field TreeMultiparentRootEntity#entitySource should be initialized")
       }
       // Check initialization for list with ref type
       if (_diff != null) {
@@ -102,20 +102,12 @@ open class TreeMultiparentRootEntityImpl : TreeMultiparentRootEntity, WorkspaceE
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as TreeMultiparentRootEntity
-      this.data = dataSource.data
       this.entitySource = dataSource.entitySource
+      this.data = dataSource.data
       if (parents != null) {
       }
     }
 
-
-    override var data: String
-      get() = getEntityData().data
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().data = value
-        changedProperty.add("data")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -124,6 +116,14 @@ open class TreeMultiparentRootEntityImpl : TreeMultiparentRootEntity, WorkspaceE
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var data: String
+      get() = getEntityData().data
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().data = value
+        changedProperty.add("data")
       }
 
     // List of non-abstract referenced types
@@ -226,8 +226,8 @@ class TreeMultiparentRootEntityData : WorkspaceEntityData.WithCalculablePersiste
 
     other as TreeMultiparentRootEntityData
 
-    if (this.data != other.data) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.data != other.data) return false
     return true
   }
 

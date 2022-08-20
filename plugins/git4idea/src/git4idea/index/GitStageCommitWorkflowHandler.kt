@@ -23,7 +23,7 @@ class GitStageCommitWorkflowHandler(
     Disposer.register(ui, this)
 
     workflow.addListener(this, this)
-    workflow.addCommitListener(GitStageCommitStateCleaner(), this)
+    workflow.addVcsCommitListener(GitStageCommitStateCleaner(), this)
 
     ui.addExecutorListener(this, this)
     ui.addDataProvider(createDataProvider())
@@ -34,7 +34,7 @@ class GitStageCommitWorkflowHandler(
     vcsesChanged()
     initCommitMessage(false)
 
-    DelayedCommitMessageProvider.init(project, ui) { commitMessagePolicy.getCommitMessage(false) }
+    DelayedCommitMessageProvider.init(project, ui, getCommitMessage())
   }
 
   override fun isCommitEmpty(): Boolean = ui.rootsToCommit.isEmpty()
@@ -60,11 +60,11 @@ class GitStageCommitWorkflowHandler(
   }
 
   private inner class GitStageCommitStateCleaner : CommitStateCleaner() {
-    override fun onSuccess(commitMessage: String) {
+    override fun onSuccess() {
       commitAuthor = null
       initCommitMessage(true)
 
-      super.onSuccess(commitMessage)
+      super.onSuccess()
     }
   }
 }

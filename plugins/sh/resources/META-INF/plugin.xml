@@ -86,11 +86,13 @@ Adds support for working with shell script files
     <highlightUsagesHandlerFactory implementation="com.intellij.sh.highlighting.ShOccurrencesHighlightingFactory"/>
     <renameHandler implementation="com.intellij.sh.rename.ShRenameHandler"/>
     <intentionAction>
+      <language>Shell Script</language>
       <className>com.intellij.sh.rename.ShRenameAllOccurrencesIntention</className>
       <bundleName>messages.ShBundle</bundleName>
       <categoryKey>intention.shell.script</categoryKey>
     </intentionAction>
     <intentionAction>
+      <language>Shell Script</language>
       <className>com.intellij.sh.ShExplainShellIntention</className>
       <bundleName>messages.ShBundle</bundleName>
       <categoryKey>intention.shell.script</categoryKey>

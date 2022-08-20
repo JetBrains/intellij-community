@@ -19,7 +19,7 @@ abstract class CommitExecutorAction : JButtonAction(null) {
     isEnabledInModalContext = true
   }
 
-  override fun createButton(): JButton = JButton().apply { isOpaque = false }
+  override fun createButton(): JButton = JButton()
 
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.EDT

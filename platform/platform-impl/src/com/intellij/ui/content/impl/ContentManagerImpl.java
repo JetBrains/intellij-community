@@ -544,12 +544,18 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     boolean focused = false;
     final Content[] selection = getSelectedContents();
     for (Content each : selection) {
-      if (UIUtil.isFocusAncestor(each.getComponent())) {
+      if (isFocusAncestorStrict(each.getComponent())) {
         focused = true;
         break;
       }
     }
     return focused;
+  }
+
+  private static boolean isFocusAncestorStrict(JComponent component) {
+    Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    if (owner == null) return false;
+    return SwingUtilities.isDescendingFrom(owner, component);
   }
 
   @Override
