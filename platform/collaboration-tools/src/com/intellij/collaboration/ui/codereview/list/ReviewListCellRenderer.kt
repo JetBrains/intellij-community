@@ -34,7 +34,10 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
   private val title = JLabel().apply {
     minimumSize = JBDimension(30, 0)
   }
-  private val info = JLabel()
+  private val info = JLabel().apply {
+    val titleFontSize = title.font.size
+    font = font.deriveFont(titleFontSize / 13.0f * 12.0f)
+  }
   private val tags = JLabel()
   private val state = JLabel().apply {
     border = JBUI.Borders.empty(0, 4)
