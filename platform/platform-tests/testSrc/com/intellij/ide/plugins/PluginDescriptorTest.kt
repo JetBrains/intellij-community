@@ -36,14 +36,13 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 
 class PluginDescriptorTest {
+
   @Rule
   @JvmField
   val inMemoryFs = InMemoryFsRule()
 
-  private val rootPath: Path
-    get() = inMemoryFs.fs.getPath("/")
-  private val pluginDirPath: Path
-    get() = rootPath.resolve("plugin")
+  private val rootPath get() = inMemoryFs.fs.getPath("/")
+  private val pluginDirPath get() = rootPath.resolve("plugin")
 
   @Test
   fun descriptorLoading() {
@@ -72,7 +71,7 @@ class PluginDescriptorTest {
   @Test
   fun testMalformedDescriptor() {
     assertThatThrownBy { loadDescriptorInTest("malformed") }
-      .cause().hasMessageContaining("Unexpected character 'o' (code 111) in prolog")
+      .hasMessageContaining("Unexpected character 'o' (code 111) in prolog")
   }
 
   @Test
@@ -128,7 +127,7 @@ class PluginDescriptorTest {
     IoTestUtil.assumeMacOS()
 
     assumeNotUnderTeamcity()
-    val descriptors = PluginSetTestBuilder(path = Path.of("/Volumes/data/plugins"))
+    val descriptors = PluginSetTestBuilder(path = Paths.get("/Volumes/data/plugins"))
       .build()
       .allPlugins
     assertThat(descriptors).isNotEmpty()
@@ -609,7 +608,10 @@ class PluginDescriptorTest {
 private val testDataPath: String
   get() = "${PlatformTestUtil.getPlatformTestDataPath()}plugins/pluginDescriptor"
 
-private fun loadDescriptorInTest(dirName: String, disabledPlugins: Set<String> = emptySet()): IdeaPluginDescriptorImpl {
+private fun loadDescriptorInTest(
+  dirName: String,
+  disabledPlugins: Set<String> = emptySet(),
+): IdeaPluginDescriptorImpl {
   return loadDescriptorInTest(
     dir = Path.of(testDataPath, dirName),
     disabledPlugins = disabledPlugins,

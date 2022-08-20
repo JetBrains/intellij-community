@@ -21,6 +21,7 @@ import org.codehaus.stax2.typed.TypedXMLStreamException
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
+import java.io.InputStream
 import java.text.ParseException
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -35,6 +36,24 @@ import javax.xml.stream.events.XMLEvent
 @ApiStatus.Experimental const val ON_DEMAND_ATTRIBUTE = "on-demand"
 
 private const val defaultXPointerValue = "xpointer(/idea-plugin/*)"
+
+/**
+ * Do not use [java.io.BufferedInputStream] - buffer is used internally already.
+ */
+fun readModuleDescriptor(input: InputStream,
+                         readContext: ReadModuleContext,
+                         pathResolver: PathResolver,
+                         dataLoader: DataLoader,
+                         includeBase: String?,
+                         readInto: RawPluginDescriptor?,
+                         locationSource: String?): RawPluginDescriptor {
+  return readModuleDescriptor(reader = createNonCoalescingXmlStreamReader(input, locationSource),
+                              readContext = readContext,
+                              pathResolver = pathResolver,
+                              dataLoader = dataLoader,
+                              includeBase = includeBase,
+                              readInto = readInto)
+}
 
 fun readModuleDescriptor(input: ByteArray,
                          readContext: ReadModuleContext,

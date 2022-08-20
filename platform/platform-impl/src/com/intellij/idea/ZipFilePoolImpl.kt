@@ -8,6 +8,7 @@ import com.intellij.util.lang.ImmutableZipFile
 import com.intellij.util.lang.ZipFile
 import com.intellij.util.lang.ZipFilePool
 import org.jetbrains.annotations.ApiStatus
+import java.io.InputStream
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
@@ -38,8 +39,8 @@ class ZipFilePoolImpl : ZipFilePool() {
   }
 
   private class MyEntryResolver(@JvmField val zipFile: ZipFile) : EntryResolver {
-    override fun loadZipEntry(path: String): ByteArray? {
-      return zipFile.getData(if (path[0] == '/') path.substring(1) else path)
+    override fun loadZipEntry(path: String): InputStream? {
+      return zipFile.getInputStream(if (path[0] == '/') path.substring(1) else path)
     }
 
     override fun toString() = zipFile.toString()

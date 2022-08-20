@@ -33,6 +33,7 @@ internal fun loadDescriptorInTest(
       pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
       isBundled = isBundled,
       isEssential = true,
+      isDirectory = Files.isDirectory(dir),
       useCoreClassLoader = false,
       isUnitTestMode = true,
       pool = null,

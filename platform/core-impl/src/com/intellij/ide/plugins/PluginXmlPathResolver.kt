@@ -2,9 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.util.lang.UrlClassLoader
 import java.io.IOException
-import java.io.InputStream
 import java.nio.file.Path
 import java.util.*
 import java.util.zip.ZipFile
@@ -23,9 +21,9 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolv
                                  includeBase: String?): Boolean {
       val zipFile = ZipFile(jarFile.toFile())
       try {
+        // do not use kotlin stdlib here
         val entry = zipFile.getEntry(if (relativePath.startsWith("/")) relativePath.substring(1) else relativePath) ?: return false
-        // don't care about performance - this method is used only when pool is not used
-        readModuleDescriptor(input = zipFile.getInputStream(entry).use { it.readBytes() },
+        readModuleDescriptor(input = zipFile.getInputStream(entry),
                              readContext = readContext,
                              pathResolver = pathResolver,
                              dataLoader = dataLoader,
@@ -95,16 +93,7 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolv
 
     // it is allowed to reference any platform XML file using href="/META-INF/EnforcedPlainText.xml"
     if (path.startsWith("META-INF/")) {
-      val classLoader = PluginXmlPathResolver::class.java.classLoader
-      val data = if (classLoader is UrlClassLoader) {
-        classLoader.getResourceAsBytes(path, true)
-      }
-      else {
-        // don't care about performance - UrlClassLoader is expected always
-        classLoader.getResourceAsStream(path)?.use(InputStream::readBytes)
-      }
-
-      data?.let {
+      PluginXmlPathResolver::class.java.classLoader.getResourceAsStream(path)?.let {
         readModuleDescriptor(input = it,
                              readContext = readContext,
                              pathResolver = this,
