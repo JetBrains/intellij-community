@@ -543,7 +543,7 @@ public final class PluginManagerCore {
    */
   @ApiStatus.Internal
   public static @NotNull CompletableFuture<List<IdeaPluginDescriptorImpl>> getEnabledPluginRawList() {
-    scheduleDescriptorLoading(GlobalScope.INSTANCE);
+    scheduleDescriptorLoading(GlobalScope.INSTANCE, null);
     return FutureKt.asCompletableFuture(initFuture).thenApply(it -> it.enabledPlugins);
   }
 
