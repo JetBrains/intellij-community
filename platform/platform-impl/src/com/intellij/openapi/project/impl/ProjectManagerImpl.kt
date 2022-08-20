@@ -1216,9 +1216,7 @@ private suspend fun initProject(file: Path,
 
       preloadServicesAndCreateComponents(project, preloadServices)
       projectInitListeners {
-        launchAndMeasure(it.javaClass.simpleName) {
-          it.containerConfigured(project)
-        }
+        it.containerConfigured(project)
       }
 
       if (!isTrusted.await()) {

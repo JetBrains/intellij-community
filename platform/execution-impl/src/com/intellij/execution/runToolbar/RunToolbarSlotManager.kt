@@ -12,6 +12,7 @@ import com.intellij.ide.ActivityTracker
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -235,7 +236,6 @@ internal class RunToolbarSlotManager(private val project: Project) {
     val sortedSlots = mutableListOf<SlotDate>()
     sortedSlots.add(mainSlotData)
     sortedSlots.addAll(dataIds.mapNotNull { slotsData[it] }.toList())
-
     return sortedSlots.filter { it.configuration == env.runnerAndConfigurationSettings }
   }
 
@@ -475,8 +475,8 @@ internal class RunToolbarSlotManager(private val project: Project) {
   }
 
   private fun saveSlotsConfiguration() {
-    if (IS_RUN_MANAGER_INITIALIZED.get(project) == true) {
-      val runManager = RunManager.getInstance(project)
+    val runManager = project.serviceIfCreated<RunManager>()
+    if (runManager != null) {
       mainSlotData.configuration?.let {
         if (runManager.hasSettings(it) &&
             it != runManager.selectedConfiguration &&
@@ -490,7 +490,9 @@ internal class RunToolbarSlotManager(private val project: Project) {
 
     val slotOrder = getSlotOrder()
     val configurations = getConfigurationMap(slotOrder)
-    if (RunToolbarProcess.logNeeded) LOG.info("MANAGER saveSlotsConfiguration: ${configurations} RunToolbar")
+    if (RunToolbarProcess.logNeeded) {
+      LOG.info("MANAGER saveSlotsConfiguration: ${configurations} RunToolbar")
+    }
 
     runToolbarSettings.setConfigurations(configurations, slotOrder)
     publishConfigurations(configurations)

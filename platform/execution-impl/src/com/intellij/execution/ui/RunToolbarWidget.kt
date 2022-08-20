@@ -22,10 +22,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.ex.InlineActionsHolder
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
@@ -142,30 +139,32 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
 
   override fun update(e: AnActionEvent) {
     val project = e.project
-    if (project == null) {
+    val runManager = project?.serviceIfCreated<RunManager>()
+    if (runManager == null) {
       e.presentation.icon = iconFor(LOADING)
       e.presentation.text = ExecutionBundle.message("run.toolbar.widget.loading.text")
       e.presentation.isEnabled = false
       return
     }
-    val conf: RunnerAndConfigurationSettings? = RunManager.getInstance(project).selectedConfiguration
+
+    val selectedConfiguration = runManager.selectedConfiguration
     val history = RunConfigurationStartHistory.getInstance(project)
-    val run = history.firstOrNull(conf) { it.state.isRunningState() } ?: history.firstOrNull(conf)
+    val run = history.firstOrNull(selectedConfiguration) { it.state.isRunningState() } ?: history.firstOrNull(selectedConfiguration)
     val isLoading = run?.state?.isBusyState() == true
     val lastExecutorId = run?.executorId ?: DefaultRunExecutor.EXECUTOR_ID
-    e.presentation.putClientProperty(CONF, conf)
+    e.presentation.putClientProperty(CONF, selectedConfiguration)
     e.presentation.putClientProperty(EXECUTOR_ID, lastExecutorId)
-    if (conf != null) {
+    if (selectedConfiguration != null) {
       val isRunning = run?.state == RunState.STARTED || run?.state == RunState.TERMINATING
-      val canRestart = isRunning && !conf.configuration.isAllowRunningInParallel
+      val canRestart = isRunning && !selectedConfiguration.configuration.isAllowRunningInParallel
       e.presentation.putClientProperty(COLOR, if (isRunning) RunButtonColors.GREEN else RunButtonColors.BLUE)
       e.presentation.icon = iconFor(when {
                                       isLoading -> LOADING
                                       canRestart -> RESTART
                                       else -> lastExecutorId
                                     })
-      e.presentation.text = conf.shortenName()
-      e.presentation.description = RunToolbarWidgetRunAction.reword(getExecutorByIdOrDefault(lastExecutorId), canRestart, conf.shortenName())
+      e.presentation.text = selectedConfiguration.shortenName()
+      e.presentation.description = RunToolbarWidgetRunAction.reword(getExecutorByIdOrDefault(lastExecutorId), canRestart, selectedConfiguration.shortenName())
     } else {
       e.presentation.putClientProperty(COLOR, RunButtonColors.BLUE)
       e.presentation.icon = iconFor(RUN)
@@ -822,9 +821,7 @@ internal class RunConfigurationStartHistory(private val project: Project) : Pers
   }
 
   companion object {
-    fun getInstance(project: Project): RunConfigurationStartHistory {
-      return project.getService(RunConfigurationStartHistory::class.java)
-    }
+    fun getInstance(project: Project): RunConfigurationStartHistory = project.service()
   }
 }
 

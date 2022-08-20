@@ -78,7 +78,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       presentation.setDescription(ExecutionBundle.messagePointer("choose.run.configuration.action.description"));
     }
     try {
-      if (project == null || project.isDisposed() || !project.isOpen()) {
+      if (project == null || project.isDisposed() || !project.isOpen() || RunManager.IS_RUN_MANAGER_INITIALIZED.get(project) != Boolean.TRUE) {
         updatePresentation(null, null, null, presentation, e.getPlace());
         presentation.setEnabled(false);
       }
