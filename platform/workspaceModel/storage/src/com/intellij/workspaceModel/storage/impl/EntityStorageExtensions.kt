@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.openapi.diagnostic.logger
@@ -8,7 +8,6 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 
 // ------------------------- Updating references ------------------------
 
-@Suppress("unused")
 fun WorkspaceEntityStorage.updateOneToManyChildrenOfParent(connectionId: ConnectionId,
                                                            parent: WorkspaceEntity,
                                                            children: Sequence<WorkspaceEntity>) {
@@ -31,7 +30,6 @@ internal fun WorkspaceEntityStorageBuilderImpl.updateOneToManyChildrenOfParent(c
 }
 
 
-@Suppress("unused")
 fun WorkspaceEntityStorage.updateOneToAbstractManyChildrenOfParent(connectionId: ConnectionId,
                                                                    parent: WorkspaceEntity,
                                                                    children: Sequence<WorkspaceEntity>) {
@@ -46,7 +44,6 @@ internal fun WorkspaceEntityStorageBuilderImpl.updateOneToAbstractManyChildrenOf
   refs.updateOneToAbstractManyChildrenOfParent(connectionId, parentId, childrenIds)
 }
 
-@Suppress("unused")
 fun WorkspaceEntityStorage.updateOneToAbstractOneChildOfParent(connectionId: ConnectionId,
                                                                parent: WorkspaceEntity,
                                                                child: WorkspaceEntity?) {
@@ -85,7 +82,6 @@ internal fun WorkspaceEntityStorageBuilderImpl.updateOneToOneChildOfParent(conne
   }
 }
 
-@Suppress("unused")
 fun <Parent : WorkspaceEntityBase> WorkspaceEntityStorage.updateOneToManyParentOfChild(connectionId: ConnectionId,
                                                                                                 child: WorkspaceEntity,
                                                                                                 parent: Parent?) {
@@ -130,7 +126,6 @@ internal fun <Parent : WorkspaceEntityBase> WorkspaceEntityStorageBuilderImpl.up
 
 // ------------------------- Extracting references references ------------------------
 
-@Suppress("unused")
 fun <Child : WorkspaceEntity> WorkspaceEntityStorage.extractOneToManyChildren(connectionId: ConnectionId,
                                                                               parent: WorkspaceEntity): Sequence<Child> {
   return (this as AbstractEntityStorage).extractOneToManyChildren(connectionId, (parent as WorkspaceEntityBase).id)
@@ -162,7 +157,6 @@ internal fun AbstractEntityStorage.extractOneToManyChildrenIds(connectionId: Con
   return refs.getOneToManyChildren(connectionId, parentId.arrayId)?.map { createEntityId(it, connectionId.childClass) } ?: emptySequence()
 }
 
-@Suppress("unused")
 fun <Child : WorkspaceEntity> WorkspaceEntityStorage.extractOneToAbstractManyChildren(connectionId: ConnectionId,
                                                                                       parent: WorkspaceEntity): Sequence<Child> {
   return (this as AbstractEntityStorage).extractOneToAbstractManyChildren(connectionId, (parent as WorkspaceEntityBase).id.asParent())
@@ -176,7 +170,6 @@ internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractOneToAbstrac
   } as? Sequence<Child> ?: emptySequence()
 }
 
-@Suppress("unused")
 fun <Child : WorkspaceEntity> WorkspaceEntityStorage.extractAbstractOneToOneChild(connectionId: ConnectionId,
                                                                                   parent: WorkspaceEntity): Child? {
   return (this as AbstractEntityStorage).extractAbstractOneToOneChild(connectionId, (parent as WorkspaceEntityBase).id.asParent())
@@ -240,7 +233,6 @@ internal fun <Parent : WorkspaceEntity> AbstractEntityStorage.extractOneToOnePar
   }
 }
 
-@Suppress("unused")
 fun <Parent : WorkspaceEntity> WorkspaceEntityStorage.extractOneToManyParent(connectionId: ConnectionId,
                                                                              child: WorkspaceEntity): Parent? {
   return (this as AbstractEntityStorage).extractOneToManyParent(connectionId, (child as WorkspaceEntityBase).id)

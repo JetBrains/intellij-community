@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ex.PathManagerEx
@@ -21,7 +21,6 @@ import com.intellij.project.isDirectoryBased
 import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.util.io.Ksuid
 import com.intellij.util.io.readText
 import com.intellij.util.io.systemIndependentPath
@@ -48,7 +47,6 @@ class ModuleStoreTest {
 
   private val tempDirManager = TemporaryDirectory()
 
-  @Suppress("unused")
   @JvmField
   @Rule
   val ruleChain = RuleChain(tempDirManager, EdtRule(), ActiveStoreRule(projectRule), DisposeModulesRule(projectRule))

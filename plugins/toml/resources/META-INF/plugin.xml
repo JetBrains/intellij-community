@@ -52,6 +52,9 @@
 
         <extendWordSelectionHandler implementation="org.toml.ide.wordSelection.TomlStringLiteralSelectionHandler"/>
 
+        <psi.referenceContributor language="TOML"
+                                  implementation="org.toml.ide.resolve.TomlReferenceContributor"/>
+
         <localInspection language="TOML"
                          groupKey="inspection.group.toml"
                          key="inspection.toml.unresolved.reference.display.name"

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.model
 
 import com.intellij.openapi.diagnostic.logger
@@ -58,7 +58,6 @@ class DataNodeTest {
     val invocationHandler = InvocationHandler { _, _, _ -> 0 }
 
     val proxyInstance = Proxy.newProxyInstance(classLoader, arrayOf(interfaceClass), invocationHandler)
-    @Suppress("UNCHECKED_CAST")
     val deserialized = wrapAndDeserialize(proxyInstance, URLClassLoader(arrayOf(libUrl)))
     assertThat(deserialized.data.javaClass.interfaces)
       .extracting("name")

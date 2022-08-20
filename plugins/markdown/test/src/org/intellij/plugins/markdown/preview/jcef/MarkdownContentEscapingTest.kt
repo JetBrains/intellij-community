@@ -34,13 +34,13 @@ class MarkdownContentEscapingTest(enableOsr: Boolean) {
 
   @Before
   fun before() {
-    TestScaleHelper.assumeStandalone();
-    TestScaleHelper.setSystemProperty("java.awt.headless", "false");
+    TestScaleHelper.assumeStandalone()
+    TestScaleHelper.setSystemProperty("java.awt.headless", "false")
   }
 
   @After
   fun after() {
-    TestScaleHelper.restoreProperties();
+    TestScaleHelper.restoreProperties()
   }
 
   @Rule

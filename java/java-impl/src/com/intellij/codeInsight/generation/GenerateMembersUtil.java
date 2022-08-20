@@ -93,7 +93,7 @@ public final class GenerateMembersUtil {
           //     }
           whiteSpace += "\n";
         }
-        final PsiParserFacade parserFacade = PsiParserFacade.SERVICE.getInstance(file.getProject());
+        final PsiParserFacade parserFacade = PsiParserFacade.getInstance(file.getProject());
         final ASTNode singleNewLineWhitespace = parserFacade.createWhiteSpaceFromText(whiteSpace).getNode();
         if (singleNewLineWhitespace != null) {
           spaceNode.getTreeParent().replaceChild(spaceNode, singleNewLineWhitespace); // See http://jetbrains.net/jira/browse/IDEADEV-12837

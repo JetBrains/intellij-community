@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.featuresSuggester.ui
 
 import com.intellij.ide.BrowserUtil
@@ -24,7 +25,7 @@ interface SuggestionPresenter {
   fun showSuggestion(project: Project, suggestion: PopupSuggestion, disposable: Disposable)
 }
 
-@Suppress("UnstableApiUsage", "DialogTitleCapitalization")
+@Suppress("DialogTitleCapitalization")
 class NotificationSuggestionPresenter :
   SuggestionPresenter {
   private val notificationGroup: NotificationGroup = NotificationGroupManager.getInstance()

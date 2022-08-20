@@ -134,7 +134,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
     if (info == null) return;
     HighlightSeverity infoSeverity = info.getSeverity();
-    if (infoSeverity.myVal <= HighlightSeverity.INFORMATION.myVal) return;
+    if (infoSeverity.myVal <= HighlightSeverity.TEXT_ATTRIBUTES.myVal) return;
 
     errorCount.put(infoSeverity, errorCount.getInt(infoSeverity) + delta);
   }

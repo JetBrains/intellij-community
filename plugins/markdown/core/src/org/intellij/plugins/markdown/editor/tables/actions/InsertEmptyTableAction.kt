@@ -191,7 +191,6 @@ internal class InsertEmptyTableAction: DumbAwareAction() {
     private fun updateSelection(selectedRow: Int, selectedColumn: Int) {
       selectedCellRow = selectedRow
       selectedCellColumn = selectedColumn
-      @Suppress("HardCodedStringLiteral")
       label.text = "${selectedRow + 1}×${selectedColumn + 1}"
       for (row in 0 until rows) {
         for (column in 0 until columns) {

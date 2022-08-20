@@ -35,11 +35,12 @@ public abstract class SettingsConnectionService {
   @NotNull
   private final Supplier<EventLogExternalSendSettings> myCachedExternalSettings;
 
-  protected SettingsConnectionService(@Nullable String settingsUrl, @NotNull EventLogApplicationInfo appInfo, long settingsCacheTimeoutMs) {
+  protected SettingsConnectionService(@Nullable String settingsUrl, @NotNull String recorderId,
+                                      @NotNull EventLogApplicationInfo appInfo, long settingsCacheTimeoutMs) {
     myConfigUrl = settingsUrl;
     myApplicationInfo = appInfo;
     myCachedExternalSettings = new StatisticsCachingSupplier<>(
-      () -> myConfigUrl != null ? loadSettings(myConfigUrl, myApplicationInfo.getProductVersion()) : null,
+      () -> myConfigUrl != null ? loadSettings(recorderId, myConfigUrl, myApplicationInfo.getProductVersion()) : null,
       settingsCacheTimeoutMs
     );
   }
@@ -68,7 +69,7 @@ public abstract class SettingsConnectionService {
   }
 
   @Nullable
-  public EventLogExternalSendSettings loadSettings(@NotNull String configUrl, @NotNull String appVersion) {
+  public EventLogExternalSendSettings loadSettings(@NotNull String recorderId, @NotNull String configUrl, @NotNull String appVersion) {
     try {
       return StatsHttpRequests.request(configUrl, myApplicationInfo.getConnectionSettings()).send(r -> {
         try {
@@ -85,12 +86,12 @@ public abstract class SettingsConnectionService {
       }).getResult();
     }
     catch (StatsResponseException | IOException e) {
-      logError(e);
+      logError(recorderId, e);
     }
     return null;
   }
 
-  private void logError(Exception e) {
+  private void logError(@NotNull String recorderId, Exception e) {
     final String message = String.format(Locale.ENGLISH, "%s: %s", e.getClass().getName(),
                                          Objects.requireNonNullElse(e.getMessage(), "No message provided"));
 
@@ -101,6 +102,6 @@ public abstract class SettingsConnectionService {
     } else {
       myApplicationInfo.getLogger().warn(message, e);
     }
-    myApplicationInfo.getEventLogger().logErrorEvent("loading.config.failed", e);
+    myApplicationInfo.getEventLogger().logErrorEvent(recorderId, "loading.config.failed", e);
   }
 }

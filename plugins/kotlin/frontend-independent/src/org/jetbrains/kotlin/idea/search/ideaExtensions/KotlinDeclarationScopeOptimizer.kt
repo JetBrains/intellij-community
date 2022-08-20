@@ -45,7 +45,7 @@ class KotlinDeclarationScopeOptimizer : ScopeOptimizer {
 
 private fun findModuleOrLibraryScope(file: KtFile): GlobalSearchScope? {
     val project = file.project
-    val projectFileIndex = ProjectFileIndex.SERVICE.getInstance(project)
+    val projectFileIndex = ProjectFileIndex.getInstance(project)
     val virtualFile = file.virtualFile ?: return null
     val moduleScope = projectFileIndex.getModuleForFile(virtualFile)?.moduleScope
     return when {

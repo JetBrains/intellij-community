@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.cutPaste
 
@@ -48,7 +48,7 @@ class MoveDeclarationsPassFactory : TextEditorHighlightingPassFactory {
         private fun buildHighlightingInfo(): HighlightInfo? {
             val cookie = editor.getUserData(MoveDeclarationsEditorCookie.KEY) ?: return null
 
-            if (cookie.modificationCount != PsiModificationTracker.SERVICE.getInstance(project).modificationCount) return null
+            if (cookie.modificationCount != PsiModificationTracker.getInstance(project).modificationCount) return null
 
             val processor = MoveDeclarationsProcessor.build(editor, cookie)
 

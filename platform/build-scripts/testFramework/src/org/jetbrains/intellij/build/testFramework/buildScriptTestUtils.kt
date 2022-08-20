@@ -10,22 +10,21 @@ import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.exporter.jaeger.JaegerGrpcSpanExporter
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.BuildContextImpl
-import org.jetbrains.intellij.build.impl.TracerManager
-import org.jetbrains.intellij.build.impl.TracerProviderManager
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
+import org.jetbrains.intellij.build.testFramework.binaryReproducibility.BuildArtifactsReproducibilityTest
 import org.junit.AssumptionViolatedException
 import java.net.http.HttpConnectTimeoutException
-import org.jetbrains.intellij.build.testFramework.binaryReproducibility.BuildArtifactsReproducibilityTest
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import java.util.function.Supplier
 
 private val initializeTracer by lazy {
   val endpoint = System.getenv("JAEGER_ENDPOINT")
   if (endpoint != null) {
-    val defaultExporters = TracerProviderManager.getSpanExporterProvider().get()
-    TracerProviderManager.setSpanExporterProvider {
+    val defaultExporters = TracerProviderManager.spanExporterProvider.get()
+    TracerProviderManager.spanExporterProvider = Supplier {
       defaultExporters + JaegerGrpcSpanExporter.builder().setEndpoint(endpoint).build()
     }
   }
@@ -50,10 +49,10 @@ fun customizeBuildOptionsForTest(options: BuildOptions, productProperties: Produ
 }
 
 fun createBuildContext(
-  homePath: String, productProperties: ProductProperties,
+  homePath: Path, productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
   skipDependencySetup: Boolean = false,
-  communityHomePath: String = "$homePath/community",
+  communityHomePath: Path = homePath.resolve("community"),
   buildOptionsCustomizer: (BuildOptions) -> Unit = {},
 ): BuildContext {
   val options = BuildOptions()
@@ -63,10 +62,10 @@ fun createBuildContext(
 }
 
 fun runTestBuild(
-  homePath: String,
+  homePath: Path,
   productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
-  communityHomePath: String = "$homePath/community",
+  communityHomePath: Path = homePath.resolve("community"),
   traceSpanName: String? = null,
   onFinish: (context: BuildContext) -> Unit = {},
   buildOptionsCustomizer: (BuildOptions) -> Unit = {}
@@ -93,10 +92,10 @@ fun runTestBuild(
 }
 
 private fun testBuild(
-  homePath: String,
+  homePath: Path,
   productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools,
-  communityHomePath: String,
+  communityHomePath: Path,
   traceSpanName: String?,
   onFinish: (context: BuildContext) -> Unit,
   buildOptionsCustomizer: (BuildOptions) -> Unit,
@@ -129,7 +128,7 @@ fun runTestBuild(
 
   // to see in Jaeger as a one trace
   val traceFileName = "${productProperties.baseFileName}-trace.json"
-  val span = TracerManager.spanBuilder(traceSpanName ?: "test build of ${productProperties.baseFileName}").startSpan()
+  val span = TraceManager.spanBuilder(traceSpanName ?: "test build of ${productProperties.baseFileName}").startSpan()
   var spanEnded = false
   val spanScope = span.makeCurrent()
 
@@ -186,7 +185,7 @@ fun runTestBuild(
 
 private fun copyDebugLog(productProperties: ProductProperties, messages: BuildMessagesImpl) {
   try {
-    val targetFile = Path.of(TestLoggerFactory.getTestLogDir(), "${productProperties.baseFileName}-test-build-debug.log")
+    val targetFile = TestLoggerFactory.getTestLogDir().resolve("${productProperties.baseFileName}-test-build-debug.log")
     Files.createDirectories(targetFile.parent)
     Files.copy(messages.debugLogFile, targetFile, StandardCopyOption.REPLACE_EXISTING)
     messages.info("Debug log copied to $targetFile")
@@ -197,9 +196,9 @@ private fun copyDebugLog(productProperties: ProductProperties, messages: BuildMe
 }
 
 private fun copyPerfReport(traceFileName: String) {
-  val targetFile = Path.of(TestLoggerFactory.getTestLogDir(), traceFileName)
+  val targetFile = TestLoggerFactory.getTestLogDir().resolve(traceFileName)
   Files.createDirectories(targetFile.parent)
-  val file = TracerManager.finish() ?: return
+  val file = TraceManager.finish() ?: return
   try {
     Files.copy(file, targetFile, StandardCopyOption.REPLACE_EXISTING)
     println("Performance report is written to $targetFile")

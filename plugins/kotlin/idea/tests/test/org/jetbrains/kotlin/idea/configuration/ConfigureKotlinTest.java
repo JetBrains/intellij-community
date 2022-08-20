@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
@@ -16,7 +17,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.PsiRequiresStatement;
-import com.intellij.util.containers.ContainerUtil;
 import kotlin.KotlinVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.cli.common.arguments.InternalArgument;
@@ -34,15 +34,14 @@ import org.jetbrains.kotlin.idea.facet.KotlinFacet;
 import org.jetbrains.kotlin.idea.framework.JSLibraryKind;
 import org.jetbrains.kotlin.idea.framework.JsLibraryStdDetectionUtil;
 import org.jetbrains.kotlin.idea.framework.LibraryEffectiveKindProviderKt;
+import org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetector;
 import org.jetbrains.kotlin.idea.project.PlatformKt;
 import org.jetbrains.kotlin.idea.util.Java9StructureUtilKt;
-import org.jetbrains.kotlin.idea.versions.KotlinRuntimeLibraryUtilKt;
 import org.jetbrains.kotlin.platform.TargetPlatform;
 import org.jetbrains.kotlin.platform.js.JsPlatforms;
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms;
 import org.jetbrains.kotlin.resolve.jvm.modules.JavaModuleKt;
 import org.jetbrains.kotlin.utils.PathUtil;
-import org.jetbrains.plugins.groovy.config.GroovyHomeKind;
 import org.junit.internal.runners.JUnit38ClassRunner;
 import org.junit.runner.RunWith;
 
@@ -97,6 +96,20 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
             configure(module, getJvmConfigurator());
             assertConfigured(module, getJvmConfigurator());
         }
+    }
+
+    public void testKotlinBundledUsedInLibraryClasses() {
+        assertTrue(KotlinBundledUsageDetector.isKotlinBundledPotentiallyUsedInLibraries(myProject));
+    }
+
+    public void testKotlinBundledUsedInModuleLibraryClasses() {
+        assertTrue(KotlinBundledUsageDetector.isKotlinBundledPotentiallyUsedInLibraries(myProject));
+    }
+
+    public void testKotlinBundledUsedInUnusedLibraryClasses() {
+        // it is true because [org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetector.ModelChangeListener] triggers once per project
+        // we must have [org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetector.MyStartupActivity] to process reopened projects
+        assertTrue(KotlinBundledUsageDetector.isKotlinBundledPotentiallyUsedInLibraries(myProject));
     }
 
     public void testNewLibrary_js() {

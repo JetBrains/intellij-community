@@ -146,7 +146,7 @@ public class UnnecessaryModuleDependencyAnnotator extends RefGraphAnnotator {
     VirtualFile vFile = PsiUtilCore.getVirtualFile(what);
     if (vFile == null) return null;
     Project project = what.getProject();
-    final ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(project);
+    final ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
     if (fileIndex.isInLibrary(vFile)) {
       final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(vFile);
       if (orderEntries.isEmpty()) {

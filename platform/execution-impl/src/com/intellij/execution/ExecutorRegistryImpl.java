@@ -436,7 +436,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       // Effectively, we need only one boolean value: whether the action is enabled or not, so it shouldn't be a problem that
       // RunnerAndConfigurationSettings and ConfigurationContext don't implement equals() and this code doesn't pass CachedValuesManager checks.
 
-      long psiModCount = PsiModificationTracker.SERVICE.getInstance(psiFile.getProject()).getModificationCount();
+      long psiModCount = PsiModificationTracker.getInstance(psiFile.getProject()).getModificationCount();
       RunCurrentFileInfo cache = psiFile.getUserData(CURRENT_FILE_RUN_CONFIGS_KEY);
 
       if (cache == null || cache.myPsiModCount != psiModCount) {

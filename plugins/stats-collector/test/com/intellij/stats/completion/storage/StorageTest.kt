@@ -124,7 +124,7 @@ class FileLoggerTest : HeavyPlatformTestCase() {
 
     fun `test chunk size has limit`() {
         val random = Random(42)
-        val iterationLimit = 10_000; // second chunk must be created after adding not more than this number of session
+        val iterationLimit = 10_000 // second chunk must be created after adding not more than this number of session
 
 
         for (i in 0 until iterationLimit) {

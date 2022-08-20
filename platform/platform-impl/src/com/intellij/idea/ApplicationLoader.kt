@@ -8,6 +8,7 @@ package com.intellij.idea
 import com.intellij.BundleBase
 import com.intellij.diagnostic.*
 import com.intellij.diagnostic.StartUpMeasurer.Activities
+import com.intellij.diagnostic.opentelemetry.TraceManager
 import com.intellij.icons.AllIcons
 import com.intellij.ide.*
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
@@ -111,6 +112,12 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<Any>
 
       val app = initAppActivity.runChild("app instantiation") {
         ApplicationImpl(isInternal, Main.isHeadless(), Main.isCommandLine(), EDT.getEventDispatchThread())
+      }
+
+      ForkJoinPool.commonPool().execute {
+        initAppActivity.runChild("opentelemetry configuration") {
+          TraceManager.init()
+        }
       }
 
       if (!Main.isHeadless()) {

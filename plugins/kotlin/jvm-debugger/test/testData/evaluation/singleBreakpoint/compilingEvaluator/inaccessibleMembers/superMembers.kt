@@ -39,3 +39,8 @@ fun main() {
 
 // EXPRESSION: block { (d as Base).x }
 // RESULT: 0: J
+
+// TODO: Muted on IR backend
+// ReflectiveAccessLowering does not predict the IllegalAccessException that would be otherwise thrown when accessing
+// protected declarations because they are nominally in the same package ('<root>'). Placing a package declaration
+// works around this fault completely.

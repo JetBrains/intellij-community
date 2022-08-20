@@ -140,7 +140,7 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager {
         }
       }
     }
-    Content content = ContentFactory.SERVICE.getInstance().createContent(component, contentName, isLockable);
+    Content content = ContentFactory.getInstance().createContent(component, contentName, isLockable);
     content.setTabName(tabName);
     content.setToolwindowTitle(toolwindowTitle);
     content.putUserData(contentKey, Boolean.TRUE);

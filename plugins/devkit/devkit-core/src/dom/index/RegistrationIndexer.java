@@ -36,68 +36,86 @@ class RegistrationIndexer {
   private void process(IdeaPlugin ideaPlugin) {
     processActions(ideaPlugin);
 
-    processElements(ideaPlugin.getApplicationComponents(),
-                    ApplicationComponents::getComponents,
-                    Component::getImplementationClass,
-                    RegistrationEntry.RegistrationType.APPLICATION_COMPONENT);
-    processElements(ideaPlugin.getProjectComponents(),
-                    ProjectComponents::getComponents,
-                    Component::getImplementationClass,
-                    RegistrationEntry.RegistrationType.PROJECT_COMPONENT);
-    processElements(ideaPlugin.getModuleComponents(),
-                    ModuleComponents::getComponents,
-                    Component::getImplementationClass,
-                    RegistrationEntry.RegistrationType.MODULE_COMPONENT);
+    processComponents(RegistrationEntry.RegistrationType.APPLICATION_COMPONENT,
+                      ideaPlugin.getApplicationComponents(),
+                      ApplicationComponents::getComponents);
 
-    processElements(ideaPlugin.getApplicationListeners(),
+    processComponents(RegistrationEntry.RegistrationType.PROJECT_COMPONENT,
+                      ideaPlugin.getProjectComponents(),
+                      ProjectComponents::getComponents);
+
+    processComponents(RegistrationEntry.RegistrationType.MODULE_COMPONENT,
+                      ideaPlugin.getModuleComponents(),
+                      ModuleComponents::getComponents);
+
+
+    processListeners(RegistrationEntry.RegistrationType.APPLICATION_LISTENER,
+                     ideaPlugin.getApplicationListeners());
+    processListeners(RegistrationEntry.RegistrationType.PROJECT_LISTENER,
+                     ideaPlugin.getProjectListeners());
+  }
+
+  private <T extends DomElement, U extends Component>
+  void processComponents(RegistrationEntry.RegistrationType componentType,
+                         List<T> componentContainer,
+                         Function<T, List<? extends U>> componentGetter) {
+    processElements(componentType,
+                    componentContainer,
+                    componentGetter,
+                    Component::getImplementationClass, Component::getHeadlessImplementationClass
+    );
+    processElements(RegistrationEntry.RegistrationType.COMPONENT_INTERFACE,
+                    componentContainer,
+                    componentGetter,
+                    Component::getInterfaceClass
+    );
+  }
+
+  private void processListeners(RegistrationEntry.RegistrationType listenerType,
+                                List<Listeners> listenerContainer) {
+    processElements(listenerType,
+                    listenerContainer,
                     Listeners::getListeners,
-                    Listeners.Listener::getListenerClassName,
-                    RegistrationEntry.RegistrationType.APPLICATION_LISTENER);
-    processElements(ideaPlugin.getProjectListeners(),
+                    Listeners.Listener::getListenerClassName
+    );
+    processElements(RegistrationEntry.RegistrationType.LISTENER_TOPIC,
+                    listenerContainer,
                     Listeners::getListeners,
-                    Listeners.Listener::getListenerClassName,
-                    RegistrationEntry.RegistrationType.PROJECT_LISTENER);
+                    Listeners.Listener::getTopicClassName);
   }
 
   private <T extends DomElement, U extends DomElement>
-  void processElements(List<T> elementContainer,
+  void processElements(RegistrationEntry.RegistrationType type,
+                       List<T> elementContainer,
                        Function<T, List<? extends U>> elementGetter,
-                       Function<U, GenericDomValue<PsiClass>> psiClassGetter,
-                       RegistrationEntry.RegistrationType type) {
+                       Function<U, GenericDomValue<PsiClass>>... psiClassGetters) {
     for (T wrapper : elementContainer) {
       for (U element : elementGetter.fun(wrapper)) {
-        addEntry(element, psiClassGetter.fun(element), type);
+        for (Function<U, GenericDomValue<PsiClass>> psiClassGetter : psiClassGetters) {
+          addEntry(element, psiClassGetter.fun(element), type);
+        }
       }
     }
   }
 
   private void processActions(IdeaPlugin ideaPlugin) {
     for (Actions actions : ideaPlugin.getActions()) {
-      for (Action action : actions.getActions()) {
-        processAction(action);
-      }
-
-      for (Group group : actions.getGroups()) {
-        processGroup(group);
-      }
+      processActionContainer(actions);
     }
   }
 
-  private void processGroup(Group group) {
-    addEntry(group, group.getClazz(), RegistrationEntry.RegistrationType.ACTION);
-    addIdEntry(group, group.getId(), RegistrationEntry.RegistrationType.ACTION_GROUP_ID);
-
-    for (Action action : group.getActions()) {
-      processAction(action);
+  private void processActionContainer(ActionContainer actionContainer) {
+    for (Action action : actionContainer.getActions()) {
+      addEntry(action, action.getClazz(), RegistrationEntry.RegistrationType.ACTION);
+      addIdEntry(action, action.getId(), RegistrationEntry.RegistrationType.ACTION_ID);
     }
-    for (Group nestedGroup : group.getGroups()) {
-      processGroup(nestedGroup);
-    }
-  }
 
-  private void processAction(Action action) {
-    addEntry(action, action.getClazz(), RegistrationEntry.RegistrationType.ACTION);
-    addIdEntry(action, action.getId(), RegistrationEntry.RegistrationType.ACTION_ID);
+    for (Group group : actionContainer.getGroups()) {
+      addEntry(group, group.getClazz(), RegistrationEntry.RegistrationType.ACTION);
+      addIdEntry(group, group.getId(), RegistrationEntry.RegistrationType.ACTION_GROUP_ID);
+
+      processActionContainer(group);
+    }
   }
 
   private void addIdEntry(DomElement domElement,
@@ -105,7 +123,7 @@ class RegistrationIndexer {
                           RegistrationEntry.RegistrationType type) {
     if (!DomUtil.hasXml(domElement)) return;
     String id = idValue.getStringValue();
-    if (StringUtil.isEmpty(id)) return;
+    if (StringUtil.isEmptyOrSpaces(id)) return;
 
     storeEntry(id, domElement, type);
   }
@@ -115,7 +133,7 @@ class RegistrationIndexer {
                         RegistrationEntry.RegistrationType type) {
     if (!DomUtil.hasXml(clazzValue)) return;
     final String clazz = clazzValue.getStringValue();
-    if (clazz == null) return;
+    if (StringUtil.isEmptyOrSpaces(clazz)) return;
 
     final String className = clazz.replace('$', '.');
 

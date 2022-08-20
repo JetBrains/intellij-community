@@ -152,6 +152,17 @@ public class Notification {
     return myGroupId;
   }
 
+  /**
+   * Unique ID for "Don’t show again" action for a specific notification. By default, used group ID and they title.
+   * Only for suggestion notifications.
+   *
+   * @param displayName tile for UI in Preferences | Appearance & Behavior | Notifications
+   */
+  public void configureDoNotAskOption(@NotNull String id, @NotNull @Nls String displayName) {
+    myDoNotAskId = id;
+    myDoNotAskDisplayName = displayName;
+  }
+
   @ApiStatus.Internal
   public boolean canShowFor(@Nullable Project project) {
     if (mySuggestionType) {
@@ -188,7 +199,12 @@ public class Notification {
     return myRemindLaterHandlerId;
   }
 
-  @ApiStatus.Internal
+  /**
+   * Unique ID for "Remind me tomorrow" action for a specific notification.
+   * Only for suggestion notifications.
+   *
+   * @see NotificationRemindLaterHandler
+   */
   public Notification setRemindLaterHandlerId(@NotNull String remindLaterHandlerId) {
     myRemindLaterHandlerId = remindLaterHandlerId;
     return this;

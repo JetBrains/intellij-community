@@ -1,8 +1,11 @@
 package com.intellij.ide.starter.path
 
-import com.intellij.ide.starter.teamcity.TeamCityCIServer
+import com.intellij.ide.starter.ci.CIServer
+import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.utils.FileSystem.getDirectoryTreePresentableSizes
 import com.intellij.ide.starter.utils.getDiskInfo
+import org.kodein.di.direct
+import org.kodein.di.instance
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -17,26 +20,18 @@ abstract class GlobalPaths(val checkoutDir: Path) {
    * Local => out
    * CI => out/tests
    */
-  val compiledRootDirectory: Path = when (TeamCityCIServer.isBuildRunningOnCI) {
+  val compiledRootDirectory: Path = when (di.direct.instance<CIServer>().isBuildRunningOnCI) {
     true -> intelliJOutDirectory / "tests"
     false -> intelliJOutDirectory // Local run
   }
 
-  // TODO: get rid of dependency on TeamCity
-  val testHomePath = if (TeamCityCIServer.isBuildRunningOnCI) {
-    val tempDirPath = Paths.get(System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir")))
-    Files.createTempDirectory(tempDirPath, "startupPerformanceTests")
-  }
-  else {
-    intelliJOutDirectory
-  }.resolve("perf-startup").createDirectories()
+  open val testHomePath:Path = intelliJOutDirectory.resolve("perf-startup").createDirectories()
 
   val installersDirectory = (testHomePath / "installers").createDirectories()
 
   val testsDirectory = (testHomePath / "tests").createDirectories()
 
-  // TODO: get rid of dependency on TeamCity
-  private val cacheDirectory: Path = if (TeamCityCIServer.isBuildRunningOnCI &&
+  private val cacheDirectory: Path = if (di.direct.instance<CIServer>().isBuildRunningOnCI &&
     !System.getProperty("agent.persistent.cache").isNullOrEmpty()
   ) {
     (Paths.get(System.getProperty("agent.persistent.cache"), "perf-tests-cache")).createDirectories()

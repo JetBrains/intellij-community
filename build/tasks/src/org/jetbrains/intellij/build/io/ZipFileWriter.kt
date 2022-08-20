@@ -20,7 +20,7 @@ private const val compressThreshold = 8 * 1024
 // 8 MB (as JDK)
 private const val mappedTransferSize = 8L * 1024L * 1024L
 
-internal inline fun writeNewZip(file: Path, compress: Boolean = false, task: (ZipFileWriter) -> Unit) {
+inline fun writeNewZip(file: Path, compress: Boolean = false, task: (ZipFileWriter) -> Unit) {
   Files.createDirectories(file.parent)
   ZipFileWriter(channel = FileChannel.open(file, W_CREATE_NEW),
                 deflater = if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null).use {
@@ -29,9 +29,9 @@ internal inline fun writeNewZip(file: Path, compress: Boolean = false, task: (Zi
 }
 
 // you must pass SeekableByteChannel if files will be written (`file` method)
-internal class ZipFileWriter(channel: WritableByteChannel, private val deflater: Deflater? = null) : AutoCloseable {
+class ZipFileWriter(channel: WritableByteChannel, private val deflater: Deflater? = null) : AutoCloseable {
   // size is written as part of optimized metadata - so, if compression is enabled, optimized metadata will be incorrect
-  val resultStream = ZipArchiveOutputStream(channel, withOptimizedMetadataEnabled = deflater == null)
+  internal val resultStream = ZipArchiveOutputStream(channel, withOptimizedMetadataEnabled = deflater == null)
   private val crc32 = CRC32()
 
   private val bufferAllocator = ByteBufferAllocator()
@@ -170,7 +170,6 @@ internal class ZipFileWriter(channel: WritableByteChannel, private val deflater:
     return compressedSize
   }
 
-  @Suppress("DuplicatedCode")
   fun compressedData(nameString: String, data: ByteArray) {
     val name = nameString.toByteArray()
     val headerSize = 30 + name.size

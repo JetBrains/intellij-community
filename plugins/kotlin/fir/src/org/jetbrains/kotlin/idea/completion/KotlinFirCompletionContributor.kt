@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion
 
@@ -7,20 +7,13 @@ import com.intellij.openapi.components.service
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.util.ProcessingContext
-import org.jetbrains.kotlin.idea.completion.context.*
-import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirExpressionNameReferencePositionContext
-import org.jetbrains.kotlin.idea.completion.context.FirPositionCompletionContextDetector
-import org.jetbrains.kotlin.idea.completion.context.FirTypeNameReferencePositionContext
-import org.jetbrains.kotlin.idea.completion.context.FirUnknownPositionContext
-import org.jetbrains.kotlin.idea.completion.contributors.*
-import org.jetbrains.kotlin.idea.completion.contributors.FirAnnotationCompletionContributor
-import org.jetbrains.kotlin.idea.completion.contributors.FirCallableCompletionContributor
-import org.jetbrains.kotlin.idea.completion.contributors.FirClassifierCompletionContributor
-import org.jetbrains.kotlin.idea.completion.contributors.complete
-import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.low.level.api.fir.util.originalKtFile
+import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
+import org.jetbrains.kotlin.idea.completion.context.FirPositionCompletionContextDetector
+import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
+import org.jetbrains.kotlin.idea.completion.contributors.FirCompletionContributorFactory
+import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -91,7 +84,7 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         if (parameters is KotlinFirCompletionParameters.Corrected) {
             val replaced = parameters.ijParameters
 
-            @Suppress("UnstableApiUsage", "DEPRECATION")
+            @Suppress("DEPRECATION")
             val originalPrefix = CompletionData.findPrefixStatic(replaced.position, replaced.offset)
             result = result.withPrefixMatcher(originalPrefix)
         }

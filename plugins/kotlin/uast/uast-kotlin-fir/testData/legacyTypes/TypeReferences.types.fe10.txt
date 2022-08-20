@@ -20,7 +20,7 @@ UFile (package = ) [public final class TypeReferencesKt {...]
         UMethod (name = parameterizedFoo) [public static final fun parameterizedFoo(@org.jetbrains.annotations.Nullable arg: T) : void {...}]
             UParameter (name = arg) [@org.jetbrains.annotations.Nullable var arg: T]
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
-            UBlockExpression [{...}] : PsiType:Unit
+            UBlockExpression [{...}] : PsiType:void
                 UDeclarationsExpression [var a: T = arg]
                     ULocalVariable (name = a) [var a: T = arg]
                         USimpleNameReferenceExpression (identifier = arg) [arg] : PsiType:T

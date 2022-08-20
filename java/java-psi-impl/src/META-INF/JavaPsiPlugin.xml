@@ -85,6 +85,7 @@
                     serviceImplementation="com.intellij.lang.jvm.facade.JvmFacadeImpl"/>
     <projectService serviceInterface="com.intellij.psi.JavaPsiFacade"
                     serviceImplementation="com.intellij.psi.impl.JavaPsiFacadeImpl"/>
+    <psi.treeChangePreprocessor implementation="com.intellij.psi.impl.PsiJavaModuleTreeChangePreprocessor"/>
     <projectService serviceImplementation="org.jetbrains.uast.UastContext"/>
 
     <metaLanguage implementation="com.intellij.lang.jvm.JvmMetaLanguage"/>

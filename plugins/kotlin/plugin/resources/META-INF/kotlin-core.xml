@@ -83,7 +83,6 @@
     <projectPathMacroContributor implementation="org.jetbrains.kotlin.idea.macros.KotlinBundledPathMacroContributor"/>
 
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.PluginStartupActivity"/>
-    <postStartupActivity implementation="org.jetbrains.kotlin.idea.macros.KotlinDistAutomaticDownloaderForKotlinBundled"/>
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetector$MyStartupActivity"/>
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.macros.KotlinBundledRefresher"/>
 
@@ -179,6 +178,15 @@
 
     <listener class="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService$CommonCompilerSettingsChangeListener"
               topic="org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener"/>
+
+    <listener class="org.jetbrains.kotlin.idea.macros.KotlinDistAutomaticDownloaderForKotlinBundled"
+              topic="org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener"/>
+
+    <listener class="org.jetbrains.kotlin.idea.macros.KotlinDistAutomaticDownloaderForKotlinBundled"
+              topic="org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetectorListener"/>
+
+    <listener class="org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetector$ModelChangeListener"
+              topic="com.intellij.workspaceModel.ide.WorkspaceModelChangeListener"/>
   </projectListeners>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
@@ -346,9 +354,6 @@
     <fileStructureGroupRuleProvider implementation="org.jetbrains.kotlin.idea.findUsages.KotlinDeclarationSecondLevelGroupRuleProvider"/>
 
     <findUsagesHandlerFactory implementation="org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesHandlerFactory"/>
-
-    <highlightUsagesHandlerFactory implementation="org.jetbrains.kotlin.idea.highlighter.KotlinHighlightExitPointsHandlerFactory"/>
-    <highlightUsagesHandlerFactory implementation="org.jetbrains.kotlin.idea.highlighter.KotlinHighlightImplicitItHandlerFactory"/>
 
     <referencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearcher"/>
     <referencesSearch implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinAliasedImportedElementSearcher"/>

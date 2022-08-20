@@ -255,7 +255,7 @@ public class QualifiedNameFinder {
 
     public QualifiedNameBasedScope(@NotNull Project project) {
       super(project);
-      myProjectFileIndex = ProjectFileIndex.SERVICE.getInstance(project);
+      myProjectFileIndex = ProjectFileIndex.getInstance(project);
     }
 
     @Override

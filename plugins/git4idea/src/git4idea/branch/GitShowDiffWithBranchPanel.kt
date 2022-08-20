@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch
 
 import com.intellij.dvcs.ui.CompareBranchesDiffPanel
@@ -51,7 +51,7 @@ class GitShowDiffWithBranchPanel(val project: Project,
 
   fun showAsTab() {
     val title = GitBundle.message("show.diff.between.dialog.title", branchName)
-    val content = ContentFactory.SERVICE.getInstance().createContent(loadingPanel, title, false)
+    val content = ContentFactory.getInstance().createContent(loadingPanel, title, false)
     content.preferredFocusableComponent = diffPanel.preferredFocusComponent
     content.setDisposer(disposable)
     showTab(project, content)

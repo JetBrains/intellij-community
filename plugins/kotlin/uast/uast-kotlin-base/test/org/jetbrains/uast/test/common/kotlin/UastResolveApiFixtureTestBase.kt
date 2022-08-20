@@ -3,14 +3,21 @@ package org.jetbrains.uast.test.common.kotlin
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
+import com.intellij.testFramework.replaceService
 import junit.framework.TestCase
+import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
 import org.jetbrains.kotlin.builtins.StandardNames.ENUM_VALUES
 import org.jetbrains.kotlin.builtins.StandardNames.ENUM_VALUE_OF
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertContainsElements
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertDoesntContain
+import org.jetbrains.kotlin.idea.test.util.JUnit4Assertions.assertSameElements
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtConstructor
+import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.KotlinUFunctionCallExpression
@@ -229,6 +236,67 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         TestCase.assertEquals(PsiType.INT, functionCall.getExpressionType())
     }
 
+    fun checkResolveToFacade(myFixture: JavaCodeInsightTestFixture) {
+
+        myFixture.project.replaceService(
+            KotlinAsJavaSupport::class.java,
+            object : MockKotlinAsJavaSupport(getInstance(myFixture.project)) {
+                override fun getFacadeClasses(facadeFqName: FqName, scope: GlobalSearchScope): Collection<PsiClass> =
+                    // emulating facade classes from different modules
+                    super.getFacadeClasses(facadeFqName, scope).let { it + it }
+            },
+            myFixture.testRootDisposable
+        )
+
+        myFixture.addFileToProject(
+            "pkg/MyFacade.java", """
+                package pkg;
+                
+                public class MyFacade {
+                    public void bar(){}
+                }
+        """.trimIndent()
+        )
+
+
+        for (i in 1..3) {
+            myFixture.addFileToProject(
+                "pkg/mffacade$i.kt", """
+                    @file:JvmMultifileClass
+                    @file:JvmName("MyFacade")
+                    package pkg;
+                    
+                    fun foo$i(vararg args: Int) = TODO()    
+                """.trimIndent()
+            )
+        }
+
+        val file = myFixture.configureByText(
+            "s.kt", """
+                import pkg.*
+                
+                fun main(args: Array<String>) {
+                    foo1(1,2,3)
+                    foo2(1,2,3)
+                    foo3(1,2,3)
+                }
+            """
+        )
+
+        val main = file.toUElement()!!.findElementByTextFromPsi<UElement>("main").getContainingUMethod()!!
+        val functionCalls = (1..3).map { i ->
+            main.findElementByText<UElement>("foo$i").uastParent as KotlinUFunctionCallExpression
+        }
+
+        UsefulTestCase.assertSameElements(
+            functionCalls
+                .map { it.resolve()?.text ?: "<null>" },
+            "fun foo1(vararg args: Int) = TODO()",
+            "fun foo2(vararg args: Int) = TODO()",
+            "fun foo3(vararg args: Int) = TODO()"
+        )
+    }
+
     fun checkMultiConstructorResolve(myFixture: JavaCodeInsightTestFixture, project: Project) {
         val file = myFixture.configureByText(
             "s.kt", """
@@ -265,7 +333,6 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         assertDoesntContain(resolvedDeclarationsStrings, "fun foo(): Int = TODO()")
         TestCase.assertEquals(PsiType.getTypeByName("MyClass", project, file.resolveScope), functionCall.getExpressionType())
     }
-
 
     fun checkMultiInvokableObjectResolve(myFixture: JavaCodeInsightTestFixture) {
         val file = myFixture.configureByText(
@@ -339,7 +406,6 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         """
         )
 
-
         val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
             .orFail("cant convert to UCallExpression")
         val resolved = uCallExpression.resolve()
@@ -366,6 +432,25 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         TestCase.assertEquals("LocalClass", resolved.name)
     }
 
+    fun checkResolveJavaClassAsAnonymousObjectSuperType(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.addClass(
+            """public class JavaClass { }
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                fun foo() {
+                    val o = object : JavaClass() { }
+                }
+            """.trimIndent()
+        )
+
+        val o = myFixture.file.toUElement()!!.findElementByTextFromPsi<UObjectLiteralExpression>("object : JavaClass() { }")
+        val resolved = (o.classReference?.resolve() as? PsiClass)
+            .orFail("cant resolve Java class as a super type of an anonymous object")
+        TestCase.assertEquals("JavaClass", resolved.name)
+    }
+
     fun checkResolveCompiledAnnotation(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "MyClass.kt", """
@@ -380,10 +465,59 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         TestCase.assertEquals("message", resolved.name)
     }
 
+    fun checkResolveExplicitLambdaParameter(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                inline fun <T, R> T.use(block: (T) -> R): R {
+                  return block(this)
+                }
+                
+                fun foo() {
+                  42.use { it ->
+                    i<caret>t.toString()
+                  }
+                }
+            """.trimIndent()
+        )
+
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        TestCase.assertEquals("it", (uCallExpression.receiver as? USimpleNameReferenceExpression)?.identifier)
+        // Expect to be resolved to source KtParameter
+        val resolved = (uCallExpression.receiver?.tryResolve() as? KtParameter)
+            .orFail("cant resolve explicit lambda parameter")
+        TestCase.assertEquals("it", resolved.name)
+    }
+
+    fun checkResolveImplicitLambdaParameter(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                inline fun <T, R> T.use(block: (T) -> R): R {
+                  return block(this)
+                }
+                
+                fun foo() {
+                  42.use { i<caret>t.toString() }
+                }
+            """.trimIndent()
+        )
+
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        TestCase.assertEquals("it", (uCallExpression.receiver as? USimpleNameReferenceExpression)?.identifier)
+        // No source for implicit lambda parameter. Expect to be resolved to fake PsiParameter used inside ULambdaExpression
+        val resolved = (uCallExpression.receiver?.tryResolve() as? PsiParameter)
+            .orFail("cant resolve implicit lambda parameter")
+        TestCase.assertEquals("it", resolved.name)
+    }
+
     fun checkResolveSyntheticMethod(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "MyClass.kt", """
+            annotation class MyAnnotation
+
             class Foo {
+                @MyAnnotation
                 @JvmSynthetic
                 fun bar() {}
             }
@@ -399,6 +533,10 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         val resolved = uCallExpression.resolve()
             .orFail("cant resolve from $uCallExpression")
         TestCase.assertEquals("bar", resolved.name)
+
+        TestCase.assertEquals(2, resolved.annotations.size)
+        TestCase.assertTrue(resolved.hasAnnotation("MyAnnotation"))
+        TestCase.assertTrue(resolved.hasAnnotation("kotlin.jvm.JvmSynthetic"))
     }
 
     fun checkAssigningArrayElementType(myFixture: JavaCodeInsightTestFixture) {
@@ -424,6 +562,137 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
             "PsiType:List<?>",
             uFile.findElementByTextFromPsi<UExpression>("lst[0]").getExpressionType().toString()
         )
+    }
+
+    fun checkArgumentMappingDefaultValue(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+            class Foo {
+                fun boo(ch: Char, i: Int = 42): Int {
+                  return i
+                }
+            }
+            
+            fun box(foo: Foo) = run {
+                foo.b<caret>oo('x')
+            }
+        """
+        )
+
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        val resolved = uCallExpression.resolve()
+            .orFail("cant resolve from $uCallExpression")
+
+        resolved.parameters.forEachIndexed { index, _ ->
+            val arg = uCallExpression.getArgumentForParameter(index)
+            if (index == 0) {
+                TestCase.assertNotNull("Value parameter ch of function boo", arg)
+                TestCase.assertEquals('x', arg?.evaluate())
+            } else {
+                // 2nd parameter has a default value, and is not passed.
+                TestCase.assertNull(arg)
+            }
+        }
+    }
+
+    fun checkArgumentMappingExtensionFunction(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+            class Foo {
+            }
+            
+            fun Foo.boo(ch: Char): Int {
+                return 42
+            }
+            
+            fun box(foo: Foo) = run {
+                foo.b<caret>oo('x')
+            }
+        """
+        )
+
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        val resolved = uCallExpression.resolve()
+            .orFail("cant resolve from $uCallExpression")
+
+        resolved.parameters.forEachIndexed { index, _ ->
+            val arg = uCallExpression.getArgumentForParameter(index)
+            if (index == 0) {
+                // Extension receiver parameter
+                TestCase.assertNotNull("Extension receiver parameter", arg)
+                TestCase.assertEquals("foo", (arg as? USimpleNameReferenceExpression)?.identifier)
+            } else {
+                // one and only parameter becomes 2nd parameter in JVM bytecode.
+                TestCase.assertNotNull("Value parameter ch of function boo", arg)
+                TestCase.assertEquals('x', arg?.evaluate())
+            }
+        }
+    }
+
+    fun checkArgumentMappingVararg(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+            class Foo {
+                fun boo(vararg chars: Char): Int {
+                  return chars.size
+                }
+            }
+            
+            fun box(foo: Foo) = run {
+                foo.b<caret>oo('x', 'y', 'z')
+            }
+        """
+        )
+
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        val resolved = uCallExpression.resolve()
+            .orFail("cant resolve from $uCallExpression")
+
+        resolved.parameters.forEachIndexed { index, _ ->
+            val arg = uCallExpression.getArgumentForParameter(index)
+            TestCase.assertNotNull("vararg chars of function boo", arg)
+            TestCase.assertTrue(arg is UExpressionList)
+            val varargValues = (arg as UExpressionList).expressions.map { it.evaluate() }
+            assertSameElements(listOf('x', 'y', 'z'), varargValues) {
+                varargValues.joinToString(separator = ", ", prefix = "[", postfix = "]")
+            }
+        }
+    }
+
+    fun checkArgumentMappingOOBE(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+            class Foo {
+                suspend fun boo(ch: Char): Int {
+                  return 42
+                }
+            }
+            
+            fun box(foo: Foo) = run {
+                foo.b<caret>oo('x')
+            }
+        """
+        )
+
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        val resolved = uCallExpression.resolve()
+            .orFail("cant resolve from $uCallExpression")
+
+        resolved.parameters.forEachIndexed { index, _ ->
+            val arg = uCallExpression.getArgumentForParameter(index)
+            if (index == 0) {
+                TestCase.assertNotNull("Value parameter ch of function boo", arg)
+                TestCase.assertEquals('x', arg?.evaluate())
+            } else {
+                // That suspend function has only one parameter. Anything else is generated by the compiler.
+                // But, at least, UCallExpression#getArgumentForParameter should not raise an out-of-bound exception.
+                TestCase.assertNull(arg)
+            }
+        }
     }
 
     fun checkDivByZero(myFixture: JavaCodeInsightTestFixture) {
@@ -548,5 +817,25 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         get() {
             return qualifiedName?.endsWith("NotNull") == true || qualifiedName?.endsWith("Nullable") == true
         }
+
+    fun checkSubstitutedReceiverType(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                inline fun <T, R> T.use(block: (T) -> R): R {
+                  return block(this)
+                }
+                
+                fun foo() {
+                  // T: String, R: Int
+                  val len = "42".u<caret>se { it.length }
+                }
+            """.trimIndent()
+        )
+
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        TestCase.assertEquals("use", uCallExpression.methodName)
+        TestCase.assertEquals("PsiType:String", uCallExpression.receiverType?.toString())
+    }
 
 }

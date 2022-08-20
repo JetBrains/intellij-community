@@ -25,7 +25,6 @@ import static org.jetbrains.plugins.groovy.lang.typing.TuplesKt.getMultiAssignme
 
 /**
  * @author Dmitry.Krasilschikov
- * @date 11.04.2007
  */
 public class GrVariableImpl extends GrVariableBaseImpl<GrVariableStub> implements GrVariable {
 

@@ -2,13 +2,16 @@
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
+import com.intellij.codeInsight.navigation.DomGotoRelatedItem;
 import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTag;
@@ -24,11 +27,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.DevKitIcons;
-import org.jetbrains.idea.devkit.dom.Extension;
-import org.jetbrains.idea.devkit.dom.ExtensionPoint;
+import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.idea.devkit.util.ActionCandidate;
+import org.jetbrains.idea.devkit.util.ComponentCandidate;
+import org.jetbrains.idea.devkit.util.ListenerCandidate;
 import org.jetbrains.idea.devkit.util.PointableCandidate;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 final class LineMarkerInfoHelper {
@@ -36,7 +42,7 @@ final class LineMarkerInfoHelper {
   private static final NotNullFunction<PointableCandidate, Collection<? extends PsiElement>> CONVERTER =
     candidate -> ContainerUtil.createMaybeSingletonList(candidate.pointer.getElement());
   private static final NotNullFunction<PointableCandidate, Collection<? extends GotoRelatedItem>> RELATED_ITEM_PROVIDER =
-    candidate -> GotoRelatedItem.createItems(ContainerUtil.createMaybeSingletonList(candidate.pointer.getElement()), "DevKit");
+    candidate -> Collections.singleton(new DomGotoRelatedItem(DomUtil.getDomElement(candidate.pointer.getElement()), "DevKit"));
 
   private static final NullableFunction<PointableCandidate, String> EXTENSION_NAMER =
     createNamer("line.marker.tooltip.extension.declaration", tag -> {
@@ -55,6 +61,40 @@ final class LineMarkerInfoHelper {
     return ((ExtensionPoint)element).getEffectiveQualifiedName();
   }
 
+  private static final NullableFunction<PointableCandidate, String> LISTENER_IMPLEMENTATION_NAMER =
+    createNamer("line.marker.tooltip.listener.declaration", tag -> {
+      final DomElement element = DomUtil.getDomElement(tag);
+      if (!(element instanceof Listeners.Listener)) return "?";
+      return StringUtil.notNullize(((Listeners.Listener)element).getListenerClassName().getStringValue(), "?");
+    });
+
+  private static final NullableFunction<PointableCandidate, String> LISTENER_TOPIC_NAMER =
+    createNamer("line.marker.tooltip.listener.declaration", tag -> {
+      final DomElement element = DomUtil.getDomElement(tag);
+      if (!(element instanceof Listeners.Listener)) return "?";
+      return StringUtil.notNullize(((Listeners.Listener)element).getTopicClassName().getStringValue(), "?");
+    });
+
+  private static final NotNullFunction<XmlTag, @NlsContexts.ListItem String> ACTION_OR_GROUP_NAME_FUNCTION = tag -> {
+    final DomElement element = DomUtil.getDomElement(tag);
+    if (!(element instanceof ActionOrGroup)) return "?";
+    return StringUtil.notNullize(((ActionOrGroup)element).getId().getStringValue(), "?");
+  };
+
+  private static final NullableFunction<PointableCandidate, String> ACTION_NAMER =
+    createNamer("line.marker.tooltip.action.declaration", ACTION_OR_GROUP_NAME_FUNCTION);
+
+  private static final NullableFunction<PointableCandidate, String> ACTION_GROUP_NAMER =
+    createNamer("line.marker.tooltip.action.group.declaration", ACTION_OR_GROUP_NAME_FUNCTION);
+
+  private static final NullableFunction<PointableCandidate, String> COMPONENT_NAMER =
+    createNamer("line.marker.tooltip.component.declaration", tag -> {
+      final DomElement element = DomUtil.getDomElement(tag);
+      if (!(element instanceof Component)) return "?";
+      Component component = (Component)element;
+      return StringUtil.notNullize(component.getImplementationClass().getStringValue(), "?");
+    });
+
   private LineMarkerInfoHelper() {
   }
 
@@ -70,6 +110,38 @@ final class LineMarkerInfoHelper {
     return createPluginLineMarkerInfo(targets, element,
                                       DevKitBundle.message("gutter.related.navigation.choose.extension.point"),
                                       EXTENSION_POINT_NAMER);
+  }
+
+  static RelatedItemLineMarkerInfo<PsiElement> createListenerLineMarkerInfo(@NotNull List<? extends ListenerCandidate> targets,
+                                                                            @NotNull PsiElement element) {
+    return createPluginLineMarkerInfo(targets, element,
+                                      DevKitBundle.message("gutter.related.navigation.choose.listener"),
+                                      LISTENER_TOPIC_NAMER);
+  }
+
+  static RelatedItemLineMarkerInfo<PsiElement> createListenerTopicLineMarkerInfo(@NotNull List<? extends ListenerCandidate> targets,
+                                                                            @NotNull PsiElement element) {
+    return createPluginLineMarkerInfo(targets, element,
+                                      DevKitBundle.message("gutter.related.navigation.choose.listener"),
+                                      LISTENER_IMPLEMENTATION_NAMER);
+  }
+
+  static RelatedItemLineMarkerInfo<?> createActionLineMarkerInfo(List<? extends ActionCandidate> targets, PsiElement element) {
+    return createPluginLineMarkerInfo(targets, element,
+                                      DevKitBundle.message("gutter.related.navigation.choose.action"),
+                                      ACTION_NAMER);
+  }
+
+  static RelatedItemLineMarkerInfo<?> createActionGroupLineMarkerInfo(List<? extends ActionCandidate> targets, PsiElement element) {
+    return createPluginLineMarkerInfo(targets, element,
+                                      DevKitBundle.message("gutter.related.navigation.choose.action.group"),
+                                      ACTION_GROUP_NAMER);
+  }
+
+  static RelatedItemLineMarkerInfo<?> createComponentLineMarkerInfo(List<? extends ComponentCandidate> targets, PsiElement element) {
+    return createPluginLineMarkerInfo(targets, element,
+                                      DevKitBundle.message("gutter.related.navigation.choose.component"),
+                                      COMPONENT_NAMER);
   }
 
   private static @NotNull RelatedItemLineMarkerInfo<PsiElement> createPluginLineMarkerInfo(@NotNull List<? extends PointableCandidate> targets,

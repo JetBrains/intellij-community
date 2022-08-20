@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.core
 
 import kotlinx.collections.immutable.toPersistentList
@@ -70,7 +70,7 @@ internal inline fun <T> cached(crossinline createValue: (name: String) -> T) = o
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
 internal inline fun <reified T> Any?.safeAs(): @kotlin.internal.NoInfer T? = this as? T
 
-@Suppress("NOTHING_TO_INLINE", "unused")
+@Suppress("NOTHING_TO_INLINE", "UnusedReceiverParameter")
 inline fun Any?.ignore() = Unit
 
 internal fun <T> T.asSingletonList() = listOf(this)

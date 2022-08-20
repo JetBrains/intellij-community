@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -32,18 +32,22 @@ class RemoveRedundantSpreadOperatorInspection : AbstractKotlinInspection() {
                 when (argumentExpression) {
                     is KtCallExpression -> {
                         if (!argumentExpression.isArrayOfMethod()) return
-                        if (argumentExpression.valueArguments.isEmpty()) {
-                            val call = argument.getStrictParentOfType<KtCallExpression>()
-                            if (call != null) {
-                                val bindingContext = call.analyze(BodyResolveMode.PARTIAL)
-                                if (call.replaceWithCopyWithResolveCheck(
-                                        resolveStrategy = { expr, context -> expr.getResolvedCall(context)?.resultingDescriptor },
-                                        context = bindingContext,
-                                        preHook = { valueArgumentList?.removeArgument(call.valueArguments.indexOfFirst { it == argument }) }
-                                    ) == null
-                                ) return
-                            }
-                        }
+                        val call = argument.getStrictParentOfType<KtCallExpression>() ?: return
+                        val bindingContext = call.analyze(BodyResolveMode.PARTIAL)
+                        val argumentIndex = call.valueArguments.indexOfFirst { it == argument }
+                        if (call.replaceWithCopyWithResolveCheck(
+                                resolveStrategy = { expr, context -> expr.getResolvedCall(context)?.resultingDescriptor },
+                                context = bindingContext,
+                                preHook = {
+                                    val anchor = valueArgumentList?.arguments?.getOrNull(argumentIndex)
+                                    argumentExpression.valueArguments.reversed().forEach {
+                                        valueArgumentList?.addArgumentAfter(it, anchor)
+                                    }
+                                    valueArgumentList?.removeArgument(argumentIndex)
+                                }
+                            ) == null
+                        ) return
+
                         argumentExpression.calleeExpression!!.endOffset - argumentOffset
                     }
                     is KtCollectionLiteralExpression -> startOffset + 1

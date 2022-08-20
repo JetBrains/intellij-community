@@ -27,7 +27,11 @@ fun main(args: Array<String>) {
 private fun generateProjectModelFiles(dotIdea: File, args: Args, isCommunity: Boolean) {
     val libraries = dotIdea.resolve("libraries")
     libraries.listFiles()!!.filter { it.startsWith("kotlinc_") }.forEach { it.delete() }
-    generateKotlincLibraries(args.kotlincArtifactsMode, args.kotlincVersion, args.jpsPluginVersion, isCommunity).forEach {
+    generateKotlincLibraries(
+        kotlincArtifactsCoordinates = ArtifactCoordinates(args.kotlincVersion, args.kotlincArtifactsMode),
+        jpsPluginCoordinates = ArtifactCoordinates(args.jpsPluginVersion, args.jpsPluginArtifactsMode),
+        isCommunity = isCommunity
+    ).forEach {
         val libXmlName = it.name.jpsEntityNameToFilename() + ".xml"
         libraries.resolve(libXmlName).writeText(it.generateXml())
     }
@@ -35,7 +39,6 @@ private fun generateProjectModelFiles(dotIdea: File, args: Args, isCommunity: Bo
 
 private fun patchProjectModelFiles(dotIdea: File, args: Args, isCommunity: Boolean) {
     patchGitignore(dotIdea, args.kotlincArtifactsMode, isCommunity)
-    patchKotlincLibs(args, isCommunity, dotIdea)
 }
 
 private fun patchGitignore(dotIdea: File, kotlincArtifactsMode: KotlincArtifactsMode, isCommunity: Boolean) {
@@ -52,38 +55,6 @@ private fun patchGitignore(dotIdea: File, kotlincArtifactsMode: KotlincArtifacts
 
         KotlincArtifactsMode.BOOTSTRAP -> {
             gitignore.writeText("$normalizedContent\n$ignoreRule")
-        }
-    }
-}
-
-private fun patchKotlincLibs(args: Args, isCommunity: Boolean, dotIdea: File) {
-    val kotlincMvnLibs = generateKotlincLibraries(KotlincArtifactsMode.MAVEN, args.kotlincVersion, args.jpsPluginVersion, isCommunity)
-
-    val artifactIds = kotlincMvnLibs.flatMap { lib -> lib.classes.map { (it.jpsPath as JpsPath.MavenRepository).mavenId.artifactId } }
-    val replacements = generateKotlincLibraries(args.kotlincArtifactsMode, args.kotlincVersion, args.jpsPluginVersion, isCommunity)
-        .flatMap { lib -> lib.classes.map { it.jpsPath.generateXml() } }
-
-    val stubVersion = "STUB_VERSION"
-    val regexes = KotlincArtifactsMode.values().flatMap { generateKotlincLibraries(it, stubVersion, args.jpsPluginVersion, isCommunity) }
-        .flatMap { it.classes }
-        .map {
-            it.jpsPath.generateXml().escapeForRegex().replace(stubVersion, """\d+.\d+.\d+(-SNAPSHOT|-M1|-M2|-RC|-release)?(-\d+)?""")
-        }
-        .distinct()
-        .map { Regex(it) }
-        .toList()
-
-    for (artifactXmlFile in dotIdea.resolve("artifacts").listFiles()!!) {
-        for (artifactId in artifactIds) {
-            val allMatchingRegexes = regexes.filter { it.toString().contains("\\/$artifactId\\/") }
-            check(allMatchingRegexes.size == KotlincArtifactsMode.values().size) {
-                "There should be only ${KotlincArtifactsMode.values().size} matching regexes"
-            }
-            val replacement = replacements.single { it.contains("/$artifactId/") }
-            val newText = allMatchingRegexes.fold(artifactXmlFile.readText()) { text, regex ->
-                regex.replace(text, Regex.escapeReplacement(replacement))
-            }
-            artifactXmlFile.writeText(newText)
         }
     }
 }

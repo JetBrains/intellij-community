@@ -4,7 +4,6 @@
 // ACTION: Apply all 'Add modifier' fixes in file
 // ACTION: Convert member to extension
 // ACTION: Convert property to function
-// ACTION: Do not show return expression hints
 // ACTION: Introduce backing property
 // ACTION: Make 'b' 'abstract'
 // ACTION: Move to companion object

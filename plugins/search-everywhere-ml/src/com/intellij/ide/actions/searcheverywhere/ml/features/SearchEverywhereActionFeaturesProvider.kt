@@ -39,15 +39,7 @@ internal class SearchEverywhereActionFeaturesProvider :
     internal val PLUGIN_TYPE = EventFields.StringValidatedByEnum("pluginType", "plugin_type")
     internal val PLUGIN_ID = EventFields.StringValidatedByCustomRule("pluginId", "plugin")
 
-    private val version = "V" + ActionsGlobalSummaryManager.getUpdatedStatisticsVersion()
-    internal val GLOBAL_USAGE_COUNT_KEY = EventFields.Long("globalUsage")
-    internal val GLOBAL_USAGE_COUNT_KEY_VERSIONED = EventFields.Long("globalUsage$version")
-    internal val GLOBAL_USAGE_TO_MAX_KEY = EventFields.Double("globalUsageToMax")
-    internal val GLOBAL_USAGE_TO_MAX_KEY_VERSIONED = EventFields.Double("globalUsageToMax$version")
-    internal val USERS_RATIO_DATA_KEY = EventFields.Double("usersRatio")
-    internal val USERS_RATIO_DATA_KEY_VERSIONED = EventFields.Double("usersRatio$version")
-    internal val USAGES_PER_USER_RATIO_DATA_KEY = EventFields.Double("usagesPerUserRatio")
-    internal val USAGES_PER_USER_RATIO_DATA_KEY_VERSIONED = EventFields.Double("usagesPerUserRatio$version")
+    private val GLOBAL_STATISTICS_DEFAULT = GlobalStatisticsFields(ActionsGlobalSummaryManager.getDefaultStatisticsVersion())
 
     internal val USAGE = EventFields.Int("usage")
     internal val USAGE_SE = EventFields.Int("usageSe")
@@ -67,12 +59,10 @@ internal class SearchEverywhereActionFeaturesProvider :
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {
-    return arrayListOf<EventField<*>>(
+    val fields = arrayListOf<EventField<*>>(
       IS_ACTION_DATA_KEY, IS_TOGGLE_ACTION_DATA_KEY, IS_EDITOR_ACTION, IS_SEARCH_ACTION,
       MATCH_MODE_KEY, TEXT_LENGTH_KEY, IS_GROUP_KEY, GROUP_LENGTH_KEY, HAS_ICON_KEY, WEIGHT_KEY,
-      PLUGIN_TYPE, PLUGIN_ID, GLOBAL_USAGE_COUNT_KEY, GLOBAL_USAGE_COUNT_KEY_VERSIONED, GLOBAL_USAGE_TO_MAX_KEY,
-      GLOBAL_USAGE_TO_MAX_KEY_VERSIONED, USERS_RATIO_DATA_KEY, USERS_RATIO_DATA_KEY_VERSIONED,
-      USAGES_PER_USER_RATIO_DATA_KEY, USAGES_PER_USER_RATIO_DATA_KEY_VERSIONED,
+      PLUGIN_TYPE, PLUGIN_ID,
       USAGE, USAGE_SE, USAGE_TO_MAX, USAGE_TO_MAX_SE,
       TIME_SINCE_LAST_USAGE, TIME_SINCE_LAST_USAGE_SE,
       WAS_USED_IN_LAST_MINUTE, WAS_USED_IN_LAST_MINUTE_SE,
@@ -80,6 +70,8 @@ internal class SearchEverywhereActionFeaturesProvider :
       WAS_USED_IN_LAST_DAY, WAS_USED_IN_LAST_DAY_SE,
       WAS_USED_IN_LAST_MONTH, WAS_USED_IN_LAST_MONTH_SE,
     )
+    fields.addAll(GLOBAL_STATISTICS_DEFAULT.getFieldsDeclaration())
+    return fields
   }
 
   override fun getElementFeatures(element: Any,
@@ -120,11 +112,7 @@ internal class SearchEverywhereActionFeaturesProvider :
 
     val actionStats = globalSummary.getActionStatistics(actionId)
     val maxUsageCount = globalSummary.totalSummary.maxUsageCount
-    data.addAll(getGlobalUsageStatistics(actionStats, maxUsageCount, false))
-
-    val updatedActionStats = globalSummary.getUpdatedActionStatistics(actionId)
-    val updatedMaxUsageCount = globalSummary.updatedTotalSummary.maxUsageCount
-    data.addAll(getGlobalUsageStatistics(updatedActionStats, updatedMaxUsageCount, true))
+    data.addAll(GLOBAL_STATISTICS_DEFAULT.getGlobalUsageStatistics(actionStats, maxUsageCount))
 
     val pluginInfo = getPluginInfo(action.javaClass)
     if (pluginInfo.isSafeToReport()) {
@@ -142,23 +130,6 @@ internal class SearchEverywhereActionFeaturesProvider :
       return value
     }
     return null
-  }
-
-  private fun getGlobalUsageStatistics(actionGlobalStatistics: ActionGlobalUsageInfo?, maxUsageCount: Long, isVersioned: Boolean) : List<EventPair<*>> {
-    val result = arrayListOf<EventPair<*>>()
-    actionGlobalStatistics?.let {
-      val globalUsageCountKeyEventId = if (isVersioned) GLOBAL_USAGE_COUNT_KEY_VERSIONED else GLOBAL_USAGE_COUNT_KEY
-      result.add(globalUsageCountKeyEventId.with(it.usagesCount))
-      if (maxUsageCount != 0L) {
-        val globalUsageToMaxKeyEventId = if (isVersioned) GLOBAL_USAGE_TO_MAX_KEY_VERSIONED else GLOBAL_USAGE_TO_MAX_KEY
-        result.add(globalUsageToMaxKeyEventId.with(roundDouble(it.usagesCount.toDouble() / maxUsageCount)))
-      }
-      val usersRatioDataKeyEventId = if (isVersioned) USERS_RATIO_DATA_KEY_VERSIONED else USERS_RATIO_DATA_KEY
-      result.add(usersRatioDataKeyEventId.with(roundDouble(it.usersRatio)))
-      val usagesPerUserRatioDataKeyEventId = if (isVersioned) USAGES_PER_USER_RATIO_DATA_KEY_VERSIONED else USAGES_PER_USER_RATIO_DATA_KEY
-      result.add(usagesPerUserRatioDataKeyEventId.with(roundDouble(it.usagesPerUserRatio)))
-    }
-    return result
   }
 
   private fun getLocalUsageStatistics(action: AnAction,
@@ -208,6 +179,28 @@ internal class SearchEverywhereActionFeaturesProvider :
       addIfTrue(data, if (isSe) WAS_USED_IN_LAST_HOUR_SE else WAS_USED_IN_LAST_HOUR, timeSinceLastUsage <= Time.HOUR)
       addIfTrue(data, if (isSe) WAS_USED_IN_LAST_DAY_SE else WAS_USED_IN_LAST_DAY, timeSinceLastUsage <= Time.DAY)
       addIfTrue(data, if (isSe) WAS_USED_IN_LAST_MONTH_SE else WAS_USED_IN_LAST_MONTH, timeSinceLastUsage <= (4 * Time.WEEK.toLong()))
+    }
+  }
+
+  internal class GlobalStatisticsFields(version: Int) {
+    private val globalUsage = EventFields.Long("globalUsageV$version")
+    private val globalUsageToMax = EventFields.Double("globalUsageToMaxV$version")
+    private val usersRatio = EventFields.Double("usersRatioV$version")
+    private val usagesPerUserRatio = EventFields.Double("usagesPerUserRatioV$version")
+
+    fun getFieldsDeclaration(): List<EventField<*>> = arrayListOf(globalUsage, globalUsageToMax, usersRatio, usagesPerUserRatio)
+
+    fun getGlobalUsageStatistics(actionGlobalStatistics: ActionGlobalUsageInfo?, maxUsageCount: Long) : List<EventPair<*>> {
+      val result = arrayListOf<EventPair<*>>()
+      actionGlobalStatistics?.let {
+        result.add(globalUsage.with(it.usagesCount))
+        if (maxUsageCount != 0L) {
+          result.add(globalUsageToMax.with(roundDouble(it.usagesCount.toDouble() / maxUsageCount)))
+        }
+        result.add(usersRatio.with(roundDouble(it.usersRatio)))
+        result.add(usagesPerUserRatio.with(roundDouble(it.usagesPerUserRatio)))
+      }
+      return result
     }
   }
 }

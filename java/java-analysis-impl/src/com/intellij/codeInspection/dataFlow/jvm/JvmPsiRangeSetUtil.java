@@ -50,7 +50,7 @@ public class JvmPsiRangeSetUtil {
    * range annotation.
    */
   @NotNull
-  public static LongRangeSet fromPsiElement(PsiModifierListOwner owner) {
+  public static LongRangeSet fromPsiElement(@Nullable PsiModifierListOwner owner) {
     if (owner == null) return LongRangeSet.all();
     return StreamEx.of(AnnotationUtil.findAnnotation(owner, JETBRAINS_RANGE), owner.getAnnotation(JETBRAINS_RANGE))
                    .nonNull()
@@ -58,8 +58,13 @@ public class JvmPsiRangeSetUtil {
                    .map(JvmPsiRangeSetUtil::fromAnnotation).foldLeft(LongRangeSet.all(), LongRangeSet::meet);
   }
 
-  private static LongRangeSet fromAnnotation(PsiAnnotation annotation) {
-    switch (Objects.requireNonNull(annotation.getQualifiedName())) {
+  private static @NotNull LongRangeSet fromAnnotation(@NotNull PsiAnnotation annotation) {
+    String qualifiedName = annotation.getQualifiedName();
+    if (qualifiedName == null) {
+      // unresolved annotation?
+      return LongRangeSet.all();
+    }
+    switch (qualifiedName) {
       case JETBRAINS_RANGE:
       case CHECKER_RANGE:
         Long from = AnnotationUtil.getLongAttributeValue(annotation, "from");
@@ -172,23 +177,40 @@ public class JvmPsiRangeSetUtil {
    * @return a range or null if type is not supported
    */
   public static @Nullable LongRangeSet typeRange(@Nullable PsiType type) {
+    return typeRange(type, false);
+  }
+
+  /**
+   * Creates a range for given type (for primitives and boxed: values range)
+   *
+   * @param type           type to create a range for
+   * @param useAnnotations whether to check type annotations such as {@code @Range} to narrow down the search
+   * @return a range or null if type is not supported
+   */
+  public static @Nullable LongRangeSet typeRange(@Nullable PsiType type, boolean useAnnotations) {
     if (!(type instanceof PsiPrimitiveType) && !TypeConversionUtil.isPrimitiveWrapper(type)) return null;
     type = PsiPrimitiveType.getOptionallyUnboxedType(type);
     if (type != null) {
+      LongRangeSet result = LongRangeSet.all();
+      if (useAnnotations) {
+        for (PsiAnnotation annotation : type.getAnnotations()) {
+          result = result.meet(fromAnnotation(annotation));
+        }
+      }
       if (type.equals(PsiType.BYTE)) {
-        return BYTE_RANGE;
+        return BYTE_RANGE.meet(result);
       }
       if (type.equals(PsiType.CHAR)) {
-        return CHAR_RANGE;
+        return CHAR_RANGE.meet(result);
       }
       if (type.equals(PsiType.SHORT)) {
-        return SHORT_RANGE;
+        return SHORT_RANGE.meet(result);
       }
       if (type.equals(PsiType.INT)) {
-        return INT_RANGE;
+        return INT_RANGE.meet(result);
       }
       if (type.equals(PsiType.LONG)) {
-        return LongRangeSet.all();
+        return result;
       }
     }
     return null;

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,7 +39,7 @@ public final class BaseRevisionTextPatchEP implements PatchEP {
 
     if (Boolean.TRUE.equals(commitContext.getUserData(ourPutBaseRevisionTextKey))) {
       Path file = ProjectKt.getStateStore(project).getProjectBasePath().resolve(path);
-      FilePath filePath = VcsContextFactory.SERVICE.getInstance().createFilePath(file, Files.isDirectory(file));
+      FilePath filePath = VcsContextFactory.getInstance().createFilePath(file, Files.isDirectory(file));
       Map<FilePath, ContentRevision> baseRevisions = commitContext.getUserData(ourBaseRevisions);
       ContentRevision baseRevision = baseRevisions == null ? null : baseRevisions.get(filePath);
       if (baseRevision == null) {

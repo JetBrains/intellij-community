@@ -17,8 +17,6 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.ColorUtil;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBCheckBoxMenuItem;
 import com.intellij.ui.mac.screenmenu.Menu;
 import com.intellij.ui.mac.screenmenu.MenuItem;
@@ -199,12 +197,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
       }
       else if (myToggled) {
         Icon checkmark = LafIconLookup.getIcon("checkmark");
-        Color selectionBg = UIManager.getColor("PopupMenu.selectionBackground");
-        if (selectionBg == null) {
-          selectionBg = UIManager.getColor("List.selectionBackground");
-        }
-        boolean isLightSelectionInLightTheme = selectionBg != null && JBColor.isBright() && !ColorUtil.isDark(selectionBg);
-        Icon selectedCheckmark = isLightSelectionInLightTheme ?  checkmark : LafIconLookup.getSelectedIcon("checkmark");
+        Icon selectedCheckmark = LafIconLookup.getSelectedIcon("checkmark");
         Icon disabledCheckmark = LafIconLookup.getDisabledIcon("checkmark");
         if (ActionMenu.shouldConvertIconToDarkVariant()) {
           checkmark = IconLoader.getDarkIcon(checkmark, true);

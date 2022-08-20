@@ -15,7 +15,7 @@ import java.io.InputStream
 
 class IDEVirtualFileFinder(private val scope: GlobalSearchScope) : VirtualFileFinder() {
     override fun findMetadata(classId: ClassId): InputStream? {
-        val file = findVirtualFileWithHeader(classId.asSingleFqName(), KotlinMetadataFileIndex.KEY) ?: return null
+        val file = findVirtualFileWithHeader(classId.asSingleFqName(), KotlinMetadataFileIndex.KEY)?.takeIf { it.exists() } ?: return null
 
         return try {
             file.inputStream
@@ -40,8 +40,14 @@ class IDEVirtualFileFinder(private val scope: GlobalSearchScope) : VirtualFileFi
     override fun findVirtualFileWithHeader(classId: ClassId): VirtualFile? =
         findVirtualFileWithHeader(classId.asSingleFqName(), KotlinClassFileIndex.KEY)
 
-    private fun findVirtualFileWithHeader(fqName: FqName, key: ID<FqName, Void>): VirtualFile? =
-        FileBasedIndex.getInstance().getContainingFiles(key, fqName, scope).firstOrNull()
+    private fun findVirtualFileWithHeader(fqName: FqName, key: ID<FqName, Void>): VirtualFile? {
+        val iterator = FileBasedIndex.getInstance().getContainingFilesIterator(key, fqName, scope)
+        return if (iterator.hasNext()) {
+            iterator.next()
+        } else {
+            null
+        }
+    }
 
     companion object {
         private val LOG = Logger.getInstance(IDEVirtualFileFinder::class.java)

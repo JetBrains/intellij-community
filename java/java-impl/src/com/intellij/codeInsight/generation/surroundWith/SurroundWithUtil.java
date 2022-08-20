@@ -1,5 +1,5 @@
 
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation.surroundWith;
 
 import com.intellij.lang.ASTNode;
@@ -182,7 +182,7 @@ public final class SurroundWithUtil {
     PsiElement codeBlockWsElement = null;
     ASTNode codeBlockWsNode = null;
     boolean lbraceFound = false;
-    final PsiParserFacade parserFacade = PsiParserFacade.SERVICE.getInstance(container.getProject());
+    final PsiParserFacade parserFacade = PsiParserFacade.getInstance(container.getProject());
     for (PsiElement codeBlockChild = container.getFirstChild(); codeBlockChild != null; codeBlockChild = codeBlockChild.getNextSibling()) {
       ASTNode childNode = codeBlockChild.getNode();
       if (childNode == null) {

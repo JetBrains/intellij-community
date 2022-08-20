@@ -277,6 +277,8 @@ class ExternalSystemStorageTest {
     assertThat(ExternalSystemModulePropertyManager.getInstance(module).isMavenized()).isTrue()
     val facet = FacetManager.getInstance(module).allFacets.single()
     assertThat(facet.name).isEqualTo("regular")
+    //suppressed until https://youtrack.jetbrains.com/issue/IDEA-294031 being fixed
+    @Suppress("AssertBetweenInconvertibleTypes")
     assertThat(facet.type).isEqualTo(MockFacetType.getInstance())
     assertThat(facet.externalSource).isNull()
   }

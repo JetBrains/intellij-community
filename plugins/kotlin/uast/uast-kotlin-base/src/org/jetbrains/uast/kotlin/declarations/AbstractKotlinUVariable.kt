@@ -21,13 +21,11 @@ abstract class AbstractKotlinUVariable(
 
     override val uastInitializer: UExpression?
         get() {
-            val psi = psi
-            val initializerExpression = when (psi) {
+            val initializerExpression = when (val psi = psi) {
                 is UastKotlinPsiVariable -> psi.ktInitializer
                 is UastKotlinPsiParameter -> psi.ktDefaultValue
                 is KtLightElement<*, *> -> {
-                    val origin = psi.kotlinOrigin?.takeIf { it.canAnalyze() } // EA-137191
-                    when (origin) {
+                    when (val origin = psi.kotlinOrigin?.takeIf { it.canAnalyze() }) { // EA-137191
                         is KtVariableDeclaration -> origin.initializer
                         is KtParameter -> origin.defaultValue
                         else -> null
@@ -39,8 +37,7 @@ abstract class AbstractKotlinUVariable(
         }
 
     protected val delegateExpression: UExpression? by lz {
-        val psi = psi
-        val expression = when (psi) {
+        val expression = when (val psi = psi) {
             is KtLightElement<*, *> -> (psi.kotlinOrigin as? KtProperty)?.delegateExpression
             is UastKotlinPsiVariable -> (psi.ktElement as? KtProperty)?.delegateExpression
             else -> null

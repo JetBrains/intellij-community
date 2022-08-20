@@ -26,12 +26,12 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
                                         SpeedSearchFilter<PopupFactoryImpl.ActionItem> {
   private static final Logger LOG = Logger.getInstance(ActionPopupStep.class);
 
-  private final List<PopupFactoryImpl.ActionItem> myItems;
+  private final @NotNull List<PopupFactoryImpl.ActionItem> myItems;
   private final @NlsContexts.PopupTitle @Nullable String myTitle;
-  private final Supplier<? extends DataContext> myContext;
-  private final String myActionPlace;
+  private final @NotNull Supplier<? extends DataContext> myContext;
+  private final @NotNull String myActionPlace;
   private final boolean myEnableMnemonics;
-  private final PresentationFactory myPresentationFactory;
+  private final @Nullable PresentationFactory myPresentationFactory;
   private final int myDefaultOptionIndex;
   private final boolean myAutoSelectionEnabled;
   private final boolean myShowDisabledActions;
@@ -247,6 +247,36 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
 
   public void performAction(@NotNull AnAction action, int modifiers, InputEvent inputEvent) {
     performAction(myContext, myActionPlace, action, modifiers, inputEvent);
+  }
+
+  public void updateStepItems(@Nullable Runnable afterUpdate) {
+    DefaultActionGroup actionGroup = new DefaultActionGroup();
+    for (PopupFactoryImpl.ActionItem actionItem : getValues()) {
+      actionGroup.add(actionItem.getAction());
+    }
+
+    DataContext dataContext = myContext.get();
+    PresentationFactory presentationFactory = myPresentationFactory != null ? myPresentationFactory : new PresentationFactory();
+
+    Runnable updatePresentationRunnable = () -> {
+      for (PopupFactoryImpl.ActionItem actionItem : getValues()) {
+        Presentation presentation = presentationFactory.getPresentation(actionItem.getAction());
+        actionItem.updateFromPresentation(presentation, myActionPlace);
+      }
+      if (afterUpdate != null) {
+        afterUpdate.run();
+      }
+    };
+
+    if (Utils.isAsyncDataContext(dataContext)) {
+      Utils.expandActionGroupAsync(actionGroup, presentationFactory, dataContext, myActionPlace).onSuccess(actions -> {
+        updatePresentationRunnable.run();
+      });
+    }
+    else {
+      Utils.expandActionGroup(actionGroup, presentationFactory, dataContext, myActionPlace);
+      updatePresentationRunnable.run();
+    }
   }
 
   @Override

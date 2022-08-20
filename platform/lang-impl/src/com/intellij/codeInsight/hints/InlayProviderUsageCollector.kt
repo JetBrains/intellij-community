@@ -17,7 +17,7 @@ import com.intellij.openapi.project.Project
 import kotlin.streams.toList
 
 class InlayProviderUsageCollector : ProjectUsagesCollector() {
-  private val INLAY_CONFIGURATION_GROUP = EventLogGroup("inlay.configuration", 17)
+  private val INLAY_CONFIGURATION_GROUP = EventLogGroup("inlay.configuration", 18)
 
   private val GLOBAL_SETTINGS_EVENT = INLAY_CONFIGURATION_GROUP.registerEvent(
     "global.inlays.settings",

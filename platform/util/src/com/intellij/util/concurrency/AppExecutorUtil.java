@@ -4,7 +4,6 @@ package com.intellij.util.concurrency;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -112,9 +111,6 @@ public final class AppExecutorUtil {
 
   @ApiStatus.Internal
   public static boolean propagateContextOrCancellation() {
-    return LoadingState.APP_STARTED.isOccurred() && (
-      Registry.is("ide.propagate.context") ||
-      Registry.is("ide.propagate.cancellation")
-    );
+    return LoadingState.APP_STARTED.isOccurred() && (Propagation.propagateThreadContext() || Propagation.propagateCancellation());
   }
 }

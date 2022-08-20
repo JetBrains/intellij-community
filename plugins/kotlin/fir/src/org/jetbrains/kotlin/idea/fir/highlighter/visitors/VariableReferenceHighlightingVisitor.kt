@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.highlighter.visitors
 
@@ -57,7 +57,7 @@ internal class VariableReferenceHighlightingVisitor(
         }
     }
 
-    @Suppress("unused")
+    @Suppress("UnusedReceiverParameter")
     private fun KtAnalysisSession.isBackingFieldReferencingMutableVariable(symbol: KtSymbol): Boolean {
         if (symbol !is KtBackingFieldSymbol) return false
         return !symbol.owningProperty.isVal
@@ -72,7 +72,7 @@ internal class VariableReferenceHighlightingVisitor(
     }
 }
 
-@Suppress("unused")
+@Suppress("UnusedReceiverParameter")
 private fun KtAnalysisSession.isMutableVariable(symbol: KtSymbol?): Boolean = when (symbol) {
     is KtVariableSymbol -> !symbol.isVal
     else -> false

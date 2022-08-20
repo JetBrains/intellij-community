@@ -359,7 +359,7 @@ public class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalInspect
       }
     });
 
-    final PsiResolveHelper helper = PsiResolveHelper.SERVICE.getInstance(lambdaExpression.getProject());
+    final PsiResolveHelper helper = PsiResolveHelper.getInstance(lambdaExpression.getProject());
     for (Iterator<PsiVariable> iterator = variables.iterator(); iterator.hasNext(); ) {
       PsiVariable local = iterator.next();
       final String localName = local.getName();

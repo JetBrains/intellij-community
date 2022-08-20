@@ -74,6 +74,10 @@ class RunConfigurationTemplatesConfigurable(project: Project, private val config
     applyTemplates()
   }
 
+  override fun isModified(): Boolean {
+    return isConfigurableModified()
+  }
+
   override fun createComponent(): JComponent {
     val component = super.createComponent()
     val label = JLabel(ExecutionBundle.message("templates.disclaimer"))

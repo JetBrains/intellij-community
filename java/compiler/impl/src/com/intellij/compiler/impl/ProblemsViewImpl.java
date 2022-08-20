@@ -58,7 +58,7 @@ final class ProblemsViewImpl extends ProblemsView {
         });
         Disposer.register(toolWindow.getDisposable(), panel);
 
-        Content content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false);
+        Content content = ContentFactory.getInstance().createContent(panel, "", false);
         content.setHelpId("reference.problems.tool.window");
         toolWindow.getContentManager().addContent(content);
 

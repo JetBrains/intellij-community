@@ -29,6 +29,12 @@ class Java9RedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureT
     add("org.example.m6", "C6", ModuleDescriptor.M6, "public C7 getC7() { return new C7(); }", "org.example.m7.C7")
     add("org.example.m7", "C7", ModuleDescriptor.M7)
   }
+  
+  fun testTestClassAndSrc() {
+    addFile("CT.java", "class CT extends org.example.m2.C2 {}", ModuleDescriptor.M_TEST)
+    addTestFile("MyTest.java", "class MyTest {}", ModuleDescriptor.M_TEST )
+    mainModule("module m.src {requires M2; requires java.base;}", ModuleDescriptor.M_TEST)
+  }
 
   fun testNoSourcesAtAll() {
     mainModule("module MAIN { requires M2; }")
@@ -99,8 +105,9 @@ class Java9RedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureT
     mainModule("@SuppressWarnings(\"Java9RedundantRequiresStatement\") module M { requires M2; }")
   }
 
-  private fun mainModule(@Language("JAVA") text: String) {
-    addFile("module-info.java", text, ModuleDescriptor.MAIN)
+  private fun mainModule(@Language("JAVA") text: String,
+                         moduleDescriptor: ModuleDescriptor = ModuleDescriptor.MAIN) {
+    addFile("module-info.java", text, moduleDescriptor)
 
     val mainFile = myMainFile
     if (mainFile != null) {

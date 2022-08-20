@@ -1,6 +1,5 @@
 // "Make 'PrivateInFileClass' private" "false"
 // ACTION: Create test
-// ACTION: Do not show return expression hints
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Import members from 'PrivateInFileClass'
 // ACTION: Introduce import alias

@@ -137,7 +137,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
 
     productLayout.withAdditionalPlatformJar(BaseLayout.APP_JAR, "intellij.java.ide.resources")
 
-    productLayout.platformLayoutCustomizer = new BiConsumer<PlatformLayout, BuildContext>() {
+    productLayout.addPlatformCustomizer(new BiConsumer<PlatformLayout, BuildContext>() {
       @Override
       void accept(PlatformLayout layout, BuildContext context) {
         for (String name : JAVA_IDE_API_MODULES) {
@@ -145,7 +145,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
             layout.withModule(name)
           }
         }
-        for (String moduleName : List.<String>of("intellij.java.testFramework", "intellij.platform.testFramework.core")) {
+        for (String moduleName : List.<String> of("intellij.java.testFramework", "intellij.platform.testFramework.core")) {
           if (!productLayout.productApiModules.contains(moduleName)) {
             layout.withModule(moduleName, "testFramework.jar")
           }
@@ -172,14 +172,14 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
         //this library is placed into subdirectory of 'lib' directory in Android plugin layout so we need to exclude it from the platform layout explicitly
         layout.withoutProjectLibrary("layoutlib")
       }
-    }
+    })
 
     productLayout.compatiblePluginsToIgnore = [
       "intellij.java.plugin",
       "kotlin.resources-fir",
     ]
-    additionalModulesToCompile = ["intellij.tools.jps.build.standalone"]
-    modulesToCompileTests = ["intellij.platform.jps.build"]
+    additionalModulesToCompile = List.of("intellij.tools.jps.build.standalone")
+    modulesToCompileTests = List.of("intellij.platform.jps.build")
 
     antRequired = true
   }

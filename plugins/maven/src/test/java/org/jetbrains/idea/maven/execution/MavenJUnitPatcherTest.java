@@ -17,12 +17,12 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.JavaParameters;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.project.MavenProjectSettings;
 import org.junit.Test;
 
@@ -388,7 +388,7 @@ public class MavenJUnitPatcherTest extends MavenMultiVersionImportingTestCase {
             + "</build>\n");
 
     importProject();
-    Module module = getModule("m1");
+    Module module = getModule(mn("project", "m1"));
 
     MavenJUnitPatcher mavenJUnitPatcher = new MavenJUnitPatcher();
     JavaParameters javaParameters = new JavaParameters();

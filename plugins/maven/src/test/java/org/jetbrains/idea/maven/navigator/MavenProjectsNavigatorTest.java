@@ -173,6 +173,7 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
 
     MavenUtil.cleanAllRunnables();
     myProjectsManager.removeManagedFiles(Collections.singletonList(myProjectPom));
+    waitForImportCompletion();
     readFiles();
     assertEquals(0, getRootNodes().size());
   }
@@ -235,7 +236,7 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
                                          "<version>1</version>");
     readFiles(myProjectPom, m);
 
-    myProjectsTree.setIgnoredFilesPaths(Arrays.asList(m.getPath()));
+    myProjectsManager.getProjectsTree().setIgnoredFilesPaths(Arrays.asList(m.getPath()));
 
     myNavigator.setShowIgnored(true);
     waitForMavenUtilRunnablesComplete();
@@ -265,7 +266,7 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
                                          "<version>1</version>");
     readFiles(myProjectPom, m);
 
-    myProjectsTree.setIgnoredFilesPaths(Arrays.asList(myProjectPom.getPath()));
+    getProjectsTree().setIgnoredFilesPaths(Arrays.asList(myProjectPom.getPath()));
 
     myNavigator.setShowIgnored(true);
     assertEquals(1, getRootNodes().size());

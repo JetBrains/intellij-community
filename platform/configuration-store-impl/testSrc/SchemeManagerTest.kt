@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.*
@@ -303,7 +303,6 @@ internal class SchemeManagerTest {
     s1 = writeScheme(1, "bar")
     s2 = writeScheme(2, "bar")
 
-    @Suppress("UNCHECKED_CAST")
     val schemeChangeApplicator = SchemeChangeApplicator(schemeManager)
     if (kind == UpdateScheme::class.java) {
       schemeChangeApplicator.reload(listOf(UpdateScheme(createVirtualFile(s1)), UpdateScheme(createVirtualFile(s2))))
@@ -595,7 +594,7 @@ internal class SchemeManagerTest {
   }
 
   @Test fun `path must be system-independent`() {
-    DefaultLogger.disableStderrDumping(disposableRule.disposable);
+    DefaultLogger.disableStderrDumping(disposableRule.disposable)
     assertThatThrownBy { SchemeManagerFactory.getInstance().create("foo\\bar", TestSchemeProcessor())}.hasMessage("Path must be system-independent, use forward slash instead of backslash")
   }
 

@@ -37,7 +37,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestProcessor.Simple implements DiffPreviewUpdateProcessor {
+public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestProcessor.Simple
+  implements DiffPreviewUpdateProcessor, DiffRequestProcessorWithProducers {
 
   private static final int MANY_CHANGES_THRESHOLD = 10000;
 
@@ -50,6 +51,16 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   //
   // Abstract
   //
+
+  @Override
+  public ListSelection<? extends DiffRequestProducer> collectDiffProducers(boolean selectedOnly) {
+    Project project = getProject();
+    Wrapper change = getCurrentChange();
+    List<Wrapper> changes = (selectedOnly ? getSelectedChanges() : getAllChanges()).collect(Collectors.toList());
+    return ListSelection.create(changes, change)
+      .withExplicitSelection(selectedOnly)
+      .map(wrapper -> wrapper.createProducer(project));
+  }
 
   @NotNull
   public abstract Stream<? extends Wrapper> getSelectedChanges();
@@ -329,7 +340,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   }
 
   @Nullable
-  private static <T> List<T> toListIfNotMany(@NotNull Stream<? extends T> stream, boolean fromUpdate) {
+  public static <T> List<T> toListIfNotMany(@NotNull Stream<? extends T> stream, boolean fromUpdate) {
     if (!fromUpdate) return stream.collect(Collectors.toList());
 
     List<T> result = stream.limit(MANY_CHANGES_THRESHOLD + 1).collect(Collectors.toList());

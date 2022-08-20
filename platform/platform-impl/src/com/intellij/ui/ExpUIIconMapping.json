@@ -31,7 +31,7 @@
       "breakpointMutedDisabled.svg": "debugger/db_muted_disabled_breakpoint.svg",
       "breakpointObsolete.svg": "debugger/db_obsolete.svg",
       "breakpointUnsuspendent.svg": "debugger/db_no_suspend_breakpoint.svg",
-      "breakpointUnsuspendentValid": "debugger/db_verified_no_suspend_breakpoint.svg",
+      "breakpointUnsuspendentValid.svg": "debugger/db_verified_no_suspend_breakpoint.svg",
       "breakpointValid.svg": "debugger/db_verified_breakpoint.svg",
       "multipleBreakpoints.svg": "debugger/MultipleBreakpoints.svg",
       "questionBadge.svg": "debugger/question_badge.svg"
@@ -60,7 +60,7 @@
       "inlayRenameInCommentsActive.svg": "actions/inlayRenameInCommentsActive.svg",
       "inlayRenameInNoCodeFiles.svg": "actions/inlayRenameInNoCodeFiles.svg",
       "inlayRenameInNoCodeFilesActive.svg": "actions/inlayRenameInNoCodeFilesActive.svg",
-      "inlaySettings.svg": "actions/gear.svg",
+      "inlaySettings.svg": "general/gear.svg",
       "intentionBulb.svg": "actions/intentionBulb.svg",
       "intentionBulbGrey.svg": "actions/intentionBulbGrey.svg",
       "quickfixBulb.svg": "actions/quickfixBulb.svg",
@@ -139,7 +139,6 @@
         "debugger/console.svg"
       ],
       "sql.svg": "icons/sql.svg",
-      "terraform.svg": "hcl/terraform.png",
       "text.svg": [
         "fileTypes/custom.svg",
         "fileTypes/text.svg"

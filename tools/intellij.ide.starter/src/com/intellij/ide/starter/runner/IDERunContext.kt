@@ -58,7 +58,6 @@ data class IDERunContext(
       testContext.testName
     }
 
-  @Suppress("unused")
   fun verbose() = copy(verboseOutput = true)
 
   @Suppress("unused")
@@ -76,9 +75,7 @@ data class IDERunContext(
     }
 
   fun installProfiler(): IDERunContext {
-    val profilerType = testContext.profilerType
-
-    return when (profilerType) {
+    return when (val profilerType = testContext.profilerType) {
       ProfilerType.ASYNC, ProfilerType.YOURKIT -> {
         val profiler = di.direct.instance<ProfilerInjector>(tag = profilerType)
         logOutput("Injecting profiler ${profiler.type.kind}")

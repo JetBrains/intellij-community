@@ -61,8 +61,7 @@ internal fun getTargetParentsByQualifier(
 
 internal fun getTargetParentsByCall(call: Call, context: BindingContext): List<PsiElement> {
     val callElement = call.callElement
-    val receiver = call.explicitReceiver
-    return when (receiver) {
+    return when (val receiver = call.explicitReceiver) {
         null -> getTargetParentsByQualifier(callElement, false, null)
         is Qualifier -> getTargetParentsByQualifier(
             callElement,

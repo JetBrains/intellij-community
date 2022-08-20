@@ -122,6 +122,10 @@ class KtVariableDescriptor(val variable: KtCallableDeclaration) : JvmVariableDes
                             val receiver = parent.receiverExpression
                             qualifier = createFromSimpleName(factory, receiver)
                         } else {
+                            if (target.parent is KtFile) {
+                                // top-level declaration
+                                return varFactory.createVariableValue(KtVariableDescriptor(target), null)
+                            }
                             val classOrObject = target.containingClassOrObject?.resolveToDescriptorIfAny()
                             if (classOrObject != null) {
                                 val dfType = classOrObject.defaultType.toDfType(expr)

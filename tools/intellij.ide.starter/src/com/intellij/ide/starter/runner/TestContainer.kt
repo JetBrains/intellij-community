@@ -2,20 +2,18 @@ package com.intellij.ide.starter.runner
 
 import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.di.di
-import com.intellij.ide.starter.downloadAndroidStudio
 import com.intellij.ide.starter.ide.*
 import com.intellij.ide.starter.models.IdeInfo
 import com.intellij.ide.starter.models.IdeProduct
 import com.intellij.ide.starter.models.TestCase
 import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.path.IDEDataPaths
-import com.intellij.ide.starter.system.SystemInfo
+import com.intellij.ide.starter.utils.catchAll
 import com.intellij.ide.starter.utils.logOutput
 import org.kodein.di.direct
+import org.kodein.di.factory
 import org.kodein.di.instance
 import java.io.Closeable
-import java.io.File
-import java.nio.file.Path
 import kotlin.io.path.div
 
 /**
@@ -26,6 +24,12 @@ interface TestContainer<T> : Closeable {
   var useLatestDownloadedIdeBuild: Boolean
   val allContexts: MutableList<IDETestContext>
   val setupHooks: MutableList<IDETestContext.() -> IDETestContext>
+
+  override fun close() {
+    for (context in allContexts) {
+      catchAll { context.paths.close() }
+    }
+  }
 
   /**
    * Allows to apply the common configuration to all created IDETestContext instances
@@ -42,46 +46,8 @@ interface TestContainer<T> : Closeable {
     useLatestDownloadedIdeBuild = true
   } as T
 
-  fun resolveIDE(ideInfo: IdeInfo) = resolveExternallyBuiltIDE(ideInfo)
-
-  /**
-   * Download IDE installer, if necessary
-   * @return BuildNumber / InstalledIDE
-   */
-  fun resolveExternallyBuiltIDE(ideInfo: IdeInfo): Pair<String, InstalledIDE> {
-    val installDir: Path
-    val installerFile: File
-    var buildNumber = ""
-
-    if (ideInfo == IdeProduct.AI.ideInfo) {
-      downloadAndroidStudio().also {
-        installDir = it.first
-        installerFile = it.second
-      }
-    }
-    else {
-      val ideInstaller = IdeInstaller.resolveIdeInstaller(ideInfo, useLatestDownloadedIdeBuild, ciServer)
-      buildNumber = ideInstaller.buildNumber
-      installDir = di.direct.instance<GlobalPaths>().getCacheDirectoryFor("builds") / "${ideInstaller.ideInfo.productCode}-$buildNumber"
-      if (buildNumber == "SNAPSHOT") {
-        logOutput("Cleaning up SNAPSHOT IDE installation $installDir")
-        installDir.toFile().deleteRecursively()
-      }
-      installerFile = ideInstaller.installerFile.toFile()
-    }
-
-    extractIDEIfNeeded(installerFile, installDir.toFile())
-
-    val installationPath = when (ideInfo == IdeProduct.AI.ideInfo && !SystemInfo.isMac) {
-      true -> installDir.resolve("android-studio")
-      false -> installDir
-    }
-
-    val ide = resolveInstalledIDE(installationPath.toFile(), ideInfo.executableFileName)
-
-    if (ideInfo == IdeProduct.AI.ideInfo) buildNumber = ide.build
-
-    return Pair(buildNumber, ide)
+  fun resolveIDE(ideInfo: IdeInfo): Pair<String, InstalledIDE> {
+    return di.direct.factory<IdeInfo, IdeInstallator>().invoke(ideInfo).install(ideInfo)
   }
 
   /** Starting point to run your test */
@@ -93,11 +59,7 @@ interface TestContainer<T> : Closeable {
 
     require(ide.productCode == testCase.ideInfo.productCode) { "Product code of $ide must be the same as for $testCase" }
 
-    val build = when (testCase.ideInfo == IdeProduct.AI.ideInfo) {
-      true -> Regex("\\d*.\\d*.\\d*").find(buildNumber)?.groups?.first()?.value
-      false -> buildNumber
-    }
-    val testDirectory = (di.direct.instance<GlobalPaths>().testsDirectory / "${testCase.ideInfo.productCode}-$build") / testName
+    val testDirectory = (di.direct.instance<GlobalPaths>().testsDirectory / "${testCase.ideInfo.productCode}-$buildNumber") / testName
 
     val paths = IDEDataPaths.createPaths(testName, testDirectory, testCase.useInMemoryFileSystem)
     logOutput("Using IDE paths for $testName: $paths")

@@ -51,25 +51,29 @@ class JsIdePlatformKindTooling : IdePlatformKindTooling() {
         declaration: KtNamedDeclaration,
         descriptorProvider: () -> DeclarationDescriptor?,
         includeSlowProviders: Boolean?
-    ): Icon? = getGenericTestIcon(declaration, descriptorProvider) {
-        val contexts by lazy { computeConfigurationContexts(declaration) }
+    ): Icon? {
+        if (includeSlowProviders == false) return null
 
-        val runConfigData = RunConfigurationProducer
-            .getProducers(declaration.project)
-            .asSequence()
-            .filterIsInstance<KotlinJSRunConfigurationDataProvider<*>>()
-            .filter { it.isForTests }
-            .flatMap { provider -> contexts.map { context -> provider.getConfigurationData(context) } }
-            .firstOrNull { it != null }
-            ?: return@getGenericTestIcon null
+        return getGenericTestIcon(declaration, descriptorProvider) {
+            val contexts by lazy { computeConfigurationContexts(declaration) }
 
-        val location = if (runConfigData is KotlinJSRunConfigurationData) {
-            FileUtil.toSystemDependentName(runConfigData.jsOutputFilePath)
-        } else {
-            declaration.containingKtFile.packageFqName.asString()
+            val runConfigData = RunConfigurationProducer
+                .getProducers(declaration.project)
+                .asSequence()
+                .filterIsInstance<KotlinJSRunConfigurationDataProvider<*>>()
+                .filter { it.isForTests }
+                .flatMap { provider -> contexts.map { context -> provider.getConfigurationData(context) } }
+                .firstOrNull { it != null }
+                ?: return@getGenericTestIcon null
+
+            val location = if (runConfigData is KotlinJSRunConfigurationData) {
+                FileUtil.toSystemDependentName(runConfigData.jsOutputFilePath)
+            } else {
+                declaration.containingKtFile.packageFqName.asString()
+            }
+
+            return@getGenericTestIcon SmartList(location)
         }
-
-        return@getGenericTestIcon SmartList(location)
     }
 
     override fun acceptsAsEntryPoint(function: KtFunction): Boolean {

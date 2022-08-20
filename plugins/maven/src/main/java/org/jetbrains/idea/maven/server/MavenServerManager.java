@@ -281,6 +281,7 @@ public final class MavenServerManager implements Disposable {
       values = new ArrayList<>(myMultimoduleDirToConnectorMap.values());
     }
 
+
     values.forEach(c -> shutdownConnector(c, wait));
   }
 

@@ -165,11 +165,6 @@ abstract class AbstractKotlinEvaluateExpressionTest : KotlinDescriptorTestCaseWi
 
         val contextElement = ContextUtil.getContextElement(debuggerContext)!!
 
-        evaluationContext.debugProcess.putUserData(
-            CodeFragmentCompiler.KOTLIN_EVALUATOR_FRAGMENT_COMPILER_BACKEND,
-            fragmentCompilerBackend()
-        )
-
         assert(KotlinCodeFragmentFactory().isContextAccepted(contextElement)) {
             val text = runReadAction { contextElement.text }
             "KotlinCodeFragmentFactory should be accepted for context element otherwise default evaluator will be called. " +

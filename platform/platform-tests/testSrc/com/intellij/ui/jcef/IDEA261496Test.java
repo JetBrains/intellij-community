@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.ui.scale.TestScaleHelper;
-import junit.framework.TestCase;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.handler.CefLoadHandlerAdapter;
@@ -18,9 +17,10 @@ import java.util.concurrent.CountDownLatch;
 
 import static com.intellij.ui.jcef.JBCefTestHelper.await;
 import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLoad;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests https://youtrack.jetbrains.com/issue/IDEA-261496
+ * Tests IDEA-261496
  * When loading is canceled and then another loading is immediately started, the error page should not be displayed.
  *
  * @author tav
@@ -80,8 +80,8 @@ public class IDEA261496Test {
       frame.setVisible(true);
     });
 
-    TestCase.assertTrue(await(latch));
+    await(latch);
 
-    TestCase.assertTrue(jbCefBrowser.getCefBrowser().getURL().contains("version"));
+    assertThat(jbCefBrowser.getCefBrowser().getURL()).contains("version");
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.perf.synthetic
 
@@ -9,16 +9,16 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.completion.CompletionBindingContextProvider
-import org.jetbrains.kotlin.idea.testFramework.Stats
-import org.jetbrains.kotlin.idea.testFramework.Stats.Companion.WARM_UP
-import org.jetbrains.kotlin.idea.testFramework.performanceTest
+import org.jetbrains.kotlin.idea.performance.tests.utils.commitAllDocuments
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.idea.testFramework.Stats
+import org.jetbrains.kotlin.idea.testFramework.Stats.Companion.WARM_UP
 import org.jetbrains.kotlin.idea.testFramework.TestData
-import org.jetbrains.kotlin.idea.performance.tests.utils.commitAllDocuments
+import org.jetbrains.kotlin.idea.testFramework.performanceTest
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 
 /**
  * inspired by @see AbstractCompletionIncrementalResolveTest
@@ -65,7 +65,7 @@ abstract class AbstractPerformanceCompletionIncrementalResolveTest : KotlinLight
     }
 
     protected fun doPerfTest(unused: String) {
-        val testPath = testPath()
+        val testPath = dataFilePath(fileName())
         val testName = getTestName(false)
         innerPerfTest(testName) {
             myFixture.configureByFile(fileName())

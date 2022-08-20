@@ -4,7 +4,6 @@
 // ERROR: No get method providing array access
 // ACTION: Create extension function 'Some.get'
 // ACTION: Create member function 'Some.get'
-// ACTION: Do not show return expression hints
 // ACTION: Replace overloaded operator with function call
 
 

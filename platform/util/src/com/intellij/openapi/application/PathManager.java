@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.SystemInfoRt;
@@ -142,10 +142,15 @@ public final class PathManager {
   }
 
   public static @Nullable String getHomePathFor(@NotNull Class<?> aClass) {
-    String rootPath = getResourceRoot(aClass, '/' + aClass.getName().replace('.', '/') + ".class");
-    if (rootPath == null) return null;
+    Path result = getHomeDirFor(aClass);
+    return result == null ? null : result.toString();
+  }
 
-    Path root = Paths.get(rootPath).toAbsolutePath();
+  public static @Nullable Path getHomeDirFor(@NotNull Class<?> aClass) {
+    Path result = null;
+    String rootPath = getResourceRoot(aClass, '/' + aClass.getName().replace('.', '/') + ".class");
+    if (rootPath != null) {
+      Path root = Paths.get(rootPath).toAbsolutePath();
     // Android Studio: On Bazel tests, there may be some symlinks that need to be followed.
     // E.g., rootPath = bazel-out/x64_windows-fastbuild/bin/tools/adt/idea/adt-ui/intellij.android.adt.ui_tests.exe.j/0/util.jar
     // where the path contains the symlink:
@@ -156,8 +161,11 @@ public final class PathManager {
       }
       catch (IOException ignore) { }
     }
-    do root = root.getParent(); while (root != null && !isIdeaHome(root));
-    return root != null ? root.toString() : null;
+      do root = root.getParent();
+      while (root != null && !isIdeaHome(root));
+      result = root;
+    }
+    return result;
   }
 
   private static boolean isIdeaHome(Path root) {

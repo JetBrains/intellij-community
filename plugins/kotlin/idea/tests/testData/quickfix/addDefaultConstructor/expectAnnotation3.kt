@@ -1,6 +1,5 @@
 // "Add default constructor to expect class" "false"
 // ENABLE_MULTIPLATFORM
-// ACTION: Do not show return expression hints
 // ACTION: Make internal
 // ACTION: Make private
 // ACTION: Remove constructor call

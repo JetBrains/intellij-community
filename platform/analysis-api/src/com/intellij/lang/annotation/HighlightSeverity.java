@@ -50,7 +50,7 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
   public static final HighlightSeverity TEXT_ATTRIBUTES =
     new HighlightSeverity(
       "TEXT ATTRIBUTES",
-      10,
+      11,
       InspectionsBundle.messagePointer("text.attributes.severity"),
       InspectionsBundle.messagePointer("text.attributes.severity.capitalized"),
       InspectionsBundle.messagePointer("text.attributes.severity.count.message"));

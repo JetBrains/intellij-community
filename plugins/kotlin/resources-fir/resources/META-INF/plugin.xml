@@ -99,7 +99,7 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
     <statusBarWidgetFactory implementation="org.jetbrains.kotlin.idea.fir.FirStatusBarWidgetFactory"/>
     <highlightRangeExtension implementation="org.jetbrains.kotlin.idea.fir.highlighter.KotlinFirPsiChecker"/>
     <annotator language="kotlin" implementationClass="org.jetbrains.kotlin.idea.fir.highlighter.KotlinFirPsiChecker"/>
-    <projectService serviceImplementation="org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirResolveStateService"/>
+    <projectService serviceImplementation="org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirResolveSessionService"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.psi.KtFileClassProvider"
@@ -173,8 +173,6 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
             serviceInterface="org.jetbrains.kotlin.psi.KotlinReferenceProvidersService"
             serviceImplementation="org.jetbrains.kotlin.analysis.api.impl.base.references.HLApiReferenceProviderService"/>
 
-    <projectService serviceImplementation="org.jetbrains.kotlin.idea.PluginStartupService"/>
-
     <iconProvider implementation="org.jetbrains.kotlin.idea.KotlinIconProviderBase"/>
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.caches.resolve.IdePackageOracleFactory"/>
@@ -185,7 +183,6 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
                     serviceImplementation="org.jetbrains.kotlin.idea.vfilefinder.IDEVirtualFileFinderFactory"/>
 
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.PluginStartupActivity"/>
-    <postStartupActivity implementation="org.jetbrains.kotlin.idea.versions.KotlinUpdatePluginStartupActivity"/>
 
     <newProjectWizard.buildSystem.kotlin implementation="org.jetbrains.kotlin.tools.projectWizard.GradleKotlinBuildSystemType"/>
     <newProjectWizard.buildSystem.kotlin implementation="org.jetbrains.kotlin.tools.projectWizard.MavenKotlinBuildSystemType"/>

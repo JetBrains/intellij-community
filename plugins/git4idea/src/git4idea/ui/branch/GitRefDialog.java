@@ -10,6 +10,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.CharFilter;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
@@ -90,22 +92,26 @@ public final class GitRefDialog extends DialogWrapper {
   private static FutureResult<Collection<GitTag>> scheduleCollectCommonTags(@NotNull List<GitRepository> repositories,
                                                                             @NotNull Disposable disposable) {
     FutureResult<Collection<GitTag>> futureResult = new FutureResult<>();
-    ApplicationManager.getApplication().executeOnPooledThread(() -> futureResult.set(BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposable, () -> GitBranchUtil.collectCommon(repositories.stream().map(repository -> {
-        try {
-          List<String> tags = GitBranchUtil.getAllTags(repository.getProject(), repository.getRoot());
-          return ContainerUtil.map(tags, GitTag::new);
-        }
-        catch (VcsException e) {
-          return Collections.emptyList();
-        }
-      })))));
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      futureResult.set(BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposable, () -> {
+        return GitBranchUtil.collectCommon(repositories.stream().map(repository -> {
+          try {
+            List<String> tags = GitBranchUtil.getAllTags(repository.getProject(), repository.getRoot());
+            return ContainerUtil.map(tags, GitTag::new);
+          }
+          catch (VcsException e) {
+            return Collections.emptyList();
+          }
+        }));
+      }));
+    });
     return futureResult;
   }
 
 
   @NotNull
   public String getReference() {
-    return myTextField.getText();
+    return StringUtil.trim(myTextField.getText(), CharFilter.NOT_WHITESPACE_FILTER);
   }
 
   @Nullable
@@ -131,8 +137,8 @@ public final class GitRefDialog extends DialogWrapper {
 
   private static final class MyVcsRefCompletionProvider extends VcsRefCompletionProvider {
     MyVcsRefCompletionProvider(@NotNull VcsLogRefs refs,
-                                      @NotNull Collection<? extends VirtualFile> roots,
-                                      @NotNull Comparator<? super VcsRef> comparator) {
+                               @NotNull Collection<? extends VirtualFile> roots,
+                               @NotNull Comparator<? super VcsRef> comparator) {
       super(refs, roots, new VcsRefDescriptor(comparator));
     }
 
@@ -154,7 +160,7 @@ public final class GitRefDialog extends DialogWrapper {
     @NotNull private final FutureResult<? extends Collection<GitTag>> myTagsFuture;
 
     MySimpleCompletionListProvider(@NotNull List<? extends GitBranch> branches,
-                                          @NotNull FutureResult<? extends Collection<GitTag>> tagsFuture) {
+                                   @NotNull FutureResult<? extends Collection<GitTag>> tagsFuture) {
       super(new GitReferenceDescriptor());
       myBranches = branches;
       myTagsFuture = tagsFuture;
@@ -164,7 +170,7 @@ public final class GitRefDialog extends DialogWrapper {
     @Override
     protected Stream<? extends GitReference> collectSync(@NotNull CompletionResultSet result) {
       return myBranches.stream()
-                       .filter(branch -> result.getPrefixMatcher().prefixMatches(branch.getName()));
+        .filter(branch -> result.getPrefixMatcher().prefixMatches(branch.getName()));
     }
 
     @NotNull
@@ -172,7 +178,7 @@ public final class GitRefDialog extends DialogWrapper {
     protected Stream<? extends GitReference> collectAsync(@NotNull CompletionResultSet result) {
       try {
         return myTagsFuture.get().stream()
-                           .filter(tag -> result.getPrefixMatcher().prefixMatches(tag.getName()));
+          .filter(tag -> result.getPrefixMatcher().prefixMatches(tag.getName()));
       }
       catch (ExecutionException | InterruptedException e) {
         return Stream.empty();

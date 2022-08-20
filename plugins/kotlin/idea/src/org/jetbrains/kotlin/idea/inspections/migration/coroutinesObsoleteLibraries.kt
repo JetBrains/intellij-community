@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections.migration
 
@@ -31,7 +31,6 @@ data class DeprecatedForKotlinLibInfo(
     @Nls val message: String
 )
 
-@Suppress("SpellCheckingInspection")
 private fun kotlinxCoroutinesDeprecation(name: String): DeprecatedForKotlinLibInfo {
     return DeprecatedForKotlinLibInfo(
         lib = LibInfo("org.jetbrains.kotlinx", name),
@@ -41,7 +40,6 @@ private fun kotlinxCoroutinesDeprecation(name: String): DeprecatedForKotlinLibIn
     )
 }
 
-@Suppress("SpellCheckingInspection")
 val DEPRECATED_COROUTINES_LIBRARIES_INFORMATION = listOf(
     kotlinxCoroutinesDeprecation("kotlinx-coroutines"),
     kotlinxCoroutinesDeprecation("kotlinx-coroutines-android"),

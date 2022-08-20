@@ -2,7 +2,6 @@
 // COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
 // WITH_STDLIB
 // ACTION: Add '-opt-in=MyExperimentalAPI' to module light_idea_test_case compiler arguments
-// ACTION: Do not show return expression hints
 // ACTION: Introduce import alias
 // ACTION: Opt in for 'MyExperimentalAPI' in containing file 'nestedClasses.kt'
 // ACTION: Opt in for 'MyExperimentalAPI' on 'bar'

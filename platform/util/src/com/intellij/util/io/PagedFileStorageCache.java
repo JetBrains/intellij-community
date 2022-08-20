@@ -12,12 +12,10 @@ class PagedFileStorageCache {
 
   private static class CachedBuffer {
     private final DirectBufferWrapper myWrapper;
-    private final int myLastChangeCount;
     private final long myLastPage;
 
-    private CachedBuffer(DirectBufferWrapper wrapper, int count, long page) {
+    private CachedBuffer(DirectBufferWrapper wrapper, long page) {
       myWrapper = wrapper;
-      myLastChangeCount = count;
       myLastPage = page;
     }
   }
@@ -29,34 +27,33 @@ class PagedFileStorageCache {
   }
 
   @Nullable
-  DirectBufferWrapper getPageFromCache(long page, int mappingChangeCount) {
+  DirectBufferWrapper getPageFromCache(long page) {
     DirectBufferWrapper buffer;
 
-    buffer = fromCache(myLastBuffer, page, mappingChangeCount);
+    buffer = fromCache(myLastBuffer, page);
     if (buffer != null) return buffer;
 
-    buffer = fromCache(myLastBuffer2, page, mappingChangeCount);
+    buffer = fromCache(myLastBuffer2, page);
     if (buffer != null) return buffer;
 
-    buffer = fromCache(myLastBuffer3, page, mappingChangeCount);
+    buffer = fromCache(myLastBuffer3, page);
     return buffer;
   }
 
   @Nullable
-  private static DirectBufferWrapper fromCache(CachedBuffer lastBuffer, long page, int mappingChangeCount) {
+  private static DirectBufferWrapper fromCache(CachedBuffer lastBuffer, long page) {
     if (lastBuffer != null && !lastBuffer.myWrapper.isReleased() &&
-        mappingChangeCount == lastBuffer.myLastChangeCount &&
         lastBuffer.myLastPage == page) {
       return lastBuffer.myWrapper;
     }
     return null;
   }
 
-  /* race */ void updateCache(long page, DirectBufferWrapper byteBufferWrapper, int mappingChangeCount) {
+  /* race */ void updateCache(long page, DirectBufferWrapper byteBufferWrapper) {
     if (myLastBuffer != null && myLastBuffer.myLastPage != page) {
       myLastBuffer3 = myLastBuffer2;
       myLastBuffer2 = myLastBuffer;
     }
-    myLastBuffer = new CachedBuffer(byteBufferWrapper, mappingChangeCount, page);
+    myLastBuffer = new CachedBuffer(byteBufferWrapper, page);
   }
 }

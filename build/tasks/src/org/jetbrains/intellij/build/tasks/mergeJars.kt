@@ -3,9 +3,11 @@
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 package org.jetbrains.intellij.build.tasks
 
+import com.intellij.diagnostic.telemetry.use
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.context.Context
 import org.jetbrains.intellij.build.io.*
+import org.jetbrains.intellij.build.tracer
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
@@ -43,7 +45,7 @@ data class ZipSource(val file: Path,
   }
 }
 
-data class DirSource(val dir: Path, val excludes: List<PathMatcher>, override val sizeConsumer: IntConsumer? = null) : Source {
+data class DirSource(val dir: Path, val excludes: List<PathMatcher> = emptyList(), override val sizeConsumer: IntConsumer? = null) : Source {
   override fun toString(): String {
     val shortPath = if (dir.startsWith(USER_HOME)) {
       "~/" + USER_HOME.relativize(dir)
@@ -104,7 +106,6 @@ fun buildJars(descriptors: List<Triple<Path, String, List<Source>>>, dryRun: Boo
         .setAttribute(DO_NOT_EXPORT_TO_CONSOLE, true)
         .setAttribute("jar", file.toString())
         .setAttribute(AttributeKey.stringArrayKey("sources"), item.third.map { item.toString() })
-        .startSpan()
         .use {
           buildJar(file, item.third, dryRun = dryRun)
         }

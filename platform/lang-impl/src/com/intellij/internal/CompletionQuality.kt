@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DEPRECATION") // declared for import com.intellij.codeInsight.completion.CompletionProgressIndicator
 
 package com.intellij.internal
@@ -59,7 +59,6 @@ import javax.swing.DefaultComboBoxModel
 import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.JLabel
-import kotlin.collections.HashMap
 
 private data class CompletionTime(var cnt: Int, var time: Long)
 
@@ -318,7 +317,6 @@ internal class CompletionQualityStatsAction : AnAction() {
               }
 
               val handler = object : CodeCompletionHandlerBase(CompletionType.BASIC, false, false, true) {
-                @Suppress("DEPRECATION")
                 override fun completionFinished(indicator: CompletionProgressIndicator, hasModifiers: Boolean) {
                   super.completionFinished(indicator, hasModifiers)
                   lookupItems = indicator.lookup.items

@@ -142,7 +142,6 @@ class NewMessageBundleAction : CreateElementActionBase(), UpdateInBackground {
   }
 }
 
-@Suppress("HardCodedStringLiteral")
 fun generateDefaultBundleName(module: Module): String {
   val nameWithoutPrefix = module.name.removePrefix("intellij.").removeSuffix(".impl")
   val commonGroupNames = listOf("platform", "vcs", "tools", "clouds")

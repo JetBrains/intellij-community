@@ -12,7 +12,6 @@ object OpenSourceCommunityInstallersBuildTarget {
       buildNumber = null
     }
 
-    val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass).toString()
-    IdeaCommunityBuilder(communityHome, options).buildDistributions()
+    IdeaCommunityBuilder(IdeaProjectLoaderUtil.guessCommunityHome(javaClass), options).buildDistributions()
   }
 }

@@ -7,47 +7,52 @@ import javax.accessibility.AccessibleAction;
 import javax.accessibility.AccessibleContext;
 
 public abstract class AccessibleContextDelegateWithContextMenu extends AccessibleContextDelegate {
+  private AccessibleAction myAction = null;
+
   public AccessibleContextDelegateWithContextMenu(@NotNull AccessibleContext context) {
     super(context);
   }
 
   @Override
   public AccessibleAction getAccessibleAction() {
-    return new AccessibleAction() {
-      @Override
-      public int getAccessibleActionCount() {
-        AccessibleContext ac = getDelegate();
-        if (ac != null) {
-          AccessibleAction aa = ac.getAccessibleAction();
-          if (aa != null) {
-            return aa.getAccessibleActionCount() + 1;
+    if (myAction == null) {
+      myAction = new AccessibleAction() {
+        @Override
+        public int getAccessibleActionCount() {
+          AccessibleContext ac = getDelegate();
+          if (ac != null) {
+            AccessibleAction aa = ac.getAccessibleAction();
+            if (aa != null) {
+              return aa.getAccessibleActionCount() + 1;
+            }
           }
+
+          return 1;
         }
 
-        return 1;
-      }
+        @Override
+        public String getAccessibleActionDescription(int i) {
+          if (i < 0 || i > getAccessibleActionCount()) return null;
+          if (getAccessibleActionCount() != 1 && i < getAccessibleActionCount() - 1) {
+            return getDelegate().getAccessibleAction().getAccessibleActionDescription(i);
+          }
 
-      @Override
-      public String getAccessibleActionDescription(int i) {
-        if (i < 0 || i > getAccessibleActionCount()) return null;
-        if (getAccessibleActionCount() != 1 && i < getAccessibleActionCount() - 1) {
-          return getDelegate().getAccessibleAction().getAccessibleActionDescription(i);
+          return AccessibleAction.TOGGLE_POPUP;
         }
 
-        return AccessibleAction.TOGGLE_POPUP;
-      }
+        @Override
+        public boolean doAccessibleAction(int i) {
+          if (i < 0 || i > getAccessibleActionCount()) return false;
+          if (getAccessibleActionCount() != 1 && i < getAccessibleActionCount() - 1) {
+            return getDelegate().getAccessibleAction().doAccessibleAction(i);
+          }
 
-      @Override
-      public boolean doAccessibleAction(int i) {
-        if (i < 0 || i > getAccessibleActionCount()) return false;
-        if (getAccessibleActionCount() != 1 && i < getAccessibleActionCount() - 1) {
-          return getDelegate().getAccessibleAction().doAccessibleAction(i);
+          doShowContextMenu();
+          return true;
         }
-
-        doShowContextMenu();
-        return true;
-      }
-    };
+      };
+    }
+    return myAction;
   }
 
   protected abstract void doShowContextMenu();

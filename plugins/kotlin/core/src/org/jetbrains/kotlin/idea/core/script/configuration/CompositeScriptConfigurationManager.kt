@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.core.script.configuration
 
@@ -43,7 +43,6 @@ import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrap
  * Listener should do something to invalidate configuration and schedule reloading.
  */
 class CompositeScriptConfigurationManager(val project: Project) : ScriptConfigurationManager {
-    @Suppress("unused")
     private val notifier = ScriptChangesNotifier(project)
 
     private val classpathRoots: ScriptClassRootsCache

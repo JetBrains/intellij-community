@@ -72,7 +72,8 @@ class KotlinUObjectLiteralExpression(
             get() = sourcePsi
 
         override fun resolve() =
-            baseResolveProviderService.resolveCall(sourcePsi)?.containingClass
+            baseResolveProviderService.resolveToClassIfConstructorCall(sourcePsi, this)
+                ?: baseResolveProviderService.resolveCall(sourcePsi)?.containingClass
 
         override val uAnnotations: List<UAnnotation>
             get() = emptyList()

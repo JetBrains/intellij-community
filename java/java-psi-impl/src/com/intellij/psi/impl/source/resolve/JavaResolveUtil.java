@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.openapi.project.Project;
@@ -302,7 +302,7 @@ public final class JavaResolveUtil {
     final FileElement holder = result.getTreeElement();
     holder.rawAddChildren((TreeElement)expressionList.getNode());
 
-    return PsiResolveHelper.SERVICE.getInstance(project)
+    return PsiResolveHelper.getInstance(project)
       .resolveConstructor(PsiTypesUtil.getClassType(superClassWhichTheSuperCallMustResolveTo), expressionList, place).getElement();
   }
 

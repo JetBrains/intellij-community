@@ -222,7 +222,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
     }
   }
 
-  @Suppress("DEPRECATION", "OverridingDeprecatedMember")
+  @Suppress("OverridingDeprecatedMember")
   override fun addKeymapManagerListener(listener: KeymapManagerListener, parentDisposable: Disposable) {
     pollQueue()
     ApplicationManager.getApplication().messageBus.connect(parentDisposable).subscribe(KeymapManagerListener.TOPIC, listener)
@@ -238,7 +238,6 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
     listeners.remove(listener)
   }
 
-  @Suppress("DEPRECATION")
   override fun addWeakListener(listener: KeymapManagerListener) {
     pollQueue()
     listeners.add(WeakKeymapManagerListener(this, listener))

@@ -80,5 +80,8 @@
     <localInspection language="RegExp" shortName="RegExpSimplifiable" enabledByDefault="true" level="WEAK WARNING"
                      bundle="messages.RegExpBundle" groupKey="inspection.group.name.regexp" key="inspection.name.simplifiable.expression"
                      implementationClass="org.intellij.lang.regexp.inspection.RegExpSimplifiableInspection"/>
+    <localInspection language="RegExp" shortName="RegExpRedundantClassElement" enabledByDefault="true" level="WEAK WARNING"
+                     bundle="messages.RegExpBundle" groupKey="inspection.group.name.regexp" key="inspection.name.redundant.digit.class.element"
+                     implementationClass="org.intellij.lang.regexp.inspection.RegExpRedundantClassElementInspection"/>
   </extensions>
 </idea-plugin>

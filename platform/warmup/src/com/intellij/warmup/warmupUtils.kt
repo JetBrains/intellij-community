@@ -1,8 +1,9 @@
-package com.intellij.indexing.shared.ultimate.project
+package com.intellij.warmup
 
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexEx
+import com.intellij.warmup.util.ConsoleLog
 import com.intellij.warmup.util.runTaskAndLogTime
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.time.delay
@@ -16,7 +17,7 @@ fun waitUntilProgressTasksAreFinishedOrFail() {
     waitUntilProgressTasksAreFinished()
   }
   catch (e: IllegalStateException) {
-    println(e.message)
+    ConsoleLog.info(e.message ?: e.toString())
     exitProcess(2)
   }
 }
@@ -34,7 +35,7 @@ private fun waitUntilProgressTasksAreFinished() = runBlocking {
         }
         error(timeoutMessage)
       }
-      delay(Duration.ofMillis(100))
+      delay(Duration.ofMillis(1000))
     }
   }
 }

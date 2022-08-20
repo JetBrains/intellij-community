@@ -14,7 +14,7 @@ import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 class GradleDirectoryCompletionContributor : CreateDirectoryCompletionContributor {
-  override fun getDescription(): String = GradleBundle.message("gradle.tasks.directory.completion.description");
+  override fun getDescription(): String = GradleBundle.message("gradle.tasks.directory.completion.description")
 
   override fun getVariants(directory: PsiDirectory): Collection<CreateDirectoryCompletionContributor.Variant> {
     val project = directory.project

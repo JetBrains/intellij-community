@@ -202,6 +202,11 @@ public final class InTextDirectivesUtils {
                         if (!uncommentedLine.isEmpty()) {
                             result.add(uncommentedLine);
                         }
+                    } else if (line.startsWith("<!--")) {
+                        String uncommentedLine = StringsKt.substringBefore(line.substring(4), "-->", "").trim();
+                        if (!uncommentedLine.isEmpty()) {
+                            result.add(uncommentedLine);
+                        }
                     }
                 }
             }

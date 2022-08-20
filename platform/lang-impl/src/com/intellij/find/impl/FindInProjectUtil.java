@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.find.impl;
 
@@ -562,7 +562,7 @@ public final class FindInProjectUtil {
   private static void addSourceDirectoriesFromLibraries(@NotNull Project project,
                                                         @NotNull VirtualFile directory,
                                                         @NotNull Collection<? super VirtualFile> outSourceRoots) {
-    ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
+    ProjectFileIndex index = ProjectFileIndex.getInstance(project);
     // if we already are in the sources, search just in this directory only
     if (!index.isInLibraryClasses(directory)) return;
     VirtualFile classRoot = index.getClassRootForFile(directory);

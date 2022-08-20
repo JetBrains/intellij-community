@@ -14,6 +14,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.codeStyle.NameUtil
+import com.intellij.ui.render.IconCompCompPanel
 import com.intellij.util.Processor
 import com.intellij.util.text.Matcher
 import com.intellij.util.ui.JBUI
@@ -35,12 +36,10 @@ import git4idea.i18n.GitBundle
 import git4idea.log.GitRefManager
 import git4idea.repo.GitRepositoryManager
 import git4idea.search.GitSearchEverywhereItemType.*
-import java.awt.BorderLayout
 import java.awt.Component
 import java.util.function.Function
 import javax.swing.JLabel
 import javax.swing.JList
-import javax.swing.JPanel
 import javax.swing.ListCellRenderer
 
 internal class GitSearchEverywhereContributor(private val project: Project) : WeightedSearchEverywhereContributor<Any>, DumbAware {
@@ -125,16 +124,8 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
 
   private val renderer = object : ListCellRenderer<Any> {
 
-    private val leftLabel = JLabel().apply {
-      border = JBUI.Borders.empty(0, 8, 0, 2)
-    }
-    private val rightLabel = JLabel().apply {
-      border = JBUI.Borders.empty(0, 2, 0, 8)
-    }
-
-    private val panel = JPanel(BorderLayout(0, 0)).apply {
-      add(leftLabel, BorderLayout.CENTER)
-      add(rightLabel, BorderLayout.EAST)
+    private val panel = IconCompCompPanel(JLabel(), JLabel()).apply {
+      border = JBUI.Borders.empty(0, 8)
     }
 
     override fun getListCellRendererComponent(
@@ -142,22 +133,23 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
       value: Any?, index: Int,
       isSelected: Boolean, cellHasFocus: Boolean
     ): Component {
+      panel.reset()
       panel.background = UIUtil.getListBackground(isSelected, cellHasFocus)
-      leftLabel.apply {
+      panel.setIcon(when (value) {
+                      is VcsRef -> LabelIcon(panel.center, JBUI.scale(16), panel.background, listOf(value.type.backgroundColor))
+                      else -> AllIcons.Vcs.CommitNode
+                    })
+      panel.center.apply {
         font = list.font
         text = when (value) {
           is VcsRef -> value.name
           is VcsCommitMetadata -> value.subject
           else -> null
         }
-        icon = when (value) {
-          is VcsRef -> LabelIcon(this, JBUI.scale(16), background, listOf(value.type.backgroundColor))
-          else -> AllIcons.Vcs.CommitNode
-        }
         foreground = UIUtil.getListForeground(isSelected, cellHasFocus)
       }
 
-      rightLabel.apply {
+      panel.right.apply {
         font = list.font
         text = when (value) {
           is VcsRef -> getTrackingRemoteBranchName(value)

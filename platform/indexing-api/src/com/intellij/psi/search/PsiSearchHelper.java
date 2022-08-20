@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.concurrency.AsyncFuture;
@@ -22,14 +22,15 @@ import org.jetbrains.annotations.Nullable;
  * Use {@link PsiSearchHelper#getInstance(Project)} to get a search helper instance.
  */
 public interface PsiSearchHelper {
+
+  /**
+   * @deprecated please use {@link PsiSearchHelper#getInstance(Project)}
+   */
+  @Deprecated(forRemoval = true)
   final class SERVICE {
     private SERVICE() {
     }
 
-    /**
-     * @deprecated please use {@link PsiSearchHelper#getInstance(Project)}
-     */
-    @Deprecated
     public static PsiSearchHelper getInstance(@NotNull Project project) {
       return PsiSearchHelper.getInstance(project);
     }

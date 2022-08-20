@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.merge
 
 import com.intellij.diff.DiffContentFactoryImpl
@@ -24,23 +24,23 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ui.UIUtil
 
 abstract class MergeTestBase : HeavyDiffTestCase() {
-  fun test1(left: String, base: String, right: String, f: TestBuilder.() -> Unit) {
-    test(left, base, right, 1, f)
+  fun doTest1(left: String, base: String, right: String, f: TestBuilder.() -> Unit) {
+    doTest(left, base, right, 1, f)
   }
 
-  fun test2(left: String, base: String, right: String, f: TestBuilder.() -> Unit) {
-    test(left, base, right, 2, f)
+  fun doTest2(left: String, base: String, right: String, f: TestBuilder.() -> Unit) {
+    doTest(left, base, right, 2, f)
   }
 
-  fun testN(left: String, base: String, right: String, f: TestBuilder.() -> Unit) {
-    test(left, base, right, -1, f)
+  fun doTestN(left: String, base: String, right: String, f: TestBuilder.() -> Unit) {
+    doTest(left, base, right, -1, f)
   }
 
-  fun test(left: String, base: String, right: String, changesCount: Int, f: TestBuilder.() -> Unit) {
-    test(left, base, right, changesCount, IgnorePolicy.DEFAULT, f)
+  fun doTest(left: String, base: String, right: String, changesCount: Int, f: TestBuilder.() -> Unit) {
+    doTest(left, base, right, changesCount, IgnorePolicy.DEFAULT, f)
   }
 
-  fun test(left: String, base: String, right: String, changesCount: Int, policy: IgnorePolicy, f: TestBuilder.() -> Unit) {
+  fun doTest(left: String, base: String, right: String, changesCount: Int, policy: IgnorePolicy, f: TestBuilder.() -> Unit) {
     val contentFactory = DiffContentFactoryImpl()
     val leftContent: DocumentContent = contentFactory.create(parseSource(left))
     val baseContent: DocumentContent = contentFactory.create(parseSource(base))

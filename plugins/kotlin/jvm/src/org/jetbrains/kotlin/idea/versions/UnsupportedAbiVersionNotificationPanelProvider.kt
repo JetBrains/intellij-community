@@ -57,7 +57,6 @@ class UnsupportedAbiVersionNotificationPanelProvider : EditorNotificationProvide
                 val jsLibJar = LibraryJarDescriptor.JS_STDLIB_JAR.findExistingJar(library)?.let { VfsUtil.getLocalFile(it) }
                 if (badRootFiles.contains(runtimeJar) || badRootFiles.contains(jsLibJar)) {
                     list.add(library)
-                    return@forEachAllUsedLibraries true
                 }
                 return@forEachAllUsedLibraries true
             }

@@ -1,7 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.auth.ui
 
-import com.intellij.collaboration.auth.*
+import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
+import com.intellij.collaboration.auth.Account
+import com.intellij.collaboration.auth.AccountManager
+import com.intellij.collaboration.auth.AccountsListener
+import com.intellij.collaboration.auth.PersistentDefaultAccountHolder
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.ExceptionUtil
 import com.intellij.collaboration.ui.codereview.avatar.AvatarIconsProvider
@@ -11,8 +15,8 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.ToolbarDecorator
@@ -20,11 +24,9 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBList
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
-import com.intellij.util.IconUtil
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import java.awt.Image
 import java.awt.event.MouseEvent
@@ -35,7 +37,7 @@ import javax.swing.event.ListDataListener
 import kotlin.properties.Delegates.observable
 
 class AccountsPanelFactory<A : Account, Cred>
-private constructor(private val disposable: Disposable,
+private constructor(disposable: Disposable,
                     private val accountManager: AccountManager<A, Cred>,
                     private val defaultAccountHolder: PersistentDefaultAccountHolder<A>?,
                     private val accountsModel: AccountsListModel<A, Cred>,
@@ -73,7 +75,7 @@ private constructor(private val disposable: Disposable,
     val accountsList = createList {
       SimpleAccountsListCellRenderer(accountsModel, detailsProvider, avatarIconsProvider)
     }
-    loadAccountsDetails(disposable, accountsList, detailsLoader, detailsMap)
+    loadAccountsDetails(accountsList, detailsLoader, detailsMap)
 
     val component = wrapWithToolbar(accountsList, needAddBtnWithDropdown)
 
@@ -168,11 +170,9 @@ private constructor(private val disposable: Disposable,
     return toolbar.createPanel()
   }
 
-  private fun <A : Account> loadAccountsDetails(disposable: Disposable,
-                                                accountsList: JBList<A>,
+  private fun <A : Account> loadAccountsDetails(accountsList: JBList<A>,
                                                 detailsLoader: AccountsDetailsLoader<A, *>,
                                                 resultsMap: MutableMap<A, CompletableFuture<AccountsDetailsLoader.Result<*>>>) {
-    val scope = CoroutineScope(SupervisorJob()).also { Disposer.register(disposable) { it.cancel() } }
 
     val listModel = accountsList.model
     listModel.addListDataListener(object : ListDataListener {
@@ -194,28 +194,13 @@ private constructor(private val disposable: Disposable,
         for (i in startIdx..endIdx) {
           val account = listModel.getElementAt(i)
           resultsMap[account]?.cancel(true)
-          resultsMap[account] = scope.async(Dispatchers.Main) {
-            loadingCount++
-            try {
-              loadAndRepaint(account)
-            }
-            finally {
-              loadingCount--
-            }
-          }.asCompletableFuture()
-        }
-      }
-
-      private suspend fun loadAndRepaint(account: A): AccountsDetailsLoader.Result<*> {
-        return try {
-          detailsLoader.loadDetails(account)
-        }
-        catch (e: Throwable) {
-          val errorMessage = ExceptionUtil.getPresentableMessage(e)
-          AccountsDetailsLoader.Result.Error<AccountDetails>(errorMessage, false)
-        }
-        finally {
-          repaint(account)
+          loadingCount++
+          val detailsLoadingResult = detailsLoader.loadDetailsAsync(account).asCompletableFuture()
+          detailsLoadingResult.handleOnEdt(ModalityState.any()) { _, _ ->
+            loadingCount--
+            repaint(account)
+          }
+          resultsMap[account] = detailsLoadingResult
         }
       }
 
@@ -235,13 +220,14 @@ private class LoadingAvatarIconsProvider<A : Account>(private val detailsLoader:
   : AvatarIconsProvider<A> {
 
   private val cachingDelegate = object : CachingAvatarIconsProvider<Pair<A, String>>(defaultAvatarIcon) {
-    override fun loadImage(key: Pair<A, String>): Image? = runBlocking { detailsLoader.loadAvatar(key.first, key.second) }
+    override fun loadImageAsync(key: Pair<A, String>): CompletableFuture<Image?> =
+      detailsLoader.loadAvatarAsync(key.first, key.second).asCompletableFuture()
   }
 
 
   override fun getIcon(key: A?, iconSize: Int): Icon {
-    val account = key ?: return IconUtil.resizeSquared(defaultAvatarIcon, iconSize)
-    val uri = avatarUrlSupplier(key) ?: return IconUtil.resizeSquared(defaultAvatarIcon, iconSize)
+    val account = key ?: return cachingDelegate.getIcon(null, iconSize)
+    val uri = avatarUrlSupplier(key) ?: return cachingDelegate.getIcon(null, iconSize)
     return cachingDelegate.getIcon(account to uri, iconSize)
   }
 }

@@ -21,6 +21,8 @@ fun main() {
     val x = 0
 }
 
+// Old backend does not support access to private constructors, so throws
+// an illegal access exception on this fragment.
 // EXPRESSION: block { Foo("foo") }
 // RESULT: instance of test.Foo(id=ID): Ltest/Foo;
 

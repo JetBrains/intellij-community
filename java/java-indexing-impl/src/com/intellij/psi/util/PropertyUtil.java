@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.lang.java.beans.PropertyKind;
@@ -224,7 +224,7 @@ public final class PropertyUtil extends PropertyUtilBase {
   }
 
   private static boolean checkFieldLocation(PsiMethod method, PsiField field) {
-    return PsiResolveHelper.SERVICE.getInstance(method.getProject()).isAccessible(field, method, null) &&
+    return PsiResolveHelper.getInstance(method.getProject()).isAccessible(field, method, null) &&
            (!method.hasModifier(JvmModifier.STATIC) || field.hasModifier(JvmModifier.STATIC)) &&
            InheritanceUtil.isInheritorOrSelf(method.getContainingClass(), field.getContainingClass(), true);
   }

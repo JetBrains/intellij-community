@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.actions
 
 import com.intellij.diff.*
@@ -141,7 +141,6 @@ internal class SwitchToRecentEditorActionGroup : ActionGroup(), DumbAware {
     return BlankDiffWindowUtil.getRecentFiles().map2Array { MySwitchAction(it) }
   }
 
-  @Suppress("DialogTitleCapitalization")
   private class MySwitchAction(val content: RecentBlankContent) : BlankSwitchContentActionBase() {
     init {
       templatePresentation.setTextWithMnemonic {

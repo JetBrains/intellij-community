@@ -13,8 +13,7 @@ fun SMTestProxy.calculateAndReturnMagnitude(): TestStateInfo.Magnitude {
     var hasTerminated = false
 
     children.forEach { child ->
-      val childMagnitude = child.calculateAndReturnMagnitude()
-      when (childMagnitude) {
+      when (child.calculateAndReturnMagnitude()) {
         TestStateInfo.Magnitude.PASSED_INDEX -> hasPassedChildren = true
         TestStateInfo.Magnitude.SKIPPED_INDEX, TestStateInfo.Magnitude.IGNORED_INDEX -> hasSkippedChildren = true
         TestStateInfo.Magnitude.ERROR_INDEX -> hasErrorChildren = true

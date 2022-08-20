@@ -97,7 +97,7 @@ public class SplitDeclarationAndInitializationIntention extends Intention {
       classInitializer = (PsiClassInitializer)containingClass.addAfter(elementFactory.createClassInitializer(), field);
 
       // add some whitespace between the field and the class initializer
-      final PsiElement whitespace = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n");
+      final PsiElement whitespace = PsiParserFacade.getInstance(project).createWhiteSpaceFromText("\n");
       containingClass.addAfter(whitespace, field);
     }
     final PsiCodeBlock body = classInitializer.getBody();

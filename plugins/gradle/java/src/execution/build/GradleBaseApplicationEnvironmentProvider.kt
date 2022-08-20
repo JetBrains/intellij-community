@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.build
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
@@ -63,7 +63,7 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     val mainClass = runProfile.configurationModule.findClass(runClass) ?: return null
 
     val virtualFile = mainClass.containingFile.virtualFile
-    val module = ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(virtualFile) ?: return null
+    val module = ProjectFileIndex.getInstance(project).getModuleForFile(virtualFile) ?: return null
 
     val params = JavaParameters().apply {
       JavaParametersUtil.configureConfiguration(this, runProfile)

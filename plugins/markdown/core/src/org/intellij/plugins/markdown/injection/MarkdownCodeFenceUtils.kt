@@ -12,11 +12,11 @@ import com.intellij.psi.util.elementType
 import com.intellij.psi.util.siblings
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
-import org.intellij.plugins.markdown.lang.psi.MarkdownAstUtils.parents
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl
+import org.intellij.plugins.markdown.lang.psi.util.hasType
+import org.intellij.plugins.markdown.lang.psi.util.parents
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil
-import org.intellij.plugins.markdown.util.hasType
 
 /**
  * Utility functions used to work with Markdown Code Fences

@@ -69,7 +69,7 @@ object AdditionalKotlinArtifacts {
 
     private fun downloadAndUnpack(libraryFileName: String, artifactId: String, dirName: String): File {
         val jar = downloadArtifact(libraryFileName, artifactId)
-        return lazyUnpackJar(jar, File(PathManager.getCommunityHomePath()).resolve("out").resolve(dirName))
+        return LazyZipUnpacker(File(PathManager.getCommunityHomePath()).resolve("out").resolve(dirName)).lazyUnpack(jar)
     }
 
     private fun downloadArtifact(libraryFileName: String, artifactId: String, extension: String = "jar"): File {

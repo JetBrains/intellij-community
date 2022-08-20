@@ -1,22 +1,20 @@
 package com.intellij.ide.starter.utils
 
-import org.apache.commons.lang3.CharUtils
-
-private val OFFSET: Int = "AAAAAAA".hashCode();
+private val OFFSET: Int = "AAAAAAA".hashCode()
 
 fun convertToHashCodeWithOnlyLetters(hash: Int): String {
   val offsettedHash = (hash - OFFSET).toLong()
   var longHash: Long = offsettedHash and 0xFFFFFFFFL
 
   val generatedChars = CharArray(7)
-  val aChar: Char = 'A'
+  val aChar = 'A'
 
   generatedChars.indices.forEach { index ->
     generatedChars[6 - index] = (aChar + ((longHash % 31).toInt()))
-    longHash /= 31;
+    longHash /= 31
   }
 
-  return generatedChars.filter { CharUtils.isAsciiAlphanumeric(it) }.joinToString(separator = "")
+  return generatedChars.filter { it.isLetterOrDigit() }.joinToString(separator = "")
 }
 
 /**
@@ -28,9 +26,9 @@ fun convertToHashCodeWithOnlyLetters(hash: Int): String {
  *  text1234text => text<NUM>text
  **/
 fun generifyErrorMessage(originalMessage: String): String {
-  return originalMessage // text@3ba5aac, text => text<ID>, text
-    .replace("[\$@#][A-Za-z0-9-_]+".toRegex(), "<ID>") // some-text.db451f59 => some-text.<HASH>
-    .replace("[.]([A-Za-z]+[0-9]|[0-9]+[A-Za-z])[A-Za-z0-9]*".toRegex(), ".<HASH>") // 0x01 => <HEX>
-    .replace("0x[0-9a-fA-F]+".toRegex(), "<HEX>") // text1234text => text<NUM>text
-    .replace("[0-9]+".toRegex(), "<NUM>")
+  return originalMessage
+    .replace("[\$@#][A-Za-z\\d-_]+".toRegex(), "<ID>") // text@3ba5aac, text => text<ID>, text
+    .replace("[.]([A-Za-z]+\\d|\\d+[A-Za-z])[A-Za-z\\d]*".toRegex(), ".<HASH>") // some-text.db451f59 => some-text.<HASH>
+    .replace("0x[\\da-fA-F]+".toRegex(), "<HEX>") // 0x01 => <HEX>
+    .replace("\\d+".toRegex(), "<NUM>") // text1234text => text<NUM>text
 }

@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes
 
 import com.intellij.diff.editor.DiffEditorTabFilesManager
 import com.intellij.diff.editor.DiffEditorTabFilesManager.Companion.isDiffInEditor
-import com.intellij.diff.tools.external.ExternalDiffTool
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.components.service
@@ -17,7 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile
 
 class EditorTabDiffPreviewManager(private val project: Project) : DiffEditorTabFilesManager {
 
-  fun isEditorDiffPreviewAvailable() = isEditorDiffPreview.asBoolean() && !ExternalDiffTool.isEnabled()
+  fun isEditorDiffPreviewAvailable() = isEditorDiffPreview.asBoolean()
 
   fun subscribeToPreviewVisibilityChange(disposable: Disposable, onVisibilityChange: Runnable) {
     isEditorDiffPreview.addListener(object : RegistryValueListener {
@@ -36,10 +35,6 @@ class EditorTabDiffPreviewManager(private val project: Project) : DiffEditorTabF
 
   override fun showDiffFile(diffFile: VirtualFile, focusEditor: Boolean): Array<out FileEditor> {
     return VcsEditorTabFilesManager.getInstance().openFile(project, diffFile, focusEditor, !isDiffInEditor, false)
-  }
-
-  fun showDiffPreview(diffPreview: DiffPreview) {
-    diffPreview.setPreviewVisible(true, true)
   }
 
   companion object {

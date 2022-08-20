@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.codeInsight.gradle;
 
+import com.intellij.testFramework.UsefulTestCase;
 import org.gradle.util.GradleVersion;
 import org.hamcrest.CustomMatcher;
 import org.jetbrains.annotations.NotNull;
@@ -8,11 +9,15 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher;
+import org.junit.Assume;
+import org.junit.AssumptionViolatedException;
 import org.junit.rules.MethodRule;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.Statement;
 
 import java.lang.annotation.Annotation;
+
+import static com.intellij.testFramework.UsefulTestCase.IS_UNDER_TEAMCITY;
 
 
 public class PluginTargetVersionsRule implements MethodRule {
@@ -52,23 +57,33 @@ public class PluginTargetVersionsRule implements MethodRule {
 
         MultiplePluginVersionGradleImportingTestCase testCase = (MultiplePluginVersionGradleImportingTestCase) target;
         if (targetVersions != null && !shouldRun(targetVersions, testCase)) {
-            return new Statement() {
-                @Override
-                public void evaluate() {
-                    System.out.println(
-                            "Test is marked passed due to unmet requirements\n" +
-                            "Gradle version: " +
-                            testCase.gradleVersion +
-                            " | Requirement: " +
-                            targetVersions.gradleVersion() +
-                            "\n" +
-                            "Plugin version: " +
-                            testCase.getKotlinPluginVersionString() +
-                            " | Requirement: " +
-                            targetVersions.pluginVersion()
-                    );
-                }
-            };
+            String mark = IS_UNDER_TEAMCITY ? "passed" : "ignored";
+            String message = "Test is marked " + mark + " due to unmet requirements\n" +
+                             "Gradle version: " +
+                             testCase.gradleVersion +
+                             " | Requirement: " +
+                             targetVersions.gradleVersion() +
+                             "\n" +
+                             "Plugin version: " +
+                             testCase.getKotlinPluginVersionString() +
+                             " | Requirement: " +
+                             targetVersions.pluginVersion();
+
+            /*
+             Tests are marked as successful on CI instead of Ignored, because this makes overall project maintainance easier
+             (managing legitimately ignored tests).
+             Running tests locally will still mark them as 'Ignored'
+             */
+            if (IS_UNDER_TEAMCITY) {
+                return new Statement() {
+                    @Override
+                    public void evaluate() {
+                        System.out.println(message);
+                    }
+                };
+            } else {
+                throw new AssumptionViolatedException(message);
+            }
         }
 
         return base;

@@ -91,8 +91,7 @@ open class KotlinIntroduceTypeAliasHandler : RefactoringActionHandler {
                 true
             )
         }
-        val analysisResult = introduceData.analyze()
-        when (analysisResult) {
+        when (val analysisResult = introduceData.analyze()) {
             is IntroduceTypeAliasAnalysisResult.Error -> {
                 return showErrorHint(project, editor, analysisResult.message, REFACTORING_NAME)
             }

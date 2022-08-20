@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 @file:Suppress("DEPRECATION")
 
@@ -22,7 +22,9 @@ class KotlinJUnitStaticEntryPoint(@JvmField var wasSelected: Boolean = true) : E
 
     private val staticJUnitAnnotations = listOf(
         "org.junit.BeforeClass",
+        "org.junit.jupiter.api.BeforeAll",
         "org.junit.AfterClass",
+        "org.junit.jupiter.api.AfterAll",
         "org.junit.runners.Parameterized.Parameters"
     )
 

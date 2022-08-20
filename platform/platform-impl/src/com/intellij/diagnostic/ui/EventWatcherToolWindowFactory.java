@@ -38,7 +38,7 @@ final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAwar
       .subscribe(listener.TOPIC, listener);
 
     ContentManager manager = toolWindow.getContentManager();
-    ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
+    ContentFactory contentFactory = ContentFactory.getInstance();
     listener.createNamedPanels()
       .map(entry -> {
         JPanel panel = new JPanel(new BorderLayout());

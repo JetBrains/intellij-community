@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sourceToSink.propagate;
 
 import com.intellij.analysis.JvmAnalysisBundle;
@@ -76,7 +76,7 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     String title = JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.toolwindow.title");
     ToolWindow toolWindow = ProblemsViewToolWindowUtils.INSTANCE.getToolWindow(project);
     if (toolWindow == null) return;
-    Content content = ContentFactory.SERVICE.getInstance().createContent(panel, title, true);
+    Content content = ContentFactory.getInstance().createContent(panel, title, true);
     panel.setContent(content);
     ContentManager contentManager = toolWindow.getContentManager();
     contentManager.addContent(content);

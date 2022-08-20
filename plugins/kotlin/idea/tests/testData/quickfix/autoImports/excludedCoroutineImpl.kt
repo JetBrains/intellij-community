@@ -10,7 +10,6 @@
 // ACTION: Create object 'CoroutineImpl'
 // ACTION: Create parameter 'CoroutineImpl'
 // ACTION: Create property 'CoroutineImpl'
-// ACTION: Do not show return expression hints
 // ACTION: Introduce local variable
 // ACTION: Rename reference
 // ERROR: Unresolved reference: CoroutineImpl

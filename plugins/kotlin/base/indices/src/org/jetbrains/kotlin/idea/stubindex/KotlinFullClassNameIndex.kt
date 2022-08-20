@@ -8,7 +8,7 @@ import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
 object KotlinFullClassNameIndex : KotlinStringStubIndexExtension<KtClassOrObject>(KtClassOrObject::class.java) {
-    private val KEY: StubIndexKey<String, KtClassOrObject> =
+    val KEY: StubIndexKey<String, KtClassOrObject> =
         StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex")
 
     override fun getKey(): StubIndexKey<String, KtClassOrObject> = KEY

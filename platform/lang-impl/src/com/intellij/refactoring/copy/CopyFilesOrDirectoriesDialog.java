@@ -64,7 +64,6 @@ public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements D
   @Deprecated(forRemoval = true)
   public static JCheckBox createOpenInEditorCB() {
     JCheckBox checkBox = new JCheckBox(RefactoringBundle.message("open.copy.in.editor"), PropertiesComponent.getInstance().getBoolean(COPY_OPEN_IN_EDITOR, true));
-    checkBox.setMnemonic('o');
     return checkBox;
   }
 

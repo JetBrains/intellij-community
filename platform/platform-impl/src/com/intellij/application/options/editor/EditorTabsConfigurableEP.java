@@ -7,17 +7,19 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
 
 /**
- * To provide additional options in Editor | Editor Tabs section register implementation of
- * {@link UnnamedConfigurable} in the plugin.xml:
- * <p/>
- * &lt;extensions defaultExtensionNs="com.intellij"&gt;<br>
- * &nbsp;&nbsp;&lt;editorTabsConfigurable instance="class-name"/&gt;<br>
- * &lt;/extensions&gt;
+ * Provides additional options in <em>Editor | General | Editor Tabs</em> settings.
  * <p>
- * A new instance of the specified class will be created each time then the Settings dialog is opened
- *
- * If you need to add a section of editor tabs options, your UnnamedConfigurable should implement
- * {@link EditorTabsOptionsCustomSection}
+ * Register implementation of {@link UnnamedConfigurable} in {@code plugin.xml}:
+ * <pre>
+ * &lt;extensions defaultExtensionNs="com.intellij"&gt;
+ *    &lt;editorTabsConfigurable instance="class-name"/&gt;
+ * &lt;/extensions&gt;
+ * </pre>
+ * <p>
+ * A new instance of the specified class will be created each time when the Settings dialog is opened.
+ * <p>
+ * If you need to add a section of editor tabs options, your {@code UnnamedConfigurable} should implement
+ * {@link EditorTabsOptionsCustomSection}.
  */
 public final class EditorTabsConfigurableEP extends ConfigurableEP<SearchableConfigurable> {
   static final ExtensionPointName<EditorTabsConfigurableEP> EP_NAME = new ExtensionPointName<>("com.intellij.editorTabsConfigurable");

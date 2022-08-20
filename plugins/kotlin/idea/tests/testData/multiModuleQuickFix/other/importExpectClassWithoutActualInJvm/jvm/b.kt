@@ -4,7 +4,6 @@
 // ACTION: Create enum 'Foo'
 // ACTION: Create interface 'Foo'
 // ACTION: Create type parameter 'Foo' in function 'use'
-// ACTION: Do not show return expression hints
 // ACTION: Enable a trailing comma by default in the formatter
 // ERROR: Unresolved reference: Foo
 package bar

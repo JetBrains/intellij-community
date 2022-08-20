@@ -11,7 +11,6 @@ import com.jetbrains.python.sdk.flavors.PyCondaRunTargetsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -32,7 +31,8 @@ public class CondaOnTargetPackageManager {
 
     PyCondaRunTargetsKt.runCondaOnTarget(targetEnvironmentRequest, condaExecutable, parameters);
     final String binary = PythonSdkUtil.getPythonExecutable(destinationDir);
-    final String binaryFallback = destinationDir + File.separator + "bin" + File.separator + "python";
+    char separator = targetEnvironmentRequest.getTargetPlatform().getPlatform().fileSeparator;
+    final String binaryFallback = destinationDir + separator + "bin" + separator + "python";
     return (binary != null) ? binary : binaryFallback;
   }
 }

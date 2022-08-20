@@ -3,7 +3,10 @@ package com.intellij.util.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.IconLoader
+import com.intellij.ui.ColorUtil
+import com.intellij.ui.JBColor
 import javax.swing.Icon
+import javax.swing.UIManager
 
 /**
  * @author Konstantin Bulenkov
@@ -50,7 +53,7 @@ object LafIconLookup {
     if (editable) {
       key += "Editable"
     }
-    if (selected) {
+    if (selected && !isUseRegularIconOnSelection(name)) {
       key += "Selected"
     }
 
@@ -73,6 +76,14 @@ object LafIconLookup {
     }
 
     return IconLoader.findIcon(path, classLoader)
+  }
+
+  private fun isUseRegularIconOnSelection(name: String): Boolean {
+    if (name == "checkmark") {
+      val selectionBg = UIManager.getColor("PopupMenu.selectionBackground")?: UIManager.getColor("List.selectionBackground")
+      return selectionBg != null && JBColor.isBright() && !ColorUtil.isDark(selectionBg)
+    }
+    return false
   }
 
   @JvmStatic

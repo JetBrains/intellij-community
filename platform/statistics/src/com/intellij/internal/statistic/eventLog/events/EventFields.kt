@@ -55,8 +55,15 @@ object EventFields {
    * @param customValidationRule inheritor of [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule],
    */
   @JvmStatic
-  fun StringValidatedByCustomRule(@NonNls name: String, @NonNls customValidationRule: Class<out CustomValidationRule>): StringEventField =
+  fun StringValidatedByCustomRule(@NonNls name: String, customValidationRule: Class<out CustomValidationRule>): StringEventField =
     StringEventField.ValidatedByCustomValidationRule(name, customValidationRule)
+
+  /**
+   * Creates a field that will be validated by [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule].
+   * @param name  name of the field
+   */
+  inline fun <reified T : CustomValidationRule> StringValidatedByCustomRule(@NonNls name: String): StringEventField =
+    StringValidatedByCustomRule(name, T::class.java)
 
   /**
    * Creates a field that allows only a specific list of values
@@ -137,8 +144,15 @@ object EventFields {
    * @param customValidationRule inheritor of [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule]
    */
   @JvmStatic
-  fun StringListValidatedByCustomRule(@NonNls name: String, @NonNls customValidationRule: Class<out CustomValidationRule>): StringListEventField =
+  fun StringListValidatedByCustomRule(@NonNls name: String, customValidationRule: Class<out CustomValidationRule>): StringListEventField =
     StringListEventField.ValidatedByCustomValidationRule(name, customValidationRule)
+
+  /**
+   * Creates a field for a list, each element of which will be validated by [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule]
+   * @param name  name of the field
+   */
+  inline fun <reified T : CustomValidationRule> StringListValidatedByCustomRule(@NonNls name: String): StringListEventField =
+    StringListValidatedByCustomRule(name, T::class.java)
 
   /**
    * Creates a field for a list, each element of which will be validated by global enum rule

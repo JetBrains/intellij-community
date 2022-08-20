@@ -8,8 +8,16 @@ import groovy.xml.QName
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.impl.JpsJavaDependencyExtensionRole
+import org.jetbrains.jps.model.library.JpsOrderRootType
+import org.jetbrains.jps.model.module.JpsDependencyElement
+import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
+import org.jetbrains.jps.util.JpsPathUtil
+
+import java.nio.file.Path
+import java.util.jar.JarEntry
+import java.util.jar.JarInputStream
 
 @CompileStatic
 final class ModuleStructureValidator {
@@ -186,9 +194,21 @@ final class ModuleStructureValidator {
 
   private void validateXmlRegistrations(HashSet<File> descriptors) {
     def classes = new HashSet<String>(predefinedTypes)
+    Set<String> visitedLibraries = new HashSet<>()
     for (moduleName in moduleNames) {
-      def outputDirectory = JpsJavaExtensionService.instance.getOutputDirectory(buildContext.findModule(moduleName), false)
+      JpsModule jpsModule = buildContext.findModule(moduleName)
+
+      def outputDirectory = JpsJavaExtensionService.instance.getOutputDirectory(jpsModule, false)
       def outputDirectoryPrefix = outputDirectory.path.replace("\\", "/") + "/"
+      if (!outputDirectory.isDirectory()) {
+        if (jpsModule.contentRootsList.urls.isEmpty()) {
+          // no content roots -> no classes
+          continue
+        }
+
+        throw new IllegalStateException("Module output directory '$outputDirectory' is missing")
+      }
+
       outputDirectory.eachFileRecurse(FileType.FILES) {
         if (!it.name.endsWith('.class') || it.name.endsWith("Kt.class")) {
           return
@@ -198,9 +218,33 @@ final class ModuleStructureValidator {
         def className = removeSuffixStrict(removePrefixStrict(normalizedPath, outputDirectoryPrefix), ".class").replace("/", ".")
         classes.add(className)
       }
+
+      for (JpsDependencyElement dependencyElement in jpsModule.dependenciesList.getDependencies()) {
+        if (dependencyElement instanceof JpsLibraryDependency) {
+          if (!visitedLibraries.add(dependencyElement.library.name)) {
+            continue
+          }
+
+          for (String libraryRootUrl in dependencyElement.library.getRootUrls(JpsOrderRootType.COMPILED)) {
+            def path = Path.of(JpsPathUtil.urlToPath(libraryRootUrl))
+
+            try (JarInputStream jarStream = new JarInputStream(new FileInputStream(path.toFile()))) {
+              JarEntry je;
+              while ((je = jarStream.getNextJarEntry()) != null) {
+                if (!je.name.endsWith('.class') || je.name.endsWith("Kt.class")) {
+                  return
+                }
+
+                classes.add(removeSuffixStrict(je.name, ".class").replace("/", "."))
+              }
+            }
+          }
+        }
+      }
     }
 
-    buildContext.messages.info("Found ${classes.size()} classes in ${moduleNames.size()} modules")
+    buildContext.messages.info("Found ${classes.size()} classes in ${moduleNames.size()} modules and ${visitedLibraries.size()} libraries")
+
     for (descriptor in descriptors) {
       def xml = new XmlParser().parse(descriptor)
       validateXmlRegistrationsRec(descriptor.name, xml, classes)

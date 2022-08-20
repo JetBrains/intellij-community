@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion.smart
 
@@ -142,7 +142,6 @@ fun <TDescriptor : DeclarationDescriptor?> MutableCollection<LookupElement>.addL
     for (info in expectedInfos) {
         val classification = infoMatcher(info)
         if (classification.substitutor != null) {
-            @Suppress("UNCHECKED_CAST")
             val substitutedDescriptor = descriptor.substituteFixed(classification.substitutor)
             val map = if (classification.makeNotNullable) makeNullableInfos else matchedInfos
             map.getOrPut(ItemData(substitutedDescriptor, info.itemOptions)) { ArrayList() }.add(info)

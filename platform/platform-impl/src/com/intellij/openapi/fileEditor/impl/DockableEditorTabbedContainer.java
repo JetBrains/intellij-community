@@ -32,6 +32,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -358,5 +359,10 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
       TabsUtil.updateBoundsWithDropSide(r, currentDropSide);
       myBoundingBox = new Rectangle2D.Double(r.x, r.y, r.width, r.height);
     }
+  }
+
+  @Override
+  public String toString() {
+    return "DockableEditorTabbedContainer windows=" + Arrays.toString(mySplitters.getWindows());
   }
 }

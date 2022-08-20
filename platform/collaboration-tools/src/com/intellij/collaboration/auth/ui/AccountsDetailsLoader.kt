@@ -3,14 +3,15 @@ package com.intellij.collaboration.auth.ui
 
 import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.auth.AccountDetails
+import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.Nls
 import java.awt.Image
 
 interface AccountsDetailsLoader<in A : Account, out D : AccountDetails> {
 
-  suspend fun loadDetails(account: A): Result<D>
+  fun loadDetailsAsync(account: A): Deferred<Result<D>>
 
-  suspend fun loadAvatar(account: A, url: String): Image?
+  fun loadAvatarAsync(account: A, url: String): Deferred<Image?>
 
   sealed class Result<out D : AccountDetails> {
     class Success<out D : AccountDetails>(val details: D) : Result<D>()

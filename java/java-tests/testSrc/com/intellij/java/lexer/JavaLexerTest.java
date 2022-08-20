@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.lexer;
 
 import com.intellij.lang.java.JavaParserDefinition;
@@ -158,6 +158,50 @@ public class JavaLexerTest extends LexerTestCase {
     doTest("\"\"\"\n  \"\\\"\"\"  \"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\"\\n  \"\\\"\"\"  \"\"\"')\nWHITE_SPACE (' ')");
     doTest("\"\"\"\n  \"\"\\\"\"\"  \"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\"\\n  \"\"\\\"\"\"  \"\"\"')\nWHITE_SPACE (' ')");
     doTest("\"\"\" \n\"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\" \\n\"\"\"')\nWHITE_SPACE (' ')");
+    doTest("\"\"\"\n \\u005C\"\"\"\n \"\"\"", "TEXT_BLOCK_LITERAL ('\"\"\"\\n \\u005C\"\"\"\\n \"\"\"')"); // unicode escaped backslash '\'
+  }
+
+  public void testStringLiterals() {
+    doTest("\"", "STRING_LITERAL ('\"')");
+    doTest("\" ", "STRING_LITERAL ('\" ')");
+    doTest("\"\"", "STRING_LITERAL ('\"\"')");
+    doTest("\"\" ", "STRING_LITERAL ('\"\"')\nWHITE_SPACE (' ')");
+    doTest("\"\\\"\" ", "STRING_LITERAL ('\"\\\"\"')\nWHITE_SPACE (' ')");
+    doTest("\"\\", "STRING_LITERAL ('\"\\')");
+    doTest("\"\\u", "STRING_LITERAL ('\"\\u')");
+    doTest("\"\n\"", "STRING_LITERAL ('\"')\nWHITE_SPACE ('\\n')\nSTRING_LITERAL ('\"')");
+    doTest("\"\\n\" ", "STRING_LITERAL ('\"\\n\"')\nWHITE_SPACE (' ')");
+    doTest("\"\\u005c\"\" ", "STRING_LITERAL ('\"\\u005c\"\"')\nWHITE_SPACE (' ')");
+    doTest("\"\\u005\" ", "STRING_LITERAL ('\"\\u005\"')\nWHITE_SPACE (' ')"); // broken unicode escape
+    doTest("\"\\u00\" ", "STRING_LITERAL ('\"\\u00\"')\nWHITE_SPACE (' ')"); // broken unicode escape
+    doTest("\"\\u0\" ", "STRING_LITERAL ('\"\\u0\"')\nWHITE_SPACE (' ')"); // broken unicode escape
+    doTest("\"\\u\" ", "STRING_LITERAL ('\"\\u\"')\nWHITE_SPACE (' ')"); // broken unicode escape
+  }
+
+  public void testCharLiterals() {
+    doTest("'\\u005c\\u005c'", "CHARACTER_LITERAL (''\\u005c\\u005c'')"); // unicode escaped escaped slash '\\'
+    doTest("'\\u1234' ", "CHARACTER_LITERAL (''\\u1234'')\nWHITE_SPACE (' ')");
+    doTest("'x' ", "CHARACTER_LITERAL (''x'')\nWHITE_SPACE (' ')");
+    doTest("'", "CHARACTER_LITERAL (''')");
+    doTest("' ", "CHARACTER_LITERAL ('' ')");
+    doTest("''", "CHARACTER_LITERAL ('''')");
+    doTest("'\\u007F' 'F' ", "CHARACTER_LITERAL (''\\u007F'')\nWHITE_SPACE (' ')\nCHARACTER_LITERAL (''F'')\nWHITE_SPACE (' ')");
+    doTest("'\\u005C' ", "CHARACTER_LITERAL (''\\u005C' ')"); // closing quote is escaped with unicode escaped backslash
+  }
+
+  public void testComments() {
+    doTest("//", "END_OF_LINE_COMMENT ('//')");
+    doTest("//\n", "END_OF_LINE_COMMENT ('//')\nWHITE_SPACE ('\\n')");
+    doTest("//x\n", "END_OF_LINE_COMMENT ('//x')\nWHITE_SPACE ('\\n')");
+    doTest("/*/ ", "C_STYLE_COMMENT ('/*/ ')");
+    doTest("/**/ ", "C_STYLE_COMMENT ('/**/')\nWHITE_SPACE (' ')");
+    doTest("/*x*/ ", "C_STYLE_COMMENT ('/*x*/')\nWHITE_SPACE (' ')");
+    doTest("/***/ ", "DOC_COMMENT ('/***/')\nWHITE_SPACE (' ')");
+    doTest("/**x*/ ", "DOC_COMMENT ('/**x*/')\nWHITE_SPACE (' ')");
+    doTest("/*", "C_STYLE_COMMENT ('/*')");
+    doTest("/**", "DOC_COMMENT ('/**')");
+    doTest("/***", "DOC_COMMENT ('/***')");
+    doTest("#! ", "END_OF_LINE_COMMENT ('#! ')");
   }
 
   @Override

@@ -462,7 +462,7 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
     val result = doBuild(CompileScopeTestBuilder.rebuild().artifacts(a))
     result.assertFailed()
     val message = result.getMessages(BuildMessage.Kind.ERROR).first()
-    assertTrue(message.messageText, message.messageText.contains("incorrect-crc.jar"));
+    assertTrue(message.messageText, message.messageText.contains("incorrect-crc.jar"))
   }
 
   fun testBuildModuleBeforeArtifactIfSomeDirectoryInsideModuleOutputIsCopiedToArtifact() {

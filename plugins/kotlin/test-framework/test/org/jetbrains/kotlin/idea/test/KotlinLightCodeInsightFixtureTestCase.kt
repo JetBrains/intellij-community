@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.test
 
@@ -58,9 +58,9 @@ import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.API_VERSION_DIRECTI
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.COMPILER_ARGUMENTS_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.JVM_TARGET_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.LANGUAGE_VERSION_DIRECTIVE
+import org.jetbrains.kotlin.idea.test.util.slashedPath
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.KotlinRoot
-import org.jetbrains.kotlin.idea.test.util.slashedPath
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.rethrow
 import java.io.File
@@ -73,15 +73,13 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
 
     protected open val captureExceptions = false
 
-    protected fun testDataFile(fileName: String): File = File(testDataDirectory, fileName)
+    protected fun dataFile(fileName: String): File = File(testDataDirectory, fileName)
 
-    protected fun testDataFile(): File = testDataFile(fileName())
+    protected fun dataFile(): File = dataFile(fileName())
 
-    protected fun testDataFilePath(): Path = testDataFile().toPath()
+    protected fun dataFilePath(): Path = dataFile().toPath()
 
-    protected fun testPath(fileName: String = fileName()): String = testDataFile(fileName).toString()
-
-    protected fun testPath(): String = testPath(fileName())
+    protected fun dataFilePath(fileName: String = fileName()): String = dataFile(fileName).toString()
 
     protected open fun fileName(): String = KotlinTestUtils.getTestDataFileName(this::class.java, this.name) ?: (getTestName(false) + ".kt")
 

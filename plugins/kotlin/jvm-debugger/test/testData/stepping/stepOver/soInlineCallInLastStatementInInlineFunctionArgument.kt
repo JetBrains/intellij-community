@@ -19,4 +19,4 @@ inline fun foo() {
 
 fun nop() {}
 
-// STEP_OVER: 3
+// STEP_OVER: 4

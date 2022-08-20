@@ -156,8 +156,7 @@ class KotlinPullUpHelper(
                 val resolvedCall = expression.getResolvedCall(context) ?: return
                 val receiver = (resolvedCall.getExplicitReceiverValue() as? ExpressionReceiver)?.expression
                 if (receiver != null && receiver !is KtThisExpression) return
-                val target = (resolvedCall.resultingDescriptor as? DeclarationDescriptorWithSource)?.source?.getPsi()
-                when (target) {
+                when (val target = (resolvedCall.resultingDescriptor as? DeclarationDescriptorWithSource)?.source?.getPsi()) {
                     is KtParameter -> usedParameters.add(target)
                     is KtProperty -> usedProperties.add(target)
                 }

@@ -15,7 +15,7 @@ import java.util.*;
 import java.util.function.Predicate;
 
 /**
- * @author: db
+ * @author db
  */
 public final class ClassRepr extends ClassFileRepr {
   private final TypeRepr.ClassType mySuperClass;

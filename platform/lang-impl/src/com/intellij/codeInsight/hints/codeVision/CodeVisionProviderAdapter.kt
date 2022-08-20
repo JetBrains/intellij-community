@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.codeVision
 
 import com.intellij.codeInsight.codeVision.*
@@ -30,11 +30,11 @@ class CodeVisionProviderAdapter(internal val delegate: DaemonBoundCodeVisionProv
     return delegate.getPlaceholderCollector(editor, psiFile)
   }
 
-  override fun shouldRecomputeForEditor(editor: Editor, uiData: Unit): Boolean {
+  override fun shouldRecomputeForEditor(editor: Editor, uiData: Unit?): Boolean {
     if (isInlaySettingsEditor(editor)) return true
     val project = editor.project ?: return super.shouldRecomputeForEditor(editor, uiData)
     val cacheService = DaemonBoundCodeVisionCacheService.getInstance(project)
-    val modificationTracker = PsiModificationTracker.SERVICE.getInstance(editor.project)
+    val modificationTracker = PsiModificationTracker.getInstance(editor.project)
     val cached = cacheService.getVisionDataForEditor(editor, id) ?: return super.shouldRecomputeForEditor(editor, uiData)
 
     return modificationTracker.modificationCount == cached.modificationStamp

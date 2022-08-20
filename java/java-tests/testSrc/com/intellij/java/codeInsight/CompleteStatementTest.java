@@ -77,6 +77,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testBeforeFor() { doTest(); }
   public void testForSingleStatementInBody() { doTest(); }
   public void testForEachSingleStatementInBody() { doTest(); }
+  public void testForEachNextStatementNotIndented() { doTest(); }
   public void testAtBlockEnd() { doTest(); }
   public void testForceBlock() { doTest(); }
   public void testElseIf() { doTest(); }

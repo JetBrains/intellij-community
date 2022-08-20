@@ -84,6 +84,7 @@ class KotlinSearchUsagesSupportFirImpl(private val project: Project) : KotlinSea
                 is KtCallableDeclaration -> {
                     if (target.isTopLevelCallable()) return@any false
                     analyse(target) {
+                        if (!declaration.canBeAnalysed()) return@any false
                         val targetSymbol = target.getSymbol() as? KtCallableSymbol ?: return@any false
                         declaration.getSymbol() in targetSymbol.getAllOverriddenSymbols()
                     }

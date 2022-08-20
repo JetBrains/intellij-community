@@ -72,7 +72,7 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
                   .loadDependenciesSync(project, descriptor, setOf(ArtifactKind.ANNOTATIONS), repos, null)
 
     if (roots.isNullOrEmpty()) {
-      return false;
+      return false
     }
 
     ApplicationManager.getApplication().invokeAndWait { updateLibrary(roots, descriptor, library) }

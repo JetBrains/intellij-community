@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.idea.devkit.inspections
 
@@ -40,7 +40,6 @@ class RegistryPropertiesAnnotator : Annotator {
     }
 
     val groupName = propertyName.substringBefore('.').toLowerCase()
-    @Suppress("HardCodedStringLiteral")
     if (PLUGIN_GROUP_NAMES.contains(groupName) ||
         propertyName.startsWith("editor.config.")) {
       holder.newAnnotation(HighlightSeverity.ERROR, DevKitBundle.message("registry.properties.annotator.plugin.keys.use.ep"))
@@ -95,7 +94,6 @@ class RegistryPropertiesAnnotator : Annotator {
 
     override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean = true
 
-    @Suppress("HardCodedStringLiteral")
     @Throws(IncorrectOperationException::class)
     override fun invoke(project: Project, editor: Editor, file: PsiFile) {
       val propertiesFile = file as PropertiesFile

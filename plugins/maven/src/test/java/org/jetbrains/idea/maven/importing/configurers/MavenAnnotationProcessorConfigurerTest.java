@@ -9,8 +9,8 @@ import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl;
 import org.junit.Assert;
 
-import static org.jetbrains.idea.maven.importing.configurers.MavenAnnotationProcessorConfigurer.MAVEN_DEFAULT_ANNOTATION_PROFILE;
-import static org.jetbrains.idea.maven.importing.configurers.MavenAnnotationProcessorConfigurer.PROFILE_PREFIX;
+import static org.jetbrains.idea.maven.importing.MavenCompilerAnnotationProcessorPathsImporter.MAVEN_DEFAULT_ANNOTATION_PROFILE;
+import static org.jetbrains.idea.maven.importing.MavenCompilerAnnotationProcessorPathsImporter.PROFILE_PREFIX;
 
 public class MavenAnnotationProcessorConfigurerTest extends MavenImportingTestCase {
 

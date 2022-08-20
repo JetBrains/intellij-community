@@ -55,7 +55,7 @@ public class PersistentEnumerator<Data> implements DataEnumeratorEx<Data>, Close
                               final int initialSize,
                               @Nullable StorageLockContext lockContext,
                               int version) throws IOException {
-    myEnumerator = createDefaultEnumerator(file, dataDescriptor, initialSize, lockContext, version);
+    myEnumerator = createDefaultEnumerator(file, dataDescriptor, initialSize, lockContext, version, true);
   }
 
   @NotNull
@@ -63,8 +63,9 @@ public class PersistentEnumerator<Data> implements DataEnumeratorEx<Data>, Close
                                                                        @NotNull KeyDescriptor<Data> dataDescriptor,
                                                                        final int initialSize,
                                                                        @Nullable StorageLockContext lockContext,
-                                                                       int version) throws IOException {
-    return new PersistentBTreeEnumerator<>(file, dataDescriptor, initialSize, lockContext, version, false);
+                                                                       int version,
+                                                                       boolean registerForStats) throws IOException {
+    return new PersistentBTreeEnumerator<>(file, dataDescriptor, initialSize, lockContext, version, false, registerForStats);
   }
 
   @ApiStatus.Internal

@@ -6,7 +6,6 @@ import com.intellij.ide.starter.path.GlobalPaths
 import com.intellij.ide.starter.utils.FileSystem
 import com.intellij.ide.starter.utils.HttpClient
 import com.intellij.ide.starter.utils.logOutput
-import org.apache.commons.io.IOUtils
 import org.kodein.di.direct
 import org.kodein.di.instance
 import java.nio.file.Path
@@ -82,7 +81,7 @@ open class PluginConfigurator(val testContext: IDETestContext) {
       val entry = jarFile.getJarEntry("META-INF/plugin.xml")
       if (entry != null) {
         val inputStream = jarFile.getInputStream(entry)
-        val text: String = IOUtils.toString(inputStream, Charsets.UTF_8.name())
+        val text: String = inputStream.bufferedReader(Charsets.UTF_8).use { reader -> reader.readText() }
         if (text.contains(" <id>$pluginId</id>")) {
           return true
         }

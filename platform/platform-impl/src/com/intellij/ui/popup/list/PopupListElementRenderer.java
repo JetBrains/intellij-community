@@ -109,10 +109,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       public Dimension getPreferredSize() {
         Dimension size = super.getPreferredSize();
         if (ExperimentalUI.isNewUI()) {
-          int rowHeight = JBUI.CurrentTheme.List.rowHeight();
-          if (rowHeight > 0) {
-            size.height = rowHeight;
-          }
+          size.height = JBUI.CurrentTheme.List.rowHeight();
         }
         return size;
       }
@@ -135,16 +132,22 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     panel.add(myShortcutLabel, BorderLayout.EAST);
 
     myMnemonicLabel = new JLabel();
-    Insets insets = JBUI.CurrentTheme.ActionsList.numberMnemonicInsets();
-    myMnemonicLabel.setBorder(JBUI.Borders.empty(insets));
     if (!ExperimentalUI.isNewUI()) {
+      Insets insets = JBUI.CurrentTheme.ActionsList.numberMnemonicInsets();
+      myMnemonicLabel.setBorder(new JBEmptyBorder(insets));
+      //noinspection HardCodedStringLiteral
       Dimension preferredSize = new JLabel("W").getPreferredSize();
       JBInsets.addTo(preferredSize, insets);
       myMnemonicLabel.setPreferredSize(preferredSize);
     }
     else {
+      myMnemonicLabel.setBorder(new JBEmptyBorder(JBUI.CurrentTheme.ActionsList.mnemonicInsets()));
       myMnemonicLabel.setHorizontalAlignment(SwingConstants.RIGHT);
-      myIconLabel.setBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap()));
+      myIconLabel.setBorder(JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap() - 2));
+
+      Dimension preferredSize = new JLabel("W").getPreferredSize();
+      JBInsets.addTo(preferredSize, JBUI.insetsLeft(4));
+      myMnemonicLabel.setPreferredSize(preferredSize);
     }
 
     myMnemonicLabel.setFont(JBUI.CurrentTheme.ActionsList.applyStylesForNumberMnemonic(myMnemonicLabel.getFont()));
@@ -310,11 +313,14 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       Character mnemonic = ((NumericMnemonicItem)value).getMnemonicChar();
       myMnemonicLabel.setText(mnemonic != null ? String.valueOf(mnemonic) : "");
       if (ExperimentalUI.isNewUI() && mnemonic == null) {
+        //noinspection HardCodedStringLiteral
         Dimension preferredSize = new JLabel("W").getPreferredSize();
-        JBInsets.addTo(preferredSize, JBUI.CurrentTheme.ActionsList.numberMnemonicInsets());
+        JBInsets.addTo(preferredSize, JBUI.CurrentTheme.ActionsList.mnemonicInsets());
         myMnemonicLabel.setText("  ");
       }
-      myMnemonicLabel.setForeground(isSelected && isSelectable && !nextStepButtonSelected ? getSelectionForeground() : JBUI.CurrentTheme.ActionsList.MNEMONIC_FOREGROUND);
+      Color foreground =
+        ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Popup.mnemonicForeground() : JBUI.CurrentTheme.ActionsList.MNEMONIC_FOREGROUND;
+      myMnemonicLabel.setForeground(isSelected && isSelectable && !nextStepButtonSelected ? getSelectionForeground() : foreground);
       myMnemonicLabel.setVisible(true);
     }
 

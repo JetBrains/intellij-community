@@ -14,7 +14,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * @author: db
+ * @author db
  */
 class Proto implements RW.Savable, Streamable, ProtoEntity {
   public final int access;

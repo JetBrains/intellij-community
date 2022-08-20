@@ -4,11 +4,14 @@ package org.jetbrains.kotlin.idea.inspections.dfa
 import com.intellij.codeInspection.dataFlow.*
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter
 import com.intellij.codeInspection.dataFlow.java.JavaDfaHelpers
+import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState
 import com.intellij.codeInspection.dataFlow.lang.ir.ExpressionPushingInstruction
 import com.intellij.codeInspection.dataFlow.lang.ir.Instruction
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet
+import com.intellij.codeInspection.dataFlow.types.DfJvmIntegralType
 import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue
@@ -87,11 +90,17 @@ class KotlinFunctionCallInstruction(
             }
         }
         val descriptor = call.resolveToCall()?.resultingDescriptor
+        var dfType = getExpressionDfType(call)
         if (descriptor != null) {
             val type = fromKnownDescriptor(descriptor, arguments, stateBefore)
-            if (type != null) return MethodEffect(factory.fromDfType(type.meet(getExpressionDfType(call))), true)
+            if (type != null) return MethodEffect(factory.fromDfType(type.meet(dfType)), true)
         }
-        return MethodEffect(factory.fromDfType(getExpressionDfType(call)), pure)
+        if (dfType is DfJvmIntegralType && method != null) {
+            val specifiedRange = JvmPsiRangeSetUtil.fromPsiElement(method)
+                .meet(JvmPsiRangeSetUtil.typeRange(method.returnType, true) ?: LongRangeSet.all())
+            dfType = dfType.meetRange(specifiedRange)
+        }
+        return MethodEffect(factory.fromDfType(dfType), pure)
     }
 
     private fun fromKnownDescriptor(descriptor: CallableDescriptor, arguments: DfaCallArguments, state: DfaMemoryState): DfType? {

@@ -192,7 +192,7 @@ class FailedEditorBuilder internal constructor(@DialogMessage val message: Strin
 
   private fun getGapAfterMessage() =
     if (myButtons.count() > 1)
-      UIUtil.DEFAULT_VGAP + 1;
+      UIUtil.DEFAULT_VGAP + 1
     else
       UIUtil.DEFAULT_VGAP
 }

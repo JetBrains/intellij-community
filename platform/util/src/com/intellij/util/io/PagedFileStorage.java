@@ -7,6 +7,7 @@ import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.AbstractStorage;
 import com.intellij.util.lang.CompoundRuntimeException;
@@ -27,7 +28,8 @@ import java.util.List;
 
 public class PagedFileStorage implements Forceable {
   static final Logger LOG = Logger.getInstance(PagedFileStorage.class);
-  private static final OpenChannelsCache CHANNELS_CACHE = new OpenChannelsCache(200);
+
+  static final OpenChannelsCache CHANNELS_CACHE = new OpenChannelsCache(SystemProperties.getIntProperty("paged.file.storage.open.channel.cache.capacity", 400));
 
   public static final int MB = 1024 * 1024;
   public static final int BUFFER_SIZE = FilePageCache.BUFFER_SIZE;
@@ -145,6 +147,7 @@ public class PagedFileStorage implements Forceable {
       return CHANNELS_CACHE.useChannel(myFile, processor, read);
     }
     else {
+      myStorageLockContext.getBufferCache().incrementUncachedFileAccess();
       try (OpenChannelsCache.ChannelDescriptor desc = new OpenChannelsCache.ChannelDescriptor(myFile, read)) {
         return processor.process(desc.getChannel());
       }
@@ -413,13 +416,14 @@ public class PagedFileStorage implements Forceable {
   @NotNull
   private DirectBufferWrapper doGetBufferWrapper(long page, boolean modify) throws IOException {
     DirectBufferWrapper pageFromCache =
-      myLastAccessedBufferCache.getPageFromCache(page, myStorageLockContext.getBufferCache().getMappingChangeCount());
+      myLastAccessedBufferCache.getPageFromCache(page);
 
     if (myReadOnly && modify) {
       throw new IOException("Read-only storage can't be modified");
     }
 
     if (pageFromCache != null) {
+      myStorageLockContext.getBufferCache().incrementFastCacheHitsCount();
       return pageFromCache;
     }
 
@@ -435,7 +439,7 @@ public class PagedFileStorage implements Forceable {
       byteBufferWrapper.useNativeByteOrder();
     }
 
-    myLastAccessedBufferCache.updateCache(page, byteBufferWrapper, myStorageLockContext.getBufferCache().getMappingChangeCount());
+    myLastAccessedBufferCache.updateCache(page, byteBufferWrapper);
 
     return byteBufferWrapper;
   }
@@ -463,7 +467,7 @@ public class PagedFileStorage implements Forceable {
     long started = IOStatistics.DEBUG ? System.currentTimeMillis() : 0;
 
     if (isDirty) {
-      myStorageLockContext.getBufferCache().flushBuffersForOwner(myStorageLockContext);
+      myStorageLockContext.getBufferCache().flushBuffersForOwner(this);
       isDirty = false;
     }
 

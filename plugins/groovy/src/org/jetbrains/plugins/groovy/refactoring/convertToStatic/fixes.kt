@@ -71,8 +71,7 @@ private class EmptyDeclarationTypeCollector(private val recursive: Boolean) : Gr
   private fun checkReference(referenceExpression: GroovyReference) {
     val resolveResult = referenceExpression.advancedResolve()
     if (!resolveResult.isValidResult) return
-    val element = resolveResult.element
-    when (element) {
+    when (val element = resolveResult.element) {
       is GrAccessorMethod -> {
         checkField(element.property)
       }

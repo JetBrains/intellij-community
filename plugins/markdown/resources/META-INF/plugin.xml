@@ -113,6 +113,8 @@ Includes the following features:</p>
       <categoryKey>markdown.intention.category</categoryKey>
     </intentionAction>
 
+    <typedHandler implementation="org.intellij.plugins.markdown.editor.headers.HeaderLevelInferenceTypedHandler"/>
+
     <httpRequestHandler implementation="org.intellij.plugins.markdown.google.authorization.GoogleOAuthCallbackHandler"/>
 
     <renameHandler implementation="org.intellij.plugins.markdown.ui.projectTree.MarkdownRenameHandler"/>
@@ -235,6 +237,14 @@ Includes the following features:</p>
     <editorActionHandler action="EditorUnindentSelection"
                          implementationClass="org.intellij.plugins.markdown.editor.lists.MarkdownListItemUnindentHandler"/>
 
+    <localInspection language="Markdown"
+                     shortName="MarkdownIncorrectlyNumberedListItem"
+                     bundle="messages.MarkdownBundle"
+                     key="markdown.incorrectly.numbered.list.item.inspection.name"
+                     groupKey="markdown.inspection.group.ruby.name"
+                     enabledByDefault="true"
+                     implementationClass="org.intellij.plugins.markdown.editor.lists.inspections.IncorrectListNumberingInspection"/>
+
     <actionPromoter implementation="org.intellij.plugins.markdown.ui.actions.MarkdownActionPromoter"/>
     <customizableActionGroupProvider implementation="org.intellij.plugins.markdown.ui.floating.FloatingToolbarCustomizableGroupProvider"/>
 
@@ -309,6 +319,10 @@ Includes the following features:</p>
                  defaultValue="true"
                  description="Enables Markdown tables editing support"/>
 
+    <registryKey key="markdown.lists.renumber.on.type.enable"
+                 defaultValue="false"
+                 description="Enables auto renumbering of list items on type"/>
+
     <registryKey key="markdown.experimental.boundary.precise.scroll.enable"
                  defaultValue="true"
                  description="Enables precise scrolling on the document boundaries (direct passing of scroll events from IDE to JCEF preview).
@@ -319,6 +333,10 @@ Includes the following features:</p>
                  defaultValue="false"
                  description="Enables experimental front matter support"
                  restartRequired="true"/>
+
+    <registryKey key="markdown.experimental.header.level.inference.enable"
+                 defaultValue="false"
+                 description="Enables experimental support for inferring header level"/>
 
     <advancedSetting id="markdown.hide.floating.toolbar" default="false" groupKey="markdown.settings.name"/>
     <statistics.counterUsagesCollector implementationClass="org.intellij.plugins.markdown.MarkdownUsageCollector"/>
@@ -516,6 +534,9 @@ Includes the following features:</p>
               icon="AllIcons.General.LayoutPreviewOnly">
         <keyboard-shortcut first-keystroke="control U" keymap="$default"/>
       </action>
+      <action id="Markdown.GenerateTableOfContents"
+              class="org.intellij.plugins.markdown.editor.toc.GenerateTableOfContentsAction"
+              icon="org.intellij.plugins.markdown.MarkdownIcons.EditorActions.BulletList"/>
     </group>
     <action id="Markdown.Insert"
             class="org.intellij.plugins.markdown.ui.actions.InsertAction"
@@ -545,16 +566,16 @@ Includes the following features:</p>
 
     <group id="Markdown.Tools" popup="true">
       <add-to-group group-id="ToolsMenu" anchor="before" relative-to-action="ExternalToolsGroup"/>
-      <action id="org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownImportFromDocxAction"
+      <action id="Markdown.ImportFromDocx"
               class="org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownImportFromDocxAction"/>
-      <action id="org.intellij.plugins.markdown.fileActions.importFrom.googleDocs.GoogleDocsImportAction"
+      <action id="Markdown.GoogleDocsImport"
               class="org.intellij.plugins.markdown.fileActions.importFrom.googleDocs.GoogleDocsImportAction"/>
-      <action id="org.intellij.plugins.markdown.fileActions.export.MarkdownExportAction"
+      <action id="Markdown.Export"
               class="org.intellij.plugins.markdown.fileActions.export.MarkdownExportAction"/>
-      <action id="org.intellij.plugins.markdown.ui.actions.ConfigurePandocAction"
+      <action id="Markdown.ConfigurePandoc"
               class="org.intellij.plugins.markdown.ui.actions.ConfigurePandocAction"/>
     </group>
-    <action id="Markdown.OpenDevtoolsAction"
+    <action id="Markdown.OpenDevtools"
             class="org.intellij.plugins.markdown.ui.actions.MarkdownOpenDevtoolsAction"/>
     <action id="Markdown.Extensions.CleanupExternalFiles"
             class="org.intellij.plugins.markdown.extensions.CleanupExtensionsExternalFilesAction"

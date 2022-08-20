@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.moduleDependencies;
 
 import com.intellij.analysis.AnalysisScope;
@@ -51,7 +51,7 @@ public class ShowModuleDependenciesAction extends AnAction {
 
     ModulesDependenciesPanel panel = new ModulesDependenciesPanel(project, modules);
     AnalysisScope scope = modules != null ? new AnalysisScope(modules) : new AnalysisScope(project);
-    Content content = ContentFactory.SERVICE.getInstance().createContent(panel, scope.getDisplayName(), false);
+    Content content = ContentFactory.getInstance().createContent(panel, scope.getDisplayName(), false);
     content.setHelpId(ModulesDependenciesPanel.HELP_ID);
     content.setDisposer(panel);
     panel.setContent(content);

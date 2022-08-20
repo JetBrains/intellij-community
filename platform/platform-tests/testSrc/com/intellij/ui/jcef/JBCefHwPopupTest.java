@@ -1,19 +1,23 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.TestScaleHelper;
-import junit.framework.TestCase;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Test;
 
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.intellij.ui.jcef.JBCefTestHelper.*;
+import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForCondition;
+import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLoad;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Tests IDEA-244182 JCEF heavyweight popup closes too early or always stays on top [Linux]
@@ -67,6 +71,6 @@ public class JBCefHwPopupTest {
       popupIsShowing.set(popup.getContent().isShowing());
     });
 
-    TestCase.assertTrue(popupIsShowing.get());
+    assertTrue(popupIsShowing.get());
   }
 }

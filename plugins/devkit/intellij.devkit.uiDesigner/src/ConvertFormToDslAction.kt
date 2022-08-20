@@ -52,7 +52,6 @@ class ConvertFormToDslAction /* todo IDEA-282478 : AnAction() */ {
   }
 }
 
-@Suppress("HardCodedStringLiteral")
 fun convertFormToUiDsl(boundClass: PsiClass, formFile: PsiFile) {
   val project = boundClass.project
   val psiFile = boundClass.containingFile as PsiJavaFile
@@ -163,7 +162,6 @@ private fun convertRootContainer(module: Module,
   return UiForm(module, call)
 }
 
-@Suppress("HardCodedStringLiteral")
 private fun generateOptionDescriptors(call: FormCall, optionDescriptors: StringBuilder) {
   val propertyName = call.binding
   val size = call.args.size
@@ -188,7 +186,6 @@ private fun generateOptionDescriptors(call: FormCall, optionDescriptors: StringB
   }
 }
 
-@Suppress("HardCodedStringLiteral")
 class FormCall(
   val callee: String,
   val args: MutableList<String> = mutableListOf(),
@@ -247,7 +244,6 @@ class FormCall(
 
 data class ComponentBinding(val name: String, val type: String)
 
-@Suppress("HardCodedStringLiteral")
 class UiForm(module: Module, val root: FormCall) {
   private val _imports = sortedSetOf<String>()
   private val _componentBindings = mutableListOf<ComponentBinding>()
@@ -288,7 +284,6 @@ class UiForm(module: Module, val root: FormCall) {
 
 internal class PropertyBinding(val type: PsiType?, val bindingCallParameters: Array<String>)
 
-@Suppress("HardCodedStringLiteral")
 class FormToDslConverter(private val module: Module, private val boundInstanceUClass: UClass?) {
   fun convertContainer(container: LwContainer): FormCall {
     val row: FormCall
@@ -447,7 +442,6 @@ class FormToDslConverter(private val module: Module, private val boundInstanceUC
   }
 }
 
-  @Suppress("HardCodedStringLiteral")
 private fun buildTypeParametersString(module: Module, className: String): String {
   val javaPsiFacade = JavaPsiFacade.getInstance(module.project)
   val componentClass = javaPsiFacade.findClass(className, module.moduleWithDependenciesScope)
@@ -482,7 +476,6 @@ fun FormCall.checkConvertButtonGroup(ids: Array<String>) {
   }
 }
 
-@Suppress("HardCodedStringLiteral")
 private fun FormCall.isRadioButtonRow(ids: Array<String>): Boolean {
   return callee == "row" && contents.singleOrNull()?.origin?.id?.let { it in ids } == true
 }

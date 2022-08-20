@@ -1,7 +1,7 @@
 UFile (package = ) [public final class TryCatch {...]
     UClass (name = TryCatch) [public final class TryCatch {...}]
         UMethod (name = catches) [public final fun catches() : void {...}]
-            UBlockExpression [{...}] : PsiType:Unit
+            UBlockExpression [{...}] : PsiType:void
                 UTryExpression [try {...}] : PsiType:Unit
                     UBlockExpression [{...}] : PsiType:Unit
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [body()] : PsiType:Unit
@@ -19,18 +19,18 @@ UFile (package = ) [public final class TryCatch {...]
                             UIdentifier (Identifier (finalizer)) [UIdentifier (Identifier (finalizer))]
                             USimpleNameReferenceExpression (identifier = finalizer, resolvesTo = null) [finalizer] : PsiType:Unit
         UMethod (name = body) [public final fun body() : void {...}]
-            UBlockExpression [{...}] : PsiType:Unit
+            UBlockExpression [{...}] : PsiType:void
         UMethod (name = catcher) [public final fun catcher() : void {...}]
-            UBlockExpression [{...}] : PsiType:Unit
+            UBlockExpression [{...}] : PsiType:void
         UMethod (name = finalizer) [public final fun finalizer() : void {...}]
-            UBlockExpression [{...}] : PsiType:Unit
+            UBlockExpression [{...}] : PsiType:void
         UMethod (name = TryCatch) [public fun TryCatch() = UastEmptyExpression]
     UClass (name = TryCatchAnnotations) [public final class TryCatchAnnotations {...}]
         UMethod (name = catches) [@java.lang.SuppressWarnings(value = "Something")...}]
             UAnnotation (fqName = java.lang.SuppressWarnings) [@java.lang.SuppressWarnings(value = "Something")]
                 UNamedExpression (name = value) [value = "Something"]
                     ULiteralExpression (value = "Something") ["Something"] : PsiType:String
-            UBlockExpression [{...}] : PsiType:Unit
+            UBlockExpression [{...}] : PsiType:void
                 UTryExpression [try {...}] : PsiType:Unit
                     UBlockExpression [{...}] : PsiType:Unit
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [body()] : PsiType:Unit
@@ -51,9 +51,9 @@ UFile (package = ) [public final class TryCatch {...]
                             UIdentifier (Identifier (finalizer)) [UIdentifier (Identifier (finalizer))]
                             USimpleNameReferenceExpression (identifier = finalizer, resolvesTo = null) [finalizer] : PsiType:Unit
         UMethod (name = body) [public final fun body() : void {...}]
-            UBlockExpression [{...}] : PsiType:Unit
+            UBlockExpression [{...}] : PsiType:void
         UMethod (name = catcher) [public final fun catcher() : void {...}]
-            UBlockExpression [{...}] : PsiType:Unit
+            UBlockExpression [{...}] : PsiType:void
         UMethod (name = finalizer) [public final fun finalizer() : void {...}]
-            UBlockExpression [{...}] : PsiType:Unit
+            UBlockExpression [{...}] : PsiType:void
         UMethod (name = TryCatchAnnotations) [public fun TryCatchAnnotations() = UastEmptyExpression]

@@ -59,8 +59,13 @@ public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
 
   @NotNull
   private Stream<Wrapper> wrap(@NotNull VcsTreeModelData modelData) {
+    return wrap(myBrowser, modelData);
+  }
+
+  @NotNull
+  static Stream<Wrapper> wrap(@NotNull VcsLogChangesBrowser browser, @NotNull VcsTreeModelData modelData) {
     return StreamEx.of(modelData.nodesStream()).select(ChangesBrowserChangeNode.class)
-      .map(n -> new MyChangeWrapper(n.getUserObject(), myBrowser.getTag(n.getUserObject())));
+      .map(n -> new MyChangeWrapper(browser, n.getUserObject(), browser.getTag(n.getUserObject())));
   }
 
   @Override
@@ -84,9 +89,11 @@ public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
                         : VcsTreeModelData.all(changesBrowser.getViewer());
   }
 
-  private class MyChangeWrapper extends ChangeWrapper {
-    MyChangeWrapper(@NotNull Change change, @Nullable ChangesBrowserNode.Tag tag) {
+  private static class MyChangeWrapper extends ChangeWrapper {
+    @NotNull private final VcsLogChangesBrowser myBrowser;
+    MyChangeWrapper(@NotNull VcsLogChangesBrowser browser, @NotNull Change change, @Nullable ChangesBrowserNode.Tag tag) {
       super(change, tag);
+      myBrowser = browser;
     }
 
     @Nullable

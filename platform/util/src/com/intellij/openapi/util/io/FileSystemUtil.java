@@ -186,8 +186,7 @@ public final class FileSystemUtil {
     public String resolveSymLink(@NotNull String path) {
       path = new File(path).getAbsolutePath();
 
-      char drive = Character.toUpperCase(path.charAt(0));
-      if (!(path.length() > 3 && drive >= 'A' && drive <= 'Z' && path.charAt(1) == ':' && path.charAt(2) == '\\')) {
+      if (!(path.length() > 3 && OSAgnosticPathUtil.isAbsoluteDosPath(path))) {
         return path;  // unknown format
       }
 

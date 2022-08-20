@@ -1,8 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.trace.Span
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -10,8 +12,8 @@ import java.util.function.BiPredicate
 import java.util.stream.Collectors
 
 class FileSet(private val root: Path) {
-  private val includePatterns: MutableMap<String, Regex> = mutableMapOf()
-  private val excludePatterns: MutableMap<String, Regex> = mutableMapOf()
+  private val includePatterns = mutableMapOf<String, Regex>()
+  private val excludePatterns = mutableMapOf<String, Regex>()
 
   private fun toRegex(pattern: String): Regex = pattern
     .let { FileUtil.toSystemIndependentName(it) }
@@ -33,7 +35,10 @@ class FileSet(private val root: Path) {
   fun copyToDir(targetDir: Path) {
     for (path in enumerate()) {
       val destination = targetDir.resolve(root.relativize(path))
-      LOG.debug("Copy: $path -> $destination ($this)")
+      Span.current().addEvent("copy", Attributes.of(
+        AttributeKey.stringKey("source"), path.toString(),
+        AttributeKey.stringKey("destination"), destination.toString(),
+      ))
       Files.createDirectories(destination.parent)
       Files.copy(path, destination, StandardCopyOption.COPY_ATTRIBUTES)
     }
@@ -41,7 +46,9 @@ class FileSet(private val root: Path) {
 
   fun delete() {
     for (path in enumerate()) {
-      LOG.debug("Delete: file $path ($this)")
+      Span.current().addEvent("delete", Attributes.of(
+        AttributeKey.stringKey("files"), path.toString(),
+      ))
       Files.delete(path)
     }
   }
@@ -112,8 +119,4 @@ class FileSet(private val root: Path) {
                             "included=[${includePatterns.keys.sorted().joinToString(", ")}], " +
                             "excluded=[${excludePatterns.keys.sorted().joinToString(", ")}]" +
                             ")"
-
-  companion object {
-    private val LOG = Logger.getInstance(FileSet::class.java)
-  }
 }

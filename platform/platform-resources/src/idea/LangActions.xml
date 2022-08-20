@@ -409,7 +409,7 @@
     </action>
 
     <action id="ViewImportPopups" class="com.intellij.openapi.editor.actions.ToggleShowImportPopupsAction">
-      <add-to-group group-id="EditorToggleActions"/>
+      <add-to-group group-id="EditorToggleActions" anchor="after" relative-to-action="EditorToggleShowIndentLines"/>
     </action>
 
 

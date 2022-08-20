@@ -21,6 +21,8 @@ object KonanArtifactModelBuilder : KotlinMultiplatformComponentBuilderBase<Konan
         val runConfiguration = KonanRunConfigurationModelImpl(konanArtifactReflection.runTask)
         val exportDependencies = KonanArtifactDependenciesBuilder.buildComponent(origin, importingContext)
             .map { importingContext.dependencyMapper.getId(it) }.distinct().toTypedArray()
+        val binaryOptions = konanArtifactReflection.binaryOptions.orEmpty()
+            .map { (name, value) -> "$name=$value" }.toTypedArray()
 
         return KonanArtifactModelImpl(
             compilationTargetName,
@@ -32,7 +34,8 @@ object KonanArtifactModelBuilder : KotlinMultiplatformComponentBuilderBase<Konan
             runConfiguration,
             isTests,
             freeCompilerArgs,
-            exportDependencies
+            exportDependencies,
+            binaryOptions,
         )
     }
 

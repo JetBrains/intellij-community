@@ -11,7 +11,6 @@ com.intellij.codeInspection.htmlInspections.HtmlUnknownTagInspection
 com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection
 com.intellij.codeInspection.i18n.I18nInspection
 com.intellij.codeInspection.i18n.inconsistentResourceBundle.InconsistentResourceBundleInspection
-com.intellij.codeInspection.javaDoc.JavaDocLocalInspection
 com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal
 com.intellij.codeInspection.miscGenerics.SuspiciousCollectionsMethodCallsInspection
 com.intellij.codeInspection.nullable.NullableStuffInspection

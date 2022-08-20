@@ -20,12 +20,12 @@ import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
 import javax.swing.*
 
-private val ASSIGNED_FOREGROUND = namedColor("BookmarkMnemonicAssigned.foreground", 0x000000, 0xBBBBBB)
-private val ASSIGNED_BACKGROUND = namedColor("BookmarkMnemonicAssigned.background", 0xF7C777, 0x665632)
+private val ASSIGNED_FOREGROUND = namedColor("BookmarkMnemonicAssigned.buttonForeground", 0x000000, 0xBBBBBB)
+private val ASSIGNED_BACKGROUND = namedColor("BookmarkMnemonicAssigned.buttonBackground", 0xF7C777, 0x665632)
 private val ASSIGNED_BORDER = namedColor("BookmarkMnemonicAssigned.borderColor", ASSIGNED_BACKGROUND)
 
-private val CURRENT_FOREGROUND = namedColor("BookmarkMnemonicCurrent.foreground", 0xFFFFFF, 0xFEFEFE)
-private val CURRENT_BACKGROUND = namedColor("BookmarkMnemonicCurrent.background", 0x389FD6, 0x345F85)
+private val CURRENT_FOREGROUND = namedColor("BookmarkMnemonicCurrent.buttonForeground", 0xFFFFFF, 0xFEFEFE)
+private val CURRENT_BACKGROUND = namedColor("BookmarkMnemonicCurrent.buttonBackground", 0x389FD6, 0x345F85)
 private val CURRENT_BORDER = namedColor("BookmarkMnemonicCurrent.borderColor", CURRENT_BACKGROUND)
 
 private val SHARED_CURSOR by lazy { Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) }
@@ -92,8 +92,8 @@ internal class MnemonicChooser(
         putClientProperty("JButton.borderColor", ASSIGNED_BORDER)
       }
       else -> {
-        putClientProperty("JButton.textColor", UIManager.getColor("BookmarkMnemonicAvailable.foreground"))
-        putClientProperty("JButton.backgroundColor", UIManager.getColor("BookmarkMnemonicAvailable.background"))
+        putClientProperty("JButton.textColor", UIManager.getColor("BookmarkMnemonicAvailable.buttonForeground"))
+        putClientProperty("JButton.backgroundColor", UIManager.getColor("BookmarkMnemonicAvailable.buttonBackground"))
         putClientProperty("JButton.borderColor", UIManager.getColor("BookmarkMnemonicAvailable.borderColor"))
       }
     }

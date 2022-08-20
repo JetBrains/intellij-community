@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -408,7 +408,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
       if (nextSibling instanceof PsiWhiteSpace) {
         final String text = nextSibling.getText();
         if (StringUtil.countNewLines(text) > 1) {
-          final PsiElement newWhitespace = PsiParserFacade.SERVICE.getInstance(nextSibling.getProject())
+          final PsiElement newWhitespace = PsiParserFacade.getInstance(nextSibling.getProject())
             .createWhiteSpaceFromText(text.substring(0, text.lastIndexOf('\n')));
           nextSibling.replace(newWhitespace);
           break;

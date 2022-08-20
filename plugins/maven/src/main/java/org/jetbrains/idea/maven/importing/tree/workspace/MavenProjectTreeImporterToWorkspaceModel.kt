@@ -16,9 +16,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.importing.*
-import org.jetbrains.idea.maven.importing.tree.MavenModuleType
-import org.jetbrains.idea.maven.importing.tree.MavenProjectTreeImporter
-import org.jetbrains.idea.maven.importing.tree.ModuleData
+import org.jetbrains.idea.maven.importing.tree.*
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.util.*
@@ -31,28 +29,22 @@ class MavenProjectTreeImporterToWorkspaceModel(
   private val project: Project
 ) : MavenProjectImporterBase(mavenProjectsTree, mavenImportingSettings, projectsToImportWithChanges) {
 
-  private val modelsProvider = MavenProjectTreeImporter.getModelProvider(ideModelsProvider, project)
+  private val modelsProvider = MavenProjectTreeLegacyImporter.getModelProvider(ideModelsProvider, project)
   private val createdModulesList = ArrayList<Module>()
   private val virtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
   private val contextProvider = MavenProjectImportContextProvider(project, mavenProjectsTree,
                                                                   projectsToImportWithChanges, mavenImportingSettings)
 
   override fun importProject(): List<MavenProjectsProcessorTask> {
-    val activity = MavenImportStats.startApplyingModelsActivity(project)
-    val startTime = System.currentTimeMillis()
-    try {
-      val postTasks = ArrayList<MavenProjectsProcessorTask>()
-      val context = contextProvider.context
-      if (context.hasChanges) {
-        importModules(context, postTasks)
-        scheduleRefreshResolvedArtifacts(postTasks)
-      }
-      return postTasks
+
+    val postTasks = ArrayList<MavenProjectsProcessorTask>()
+    val context = contextProvider.context
+    if (context.hasChanges) {
+      importModules(context, postTasks)
+      scheduleRefreshResolvedArtifacts(postTasks)
     }
-    finally {
-      activity.finished()
-      LOG.info("[maven import] applying models to workspace model took ${System.currentTimeMillis() - startTime}ms")
-    }
+    return postTasks
+
   }
 
   private fun importModules(context: MavenModuleImportContext, postTasks: ArrayList<MavenProjectsProcessorTask>) {
@@ -90,8 +82,6 @@ class MavenProjectTreeImporterToWorkspaceModel(
 
     MavenUtil.invokeAndWaitWriteAction(project) { modelsProvider.dispose() }
 
-    configureMavenProjectsInBackground(project,
-                                       moduleImportDataList.associate { it.module to it.mavenModuleImportData.mavenProject })
   }
 
   private fun facetImport(moduleImportDataList: MutableList<ModuleImportData>,
@@ -102,7 +92,8 @@ class MavenProjectTreeImporterToWorkspaceModel(
       for (importData in moduleImportDataList) {
         configFacet(importData, context, modifiableModelsProvider, postTasks)
       }
-    } finally {
+    }
+    finally {
       MavenUtil.invokeAndWaitWriteAction(project) {
         ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring { modifiableModelsProvider.commit() }
       }
@@ -133,9 +124,9 @@ class MavenProjectTreeImporterToWorkspaceModel(
 
     val rootModelAdapter = MavenRootModelAdapter(MavenRootModelAdapterLegacyImpl(mavenProject, importData.module, modelsProvider))
     val mapToOldImportModel = mapToOldImportModel(importData)
-    MavenProjectTreeImporter.configModule(mapToOldImportModel, mavenModuleImporter, rootModelAdapter)
+    MavenProjectTreeLegacyImporter.configModule(mapToOldImportModel, mavenModuleImporter, rootModelAdapter)
 
-    mavenModuleImporter.setModifiableModelsProvider(modifiableModelsProvider);
+    mavenModuleImporter.setModifiableModelsProvider(modifiableModelsProvider)
 
     mavenModuleImporter.preConfigFacets()
     mavenModuleImporter.configFacets(postTasks)
@@ -144,23 +135,25 @@ class MavenProjectTreeImporterToWorkspaceModel(
 
   private fun mapToOldImportModel(importData: ModuleImportData): org.jetbrains.idea.maven.importing.tree.MavenModuleImportData {
     val mavenModuleImportData = importData.mavenModuleImportData
-    return org.jetbrains.idea.maven.importing.tree.MavenModuleImportData(
+    return MavenModuleImportData(
       mavenModuleImportData.mavenProject,
-      ModuleData(importData.module, mavenModuleImportData.moduleData.type, mavenModuleImportData.moduleData.javaVersionHolder, true),
+      LegacyModuleData(importData.module, mavenModuleImportData.moduleData.type, mavenModuleImportData.moduleData.javaVersionHolder, true),
       mavenModuleImportData.dependencies,
       mavenModuleImportData.changes
     )
   }
 
-  override val createdModules: List<Module>
-    get() = createdModulesList
+  override fun createdModules(): List<Module> {
+    return createdModulesList
+  }
+
 
   companion object {
     private val LOG = logger<MavenProjectTreeImporterToWorkspaceModel>()
   }
 }
 
-class ModuleImportData(
+private class ModuleImportData(
   val module: Module,
   val mavenModuleImportData: MavenModuleImportData
 )

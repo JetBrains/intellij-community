@@ -10,6 +10,7 @@ import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.api.util.GithubApiSearchQueryBuilder
 import org.jetbrains.plugins.github.api.util.GithubApiUrlQueryBuilder
 import java.awt.Image
+import java.awt.image.BufferedImage
 
 /**
  * Collection of factory methods for API requests used in plugin
@@ -24,8 +25,8 @@ object GithubApiRequests {
     fun get(url: String) = Get.json<GithubAuthenticatedUser>(url).withOperationName("get profile information")
 
     @JvmStatic
-    fun getAvatar(url: String) = object : Get<Image>(url) {
-      override fun extractResult(response: GithubApiResponse): Image {
+    fun getAvatar(url: String) = object : Get<BufferedImage>(url) {
+      override fun extractResult(response: GithubApiResponse): BufferedImage {
         return response.handleBody(ThrowableConvertor {
           GithubApiContentHelper.loadImage(it)
         })

@@ -19,7 +19,7 @@ class ColoredTextConsole(project: Project, viewer: Boolean = false) :
   private val ansiEscapeDecoder = AnsiEscapeDecoder()
 
   // when it's true its save to call editor, otherwise call 'editor' will throw an NPE
-  private val objectInitialized = true;
+  private val objectInitialized = true
 
   fun addData(message: String, outputType: Key<*>) {
     ansiEscapeDecoder.escapeText(message, outputType, this)

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UndesirableClassUsage")
 
 package com.intellij.ui.svg
@@ -309,7 +309,6 @@ private fun render(offScreenWidth: Int, offScreenHeight: Int, usr2dev: AffineTra
   g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE)
   g.setRenderingHint(RenderingHintsKeyExt.KEY_BUFFERED_IMAGE, WeakReference(image))
   g.transform = identityTransform
-  @Suppress("GraphicsSetClipInspection")
   g.setClip(0, 0, offScreenWidth, offScreenHeight)
   g.composite = AlphaComposite.Clear
   g.fillRect(0, 0, offScreenWidth, offScreenHeight)

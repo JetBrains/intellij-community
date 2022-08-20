@@ -253,8 +253,7 @@ fun KtDotQualifiedExpression.replaceFirstReceiver(
     val replaced = (if (safeAccess) {
         this.replaced(factory.createExpressionByPattern("$0?.$1", receiverExpression, selectorExpression!!))
     } else this) as KtQualifiedExpression
-    val receiver = replaced.receiverExpression
-    when (receiver) {
+    when (val receiver = replaced.receiverExpression) {
         is KtDotQualifiedExpression -> {
             receiver.replace(receiver.replaceFirstReceiver(factory, newReceiver, safeAccess))
         }
@@ -266,8 +265,7 @@ fun KtDotQualifiedExpression.replaceFirstReceiver(
 }
 
 fun KtDotQualifiedExpression.deleteFirstReceiver(): KtExpression {
-    val receiver = receiverExpression
-    when (receiver) {
+    when (val receiver = receiverExpression) {
         is KtDotQualifiedExpression -> receiver.deleteFirstReceiver()
         else -> selectorExpression?.let { return this.replace(it) as KtExpression }
     }

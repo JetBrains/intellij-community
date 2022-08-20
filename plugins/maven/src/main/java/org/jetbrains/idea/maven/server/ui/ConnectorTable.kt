@@ -20,7 +20,7 @@ class ConnectorTable : ListTableWithButtons<MavenServerConnector>() {
   val stop = object : AnActionButton(MavenConfigurableBundle.message("connector.ui.stop"), AllIcons.Debugger.KillProcess) {
     override fun actionPerformed(e: AnActionEvent) {
       MavenActionsUsagesCollector.trigger(e.project, MavenActionsUsagesCollector.KILL_MAVEN_CONNECTOR)
-      val connector = tableView.selectedObject ?: return;
+      val connector = tableView.selectedObject ?: return
       MavenServerManager.getInstance().shutdownConnector(connector, true)
       this@ConnectorTable.refreshValues()
     }
@@ -59,7 +59,7 @@ class ConnectorTable : ListTableWithButtons<MavenServerConnector>() {
       MavenConfigurableBundle.message("connector.ui.type")) { it.supportType }
     val columnInfos = arrayOf<TableColumn>(project, dir, type, maven, state)
     return ListTableModel<MavenServerConnector>(columnInfos, MavenServerManager.getInstance().allConnectors.toList(), 3,
-                                                SortOrder.DESCENDING);
+                                                SortOrder.DESCENDING)
   }
 
   override fun createExtraActions(): Array<AnActionButton> {
@@ -70,14 +70,14 @@ class ConnectorTable : ListTableWithButtons<MavenServerConnector>() {
                             val supplier: (MavenServerConnector) -> String) : ElementsColumnInfoBase<MavenServerConnector>(
     name) {
 
-    override fun getDescription(element: MavenServerConnector?): String? = null;
+    override fun getDescription(element: MavenServerConnector?): String? = null
 
     override fun valueOf(item: MavenServerConnector) = supplier(item)
 
   }
 
   override fun createElement(): MavenServerConnector? {
-    return null;
+    return null
   }
 
   override fun isEmpty(element: MavenServerConnector?): Boolean {

@@ -45,7 +45,7 @@ class KotlinInlayHintsTopHitProvider : OptionsSearchTopHitProvider.ProjectLevelP
                             with(it) {
                                 isEnabled = newValue
                                 apply()
-                                InlayHintsPassFactory.forceHintsUpdateOnNextPass()
+                                refreshHints()
                             }
                         })
                 ).asOptionDescriptor()
@@ -62,7 +62,7 @@ class KotlinInlayHintsTopHitProvider : OptionsSearchTopHitProvider.ProjectLevelP
                                         it.isEnabled = true
                                     }
                                     it.apply()
-                                    InlayHintsPassFactory.forceHintsUpdateOnNextPass()
+                                    refreshHints()
                                 })
                         ).asOptionDescriptor()
                     }

@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.completion
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import org.jetbrains.kotlin.builtins.getReturnTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalType
 import org.jetbrains.kotlin.descriptors.*
@@ -49,6 +50,9 @@ class InsertHandlerProvider(
             is FunctionDescriptor -> {
                 when (callType) {
                     CallType.DEFAULT, CallType.DOT, CallType.SAFE, CallType.SUPER_MEMBERS -> {
+                        if (!EditorSettingsExternalizable.getInstance().isInsertParenthesesAutomatically) {
+                            return KotlinFunctionInsertHandler.OnlyName(callType)
+                        }
                         val needTypeArguments = needTypeArguments(descriptor)
                         val parameters = descriptor.valueParameters
                         val functionName = descriptor.name

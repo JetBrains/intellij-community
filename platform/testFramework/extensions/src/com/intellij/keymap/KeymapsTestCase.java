@@ -363,6 +363,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift control X",          "EditorToggleCase", "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
       {"shift ctrl alt LEFT",      "NextEditorTab", "Diff.NextChange"},
       {"shift ctrl alt RIGHT",     "PreviousEditorTab", "Diff.PrevChange"},
+      {"shift ctrl DIVIDE",        "CollapseAll", "CollapseAllRegions"},
     }),
     Map.entry("NetBeans 6.5", new String[][]{
       {"F4",                       "RunToCursor", "EditSource"},
@@ -430,6 +431,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift meta K",             "Vcs.Push", "FindPrevious"},
       {"shift meta U",             "FindUsagesInFile", "ShelveChanges.UnshelveWithDialog", "Markdown.Styling.CreateLink"},
       {"shift meta X",             "EditorToggleCase", "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
+      {"shift meta DIVIDE",        "CollapseAll", "CollapseAllRegions"},
     }),
     Map.entry("Sublime Text", new String[][]{
       {"F2",                       "ChangesView.Rename", "Console.TableResult.EditValue", "Git.Reword.Commit", "Git.Rename.Local.Branch",
@@ -515,7 +517,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"meta alt I",               "Move", "RMarkdownNewChunk"},
       {"meta alt UP",              "Console.TableResult.PreviousPage", "NotebookSelectCellAboveAction", "PreviousOccurence"},
       {"shift alt SEMICOLON",      "ForceStepInto", SECOND_STROKE},
-      {"shift meta MINUS",         "EditorDecreaseFontSize", "NotebookSplitCellAction"},
       {"shift meta T",             "ReopenClosedTab", "ServiceView.ShowServices"},
     })
   );

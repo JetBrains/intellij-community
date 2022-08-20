@@ -4,9 +4,9 @@ import com.intellij.buildsystem.model.BuildDependency
 import com.intellij.openapi.util.NlsSafe
 
 data class UnifiedCoordinates(
-  val groupId: String?,
-  val artifactId: String?,
-  val version: String?
+  val groupId: @NlsSafe String?,
+  val artifactId: @NlsSafe String?,
+  val version: @NlsSafe String?
 ) : BuildDependency.Coordinates {
 
   @get:NlsSafe

@@ -31,7 +31,7 @@ import org.intellij.plugins.markdown.editor.tables.ui.presentation.GraphicsUtils
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
-import org.intellij.plugins.markdown.util.hasType
+import org.intellij.plugins.markdown.lang.psi.util.hasType
 import java.awt.*
 import java.awt.event.MouseEvent
 import java.lang.ref.WeakReference

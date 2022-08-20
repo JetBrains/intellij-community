@@ -21,8 +21,7 @@ internal class BaseStylesExtension(private val project: Project?) : MarkdownBrow
       return ResourceProvider.Resource(PreviewLAFThemeStyles.createStylesheet().toByteArray())
     }
     val settings = project?.let(MarkdownSettings::getInstance)
-    val path = settings?.customStylesheetPath.takeIf { settings?.useCustomStylesheetPath == true }
-    return when (path) {
+    return when (val path = settings?.customStylesheetPath.takeIf { settings?.useCustomStylesheetPath == true }) {
       null -> ResourceProvider.loadInternalResource(BaseStylesExtension::class, resourceName)
       else -> ResourceProvider.loadExternalResource(File(path))
     }

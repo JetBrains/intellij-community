@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.ui.scale.TestScaleHelper;
-import junit.framework.TestCase;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.handler.CefLoadHandler;
@@ -18,9 +17,10 @@ import java.util.concurrent.CountDownLatch;
 
 import static com.intellij.ui.jcef.JBCefTestHelper.await;
 import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLoad;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Tests https://youtrack.jetbrains.com/issue/IDEA-259472
+ * Tests IDEA-259472
  * When two load requests are performed in a row, the second requests aborts the first one.
  * In that case the error page should not abort the second request.
  *
@@ -48,7 +48,7 @@ public class IDEA259472Test {
     CountDownLatch latch1 = new CountDownLatch(1);
     CountDownLatch latch2 = new CountDownLatch(1);
 
-    JBCefBrowser jbCefBrowser = new JBCefBrowser("https://maps.google.com"); // need some heavy page, taking time to load
+    JBCefBrowser jbCefBrowser = new JBCefBrowser("https://maps.google.com"); // we need some heavy website, taking time to load
     jbCefBrowser.setErrorPage(JBCefBrowserBase.ErrorPage.DEFAULT);
 
     jbCefBrowser.getJBCefClient().addLoadHandler(new CefLoadHandler() {
@@ -59,22 +59,23 @@ public class IDEA259472Test {
           latch2.countDown();
         }
       }
+
       @Override
       public void onLoadStart(CefBrowser browser, CefFrame frame, CefRequest.TransitionType transitionType) {
         System.out.println("JBCefLoadHtmlTest.onLoadStart: " + frame.getURL());
-
         if (frame.getURL().contains("google")) {
-          jbCefBrowser.loadURL("https://maps.yandex.ru"); // need some heavy page, taking time to load
+          jbCefBrowser.loadURL("https://www.jetbrains.com"); // we need some heavy website, taking time to load
         }
       }
+
       @Override
       public void onLoadEnd(CefBrowser browser, CefFrame frame, int httpStatusCode) {
         System.out.println("JBCefLoadHtmlTest.onLoadEnd: " + frame.getURL());
-
-        if (frame.getURL().contains("yandex")) {
+        if (frame.getURL().contains("jetbrains")) {
           latch1.countDown();
         }
       }
+
       @Override
       public void onLoadError(CefBrowser browser, CefFrame frame, ErrorCode errorCode, String errorText, String failedUrl) {
         System.out.println("JBCefLoadHtmlTest.onLoadError: " + failedUrl);
@@ -89,10 +90,10 @@ public class IDEA259472Test {
       frame.setVisible(true);
     });
 
-    TestCase.assertTrue(await(latch1));
+    await(latch1);
 
-    TestCase.assertTrue(await(latch2));
+    await(latch2);
 
-    TestCase.assertTrue(jbCefBrowser.getCefBrowser().getURL().contains("yandex"));
+    assertThat(jbCefBrowser.getCefBrowser().getURL()).contains("jetbrains");
   }
 }

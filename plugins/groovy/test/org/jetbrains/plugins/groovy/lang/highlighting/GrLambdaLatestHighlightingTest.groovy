@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
@@ -32,7 +32,7 @@ class GrLambdaLatestHighlightingTest extends GrHighlightingTestBase {
 
 
   void 'test IDEA-185371'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 import groovy.transform.CompileStatic
 
 @CompileStatic
@@ -43,7 +43,7 @@ def com() {
   }
 
   void 'test IDEA-185371-2'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 import groovy.transform.CompileStatic
 
 static <K,V> Map<K, V> getMap() {
@@ -58,7 +58,7 @@ def com() {
   }
 
   void '_test IDEA-185371-3'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 import groovy.transform.CompileStatic
 import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.FirstParam
@@ -81,7 +81,7 @@ def m() {
   }
 
   void 'test IDEA-185371-4'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 import groovy.transform.CompileStatic
 
 @CompileStatic
@@ -94,7 +94,7 @@ def m() {
   }
 
   void 'test IDEA-185758-2'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 import groovy.transform.CompileStatic
 
 interface A {}
@@ -113,7 +113,7 @@ def method(Container<A> box) {
   }
 
   void 'test IDEA-185758'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 import groovy.transform.CompileStatic
 
 interface A {}
@@ -133,7 +133,7 @@ def method(Box<A> box) {
 
   void testOverloadedInClosure() {
     RecursionManager.disableAssertOnRecursionPrevention(myFixture.testRootDisposable)
-    testHighlighting '''
+    doTestHighlighting '''
 def <T> void foo(T t, Closure cl) {}
 
 foo(1, (it) -> { println <weak_warning descr="Cannot infer argument types">it</weak_warning> })
@@ -141,7 +141,7 @@ foo(1, (it) -> { println <weak_warning descr="Cannot infer argument types">it</w
   }
 
   void testOverloadedInClosureCS() {
-    testHighlighting '''
+    doTestHighlighting '''
 import groovy.transform.CompileStatic
 
 def <T> void foo(T t, Closure<T> cl) {}
@@ -159,7 +159,7 @@ def m() {
   void testOverloadedInClosureCS2() {
     myFixture.enableInspections(new MissingReturnInspection())
 
-    testHighlighting '''
+    doTestHighlighting '''
 import groovy.transform.CompileStatic
 
 def <T> void foo(T t, Closure<T> cl) {}
@@ -174,7 +174,7 @@ def m() {
 
 
   void testOverloadedInClosureCS3() {
-    testHighlighting '''
+    doTestHighlighting '''
 import groovy.transform.CompileStatic
 import groovy.transform.stc.ClosureParams
 import groovy.transform.stc.FirstParam
@@ -189,7 +189,7 @@ def m() {
   }
 
   void 'test IDEA-171738'() {
-    testHighlighting '''
+    doTestHighlighting '''
 import groovy.transform.CompileStatic
 import java.util.stream.Collectors
 
@@ -202,7 +202,7 @@ void testAsItIs(Collection<Thread> existingPairs) {
   }
 
   void 'test IDEA-171738-2'() {
-    testHighlighting '''
+    doTestHighlighting '''
 import groovy.transform.CompileStatic
 
 import java.util.stream.Collectors
@@ -215,7 +215,7 @@ void testAsItIs(Collection<Thread> existingPairs) {
   }
 
   void 'test IDEA-171738-2_5'() {
-    testHighlighting '''
+    doTestHighlighting '''
 import java.util.stream.Collectors
 
 @groovy.transform.CompileStatic
@@ -226,7 +226,7 @@ void testAsItIs(Collection<Thread> existingPairs) {
   }
 
   void '_test IDEA-171738-4'() {
-    testHighlighting '''
+    doTestHighlighting '''
 @groovy.transform.CompileStatic
 public class G<T> {
     T t;
@@ -249,7 +249,7 @@ public class G<T> {
   }
 
   void 'test IDEA-189792'() {
-    testHighlighting '''
+    doTestHighlighting '''
 import groovy.transform.CompileStatic
 
 import java.nio.file.Files
@@ -264,7 +264,7 @@ static Stream<String> topicStream(Path path) {
   }
 
   void 'test IDEA-189274'() {
-    testHighlighting '''
+    doTestHighlighting '''
 import groovy.transform.CompileStatic
 
 import java.time.LocalDateTime
@@ -287,7 +287,7 @@ class JustAClass {
   }
 
   void '_test IDEA-188105'() {
-    testHighlighting '''
+    doTestHighlighting '''
 import groovy.transform.CompileStatic
 
 @CompileStatic
@@ -308,7 +308,7 @@ void usage() {
 
 
   void 'test with closeable IDEA-197035'() {
-    testHighlighting '''
+    doTestHighlighting '''
 import groovy.transform.CompileStatic
 
 @CompileStatic
@@ -325,7 +325,7 @@ def m() {
   }
 
   void 'test IDEA-198057-1'() {
-    testHighlighting '''
+    doTestHighlighting '''
 Optional<BigDecimal> foo(Optional<String> string) {
     string.flatMap (it) -> {
         try {
@@ -339,7 +339,7 @@ Optional<BigDecimal> foo(Optional<String> string) {
   }
 
   void 'test IDEA-198057-2'() {
-    testHighlighting '''
+    doTestHighlighting '''
 Optional<BigDecimal> foo(Optional<String> string) {
   string.flatMap (it) -> {
      return Optional.<BigDecimal> empty()    
@@ -349,7 +349,7 @@ Optional<BigDecimal> foo(Optional<String> string) {
   }
 
   void 'test call without reference with generics'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 class E {
     def <K,V> Map<K, V> call(Map<K, V> m) { m }
 }

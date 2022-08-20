@@ -11,7 +11,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 13-Dec-17
  */
 public class ConsentsTest extends TestCase{
   private static final String JSON_CONSENTS_DATA = "[{\"consentId\":\"rsch.test.consent.option.for.intellij\",\"version\":\"1.0\",\"text\":\"This is a text of test consent option.\",\"printableName\":\"Test consent option\",\"accepted\":true,\"deleted\":false,\"acceptanceTime\":0},{\"consentId\":\"rsch.send.usage.stat\",\"version\":\"1.0\",\"text\":\"I consent to submit anonymous usage statistics to help JetBrains make better releases and refine the most important areas of the products. I agree that the following information will be sent\\n  * Information about which product features is used\\n  * General statistics (number of files, file types) of the solutions I am working on\\n  * General information about my hardware configuration (for example, amount of RAM, CPU speed and number of cores)\\n  * General information about my software configuration (for example, OS version)\",\"printableName\":\"Send anonymous usage statistics to JetBrains\",\"accepted\":false,\"deleted\":false,\"acceptanceTime\":0}]";

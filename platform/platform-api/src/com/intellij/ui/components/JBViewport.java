@@ -475,9 +475,10 @@ public class JBViewport extends JViewport implements ZoomableViewport {
         if (viewport != null) {
           JScrollPane pane = ComponentUtil.getScrollPane(viewport);
           if (pane != null) {
+            boolean isOverlappingScrollBar = (pane instanceof JBScrollPane) && ((JBScrollPane)pane).isOverlappingScrollBar();
             // calculate empty border under vertical scroll bar
             JScrollBar vsb = pane.getVerticalScrollBar();
-            if (vsb != null && vsb.isVisible()) {
+            if (vsb != null && vsb.isVisible() && !isOverlappingScrollBar) {
               boolean opaque = vsb.isOpaque();
               if (viewport == pane.getColumnHeader()
                   ? (!opaque || ScrollSettings.isHeaderOverCorner(pane.getViewport()))
@@ -493,7 +494,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
             }
             // calculate empty border under horizontal scroll bar
             JScrollBar hsb = pane.getHorizontalScrollBar();
-            if (hsb != null && hsb.isVisible()) {
+            if (hsb != null && hsb.isVisible() && !isOverlappingScrollBar) {
               boolean opaque = hsb.isOpaque();
               if (viewport == pane.getRowHeader()
                   ? (!opaque || ScrollSettings.isHeaderOverCorner(pane.getViewport()))

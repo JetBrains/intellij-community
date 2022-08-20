@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.utils
 
 import com.intellij.ide.plugins.PluginInfoProvider
@@ -62,7 +62,6 @@ fun getPluginInfoById(pluginId: PluginId?): PluginInfo {
     return unknownPlugin
   }
   val plugin = PluginManagerCore.getPlugin(pluginId)
-  @Suppress("FoldInitializerAndIfToElvis")
   if (plugin == null) {
     // we can't load plugin descriptor for a not installed plugin, but we can check if it's from JB repo
     return if (isPluginFromOfficialJbPluginRepo(pluginId)) PluginInfo(PluginType.LISTED, pluginId.idString, null) else unknownPlugin

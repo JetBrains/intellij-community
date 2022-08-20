@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix.fixes
 
@@ -14,10 +14,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiModificationTracker
-import org.jetbrains.kotlin.analyzer.ModuleSourceInfoBase
-import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.fir.HLIndexHelper
-import org.jetbrains.kotlin.idea.fir.api.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.fir.utils.addImportToFile
@@ -28,9 +24,11 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.project.structure.getKtModuleOfTypeSafe
 import org.jetbrains.kotlin.analysis.project.structure.moduleScopeProvider
+import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.fir.HLIndexHelper
+import org.jetbrains.kotlin.idea.fir.api.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.idea.quickfix.QuickFixActionBase
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -79,7 +77,7 @@ internal class ImportQuickFix(
         return true
     }
 
-    private val modificationCountOnCreate: Long = PsiModificationTracker.SERVICE.getInstance(element.project).modificationCount
+    private val modificationCountOnCreate: Long = PsiModificationTracker.getInstance(element.project).modificationCount
 
     /**
      * This is a safe-guard against showing hint after the quickfix have been applied.
@@ -87,7 +85,7 @@ internal class ImportQuickFix(
      * Inspired by the org.jetbrains.kotlin.idea.quickfix.ImportFixBase.isOutdated
      */
     private fun isOutdated(project: Project): Boolean {
-        return modificationCountOnCreate != PsiModificationTracker.SERVICE.getInstance(project).modificationCount
+        return modificationCountOnCreate != PsiModificationTracker.getInstance(project).modificationCount
     }
 
     override fun isAvailableImpl(project: Project, editor: Editor?, file: PsiFile): Boolean {

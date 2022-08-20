@@ -4,7 +4,6 @@ abstract class SearchQueryParser {
 
     var searchQuery: String? = null
 
-    @Suppress("MemberVisibilityCanBePrivate")
     protected fun parse(query: String) {
         val words = splitQuery(query)
         val size = words.size

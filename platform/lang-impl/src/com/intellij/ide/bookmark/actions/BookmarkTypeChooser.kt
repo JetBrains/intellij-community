@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:Suppress("UnregisteredNamedColor")
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.bookmark.actions
 
@@ -23,13 +22,13 @@ import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
 import javax.swing.*
 
-private val ASSIGNED_FOREGROUND = namedColor("BookmarkMnemonicAssigned.foreground", namedColor("AssignedMnemonic.foreground", 0x000000, 0xBBBBBB))
-private val ASSIGNED_BACKGROUND = namedColor("BookmarkMnemonicAssigned.background", namedColor("AssignedMnemonic.background", 0xF7C777, 0x665632))
-private val ASSIGNED_BORDER = namedColor("BookmarkMnemonicAssigned.borderColor", namedColor("AssignedMnemonic.borderColor", ASSIGNED_BACKGROUND))
+private val ASSIGNED_FOREGROUND = namedColor("BookmarkMnemonicAssigned.buttonForeground", 0x000000, 0xBBBBBB)
+private val ASSIGNED_BACKGROUND = namedColor("BookmarkMnemonicAssigned.buttonBackground", 0xF7C777, 0x665632)
+private val ASSIGNED_BORDER = namedColor("BookmarkMnemonicAssigned.borderColor", ASSIGNED_BACKGROUND)
 
-private val CURRENT_FOREGROUND = namedColor("BookmarkMnemonicCurrent.foreground", namedColor("CurrentMnemonic.foreground", 0xFFFFFF, 0xFEFEFE))
-private val CURRENT_BACKGROUND = namedColor("BookmarkMnemonicCurrent.background", namedColor("CurrentMnemonic.background", 0x389FD6, 0x345F85))
-private val CURRENT_BORDER = namedColor("BookmarkMnemonicCurrent.borderColor", namedColor("CurrentMnemonic.borderColor", CURRENT_BACKGROUND))
+private val CURRENT_FOREGROUND = namedColor("BookmarkMnemonicCurrent.buttonForeground", 0xFFFFFF, 0xFEFEFE)
+private val CURRENT_BACKGROUND = namedColor("BookmarkMnemonicCurrent.buttonBackground", 0x389FD6, 0x345F85)
+private val CURRENT_BORDER = namedColor("BookmarkMnemonicCurrent.borderColor", CURRENT_BACKGROUND)
 
 private val SHARED_CURSOR by lazy { Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) }
 private val SHARED_LAYOUT by lazy {
@@ -174,8 +173,8 @@ private class BookmarkLayoutGrid(
           it.putClientProperty("JButton.borderColor", ASSIGNED_BORDER)
         }
         else -> {
-          it.putClientProperty("JButton.textColor", UIManager.getColor("BookmarkMnemonicAvailable.foreground"))
-          it.putClientProperty("JButton.backgroundColor", UIManager.getColor("BookmarkMnemonicAvailable.background"))
+          it.putClientProperty("JButton.textColor", UIManager.getColor("BookmarkMnemonicAvailable.buttonForeground"))
+          it.putClientProperty("JButton.backgroundColor", UIManager.getColor("BookmarkMnemonicAvailable.buttonBackground"))
           it.putClientProperty("JButton.borderColor", UIManager.getColor("BookmarkMnemonicAvailable.borderColor"))
         }
       }

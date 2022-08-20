@@ -435,7 +435,6 @@ private class RunToolbarWidgetRunAction(
   }
 }
 
-@Suppress("UnregisteredNamedColor")
 private enum class RunButtonColors {
   BLUE {
     override fun updateColors(button: RunDropDownButton) {

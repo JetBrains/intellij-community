@@ -93,6 +93,8 @@
 
     <advancedSetting id="debugger.max.recent.expressions" default="50"
                      groupKey="group.advanced.settings.debugger" bundle="messages.XDebuggerBundle"/>
+
+    <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.XDebuggerPerformanceCollector"/>
   </extensions>
 
   <actions>

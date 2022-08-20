@@ -7,6 +7,7 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
 import java.awt.Image
+import java.util.concurrent.CompletableFuture
 import javax.swing.Icon
 
 class GHAvatarIconsProvider(private val avatarsLoader: CachingGHUserAvatarLoader,
@@ -15,5 +16,5 @@ class GHAvatarIconsProvider(private val avatarsLoader: CachingGHUserAvatarLoader
 
   fun getIcon(key: String?): Icon = super.getIcon(key, GHUIUtil.AVATAR_SIZE)
 
-  override fun loadImage(key: String): Image? = avatarsLoader.requestAvatar(requestExecutor, key).get()
+  override fun loadImageAsync(key: String): CompletableFuture<Image?> = avatarsLoader.requestAvatar(requestExecutor, key)
 }

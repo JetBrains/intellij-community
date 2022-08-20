@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -18,14 +18,14 @@ import java.util.concurrent.atomic.AtomicInteger
 private val LOG = Logger.getInstance(StructuredIdeActivity::class.java)
 
 /**
- * New style API to record information about process.
- * It allows you to record start/finish events, calculate duration and link them by common id.
+ * New style API to record information about processes.
+ * It allows you to record start/finish events, link them by common id, and calculate duration.
  *
  * To record a process:
- * - Register ide activity in event log group (see [com.intellij.internal.statistic.eventLog.EventLogGroup.registerIdeActivity]).
+ * - Register ide activity in an event log group (see [com.intellij.internal.statistic.eventLog.EventLogGroup.registerIdeActivity]).
  * - Use [com.intellij.internal.statistic.IdeActivityDefinition.started] or
- * [com.intellij.internal.statistic.IdeActivityDefinition.startedAsync] to record start event and
- * [com.intellij.internal.statistic.StructuredIdeActivity.finished] to record finish event.
+ * [com.intellij.internal.statistic.IdeActivityDefinition.startedAsync] to record start events,
+ * and [com.intellij.internal.statistic.StructuredIdeActivity.finished] to record finish events.
  *
  * See example in dev-guide/fus-collectors.md.
  */
@@ -135,8 +135,7 @@ class IdeActivityDefinition internal constructor(val group: EventLogGroup,
                                                  startEventAdditionalFields: Array<EventField<*>> = emptyArray(),
                                                  finishEventAdditionalFields: Array<EventField<*>> = emptyArray()) {
   val started = group.registerVarargEvent(appendActivityName(activityName, "started"), activityId, *startEventAdditionalFields)
-  val finished = group.registerVarargEvent(appendActivityName(activityName, "finished"), activityId, EventFields.DurationMs,
-                                           *finishEventAdditionalFields)
+  val finished = group.registerVarargEvent(appendActivityName(activityName, "finished"), activityId, EventFields.DurationMs, *finishEventAdditionalFields)
 
   @JvmOverloads
   fun started(project: Project?, dataSupplier: (() -> List<EventPair<*>>)? = null): StructuredIdeActivity {
@@ -157,14 +156,6 @@ class IdeActivityDefinition internal constructor(val group: EventLogGroup,
     return StructuredIdeActivity(project, this).startedAsync(dataSupplier)
   }
 
-  @JvmOverloads
-  fun startedAsyncWithParent(project: Project?,
-                             parentActivity: StructuredIdeActivity,
-                             dataSupplier: (() -> List<EventPair<*>>)? = null): StructuredIdeActivity {
-    logIfParentNotRegistered()
-    return StructuredIdeActivity(project, this, parentActivity).started(dataSupplier)
-  }
-
   private fun logIfShouldBeStartedWithParent() {
     LOG.assertTrue(parentActivityDefinition == null, "Use startedWithParent/startedAsyncWithParent")
   }
@@ -180,8 +171,8 @@ class IdeActivityDefinition internal constructor(val group: EventLogGroup,
   }
 
   @JvmOverloads
-  fun registerStage(stageName: String, additionalFields: Array<EventField<*>> = emptyArray()): VarargEventId = group.registerVarargEvent(
-    appendActivityName(activityName, stageName), activityId, *additionalFields)
+  fun registerStage(stageName: String, additionalFields: Array<EventField<*>> = emptyArray()): VarargEventId =
+    group.registerVarargEvent(appendActivityName(activityName, stageName), activityId, *additionalFields)
 
   companion object {
     val activityId = EventFields.Int("ide_activity_id")

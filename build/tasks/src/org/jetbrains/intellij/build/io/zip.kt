@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
 import org.jetbrains.intellij.build.tasks.PackageIndexBuilder
@@ -53,7 +53,7 @@ private fun addDirForResourceFiles(out: ZipFileWriter, dirNameSetToAdd: Set<Stri
   }
 }
 
-internal class ZipArchiver(private val zipCreator: ZipFileWriter, val fileAdded: ((String) -> Boolean)? = null) : AutoCloseable {
+class ZipArchiver(private val zipCreator: ZipFileWriter, val fileAdded: ((String) -> Boolean)? = null) : AutoCloseable {
   private var localPrefixLength = -1
   private var archivePrefix = ""
 
@@ -80,7 +80,7 @@ internal class ZipArchiver(private val zipCreator: ZipFileWriter, val fileAdded:
   }
 }
 
-internal fun compressDir(startDir: Path, archiver: ZipArchiver, excludes: List<PathMatcher>? = emptyList()) {
+fun compressDir(startDir: Path, archiver: ZipArchiver, excludes: List<PathMatcher>? = emptyList()) {
   val dirCandidates = ArrayDeque<Path>()
   dirCandidates.add(startDir)
   val tempList = ArrayList<Path>()

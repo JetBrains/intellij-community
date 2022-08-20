@@ -15,8 +15,8 @@ import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElementFactory
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuote
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownParagraph
+import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil
-import org.intellij.plugins.markdown.util.hasType
 
 /**
  * Inserts block quote arrows `>` before wrapped text elements when reformatting block quotes.

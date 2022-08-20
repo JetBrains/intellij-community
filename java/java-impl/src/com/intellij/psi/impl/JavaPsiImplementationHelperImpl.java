@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.application.options.CodeStyle;
@@ -138,7 +138,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   }
 
   private Stream<VirtualFile> findSourceRoots(VirtualFile file) {
-    Stream<VirtualFile> modelRoots = ProjectFileIndex.SERVICE.getInstance(myProject).getOrderEntriesForFile(file).stream()
+    Stream<VirtualFile> modelRoots = ProjectFileIndex.getInstance(myProject).getOrderEntriesForFile(file).stream()
       .filter(entry -> entry instanceof LibraryOrSdkOrderEntry && entry.isValid())
       .flatMap(entry -> Stream.of(entry.getFiles(OrderRootType.SOURCES)));
 

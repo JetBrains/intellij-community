@@ -82,7 +82,7 @@ fun match(loop: KtForExpression, useLazySequence: Boolean, reformat: Boolean): M
 
                         if (matcher.shouldUseInputVariables
                             && !state.inputVariable.hasDifferentSetsOfUsages(state.statements, newState.statements)
-                            && !(state.indexVariable?.hasDifferentSetsOfUsages(state.statements, newState.statements) ?: false)
+                            && state.indexVariable?.hasDifferentSetsOfUsages(state.statements, newState.statements) != true
                         ) {
                             // matched part of the loop uses neither input variable nor index variable
                             continue@MatchersLoop

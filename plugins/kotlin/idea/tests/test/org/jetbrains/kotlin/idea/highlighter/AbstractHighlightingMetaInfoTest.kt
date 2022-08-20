@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.lang.annotation.HighlightSeverity
@@ -19,7 +19,7 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinLightCodeInsightFixtureT
 
     open fun doTest(unused: String) {
         myFixture.configureByFile(fileName())
-        val expectedHighlighting = testDataFile().getExpectedHighlightingFile()
+        val expectedHighlighting = dataFile().getExpectedHighlightingFile()
 
         checkHighlighting(expectedHighlighting)
     }

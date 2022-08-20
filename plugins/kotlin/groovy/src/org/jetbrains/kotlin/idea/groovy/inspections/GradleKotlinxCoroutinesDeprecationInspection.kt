@@ -27,7 +27,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrC
 
 private val LibInfo.gradleMarker get() = "$groupId:$name:"
 
-@Suppress("SpellCheckingInspection")
 class GradleKotlinxCoroutinesDeprecationInspection : BaseInspection(), CleanupLocalInspectionTool, MigrationFix {
     override fun isApplicable(migrationInfo: MigrationInfo): Boolean {
         return migrationInfo.isLanguageVersionUpdate(LanguageVersion.KOTLIN_1_2, LanguageVersion.KOTLIN_1_3)

@@ -34,8 +34,7 @@ class KotlinUSwitchEntry(
                 appendLine("}")
             }
         }.apply KotlinUExpressionList@{
-            val exprPsi = this@KotlinUSwitchEntry.sourcePsi.expression
-            val userExpressions = when (exprPsi) {
+            val userExpressions = when (val exprPsi = this@KotlinUSwitchEntry.sourcePsi.expression) {
                 is KtBlockExpression -> exprPsi.statements.map { baseResolveProviderService.baseKotlinConverter.convertOrEmpty(it, this) }
                 else -> listOf(baseResolveProviderService.baseKotlinConverter.convertOrEmpty(exprPsi, this))
             }

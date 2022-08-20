@@ -4,6 +4,7 @@ package com.jetbrains.python.ui
 import com.intellij.execution.Platform
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.ui.layout.*
 import com.jetbrains.python.PyBundle
 import javax.swing.JComponent
@@ -44,9 +45,6 @@ class ManualPathEntryDialog(project: Project?, private val platform: Platform) :
       Platform.WINDOWS -> isAbsoluteWindowsPath(path)
     }
 
-    private fun isAbsoluteWindowsPath(path: String): Boolean =
-      path.length > 2 && path[1] == ':' && isDriveLetter(path[0]) && path[2] in setOf('\\', '/')
-
-    private fun isDriveLetter(c: Char): Boolean = c in 'a'..'z' || c in 'A'..'Z'
+    private fun isAbsoluteWindowsPath(path: String): Boolean = OSAgnosticPathUtil.isAbsoluteDosPath(path)
   }
 }

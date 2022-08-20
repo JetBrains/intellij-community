@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.breakpoints
 
@@ -30,7 +30,6 @@ class BreakpointChecker {
         All("*") // line & lambda
     }
 
-    @Suppress("SimplifiableCall")
     private val breakpointTypes: List<XLineBreakpointType<*>> = run {
         val extensionPoint = ApplicationManager.getApplication().extensionArea
             .getExtensionPoint<XBreakpointType<*, *>>(XBreakpointType.EXTENSION_POINT_NAME.name)

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.surroundWith;
 
 import com.intellij.openapi.editor.Editor;
@@ -26,19 +12,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Defines a single template which can be used in Surround With.
+ * Defines a single template which can be used in <em>Code | Surround With</em> action.
  *
- * @author ven
  * @see SurroundDescriptor
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/surround-with.html">Surround With (IntelliJ Platform Docs)</a>
  */
 public interface Surrounder {
   Surrounder[] EMPTY_ARRAY = new Surrounder[0];
   ArrayFactory<Surrounder> myArrayFactory = count -> count == 0 ? EMPTY_ARRAY : new Surrounder[count];
 
   /**
-   * Returns the user-visible name of the Surround With template.
-   *
-   * @return the template name
+   * @return the user-visible name of the <em>Surround With</em> template
    */
   @NlsActions.ActionText
   String getTemplateDescription();
@@ -47,16 +31,14 @@ public interface Surrounder {
    * Checks if the template can be used to surround the specified range of elements.
    *
    * @param elements the elements to be surrounded
-   * @return true if the template is applicable to the elements, false otherwise.
+   * @return {@code true} if the template is applicable to the elements, {@code false} otherwise
    */
   boolean isApplicable(PsiElement @NotNull [] elements);
 
   /**
-   * Performs the Surround With action on the specified range of elements.
+   * Performs the <em>Code | Surround With</em> action on the specified range of elements.
    *
-   * @param project  the project containing the elements.
-   * @param editor   the editor in which the action is invoked.
-   * @param elements the elements to be surrounded.
+   * @param elements the elements to be surrounded
    * @return range to select/to position the caret
    */
   @Nullable

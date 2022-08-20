@@ -51,7 +51,7 @@ internal class ShowChangedStateEventsAction(private val recorderId: String) : Du
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(eventLogToolWindowsId) ?: return
     val displayName = "Changed events: $recorderId"
     val changedEventsComponent = ChangedStateEventsPanel(project, toolWindow.disposable, difference, recorderId).component
-    val content = ContentFactory.SERVICE.getInstance().createContent(changedEventsComponent, displayName, true)
+    val content = ContentFactory.getInstance().createContent(changedEventsComponent, displayName, true)
     content.preferredFocusableComponent = changedEventsComponent
     val contentManager = toolWindow.contentManager
     contentManager.addContent(content)

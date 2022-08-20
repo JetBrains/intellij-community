@@ -26,7 +26,6 @@ import java.util.regex.Pattern;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 26-Sep-19
  */
 public final class ModulePathSplitter {
   private final Map<File, ModuleInfo> myCache = Collections.synchronizedMap(FileCollectionFactory.createCanonicalFileMap());

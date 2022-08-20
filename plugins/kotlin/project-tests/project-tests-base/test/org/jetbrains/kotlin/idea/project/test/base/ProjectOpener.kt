@@ -15,7 +15,9 @@ object ProjectOpener {
             projectOpenAction = projectData.openAction,
         )
         return withGradleNativeSetToFalse(projectData.openAction) {
-            ProjectOpenAction.openProject(openProject)
+            ProjectOpenAction.openProject(openProject).also {
+                openProject.projectOpenAction.postOpenProject(openProject = openProject, project = it)
+            }
         }
     }
 

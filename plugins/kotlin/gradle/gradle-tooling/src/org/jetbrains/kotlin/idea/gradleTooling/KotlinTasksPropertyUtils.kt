@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.gradleTooling
 
@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.idea.gradleTooling.AbstractKotlinGradleModelBuilder.
 import org.jetbrains.kotlin.idea.gradleTooling.AbstractKotlinGradleModelBuilder.Companion.kotlinPluginWrapper
 import org.jetbrains.kotlin.idea.gradleTooling.AbstractKotlinGradleModelBuilder.Companion.kotlinProjectExtensionClass
 import org.jetbrains.kotlin.idea.gradleTooling.AbstractKotlinGradleModelBuilder.Companion.kotlinSourceSetClass
-import org.jetbrains.kotlin.idea.gradleTooling.compilationFullName
 import org.jetbrains.kotlin.idea.projectModel.KotlinTaskProperties
 import java.io.File
 
@@ -33,8 +32,7 @@ typealias KotlinTaskPropertiesBySourceSet = MutableMap<String, KotlinTaskPropert
 private fun Task.getPackagePrefix(): String? {
     try {
         val getJavaPackagePrefix = this.javaClass.getMethod("getJavaPackagePrefix")
-        @Suppress("UNCHECKED_CAST")
-        return (getJavaPackagePrefix.invoke(this) as? String)
+      return (getJavaPackagePrefix.invoke(this) as? String)
     } catch (e: Exception) {
     }
     return null
@@ -44,8 +42,7 @@ private fun Task.getIsIncremental(): Boolean? {
     try {
         val abstractKotlinCompileClass = javaClass.classLoader.loadClass(AbstractKotlinGradleModelBuilder.ABSTRACT_KOTLIN_COMPILE_CLASS)
         val getIncremental = abstractKotlinCompileClass.getDeclaredMethod("getIncremental")
-        @Suppress("UNCHECKED_CAST")
-        return (getIncremental.invoke(this) as? Boolean)
+      return (getIncremental.invoke(this) as? Boolean)
     } catch (e: Exception) {
     }
     return null

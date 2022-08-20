@@ -38,10 +38,8 @@ class DestructuringDeclarationReferenceSearcher(
     override fun isReferenceToCheck(ref: PsiReference) = ref is KtDestructuringDeclarationReference
 
     override fun processPossibleReceiverExpression(expression: KtExpression) {
-        val parent = expression.parent
-        val destructuringDeclaration = when (parent) {
+        val destructuringDeclaration = when (val parent = expression.parent) {
             is KtDestructuringDeclaration -> parent
-
             is KtContainerNode -> {
                 if (parent.node.elementType == KtNodeTypes.LOOP_RANGE) {
                     (parent.parent as KtForExpression).destructuringDeclaration
@@ -49,7 +47,6 @@ class DestructuringDeclarationReferenceSearcher(
                     null
                 }
             }
-
             else -> null
         }
 

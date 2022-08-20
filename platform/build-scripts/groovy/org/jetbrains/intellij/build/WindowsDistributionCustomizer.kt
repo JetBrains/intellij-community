@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
@@ -43,7 +43,7 @@ abstract class WindowsDistributionCustomizer {
   /**
    * List of file extensions (without leading dot) which installer will suggest to associate with the product
    */
-  var fileAssociations: MutableList<String> = mutableListOf()
+  var fileAssociations: List<String> = emptyList()
 
   /**
    * Paths to files which will be used to overwrite the standard *.nsi files

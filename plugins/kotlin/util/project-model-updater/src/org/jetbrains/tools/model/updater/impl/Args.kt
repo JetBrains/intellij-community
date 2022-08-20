@@ -11,6 +11,7 @@ class Args(args: Map<String, String>) {
     val jpsPluginVersion: String by mapDelegate(mutableArgs)
     val kotlincVersion: String by mapDelegate(mutableArgs)
     val kotlincArtifactsMode: KotlincArtifactsMode by mapDelegate(mutableArgs, KotlincArtifactsMode::valueOf)
+    val jpsPluginArtifactsMode: KotlincArtifactsMode by mapDelegate(mutableArgs, KotlincArtifactsMode::valueOf)
 
     init {
         declaredProperties().forEach { it.getter.call(this) } // Initialize all the values

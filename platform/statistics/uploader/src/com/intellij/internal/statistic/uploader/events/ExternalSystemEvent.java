@@ -2,16 +2,22 @@
 package com.intellij.internal.statistic.uploader.events;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
 public abstract class ExternalSystemEvent {
+  public static final String ALL_RECORDERS = "ALL";
+
   private final long myTimestamp;
   private final ExternalSystemEventType myEventType;
 
-  public ExternalSystemEvent(@NotNull ExternalSystemEventType eventType, long timestamp) {
+  private final @NotNull String myRecorderId;
+
+  public ExternalSystemEvent(@NotNull ExternalSystemEventType eventType, long timestamp, @Nullable String recorderId) {
     myTimestamp = timestamp;
     myEventType = eventType;
+    myRecorderId = recorderId != null ? recorderId : ALL_RECORDERS;
   }
 
   public long getTimestamp() {
@@ -20,6 +26,10 @@ public abstract class ExternalSystemEvent {
 
   public ExternalSystemEventType getEventType() {
     return myEventType;
+  }
+
+  public @NotNull String getRecorderId() {
+    return myRecorderId;
   }
 
   @Override

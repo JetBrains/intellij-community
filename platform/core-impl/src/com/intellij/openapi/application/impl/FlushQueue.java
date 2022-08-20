@@ -11,18 +11,18 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import java.util.*;
 
 final class FlushQueue {
   private static final Logger LOG = Logger.getInstance(FlushQueue.class);
   private final Object LOCK = ObjectUtils.sentinel("FlushQueue");
 
-  private List<RunnableInfo> mySkippedItems = new ArrayList<>(); //protected by LOCK
-
-  private final Deque<RunnableInfo> myQueue = new ArrayDeque<>(); //protected by LOCK
+  private ObjectList<RunnableInfo> mySkippedItems = new ObjectArrayList<>(100); //protected by LOCK
+  private final BulkArrayQueue<RunnableInfo> myQueue = new BulkArrayQueue<>();  //protected by LOCK
 
   FlushQueue() {
   }
@@ -41,25 +41,31 @@ final class FlushQueue {
       }
       runNextEvent(info);
       if (System.currentTimeMillis() - startTime > 5) {
+        synchronized (LOCK) {
+          requestFlush();
+        }
         break;
       }
     }
   }
 
-  void push(@NotNull RunnableInfo runnableInfo) {
+  void push(@NotNull ModalityState modalityState,
+            @NotNull Condition<?> expired,
+            @NotNull Runnable runnable) {
     synchronized (LOCK) {
-      myQueue.offer(runnableInfo);
+      RunnableInfo info = new RunnableInfo(runnable, modalityState, expired);
+      myQueue.enqueue(info);
       requestFlush();
     }
   }
 
   @TestOnly
   @NotNull
-  Collection<RunnableInfo> getQueue() {
+  Object getQueue() {
     synchronized (LOCK) {
       // used by leak hunter as root, so we must not copy it here to another list
       // to avoid walking over obsolete queue
-      return Collections.unmodifiableCollection(myQueue);
+      return myQueue;
     }
   }
 
@@ -131,16 +137,15 @@ final class FlushQueue {
     ApplicationManager.getApplication().assertIsDispatchThread();
     synchronized (LOCK) {
       int size = mySkippedItems.size();
-      for (int i = size - 1; i >= 0; i--) {
-        RunnableInfo item = mySkippedItems.get(i);
-        myQueue.addFirst(item);
-      }
-      // .clear() may be expensive
-      if (size < 20) {
-        mySkippedItems.clear();
-      }
-      else {
-        mySkippedItems = new ArrayList<>();
+      if (size != 0) {
+        myQueue.bulkEnqueueFirst(mySkippedItems);
+        // .clear() may be expensive
+        if (size < 100) {
+          mySkippedItems.clear();
+        }
+        else {
+          mySkippedItems = new ObjectArrayList<>(100);
+        }
       }
       requestFlush();
     }
@@ -150,17 +155,7 @@ final class FlushQueue {
     ApplicationManager.getApplication().assertIsDispatchThread();
     synchronized (LOCK) {
       reincludeSkippedItems();
-
-      List<RunnableInfo> alive = new ArrayList<>(myQueue.size());
-      for (RunnableInfo info : myQueue) {
-        if (!info.expired.value(null)) {
-          alive.add(info);
-        }
-      }
-      if (alive.size() < myQueue.size()) {
-        myQueue.clear();
-        myQueue.addAll(alive);
-      }
+      myQueue.removeAll(info -> info.expired.value(null));
       requestFlush();
     }
   }
@@ -176,13 +171,12 @@ final class FlushQueue {
     }
   }
 
-
   private final Runnable FLUSH_NOW = this::flushNow;
   boolean isFlushNow(@NotNull Runnable runnable) {
     return runnable == FLUSH_NOW;
   }
 
-  final static class RunnableInfo {
+  private static class RunnableInfo {
     @NotNull private final Runnable runnable;
     @NotNull private final ModalityState modalityState;
     @NotNull private final Condition<?> expired;

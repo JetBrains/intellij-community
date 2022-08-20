@@ -23,7 +23,6 @@ import com.jetbrains.python.psi.PyParenthesizedExpression;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Created by IntelliJ IDEA.
  * Author: Alexey.Ivanov
  */
 public class PyParenthesizedFixer extends PyFixer<PyParenthesizedExpression> {

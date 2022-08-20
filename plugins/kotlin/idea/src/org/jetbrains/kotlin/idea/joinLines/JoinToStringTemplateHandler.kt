@@ -75,8 +75,7 @@ class JoinToStringTemplateHandler : JoinRawLinesHandlerDelegate {
 private fun KtBinaryExpression.joinable(): Boolean {
     if (operationToken != KtTokens.PLUS) return false
     if (right !is KtStringTemplateExpression) return false
-    val left = left
-    return when (left) {
+    return when (val left = left) {
         is KtStringTemplateExpression -> true
         is KtBinaryExpression -> left.right is KtStringTemplateExpression
         else -> false

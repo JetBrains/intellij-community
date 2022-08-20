@@ -194,7 +194,7 @@ internal class DocumentationToolWindowManager(private val project: Project) : Di
   }
 
   private fun addNewContent(): Content {
-    val content = ContentFactory.SERVICE.getInstance().createContent(JPanel(), null, false).also {
+    val content = ContentFactory.getInstance().createContent(JPanel(), null, false).also {
       it.isCloseable = true
       it.putUserData(ToolWindow.SHOW_CONTENT_ICON, true)
     }

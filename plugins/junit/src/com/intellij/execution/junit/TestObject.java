@@ -425,7 +425,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   private static String getVersion(PsiClass classFromCommon) {
     VirtualFile virtualFile = PsiUtilCore.getVirtualFile(classFromCommon);
     if (virtualFile != null) {
-      ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(classFromCommon.getProject());
+      ProjectFileIndex index = ProjectFileIndex.getInstance(classFromCommon.getProject());
       VirtualFile root = index.getClassRootForFile(virtualFile);
       if (root != null && root.getFileSystem() instanceof JarFileSystem) {
         VirtualFile manifestFile = root.findFileByRelativePath(JarFile.MANIFEST_NAME);
@@ -712,12 +712,17 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     Project project = myConfiguration.getProject();
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
 
-    if (DumbService.isDumb(project)) {
-      return findCustomJUnit5TestEngineUsingClassLoader(globalSearchScope, psiFacade);
+    Boolean isCustomJUnit5UsingPsi =
+      ReadAction.nonBlocking(() -> {
+        if (DumbService.isDumb(project)) {
+          return null;
+        }
+        return findCustomJunit5TestEngineUsingPsi(globalSearchScope, project, psiFacade);
+      }).executeSynchronously();
+    if (isCustomJUnit5UsingPsi != null) {
+      return isCustomJUnit5UsingPsi;
     }
-    else {
-      return ReadAction.nonBlocking(() -> findCustomJunit5TestEngineUsingPsi(globalSearchScope, project, psiFacade)).executeSynchronously();
-    }
+    return findCustomJUnit5TestEngineUsingClassLoader(globalSearchScope, psiFacade);
   }
 
   private boolean findCustomJUnit5TestEngineUsingClassLoader(@NotNull GlobalSearchScope globalSearchScope,

@@ -81,6 +81,7 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
     if (!myConnectStarted.compareAndSet(false, true)) {
       return;
     }
+    MavenLog.LOG.warn("connecting new maven server:", new Exception());
     ApplicationManager.getApplication().executeOnPooledThread(new StartServerTask());
   }
 
@@ -128,14 +129,16 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
 
   private void cleanUpFutures() {
     try {
-      if(!myExecutor.isShutdown()) {
+      if (!myExecutor.isShutdown()) {
         myExecutor.shutdownNow();
       }
       int count = myLoggerConnectFailedCount.get();
       if (count != 0) MavenLog.LOG.warn("Maven pulling logger was failed: " + count + " times");
       count = myDownloadConnectFailedCount.get();
       if (count != 0) MavenLog.LOG.warn("Maven pulling download listener was failed: " + count + " times");
-    } catch (IllegalStateException ignore){}
+    }
+    catch (IllegalStateException ignore) {
+    }
   }
 
   @Override

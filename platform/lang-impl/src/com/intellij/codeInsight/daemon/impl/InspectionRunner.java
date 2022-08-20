@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -293,7 +293,7 @@ class InspectionRunner {
       ((JobLauncherImpl)JobLauncher.getInstance()).processQueue(contexts, new LinkedBlockingQueue<>(), new SensitiveProgressWrapper(myProgress), TOMB_STONE, context ->
         AstLoadingFilter.disallowTreeLoading(() -> AstLoadingFilter.<Boolean, RuntimeException>forceAllowTreeLoading(myPsiFile, () -> {
           Runnable runnable = () -> {
-            if (!application.tryRunReadAction(() -> {
+            Runnable action = () -> {
               InspectionProblemHolder holder = context.holder;
               int resultCount = holder.getResultCount();
               PsiElement favoriteElement = context.myFavoriteElement;
@@ -321,7 +321,8 @@ class InspectionRunner {
                 }
               }
               afterProcessCallback.accept(context);
-            })) {
+            };
+            if (!application.tryRunReadAction(action)) {
               throw new ProcessCanceledException();
             }
           };

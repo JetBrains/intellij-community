@@ -22,6 +22,7 @@ class MarkdownAstFactory: ASTFactory() {
 
   override fun createLeaf(type: IElementType, text: CharSequence): LeafElement? {
     return when {
+      type == MarkdownTokenTypes.LIST_NUMBER -> MarkdownListNumber(type, text)
       type == MarkdownTokenTypes.CODE_FENCE_CONTENT -> MarkdownCodeFenceContent(type, text)
       type == MarkdownElementTypes.FRONT_MATTER_HEADER_CONTENT -> MarkdownFrontMatterHeaderContent(type, text)
       type == MarkdownTokenTypes.TABLE_SEPARATOR && text.length > 1 -> MarkdownTableSeparatorRow(text)

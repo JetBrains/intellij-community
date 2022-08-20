@@ -2,7 +2,6 @@
 // ACTION: Create extension function 'A.bar'
 // ACTION: Create function 'bar'
 // ACTION: Create member function 'A.bar'
-// ACTION: Do not show return expression hints
 // ACTION: Rename reference
 // ERROR: Unresolved reference: bar
 package p

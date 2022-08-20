@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations
 
@@ -222,14 +222,13 @@ class MoveKotlinDeclarationsHandler internal constructor(private val handlerActi
                         handlerActions.showErrorHint(project, editor, message, MOVE_DECLARATIONS, null)
                         return true
                     }
-                    @Suppress("UNCHECKED_CAST")
-                    handlerActions.invokeMoveKotlinNestedClassesRefactoring(
-                        project,
-                        elementsToSearch.filterIsInstance<KtClassOrObject>(),
-                        container,
-                        targetContainer,
-                        callback
-                    )
+                  handlerActions.invokeMoveKotlinNestedClassesRefactoring(
+                      project,
+                      elementsToSearch.filterIsInstance<KtClassOrObject>(),
+                      container,
+                      targetContainer,
+                      callback
+                  )
                     return true
                 }
                 handlerActions.invokeKotlinSelectNestedClassChooser(

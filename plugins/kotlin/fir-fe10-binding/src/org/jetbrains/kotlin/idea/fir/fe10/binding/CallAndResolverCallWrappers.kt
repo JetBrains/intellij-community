@@ -224,7 +224,7 @@ class CallAndResolverCallWrappers(bindingContext: KtSymbolBasedBindingContext) {
 
     private fun getCall(element: KtElement): Call {
         val ktCall = element.parent.safeAs<KtCallExpression>() ?: context.implementationPostponed()
-        val firCall = when (val fir = ktCall.getOrBuildFir(context.ktAnalysisSessionFacade.firResolveState)) {
+        val firCall = when (val fir = ktCall.getOrBuildFir(context.ktAnalysisSessionFacade.firResolveSession)) {
             is FirFunctionCall -> fir
             is FirSafeCallExpression -> fir.selector as? FirFunctionCall
             else -> null

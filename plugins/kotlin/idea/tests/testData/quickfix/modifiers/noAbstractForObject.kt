@@ -1,6 +1,5 @@
 // "Make 'Some' abstract" "false"
 // ACTION: Create test
-// ACTION: Do not show return expression hints
 // ACTION: Extract 'Some' from current file
 // ACTION: Implement members
 // ACTION: Rename file to Some.kt

@@ -4,7 +4,6 @@ package com.intellij.diff.editor
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.impl.DiffRequestProcessorListener
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import javax.swing.JComponent
 
@@ -12,10 +11,10 @@ import javax.swing.JComponent
 open class DiffRequestProcessorEditor(
   private val file: DiffVirtualFile,
   val processor: DiffRequestProcessor
-) : DiffRequestProcessorEditorBase(file,
-                                   processor.component,
-                                   processor,
-                                   processor.context) {
+) : DiffEditorBase(file,
+                   processor.component,
+                   processor,
+                   processor.context) {
 
   init {
     processor.addListener(MyProcessorListener(), this)

@@ -12,8 +12,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplements
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrReferenceListStub;
 
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 26.03.2007
+ * @author Dmitry.Krasilschikov
  */
 public class GrImplementsClauseImpl extends GrReferenceListImpl implements GrImplementsClause {
 

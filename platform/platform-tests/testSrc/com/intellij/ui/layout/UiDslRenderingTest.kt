@@ -33,7 +33,6 @@ class UiDslRenderingTest : UiDslTest() {
     val uiRule = UiTestRule(Paths.get(PlatformTestUtil.getPlatformTestDataPath(), "ui", "layout"))
   }
 
-  @Suppress("MemberVisibilityCanBePrivate")
   @Parameterized.Parameter
   lateinit var lafName: String
 

@@ -204,7 +204,7 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
     }
   }
 
-  static final class Thumb extends ScrollBarPainter {
+  static class Thumb extends ScrollBarPainter {
     private final MixedColorProducer fillProducer;
     private final MixedColorProducer drawProducer;
 
@@ -227,11 +227,11 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
       double mixer = value == null ? 0 : value.doubleValue();
       Color fill = fillProducer.produce(mixer);
       Color draw = drawProducer.produce(mixer);
-      if (fill.getRGB() == draw.getRGB()) draw = null; // without border
+      if (ignoreBorder() || fill.getRGB() == draw.getRGB()) draw = null; // without border
 
       int arc = 0;
       if (SystemInfo.isMac) {
-        int margin = draw == null ? 2 : 1;
+        int margin = macMargin(draw != null);
         x += margin;
         y += margin;
         width -= margin + margin;
@@ -239,6 +239,30 @@ public abstract class ScrollBarPainter implements RegionPainter<Float> {
         arc = Math.min(width, height);
       }
       RectanglePainter.paint(g, x, y, width, height, arc, fill, draw);
+    }
+
+    protected int macMargin(boolean withBorder) {
+      return withBorder ? 1 : 2;
+    }
+
+    protected boolean ignoreBorder() {
+      return false;
+    }
+  }
+
+  static final class ThinScrollBarThumb extends Thumb {
+    ThinScrollBarThumb(@NotNull Supplier<? extends Component> supplier, boolean opaque) {
+      super(supplier, opaque);
+    }
+
+    @Override
+    protected int macMargin(boolean withBorder) {
+      return 0;
+    }
+
+    @Override
+    protected boolean ignoreBorder() {
+      return true;
     }
   }
 }

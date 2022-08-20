@@ -6,7 +6,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import org.apache.commons.lang3.StringUtils
 
-@Suppress("unused", "TooGenericExceptionCaught") // T is used to get the logger
+@Suppress("UnusedReceiverParameter", "TooGenericExceptionCaught") // T is used to get the logger
 inline fun <reified T, R> T.tryDoing(a: () -> R?): R? = try {
     a()
 } catch (t: Throwable) {

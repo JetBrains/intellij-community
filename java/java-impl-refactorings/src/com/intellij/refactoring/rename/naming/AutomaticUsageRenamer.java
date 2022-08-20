@@ -3,14 +3,14 @@ package com.intellij.refactoring.rename.naming;
 
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.usages.RenameableUsage;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author peter
@@ -20,15 +20,12 @@ public abstract class AutomaticUsageRenamer<T> {
   private final String myNewName;
   private final Map<T, String> myRenames = new LinkedHashMap<>();
   private final List<T> myElements = new ArrayList<>();
-  private final Map<T, List<RenameableUsage>> myReferences = new HashMap<>();
 
   protected AutomaticUsageRenamer(List<? extends T> renamedElements, String oldName, String newName) {
     myOldName = oldName;
     myNewName = newName;
     List<T> elements = new ArrayList<>(renamedElements);
     elements.sort((o1, o2) -> {
-      int i = StringUtil.compare(getSourceName(o1), getSourceName(o2), false);
-      if (i != 0) return i;
       return getName(o1).compareTo(getName(o2));
     });
     for (T element : elements) {
@@ -38,13 +35,6 @@ public abstract class AutomaticUsageRenamer<T> {
         setRename(element, suggestedNewName);
       }
     }
-  }
-
-  public boolean hasAnythingToRename() {
-    for (final String s : myRenames.values()) {
-      if (s != null) return true;
-    }
-    return false;
   }
 
   public boolean isEmpty() {
@@ -67,21 +57,8 @@ public abstract class AutomaticUsageRenamer<T> {
     return false;
   }
 
-  protected boolean isNameAlreadySuggested(String newName) {
-    return myRenames.containsValue(newName);
-  }
-
   public List<? extends T> getElements() {
     return myElements;
-  }
-
-  /**
-   * Element source, path. For example, package. Taken into account while sorting.
-   */
-  @Nullable
-  @NlsSafe
-  public String getSourceName(T element) {
-    return null;
   }
 
   public String getNewElementName(T element) {
@@ -100,23 +77,8 @@ public abstract class AutomaticUsageRenamer<T> {
     myRenames.remove(element);
   }
 
-  @Nullable
-  public @NlsContexts.Tooltip String getErrorText(T element) {
-    return null;
-  }
-
   public final void doRename() throws IncorrectOperationException {
-    for (final Map.Entry<T, List<RenameableUsage>> entry : myReferences.entrySet()) {
-      final T element = entry.getKey();
-      final String newName = getNewElementName(element);
-      doRenameElement(element);
-      for (final RenameableUsage usage : entry.getValue()) {
-        usage.rename(newName);
-      }
-    }
   }
-
-  protected abstract void doRenameElement(T element) throws IncorrectOperationException;
 
   protected abstract String suggestName(T element);
 

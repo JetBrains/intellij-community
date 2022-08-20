@@ -7,6 +7,6 @@ import com.intellij.openapi.project.Project
 
 class ClearBuildManagerState : ClearBuildStateExtension() {
     override fun clearState(project: Project) {
-        BuildManager.getInstance().clearState(project);
+        BuildManager.getInstance().clearState(project)
     }
 }

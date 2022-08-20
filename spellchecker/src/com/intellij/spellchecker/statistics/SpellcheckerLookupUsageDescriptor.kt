@@ -43,7 +43,7 @@ class SpellcheckerLookupUsageDescriptor : LookupUsageDescriptor {
     }
 
     companion object {
-      val SPELLCHECKER = EventFields.Boolean(SPELLCHECKER_KEY_NAME);
+      val SPELLCHECKER = EventFields.Boolean(SPELLCHECKER_KEY_NAME)
     }
   }
 }

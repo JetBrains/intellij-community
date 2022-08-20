@@ -42,7 +42,7 @@ public abstract class TextEditorHighlightingPassRegistrar {
       case LAST:
         //todo
         ids = new int[]{Pass.UPDATE_ALL,
-          Pass.UPDATE_FOLDING, Pass.LINE_MARKERS,
+          Pass.UPDATE_FOLDING, Pass.LINE_MARKERS, Pass.SLOW_LINE_MARKERS,
           Pass.EXTERNAL_TOOLS,
           Pass.LOCAL_INSPECTIONS, Pass.POPUP_HINTS};
         break;

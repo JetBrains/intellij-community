@@ -6,6 +6,7 @@ import org.gradle.api.tasks.Exec
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CompilerArgumentsCacheAwareImpl
 import org.jetbrains.kotlin.idea.projectModel.*
 import java.io.File
+import org.jetbrains.kotlin.idea.gradleTooling.arguments.createCachedArgsInfo
 
 class KotlinSourceSetProto(
     val name: String,
@@ -168,7 +169,7 @@ data class KotlinCompilationImpl(
         output = KotlinCompilationOutputImpl(kotlinCompilation.output),
         arguments = KotlinCompilationArgumentsImpl(kotlinCompilation.arguments),
         dependencyClasspath = kotlinCompilation.dependencyClasspath,
-        cachedArgsInfo = kotlinCompilation.cachedArgsInfo.duplicate(),
+        cachedArgsInfo = createCachedArgsInfo(kotlinCompilation.cachedArgsInfo, cloningCache),
         kotlinTaskProperties = KotlinTaskPropertiesImpl(kotlinCompilation.kotlinTaskProperties),
         nativeExtensions = kotlinCompilation.nativeExtensions?.let(::KotlinNativeCompilationExtensionsImpl)
     ) {
@@ -350,7 +351,8 @@ data class KonanArtifactModelImpl(
     override val runConfiguration: KonanRunConfigurationModel,
     override val isTests: Boolean,
     override val freeCompilerArgs: Array<String>? = emptyArray(), // nullable for backwards compatibility
-    override val exportDependencies: Array<KotlinDependencyId>? = emptyArray() // nullable for backwards compatibility
+    override val exportDependencies: Array<KotlinDependencyId>? = emptyArray(), // nullable for backwards compatibility
+    override val binaryOptions: Array<String>? = emptyArray(), // nullable for backwards compatibility
 ) : KonanArtifactModel {
     constructor(artifact: KonanArtifactModel) : this(
         artifact.targetName,
@@ -362,7 +364,8 @@ data class KonanArtifactModelImpl(
         KonanRunConfigurationModelImpl(artifact.runConfiguration),
         artifact.isTests,
         checkNotNull(artifact.freeCompilerArgs) { "free compiler arguments are unexpectedly null" },
-        checkNotNull(artifact.exportDependencies) { "export dependencies are unexpectedly null" }
+        checkNotNull(artifact.exportDependencies) { "export dependencies are unexpectedly null" },
+        checkNotNull(artifact.binaryOptions) { "binary compiler options are unexpectedly null" },
     )
 }
 

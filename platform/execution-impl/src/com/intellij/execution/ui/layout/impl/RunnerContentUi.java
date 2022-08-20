@@ -329,7 +329,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     });
 
     if (myOriginal != null) {
-      final ContentManager manager = ContentFactory.SERVICE.getInstance().createContentManager(this, false, myProject);
+      final ContentManager manager = ContentFactory.getInstance().createContentManager(this, false, myProject);
       Disposer.register((Disposable)myRunnerUi, manager);
       manager.getComponent();
     }

@@ -25,6 +25,10 @@ public class UnusedMethodParameterTest extends JavaInspectionTestCase {
     doTest();
   }
 
+  public void testUnusedConstructorParameter() {
+    doTest();
+  }
+
   public void testUsedForReading() {
     doTest();
   }

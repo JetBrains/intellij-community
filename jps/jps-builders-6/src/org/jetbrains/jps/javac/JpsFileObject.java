@@ -12,7 +12,6 @@ import java.nio.CharBuffer;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 16-Oct-18
  */
 public abstract class JpsFileObject extends SimpleJavaFileObject {
   private static final Kind[] ourAvailableKinds = Kind.values();

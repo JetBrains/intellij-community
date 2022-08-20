@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -79,29 +79,32 @@ public final class JpsProjectLoader extends JpsLoaderBase {
     myLoadUnloadedModules = loadUnloadedModules;
   }
 
-  static JpsMacroExpander createProjectMacroExpander(Map<String, String> pathVariables, @NotNull Path baseDir) {
+  private static JpsMacroExpander createProjectMacroExpander(Map<String, String> pathVariables, @NotNull Path baseDir) {
     JpsMacroExpander expander = new JpsMacroExpander(pathVariables);
     expander.addFileHierarchyReplacements(PathMacroUtil.PROJECT_DIR_MACRO_NAME, baseDir.toFile());
     return expander;
   }
 
-  public static void loadProject(JpsProject project, Map<String, String> pathVariables, String projectPath) throws IOException {
+  public static void loadProject(JpsProject project, Map<String, String> pathVariables, Path projectPath) throws IOException {
     loadProject(project, pathVariables, JpsPathMapper.IDENTITY, projectPath, false);
   }
 
-  public static void loadProject(JpsProject project, Map<String, String> pathVariables, @NotNull JpsPathMapper pathMapper, String projectPath, boolean loadUnloadedModules) throws IOException {
-    Path file = Paths.get(FileUtil.toCanonicalPath(projectPath));
-    if (Files.isRegularFile(file) && projectPath.endsWith(".ipr")) {
-      new JpsProjectLoader(project, pathVariables, pathMapper, file.getParent(), loadUnloadedModules).loadFromIpr(file);
+  public static void loadProject(JpsProject project,
+                                 Map<String, String> pathVariables,
+                                 @NotNull JpsPathMapper pathMapper,
+                                 Path projectPath,
+                                 boolean loadUnloadedModules) throws IOException {
+    if (Files.isRegularFile(projectPath) && projectPath.toString().endsWith(".ipr")) {
+      new JpsProjectLoader(project, pathVariables, pathMapper, projectPath.getParent(), loadUnloadedModules).loadFromIpr(projectPath);
     }
     else {
-      Path dotIdea = file.resolve(PathMacroUtil.DIRECTORY_STORE_NAME);
+      Path dotIdea = projectPath.resolve(PathMacroUtil.DIRECTORY_STORE_NAME);
       Path directory;
       if (Files.isDirectory(dotIdea)) {
         directory = dotIdea;
       }
-      else if (Files.isDirectory(file) && file.endsWith(PathMacroUtil.DIRECTORY_STORE_NAME)) {
-        directory = file;
+      else if (Files.isDirectory(projectPath) && projectPath.endsWith(PathMacroUtil.DIRECTORY_STORE_NAME)) {
+        directory = projectPath;
       }
       else {
         throw new IOException("Cannot find IntelliJ IDEA project files at " + projectPath);
@@ -434,7 +437,7 @@ public final class JpsProjectLoader extends JpsLoaderBase {
                                                    projectSdkType, pathMapper);
       }
       catch (JpsSerializationFormatException e) {
-        LOG.warn("Failed to load module configuration from " + file.toString() + ": " + e.getMessage(), e);
+        LOG.warn("Failed to load module configuration from " + file + ": " + e.getMessage(), e);
       }
     }
     else {

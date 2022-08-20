@@ -39,7 +39,7 @@ abstract class TargetEnvironmentType<C : TargetEnvironmentConfiguration>(id: Str
   /**
    * Instantiates a new environment factory for given prepared [configuration][config].
    */
-  abstract fun createEnvironmentRequest(project: Project, config: C): TargetEnvironmentRequest
+  abstract fun createEnvironmentRequest(project: Project?, config: C): TargetEnvironmentRequest
 
   abstract fun createConfigurable(project: Project,
                                   config: C,

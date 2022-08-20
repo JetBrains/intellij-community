@@ -152,7 +152,7 @@ private fun getExtensions(toolWindow: ToolWindow): Sequence<ChangesViewContentEP
 private fun createExtensionContent(project: Project, extension: ChangesViewContentEP): Content {
   val displayName = extension.getDisplayName(project) ?: extension.tabName
 
-  return ContentFactory.SERVICE.getInstance().createContent(JPanel(null), displayName, false).apply {
+  return ContentFactory.getInstance().createContent(JPanel(null), displayName, false).apply {
     isCloseable = false
     tabName = extension.tabName //NON-NLS overridden by displayName above
     putUserData(CHANGES_VIEW_EXTENSION, extension)

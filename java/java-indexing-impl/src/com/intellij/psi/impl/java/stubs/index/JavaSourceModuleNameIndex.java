@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.java.stubs.index;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
@@ -29,7 +29,7 @@ public final class JavaSourceModuleNameIndex extends ScalarIndexExtension<String
     new DefaultFileTypeSpecificInputFilter(FileTypeRegistry.getInstance().getFileTypeByExtension("MF")) {
       @Override
       public boolean acceptInput(@NotNull VirtualFile f) {
-        return f.isInLocalFileSystem() && "MANIFEST.MF".equalsIgnoreCase(f.getName());
+        return "MANIFEST.MF".equalsIgnoreCase(f.getName());
       }
     };
 
@@ -49,7 +49,7 @@ public final class JavaSourceModuleNameIndex extends ScalarIndexExtension<String
 
   @Override
   public int getVersion() {
-    return 3;
+    return 4;
   }
 
   @Override

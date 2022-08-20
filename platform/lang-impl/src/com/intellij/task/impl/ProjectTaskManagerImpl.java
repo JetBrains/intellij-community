@@ -78,7 +78,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
   public Promise<Result> compile(VirtualFile @NotNull [] files) {
     List<ModuleFilesBuildTask> buildTasks = map(
       stream(files)
-        .collect(groupingBy(file -> ProjectFileIndex.SERVICE.getInstance(myProject).getModuleForFile(file, false)))
+        .collect(groupingBy(file -> ProjectFileIndex.getInstance(myProject).getModuleForFile(file, false)))
         .entrySet(),
       entry -> new ModuleFilesBuildTaskImpl(entry.getKey(), false, entry.getValue())
     );

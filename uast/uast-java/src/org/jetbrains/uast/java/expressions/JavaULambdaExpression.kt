@@ -32,8 +32,7 @@ class JavaULambdaExpression(
   }
 
   override val body: UExpression by lz {
-    val b = sourcePsi.body
-    when (b) {
+    when (val b = sourcePsi.body) {
       is PsiCodeBlock -> JavaConverter.convertBlock(b, this)
       is PsiExpression -> wrapLambdaBody(this, b)
       else -> UastEmptyExpression(this)

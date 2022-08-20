@@ -80,7 +80,7 @@ class Demo {
   private fun testAnnotations(
     text: String
   ) {
-    testProvider(
+    doTestProvider(
       "test.java",
       text,
       ImplicitTypeInlayProvider(),

@@ -686,7 +686,7 @@ public class JavaDocInfoGenerator {
       if (containingFile == null) return false;
       items = new PsiFileSystemItem[]{containingFile};
     }
-    ProjectFileIndex projectFileIndex = ProjectFileIndex.SERVICE.getInstance(myProject);
+    ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(myProject);
     for (PsiFileSystemItem item : items) {
       VirtualFile file = item.getVirtualFile();
       if (file != null && projectFileIndex.isInSource(file)) return true;

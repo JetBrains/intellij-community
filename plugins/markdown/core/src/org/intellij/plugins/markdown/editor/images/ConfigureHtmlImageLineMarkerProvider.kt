@@ -8,7 +8,7 @@ import com.intellij.psi.html.HtmlTag
 import com.intellij.psi.xml.XmlTokenType
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
-import org.intellij.plugins.markdown.util.hasType
+import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

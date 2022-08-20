@@ -31,7 +31,7 @@ fun downloadAndroidStudio(): Pair<Path, File> {
     else -> error("Not supported OS")
   }
 
-  val downloadUrl = "https://redirector.gvt1.com/edgedl/android/studio/ide-zips/2021.1.1.11/android-studio-2021.1.1.11" + ext
+  val downloadUrl = "https://redirector.gvt1.com/edgedl/android/studio/ide-zips/2021.1.1.11/android-studio-2021.1.1.11$ext"
   val asFileName = downloadUrl.split("/").last()
   val globalPaths by di.instance<GlobalPaths>()
   val zipFile = globalPaths.getCacheDirectoryFor("android-studio").resolve(asFileName)

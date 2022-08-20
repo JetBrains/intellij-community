@@ -8,17 +8,18 @@ import com.intellij.internal.statistic.eventLog.StatisticsEventLogMigration;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider;
 import com.intellij.internal.statistic.eventLog.connection.StatisticsService;
-import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.internal.statistic.eventLog.uploader.EventLogExternalUploader;
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
 
 @InternalIgnoreDependencyViolation
 final class StatisticsJobsScheduler implements ApplicationInitializedListener {
@@ -62,10 +63,9 @@ final class StatisticsJobsScheduler implements ApplicationInitializedListener {
 
   private static void checkPreviousExternalUploadResult() {
     JobScheduler.getScheduler().schedule(() -> {
-      StatisticsEventLoggerProvider config = FeatureUsageLogger.INSTANCE.getConfig();
-      if (config.isRecordEnabled()) {
-        EventLogExternalUploader.INSTANCE.logPreviousExternalUploadResult(config.getRecorderId());
-      }
+      List<StatisticsEventLoggerProvider> providers =
+        ContainerUtil.filter(StatisticsEventLogProviderUtil.getEventLogProviders(), provider -> provider.getSendLogsOnIdeClose());
+      EventLogExternalUploader.INSTANCE.logPreviousExternalUploadResult(providers);
     }, CHECK_EXTERNAL_UPLOADER_DELAY_IN_MIN, TimeUnit.MINUTES);
   }
 

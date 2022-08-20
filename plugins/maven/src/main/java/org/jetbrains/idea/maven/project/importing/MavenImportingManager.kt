@@ -18,9 +18,12 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.MessageBusConnection
+import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -73,18 +76,20 @@ class MavenImportingManager(val project: Project) {
                                                                           RunnerBundle.message("maven.server.shutdown"),
                                                                           false, project)
       }
-    });
+    })
   }
 
   private var waitingPromise = AsyncPromise<MavenImportFinishedContext>()
 
+  @RequiresEdt
   fun linkAndImportFile(pom: VirtualFile): MavenImportingResult {
     ApplicationManager.getApplication().assertIsDispatchThread()
-    val manager = MavenProjectsManager.getInstance(project);
+    val manager = MavenProjectsManager.getInstance(project)
     val importPath = if (pom.isDirectory) RootPath(pom) else FilesList(pom)
-    return openProjectAndImport(importPath, manager.importingSettings, manager.generalSettings, MavenImportSpec.EXPLICIT_IMPORT);
+    return openProjectAndImport(importPath, manager.importingSettings, manager.generalSettings, MavenImportSpec.EXPLICIT_IMPORT)
   }
 
+  @RequiresEdt
   fun openProjectAndImport(importPaths: ImportPaths): MavenImportingResult {
     val settings = MavenWorkspaceSettingsComponent.getInstance(project).settings
     return openProjectAndImport(importPaths,
@@ -94,18 +99,19 @@ class MavenImportingManager(val project: Project) {
 
   }
 
+  @RequiresEdt
   fun openProjectAndImport(importPaths: ImportPaths,
                            importingSettings: MavenImportingSettings,
                            generalSettings: MavenGeneralSettings,
                            spec: MavenImportSpec): MavenImportingResult {
     ApplicationManager.getApplication().assertIsDispatchThread()
     if (isImportingInProgress()) {
-      return MavenImportingResult(waitingPromise, null);
+      return MavenImportingResult(waitingPromise, null)
     }
     if (executor.isShutdown) {
-      throw RuntimeException("Project is closing");
+      throw RuntimeException("Project is closing")
     }
-    waitingPromise = AsyncPromise();
+    waitingPromise = AsyncPromise()
     MavenUtil.setupProjectSdk(project)
     currentContext = MavenStartedImport(project)
     val enabledProfiles = MavenProjectsManager.getInstance(project).explicitProfiles.enabledProfiles
@@ -113,6 +119,7 @@ class MavenImportingManager(val project: Project) {
     val initialImportContext = MavenImportFlow().prepareNewImport(project, importPaths, generalSettings, importingSettings,
                                                                   enabledProfiles,
                                                                   disabledProfiles)
+    project.messageBus.syncPublisher(MavenImportListener.TOPIC).importStarted(spec)
 
     setProjectSettings(initialImportContext)
 
@@ -124,6 +131,8 @@ class MavenImportingManager(val project: Project) {
             getWaitingPromise().setResult(finishedContext)
           }
           catch (e: Throwable) {
+            MavenLog.LOG.debug("import started at: ", initialImportContext.startImportStackTrace)
+            MavenLog.LOG.warn(e)
             if (indicator.isCanceled) {
               getWaitingPromise().setError("Cancelled")
             }
@@ -165,7 +174,7 @@ class MavenImportingManager(val project: Project) {
     return@withStructuredIdeActivity runSync(spec) {
 
       @Suppress("HardCodedStringLiteral") console.addWarning("New Maven importing flow is enabled",
-                                                             "New Maven importing flow is enabled, it is experimental feature. " + "\n\n" + "To revert to old importing flow, set \"maven.linear.import\" registry flag to false");
+                                                             "New Maven importing flow is enabled, it is experimental feature. " + "\n\n" + "To revert to old importing flow, set \"maven.linear.import\" registry flag to false")
 
       currentContext = initialImport
 
@@ -200,7 +209,7 @@ class MavenImportingManager(val project: Project) {
       val importContext = doTask(MavenProjectBundle.message("maven.project.importing"), activity,
                                  MavenImportStats.ApplyingModelTask::class.java) {
         currentContext?.indicator?.checkCanceled()
-        flow.commitToWorkspaceModel(dependenciesContext)
+        flow.commitToWorkspaceModel(dependenciesContext, activity)
       }
 
       return@runSync doTask(MavenProjectBundle.message("maven.post.processing"), activity,
@@ -208,17 +217,22 @@ class MavenImportingManager(val project: Project) {
         currentContext?.indicator?.checkCanceled()
         flow.runPostImportTasks(importContext)
         flow.updateProjectManager(readMavenFiles)
-        flow.configureMavenProject(importContext)
         setProjectSettings(initialImport)
         MavenResolveResultProblemProcessor.notifyMavenProblems(project) // remove this, should be in appropriate phase
         return@doTask MavenImportFinishedContext(importContext)
       }
-    }.also { it.context?.let(flow::runImportExtensions) }
+    }.also {
+      it.context?.let {
+        project.messageBus
+          .syncPublisher(MavenImportListener.TOPIC)
+          .importFinished(it.resolvedContext.projectsToImport, it.modulesCreated)
+      }
+    }
 
   }
 
   private fun getWaitingPromise(): AsyncPromise<MavenImportFinishedContext> {
-    if (ApplicationManager.getApplication().isDispatchThread) return waitingPromise;
+    if (ApplicationManager.getApplication().isDispatchThread) return waitingPromise
     val ref = Ref<AsyncPromise<MavenImportFinishedContext>>()
     ApplicationManager.getApplication().invokeAndWait {
       ref.set(waitingPromise)
@@ -228,20 +242,46 @@ class MavenImportingManager(val project: Project) {
 
 
   fun isImportingInProgress(): Boolean {
-    return currentContext != null && currentContext !is MavenImportFinishedContext
+    val context = currentContext
+    return context != null && context !is MavenImportFinishedContext
   }
 
+  @RequiresEdt
   fun getImportFinishPromise(): Promise<MavenImportFinishedContext> {
     ApplicationManager.getApplication().assertIsDispatchThread()
-    return getWaitingPromise();
+    return getWaitingPromise()
   }
 
   fun scheduleImportAll(spec: MavenImportSpec): MavenImportingResult {
+    if (isRecursiveImportCalledFromMavenProjectsManagerWatcher()) {
+      return MavenImportingResult(getWaitingPromise(), null)
+    }
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    val manager = MavenProjectsManager.getInstance(project)
+    if (isImportingInProgress()) {
+      return MavenImportingResult(getWaitingPromise(), null)
+    }
+    val settings = MavenWorkspaceSettingsComponent.getInstance(project)
+    return openProjectAndImport(FilesList(manager.projectsTree.managedFilesPaths.mapNotNull { LocalFileSystem.getInstance().findFileByPath(it)}), settings.settings.getImportingSettings(),
+                                settings.settings.getGeneralSettings(), spec)
+  }
+
+
+  fun scheduleUpdate(filesToUpdate: List<VirtualFile>, filesToDelete: List<VirtualFile>, spec: MavenImportSpec): MavenImportingResult {
+    if (isRecursiveImportCalledFromMavenProjectsManagerWatcher()) {
+      return MavenImportingResult(getWaitingPromise(), null)
+    }
+
     ApplicationManager.getApplication().assertIsDispatchThread()
     val manager = MavenProjectsManager.getInstance(project)
     val settings = MavenWorkspaceSettingsComponent.getInstance(project)
-    return openProjectAndImport(FilesList(manager.collectAllAvailablePomFiles()), settings.settings.getImportingSettings(),
+    manager.projectsTree.removeManagedFiles(filesToDelete)
+    return openProjectAndImport(FilesList(filesToUpdate), settings.settings.getImportingSettings(),
                                 settings.settings.getGeneralSettings(), spec)
+  }
+
+  private fun isRecursiveImportCalledFromMavenProjectsManagerWatcher(): Boolean {
+    return isImportingInProgress()
   }
 
   // Action: Show statistic/events in Console
@@ -261,7 +301,12 @@ class MavenImportingManager(val project: Project) {
       return init()
     }
     catch (e: Exception) {
-      console.addException(e, project.getService(SyncViewManager::class.java))
+      if(!project.isDisposed) {
+        console.addException(e, project.getService(SyncViewManager::class.java))
+      } else {
+        MavenLog.LOG.warn(e)
+      }
+
       return MavenImportFinishedContext(e, project)
     }
     finally {
@@ -312,5 +357,7 @@ class MavenImportingManager(val project: Project) {
     fun getInstance(project: Project): MavenImportingManager {
       return project.getService(MavenImportingManager::class.java)
     }
+
+
   }
 }

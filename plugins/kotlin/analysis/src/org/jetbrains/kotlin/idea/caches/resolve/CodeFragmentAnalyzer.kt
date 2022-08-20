@@ -24,6 +24,8 @@ import org.jetbrains.kotlin.resolve.scopes.utils.addImportingScopes
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.idea.core.util.externalDescriptors
+import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
+import org.jetbrains.kotlin.resolve.BindingContext.USED_AS_EXPRESSION
 import org.jetbrains.kotlin.types.expressions.ExpressionTypingServices
 import javax.inject.Inject
 
@@ -56,6 +58,7 @@ class CodeFragmentAnalyzer(
                     expressionTypingServices = expressionTypingServices
                 )
                 analyzeControlFlow(resolveSession, contentElement, bindingTrace)
+                bindingTrace.record(USED_AS_EXPRESSION, contentElement.lastBlockStatementOrThis())
             }
 
             is KtTypeReference -> {

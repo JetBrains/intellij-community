@@ -277,7 +277,6 @@ class FileUsagePredictorLoggerTest : CodeInsightFixtureTestCase<ModuleFixtureBui
       "com/test/Foo3.txt"
     )
 
-    @Suppress("UNCHECKED_CAST")
     val validator = TestFileCandidatesValidatorBuilder()
       .hasField("opened", 0) { (it["features"] as String).contains("JAVA").not() }
       .hasField("opened", 1) { (it["features"] as String).contains("JAVA") }.build()

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon.inlays
 
 import com.intellij.codeInsight.hints.MethodChainsInlayProvider
@@ -7,7 +7,7 @@ import org.intellij.lang.annotations.Language
 
 class MethodChainHintsTest : InlayHintsProviderTestCase() {
   fun check(@Language("Java") text: String) {
-    testProvider("A.java", text, MethodChainsInlayProvider())
+    doTestProvider("A.java", text, MethodChainsInlayProvider())
   }
 
   fun `test plain builder`() {

@@ -101,15 +101,16 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   String myTargets;
   public boolean myErrorCodeRequired = true;
   String myScopePattern;
+
   public void startup() {
     if (myProjectPath == null) {
       reportError("Project to inspect is not defined");
-      printHelp();
+      printHelpAndExit();
     }
 
     if (myProfileName == null && myProfilePath == null && myStubProfile == null) {
       reportError("Profile to inspect with is not defined");
-      printHelp();
+      printHelpAndExit();
     }
 
     ApplicationManagerEx.getApplicationEx().setSaveAllowed(false);
@@ -134,7 +135,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     myPathProfiling = true;
   }
 
-  public void header(){}
+  public void header() { }
 
   public void execute() throws Exception {
     ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
@@ -154,9 +155,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     }
   }
 
-  private void printHelp() {
-    assert myHelpProvider != null;
-
+  private void printHelpAndExit() {
     myHelpProvider.printHelpAndExit();
   }
 
@@ -186,12 +185,12 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
       @Override
       public @NotNull Predicate<Path> getFilesFilter() {
-        return __->true;
+        return __ -> true;
       }
 
       @Override
       public @NotNull Predicate<VirtualFile> getVirtualFilesFilter() {
-        return __->true;
+        return __ -> true;
       }
     };
   }
@@ -215,10 +214,11 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   @Nullable
   protected Project openProject(@NotNull Path projectPath, @NotNull Disposable parentDisposable)
     throws InterruptedException, ExecutionException {
-    VirtualFile vfsProject = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtil.toSystemIndependentName(projectPath.toString()));
+    VirtualFile vfsProject = LocalFileSystem.getInstance().refreshAndFindFileByPath(
+      FileUtil.toSystemIndependentName(projectPath.toString()));
     if (vfsProject == null) {
       reportError(InspectionsBundle.message("inspection.application.file.cannot.be.found", projectPath));
-      printHelp();
+      printHelpAndExit();
     }
 
     reportMessageNoLineBreak(1, InspectionsBundle.message("inspection.application.opening.project"));
@@ -308,7 +308,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
         VirtualFile vfsDir = LocalFileSystem.getInstance().findFileByPath(mySourceDirectory);
         if (vfsDir == null) {
           reportError(InspectionsBundle.message("inspection.application.directory.cannot.be.found", mySourceDirectory));
-          printHelp();
+          printHelpAndExit();
         }
         scope = GlobalSearchScopesCore.directoriesScope(project, true, Objects.requireNonNull(vfsDir));
       }
@@ -360,7 +360,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       try {
         List<VirtualFile> files = changeListManager.getAffectedFiles();
         for (VirtualFile file : files) {
-          reportMessage(0, "modified file" + file.getPath());
+          reportMessage(0, "modified file: " + file.getPath());
         }
         future.complete(files);
       }
@@ -435,7 +435,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
     for (CommandLineInspectionProjectConfigurator configurator : CommandLineInspectionProjectConfigurator.EP_NAME.getIterable()) {
       CommandLineInspectionProjectConfigurator.ConfiguratorContext context = configuratorContext(projectPath, scope);
-      configurator.preConfigureProject(project,context);
+      configurator.preConfigureProject(project, context);
     }
 
     for (CommandLineInspectionProjectConfigurator configurator : CommandLineInspectionProjectConfigurator.EP_NAME.getIterable()) {
@@ -448,7 +448,10 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
   }
 
   private static void waitForInvokeLaterActivities() {
-    ApplicationManager.getApplication().invokeAndWait(() -> { }, ModalityState.any());
+    ApplicationManager.getApplication().invokeAndWait(
+      () -> {
+      },
+      ModalityState.any());
   }
 
   private void runAnalysis(Project project,
@@ -495,7 +498,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
       }
       catch (InspectionsReportConverter.ConversionException e) {
         reportError("\n" + e.getMessage());
-        printHelp();
+        printHelpAndExit();
       }
     }
   }
@@ -765,7 +768,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(project);
     InspectionProfileImpl inspectionProfile = profileManager.getProfile(profileName, false);
     if (inspectionProfile != null) {
-      reportMessage(1, "Loaded the '" + profileName +"' shared project profile");
+      reportMessage(1, "Loaded the '" + profileName + "' shared project profile");
     }
     else {
       //check if ide profile is used for project

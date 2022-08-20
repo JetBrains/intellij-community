@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.bridgeEntities
 
 import com.intellij.openapi.util.NlsSafe
@@ -17,7 +17,6 @@ import java.io.Serializable
  * * 'jar directory' flag is stored in a library root itself;
  */
 
-@Suppress("unused")
 class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEntity>(), SoftLinkable, WithAssertableConsistency {
   lateinit var name: String
   var type: String? = null
@@ -308,7 +307,6 @@ class SourceRootEntity(
   }
 }
 
-@Suppress("unused")
 class JavaSourceRootEntityData : WorkspaceEntityData<JavaSourceRootEntity>(), WithAssertableConsistency {
   var generated: Boolean = false
   lateinit var packagePrefix: String
@@ -417,7 +415,6 @@ class CustomSourceRootPropertiesEntity(
 
 fun SourceRootEntity.asCustomSourceRoot() = referrers(CustomSourceRootPropertiesEntity::sourceRoot).firstOrNull()
 
-@Suppress("unused")
 class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>(), WithAssertableConsistency {
   lateinit var url: VirtualFileUrl
   lateinit var excludedUrls: List<VirtualFileUrl>
@@ -677,7 +674,6 @@ data class LibraryRoot(
   }
 }
 
-@Suppress("unused")
 class LibraryPropertiesEntityData : WorkspaceEntityData<LibraryPropertiesEntity>(), WithAssertableConsistency {
   lateinit var libraryType: String
   var propertiesXmlTag: String? = null

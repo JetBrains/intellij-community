@@ -101,7 +101,7 @@ fun ModalityState.asContextElement(): CoroutineContext = coroutineSupport().asCo
 /**
  * @return UI dispatcher which dispatches within the [context modality state][asContextElement].
  */
-@Suppress("unused") // unused receiver
+@Suppress("UnusedReceiverParameter")
 val Dispatchers.EDT: CoroutineContext get() = coroutineSupport().edtDispatcher()
 
 private fun coroutineSupport() = ApplicationManager.getApplication().getService(CoroutineSupport::class.java)

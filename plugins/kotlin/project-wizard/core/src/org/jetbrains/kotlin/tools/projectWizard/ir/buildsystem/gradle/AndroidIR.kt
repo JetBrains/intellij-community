@@ -36,7 +36,7 @@ data class AndroidConfigIR(
                     assignmentOrCall("applicationId") { +javaPackage.asCodePackage().quotified }; nlIndented()
                 }
                 call("minSdkVersion") { +"24" }; nlIndented()  // TODO dehardcode
-                call("targetSdkVersion") { +androidSdkVersion };
+                call("targetSdkVersion") { +androidSdkVersion }
                 if (printVersionCode) {
                     nlIndented()
                     assignmentOrCall("versionCode") { +"1" }; nlIndented()

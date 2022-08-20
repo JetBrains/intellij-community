@@ -243,7 +243,7 @@ private class ModuleDescriptionsTree(project: Project) {
   fun installDoubleClickListener(action: () -> Unit) {
     object : DoubleClickListener() {
       override fun onDoubleClick(event: MouseEvent): Boolean {
-        if (tree.selectionPaths?.all { (it?.lastPathComponent as? ModuleDescriptionTreeNode)?.isLeaf == true } ?: false) {
+        if (tree.selectionPaths?.all { (it?.lastPathComponent as? ModuleDescriptionTreeNode)?.isLeaf == true } == true) {
           action()
           return true
         }

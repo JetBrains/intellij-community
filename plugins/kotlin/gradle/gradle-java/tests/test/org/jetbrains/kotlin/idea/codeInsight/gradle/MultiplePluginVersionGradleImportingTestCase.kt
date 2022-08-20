@@ -10,13 +10,11 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.Disposer
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.ProjectInfo
-import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.KotlinVersion
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.LAST_SNAPSHOT
-import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_3_30
-import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_3_72
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_4_32
-import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_5_31
-import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_6_10
+import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_5_32
+import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_6_21
+import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher
 import org.junit.Assume.assumeTrue
 import org.junit.Rule
@@ -28,8 +26,10 @@ import java.io.File
 abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImportingTestCase() {
 
     sealed class KotlinVersionRequirement {
-        data class Exact(val version: KotlinVersion) : KotlinVersionRequirement()
-        data class Range(val lowestIncludedVersion: KotlinVersion?, val highestIncludedVersion: KotlinVersion?) : KotlinVersionRequirement()
+        data class Exact(val version: KotlinToolingVersion) : KotlinVersionRequirement()
+        data class Range(
+            val lowestIncludedVersion: KotlinToolingVersion?, val highestIncludedVersion: KotlinToolingVersion?
+            ) : KotlinVersionRequirement()
     }
 
     @Rule
@@ -40,7 +40,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     @Parameterized.Parameter(1)
     var kotlinPluginParameter: String = ""
 
-    val kotlinPluginVersion: KotlinVersion get() = parseKotlinVersion(kotlinPluginVersionString)
+    val kotlinPluginVersion: KotlinToolingVersion get() = KotlinToolingVersion(kotlinPluginVersionString)
 
     open val kotlinPluginVersionString: String get() = if (kotlinPluginParameter == "master") masterKotlinPluginVersion else kotlinPluginParameter
 
@@ -60,7 +60,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         Commonizer runner forwarded this property and failed, because IntelliJ might set a custom
         ClassLoader, which will not be available for the Commonizer.
         */
-        if (kotlinPluginVersion < parseKotlinVersion("1.5.20")) {
+        if (kotlinPluginVersion < KotlinToolingVersion("1.5.20")) {
             val classLoaderKey = "java.system.class.loader"
             System.getProperty(classLoaderKey)?.let { configuredClassLoader ->
                 System.clearProperty(classLoaderKey)
@@ -88,53 +88,50 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         @Suppress("ACCIDENTAL_OVERRIDE")
         @Parameterized.Parameters(name = kotlinAndGradleParametersName)
         fun data(): Collection<Array<Any>> {
-            val safePushParams: Collection<Array<Any>> = listOf(arrayOf("7.3.3", "master"))
-
-            if (IS_UNDER_SAFE_PUSH)
-                return safePushParams
-            else
-                return listOf<Array<Any>>(
-                    arrayOf("4.9", V_1_3_30.toString()),
-                    arrayOf("5.6.4", V_1_3_72.toString()),
-                    arrayOf("6.8.2", V_1_4_32.toString()),
-                    arrayOf("7.3.3", V_1_5_31.toString()),
-                    arrayOf("7.3.3", V_1_6_10.toString()),
-                    arrayOf("6.8.2", "master"),
-                ).plus(safePushParams)
+            return if (IS_UNDER_SAFE_PUSH) listOf(
+                /* Safe push tested with latest released versions */
+                arrayOf("7.3.3", V_1_6_21.toString())
+            ) else listOf(
+                /* Progressively updated Gradle and KGP versions */
+                arrayOf("6.8.3", V_1_4_32.toString()),
+                arrayOf("6.9.2", V_1_5_32.toString()),
+                arrayOf("7.3.3", V_1_6_21.toString()),
+                arrayOf("7.4.2", "master")
+            )
         }
     }
 
-    fun androidProperties(): Map<String, String> = mapOf(
-        "android_gradle_plugin_version" to "4.0.2",
-        "compile_sdk_version" to "30",
-        "build_tools_version" to "28.0.3",
-    )
+    val androidProperties: Map<String, String>
+        get() = mapOf(
+            "android_gradle_plugin_version" to "7.0.4",
+            "compile_sdk_version" to "30",
+            "build_tools_version" to "28.0.3",
+        )
 
     val isHmppEnabledByDefault get() = kotlinPluginVersion.isHmppEnabledByDefault
 
-    fun hmppProperties(): Map<String, String> =
-        if (isHmppEnabledByDefault) {
-            mapOf(
-                "enable_hmpp_flags" to "",
-                "disable_hmpp_flags" to "kotlin.mpp.hierarchicalStructureSupport=false"
-            )
-        } else {
-            mapOf(
-                "enable_hmpp_flags" to """
-                    kotlin.mpp.enableGranularSourceSetsMetadata=true
-                    kotlin.native.enableDependencyPropagation=false
-                    kotlin.mpp.enableHierarchicalCommonization=true
-                """.trimIndent(),
-                "disable_hmpp_flags" to ""
-            )
-        }
+    protected val hmppProperties: Map<String, String>
+        get() = mapOf(
+            "enable_hmpp_flags" to enableHmppProperties,
+            "disable_hmpp_flags" to disableHmppProperties
+        )
+
+    protected val enableHmppProperties: String
+        get() = if (isHmppEnabledByDefault) "" else """
+            kotlin.mpp.enableGranularSourceSetsMetadata=true
+            kotlin.native.enableDependencyPropagation=false
+            kotlin.mpp.enableHierarchicalCommonization=true
+        """.trimIndent()
+
+    protected val disableHmppProperties: String
+        get() = if (isHmppEnabledByDefault) "kotlin.mpp.hierarchicalStructureSupport=false" else ""
 
     protected fun repositories(useKts: Boolean): String = GradleKotlinTestUtils.listRepositories(useKts, gradleVersion)
 
     override val defaultProperties: Map<String, String>
         get() = super.defaultProperties.toMutableMap().apply {
-            putAll(androidProperties())
-            putAll(hmppProperties())
+            putAll(androidProperties)
+            putAll(hmppProperties)
             put("kotlin_plugin_version", kotlinPluginVersionString)
             put("kotlin_plugin_repositories", repositories(false))
             put("kts_kotlin_plugin_repositories", repositories(true))
@@ -172,7 +169,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         )
     }
 
-    fun checkHighligthingOnAllModules() {
+    fun checkHighlightingOnAllModules() {
         createHighlightingCheck().invokeOnAllModules()
     }
 }

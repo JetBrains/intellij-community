@@ -14,6 +14,10 @@ fun main() {
     A().foo()
 }
 
+// Muted on the IR backend due to differences in stepping behavior.
+// See [compiler/testData/debug/stepping/kt29179.kt] for evidence,
+// and reevalute this once that is investigated.
+
 // EXPRESSION: bar()
 // RESULT: 2: I
 

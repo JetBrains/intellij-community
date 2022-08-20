@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.typing
 
 import com.intellij.pom.java.LanguageLevel
@@ -26,16 +26,18 @@ abstract class GroovyClosureType(
   final override fun setLanguageLevel(languageLevel: LanguageLevel): PsiClassType = error("must not be called")
   @NonNls final override fun toString(): String = "Closure"
 
-  final override fun getParameters(): Array<out PsiType?> = myTypeArguments ?: PsiType.EMPTY_ARRAY
+  final override fun getParameters(): Array<out PsiType> = myTypeArguments ?: PsiType.EMPTY_ARRAY
 
-  private val myTypeArguments: Array<out PsiType?>? by recursionSafeLazy {
+  private val myTypeArguments: Array<out PsiType>? by recursionSafeLazy {
     val closureClazz = resolve()
     if (closureClazz == null || closureClazz.typeParameters.size != 1) {
       return@recursionSafeLazy PsiType.EMPTY_ARRAY
     }
     val type: PsiType? = returnType(null)
     if (type == null || type === PsiType.NULL) {
-      arrayOf<PsiType?>(null)
+      // type inference for closures have smart rules when it concerns return type
+      // of course raw types are bad, but by leaving it this way we allow some flexibility in ad-hoc inference of closure types
+      PsiType.EMPTY_ARRAY
     }
     else {
       arrayOf(TypesUtil.boxPrimitiveType(type, psiManager, resolveScope, true))

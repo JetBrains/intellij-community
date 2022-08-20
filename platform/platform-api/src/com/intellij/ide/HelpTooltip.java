@@ -26,10 +26,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -433,7 +430,8 @@ public class HelpTooltip {
   }
 
   @NotNull
-  protected final JPanel createTipPanel() {
+  @ApiStatus.Internal
+  public final JPanel createTipPanel() {
     JPanel tipPanel = new JPanel();
     tipPanel.setLayout(new VerticalLayout(JBUI.getInt("HelpTooltip.verticalGap", 4)));
     tipPanel.setBackground(UIUtil.getToolTipBackground());
@@ -479,6 +477,11 @@ public class HelpTooltip {
   private void uninstallMouseListeners(@NotNull JComponent owner) {
     owner.removeMouseListener(myMouseListener);
     owner.removeMouseMotionListener(myMouseListener);
+  }
+
+  @Nullable
+  public static HelpTooltip getTooltipFor(@NotNull JComponent owner) {
+    return (HelpTooltip)owner.getClientProperty(TOOLTIP_PROPERTY);
   }
 
   /**

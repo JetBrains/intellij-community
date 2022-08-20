@@ -12,7 +12,7 @@ class DependenciesProperties(private val context: CompilationContext) {
 
   val file: Path = propertiesFile
 
-  val props: Properties by lazy {
+  private val props: Properties by lazy {
     propertiesFile.inputStream().use {
       val properties = Properties()
       properties.load(it)

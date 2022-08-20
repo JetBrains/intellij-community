@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.rest
 
 import com.intellij.openapi.project.Project
@@ -13,7 +13,7 @@ import com.jetbrains.rest.editor.RestPreviewProvider
 class RestPythonPreviewProvider : RestPreviewProvider() {
 
   override fun toHtml(text: String, virtualFile: VirtualFile, project: Project): Pair<String, String>? {
-    val module = ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(virtualFile) ?: return null
+    val module = ProjectFileIndex.getInstance(project).getModuleForFile(virtualFile) ?: return null
 
     val sdk = PythonSdkUtil.findPythonSdk(module) ?: return Pair("", PyBundle.message("python.sdk.no.interpreter.configured.warning"))
     val commandLine = REST_RUNNER.newCommandLine(sdk, listOf("rst2html"))

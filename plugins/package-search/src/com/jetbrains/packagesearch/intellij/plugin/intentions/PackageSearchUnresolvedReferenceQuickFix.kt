@@ -28,7 +28,6 @@ class PackageSearchUnresolvedReferenceQuickFix(private val ref: PsiReference) : 
         isValid && classnamePattern.matcher(text).matches()
     }
 
-    @Suppress("DialogTitleCapitalization") // It's the Package Search plugin name...
     override fun getText() = PackageSearchBundle.message("packagesearch.quickfix.packagesearch.action")
 
     @Suppress("DialogTitleCapitalization") // It's the Package Search plugin name...

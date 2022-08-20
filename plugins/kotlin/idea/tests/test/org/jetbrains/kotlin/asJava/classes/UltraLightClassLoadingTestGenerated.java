@@ -30,11 +30,6 @@ public class UltraLightClassLoadingTestGenerated extends AbstractUltraLightClass
         super.setUp();
     }
 
-    @TestMetadata("annotationTargets_1_6.kt")
-    public void testAnnotationTargets_1_6() throws Exception {
-        runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/annotationTargets_1_6.kt"));
-    }
-
     @TestMetadata("annotationWithSetParamPropertyModifier.kt")
     public void testAnnotationWithSetParamPropertyModifier() throws Exception {
         runTest(compilerTestData("compiler/testData/asJava/ultraLightClasses/annotationWithSetParamPropertyModifier.kt"));

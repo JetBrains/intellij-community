@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.analysis.api.tokens.HackToForceAllowRunningAnalyzeOn
 import org.jetbrains.kotlin.analysis.api.tokens.ValidityToken
 import org.jetbrains.kotlin.analysis.api.tokens.ValidityTokenFactory
 import org.jetbrains.kotlin.analysis.api.tokens.assertIsValidAndAccessible
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getResolveState
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getFirResolveSession
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.getKtModule
 import org.jetbrains.kotlin.idea.fir.analysis.project.structure.FE10ApiUsage
@@ -89,7 +89,7 @@ class FE10BindingContextImpl(
     private val module: KtModule = ktElement.getKtModule(project)
 
     @OptIn(InvalidWayOfUsingAnalysisSession::class)
-    override val ktAnalysisSessionFacade = KtAnalysisSessionFe10BindingHolder.create(module.getResolveState(project), token, ktElement)
+    override val ktAnalysisSessionFacade = KtAnalysisSessionFe10BindingHolder.create(module.getFirResolveSession(project), token, ktElement)
 
     override val moduleDescriptor: ModuleDescriptor = KtSymbolBasedModuleDescriptorImpl(this, module)
 

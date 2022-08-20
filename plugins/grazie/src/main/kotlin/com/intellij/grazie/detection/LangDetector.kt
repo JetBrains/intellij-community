@@ -28,7 +28,6 @@ object LangDetector {
    *
    * @return Language that is detected.
    */
-  @Suppress("MemberVisibilityCanBePrivate")
   fun getLanguage(text: String): Language? {
     val detected = detectWithDetails(text.take(textLimit), isReliable = false).result.preferred
     return if (detected == Language.UNKNOWN) null else detected

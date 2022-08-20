@@ -10,8 +10,7 @@ import com.intellij.diff.fragments.LineFragment
 import com.intellij.diff.requests.ContentDiffRequest
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.tools.combined.*
-import com.intellij.diff.tools.combined.CombinedDiffRequest.InsertPosition
-import com.intellij.diff.tools.combined.CombinedDiffRequest.NewChildDiffRequestData
+import com.intellij.diff.tools.combined.CombinedDiffModel.*
 import com.intellij.diff.tools.fragmented.UnifiedDiffChange
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 import com.intellij.diff.tools.simple.SimpleDiffChange
@@ -46,7 +45,7 @@ internal class SemanticInlayModel(private val combinedDiffViewerContext: UserDat
   private data class FragmentId(val changeIndex: Int, val title: @NlsSafe String)
   private val semanticFragmentsBlocks = hashMapOf<FragmentId, CombinedDiffBlock<*>>()
 
-  private val combinedDiffProcessor = viewer.context.getUserData(COMBINED_DIFF_PROCESSOR)!!
+  private val combinedDiffModel = viewer.context.getUserData(COMBINED_DIFF_MODEL)!!
 
   private val isUnified = viewer is UnifiedDiffViewer
 
@@ -60,7 +59,7 @@ internal class SemanticInlayModel(private val combinedDiffViewerContext: UserDat
     viewer.addListener(SemanticEntriesListener())
   }
 
-  private fun getCombinedDiffViewer() = combinedDiffProcessor.viewer
+  private fun getCombinedDiffViewer() = viewer.context.getUserData(COMBINED_DIFF_VIEWER_KEY)
 
   private inner class SemanticEntriesListener : DiffViewerListener() {
     override fun onBeforeRediff() {
@@ -160,15 +159,18 @@ internal class SemanticInlayModel(private val combinedDiffViewerContext: UserDat
     else {
       val parentBlock = combinedDiffViewer.getBlock(viewer) ?: return
       val semanticFragmentDiffData =
-        NewChildDiffRequestData(parentBlock.id, //TODO should be different?
-                                position = InsertPosition(parentBlock.id, false))
+        NewRequestData(parentBlock.id, //TODO should be different?
+                       position = InsertPosition(parentBlock.id, false))
       val fragmentDiffRequestProducer = FragmentDiffRequestProducer(title, info, viewer, changeIndex, changeFragment, fragmentSide)
-      val semanticFragmentBlock = combinedDiffProcessor.addChildRequest(semanticFragmentDiffData, fragmentDiffRequestProducer) ?: return
-      Disposer.register(semanticFragmentBlock, Disposable {
-        semanticFragmentsBlocks.remove(fragmentId)
-      })
-      semanticFragmentsBlocks[fragmentId] = semanticFragmentBlock
-      combinedDiffViewer.selectDiffBlock(semanticFragmentBlock, ScrollPolicy.DIFF_BLOCK)
+      combinedDiffModel.add(semanticFragmentDiffData, fragmentDiffRequestProducer) { semanticFragmentBlockId ->
+        combinedDiffViewer.getBlock(semanticFragmentBlockId)?.let { semanticFragmentBlock ->
+          Disposer.register(semanticFragmentBlock, Disposable {
+            semanticFragmentsBlocks.remove(fragmentId)
+          })
+          semanticFragmentsBlocks[fragmentId] = semanticFragmentBlock
+          combinedDiffViewer.selectDiffBlock(semanticFragmentBlock, ScrollPolicy.DIFF_BLOCK)
+        }
+      }
     }
   }
 

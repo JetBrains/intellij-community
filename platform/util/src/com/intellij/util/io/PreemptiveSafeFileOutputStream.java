@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,8 +15,11 @@ import java.nio.file.*;
  * Relies entirely on {@link StandardCopyOption#ATOMIC_MOVE} guarantees; always recreates the target file.</p>
  *
  * <p><b>The class is not thread-safe</b>; expected to be used within try-with-resources or an equivalent statement.</p>
+ *
+ * @see com.intellij.openapi.vfs.LargeFileWriteRequestor
+ * @see SafeFileOutputStream
  */
-public class PreemptiveSafeFileOutputStream extends OutputStream {
+public final class PreemptiveSafeFileOutputStream extends OutputStream {
   private static final String TEMP_EXT = ".tmp";
   private static final String BACKUP_EXT = "~";
   private static final OpenOption[] TEMP_WRITE = {StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.DSYNC};

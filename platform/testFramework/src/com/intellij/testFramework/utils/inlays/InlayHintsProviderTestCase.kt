@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.utils.inlays
 
 import com.intellij.codeInsight.hints.CollectorWithSettings
@@ -26,11 +26,11 @@ abstract class InlayHintsProviderTestCase : BasePlatformTestCase() {
   }
 
   @JvmOverloads
-  fun <T : Any> testProvider(fileName: String,
-                             expectedText: String,
-                             provider: InlayHintsProvider<T>,
-                             settings: T = provider.createSettings(),
-                             verifyHintPresence: Boolean = false) {
+  fun <T : Any> doTestProvider(fileName: String,
+                               expectedText: String,
+                               provider: InlayHintsProvider<T>,
+                               settings: T = provider.createSettings(),
+                               verifyHintPresence: Boolean = false) {
     val sourceText = InlayData.pattern.matcher(expectedText).replaceAll("")
     myFixture.configureByText(fileName, sourceText)
     val actualText = dumpInlayHints(sourceText, provider, settings)

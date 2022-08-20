@@ -32,7 +32,7 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
   /**
    * Always first {@link HighlightDisplayLevel#DO_NOT_SHOW} must be skipped during navigation, editing settings, etc.
    */
-  static final int SHOWN_SEVERITIES_OFFSET = 1;
+  static final int SHOWN_SEVERITIES_OFFSET = 2;
 
   private static final Logger LOG = Logger.getInstance(SeverityRegistrar.class);
 

@@ -32,7 +32,7 @@ object ESUploader {
 
         val url = "$host/$indexName/_doc/${benchmark.id()}"
         val auth = if (username != null && password != null) {
-            Credentials.basic(username!!, password!!);
+            Credentials.basic(username!!, password!!)
         } else {
             null
         }

@@ -389,25 +389,27 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     getCustomData: ChangesTree.(String) -> Any? = { null }
   ): JComponent {
     val editorDiffPreview = object : DiffPreview {
-      override fun updateAvailability(event: AnActionEvent) {
+      override fun updateDiffAction(event: AnActionEvent) {
         GHPRShowDiffActionProvider.updateAvailability(event)
       }
 
-      override fun setPreviewVisible(isPreviewVisible: Boolean, focus: Boolean) {
-        if (isPreviewVisible) {
-          viewController.openPullRequestDiff(dataProvider.id, focus)
-        }
+      override fun openPreview(requestFocus: Boolean): Boolean {
+        viewController.openPullRequestDiff(dataProvider.id, requestFocus)
+        return true
+      }
+
+      override fun closePreview() {
       }
     }
 
     val tree = GHPRChangesTreeFactory(project, model).create(emptyTextText).also {
       it.doubleClickHandler = Processor { e ->
         if (EditSourceOnDoubleClickHandler.isToggleEvent(it, e)) return@Processor false
-        editorDiffPreview.setPreviewVisible(true, true)
+        editorDiffPreview.performDiffAction()
         true
       }
       it.enterKeyHandler = Processor {
-        editorDiffPreview.setPreviewVisible(true, true)
+        editorDiffPreview.performDiffAction()
         true
       }
     }

@@ -18,8 +18,7 @@ class Pgp(private val gpgTool: GpgToolWrapper = createGpg()) {
         continue
       }
 
-      val tag = fields.next()
-      when (tag) {
+      when (fields.next()) {
         "sec" -> {
           for (i in 2 until 5) {
             fields.next()

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.intellij.openapi.util.io.FileUtil
@@ -183,7 +183,7 @@ final class PortableCompilationCacheDownloader implements AutoCloseable {
 }
 
 @CompileStatic
-class GetClient {
+final class GetClient {
   private int timeout = TimeUnit.MINUTES.toMillis(1).toInteger()
 
   private final RequestConfig config = RequestConfig.custom()

@@ -67,9 +67,7 @@ private fun JavaAbstractUElement.wrapSingleExpressionLambda(uParent: UElement): 
 private fun JavaAbstractUElement.unwrapSwitch(uParent: UElement): UElement {
   when (uParent) {
     is UBlockExpression -> {
-      val codeBlockParent = uParent.uastParent
-      when (codeBlockParent) {
-
+      when (val codeBlockParent = uParent.uastParent) {
         is JavaUSwitchEntryList -> {
           if (branchHasElement(sourcePsi, codeBlockParent.sourcePsi) { it is PsiSwitchLabelStatementBase }) {
             return codeBlockParent

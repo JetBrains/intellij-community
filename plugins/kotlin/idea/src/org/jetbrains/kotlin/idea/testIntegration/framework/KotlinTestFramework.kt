@@ -31,11 +31,13 @@ interface KotlinTestFramework {
         val EXTENSION_NAME: ExtensionPointName<KotlinTestFramework> =
             ExtensionPointName.create("org.jetbrains.kotlin.kotlinTestFramework")
 
-        fun getApplicableFor(declaration: KtNamedDeclaration): KotlinTestFramework? {
-            return EXTENSION_NAME.extensionList.firstOrNull { it.responsibleFor(declaration) }
-        }
+        fun getApplicableFor(declaration: KtNamedDeclaration, slow: Boolean? ): KotlinTestFramework? =
+            EXTENSION_NAME.extensionList.firstOrNull { (slow == null || it.isSlow == slow) && it.responsibleFor(declaration) }
     }
 
+    /**
+     * Indicates if provider could use some heavy calculations as resolve, or it is pure fast and no slow fallbacks.
+     */
     val isSlow: Boolean
 
 

@@ -30,8 +30,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt.*;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PropertyUtilKt.getAccessorName;
 
 /**
- * @author: Dmitry.Krasilschikov
- * @date: 26.03.2007
+ * @author Dmitry.Krasilschikov
  */
 public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeReferenceElement> implements GrCodeReferenceElement {
   private static final Logger LOG = Logger.getInstance(GrCodeReferenceElementImpl.class);

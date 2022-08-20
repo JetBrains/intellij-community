@@ -9,10 +9,16 @@ open class CommandChain : MarshallableCommand, Iterable<MarshallableCommand> {
     return _chain.joinToString(separator = System.lineSeparator()) { it.storeToString() }
   }
 
+  /**
+   * Pattern for adding a command: %YOUR_COMMAND_PREFIX COMMAND_PARAMS
+   */
   fun addCommand(command: String) {
     _chain.add(initMarshallableCommand(command))
   }
 
+  /**
+   * Pattern for adding a command: %YOUR_COMMAND_PREFIX COMMAND_PARAM_1 .. COMMAND_PARAM_N
+   */
   fun addCommand(vararg commandArgs: String) {
     val command = initMarshallableCommand(commandArgs.joinToString(separator = " "))
     _chain.add(command)

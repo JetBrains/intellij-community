@@ -61,7 +61,7 @@ internal fun ToolWindow.initialize(project: Project) {
         }
     }
 
-    val contentFactory = ContentFactory.SERVICE.getInstance()
+    val contentFactory = ContentFactory.getInstance()
 
     for (panel in panels) {
         panel.initialize(contentManager, contentFactory)
@@ -136,7 +136,7 @@ internal fun ContentManager.addTab(
     )
 }
 
-@Suppress("unused")
+@Suppress("UnusedReceiverParameter")
 internal fun Dispatchers.toolWindowManager(project: Project): CoroutineDispatcher = object : CoroutineDispatcher() {
 
     private val executor = ToolWindowManager.getInstance(project)

@@ -19,13 +19,11 @@ class MoveProjectToGroupAction(private val myGroup: ProjectGroup) : RecentProjec
     val item = getSelectedItem(event).castSafelyTo<RecentProjectItem>() ?: return
     val path = item.projectPath
     val recentProjectsManager = RecentProjectsManager.getInstance()
-    for (group in RecentProjectsManager.getInstance().groups) {
-      recentProjectsManager.moveProjectToGroup(path, group, myGroup)
-    }
+    recentProjectsManager.moveProjectToGroup(path, myGroup)
   }
 
   override fun update(event: AnActionEvent) {
-    val item = getSelectedItem(event) ?: return
+    val item = getSelectedItem(event)
     event.presentation.isEnabled = item is RecentProjectItem
   }
 }

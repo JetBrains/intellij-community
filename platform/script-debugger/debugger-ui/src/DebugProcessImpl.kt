@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.debugger
 
 import com.intellij.execution.DefaultExecutionResult
@@ -208,8 +208,6 @@ abstract class DebugProcessImpl<out C : VmConnection<*>>(session: XDebugSession,
     urlToFileCache.putIfAbsent(url, file)
   }
 
-  // go plugin compatibility
-  @Suppress("unused")
   open fun getLocationsForBreakpoint(breakpoint: XLineBreakpoint<*>): List<Location> = getLocationsForBreakpoint(activeOrMainVm!!, breakpoint)
 
   open fun getLocationsForBreakpoint(vm: Vm, breakpoint: XLineBreakpoint<*>): List<Location> = throw UnsupportedOperationException()

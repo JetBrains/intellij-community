@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.j2k
 
@@ -411,7 +411,7 @@ enum class SpecialMethod(val qualifiedClassName: String?, val methodName: String
 
     data class ConvertCallData(
             val qualifier: PsiExpression?,
-            @Suppress("ArrayInDataClass") val arguments: List<PsiExpression>,
+            val arguments: List<PsiExpression>,
             val typeArgumentsConverted: List<Type>,
             val dot: PsiElement?,
             val lPar: PsiElement?,

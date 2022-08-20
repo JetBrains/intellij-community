@@ -46,4 +46,13 @@
         <projectService
                 serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.maven.configuration.PackageSearchMavenConfiguration"/>
     </extensions>
+
+    <actions>
+        <action id="PackageSearch.Maven.DependencyAnalyzer.GoTo"
+                class="com.jetbrains.packagesearch.intellij.plugin.maven.dependency.analyzer.MavenDependencyAnalyzerGoToPackageSearchAction">
+            <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyListGroup"/>
+            <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyTreeGroup"/>
+            <add-to-group group-id="ExternalSystem.DependencyAnalyzer.UsagesTreeGroup"/>
+        </action>
+    </actions>
 </idea-plugin>

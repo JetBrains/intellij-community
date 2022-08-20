@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
-import java.util.*
 
 class AssertBetweenInconvertibleTypesInspection : AbstractBaseUastLocalInspectionTool() {
 
@@ -62,6 +61,7 @@ class AssertBetweenInconvertibleTypesInspection : AbstractBaseUastLocalInspectio
     }
     private fun checkConvertibleTypes(expression: UCallExpression, firstArgument: UExpression, secondArgument: UExpression,
                                       holder : ProblemsHolder) {
+      if (firstArgument.isNullLiteral() || secondArgument.isNullLiteral()) return
       val type1 = firstArgument.getExpressionType() ?: return
       val type2 = secondArgument.getExpressionType() ?: return
       val mismatch = InconvertibleTypesChecker.checkTypes(type1, type2, LookForMutualSubclass.IF_CHEAP)
@@ -103,7 +103,10 @@ class AssertBetweenInconvertibleTypesInspection : AbstractBaseUastLocalInspectio
         qualifier = getQualifier(lastDescribed as UCallExpression)
       }
       if (qualifier == null || !ASSERTJ_ASSERT_THAT.uCallMatches(qualifier)) return
-      checkConvertibleTypes(call, call.valueArguments[0], qualifier.valueArguments[0], holder)
+      val callValueArguments = call.valueArguments
+      val qualValueArguments = qualifier.valueArguments
+      if (callValueArguments.isEmpty() || qualValueArguments.isEmpty()) return
+      checkConvertibleTypes(call, callValueArguments[0], qualValueArguments[0], holder)
     }
   }
   @Nls

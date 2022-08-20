@@ -212,7 +212,7 @@ final class AttachSourcesNotificationProvider implements EditorNotificationProvi
                                                                              @NotNull Project project) {
     List<LibraryOrderEntry> entries = null;
 
-    ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
+    ProjectFileIndex index = ProjectFileIndex.getInstance(project);
     for (OrderEntry entry : index.getOrderEntriesForFile(file)) {
       if (entry instanceof LibraryOrderEntry) {
         if (entries == null) entries = new SmartList<>();

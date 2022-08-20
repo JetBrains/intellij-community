@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -28,7 +28,6 @@ internal class VirtualFileNameStore {
 
       name2IdStore[name] = IdPerCount(id, 1)
       // Don't convert to links[key] = ... because it *may* became autoboxing
-      @Suppress("ReplacePutWithAssignment")
       id2NameStore.put(id, name)
       return id
     }

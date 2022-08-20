@@ -42,7 +42,7 @@ class MultiplatformModulesAndServicesCreationTest : AbstractCodeMetaInfoTest() {
 
     fun testCreationOfModulesAndServices() {
         val testDataDir = "testData/$TEST_DIR_NAME_IN_TEST_DATA"
-        KotlinTestUtils.runTest(this::doRunTest, this, testDataDir);
+        KotlinTestUtils.runTest(this::doRunTest, this, testDataDir)
     }
 
     fun doRunTest(testDataDir: String) {

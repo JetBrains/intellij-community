@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.execution.configuration
 
 import com.intellij.execution.Executor
@@ -38,7 +38,6 @@ abstract class ExternalSystemRunConfigurationExtension : RunConfigurationExtensi
    *
    * @see com.intellij.execution.RunConfigurationExtension.updateJavaParameters from java plugin
    */
-  @Suppress("KDocUnresolvedReference")
   open fun updateVMParameters(
     configuration: ExternalSystemRunConfiguration,
     javaParameters: SimpleJavaParameters,

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.lang.Language;
@@ -52,7 +52,7 @@ public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurren
       return;
     }
 
-    final TodoCacheManager cacheManager = TodoCacheManager.SERVICE.getInstance(file.getProject());
+    final TodoCacheManager cacheManager = TodoCacheManager.getInstance(file.getProject());
     final IndexPatternProvider patternProvider = queryParameters.getPatternProvider();
     int count = patternProvider != null
                 ? cacheManager.getTodoCount(virtualFile, patternProvider)

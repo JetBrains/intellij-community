@@ -42,7 +42,7 @@ public class AspectAnnotationFieldGutter extends AnnotationFieldGutter {
   @Override
   public String getLineText(int line, Editor editor) {
     final String value = isAvailable() ? myAspect.getValue(line) : "";
-    if (myAspect.getId() == LineAnnotationAspect.AUTHOR) {
+    if (LineAnnotationAspect.AUTHOR.equals(myAspect.getId())) {
       return ShortNameType.shorten(value, ShowShortenNames.getType());
     }
     return value;

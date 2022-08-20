@@ -19,8 +19,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class WhatsNewTriggerTest extends BareTestFixtureTestCase {
-  private static final String WHATS_NEW_SHOWN_FOR_PROPERTY = "ide.updates.whats.new.shown.for";
-
   @Rule public TempDirectory tempDir = new TempDirectory();
 
   @Before
@@ -44,7 +42,7 @@ public class WhatsNewTriggerTest extends BareTestFixtureTestCase {
 
   @After
   public void tearDown() {
-    PropertiesComponent.getInstance().unsetValue(WHATS_NEW_SHOWN_FOR_PROPERTY);
+    UpdateSettings.getInstance().setWhatsNewShownFor(0);
     System.clearProperty("idea.updates.url");
   }
 
@@ -79,5 +77,19 @@ public class WhatsNewTriggerTest extends BareTestFixtureTestCase {
     assertFalse(UpdateCheckerService.shouldShowWhatsNew(beta, true));  // EAP 1st launch
     assertTrue(UpdateCheckerService.shouldShowWhatsNew(release, false));  // release 1st launch
     assertFalse(UpdateCheckerService.shouldShowWhatsNew(release, false));  // release 2nd launch
+  }
+
+  @Test
+  public void whatsNewSettingsMigration() {
+    BuildNumber previous = fromString("211.7628.21"), release = fromString("212.4746.92");
+    String historicProperty = "ide.updates.whats.new.shown.for";
+    PropertiesComponent properties = PropertiesComponent.getInstance();
+    try {
+      properties.setValue(historicProperty, previous.getBaselineVersion(), 0);
+      assertTrue(UpdateCheckerService.shouldShowWhatsNew(release, false));  // release 1st launch
+    }
+    finally {
+      properties.unsetValue(historicProperty);
+    }
   }
 }

@@ -9,18 +9,26 @@ import com.intellij.openapi.diff.DiffBundle
 
 interface CombinedDiffTool: FrameDiffTool
 
+/**
+ * This tool intended only for persistence purpose.
+ * Combined diff viewer will be created by the corresponding [CombinedDiffComponentFactory].
+ */
 internal class CombinedSideBySideDiffTool : CombinedDiffTool {
-  override fun canShow(context: DiffContext, request: DiffRequest): Boolean = request is CombinedDiffRequest
+  override fun canShow(context: DiffContext, request: DiffRequest): Boolean = false
 
-  override fun createComponent(context: DiffContext, request: DiffRequest): DiffViewer = CombinedDiffViewer(context, false)
+  override fun createComponent(context: DiffContext, request: DiffRequest): DiffViewer = throw UnsupportedOperationException()
 
   override fun getName(): String = DiffBundle.message("combined.side.by.side.viewer")
 }
 
+/**
+ * This tool intended only for persistence purpose.
+ * Combined diff viewer will be created by the corresponding [CombinedDiffComponentFactory].
+ */
 internal class CombinedUnifiedDiffTool : CombinedDiffTool {
-  override fun canShow(context: DiffContext, request: DiffRequest): Boolean = request is CombinedDiffRequest
+  override fun canShow(context: DiffContext, request: DiffRequest): Boolean = false
 
-  override fun createComponent(context: DiffContext, request: DiffRequest): DiffViewer = CombinedDiffViewer(context, true)
+  override fun createComponent(context: DiffContext, request: DiffRequest): DiffViewer = throw UnsupportedOperationException()
 
   override fun getName(): String = DiffBundle.message("combined.unified.viewer")
 }

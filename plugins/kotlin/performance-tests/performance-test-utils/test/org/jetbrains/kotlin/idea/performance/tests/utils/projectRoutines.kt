@@ -69,7 +69,7 @@ fun saveDocument(document: Document) {
 fun dispatchAllInvocationEvents() {
     runInEdtAndWait {
         UIUtil.dispatchAllInvocationEvents()
-        NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     }
 }
 

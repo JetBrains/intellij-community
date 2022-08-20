@@ -7,19 +7,31 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UClass;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Node in the graph corresponding to a Java or Kotlin class
+ */
 public interface RefClass extends RefJavaElement, RefOverridable {
 
+  /** @return the direct super classes of this class */
   @NotNull
   Set<RefClass> getBaseClasses();
 
+  /** @eturn the direct subclasses of this class. */
   @NotNull
   Set<RefClass> getSubClasses();
 
+  /** @return the constructors of this class */
   @NotNull
   List<RefMethod> getConstructors();
+
+  /** @return the fields of this class */
+  default List<RefField> getFields() {
+    return Collections.emptyList();
+  }
 
   @NotNull
   Set<RefElement> getInTypeReferences();
@@ -74,6 +86,11 @@ public interface RefClass extends RefJavaElement, RefOverridable {
    * @return true if this class is a local class, false otherwise.
    */
   boolean isLocalClass();
+
+  /** @return true if this class is an enum class, false otherwise. */
+  default boolean isEnum() {
+    return false;
+  }
 
   @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
   @Deprecated(forRemoval = true)

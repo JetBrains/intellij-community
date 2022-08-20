@@ -24,7 +24,7 @@ UBlockExpression -> UQualifiedReferenceExpression -> KtUltraLightMethodForSource
 }: A
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to PsiMethod:forEach) -> USimpleNameReferenceExpression (identifier = forEach) -> PsiMethod:forEach: forEach
         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to PsiMethod:println) -> USimpleNameReferenceExpression (identifier = println) -> PsiMethod:println: println
-        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to PsiMethod:println) -> USimpleNameReferenceExpression (identifier = it) -> null: null
+        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to PsiMethod:println) -> USimpleNameReferenceExpression (identifier = it) -> Light Parameter: it
     UBlockExpression -> UQualifiedReferenceExpression -> PsiMethod:joinToString: joinToString
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to PsiMethod:listOf) -> USimpleNameReferenceExpression (identifier = listOf) -> PsiMethod:listOf: listOf
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to PsiMethod:joinToString) -> USimpleNameReferenceExpression (identifier = joinToString) -> PsiMethod:joinToString: joinToString

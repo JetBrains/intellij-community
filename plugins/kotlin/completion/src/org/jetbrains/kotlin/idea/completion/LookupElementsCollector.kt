@@ -122,7 +122,7 @@ class LookupElementsCollector(
             result = DeclarationLookupObjectLookupElementDecorator(result, declarationLookupObject)
         }
 
-        if (filter?.invoke(result) ?: true) {
+        if (filter?.invoke(result) != false) {
             elements.add(result)
         }
 

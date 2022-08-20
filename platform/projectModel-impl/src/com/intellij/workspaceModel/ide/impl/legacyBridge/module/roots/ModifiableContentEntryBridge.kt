@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
 import com.intellij.openapi.diagnostic.logger
@@ -53,7 +54,6 @@ internal class ModifiableContentEntryBridge(
       return duplicate
     }
 
-    @Suppress("UNCHECKED_CAST")
     val serializer: JpsModuleSourceRootPropertiesSerializer<P> = SourceRootPropertiesHelper.findSerializer(type)
                                                                  ?: error("Module source root type $type is not registered as JpsModelSerializerExtension")
 

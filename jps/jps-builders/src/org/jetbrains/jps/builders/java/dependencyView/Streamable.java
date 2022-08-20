@@ -19,7 +19,7 @@ import java.io.PrintStream;
 
 /**
  * Created with IntelliJ IDEA.
- * @author: db
+ * @author db
  * To change this template use File | Settings | File Templates.
  */
 

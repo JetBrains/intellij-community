@@ -237,7 +237,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       }
     }
 
-  protected fun runBeforeCommitHandlersChecks(executor: CommitExecutor?, handlers: List<CheckinHandler>): CheckinHandler.ReturnResult {
+  fun runBeforeCommitHandlersChecks(executor: CommitExecutor?, handlers: List<CheckinHandler>): CheckinHandler.ReturnResult {
     handlers.forEachLoggingErrors(LOG) { handler ->
       try {
         val result = runBeforeCommitHandler(handler, executor)

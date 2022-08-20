@@ -93,6 +93,11 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         doCheck("MultiResolveInClass", ::checkMultiResolveInClass)
     }
 
+    fun testResolveToFacade() {
+        doCheck("ResolveToFacade", ::checkResolveToFacade)
+    }
+
+
     fun testMultiConstructorResolve() {
         doCheck("MultiConstructorResolve", ::checkMultiConstructorResolve)
     }
@@ -113,8 +118,20 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         doCheck("ResolveLocalDefaultConstructor", ::checkResolveLocalDefaultConstructor)
     }
 
+    fun testResolveJavaClassAsAnonymousObjectSuperType() {
+        doCheck("ResolveJavaClassAsAnonymousObjectSuperType", ::checkResolveJavaClassAsAnonymousObjectSuperType)
+    }
+
     fun testResolveCompiledAnnotation() {
         doCheck("ResolveCompiledAnnotation", ::checkResolveCompiledAnnotation)
+    }
+
+    fun testResolveExplicitLambdaParameter() {
+        doCheck("ResolveExplicitLambdaParameter", ::checkResolveExplicitLambdaParameter)
+    }
+
+    fun testResolveImplicitLambdaParameter() {
+        doCheck("ResolveImplicitLambdaParameter", ::checkResolveImplicitLambdaParameter)
     }
 
     fun testResolveSyntheticMethod() {
@@ -129,11 +146,31 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         doCheck("DivByZero", ::checkDivByZero)
     }
 
+    fun testArgumentMappingDefaultValue() {
+        doCheck("ArgumentMappingDefaultValue", ::checkArgumentMappingDefaultValue)
+    }
+
+    fun testArgumentMappingExtensionFunction() {
+        doCheck("ArgumentMappingExtensionFunction", ::checkArgumentMappingExtensionFunction)
+    }
+
+    fun testArgumentMappingVararg() {
+        doCheck("ArgumentMappingVararg", ::checkArgumentMappingVararg)
+    }
+
+    fun testArgumentMappingOOBE() {
+        doCheck("ArgumentMappingOOBE", ::checkArgumentMappingOOBE)
+    }
+
     fun testDetailsOfDeprecatedHidden() {
         doCheck("DetailsOfDeprecatedHidden", ::checkDetailsOfDeprecatedHidden)
     }
 
     fun testSyntheticEnumMethods() {
         doCheck("SyntheticEnumMethods", ::checkSyntheticEnumMethods)
+    }
+
+    fun testSubstitutedReceiverType() {
+        doCheck("SubstitutedReceiverType", ::checkSubstitutedReceiverType)
     }
 }

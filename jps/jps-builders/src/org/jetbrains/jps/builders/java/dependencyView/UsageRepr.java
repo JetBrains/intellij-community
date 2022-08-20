@@ -16,7 +16,7 @@ import java.io.PrintStream;
 import java.util.*;
 
 /**
- * @author: db
+ * @author db
  */
 final class UsageRepr {
   private static final byte FIELD_USAGE = 0x0;

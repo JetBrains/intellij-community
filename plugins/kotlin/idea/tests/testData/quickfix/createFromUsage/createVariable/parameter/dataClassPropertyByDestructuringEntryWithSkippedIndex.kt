@@ -1,6 +1,5 @@
 // "Create property 'address2' as constructor parameter" "false"
 // ACTION: Create property 'address' as constructor parameter
-// ACTION: Do not show return expression hints
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Introduce import alias
 // ACTION: Make 'Person' data class

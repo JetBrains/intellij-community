@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.project.importing;
 
 import com.intellij.ProjectTopics;
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.roots.*;
@@ -25,7 +26,6 @@ import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapterLegacyImpl;
@@ -146,9 +146,10 @@ public class MavenFoldersImporterTest extends MavenMultiVersionImportingTestCase
     sourceDir.mkdirs();
 
     ApplicationManager.getApplication().runWriteAction(() -> {
-      MavenRootModelAdapter adapter = new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(myProjectsTree.findProject(myProjectPom),
-                                                                                                    getModule("project"),
-                                                                                                    new ModifiableModelsProviderProxyWrapper(myProject)));
+      MavenRootModelAdapter adapter = new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(
+        getProjectsTree().findProject(myProjectPom),
+        getModule("project"),
+        new ModifiableModelsProviderProxyWrapper(myProject)));
       adapter.addSourceFolder(sourceDir.getPath(), JavaSourceRootType.SOURCE);
       adapter.getRootModel().commit();
     });
@@ -177,9 +178,10 @@ public class MavenFoldersImporterTest extends MavenMultiVersionImportingTestCase
                   "<version>1</version>");
 
     ApplicationManager.getApplication().runWriteAction(() -> {
-      MavenRootModelAdapter adapter = new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(myProjectsTree.findProject(myProjectPom),
-                                                                getModule("project"),
-                                                                new ModifiableModelsProviderProxyWrapper(myProject)));
+      MavenRootModelAdapter adapter = new MavenRootModelAdapter(new MavenRootModelAdapterLegacyImpl(
+        getProjectsTree().findProject(myProjectPom),
+        getModule("project"),
+        new ModifiableModelsProviderProxyWrapper(myProject)));
       adapter.useModuleOutput(new File(myProjectRoot.getPath(), "target/my-classes").getPath(),
                               new File(myProjectRoot.getPath(), "target/my-test-classes").getPath());
       adapter.getRootModel().commit();
@@ -306,7 +308,7 @@ public class MavenFoldersImporterTest extends MavenMultiVersionImportingTestCase
                   "  <module>m1/customName.xml</module>" +
                   "</modules>");
 
-    assertContentRoots("m1", getProjectPath() + "/m1");
+    assertContentRoots(mn("project", "m1"), getProjectPath() + "/m1");
   }
 
   @Test 
@@ -350,10 +352,10 @@ public class MavenFoldersImporterTest extends MavenMultiVersionImportingTestCase
                   "  <module>m1/custom.xml</module>" +
                   "</modules>");
 
-    assertModules("project", "m1-pom", "m1-custom");
+    assertModules("project", mn("project", "m1-pom"), mn("project", "m1-custom"));
 
-    assertContentRoots("m1-pom", getProjectPath() + "/m1");
-    assertContentRoots("m1-custom", getProjectPath() + "/m1/sources", getProjectPath() + "/m1/tests");
+    assertContentRoots(mn("project", "m1-pom"), getProjectPath() + "/m1");
+    assertContentRoots(mn("project", "m1-custom"), getProjectPath() + "/m1/sources", getProjectPath() + "/m1/tests");
   }
 
   @Test 
@@ -399,10 +401,10 @@ public class MavenFoldersImporterTest extends MavenMultiVersionImportingTestCase
                   "  <module>m1/custom.xml</module>" +
                   "</modules>");
 
-    assertModules("project", "m1-pom", "m1-custom");
+    assertModules("project", mn("project", "m1-pom"), mn("project", "m1-custom"));
 
-    assertContentRoots("m1-pom", getProjectPath() + "/m1", getProjectPath() + "/pom-sources");
-    assertContentRoots("m1-custom", getProjectPath() + "/custom-sources");
+    assertContentRoots(mn("project", "m1-pom"), getProjectPath() + "/m1", getProjectPath() + "/pom-sources");
+    assertContentRoots(mn("project", "m1-custom"), getProjectPath() + "/custom-sources");
   }
 
   @Test 
@@ -454,9 +456,9 @@ public class MavenFoldersImporterTest extends MavenMultiVersionImportingTestCase
 
     importProject();
 
-    assertEquals(LanguageLevel.JDK_11, LanguageLevelUtil.getCustomLanguageLevel(getModule("m1")));
+    assertEquals(LanguageLevel.JDK_11, LanguageLevelUtil.getCustomLanguageLevel(getModule(mn("project", "m1"))));
     assertEquals(LanguageLevel.JDK_11.toJavaVersion().toString(),
-                 CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")));
+                 CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule(mn("project", "m1"))));
   }
 
   @Test 
@@ -508,9 +510,9 @@ public class MavenFoldersImporterTest extends MavenMultiVersionImportingTestCase
 
     importProject();
 
-    assertEquals(LanguageLevel.JDK_1_9, LanguageLevelUtil.getCustomLanguageLevel(getModule("m1")));
+    assertEquals(LanguageLevel.JDK_1_9, LanguageLevelUtil.getCustomLanguageLevel(getModule(mn("project", "m1"))));
     assertEquals(LanguageLevel.JDK_1_9.toJavaVersion().toString(),
-                 CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")));
+                 CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule(mn("project", "m1"))));
   }
 
   @Test
@@ -562,9 +564,9 @@ public class MavenFoldersImporterTest extends MavenMultiVersionImportingTestCase
 
     importProject();
 
-    assertEquals(LanguageLevel.JDK_11, LanguageLevelUtil.getCustomLanguageLevel(getModule("m1")));
+    assertEquals(LanguageLevel.JDK_11, LanguageLevelUtil.getCustomLanguageLevel(getModule(mn("project", "m1"))));
     assertEquals(LanguageLevel.JDK_11.toJavaVersion().toString(),
-                 CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule("m1")));
+                 CompilerConfiguration.getInstance(myProject).getBytecodeTargetLevel(getModule(mn("project", "m1"))));
   }
 
   @Test

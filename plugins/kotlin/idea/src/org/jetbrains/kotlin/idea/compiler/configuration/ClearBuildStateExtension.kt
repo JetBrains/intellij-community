@@ -9,7 +9,7 @@ abstract class ClearBuildStateExtension {
     companion object {
         @JvmStatic
         fun getExtensions(): Array<out ClearBuildStateExtension> {
-            return EP_NAME.getExtensions();
+            return EP_NAME.getExtensions()
         }
 
         val EP_NAME: ExtensionPointName<ClearBuildStateExtension> =

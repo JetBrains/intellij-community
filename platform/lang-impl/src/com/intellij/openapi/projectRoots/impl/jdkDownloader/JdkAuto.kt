@@ -225,7 +225,12 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
           }
         })
 
-        result
+        result.also {
+          LOG.info(
+            result.joinToString(prefix = "The following local JDKs were found: ")
+            { "[${it.existingSdkHome}, ${it.presentableVersionString}, ${it.suggestedSdkName}]" }
+          )
+        }
       }
 
       override fun proposeLocalFix(sdk: UnknownSdk, indicator: ProgressIndicator): UnknownSdkLocalSdkFix? {

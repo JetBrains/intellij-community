@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiJavaModuleModificationTracker;
 import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.impl.light.LightJavaModule;
 import com.intellij.psi.search.FilenameIndex;
@@ -22,7 +23,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -123,7 +123,7 @@ public final class JavaModuleGraphUtil {
     Project project = module.getProject();
     return new Result<>(findDescriptionByModuleInner(module, inTests), 
                         ProjectRootModificationTracker.getInstance(project), 
-                        PsiModificationTracker.SERVICE.getInstance(project));
+                        PsiJavaModuleModificationTracker.getInstance(project));
   }
 
   @Nullable
@@ -169,7 +169,9 @@ public final class JavaModuleGraphUtil {
   public static @NotNull Collection<PsiJavaModule> findCycle(@NotNull PsiJavaModule module) {
     Project project = module.getProject();
     List<Set<PsiJavaModule>> cycles = CachedValuesManager.getManager(project).getCachedValue(project, () ->
-      Result.create(findCycles(project), PsiModificationTracker.MODIFICATION_COUNT));
+      Result.create(findCycles(project),
+                    PsiJavaModuleModificationTracker.getInstance(project),
+                    ProjectRootModificationTracker.getInstance(project)));
     return Objects.requireNonNullElse(ContainerUtil.find(cycles, set -> set.contains(module)), Collections.emptyList());
   }
 
@@ -264,7 +266,9 @@ public final class JavaModuleGraphUtil {
   private static RequiresGraph getRequiresGraph(PsiJavaModule module) {
     Project project = module.getProject();
     return CachedValuesManager.getManager(project).getCachedValue(project, () ->
-      Result.create(buildRequiresGraph(project), PsiModificationTracker.MODIFICATION_COUNT));
+      Result.create(buildRequiresGraph(project),
+                    PsiJavaModuleModificationTracker.getInstance(project),
+                    ProjectRootModificationTracker.getInstance(project)));
   }
 
   /*
@@ -440,7 +444,7 @@ public final class JavaModuleGraphUtil {
     private JavaModuleScope(@NotNull Project project, @NotNull PsiJavaModule module, @NotNull VirtualFile moduleFile) {
       super(project);
       myModule = module;
-      ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(project);
+      ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
       myIncludeLibraries = fileIndex.isInLibrary(moduleFile);
       myIsInTests = !myIncludeLibraries && fileIndex.isInTestSourceContent(moduleFile);
     }
@@ -460,7 +464,7 @@ public final class JavaModuleGraphUtil {
       Project project = getProject();
       if (project == null) return false;
       if (!isJvmLanguageFile(file)) return false;
-      ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
+      ProjectFileIndex index = ProjectFileIndex.getInstance(project);
       if (index.isInLibrary(file)) return myIncludeLibraries && myModule.equals(findDescriptorInLibrary(project, index, file));
       Module module = index.getModuleForFile(file);
       return myModule.equals(findDescriptorByModule(module, myIsInTests));

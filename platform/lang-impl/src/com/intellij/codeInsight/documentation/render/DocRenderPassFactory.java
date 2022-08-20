@@ -38,7 +38,7 @@ public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRe
   @Nullable
   @Override
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    long current = PsiModificationTracker.SERVICE.getInstance(file.getProject()).getModificationCount();
+    long current = PsiModificationTracker.getInstance(file.getProject()).getModificationCount();
     boolean iconsEnabled = DocRenderDummyLineMarkerProvider.isGutterIconEnabled();
     Long existing = editor.getUserData(MODIFICATION_STAMP);
     Boolean iconsWereEnabled = editor.getUserData(ICONS_ENABLED);
@@ -104,7 +104,7 @@ public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRe
                                         @NotNull Project project,
                                         @NotNull Items items,
                                         boolean collapseNewRegions) {
-    editor.putUserData(MODIFICATION_STAMP, PsiModificationTracker.SERVICE.getInstance(project).getModificationCount());
+    editor.putUserData(MODIFICATION_STAMP, PsiModificationTracker.getInstance(project).getModificationCount());
     editor.putUserData(ICONS_ENABLED, DocRenderDummyLineMarkerProvider.isGutterIconEnabled());
     DocRenderItem.setItemsToEditor(editor, items, collapseNewRegions);
   }

@@ -24,7 +24,6 @@ import java.awt.image.BufferedImage
 import javax.swing.*
 import javax.swing.event.ChangeListener
 
-@Suppress("HardCodedStringLiteral")
 class RoundedIconTestAction : DumbAwareAction("Show Rounded Icon") {
   override fun actionPerformed(e: AnActionEvent) {
     object : DialogWrapper(e.project, null, true, IdeModalityType.IDE, false) {

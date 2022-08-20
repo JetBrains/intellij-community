@@ -49,7 +49,7 @@ public final class PsiUtil extends PsiUtilCore {
   public static final int ACCESS_LEVEL_PRIVATE = 1;
   public static final Key<Boolean> VALID_VOID_TYPE_IN_CODE_FRAGMENT = Key.create("VALID_VOID_TYPE_IN_CODE_FRAGMENT");
 
-  private static final Pattern IGNORED_NAMES = Pattern.compile("ignored?[A-Z]?[a-z]*\\d*");
+  private static final Pattern IGNORED_NAMES = Pattern.compile("ignored?[A-Za-z\\d]*");
 
   private PsiUtil() {}
 
@@ -165,7 +165,7 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   public static void addException(@NotNull PsiMethod method, @NotNull PsiClass exceptionClass) throws IncorrectOperationException {
-    addException(method, exceptionClass, exceptionClass.getQualifiedName());
+    addException(method, exceptionClass, exceptionClass instanceof PsiTypeParameter ? exceptionClass.getName() : exceptionClass.getQualifiedName());
   }
 
   private static void addException(@NotNull PsiMethod method,

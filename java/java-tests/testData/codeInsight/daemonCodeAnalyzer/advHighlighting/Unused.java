@@ -51,6 +51,11 @@ class PrivateClassTest {
        }
     }
 
+    void localVariables() {
+      String <warning descr="Variable 's' is never used">s</warning> = "unused";
+      String ignored = "unused but ignored";
+    }
+
 
   class IncrementedButNeverAccessed {
     private int <warning descr="Private field 'ffff' is assigned but never accessed">ffff</warning>;

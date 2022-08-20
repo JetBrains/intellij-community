@@ -2,7 +2,6 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
-import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
@@ -37,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.statistics.MavenImportCollector;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
@@ -92,22 +92,15 @@ class MavenProjectImporterImpl extends MavenProjectImporterBase {
   @Override
   @Nullable
   public List<MavenProjectsProcessorTask> importProject() {
-    StructuredIdeActivity activity = MavenImportStats.startApplyingModelsActivity(myProject);
-    long startTime = System.currentTimeMillis();
-    try {
-      if (MavenUtil.newModelEnabled(myProject) && myDiff != null) {
-        myModelsProvider = new ModifiableModelsProviderProxyImpl(myProject, myDiff);
-      }
-      else {
-        myModelsProvider = new ModifiableModelsProviderProxyWrapper(myIdeModifiableModelsProvider);
-      }
-      myModuleModel = myModelsProvider.getModuleModelProxy();
-      return importProjectOldWay();
+
+    if (MavenUtil.newModelEnabled(myProject) && myDiff != null) {
+      myModelsProvider = new ModifiableModelsProviderProxyImpl(myProject, myDiff);
     }
-    finally {
-      activity.finished();
-      LOG.info("[maven import] applying models took " + (System.currentTimeMillis() - startTime) + "ms");
+    else {
+      myModelsProvider = new ModifiableModelsProviderProxyWrapper(myIdeModifiableModelsProvider);
     }
+    myModuleModel = myModelsProvider.getModuleModelProxy();
+    return importProjectOldWay();
   }
 
   @Nullable
@@ -201,9 +194,6 @@ class MavenProjectImporterImpl extends MavenProjectImporterBase {
         }
       }
 
-      configureMavenProjectsInBackground(myProject,
-                                         ContainerUtil.map2Map(myMavenProjectToModule.entrySet(),
-                                                               entry -> Pair.create(entry.getValue(), entry.getKey())));
     }
     else {
       MavenUtil.invokeAndWaitWriteAction(myProject, () -> setMavenizedModules(obsoleteModules, false));
@@ -626,9 +616,14 @@ class MavenProjectImporterImpl extends MavenProjectImporterBase {
 
     boolean removed = false;
     for (Library each : unusedLibraries) {
-      if (!isDisposed(each) && MavenRootModelAdapter.isMavenLibrary(each) && !MavenRootModelAdapter.isChangedByUser(each)) {
-        myModelsProvider.removeLibrary(each);
-        removed = true;
+      if (!isDisposed(each) && MavenRootModelAdapter.isMavenLibrary(each)) {
+        if (!MavenRootModelAdapter.isChangedByUser(each)) {
+          myModelsProvider.removeLibrary(each);
+          removed = true;
+        }
+        else {
+          MavenImportCollector.HAS_USER_MODIFIED_IMPORTED_LIBRARY.log(myProject);
+        }
       }
     }
     return removed;
@@ -653,7 +648,7 @@ class MavenProjectImporterImpl extends MavenProjectImporterBase {
   }
 
   @Override
-  public @NotNull List<Module> getCreatedModules() {
+  public @NotNull List<Module> createdModules() {
     return myCreatedModules;
   }
 

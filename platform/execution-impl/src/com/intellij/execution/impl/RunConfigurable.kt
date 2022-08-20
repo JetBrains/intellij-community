@@ -723,8 +723,10 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       }
     }
 
-    return allSettings.size != currentSettingCount || storedComponents.values.any { it.isModified }
+    return allSettings.size != currentSettingCount || isConfigurableModified()
   }
+
+  protected fun isConfigurableModified() = storedComponents.values.any { it.isModified }
 
   override fun disposeUIResources() {
     Disposer.dispose(this)

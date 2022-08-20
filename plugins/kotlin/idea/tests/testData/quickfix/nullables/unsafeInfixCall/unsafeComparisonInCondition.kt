@@ -1,6 +1,5 @@
 // "Replace with safe (?.) call" "false"
 // ACTION: Add non-null asserted (!!) call
-// ACTION: Do not show return expression hints
 // ACTION: Expand boolean expression to 'if else'
 // ACTION: Flip '<'
 // ACTION: Replace overloaded operator with function call

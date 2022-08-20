@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.protocolReader
 
 import org.jetbrains.io.JsonReaderEx
@@ -135,7 +135,6 @@ internal class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, Ty
 
   fun getFieldTypeParser(member: KCallable<*>?, type: Type, isSubtyping: Boolean, method: Method?): ValueReader {
     if (type is Class<*>) {
-      @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
       return when {
         type == java.lang.Long.TYPE -> LONG_PARSER
         type == Integer.TYPE || type == Integer::class.java -> INTEGER_PARSER
@@ -149,7 +148,7 @@ internal class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, Ty
             if (jsonField != null && jsonField.allowAnyPrimitiveValue) {
               return RAW_STRING_PARSER
             }
-            else if ((member?.returnType?.isMarkedNullable ?: false) || method.getAnnotation<Optional>(Optional::class.java) != null) {
+            else if ((member?.returnType?.isMarkedNullable == true) || method.getAnnotation<Optional>(Optional::class.java) != null) {
               return NULLABLE_STRING_PARSER
             }
           }

@@ -3,17 +3,31 @@ package org.intellij.plugins.markdown.editor.lists
 
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
+import com.intellij.testFramework.RegistryKeyRule
 import org.intellij.plugins.markdown.MarkdownTestingUtil
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 
+@RunWith(JUnit4::class)
 class MarkdownListItemTabHandlerTest: LightPlatformCodeInsightTestCase() {
+  @Rule
+  @JvmField
+  val rule = RegistryKeyRule("markdown.lists.renumber.on.type.enable", true)
+
   override fun getTestDataPath(): String = MarkdownTestingUtil.TEST_DATA_PATH + "/editor/lists/tab/"
 
+  @Test
   fun testCreateSubItemWithChildren() = doTest()
 
+  @Test
   fun testCreateSubItemWithChildrenInBlockQuote() = doTest()
 
+  @Test
   fun testHeterogeneousDocument() = doTest()
 
+  @Test
   fun testComplexListItemContent() = doTest()
 
   private fun doTest() {

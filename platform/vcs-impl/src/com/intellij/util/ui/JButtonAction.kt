@@ -21,6 +21,7 @@ abstract class JButtonAction(text: @ActionText String?, @ActionDescription descr
     button.addActionListener {
       performAction(button, place, presentation)
     }
+    button.text = presentation.getText(true)
 
     return button
   }

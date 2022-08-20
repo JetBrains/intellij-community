@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.facet
 
@@ -6,16 +6,14 @@ import com.intellij.facet.ui.*
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.HoverHyperlinkLabel
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.ThreeStateCheckBox
 import org.jetbrains.kotlin.cli.common.arguments.*
-import org.jetbrains.kotlin.config.CompilerSettings
-import org.jetbrains.kotlin.config.createArguments
-import org.jetbrains.kotlin.config.isHmpp
-import org.jetbrains.kotlin.config.splitArgumentString
+import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.*
 import org.jetbrains.kotlin.idea.core.util.onTextChange
@@ -23,6 +21,7 @@ import org.jetbrains.kotlin.idea.roots.invalidateProjectRoots
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.platform.*
 import org.jetbrains.kotlin.platform.js.isJs
+import org.jetbrains.kotlin.platform.jvm.JdkPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import java.awt.BorderLayout
@@ -169,10 +168,12 @@ class KotlinFacetEditorGeneralTab(
                             cellHasFocus: Boolean
                         ): Component {
                             return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus).apply {
-                                text =
-                                    (value as? TargetPlatformWrapper)?.targetPlatform?.componentPlatforms?.singleOrNull()
-                                        ?.oldFashionedDescription
-                                        ?: KotlinBundle.message("facet.text.multiplatform")
+                                val specificPlatform = (value as? TargetPlatformWrapper)?.targetPlatform?.componentPlatforms?.singleOrNull()
+                                text = specificPlatform?.oldFashionedDescription ?: KotlinBundle.message("facet.text.multiplatform")
+
+                                if (specificPlatform is JdkPlatform && specificPlatform.targetVersion == JvmTarget.JVM_1_6) {
+                                    text += " " + KotlinBundle.message("deprecated.jvm.version")
+                                }
                             }
                         }
                     })
@@ -485,7 +486,7 @@ class KotlinFacetEditorGeneralTab(
                 updateMergedArguments()
 
                 // Force code analysis with modified settings
-                runWriteAction { editorContext.project.invalidateProjectRoots() }
+                runWriteAction { editorContext.project.invalidateProjectRoots(RootsChangeRescanningInfo.NO_RESCAN_NEEDED) }
             }
         }
     }

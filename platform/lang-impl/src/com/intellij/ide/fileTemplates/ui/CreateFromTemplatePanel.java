@@ -22,7 +22,7 @@ import java.util.Arrays;
 import java.util.Properties;
 
 /*
- * @author: MYakovlev
+ * @author MYakovlev
  */
 public class CreateFromTemplatePanel {
 

@@ -1,4 +1,6 @@
 <idea-plugin>
+  <resource-bundle>messages.KotlinBundle</resource-bundle>
+
   <extensionPoints>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.idePlatformKind"
@@ -28,6 +30,12 @@
     <buildProcess.parametersProvider implementation="org.jetbrains.kotlin.idea.jps.KotlinJpsClasspathProvider"/>
     <compiler.task execute="BEFORE" implementation="org.jetbrains.kotlin.idea.jps.SetupKotlinJpsPluginBeforeCompileTask"/>
     <projectFacetListener facet-type="kotlin-language" implementation="org.jetbrains.kotlin.idea.jps.KotlinFacetListener"/>
+
+    <notificationGroup
+            id="Kotlin JPS plugin"
+            displayType="STICKY_BALLOON"
+            key="kotlin.jps.plugin.group.name"
+    />
   </extensions>
 
 

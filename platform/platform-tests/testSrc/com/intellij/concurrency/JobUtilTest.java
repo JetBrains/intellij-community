@@ -308,7 +308,7 @@ public class JobUtilTest extends LightPlatformTestCase {
 
   public void testSaturation() throws InterruptedException, TimeoutException, ExecutionException {
     final CountDownLatch latch = new CountDownLatch(1);
-    List<Job> jobs = new ArrayList<>();
+    List<Job<?>> jobs = new ArrayList<>();
     for (int i = 0; i<100 && !t.timedOut(i); i++) {
       jobs.add(JobLauncher.getInstance().submitToJobThread(() -> {
         try {
@@ -331,11 +331,11 @@ public class JobUtilTest extends LightPlatformTestCase {
     }
   }
 
-  private static void cancelAndWait(List<? extends Job> jobs) throws InterruptedException, ExecutionException, TimeoutException {
-    for (Job job : jobs) {
+  private static void cancelAndWait(List<? extends Job<?>> jobs) throws InterruptedException, TimeoutException {
+    for (Job<?> job : jobs) {
       job.cancel();
     }
-    for (Job job : jobs) {
+    for (Job<?> job : jobs) {
       try {
         job.waitForCompletion(100_000);
       }
@@ -617,7 +617,7 @@ public class JobUtilTest extends LightPlatformTestCase {
 
   public void testExecuteAllMustBeResponsiveToTheIndicatorCancelWhenWaitsEvenForExtraCoarseGranularTasks() throws Throwable {
     int COARSENESS = 100_000;
-    List<Job> jobs = new ArrayList<>();
+    List<Job<?>> jobs = new ArrayList<>();
     // try to repeat until got into the right thread; but not for too long
     try {
       for (int i=0; i<1000; i++) {

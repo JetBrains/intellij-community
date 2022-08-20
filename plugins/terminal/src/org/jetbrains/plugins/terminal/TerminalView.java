@@ -263,7 +263,7 @@ public final class TerminalView implements Disposable {
     String tabName = ObjectUtils.notNull(tabState != null ? tabState.myTabName : null,
                                          TerminalOptionsProvider.getInstance().getTabName());
 
-    Content content = ContentFactory.SERVICE.getInstance().createContent(panel, tabName, false);
+    Content content = ContentFactory.getInstance().createContent(panel, tabName, false);
 
     if (terminalWidget == null) {
       String currentWorkingDir = terminalRunner.getCurrentWorkingDir(tabState);

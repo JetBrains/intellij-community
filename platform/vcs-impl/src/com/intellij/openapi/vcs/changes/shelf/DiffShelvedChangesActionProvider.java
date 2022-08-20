@@ -158,7 +158,7 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
     ListSelection<? extends ChangeDiffRequestChain.Producer> diffRequestProducers = createDiffProducers(dc, withLocal);
     if (diffRequestProducers == null || diffRequestProducers.isEmpty()) return;
 
-    DiffRequestChain chain = new ChangeDiffRequestChain(diffRequestProducers.getList(), diffRequestProducers.getSelectedIndex());
+    DiffRequestChain chain = new ChangeDiffRequestChain(diffRequestProducers);
     chain.putUserData(PatchesPreloader.SHELF_PRELOADER, new PatchesPreloader(project));
     DiffManager.getInstance().showDiff(project, chain, DiffDialogHints.FRAME);
   }

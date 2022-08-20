@@ -41,7 +41,8 @@ class ComboBoxWithAutoCompletion<E>(model: ComboBoxModel<E>,
 
   private var selectingItem = false
 
-  @Nls private var myPlaceHolder: String? = null
+  @Nls
+  private var myPlaceHolder: String? = null
 
   init {
     isEditable = true
@@ -71,6 +72,33 @@ class ComboBoxWithAutoCompletion<E>(model: ComboBoxModel<E>,
   @Nls
   fun getText(): String? {
     return myEditor?.document?.text
+  }
+
+  fun updatePreserving(update: () -> Unit) {
+    val oldItem = item
+    if (oldItem != null) {
+      update()
+      item = oldItem
+      return
+    }
+
+    val editorField = myEditableComponent
+    val editor = editorField?.editor
+    if (editor != null) {
+      val oldText = editorField.text
+      val offset = editor.caretModel.offset
+      val selectionStart = editor.selectionModel.selectionStart
+      val selectionStartPosition = editor.selectionModel.selectionStartPosition
+      val selectionEnd = editor.selectionModel.selectionEnd
+      val selectionEndPosition = editor.selectionModel.selectionEndPosition
+      update()
+      editorField.text = oldText
+      editor.caretModel.moveToOffset(offset)
+      editor.selectionModel.setSelection(selectionStartPosition, selectionStart, selectionEndPosition, selectionEnd)
+      return
+    }
+
+    update()
   }
 
   fun setPlaceholder(@Nls placeHolder: String) {
@@ -167,7 +195,8 @@ class ComboBoxWithAutoCompletion<E>(model: ComboBoxModel<E>,
 
   private fun isFieldCleared(e: DocumentEvent) = e.oldLength != 0 && getCurrentText(e).isEmpty()
 
-  private fun isItemSelected(e: DocumentEvent) = e.oldLength == 0 && getCurrentText(e).isNotEmpty() && getCurrentText(e) in getItems().map { it.toString() }
+  private fun isItemSelected(e: DocumentEvent) = e.oldLength == 0 && getCurrentText(e).isNotEmpty() &&
+                                                 getCurrentText(e) in getItems().map { it.toString() }
 
   private fun getCurrentText(e: DocumentEvent) = getText() ?: e.newFragment
 

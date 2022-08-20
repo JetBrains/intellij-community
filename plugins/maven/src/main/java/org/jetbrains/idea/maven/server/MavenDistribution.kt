@@ -51,7 +51,7 @@ internal class WslMavenDistribution(private val wslDistribution: WSLDistribution
 
   override fun compatibleWith(mavenDistribution: MavenDistribution): Boolean {
     if (mavenDistribution == this) return true
-    val another = mavenDistribution as? WslMavenDistribution ?: return false;
+    val another = mavenDistribution as? WslMavenDistribution ?: return false
     return another.wslDistribution == wslDistribution && another.pathToMaven == pathToMaven
   }
 

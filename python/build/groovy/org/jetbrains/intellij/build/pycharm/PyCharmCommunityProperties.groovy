@@ -1,20 +1,21 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.pycharm
 
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.*
 
+import java.nio.file.Files
 import java.nio.file.Path
 
 import static org.jetbrains.intellij.build.impl.PluginLayoutGroovy.plugin
 
 @CompileStatic
 class PyCharmCommunityProperties extends PyCharmPropertiesBase {
-  PyCharmCommunityProperties(String communityHome) {
+  PyCharmCommunityProperties(Path communityHome) {
     platformPrefix = "PyCharmCore"
     customProductCode = "PC"
     applicationInfoModule = "intellij.pycharm.community"
-    brandingResourcePaths = ["$communityHome/python/resources".toString()]
+    brandingResourcePaths = List.of(communityHome.resolve("python/resources"))
     scrambleMainJar = false
     buildSourcesArchive = true
 
@@ -24,11 +25,11 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
       "intellij.xml.dom.impl",
       "intellij.platform.main",
       "intellij.pycharm.community"
+
     ]
-    productLayout.bundledPluginModules +=
-      ["intellij.python.community.plugin",
-       "intellij.pycharm.community.customization"
-      ] + new File("$communityHome/python/build/plugin-list.txt").readLines()
+    productLayout.bundledPluginModules.add("intellij.python.community.plugin")
+    productLayout.bundledPluginModules.add("intellij.pycharm.community.customization")
+    productLayout.bundledPluginModules.addAll(Files.readAllLines(communityHome.resolve("python/build/plugin-list.txt")))
 
     productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
       plugin("intellij.pycharm.community.customization") {

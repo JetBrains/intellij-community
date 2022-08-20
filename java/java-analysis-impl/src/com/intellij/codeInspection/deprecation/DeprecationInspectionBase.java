@@ -211,7 +211,7 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
       .map(resolved -> ObjectUtils.tryCast(resolved, clazz))
       .filter(Objects::nonNull)
       .filter(tagMethod -> !tagMethod.isDeprecated()) // not deprecated
-      .filter(tagMethod -> PsiResolveHelper.SERVICE.getInstance(context.getProject()).isAccessible(tagMethod, context, qualifierClass)) // accessible
+      .filter(tagMethod -> PsiResolveHelper.getInstance(context.getProject()).isAccessible(tagMethod, context, qualifierClass)) // accessible
       .filter(tagMethod -> !member.getManager().areElementsEquivalent(tagMethod, member)); // not the same
   }
 

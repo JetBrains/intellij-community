@@ -74,7 +74,7 @@ public final class ScriptRunnerUtil {
                                          @Nullable String workingDirectory,
                                          @Nullable VirtualFile scriptFile,
                                          String[] parameters) throws ExecutionException {
-    return execute(exePath, workingDirectory, scriptFile, parameters, null, commandLine -> new ColoredProcessHandler(commandLine));
+    return execute(exePath, workingDirectory, scriptFile, parameters, null, commandLine -> new ColoredProcessHandler(commandLine), null);
   }
 
   @NotNull
@@ -85,8 +85,22 @@ public final class ScriptRunnerUtil {
                                          @Nullable Charset charset,
                                          @NotNull ThrowableNotNullFunction<? super GeneralCommandLine, ? extends OSProcessHandler, ? extends ExecutionException> creator)
     throws ExecutionException {
+    return execute(exePath, workingDirectory, scriptFile, parameters, charset, creator, null);
+  }
+
+  @NotNull
+  public static OSProcessHandler execute(@NotNull String exePath,
+                                         @Nullable String workingDirectory,
+                                         @Nullable VirtualFile scriptFile,
+                                         String[] parameters,
+                                         @Nullable Charset charset,
+                                         @NotNull ThrowableNotNullFunction<? super GeneralCommandLine, ? extends OSProcessHandler, ? extends ExecutionException> creator,  String[] options)
+    throws ExecutionException {
 
     GeneralCommandLine commandLine = new GeneralCommandLine(PathEnvironmentVariableUtil.findExecutableInWindowsPath(exePath));
+    if (options != null) {
+      commandLine.addParameters(options);
+    }
     if (scriptFile != null) {
       commandLine.addParameter(scriptFile.getPresentableUrl());
     }

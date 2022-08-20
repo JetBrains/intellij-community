@@ -41,6 +41,7 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.VerticalLayout;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.ui.mac.touchbar.TouchbarActionCustomizations;
 import com.intellij.ui.scale.JBUIScale;
@@ -78,6 +79,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   public static final int DEFAULT_HEIGHT = USE_TABBED_WELCOME_SCREEN ? 650 : 460;
   public static final int MAX_DEFAULT_WIDTH = 800;
   private final AbstractWelcomeScreen myScreen;
+  private final Wrapper myContent;
   private WelcomeBalloonLayoutImpl myBalloonLayout;
   private boolean myDisposed;
   private DefaultFrameHeader myHeader;
@@ -89,15 +91,18 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     myBalloonLayout = new WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8));
     myScreen = USE_TABBED_WELCOME_SCREEN ? new TabbedWelcomeScreen() : new FlatWelcomeScreen();
 
+    myContent = new Wrapper();
+    setContentPane(myContent);
+
     if (IdeFrameDecorator.isCustomDecorationActive()) {
       myHeader = new DefaultFrameHeader(this);
-      setContentPane(CustomFrameDialogContent.getCustomContentHolder(this, myScreen.getWelcomePanel(), myHeader));
+      myContent.setContent(CustomFrameDialogContent.getCustomContentHolder(this, myScreen.getWelcomePanel(), myHeader));
     }
     else {
       if (USE_TABBED_WELCOME_SCREEN && SystemInfoRt.isMac) {
         rootPane.setJMenuBar(new WelcomeFrameMenuBar().setFrame(this));
       }
-      setContentPane(myScreen.getWelcomePanel());
+      myContent.setContent(myScreen.getWelcomePanel());
     }
 
     IdeGlassPaneImpl glassPane = new IdeGlassPaneImpl(rootPane);
@@ -178,7 +183,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       if (USE_TABBED_WELCOME_SCREEN && SystemInfoRt.isMac) {
         rootPane.setJMenuBar(new WelcomeFrameMenuBar().setFrame(this));
       }
-      setContentPane(myScreen.getWelcomePanel());
+      myContent.setContent(myScreen.getWelcomePanel());
     }
     if (USE_TABBED_WELCOME_SCREEN) {
       JBDimension defaultSize = JBUI.size(MAX_DEFAULT_WIDTH, defaultHeight);

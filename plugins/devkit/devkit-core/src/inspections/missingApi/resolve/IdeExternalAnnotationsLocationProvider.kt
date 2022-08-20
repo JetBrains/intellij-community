@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.missingApi.resolve
 
 import com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocation
@@ -29,7 +29,6 @@ internal class IdeExternalAnnotationsLocationProvider : AnnotationsLocationProvi
     return emptyList()
   }
 
-  @Suppress("HardCodedStringLiteral")
   private fun getAnnotationsLocations(ideVersion: String): List<AnnotationsLocation> {
     val annotationsVersion = if (ideVersion.endsWith("-SNAPSHOT")) {
       ideVersion

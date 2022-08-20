@@ -89,8 +89,8 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
       "untitled1", "untitled1.main", "untitled1.test"
     );
 
-    DataNode<ProjectData> projectNode1 = ExternalSystemApiUtil.findProjectData(project, SYSTEM_ID, externalProjectPath1);
-    DataNode<ProjectData> projectNode2 = ExternalSystemApiUtil.findProjectData(project, SYSTEM_ID, externalProjectPath2);
+    DataNode<ProjectData> projectNode1 = ExternalSystemApiUtil.findProjectNode(project, SYSTEM_ID, externalProjectPath1);
+    DataNode<ProjectData> projectNode2 = ExternalSystemApiUtil.findProjectNode(project, SYSTEM_ID, externalProjectPath2);
     GradleImportingTestUtil.waitForProjectReload(() -> {
       return createModuleFromTemplate(project, step -> {
         LanguageNewProjectWizardData.setLanguage(step, "Java");

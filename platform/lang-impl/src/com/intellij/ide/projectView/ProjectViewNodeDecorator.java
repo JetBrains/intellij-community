@@ -9,6 +9,9 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 /**
  * Allows modifying the presentation of project view and package dependencies view nodes.
  *
+ * Please see the <a href="https://plugins.jetbrains.com/docs/intellij/project-view.html#decorating-project-view-nodes">IntelliJ Platform Docs</a>
+ * for a high-level overview.
+ *
  * @see TreeStructureProvider
  */
 public interface ProjectViewNodeDecorator {

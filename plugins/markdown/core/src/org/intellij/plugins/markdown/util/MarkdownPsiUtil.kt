@@ -17,6 +17,7 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownList
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
+import org.intellij.plugins.markdown.lang.psi.util.hasType
 
 internal object MarkdownPsiUtil {
   /** Check if node is on a top-level -- meaning its parent is root of file   */

@@ -9,7 +9,6 @@ import com.intellij.execution.target.ContributedConfigurationsList.Companion.get
 import com.intellij.execution.target.TargetEnvironmentsManager.OneTargetState.Companion.toOneTargetState
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
@@ -22,7 +21,7 @@ fun Sdk.isBasedOnTargetType(targetTypeId: String): Boolean =
   (sdkAdditionalData as? TargetBasedSdkAdditionalData)?.targetEnvironmentConfiguration?.getTargetType()?.id == targetTypeId
 
 fun TargetBasedSdkAdditionalData.getTargetEnvironmentRequest(project: Project?): TargetEnvironmentRequest? {
-  return targetEnvironmentConfiguration?.createEnvironmentRequest(project ?: ProjectManager.getInstance().defaultProject)
+  return targetEnvironmentConfiguration?.createEnvironmentRequest(project)
 }
 
 /**

@@ -79,8 +79,7 @@ class MapGetWithNotNullAssertionOperatorInspection : AbstractKotlinInspection() 
 }
 
 private fun KtPostfixExpression.getReplacementData(): Pair<KtExpression, KtExpression>? {
-    val base = baseExpression
-    when (base) {
+    when (val base = baseExpression) {
         is KtQualifiedExpression -> {
             if (base.callExpression?.calleeExpression?.text != "get") return null
             val reference = base.receiverExpression

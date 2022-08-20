@@ -25,13 +25,13 @@ class GradleConnectorServiceIntegrationTest : GradleImportingTestCase() {
     val childProjectPath = path("child")
     assertThat(projectConnection)
       .isEqualTo(requestConnection(projectPath, getExecutionSettings(projectPath)))
-      .isEqualTo(requestConnection(projectPath, getExecutionSettings(childProjectPath)));
+      .isEqualTo(requestConnection(projectPath, getExecutionSettings(childProjectPath)))
 
     val childProjectConnection = requestConnection(childProjectPath, getExecutionSettings(projectPath))
     assertThat(childProjectConnection)
       .isNotEqualTo(projectConnection)
       .isEqualTo(requestConnection(childProjectPath, getExecutionSettings(projectPath)))
-      .isEqualTo(requestConnection(childProjectPath, getExecutionSettings(childProjectPath)));
+      .isEqualTo(requestConnection(childProjectPath, getExecutionSettings(childProjectPath)))
   }
 
   private fun getExecutionSettings(projectPath: String): GradleExecutionSettings =

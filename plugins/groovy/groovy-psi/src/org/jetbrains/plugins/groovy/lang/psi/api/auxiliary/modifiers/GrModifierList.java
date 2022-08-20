@@ -28,7 +28,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 
 /**
  * @autor: Dmitry.Krasilschikov
- * @date: 18.03.2007
  */
 public interface GrModifierList extends GroovyPsiElement, PsiModifierList {
 

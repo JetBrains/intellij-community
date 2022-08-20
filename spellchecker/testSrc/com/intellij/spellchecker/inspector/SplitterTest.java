@@ -139,6 +139,12 @@ public class SplitterTest {
   }
 
   @Test
+  public void testUnicodeCombiningChars() {
+    correctListToCheck(PlainTextSplitter.getInstance(), "бо́льшую", "бо́льшую");
+    correctListToCheck(PlainTextSplitter.getInstance(), "dafür", "dafür");
+  }
+
+  @Test
   public void testConstantName() {
     String text = "TEST_CONSTANT";
     correctListToCheck(IdentifierSplitter.getInstance(), text, "TEST", "CONSTANT");

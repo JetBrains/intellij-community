@@ -5,9 +5,9 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
-import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.service.project.IdeModelsProviderImpl;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -19,7 +19,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.BooleanFunction;
 import com.intellij.util.containers.Stack;
 import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.gradle.GradleScript;
@@ -287,10 +286,22 @@ public final class GradleUtil {
   @ApiStatus.Experimental
   @Nullable
   public static DataNode<ModuleData> findGradleModuleData(@NotNull Project project, @NotNull String projectPath) {
-    DataNode<ProjectData> projectNode = ExternalSystemApiUtil.findProjectData(project, GradleConstants.SYSTEM_ID, projectPath);
-    if (projectNode == null) return null;
-    BooleanFunction<DataNode<ModuleData>> predicate = node -> projectPath.equals(node.getData().getLinkedExternalProjectPath());
-    return ExternalSystemApiUtil.find(projectNode, ProjectKeys.MODULE, predicate);
+    return ExternalSystemApiUtil.findModuleNode(project, GradleConstants.SYSTEM_ID, projectPath);
+  }
+
+  public static @Nullable Module findGradleModule(@NotNull Project project, @NotNull String projectPath) {
+    var moduleNode = ExternalSystemApiUtil.findModuleNode(project, GradleConstants.SYSTEM_ID, projectPath);
+    if (moduleNode == null) return null;
+    return findGradleModule(project, moduleNode.getData());
+  }
+
+  public static @Nullable Module findGradleModule(@NotNull Project project, @NotNull ProjectData projectData) {
+    return findGradleModule(project, projectData.getLinkedExternalProjectPath());
+  }
+
+  public static @Nullable Module findGradleModule(@NotNull Project project, @NotNull ModuleData moduleData) {
+    var modelsProvider = new IdeModelsProviderImpl(project);
+    return modelsProvider.findIdeModule(moduleData);
   }
 
   public static @NotNull GradleVersion getGradleVersion(Project project, PsiFile file) {

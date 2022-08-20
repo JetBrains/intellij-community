@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.core.script
 
@@ -99,7 +99,7 @@ class KotlinScriptDependenciesClassFinder(private val project: Project) : NonCla
         }
 
         val file = clazz.containingFile?.virtualFile ?: return false
-        val index = ProjectFileIndex.SERVICE.getInstance(myProject)
+        val index = ProjectFileIndex.getInstance(myProject)
         return !index.isInContent(file) && !index.isInLibrary(file) && scope.contains(file)
     }
 

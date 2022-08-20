@@ -35,14 +35,14 @@ public abstract class MavenConfigureProjectByChangingFileTestGenerated extends A
             runTest("testData/configurator/jvm/jreLib/");
         }
 
-        @TestMetadata("libraryMissed")
-        public void testLibraryMissed() throws Exception {
-            runTest("testData/configurator/jvm/libraryMissed/");
+        @TestMetadata("libraryMissing")
+        public void testLibraryMissing() throws Exception {
+            runTest("testData/configurator/jvm/libraryMissing/");
         }
 
-        @TestMetadata("pluginMissed")
-        public void testPluginMissed() throws Exception {
-            runTest("testData/configurator/jvm/pluginMissed/");
+        @TestMetadata("pluginMissing")
+        public void testPluginMissing() throws Exception {
+            runTest("testData/configurator/jvm/pluginMissing/");
         }
 
         @TestMetadata("simpleProject")
@@ -50,14 +50,24 @@ public abstract class MavenConfigureProjectByChangingFileTestGenerated extends A
             runTest("testData/configurator/jvm/simpleProject/");
         }
 
-        @TestMetadata("simpleProjectEAP")
-        public void testSimpleProjectEAP() throws Exception {
-            runTest("testData/configurator/jvm/simpleProjectEAP/");
+        @TestMetadata("simpleProjectBeta")
+        public void testSimpleProjectBeta() throws Exception {
+            runTest("testData/configurator/jvm/simpleProjectBeta/");
         }
 
-        @TestMetadata("simpleProjectRc")
-        public void testSimpleProjectRc() throws Exception {
-            runTest("testData/configurator/jvm/simpleProjectRc/");
+        @TestMetadata("simpleProjectDev")
+        public void testSimpleProjectDev() throws Exception {
+            runTest("testData/configurator/jvm/simpleProjectDev/");
+        }
+
+        @TestMetadata("simpleProjectMilestone")
+        public void testSimpleProjectMilestone() throws Exception {
+            runTest("testData/configurator/jvm/simpleProjectMilestone/");
+        }
+
+        @TestMetadata("simpleProjectReleaseCandidate")
+        public void testSimpleProjectReleaseCandidate() throws Exception {
+            runTest("testData/configurator/jvm/simpleProjectReleaseCandidate/");
         }
 
         @TestMetadata("simpleProjectSnapshot")
@@ -78,14 +88,14 @@ public abstract class MavenConfigureProjectByChangingFileTestGenerated extends A
             KotlinTestUtils.runTest(this::doTestWithJSMaven, this, testDataFilePath);
         }
 
-        @TestMetadata("libraryMissed")
-        public void testLibraryMissed() throws Exception {
-            runTest("testData/configurator/js/libraryMissed/");
+        @TestMetadata("libraryMissing")
+        public void testLibraryMissing() throws Exception {
+            runTest("testData/configurator/js/libraryMissing/");
         }
 
-        @TestMetadata("pluginMissed")
-        public void testPluginMissed() throws Exception {
-            runTest("testData/configurator/js/pluginMissed/");
+        @TestMetadata("pluginMissing")
+        public void testPluginMissing() throws Exception {
+            runTest("testData/configurator/js/pluginMissing/");
         }
 
         @TestMetadata("simpleProject")

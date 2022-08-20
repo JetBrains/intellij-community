@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dsl
 
 
@@ -59,7 +59,6 @@ task id14 << {}
   }
 
   void 'task declaration invalid'() {
-    def voidGeneric = isGradleNewerOrSameAs("7.0") ? "" : "<java.lang.Void>"
     testHighlighting """\
 task <warning descr="'task' in 'org.gradle.api.Project' cannot be applied to '(java.lang.String, java.lang.Integer)'">id1, 42</warning>
 task <warning descr="'task' in 'org.gradle.api.Project' cannot be applied to '(java.lang.Integer, ?)'">42, <warning descr="Cannot resolve symbol 'id2'">id2</warning></warning>
@@ -69,7 +68,7 @@ task <warning descr="'task' in 'org.gradle.api.Project' cannot be applied to '([
 task <warning descr="'task' in 'org.gradle.api.Project' cannot be applied to '(['description':java.lang.String], ?, java.lang.Integer, java.lang.Integer)'"><warning descr="Cannot resolve symbol 'id6'">id6</warning>, description: 'a', 43, 69</warning>
 
 task <weak_warning descr="Cannot infer argument types"><warning descr="Cannot resolve symbol 'id7'">id7</warning>(42)</weak_warning>
-task<warning descr="'task' in 'org.gradle.api.Project' cannot be applied to '(groovy.lang.Closure${voidGeneric}, ?)'">({}, <warning descr="Cannot resolve symbol 'id8'">id8</warning>)</warning>
+task<warning descr="'task' in 'org.gradle.api.Project' cannot be applied to '(groovy.lang.Closure<java.lang.Void>, ?)'">({}, <warning descr="Cannot resolve symbol 'id8'">id8</warning>)</warning>
 
 task id9 + {}
 

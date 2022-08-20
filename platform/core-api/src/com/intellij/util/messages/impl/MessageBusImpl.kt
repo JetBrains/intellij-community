@@ -66,7 +66,6 @@ open class MessageBusImpl : MessageBus {
 
   // separate disposable must be used, because container will dispose bus connections in a separate step
   private var connectionDisposable: Disposable? = Disposer.newDisposable()
-  @Suppress("LeakingThis")
   @JvmField
   internal var messageDeliveryListener: MessageDeliveryListener? = null
 

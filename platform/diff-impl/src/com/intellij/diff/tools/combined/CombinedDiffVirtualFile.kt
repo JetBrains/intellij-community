@@ -2,12 +2,7 @@
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.editor.DiffVirtualFileBase
-import com.intellij.openapi.project.Project
 
-abstract class CombinedDiffVirtualFile<P : CombinedDiffRequestProducer>(protected val requestProducer: P) :
-  DiffVirtualFileBase(requestProducer.name) {
-
-  abstract fun createProcessor(project: Project): CombinedDiffRequestProcessor
-
-  override fun getPath(): String  = name
+open class CombinedDiffVirtualFile(val sourceId: String, name: String, private val path: String? = null) : DiffVirtualFileBase(name) {
+  override fun getPath(): String = path ?: name
 }

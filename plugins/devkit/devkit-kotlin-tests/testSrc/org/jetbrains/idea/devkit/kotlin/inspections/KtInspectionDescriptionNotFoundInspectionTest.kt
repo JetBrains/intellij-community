@@ -41,7 +41,7 @@ class KtInspectionDescriptionNotFoundInspectionTest : JavaCodeInsightFixtureTest
   }
 
   fun testHighlightingForDescriptionCustomShortName() {
-    myFixture.testHighlighting("MyInspectionCustomShortName.kt");
+    myFixture.testHighlighting("MyInspectionCustomShortName.kt")
   }
 
   fun testWithDescription() {

@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * @author: oleg
+ * @author oleg
  */
 public final class SetUtil {
   private SetUtil() {

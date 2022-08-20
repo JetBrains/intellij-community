@@ -36,7 +36,6 @@ internal class PsiFileNavigationTarget(
 
     val locationAndIcon = fileLocation(project, file)
                           ?: return builder.presentation()
-    @Suppress("HardCodedStringLiteral")
     builder = builder.locationText(locationAndIcon.text, locationAndIcon.icon)
 
     return builder.presentation()

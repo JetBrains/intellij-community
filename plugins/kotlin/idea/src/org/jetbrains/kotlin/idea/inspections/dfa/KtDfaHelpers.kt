@@ -117,7 +117,7 @@ private fun KotlinType.toDfTypeNotNullable(context: KtElement): DfType {
                 return typeConstraint.asDfType().meet(DfTypes.NOT_NULL_OBJECT)
             }
         }
-        // TODO: Support type parameters
+        is TypeParameterDescriptor -> descriptor.upperBounds.map { type -> type.toDfType(context) }.fold(DfType.TOP, DfType::meet)
         else -> DfType.TOP
     }
 }

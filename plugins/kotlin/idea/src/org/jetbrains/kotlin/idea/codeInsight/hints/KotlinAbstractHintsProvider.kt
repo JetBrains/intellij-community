@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.InsetPresentation
 import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
+import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -26,13 +27,16 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.analysisContext
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-@Suppress("UnstableApiUsage")
 abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
 
     override val previewText: String? = ""
 
     open val hintsArePlacedAtTheEndOfLine = false
 
+    /**
+     * Check if specified setting is enabled for the provider.
+     * It has to return false when [#isHintSupported] returns `false`
+     */
     abstract fun isElementSupported(resolved: HintType?, settings: T): Boolean
 
     open fun isHintSupported(hintType: HintType): Boolean = false
@@ -57,7 +61,7 @@ abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
                     if (isElementSupported(hintType, settings)) {
                         hintType.provideHintDetails(element).forEach { details ->
                             val p = PresentationAndSettings(
-                                getInlayPresentationForInlayInfoDetails(details, f, project, this@KotlinAbstractHintsProvider),
+                                getInlayPresentationForInlayInfoDetails(element, hintType, details, f, project, this@KotlinAbstractHintsProvider),
                                 details.inlayInfo.offset,
                                 details.inlayInfo.relatesToPrecedingText
                             )
@@ -72,6 +76,8 @@ abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
 
     companion object {
         fun getInlayPresentationForInlayInfoDetails(
+            element: PsiElement,
+            hintType: HintType?,
             infoDetails: InlayInfoDetails,
             factory: PresentationFactory,
             project: Project,
@@ -85,9 +91,9 @@ abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
             val roundedPresentation = factory.roundWithBackground(basePresentation)
             return InsetPresentation(
                 MenuOnClickPresentation(roundedPresentation, project) {
-                    listOf(
-                        InlayProviderDisablingAction(provider.name, KotlinLanguage.INSTANCE, project, provider.key),
-                        ShowInlayHintsSettings()
+                    listOfNotNull(
+                        hintType?.let { DisableKotlinInlayHintsAction(it.hideDescription, it, project, element) },
+                        ShowInlayHintsSettings(provider.key)
                     )
                 }, left = 1
             )
@@ -171,4 +177,9 @@ abstract class KotlinAbstractHintsProvider<T : Any> : InlayHintsProvider<T> {
 
         abstract fun enable(hintType: HintType, enable: Boolean)
     }
+}
+
+internal fun refreshHints() {
+    InlayHintsPassFactory.forceHintsUpdateOnNextPass()
+    InlayHintsConfigurable.updateInlayHintsUI()
 }

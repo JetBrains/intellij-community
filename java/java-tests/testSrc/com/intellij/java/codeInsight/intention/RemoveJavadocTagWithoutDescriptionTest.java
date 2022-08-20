@@ -3,14 +3,14 @@ package com.intellij.java.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
+import com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection;
 import org.jetbrains.annotations.NotNull;
 
 public class RemoveJavadocTagWithoutDescriptionTest extends LightIntentionActionTestCase {
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
-      new JavaDocLocalInspection()
+      new JavadocDeclarationInspection()
     };
   }
 

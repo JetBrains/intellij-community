@@ -107,14 +107,14 @@ class CompilerArgumentsCachingTest {
 
     private fun ExtractedCompilerArgumentsBucket.cacheAndCheckConsistency() {
         val mapper = CompilerArgumentsCacheMapperImpl()
-        val cachedBucket = CompilerArgumentsCachingTool.cacheCompilerArguments(this, mapper)
+        val cachedBucket = CompilerArgumentsCachingManager.cacheCompilerArguments(this, mapper)
         singleArguments.entries.forEach { (key, value) ->
             assertTrue(mapper.checkCached(key))
             val rawValue = value ?: return@forEach
             assertTrue(mapper.checkCached(rawValue))
             val keyCacheId = mapper.cacheArgument(key)
             val matchingCachedEntry = cachedBucket.singleArguments.entries.singleOrNull { (cachedKey, _) ->
-                cachedKey is KotlinCachedRegularCompilerArgument && cachedKey.data == keyCacheId
+                cachedKey.data == keyCacheId
             }
             assertTrue(matchingCachedEntry != null)
             val valueCacheId = mapper.cacheArgument(rawValue)
@@ -129,18 +129,11 @@ class CompilerArgumentsCachingTest {
         )
         flagArguments.entries.forEach { (key, value) ->
             assertTrue(mapper.checkCached(key))
-            val rawValue = value.toString()
-            assertTrue(mapper.checkCached(rawValue))
             val keyCacheId = mapper.cacheArgument(key)
             val matchingCachedEntry = cachedBucket.flagArguments.entries.singleOrNull { (cachedKey, _) ->
-                cachedKey is KotlinCachedRegularCompilerArgument && cachedKey.data == keyCacheId
+                cachedKey.data == keyCacheId
             }
             assertTrue(matchingCachedEntry != null)
-            val valueCacheId = mapper.cacheArgument(rawValue)
-            assertEquals(
-                (matchingCachedEntry.value as KotlinCachedBooleanCompilerArgument).data,
-                valueCacheId
-            )
         }
         multipleArguments.entries.forEach { (key, value) ->
             assertTrue(mapper.checkCached(key))
@@ -150,7 +143,7 @@ class CompilerArgumentsCachingTest {
             }
             val keyCacheId = mapper.cacheArgument(key)
             val matchingCachedEntry = cachedBucket.multipleArguments.entries.singleOrNull { (cachedKey, _) ->
-                cachedKey is KotlinCachedRegularCompilerArgument && cachedKey.data == keyCacheId
+                true && cachedKey.data == keyCacheId
             }
             assertTrue(matchingCachedEntry != null)
             val valueCacheIds = rawValues.map { mapper.cacheArgument(it) }
@@ -200,7 +193,7 @@ class CompilerArgumentsCachingTest {
         profilePhases = Random.nextBoolean()
         checkPhaseConditions = Random.nextBoolean()
         checkStickyPhaseConditions = Random.nextBoolean()
-        useFir = Random.nextBoolean()
+        useK2 = Random.nextBoolean()
         useFirExtendedCheckers = Random.nextBoolean()
         disableUltraLightClasses = Random.nextBoolean()
         useMixedNamedArguments = Random.nextBoolean()
@@ -409,7 +402,7 @@ class CompilerArgumentsCachingTest {
         compilerArguments.modify()
         val extractedBucket = CompilerArgumentsExtractor.prepareCompilerArgumentsBucket(compilerArguments)
         val mapper = CompilerArgumentsCacheMapperImpl()
-        val cachedArgsBucket = CompilerArgumentsCachingTool.cacheCompilerArguments(extractedBucket, mapper)
+        val cachedArgsBucket = CompilerArgumentsCachingManager.cacheCompilerArguments(extractedBucket, mapper)
         val restoreCompilerArguments = CachedArgumentsRestoring::class.java.declaredMethods
             .find { it.name == "restoreCachedCompilerArguments" }!!.apply { isAccessible = true }
         val restoredCompilerArguments = restoreCompilerArguments.invoke(
@@ -470,7 +463,7 @@ class CompilerArgumentsCachingTest {
             "profilePhases",
             "checkPhaseConditions",
             "checkStickyPhaseConditions",
-            "useFir",
+            "useK2",
             "useFirExtendedCheckers",
             "disableUltraLightClasses",
             "useMixedNamedArguments",

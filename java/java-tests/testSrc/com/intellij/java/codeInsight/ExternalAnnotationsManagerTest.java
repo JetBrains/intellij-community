@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.BaseExternalAnnotationsManager;
@@ -34,7 +34,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.util.PathUtil;
-import org.junit.Assume;
 
 import javax.xml.bind.annotation.XmlElement;
 import java.util.Arrays;
@@ -81,11 +80,7 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
   }
 
   public void testBundledAnnotationXmlSyntax() {
-    String version = getProjectDescriptor().getSdk().getVersionString();
-    Assume.assumeTrue("This test requires boot JDK 11; actual: "+version,
-                       version.startsWith("java version \"11"));
-    String root = PathManagerEx.getCommunityHomePath() + "/java/jdkAnnotations";
-    findAnnotationsXmlAndCheckSyntax(root);
+    findAnnotationsXmlAndCheckSyntax(PathManagerEx.getCommunityHomePath() + "/java/jdkAnnotations");
   }
 
   private void findAnnotationsXmlAndCheckSyntax(String root) {

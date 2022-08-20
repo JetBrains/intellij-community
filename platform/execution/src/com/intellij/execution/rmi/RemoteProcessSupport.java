@@ -86,7 +86,10 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
           if (o.handler != null) infos.add(o);
         }
       }
-      if (infos.isEmpty()) return;
+      if (infos.isEmpty()) {
+        finishFuture.complete(null);
+        return;
+      }
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         try {
           destroyProcessesImpl(infos);

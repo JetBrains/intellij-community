@@ -19,5 +19,5 @@ UFile (package = ) [public final class PropertyTest {...]
         UMethod (name = setDataFromString) [public final fun setDataFromString(@org.jetbrains.annotations.NotNull data: java.lang.String) : void {...}]
             UParameter (name = data) [@org.jetbrains.annotations.NotNull var data: java.lang.String]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-            UBlockExpression [{...}] : PsiType:Unit
+            UBlockExpression [{...}] : PsiType:void
         UMethod (name = PropertyTest) [public fun PropertyTest() = UastEmptyExpression]

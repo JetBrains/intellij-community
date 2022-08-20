@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.openapi.application.PathManager
@@ -114,7 +114,6 @@ internal fun ChangeLog.anonymize(): ChangeLog {
       is ChangeEntry.ReplaceAndChangeSource -> {
         val newEntityData = value.sourceChange.newData.clone()
         newEntityData.entitySource = newEntityData.entitySource.anonymize(null)
-        @Suppress("UNCHECKED_CAST")
         val sourceChange = ChangeEntry.ChangeEntitySource(value.sourceChange.originalSource.anonymize(null), newEntityData)
 
         @Suppress("UNCHECKED_CAST")

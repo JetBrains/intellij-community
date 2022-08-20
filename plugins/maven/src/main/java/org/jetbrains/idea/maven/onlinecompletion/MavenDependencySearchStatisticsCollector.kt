@@ -19,7 +19,7 @@ object MavenDependencySearchStatisticsCollector {
                                                   .addData("time", timeMillisToResponse)
                                                   .addData("endpoint", endPoint)
                                                   .addData("useCache", parameters.useCache())
-                                                  .addData("exception", e.javaClass.canonicalName));
+                                                  .addData("exception", e.javaClass.canonicalName))
   }
 
   @JvmStatic
@@ -31,6 +31,6 @@ object MavenDependencySearchStatisticsCollector {
                                                 FeatureUsageData()
                                                   .addData("time", timeMillisToResponse)
                                                   .addData("endpoint", endPoint)
-                                                  .addData("useCache", parameters.useCache()));
+                                                  .addData("useCache", parameters.useCache()))
   }
 }

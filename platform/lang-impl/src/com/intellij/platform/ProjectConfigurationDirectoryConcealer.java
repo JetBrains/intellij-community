@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform;
 
 import com.intellij.ide.projectView.TreeStructureProvider;
@@ -34,7 +34,7 @@ public final class ProjectConfigurationDirectoryConcealer implements TreeStructu
     if (parent instanceof PsiDirectoryNode &&
         ProjectViewDirectoryHelper.getInstance(myProject).shouldHideProjectConfigurationFilesDirectory()) {
       final VirtualFile vFile = ((PsiDirectoryNode)parent).getVirtualFile();
-      if (vFile != null && Comparing.equal(ProjectFileIndex.SERVICE.getInstance(myProject).getContentRootForFile(vFile), vFile)) {
+      if (vFile != null && Comparing.equal(ProjectFileIndex.getInstance(myProject).getContentRootForFile(vFile), vFile)) {
         final Collection<? extends AbstractTreeNode<?>> moduleChildren = parent.getChildren();
         Collection<AbstractTreeNode<?>> result = new ArrayList<>();
         for (AbstractTreeNode<?> moduleChild : moduleChildren) {

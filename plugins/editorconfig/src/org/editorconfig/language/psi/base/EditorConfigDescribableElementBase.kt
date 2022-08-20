@@ -38,8 +38,7 @@ abstract class EditorConfigDescribableElementBase(node: ASTNode) : ASTWrapperPsi
 
 
   override fun getReference(): PsiReference? {
-    val descriptor = getDescriptor(false)
-    return when (descriptor) {
+    return when (val descriptor = getDescriptor(false)) {
       is EditorConfigDeclarationDescriptor -> EditorConfigDeclarationReference(this)
       is EditorConfigReferenceDescriptor -> EditorConfigIdentifierReference(this, descriptor.id)
       is EditorConfigConstantDescriptor -> EditorConfigConstantReference(this)

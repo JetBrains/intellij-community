@@ -181,13 +181,12 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
 
   @Override
   public void setTtyConnector(@NotNull TtyConnector ttyConnector) {
+    super.setTtyConnector(ttyConnector);
     myTerminalTitle.change(terminalTitleState -> {
       //noinspection HardCodedStringLiteral
       terminalTitleState.setDefaultTitle(getSessionName());
       return null;
     });
-
-    super.setTtyConnector(ttyConnector);
   }
 
   @Override

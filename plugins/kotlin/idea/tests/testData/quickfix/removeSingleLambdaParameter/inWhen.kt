@@ -3,7 +3,6 @@
 // ACTION: Add braces to all 'when' entries
 // ACTION: Convert to anonymous function
 // ACTION: Convert to multi-line lambda
-// ACTION: Do not show implicit receiver and parameter hints
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Remove explicit lambda parameter types (may break code)
 // ACTION: Rename to _

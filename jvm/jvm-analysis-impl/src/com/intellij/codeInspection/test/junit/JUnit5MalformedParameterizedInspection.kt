@@ -8,7 +8,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.test.junit.references.MethodSourceReference
-import com.intellij.execution.junit.JUnitUtil
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.editor.Editor
@@ -17,7 +16,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
-import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
 import com.intellij.psi.impl.source.tree.java.PsiNameValuePairImpl
 import com.intellij.psi.search.searches.ClassInheritorsSearch
@@ -56,7 +54,9 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseUastLocalInspectionTo
       override fun visitMethod(node: UMethod): Boolean {
         val parameterizedAnnotation = findAnnotations(node, Collections.singletonList(
           JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST))
-        val testAnnotation = findAnnotations(node, JUnitUtil.TEST5_JUPITER_ANNOTATIONS.toMutableList())
+        val testAnnotation = findAnnotations(node, listOf(
+          JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST_FACTORY)
+        )
         if (parameterizedAnnotation.isNotEmpty()) {
           if (testAnnotation.isNotEmpty() && node.uastParameters.isNotEmpty() && testAnnotation[0].sourcePsi != null) {
             testAnnotation[0].uastAnchor?.sourcePsi?.let {
@@ -235,7 +235,7 @@ private class NullOrEmptySourceChecker(val holder: ProblemsHolder) {
     val shortName = psiAnnotation.qualifiedName ?: return
     if (size == 1) {
       var type = method.uastParameters[0].type
-      if (type is PsiClassReferenceType) {
+      if (type is PsiClassType) {
         type = type.rawType()
       }
       if (type is PsiArrayType ||

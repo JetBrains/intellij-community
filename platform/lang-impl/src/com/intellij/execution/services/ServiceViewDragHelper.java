@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.services;
 
 import com.intellij.execution.ExecutionBundle;
@@ -137,7 +137,7 @@ final class ServiceViewDragHelper {
   }
 
   private static Content createDropTargetContent() {
-    Content content = ContentFactory.SERVICE.getInstance().createContent(new JPanel(), null, false);
+    Content content = ContentFactory.getInstance().createContent(new JPanel(), null, false);
     content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
     content.setCloseable(true);
     return content;

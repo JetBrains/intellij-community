@@ -2,7 +2,6 @@ package com.intellij.cce.interpreter
 
 import com.intellij.completion.ml.features.RankingFeaturesOverrides
 
-@Suppress("UnstableApiUsage")
 class DisableUserDependentFeatures : RankingFeaturesOverrides {
   companion object {
     private val mlUserDependentFeaturesToDefaultValues = mapOf(

@@ -1,24 +1,22 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test.util
 
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils.findLinesWithPrefixesRemoved
 import com.intellij.debugger.DebuggerInvocationUtil
-import com.intellij.openapi.application.ModalityState
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiManager
-import com.intellij.psi.search.FilenameIndex
-import com.intellij.xdebugger.XDebuggerManager
-import org.jetbrains.kotlin.idea.util.application.runReadAction
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl
 import com.intellij.debugger.ui.breakpoints.Breakpoint
 import com.intellij.debugger.ui.breakpoints.BreakpointManager
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
+import com.intellij.psi.search.FilenameIndex
+import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.breakpoints.XBreakpointManager
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties
@@ -29,6 +27,8 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProp
 import org.jetbrains.kotlin.idea.debugger.breakpoints.*
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferenceKeys
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils.findLinesWithPrefixesRemoved
+import org.jetbrains.kotlin.idea.util.application.runReadAction
 import javax.swing.SwingUtilities
 
 internal class BreakpointCreator(
@@ -57,7 +57,7 @@ internal class BreakpointCreator(
                     .trim()
 
                 when {
-                    @Suppress("SpellCheckingInspection") comment.startsWith("//FieldWatchpoint!") -> {
+                    comment.startsWith("//FieldWatchpoint!") -> {
                         val javaBreakpoint = createBreakpointOfType(
                             breakpointManager,
                             kotlinFieldBreakpointType,
@@ -66,7 +66,6 @@ internal class BreakpointCreator(
                         )
 
                         (javaBreakpoint as? KotlinFieldBreakpoint)?.apply {
-                            @Suppress("SpellCheckingInspection")
                             val fieldName = comment.substringAfter("//FieldWatchpoint! (").substringBefore(")")
 
                             setFieldName(fieldName)

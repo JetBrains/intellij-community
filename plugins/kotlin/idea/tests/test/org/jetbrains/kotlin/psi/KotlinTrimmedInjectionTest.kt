@@ -166,7 +166,7 @@ class KotlinTrimmedInjectionTest : AbstractInjectionTest() {
         """.trimIndent(), myInjectionFixture.injectedElement?.containingFile?.text
         )
 
-        val fragmentEditorFixture = myInjectionFixture.openInFragmentEditor();
+        val fragmentEditorFixture = myInjectionFixture.openInFragmentEditor()
         TestCase.assertEquals(
             "<html>\n" +
                     "    <body>\n" +
@@ -447,7 +447,7 @@ class KotlinTrimmedInjectionTest : AbstractInjectionTest() {
         )
         
         // now user closes the fragment editor
-        quickEditHandler.closeEditorForTest();
+        quickEditHandler.closeEditorForTest()
         PsiDocumentManager.getInstance(project).reparseFiles(listOf(myInjectionFixture.topLevelFile.virtualFile), true)
 
         myInjectionFixture.assertInjectedContent(

@@ -7,10 +7,15 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.io.Decompressor
 import groovy.transform.CompileStatic
+import kotlin.Unit
+import kotlin.jvm.functions.Function0
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildContextKt
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.TraceManager
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
+import org.jetbrains.intellij.build.io.FileKt
 import org.jetbrains.intellij.build.io.ProcessKt
 
 import java.nio.file.*
@@ -63,7 +68,7 @@ final class WinExeInstallerBuilder {
    * Returns list of file extensions with leading dot added
    */
   private List<String> getFileAssociations() {
-    customizer.fileAssociations.collect {it.startsWith(".") ? it : ("." + it) }
+    return customizer.fileAssociations.collect {it.startsWith(".") ? it : ("." + it) }
   }
 
   Path buildInstaller(Path winDistPath, Path additionalDirectoryToInclude, String suffix, BuildContext context) {
@@ -85,7 +90,7 @@ final class WinExeInstallerBuilder {
       context.messages.info("JRE won't be bundled with Windows installer because JRE archive is missing")
     }
 
-    BuildHelper.copyDir(context.paths.communityHomeDir.resolve("build/conf/nsis"), nsiConfDir)
+    FileKt.copyDir(context.paths.communityHomeDir.resolve("build/conf/nsis"), nsiConfDir)
 
     generateInstallationConfigFileForSilentMode()
 
@@ -168,9 +173,13 @@ final class WinExeInstallerBuilder {
     if (Files.notExists(installerFile)) {
       context.messages.error("Windows installer wasn't created.")
     }
-    context.executeStep(TracerManager.spanBuilder("sign").setAttribute("file", installerFile.toString()), BuildOptions.WIN_SIGN_STEP) {
-      context.signFile(installerFile)
-    }
+    BuildContextKt.executeStep(context, TraceManager.spanBuilder("sign").setAttribute("file", installerFile.toString()), BuildOptions.WIN_SIGN_STEP, new Function0<Unit>() {
+      @Override
+      Unit invoke() {
+        context.signFiles(List.of(installerFile), Collections.emptyMap())
+        return Unit.INSTANCE
+      }
+    })
     context.notifyArtifactWasBuilt(installerFile)
     return installerFile
   }

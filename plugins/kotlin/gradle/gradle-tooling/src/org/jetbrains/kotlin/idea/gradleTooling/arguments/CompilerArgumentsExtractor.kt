@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleTooling.arguments
 
 import org.gradle.api.Task
@@ -16,7 +17,6 @@ object CompilerArgumentsExtractor {
 
     private val ARGUMENT_ANNOTATION_CLASSES = setOf(LEGACY_ARGUMENT_ANNOTATION_CLASS, ARGUMENT_ANNOTATION_CLASS)
 
-    @Suppress("UNCHECKED_CAST")
     fun extractCompilerArgumentsFromTask(compileTask: Task, defaultsOnly: Boolean = false): ExtractedCompilerArgumentsBucket {
         val compileTaskClass = compileTask.javaClass
         val compilerArguments = compileTask[CREATE_COMPILER_ARGS]!!

@@ -40,19 +40,14 @@ data class VMOptions(
     appendLine("} // VMOptions")
   }
 
-  @Suppress("unused")
   fun addSystemProperty(key: String, value: Boolean): VMOptions = addSystemProperty(key, value.toString())
 
-  @Suppress("unused")
   fun addSystemProperty(key: String, value: Int): VMOptions = addSystemProperty(key, value.toString())
 
-  @Suppress("unused")
   fun addSystemProperty(key: String, value: Long): VMOptions = addSystemProperty(key, value.toString())
 
-  @Suppress("unused")
   fun addSystemProperty(key: String, value: Path): VMOptions = addSystemProperty(key, value.toAbsolutePath().toString())
 
-  @Suppress("unused")
   fun addSystemProperty(key: String, value: String): VMOptions {
     logOutput("Setting system property: [$key=$value]")
     System.setProperty(key, value) // to synchronize behaviour in IDEA and on test runner side
@@ -67,7 +62,6 @@ data class VMOptions(
 
   private fun filterKeys(toRemove: (String) -> Boolean) = copy(data = data.filterNot(toRemove))
 
-  @Suppress("MemberVisibilityCanBePrivate")
   fun withEnv(key: String, value: String) = copy(env = env + (key to value))
 
   fun writeIntelliJVmOptionFile(path: Path) {
@@ -120,7 +114,6 @@ data class VMOptions(
     }
   }
 
-  @Suppress("unused")
   fun debug(port: Int = 5005, suspend: Boolean = true): VMOptions {
     val suspendKey = if (suspend) "y" else "n"
     val configLine = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=${suspendKey},address=*:${port}"
@@ -213,14 +206,12 @@ data class VMOptions(
   fun withXmx(sizeMb: Int) = this
     .addLine("-Xmx" + sizeMb + "m", "-Xmx")
 
-  @Suppress("unused")
   fun withG1GC() = this
     .filterKeys { it == "-XX:+UseConcMarkSweepGC" }
     .filterKeys { it == "-XX:+UseG1GC" }
     .addLine("-XX:+UseG1GC")
 
   /** see https://openjdk.java.net/jeps/318 **/
-  @Suppress("unused")
   fun withEpsilonGC() = this
     .filterKeys { it == "-XX:+UseConcMarkSweepGC" }
     .filterKeys { it == "-XX:+UseG1GC" }
@@ -229,6 +220,5 @@ data class VMOptions(
     .addLine("-Xmx16g", "-Xmx")
 
   // a dummy wrapper to simplify expressions
-  @Suppress("unused")
   fun id() = this
 }

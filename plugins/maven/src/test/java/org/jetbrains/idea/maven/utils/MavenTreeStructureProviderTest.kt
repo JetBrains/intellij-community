@@ -41,7 +41,7 @@ class MavenTreeStructureProviderTest : MavenMultiVersionImportingTestCase() {
                      "<packaging>pom</packaging>" +
                      "<modules>" +
                      "  <module>m1</module>" +
-                     "</modules>");
+                     "</modules>")
 
     createModulePom("m1", "<groupId>test</groupId>" +
                           "<artifactId>m1</artifactId>" +
@@ -73,7 +73,7 @@ class MavenTreeStructureProviderTest : MavenMultiVersionImportingTestCase() {
                      "<packaging>pom</packaging>" +
                      "<modules>" +
                      "  <module>m1</module>" +
-                     "</modules>");
+                     "</modules>")
 
     val modulePom = createModulePom("m1", "<groupId>test</groupId>" +
                                           "<artifactId>m1</artifactId>" +

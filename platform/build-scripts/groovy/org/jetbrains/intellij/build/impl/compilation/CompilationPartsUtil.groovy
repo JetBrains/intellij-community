@@ -20,10 +20,9 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.CompilationContext
-import org.jetbrains.intellij.build.impl.BuildHelper
+import org.jetbrains.intellij.build.impl.BuildHelperKt
 import org.jetbrains.intellij.build.impl.logging.IntelliJBuildException
 
-import java.nio.charset.StandardCharsets
 import java.nio.file.FileVisitOption
 import java.nio.file.Files
 import java.nio.file.Path
@@ -40,8 +39,7 @@ import java.util.function.Predicate
 import java.util.zip.GZIPOutputStream
 
 @CompileStatic
-class CompilationPartsUtil {
-
+final class CompilationPartsUtil {
   static void packAndUploadToServer(CompilationContext context, String zipsLocation) {
     upload(zipsLocation, context.messages, pack(context, zipsLocation))
   }
@@ -68,12 +66,14 @@ class CompilationPartsUtil {
 
     List<PackAndUploadContext> contexts = new ArrayList<PackAndUploadContext>(2048)
 
-    File root = context.getProjectOutputDirectory().getAbsoluteFile()
-    List<File> subroots = root.listFiles().toList().collect { it.absoluteFile } // production, test
-    for (File subroot : subroots) {
-      FileUtil.ensureExists(new File("$zipsLocation/${subroot.name}"))
+    File root = context.getProjectOutputDirectory().toFile().getAbsoluteFile()
+    List<File> subRoots = root.listFiles().toList().collect { it.absoluteFile } // production, test
+    Path zipsLocationDir = Path.of(zipsLocation)
+    Files.createDirectories(zipsLocationDir)
+    for (File subRoot : subRoots) {
+      Files.createDirectories(zipsLocationDir.resolve(subRoot.name))
 
-      def modules = subroot.listFiles().toList().collect { it.absoluteFile }
+      def modules = subRoot.listFiles().toList().collect { it.absoluteFile }
       for (File module : modules) {
         def files = module.list()
         if (files == null || files.size() == 0) {
@@ -86,7 +86,7 @@ class CompilationPartsUtil {
           continue
         }
 
-        String name = "${subroot.name}/${module.name}".toString()
+        String name = "${subRoot.name}/${module.name}".toString()
         PackAndUploadContext ctx = new PackAndUploadContext(module, name, "$zipsLocation/${name}.jar".toString())
         contexts.add(ctx)
       }
@@ -146,7 +146,7 @@ class CompilationPartsUtil {
       runUnderStatisticsTimer(messages, 'compile-parts:checksum:time') {
         contexts.each { PackAndUploadContext ctx ->
           executor.submit {
-            String hash = computeHash(new File(ctx.archive))
+            String hash = computeHash(Path.of(ctx.archive))
             hashes.put(ctx.name, hash)
           }
         }
@@ -196,7 +196,7 @@ class CompilationPartsUtil {
           }
 
           executor.submit {
-            def archiveFile = new File(ctx.archive)
+            Path archiveFile = Path.of(ctx.archive)
 
             String hash = hashes.get(ctx.name)
             def path = "$uploadPrefix/${ctx.name}/${hash}.jar".toString()
@@ -244,7 +244,7 @@ class CompilationPartsUtil {
     messages.artifactBuilt(gzippedMetadataFile.absolutePath)
   }
 
-  static void fetchAndUnpackCompiledClasses(BuildMessages messages, File classesOutput, BuildOptions options) {
+  static void fetchAndUnpackCompiledClasses(BuildMessages messages, Path classesOutput, BuildOptions options) {
     def metadataFile = new File(options.pathToCompiledClassesArchivesMetadata)
     if (!metadataFile.isFile()) {
       messages.error("Cannot fetch compiled classes: metadata file not found at '$options.pathToCompiledClassesArchivesMetadata'")
@@ -261,14 +261,14 @@ class CompilationPartsUtil {
       return
     }
     String persistentCache = System.getProperty('agent.persistent.cache')
-    String cache = persistentCache ?: classesOutput.parentFile.getAbsolutePath()
-    File tempDownloadsStorage = new File(cache, "idea-compile-parts-v2")
+    Path cache = persistentCache == null ? classesOutput.parent : Path.of(persistentCache).toAbsolutePath().normalize()
+    Path tempDownloadsStorage = cache.resolve("idea-compile-parts-v2")
 
     Set<String> upToDate = ContainerUtil.newConcurrentSet()
 
     List<FetchAndUnpackContext> contexts = new ArrayList<FetchAndUnpackContext>(metadata.files.size())
     new TreeMap<String, String>(metadata.files).each { entry ->
-      contexts.add(new FetchAndUnpackContext(entry.key, entry.value, new File(classesOutput, entry.key), !forInstallers))
+      contexts.add(new FetchAndUnpackContext(entry.key, entry.value, classesOutput.resolve(entry.key), !forInstallers))
     }
 
     //region Prepare executor
@@ -285,13 +285,13 @@ class CompilationPartsUtil {
       long start = System.nanoTime()
       contexts.each { ctx ->
         def out = ctx.output
-        if (!out.exists()) return
+        if (!Files.exists(out)) return
         executor.submit {
-          if (out.isDirectory()) {
-            def hashFile = new File(out, ".hash")
-            if (hashFile.exists() && hashFile.isFile()) {
+          if (Files.isDirectory(out)) {
+            def hashFile = out.resolve(".hash")
+            if (Files.exists(hashFile) && Files.isRegularFile(hashFile)) {
               try {
-                String actual = FileUtil.loadFile(hashFile, StandardCharsets.UTF_8)
+                String actual = Files.readString(hashFile)
                 if (actual == ctx.hash) {
                   upToDate.add(ctx.name)
                   return
@@ -316,7 +316,7 @@ class CompilationPartsUtil {
         // Remove stalled directories not present in metadata
         def expectedDirectories = new HashSet<String>(metadata.files.keySet())
         // We need to traverse with depth 2 since first level is [production,test]
-        def subroots = (classesOutput.listFiles() ?: new File[0]).toList().findAll { it.directory }.collect { it.absoluteFile }
+        def subroots = (classesOutput.toFile().listFiles() ?: new File[0]).toList().findAll { it.directory }.collect { it.absoluteFile }
         for (File subroot : subroots) {
           def modules = subroot.listFiles()
           if (modules == null) continue
@@ -342,16 +342,16 @@ class CompilationPartsUtil {
     messages.block("Check previously downloaded archives") {
       long start = System.nanoTime()
       contexts.each { ctx ->
-        ctx.jar = new File(tempDownloadsStorage, "${ctx.name}/${ctx.hash}.jar")
+        ctx.jar = tempDownloadsStorage.resolve("${ctx.name}/${ctx.hash}.jar")
         if (upToDate.contains(ctx.name)) return
         toUnpack.add(ctx)
         executor.submit {
           def file = ctx.jar
-          if (file.exists() && ctx.hash != computeHash(file)) {
+          if (Files.exists(file) && ctx.hash != computeHash(file)) {
             messages.info("File $file has unexpected hash, will refetch")
             FileUtil.delete(file)
           }
-          if (!file.exists()) {
+          if (!Files.exists(file)) {
             toDownload.add(ctx)
           }
           return
@@ -368,13 +368,13 @@ class CompilationPartsUtil {
       int count = 0
       long bytes = 0
       try {
-        def preserve = new HashSet<Path>(contexts.collect { it.jar.toPath() })
+        def preserve = new HashSet<Path>(contexts.collect { it.jar })
         def epoch = FileTime.fromMillis(0)
         def daysAgo = FileTime.fromMillis(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(4))
-        FileUtil.ensureExists(tempDownloadsStorage)
+        Files.createDirectories(tempDownloadsStorage)
         // We need to traverse with depth 3 since first level is [production, test], second level is module name, third is file.
         Files
-          .walk(tempDownloadsStorage.toPath(), 3, FileVisitOption.FOLLOW_LINKS)
+          .walk(tempDownloadsStorage, 3, FileVisitOption.FOLLOW_LINKS)
           .filter({ !preserve.contains(it) } as Predicate<Path>)
           .forEach({ Path file ->
             BasicFileAttributes attr = Files.readAttributes(file, BasicFileAttributes.class)
@@ -438,15 +438,15 @@ class CompilationPartsUtil {
 
         toDownload.each { ctx ->
           executor.submit {
-            FileUtil.ensureExists(ctx.jar.parentFile)
-            def get = new HttpGet("${urlWithPrefix}${ctx.name}/${ctx.jar.name}")
+            Files.createDirectories(ctx.jar.parent)
+            def get = new HttpGet("${urlWithPrefix}${ctx.name}/${ctx.jar.fileName}")
             httpClient.execute(get).withCloseable { response ->
               if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
                 failed.add(Pair.create(ctx, response.getStatusLine().getStatusCode()))
               }
               else {
                 new BufferedInputStream(response.getEntity().getContent()).withCloseable { bis ->
-                  new BufferedOutputStream(new FileOutputStream(ctx.jar)).withCloseable { bos ->
+                  new BufferedOutputStream(Files.newOutputStream(ctx.jar)).withCloseable { bos ->
                     FileUtil.copy(bis, bos)
                   }
                 }
@@ -469,7 +469,7 @@ class CompilationPartsUtil {
 
       if (!failed.isEmpty()) {
         failed.each { pair ->
-          messages.warning("Failed to fetch '${pair.first.name}/${pair.first.jar.name}', status code: ${pair.second}".toString())
+          messages.warning("Failed to fetch '${pair.first.name}/${pair.first.jar.fileName}', status code: ${pair.second}".toString())
         }
         messages.error("Failed to fetch ${failed.size()} file${failed.size() != 1 ? 's' : ''}, see details above")
       }
@@ -480,7 +480,7 @@ class CompilationPartsUtil {
     messages.block("Verify downloaded archives") {
       long start = System.nanoTime()
       // todo: retry download if hash verification failed
-      Set<Trinity<File, String, String>> failed = ContainerUtil.newConcurrentSet()
+      Set<Trinity<Path, String, String>> failed = ContainerUtil.newConcurrentSet()
 
       toDownload.each { ctx ->
         executor.submit {
@@ -538,11 +538,11 @@ class CompilationPartsUtil {
 
   private static void unpack(BuildMessages messages, FetchAndUnpackContext ctx) {
     messages.block("Unpacking $ctx.name") {
-      FileUtil.ensureExists(ctx.output)
+      Files.createDirectories(ctx.output)
       new Decompressor.Zip(ctx.jar).overwrite(true).extract(ctx.output)
       if (ctx.saveHash) {
         // Save actual hash
-        FileUtil.writeToFile(new File(ctx.output, ".hash"), ctx.hash)
+        Files.writeString(ctx.output.resolve(".hash"), ctx.hash)
       }
     }
   }
@@ -553,23 +553,20 @@ class CompilationPartsUtil {
       if (Files.exists(destination)) {
         Files.delete(destination)
       }
-      BuildHelper.zip(compilationContext, destination, ctx.output.absoluteFile.toPath(), true)
+      BuildHelperKt.zip(compilationContext, destination, ctx.output.absoluteFile.toPath(), true)
     }
   }
 
-  private static String computeHash(File file) {
-    if (file == null || !file.exists()) return null
+  private static String computeHash(Path file) {
+    if (file == null || !Files.exists(file)) {
+      return null
+    }
+
     MessageDigest messageDigest = MessageDigest.getInstance("SHA-256")
-    def fis = new FileInputStream(file)
-    try {
-      FileUtil.copy(fis, new DigestOutputStream(messageDigest))
-      def digest = messageDigest.digest()
-      def hex = StringUtil.toHexString(digest)
-      return hex
-    }
-    finally {
-      fis.close()
-    }
+    Files.copy(file, new DigestOutputStream(messageDigest))
+    def digest = messageDigest.digest()
+    def hex = StringUtil.toHexString(digest)
+    return hex
   }
 
   private static class DigestOutputStream extends OutputStream {
@@ -608,22 +605,21 @@ class CompilationPartsUtil {
     }
   }
 
-  private static class FetchAndUnpackContext {
+  private static final class FetchAndUnpackContext {
     final String name
     final String hash
-    final File output
+    final Path output
     final boolean saveHash
 
-    File jar
+    Path jar
 
-    FetchAndUnpackContext(String name, String hash, File output, boolean saveHash) {
+    FetchAndUnpackContext(String name, String hash, Path output, boolean saveHash) {
       this.name = name
       this.hash = hash
       this.output = output
       this.saveHash = saveHash
     }
   }
-
 
   // based on org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl.block
   private static <V> V runUnderStatisticsTimer(BuildMessages messages, String name, Closure<V> body) {

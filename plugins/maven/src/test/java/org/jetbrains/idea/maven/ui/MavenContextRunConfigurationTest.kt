@@ -3,10 +3,10 @@ package org.jetbrains.idea.maven.ui
 
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.RunConfigurationProducer
+import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import junit.framework.TestCase
-import com.intellij.maven.testFramework.MavenDomTestCase
 import org.jetbrains.idea.maven.execution.MavenConfigurationProducer
 import org.jetbrains.idea.maven.execution.MavenGoalLocation
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration
@@ -149,9 +149,9 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
 
     val runConfiguration1 = createRunConfiguration(m1, "validate")
     TestCase.assertNotNull(runConfiguration1)
-    TestCase.assertEquals("m1 [validate]", runConfiguration1!!.name)
+    TestCase.assertEquals(mn("project", "m1") + " [validate]", runConfiguration1!!.name)
     val runConfiguration2 = createRunConfiguration(m2, "validate")
-    TestCase.assertEquals("m2 [validate]", runConfiguration2!!.name)
+    TestCase.assertEquals(mn("project", "m2") + " [validate]", runConfiguration2!!.name)
   }
 
 

@@ -8,10 +8,12 @@ import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.tasks.ArchiveKt
+import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.BiConsumer
 import java.util.function.UnaryOperator
@@ -25,9 +27,38 @@ final class KotlinPluginBuilder {
    */
   public static String MAIN_KOTLIN_PLUGIN_MODULE = "kotlin.plugin"
 
-  private final String communityHome
-  private final String home
+  /**
+   * Version of Kotlin compiler which is used in the cooperative development setup in kt-master && kt-*-master branches
+   */
+  private static String KOTLIN_COOP_DEV_VERSION = "1.7.255"
+
+  private final Path communityHome
+  private final Path home
   private final ProductProperties properties
+
+  @SuppressWarnings('SpellCheckingInspection')
+  public static final List<String> FIR_IDE_MODULES = List.of(
+    "kotlin.fir",
+    "kotlin.fir.fir-fe10-binding",
+    "kotlin.uast.uast-kotlin-fir",
+    "kotlin.uast.uast-kotlin-idea-fir",
+    "kotlin.fir.analysis-api-providers-ide-impl",
+    "kotlin.fir.fir-low-level-api-ide-impl",
+    "kotlin.fir.analysis-project-structure-ide-impl",
+  )
+
+  @SuppressWarnings('SpellCheckingInspection')
+  public static final List<String> FIR_IDE_LIBRARIES = List.of(
+    "kotlinc.analysis-api-providers",
+    "kotlinc.analysis-project-structure",
+    "kotlinc.high-level-api",
+    "kotlinc.high-level-api-fir",
+    "kotlinc.high-level-api-impl-base",
+    "kotlinc.kotlin-compiler-fir",
+    "kotlinc.low-level-api-fir",
+    "kotlinc.symbol-light-classes",
+  )
+
 
   @SuppressWarnings('SpellCheckingInspection')
   public static final List<String> MODULES = List.of(
@@ -112,7 +143,7 @@ final class KotlinPluginBuilder {
     "kotlin.i18n",
     "kotlin.project-model",
     "kotlin.features-trainer"
-    )
+  )
 
   @SuppressWarnings('SpellCheckingInspection')
   private static final List<String> LIBRARIES = List.of(
@@ -121,7 +152,8 @@ final class KotlinPluginBuilder {
     "kotlinc.kotlin-scripting-common",
     "kotlinc.kotlin-scripting-jvm",
     "kotlinc.kotlin-gradle-statistics",
-    "kotlin-gradle-plugin-idea"
+    "kotlin-gradle-plugin-idea",
+    "kotlin-tooling-core"
   )
 
   private static final List<String> COMPILER_PLUGINS = List.of(
@@ -131,20 +163,23 @@ final class KotlinPluginBuilder {
     "kotlinc.sam-with-receiver-compiler-plugin",
     "kotlinc.kotlinx-serialization-compiler-plugin",
     "kotlinc.parcelize-compiler-plugin",
-    "kotlinc.lombok-compiler-plugin"
+    "kotlinc.lombok-compiler-plugin",
   )
 
-  KotlinPluginBuilder(String communityHome, String home, ProductProperties properties) {
+  KotlinPluginBuilder(Path communityHome, Path home, ProductProperties properties) {
     this.communityHome = communityHome
     this.home = home
     this.properties = properties
   }
 
   static PluginLayout kotlinPlugin() {
-    return kotlinPlugin(KotlinPluginKind.valueOf(System.getProperty("kotlin.plugin.kind", "IJ")))
+    return kotlinPlugin(
+      KotlinPluginKind.valueOf(System.getProperty("kotlin.plugin.kind", "IJ")),
+      KotlinPluginType.valueOf(System.getProperty("kotlin.plugin.type", KotlinPluginType.FE10.name())),
+    )
   }
 
-  static PluginLayout kotlinPlugin(KotlinPluginKind kind) {
+  static PluginLayout kotlinPlugin(KotlinPluginKind kind, KotlinPluginType type) {
     return PluginLayoutGroovy.plugin(MAIN_KOTLIN_PLUGIN_MODULE) {
       switch (kind) {
         default:
@@ -161,10 +196,10 @@ final class KotlinPluginBuilder {
         isUltimate = false
       }
 
-      for (String moduleName : MODULES) {
+      for (String moduleName : MODULES + type.additionalModules) {
         withModule(moduleName)
       }
-      for (String library : LIBRARIES) {
+      for (String library : LIBRARIES + type.additionalLibraries) {
         withProjectLibraryUnpackedIntoJar(library, mainJarName)
       }
       for (String library : COMPILER_PLUGINS) {
@@ -195,13 +230,30 @@ final class KotlinPluginBuilder {
 
           ArchiveKt.consumeDataByPrefix(
             jars[0].toPath(), "META-INF/extensions/", new BiConsumer<String, byte[]>() {
-              @Override
-              void accept(String name, byte[] data) {
-                patcher.patchModuleOutput(MAIN_KOTLIN_PLUGIN_MODULE, name, data)
-              }
-            })
+            @Override
+            void accept(String name, byte[] data) {
+              patcher.patchModuleOutput(MAIN_KOTLIN_PLUGIN_MODULE, name, data)
+            }
+          })
         }
       })
+
+      if (type == KotlinPluginType.FIR) {
+        withPatch(new BiConsumer<ModuleOutputPatcher, BuildContext>() {
+          @Override
+          void accept(ModuleOutputPatcher patcher, BuildContext context) {
+            def firResourcesDir = context.findModule("kotlin.resources-fir").sourceRoots
+              .findAll { it.rootType instanceof JavaResourceRootType }[0]
+              .file.toPath()
+
+            Files.walk(firResourcesDir)
+              .filter { Files.isRegularFile(it) }
+              .forEach { resource ->
+                patcher.patchModuleOutput(MAIN_KOTLIN_PLUGIN_MODULE, "META-INF/" + resource.fileName.toString(), resource.toFile().text, true)
+              }
+          }
+        })
+      }
 
       withProjectLibrary("kotlinc.kotlin-compiler-fe10")
       withProjectLibrary("kotlinc.kotlin-compiler-ir")
@@ -239,12 +291,10 @@ final class KotlinPluginBuilder {
             String major = ijBuildNumber.group(1)
             String minor = ijBuildNumber.group(2)
             String kotlinVersion = context.project.libraryCollection.libraries
-              .find { it.name.startsWith("kotlinc.") && it.type instanceof JpsRepositoryLibraryType }
+              .find { it.name.startsWith("kotlinc.kotlin-jps-plugin-classpath") && it.type instanceof JpsRepositoryLibraryType }
               ?.asTyped(JpsRepositoryLibraryType.INSTANCE)
-              ?.properties?.data?.version
-            if (kotlinVersion == null) {
-              throw new IllegalStateException("Can't determine Kotlin compiler version")
-            }
+              ?.properties?.data?.version ?: KOTLIN_COOP_DEV_VERSION
+
             String version = "${major}-${kotlinVersion}-${kind}${minor}"
             context.messages.info("version: $version")
             return version
@@ -318,7 +368,7 @@ final class KotlinPluginBuilder {
 
   private static String replace(String oldText, String regex, String newText) {
     String result = oldText.replaceFirst(regex, newText)
-    if (result == oldText && /* Update IDE from Sources */ !oldText.contains(newText)) {
+    if (result == oldText && /* Update IDE from Sources */!oldText.contains(newText)) {
       throw new IllegalStateException("Cannot find '$regex' in '$oldText'")
     }
     return result
@@ -328,6 +378,20 @@ final class KotlinPluginBuilder {
     BuildContext buildContext = BuildContextImpl.createContext(communityHome, home, properties)
     BuildTasks.create(buildContext).buildNonBundledPlugins([MAIN_KOTLIN_PLUGIN_MODULE])
   }
+
+  enum KotlinPluginType {
+    FIR(FIR_IDE_MODULES, FIR_IDE_LIBRARIES),
+    FE10(List.<String>of(), List.<String>of())
+
+    List< String> additionalModules
+    List< String> additionalLibraries
+
+    KotlinPluginType(List<String> additionalModules, List<String> additionalLibraries) {
+      this.additionalModules = additionalModules
+      this.additionalLibraries = additionalLibraries
+    }
+  }
+
 
   enum KotlinPluginKind {
     IJ, AS, MI,

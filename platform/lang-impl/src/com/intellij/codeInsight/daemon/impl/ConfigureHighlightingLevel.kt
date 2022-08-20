@@ -64,7 +64,7 @@ private class LevelAction(val level: InspectionsLevel, val provider: FileViewPro
 
   override fun setSelected(event: AnActionEvent, state: Boolean) {
     if (!state) return
-    val file = provider.getPsi(language) ?: return;
+    val file = provider.getPsi(language) ?: return
     forceRootHighlighting(file, FileHighlightingSetting.fromInspectionsLevel(level))
     InjectedLanguageManager.getInstance(file.project).dropFileCaches(file)
     DaemonCodeAnalyzer.getInstance(file.project).restart()

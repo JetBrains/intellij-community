@@ -22,7 +22,7 @@ open class ChangesGroupingSupport(val project: Project, source: Any, val showCon
   val groupingKeys get() = _groupingKeys.toSet()
 
   operator fun get(groupingKey: @NonNls String): Boolean {
-    if (!isAvailable(groupingKey)) throw IllegalArgumentException("Unknown grouping $groupingKey") // NON-NLS
+    if (!isAvailable(groupingKey)) return false
 
     return _groupingKeys.contains(groupingKey)
   }

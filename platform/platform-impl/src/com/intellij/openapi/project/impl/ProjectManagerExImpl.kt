@@ -7,7 +7,9 @@ import com.intellij.conversion.ConversionService
 import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.opentelemetry.TraceManager
 import com.intellij.diagnostic.runActivity
+import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.*
 import com.intellij.ide.impl.*
@@ -44,6 +46,8 @@ import com.intellij.util.ModalityUiUtil
 import com.intellij.util.ThreeState
 import com.intellij.util.io.delete
 import com.intellij.util.io.exists
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.context.Context
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.event.InvocationEvent
@@ -351,7 +355,6 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
 
     project.putUserData(PlatformProjectOpenProcessor.PROJECT_NEWLY_OPENED, options.isNewProject)
 
-    @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
     if (options.beforeOpen != null && !options.beforeOpen!!(project)) {
       return null
     }
@@ -436,6 +439,8 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
   }
 }
 
+private val tracer by lazy { TraceManager.getTracer("projectManager") }
+
 @NlsSafe
 private fun message(e: Throwable): String {
   var message = e.message ?: e.localizedMessage
@@ -474,53 +479,62 @@ private fun openProject(project: Project, indicator: ProgressIndicator?, runStar
     indicator.isIndeterminate = true
   }
 
-  // invokeLater cannot be used for now
-  executeInEdtWithProgress(indicator) {
-    waitEdtActivity.end()
+  tracer.spanBuilder("open project")
+    .setAttribute(AttributeKey.stringKey("project"), project.name)
+    .useWithScope {
+    val traceContext = Context.current()
+    // invokeLater cannot be used for now
+    executeInEdtWithProgress(indicator) {
+      waitEdtActivity.end()
 
-    indicator?.checkCanceled()
+      indicator?.checkCanceled()
 
-    if (indicator != null && ApplicationManager.getApplication().isInternal) {
-      indicator.text = "Running project opened tasks..."  // NON-NLS (internal mode)
-    }
+      if (indicator != null && ApplicationManager.getApplication().isInternal) {
+        indicator.text = "Running project opened tasks..."  // NON-NLS (internal mode)
+      }
 
-    ProjectManagerImpl.LOG.debug("projectOpened")
+      ProjectManagerImpl.LOG.debug("projectOpened")
 
-    val activity = StartUpMeasurer.startActivity("project opened callbacks")
+      val activity = StartUpMeasurer.startActivity("project opened callbacks")
 
-    runActivity("projectOpened event executing") {
-      ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
-    }
-
-    @Suppress("DEPRECATION")
-    (project as ComponentManagerEx)
-      .processInitializedComponents(com.intellij.openapi.components.ProjectComponent::class.java) { component, pluginDescriptor ->
-        indicator?.checkCanceled()
-        try {
-          val componentActivity = StartUpMeasurer.startActivity(component.javaClass.name, ActivityCategory.PROJECT_OPEN_HANDLER,
-                                                                pluginDescriptor.pluginId.idString)
-          component.projectOpened()
-          componentActivity.end()
-        }
-        catch (e: ProcessCanceledException) {
-          throw e
-        }
-        catch (e: Throwable) {
-          ProjectManagerImpl.LOG.error(e)
+      runActivity("projectOpened event executing") {
+        tracer.spanBuilder("execute projectOpened handlers").setParent(traceContext).useWithScope {
+          ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
         }
       }
 
-    activity.end()
+      @Suppress("DEPRECATION")
+      (project as ComponentManagerEx)
+        .processInitializedComponents(com.intellij.openapi.components.ProjectComponent::class.java) { component, pluginDescriptor ->
+          indicator?.checkCanceled()
+          try {
+            val componentActivity = StartUpMeasurer.startActivity(component.javaClass.name, ActivityCategory.PROJECT_OPEN_HANDLER,
+                                                                  pluginDescriptor.pluginId.idString)
+            component.projectOpened()
+            componentActivity.end()
+          }
+          catch (e: ProcessCanceledException) {
+            throw e
+          }
+          catch (e: Throwable) {
+            ProjectManagerImpl.LOG.error(e)
+          }
+        }
+
+      activity.end()
+    }
+
+    ProjectImpl.ourClassesAreLoaded = true
+
+    if (runStartUpActivities) {
+      tracer.spanBuilder("StartupManager.projectOpened").useWithScope {
+        (StartupManager.getInstance(project) as StartupManagerImpl).projectOpened(indicator)
+      }
+    }
+
+    LifecycleUsageTriggerCollector.onProjectOpened(project)
+    return CompletableFuture.completedFuture(null)
   }
-
-  ProjectImpl.ourClassesAreLoaded = true
-
-  if (runStartUpActivities) {
-    (StartupManager.getInstance(project) as StartupManagerImpl).projectOpened(indicator)
-  }
-
-  LifecycleUsageTriggerCollector.onProjectOpened(project)
-  return CompletableFuture.completedFuture(null)
 }
 
 // allow `invokeAndWait` inside startup activities

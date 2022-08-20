@@ -1,8 +1,8 @@
 package com.intellij.cce.evaluation.step
 
+import com.intellij.cce.evaluation.UndoableEvaluationStep
 import com.intellij.cce.evaluation.features.CCEContextFeatureProvider
 import com.intellij.cce.evaluation.features.CCEElementFeatureProvider
-import com.intellij.cce.evaluation.UndoableEvaluationStep
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.codeInsight.completion.ml.ContextFeatureProvider
 import com.intellij.codeInsight.completion.ml.ElementFeatureProvider
@@ -123,7 +123,6 @@ class SetupStatsCollectorStep(private val project: Project,
     }
   }
 
-  @Suppress("UnstableApiUsage")
   private fun registerFeatureProvidersIfNeeded() {
     contextFeatureProvider = CCEContextFeatureProvider(logLocationAndTextItem)
     ContextFeatureProvider.EP_NAME.addExplicitExtension(Language.ANY, contextFeatureProvider)
@@ -132,7 +131,6 @@ class SetupStatsCollectorStep(private val project: Project,
     ElementFeatureProvider.EP_NAME.addExplicitExtension(Language.ANY, elementFeatureProvider)
   }
 
-  @Suppress("UnstableApiUsage")
   private fun unregisterFeatureProviders() {
     ContextFeatureProvider.EP_NAME.removeExplicitExtension(Language.ANY, contextFeatureProvider)
     if (!logLocationAndTextItem) return

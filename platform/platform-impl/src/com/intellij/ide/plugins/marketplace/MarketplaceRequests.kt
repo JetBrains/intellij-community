@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.marketplace
 
 import com.fasterxml.jackson.core.type.TypeReference
@@ -212,6 +212,7 @@ class MarketplaceRequests : PluginInfoProvider {
     return Urls.newFromEncoded("${pluginManagerUrl}/feature/getImplementations").addParameters(param)
   }
 
+  @Throws(IOException::class)
   fun getFeatures(param: Map<String, String>): List<FeatureImpl> {
     if (param.isEmpty()) {
       return emptyList()
@@ -236,6 +237,7 @@ class MarketplaceRequests : PluginInfoProvider {
     }
   }
 
+  @Throws(IOException::class)
   internal fun getFeatures(
     featureType: String,
     implementationName: String,
@@ -513,13 +515,13 @@ class MarketplaceRequests : PluginInfoProvider {
 /**
  * NB!: any previous tuners set by {@link RequestBuilder#tuner} will be overwritten by this call
  */
-fun RequestBuilder.setHeadersViaTuner(): RequestBuilder =
-  if (ApplicationManager.getApplication() != null) {
-    serviceOrNull<PluginRepositoryAuthService>()
-      ?.let {
-        tuner(it.connectionTuner)
-      } ?: this
-  } else this
+fun RequestBuilder.setHeadersViaTuner(): RequestBuilder {
+  return ApplicationManager.getApplication()
+           ?.getService(PluginRepositoryAuthService::class.java)
+           ?.connectionTuner
+           ?.let(::tuner)
+         ?: this
+}
 
 private fun loadETagForFile(file: Path): String {
   val eTagFile = getETagFile(file)

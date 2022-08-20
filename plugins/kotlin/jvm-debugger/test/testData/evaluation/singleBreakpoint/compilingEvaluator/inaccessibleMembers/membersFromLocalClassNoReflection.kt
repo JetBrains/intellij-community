@@ -24,3 +24,5 @@ class A {
         val a = 1
     }
 }
+
+// Working as intended on EE-IR: No support for disabling reflective access

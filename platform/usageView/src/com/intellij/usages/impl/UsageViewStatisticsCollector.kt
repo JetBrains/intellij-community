@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl
 
 import com.intellij.find.FindSettings
@@ -185,7 +185,6 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
 }
 
 class ScopeRuleValidator : CustomValidationRule() {
-  @Suppress("HardCodedStringLiteral")
   override fun doValidate(data: String, context: EventContext): ValidationResultType =
     if (ScopeIdMapper.standardNames.contains(data)) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED
 

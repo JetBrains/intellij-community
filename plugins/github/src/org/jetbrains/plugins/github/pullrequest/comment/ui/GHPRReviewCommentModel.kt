@@ -3,8 +3,8 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.collaboration.ui.SimpleEventListener
 import com.intellij.util.EventDispatcher
+import com.intellij.vcsUtil.Delegates.equalVetoingObservable
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
-import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
 
 class GHPRReviewCommentModel(comment: GHPullRequestReviewComment) {
 

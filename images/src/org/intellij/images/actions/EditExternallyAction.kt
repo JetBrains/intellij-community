@@ -35,10 +35,10 @@ internal class EditExternallyAction : DumbAwareAction() {
     if (!StringUtil.isEmpty(executablePath)) {
       EnvironmentUtil.getEnvironmentMap().forEach { (varName, varValue) ->
         executablePath = if (SystemInfo.isWindows) StringUtil.replace(executablePath, "%$varName%", varValue, true)
-                         else StringUtil.replace(executablePath, "\${$varName}", varValue, false);
+                         else StringUtil.replace(executablePath, "\${$varName}", varValue, false)
         }
 
-      executablePath = FileUtil.toSystemDependentName(executablePath);
+      executablePath = FileUtil.toSystemDependentName(executablePath)
       val executable = File(executablePath)
       val commandLine = GeneralCommandLine()
       val path = if(executable.exists()) executable.absolutePath else executablePath
@@ -62,7 +62,7 @@ internal class EditExternallyAction : DumbAwareAction() {
         commandLine.createProcess()
       }
       catch (ex: ExecutionException) {
-        Messages.showErrorDialog(e.project, ex.localizedMessage, ImagesBundle.message("error.title.launching.external.editor"));
+        Messages.showErrorDialog(e.project, ex.localizedMessage, ImagesBundle.message("error.title.launching.external.editor"))
         ImagesConfigurable.show(e.project)
       }
     }

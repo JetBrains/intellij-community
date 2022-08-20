@@ -79,7 +79,7 @@ class IDEDataPaths(
   }
 
   private fun getDirectoriesToDeleteAfterTest() = if (testHome.exists()) {
-    Files.list(testHome).use { it.toList() } - listOf(teamCityArtifacts)
+    Files.list(testHome).use { it.toList() } - setOf(teamCityArtifacts)
   }
   else {
     emptyList()

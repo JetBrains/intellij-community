@@ -1,5 +1,4 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("UsePropertyAccessSyntax")
 
 package com.intellij.toolWindow
 
@@ -80,7 +79,7 @@ internal class InitToolWindowSetActivity : StartupActivity {
   }
 }
 
-internal class ToolWindowSetInitializer(private val project: Project, private val manager: ToolWindowManagerImpl) {
+class ToolWindowSetInitializer(private val project: Project, private val manager: ToolWindowManagerImpl) {
   @Volatile
   private var isInitialized = false
 

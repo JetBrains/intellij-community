@@ -1,10 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("KotlinVersionUtils")
+@file:Suppress("deprecation_error")
 
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.KotlinVersion
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase.KotlinVersionRequirement
+import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import java.util.*
 import kotlin.Comparator
 
@@ -20,19 +22,19 @@ val KotlinVersion.isDev: Boolean
 
 val KotlinVersion.isMilestone: Boolean
     get() = this.classifier != null &&
-            this.classifier.lowercase().matches(Regex("""m\d+(-\d*)?"""))
+            this.classifier.lowercase().matches(Regex("""m\d+(-release)?(-\d*)?"""))
 
 val KotlinVersion.isAlpha: Boolean
     get() = this.classifier != null &&
-            this.classifier.lowercase().matches(Regex("""alpha(\d*)?-?\d*"""))
+            this.classifier.lowercase().matches(Regex("""alpha(\d*)?(-release)?-?\d*"""))
 
 val KotlinVersion.isBeta: Boolean
     get() = this.classifier != null &&
-            this.classifier.lowercase().matches(Regex("""beta(\d*)?-?\d*"""))
+            this.classifier.lowercase().matches(Regex("""beta(\d*)?(-release)?-?\d*"""))
 
 val KotlinVersion.isRC: Boolean
     get() = this.classifier != null &&
-            this.classifier.lowercase().matches(Regex("""(rc)(\d*)?-?\d*"""))
+            this.classifier.lowercase().matches(Regex("""(rc)(\d*)?(-release)?-?\d*"""))
 
 val KotlinVersion.isStable: Boolean
     get() = this.classifier == null ||
@@ -143,21 +145,21 @@ val KotlinVersion.classifierNumber: Int?
     }
 
 fun KotlinVersionRequirement.matches(kotlinVersionString: String): Boolean {
-    return matches(parseKotlinVersion(kotlinVersionString))
+    return matches(KotlinToolingVersion(kotlinVersionString))
 }
 
-fun KotlinVersionRequirement.matches(version: KotlinVersion): Boolean {
+fun KotlinVersionRequirement.matches(version: KotlinToolingVersion): Boolean {
     return when (this) {
         is KotlinVersionRequirement.Exact -> matches(version)
         is KotlinVersionRequirement.Range -> matches(version)
     }
 }
 
-fun KotlinVersionRequirement.Exact.matches(version: KotlinVersion): Boolean {
-    return this.version == version
+fun KotlinVersionRequirement.Exact.matches(version: KotlinToolingVersion): Boolean {
+    return this.version.compareTo(version) == 0
 }
 
-fun KotlinVersionRequirement.Range.matches(version: KotlinVersion): Boolean {
+fun KotlinVersionRequirement.Range.matches(version: KotlinToolingVersion): Boolean {
     if (lowestIncludedVersion != null && version < lowestIncludedVersion) return false
     if (highestIncludedVersion != null && version > highestIncludedVersion) return false
     return true
@@ -166,7 +168,7 @@ fun KotlinVersionRequirement.Range.matches(version: KotlinVersion): Boolean {
 fun parseKotlinVersionRequirement(value: String): KotlinVersionRequirement {
     if (value.endsWith("+")) {
         return KotlinVersionRequirement.Range(
-            lowestIncludedVersion = parseKotlinVersion(value.removeSuffix("+")),
+            lowestIncludedVersion = KotlinToolingVersion(value.removeSuffix("+")),
             highestIncludedVersion = null
         )
     }
@@ -175,12 +177,12 @@ fun parseKotlinVersionRequirement(value: String): KotlinVersionRequirement {
         val split = value.split(Regex("""\s*<=>\s*"""))
         require(split.size == 2) { "Illegal Kotlin version requirement: $value. Example: '1.4.0 <=> 1.5.0'" }
         return KotlinVersionRequirement.Range(
-            lowestIncludedVersion = parseKotlinVersion(split[0]),
-            highestIncludedVersion = parseKotlinVersion(split[1])
+            lowestIncludedVersion = KotlinToolingVersion(split[0]),
+            highestIncludedVersion = KotlinToolingVersion(split[1])
         )
     }
 
-    return KotlinVersionRequirement.Exact(parseKotlinVersion(value))
+    return KotlinVersionRequirement.Exact(KotlinToolingVersion(value))
 }
 
 fun parseKotlinVersion(value: String): KotlinVersion {
@@ -198,7 +200,7 @@ fun parseKotlinVersion(value: String): KotlinVersion {
         major = baseVersionSplit[0].toIntOrNull() ?: throwInvalid(),
         minor = baseVersionSplit[1].toIntOrNull() ?: throwInvalid(),
         patch = baseVersionSplit.getOrNull(2)?.let { it.toIntOrNull() ?: throwInvalid() } ?: 0,
-        classifier = classifier?.lowercase()
+        classifier = classifier
     )
 }
 
@@ -211,4 +213,4 @@ fun KotlinVersion.toWildcard(): KotlinVersion {
     )
 }
 
-val KotlinVersion.isHmppEnabledByDefault get() = this >= parseKotlinVersion("1.6.20-dev-6442")
+val KotlinToolingVersion.isHmppEnabledByDefault get() = this >= KotlinToolingVersion("1.6.20-dev-6442")

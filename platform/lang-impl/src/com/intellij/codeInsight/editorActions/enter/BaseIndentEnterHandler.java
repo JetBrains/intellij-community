@@ -42,10 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Created by IntelliJ IDEA.
- *
  * @author oleg
- * @date 11/17/10
  */
 public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
   private final Language myLanguage;

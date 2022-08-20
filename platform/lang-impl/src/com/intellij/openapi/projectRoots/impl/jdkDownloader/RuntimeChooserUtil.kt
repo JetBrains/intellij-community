@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.openapi.components.service
@@ -12,10 +12,7 @@ object RuntimeChooserUtil {
     model.fetchAvailableJbrs()
     model.fetchCurrentRuntime()
 
-    val result = RuntimeChooserDialog(null, model).showDialogAndGetResult()
-
-    @Suppress("MoveVariableDeclarationIntoWhen")
-    return when (result) {
+    return when (val result = RuntimeChooserDialog(null, model).showDialogAndGetResult()) {
       is RuntimeChooserDialogResult.Cancel -> Unit
       is RuntimeChooserDialogResult.UseDefault -> service<RuntimeChooserPaths>().resetCustomJdk()
       is RuntimeChooserDialogResult.UseCustomJdk -> service<RuntimeChooserPaths>().installCustomJdk(result.name) { result.path }

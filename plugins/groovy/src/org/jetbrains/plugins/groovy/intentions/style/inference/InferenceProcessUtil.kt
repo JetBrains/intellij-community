@@ -235,7 +235,6 @@ private fun buildVirtualEnvironmentForMethod(method: GrMethod, newTypeParameterL
   return header + resultMethodText + footer to (header.length)
 }
 
-@Suppress("UnnecessaryVariable")
 private fun insertTypeParameterList(method: GrMethod, methodText: String, newTypeParameterListText: String?): String {
   val methodStartOffset: Int = method.startOffset
   val typeParameterList: TextRange? = method.typeParameterList?.textRange?.takeIf { !it.isEmpty }
@@ -392,7 +391,6 @@ private fun locateMethod(file: GroovyFileBase, method: GrMethod): GrMethod? {
   }
 }
 
-@Suppress("RemoveExplicitTypeArguments")
 internal fun getOriginalMethod(method: GrMethod): GrMethod {
   return when (val originalFile = method.containingFile?.originalFile) {
     null -> method

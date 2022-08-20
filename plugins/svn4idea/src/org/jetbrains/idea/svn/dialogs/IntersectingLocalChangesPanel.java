@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.ide.DataManager;
@@ -107,7 +107,7 @@ public final class IntersectingLocalChangesPanel {
                                                     @TabTitle @NotNull String title,
                                                     @NotNull List<? extends FilePath> files) {
     IntersectingLocalChangesPanel intersectingPanel = new IntersectingLocalChangesPanel(project, files);
-    Content content = ContentFactory.SERVICE.getInstance().createContent(intersectingPanel.myPanel, title, true);
+    Content content = ContentFactory.getInstance().createContent(intersectingPanel.myPanel, title, true);
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
 
     addContent(toolWindow.getContentManager(), content, true);

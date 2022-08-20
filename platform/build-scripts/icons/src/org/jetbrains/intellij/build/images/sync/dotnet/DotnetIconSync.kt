@@ -9,7 +9,7 @@ import java.util.*
 
 fun main() = DotnetIconSync.sync()
 
-internal object DotnetIconSync {
+object DotnetIconSync {
   private class SyncPath(val iconsPath: String, val devPath: String)
 
   private val syncPaths = listOf(

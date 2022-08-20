@@ -11,7 +11,7 @@ import org.editorconfig.language.psi.interfaces.EditorConfigIdentifierElement
 class EditorConfigFindUsagesHandlerFactory : FindUsagesHandlerFactory() {
   override fun canFindUsages(element: PsiElement) = element is EditorConfigIdentifierElement
   override fun createFindUsagesHandler(element: PsiElement, forHighlightUsages: Boolean): FindUsagesHandler? {
-    element as? EditorConfigDescribableElement ?: return null
+    if (element !is EditorConfigDescribableElement) return null
     if (getId(element) != null) return EditorConfigFindVariableUsagesHandler(element)
     return EditorConfigDescriptorBasedFindUsagesHandler(element)
   }

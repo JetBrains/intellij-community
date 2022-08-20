@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui.actions;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.actions.RunInspectionIntention;
 import com.intellij.codeInspection.ex.DisableInspectionToolAction;
@@ -63,12 +62,15 @@ public abstract class KeyAwareInspectionViewAction extends InspectionViewActionB
 
     @Override
     protected boolean isEnabled(@NotNull InspectionResultsView view, AnActionEvent e) {
-      final boolean enabled = super.isEnabled(view, e);
-      if (!enabled) return false;
-      final HighlightDisplayKey key = HighlightDisplayKey.find(view.getTree().getSelectedToolWrapper(true).getShortName());
-      final InspectionProfile profile = InspectionProjectProfileManager.getInstance(view.getProject())
-        .getCurrentProfile();
-      return profile.isToolEnabled(key);
+      final InspectionToolWrapper wrapper = view.getTree().getSelectedToolWrapper(true);
+      if (wrapper == null) {
+        return false;
+      }
+      final HighlightDisplayKey key = HighlightDisplayKey.find(wrapper.getShortName());
+      if (key == null) {
+        return false;
+      }
+      return InspectionProjectProfileManager.getInstance(view.getProject()).getCurrentProfile().isToolEnabled(key);
     }
 
     @Override

@@ -829,10 +829,10 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
   }
 
   private List<MavenProject> getRootProjects() {
-    return myProjectsTree.getRootProjects();
+    return getProjectsTree().getRootProjects();
   }
 
   private List<MavenProject> getModules(MavenProject p) {
-    return myProjectsTree.getModules(p);
+    return getProjectsTree().getModules(p);
   }
 }

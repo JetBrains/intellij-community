@@ -1,6 +1,5 @@
 // "Make 'SealedClass' public" "true"
 // ACTION: Create test
-// ACTION: Do not show return expression hints
 // ACTION: Introduce import alias
 // ACTION: Make 'SealedClass' public
 // ACTION: Make 'Test' private

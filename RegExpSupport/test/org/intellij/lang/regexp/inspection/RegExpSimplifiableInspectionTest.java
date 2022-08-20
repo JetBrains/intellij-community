@@ -4,6 +4,8 @@ package org.intellij.lang.regexp.inspection;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalInspectionTool;
 import org.intellij.lang.annotations.Language;
+import org.intellij.lang.regexp.RegExpFileType;
+import org.intellij.lang.regexp.ecmascript.EcmaScriptRegexpLanguage;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -82,6 +84,10 @@ public class RegExpSimplifiableInspectionTest extends RegExpInspectionTestCase {
 
   public void testFixedRepetitionRange() {
     doTest("a{3,3}", 1, 5, "{3}", "a{3}");
+  }
+
+  public void testSinglePosixBracketExpressionInClass() {
+    highlightTest("[[:upper:]]", RegExpFileType.forLanguage(EcmaScriptRegexpLanguage.INSTANCE));
   }
 
   private void doTest(@Language("RegExp") String code, @Language("RegExp") String replacement) {

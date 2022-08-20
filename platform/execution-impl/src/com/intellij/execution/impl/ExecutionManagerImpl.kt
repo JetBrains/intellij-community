@@ -893,9 +893,7 @@ private fun userApprovesStopForSameTypeConfigurations(project: Project, configNa
 private fun userApprovesStopForIncompatibleConfigurations(project: Project,
                                                           configName: String,
                                                           runningIncompatibleDescriptors: List<RunContentDescriptor>): Boolean {
-  @Suppress("DuplicatedCode")
   val config = RunManagerImpl.getInstanceImpl(project).config
-  @Suppress("DuplicatedCode")
   if (!config.isStopIncompatibleRequiresConfirmation) {
     return true
   }

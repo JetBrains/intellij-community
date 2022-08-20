@@ -4,6 +4,7 @@ package com.intellij.ide.util;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -85,7 +86,7 @@ public final class DirectoryUtil {
 
       if (StringUtil.endsWithChar(path, '/')) {
         path = path.substring(0, path.length() - 1);
-        if (SystemInfo.isWindows && path.length() == 2 && path.charAt(1) == ':') {
+        if (SystemInfo.isWindows && path.length() == 2 && OSAgnosticPathUtil.startsWithWindowsDrive(path)) {
           return null;
         }
       }

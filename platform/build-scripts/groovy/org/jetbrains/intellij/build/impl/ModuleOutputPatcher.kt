@@ -1,4 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.impl
 
 import io.opentelemetry.api.common.AttributeKey
@@ -12,8 +14,8 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
 class ModuleOutputPatcher {
-  val patchDirs: ConcurrentHashMap<String, CopyOnWriteArrayList<Path>> = ConcurrentHashMap()
-  val patches: ConcurrentHashMap<String, MutableMap<String, ByteArray>> = ConcurrentHashMap()
+  private val patchDirs = ConcurrentHashMap<String, CopyOnWriteArrayList<Path>>()
+  private val patches = ConcurrentHashMap<String, MutableMap<String, ByteArray>>()
 
   @JvmOverloads
   fun patchModuleOutput(moduleName: String, path: String, content: String, overwrite: Boolean = false) {
@@ -30,7 +32,7 @@ class ModuleOutputPatcher {
         AttributeKey.stringKey("path"), path,
         AttributeKey.booleanKey("overwrite"), true,
         AttributeKey.booleanKey("overwritten"), overwritten,
-        ))
+      ))
     }
     else {
       val existing = pathToData.putIfAbsent(path, content)
@@ -47,7 +49,7 @@ class ModuleOutputPatcher {
       span.addEvent("patch module output", Attributes.of(
         AttributeKey.stringKey("module"), moduleName,
         AttributeKey.stringKey("path"), path,
-        ))
+      ))
     }
   }
 
@@ -61,16 +63,13 @@ class ModuleOutputPatcher {
   }
 
   fun getPatchedPluginXmlIfExists(moduleName: String): String? {
-    val result = patches[moduleName]?.entries?.firstOrNull { entry -> entry.key == "META-INF/plugin.xml" }?.value
+    val result = patches.get(moduleName)?.entries?.firstOrNull { it.key == "META-INF/plugin.xml" }?.value
     return if (result == null) null else String(result, StandardCharsets.UTF_8)
   }
 
   fun getPatchedPluginXml(moduleName: String): ByteArray {
-    val result = patches[moduleName]?.entries?.firstOrNull { it.key == "META-INF/plugin.xml" }?.value
-    if (result == null) {
-      error("patched plugin.xml not found for $moduleName module")
-    }
-    return result
+    return patches.get(moduleName)?.entries?.firstOrNull { it.key == "META-INF/plugin.xml" }?.value
+           ?: error("patched plugin.xml not found for $moduleName module")
   }
 
   /**
@@ -84,6 +83,7 @@ class ModuleOutputPatcher {
     list.add(pathToDirectoryWithPatchedFiles)
   }
 
-  fun getPatchedDir(moduleName: String): Collection<Path> = patchDirs[moduleName] ?: emptyList()
-  fun getPatchedContent(moduleName: String): Map<String, ByteArray> = patches[moduleName] ?: emptyMap()
+  fun getPatchedDir(moduleName: String): Collection<Path> = patchDirs.get(moduleName) ?: emptyList()
+
+  fun getPatchedContent(moduleName: String): Map<String, ByteArray> = patches.get(moduleName) ?: emptyMap()
 }

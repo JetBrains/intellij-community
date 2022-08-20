@@ -308,7 +308,7 @@ public final class AntRunConfiguration extends LocatableConfigurationBase implem
     }
   }
 
-  private static void copyProperties(final Iterable<? extends BuildFileProperty> from, final List<? super BuildFileProperty> to) {
+  private static void copyProperties(final Iterable<BuildFileProperty> from, final List<? super BuildFileProperty> to) {
     to.clear();
     for (BuildFileProperty p : from) {
       to.add(p.clone());

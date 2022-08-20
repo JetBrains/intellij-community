@@ -1007,7 +1007,7 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
                              ((PyFunction)element).getContainingClass().getName() : "";
     final String name = element instanceof PsiNamedElement && !(element instanceof PyFile) ? ((PsiNamedElement)element).getName() : null;
     final String name2 = "__init__".equals(name) ? "" : name;
-    final String qName = name == null ? null : className + (!"".equals(className) && !"".equals(name2) ? "." : "") + name2;
+    final String qName = name == null ? null : className + (!"".equals(className) && !name2.isEmpty() ? "." : "") + name2;
     final String webpageName2 = isBuiltin ? stdlibObjectsToWebpage.get(qName) : webpageName;
 
     if (webpageName2 != null) {

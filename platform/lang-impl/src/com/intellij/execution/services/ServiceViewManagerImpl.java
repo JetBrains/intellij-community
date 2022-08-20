@@ -256,7 +256,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
   }
 
   private void addMainContent(ContentManager contentManager, ServiceView mainView) {
-    Content mainContent = ContentFactory.SERVICE.getInstance().createContent(mainView, null, false);
+    Content mainContent = ContentFactory.getInstance().createContent(mainView, null, false);
     mainContent.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
     mainContent.setHelpId(getToolWindowContextHelpId());
     mainContent.setCloseable(false);
@@ -589,7 +589,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
   private static Content addServiceContent(ContentManager contentManager, ServiceView serviceView, ItemPresentation presentation,
                                            boolean select, int index) {
     Content content =
-      ContentFactory.SERVICE.getInstance().createContent(serviceView, ServiceViewDragHelper.getDisplayName(presentation), false);
+      ContentFactory.getInstance().createContent(serviceView, ServiceViewDragHelper.getDisplayName(presentation), false);
     content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
     content.setHelpId(getToolWindowContextHelpId());
     content.setCloseable(true);

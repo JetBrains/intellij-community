@@ -5,8 +5,10 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,8 +20,11 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,14 +40,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 public class MainPassesRunner {
   private static final Logger LOG = Logger.getInstance(MainPassesRunner.class);
   private final Project myProject;
-  private final String myTitle;
+  @NlsContexts.DialogTitle private final String myTitle;
   private final InspectionProfile myInspectionProfile;
 
-  public MainPassesRunner(@NotNull Project project, @NotNull String title, @Nullable InspectionProfile inspectionProfile) {
+  public MainPassesRunner(@NotNull Project project,
+                          @NlsContexts.DialogTitle @NotNull String title, 
+                          @Nullable InspectionProfile inspectionProfile) {
     myProject = project;
     myTitle = title;
     myInspectionProfile = inspectionProfile;
@@ -97,16 +105,32 @@ public class MainPassesRunner {
       progress.setText(ProjectUtil.calcRelativeToProjectPath(file, myProject));
       progress.setFraction((double)i / (double)files.size());
 
-      DaemonProgressIndicator daemonIndicator = new DaemonProgressIndicator();
-      ((ProgressIndicatorEx)progress).addStateDelegate(new AbstractProgressIndicatorExBase() {
-        @Override
-        public void cancel() {
-          super.cancel();
-          daemonIndicator.cancel();
+      while (true) {
+        Disposable disposable = Disposer.newDisposable();
+        try {
+          DaemonProgressIndicator daemonIndicator = new DaemonProgressIndicator();
+          GlobalInspectionContextImpl.setupCancelOnWriteProgress(disposable, daemonIndicator);
+          ((ProgressIndicatorEx)progress).addStateDelegate(new AbstractProgressIndicatorExBase() {
+            @Override
+            public void cancel() {
+              super.cancel();
+              daemonIndicator.cancel();
+            }
+          });
+  
+          runMainPasses(file, result, daemonIndicator);
+          break;
         }
-      });
-
-      runMainPasses(file, result, daemonIndicator);
+        catch (ProcessCanceledException e) {
+          if (progress.isCanceled()) {
+            throw e;
+          }
+          //retry if daemonIndicator was canceled by started write action
+        }
+        finally {
+          Disposer.dispose(disposable);
+        }
+      }
     }
   }
 
@@ -139,10 +163,12 @@ public class MainPassesRunner {
       try {
         InspectionProfile currentProfile = myInspectionProfile;
         settings.setAutoReparseDelay(0);
-        InspectionProfileWrapper.runWithCustomInspectionWrapper(psiFile, p -> currentProfile == null ? new InspectionProfileWrapper(
-          (InspectionProfileImpl)p) : new InspectionProfileWrapper(currentProfile,
-                                                                   ((InspectionProfileImpl)p).getProfileManager()), () -> {
-          List<HighlightInfo> infos = ReadAction.nonBlocking(() -> codeAnalyzer.runMainPasses(psiFile, document, daemonIndicator)).inSmartMode(project).executeSynchronously();
+        Function<InspectionProfile, InspectionProfileWrapper> profileProvider = 
+          p -> currentProfile == null 
+               ? new InspectionProfileWrapper((InspectionProfileImpl)p) 
+               : new InspectionProfileWrapper(currentProfile, ((InspectionProfileImpl)p).getProfileManager());
+        InspectionProfileWrapper.runWithCustomInspectionWrapper(psiFile, profileProvider, () -> {
+          List<HighlightInfo> infos = DumbService.getInstance(project).runReadActionInSmartMode(() -> codeAnalyzer.runMainPasses(psiFile, document, daemonIndicator));
           result.computeIfAbsent(document, __ -> new ArrayList<>()).addAll(infos);
         });
         break;

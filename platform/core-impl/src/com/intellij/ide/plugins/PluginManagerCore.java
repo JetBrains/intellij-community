@@ -443,7 +443,7 @@ public final class PluginManagerCore {
     shadowedBundledPlugins = null;
   }
 
-  private static void logPlugins(@NotNull List<IdeaPluginDescriptorImpl> plugins,
+  private static void logPlugins(@NotNull Collection<IdeaPluginDescriptorImpl> plugins,
                                  @NotNull Collection<IdeaPluginDescriptorImpl> incompletePlugins) {
     StringBuilder bundled = new StringBuilder();
     StringBuilder disabled = new StringBuilder();

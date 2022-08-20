@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.ui.scale.TestScaleHelper;
-import junit.framework.TestCase;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.handler.CefLoadHandlerAdapter;
@@ -22,8 +21,11 @@ import java.util.List;
 import java.util.concurrent.*;
 import java.util.function.Function;
 
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 /**
- * Tests {@link JBCefCookieManager} methods. See https://youtrack.jetbrains.com/issue/JBR-4102
+ * Tests {@link JBCefCookieManager} methods. See JBR-4102
  *
  * @author tav
  */
@@ -51,7 +53,7 @@ public class JBCefCookieManagerTest {
     }
     catch (MalformedURLException e) {
       e.printStackTrace();
-      TestCase.fail("Unexpected exception");
+      fail("Unexpected exception");
       return;
     }
     String urlToQuery = url.getProtocol() + "://" + url.getHost();
@@ -84,16 +86,16 @@ public class JBCefCookieManagerTest {
     Future<Boolean> result = manager.setCookie(urlToQuery, cookie);
     JBCefTestHelper.showAsync(browser, JBCefCookieManagerTest.class.getSimpleName());
     testFuture(result, Function.identity());
-    TestCase.assertTrue(loadStartedLatch.getCount() > 0); // assure the cookie had been set before the site loading has started
+    assertTrue(loadStartedLatch.getCount() > 0); // assure the cookie had been set before the site loading has started
     System.out.println("...done");
 
     // wait for the loading to start
     try {
-      TestCase.assertTrue(loadStartedLatch.await(5, TimeUnit.SECONDS));
+      assertTrue(loadStartedLatch.await(5, TimeUnit.SECONDS));
     }
     catch (InterruptedException e) {
       e.printStackTrace();
-      TestCase.fail("Unexpected exception");
+      fail("Unexpected exception");
     }
 
     /*
@@ -101,7 +103,7 @@ public class JBCefCookieManagerTest {
      */
     System.out.println("Test getCookie()...");
     Future<List<JBCefCookie>> result2 = manager.getCookies(urlToQuery, false);
-    TestCase.assertTrue(testFuture(result2, futureResult -> futureResult.contains(cookie)));
+    assertTrue(testFuture(result2, futureResult -> futureResult.contains(cookie)));
     System.out.println("...done");
 
     /*
@@ -109,7 +111,7 @@ public class JBCefCookieManagerTest {
      */
     System.out.println("Test deleteCookies()...");
     Future<Boolean> result3 = manager.deleteCookies(urlToQuery, cookie.getName());
-    TestCase.assertTrue(testFuture(result3, Function.identity()));
+    assertTrue(testFuture(result3, Function.identity()));
     System.out.println("...done");
 
     /*
@@ -117,7 +119,7 @@ public class JBCefCookieManagerTest {
      */
     System.out.println("Test getCookie() to timeout...");
     Future<List<JBCefCookie>> result4 = manager.getCookies(urlToQuery, false);
-    TestCase.assertTrue(testFuture(result4, null));
+    assertTrue(testFuture(result4, null));
     System.out.println("...done");
 
     Disposer.dispose(browser);

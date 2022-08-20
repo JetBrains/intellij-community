@@ -114,7 +114,7 @@ open class CommonInjectedFileChangesHandler(
       if (host == null) continue
       val hostRange = host.textRange
       val hostOffset = hostRange.startOffset
-      var currentHost = host;
+      var currentHost = host
       val hostMarkers = map[host].orEmpty().reversed()
       for ((hostMarker, fragmentMarker, _) in hostMarkers) {
         val localInsideHost = ProperTextRange(hostMarker.startOffset - hostOffset, hostMarker.endOffset - hostOffset)

@@ -128,6 +128,7 @@ abstract class GitStageTree(project: Project,
     val entries = VcsTreeModelData.selected(this).userObjects(GitFileStatusNode::class.java)
     if (entries.size > 1) {
       return ListSelection.createAt(entries, 0)
+        .asExplicitSelection()
     }
 
     val selected = entries.singleOrNull()
@@ -148,6 +149,7 @@ abstract class GitStageTree(project: Project,
     val allEntries = allEntriesData.userObjects(GitFileStatusNode::class.java)
     return if (allEntries.size <= entries.size) {
       ListSelection.createAt(entries, 0)
+        .asExplicitSelection()
     }
     else {
       ListSelection.create(allEntries, selected)

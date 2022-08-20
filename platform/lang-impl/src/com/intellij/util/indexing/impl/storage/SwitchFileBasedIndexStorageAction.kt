@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.storage
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -68,7 +68,6 @@ private class IndexStorageDescriptorPopupContext(private val project: Project,
     return model
   }
 
-  @Suppress("HardCodedStringLiteral")
   override fun getRenderer(): ListCellRenderer<IndexStorageDescriptor> {
     return SimpleListCellRenderer.create { label, value, _ -> label.text = value.presentableName }
   }

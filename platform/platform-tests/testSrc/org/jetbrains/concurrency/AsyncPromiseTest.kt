@@ -190,7 +190,7 @@ class AsyncPromiseTest {
   @Test
   fun `do not swallow exceptions`() {
     val disposable = Disposer.newDisposable()
-    DefaultLogger.disableStderrDumping(disposable);
+    DefaultLogger.disableStderrDumping(disposable)
 
     try {
       val promise = AsyncPromise<String>()
@@ -209,7 +209,7 @@ class AsyncPromiseTest {
   @Test
   fun `do not swallow exceptions - do not log CancellationException`() {
     val disposable = Disposer.newDisposable()
-    DefaultLogger.disableStderrDumping(disposable);
+    DefaultLogger.disableStderrDumping(disposable)
 
     try {
       val promise = AsyncPromise<String>()
@@ -224,7 +224,7 @@ class AsyncPromiseTest {
   @Test
   fun `do not swallow exceptions - error in handler`() {
     val disposable = Disposer.newDisposable()
-    DefaultLogger.disableStderrDumping(disposable);
+    DefaultLogger.disableStderrDumping(disposable)
 
     try {
       val promise = AsyncPromise<String>()
@@ -244,7 +244,7 @@ class AsyncPromiseTest {
   @Test
   fun `do not swallow exceptions - error2 in handler`() {
     val disposable = Disposer.newDisposable()
-    DefaultLogger.disableStderrDumping(disposable);
+    DefaultLogger.disableStderrDumping(disposable)
     try {
       val promise = AsyncPromise<String>()
       val promise2 = promise
@@ -344,7 +344,7 @@ class AsyncPromiseTest {
 
   @Test
   fun `test onProcessed is called even for canceled promise`() {
-    val called = AtomicBoolean();
+    val called = AtomicBoolean()
     val promise = AsyncPromise<String>()
     promise.onProcessed {
       called.set(true)

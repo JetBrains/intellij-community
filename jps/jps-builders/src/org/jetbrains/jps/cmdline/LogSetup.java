@@ -25,18 +25,16 @@ public final class LogSetup {
     if (!Boolean.parseBoolean(System.getProperty(GlobalOptions.USE_DEFAULT_FILE_LOGGING_OPTION, "true"))) {
       return;
     }
-
     try {
       String logDir = System.getProperty(GlobalOptions.LOG_DIR_OPTION, null);
       Path configFile = logDir == null ? Paths.get(LOG_CONFIG_FILE_NAME) : Paths.get(logDir, LOG_CONFIG_FILE_NAME);
       ensureLogConfigExists(configFile);
       Path logFilePath = logDir != null ? Paths.get(logDir, LOG_FILE_NAME) : Paths.get(LOG_FILE_NAME);
       JulLogger.clearHandlers();
-      try (final InputStream in = Files.newInputStream(configFile)) {
-        final BufferedInputStream bin = new BufferedInputStream(in);
-        LogManager.getLogManager().readConfiguration(bin);
+      try (InputStream in = new BufferedInputStream(Files.newInputStream(configFile))) {
+        LogManager.getLogManager().readConfiguration(in);
       }
-      JulLogger.configureLogFileAndConsole(logFilePath, true, true, null);
+      JulLogger.configureLogFileAndConsole(logFilePath, true, true, true, null);
     }
     catch (IOException e) {
       //noinspection UseOfSystemOutOrSystemErr

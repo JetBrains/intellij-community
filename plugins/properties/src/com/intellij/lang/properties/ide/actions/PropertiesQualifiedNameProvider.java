@@ -5,23 +5,24 @@ import com.intellij.ide.actions.QualifiedNameProvider;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 final class PropertiesQualifiedNameProvider implements QualifiedNameProvider {
   @Nullable
   @Override
-  public PsiElement adjustElementToCopy(PsiElement element) {
+  public PsiElement adjustElementToCopy(@NotNull PsiElement element) {
     return null;
   }
 
   @Nullable
   @Override
-  public String getQualifiedName(PsiElement element) {
+  public String getQualifiedName(@NotNull PsiElement element) {
     return element instanceof Property ? ((Property)element).getKey() : null;
   }
 
   @Override
-  public PsiElement qualifiedNameToElement(String fqn, Project project) {
+  public PsiElement qualifiedNameToElement(@NotNull String fqn, @NotNull Project project) {
     return null;
   }
 }

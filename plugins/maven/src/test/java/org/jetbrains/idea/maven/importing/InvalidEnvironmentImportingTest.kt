@@ -26,7 +26,7 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
         myEvents.add(event)
       }
     }
-    myProjectsManager.setProgressListener(myTestSyncViewManager);
+    myProjectsManager.setProgressListener(myTestSyncViewManager)
   }
 
   @Test
@@ -36,12 +36,12 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
     try {
       LoggedErrorProcessor.executeWith<RuntimeException>(loggedErrorProcessor("Project JDK is not specifie")) {
         MavenWorkspaceSettingsComponent.getInstance(myProject)
-          .settings.getImportingSettings().jdkForImporter = MavenRunnerSettings.USE_PROJECT_JDK;
+          .settings.getImportingSettings().jdkForImporter = MavenRunnerSettings.USE_PROJECT_JDK
         WriteAction.runAndWait<Throwable> { ProjectRootManager.getInstance(myProject).projectSdk = null }
         createAndImportProject()
         val connectors = MavenServerManager.getInstance().allConnectors.filter { it.project == myProject }
         assertNotEmpty(connectors)
-        TestCase.assertEquals(JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk(), connectors[0].jdk);
+        TestCase.assertEquals(JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk(), connectors[0].jdk)
       }
     }
     finally {
@@ -75,7 +75,7 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun `test maven import - bad maven config`() {
-    assumeVersionMoreThan("3.3.1");
+    assumeVersionMoreThan("3.3.1")
     createProjectSubFile(".mvn/maven.config", "-aaaaT1")
     createAndImportProject()
     assertModules("test")
@@ -101,7 +101,7 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
     }
 
     fail("Message \"${description}\" was not found. Known messages:\n" +
-         myEvents.joinToString("\n") { "${it}" });
+         myEvents.joinToString("\n") { "${it}" })
   }
 
   private fun assertErrorEvent(message: String) {

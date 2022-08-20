@@ -74,6 +74,13 @@ class DependencyNavigationService(private val project: Project) {
         }
         return NavigationResult.Success
     }
+
+    companion object {
+
+        @JvmStatic
+        fun getInstance(project: Project): DependencyNavigationService =
+            project.service()
+    }
 }
 
 sealed class NavigationResult {

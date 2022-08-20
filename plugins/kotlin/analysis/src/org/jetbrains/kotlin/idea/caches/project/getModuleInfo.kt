@@ -16,8 +16,8 @@ import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.idea.core.isInTestSourceContentKotlinAware
-import org.jetbrains.kotlin.idea.core.script.ScriptRelatedModuleNameFile
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.ScriptRelatedModuleNameFile
 import org.jetbrains.kotlin.idea.highlighter.OutsidersPsiFileSupportUtils
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.isInSourceContentWithoutInjected
@@ -240,7 +240,7 @@ private inline fun <T> collectInfosByVirtualFile(
         onOccurrence(moduleRelatedModuleInfo)
     }
 
-    val projectFileIndex = ProjectFileIndex.SERVICE.getInstance(project)
+    val projectFileIndex = ProjectFileIndex.getInstance(project)
     projectFileIndex.getOrderEntriesForFile(virtualFile).forEach {
         it.toIdeaModuleInfo(project, virtualFile, treatAsLibrarySource).map(onOccurrence)
     }
@@ -262,7 +262,7 @@ private inline fun <T> collectInfosByVirtualFile(
 }
 
 private fun getModuleRelatedModuleInfo(project: Project, virtualFile: VirtualFile): ModuleSourceInfo? {
-    val projectFileIndex = ProjectFileIndex.SERVICE.getInstance(project)
+    val projectFileIndex = ProjectFileIndex.getInstance(project)
 
     val module = projectFileIndex.getModuleForFile(virtualFile)
     if (module != null && !module.isDisposed) {

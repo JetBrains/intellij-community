@@ -26,6 +26,8 @@
     <group id="Vcs.KeymapGroup" searchable="false"/> <!-- grouping for Settings -> Keymap -> Version Control Systems -->
     <group id="VcsGeneral.KeymapGroup" searchable="false"/> <!-- grouping for Settings -> Keymap -> Version Control Systems -->
 
+    <group id="ProjectWidget.Actions" searchable="false"/>
+
     <group id="ListActions">
       <action id="List-selectFirstRow" class="com.intellij.ui.ListActions$Home" use-shortcut-of="EditorTextStart"/>
       <action id="List-selectFirstRowExtendSelection" class="com.intellij.ui.ListActions$ShiftHome"
@@ -301,6 +303,8 @@
       <action id="EditorToggleColumnMode" class="com.intellij.openapi.editor.actions.ToggleColumnModeAction"/>
       <action id="EditorIncreaseFontSize" class="com.intellij.openapi.editor.actions.ChangeEditorFontSizeAction$IncreaseEditorFontSize"/>
       <action id="EditorDecreaseFontSize" class="com.intellij.openapi.editor.actions.ChangeEditorFontSizeAction$DecreaseEditorFontSize"/>
+      <action id="EditorIncreaseFontSizeGlobal" class="com.intellij.openapi.editor.actions.ChangeEditorFontSizeAction$IncreaseEditorFontSizeGlobal"/>
+      <action id="EditorDecreaseFontSizeGlobal" class="com.intellij.openapi.editor.actions.ChangeEditorFontSizeAction$DecreaseEditorFontSizeGlobal"/>
 
       <action id="EditorScrollToCenter" class="com.intellij.openapi.editor.actions.ScrollToCenterAction"/>
       <action id="EditorToggleCase" class="com.intellij.openapi.editor.actions.ToggleCaseAction"/>
@@ -434,7 +438,9 @@
       <group id="FileMenu" popup="true">
         <group id="FileOpenGroup">
           <action id="NewDummyProject" class="com.intellij.ide.actions.NewDummyProjectAction" internal="true"/>
-          <action id="OpenFile" class="com.intellij.ide.actions.OpenFileAction" icon="AllIcons.Actions.MenuOpen"/>
+          <action id="OpenFile" class="com.intellij.ide.actions.OpenFileAction" icon="AllIcons.Actions.MenuOpen">
+            <add-to-group group-id="ProjectWidget.Actions"/>
+          </action>
           <action id="AttachProject" class="com.intellij.platform.AttachProjectAction"/>
           <group id="$LRU" popup="true">
             <override-text place="GoToAction"/>
@@ -654,7 +660,14 @@
           <action id="EditorToggleShowGutterIcons" class="com.intellij.openapi.editor.actions.ToggleShowGutterIconsAction"/>
           <action id="EditorToggleShowIndentLines" class="com.intellij.openapi.editor.actions.ToggleShowIndentLinesAction"/>
           <action id="EditorToggleVisualFormattingLayer" class="com.intellij.formatting.visualLayer.ToggleVisualLayerAction"/>
+          <separator/>
+          <reference ref="EditorIncreaseFontSize"/>
+          <reference ref="EditorDecreaseFontSize"/>
         </group>
+        <separator/>
+        <reference ref="EditorIncreaseFontSizeGlobal"/>
+        <reference ref="EditorDecreaseFontSizeGlobal"/>
+        <reference ref="EditorResetFontSize"/>
 
         <action id="ToggleFocusMode" class="com.intellij.ide.actions.ToggleFocusViewModeAction" internal="true"/>
 
@@ -1145,6 +1158,8 @@
         <action id="SetCaretVisualAttributesInternalAction" internal="true" class="com.intellij.internal.SetCaretVisualAttributesAction"/>
         <action id="EditorRenderingBenchmarkAction" internal="true"
                 class="com.intellij.internal.performance.EditorRenderingBenchmarkAction"/>
+        <action id="ActionUpdatesBenchmarkAction" internal="true"
+                class="com.intellij.internal.performance.ActionUpdatesBenchmarkAction"/>
       </group>
       <group id="Internal.UI" popup="true">
         <group id="Internal.UI.Demos" popup="true">
@@ -1171,6 +1186,10 @@
         <action id="UiInspector" internal="true" class="com.intellij.internal.inspector.UiInspectorAction">
           <abbreviation value="uii"/>
           <mouse-shortcut keymap="$default" keystroke="control alt button1"/>
+        </action>
+        <action id="CopyUiLabel" internal="true" class="com.intellij.internal.inspector.CopyUiLabelAction">
+          <mouse-shortcut keymap="$default" keystroke="control alt button3"/>
+          <mouse-shortcut keymap="$default" keystroke="control alt shift button3"/>
         </action>
         <action id="ToggleUiInspectorHierarchyTrace" internal="true"
                 class="com.intellij.internal.inspector.UiInspectorAction$ToggleHierarchyTraceAction"/>

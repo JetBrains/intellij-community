@@ -103,8 +103,7 @@ internal class ParenPositionConvertorFactory(private val keepLineBreaks: Boolean
 
 internal object TabCharacterConvertor : Convertor<String, String> {
   override fun convertIncoming(value: String): String {
-    val lowercase = value.lowercase()
-    return when (lowercase) {
+    return when (val lowercase = value.lowercase()) {
       TAB_CHAR_MIXED,
       TAB_CHAR_TAB,
       TAB_CHAR_SPACE -> lowercase

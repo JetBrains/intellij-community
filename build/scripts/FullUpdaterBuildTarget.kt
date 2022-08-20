@@ -6,7 +6,6 @@ import org.jetbrains.intellij.build.IdeaProjectLoaderUtil
 object FullUpdaterBuildTarget {
   @JvmStatic
   fun main(args: Array<String>) {
-    val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass).toString()
-    IdeaCommunityBuilder(communityHome).buildFullUpdater()
+    IdeaCommunityBuilder(IdeaProjectLoaderUtil.guessCommunityHome(javaClass)).buildFullUpdater()
   }
 }

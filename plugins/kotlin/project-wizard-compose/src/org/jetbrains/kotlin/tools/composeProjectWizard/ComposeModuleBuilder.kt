@@ -254,7 +254,7 @@ class ComposeModuleBuilder : StarterModuleBuilder() {
         assets.add(GeneratorEmptyDirectory("desktop/src/jvmMain/resources"))
         assets.add(GeneratorEmptyDirectory("desktop/src/jvmTest/kotlin"))
         assets.add(GeneratorEmptyDirectory("desktop/src/jvmTest/resources"))
-        return assets;
+        return assets
     }
 
     override fun setupModule(module: Module) {

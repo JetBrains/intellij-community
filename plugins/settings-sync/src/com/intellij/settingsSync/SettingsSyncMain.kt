@@ -19,6 +19,8 @@ internal fun isSettingsSyncEnabledByKey(): Boolean =
 internal fun isSettingsSyncEnabledInSettings(): Boolean =
   SettingsSyncSettings.getInstance().syncEnabled
 
+internal const val SETTINGS_SYNC_STORAGE_FOLDER = "settingsSync"
+
 internal class SettingsSyncMain : Disposable {
 
   internal val controls: SettingsSyncControls
@@ -27,7 +29,7 @@ internal class SettingsSyncMain : Disposable {
   init {
     val application = ApplicationManager.getApplication()
     val appConfigPath = PathManager.getConfigDir()
-    val settingsSyncStorage = appConfigPath.resolve("settingsSync")
+    val settingsSyncStorage = appConfigPath.resolve(SETTINGS_SYNC_STORAGE_FOLDER)
     val remoteCommunicator = if (System.getProperty(SETTINGS_SYNC_LOCAL_SERVER_PATH_PROPERTY) != null)
       LocalDirSettingsSyncRemoteCommunicator(settingsSyncStorage)
     else CloudConfigServerCommunicator()

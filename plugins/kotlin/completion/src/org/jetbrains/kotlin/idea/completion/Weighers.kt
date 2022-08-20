@@ -117,14 +117,11 @@ object KindWeigher : LookupElementWeigher("kotlin.kind") {
     }
 
     override fun weigh(element: LookupElement): Comparable<*> {
-        val o = element.`object`
-
-        return when (o) {
+        return when (val o = element.`object`) {
             is PackageLookupObject -> Weight.packages
 
             is DeclarationLookupObject -> {
-                val descriptor = o.descriptor
-                when (descriptor) {
+                when (val descriptor = o.descriptor) {
                     is VariableDescriptor, is FunctionDescriptor -> Weight.callable
                     is ClassDescriptor -> if (descriptor.kind == ClassKind.ENUM_ENTRY) Weight.enumMember else Weight.default
                     else -> Weight.default
@@ -259,8 +256,7 @@ object PreferMatchingItemWeigher : LookupElementWeigher("kotlin.preferMatching",
         if (element.lookupString != prefix) {
             return Weight.notExactMatch
         } else {
-            val o = element.`object`
-            return when (o) {
+            return when (val o = element.`object`) {
                 is KeywordLookupObject -> Weight.keywordExactMatch
 
                 is DeclarationLookupObject -> {

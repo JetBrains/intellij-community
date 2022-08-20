@@ -1,6 +1,5 @@
 // "Create class 'Foo'" "false"
 // ACTION: Create extension function 'List<T>.Foo'
-// ACTION: Do not show return expression hints
 // ACTION: Rename reference
 // ERROR: Unresolved reference: Foo
 // WITH_STDLIB

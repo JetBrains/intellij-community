@@ -1,7 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
-import com.intellij.openapi.util.io.FileUtil
+
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.Compressor
 import groovy.transform.CompileStatic
@@ -16,8 +16,11 @@ import org.jetbrains.intellij.build.impl.compilation.cache.BuildTargetState
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.intellij.build.impl.compilation.cache.CompilationOutput
 import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
+import org.jetbrains.intellij.build.io.FileKt
 import org.jetbrains.jps.incremental.storage.ProjectStamps
 
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -53,8 +56,8 @@ final class PortableCompilationCacheUploader {
     this.forcedUpload = forcedUpload
   }
 
-  def upload() {
-    if (!sourcesStateProcessor.sourceStateFile.exists()) {
+  void upload() {
+    if (!Files.exists(sourcesStateProcessor.sourceStateFile)) {
       context.messages.warning("Compilation outputs doesn't contain source state file, " +
                                "please enable '${ProjectStamps.PORTABLE_CACHES_PROPERTY}' flag")
       return
@@ -90,29 +93,29 @@ final class PortableCompilationCacheUploader {
     }
   }
 
-  File buildJpsCacheZip() {
-    File dataStorageRoot = context.compilationData.dataStorageRoot
-    File zipFile = new File(dataStorageRoot.parent, commitHash)
+  Path buildJpsCacheZip() {
+    Path dataStorageRoot = context.compilationData.dataStorageRoot
+    Path zipFile = dataStorageRoot.parent.resolve(commitHash)
     zipBinaryData(zipFile, dataStorageRoot)
     return zipFile
   }
 
   private void uploadJpsCaches() {
-    File zipFile = buildJpsCacheZip()
+    Path zipFile = buildJpsCacheZip()
     String cachePath = "caches/$commitHash"
     if (forcedUpload || !uploader.isExist(cachePath, true)) {
       uploader.upload(cachePath, zipFile)
     }
-    File zipCopy = new File(syncFolder, cachePath)
-    move(zipFile, zipCopy)
+    Path zipCopy = Path.of(syncFolder, cachePath)
+    FileKt.moveFile(zipFile, zipCopy)
   }
 
   private void uploadMetadata() {
     String metadataPath = "metadata/$commitHash"
-    File sourceStateFile = sourcesStateProcessor.sourceStateFile
+    Path sourceStateFile = sourcesStateProcessor.sourceStateFile
     uploader.upload(metadataPath, sourceStateFile)
-    File sourceStateFileCopy = new File(syncFolder, metadataPath)
-    move(sourceStateFile, sourceStateFileCopy)
+    Path sourceStateFileCopy = Path.of(syncFolder, metadataPath)
+    FileKt.moveFile(sourceStateFile, sourceStateFileCopy)
   }
 
   private void uploadCompilationOutputs(Map<String, Map<String, BuildTargetState>> currentSourcesState,
@@ -127,26 +130,26 @@ final class PortableCompilationCacheUploader {
                                        NamedThreadPoolExecutor executor) {
     executor.submit {
       def sourcePath = compilationOutput.remotePath
-      def outputFolder = new File(compilationOutput.path)
-      if (!outputFolder.exists()) {
+      Path outputFolder = Path.of(compilationOutput.path)
+      if (!Files.exists(outputFolder)) {
         context.messages.warning("$outputFolder doesn't exist, was a respective module removed?")
         return
       }
-      if (!outputFolder.isDirectory()) {
+      if (!Files.isDirectory(outputFolder)) {
         context.messages.error("$outputFolder isn't a directory")
       }
-      File zipFile = new File(outputFolder.getParent(), compilationOutput.hash)
+      Path zipFile = outputFolder.parent.resolve(compilationOutput.hash)
       zipBinaryData(zipFile, outputFolder)
       if (!uploader.isExist(sourcePath)) {
         uploader.upload(sourcePath, zipFile)
         uploadedOutputsCount.incrementAndGet()
       }
-      File zipCopy = new File(syncFolder, sourcePath)
-      move(zipFile, zipCopy)
+      Path zipCopy = Path.of(syncFolder, sourcePath)
+      FileKt.moveFile(zipFile, zipCopy)
     }
   }
 
-  private void zipBinaryData(File zipFile, File dir) {
+  private void zipBinaryData(Path zipFile, Path dir) {
     new Compressor.Zip(zipFile).withCloseable { zip ->
       try {
         zip.addDirectory(dir)
@@ -189,21 +192,15 @@ final class PortableCompilationCacheUploader {
     }
   }
 
-  private File writeCommitHistory(CommitsHistory commitsHistory) {
-    File commitHistoryFile = new File(syncFolder, CommitsHistory.JSON_FILE)
-    commitHistoryFile.parentFile.mkdirs()
+  private Path writeCommitHistory(CommitsHistory commitsHistory) {
+    Path commitHistoryFile = Path.of(syncFolder, CommitsHistory.JSON_FILE)
+    Files.createDirectories(commitHistoryFile.parent)
     def json = commitsHistory.toJson()
-    commitHistoryFile.write(json)
+    Files.writeString(commitHistoryFile, json)
     context.messages.block(CommitsHistory.JSON_FILE) {
       context.messages.info(json)
     }
     return commitHistoryFile
-  }
-
-  private static move(File src, File dst) {
-    if (!src.exists()) throw new IllegalStateException("File $src doesn't exist.")
-    FileUtil.rename(src, dst)
-    if (!dst.exists()) throw new IllegalStateException("File $dst doesn't exist.")
   }
 
   @CompileStatic
@@ -226,7 +223,7 @@ final class PortableCompilationCacheUploader {
       return false
     }
 
-    String getAsString(@NotNull final String path) throws UploadException {
+    String getAsString(@NotNull final String path) {
       CloseableHttpResponse response = null
       try {
         String url = myServerUrl + StringUtil.trimStart(path, '/')
@@ -238,14 +235,14 @@ final class PortableCompilationCacheUploader {
         return EntityUtils.toString(response.getEntity(), ContentType.APPLICATION_OCTET_STREAM.charset)
       }
       catch (Exception e) {
-        throw new UploadException("Failed to GET $path: " + e.getMessage(), e)
+        throw new RuntimeException("Failed to GET $path: " + e.getMessage(), e)
       }
       finally {
         CloseStreamUtil.closeStream(response)
       }
     }
 
-    boolean upload(@NotNull final String path, @NotNull final File file) {
+    boolean upload(@NotNull final String path, @NotNull final Path file) {
       log("Uploading '$path'.")
       return super.upload(path, file, false)
     }

@@ -611,7 +611,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
     @Override
     public void mouseReleased(MouseEvent e) {
-      if (e.isConsumed() || !isActionClick(e) || isMultiSelectionEnabled() && UIUtil.isSelectionButtonDown(e)) return;
+      if (!isActionClick(e) || isMultiSelectionEnabled() && UIUtil.isSelectionButtonDown(e)) return;
       IdeEventQueue.getInstance().blockNextEvents(e); // sometimes, after popup close, MOUSE_RELEASE event delivers to other components
       Object selectedValue = myList.getSelectedValue();
       ListPopupStep<Object> listStep = getListStep();
@@ -760,25 +760,21 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
   @Override
   protected void onSpeedSearchPatternChanged() {
-    Object before = myList.getSelectedValue();
     myListModel.refilter();
     if (myListModel.getSize() > 0) {
       if (!(shouldUseStatistics() && autoSelectUsingStatistics())) {
-        selectBestMatch(before);
+        selectBestMatch();
       }
     }
   }
 
-  private void selectBestMatch(Object before) {
+  private void selectBestMatch() {
     int fullMatchIndex = myListModel.getClosestMatchIndex();
     if (fullMatchIndex != -1 && isSelectableAt(fullMatchIndex)) {
       myList.setSelectedIndex(fullMatchIndex);
     }
-
-    if (!myListModel.isVisible(before)) {
+    else {
       selectFirstSelectableItem();
-    } else {
-      myList.setSelectedValue(before, true);
     }
   }
 

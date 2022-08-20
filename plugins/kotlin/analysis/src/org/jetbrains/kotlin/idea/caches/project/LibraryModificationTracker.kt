@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.caches.project
 
@@ -75,7 +75,7 @@ class LibraryModificationTracker(project: Project) : SimpleModificationTracker()
         })
     }
 
-    private val projectFileIndex = ProjectFileIndex.SERVICE.getInstance(project)
+    private val projectFileIndex = ProjectFileIndex.getInstance(project)
 
     private inline fun processBulk(events: List<VFileEvent>, check: (VirtualFile) -> Boolean) {
         events.forEach { event ->

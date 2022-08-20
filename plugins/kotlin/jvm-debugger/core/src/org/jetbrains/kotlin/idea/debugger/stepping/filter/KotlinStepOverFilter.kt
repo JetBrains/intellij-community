@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.stepping.filter
 
 import com.intellij.debugger.engine.DebugProcess.JAVA_STRATUM
 import com.intellij.debugger.engine.DebugProcessImpl
-import com.intellij.debugger.engine.MethodFilter
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.openapi.project.Project
 import com.intellij.util.Range
@@ -17,7 +16,6 @@ import org.jetbrains.kotlin.idea.debugger.safeMethod
 import org.jetbrains.kotlin.idea.debugger.safeVariables
 import org.jetbrains.kotlin.idea.debugger.stepping.KotlinMethodFilter
 
-@Suppress("EqualsOrHashCode")
 data class StepOverCallerInfo(val declaringType: String, val methodName: String?, val methodSignature: String?) {
     companion object {
         fun from(location: Location): StepOverCallerInfo {

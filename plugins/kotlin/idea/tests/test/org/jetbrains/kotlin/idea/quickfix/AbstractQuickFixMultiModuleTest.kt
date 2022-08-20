@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -19,17 +19,14 @@ import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.TestMetadataUtil
 import org.junit.Assert
 import java.io.File
 import java.nio.file.Paths
 
 abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), QuickFixTest {
-    protected fun testDataFile(fileName: String): File = File(testDataPath, fileName)
+    protected fun dataFile(fileName: String): File = File(testDataPath, fileName)
 
-    protected fun testDataFile(): File = testDataFile(fileName())
+    protected fun dataFile(): File = dataFile(fileName())
 
     protected open fun fileName(): String = KotlinTestUtils.getTestDataFileName(this::class.java, this.name) ?: (getTestName(false) + ".kt")
 
@@ -38,7 +35,7 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
     }
 
     fun doTest(unused: String) {
-        setupMppProjectFromDirStructure(testDataFile())
+        setupMppProjectFromDirStructure(dataFile())
         val directiveFileText = project.findFileWithCaret().text
         withCustomCompilerOptions(directiveFileText, project, module) {
             doQuickFixTest(fileName())

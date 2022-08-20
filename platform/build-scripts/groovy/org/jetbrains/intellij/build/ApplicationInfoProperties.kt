@@ -22,7 +22,7 @@ interface ApplicationInfoProperties {
   val motto: String
   val companyName: String
   val shortCompanyName: String
-  val svgRelativePath: String
+  val svgRelativePath: String?
   val svgProductIcons: List<String>
   val patchesUrl: String
 

@@ -24,9 +24,9 @@ import javax.swing.SwingUtilities
 
 private const val PERSISTENT_SETTING_MUTED_KEY = "input.method.disabler.muted"
 private const val PERSISTENT_SETTING_AUTO_DISABLE_KEY = "input.method.disabler.auto"
-private const val NOTIFICATION_GROUP = "Input method disabler";
+private const val NOTIFICATION_GROUP = "Input method disabler"
 
-private var IS_NOTIFICATION_REGISTERED = false;
+private var IS_NOTIFICATION_REGISTERED = false
 
 // TODO: consider to detect IM-freezes and then notify user (offer to disable IM)
 
@@ -35,7 +35,7 @@ internal fun disableInputMethodsIfPossible() {
     return
   }
 
-  val properties = PropertiesComponent.getInstance();
+  val properties = PropertiesComponent.getInstance()
   val muted = properties.isTrueValue(PERSISTENT_SETTING_MUTED_KEY)
   if (muted) {
     val auto = properties.isTrueValue(PERSISTENT_SETTING_AUTO_DISABLE_KEY)
@@ -47,7 +47,7 @@ internal fun disableInputMethodsIfPossible() {
     return
   }
 
-  properties.setValue(PERSISTENT_SETTING_MUTED_KEY, true);
+  properties.setValue(PERSISTENT_SETTING_MUTED_KEY, true)
 
   // TODO: improve heuristic to return probability and if
   //  prob == 0: don't notify user, don't disable
@@ -71,8 +71,8 @@ internal fun disableInputMethodsIfPossible() {
   val message = IdeBundle.message("notification.content.input.method.disabler")
   val notification = Notification(NOTIFICATION_GROUP, title, message, NotificationType.WARNING)
   notification.addAction(DumbAwareAction.create(IdeBundle.message("action.text.disable.input.methods")) { e: AnActionEvent? ->
-    PropertiesComponent.getInstance().setValue(PERSISTENT_SETTING_AUTO_DISABLE_KEY, true);
-    disableInputMethdosImpl();
+    PropertiesComponent.getInstance().setValue(PERSISTENT_SETTING_AUTO_DISABLE_KEY, true)
+    disableInputMethdosImpl()
     notification.expire()
   })
   notification.notify(null)
@@ -109,7 +109,7 @@ private fun getLogger() = Logger.getInstance("#com.intellij.idea.ApplicationLoad
 private fun freeIMRecursively(c: Component) {
   val ic = c.getInputContext() // thread-safe
   if (ic != null)
-    ic.removeNotify(c); // thread-safe
+    ic.removeNotify(c) // thread-safe
 
   if (c !is Container) {
     return

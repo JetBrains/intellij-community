@@ -6,8 +6,9 @@ import com.intellij.codeInspection.InspectionEngine;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
+import com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection;
+import com.intellij.codeInspection.javaDoc.MissingJavadocInspection;
 import com.intellij.javadoc.JavadocNavigationDelegate;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -74,10 +75,12 @@ public class JavaDocCommentFixer implements DocCommentFixer {
                                        file.getTextRange(),
                                        true, false, new DaemonProgressIndicator(), Collections.singletonList(owner), PairProcessor.alwaysTrue());
 
+    List<LocalInspectionToolWrapper> toolWrappers = List.of(
+      new LocalInspectionToolWrapper(getMissingJavadocInspection()), new LocalInspectionToolWrapper(getJavadocDeclarationInspection())
+    );
     Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> commonProblems =
-      InspectionEngine.inspectElements(Collections.singletonList(new LocalInspectionToolWrapper(getDocLocalInspection())), file,
-                                       file.getTextRange(),
-                                       true, true, new DaemonProgressIndicator(), Collections.singletonList(owner), PairProcessor.alwaysTrue());
+      InspectionEngine.inspectElements(toolWrappers, file, file.getTextRange(), true, true,
+                                       new DaemonProgressIndicator(), Collections.singletonList(owner), PairProcessor.alwaysTrue());
 
     if (!referenceProblems.isEmpty()) {
       fixReferenceProblems(ContainerUtil.flatten(referenceProblems.values()), project);
@@ -92,27 +95,32 @@ public class JavaDocCommentFixer implements DocCommentFixer {
   }
 
   @NotNull
-  private static JavaDocLocalInspection getDocLocalInspection() {
-    JavaDocLocalInspection localInspection = new JavaDocLocalInspection();
+  private static MissingJavadocInspection getMissingJavadocInspection() {
+    MissingJavadocInspection localInspection = new MissingJavadocInspection();
 
     //region visibility
-    localInspection.TOP_LEVEL_CLASS_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = PsiModifier.PRIVATE;
-    localInspection.INNER_CLASS_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = PsiModifier.PRIVATE;
-    localInspection.FIELD_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = PsiModifier.PRIVATE;
-    localInspection.METHOD_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = PsiModifier.PRIVATE;
+    localInspection.TOP_LEVEL_CLASS_SETTINGS.MINIMAL_VISIBILITY = PsiModifier.PRIVATE;
+    localInspection.INNER_CLASS_SETTINGS.MINIMAL_VISIBILITY = PsiModifier.PRIVATE;
+    localInspection.FIELD_SETTINGS.MINIMAL_VISIBILITY = PsiModifier.PRIVATE;
+    localInspection.METHOD_SETTINGS.MINIMAL_VISIBILITY = PsiModifier.PRIVATE;
     //endregion
-
-    localInspection.setIgnoreEmptyDescriptions(true);
 
     //region class type arguments
-    if (!localInspection.TOP_LEVEL_CLASS_OPTIONS.REQUIRED_TAGS.contains(PARAM_TAG)) {
-      localInspection.TOP_LEVEL_CLASS_OPTIONS.REQUIRED_TAGS += PARAM_TAG;
+    if (!localInspection.TOP_LEVEL_CLASS_SETTINGS.isTagRequired(PARAM_TAG)) {
+      localInspection.TOP_LEVEL_CLASS_SETTINGS.setTagRequired(PARAM_TAG, true);
     }
-    if (!localInspection.INNER_CLASS_OPTIONS.REQUIRED_TAGS.contains(PARAM_TAG)) {
-      localInspection.INNER_CLASS_OPTIONS.REQUIRED_TAGS += PARAM_TAG;
+    if (!localInspection.INNER_CLASS_SETTINGS.isTagRequired(PARAM_TAG)) {
+      localInspection.INNER_CLASS_SETTINGS.setTagRequired(PARAM_TAG, true);
     }
     //endregion
 
+    return localInspection;
+  }
+
+  @NotNull
+  private static JavadocDeclarationInspection getJavadocDeclarationInspection() {
+    JavadocDeclarationInspection localInspection = new JavadocDeclarationInspection();
+    localInspection.setIgnoreEmptyDescriptions(true);
     return localInspection;
   }
 

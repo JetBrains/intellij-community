@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author: Dennis.Ushakov
+ * @author Dennis.Ushakov
  */
 public class PyPullUpHandler extends PyClassRefactoringHandler {
   @Override

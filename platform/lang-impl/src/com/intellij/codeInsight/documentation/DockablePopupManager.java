@@ -165,7 +165,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
     ContentManager contentManager = toolWindow.getContentManager();
     String displayName = element != null ? getTitle(element) : "";
-    contentManager.addContent(ContentFactory.SERVICE.getInstance().createContent(component, displayName, false));
+    contentManager.addContent(ContentFactory.getInstance().createContent(component, displayName, false));
     contentManager.addContentManagerListener(new ContentManagerListener() {
       @Override
       public void contentRemoved(@NotNull ContentManagerEvent event) {

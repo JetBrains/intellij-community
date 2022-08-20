@@ -70,7 +70,7 @@ import com.jetbrains.python.debugger.PyStackFrameInfo;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
-import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.testing.PyTestsSharedKt;
 import org.jetbrains.annotations.NotNull;
@@ -122,7 +122,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     myTestMode = testMode;
     isShowVars = PyConsoleOptions.getInstance(project).isShowVariableByDefault();
     VirtualFile virtualFile = getVirtualFile();
-    PythonLanguageLevelPusher.specifyFileLanguageLevel(virtualFile, PythonSdkType.getLanguageLevelForSdk(sdk));
+    PythonLanguageLevelPusher.specifyFileLanguageLevel(virtualFile, PySdkUtil.getLanguageLevelForSdk(sdk));
     virtualFile.putUserData(CONSOLE_KEY, true);
     // Mark editor as console one, to prevent autopopup completion
     getConsoleEditor().putUserData(PythonConsoleAutopopupBlockingHandler.REPL_KEY, new Object());
@@ -156,28 +156,28 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
       myIsToolwindowHorizontal = isToolwindowHorizontal(PythonConsoleToolWindow.getInstance(getProject()).getToolWindow());
       showVariables((PydevConsoleCommunication)communication);
     }
-    if (RegistryManager.getInstance().is("python.console.CommandQueue")){
+    if (RegistryManager.getInstance().is("python.console.CommandQueue")) {
       if (communication instanceof PydevConsoleCommunication || communication instanceof PythonDebugConsoleCommunication) {
         myCommandQueuePanel.setCommunication(communication);
         ApplicationManager.getApplication().getService(CommandQueueForPythonConsoleService.class)
           .addListener(communication, new CommandQueueListener() {
-          @Override
-          public void removeCommand(ConsoleCommunication.@NotNull ConsoleCodeFragment command) {
-            ApplicationManager.getApplication().invokeLater(() -> {
-              myCommandQueuePanel.removeCommand(command);
-            });
-          }
+            @Override
+            public void removeCommand(ConsoleCommunication.@NotNull ConsoleCodeFragment command) {
+              ApplicationManager.getApplication().invokeLater(() -> {
+                myCommandQueuePanel.removeCommand(command);
+              });
+            }
 
-          @Override
-          public void addCommand(ConsoleCommunication.@NotNull ConsoleCodeFragment command) {
-            myCommandQueuePanel.addCommand(command);
-          }
+            @Override
+            public void addCommand(ConsoleCommunication.@NotNull ConsoleCodeFragment command) {
+              myCommandQueuePanel.addCommand(command);
+            }
 
-          @Override
-          public void removeAll() {
-            myCommandQueuePanel.removeAllCommands();
-          }
-        });
+            @Override
+            public void removeAll() {
+              myCommandQueuePanel.removeAllCommands();
+            }
+          });
       }
     }
   }
@@ -266,7 +266,8 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
         if (code != null) {
           if (RegistryManager.getInstance().is("python.console.CommandQueue")) {
             executeInConsole(code);
-          } else {
+          }
+          else {
             ProgressManager.getInstance().run(new Task.Backgroundable(null, PyBundle.message("console.executing.code.in.console"), true) {
               @Override
               public void run(@NotNull final ProgressIndicator indicator) {
@@ -303,11 +304,9 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
         PsiDocumentManager.getInstance(getProject()).commitDocument(document);
         PsiFile psiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
         if (psiFile != null) {
-          CommandProcessor.getInstance().runUndoTransparentAction(() ->
-                                                                    CodeStyleManager.getInstance(getProject())
-                                                                                    .adjustLineIndent(psiFile,
-                                                                                                      new TextRange(0, psiFile
-                                                                                                        .getTextLength())));
+          CommandProcessor.getInstance().runUndoTransparentAction(
+            () -> CodeStyleManager.getInstance(getProject()).adjustLineIndent(psiFile, new TextRange(0, psiFile.getTextLength()))
+          );
         }
         int oldOffset = getConsoleEditor().getCaretModel().getOffset();
         getConsoleEditor().getCaretModel().moveToOffset(document.getTextLength());
@@ -330,7 +329,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     }
   }
 
-  public void executeStatement(@NotNull String statement, @NotNull final Key attributes) {
+  public void executeStatement(@NotNull String statement, @NotNull Key<?> attributes) {
     print(statement, outputTypeForAttributes(attributes));
     myExecuteActionHandler.processLine(statement);
   }
@@ -339,7 +338,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     super.print(text, outputType);
   }
 
-  public void print(String text, @NotNull final Key attributes) {
+  public void print(@NotNull String text, @NotNull Key<?> attributes) {
     print(text, outputTypeForAttributes(attributes));
   }
 
@@ -417,7 +416,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     }
   }
 
-  public ConsoleViewContentType outputTypeForAttributes(Key attributes) {
+  public @NotNull ConsoleViewContentType outputTypeForAttributes(@NotNull Key<?> attributes) {
     final ConsoleViewContentType outputType;
     if (attributes == ProcessOutputTypes.STDERR) {
       outputType = ConsoleViewContentType.ERROR_OUTPUT;
@@ -653,7 +652,6 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   @Nullable
   private static String getConsoleDisplayName(@NotNull Project project) {
     ToolWindow window = PythonConsoleToolWindow.getInstance(project).getToolWindow();
-    if (window == null) return null;
     final Content content = window.getContentManager().getSelectedContent();
     if (content == null) return null;
     return content.getDisplayName();

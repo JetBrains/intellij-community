@@ -18,7 +18,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion;
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightTestCase;
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
@@ -52,11 +51,10 @@ public abstract class AbstractConfigureProjectByChangingFileTest<C extends Kotli
 
         prepareModuleInfoFile(beforeFile);
 
-        String versionFromFile = InTextDirectivesUtils.findStringWithPrefixes(getFile().getText(), "// VERSION:");
+        String rawVersion = InTextDirectivesUtils.findStringWithPrefixes(getFile().getText(), "// VERSION:");
+        assert rawVersion != null : "Directive with configured Kotlin version ('//VERSION: ') should be specified";
 
-        IdeKotlinVersion version = versionFromFile != null
-                         ? IdeKotlinVersion.get(versionFromFile)
-                         : KotlinPluginLayout.getInstance().getStandaloneCompilerVersion();
+        IdeKotlinVersion version = IdeKotlinVersion.get(rawVersion);
 
         NotificationMessageCollector collector = NotificationMessageCollectorKt.createConfigureKotlinNotificationCollector(getProject());
 
@@ -64,10 +62,7 @@ public abstract class AbstractConfigureProjectByChangingFileTest<C extends Kotli
 
         collector.showNotification();
 
-        KotlinTestUtils.assertEqualsToFile(
-                new File(getTestDataDirectory(), afterFile),
-                getFile().getText().replace(version.getRawVersion(), "$VERSION$")
-        );
+        KotlinTestUtils.assertEqualsToFile(new File(getTestDataDirectory(), afterFile), getFile().getText());
 
         checkModuleInfoFile(beforeFile);
     }
@@ -83,7 +78,7 @@ public abstract class AbstractConfigureProjectByChangingFileTest<C extends Kotli
 
             PsiFile[] moduleInfoFiles =
                     FilenameIndex.getFilesByName(getProject(), PsiJavaModule.MODULE_INFO_FILE, GlobalSearchScope.allScope(getProject()));
-            assertTrue(PsiJavaModule.MODULE_INFO_FILE + " should be present in index", moduleInfoFiles.length == 1);
+            assertEquals(PsiJavaModule.MODULE_INFO_FILE + " should be present in index", 1, moduleInfoFiles.length);
             moduleInfoFile = moduleInfoFiles[0];
         }
     }

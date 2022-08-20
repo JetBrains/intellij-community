@@ -34,19 +34,19 @@ class ExternalSystemSyncActionsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("build.gradle.import", 5)
+    val GROUP = EventLogGroup("build.gradle.import", 5)
 
     val activityIdField = EventFields.Long("ide_activity_id")
     val importPhaseField = EventFields.Enum<Phase>("phase")
 
-    private val syncStartedEvent = GROUP.registerEvent("gradle.sync.started", activityIdField)
-    private val syncFinishedEvent = GROUP.registerEvent("gradle.sync.finished", activityIdField, Boolean("sync_successful"))
-    private val phaseStartedEvent = GROUP.registerEvent("phase.started", activityIdField, importPhaseField)
-    private val phaseFinishedEvent = GROUP.registerVarargEvent("phase.finished",
-                                                               activityIdField,
-                                                               importPhaseField,
-                                                               DurationMs,
-                                                               Int("error_count"))
+    val syncStartedEvent = GROUP.registerEvent("gradle.sync.started", activityIdField)
+    val syncFinishedEvent = GROUP.registerEvent("gradle.sync.finished", activityIdField, Boolean("sync_successful"))
+    val phaseStartedEvent = GROUP.registerEvent("phase.started", activityIdField, importPhaseField)
+    val phaseFinishedEvent = GROUP.registerVarargEvent("phase.finished",
+                                                       activityIdField,
+                                                       importPhaseField,
+                                                       DurationMs,
+                                                       Int("error_count"))
 
     val errorField = StringValidatedByCustomRule("error", ClassNameRuleValidator::class.java)
     val severityField = EventFields.String("severity", listOf("fatal", "warning"))

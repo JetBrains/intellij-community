@@ -2,4 +2,4 @@ UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolve
         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = append) -> Decompiled_Method: append
     UBlockExpression -> UQualifiedReferenceExpression -> Decompiled_Method: let
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = let) -> Decompiled_Method: let
-        UReturnExpression -> USimpleNameReferenceExpression (identifier = it) -> null: null
+        UReturnExpression -> USimpleNameReferenceExpression (identifier = it) -> Kotlin_Light_Value_Parameter: it

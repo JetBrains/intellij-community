@@ -77,6 +77,8 @@ class KotlinCallChainHintsProvider : AbstractCallChainHintsProvider<KtQualifiedE
             .getInlayHintsTypeRenderer(context, expression as? KtElement ?: error("Only Kotlin psi are possible"))
             .renderTypeIntoInlayInfo(this)
         return KotlinAbstractHintsProvider.getInlayPresentationForInlayInfoDetails(
+            expression,
+            null,
             InlayInfoDetails(InlayInfo("", expression.textRange.endOffset), inlayInfoDetails),
             factory,
             project,

@@ -4,7 +4,6 @@ package com.intellij.openapi.project;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.InternalFileType;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
@@ -42,8 +41,7 @@ public final class ProjectCoreUtil {
   @ApiStatus.Internal
   @Nullable
   public static Project theOnlyOpenProject() {
-    // piggyback Disposer.isDebugMode() to convey ApplicationManagerEx.isInStressTest info
-    return Disposer.isDebugMode() ? null : theOnlyProject;
+    return theOnlyProject;
   }
 
   /**

@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere.ml.model
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService
+import com.intellij.ide.actions.searcheverywhere.ml.model.local.LocalRankingModelProviderUtil
 import com.intellij.internal.ml.DecisionFunction
 import com.intellij.internal.ml.FeaturesInfo
 import com.intellij.internal.ml.catboost.CatBoostResourcesModelMetadataReader

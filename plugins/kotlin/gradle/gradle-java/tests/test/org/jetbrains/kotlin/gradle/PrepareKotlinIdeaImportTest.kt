@@ -1,11 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle
 
-import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.KotlinVersion
 import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
-import org.jetbrains.kotlin.idea.codeInsight.gradle.compareTo
-import org.jetbrains.kotlin.idea.codeInsight.gradle.parseKotlinVersion
 import org.jetbrains.kotlin.idea.gradleTooling.PrepareKotlinIdeImportTaskModel
+import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -14,11 +12,12 @@ import kotlin.test.assertNull
 
 class PrepareKotlinIdeaImportTest : MultiplePluginVersionGradleImportingTestCase() {
 
-    private val KotlinVersion.isPrepareKotlinIdeaImportSupportExpected: Boolean
-        get() = this >= parseKotlinVersion("1.6.255-SNAPSHOT")
+    private val KotlinToolingVersion.isPrepareKotlinIdeaImportSupportExpected: Boolean
+        get() = this >= KotlinToolingVersion("1.6.255-SNAPSHOT")
+
 
     @Test
-    @PluginTargetVersions(pluginVersion = "1.4+")
+    @PluginTargetVersions(pluginVersion = "1.5+")
     fun testPrepareKotlinIdeaImport() {
         configureByFiles()
 

@@ -100,7 +100,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
   private void checkComment(@Nullable PsiDocComment comment, PsiElement context, ProblemsHolder holder, boolean isOnTheFly) {
     if (comment == null) return;
 
-    JavadocManager javadocManager = JavadocManager.SERVICE.getInstance(holder.getProject());
+    JavadocManager javadocManager = JavadocManager.getInstance(holder.getProject());
     comment.accept(new JavaElementVisitor() {
       @Override
       public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
@@ -202,7 +202,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
         PsiDocTag[] tags = tag.getContainingComment().getTags();
         Set<String> unboundParams = new HashSet<>();
         for (PsiParameter parameter : parameters) {
-          if (!JavadocHighlightUtil.hasTagForParameter(tags, parameter)) {
+          if (!MissingJavadocInspection.hasTagForParameter(tags, parameter)) {
             unboundParams.add(parameter.getName());
           }
         }
@@ -252,7 +252,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     if (!(resolved instanceof PsiMember)) {
       return true;
     }
-    if (!PsiResolveHelper.SERVICE.getInstance(resolved.getProject()).isAccessible((PsiMember)resolved, context, null)) {
+    if (!PsiResolveHelper.getInstance(resolved.getProject()).isAccessible((PsiMember)resolved, context, null)) {
       return false;
     }
     VirtualFile file = PsiUtilCore.getVirtualFile(resolved);

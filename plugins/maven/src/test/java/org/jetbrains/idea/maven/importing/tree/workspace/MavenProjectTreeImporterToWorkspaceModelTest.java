@@ -198,4 +198,40 @@ public class MavenProjectTreeImporterToWorkspaceModelTest extends MavenMultiVers
     assertModules("project", "project.m1", "project.m1.main", "project.m1.test");
     assertContentRoots("project.m1.main", getProjectPath() + "/m1/src/main", getProjectPath() + "/custom-sources");
   }
+
+  @Test
+  public void testPreservingDependenciesOrderWithTestDependencies() {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>a</groupId>" +
+                  "    <artifactId>compile</artifactId>" +
+                  "    <version>1</version>" +
+                  "  </dependency>" +
+                  "  <dependency>" +
+                  "    <groupId>a</groupId>" +
+                  "    <artifactId>test</artifactId>" +
+                  "    <version>1</version>" +
+                  "    <scope>test</scope>" +
+                  "  </dependency>" +
+                  "  <dependency>" +
+                  "    <groupId>a</groupId>" +
+                  "    <artifactId>runtime</artifactId>" +
+                  "    <version>1</version>" +
+                  "    <scope>runtime</scope>" +
+                  "  </dependency>" +
+                  "  <dependency>" +
+                  "    <groupId>a</groupId>" +
+                  "    <artifactId>compile-2</artifactId>" +
+                  "    <version>1</version>" +
+                  "  </dependency>" +
+                  "</dependencies>");
+
+    assertModules("project");
+    assertModuleLibDeps("project",
+                        "Maven: a:compile:1", "Maven: a:test:1", "Maven: a:runtime:1", "Maven: a:compile-2:1");
+  }
 }

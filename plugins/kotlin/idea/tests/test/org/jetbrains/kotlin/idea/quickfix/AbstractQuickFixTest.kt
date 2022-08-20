@@ -298,7 +298,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
     }
 
     protected open fun checkAvailableActionsAreExpected(actions: List<IntentionAction>) {
-        DirectiveBasedActionUtils.checkAvailableActionsAreExpected(testDataFile(), actions)
+        DirectiveBasedActionUtils.checkAvailableActionsAreExpected(dataFile(), actions)
     }
 
     protected open fun checkForUnexpectedErrors() = DirectiveBasedActionUtils.checkForUnexpectedErrors(myFixture.file as KtFile)

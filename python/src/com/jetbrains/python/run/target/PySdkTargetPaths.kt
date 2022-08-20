@@ -13,7 +13,7 @@ import com.intellij.remote.RemoteMappingsManager
 import com.intellij.remote.RemoteSdkAdditionalData
 import com.jetbrains.python.console.PyConsoleOptions
 import com.jetbrains.python.console.PyConsoleOptions.PyConsoleSettings
-import com.jetbrains.python.console.PydevConsoleRunner
+import com.jetbrains.python.console.getPathMapper
 import com.jetbrains.python.remote.PyRemotePathMapper
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager.appendBasicMappings
@@ -65,11 +65,20 @@ fun getTargetPathForPythonConsoleExecution(targetEnvironmentRequest: TargetEnvir
   return targetPath?.let { constant(it) } ?: targetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath)
 }
 
+fun getTargetPathForPythonConsoleExecution(project: Project,
+                                           sdk: Sdk?,
+                                           pathMapper: PyRemotePathMapper?,
+                                           localPath: String): TargetEnvironmentFunction<String> {
+  val targetPath = pathMapper?.convertToRemoteOrNull(localPath)
+                   ?: getPythonConsolePathMapper(project, sdk)?.convertToRemoteOrNull(localPath)
+  return targetPath?.let { constant(it) } ?: getTargetEnvironmentValueForLocalPath(localPath)
+}
+
 /**
  * Note that the returned mapper includes the path mappings collected by the execution of [appendBasicMappings].
  */
 private fun getPythonConsolePathMapper(project: Project, sdk: Sdk?): PyRemotePathMapper? =
-  PydevConsoleRunner.getPathMapper(project, sdk, PyConsoleOptions.getInstance(project).pythonConsoleSettings)
+  getPathMapper(project, sdk, PyConsoleOptions.getInstance(project).pythonConsoleSettings)
 
 private fun PyRemotePathMapper.convertToRemoteOrNull(localPath: String): String? =
   takeIf { it.canReplaceLocal(localPath) }?.convertToRemote(localPath)

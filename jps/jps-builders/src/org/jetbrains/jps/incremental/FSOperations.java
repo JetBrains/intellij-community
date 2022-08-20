@@ -439,6 +439,8 @@ public final class FSOperations {
     try {
       return Files.getLastModifiedTime(path).toMillis();
     }
+    catch (NoSuchFileException ignored) {
+    }
     catch (IOException e) {
       LOG.warn(e);
     }

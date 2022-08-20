@@ -1,5 +1,5 @@
 buildscript {
-  ext.some = '0.0.1'
+  ext.some = '1.1.10'
 
   repositories {
     mavenCentral()

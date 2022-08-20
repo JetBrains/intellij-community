@@ -88,7 +88,7 @@ private class KotlinPluginLayoutWhenRunFromSources : KotlinPluginLayout() {
 
     override val kotlinc: File by lazy {
         val distJar = KotlinMavenUtils.findArtifactOrFail(KOTLIN_MAVEN_GROUP_ID, KOTLIN_DIST_ARTIFACT_ID, bundledJpsVersion)
-        lazyUnpackJar(distJar.toFile(), KotlinArtifacts.KOTLIN_DIST_LOCATION_PREFIX.resolve("kotlinc-dist-for-ide-from-sources"))
+        LazyZipUnpacker(KotlinArtifacts.KOTLIN_DIST_LOCATION_PREFIX.resolve("kotlinc-dist-for-ide-from-sources")).lazyUnpack(distJar.toFile())
     }
 
     override val jpsPluginJar: File by lazy {

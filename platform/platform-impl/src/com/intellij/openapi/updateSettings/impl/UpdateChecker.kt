@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.execution.process.ProcessIOExecutorService
@@ -80,7 +80,6 @@ object UpdateChecker {
    * Adding a plugin ID to this collection allows to exclude a plugin from a regular update check.
    * Has no effect on non-bundled plugins.
    */
-  @Suppress("MemberVisibilityCanBePrivate")
   val excludedFromUpdateCheckPlugins: HashSet<String> = hashSetOf()
 
   init {

@@ -13,6 +13,7 @@ import com.intellij.tracing.Tracer;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.io.DataOutputStream;
+import com.intellij.util.io.StorageLockContext;
 import io.netty.channel.Channel;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -23,7 +24,10 @@ import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.cache.loader.JpsOutputLoaderManager;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.MessageHandler;
+import org.jetbrains.jps.incremental.RebuildRequestedException;
+import org.jetbrains.jps.incremental.TargetTypeRegistry;
+import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.ProjectStamps;
@@ -239,9 +243,14 @@ final class BuildSession implements Runnable, CanceledStatus {
       error = e;
     }
     finally {
+      logStorageDiagnostic();
       finishBuild(error, hasErrors.get(), doneSomething.get());
       Disposer.dispose(memWatcher);
     }
+  }
+
+  private static void logStorageDiagnostic() {
+    LOG.info("FilePageCache stats: " + StorageLockContext.getStatistics().dumpInfoImportantForBuildProcess());
   }
 
   private void runBuild(final MessageHandler msgHandler, CanceledStatus cs) throws Throwable{

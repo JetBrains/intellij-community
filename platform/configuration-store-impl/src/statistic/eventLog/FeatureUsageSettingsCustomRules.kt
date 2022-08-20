@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore.statistic.eventLog
 
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
@@ -22,7 +22,6 @@ class SettingsComponentNameValidator : CustomValidationRule() {
   }
 
   private fun isComponentName(data: String, context: EventContext): Boolean {
-    @Suppress("HardCodedStringLiteral")
     return context.eventData.containsKey("component") && data == context.eventData["component"]
   }
 }
@@ -31,7 +30,6 @@ class SettingsValueValidator : CustomValidationRule() {
   override fun getRuleId(): String = "setting_value"
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
-    @Suppress("HardCodedStringLiteral")
     val componentName = context.eventData["component"] as? String ?: return REJECTED
     val optionName = context.eventData["name"] as? String ?: return REJECTED
     if (!isComponentNameWhitelisted(componentName) || !isComponentOptionNameWhitelisted(optionName)) return REJECTED

@@ -366,7 +366,7 @@ public class ChangeModifierIntention extends BaseElementAtCaretIntentionAction {
       .run(() -> {
         VisibilityUtil.setVisibility(modifierList, modifier.toPsiModifier());
         if (modifier != AccessModifier.PACKAGE_LOCAL) {
-          final PsiElement whitespace = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText(" ");
+          final PsiElement whitespace = PsiParserFacade.getInstance(project).createWhiteSpaceFromText(" ");
           final PsiElement sibling = modifierList.getNextSibling();
           if (sibling instanceof PsiWhiteSpace) {
             sibling.replace(whitespace);

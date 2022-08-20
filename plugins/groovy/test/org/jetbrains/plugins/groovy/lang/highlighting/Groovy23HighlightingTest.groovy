@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil
@@ -23,7 +23,7 @@ class Groovy23HighlightingTest extends GrHighlightingTestBase {
   final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_2_3
 
   void testSam1() {
-    testHighlighting('''
+    doTestHighlighting('''
 interface Action<T, X> {
     void execute(T t, X x)
 }
@@ -39,7 +39,7 @@ def foo() {
   }
 
   void testSam2() {
-    testHighlighting('''
+    doTestHighlighting('''
 interface Action<T> {
     void execute(T t)
 }
@@ -55,7 +55,7 @@ def foo() {
   }
 
   void testSam3() {
-    testHighlighting('''
+    doTestHighlighting('''
  interface Action<T, X> {
     void execute(T t, X x)
 }
@@ -72,7 +72,7 @@ def foo() {
   }
 
   void 'test default parameter in trait methods'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 trait T {
   abstract foo(x = 3);
   def bar(y = 6) {}
@@ -81,7 +81,7 @@ trait T {
   }
 
   void 'test concrete trait property'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 trait A {
   def foo
 }
@@ -90,13 +90,13 @@ class B implements A {}
   }
 
   void 'test abstract trait property'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 trait A {
   abstract foo
 }
 <error descr="Method 'getFoo' is not implemented">class B implements A</error> {}
 '''
-    testHighlighting '''\
+    doTestHighlighting '''\
 trait A {
   abstract foo
 }
@@ -125,7 +125,7 @@ trait T {
   }
 
   void 'test trait with method with default parameters'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 trait A {
   def foo(a, b = null, c = null) {}
 }
@@ -134,7 +134,7 @@ class B implements A {}
   }
 
   void 'test trait with abstract method with default parameters'() {
-    testHighlighting '''
+    doTestHighlighting '''
 trait A {
   abstract foo(a, b = null, c = null)
 }
@@ -146,7 +146,7 @@ trait A {
   }
 
   void 'test trait with middle interface'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 trait T<E> {
     E foo() { null }
 }
@@ -184,7 +184,7 @@ new TT().fo<caret>o()
   }
 
   void 'test non-static inner class in trait not allowed'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 interface I {}
 
 trait T {
@@ -203,7 +203,7 @@ trait T {
   }
 
   void 'test static trait members not resolved in direct access'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 trait StaticsContainer {
   public static boolean CALLED = false
   static void init() { CALLED = true }
@@ -230,7 +230,7 @@ public class Consumer {
   }
 
   void 'test class initializers in traits'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 trait T {
   static {
   }
@@ -253,7 +253,7 @@ class A {
   }
 
   void 'test static modifier on toplevel definition (not trait) is not allowed'() {
-    testHighlighting '''\
+    doTestHighlighting '''\
 <error descr="Modifier 'static' not allowed here">static</error> class A {}
 <error descr="Modifier 'static' not allowed here">static</error> interface I {}
 static trait T {}
@@ -261,7 +261,7 @@ static trait T {}
   }
 
   void 'test default method in interfaces'() {
-    testHighlighting '''
+    doTestHighlighting '''
 import groovy.transform.CompileStatic
 
 interface I {
@@ -280,7 +280,7 @@ interface I2 {
   }
 
   void 'test default modifier'() {
-    testHighlighting '''
+    doTestHighlighting '''
 <error>default</error> interface I {
 }
 
@@ -299,7 +299,7 @@ class C {
   }
 
   void 'test final method in trait'() {
-    testHighlighting '''
+    doTestHighlighting '''
 trait ATrain {
     final String getName() { "Name" }
 }'''

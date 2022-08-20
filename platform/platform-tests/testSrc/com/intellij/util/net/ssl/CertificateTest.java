@@ -28,8 +28,12 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 
+import javax.net.ssl.X509TrustManager;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
+import java.util.List;
 
 import static com.intellij.util.net.ssl.ConfirmingTrustManager.MutableTrustManager;
 
@@ -96,15 +100,41 @@ public class CertificateTest extends LightPlatformTestCase {
     doTest(TRUSTED_CERT_CN, false);
   }
 
+  public void testAdditionalSystemTrustManager() throws Exception {
+    Assert.assertTrue(myTrustManager.removeCertificate(myAuthorityCertificate));
+
+    Assert.assertFalse(myTrustManager.containsCertificate(TRUSTED_CERT_CN));
+    assertEquals(0, myTrustManager.getCertificates().size());
+    List<X509Certificate> acceptedIssuersBefore = Arrays.asList(myCertificateManager.getTrustManager().getAcceptedIssuers());
+    Assert.assertFalse(acceptedIssuersBefore.contains(myAuthorityCertificate));
+
+    X509TrustManager customTrustManager = ConfirmingTrustManager.createTrustManagerFromCertificates(
+      List.of(myAuthorityCertificate)
+    );
+
+    myCertificateManager.getTrustManager().addSystemTrustManager(customTrustManager);
+    try {
+      List<X509Certificate> acceptedIssuersAfter = Arrays.asList(myCertificateManager.getTrustManager().getAcceptedIssuers());
+      Assert.assertTrue(acceptedIssuersAfter.contains(myAuthorityCertificate));
+
+      doTestHttpCall("https://" + TRUSTED_CERT_CN);
+
+      // No certificates were added to mutable store
+      assertEquals(0, myTrustManager.getCertificates().size());
+      Assert.assertFalse(myTrustManager.containsCertificate(TRUSTED_CERT_CN));
+    }
+    finally {
+      myCertificateManager.getTrustManager().removeSystemTrustManager(customTrustManager);
+    }
+  }
 
   private void doTest(@NonNls String alias, boolean willBeAdded) throws Exception {
     doTest("https://" + alias, alias, willBeAdded);
   }
 
   private void doTest(@NotNull String url, @NotNull String alias, boolean added) throws Exception {
-    try (CloseableHttpResponse response = myClient.execute(new HttpGet(url))) {
-      assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
-    }
+    doTestHttpCall(url);
+
     if (added) {
       assertTrue(myTrustManager.containsCertificate(alias));
       assertEquals(2, myTrustManager.getCertificates().size());
@@ -112,6 +142,12 @@ public class CertificateTest extends LightPlatformTestCase {
     else {
       // only CA certificate
       assertEquals(1, myTrustManager.getCertificates().size());
+    }
+  }
+
+  private void doTestHttpCall(@NotNull String url) throws Exception {
+    try (CloseableHttpResponse response = myClient.execute(new HttpGet(url))) {
+      assertEquals(response.getStatusLine().getStatusCode(), HttpStatus.SC_OK);
     }
   }
 

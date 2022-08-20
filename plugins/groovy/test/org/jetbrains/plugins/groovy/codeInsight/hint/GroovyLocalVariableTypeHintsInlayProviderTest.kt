@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInsight.hint
 
 import com.intellij.testFramework.LightProjectDescriptor
@@ -13,10 +13,10 @@ class GroovyLocalVariableTypeHintsInlayProviderTest : InlayHintsProviderTestCase
   }
 
   private fun testTypeHints(text: String, drawHintBefore: Boolean = false) {
-    testProvider("test.groovy",
-                 text,
-                 GroovyLocalVariableTypeHintsInlayProvider(),
-                 GroovyLocalVariableTypeHintsInlayProvider.Settings(insertBeforeIdentifier = drawHintBefore))
+    doTestProvider("test.groovy",
+                   text,
+                   GroovyLocalVariableTypeHintsInlayProvider(),
+                   GroovyLocalVariableTypeHintsInlayProvider.Settings(insertBeforeIdentifier = drawHintBefore))
   }
 
   fun `test basic cases`() {

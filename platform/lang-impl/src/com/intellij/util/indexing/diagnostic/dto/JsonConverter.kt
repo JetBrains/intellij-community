@@ -42,7 +42,6 @@ fun ScanningStatistics.ScannedFile.toJson(): JsonScanningStatistics.JsonScannedF
     wasFullyIndexedByInfrastructureExtension = wasFullyIndexedByInfrastructureExtension
   )
 
-@Suppress("DuplicatedCode")
 fun IndexingFileSetStatistics.toJsonStatistics(visibleTimeToAllThreadsTimeRatio: Double): JsonFileProviderIndexStatistics {
   val jsonIndexedFiles = if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
     indexedFiles.map { it.toJson() }
@@ -85,7 +84,7 @@ fun IndexingFileSetStatistics.IndexedFile.toJson() = JsonFileProviderIndexStatis
 fun IndexingTimes.toJson() =
   JsonProjectIndexingHistoryTimes(
     indexingReason = indexingReason,
-    wasFullIndexing = wasFullIndexing,
+    wasFullRescanning = wasFullRescanning,
     totalUpdatingTime = JsonDuration(totalUpdatingTime),
     indexingTime = JsonDuration(indexingDuration.toNanos()),
     contentLoadingVisibleTime = JsonDuration(contentLoadingVisibleDuration.toNanos()),

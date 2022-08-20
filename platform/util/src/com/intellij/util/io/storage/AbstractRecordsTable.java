@@ -63,7 +63,7 @@ public abstract class AbstractRecordsTable implements Closeable, Forceable {
   }
 
   private boolean areDataAlignedToPage() {
-    return ((getPageSize() - getHeaderSize()) / getRecordSize() == 0) && (getPageSize() / getRecordSize() == 0);
+    return ((getPageSize() - getHeaderSize()) % getRecordSize() == 0) && (getPageSize() % getRecordSize() == 0);
   }
 
   private int getSafelyClosedMagic() {

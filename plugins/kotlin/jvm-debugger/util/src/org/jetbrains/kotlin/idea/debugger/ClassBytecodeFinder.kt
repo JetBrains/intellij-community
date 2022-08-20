@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger
 
 import com.intellij.openapi.compiler.CompilerPaths
@@ -22,7 +22,7 @@ class ClassBytecodeFinder(private val project: Project, private val jvmName: Jvm
         private val LOG = Logger.getInstance(ClassBytecodeFinder::class.java)
     }
 
-    private val module = ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(file)
+    private val module = ProjectFileIndex.getInstance(project).getModuleForFile(file)
 
     fun find(): ByteArray? = findInCompilerOutput() ?: findInLibraries()
 

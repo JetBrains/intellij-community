@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -42,7 +42,6 @@ abstract class IntentionBasedInspection<TElement : PsiElement> private construct
         }
     }
 
-    @Suppress("DEPRECATION")
     @Deprecated("Please do not use for new inspections. Use AbstractKotlinInspection as base class for them")
     constructor(
         intention: KClass<out SelfTargetingRangeIntention<TElement>>,

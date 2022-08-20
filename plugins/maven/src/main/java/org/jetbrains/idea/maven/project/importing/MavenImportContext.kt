@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.model.MavenArtifact
@@ -35,7 +36,8 @@ class MavenInitialImportContext internal constructor(project: Project,
                                                      val importingSettings: MavenImportingSettings,
                                                      val ignorePaths: List<String>,
                                                      val ignorePatterns: List<String>,
-                                                     val dummyModule: Module?
+                                                     val dummyModule: Module?,
+                                                     val startImportStackTrace: Exception
 ) : MavenImportContext(project) {
   override val indicator = MavenProgressIndicator(project, null)
 }

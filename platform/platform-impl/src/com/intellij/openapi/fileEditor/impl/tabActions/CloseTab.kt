@@ -27,7 +27,6 @@ import java.awt.event.InputEvent
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 
-@Suppress("ComponentNotRegistered")
 class CloseTab(c: JComponent,
                val file: VirtualFile,
                val project: Project,
@@ -46,11 +45,11 @@ class CloseTab(c: JComponent,
     e.presentation.isVisible = UISettings.getInstance().showCloseButton || pinned
     if (pinned && !Registry.get("ide.editor.tabs.interactive.pin.button").asBoolean()) {
       e.presentation.text = ""
-      shortcutSet = CustomShortcutSet.EMPTY;
+      shortcutSet = CustomShortcutSet.EMPTY
     }
     else {
       if (pinned) {
-        shortcutSet = CustomShortcutSet.EMPTY;
+        shortcutSet = CustomShortcutSet.EMPTY
         e.presentation.text = TextWithMnemonic.parse(IdeBundle.message("action.unpin.tab")).dropMnemonic(true).text
       }
       else {

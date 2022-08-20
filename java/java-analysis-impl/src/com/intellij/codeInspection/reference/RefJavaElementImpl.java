@@ -19,7 +19,6 @@ import javax.swing.*;
 import java.util.*;
 
 public abstract class RefJavaElementImpl extends RefElementImpl implements RefJavaElement {
-  private Set<RefClass> myOutTypeReferences; // guarded by this
   private static final int ACCESS_MODIFIER_MASK = 0b11;
   private static final int ACCESS_PRIVATE = 0b00;
   private static final int ACCESS_PROTECTED = 0b01;
@@ -64,14 +63,15 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
   @Override
   @NotNull
   public synchronized Collection<RefClass> getOutTypeReferences() {
-    return ObjectUtils.notNull(myOutTypeReferences, Collections.emptySet());
+    final RefEntity owner = getOwner();
+    return owner instanceof RefJavaElement ? ((RefJavaElement)owner).getOutTypeReferences() : Collections.emptySet();
   }
 
-  synchronized void addOutTypeReference(RefClass refClass){
-    if (myOutTypeReferences == null){
-      myOutTypeReferences = new HashSet<>();
+  synchronized void addOutTypeReference(RefClass refClass) {
+    final RefEntity owner = getOwner();
+    if (owner instanceof RefJavaElementImpl) {
+      ((RefJavaElementImpl)owner).addOutTypeReference(refClass);
     }
-    myOutTypeReferences.add(refClass);
   }
 
   @NotNull

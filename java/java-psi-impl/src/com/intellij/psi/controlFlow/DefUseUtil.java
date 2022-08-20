@@ -238,7 +238,7 @@ public final class DefUseUtil {
                                                                     PsiStatement.class, PsiAssignmentExpression.class,
                                                                     PsiUnaryExpression.class);
           PsiVariable psiVariable = writeInstruction.variable;
-          if (context != null && !(context instanceof PsiTryStatement)) {
+          if (context != null) {
             if (context instanceof PsiDeclarationStatement && psiVariable.getInitializer() == null) {
               if (!assignedVariables.contains(psiVariable)) {
                 unusedDefs.add(new Info(psiVariable, context, false));

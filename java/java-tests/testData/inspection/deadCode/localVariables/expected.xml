@@ -117,5 +117,26 @@
     <line>50</line>
     <description>Variable &lt;code&gt;i3&lt;/code&gt; is never used</description>
   </problem>
+
+  <problem>
+    <file>PatternVariables.java</file>
+    <line>4</line>
+    <description>Variable &lt;code&gt;arg&lt;/code&gt; is never used</description>
+  </problem>
+  <problem>
+    <file>PatternVariables.java</file>
+    <line>7</line>
+    <description>Variable &lt;code&gt;in&lt;/code&gt; is never used</description>
+  </problem>
+  <problem>
+    <file>PatternVariables.java</file>
+    <line>15</line>
+    <description>Variable &lt;code&gt;s&lt;/code&gt; is never used</description>
+  </problem>
+  <problem>
+    <file>PatternVariables.java</file>
+    <line>18</line>
+    <description>Variable &lt;code&gt;strings&lt;/code&gt; is never used</description>
+  </problem>
 </problems>
 

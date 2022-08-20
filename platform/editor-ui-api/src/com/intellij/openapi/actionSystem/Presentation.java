@@ -151,8 +151,7 @@ public final class Presentation implements Cloneable {
   }
 
   public @ActionText String getText() {
-    TextWithMnemonic textWithMnemonic = myTextWithMnemonicSupplier.get();
-    return textWithMnemonic == null ? null : textWithMnemonic.getText();
+    return getText(false);
   }
 
   public @ActionText String getText(boolean withSuffix) {

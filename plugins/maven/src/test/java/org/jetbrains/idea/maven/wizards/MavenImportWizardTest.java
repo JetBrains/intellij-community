@@ -8,7 +8,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -155,11 +154,22 @@ public class MavenImportWizardTest extends ProjectWizardTestCase<AbstractProject
     MavenProjectBuilder builder = (MavenProjectBuilder)provider.doGetBuilder();
     builder.setFileToImport(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(pom2));
     Module module = importProjectFrom(pom1.toString(), null, provider);
-    List<Path> paths = ContainerUtil.map(
-      MavenProjectsManager.getInstance(module.getProject()).getProjectsTreeForTests().getExistingManagedFiles(), m -> m.toNioPath()
-    );
-    assertEquals(1, paths.size());
-    assertContainsElements(paths, pom2);
+    if (MavenUtil.isLinearImportEnabled()) {
+      afterImportFinished(module.getProject(), c -> {
+        List<Path> paths = ContainerUtil.map(
+          MavenProjectsManager.getInstance(module.getProject()).getProjectsTreeForTests().getExistingManagedFiles(), m -> m.toNioPath()
+        );
+        assertEquals(1, paths.size());
+        assertContainsElements(paths, pom2);
+      });
+    }
+    else {
+      List<Path> paths = ContainerUtil.map(
+        MavenProjectsManager.getInstance(module.getProject()).getProjectsTreeForTests().getExistingManagedFiles(), m -> m.toNioPath()
+      );
+      assertEquals(1, paths.size());
+      assertContainsElements(paths, pom2);
+    }
   }
 
   private @NotNull Path createPom() throws IOException {

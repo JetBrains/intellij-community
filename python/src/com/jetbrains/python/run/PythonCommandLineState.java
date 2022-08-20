@@ -746,8 +746,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
     Sdk pythonSdk = PythonSdkUtil.findSdkByPath(sdkHome);
     if (pythonSdk != null) {
       List<Function<TargetEnvironment, String>> pathList = new ArrayList<>();
-      pathList.addAll(TargetedPythonPaths.getAddedPaths(targetEnvironmentRequest, pythonSdk));
-      pathList.addAll(TargetedPythonPaths.collectPythonPath(targetEnvironmentRequest, project, module, sdkHome, pathMapper,
+      pathList.addAll(TargetedPythonPaths.getAddedPaths(pythonSdk));
+      pathList.addAll(TargetedPythonPaths.collectPythonPath(project, module, sdkHome, pathMapper,
                                                             shouldAddContentRoots, shouldAddSourceRoots, isDebug));
       initPythonPath(pythonScript, passParentEnvs, pathList, sdkHome, targetEnvironmentRequest);
     }

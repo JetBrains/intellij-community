@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.util.ReflectionUtil
@@ -178,14 +178,12 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntityBase> : Workspac
   }
 
   // For generated entities
-  @Suppress("unused")
   fun addToBuilder() {
     val builder = diff as WorkspaceEntityStorageBuilderImpl
     builder.putEntity(getEntityData())
   }
 
   // For generated entities
-  @Suppress("unused")
   fun applyRef(connectionId: ConnectionId, child: WorkspaceEntityData<*>?, children: List<WorkspaceEntityData<*>>?) {
     val builder = diff as WorkspaceEntityStorageBuilderImpl
     when (connectionId.connectionType) {
@@ -197,14 +195,12 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntityBase> : Workspac
   }
 
   // For generated entities
-  @Suppress("unused")
   fun index(entity: WorkspaceEntity, propertyName: String, virtualFileUrl: VirtualFileUrl?) {
     val builder = diff as WorkspaceEntityStorageBuilderImpl
     builder.getMutableVirtualFileUrlIndex().index(entity, propertyName, virtualFileUrl)
   }
 
   // For generated entities
-  @Suppress("unused")
   fun index(entity: WorkspaceEntity, propertyName: String, virtualFileUrls: Set<VirtualFileUrl>) {
     val builder = diff as WorkspaceEntityStorageBuilderImpl
     (builder.getMutableVirtualFileUrlIndex() as VirtualFileIndex.MutableVirtualFileIndex).index((entity as WorkspaceEntityBase).id,
@@ -212,7 +208,6 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntityBase> : Workspac
   }
 
   // For generated entities
-  @Suppress("unused")
   fun indexJarDirectories(entity: WorkspaceEntity, virtualFileUrls: Set<VirtualFileUrl>) {
     val builder = diff as WorkspaceEntityStorageBuilderImpl
     (builder.getMutableVirtualFileUrlIndex() as VirtualFileIndex.MutableVirtualFileIndex).indexJarDirectories(

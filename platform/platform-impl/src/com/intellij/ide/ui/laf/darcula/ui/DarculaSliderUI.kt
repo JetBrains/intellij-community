@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui
 
 import com.intellij.ui.JBColor
@@ -15,7 +15,6 @@ import javax.swing.plaf.basic.BasicSliderUI
 
 public open class DarculaSliderUI(b: JComponent? = null) : BasicSliderUI(b as JSlider) {
   companion object {
-    @Suppress("UNUSED_PARAMETER")
     @JvmStatic
     fun createUI(c: JComponent): DarculaSliderUI = DarculaSliderUI(c)
   }

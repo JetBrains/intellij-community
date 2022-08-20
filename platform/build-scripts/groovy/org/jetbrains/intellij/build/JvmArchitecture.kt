@@ -1,0 +1,24 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+
+package org.jetbrains.intellij.build
+
+@Suppress("EnumEntryName")
+enum class JvmArchitecture(@JvmField val fileSuffix: String) {
+  x64("64"), aarch64("aarch64");
+
+  companion object {
+    @JvmField
+    val ALL: List<JvmArchitecture> = java.util.List.of(*values())
+    @JvmField
+    val currentJvmArch: JvmArchitecture
+
+    init {
+      when (System.getProperty("os.arch")) {
+        "aarch64" -> currentJvmArch = aarch64
+        "x86_64", "amd64" -> currentJvmArch = x64
+        else -> throw IllegalStateException("Unsupported arch: \$archName")
+      }
+    }
+  }
+}

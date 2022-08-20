@@ -22,7 +22,7 @@ import kotlin.io.path.absolutePathString
 
 class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
   private val myEvents: MutableList<Pair<BuildEvent, Throwable>> = ArrayList()
-  private lateinit var mySyncViewManager: SyncViewManager;
+  private lateinit var mySyncViewManager: SyncViewManager
 
   @Throws(Exception::class)
   override fun setUp() {
@@ -34,7 +34,7 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
       }
     }
     myProject.replaceService(SyncViewManager::class.java, mySyncViewManager, testRootDisposable)
-    MavenProjectsManager.getInstance(myProject).setProgressListener(mySyncViewManager);
+    MavenProjectsManager.getInstance(myProject).setProgressListener(mySyncViewManager)
   }
 
   @Throws(IOException::class)
@@ -105,7 +105,7 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>")
-    MavenWorkspaceSettingsComponent.getInstance(myProject).settings.generalSettings.mavenHome = FileUtil.toSystemDependentName("path/to/unexisted/maven/home");
+    MavenWorkspaceSettingsComponent.getInstance(myProject).settings.generalSettings.mavenHome = FileUtil.toSystemDependentName("path/to/unexisted/maven/home")
     importProject()
     val connector = MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.path)
     assertEquals(
@@ -155,7 +155,7 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
   }
 
   private fun getStacktraces(exceptions: List<Throwable>): String {
-    return exceptions.asSequence().map(ExceptionUtil::getThrowableText).joinToString("\n-------------------\n");
+    return exceptions.asSequence().map(ExceptionUtil::getThrowableText).joinToString("\n-------------------\n")
   }
 
 

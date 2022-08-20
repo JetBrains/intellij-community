@@ -13,6 +13,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.openapi.roots.impl.DirectoryIndex"
                     serviceImplementation="com.intellij.openapi.roots.impl.DirectoryIndexImpl" preload="true"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.roots.impl.DirectoryIndexCollector"/>
+
     <projectService serviceInterface="com.intellij.openapi.components.PathMacroManager"
                     serviceImplementation="com.intellij.openapi.components.impl.ProjectPathMacroManager"/>
     <projectService serviceInterface="com.intellij.openapi.roots.impl.ModifiableModelCommitterService"
@@ -41,6 +43,5 @@
                         serviceImplementation="com.intellij.openapi.roots.impl.AdditionalLibraryRootsListenerHelperImpl"/>
 
     <workspaceModel.preUpdateHandler implementation="com.intellij.workspaceModel.ide.impl.ModulePreUpdateHandler"/>
-
   </extensions>
 </idea-plugin>

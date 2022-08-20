@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.annotations.JVM_STATIC_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.uast.DEFAULT_TYPES_LIST
 import org.jetbrains.uast.UElement
@@ -132,7 +133,10 @@ class KotlinUastLanguagePlugin : UastLanguagePlugin {
             else -> sequenceOf(convertElementWithParent(element, requiredTypes.nonEmptyOr(DEFAULT_TYPES_LIST)) as? T).filterNotNull()
         }
 
-    private fun KtNamedFunction.isJvmStatic() = annotationEntries.firstOrNull { it.shortName?.asString() == "JvmStatic" } != null
+    private fun KtNamedFunction.isJvmStatic() = annotationEntries.any {
+        it.shortName?.asString() == JVM_STATIC_ANNOTATION_FQ_NAME.shortName().asString()
+                && analyze()[BindingContext.ANNOTATION, it]?.fqName == JVM_STATIC_ANNOTATION_FQ_NAME
+    }
 
     override fun getPossiblePsiSourceTypes(vararg uastTypes: Class<out UElement>): ClassSet<PsiElement> =
         when (uastTypes.size) {

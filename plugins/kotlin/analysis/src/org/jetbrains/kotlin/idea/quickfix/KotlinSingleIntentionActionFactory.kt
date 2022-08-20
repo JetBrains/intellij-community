@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -30,7 +30,6 @@ abstract class KotlinSingleIntentionActionFactory : KotlinIntentionActionsFactor
 fun QuickFixFactory.asKotlinIntentionActionsFactory(): KotlinIntentionActionsFactory = when (this) {
     is KotlinIntentionActionsFactory -> this
     is QuickFixesPsiBasedFactory<*> -> object : KotlinIntentionActionsFactory() {
-        @Suppress("UNCHECKED_CAST")
         override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
             val psiElement = diagnostic.psiElement
             return createQuickFix(psiElement)

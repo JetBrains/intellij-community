@@ -130,7 +130,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
   private fun ipythonInPrompt() {
     myConsoleView.setPromptAttributes(object : ConsoleViewContentType("", TextAttributes()) {
       override fun getAttributes(): TextAttributes {
-        val attrs = EditorColorsManager.getInstance().globalScheme.getAttributes(USER_INPUT_KEY);
+        val attrs = EditorColorsManager.getInstance().globalScheme.getAttributes(USER_INPUT_KEY)
         attrs.fontType = Font.PLAIN
         return attrs
       }

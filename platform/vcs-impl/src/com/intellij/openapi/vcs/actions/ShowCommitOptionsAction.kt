@@ -2,12 +2,12 @@
 package com.intellij.openapi.vcs.actions
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
 import com.intellij.vcs.commit.NonModalCommitWorkflowHandler
 
-class ShowCommitOptionsAction : AnAction() {
+class ShowCommitOptionsAction : DumbAwareAction() {
   init {
     templatePresentation.icon = AllIcons.Ide.Notification.Gear
     templatePresentation.hoveredIcon = AllIcons.Ide.Notification.GearHover

@@ -13,6 +13,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.importing.MavenModelUtil
+import org.jetbrains.idea.maven.importing.tree.MavenModuleImportData
 import org.jetbrains.idea.maven.importing.tree.MavenModuleType
 import org.jetbrains.idea.maven.importing.tree.dependency.BaseDependency
 import org.jetbrains.idea.maven.importing.tree.dependency.LibraryDependency
@@ -190,8 +191,8 @@ class WorkspaceModuleImporter(
     if (importingSettings.generatedSourcesFolder != GeneratedSourcesFolder.IGNORE) {
       annotationProcessorDirectory = mavenProject.getAnnotationProcessorDirectory(false)
       annotationProcessorTestDirectory = mavenProject.getAnnotationProcessorDirectory(true)
-      if (File(annotationProcessorDirectory).list().isNullOrEmpty()) annotationProcessorDirectory = null;
-      if (File(annotationProcessorTestDirectory).list().isNullOrEmpty()) annotationProcessorTestDirectory = null;
+      if (File(annotationProcessorDirectory).list().isNullOrEmpty()) annotationProcessorDirectory = null
+      if (File(annotationProcessorTestDirectory).list().isNullOrEmpty()) annotationProcessorTestDirectory = null
     }
 
     val generatedDir = mavenProject.getGeneratedSourcesDirectory(false)

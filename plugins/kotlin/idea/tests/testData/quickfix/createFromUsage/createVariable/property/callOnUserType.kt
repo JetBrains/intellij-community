@@ -1,7 +1,6 @@
 // "Create property 'foo'" "false"
 // ACTION: Create extension function 'A<Int>.bar'
 // ACTION: Create member function 'A.bar'
-// ACTION: Do not show return expression hints
 // ACTION: Rename reference
 // ERROR: Unresolved reference: bar
 // ERROR: Unresolved reference: foo

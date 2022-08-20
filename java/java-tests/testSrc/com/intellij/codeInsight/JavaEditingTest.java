@@ -300,4 +300,30 @@ public class JavaEditingTest extends EditingTestBase {
                       "    int b;<caret></selection>\n" +
                       "}");
   }
+
+  public void testSmartHomeInJavadoc() {
+    init("/**\n" +
+         " * some text<caret>\n" +
+         " */\n" +
+         "class C {}",
+         JavaFileType.INSTANCE);
+    home();
+    checkResultByText("/**\n" +
+                      " * <caret>some text\n" +
+                      " */\n" +
+                      "class C {}");
+  }
+
+  public void testSmartHomeWithSelectionInJavadoc() {
+    init("/**\n" +
+         " * some text<caret>\n" +
+         " */\n" +
+         "class C {}",
+         JavaFileType.INSTANCE);
+    homeWithSelection();
+    checkResultByText("/**\n" +
+                      " * <selection><caret>some text</selection>\n" +
+                      " */\n" +
+                      "class C {}");
+  }
 }

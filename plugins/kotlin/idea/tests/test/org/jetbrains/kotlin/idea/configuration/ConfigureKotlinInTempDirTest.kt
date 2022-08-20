@@ -5,18 +5,23 @@ package org.jetbrains.kotlin.idea.configuration
 import com.intellij.facet.FacetManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.JDOMUtil
-import junit.framework.TestCase
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JsCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
+import org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetector
+import org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetectorListener
 import org.jetbrains.kotlin.idea.notification.catchNotificationText
 import org.jetbrains.kotlin.idea.project.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
+import org.jetbrains.kotlin.idea.util.projectStructure.findLibrary
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -27,8 +32,12 @@ import java.nio.charset.StandardCharsets
 class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
     private fun checkKotlincPresence(present: Boolean = true, jpsVersionOnly: Boolean = false) {
         val file = File(project.basePath, ".idea/kotlinc.xml")
-        TestCase.assertEquals(present, file.exists())
-        val children = JDOMUtil.load(file).children.ifEmpty { error("kotlinc.xml is empty") }
+        assertEquals(present, file.exists())
+        if (!present) return
+
+        val children = JDOMUtil.load(file).children
+        assertNotEmpty(children)
+
         val jpsSettingsElement = children.singleOrNull {
             it.getAttributeValue("name") == KotlinJpsPluginSettings::class.java.simpleName
         }
@@ -43,7 +52,7 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
         } else {
             assertTrue(
                 /* message = */ "non-jps settings is not found: $childrenNames",
-                /* condition = */ jpsSettingsElement != null && children.size > 1 || jpsSettingsElement == null && children.isNotEmpty(),
+                /* condition = */ jpsSettingsElement == null || children.size > 1,
             )
         }
     }
@@ -56,7 +65,34 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
         Assert.assertEquals(LanguageVersion.KOTLIN_1_0, module.languageVersionSettings.languageVersion)
         Assert.assertEquals(LanguageVersion.KOTLIN_1_0, myProject.getLanguageVersionSettings(null).languageVersion)
         application.saveAll()
-        checkKotlincPresence(jpsVersionOnly = true)
+        checkKotlincPresence(false) // TODO: replace to "jpsVersionOnly = true" after KTI-724
+    }
+
+    fun testKotlinBundledAdded() {
+        assertFalse(KotlinBundledUsageDetector.isKotlinBundledPotentiallyUsedInLibraries(project))
+
+        val connection = project.messageBus.connect(testRootDisposable)
+        var kotlinBundledWasDetected = false
+        connection.subscribe(KotlinBundledUsageDetector.TOPIC, object : KotlinBundledUsageDetectorListener {
+            override fun kotlinBundledDetected() {
+                kotlinBundledWasDetected = true
+            }
+        })
+
+        runWriteAction {
+            val kotlinRuntimeLibrary = module.findLibrary { it.name == "BundledKotlinStdlib" }
+            assertNotNull(kotlinRuntimeLibrary)
+
+            with(kotlinRuntimeLibrary!!.modifiableModel) {
+                addRoot(KotlinArtifacts.instance.kotlinStdlib.absolutePath, OrderRootType.CLASSES)
+                commit()
+            }
+        }
+
+        assertTrue(KotlinBundledUsageDetector.isKotlinBundledPotentiallyUsedInLibraries(project))
+
+        connection.deliverImmediately()
+        assertTrue(kotlinBundledWasDetected)
     }
 
     fun testMigrationNotificationWithStdlib() {
@@ -116,7 +152,7 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
         Assert.assertEquals(expectedLanguageVersion, module.languageVersionSettings.languageVersion)
         Assert.assertEquals(expectedLanguageVersion, myProject.getLanguageVersionSettings(null).languageVersion)
         application.saveAll()
-        checkKotlincPresence(jpsVersionOnly = true)
+        checkKotlincPresence(false) // TODO: replace to "jpsVersionOnly = true" after KTI-724
     }
 
     fun testKotlincExistsNoSettingsLatestRuntimeNoVersionAutoAdvance() {
@@ -142,7 +178,7 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
             autoAdvanceApiVersion = true
         }
         application.saveAll()
-        checkKotlincPresence(jpsVersionOnly = true)
+        checkKotlincPresence(false) // TODO: replace to "jpsVersionOnly = true" after KTI-724
     }
 
     fun testProject107InconsistentVersionInConfig() {
@@ -211,7 +247,7 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
             sourceMapEmbedSources = ""
         }
         application.saveAll()
-        checkKotlincPresence(jpsVersionOnly = true)
+        checkKotlincPresence(false) // TODO: replace to "jpsVersionOnly = true" after KTI-724
     }
 
     private fun doTestLoadAndSaveProjectWithFacetConfig(valueBefore: String, valueAfter: String) {

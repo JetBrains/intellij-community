@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project.importing
 
+import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
@@ -24,7 +25,6 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.execution.BTWMavenConsole
 import org.jetbrains.idea.maven.importing.MavenProjectImporter
-import org.jetbrains.idea.maven.importing.MavenProjectImporterBase
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.model.MavenPlugin
@@ -54,7 +54,7 @@ class MavenImportFlow {
                        enabledProfiles: Collection<String>,
                        disabledProfiles: Collection<String>): MavenInitialImportContext {
     val isVeryNewProject = project.getUserData<Boolean>(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == true
-                           && ModuleManager.getInstance(project).modules.size == 0;
+                           && ModuleManager.getInstance(project).modules.size == 0
     if (isVeryNewProject) {
       ExternalStorageConfigurationManager.getInstance(project).isEnabled = true
     }
@@ -66,7 +66,7 @@ class MavenImportFlow {
     val ignorePatterns = manager.ignoredFilesPatterns
 
     return MavenInitialImportContext(project, importPaths, profiles, generalSettings, importingSettings, ignorePaths, ignorePatterns,
-                                     dummyModule)
+                                     dummyModule, Exception())
   }
 
   private fun createDummyModule(importPaths: ImportPaths, project: Project): Module? {
@@ -140,13 +140,13 @@ class MavenImportFlow {
   }
 
   fun setupMavenWrapper(readContext: MavenReadContext, indicator: MavenProgressIndicator): MavenReadContext {
-    if (readContext.wrapperData == null) return readContext;
-    MavenWrapperDownloader.checkOrInstallForSync(readContext.project, readContext.wrapperData.baseDir.path);
-    return readContext;
+    if (readContext.wrapperData == null) return readContext
+    MavenWrapperDownloader.checkOrInstallForSync(readContext.project, readContext.wrapperData.baseDir.path)
+    return readContext
   }
 
   private fun searchForMavenFiles(path: VirtualFile, indicator: MavenProgressIndicator): MutableList<VirtualFile> {
-    indicator.setText(MavenProjectBundle.message("maven.locating.files"));
+    indicator.setText(MavenProjectBundle.message("maven.locating.files"))
     return FileFinder.findPomFiles(path.getChildren(), LookForNestedToggleAction.isSelected(), indicator)
   }
 
@@ -186,7 +186,7 @@ class MavenImportFlow {
           nativeProjectStorage.add(projectWithChanges.first to nativeMavenProject)
         }
       }
-    }, d);
+    }, d)
     resolver.resolve(context.project, context.toResolve, context.initialContext.generalSettings, embeddersManager, consoleToBeRemoved,
                      resolveContext, context.initialContext.indicator)
     Disposer.dispose(d)
@@ -270,43 +270,25 @@ class MavenImportFlow {
     }
 
     Disposer.dispose(d)
-    return MavenSourcesGeneratedContext(context, projectsFoldersResolved);
+    return MavenSourcesGeneratedContext(context, projectsFoldersResolved)
   }
 
-  fun commitToWorkspaceModel(context: MavenResolvedContext): MavenImportedContext {
+  fun commitToWorkspaceModel(context: MavenResolvedContext, importingActivity: StructuredIdeActivity): MavenImportedContext {
     val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(context.project)
     assertNonDispatchThread()
     val projectImporter = MavenProjectImporter.createImporter(context.project, context.readContext.projectsTree,
                                                               context.projectsToImport.map {
                                                                 it to MavenProjectChanges.ALL
                                                               }.toMap(), false, modelsProvider, context.initialContext.importingSettings,
-                                                              context.initialContext.dummyModule)
-    val postImportTasks = projectImporter.importProject();
-    val modulesCreated = projectImporter.createdModules
-    return MavenImportedContext(context.project, modulesCreated, postImportTasks, context.readContext, context);
-  }
-
-  fun configureMavenProject(context: MavenImportedContext) {
-    val projectsManager = MavenProjectsManager.getInstance(context.project)
-    val projects = context.readContext.projectsTree.projects
-    val moduleMap = ReadAction.compute<Map<Module, MavenProject>, Throwable> {
-      projects.mapNotNull { project -> projectsManager.findModule(project)?.let { it to project } }.toMap();
-    }
-    MavenProjectImporterBase.configureMavenProjects(context.project, moduleMap,
-                                                    context.readContext.indicator)
-
+                                                              context.initialContext.dummyModule, importingActivity)
+    val postImportTasks = projectImporter.importProject()
+    val modulesCreated = projectImporter.createdModules()
+    return MavenImportedContext(context.project, modulesCreated, postImportTasks, context.readContext, context)
   }
 
   fun updateProjectManager(context: MavenReadContext) {
     val projectManager = MavenProjectsManager.getInstance(context.project)
-    projectManager.addManagedFilesWithProfiles(context.projectsTree.projectsFiles, context.initialContext.profiles, null)
     projectManager.setProjectsTree(context.projectsTree)
-  }
-
-  fun runImportExtensions(context: MavenImportedContext) {
-    MavenImportStatusListener.EP_NAME.forEachExtensionSafe {
-      it.importFinished(context);
-    }
   }
 
   fun runPostImportTasks(context: MavenImportedContext) {
@@ -333,7 +315,7 @@ class MavenImportFlow {
 internal fun assertNonDispatchThread() {
   val app = ApplicationManager.getApplication()
   if (app.isUnitTestMode() && app.isDispatchThread()) {
-    throw RuntimeException("Access from event dispatch thread is not allowed");
+    throw RuntimeException("Access from event dispatch thread is not allowed")
   }
   ApplicationManager.getApplication().assertIsNonDispatchThread()
 }

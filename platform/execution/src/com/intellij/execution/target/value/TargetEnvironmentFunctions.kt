@@ -4,6 +4,7 @@
 package com.intellij.execution.target.value
 
 import com.intellij.execution.target.*
+import com.intellij.execution.target.local.LocalTargetEnvironment
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
@@ -82,22 +83,35 @@ private class Constant<T>(private val value: T) : TraceableTargetEnvironmentFunc
   override fun applyInner(t: TargetEnvironment): T = value
 }
 
-fun <T> Iterable<TargetEnvironmentFunction<T>>.joinToStringFunction(separator: CharSequence): TargetEnvironmentFunction<String> =
-  JoinedStringTargetEnvironmentFunction(iterable = this, separator = separator)
+@JvmOverloads
+fun <T> Iterable<TargetEnvironmentFunction<T>>.joinToStringFunction(separator: CharSequence,
+                                                                    transform: ((T) -> CharSequence)? = null): TargetEnvironmentFunction<String> =
+  JoinedStringTargetEnvironmentFunction(iterable = this, separator = separator, transform = transform)
 
 fun TargetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath: String): TargetEnvironmentFunction<String> {
   if (this is LocalTargetEnvironmentRequest) return constant(localPath)
+  return TraceableTargetEnvironmentFunction { targetEnvironment -> targetEnvironment.resolveLocalPath(localPath) }
+}
+
+fun getTargetEnvironmentValueForLocalPath(localPath: String): TargetEnvironmentFunction<String> {
   return TraceableTargetEnvironmentFunction { targetEnvironment ->
-    if (targetEnvironment is ExternallySynchronized) {
-      val pathForSynchronizedVolume = targetEnvironment.tryMapToSynchronizedVolume(localPath)
-      if (pathForSynchronizedVolume != null) return@TraceableTargetEnvironmentFunction pathForSynchronizedVolume
+    when (targetEnvironment) {
+      is LocalTargetEnvironment -> localPath
+      else -> targetEnvironment.resolveLocalPath(localPath)
     }
-    val (uploadRoot, relativePath) = getUploadRootForLocalPath(localPath) ?: throw IllegalArgumentException(
-      "Local path \"$localPath\" is not registered within uploads in the request")
-    val volume = targetEnvironment.uploadVolumes[uploadRoot]
-                 ?: throw IllegalStateException("Upload root \"$uploadRoot\" is expected to be created in the target environment")
-    joinPaths(volume.targetRoot, relativePath, targetEnvironment.targetPlatform)
   }
+}
+
+private fun TargetEnvironment.resolveLocalPath(localPath: String): String {
+  if (this is ExternallySynchronized) {
+    val pathForSynchronizedVolume = tryMapToSynchronizedVolume(localPath)
+    if (pathForSynchronizedVolume != null) return pathForSynchronizedVolume
+  }
+  val (uploadRoot, relativePath) = request.getUploadRootForLocalPath(localPath) ?: throw IllegalArgumentException(
+    "Local path \"$localPath\" is not registered within uploads in the request")
+  val volume = uploadVolumes[uploadRoot]
+               ?: throw IllegalStateException("Upload root \"$uploadRoot\" is expected to be created in the target environment")
+  return joinPaths(volume.targetRoot, relativePath, targetPlatform)
 }
 
 private fun ExternallySynchronized.tryMapToSynchronizedVolume(localPath: String): String? {
@@ -192,11 +206,14 @@ fun TargetEnvironment.downloadFromTarget(localPath: Path, progressIndicator: Pro
 }
 
 private class JoinedStringTargetEnvironmentFunction<T>(private val iterable: Iterable<TargetEnvironmentFunction<T>>,
-                                                       private val separator: CharSequence) : TraceableTargetEnvironmentFunction<String>() {
-  override fun applyInner(t: TargetEnvironment): String = iterable.map { it.apply(t) }.joinToString(separator = separator)
+                                                       private val separator: CharSequence,
+                                                       private val transform: ((T) -> CharSequence)?)
+  : TraceableTargetEnvironmentFunction<String>() {
+  override fun applyInner(t: TargetEnvironment): String = iterable.map { it.apply(t) }.joinToString(separator = separator,
+                                                                                                    transform = transform)
 
   override fun toString(): String {
-    return "JoinedStringTargetEnvironmentValue(iterable=$iterable, separator=$separator)"
+    return "JoinedStringTargetEnvironmentValue(iterable=$iterable, separator=$separator, transform=$transform)"
   }
 }
 

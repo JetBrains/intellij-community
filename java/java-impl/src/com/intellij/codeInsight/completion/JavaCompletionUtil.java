@@ -16,6 +16,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.project.DumbService;
@@ -828,7 +829,8 @@ public final class JavaCompletionUtil {
       AutoPopupController.getInstance(file.getProject()).autoPopupParameterInfo(editor, overloadsMatter ? null : (PsiElement)item.getObject());
     }
 
-    if (smart || !needRightParenth || !insertTail(context, item, tailType, hasTail)) {
+    if (smart || !needRightParenth || !EditorSettingsExternalizable.getInstance().isInsertParenthesesAutomatically() ||
+        !insertTail(context, item, tailType, hasTail)) {
       return;
     }
 

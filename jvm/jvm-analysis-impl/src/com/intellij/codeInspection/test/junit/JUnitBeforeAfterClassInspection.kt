@@ -37,9 +37,9 @@ class JUnitBeforeAfterClassInspection : AbstractBaseUastLocalInspectionTool() {
     } ?: return emptyArray()
     val returnsVoid = method.returnType == PsiType.VOID
     // We get alternatives because Kotlin generates 2 methods for each `JvmStatic` annotated method
-    val alternatives = UastFacade.convertToAlternatives(sourcePsi, arrayOf(UMethod::class.java, UMethod::class.java)).toList()
+    val alternatives = UastFacade.convertToAlternatives(sourcePsi, arrayOf(UMethod::class.java)).toList()
     if (isJunit4Annotation(annotation)) {
-      val isStatic = alternatives.firstOrNull { it.isStatic } != null
+      val isStatic = alternatives.any { it.isStatic }
       val isPublic = javaMethod.hasModifier(JvmModifier.PUBLIC)
       if (!isStatic || !returnsVoid || !method.isValidParameterList(alternatives) || !isPublic) {
         return registerError(method, annotation, manager, isOnTheFly)
@@ -47,7 +47,7 @@ class JUnitBeforeAfterClassInspection : AbstractBaseUastLocalInspectionTool() {
     }
     else { // JUnit 5 annotation
       val isPrivate = javaMethod.hasModifier(JvmModifier.PRIVATE)
-      val inTestInstance = alternatives.firstOrNull { it.isStatic } != null
+      val inTestInstance = alternatives.any { it.isStatic }
                            || javaMethod.containingClass?.let { cls -> TestUtils.testInstancePerClass(cls) } ?: false
       if (!inTestInstance || !returnsVoid || !method.isValidParameterList(alternatives) || isPrivate) {
         return registerError(method, annotation, manager, isOnTheFly)

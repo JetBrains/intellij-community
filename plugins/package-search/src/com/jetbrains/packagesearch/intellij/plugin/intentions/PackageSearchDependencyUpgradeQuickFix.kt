@@ -19,7 +19,6 @@ internal class PackageSearchDependencyUpgradeQuickFix(
     private val operations: List<PackageSearchOperation<*>>
 ) : LocalQuickFixAndIntentionActionOnPsiElement(element), HighPriorityAction {
 
-    @Suppress("DialogTitleCapitalization")
     override fun getFamilyName() = PackageSearchBundle.message("packagesearch.quickfix.upgrade.family")
 
     override fun getText() = PackageSearchBundle.message(

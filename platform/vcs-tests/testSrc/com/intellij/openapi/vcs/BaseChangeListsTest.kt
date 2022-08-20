@@ -250,11 +250,10 @@ abstract class BaseChangeListsTest : LightPlatformTestCase() {
       semaphore.acquireOrThrow()
       try {
         for ((filePath, beforeRevision) in changes) {
-          val file = files.find { VcsUtil.getFilePath(it) == filePath }
-          val afterContent: ContentRevision? = when (file) {
-            null -> null
-            else -> CurrentContentRevision(filePath)
-          }
+          val afterContent: ContentRevision? =
+            if (files.find { VcsUtil.getFilePath(it) == filePath } == null)
+              null
+            else CurrentContentRevision(filePath)
 
           val change = Change(beforeRevision, afterContent)
 

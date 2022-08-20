@@ -39,18 +39,30 @@ class RegistrationEntry {
     return result;
   }
 
-  // do not change order
+  // update IdeaPluginRegistrationIndex.INDEX_VERSION
   enum RegistrationType {
-    ACTION,
+    ACTION(true),
 
-    APPLICATION_COMPONENT,
-    PROJECT_COMPONENT,
-    MODULE_COMPONENT,
+    APPLICATION_COMPONENT(true),
+    PROJECT_COMPONENT(true),
+    MODULE_COMPONENT(true),
+    COMPONENT_INTERFACE(true),
 
-    ACTION_ID,
-    ACTION_GROUP_ID,
+    ACTION_ID(false),
+    ACTION_GROUP_ID(false),
 
-    APPLICATION_LISTENER,
-    PROJECT_LISTENER
+    APPLICATION_LISTENER(true),
+    PROJECT_LISTENER(true),
+    LISTENER_TOPIC(true);
+
+    private final boolean myIsClass;
+
+    RegistrationType(boolean isClass) {
+      myIsClass = isClass;
+    }
+
+    boolean isClass() {
+      return myIsClass;
+    }
   }
 }

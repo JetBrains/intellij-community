@@ -42,10 +42,7 @@ public final class CoreFormattingService implements FormattingService {
     final PsiElement formatted =
       new CodeFormatterFacade(getSettings(file), element.getLanguage(), canChangeWhiteSpacesOnly)
         .processElement(treeElement).getPsi();
-    if (!canChangeWhiteSpacesOnly) {
-      return CoreCodeStyleUtil.postProcessElement(file, formatted);
-    }
-    return formatted;
+    return CoreCodeStyleUtil.postProcessElement(file, formatted, canChangeWhiteSpacesOnly);
   }
 
   @Override
@@ -56,18 +53,15 @@ public final class CoreFormattingService implements FormattingService {
     PsiFile file = element.getContainingFile();
     final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(file), element.getLanguage());
     final PsiElement formatted = codeFormatter.processRange(treeElement, range.getStartOffset(), range.getEndOffset()).getPsi();
-    return canChangeWhiteSpacesOnly ? formatted : CoreCodeStyleUtil.postProcessElement(file, formatted);
+    return CoreCodeStyleUtil.postProcessElement(file, formatted, canChangeWhiteSpacesOnly);
   }
 
   @Override
   public void formatRanges(@NotNull PsiFile file, FormattingRangesInfo rangesInfo, boolean canChangeWhiteSpaceOnly, boolean quickFormat) {
-    List<CoreCodeStyleUtil.RangeFormatInfo> infos =
-      canChangeWhiteSpaceOnly ? null : CoreCodeStyleUtil.getRangeFormatInfoList(file, rangesInfo);
+    List<CoreCodeStyleUtil.RangeFormatInfo> infos = CoreCodeStyleUtil.getRangeFormatInfoList(file, rangesInfo);
     final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(file), file.getLanguage());
     codeFormatter.processText(file, (FormatTextRanges)rangesInfo, !canChangeWhiteSpaceOnly);
-    if (infos != null) {
-      CoreCodeStyleUtil.postProcessRanges(file, infos, range -> CoreCodeStyleUtil.postProcessText(file, range));
-    }
+    CoreCodeStyleUtil.postProcessRanges(infos, range -> CoreCodeStyleUtil.postProcessText(file, range, canChangeWhiteSpaceOnly));
   }
 
   @Override

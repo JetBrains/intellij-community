@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.daemon.impl.quickfix.SafeDeleteFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
@@ -16,6 +17,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBLabel;
@@ -293,10 +295,12 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
       if (unusedDefs != null && !unusedDefs.isEmpty()) {
         for (DefUseUtil.Info varDefInfo : unusedDefs) {
           PsiElement parent = varDefInfo.getContext();
-          PsiVariable psiVariable = varDefInfo.getVariable();
-          if (parent instanceof PsiDeclarationStatement || parent instanceof PsiResourceVariable) {
-            if (!varDefInfo.isRead() && !SuppressionUtil.inspectionResultSuppressed(psiVariable, UnusedDeclarationInspection.this)) {
-              descriptors.add(createProblemDescriptor(psiVariable));
+          PsiVariable variable = varDefInfo.getVariable();
+          if (PsiUtil.isIgnoredName(variable.getName())) continue;
+          if (parent instanceof PsiDeclarationStatement || parent instanceof PsiForeachStatement ||
+              variable instanceof PsiResourceVariable || variable instanceof PsiPatternVariable) {
+            if (!varDefInfo.isRead() && !SuppressionUtil.inspectionResultSuppressed(variable, UnusedDeclarationInspection.this)) {
+              descriptors.add(createProblemDescriptor(variable));
             }
           }
         }
@@ -328,7 +332,7 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
     private ProblemDescriptor createProblemDescriptor(PsiVariable psiVariable) {
       PsiElement toHighlight = ObjectUtils.notNull(psiVariable.getNameIdentifier(), psiVariable);
       return myInspectionManager.createProblemDescriptor(
-        toHighlight, JavaBundle.message("inspection.unused.assignment.problem.descriptor1"), (LocalQuickFix)null,
+        toHighlight, JavaBundle.message("inspection.unused.assignment.problem.descriptor1"), new SafeDeleteFix(psiVariable),
         ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
     }
   }

@@ -3,7 +3,7 @@ Markdown file
     PsiElement(Markdown:Markdown:FRONT_MATTER_HEADER)
       PsiElement(Markdown:Markdown:FRONT_MATTER_HEADER_DELIMITER)('---')
       PsiWhiteSpace('\n')
-      PsiElement(Markdown:Markdown:FRONT_MATTER_HEADER_CONTENT)('layout: post\ntitle: Blogging Like a Hacker')
+      MarkdownFrontMatterHeaderContent(Markdown:Markdown:FRONT_MATTER_HEADER_CONTENT)('layout: post\ntitle: Blogging Like a Hacker')
       PsiWhiteSpace('\n')
       PsiElement(Markdown:Markdown:FRONT_MATTER_HEADER_DELIMITER)('---')
     PsiWhiteSpace('\n')

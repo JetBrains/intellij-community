@@ -32,6 +32,9 @@
     <completion.contributor
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.completion.KDocCompletionContributor"/>
+    <completion.plainTextSymbol
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.completion.KotlinPlainTextSymbolCompletionContributor"/>
 
     <completion.confidence
             language="kotlin"

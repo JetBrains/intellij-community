@@ -50,6 +50,6 @@ internal class CommentProblemFilter : ProblemFilter() {
 
   // the _todo_ word spoils the grammar of what follows
   private fun isTodoComment(file: PsiFile, text: TextContent) =
-    PsiTodoSearchHelper.SERVICE.getInstance(file.project).findTodoItems(file).any { text.intersectsRange(it.textRange) }
+    PsiTodoSearchHelper.getInstance(file.project).findTodoItems(file).any { text.intersectsRange(it.textRange) }
 
 }

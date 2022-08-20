@@ -103,7 +103,6 @@ internal suspend fun fetchProjectDependencies(
             .mapValues { (_, value) -> value.await() }
     }
 
-@Suppress("BlockingMethodInNonBlockingContext")
 internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, json: Json): List<UnifiedDependency> = coroutineScope {
     val fileHashCode = buildFile.hashCode()
 

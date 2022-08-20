@@ -216,7 +216,7 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
     private static void onJavaFileReferencesBuilt(@NotNull RefFile refFile, UFile file) {
       RefModule refModule = refFile.getModule();
       if (refModule != null && LanguageLevelUtil.getEffectiveLanguageLevel(refModule.getModule()).isAtLeast(LanguageLevel.JDK_1_9)) {
-        Set<String> packageNames = getImportedPackages(refModule, refFile);
+        Set<String> packageNames = getImportedPackages(refModule);
         if (packageNames != DONT_COLLECT_PACKAGES) {
           Stream.concat(file.getImports().stream().map(st -> getPackageName(st)), 
                         file.getImplicitImports().stream())
@@ -240,12 +240,15 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
       return null;
     }
 
-    private static @NotNull Set<String> getImportedPackages(@NotNull RefModule refModule, @NotNull RefFile refFile) {
+    private static @NotNull Set<String> getImportedPackages(@NotNull RefModule refModule) {
       //noinspection SynchronizationOnLocalVariableOrMethodParameter
       synchronized (refModule) {
         Set<String> importedPackages = refModule.getUserData(IMPORTED_JAVA_PACKAGES);
         if (importedPackages == null) {
-          PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(refFile.getPsiElement());
+          PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByModule(refModule.getModule(), false);
+          if (javaModule == null) {
+            javaModule = JavaModuleGraphUtil.findDescriptorByModule(refModule.getModule(), true);
+          }
           importedPackages = javaModule != null ? ContainerUtil.newConcurrentSet() : DONT_COLLECT_PACKAGES;
           refModule.putUserData(IMPORTED_JAVA_PACKAGES, importedPackages);
         }

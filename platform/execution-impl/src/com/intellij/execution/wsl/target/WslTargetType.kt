@@ -50,7 +50,7 @@ class WslTargetType : TargetEnvironmentType<WslTargetEnvironmentConfiguration>(T
     )
   }
 
-  override fun createEnvironmentRequest(project: Project, config: WslTargetEnvironmentConfiguration): TargetEnvironmentRequest {
+  override fun createEnvironmentRequest(project: Project?, config: WslTargetEnvironmentConfiguration): TargetEnvironmentRequest {
     return WslTargetEnvironmentRequest(config)
   }
 

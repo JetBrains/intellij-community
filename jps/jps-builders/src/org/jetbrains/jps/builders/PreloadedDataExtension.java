@@ -8,7 +8,6 @@ import org.jetbrains.jps.cmdline.PreloadedData;
  * Typical application is to pre-load and initialize some plugin custom caches to save time on build run.
  *
  * @author Eugene Zhuravlev
- * Date: 23-Sep-19
  */
 public interface PreloadedDataExtension {
 

@@ -7,7 +7,7 @@ import java.nio.file.Path
 import java.util.*
 import kotlin.math.max
 
-class EventLogFile(val file: File) {
+data class EventLogFile(val file: File) {
   companion object {
     @JvmStatic
     fun create(dir: Path, buildType: EventLogBuildType, suffix: String): EventLogFile {

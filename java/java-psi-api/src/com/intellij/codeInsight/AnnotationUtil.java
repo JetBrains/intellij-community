@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.project.Project;
@@ -494,7 +494,7 @@ public class AnnotationUtil {
           HierarchicalMethodSignature methodSignature = method.getHierarchicalMethodSignature();
 
           final List<HierarchicalMethodSignature> superSignatures = methodSignature.getSuperSignatures();
-          PsiResolveHelper resolveHelper = PsiResolveHelper.SERVICE.getInstance(aClass.getProject());
+          PsiResolveHelper resolveHelper = PsiResolveHelper.getInstance(aClass.getProject());
           for (final HierarchicalMethodSignature superSignature : superSignatures) {
             final PsiMethod superMethod = superSignature.getMethod();
             if (visited == null) {
@@ -519,7 +519,7 @@ public class AnnotationUtil {
             HierarchicalMethodSignature methodSignature = method.getHierarchicalMethodSignature();
 
             final List<HierarchicalMethodSignature> superSignatures = methodSignature.getSuperSignatures();
-            PsiResolveHelper resolveHelper = PsiResolveHelper.SERVICE.getInstance(aClass.getProject());
+            PsiResolveHelper resolveHelper = PsiResolveHelper.getInstance(aClass.getProject());
             for (final HierarchicalMethodSignature superSignature : superSignatures) {
               final PsiMethod superMethod = superSignature.getMethod();
               if (visited == null) {

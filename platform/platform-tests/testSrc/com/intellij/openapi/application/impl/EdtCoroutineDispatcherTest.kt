@@ -68,6 +68,8 @@ class EdtCoroutineDispatcherTest {
         throw t
       }
     }
+    //suppressed until this one is fixed: https://youtrack.jetbrains.com/issue/KT-52379
+    @Suppress("AssertBetweenInconvertibleTypes")
     assertSame(t, thrown)
   }
 

@@ -9,7 +9,7 @@ import com.intellij.psi.XmlElementFactoryImpl
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.IncorrectOperationException
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
-import org.intellij.plugins.markdown.util.hasType
+import org.intellij.plugins.markdown.lang.psi.util.hasType
 
 internal object ImageUtils {
   @JvmStatic

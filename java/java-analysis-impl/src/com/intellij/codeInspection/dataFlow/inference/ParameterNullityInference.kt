@@ -19,8 +19,7 @@ internal fun inferNotNullParameters(tree: LighterAST, parameterNames: List<Strin
   val queue = ArrayDeque(statements)
   while (queue.isNotEmpty() && canBeNulls.isNotEmpty()) {
     val element = queue.removeFirst()
-    val type = element.tokenType
-    when (type) {
+    when (val type = element.tokenType) {
       CONDITIONAL_EXPRESSION, EXPRESSION_STATEMENT -> JavaLightTreeUtil.findExpressionChild(tree, element)?.let(queue::addFirst)
       RETURN_STATEMENT -> {
         queue.clear()

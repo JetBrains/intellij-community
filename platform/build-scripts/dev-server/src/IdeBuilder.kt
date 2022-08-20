@@ -7,10 +7,7 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.ProprietaryBuildTools
-import org.jetbrains.intellij.build.impl.BuildContextImpl
-import org.jetbrains.intellij.build.impl.DistributionJARsBuilder
-import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
-import org.jetbrains.intellij.build.impl.PluginLayoutGroovy
+import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.impl.projectStructureMapping.LibraryFileEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEntry
 import org.jetbrains.jps.model.artifact.JpsArtifactService
@@ -57,7 +54,7 @@ class IdeBuilder(val pluginBuilder: PluginBuilder,
 internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: Path, outDir: Path): IdeBuilder {
   val productProperties = URLClassLoader.newInstance(productConfiguration.modules.map { outDir.resolve(it).toUri().toURL() }.toTypedArray())
     .loadClass(productConfiguration.className)
-    .getConstructor(String::class.java).newInstance(homePath.toString()) as ProductProperties
+    .getConstructor(Path::class.java).newInstance(homePath) as ProductProperties
 
   val allNonTrivialPlugins = productProperties.productLayout.allNonTrivialPlugins
   val bundledMainModuleNames = getBundledMainModuleNames(productProperties)
@@ -65,14 +62,14 @@ internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: 
   val platformPrefix = productProperties.platformPrefix ?: "idea"
   val runDir = createRunDirForProduct(homePath, platformPrefix)
 
-  val buildContext = BuildContextImpl.createContext(getCommunityHomePath(homePath).toString(), homePath.toString(), productProperties,
+  val buildContext = BuildContextImpl.createContext(getCommunityHomePath(homePath), homePath, productProperties,
                                                     ProprietaryBuildTools.DUMMY, createBuildOptions(runDir))
   val pluginsDir = runDir.resolve("plugins")
 
   val mainModuleToNonTrivialPlugin = HashMap<String, BuildItem>(bundledMainModuleNames.size)
   for (plugin in allNonTrivialPlugins) {
     if (bundledMainModuleNames.contains(plugin.mainModule)) {
-      val item = BuildItem(pluginsDir.resolve(DistributionJARsBuilder.getActualPluginDirectoryName(plugin, buildContext)), plugin)
+      val item = BuildItem(pluginsDir.resolve(getActualPluginDirectoryName(plugin, buildContext)), plugin)
       mainModuleToNonTrivialPlugin.put(plugin.mainModule, item)
     }
   }
@@ -83,9 +80,8 @@ internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: 
     // (old module names are not supported)
     var item = mainModuleToNonTrivialPlugin.get(mainModuleName)
     if (item == null) {
-      val pluginLayout = PluginLayoutGroovy.plugin(mainModuleName)
-      val pluginDir = pluginsDir.resolve(DistributionJARsBuilder.getActualPluginDirectoryName(pluginLayout, buildContext))
-      item = BuildItem(pluginDir, PluginLayoutGroovy.plugin(mainModuleName))
+      val pluginLayout = PluginLayout.simplePlugin(mainModuleName)
+      item = BuildItem(dir = pluginsDir.resolve(pluginLayout.directoryName), layout = pluginLayout)
     }
     else {
       for (entry in item.layout.getJarToIncludedModuleNames()) {
@@ -121,12 +117,12 @@ internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: 
 }
 
 private fun createLibClassPath(context: BuildContext, homePath: Path): String {
-  val platformLayout = DistributionJARsBuilder.createPlatformLayout(emptySet(), context)
+  val platformLayout = createPlatformLayout(emptySet(), context)
   val isPackagedLib = System.getProperty("dev.server.pack.lib") == "true"
-  val projectStructureMapping = DistributionJARsBuilder.processLibDirectoryLayout(ModuleOutputPatcher(),
-                                                                                  platformLayout,
-                                                                                  context,
-                                                                                  isPackagedLib).fork().join()
+  val projectStructureMapping = processLibDirectoryLayout(moduleOutputPatcher = ModuleOutputPatcher(),
+                                                          platform = platformLayout,
+                                                          context = context,
+                                                          copyFiles = isPackagedLib).fork().join()
   // for some reasons maybe duplicated paths - use set
   val classPath = LinkedHashSet<String>()
   if (isPackagedLib) {
@@ -215,7 +211,7 @@ private fun getCommunityHomePath(homePath: Path): Path {
 private fun createBuildOptions(runDir: Path): BuildOptions {
   val buildOptions = BuildOptions()
   buildOptions.useCompiledClassesFromProjectOutput = true
-  buildOptions.targetOS = BuildOptions.OS_NONE
+  buildOptions.targetOs = BuildOptions.OS_NONE
   buildOptions.cleanOutputFolder = false
   buildOptions.skipDependencySetup = true
   buildOptions.outputRootPath = runDir.toString()

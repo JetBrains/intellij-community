@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create
 
 import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
@@ -258,7 +258,6 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
     return ScrollPaneFactory.createScrollPane(tree, true)
   }
 
-  @Suppress("DuplicatedCode")
   private fun createCountModel(loadingModel: GHSimpleLoadingModel<out Collection<*>>): SingleValueModel<Int?> {
     val model = SingleValueModel<Int?>(null)
     val loadingListener = object : GHLoadingModel.StateChangeListener {
@@ -367,7 +366,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
 
         ChangeDiffRequestProducer.create(project, it, requestDataKeys)
       }
-      return ChangeDiffRequestChain(producers.list, producers.selectedIndex)
+      return ChangeDiffRequestChain(producers)
     }
   }
 }

@@ -11,6 +11,7 @@ import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.remote.RemoteSdkAdditionalData;
 import com.jetbrains.python.console.PydevConsoleRunner;
+import com.jetbrains.python.console.PydevConsoleRunnerUtil;
 import com.jetbrains.python.console.PydevDocumentationProvider;
 import com.jetbrains.python.console.completion.PydevConsoleReference;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
@@ -30,7 +31,7 @@ import static com.jetbrains.python.psi.PyUtil.as;
 public class PythonRuntimeServiceImpl extends PythonRuntimeService {
   @Override
   public boolean isInPydevConsole(@NotNull PsiElement file) {
-    return PydevConsoleRunner.isInPydevConsole(file);
+    return PydevConsoleRunnerUtil.isInPydevConsole(file);
   }
 
   @Override
@@ -41,7 +42,7 @@ public class PythonRuntimeServiceImpl extends PythonRuntimeService {
   @Nullable
   @Override
   public Sdk getConsoleSdk(@NotNull PsiElement foothold) {
-    return PydevConsoleRunner.getConsoleSdk(foothold);
+    return PydevConsoleRunnerUtil.getConsoleSdk(foothold);
   }
 
   @Override
@@ -72,7 +73,7 @@ public class PythonRuntimeServiceImpl extends PythonRuntimeService {
 
   @Override
   public PythonConsoleData getPythonConsoleData(@Nullable ASTNode node) {
-    return PydevConsoleRunner.getPythonConsoleData(node);
+    return PydevConsoleRunnerUtil.getPythonConsoleData(node);
   }
 
   @Override

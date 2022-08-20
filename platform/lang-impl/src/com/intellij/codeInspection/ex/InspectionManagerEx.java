@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Author: max
@@ -38,7 +38,7 @@ public class InspectionManagerEx extends InspectionManagerBase {
       myContentManager = NotNullLazyValue.createValue(() -> {
         ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
         toolWindowManager.registerToolWindow(ProblemsView.ID, true, ToolWindowAnchor.BOTTOM, project);
-        return ContentFactory.SERVICE.getInstance().createContentManager(new TabbedPaneContentUI(), true, project);
+        return ContentFactory.getInstance().createContentManager(new TabbedPaneContentUI(), true, project);
       });
     }
     else {

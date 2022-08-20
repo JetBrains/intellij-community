@@ -69,7 +69,7 @@ public abstract class RecentProjectsManager {
   public void removeGroup(@NotNull ProjectGroup group) {
   }
 
-  public void moveProjectToGroup(@NotNull String projectPath, @NotNull ProjectGroup from, @NotNull ProjectGroup to) {
+  public void moveProjectToGroup(@NotNull String projectPath, @NotNull ProjectGroup to) {
   }
 
   public void removeProjectFromGroup(@NotNull String projectPath, @NotNull ProjectGroup from) {

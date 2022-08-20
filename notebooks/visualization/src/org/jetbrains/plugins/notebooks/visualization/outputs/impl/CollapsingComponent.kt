@@ -22,9 +22,9 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 
 internal class CollapsingComponent(
-  editor: EditorImpl,
+  internal val editor: EditorImpl,
   child: JComponent,
-  private val resizable: Boolean,
+  internal val resizable: Boolean,
   private val collapsedTextSupplier: () -> @NlsSafe String,
 ) : JPanel(null) {
   private var customHeight: Int = -1
@@ -64,7 +64,7 @@ internal class CollapsingComponent(
   init {
     add(child)
     add(StubComponent(editor))
-    border = IdeBorderFactory.createEmptyBorder(Insets(0, 0, 10, 0))  // It's used as a grip for resizing.
+    border = ResizeHandlebarUpdater.invisibleResizeBorder
     isSeen = true
   }
 

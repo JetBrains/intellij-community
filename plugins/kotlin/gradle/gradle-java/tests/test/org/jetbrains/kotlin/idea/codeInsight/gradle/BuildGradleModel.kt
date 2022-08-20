@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
-import com.intellij.testFramework.IdeaTestUtil
 import kotlinx.coroutines.runBlocking
 import org.gradle.tooling.GradleConnectionException
 import org.gradle.tooling.GradleConnector
@@ -43,7 +42,9 @@ class BuiltGradleModel<T : Any>(val modules: Map<IdeaModule, T?>) {
     }
 }
 
-fun <T : Any> buildGradleModel(projectPath: File, gradleVersion: GradleVersion, clazz: KClass<T>): BuiltGradleModel<T> {
+fun <T : Any> buildGradleModel(
+    projectPath: File, gradleVersion: GradleVersion, javaHomePath: String, clazz: KClass<T>
+): BuiltGradleModel<T> {
     val connector = GradleConnector.newConnector()
     connector.useDistribution(AbstractModelBuilderTest.DistributionLocator().getDistributionFor(gradleVersion))
     connector.forProjectDirectory(projectPath)
@@ -87,8 +88,7 @@ fun <T : Any> buildGradleModel(projectPath: File, gradleVersion: GradleVersion, 
         val buildActionExecutor = gradleConnection.action(projectImportAction)
         buildActionExecutor.withArguments(executionSettings.arguments)
 
-        val jdkHome = IdeaTestUtil.requireRealJdkHome()
-        buildActionExecutor.setJavaHome(File(jdkHome))
+        buildActionExecutor.setJavaHome(File(javaHomePath))
         buildActionExecutor.setJvmArguments("-Xmx512m")
         buildActionExecutor.setStandardOutput(System.out)
         buildActionExecutor.setStandardError(System.err)

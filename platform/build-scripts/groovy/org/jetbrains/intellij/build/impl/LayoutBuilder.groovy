@@ -284,7 +284,7 @@ final class LayoutBuilder {
                                                                     ((JpsModuleReference)parentReference).moduleName, libraryFile, 0))
       }
       else {
-        ProjectLibraryData libraryData = new ProjectLibraryData(library.name, LibraryPackMode.MERGED)
+        ProjectLibraryData libraryData = new ProjectLibraryData(library.name, LibraryPackMode.MERGED, null, null)
         projectStructureMapping.addEntry(new ProjectLibraryEntry(Path.of(getOutputFilePath(outputFileName)), libraryData, libraryFile, 0))
       }
     }

@@ -29,6 +29,8 @@ fun <T> intBlock(block: () -> T): T {
     return block()
 }
 
+// Working as intended on EE-IR: No support for disabling reflective access
+
 // REFLECTION_PATCHING: false
 
 // EXPRESSION: intBlock { publicFun() }

@@ -612,13 +612,11 @@ public class Element extends Content implements Parent, Serializable {
    *                              determined by {@link
    *                              Verifier#checkCharacterData})
    */
-  public Element setText(final String text) {
+  public Element setText(String text) {
     content.clear();
-
     if (text != null) {
       addContent(new Text(text));
     }
-
     return this;
   }
 
@@ -1464,13 +1462,9 @@ public class Element extends Content implements Parent, Serializable {
    * @param ns    <code>Namespace</code> to search within. A null implies Namespace.NO_NAMESPACE.
    * @return the first matching child element, or null if not found
    */
-  public Element getChild(final String cname, final Namespace ns) {
-    final List<Element> elements = content.getView(new ElementFilter(cname, ns));
-    final Iterator<Element> iter = elements.iterator();
-    if (iter.hasNext()) {
-      return iter.next();
-    }
-    return null;
+  public Element getChild(String cname, Namespace ns) {
+    Iterator<Element> iterator = content.getView(new ElementFilter(cname, ns)).iterator();
+    return iterator.hasNext() ? iterator.next() : null;
   }
 
   /**
@@ -1482,7 +1476,7 @@ public class Element extends Content implements Parent, Serializable {
    * @param cname local name of child element to match
    * @return the first matching child element, or null if not found
    */
-  public Element getChild(final String cname) {
+  public Element getChild(String cname) {
     return getChild(cname, Namespace.NO_NAMESPACE);
   }
 

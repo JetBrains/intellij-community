@@ -28,7 +28,7 @@ class ExternalEventLogSettingsTest : BasePlatformTestCase() {
   }
 
   fun testSubstitution() {
-    val applicationInfo = EventLogInternalApplicationInfo("FUS", true)
+    val applicationInfo = EventLogInternalApplicationInfo(true)
     Assertions.assertThat(applicationInfo.templateUrl).isEqualTo(URL)
   }
 

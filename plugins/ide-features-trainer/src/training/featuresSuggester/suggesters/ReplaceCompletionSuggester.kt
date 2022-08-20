@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.featuresSuggester.suggesters
 
 import com.intellij.openapi.util.TextRange
@@ -115,7 +116,6 @@ class ReplaceCompletionSuggester : AbstractFeatureSuggester() {
     return NoSuggestion
   }
 
-  @Suppress("DuplicatedCode")
   private fun SuggesterSupport.createEditedStatementData(action: EditorAction, offset: Int): EditedStatementData? {
     val curElement = action.psiFile?.findElementAt(offset) ?: return null
     return if (curElement.getParentByPredicate(::isLiteralExpression) == null &&

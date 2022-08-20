@@ -1,6 +1,7 @@
 package com.intellij.ide.starter.tests.examples.junit4
 
 import org.junit.rules.TestName
+import java.util.*
 import kotlin.reflect.KClass
 
 /**
@@ -21,9 +22,9 @@ fun TestName.toPrintableWithClass(clazz: KClass<*>): String {
  * Format: testMethodName => test-method-name
  */
 fun String.toPrintableTestName(): String {
-  return this.replace(" ", "-").trim().decapitalize().toCharArray()
+  return this.replace(" ", "-").trim().replaceFirstChar { it.lowercase(Locale.getDefault()) }.toCharArray()
     .map {
-      if (it.isUpperCase()) "-${it.toLowerCase()}"
+      if (it.isUpperCase()) "-${it.lowercaseChar()}"
       else it
     }
     .joinToString(separator = "")

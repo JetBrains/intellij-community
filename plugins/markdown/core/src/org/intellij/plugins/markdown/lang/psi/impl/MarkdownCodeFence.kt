@@ -114,10 +114,9 @@ class MarkdownCodeFence(elementType: IElementType): MarkdownCodeFenceImpl(elemen
       // Check if new content should break current code fence
       if (content.contains("```") || content.contains("~~~")) {
         val textElement = MarkdownPsiElementFactory.createTextElement(element.project, content)
-        return when (textElement) {
-          is MarkdownCodeFence -> element.replace(textElement) as MarkdownCodeFence
-          else -> null
-        }
+        return if (textElement is MarkdownCodeFence) {
+          element.replace(textElement) as MarkdownCodeFence
+        } else null
       }
       val relevantRange = obtainRelevantTextRange(element)
       val indent = MarkdownCodeFenceUtils.getIndent(element) ?: ""

@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -20,7 +21,7 @@ public class CommonProblemDescriptorImpl implements CommonProblemDescriptor {
       if (!(this instanceof ProblemDescriptor)) {
         for (QuickFix<?> fix : fixes) {
           if (fix instanceof LocalQuickFix) {
-            LOG.error("Local quick fix expect ProblemDescriptor, but here only CommonProblemDescriptor available");
+            LOG.error("Local quick fix expect ProblemDescriptor, but here only CommonProblemDescriptor available: " + this.getClass().getName() + "; descr: " + descriptionTemplate);
           }
         }
       }

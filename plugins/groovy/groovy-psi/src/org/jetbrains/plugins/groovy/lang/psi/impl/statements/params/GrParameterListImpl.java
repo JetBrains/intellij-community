@@ -27,7 +27,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LPAREN;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RPAREN;
 
 /**
- * @author: Dmitry.Krasilschikov
+ * @author Dmitry.Krasilschikov
  */
 public class GrParameterListImpl extends GrStubElementBase<EmptyStub>
   implements GrParameterList, StubBasedPsiElement<EmptyStub>, PsiListLikeElement {

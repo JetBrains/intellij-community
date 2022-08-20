@@ -1,8 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
-import org.jetbrains.intellij.build.tasks.tracer
-import org.jetbrains.intellij.build.tasks.use
+import com.intellij.diagnostic.telemetry.use
+import org.jetbrains.intellij.build.tracer
 import java.io.ByteArrayOutputStream
 import java.lang.Thread.sleep
 import java.net.URI
@@ -20,7 +20,7 @@ private val httpClient by lazy {
 }
 
 fun download(url: String): ByteArray {
-  tracer.spanBuilder("download").setAttribute("url", url).startSpan().use {
+  tracer.spanBuilder("download").setAttribute("url", url).use {
     var attemptNumber = 0
     while (true) {
       val request = HttpRequest.newBuilder(URI(url))

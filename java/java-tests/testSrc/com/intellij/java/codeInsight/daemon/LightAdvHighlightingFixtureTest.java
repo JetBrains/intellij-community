@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
@@ -54,7 +54,7 @@ public class LightAdvHighlightingFixtureTest extends LightJavaCodeInsightFixture
       PsiTreeUtil.getParentOfType(file.findElementAt(myFixture.getEditor().getCaretModel().getOffset()), PsiCallExpression.class);
     assertNotNull(callExpression);
     CandidateInfo[] candidates =
-      PsiResolveHelper.SERVICE.getInstance(myFixture.getProject()).getReferencedMethodCandidates(callExpression, false);
+      PsiResolveHelper.getInstance(myFixture.getProject()).getReferencedMethodCandidates(callExpression, false);
     assertSize(27, candidates);
     String generateDoc = new JavaDocumentationProvider().generateDoc(callExpression, callExpression);
     assertEquals("<html>Candidates for method call <b>new StringBuilder().append()</b> are:<br><br>&nbsp;&nbsp;" +
@@ -252,6 +252,31 @@ public class LightAdvHighlightingFixtureTest extends LightJavaCodeInsightFixture
     IntentionAction action = myFixture.findSingleIntention("Remove 'for' statement");
     myFixture.launchAction(action);
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+
+  public void testProtectedInnerClass() {
+    myFixture.addClass("package a;\n" +
+                       "public class Outer {\n" +
+                       " public Object get(Inner key) {\n" +
+                       "  return null;\n" +
+                       " }\n" +
+                       " public Inner get1() {return null;} \n" +
+                       " public Inner f; \n" +
+                       " protected class Inner {}\n" +
+                       "}");
+    doTest();
+  }
+  
+  public void testProtectedInnerClass1() {
+    myFixture.addClass("package a;\n" +
+                       "public class A<T> {\n" +
+                       "  public T getData() {return null;}\n" +
+                       "}");
+    myFixture.addClass("package a;\n" +
+                       "public class Outer extends A<Outer.Inner> {\n" +
+                       " protected class Inner {}\n" +
+                       "}");
+    doTest();
   }
 
   private void doTest() {

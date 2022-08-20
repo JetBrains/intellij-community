@@ -64,8 +64,7 @@ fun PsiMember.getJavaOrKotlinMemberDescriptor(): DeclarationDescriptor? =
     javaResolutionFacade()?.let { getJavaOrKotlinMemberDescriptor(it) }
 
 fun PsiMember.getJavaOrKotlinMemberDescriptor(resolutionFacade: ResolutionFacade): DeclarationDescriptor? {
-    val callable = unwrapped
-    return when (callable) {
+    return when (val callable = unwrapped) {
         is PsiMember -> getJavaMemberDescriptor(resolutionFacade)
         is KtDeclaration -> {
             val descriptor = resolutionFacade.resolveToDescriptor(callable)

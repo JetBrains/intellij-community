@@ -7,7 +7,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.formatter.blocks.MarkdownBlocks
 import org.intellij.plugins.markdown.lang.formatter.blocks.MarkdownFormattingBlock
-import org.intellij.plugins.markdown.lang.psi.MarkdownAstUtils.children
+import org.intellij.plugins.markdown.lang.psi.util.children
 import org.intellij.plugins.markdown.util.MarkdownTextUtil
 
 /**

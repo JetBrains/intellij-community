@@ -80,7 +80,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private final Project myProject;
   private final Editor myEditor;
   private final Object myUiLock = new Object();
-  private final JBList<LookupElement> myList = new JBList<LookupElement>(new CollectionListModel<>()) {
+  private final JBList<LookupElement> myList = new JBList<LookupElement>(new CollectionListModelWithBatchUpdate<>()) {
     // 'myList' is focused when "Screen Reader" mode is enabled
     @Override
     protected void processKeyEvent(@NotNull final KeyEvent e) {
@@ -173,8 +173,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     myCreatedTimestamp = System.currentTimeMillis();
   }
 
-  private CollectionListModel<LookupElement> getListModel() {
-    return (CollectionListModel<LookupElement>)myList.getModel();
+  private CollectionListModelWithBatchUpdate<LookupElement> getListModel() {
+    return (CollectionListModelWithBatchUpdate<LookupElement>)myList.getModel();
   }
 
   @SuppressWarnings("unused") // used plugins
@@ -426,7 +426,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }
     checkValid();
 
-    CollectionListModel<LookupElement> listModel = getListModel();
+    CollectionListModelWithBatchUpdate<LookupElement> listModel = getListModel();
 
     Pair<List<LookupElement>, Integer> pair = myPresentableArranger.arrangeItems(this, onExplicitAction || reused);
     List<LookupElement> items = pair.first;

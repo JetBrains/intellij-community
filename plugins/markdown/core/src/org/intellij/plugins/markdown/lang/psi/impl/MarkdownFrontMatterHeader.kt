@@ -11,8 +11,8 @@ import com.intellij.psi.util.siblings
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElement
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElementFactory
+import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil
-import org.intellij.plugins.markdown.util.hasType
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -35,10 +35,9 @@ class MarkdownFrontMatterHeader(type: IElementType): CompositePsiElement(type), 
     override fun handleContentChange(element: MarkdownFrontMatterHeader, range: TextRange, content: String): MarkdownFrontMatterHeader? {
       if (content.contains("---")) {
         val textElement = MarkdownPsiElementFactory.createTextElement(element.project, content)
-        return when (textElement) {
-          is MarkdownFrontMatterHeader -> element.replace(textElement) as MarkdownFrontMatterHeader
-          else -> null
-        }
+        return if (textElement is MarkdownFrontMatterHeader) {
+          element.replace(textElement) as MarkdownFrontMatterHeader
+        } else null
       }
       val children = element.firstChild.siblings(forward = true, withSelf = true)
       val contentElement = children.filterIsInstance<MarkdownFrontMatterHeaderContent>().firstOrNull() ?: return null

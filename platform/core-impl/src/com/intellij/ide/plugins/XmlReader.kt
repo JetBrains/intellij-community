@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("XmlReader")
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplacePutWithAssignment", "ReplaceGetOrSet")
 package com.intellij.ide.plugins
@@ -10,11 +10,11 @@ import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
-import com.intellij.util.xml.dom.NoOpXmlInterner
-import com.intellij.util.xml.dom.XmlInterner
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.messages.ListenerDescriptor
+import com.intellij.util.xml.dom.NoOpXmlInterner
+import com.intellij.util.xml.dom.XmlInterner
+import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.codehaus.stax2.XMLStreamReader2
 import org.codehaus.stax2.typed.TypedXMLStreamException
@@ -896,7 +896,6 @@ private inline fun XMLStreamReader.consumeChildElements(crossinline consumer: (n
 
   var depth = 1
   while (true) {
-    @Suppress("DuplicatedCode")
     when (next()) {
       XMLStreamConstants.START_ELEMENT -> {
         depth++

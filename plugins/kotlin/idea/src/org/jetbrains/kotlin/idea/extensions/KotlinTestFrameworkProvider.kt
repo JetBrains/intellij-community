@@ -46,7 +46,11 @@ interface KotlinTestFrameworkProvider {
     fun isTestJavaClass(testClass: PsiClass): Boolean
     fun isTestJavaMethod(testMethod: PsiMethod): Boolean
 
+    fun isTestFrameworkAvailable(element: PsiElement): Boolean = true
+
     fun getJavaTestEntity(element: PsiElement, checkMethod: Boolean): JavaTestEntity? {
+        if (!isTestFrameworkAvailable(element)) return null
+
         val testFunction = if (checkMethod) element.getParentOfType<KtNamedFunction>(strict = false) else null
         val owner = PsiTreeUtil.getParentOfType(testFunction ?: element, KtClassOrObject::class.java, KtDeclarationWithBody::class.java)
 

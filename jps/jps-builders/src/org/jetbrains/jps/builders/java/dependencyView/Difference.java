@@ -7,7 +7,7 @@ import org.jetbrains.org.objectweb.asm.Opcodes;
 import java.util.*;
 
 /**
- * @author: db
+ * @author db
  */
 public abstract class Difference {
 

@@ -8,14 +8,16 @@ import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowContentUiType
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.openapi.wm.impl.*
+import com.intellij.openapi.wm.impl.DesktopLayout
+import com.intellij.openapi.wm.impl.WindowInfoImpl
+import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.ui.ExperimentalUI
 import kotlinx.serialization.Serializable
 import java.awt.Rectangle
 
 @Service(Service.Level.APP)
 @State(name = "ToolWindowLayout", storages = [Storage(value = "window.state.xml", roamingType = RoamingType.DISABLED)])
-internal class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
+class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
   : PersistentStateComponentWithModificationTracker<ToolWindowDefaultLayoutManager.ToolWindowLayoutStorageManagerState> {
   companion object {
     @JvmStatic
@@ -30,7 +32,7 @@ internal class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
   private var layout = DesktopLayout()
 
   @Suppress("unused")
-  private constructor() : this(ExperimentalUI.isNewUI())
+  constructor() : this(ExperimentalUI.isNewUI())
 
   fun getLayoutCopy() = layout.copy()
 
@@ -45,7 +47,6 @@ internal class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
 
   override fun getStateModificationCount() = tracker.modificationCount
 
-  @Suppress("DuplicatedCode")
   override fun noStateLoaded() {
     if (!isNewUi) {
       (WindowManager.getInstance() as? WindowManagerImpl)?.oldLayout?.let {

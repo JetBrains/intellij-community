@@ -394,7 +394,6 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     readFromXml(profile, content);
     ToolsImpl tools = profile.getTools("MissingJavadoc", getProject());
     assertFalse(tools.getDefaultState().isEnabled());
-    assertTrue(tools.getNonDefaultTools().get(0).isEnabled());
   }
 
   public void testDefaultScopeEnabled() throws Exception {
@@ -408,7 +407,6 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     readFromXml(profile, content);
     ToolsImpl tools = profile.getTools("MissingJavadoc", getProject());
     assertTrue(tools.getDefaultState().isEnabled());
-    assertFalse(tools.getNonDefaultTools().get(0).isEnabled());
   }
 
   public void testScopesInNamingConventions() throws Exception {

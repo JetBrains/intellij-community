@@ -6,7 +6,14 @@ import org.jetbrains.plugins.gradle.tooling.serialization.DefaultSerializationSe
 import org.jetbrains.plugins.gradle.tooling.serialization.SerializationService
 
 class IdeaKotlinProjectModelSerializationService : SerializationService<IdeaKotlinProjectModel> {
-    override fun getModelClass(): Class<out IdeaKotlinProjectModel> = IdeaKotlinProjectModel::class.java
+
+    // TODO Yaroslav Chernyshev
+    //  `test 'runPartialGradleImport' is running in 'lenient' or 'classpath' mode` breaks on KGP 1.6.21 with NoClassDefFoundError
+    override fun getModelClass(): Class<out IdeaKotlinProjectModel> = try {
+        IdeaKotlinProjectModel::class.java
+    } catch (t: NoClassDefFoundError) {
+        Nothing::class.java
+    }
 
     override fun write(`object`: IdeaKotlinProjectModel?, modelClazz: Class<out IdeaKotlinProjectModel>?): ByteArray =
         DefaultSerializationService().write(`object`, modelClazz)

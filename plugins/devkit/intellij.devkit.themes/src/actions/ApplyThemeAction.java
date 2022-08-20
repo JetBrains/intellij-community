@@ -15,6 +15,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,7 +32,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Map;
-import java.util.function.Function;
 
 /**
  * @author Konstantin Bulenkov
@@ -75,61 +75,74 @@ public final class ApplyThemeAction extends DumbAwareAction {
     return false;
   }
 
-  private static boolean applyTempTheme(@NotNull VirtualFile json, Project project) {
+  private static boolean applyTempTheme(@NotNull VirtualFile json,
+                                        @NotNull Project project) {
     try {
       FileDocumentManager.getInstance().saveAllDocuments();
-      UITheme theme = UITheme.loadFromJson(json.getInputStream(), "Temp theme", null, createIconsMapper(json, project));
-      String pathToScheme = theme.getEditorScheme();
-      VirtualFile editorScheme = null;
-      if (pathToScheme != null) {
-        editorScheme = findThemeFile(json, project, pathToScheme);
+
+      Module module = ModuleUtilCore.findModuleForFile(json, project);
+      UITheme theme = TempUIThemeBasedLookAndFeelInfo.loadTempTheme(json.getInputStream(), new IconPathPatcher() {
+
+        @Override
+        public @NotNull String patchPath(@NotNull String path,
+                                         @Nullable ClassLoader classLoader) {
+          String result = module != null ?
+                          findAbsoluteFilePathByRelativePath(module, path) :
+                          null;
+          return result != null ? result : path;
+        }
+      });
+
+      VirtualFile editorSchemeFile;
+      if (module != null) {
+        ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+        editorSchemeFile = findThemeFile(moduleRootManager, theme.getEditorScheme());
+
+        patchBackgroundImagePath(moduleRootManager, theme.getBackground());
+        patchBackgroundImagePath(moduleRootManager, theme.getEmptyFrameBackground());
+      }
+      else {
+        editorSchemeFile = null;
       }
 
-      patchBackgroundImagePath(json, project, theme.getBackground());
-      patchBackgroundImagePath(json, project, theme.getEmptyFrameBackground());
-
-      LafManager.getInstance().setCurrentLookAndFeel(new TempUIThemeBasedLookAndFeelInfo(theme, editorScheme));
+      LafManager lafManager = LafManager.getInstance();
+      lafManager.setCurrentLookAndFeel(new TempUIThemeBasedLookAndFeelInfo(theme,
+                                                                           editorSchemeFile,
+                                                                           lafManager.getCurrentLookAndFeel()));
       IconLoader.clearCache();
-      LafManager.getInstance().updateUI();
+      lafManager.updateUI();
       return true;
     }
     catch (IOException ignore) {}
     return false;
   }
 
-  private static void patchBackgroundImagePath(@NotNull VirtualFile json, Project project, Map<String, Object> background) {
+  private static void patchBackgroundImagePath(@NotNull ModuleRootManager moduleRootManager,
+                                               @Nullable Map<String, Object> background) {
     if (background != null) {
-      VirtualFile pathToBg = findThemeFile(json, project, background.get("image").toString());
+      VirtualFile pathToBg = findThemeFile(moduleRootManager, background.get("image").toString());
       if (pathToBg != null) {
         background.put("image", pathToBg.getPath());
       }
     }
   }
 
-  @Nullable
-  private static VirtualFile findThemeFile(@NotNull VirtualFile json, Project project, String pathToFile) {
-    Module module = ModuleUtilCore.findModuleForFile(json, project);
-    if (module != null) {
-      for (VirtualFile root : ModuleRootManager.getInstance(module).getSourceRoots(false)) {
+  private static @Nullable VirtualFile findThemeFile(@NotNull ModuleRootManager moduleRootManager,
+                                                     @Nullable String pathToFile) {
+    if (pathToFile != null) {
+      for (VirtualFile root : moduleRootManager.getSourceRoots(false)) {
         Path path = Paths.get(root.getPath(), pathToFile);
         if (path.toFile().exists()) {
           return VfsUtil.findFile(path, true);
         }
       }
     }
+
     return null;
   }
 
-  private static Function<String, String> createIconsMapper(VirtualFile json, Project project) {
-    Module module = ModuleUtilCore.findModuleForFile(json, project);
-    if (module != null) {
-      return s -> findAbsoluteFilePathByRelativePath(module, s, s);
-    }
-    return s -> s;
-  }
-
-  @Nullable
-  private static String findAbsoluteFilePathByRelativePath(Module module, String relativePath, String defaultResult) {
+  private static @Nullable String findAbsoluteFilePathByRelativePath(@NotNull Module module,
+                                                                     @NotNull String relativePath) {
     String filename = new File(relativePath).getName();
     GlobalSearchScope moduleScope = GlobalSearchScope.moduleScope(module);
     Collection<VirtualFile> filesByName = FilenameIndex.getVirtualFilesByName(filename, moduleScope);
@@ -139,7 +152,7 @@ public final class ApplyThemeAction extends DumbAwareAction {
         return "file://" + path; // NON-NLS
       }
     }
-    return defaultResult;
+    return null;
   }
 
   @Override

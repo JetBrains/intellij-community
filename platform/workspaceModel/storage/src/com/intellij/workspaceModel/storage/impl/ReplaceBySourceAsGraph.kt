@@ -47,8 +47,8 @@ internal object ReplaceBySourceAsGraph {
 
     // Map of entities in THIS builder with the entitySource that matches the predicate. Key is either hashCode or PersistentId
     val localMatchedEntities = HashMultimap.create<Any, Pair<WorkspaceEntityData<out WorkspaceEntity>, ThisEntityId>>()
-    // Map of entities in replaceWith store with the entitySource that matches the predicate. Key is either hashCode or PersistentId
-    val replaceWithMatchedEntities = HashMultimap.create<Any, NotThisEntityId>()
+    // List of entities in replaceWith store with the entitySource that matches the predicate.
+    val orderedListOfMatchedEntities = arrayListOf<NotThisEntityId>()
 
     // Map of entities in THIS builder that have a reference to matched entity. Key is either hashCode or PersistentId
     val localUnmatchedReferencedNodes = HashMultimap.create<Any, ThisEntityId>()
@@ -108,10 +108,11 @@ internal object ReplaceBySourceAsGraph {
     for (replaceWithEntitySource in replaceWith.indexes.entitySourceIndex.entries().filter { sourceFilter(it) }) {
       val entityDataList = replaceWith.indexes.entitySourceIndex
                              .getIdsByEntry(replaceWithEntitySource)
+                             ?.sortedBy { it.clazz + it.arrayId }
                              ?.mapTo(ArrayList()) { replaceWith.entityDataByIdOrDie(it) to it.notThis() } ?: continue
       if (reverseEntities) entityDataList.reverse()
       for ((matchedEntityData, matchedEntityId) in entityDataList) {
-        replaceWithMatchedEntities.put(matchedEntityData.identificator(), matchedEntityId)
+        orderedListOfMatchedEntities.add(matchedEntityId)
 
         // Find if the entity exists in local store
         val localNodeAndId = localMatchedEntities.find(matchedEntityData)
@@ -303,7 +304,7 @@ internal object ReplaceBySourceAsGraph {
 
     LOG.debug { "5) Restore references in matching ids" }
     val parentsWithSortedChildren = mutableSetOf<Pair<NotThisEntityId, ConnectionId>>()
-    for (nodeId in replaceWithMatchedEntities.values()) {
+    for (nodeId in orderedListOfMatchedEntities) {
       for ((connectionId, parentId) in replaceWith.refs.getParentRefsOfChild(nodeId.id.asChild())) {
         if (!sourceFilter(replaceWith.entityDataByIdOrDie(parentId.id).entitySource)) {
           // replaceWith storage has a link to unmatched entity. We should check if we can "transfer" this link to the current storage

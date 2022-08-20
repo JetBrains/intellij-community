@@ -2,7 +2,6 @@
 // ACTION: Add 'p =' to argument
 // ACTION: Create extension function 'Operated.plus'
 // ACTION: Create member function 'Operated.plus'
-// ACTION: Do not show return expression hints
 // ACTION: Flip '+'
 // ACTION: Replace overloaded operator with function call
 // DISABLE-ERRORS

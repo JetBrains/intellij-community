@@ -1,16 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation.cache
 
 import com.google.common.hash.Hashing
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.CharsetToolkit
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.CompilationContext
 
 import java.lang.reflect.Type
 import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.Path
 
 @CompileStatic
 final class SourcesStateProcessor {
@@ -35,12 +35,12 @@ final class SourcesStateProcessor {
     return getProductionCompilationOutputs(sourceStateFile) + getTestsCompilationOutputs(sourceStateFile)
   }
 
-  Map<String, Map<String, BuildTargetState>> parseSourcesStateFile(String json = FileUtil.loadFile(sourceStateFile, CharsetToolkit.UTF8)) {
+  Map<String, Map<String, BuildTargetState>> parseSourcesStateFile(String json = Files.readString(sourceStateFile)) {
     return gson.fromJson(json, SOURCES_STATE_TYPE)
   }
 
-  File getSourceStateFile() {
-    return new File(context.compilationData.dataStorageRoot, SOURCES_STATE_FILE_NAME)
+  Path getSourceStateFile() {
+    return context.compilationData.dataStorageRoot.resolve(SOURCES_STATE_FILE_NAME)
   }
 
   private List<CompilationOutput> getProductionCompilationOutputs(Map<String, Map<String, BuildTargetState>> currentSourcesState) {

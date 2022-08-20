@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl
@@ -57,7 +58,7 @@ object RepositoryBrowser {
 
     val contentPanel = RepositoryBrowserPanel(project, root, localRoot)
 
-    val content = ContentFactory.SERVICE.getInstance().createContent(contentPanel, title, true)
+    val content = ContentFactory.getInstance().createContent(contentPanel, title, true)
     repoToolWindow.contentManager.addContent(content)
     repoToolWindow.contentManager.setSelectedContent(content, true)
     repoToolWindow.activate(null)
@@ -180,8 +181,9 @@ class DiffRepoWithLocalAction : AnActionExtensionProvider {
 
   override fun actionPerformed(e: AnActionEvent) {
     val repoBrowser = e.getData(REPOSITORY_BROWSER_DATA_KEY) ?: return
-    val changes = repoBrowser.getSelectionAsChanges()
-    ShowDiffAction.showDiffForChange(repoBrowser.project, changes)
+    val selection = ListSelection.createAt(repoBrowser.getSelectionAsChanges(), 0)
+      .asExplicitSelection()
+    ShowDiffAction.showDiffForChange(repoBrowser.project, selection)
   }
 }
 

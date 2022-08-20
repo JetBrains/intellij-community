@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
 import java.io.IOException
@@ -7,9 +7,35 @@ import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 import java.util.function.Predicate
+import java.util.regex.Pattern
 
+@PublishedApi
 internal val W_CREATE_NEW = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)
 
+fun copyFileToDir(file: Path, targetDir: Path) {
+  doCopyFile(file, targetDir.resolve(file.fileName), targetDir)
+}
+
+fun moveFile(source: Path, target: Path) {
+  Files.createDirectories(target.parent)
+  Files.move(source, target)
+}
+
+fun moveFileToDir(file: Path, targetDir: Path) {
+  Files.createDirectories(targetDir)
+  Files.move(file, targetDir.resolve(file.fileName))
+}
+
+fun copyFile(file: Path, target: Path) {
+  doCopyFile(file, target, target.parent)
+}
+
+private fun doCopyFile(file: Path, target: Path, targetDir: Path) {
+  Files.createDirectories(targetDir)
+  Files.copy(file, target, StandardCopyOption.COPY_ATTRIBUTES)
+}
+
+@JvmOverloads
 fun copyDir(sourceDir: Path, targetDir: Path, dirFilter: Predicate<Path>? = null, fileFilter: Predicate<Path>? = null) {
   Files.createDirectories(targetDir)
   Files.walkFileTree(sourceDir, CopyDirectoryVisitor(
@@ -20,7 +46,7 @@ fun copyDir(sourceDir: Path, targetDir: Path, dirFilter: Predicate<Path>? = null
   ))
 }
 
-internal inline fun writeNewFile(file: Path, task: (FileChannel) -> Unit) {
+inline fun writeNewFile(file: Path, task: (FileChannel) -> Unit) {
   Files.createDirectories(file.parent)
   FileChannel.open(file, W_CREATE_NEW).use {
     task(it)
@@ -111,34 +137,40 @@ private fun deleteFile(file: Path) {
 }
 
 @JvmOverloads
-fun substituteTemplatePlaceholders(inputFile: Path, outputFile: Path, placeholderChar: String, values: List<Pair<String, String>>, mustUseAllPlaceholders: Boolean = true) {
+fun substituteTemplatePlaceholders(inputFile: Path,
+                                   outputFile: Path,
+                                   placeholder: String,
+                                   values: List<Pair<String, String>>,
+                                   mustUseAllPlaceholders: Boolean = true) {
   var result = Files.readString(inputFile)
 
   val missingPlaceholders = mutableListOf<String>()
   for ((name, value) in values) {
-    if (name.contains(placeholderChar)) {
-      error("Do not use placeholder '$placeholderChar' in name: $name")
+    check (!name.contains(placeholder)) {
+      "Do not use placeholder '$placeholder' in name: $name"
     }
 
-    val placeholder = "$placeholderChar$name$placeholderChar"
-    if (!result.contains(placeholder)) {
-      missingPlaceholders.add(placeholder)
+    val s = "$placeholder$name$placeholder"
+    if (!result.contains(s)) {
+      missingPlaceholders.add(s)
     }
 
-    result = result.replace(placeholder, value)
+    result = result.replace(s, value)
   }
 
-  if (mustUseAllPlaceholders && missingPlaceholders.isNotEmpty()) {
-    error("Missing placeholders [${missingPlaceholders.joinToString(" ")}] in template file $inputFile")
+  check(!mustUseAllPlaceholders || missingPlaceholders.isEmpty()) {
+    "Missing placeholders [${missingPlaceholders.joinToString(" ")}] in template file $inputFile"
   }
 
+  val escapedPlaceHolder = Pattern.quote(placeholder)
+  val regex = Regex("$escapedPlaceHolder.+$escapedPlaceHolder")
   val unsubstituted = result
-    .split('\n')
+    .splitToSequence('\n')
     .mapIndexed { line, s -> "line ${line + 1}: $s" }
-    .filter { Regex(Regex.escape(placeholderChar) + ".+" + Regex.escape(placeholderChar)).containsMatchIn(it) }
+    .filter(regex::containsMatchIn)
     .joinToString("\n")
-  if (unsubstituted.isNotBlank()) {
-    error("Some template parameters were left unsubstituted in template file $inputFile:\n$unsubstituted")
+  check (unsubstituted.isBlank()) {
+    "Some template parameters were left unsubstituted in template file $inputFile:\n$unsubstituted"
   }
 
   Files.createDirectories(outputFile.parent)

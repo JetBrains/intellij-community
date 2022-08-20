@@ -8,7 +8,6 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 
 internal class SuggestedRefactoringFeatureUsage : CounterUsagesCollector() {
 
-  @Suppress("HardCodedStringLiteral")
   companion object {
     private val GROUP = EventLogGroup("suggested.refactorings", 2)
 

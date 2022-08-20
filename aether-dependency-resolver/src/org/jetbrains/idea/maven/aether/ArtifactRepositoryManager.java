@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.aether;
 
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
@@ -46,9 +46,9 @@ import java.util.stream.Collectors;
 
 /**
  * @author Eugene Zhuravlev
- *
+ * <p>
  * Aether-based repository manager and dependency resolver using maven implementation of this functionality.
- *
+ * <p>
  * instance of this component should be managed by the code which requires dependency resolution functionality
  * all necessary params like path to local repo should be passed in constructor
  */
@@ -114,12 +114,12 @@ public final class ArtifactRepositoryManager {
     myRetry = retry;
   }
 
-  private static class RepositorySystemSessionFactory {
+  private static final class RepositorySystemSessionFactory {
     private final RepositorySystemSession sessionTemplate;
 
-    RepositorySystemSessionFactory(@NotNull File localRepositoryPath,
-                                   @NotNull ProgressConsumer progressConsumer,
-                                   boolean offline) {
+    private RepositorySystemSessionFactory(@NotNull File localRepositoryPath,
+                                           @NotNull ProgressConsumer progressConsumer,
+                                           boolean offline) {
       final DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
       if (progressConsumer != ProgressConsumer.DEAF) {
         session.setTransferListener(new TransferListener() {
@@ -168,7 +168,7 @@ public final class ArtifactRepositoryManager {
       sessionTemplate = session;
     }
 
-    RepositorySystemSession createDefaultSession() {
+    private RepositorySystemSession createDefaultSession() {
       return new DefaultRepositorySystemSession(sessionTemplate);
     }
 
@@ -176,14 +176,14 @@ public final class ArtifactRepositoryManager {
      * Return session which will include dependencies rejected by conflict resolver to the results.
      * @see ArtifactDependencyNode#isRejected()
      */
-    RepositorySystemSession createVerboseSession() {
+    private RepositorySystemSession createVerboseSession() {
       DefaultRepositorySystemSession session = new DefaultRepositorySystemSession(sessionTemplate);
       session.setConfigProperty(ConflictResolver.CONFIG_PROP_VERBOSE, Boolean.TRUE);
       session.setReadOnly();
       return session;
     }
 
-    RepositorySystemSession createSession(@NotNull List<String> excludedDependencies) {
+    private RepositorySystemSession createSession(@NotNull List<String> excludedDependencies) {
       DefaultRepositorySystemSession session = new DefaultRepositorySystemSession(sessionTemplate);
       if (excludedDependencies.isEmpty()) {
         return session;
@@ -362,7 +362,7 @@ public final class ArtifactRepositoryManager {
 
   /**
    * Modify version constraint to look for applicable annotations artifact.
-   *
+   * <p>
    * Annotations artifact for a given library is matched by Group Id, Artifact Id
    * and classifier "annotations". Annotations version is selected using following rules:
    * <ul>
@@ -467,7 +467,7 @@ public final class ArtifactRepositoryManager {
     return builder.setProxy(ourProxySelector.getProxy(url)).build();
   }
 
-  public static RemoteRepository createRemoteRepository(RemoteRepository prototype) {
+  private static RemoteRepository createRemoteRepository(RemoteRepository prototype) {
     final String url = prototype.getUrl();
     return new RemoteRepository.Builder(prototype.getId(), prototype.getContentType(), url).setProxy(ourProxySelector.getProxy(url)).build();
   }
@@ -502,7 +502,7 @@ public final class ArtifactRepositoryManager {
     return ourVersioning.parseVersion(str == null? "" : str);
   }
 
-  public static VersionConstraint asVersionConstraint(@Nullable String str) throws InvalidVersionSpecificationException {
+  private static VersionConstraint asVersionConstraint(@Nullable String str) throws InvalidVersionSpecificationException {
     return ourVersioning.parseVersionConstraint(str == null? "" : str);
   }
 
@@ -559,11 +559,11 @@ public final class ArtifactRepositoryManager {
   /**
    * Simplified copy of package-local org.eclipse.aether.internal.impl.ArtifactRequestBuilder
     */
-  private static class ArtifactRequestBuilder implements DependencyVisitor {
+  private static final class ArtifactRequestBuilder implements DependencyVisitor {
     private final ArtifactKind myKind;
     private final List<ArtifactRequest> myRequests = new ArrayList<>();
 
-    ArtifactRequestBuilder(ArtifactKind kind) {
+    private ArtifactRequestBuilder(ArtifactKind kind) {
       myKind = kind;
     }
 
@@ -597,10 +597,10 @@ public final class ArtifactRepositoryManager {
     }
   }
 
-  private static class ExcludeDependenciesFilter implements DependencyFilter {
+  private static final class ExcludeDependenciesFilter implements DependencyFilter {
     private final HashSet<String> myExcludedDependencies;
 
-    ExcludeDependenciesFilter(List<String> excludedDependencies) {
+    private ExcludeDependenciesFilter(List<String> excludedDependencies) {
       myExcludedDependencies = new HashSet<>(excludedDependencies);
     }
 
@@ -620,10 +620,10 @@ public final class ArtifactRepositoryManager {
     }
   }
 
-  private static class ArtifactDependencyTreeBuilder implements DependencyVisitor {
+  private static final class ArtifactDependencyTreeBuilder implements DependencyVisitor {
     private final List<List<ArtifactDependencyNode>> myCurrentChildren = new ArrayList<>();
 
-    ArtifactDependencyTreeBuilder() {
+    private ArtifactDependencyTreeBuilder() {
       myCurrentChildren.add(new ArrayList<>());
     }
 

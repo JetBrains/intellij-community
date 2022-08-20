@@ -73,13 +73,13 @@ class MavenTreeStructureProvider : TreeStructureProvider, DumbAware {
   private fun getModuleShortName(module: Module?): String? {
     if (module != null) {
       if (module.name.endsWith(".test")) {
-        return "test";
+        return "test"
       }
       if (module.name.endsWith(".main")) {
-        return "main";
+        return "main"
       }
     }
-    return null;
+    return null
   }
 
   private inner class MavenPomFileNode(project: Project?,

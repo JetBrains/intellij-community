@@ -22,7 +22,9 @@ import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.*;
 import org.jetbrains.idea.devkit.dom.index.RegistrationEntry.RegistrationType;
 
@@ -35,15 +37,16 @@ import java.util.*;
  * Class FQN or ID -> entry in {@code plugin.xml}.
  * <p>
  * <ul>
- *   <li>Application/Project/Module-component class - {@link Component#getImplementationClass()}</li>
+ *   <li>Application/Project/Module-component class - {@link Component#getInterfaceClass()} / {@link Component#getImplementationClass()} / {@link Component#getHeadlessImplementationClass()}</li>
  *   <li>Action/ActionGroup class - {@link Action#getClazz()}/{@link Group#getClazz()}</li>
  *   <li>Action/ActionGroup ID - {@link ActionOrGroup#getId()}</li>
  *   <li>Application/Project Listener class - {@link Listeners.Listener#getListenerClassName()}</li>
+ *   <li>Listener topic class - {@link Listeners.Listener#getTopicClassName()}</li>
  * </ul>
  */
 public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List<RegistrationEntry>> {
 
-  private static final int INDEX_VERSION = 4;
+  private static final int INDEX_VERSION = 8;
 
   private static final ID<String, List<RegistrationEntry>> NAME = ID.create("IdeaPluginRegistrationIndex");
 
@@ -95,41 +98,84 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
     return INDEX_VERSION;
   }
 
+  public static boolean isRegisteredClass(PsiClass psiClass, GlobalSearchScope scope) {
+    return isRegisteredClass(psiClass, scope, null);
+  }
+
+  public static boolean isRegisteredComponentInterface(PsiClass psiClass, GlobalSearchScope scope) {
+    return isRegisteredClass(psiClass, scope, RegistrationType.COMPONENT_INTERFACE);
+  }
+
   public static boolean isRegisteredApplicationComponent(PsiClass psiClass, GlobalSearchScope scope) {
-    return isRegistered(psiClass, scope, RegistrationType.APPLICATION_COMPONENT);
+    return isRegisteredClass(psiClass, scope, RegistrationType.APPLICATION_COMPONENT);
   }
 
   public static boolean isRegisteredProjectComponent(PsiClass psiClass, GlobalSearchScope scope) {
-    return isRegistered(psiClass, scope, RegistrationType.PROJECT_COMPONENT);
+    return isRegisteredClass(psiClass, scope, RegistrationType.PROJECT_COMPONENT);
   }
 
   public static boolean isRegisteredModuleComponent(PsiClass psiClass, GlobalSearchScope scope) {
-    return isRegistered(psiClass, scope, RegistrationType.MODULE_COMPONENT);
+    return isRegisteredClass(psiClass, scope, RegistrationType.MODULE_COMPONENT);
   }
 
-  public static boolean isRegisteredAction(PsiClass psiClass, GlobalSearchScope scope) {
-    return isRegistered(psiClass, scope, RegistrationType.ACTION);
+  public static boolean isRegisteredActionOrGroup(PsiClass psiClass, GlobalSearchScope scope) {
+    return isRegisteredClass(psiClass, scope, RegistrationType.ACTION);
+  }
+
+  public static boolean isRegisteredListenerTopic(PsiClass psiClass, GlobalSearchScope scope) {
+    return isRegisteredClass(psiClass, scope, RegistrationType.LISTENER_TOPIC);
+  }
+
+  public static boolean processComponent(Project project,
+                                         PsiClass componentInterfaceOrImplementationClass,
+                                         GlobalSearchScope scope,
+                                         Processor<? super Component> processor) {
+    String key = componentInterfaceOrImplementationClass.getQualifiedName();
+    assert key != null : componentInterfaceOrImplementationClass;
+
+    return processAll(project, key, scope,
+                      EnumSet.of(RegistrationType.APPLICATION_COMPONENT,
+                                 RegistrationType.PROJECT_COMPONENT,
+                                 RegistrationType.MODULE_COMPONENT,
+                                 RegistrationType.COMPONENT_INTERFACE),
+                      Component.class,
+                      processor);
   }
 
   public static boolean processListener(@NotNull Project project,
                                         PsiClass listenerClass,
                                         GlobalSearchScope scope,
                                         Processor<? super Listeners.Listener> processor) {
-    final String key = listenerClass.getQualifiedName();
-    assert key != null : listenerClass;
-
-    List<XmlTag> tags = collectTags(project, key, scope,
-                                    EnumSet.of(RegistrationType.APPLICATION_LISTENER, RegistrationType.PROJECT_LISTENER));
-
-    return ContainerUtil.process(tags, tag -> {
-      final DomElement domElement = DomManager.getDomManager(project).getDomElement(tag);
-
-      if (!(domElement instanceof Listeners.Listener)) return true;
-      return processor.process((Listeners.Listener)domElement);
-    });
+    return doProcessListener(project, listenerClass, scope,
+                             EnumSet.of(RegistrationType.APPLICATION_LISTENER, RegistrationType.PROJECT_LISTENER),
+                             processor);
   }
 
-  private static boolean isRegistered(PsiClass psiClass, GlobalSearchScope scope, RegistrationType type) {
+  public static boolean processListenerTopic(@NotNull Project project,
+                                             PsiClass topicClass,
+                                             GlobalSearchScope scope,
+                                             Processor<? super Listeners.Listener> processor) {
+    return doProcessListener(project, topicClass, scope, EnumSet.of(RegistrationType.LISTENER_TOPIC), processor);
+  }
+
+  private static boolean doProcessListener(@NotNull Project project,
+                                           PsiClass psiClass,
+                                           GlobalSearchScope scope,
+                                           EnumSet<RegistrationType> types,
+                                           Processor<? super Listeners.Listener> processor) {
+    final String key = psiClass.getQualifiedName();
+    assert key != null : psiClass;
+
+    return processAll(project, key, scope,
+                      types,
+                      Listeners.Listener.class,
+                      processor);
+  }
+
+  /**
+   * @param type {@code null} for any
+   */
+  private static boolean isRegisteredClass(PsiClass psiClass, GlobalSearchScope scope, @Nullable RegistrationType type) {
     final String qualifiedName = psiClass.getQualifiedName();
     if (qualifiedName == null) {
       return false;
@@ -137,7 +183,14 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
 
     return !FileBasedIndex.getInstance()
       .processValues(NAME, qualifiedName, null,
-                     (file, value) -> ContainerUtil.process(value, entry -> !(entry.getRegistrationType() == type)),
+                     (file, value) -> ContainerUtil.process(value, entry -> {
+                       RegistrationType registrationType = entry.getRegistrationType();
+                       if (type == null) {
+                         return !(registrationType.isClass());
+                       }
+
+                       return !(registrationType == type);
+                     }),
                      scope);
   }
 
@@ -147,6 +200,16 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
     Set<String> keys = new HashSet<>();
     FileBasedIndex.getInstance().processAllKeys(NAME, s -> keys.add(s), scope, null);
     return ContainerUtil.process(keys, s -> processActionOrGroup(project, s, scope, processor));
+  }
+
+  public static boolean processActionOrGroupClass(@NotNull Project project,
+                                                  PsiClass actionOrGroupClass,
+                                                  GlobalSearchScope scope,
+                                                  Processor<? super ActionOrGroup> processor) {
+    String fqn = actionOrGroupClass.getQualifiedName();
+    assert fqn != null : actionOrGroupClass;
+
+    return doProcessActionOrGroup(project, fqn, scope, EnumSet.of(RegistrationType.ACTION), processor);
   }
 
   public static boolean processActionOrGroup(@NotNull Project project,
@@ -173,17 +236,28 @@ public class IdeaPluginRegistrationIndex extends PluginXmlIndexBase<String, List
   }
 
   private static boolean doProcessActionOrGroup(@NotNull Project project,
-                                                @NotNull String actionOrGroupId,
+                                                @NotNull String key,
                                                 GlobalSearchScope scope,
                                                 EnumSet<RegistrationType> types,
                                                 Processor<? super ActionOrGroup> processor) {
-    List<XmlTag> tags = collectTags(project, actionOrGroupId, scope, types);
+    return processAll(project, key, scope, types, ActionOrGroup.class, processor);
+  }
+
+  private static <T extends DomElement> boolean processAll(@NotNull Project project,
+                                                           @NotNull String key,
+                                                           GlobalSearchScope scope,
+                                                           EnumSet<RegistrationType> types,
+                                                           Class<T> domClazz,
+                                                           Processor<? super T> processor) {
+    List<XmlTag> tags = collectTags(project, key, scope, types);
 
     return ContainerUtil.process(tags, tag -> {
       final DomElement domElement = DomManager.getDomManager(project).getDomElement(tag);
 
-      if (!(domElement instanceof ActionOrGroup)) return true;
-      return processor.process((ActionOrGroup)domElement);
+      T t = DomUtil.getParentOfType(domElement, domClazz, false);
+      if (t == null) return true;
+      //noinspection unchecked
+      return processor.process((T)domElement);
     });
   }
 

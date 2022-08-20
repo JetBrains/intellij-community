@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui.firstStep
 
 import com.intellij.icons.AllIcons
@@ -14,7 +14,8 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.TitledSeparator
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -218,7 +219,6 @@ private class JdkComponent(ideWizard: IdeWizard) : TitledComponent(ideWizard.con
     override val component: JComponent = jdkComboBox
 }
 
-@Suppress("SpellCheckingInspection")
 private class HideableSection(@NlsContexts.Separator text: String, component: JComponent) : BorderLayoutPanel() {
     private val titledSeparator = TitledSeparator(text)
     private val contentPanel = borderPanel {

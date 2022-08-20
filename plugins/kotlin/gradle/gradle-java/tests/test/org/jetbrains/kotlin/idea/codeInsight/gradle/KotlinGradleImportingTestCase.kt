@@ -54,6 +54,14 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
 
     protected val importStatusCollector = ImportStatusCollector()
 
+    override fun findJdkPath(): String {
+        return System.getenv("JDK_11") ?: System.getenv("JAVA11_HOME") ?: run {
+            val message = "Missing JDK_11 or JAVA11_HOME environment variable"
+            if (IS_UNDER_TEAMCITY) LOG.error(message) else LOG.warn(message)
+            super.findJdkPath()
+        }
+    }
+
     override fun setUp() {
         Assume.assumeFalse(AndroidStudioTestUtils.skipIncompatibleTestAgainstAndroidStudio())
         super.setUp()
@@ -119,6 +127,7 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
         }.toList()
     }
 
+    @Deprecated("Use .setupAndroid() instead", level = DeprecationLevel.ERROR)
     protected fun createLocalPropertiesSubFileForAndroid() {
         createProjectSubFile(
             "local.properties",
@@ -162,7 +171,7 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
         buildGradleModel(T::class)
 
     protected fun <T : Any> buildGradleModel(clazz: KClass<T>): BuiltGradleModel<T> =
-        buildGradleModel(myProjectRoot.toNioPath().toFile(), GradleVersion.version(gradleVersion), clazz)
+        buildGradleModel(myProjectRoot.toNioPath().toFile(), GradleVersion.version(gradleVersion), findJdkPath(), clazz)
 
     protected fun buildKotlinMPPGradleModel(): BuiltGradleModel<KotlinMPPGradleModel> = buildGradleModel()
 
@@ -220,9 +229,14 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
         val localFileSystem = LocalFileSystem.getInstance()
         val projectFile = localFileSystem.refreshAndFindFileByPath(projectFilePath)
             ?: error("Failed to find projectFile: $projectFilePath")
+
+        val settings = createLinkSettings(projectFile.toNioPath(), myProject).apply {
+            gradleJvm = GRADLE_JDK_NAME
+        }
+
         ExternalSystemUtil.linkExternalProject(
             /* externalSystemId = */ GradleConstants.SYSTEM_ID,
-            /* projectSettings = */ createLinkSettings(projectFile.toNioPath(), myProject),
+            /* projectSettings = */ settings,
             /* project = */ myProject,
             /* importResultCallback = */ null,
             /* isPreviewMode = */ false,

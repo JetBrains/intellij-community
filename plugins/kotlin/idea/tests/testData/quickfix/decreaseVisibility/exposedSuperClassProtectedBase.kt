@@ -1,7 +1,6 @@
 // "Make 'First' private" "true"
 // ACTION: Add names to call arguments
 // ACTION: Create test
-// ACTION: Do not show return expression hints
 // ACTION: Introduce import alias
 // ACTION: Make 'Data' public
 // ACTION: Make 'First' private

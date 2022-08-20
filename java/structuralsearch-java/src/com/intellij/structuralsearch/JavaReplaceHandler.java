@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -406,7 +406,7 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
   private PsiWhiteSpace whiteSpace(PsiElement element, @SuppressWarnings("SameParameterValue") String defaultWs) {
     return element instanceof PsiWhiteSpace
            ? (PsiWhiteSpace)element
-           : (PsiWhiteSpace)PsiParserFacade.SERVICE.getInstance(myProject).createWhiteSpaceFromText(defaultWs);
+           : (PsiWhiteSpace)PsiParserFacade.getInstance(myProject).createWhiteSpaceFromText(defaultWs);
   }
 
   private static boolean isCompatibleModifier(String modifier, PsiModifierList modifierList) {

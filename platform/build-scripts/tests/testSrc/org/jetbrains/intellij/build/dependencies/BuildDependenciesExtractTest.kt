@@ -130,6 +130,30 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
   }
 
   @Test
+  fun `extractFile - normalize path`() {
+    val testArchive = createTestFile(archiveType, listOf(TestFile("a"), TestFile("b")))
+    val extractRoot = temp.newFolder().toPath()
+
+    BuildDependenciesDownloader.extractFile(testArchive, extractRoot, BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory())
+    Assert.assertEquals("a", Files.readString(extractRoot.resolve("a")))
+    Assert.assertEquals("b", Files.readString(extractRoot.resolve("b")))
+
+    assertUpToDate {
+      val otherPresentation = testArchive.parent.resolve(".").resolve(testArchive.fileName)
+      Assert.assertNotEquals(testArchive, otherPresentation)
+      BuildDependenciesDownloader.extractFile(otherPresentation, extractRoot,
+                                              BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory())
+    }
+
+    assertUpToDate {
+      val otherPresentation2 = testArchive.resolve("..").resolve("..").resolve(testArchive.parent.fileName).resolve(testArchive.fileName)
+      Assert.assertNotEquals(testArchive, otherPresentation2)
+      BuildDependenciesDownloader.extractFile(otherPresentation2, extractRoot,
+                                              BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory())
+    }
+  }
+
+  @Test
   fun `extractFile - extract again on adding top level file`() {
     val testArchive = createTestFile(archiveType, emptyList())
     val extractRoot = temp.newFolder().toPath()

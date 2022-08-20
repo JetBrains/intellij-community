@@ -5,7 +5,6 @@
 // ACTION: Create object 'maximumSizeOfGroup'
 // ACTION: Create parameter 'maximumSizeOfGroup'
 // ACTION: Create property 'maximumSizeOfGroup'
-// ACTION: Do not show return expression hints
 // ACTION: Expand boolean expression to 'if else'
 // ACTION: Introduce local variable
 // ACTION: Rename reference

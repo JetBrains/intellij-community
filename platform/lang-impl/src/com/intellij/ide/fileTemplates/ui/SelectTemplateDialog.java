@@ -34,7 +34,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 /*
- * @author: MYakovlev
+ * @author MYakovlev
  */
 public class SelectTemplateDialog extends DialogWrapper{
   private ComboBox<FileTemplate> myCbxTemplates;

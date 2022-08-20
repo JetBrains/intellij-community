@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.configurationStore.*
@@ -7,13 +7,13 @@ import com.intellij.openapi.options.NonLazySchemeProcessor
 import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.util.xml.dom.createXmlStreamReader
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.systemIndependentPath
+import com.intellij.util.xml.dom.createXmlStreamReader
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
 import java.io.IOException
@@ -221,7 +221,6 @@ internal inline fun lazyPreloadScheme(bytes: ByteArray, isOldSchemeNaming: Boole
   consumer(preload(isOldSchemeNaming, reader), reader)
 }
 
-@Suppress("HardCodedStringLiteral")
 private fun preload(isOldSchemeNaming: Boolean, parser: XMLStreamReader): String? {
   var eventType = parser.eventType
 

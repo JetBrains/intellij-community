@@ -395,7 +395,6 @@ class ExpressionsOfTypeProcessor(
             return
         }
 
-        @Suppress("NAME_SHADOWING")
         data class ProcessCallableUsagesTask(
             val declaration: PsiElement,
             val processor: ReferenceProcessor,

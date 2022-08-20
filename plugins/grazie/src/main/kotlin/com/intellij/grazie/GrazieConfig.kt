@@ -26,7 +26,6 @@ import java.util.concurrent.atomic.AtomicLong
   Storage(value = "grazi_global.xml", deprecated = true)
 ], category = SettingsCategory.CODE)
 class GrazieConfig : PersistentStateComponent<GrazieConfig.State>, ModificationTracker {
-  @Suppress("unused")
   enum class Version : VersionedState.Version<State> {
     INITIAL,
 

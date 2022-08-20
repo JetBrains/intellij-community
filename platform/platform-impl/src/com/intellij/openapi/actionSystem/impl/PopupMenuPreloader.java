@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
@@ -49,6 +50,7 @@ public final class PopupMenuPreloader implements Runnable, HierarchyListener {
                              @NotNull String actionPlace,
                              @Nullable PopupHandler popupHandler,
                              @NotNull Supplier<? extends ActionGroup> groupSupplier) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
     if (component instanceof EditorComponentImpl && ourEditorContextMenuPreloadCount > 4 ||
         component instanceof IdeMenuBar && SwingUtilities.getWindowAncestor(component) instanceof IdeFrame.Child) {
       return;

@@ -33,7 +33,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinary
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ComparisonUtils;
 import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils;
 
@@ -269,14 +268,13 @@ public class GroovyPointlessBooleanInspection extends BaseInspection {
 
   private static boolean equalityExpressionIsPointless(GrExpression lhs,
                                                        GrExpression rhs) {
-    return (isTrue(lhs) || isFalse(lhs)) && isBoolean(rhs)
-           || (isTrue(rhs) || isFalse(rhs)) && isBoolean(lhs);
+    return ((isTrue(lhs) || isFalse(lhs)) && isBoolean(rhs)) ||
+           ((isTrue(rhs) || isFalse(rhs)) && isBoolean(lhs));
   }
 
   private static boolean isBoolean(GrExpression expression) {
     final PsiType type = expression.getType();
-    final PsiType unboxed = TypesUtil.unboxPrimitiveTypeWrapper(type);
-    return unboxed != null && PsiType.BOOLEAN.equals(unboxed);
+    return PsiType.BOOLEAN.equals(type);
   }
 
   private static boolean andExpressionIsPointless(GrExpression lhs,

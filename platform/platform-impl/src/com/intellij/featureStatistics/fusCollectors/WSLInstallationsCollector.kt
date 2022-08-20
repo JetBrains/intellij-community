@@ -34,7 +34,7 @@ class WSLInstallationsCollector : ApplicationUsagesCollector() {
     }
     catch (e: IllegalStateException) {
       LOG.error(e)
-      return emptySet();
+      return emptySet()
     }
 
     val installations = distributionsWithVersions.groupBy { it.version }

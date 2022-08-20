@@ -19,7 +19,7 @@ import kotlin.reflect.KMutableProperty1
 @ApiStatus.Internal
 data class ProjectIndexingHistoryImpl(override val project: Project,
                                       override val indexingReason: String?,
-                                      private val wasFullIndexing: Boolean) : ProjectIndexingHistory {
+                                      private val wasFullRescanning: Boolean) : ProjectIndexingHistory {
   private companion object {
     val indexingSessionIdSequencer = AtomicLong()
     val log = thisLogger()
@@ -31,7 +31,7 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
 
   override val times: IndexingTimes by ::timesImpl
 
-  private val timesImpl = IndexingTimesImpl(indexingReason = indexingReason, wasFullIndexing = wasFullIndexing,
+  private val timesImpl = IndexingTimesImpl(indexingReason = indexingReason, wasFullRescanning = wasFullRescanning,
                                             updatingStart = ZonedDateTime.now(ZoneOffset.UTC), totalUpdatingTime = System.nanoTime())
 
   override val scanningStatistics = arrayListOf<JsonScanningStatistics>()
@@ -324,7 +324,7 @@ data class ProjectIndexingHistoryImpl(override val project: Project,
 
   data class IndexingTimesImpl(
     override val indexingReason: String?,
-    override val wasFullIndexing: Boolean,
+    override val wasFullRescanning: Boolean,
     override val updatingStart: ZonedDateTime,
     override var totalUpdatingTime: TimeNano,
     override var updatingEnd: ZonedDateTime = updatingStart,

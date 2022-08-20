@@ -397,13 +397,19 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     logger.dispose()
     val logged = logger.testWriter.logged
     UsefulTestCase.assertSize(2, logged)
+    //suppressed until https://youtrack.jetbrains.com/issue/KTIJ-21749 being fixed
+    @Suppress("AssertBetweenInconvertibleTypes")
     assertEquals(logged[0].event.data["system_event_id"], 42.toLong())
+    //suppressed until https://youtrack.jetbrains.com/issue/KTIJ-21749 being fixed
+    @Suppress("AssertBetweenInconvertibleTypes")
     assertEquals(logged[1].event.data["system_event_id"], 43.toLong())
   }
 
   @Test
   fun testLogHeadlessModeEnabled() {
     doTestHeadlessMode(true) {
+      //suppressed until https://youtrack.jetbrains.com/issue/KTIJ-21749 being fixed
+      @Suppress("AssertBetweenInconvertibleTypes")
       assertEquals(it.event.data["system_headless"], true)
     }
   }
@@ -436,8 +442,8 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     } */
 
     class TestObjDescription : ObjectDescription() {
-      var name by field(EventFields.StringValidatedByCustomRule("name", CustomValidationRule::class.java))
-      var versions by field(EventFields.StringListValidatedByCustomRule("versions", CustomValidationRule::class.java))
+      var name by field(EventFields.StringValidatedByCustomRule<CustomValidationRule>("name"))
+      var versions by field(EventFields.StringListValidatedByCustomRule<CustomValidationRule>("versions"))
     }
 
     val group = EventLogGroup("newGroup", 1)

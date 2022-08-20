@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.LocalFileSystem
 import org.jetbrains.idea.maven.model.MavenArtifactNode
 import org.jetbrains.idea.maven.model.MavenArtifactState
 import org.jetbrains.idea.maven.model.MavenConstants
@@ -31,12 +30,16 @@ class MavenDependencyAnalyzerContributor(private val project: Project) : Depende
   }
 
   override fun getProjects(): List<DependencyAnalyzerProject> {
-    return MavenProjectsManager.getInstance(project)
-      .projects
-      .map { DAProject(it.path, it.displayName) }
+    val mavenProjectsManager = MavenProjectsManager.getInstance(project)
+    val externalProjects = ArrayList<DependencyAnalyzerProject>()
+    for (mavenProject in mavenProjectsManager.projects) {
+      val module = mavenProjectsManager.findModule(mavenProject) ?: continue
+      externalProjects.add(DAProject(module, mavenProject.displayName))
+    }
+    return externalProjects
   }
 
-  override fun getDependencyScopes(externalProjectPath: String): List<Dependency.Scope> {
+  override fun getDependencyScopes(externalProject: DependencyAnalyzerProject): List<Dependency.Scope> {
     return listOf(scope(MavenConstants.SCOPE_COMPILE),
                   scope(MavenConstants.SCOPE_PROVIDED),
                   scope(MavenConstants.SCOPE_RUNTIME),
@@ -45,11 +48,10 @@ class MavenDependencyAnalyzerContributor(private val project: Project) : Depende
                   scope(MavenConstants.SCOPE_TEST))
   }
 
-  override fun getDependencies(externalProjectPath: String): List<Dependency> {
-    return LocalFileSystem.getInstance().findFileByPath(externalProjectPath)
-             ?.let { MavenProjectsManager.getInstance(project).findProject(it) }
-             ?.let { createDependencyList(it) }
-           ?: emptyList()
+  override fun getDependencies(externalProject: DependencyAnalyzerProject): List<Dependency> {
+    val projectsManager = MavenProjectsManager.getInstance(project)
+    val mavenProject = projectsManager.findProject(externalProject.module) ?: return emptyList()
+    return createDependencyList(mavenProject)
   }
 
   private fun createDependencyList(mavenProject: MavenProject): List<Dependency> {

@@ -81,7 +81,7 @@ public final class PluginManagerConfigurable
   @SuppressWarnings("UseJBColor") public static final Color MAIN_BG_COLOR =
     JBColor.namedColor("Plugins.background", JBColor.lazy(() -> JBColor.isBright() ? UIUtil.getListBackground() : new Color(0x313335)));
   public static final Color SEARCH_BG_COLOR = JBColor.namedColor("Plugins.SearchField.background", MAIN_BG_COLOR);
-  public static final Color SEARCH_FIELD_BORDER_COLOR = JBColor.border();
+  public static final Color SEARCH_FIELD_BORDER_COLOR = JBColor.namedColor("Plugins.borderColor", JBColor.border());
 
   private static final int MARKETPLACE_TAB = 0;
   private static final int INSTALLED_TAB = 1;

@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NonNls
 @Internal
 class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = HashMap()) {
   companion object {
-    @NonNls internal const val TAG = "layout"
+    @NonNls const val TAG = "layout"
   }
 
   constructor(descriptors: List<WindowInfoImpl>) : this(descriptors.associateByTo(HashMap()) { it.id!! })

@@ -25,14 +25,13 @@ import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
 import org.jetbrains.kotlin.asJava.getAccessorLightMethods
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.stubindex.*
+import org.jetbrains.kotlin.idea.util.hasJvmFieldAnnotation
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.java.getPropertyNamesCandidatesByAccessorName
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 
 class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache() {
     companion object {
@@ -189,10 +188,8 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
             filter,
             KtNamedFunction::class.java
         ) { ktNamedFunction ->
-            val methods = LightClassUtil.getLightClassMethodsByName(ktNamedFunction, name)
-            return@processElements methods.all { method ->
-                processor.process(method)
-            }
+            val methods = LightClassUtil.getLightClassMethodsByName(ktNamedFunction, name).toList()
+            methods.all(processor::process)
         }
         if (!allFunctionsProcessed) {
             return false
@@ -207,13 +204,14 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
                 filter,
                 KtNamedDeclaration::class.java
             ) { ktNamedDeclaration ->
-                val methods: Sequence<PsiMethod> = ktNamedDeclaration.getAccessorLightMethods()
+                if (ktNamedDeclaration is KtValVarKeywordOwner && (ktNamedDeclaration.isPrivate() || ktNamedDeclaration.hasJvmFieldAnnotation())) {
+                    return@processElements true
+                }
+                val accessorLightMethods = ktNamedDeclaration.getAccessorLightMethods()
+                val methods: Sequence<PsiMethod> = accessorLightMethods
                     .asSequence()
                     .filter { it.name == name }
-
-                return@processElements methods.all { method ->
-                    processor.process(method)
-                }
+                methods.all(processor::process)
             }
             if (!allProcessed) {
                 return false

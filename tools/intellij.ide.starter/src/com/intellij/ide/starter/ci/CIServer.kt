@@ -2,6 +2,7 @@ package com.intellij.ide.starter.ci
 
 import java.nio.file.Path
 
+//TODO(Describe different approaches for different CIs about publishing artifacts)
 interface CIServer {
   val isBuildRunningOnCI: Boolean
   val buildNumber: String

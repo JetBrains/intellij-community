@@ -7,7 +7,10 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.idea.ActionsBundle
-import com.intellij.notification.*
+import com.intellij.notification.ActionCenter
+import com.intellij.notification.EventLog
+import com.intellij.notification.LogModel
+import com.intellij.notification.Notification
 import com.intellij.notification.impl.ui.NotificationsUtil
 import com.intellij.notification.impl.widget.IdeNotificationArea
 import com.intellij.openapi.Disposable
@@ -132,7 +135,7 @@ internal class NotificationContent(val project: Project,
 
     Disposer.register(toolWindow.disposable, this)
 
-    val content = ContentFactory.SERVICE.getInstance().createContent(myMainPanel, "", false)
+    val content = ContentFactory.getInstance().createContent(myMainPanel, "", false)
     content.preferredFocusableComponent = myMainPanel
 
     val contentManager = toolWindow.contentManager

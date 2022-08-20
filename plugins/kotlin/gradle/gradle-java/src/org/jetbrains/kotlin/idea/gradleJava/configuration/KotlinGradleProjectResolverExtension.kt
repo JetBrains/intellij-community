@@ -19,6 +19,9 @@ import org.jetbrains.kotlin.idea.gradle.configuration.kotlinGradleSourceSetDataN
 import org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLogger
 import org.jetbrains.kotlin.idea.gradleJava.inspections.getDependencyModules
 import org.jetbrains.kotlin.idea.gradleTooling.*
+import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedExtractedArgsInfo
+import org.jetbrains.kotlin.idea.gradleTooling.arguments.createCachedArgsInfo
+import org.jetbrains.kotlin.idea.projectModel.CachedArgsInfo
 import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
 import org.jetbrains.kotlin.idea.statistics.KotlinIDEGradleActionsFUSCollector
 import org.jetbrains.kotlin.idea.util.CopyableDataNodeUserDataProperty
@@ -35,6 +38,7 @@ import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import java.io.File
+import java.lang.reflect.Proxy
 import java.util.*
 
 val DataNode<out ModuleData>.kotlinGradleProjectDataNodeOrNull: DataNode<KotlinGradleProjectData>?
@@ -232,7 +236,7 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
     private fun initializeGradleSourceSetsData(kotlinModel: KotlinGradleModel, mainModuleNode: DataNode<ModuleData>) {
         kotlinModel.cachedCompilerArgumentsBySourceSet.forEach { (sourceSetName, cachedArgs) ->
             KotlinGradleSourceSetData(sourceSetName).apply {
-                cachedArgsInfo = cachedArgs
+                cachedArgsInfo = cachedArgs.copyIfNeeded() as CachedExtractedArgsInfo
                 additionalVisibleSourceSets = kotlinModel.additionalVisibleSourceSets.getValue(sourceSetName)
                 kotlinPluginVersion = kotlinModel.kotlinTaskProperties.getValue(sourceSetName).pluginVersion
                 mainModuleNode.kotlinGradleProjectDataNodeOrFail.createChild(KotlinGradleSourceSetData.KEY, this)
@@ -479,5 +483,10 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
             Key.create<MutableMap<DataNode<ProjectData>, Collection<DataNode<out ModuleData>>>>("MODULE_DEPENDENCIES_CACHE"),
             hashMapOf()
         )
+
+        private fun CachedArgsInfo<*>.copyIfNeeded(): CachedArgsInfo<*> =
+            if (Proxy.isProxyClass(this.javaClass)) createCachedArgsInfo(this, HashMap<Any, Any>())
+            else this
+
     }
 }

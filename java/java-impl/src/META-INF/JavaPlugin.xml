@@ -270,7 +270,7 @@
     <!-- See com.intellij.execution.filters.ExceptionFilter -->
     <extensionPoint qualifiedName="com.intellij.jvm.exceptionFilter" interface="com.intellij.execution.filters.JvmExceptionOccurrenceFilter" dynamic="true"/>
 
-    <!-- See com.intellij.codeInspection.javaDoc.JavaDocLocalInspection -->
+    <!-- com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection -->
     <extensionPoint qualifiedName="com.intellij.javaDocNotNecessary" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.starter.moduleImporter" interface="com.intellij.ide.starters.StarterModuleImporter" dynamic="true"/>
@@ -370,6 +370,8 @@
     <projectService serviceImplementation="com.intellij.psi.util.ProjectIconsAccessor"/>
     <projectService serviceImplementation="com.intellij.codeInsight.JavaProjectCodeInsightSettings"/>
     <projectService serviceImplementation="com.intellij.javadoc.JavadocGenerationManager"/>
+    <projectService serviceInterface="com.intellij.codeInspection.test.TestFailedLineManager"
+                    serviceImplementation="com.intellij.execution.codeInspection.TestFailedLineManagerImpl"/>
     <projectService serviceInterface="com.intellij.codeInspection.ex.EntryPointsManager"
                     serviceImplementation="com.intellij.codeInspection.ex.EntryPointsManagerImpl"/>
     <projectService serviceInterface="com.intellij.openapi.roots.JavaProjectModelModificationService"
@@ -868,9 +870,6 @@
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
-    <applicationService serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"
-                        serviceImplementation="com.intellij.profile.codeInspection.JavaAwareInspectionProfileManager"
-                        overrides="true"/>
     <applicationService serviceInterface="com.intellij.psi.impl.source.codeStyle.IndentHelper"
                         serviceImplementation="com.intellij.psi.impl.source.codeStyle.JavaIndentHelper"
                         overrides="true"/>
@@ -1735,9 +1734,6 @@
     <localInspection groupPath="Java" language="JAVA" shortName="JavadocReference" bundle="messages.JavaBundle" key="inspection.javadoc.ref.display.name"
                      groupKey="group.names.javadoc.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection"/>
-    <!--<localInspection groupPath="Java" language="JAVA" shortName="JavaDoc" bundle="messages.JavaBundle" key="inspection.javadoc.display.name"-->
-    <!--                 groupKey="group.names.javadoc.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"-->
-    <!--                 implementationClass="com.intellij.codeInspection.javaDoc.JavaDocLocalInspection" alternativeId="javadoc"/>-->
     <localInspection groupPath="Java" language="JAVA" shortName="MissingJavadoc" bundle="messages.JavaBundle" key="inspection.missingJavadoc.display.name"
                      groupKey="group.names.javadoc.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.javaDoc.MissingJavadocInspection"/>

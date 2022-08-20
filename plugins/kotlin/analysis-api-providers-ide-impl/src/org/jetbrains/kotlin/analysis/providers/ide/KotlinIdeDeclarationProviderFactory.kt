@@ -47,14 +47,20 @@ private class KotlinIdeDeclarationProvider(
         return result
     }
 
-
-    override fun getClassesByClassId(classId: ClassId): Collection<KtClassOrObject> {
+    override fun getClassLikeDeclarationByClassId(classId: ClassId): KtClassLikeDeclaration? {
+        return firstMatchingOrNull<String, KtClassOrObject>(
+            KotlinFullClassNameIndex.KEY,
+            key = classId.asStringForIndexes(),
+        ) { candidate -> candidate.getClassId() == classId }
+            ?: getTypeAliasByClassId(classId)
+    }
+    override fun getAllClassesByClassId(classId: ClassId): Collection<KtClassOrObject> {
         return KotlinFullClassNameIndex
             .get(classId.asStringForIndexes(), project, searchScope)
             .filter { candidate -> candidate.containingKtFile.packageFqName == classId.packageFqName }
     }
 
-    override fun getTypeAliasesByClassId(classId: ClassId): Collection<KtTypeAlias> {
+    override fun getAllTypeAliasesByClassId(classId: ClassId): Collection<KtTypeAlias> {
         return listOfNotNull(getTypeAliasByClassId(classId)) //todo
     }
 
@@ -93,7 +99,7 @@ private class KotlinIdeDeclarationProvider(
         return firstMatchingOrNull(
             stubKey = KotlinTopLevelTypeAliasFqNameIndex.KEY,
             key = classId.asStringForIndexes(),
-            filter = { candidate -> candidate.containingKtFile.packageFqName == classId.packageFqName }
+            filter = { candidate -> candidate.getClassId() == classId }
         ) ?: firstMatchingOrNull(stubKey = KotlinInnerTypeAliasClassIdIndex.key, key = classId.asString())
     }
 

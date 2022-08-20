@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.content
 
 import com.intellij.openapi.Disposable
@@ -9,7 +9,6 @@ import java.util.function.Supplier
 import javax.swing.JComponent
 
 class TabDescriptor(val component: JComponent, private val displayNamePointer: Supplier<@TabTitle String>) : Disposable {
-  @Suppress("HardCodedStringLiteral")
   @get:TabTitle
   val displayName: @TabTitle String
     get() = displayNamePointer.get()
@@ -44,7 +43,6 @@ class TabDescriptor(val component: JComponent, private val displayNamePointer: S
 class TabGroupId @JvmOverloads constructor(@NonNls val id: String,
                                            private val displayNamePointer: Supplier<@TabTitle String>,
                                            val splitByDefault: Boolean = false) {
-  @Suppress("HardCodedStringLiteral")
   @get:TabTitle
   val displayName: @TabTitle String
     get() = displayNamePointer.get()

@@ -247,8 +247,7 @@ private fun containsTypeOrDerivedInside(declaration: KtDeclaration, typeToSearch
 
 private fun FuzzyType.toPsiClass(project: Project): PsiClass? {
     val classDescriptor = type.constructor.declarationDescriptor ?: return null
-    val classDeclaration = DescriptorToSourceUtilsIde.getAnyDeclaration(project, classDescriptor)
-    return when (classDeclaration) {
+    return when (val classDeclaration = DescriptorToSourceUtilsIde.getAnyDeclaration(project, classDescriptor)) {
         is PsiClass -> classDeclaration
         is KtClassOrObject -> classDeclaration.toLightClass()
         else -> null

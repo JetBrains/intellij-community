@@ -19,6 +19,8 @@ import com.intellij.openapi.wm.StatusBarCentralWidget;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.JBThinOverlappingScrollBar;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
@@ -118,6 +120,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
       if (c != null) myWrapperPanel.remove(c);
     }
 
+    updateScrollBarFlippedState(settings.getNavBarLocation());
     myWrapperPanel.setVisible(show);
   }
 
@@ -162,9 +165,10 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
   private JComponent getNavBarPanel() {
     if (myNavBarPanel != null) return myNavBarPanel;
 
-    myNavigationBar = new NavBarPanel(myProject, true);
+    myNavigationBar = new ReusableNavBarPanel(myProject, true);
     myNavigationBar.getModel().setFixedComponent(true);
     myScrollPane = ScrollPaneFactory.createScrollPane(myNavigationBar);
+    updateScrollBarFlippedState(null);
 
     myNavBarPanel = new JPanel(new BorderLayout()) {
 
@@ -188,10 +192,15 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
         if (myScrollPane == null || !myScrollPane.isVisible()) return;
         final Component navBar = myScrollPane;
 
-        final Dimension preferredSize = navBar.getPreferredSize();
+        final int preferredHeight = navBar.getPreferredSize().height;
 
-        navBar.setBounds(x, (r.height - preferredSize.height) / 2,
-                         r.width - insets.left - insets.right, preferredSize.height);
+        int navBarHeight = preferredHeight;
+        if (ExperimentalUI.isNewNavbar()) {
+          navBarHeight = r.height;
+        }
+
+        navBar.setBounds(x, (r.height - navBarHeight) / 2,
+                         r.width - insets.left - insets.right, navBarHeight);
       }
 
       @Override
@@ -200,12 +209,22 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
         if (myScrollPane == null || myNavigationBar == null) return;
 
         var settings = UISettings.getInstance();
-        var border = !ExperimentalUI.isNewUI() ||
-                     settings.getShowNavigationBar() && settings.getNavBarLocation() == NavBarLocation.TOP ?
-                     new NavBarBorder() : JBUI.Borders.empty();
+        var border = !ExperimentalUI.isNewUI() || settings.getShowNavigationBar()
+                     ? new NavBarBorder()
+                     : JBUI.Borders.empty();
+
+        if (ExperimentalUI.isNewNavbar()) {
+          myScrollPane.setHorizontalScrollBar(new JBThinOverlappingScrollBar(Adjustable.HORIZONTAL));
+          if (myScrollPane instanceof JBScrollPane) {
+            ((JBScrollPane) myScrollPane).setOverlappingScrollBar(true);
+          }
+          myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        }
+        else {
+          myScrollPane.setHorizontalScrollBar(null);
+        }
 
         myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
-        myScrollPane.setHorizontalScrollBar(null);
         myScrollPane.setBorder(border);
         myScrollPane.setOpaque(false);
         myScrollPane.getViewport().setOpaque(false);
@@ -250,6 +269,14 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
           ((JComponent)c).setOpaque(false);
         }
       }
+    }
+  }
+
+  private void updateScrollBarFlippedState(@Nullable NavBarLocation location) {
+    if (ExperimentalUI.isNewNavbar() && myScrollPane != null) {
+      if (location == null) location = UISettings.getInstance().getNavBarLocation();
+      JBScrollPane.Flip flipState = (location == NavBarLocation.BOTTOM) ? JBScrollPane.Flip.VERTICAL : JBScrollPane.Flip.NONE;
+      myScrollPane.putClientProperty(JBScrollPane.Flip.class, flipState);
     }
   }
 

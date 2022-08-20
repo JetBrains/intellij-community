@@ -1,5 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="JAVA_MODULE" version="4">
+  <component name="FacetManager">
+    <facet type="kotlin-language" name="Kotlin">
+      <configuration version="3" platform="JVM 11" allPlatforms="JVM [11]" useProjectSettings="false">
+        <compilerSettings>
+          <option name="additionalArguments" value="-version -Xstrict-java-nullability-assertions -opt-in=kotlin.RequiresOptIn" />
+        </compilerSettings>
+        <compilerArguments>
+          <option name="jvmTarget" value="11" />
+          <option name="languageVersion" value="1.6" />
+          <option name="apiVersion" value="1.6" />
+          <option name="pluginOptions">
+            <array />
+          </option>
+          <option name="pluginClasspaths">
+            <array>
+              <option value="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/1.6.10-release-952/kotlinx-serialization-compiler-plugin-for-ide-1.6.10-release-952.jar" />
+              <option value="kotlinx-serialization-compiler-plugin.jar" />
+            </array>
+          </option>
+          <option name="errors">
+            <ArgumentParseErrors />
+          </option>
+        </compilerArguments>
+      </configuration>
+    </facet>
+  </component>
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
@@ -11,7 +37,6 @@
     <orderEntry type="library" exported="" name="Ant" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="commons-cli" level="project" />
-    <orderEntry type="library" name="decentxml" level="project" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" exported="" />
     <orderEntry type="library" name="commons-compress" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="fixed.kotlin-jps-plugin-classpath" level="project" />
@@ -33,7 +58,6 @@
     <orderEntry type="library" name="jackson-jr-objects" level="project" />
     <orderEntry type="module" module-name="intellij.groovy.constants.rt" />
     <orderEntry type="module" module-name="intellij.groovy.jps" />
-    <orderEntry type="library" name="org.codehaus.groovy:groovy-json" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics.config" />
     <orderEntry type="module" module-name="intellij.groovy.rt" scope="RUNTIME" />
     <orderEntry type="library" name="fastutil-min" level="project" />
@@ -47,6 +71,11 @@
     <orderEntry type="module" module-name="intellij.idea.community.build.dependencies" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="library" name="jackson-databind" level="project" />
-    <orderEntry type="library" name="networknt.json.schema.validator" level="project" />
+    <orderEntry type="library" name="json-schema-validator" level="project" />
+    <orderEntry type="library" name="decentxml" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
+    <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
+    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.zip" />
   </component>
 </module>

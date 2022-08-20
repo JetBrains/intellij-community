@@ -12,9 +12,14 @@ The master branch contains the source code which will be used to create the next
 and build numbers for older releases of IntelliJ IDEA can be found on the page of
 [Build Number Ranges](https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html).
 
+These Git operations can also be done through the [IntelliJ IDEA user interface](https://www.jetbrains.com/help/idea/using-git-integration.html).
+
 _**Speed Tip:**_ If the complete repository history isn't needed then using a shallow clone (`git clone --depth 1`) will save significant time.
 
-These Git operations can also be done through the [IntelliJ IDEA user interface](https://www.jetbrains.com/help/idea/using-git-integration.html).
+_**On Windows:**_ Two git options are required to check out sources on Windows. Since it's a common source of Git issues on Windows anyway, those options could be set globally (execute those commands before cloning any of intellij-community/android repositories):
+
+* `git config --global core.longpaths true`
+* `git config --global core.autocrlf input`
 
 IntelliJ IDEA Community Edition requires additional Android modules from separate Git repositories. To clone these repositories,
 run one of the `getPlugins` scripts located in the `<IDEA_HOME>` directory. These scripts clone their respective *master* branches.

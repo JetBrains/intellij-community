@@ -13,15 +13,15 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings
  */
 class GradleWrapperImplicitPropertyUsageProvider : ImplicitPropertyUsageProvider {
   override fun isUsed(property: Property): Boolean {
-    if (GradleSettings.getInstance(property.project).linkedProjectsSettings.isEmpty()) return false;
+    if (GradleSettings.getInstance(property.project).linkedProjectsSettings.isEmpty()) return false
 
     val file = property.containingFile.virtualFile
     return nameEqual(file, "gradle-wrapper.properties") && nameEqual(file?.parent, "wrapper")
-           && nameEqual(file?.parent?.parent, "gradle");
+           && nameEqual(file?.parent?.parent, "gradle")
   }
 
   private fun nameEqual(file: VirtualFile?, name: String): Boolean {
-    if (file == null) return false;
+    if (file == null) return false
     return Comparing.equal(file.name, name, file.isCaseSensitive)
   }
 }

@@ -463,7 +463,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       try {
         @SuppressWarnings("resource") var fs = myOpenFileSystems.computeIfAbsent(path, k -> {
           try {
-            return FileSystems.newFileSystem(path, (ClassLoader)null);
+            return FileSystems.newFileSystem(path, null);
           }
           catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -664,7 +664,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       if (archive != null && myRegistry.getFileTypeByFileName(archive.getFileName().toString()) == ArchiveFileType.INSTANCE) {
         @SuppressWarnings("resource") var fs = myOpenFileSystems.computeIfAbsent(archive, k -> {
           try {
-            return FileSystems.newFileSystem(archive, (ClassLoader)null);
+            return FileSystems.newFileSystem(archive, null);
           }
           catch (IOException e) {
             LOG.warn(e);
