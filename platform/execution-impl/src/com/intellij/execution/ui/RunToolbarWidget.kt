@@ -749,9 +749,9 @@ private fun RunnerAndConfigurationSettings.isRunning(project: Project, execId: S
   }
 }
 
+@Service(Service.Level.PROJECT)
 @State(name = "RunConfigurationStartHistory", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
-class RunConfigurationStartHistory(val project: Project) : PersistentStateComponent<RunConfigurationStartHistory.State> {
-
+internal class RunConfigurationStartHistory(private val project: Project) : PersistentStateComponent<RunConfigurationStartHistory.State> {
   class State {
     @XCollection(style = XCollection.Style.v2)
     @OptionTag("element")

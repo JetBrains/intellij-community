@@ -10,6 +10,7 @@ import com.intellij.execution.runToolbar.data.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.ide.ActivityTracker
 import com.intellij.lang.LangBundle
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -21,7 +22,8 @@ import com.intellij.util.messages.Topic
 import java.util.*
 import javax.swing.SwingUtilities
 
-class RunToolbarSlotManager(val project: Project) {
+@Service(Service.Level.PROJECT)
+internal class RunToolbarSlotManager(private val project: Project) {
   companion object {
     private val LOG = Logger.getInstance(RunToolbarSlotManager::class.java)
     fun getInstance(project: Project): RunToolbarSlotManager = project.service()

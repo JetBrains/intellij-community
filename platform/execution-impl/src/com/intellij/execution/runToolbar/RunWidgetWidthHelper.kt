@@ -1,13 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runToolbar
 
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import kotlin.math.roundToInt
 
-class RunWidgetWidthHelper(var project: Project) {
+@Service(Service.Level.PROJECT)
+internal class RunWidgetWidthHelper(private var project: Project) {
   companion object {
     const val RUN_CONFIG_WIDTH_UNSCALED_MIN = 200
     private const val RUN_CONFIG_WIDTH_UNSCALED_MAX = 1200
