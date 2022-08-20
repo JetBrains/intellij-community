@@ -8,10 +8,15 @@
   <extensions defaultExtensionNs="com.intellij">
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.libraryJar.FUSLibraryJarUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.libraryUsage.LibraryUsageCollector"/>
-    <backgroundPostStartupActivity implementation="com.intellij.internal.statistic.libraryUsage.LibraryUsageStatisticsStartupActivity"/>
     <internal.statistic.libraryUsage.libraryUsageImportProcessor
       implementation="com.intellij.internal.statistic.libraryUsage.JavaLibraryUsageImportProcessor"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.internal.statistic.LibraryNameValidationRule"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="com.intellij.internal.statistic.libraryUsage.LibraryUsageStatisticsProvider"
+              topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
+  </projectListeners>
 
   <actions>
     <action internal="true" id="LibraryUsageStatistics" class="com.intellij.internal.statistic.libraryUsage.LibraryUsageStatisticsAction"/>

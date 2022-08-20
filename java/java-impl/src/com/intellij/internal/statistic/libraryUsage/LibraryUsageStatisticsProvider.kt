@@ -7,6 +7,8 @@ import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -17,23 +19,28 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
 
-internal class LibraryUsageStatisticsProvider(
-  private val project: Project,
-  private val processedFilesService: ProcessedFilesStorageService,
-  private val libraryUsageService: LibraryUsageStatisticsStorageService,
-  private val libraryDescriptorFinder: LibraryDescriptorFinder,
-) : DaemonListener {
+internal class LibraryUsageStatisticsProvider(private val project: Project) : DaemonListener {
 
-  override fun daemonFinished(fileEditors: MutableCollection<out FileEditor>) {
+  init {
+    if (!isEnabled) {
+      throw ExtensionNotApplicableException.create()
+    }
+  }
+
+  override fun daemonFinished(fileEditors: Collection<FileEditor>) {
     if (!isEnabled) return
+
+    val processedFilesService = ProcessedFilesStorageService.getInstance(project)
 
     for (fileEditor in fileEditors) {
       val vFile = fileEditor.file
+
       if (processedFilesService.isVisited(vFile)) continue
+
       ReadAction.nonBlocking(Callable { processFile(vFile) })
         .finishOnUiThread(ModalityState.any()) {
           if (it != null && processedFilesService.visit(vFile)) {
-            libraryUsageService.increaseUsages(it)
+            LibraryUsageStatisticsStorageService.getInstance(project).increaseUsages(it)
           }
         }
         .inSmartMode(project)
@@ -54,6 +61,8 @@ internal class LibraryUsageStatisticsProvider(
       LibraryUsageImportProcessor.EP_NAME.findFirstSafe { it.isApplicable(fileType) } ?: return null
     val processedLibraryNames = mutableSetOf<String>()
     val usages = mutableListOf<LibraryUsage>()
+
+    val libraryDescriptorFinder = project.service<LibraryDescriptorFinderService>().libraryDescriptorFinder
 
     // we should process simple element imports first, because they can be unambiguously resolved
     val imports = importProcessor.imports(psiFile).sortedByDescending { importProcessor.isSingleElementImport(it) }
