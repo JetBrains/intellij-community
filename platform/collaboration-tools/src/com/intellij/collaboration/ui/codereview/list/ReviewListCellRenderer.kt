@@ -101,7 +101,7 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
     background = list.background
     selectionColor = ListUiUtil.WithTallRow.background(list, isSelected, list.hasFocus())
     val primaryTextColor = ListUiUtil.WithTallRow.foreground(isSelected, list.hasFocus())
-    val secondaryTextColor = ListUiUtil.WithTallRow.secondaryForeground(isSelected, list.hasFocus())
+    val secondaryTextColor = ListUiUtil.WithTallRow.secondaryForeground(isSelected && !ExperimentalUI.isNewUI(), list.hasFocus())
 
     val presentation = presenter(value)
 
