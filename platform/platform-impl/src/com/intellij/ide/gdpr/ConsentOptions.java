@@ -9,8 +9,8 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import kotlin.Pair;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -33,74 +34,87 @@ public final class ConsentOptions {
   private static final String STATISTICS_OPTION_ID = "rsch.send.usage.stat";
   private static final String EAP_FEEDBACK_OPTION_ID = "eap";
   private static final Set<String> PER_PRODUCT_CONSENTS = Set.of(EAP_FEEDBACK_OPTION_ID);
-  private final boolean myIsEAP;
+  private final BooleanSupplier myIsEap;
   private String myProductCode;
   private Set<String> myPluginCodes = Set.of();
 
+  private static @NotNull Path getDefaultConsentsFile() {
+    return PathManager.getCommonDataPath()
+      .resolve(ApplicationNamesInfo.getInstance().getLowercaseProductName())
+      .resolve("consentOptions/cached");
+  }
+
+  private static @NotNull Path getConfirmedConsentsFile() {
+    return PathManager.getCommonDataPath().resolve("consentOptions/accepted");
+  }
+
   private static final class InstanceHolder {
-    static final ConsentOptions ourInstance;
-    static {
-      final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-      Path commonDataPath = PathManager.getCommonDataPath();
-      ourInstance = new ConsentOptions(new IOBackend() {
-        private final Path DEFAULT_CONSENTS_FILE = commonDataPath
-          .resolve(ApplicationNamesInfo.getInstance().getLowercaseProductName())
-          .resolve("consentOptions/cached");
-        private final Path CONFIRMED_CONSENTS_FILE = commonDataPath.resolve("consentOptions/accepted");
-        private final String BUNDLED_CONSENTS_PATH = getBundledResourcePath();
+    static final ConsentOptions ourInstance = new ConsentOptions(new IOBackend() {
+      @Override
+      public void writeDefaultConsents(@NotNull String data) throws IOException {
+        Path defaultConsentsFile = getDefaultConsentsFile();
+        Files.createDirectories(defaultConsentsFile.getParent());
+        Files.writeString(defaultConsentsFile, data);
+      }
 
-        @Override
-        public void writeDefaultConsents(@NotNull String data) throws IOException {
-          Files.createDirectories(DEFAULT_CONSENTS_FILE.getParent());
-          Files.writeString(DEFAULT_CONSENTS_FILE, data);
-        }
+      @Override
+      public @NotNull String readDefaultConsents() throws IOException {
+        return loadText(Files.newInputStream(getDefaultConsentsFile()));
+      }
 
-        @Override
-        public @NotNull String readDefaultConsents() throws IOException {
-          return loadText(Files.newInputStream(DEFAULT_CONSENTS_FILE));
-        }
+      @Override
+      public @NotNull String readBundledConsents() {
+        return loadText(ConsentOptions.class.getClassLoader().getResourceAsStream(getBundledResourcePath()));
+      }
 
-        @Override
-        public @NotNull String readBundledConsents() {
-          return loadText(ConsentOptions.class.getClassLoader().getResourceAsStream(BUNDLED_CONSENTS_PATH));
-        }
+      @Override
+      public void writeConfirmedConsents(@NotNull String data) throws IOException {
+        Path confirmedConsentsFile = getConfirmedConsentsFile();
+        Files.createDirectories(confirmedConsentsFile.getParent());
+        Files.writeString(confirmedConsentsFile, data);
+      }
 
-        @Override
-        public void writeConfirmedConsents(@NotNull String data) throws IOException {
-          Files.createDirectories(CONFIRMED_CONSENTS_FILE.getParent());
-          Files.writeString(CONFIRMED_CONSENTS_FILE, data);
-        }
+      @Override
+      public @NotNull String readConfirmedConsents() throws IOException {
+        return loadText(Files.newInputStream(getConfirmedConsentsFile()));
+      }
 
-        @Override
-        public @NotNull String readConfirmedConsents() throws IOException {
-          return loadText(Files.newInputStream(CONFIRMED_CONSENTS_FILE));
-        }
-
-        private @NotNull String loadText(InputStream stream) {
-          if (stream != null) {
-            try (InputStream inputStream = CharsetToolkit.inputStreamSkippingBOM(stream)) {
-              return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-            }
-            catch (IOException e) {
-              LOG.info(e);
-            }
+      private static @NotNull String loadText(InputStream stream) {
+        if (stream != null) {
+          try (InputStream inputStream = CharsetToolkit.inputStreamSkippingBOM(stream)) {
+            return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
           }
-          return "";
+          catch (IOException e) {
+            LOG.info(e);
+          }
         }
-      }, appInfo.isEAP() && appInfo.isVendorJetBrains());
-    }
+        return "";
+      }
+    });
 
     private static @NotNull @NonNls String getBundledResourcePath() {
-      final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+      if ("JetBrains".equals(System.getProperty("idea.vendor.name"))) {
+        return "consents.json";
+      }
+
+      ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
       return appInfo.isVendorJetBrains() ? "consents.json" : "consents-" + appInfo.getShortCompanyName() + ".json";
     }
   }
 
   private final IOBackend myBackend;
 
-  ConsentOptions(IOBackend backend, final boolean isEap) {
+  ConsentOptions(IOBackend backend, boolean isEap) {
     myBackend = backend;
-    myIsEAP = isEap;
+    myIsEap = () -> isEap;
+  }
+
+  ConsentOptions(IOBackend backend) {
+    myBackend = backend;
+    myIsEap = () -> {
+      ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
+      return appInfo.isEAP() && appInfo.isVendorJetBrains();
+    };
   }
 
   public static ConsentOptions getInstance() {
@@ -117,7 +131,7 @@ public final class ConsentOptions {
   }
 
   public boolean isEAP() {
-    return myIsEAP;
+    return myIsEap.getAsBoolean();
   }
 
   public void setProductCode(String platformCode, Iterable<String> pluginCodes) {
@@ -236,7 +250,7 @@ public final class ConsentOptions {
   
   public @NotNull Pair<List<Consent>, Boolean> getConsents(@NotNull Predicate<? super Consent> filter) {
     final Map<String, Consent> allDefaults = loadDefaultConsents();
-    if (myIsEAP) {
+    if (isEAP()) {
       // for EA builds there is a different option for statistics sending management
       allDefaults.remove(STATISTICS_OPTION_ID);
     }
@@ -325,7 +339,7 @@ public final class ConsentOptions {
   }
 
   public boolean needsReconfirm(Consent consent) {
-    if (consent == null || consent.isDeleted() || myIsEAP && STATISTICS_OPTION_ID.equals(consent.getId())) {
+    if (consent == null || consent.isDeleted() || isEAP() && STATISTICS_OPTION_ID.equals(consent.getId())) {
       // for EA builds there is a different option for statistics sending management
       return false;
     }

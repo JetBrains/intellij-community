@@ -239,12 +239,16 @@ fun CoroutineScope.startApplication(args: List<String>,
   }
 
   mainScope.launch {
-    showEuaIfNeededJob.join()
+    // required for appStarter.prepareStart
+    appInfoDeferred.join()
 
     val appStarter = runActivity("main class loading waiting") {
       appStarterDeferred.await()
     }
     appStarter.prepareStart(args)
+
+    // before config importing and license check
+    showEuaIfNeededJob.join()
 
     if (!isHeadless && configImportNeededDeferred.await()) {
       initUiDeferred.join()
