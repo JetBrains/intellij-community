@@ -2,6 +2,7 @@
 package com.intellij.execution
 
 import com.intellij.execution.configurations.*
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -25,6 +26,9 @@ abstract class RunManager {
       }
       return project.getService(RunManager::class.java)
     }
+
+    @JvmStatic
+    fun getInstanceIfCreated(project: Project): RunManager? = project.serviceIfCreated()
 
     private const val UNNAMED = "Unnamed"
 

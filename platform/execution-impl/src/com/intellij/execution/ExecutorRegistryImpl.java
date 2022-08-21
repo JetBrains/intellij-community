@@ -522,8 +522,9 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
 
     protected @Nullable RunnerAndConfigurationSettings getSelectedConfiguration(@NotNull AnActionEvent e) {
-      if (e.getProject() == null) return null;
-      return RunManager.getInstance(e.getProject()).getSelectedConfiguration();
+      Project project = e.getProject();
+      RunManager runManager = project == null ? null : RunManager.getInstanceIfCreated(project);
+      return runManager == null ? null : runManager.getSelectedConfiguration();
     }
 
     protected void run(@NotNull Project project, @NotNull RunnerAndConfigurationSettings settings, @NotNull DataContext dataContext) {
