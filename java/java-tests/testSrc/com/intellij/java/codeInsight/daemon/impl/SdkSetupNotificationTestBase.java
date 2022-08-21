@@ -21,7 +21,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotificationsImpl;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,15 +59,14 @@ public abstract class SdkSetupNotificationTestBase extends JavaCodeInsightFixtur
                                                      @NotNull String fileName,
                                                      @NotNull String fileText) {
     FileEditor editor = openTextInEditor(fixture, fileName, fileText);
-    return (EditorNotificationPanel)EditorNotificationsImpl.getNotificationPanels(editor)
-      .get(SdkSetupNotificationProvider.class);
+    return (EditorNotificationPanel)EditorNotificationsImpl.getNotificationPanels(editor).get(SdkSetupNotificationProvider.class);
   }
 
   static @NotNull FileEditor openTextInEditor(@NotNull JavaCodeInsightTestFixture fixture,
                                               @NotNull String fileName,
                                               @NotNull String fileText) {
-    UIUtil.dispatchAllInvocationEvents();
-    EditorNotificationsImpl.completeAsyncTasks();
+    EDT.dispatchAllInvocationEvents();
+    EditorNotificationsImpl.completeAsyncTasks(fixture.getProject());
 
     final PsiFile psiFile = fixture.configureByText(fileName, fileText);
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(fixture.getProject());
@@ -82,8 +81,8 @@ public abstract class SdkSetupNotificationTestBase extends JavaCodeInsightFixtur
     });
     assertThat(editors).hasSize(1);
 
-    UIUtil.dispatchAllInvocationEvents();
-    EditorNotificationsImpl.completeAsyncTasks();
+    EDT.dispatchAllInvocationEvents();
+    EditorNotificationsImpl.completeAsyncTasks(fixture.getProject());
 
     return editors[0];
   }

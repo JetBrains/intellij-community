@@ -12,6 +12,7 @@ import com.intellij.util.ui.UIUtil
 import com.jetbrains.extensions.getSdk
 import com.jetbrains.python.fixtures.PyTestCase
 import org.assertj.core.api.AssertionsForClassTypes
+import javax.swing.JComponent
 
 class PythonNoSdkEditorNotificationTest : PyTestCase() {
   fun testNoSdkForPythonFile() {
@@ -44,11 +45,13 @@ class PythonNoSdkEditorNotificationTest : PyTestCase() {
       }
     }
 
-    fun getNotificationPanel(fileEditor: FileEditor) = EditorNotificationsImpl.getNotificationPanels(fileEditor)[PyEditorNotificationProvider::class.java]
+    private fun getNotificationPanel(fileEditor: FileEditor): JComponent? {
+      return EditorNotificationsImpl.getNotificationPanels(fileEditor).get(PyEditorNotificationProvider::class.java)
+    }
 
     fun openFileInEditor(fileName: String, fileText: String, fixture: CodeInsightTestFixture) : FileEditor {
       UIUtil.dispatchAllInvocationEvents()
-      EditorNotificationsImpl.completeAsyncTasks()
+      EditorNotificationsImpl.completeAsyncTasks(fixture.getProject())
 
       val psiFile: PsiFile = fixture.configureByText(fileName, fileText)
       val fileEditorManager = FileEditorManager.getInstance(fixture.project)
@@ -61,7 +64,7 @@ class PythonNoSdkEditorNotificationTest : PyTestCase() {
       AssertionsForClassTypes.assertThat(editors).hasSize(1)
 
       UIUtil.dispatchAllInvocationEvents()
-      EditorNotificationsImpl.completeAsyncTasks()
+      EditorNotificationsImpl.completeAsyncTasks(fixture.getProject())
 
       return editors[0]
     }
