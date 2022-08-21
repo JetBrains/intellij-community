@@ -198,6 +198,11 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/naming/function/inspectionData/inspections.test");
         }
 
+        @TestMetadata("naming/localVariable/inspectionData/inspections.test")
+        public void testNaming_localVariable_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/naming/localVariable/inspectionData/inspections.test");
+        }
+
         @TestMetadata("naming/objectProperty/inspectionData/inspections.test")
         public void testNaming_objectProperty_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/naming/objectProperty/inspectionData/inspections.test");

@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 import java.awt.BorderLayout
 import java.util.regex.PatternSyntaxException
@@ -270,14 +271,24 @@ abstract class PropertyNameInspectionBase protected constructor(
 
     protected enum class PropertyKind { NORMAL, PRIVATE, OBJECT_OR_TOP_LEVEL, CONST, LOCAL }
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-        return propertyVisitor { property ->
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : KtVisitorVoid() {
+        override fun visitProperty(property: KtProperty) {
             if (property.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
-                return@propertyVisitor
+                return
             }
 
             if (property.getKind() == kind) {
                 verifyName(property, holder)
+            }
+        }
+
+        override fun visitParameter(parameter: KtParameter) {
+            if (parameter.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
+                return
+            }
+
+            if (parameter.getKind() == kind) {
+                verifyName(parameter, holder)
             }
         }
     }
@@ -294,6 +305,14 @@ abstract class PropertyNameInspectionBase protected constructor(
         visibilityModifierType() == KtTokens.PRIVATE_KEYWORD -> PropertyKind.PRIVATE
 
         else -> PropertyKind.NORMAL
+    }
+
+    private fun KtParameter.getKind(): PropertyKind = when {
+        isPrivate() -> PropertyKind.PRIVATE
+
+        hasValOrVar() -> PropertyKind.NORMAL
+
+        else -> PropertyKind.LOCAL
     }
 }
 
