@@ -291,6 +291,13 @@ abstract class PropertyNameInspectionBase protected constructor(
                 verifyName(parameter, holder)
             }
         }
+
+        override fun visitDestructuringDeclarationEntry(multiDeclarationEntry: KtDestructuringDeclarationEntry) {
+            if (multiDeclarationEntry.name == "_") return
+            if (kind == PropertyKind.LOCAL) {
+                verifyName(multiDeclarationEntry, holder)
+            }
+        }
     }
 
     private fun KtProperty.getKind(): PropertyKind = when {

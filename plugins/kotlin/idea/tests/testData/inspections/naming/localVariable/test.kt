@@ -13,5 +13,6 @@ class ParameterImpl(
     override val interface_p2: String = ""
     fun foo(fun_param: String) {
         val local_val = 1
+        val (destructured_val, _) = listOf(1, 2)
     }
 }
