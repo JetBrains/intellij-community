@@ -229,7 +229,7 @@ class FunctionNameInspection : NamingConventionInspection(
                     val functionName = function.name
                     val typeReference = function.typeReference
                     if (typeReference != null) {
-                        typeReference.text != functionName
+                        typeReference.nameForReceiverLabel() != functionName
                     } else {
                         function.resolveToDescriptorIfAny()
                             ?.returnType
