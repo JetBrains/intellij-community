@@ -11,7 +11,7 @@ class IJTestEventLogger {
   static def logger = Logging.getLogger("IJTestEventLogger")
 
   static def configureTestEventLogging(Task task) {
-    def testReportDir = task.temporaryDir.toPath().resolve("ijTestEvents/").toFile()
+    File testReportDir = task.temporaryDir.toPath().resolve("ijTestEvents/").toFile()
 
     task.outputs.dir(testReportDir)
       .withPropertyName("ijTestEvents")
@@ -123,27 +123,11 @@ class IJTestEventLogger {
       }
     }
 
-    // make sure that the logs are ordered by when they 'should' happen, because the test data doesn't always
-    // contain a start/end time, and currentTimeMillis might return the same timestamp for multiple events per test.
-    int order = 999
-    switch (testEventType) {
-      case "beforeSuite": order = 100
-        break;
-      case "beforeTest": order = 300
-        break;
-      case "afterTest": order = 600
-        break;
-      case "afterSuite": order = 800
-        break;
-      case "onOutput": order = 900
-        break;
-    }
-
     String log = writeLog(writer.toString())
-    appendTestLogFile(testReportDir, order, log)
+    appendTestLogFile(testReportDir, log)
   }
 
-  private static synchronized void appendTestLogFile(File testReportDir, int order, String msg) {
+  private static synchronized void appendTestLogFile(File testReportDir, String msg) {
 
     // group log files together by time so Gradle doesn't get flooded with tiny files,
     // and large files are too big to work with.
@@ -151,8 +135,6 @@ class IJTestEventLogger {
 
     File testXmlFile = testReportDir.toPath().resolve("${filename}.ij.log").toFile()
     if (!testXmlFile.isFile()) testXmlFile.createNewFile()
-
-    msg = System.currentTimeMillis() + "_" + order + " \t " + msg
 
     testXmlFile.withWriterAppend {
       it.writeLine(msg)

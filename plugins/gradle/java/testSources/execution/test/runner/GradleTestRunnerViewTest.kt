@@ -183,7 +183,10 @@ class GradleTestRunnerViewTest : GradleImportingTestCase() {
     } else {
       consoleTextWithoutFirstTestingGreetingsLine = consoleText
     }
-    assertThat(consoleTextWithoutFirstTestingGreetingsLine).contains(testOutputText)
+    assertThat(consoleTextWithoutFirstTestingGreetingsLine)
+      .describedAs("console text\n${consoleText.prependIndent("  > ")}\n")
+      .contains(testOutputText)
+
     val expectedText = if (SystemInfo.isWindows) {
       scriptOutputText + scriptOutputTextWOEol + "\n"
     } else {
@@ -192,18 +195,20 @@ class GradleTestRunnerViewTest : GradleImportingTestCase() {
       "text\n" +
       "text w/o eol\n"
     }
-    assertEquals(expectedText, consoleTextWithoutFirstTestingGreetingsLine.substringBefore(testOutputText))
+    assertEquals("console text\n${consoleText.prependIndent("  > ")}\n", expectedText, consoleTextWithoutFirstTestingGreetingsLine.substringBefore(testOutputText))
   }
 
   @Test
   fun `test build tw output for Gradle test runner execution`() {
     createProjectSubFile("src/test/java/my/pack/AppTest.java",
-                         "package my.pack;\n" +
-                         "import org.junit.Test;\n" +
-                         "public class AppTest {\n" +
-                         "    @Test\n" +
-                         "    public void test() {}\n" +
-                         "}\n")
+                         """
+package my.pack;
+import org.junit.Test;
+public class AppTest {
+    @Test
+    public void test() {}
+}
+""")
 
     importProject(createBuildScriptBuilder()
                     .withJavaPlugin()
@@ -229,6 +234,7 @@ class GradleTestRunnerViewTest : GradleImportingTestCase() {
         :processTestResources
         :testClasses
         :test
+        :ijTestEventLogger
       """.trimIndent()
     )
   }
