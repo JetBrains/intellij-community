@@ -40,7 +40,7 @@ final class FineGrainedIdLock {
       myLockedIds.remove(id);
       //RC: this wakes up all threads waiting -- i.e. myLockedIds.size(), which could be a lot.
       //    And each thread will need to re-acquire myLock, to check lockedIds.contains() -- and
-      //    all thread but one return to waiting after the check. Could be quite ineffective
+      //    all threads but one return to waiting after the check. Could be quite ineffective
       //    if there are a lot of IDs locked.
       myUnlockCondition.signalAll();
     }
