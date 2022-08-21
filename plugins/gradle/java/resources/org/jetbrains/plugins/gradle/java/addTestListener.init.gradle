@@ -24,16 +24,9 @@ gradle.allprojects { project ->
           file.withReader { reader ->
             reader
               .readLines()
-              //.sort() // don't need to sort, because the log-writer is synchronized
+            //.sort() // don't need to sort, because the log-writer is synchronized
               .forEach { line ->
-                int index = line.indexOf('\t')
-                if (index > 0) {
-                  String msg = line.substring(index).trim()
-                  System.out.println(msg)
-                }
-                else {
-                  logger.warn("[ijTestEventLogger] invalid line $index - $line")
-                }
+                System.out.println(line)
               }
           }
         }
