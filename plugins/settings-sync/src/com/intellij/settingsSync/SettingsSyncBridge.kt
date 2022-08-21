@@ -46,6 +46,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
 
     // the queue is not activated initially => events will be collected but not processed until we perform all initialization tasks
     SettingsSyncEvents.getInstance().addSettingsChangedListener { event ->
+      LOG.debug("Adding settings changed event $event to the queue")
       pendingEvents.add(event)
       queue.queue(updateObject)
     }
@@ -142,6 +143,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
     var pushRequestMode: PushRequestMode = PUSH_IF_NEEDED
     while (pendingEvents.isNotEmpty()) {
       val event = pendingEvents.removeAt(0)
+      LOG.debug("Processing event $event")
       if (event is SyncSettingsEvent.IdeChange) {
         settingsLog.applyIdeState(event.snapshot, "Local changes made in the IDE")
       }

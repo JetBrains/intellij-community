@@ -100,7 +100,9 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
       rootConfig.resolve(file).write(content, 0, size)
     }
 
-    if (!isSyncEnabled(fileSpec, roamingType)) {
+    val syncEnabled = isSyncEnabled(fileSpec, roamingType)
+    LOG.debug("Sync is ${if (syncEnabled) "enabled" else "disabled"} for $fileSpec ($file)")
+    if (!syncEnabled) {
       return
     }
 
