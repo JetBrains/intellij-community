@@ -48,7 +48,7 @@ class MavenCompilerConfigurator : MavenImporter("org.apache.maven.plugins", "mav
                        embedder: MavenEmbedderWrapper,
                        context: ResolveContext) {
     if (!super.isApplicable(mavenProject)) return
-    if (!Registry.`is`("maven.import.compiler.arguments", true)) return
+    if (!Registry.`is`("maven.import.compiler.arguments", true) ||  !MavenProjectsManager.getInstance(project).importingSettings.isAutoDetectCompiler) return
 
     val defaultCompilerExtension = MavenCompilerExtension.EP_NAME.extensions.find {
       it.resolveDefaultCompiler(project, mavenProject, nativeMavenProject, embedder, context)
@@ -68,7 +68,7 @@ class MavenCompilerConfigurator : MavenImporter("org.apache.maven.plugins", "mav
 
     if (defaultCompilerExtension == null) {
       val allCompilers = context.mavenProjectsWithModules.mapNotNullTo(mutableSetOf()) {
-        getCompilerConfigurationWhenApplicable(it.mavenProject)?.let { config -> getCompilerId(config) }
+        getCompilerConfigurationWhenApplicable(context.project, it.mavenProject)?.let { config -> getCompilerId(config) }
       }
       defaultCompilerExtension = selectDefaultCompilerExtension(allCompilers)
     }
@@ -103,7 +103,7 @@ class MavenCompilerConfigurator : MavenImporter("org.apache.maven.plugins", "mav
       module.project.putUserData(DEFAULT_COMPILER_EXTENSION, null)
     }
 
-    val config = getCompilerConfigurationWhenApplicable(mavenProject) ?: return
+    val config = getCompilerConfigurationWhenApplicable(module.project, mavenProject) ?: return
 
     var compilers = modifiableModelsProvider.getUserData(ALL_PROJECTS_COMPILERS)
     if (compilers == null) {
@@ -113,8 +113,9 @@ class MavenCompilerConfigurator : MavenImporter("org.apache.maven.plugins", "mav
     compilers.add(getCompilerId(config))
   }
 
-  private fun getCompilerConfigurationWhenApplicable(mavenProject: MavenProject): Element? {
-    if (!Registry.`is`("maven.import.compiler.arguments", true)) return null
+  private fun getCompilerConfigurationWhenApplicable(project: Project, mavenProject: MavenProject): Element? {
+    if (!Registry.`is`("maven.import.compiler.arguments", true) ||
+        !MavenProjectsManager.getInstance(project).importingSettings.isAutoDetectCompiler) return null
     if (!super.isApplicable(mavenProject)) return null
     return getConfig(mavenProject)
   }

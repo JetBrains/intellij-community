@@ -691,7 +691,53 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
     TestCase.assertEquals("Javac", ideCompilerConfiguration.defaultCompiler.id)
   }
 
-  @Test fun testShouldNotSwitchToJavacCompilerIfAutoDetectDisabled() {
+
+  @Test
+  fun testShouldResolveEclipseAndStayOnEclipseCompiler() {
+    MavenProjectsManager.getInstance(myProject).importingSettings.isAutoDetectCompiler = true
+
+    createProjectPom(eclipsePom)
+    importProject()
+    TestCase.assertEquals("Eclipse", ideCompilerConfiguration.defaultCompiler.id)
+
+    createProjectPom(eclipsePom)
+    importProject()
+
+    TestCase.assertEquals("Eclipse", ideCompilerConfiguration.defaultCompiler.id)
+  }
+
+  @Test
+  fun testShouldSwitchToEclipseAfterJavac() {
+    MavenProjectsManager.getInstance(myProject).importingSettings.isAutoDetectCompiler = true
+
+    createProjectPom(javacPom)
+    importProject()
+    TestCase.assertEquals("Javac", ideCompilerConfiguration.defaultCompiler.id)
+
+    createProjectPom(eclipsePom)
+    importProject()
+
+    TestCase.assertEquals("Eclipse", ideCompilerConfiguration.defaultCompiler.id)
+  }
+
+  @Test
+  fun testShouldNoSwitchToJavacIfFlagDisabled() {
+    MavenProjectsManager.getInstance(myProject).importingSettings.isAutoDetectCompiler = true
+
+    createProjectPom(eclipsePom)
+    importProject()
+    TestCase.assertEquals("Eclipse", ideCompilerConfiguration.defaultCompiler.id)
+
+    MavenProjectsManager.getInstance(myProject).importingSettings.isAutoDetectCompiler = false
+
+    createProjectPom(javacPom)
+    importProject()
+
+    TestCase.assertEquals("Eclipse", ideCompilerConfiguration.defaultCompiler.id)
+  }
+
+  @Test
+  fun testShouldNotSwitchToJavacCompilerIfAutoDetectDisabled() {
     MavenProjectsManager.getInstance(myProject).importingSettings.isAutoDetectCompiler = true
 
     createProjectPom(eclipsePom)
