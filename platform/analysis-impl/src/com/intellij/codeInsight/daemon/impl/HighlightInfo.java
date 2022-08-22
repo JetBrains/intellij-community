@@ -1047,7 +1047,7 @@ public class HighlightInfo implements Segment {
     }
   }
   
-  public @Nullable IntentionAction getSameFamilyFix(IntentionActionWithFixAllOption action) {
+  public IntentionAction getSameFamilyFix(@NotNull IntentionActionWithFixAllOption action) {
     if (quickFixActionRanges == null) return null;
     for (Pair<IntentionActionDescriptor, TextRange> range : quickFixActionRanges) {
       IntentionAction other = IntentionActionDelegate.unwrap(range.first.myAction);
