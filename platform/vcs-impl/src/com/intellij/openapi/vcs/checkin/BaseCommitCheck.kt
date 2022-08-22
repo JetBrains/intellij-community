@@ -27,12 +27,12 @@ sealed class CommitCheckRunState {
 }
 
 @ApiStatus.Experimental
-abstract class BaseCommitCheck<T : CommitProblem> : CheckinHandler(), CommitCheck<T> {
+abstract class BaseCommitCheck : CheckinHandler(), CommitCheck {
   private val _runState = MutableStateFlow<CommitCheckRunState>(CommitCheckRunState.NotStarted)
 
   val runState: StateFlow<CommitCheckRunState> = _runState.asStateFlow()
 
-  override suspend fun runCheck(indicator: ProgressIndicator): T? =
+  override suspend fun runCheck(indicator: ProgressIndicator): CommitProblem? =
     coroutineScope {
       runState
         .onEach { updateIndicator(indicator, it) }
@@ -49,7 +49,7 @@ abstract class BaseCommitCheck<T : CommitProblem> : CheckinHandler(), CommitChec
       }
     }
 
-  protected abstract suspend fun doRunCheck(): T?
+  protected abstract suspend fun doRunCheck(): CommitProblem?
 
   protected fun progress(
     name: @Nls(capitalization = Sentence) String? = null,

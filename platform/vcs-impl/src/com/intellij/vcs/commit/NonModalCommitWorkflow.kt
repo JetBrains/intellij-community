@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
 import com.intellij.openapi.vcs.checkin.CommitCheck
-import com.intellij.openapi.vcs.checkin.CommitProblem
+import com.intellij.openapi.vcs.checkin.CommitProblemWithDetails
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
@@ -52,7 +52,7 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
   suspend fun runMetaHandlers(metaHandlers: List<CheckinMetaHandler>, commitProgressUi: CommitProgressUi, indicator: ProgressIndicator) {
     // reversed to have the same order as when wrapping meta handlers into each other
     for (metaHandler in metaHandlers.reversed()) {
-      if (metaHandler is CommitCheck<*>) {
+      if (metaHandler is CommitCheck) {
         runCommitCheck(metaHandler, commitProgressUi, indicator)
       }
       else {
@@ -64,7 +64,7 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
     }
   }
 
-  suspend fun runCommitChecks(commitChecks: List<CommitCheck<*>>,
+  suspend fun runCommitChecks(commitChecks: List<CommitCheck>,
                               commitProgressUi: CommitProgressUi,
                               indicator: ProgressIndicator): Boolean {
     for (commitCheck in commitChecks) {
@@ -77,9 +77,9 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
   /**
    * @return true if there are no errors and commit shall proceed
    */
-  private suspend fun <P : CommitProblem> runCommitCheck(commitCheck: CommitCheck<P>,
-                                                         commitProgressUi: CommitProgressUi,
-                                                         indicator: ProgressIndicator): Boolean {
+  private suspend fun runCommitCheck(commitCheck: CommitCheck,
+                                     commitProgressUi: CommitProgressUi,
+                                     indicator: ProgressIndicator): Boolean {
     if (!commitCheck.isEnabled()) return true.also { LOG.debug("Commit check disabled $commitCheck") }
     if (isDumb(project) && !isDumbAware(commitCheck)) return true.also { LOG.debug("Skipped commit check in dumb mode $commitCheck") }
 
@@ -90,7 +90,14 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
 
     try {
       val problem = commitCheck.runCheck(indicator)
-      problem?.let { commitProgressUi.addCommitCheckFailure(it.text) { commitCheck.showDetails(it) } }
+      if (problem != null) {
+        if (problem is CommitProblemWithDetails) {
+          commitProgressUi.addCommitCheckFailure(problem.text) { problem.showDetails(project) }
+        }
+        else {
+          commitProgressUi.addCommitCheckFailure(problem.text, null)
+        }
+      }
       return problem == null
     }
     catch (e: Throwable) {

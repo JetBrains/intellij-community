@@ -361,11 +361,11 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     workflow.runMetaHandlers(metaHandlers, ui.commitProgressUi, indicator)
     FileDocumentManager.getInstance().saveAllDocuments()
 
-    val plainHandlers = commitHandlers.filterNot { it is CommitCheck<*> }
+    val plainHandlers = commitHandlers.filterNot { it is CommitCheck }
     val plainHandlersResult = workflow.runBeforeCommitHandlersChecks(sessionInfo, plainHandlers)
     if (!plainHandlersResult.shouldCommit) return plainHandlersResult
 
-    val commitChecks = commitHandlers.filterNot { it is CheckinMetaHandler }.filterIsInstance<CommitCheck<*>>()
+    val commitChecks = commitHandlers.filterNot { it is CheckinMetaHandler }.filterIsInstance<CommitCheck>()
     val checksPassed = workflow.runCommitChecks(commitChecks, ui.commitProgressUi, indicator)
     when {
       isOnlyRunCommitChecks -> {

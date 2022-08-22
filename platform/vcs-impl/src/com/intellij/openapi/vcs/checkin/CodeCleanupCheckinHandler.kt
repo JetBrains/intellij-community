@@ -40,7 +40,7 @@ class CodeCleanupCheckinHandlerFactory : CheckinHandlerFactory() {
 private class CodeCleanupCheckinHandler(private val panel: CheckinProjectPanel) :
   CheckinHandler(),
   CheckinMetaHandler,
-  CommitCheck<CommitProblem> {
+  CommitCheck {
 
   private val project = panel.project
   private val settings get() = VcsConfiguration.getInstance(project)
@@ -82,11 +82,6 @@ private class CodeCleanupCheckinHandler(private val panel: CheckinProjectPanel) 
 
     return null
   }
-
-  /**
-   * Does nothing as no problem is reported in [runCheck].
-   */
-  override fun showDetails(problem: CommitProblem) = Unit
 
   private suspend fun findProblems(indicator: ProgressIndicator): CleanupProblems {
     val files = filterOutGeneratedAndExcludedFiles(panel.virtualFiles, project)

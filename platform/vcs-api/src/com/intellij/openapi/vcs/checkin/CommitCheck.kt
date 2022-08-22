@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.checkin
 
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -19,7 +20,7 @@ import org.jetbrains.annotations.Nls.Capitalization.Sentence
  * Note that [CommitCheck] API is only supported in Commit Tool Window.
  */
 @ApiStatus.Experimental
-interface CommitCheck<T : CommitProblem> {
+interface CommitCheck {
   /**
    * Indicates if commit check should be run for the commit.
    * E.g. if corresponding option is enabled in settings.
@@ -36,16 +37,7 @@ interface CommitCheck<T : CommitProblem> {
    * @return commit problem found by the commit check or `null` if no problems found
    */
   @RequiresEdt
-  suspend fun runCheck(indicator: ProgressIndicator): T?
-
-  /**
-   * Shows details of the given commit problem.
-   * E.g. navigates to the tool window with problem details.
-   *
-   * @param problem commit problem to show details for
-   */
-  @RequiresEdt
-  fun showDetails(problem: T)
+  suspend fun runCheck(indicator: ProgressIndicator): CommitProblem?
 }
 
 /**
@@ -56,8 +48,19 @@ interface CommitCheck<T : CommitProblem> {
 interface CommitProblem {
   /**
    * Short problem description to show to the user.
-   * Problem details should be provided by the [CommitCheck.showDetails] logic.
+   *
+   * Problem details can be provided by implementing [CommitProblemWithDetails] interface.
    */
   @get:Nls(capitalization = Sentence)
   val text: String
+}
+
+@ApiStatus.Experimental
+interface CommitProblemWithDetails : CommitProblem {
+  /**
+   * Shows details of the given commit problem.
+   * E.g. navigates to the tool window with problem details.
+   */
+  @RequiresEdt
+  fun showDetails(project: Project)
 }

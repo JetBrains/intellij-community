@@ -47,11 +47,15 @@ class TodoCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler = TodoCheckinHandler(panel)
 }
 
-class TodoCommitProblem(val changes: Collection<Change>, val todoItems: Collection<TodoItem>) : CommitProblem {
+class TodoCommitProblem(val changes: Collection<Change>, val todoItems: Collection<TodoItem>) : CommitProblemWithDetails {
   override val text: String get() = message("label.todo.items.found", todoItems.size)
+
+  override fun showDetails(project: Project) {
+    TodoCheckinHandler.showTodoItems(project, changes, todoItems)
+  }
 }
 
-class TodoCheckinHandler(private val commitPanel: CheckinProjectPanel) : CheckinHandler(), CommitCheck<TodoCommitProblem>, DumbAware {
+class TodoCheckinHandler(private val commitPanel: CheckinProjectPanel) : CheckinHandler(), CommitCheck, DumbAware {
   private val project: Project get() = commitPanel.project
   private val settings: VcsConfiguration get() = VcsConfiguration.getInstance(project)
   private val todoSettings: TodoPanelSettings get() = settings.myTodoPanelSettings
@@ -76,8 +80,6 @@ class TodoCheckinHandler(private val commitPanel: CheckinProjectPanel) : Checkin
     val todoItems = worker.inOneList()
     return if (todoItems.isNotEmpty()) TodoCommitProblem(changes, todoItems) else null
   }
-
-  override fun showDetails(problem: TodoCommitProblem) = showTodoItems(problem.changes, problem.todoItems)
 
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
     object : BooleanCommitOption(commitPanel, "", false, settings::CHECK_NEW_TODO) {
@@ -124,27 +126,30 @@ class TodoCheckinHandler(private val commitPanel: CheckinProjectPanel) : Checkin
   private fun processFoundTodoItems(worker: TodoCheckinHandlerWorker, @NlsContexts.Button commitActionText: String): ReturnResult =
     when (askReviewCommitCancel(worker, commitActionText)) {
       Messages.YES -> {
-        showTodoItems(worker.changes, worker.inOneList())
+        showTodoItems(project, worker.changes, worker.inOneList())
         ReturnResult.CLOSE_WINDOW
       }
       Messages.NO -> ReturnResult.COMMIT
       else -> ReturnResult.CANCEL
     }
 
-  private fun showTodoItems(changes: Collection<Change>, todoItems: Collection<TodoItem>) {
-    project.service<TodoView>().addCustomTodoView(
-      TodoTreeBuilderFactory { tree, project -> CustomChangelistTodosTreeBuilder(tree, project, changes, todoItems) },
-      message("checkin.title.for.commit.0", formatDateTime(System.currentTimeMillis())),
-      TodoPanelSettings(todoSettings)
-    )
+  companion object {
+    internal fun showTodoItems(project: Project, changes: Collection<Change>, todoItems: Collection<TodoItem>) {
+      val todoView = project.service<TodoView>()
+      todoView.addCustomTodoView(
+        TodoTreeBuilderFactory { tree, project -> CustomChangelistTodosTreeBuilder(tree, project, changes, todoItems) },
+        message("checkin.title.for.commit.0", formatDateTime(System.currentTimeMillis())),
+        TodoPanelSettings(VcsConfiguration.getInstance(project).myTodoPanelSettings)
+      )
 
-    runInEdt(ModalityState.NON_MODAL) {
-      if (project.isDisposed) return@runInEdt
-      val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(TODO_VIEW) ?: return@runInEdt
+      runInEdt(ModalityState.NON_MODAL) {
+        if (project.isDisposed) return@runInEdt
+        val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(TODO_VIEW) ?: return@runInEdt
 
-      toolWindow.show {
-        val lastContent = toolWindow.contentManager.contents.lastOrNull()
-        if (lastContent != null) toolWindow.contentManager.setSelectedContent(lastContent, true)
+        toolWindow.show {
+          val lastContent = toolWindow.contentManager.contents.lastOrNull()
+          if (lastContent != null) toolWindow.contentManager.setSelectedContent(lastContent, true)
+        }
       }
     }
   }

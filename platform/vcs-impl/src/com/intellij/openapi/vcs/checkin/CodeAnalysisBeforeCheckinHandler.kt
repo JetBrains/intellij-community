@@ -72,7 +72,7 @@ class CodeAnalysisCheckinHandlerFactory : CheckinHandlerFactory() {
     CodeAnalysisBeforeCheckinHandler(panel)
 }
 
-class CodeAnalysisCommitProblem(val codeSmells: List<CodeSmellInfo>) : CommitProblem {
+class CodeAnalysisCommitProblem(val codeSmells: List<CodeSmellInfo>) : CommitProblemWithDetails {
   override val text: String
     get() {
       val errors = codeSmells.count { it.severity == HighlightSeverity.ERROR }
@@ -83,6 +83,10 @@ class CodeAnalysisCommitProblem(val codeSmells: List<CodeSmellInfo>) : CommitPro
 
       return formatAndList(listOfNotNull(errorsText, warningsText))
     }
+
+  override fun showDetails(project: Project) {
+    CodeSmellDetector.getInstance(project).showCodeSmellErrors(codeSmells)
+  }
 }
 
 /**
@@ -90,7 +94,7 @@ class CodeAnalysisCommitProblem(val codeSmells: List<CodeSmellInfo>) : CommitPro
  * is provided as a sample of using the [CheckinHandler] API.
  */
 class CodeAnalysisBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel) :
-  CheckinHandler(), CommitCheck<CodeAnalysisCommitProblem> {
+  CheckinHandler(), CommitCheck {
 
   private val project: Project get() = commitPanel.project
   private val settings: VcsConfiguration get() = VcsConfiguration.getInstance(project)
@@ -112,9 +116,6 @@ class CodeAnalysisBeforeCheckinHandler(private val commitPanel: CheckinProjectPa
     }
     return if (codeSmells.isNotEmpty()) CodeAnalysisCommitProblem(codeSmells) else null
   }
-
-  override fun showDetails(problem: CodeAnalysisCommitProblem) =
-    CodeSmellDetector.getInstance(project).showCodeSmellErrors(problem.codeSmells)
 
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
     ProfileChooser(commitPanel, 

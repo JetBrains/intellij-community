@@ -25,7 +25,7 @@ abstract class CodeProcessorCheckinHandler(
   val commitPanel: CheckinProjectPanel
 ) : CheckinHandler(),
     CheckinMetaHandler,
-    CommitCheck<CommitProblem> {
+    CommitCheck {
 
   val project: Project get() = commitPanel.project
   val settings: VcsConfiguration get() = VcsConfiguration.getInstance(project)
@@ -47,11 +47,6 @@ abstract class CodeProcessorCheckinHandler(
 
     return null
   }
-
-  /**
-   * Does nothing as no problem is reported in [runCheck].
-   */
-  override fun showDetails(problem: CommitProblem) = Unit
 
   /**
    * Do nothing - interface is implemented to override execution order.
