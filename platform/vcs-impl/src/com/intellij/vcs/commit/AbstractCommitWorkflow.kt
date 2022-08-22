@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
 import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
+import com.intellij.openapi.vcs.checkin.CheckinModificationHandler
 import com.intellij.openapi.vcs.impl.CheckinHandlersManager
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vcs.impl.PartialChangesUtil.getPartialTracker
@@ -191,7 +192,9 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     val backgroundChecks = Runnable {
       ProgressManager.checkCanceled()
       FileDocumentManager.getInstance().saveAllDocuments()
-      result = runBeforeCommitHandlersChecks(sessionInfo, commitContext, commitHandlers)
+
+      val handlers = commitHandlers.sortedWith(checkinHandlerComparator())
+      result = runBeforeCommitHandlersChecks(sessionInfo, commitContext, handlers)
     }
 
     val metaHandlers = commitHandlers.filterIsInstance<CheckinMetaHandler>()
@@ -302,6 +305,13 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       }
 
       return CommitChecksResult.Passed
+    }
+
+    private fun checkinHandlerComparator(): Comparator<CheckinHandler> = compareBy { handler ->
+      when (handler) {
+        is CheckinModificationHandler -> -1
+        else -> 0
+      }
     }
   }
 }

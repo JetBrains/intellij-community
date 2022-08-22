@@ -25,7 +25,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
  * @author lesya
  * @see BaseCheckinHandlerFactory#createHandler(CheckinProjectPanel, CommitContext)
  * @see CodeAnalysisBeforeCheckinHandler
- * @see CheckinMetaHandler
+ * @see CheckinModificationHandler
  */
 public abstract class CheckinHandler {
   /**

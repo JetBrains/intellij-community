@@ -39,7 +39,7 @@ class CodeCleanupCheckinHandlerFactory : CheckinHandlerFactory() {
 
 private class CodeCleanupCheckinHandler(private val panel: CheckinProjectPanel) :
   CheckinHandler(),
-  CheckinMetaHandler,
+  CheckinModificationHandler,
   CommitCheck {
 
   private val project = panel.project
@@ -57,7 +57,7 @@ private class CodeCleanupCheckinHandler(private val panel: CheckinProjectPanel) 
    *
    * @see com.intellij.vcs.commit.NonModalCommitWorkflow.runMetaHandler
    */
-  override fun runCheckinHandlers(runnable: Runnable) {
+  override fun beforeCheckin(): ReturnResult {
     if (settings.CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT && !DumbService.isDumb(project)) {
       val filesToProcess = filterOutGeneratedAndExcludedFiles(panel.virtualFiles, project)
       val globalContext = InspectionManager.getInstance(project).createNewGlobalContext() as GlobalInspectionContextBase
@@ -65,7 +65,7 @@ private class CodeCleanupCheckinHandler(private val panel: CheckinProjectPanel) 
 
       globalContext.codeCleanup(AnalysisScope(project, filesToProcess), profile, null, null, true)
     }
-    runnable.run()
+    return ReturnResult.COMMIT
   }
 
   override fun isEnabled(): Boolean = settings.CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT
@@ -101,7 +101,7 @@ private class CodeCleanupCheckinHandler(private val panel: CheckinProjectPanel) 
     if (cleanupProfile != null) {
       val profileManager = if (settings.CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT_LOCAL) InspectionProfileManager.getInstance()
       else InspectionProjectProfileManager.getInstance(project)
-      
+
       return profileManager.getProfile(cleanupProfile)
     }
     return InspectionProjectProfileManager.getInstance(project).currentProfile

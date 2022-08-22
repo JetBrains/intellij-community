@@ -36,10 +36,7 @@ import com.intellij.openapi.vcs.changes.CommitExecutorWithRichDescription
 import com.intellij.openapi.vcs.changes.actions.DefaultCommitExecutorAction
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
-import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
-import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
-import com.intellij.openapi.vcs.checkin.CommitCheck
-import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory
+import com.intellij.openapi.vcs.checkin.*
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -111,7 +108,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
   protected fun setupDumbModeTracking() {
     if (isDumb(project)) ui.commitProgressUi.isDumbMode = true
-    project.messageBus.connect(this).subscribe(DumbService.DUMB_MODE, object : DumbModeListener{
+    project.messageBus.connect(this).subscribe(DumbService.DUMB_MODE, object : DumbModeListener {
       override fun enteredDumbMode() {
         ui.commitProgressUi.isDumbMode = true
       }
@@ -360,15 +357,20 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     indicator: ProgressIndicator,
     isOnlyRunCommitChecks: Boolean
   ): CommitChecksResult {
-    val metaHandlers = commitHandlers.filterIsInstance<CheckinMetaHandler>()
-    runMetaHandlers(project, metaHandlers, ui.commitProgressUi, indicator)
+    val handlers = commitHandlers
+    val (modificationPlainHandlers, plainHandlers) = handlers.filterNot { it is CommitCheck }.partition { it is CheckinModificationHandler }
+    val (modificationCommitChecks, commitChecks) = handlers.filterIsInstance<CommitCheck>().partition { it is CheckinModificationHandler }
+
+    val metaHandlers = handlers.filterIsInstance<CheckinMetaHandler>()
+    runMetaHandlers(metaHandlers)
+
+    val plainModificationHandlersResult = runBeforeCommitHandlersChecks(sessionInfo, commitContext, modificationPlainHandlers)
+    if (!plainModificationHandlersResult.shouldCommit) return plainModificationHandlersResult
+    runCommitChecks(project, modificationCommitChecks, ui.commitProgressUi, indicator)
     FileDocumentManager.getInstance().saveAllDocuments()
 
-    val plainHandlers = commitHandlers.filterNot { it is CommitCheck }
     val plainHandlersResult = runBeforeCommitHandlersChecks(sessionInfo, commitContext, plainHandlers)
     if (!plainHandlersResult.shouldCommit) return plainHandlersResult
-
-    val commitChecks = commitHandlers.filterNot { it is CheckinMetaHandler }.filterIsInstance<CommitCheck>()
     val checksPassed = runCommitChecks(project, commitChecks, ui.commitProgressUi, indicator)
     when {
       isOnlyRunCommitChecks -> {

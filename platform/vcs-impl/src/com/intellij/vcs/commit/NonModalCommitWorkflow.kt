@@ -50,20 +50,12 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
   }
 
   companion object {
-    suspend fun runMetaHandlers(project: Project,
-                                metaHandlers: List<CheckinMetaHandler>,
-                                commitProgressUi: CommitProgressUi,
-                                indicator: ProgressIndicator) {
+    suspend fun runMetaHandlers(metaHandlers: List<CheckinMetaHandler>) {
       // reversed to have the same order as when wrapping meta handlers into each other
       for (metaHandler in metaHandlers.reversed()) {
-        if (metaHandler is CommitCheck) {
-          runCommitCheck(project, metaHandler, commitProgressUi, indicator)
-        }
-        else {
-          suspendCancellableCoroutine<Unit> { continuation ->
-            val handlerCall = wrapWithCommitMetaHandler(metaHandler) { continuation.resume(Unit) }
-            handlerCall.run()
-          }
+        suspendCancellableCoroutine<Unit> { continuation ->
+          val handlerCall = wrapWithCommitMetaHandler(metaHandler) { continuation.resume(Unit) }
+          handlerCall.run()
         }
       }
     }

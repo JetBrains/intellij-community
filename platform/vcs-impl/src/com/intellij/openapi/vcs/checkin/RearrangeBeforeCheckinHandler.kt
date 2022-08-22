@@ -30,7 +30,7 @@ open class RearrangeBeforeCheckinHandler(
   private val project: Project,
   private val panel: CheckinProjectPanel
 ) : CheckinHandler(),
-    CheckinMetaHandler {
+    CheckinModificationHandler {
 
   private val settings get() = VcsConfiguration.getInstance(project)
 
@@ -38,12 +38,12 @@ open class RearrangeBeforeCheckinHandler(
     BooleanCommitOption(panel, VcsBundle.message("checkbox.checkin.options.rearrange.code"), true,
                         settings::REARRANGE_BEFORE_PROJECT_COMMIT)
 
-  override fun runCheckinHandlers(runnable: Runnable) {
+  override fun beforeCheckin(): ReturnResult {
     if (settings.REARRANGE_BEFORE_PROJECT_COMMIT && !DumbService.isDumb(project)) {
       RearrangeCodeProcessor(project, getPsiFiles(project, panel.virtualFiles), COMMAND_NAME, null, true).run()
       FileDocumentManager.getInstance().saveAllDocuments()
     }
-    runnable.run()
+    return ReturnResult.COMMIT
   }
 
   companion object {

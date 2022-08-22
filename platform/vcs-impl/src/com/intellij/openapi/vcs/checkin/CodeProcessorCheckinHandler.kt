@@ -13,9 +13,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * [CheckinMetaHandler] is only implemented for correct execution order of [CheckinHandler]-s.
- * To allow running handlers provided by [CheckinHandlerFactory] before the ones provided by [VcsCheckinHandlerFactory].
- *
  * Should only be used in Commit Tool Window. Commit Dialog is not supported.
  *
  * @see com.intellij.openapi.vcs.impl.CheckinHandlersManagerImpl.getRegisteredCheckinHandlerFactories
@@ -24,7 +21,7 @@ import kotlinx.coroutines.withContext
 abstract class CodeProcessorCheckinHandler(
   val commitPanel: CheckinProjectPanel
 ) : CheckinHandler(),
-    CheckinMetaHandler,
+    CheckinModificationHandler,
     CommitCheck {
 
   val project: Project get() = commitPanel.project
@@ -47,11 +44,6 @@ abstract class CodeProcessorCheckinHandler(
 
     return null
   }
-
-  /**
-   * Do nothing - interface is implemented to override execution order.
-   */
-  override fun runCheckinHandlers(runnable: Runnable) = runnable.run()
 }
 
 internal class NoTextIndicator(indicator: ProgressIndicator) : DelegatingProgressIndicator(indicator) {

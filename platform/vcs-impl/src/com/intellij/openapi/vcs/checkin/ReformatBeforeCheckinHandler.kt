@@ -28,19 +28,19 @@ open class ReformatBeforeCheckinHandler(
   @JvmField protected val myProject: Project,
   private val panel: CheckinProjectPanel
 ) : CheckinHandler(),
-    CheckinMetaHandler {
+    CheckinModificationHandler {
 
   private val settings get() = VcsConfiguration.getInstance(myProject)
 
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
     BooleanCommitOption(panel, message("checkbox.checkin.options.reformat.code"), true, settings::REFORMAT_BEFORE_PROJECT_COMMIT)
 
-  override fun runCheckinHandlers(runnable: Runnable) {
+  override fun beforeCheckin(): ReturnResult {
     if (settings.REFORMAT_BEFORE_PROJECT_COMMIT && !DumbService.isDumb(myProject)) {
       ReformatCodeProcessor(myProject, getPsiFiles(myProject, panel.virtualFiles), getReformatBeforeCommitCommandName(), null, true).run()
       FileDocumentManager.getInstance().saveAllDocuments()
     }
-    runnable.run()
+    return ReturnResult.COMMIT
   }
 }
 
