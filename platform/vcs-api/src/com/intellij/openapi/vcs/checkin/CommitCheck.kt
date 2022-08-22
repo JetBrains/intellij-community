@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.checkin
 
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -53,6 +54,17 @@ interface CommitProblem {
    */
   @get:Nls(capitalization = Sentence)
   val text: String
+
+  companion object {
+    fun createError(e: Throwable): CommitProblem {
+      val err = e.message
+      val message = when {
+        err.isNullOrBlank() -> VcsBundle.message("before.checkin.error.unknown")
+        else -> VcsBundle.message("before.checkin.error.unknown.details", err)
+      }
+      return TextCommitProblem(message)
+    }
+  }
 }
 
 @ApiStatus.Experimental
@@ -64,3 +76,5 @@ interface CommitProblemWithDetails : CommitProblem {
   @RequiresEdt
   fun showDetails(project: Project)
 }
+
+class TextCommitProblem(override val text: String) : CommitProblem

@@ -7,9 +7,9 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbService.isDumb
 import com.intellij.openapi.project.DumbService.isDumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
 import com.intellij.openapi.vcs.checkin.CommitCheck
+import com.intellij.openapi.vcs.checkin.CommitProblem
 import com.intellij.openapi.vcs.checkin.CommitProblemWithDetails
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
@@ -65,21 +65,31 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
                                 commitProgressUi: CommitProgressUi,
                                 indicator: ProgressIndicator): Boolean {
       for (commitCheck in commitChecks) {
-        val success = runCommitCheck(project, commitCheck, commitProgressUi, indicator)
-        if (!success) return false
+        val problem = runCommitCheck(project, commitCheck, indicator)
+        if (problem == null) continue
+
+        if (problem is CommitProblemWithDetails) {
+          commitProgressUi.addCommitCheckFailure(problem.text) { problem.showDetails(project) }
+        }
+        else {
+          commitProgressUi.addCommitCheckFailure(problem.text, null)
+        }
+        return false
       }
       return true
     }
 
-    /**
-     * @return true if there are no errors and commit shall proceed
-     */
     private suspend fun runCommitCheck(project: Project,
                                        commitCheck: CommitCheck,
-                                       commitProgressUi: CommitProgressUi,
-                                       indicator: ProgressIndicator): Boolean {
-      if (!commitCheck.isEnabled()) return true.also { LOG.debug("Commit check disabled $commitCheck") }
-      if (isDumb(project) && !isDumbAware(commitCheck)) return true.also { LOG.debug("Skipped commit check in dumb mode $commitCheck") }
+                                       indicator: ProgressIndicator): CommitProblem? {
+      if (!commitCheck.isEnabled()) {
+        LOG.debug("Commit check disabled $commitCheck")
+        return null
+      }
+      if (isDumb(project) && !isDumbAware(commitCheck)) {
+        LOG.debug("Skipped commit check in dumb mode $commitCheck")
+        return null
+      }
 
       LOG.debug("Running commit check $commitCheck")
       indicator.checkCanceled()
@@ -87,31 +97,15 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
       indicator.text2 = ""
 
       try {
-        val problem = commitCheck.runCheck(indicator)
-        if (problem != null) {
-          if (problem is CommitProblemWithDetails) {
-            commitProgressUi.addCommitCheckFailure(problem.text) { problem.showDetails(project) }
-          }
-          else {
-            commitProgressUi.addCommitCheckFailure(problem.text, null)
-          }
-        }
-        return problem == null
+        return commitCheck.runCheck(indicator)
       }
       catch (e: Throwable) {
         // Do not report error on cancellation
         // DO report error if someone threw PCE for no reason, ex: IDEA-234006
         if (e is ProcessCanceledException && indicator.isCanceled) throw e
+
         LOG.warn(Throwable(e))
-
-        val err = e.message
-        val message = when {
-          err.isNullOrBlank() -> VcsBundle.message("before.checkin.error.unknown")
-          else -> VcsBundle.message("before.checkin.error.unknown.details", err)
-        }
-        commitProgressUi.addCommitCheckFailure(message, null)
-
-        return false
+        return CommitProblem.createError(e)
       }
     }
   }
