@@ -252,7 +252,9 @@ public final class CoreFormatterUtil {
   private static final Set<Character.UnicodeBlock> FULLWIDTH_BLOCKS =
     Set.of(Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS,
            Character.UnicodeBlock.CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A,
-           Character.UnicodeBlock.CJK_COMPATIBILITY_IDEOGRAPHS);
+           Character.UnicodeBlock.CJK_COMPATIBILITY_IDEOGRAPHS,
+           Character.UnicodeBlock.HIRAGANA,
+           Character.UnicodeBlock.KATAKANA);
 
   public static boolean isFullwidthCharacter(int codePoint) {
     if (!Character.isValidCodePoint(codePoint)) {
