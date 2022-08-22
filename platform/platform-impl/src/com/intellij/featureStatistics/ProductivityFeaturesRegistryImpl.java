@@ -30,6 +30,15 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
   private final Map<String, GroupDescriptor> myGroups = new HashMap<>();
   private final List<ApplicabilityFiltersData> myApplicabilityFilters = new ArrayList<>();
 
+  private record ConfigurationSource(@NotNull String path, boolean isRequired) {
+  }
+
+  private final List<ConfigurationSource> myFeatureConfigurationSources = List.of(
+    new ConfigurationSource("PlatformProductivityFeatures.xml", true),  // common features that exist in all IDEs
+    new ConfigurationSource("ProductivityFeaturesRegistry.xml", true),  // product specific features (IDEA, PyCharm, etc...)
+    new ConfigurationSource("IdeSpecificFeatures.xml", false)  // IDE specific features (IDEA Ultimate, PyCharm Professional, etc...)
+  );
+
   private boolean myAdditionalFeaturesLoaded;
 
   @NonNls private static final String TAG_GROUP = "group";
@@ -46,24 +55,18 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
   }
 
   private void reloadFromXml() {
-    String path = "ProductivityFeaturesRegistry.xml";
-    boolean found;
-    try {
-      found = readFromXml(path);
-    }
-    catch (Throwable e) {
-      LOG.error(e);
-      found = false;
-    }
-    if (!found && !ApplicationManager.getApplication().isUnitTestMode()) {
-      LOG.error(path + " not found");
-    }
-
-    try {
-      readFromXml("IdeSpecificFeatures.xml");
-    }
-    catch (Throwable e) {
-      LOG.error(e);
+    for (ConfigurationSource source : myFeatureConfigurationSources) {
+      boolean found;
+      try {
+        found = readFromXml(source.path);
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+        found = false;
+      }
+      if (source.isRequired && !found && !ApplicationManager.getApplication().isUnitTestMode()) {
+        LOG.error(source.path + " not found");
+      }
     }
   }
 
