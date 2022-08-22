@@ -199,7 +199,8 @@
     <extensionPoint name="statistic.eventLog.eventLogEndpointSubstitutor" interface="com.intellij.internal.statistic.eventLog.EventLogEndpointSubstitutor" dynamic="true"/>
     <extensionPoint name="statistic.eventLog.externalEventLogSettings" interface="com.intellij.internal.statistic.eventLog.ExternalEventLogSettings" dynamic="true"/>
 
-    <extensionPoint name="productivityFeaturesProvider" interface="com.intellij.featureStatistics.ProductivityFeaturesProvider"/>
+    <extensionPoint name="productivityFeaturesProvider" interface="com.intellij.featureStatistics.ProductivityFeaturesProvider"
+                    dynamic="true"/>
 
     <extensionPoint name="fileIconProvider" interface="com.intellij.ide.FileIconProvider" dynamic="true"/>
     <extensionPoint name="fileIconPatcher" interface="com.intellij.ide.FileIconPatcher" dynamic="true"/>
@@ -222,7 +223,8 @@
     <extensionPoint name="editorNotificationProvider" area="IDEA_PROJECT" interface="com.intellij.ui.EditorNotificationProvider"
                     dynamic="true"/>
 
-    <extensionPoint name="featureStatisticsBundle" beanClass="com.intellij.featureStatistics.FeatureStatisticsBundleEP"/>
+    <extensionPoint name="featureStatisticsBundle" beanClass="com.intellij.featureStatistics.FeatureStatisticsBundleEP"
+                    dynamic="true"/>
 
     <extensionPoint name="toolWindowExtractor" interface="com.intellij.ui.viewModel.extraction.ToolWindowViewModelExtractor"
                     dynamic="true"/>

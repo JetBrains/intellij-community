@@ -4,6 +4,8 @@ package com.intellij.featureStatistics;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.Function;
@@ -17,6 +19,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public final class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegistry {
   private static final Logger LOG = Logger.getInstance(ProductivityFeaturesRegistryImpl.class);
@@ -34,6 +37,12 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
 
   public ProductivityFeaturesRegistryImpl() {
     reloadFromXml();
+    ProductivityFeaturesProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
+      @Override
+      public void extensionRemoved(@NotNull ProductivityFeaturesProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+        removeProvidedFeatures(extension);
+      }
+    });
   }
 
   private void reloadFromXml() {
@@ -144,7 +153,22 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
     addUsageEvents(descriptor);
   }
 
-  private @Nullable <T extends FeatureUsageEvent> FeatureDescriptor findFeatureByEvent(List<? extends T> events, Function<? super T, Boolean> eventChecker) {
+  private void removeProvidedFeatures(@NotNull ProductivityFeaturesProvider provider) {
+    Class<? extends ProductivityFeaturesProvider> providerClass = provider.getClass();
+    Set<String> featureIdsToRemove = myFeatures.entrySet().stream()
+      .filter(entry -> entry.getValue().getProvider() == providerClass)
+      .map(entry -> entry.getKey())
+      .collect(Collectors.toSet());
+    featureIdsToRemove.forEach(id -> myFeatures.remove(id));
+    myActionEvents.removeIf(event -> featureIdsToRemove.contains(event.featureId()));
+    myIntentionEvents.removeIf(event -> featureIdsToRemove.contains(event.featureId()));
+    myApplicabilityFilters.removeIf(data -> data.provider == provider);
+
+    LOG.info("Removed features provided by " + providerClass.getName() + ": " + featureIdsToRemove);
+  }
+
+  private @Nullable <T extends FeatureUsageEvent> FeatureDescriptor findFeatureByEvent(List<? extends T> events,
+                                                                                       Function<? super T, Boolean> eventChecker) {
     lazyLoadFromPluginsFeaturesProviders();
     return events
       .stream()
