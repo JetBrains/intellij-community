@@ -13,3 +13,5 @@ interface WorkspaceMetaModelProvider {
 
   fun getObjModule(packageName: String, module: Module): CompiledObjModule
 }
+
+class IncorrectObjInterfaceException(errorMessage: String): RuntimeException(errorMessage)
