@@ -1,19 +1,17 @@
 package org.jetbrains.plugins.notebooks.visualization
 
-import com.intellij.openapi.editor.*
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorFontType
-import com.intellij.openapi.editor.event.CaretEvent
-import com.intellij.openapi.editor.event.CaretListener
-import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.LineMarkerRendererEx
-import com.intellij.openapi.editor.markup.RangeHighlighter
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Point
@@ -23,11 +21,9 @@ import kotlin.math.min
 
 
 class NotebookGutterRenderer {
-  private var currentHighlighter: RangeHighlighter? = null
 
-  fun reattachHighlighter(editor: EditorEx) {
-    currentHighlighter?.let(editor.markupModel::removeHighlighter)
-    currentHighlighter = editor.markupModel.addRangeHighlighter(
+  fun attachHighlighter(editor: EditorEx) {
+    editor.markupModel.addRangeHighlighter(
       null,
       0,
       editor.document.textLength,
@@ -159,41 +155,7 @@ class NotebookGutterRenderer {
   companion object {
     fun install(editor: EditorEx): NotebookGutterRenderer {
       val instance = NotebookGutterRenderer()
-      instance.reattachHighlighter(editor)
-
-      editor.addEditorDocumentListener(object : DocumentListener {
-        override fun documentChanged(event: DocumentEvent) = onChange(event.document)
-        override fun bulkUpdateFinished(document: Document) = onChange(document)
-
-        private fun onChange(document: Document) {
-          if ((instance.currentHighlighter?.endOffset ?: Int.MAX_VALUE) < document.textLength) {
-            instance.reattachHighlighter(editor)
-          }
-        }
-      })
-
-      editor.caretModel.addCaretListener(object : CaretListener {
-        private var previousLines: IntRange? = null
-
-        override fun caretPositionChanged(event: CaretEvent) {
-          val caret = event.caret.takeIf { it === editor.caretModel.currentCaret } ?: return
-          val line = caret.logicalPosition.line
-          val actualLines = NotebookCellLines.get(editor)
-            .intervalsIterator(line)
-            .asSequence()
-            .firstOrNull()
-            ?.lines
-            ?.takeIf { line in it }
-          val reattach =
-            (previousLines
-               ?.let { actualLines == null || !(actualLines hasIntersectionWith it) }
-             ?: actualLines) != null
-          if (reattach) {
-            previousLines = actualLines
-            instance.reattachHighlighter(editor)
-          }
-        }
-      })
+      instance.attachHighlighter(editor)
 
       return instance
     }
