@@ -16,7 +16,6 @@ import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
@@ -416,7 +415,7 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
       return result;
     }
 
-    Set<T> duplicates = this instanceof BeanExtensionPoint ? null : CollectionFactory.createSmallMemoryFootprintSet(totalSize);
+    Set<T> duplicates = this instanceof BeanExtensionPoint ? null : new HashSet<>(totalSize);
     ExtensionPointListener<T>[] listeners = this.listeners;
     int extensionIndex = 0;
     for (int i = 0; i < adapters.size(); i++) {
