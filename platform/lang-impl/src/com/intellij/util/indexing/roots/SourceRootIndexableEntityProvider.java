@@ -2,8 +2,15 @@
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
+import com.intellij.util.indexing.roots.kind.IndexableSetSelfDependentOrigin;
+import com.intellij.util.indexing.roots.origin.ModuleRootSelfDependentOriginImpl;
+import com.intellij.workspaceModel.ide.VirtualFileUrlManagerUtil;
+import com.intellij.workspaceModel.ide.impl.UtilsKt;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
 import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity;
@@ -17,7 +24,7 @@ import java.util.Collections;
 import java.util.List;
 
 class SourceRootIndexableEntityProvider implements IndexableEntityProvider.ParentEntityDependent<SourceRootEntity, ContentRootEntity>,
-                                                   IndexableEntityProvider.Existing<SourceRootEntity> {
+                                                   IndexableEntityProvider.ExistingEx<SourceRootEntity> {
 
   @Override
   public @NotNull Class<SourceRootEntity> getEntityClass() {
@@ -30,6 +37,40 @@ class SourceRootIndexableEntityProvider implements IndexableEntityProvider.Paren
                                                                                                       @NotNull Project project) {
     return IndexableIteratorBuilders.INSTANCE.forModuleRoots(entity.getPersistentId(),
                                                              collectRootUrls(ExtensionsKt.getSourceRoots(entity)));
+  }
+
+  @Override
+  public @NotNull Collection<? extends IndexableSetSelfDependentOrigin> getExistingEntityIteratorOrigins(@NotNull SourceRootEntity entity,
+                                                                                                         @NotNull EntityStorage storage,
+                                                                                                         @NotNull Project project) {
+    ModuleEntity moduleEntity = entity.getContentRoot().getModule();
+    ModuleBridge module = ModuleEntityUtils.findModule(moduleEntity, storage);
+    if (module == null) {
+      return Collections.emptyList();
+    }
+    List<VirtualFileUrl> excludedUrls = entity.getContentRoot().getExcludedUrls();
+    VirtualFileUrl rootUrl = entity.getUrl();
+    boolean isExcluded = false;
+    List<VirtualFileUrl> excludedSourceUrlsFiles = new SmartList<>();
+    for (VirtualFileUrl excludedUrl : excludedUrls) {
+      if (VirtualFileUrlManagerUtil.isEqualOrParentOf(excludedUrl, rootUrl)) {
+        if (VirtualFileUrlManagerUtil.isEqualOrParentOf(rootUrl, excludedUrl)) {
+          return Collections.emptyList();
+        }
+        isExcluded = true;
+      }
+      else if (VirtualFileUrlManagerUtil.isEqualOrParentOf(excludedUrl, rootUrl)) {
+        excludedSourceUrlsFiles.add(excludedUrl);
+      }
+    }
+    if (isExcluded) {
+      return Collections.singletonList(
+        new ModuleRootSelfDependentOriginImpl(module, Collections.singletonList(UtilsKt.getVirtualFile(entity.getUrl())),
+                                              ContainerUtil.map(excludedSourceUrlsFiles, url -> UtilsKt.getVirtualFile(url))));
+    }
+    else {
+      return Collections.emptyList();
+    }
   }
 
   @Override

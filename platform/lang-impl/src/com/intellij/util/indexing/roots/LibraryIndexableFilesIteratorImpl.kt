@@ -57,7 +57,7 @@ private constructor(private val libraryName: @NlsSafe String?,
   }
 
   companion object {
-    private fun collectFiles(library: Library, rootType: OrderRootType, rootsToFilter: List<VirtualFile>? = null): List<VirtualFile> {
+    fun collectFiles(library: Library, rootType: OrderRootType, rootsToFilter: List<VirtualFile>? = null): List<VirtualFile> {
       val libraryRoots = library.rootProvider.getFiles(rootType)
       val rootsToIterate: List<VirtualFile> = rootsToFilter?.filter { root ->
         libraryRoots.find { libraryRoot ->
