@@ -8,8 +8,10 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.isEditorLoaded
 import com.intellij.openapi.project.DumbService
@@ -102,7 +104,7 @@ class EditorNotificationsImpl(private val  project: Project) : EditorNotificatio
       editor.getUserData(EDITOR_NOTIFICATION_PROVIDER)?.let {
         return it
       }
-      val editorClass: Class<out FileEditor> = editor.javaClass
+      val editorClass = editor.javaClass
       val pluginException = PluginException.createByClass(
         "User data is not supported; editorClass='${editorClass.name}'; key='$EDITOR_NOTIFICATION_PROVIDER'",
         null,
@@ -184,14 +186,19 @@ class EditorNotificationsImpl(private val  project: Project) : EditorNotificatio
 
       coroutineContext.ensureActive()
       try {
-        for (provider in EditorNotificationProvider.EP_NAME.getExtensions(project)) {
+        val point = EditorNotificationProvider.EP_NAME.getPoint(project) as ExtensionPointImpl<EditorNotificationProvider>
+        for (adapter in point.sortedAdapters) {
           coroutineContext.ensureActive()
 
-          if (DumbService.isDumb(project) && !DumbService.isDumbAware(provider)) {
-            continue
-          }
-
           try {
+            val provider = adapter.createInstance<EditorNotificationProvider>(project) ?: continue
+
+            coroutineContext.ensureActive()
+
+            if (DumbService.isDumb(project) && !DumbService.isDumbAware(provider)) {
+              continue
+            }
+
             val componentProvider = readAction {
               if (file.isValid) {
                 provider.collectNotificationData(project, file)
@@ -209,10 +216,8 @@ class EditorNotificationsImpl(private val  project: Project) : EditorNotificatio
             throw e
           }
           catch (e: Exception) {
-            val providerClass = provider.javaClass
-            val pluginException = if (e is PluginException) e else PluginException.createByClass(e, providerClass)
-            Logger.getInstance(providerClass).error(pluginException)
-            throw pluginException
+            val pluginException = if (e is PluginException) e else PluginException(e, adapter.pluginDescriptor.pluginId)
+            logger<EditorNotificationsImpl>().error(pluginException)
           }
         }
       }
