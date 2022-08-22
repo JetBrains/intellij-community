@@ -196,7 +196,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
                                                       Object value,
                                                       boolean suggestFix) {
     final String name = parameter.getName();
-    if (name.isEmpty()) return null;
+    if (name == null || name.isEmpty()) return null;
     String shortName;
     String stringPresentation;
 
@@ -506,7 +506,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
       }, new Class[]{UMethod.class});
     }
 
-    private Object getArgValue(UExpression arg, PsiMethod method) {
+    private static Object getArgValue(UExpression arg, PsiMethod method) {
       return RefParameterImpl.getAccessibleExpressionValue(arg, () -> method);
     }
   }
