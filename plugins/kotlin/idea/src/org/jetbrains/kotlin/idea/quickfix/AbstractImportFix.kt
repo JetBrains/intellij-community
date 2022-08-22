@@ -725,10 +725,11 @@ internal class ImportForMismatchingArgumentsFix(
         fun filterFunction(descriptor: FunctionDescriptor): Boolean {
             if (!callTypeAndReceiver.callType.descriptorKindFilter.accepts(descriptor)) return false
 
-            if (descriptor.original in imported) return false // already imported
+            val original = descriptor.original
+            if (original in imported) return false // already imported
 
             // check that this function matches all arguments
-            val resolutionScopeWithAddedImport = resolutionScope.addImportingScope(ExplicitImportsScope(listOf(descriptor)))
+            val resolutionScopeWithAddedImport = resolutionScope.addImportingScope(ExplicitImportsScope(listOf(original)))
             val dataFlowInfo = bindingContext.getDataFlowInfoBefore(elementToAnalyze)
             val newBindingContext = elementToAnalyze.analyzeInContext(
                 resolutionScopeWithAddedImport,
