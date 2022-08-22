@@ -8,6 +8,7 @@ class Args(args: Map<String, String>) {
     private val mutableArgs: MutableMap<String, String> = HashMap(args)
 
     val kotlincVersion: String by mapDelegate(mutableArgs)
+    val kotlinGradlePluginVersion: String by mapDelegate(mutableArgs)
     val kotlincArtifactsMode: KotlincArtifactsMode by mapDelegate(mutableArgs, KotlincArtifactsMode::valueOf)
 
     init {
