@@ -155,7 +155,7 @@ private class TestEnv(intervals: List<Interval>, val document: Document = MockDo
     notebookCellLines.intervals.addAll(allIntervals)
     val documentEvent = MockDocumentEvent(document, 0)
     val event = NotebookCellLinesEvent(documentEvent, old, old, new, new, 0)
-    notebookCellLines.intervalListeners.multicaster.segmentChanged(event)
+    notebookCellLines.intervalListeners.multicaster.documentChanged(event)
   }
 
   fun shouldBeValid(interval: Interval) {

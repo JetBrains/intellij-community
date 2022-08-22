@@ -3,7 +3,7 @@ package org.jetbrains.plugins.notebooks.visualization
 import com.intellij.openapi.editor.event.DocumentEvent
 
 /**
- * Passed to NotebookCellLines.IntervalListener when document is changed.
+ * Passed to [NotebookCellLines.IntervalListener] when document is changed.
  *
  * Intervals that were just shifted are included neither [oldIntervals], nor in [newIntervals].
  *
