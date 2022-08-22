@@ -269,8 +269,9 @@ private fun findInLibrariesAndSdk(project: Project, rootTypes: Array<OrderRootTy
 
 private fun findInModuleLevelLibraries(module: Module, rootType: OrderRootType, fileProcessor: (root: VirtualFile, module: Module?) -> PathInfo?): PathInfo? {
   return module.rootManager.orderEntries.asSequence()
-    .filter { it is LibraryOrderEntry && it.isModuleLevel }
-    .flatMap { it.getFiles(rootType).asSequence() }
+    .filterIsInstance<LibraryOrderEntry>()
+    .filter { it.isModuleLevel }
+    .flatMap { it.getRootFiles(rootType).asSequence() }
     .map { fileProcessor(it, module) }
     .firstOrNull { it != null }
 }

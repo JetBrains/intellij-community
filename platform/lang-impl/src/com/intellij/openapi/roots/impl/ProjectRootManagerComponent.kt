@@ -302,8 +302,10 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
       val rootManager = ModuleRootManager.getInstance(module)
       urls.addAll(rootManager.contentRootUrls)
       rootManager.orderEntries().withoutModuleSourceEntries().withoutDepModules().forEach { entry ->
-        for (type in OrderRootType.getAllTypes()) {
-          urls.addAll(entry.getUrls(type))
+        if (entry is LibraryOrSdkOrderEntry) {
+          for (type in OrderRootType.getAllTypes()) {
+            urls.addAll(entry.getRootUrls(type))
+          }
         }
         true
       }

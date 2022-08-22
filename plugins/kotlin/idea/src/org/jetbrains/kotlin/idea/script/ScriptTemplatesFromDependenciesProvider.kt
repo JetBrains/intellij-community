@@ -211,7 +211,7 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
 
                         it.getFiles(OrderRootType.SOURCES).contains(root)
                     } else {
-                        it is LibraryOrSdkOrderEntry && it.getFiles(OrderRootType.CLASSES).contains(root)
+                        it is LibraryOrSdkOrderEntry && it.getRootFiles(OrderRootType.CLASSES).contains(root)
                     }
                 }
                 .takeIf { it.isNotEmpty() } ?: return@forEach

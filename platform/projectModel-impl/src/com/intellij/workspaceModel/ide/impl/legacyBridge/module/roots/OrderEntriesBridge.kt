@@ -201,7 +201,7 @@ internal class LibraryOrderEntryBridge(
 
   @Nls
   private fun getPresentableNameForUnnamedLibrary(): String {
-    val url = getUrls(OrderRootType.CLASSES).firstOrNull()
+    val url = getRootUrls(OrderRootType.CLASSES).firstOrNull()
     return if (url != null) PathUtil.toPresentableUrl(url) else ProjectModelBundle.message("empty.library.title")
   }
 
