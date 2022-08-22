@@ -57,8 +57,8 @@ abstract class StringEventField(override val name: String) : PrimitiveEventField
       get() = listOf("{enum#$enumRef}")
   }
 
-  @kotlin.Deprecated("Please use StringEventField.ValidatedByCustomValidationRule(String, Class<out CustomValidationRule>)",
-                     ReplaceWith("StringEventField.ValidatedByCustomValidationRule(name, customValidationRule)"))
+  @Deprecated("Please use StringEventField.ValidatedByCustomValidationRule(String, Class<out CustomValidationRule>)",
+              ReplaceWith("StringEventField.ValidatedByCustomValidationRule(name, customValidationRule)"))
   data class ValidatedByCustomRule(@NonNls @EventFieldName  override val name: String,
                                    @NonNls val customRuleId: String) : StringEventField(name) {
     override val validationRule: List<String>
@@ -70,7 +70,7 @@ abstract class StringEventField(override val name: String) : PrimitiveEventField
     @NonNls val customValidationRule: Class<out CustomValidationRule>
   ) : StringEventField(name) {
     override val validationRule: List<String>
-      get() = listOf("{util#${CustomValidationRule.getCustomValidationRuleInstance(customValidationRule).ruleId}}")
+      get() = listOf("{util#${CustomValidationRule.geRuleId(customValidationRule)}}")
   }
 
   data class ValidatedByRegexp(@NonNls @EventFieldName  override val name: String, @NonNls val regexpRef: String) : StringEventField(name) {
@@ -350,8 +350,8 @@ abstract class StringListEventField(@NonNls @EventFieldName override val name: S
       get() = listOf("{enum#$enumRef}")
   }
 
-  @kotlin.Deprecated("Please use StringListEventField.ValidatedByCustomValidationRule(String, Class<out CustomValidationRule>)",
-                     ReplaceWith("StringListEventField.ValidatedByCustomValidationRule(name, customValidationRule)"))
+  @Deprecated("Please use StringListEventField.ValidatedByCustomValidationRule(String, Class<out CustomValidationRule>)",
+              ReplaceWith("StringListEventField.ValidatedByCustomValidationRule(name, customValidationRule)"))
   data class ValidatedByCustomRule(@NonNls @EventFieldName  override val name: String,
                                    @NonNls val customRuleId: String) : StringListEventField(name) {
     override val validationRule: List<String>
@@ -363,7 +363,7 @@ abstract class StringListEventField(@NonNls @EventFieldName override val name: S
     @NonNls val customValidationRule: Class<out CustomValidationRule>
   ) : StringListEventField(name) {
     override val validationRule: List<String>
-      get() = listOf("{util#${CustomValidationRule.getCustomValidationRuleInstance(customValidationRule).ruleId}}")
+      get() = listOf("{util#${CustomValidationRule.geRuleId(customValidationRule)}}")
   }
 
   data class ValidatedByRegexp(@NonNls @EventFieldName  override val name: String, @NonNls val regexpRef: String) : StringListEventField(name) {

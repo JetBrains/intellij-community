@@ -12,7 +12,9 @@ import com.intellij.internal.statistic.eventLog.events.scheme.GroupDescriptor
 import com.intellij.internal.statistic.eventLog.events.scheme.PluginSchemeDescriptor
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
+import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupContextData
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRuleFactory
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
@@ -32,6 +34,12 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
     doFieldTest(EventFields.StringValidatedByCustomRule("class", TestCustomValidationRule::class.java), hashSetOf("{util#custom_rule}"))
   }
 
+  fun `test generate string field validated by custom rule factory`() {
+    val testCustomValidationRuleFactory = TestCustomValidationRuleFactory("custom_rule_factory")
+    CustomValidationRuleFactory.EP_NAME.point.registerExtension(testCustomValidationRuleFactory, testRootDisposable)
+    doFieldTest(EventFields.StringValidatedByCustomRule("class", TestCustomValidationRule::class.java), hashSetOf("{util#custom_rule_factory}"))
+  }
+
   fun `test generate string field validated by list of possible values`() {
     doFieldTest(EventFields.String("class", listOf("foo", "bar")), hashSetOf("{enum:foo|bar}"))
   }
@@ -43,7 +51,7 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
   fun `test generate string list validated by custom rule`() {
     val customValidationRule = TestCustomValidationRule("index_id")
     CustomValidationRule.EP_NAME.point.registerExtension(customValidationRule, testRootDisposable)
-    doFieldTest(EventFields.StringValidatedByCustomRule("fields", TestCustomValidationRule::class.java), hashSetOf("{util#index_id}"))
+    doFieldTest(EventFields.StringListValidatedByCustomRule("fields", TestCustomValidationRule::class.java), hashSetOf("{util#index_id}"))
   }
 
   fun `test generate string list validated by regexp`() {
@@ -102,6 +110,20 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
   @Suppress("StatisticsCollectorNotRegistered")
   class TestCounterCollector(private val eventLogGroup: EventLogGroup) : CounterUsagesCollector() {
     override fun getGroup(): EventLogGroup = eventLogGroup
+  }
+
+  class TestCustomValidationRuleFactory(private val ruleId: String) : CustomValidationRuleFactory {
+    override fun createValidator(contextData: EventGroupContextData): TestCustomValidationRule {
+      return TestCustomValidationRule(ruleId)
+    }
+
+    override fun getRuleId(): String {
+      return ruleId
+    }
+
+    override fun getRuleClass(): Class<*> {
+      return TestCustomValidationRule::class.java
+    }
   }
 
   class TestCustomValidationRule(private val ruleId: String) : CustomValidationRule() {

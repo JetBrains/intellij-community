@@ -4,6 +4,7 @@ package com.intellij.internal.statistic.eventLog.validator.rules.utils;
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupContextData;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRuleFactory;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.UtilValidationRule;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -27,16 +28,23 @@ public final class CustomRuleProducer extends UtilRuleProducer {
         return extension;
       }
     }
+
+    for (CustomValidationRuleFactory extension : CustomValidationRuleFactory.EP_NAME.getExtensions()) {
+      if (isDevelopedByJetBrains(extension.getClass()) && value.equals(extension.getRuleId())) {
+        return extension.createValidator(contextData);
+      }
+    }
+
     return null;
   }
 
   private boolean isAcceptedRule(FUSRule extension) {
     if (extension instanceof TestModeValidationRule && !myTestMode) return false;
-    return isDevelopedByJetBrains(extension);
+    return isDevelopedByJetBrains(extension.getClass());
   }
 
-  private static boolean isDevelopedByJetBrains(FUSRule extension) {
+  private static boolean isDevelopedByJetBrains(Class<?> clazz) {
     return ApplicationManager.getApplication().isUnitTestMode() ||
-           PluginInfoDetectorKt.getPluginInfo(extension.getClass()).isDevelopedByJetBrains();
+           PluginInfoDetectorKt.getPluginInfo(clazz).isDevelopedByJetBrains();
   }
 }
