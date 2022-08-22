@@ -11,7 +11,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValid
  * See 'library-jar-statistics.xml' and 'library-usage-statistics.xml' files.
  */
 internal class LibraryNameValidationRule : CustomValidationRule() {
-  override fun getRuleId(): String = "used_import_library_name"
+  override fun getRuleId(): String = "used_library_name"
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
     return acceptWhenReportedByJetBrainsPlugin(context)
