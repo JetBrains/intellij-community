@@ -121,7 +121,7 @@ class WorkspaceMetaModelProviderImpl : WorkspaceMetaModelProvider {
       val valueType = convertType(extProperty.type, "${receiverClass.fqNameSafe.asString()}::${extProperty.name}")
       return ExtPropertyImpl(findObjClass(receiverClass), extProperty.name.identifier, valueType,
                              computeKind(extProperty), extProperty.isAnnotatedBy(StandardNames.OPEN_ANNOTATION),
-                             false, module, extPropertyId)
+                             false, module, extPropertyId, extProperty.source)
     }
 
     private fun createOwnProperty(property: PropertyDescriptor,
@@ -131,7 +131,8 @@ class WorkspaceMetaModelProviderImpl : WorkspaceMetaModelProvider {
       val valueType = convertType(property.type, "${classDescriptor.fqNameSafe.asString()}::${property.name}", property.isAnnotatedBy(StandardNames.CHILD_ANNOTATION))
       return OwnPropertyImpl(receiver, property.name.identifier, valueType, computeKind(property),
                              property.isAnnotatedBy(StandardNames.OPEN_ANNOTATION), false, false, propertyId,
-                             property.isAnnotatedBy(StandardNames.EQUALS_BY_ANNOTATION))
+                             property.isAnnotatedBy(StandardNames.EQUALS_BY_ANNOTATION), 
+                             property.source)
     }
 
     private fun convertType(type: KotlinType, propertyDescription: String, hasChildAnnotation: Boolean = false): ValueType<*> {
@@ -213,7 +214,7 @@ private fun createObjTypeStub(interfaceDescriptor: ClassDescriptor, module: Comp
     interfaceDescriptor.isAnnotatedBy(StandardNames.OPEN_ANNOTATION) -> ObjClass.Openness.open
     else -> ObjClass.Openness.final
   }
-  return ObjClassImpl(module, interfaceDescriptor.name.identifier, openness)
+  return ObjClassImpl(module, interfaceDescriptor.name.identifier, openness, interfaceDescriptor.source)
 }
 
 private fun Annotated.isAnnotatedBy(fqName: FqName) = annotations.hasAnnotation(fqName)

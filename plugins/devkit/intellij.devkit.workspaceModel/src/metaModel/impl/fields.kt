@@ -1,7 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.metaModel.impl
 
+import com.intellij.devkit.workspaceModel.metaModel.ObjMetaElementWithSource
 import com.intellij.workspaceModel.codegen.deft.meta.*
+import org.jetbrains.kotlin.descriptors.SourceElement
 
 private val fieldObjType = ObjTypeImpl<ObjProperty<*, *>>()
 
@@ -11,8 +13,9 @@ sealed class ObjPropertyBase<T : Obj, V>(
   override val valueType: ValueType<V>,
   override val valueKind: ObjProperty.ValueKind,
   override val open: Boolean,
-  override val content: Boolean
-) : ObjProperty<T, V> {
+  override val content: Boolean,
+  override val sourceElement: SourceElement
+) : ObjProperty<T, V>, ObjMetaElementWithSource {
   private val mutableOverrides: MutableList<ObjProperty<T, V>> = ArrayList()
   private val mutableOverriddenBy: MutableList<ObjProperty<T, V>> = ArrayList()
 
@@ -34,7 +37,8 @@ class OwnPropertyImpl<T : Obj, V>(
   override val constructorParameter: Boolean,
   override val classLocalId: Int,
   override val isKey: Boolean,
-) : ObjPropertyBase<T, V>(receiver, name, valueType, valueKind, open, content), OwnProperty<T, V> {
+  sourceElement: SourceElement
+) : ObjPropertyBase<T, V>(receiver, name, valueType, valueKind, open, content, sourceElement), OwnProperty<T, V> {
 
   override fun toString(): String = "$name (${receiver.name})"
 }
@@ -47,7 +51,8 @@ class ExtPropertyImpl<T : Obj, V>(
   open: Boolean,
   content: Boolean,
   override val module: ObjModule,
-  override val moduleLocalId: Int
-) : ObjPropertyBase<T, V>(receiver, name, valueType, valueKind, open, content), ExtProperty<T, V> {
+  override val moduleLocalId: Int,
+  sourceElement: SourceElement
+) : ObjPropertyBase<T, V>(receiver, name, valueType, valueKind, open, content, sourceElement), ExtProperty<T, V> {
   override fun toString(): String = "$name (${receiver.name})"
 }

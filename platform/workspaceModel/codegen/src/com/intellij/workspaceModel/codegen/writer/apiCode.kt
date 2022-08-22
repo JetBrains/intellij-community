@@ -6,6 +6,9 @@ import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.OwnProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
+import com.intellij.workspaceModel.codegen.engine.GenerationProblem
+import com.intellij.workspaceModel.codegen.engine.ProblemLocation
+import com.intellij.workspaceModel.codegen.engine.impl.ProblemReporter
 import com.intellij.workspaceModel.codegen.fields.javaMutableType
 import com.intellij.workspaceModel.codegen.fields.javaType
 import com.intellij.workspaceModel.codegen.fields.wsCode
@@ -27,7 +30,7 @@ val SKIPPED_TYPES: Set<String> = setOfNotNull(WorkspaceEntity::class.simpleName,
                                               ModifiableReferableWorkspaceEntity::class.simpleName,
                                               WorkspaceEntityWithPersistentId::class.simpleName)
 
-fun ObjClass<*>.generateBuilderCode(): String = lines {
+fun ObjClass<*>.generateBuilderCode(reporter: ProblemReporter): String = lines {
   line("@${GeneratedCodeApiVersion::class.fqn}(${CodeGeneratorVersions.API_VERSION})")
   val (typeParameter, typeDeclaration) = 
     if (openness.extendable) "T" to "<T: $javaFullName>" else javaFullName to ""
@@ -38,8 +41,16 @@ fun ObjClass<*>.generateBuilderCode(): String = lines {
 
   section(header) {
     list(allFields.noPersistentId()) {
+      checkPropertyType(this, reporter)
       wsBuilderApi
     }
+  }
+}
+
+private fun checkPropertyType(objProperty: ObjProperty<*, *>, reporter: ProblemReporter) {
+  val type = objProperty.valueType
+  if (type is ValueType.Optional && type.type is ValueType.List<*>) {
+    reporter.reportProblem(GenerationProblem("Optional lists aren't supported", GenerationProblem.Level.ERROR, ProblemLocation.Property(objProperty)))
   }
 }
 

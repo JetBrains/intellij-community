@@ -10,6 +10,7 @@ import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.devkit.workspaceModel.metaModel.impl.ObjClassImpl
 import com.intellij.devkit.workspaceModel.metaModel.impl.ObjModuleImpl
 import com.intellij.devkit.workspaceModel.metaModel.impl.OwnPropertyImpl
+import org.jetbrains.kotlin.descriptors.SourceElement
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -26,7 +27,7 @@ class InterfaceTraverserTest {
   }
 
   private fun ObjClassImpl<Obj>.addField(name: String, type: ValueType<*>) {
-    addField(OwnPropertyImpl(this, name, type, ObjProperty.ValueKind.Plain, false, false, false, 0, false))
+    addField(OwnPropertyImpl(this, name, type, ObjProperty.ValueKind.Plain, false, false, false, 0, false, SourceElement.NO_SOURCE))
   }
 
   @Test
@@ -115,7 +116,7 @@ class InterfaceTraverserTest {
   }
 
   private fun createType(): ObjClassImpl<Obj> {
-    return ObjClassImpl(ObjModuleImpl("module"), "MyClass", ObjClass.Openness.final)
+    return ObjClassImpl(ObjModuleImpl("module"), "MyClass", ObjClass.Openness.final, SourceElement.NO_SOURCE)
   }
 }
 
