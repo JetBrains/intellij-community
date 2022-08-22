@@ -209,7 +209,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
         LOG.error(e)
       }
     }
-    PartialChangesUtil.runUnderChangeList(project, getBeforeCommitChecksChangelist(), checks)
+    PartialChangesUtil.runUnderChangeList(project, getBeforeCommitChecksChangelist(), task)
 
     return result ?: CommitChecksResult.ExecutionError.also { LOG.debug("No commit handlers result. Cancelling commit.") }
   }
