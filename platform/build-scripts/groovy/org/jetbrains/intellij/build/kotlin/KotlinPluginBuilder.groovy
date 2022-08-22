@@ -104,6 +104,7 @@ final class KotlinPluginBuilder {
     "kotlin.completion.impl-k1",
     "kotlin.completion.impl-k2",
     "kotlin.maven",
+    "kotlin.gradle.gradle-tooling",
     "kotlin.gradle.gradle",
     "kotlin.gradle.code-insight-common",
     "kotlin.gradle.gradle-java",
@@ -179,7 +180,7 @@ final class KotlinPluginBuilder {
     "kotlin.uast.uast-kotlin-idea-fir",
     "kotlin.fir.fir-low-level-api-ide-impl",
     "kotlin.navigation",
-  )
+    )
 
   @SuppressWarnings('SpellCheckingInspection')
   private static final List<String> LIBRARIES = List.of(
@@ -197,7 +198,19 @@ final class KotlinPluginBuilder {
     "kotlinc.kotlin-compiler-fir",
     "kotlinc.low-level-api-fir",
     "kotlinc.symbol-light-classes",
-  )
+    )
+
+  private static final List<String> GRADLE_TOOLING_MODULES = List.of(
+    "kotlin.base.project-model",
+    "kotlin.base.frontend-agnostic",
+    "kotlin.gradle.gradle-tooling.impl",
+    )
+
+  private static final List<String> GRADLE_TOOLING_LIBRARIES = List.of(
+    "kotlin-gradle-plugin-idea",
+    "kotlin-gradle-plugin-idea-proto",
+    "kotlin-tooling-core",
+    )
 
   private static final List<String> COMPILER_PLUGINS = List.of(
     "kotlinc.android-extensions-compiler-plugin",
@@ -207,7 +220,7 @@ final class KotlinPluginBuilder {
     "kotlinc.kotlinx-serialization-compiler-plugin",
     "kotlinc.parcelize-compiler-plugin",
     "kotlinc.lombok-compiler-plugin",
-  )
+    )
 
   KotlinPluginBuilder(BuildDependenciesCommunityRoot communityHome, Path home, ProductProperties properties) {
     this.communityHome = communityHome
@@ -233,9 +246,20 @@ final class KotlinPluginBuilder {
       for (String moduleName : MODULES) {
         withModule(moduleName)
       }
-      for (String library : LIBRARIES) {
-        withProjectLibraryUnpackedIntoJar(library, mainJarName)
+      for (String libraryName : LIBRARIES) {
+        withProjectLibraryUnpackedIntoJar(libraryName, mainJarName)
       }
+
+      {
+        String toolingJarName = "kotlin-gradle-tooling.jar"
+        for (String moduleName : GRADLE_TOOLING_MODULES) {
+          withModule(moduleName, toolingJarName)
+        }
+        for (String library : GRADLE_TOOLING_LIBRARIES) {
+          withProjectLibraryUnpackedIntoJar(library, toolingJarName)
+        }
+      }
+
       for (String library : COMPILER_PLUGINS) {
         withProjectLibrary(library, LibraryPackMode.STANDALONE_MERGED)
       }

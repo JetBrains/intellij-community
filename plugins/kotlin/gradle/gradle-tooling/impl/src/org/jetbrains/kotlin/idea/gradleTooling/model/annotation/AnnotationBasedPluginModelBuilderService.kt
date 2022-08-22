@@ -7,7 +7,6 @@ import org.gradle.api.Project
 import org.jetbrains.kotlin.idea.gradleTooling.AbstractKotlinGradleModelBuilder
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import java.io.Serializable
-import java.lang.Exception
 
 interface DumpedPluginModel {
     val className: String

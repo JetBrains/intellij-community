@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.gradleTooling.arguments
 
 import org.jetbrains.kotlin.idea.projectModel.CachedArgsInfo
 import org.jetbrains.kotlin.idea.projectModel.KotlinCachedCompilerArgument
-import java.util.*
 
 fun createCachedArgsInfo(cachedArgsInfo: CachedArgsInfo<*>, cloningCache: MutableMap<Any, Any>): CachedArgsInfo<*> =
     when (cachedArgsInfo) {

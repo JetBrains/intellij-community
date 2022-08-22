@@ -2,8 +2,6 @@
 package org.jetbrains.kotlin.idea.gradleTooling.arguments
 
 import org.jetbrains.kotlin.idea.projectModel.CompilerArgumentsCacheMapper
-import org.jetbrains.kotlin.idea.projectModel.KotlinCachedCompilerArgument
-import java.io.File
 
 object CompilerArgumentsCachingManager {
     fun cacheCompilerArguments(

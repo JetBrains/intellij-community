@@ -119,7 +119,6 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
       "intellij.platform.tracing.ide",
       "intellij.toml",
       KotlinPluginBuilder.MAIN_KOTLIN_PLUGIN_MODULE,
-      "kotlin.gradle.gradle-tooling",
       "intellij.keymap.eclipse",
       "intellij.keymap.visualStudio",
       "intellij.keymap.netbeans",

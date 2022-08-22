@@ -115,13 +115,6 @@ final class CommunityRepositoryModules {
       withModule("intellij.gradle.toolingProxy")
       withProjectLibrary("Gradle", LibraryPackMode.STANDALONE_SEPARATE)
     },
-    plugin("kotlin.gradle.gradle-tooling") {
-      withModule("kotlin.base.project-model")
-      withModule("kotlin.base.frontend-agnostic")
-      withProjectLibrary("kotlin-gradle-plugin-idea", LibraryPackMode.STANDALONE_MERGED)
-      withProjectLibrary("kotlin-gradle-plugin-idea-proto", LibraryPackMode.STANDALONE_MERGED)
-      withProjectLibrary("kotlin-tooling-core", LibraryPackMode.STANDALONE_MERGED)
-    },
     plugin("intellij.packageSearch") {
       withModule("intellij.packageSearch.compat")
       withModule("intellij.packageSearch.gradle")

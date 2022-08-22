@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.gradleTooling.arguments
 
 import org.gradle.internal.impldep.org.apache.commons.lang.math.RandomUtils
 import org.jetbrains.kotlin.idea.projectModel.CompilerArgumentsCacheAware
-import kotlin.collections.HashMap
 
 /**
  * Abstract compiler arguments cache aware
