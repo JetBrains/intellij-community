@@ -123,11 +123,14 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   override fun executionEnded() = updateDefaultCommitActionEnabled()
 
   override fun updateDefaultCommitActionName() {
-    val commitText = getCommitActionName()
     val isAmend = amendCommitHandler.isAmendCommitMode
     val isSkipCommitChecks = isSkipCommitChecks()
+    ui.defaultCommitActionName = getCommitActionName(isAmend, isSkipCommitChecks)
+  }
 
-    ui.defaultCommitActionName = when {
+  private fun getCommitActionName(isAmend: Boolean, isSkipCommitChecks: Boolean): @Nls String {
+    val commitText = getCommitActionName()
+    return when {
       isAmend && isSkipCommitChecks -> message("action.amend.commit.anyway.text")
       isAmend && !isSkipCommitChecks -> message("amend.action.name", commitText)
       !isAmend && isSkipCommitChecks -> message("action.commit.anyway.text", commitText)
@@ -135,28 +138,40 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     }
   }
 
+  private fun getActionTextWithoutEllipsis(executor: CommitExecutor?,
+                                           isAmend: Boolean,
+                                           isSkipCommitChecks: Boolean): @Nls String {
+    if (executor == null) {
+      val actionText = getCommitActionName(isAmend, isSkipCommitChecks)
+      return removeEllipsisSuffix(actionText)
+    }
+
+    if (executor is CommitExecutorWithRichDescription) {
+      val state = CommitWorkflowHandlerState(isAmend, isSkipCommitChecks)
+      val actionText = executor.getText(state)
+      if (actionText != null) {
+        return removeEllipsisSuffix(actionText)
+      }
+    }
+
+    // We ignore 'isAmend == true' for now - unclear how to handle without CommitExecutorWithRichDescription.
+    // Ex: executor might not support this flag.
+    val actionText = executor.actionText
+    if (isSkipCommitChecks) {
+      return message("commit.checks.failed.notification.commit.anyway.action", removeEllipsisSuffix(actionText))
+    }
+    else {
+      return removeEllipsisSuffix(actionText)
+    }
+  }
+
   private fun getCommitActionTextForNotification(
     executor: CommitExecutor?,
     isSkipCommitChecks: Boolean
   ): @Nls(capitalization = Nls.Capitalization.Sentence) String {
-    if (executor is CommitExecutorWithRichDescription) {
-      val isAmend = amendCommitHandler.isAmendCommitMode
-      val state = CommitWorkflowHandlerState(isAmend, isSkipCommitChecks)
-      val actionText = executor.getText(state)
-      if (actionText != null) {
-        val notificationText = removeEllipsisSuffix(actionText)
-        return capitalize(toLowerCase(notificationText))
-      }
-    }
-
-    val actionText = executor?.actionText ?: getCommitActionName()
-    val notificationText = if (isSkipCommitChecks) {
-      message("commit.checks.failed.notification.commit.anyway.action", removeEllipsisSuffix(actionText))
-    }
-    else {
-      removeEllipsisSuffix(actionText)
-    }
-    return capitalize(toLowerCase(notificationText))
+    val isAmend = amendCommitHandler.isAmendCommitMode
+    val actionText: @Nls String = getActionTextWithoutEllipsis(executor, isAmend, isSkipCommitChecks)
+    return capitalize(toLowerCase(actionText))
   }
 
   fun updateDefaultCommitActionEnabled() {
