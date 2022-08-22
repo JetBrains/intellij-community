@@ -16,6 +16,7 @@ internal class VcsProductivityFeaturesProvider : ProductivityFeaturesProvider() 
 
 private class VcsFeaturesApplicabilityFilter : ApplicabilityFilter {
   override fun isApplicable(featureId: String, project: Project?): Boolean {
+    if (featureId == "vcs.use.integration") return true
     if (project == null) return false
     return VcsRepositoryManager.getInstance(project).repositories.isNotEmpty()
   }
