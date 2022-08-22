@@ -387,13 +387,18 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
         params.filterNotNull().forEach { add(factory(myMatchingVisitor.element) {createArgument(it.defaultValue, it.nameAsName, reformat = false) }) }
     }
 
-    private fun matchValueArguments(
-        parameters: List<KtParameter>,
-        valueArgList: KtValueArgumentList?,
-        otherValueArgList: KtValueArgumentList?,
-        lambdaArgList: List<KtLambdaArgument>,
-        otherLambdaArgList: List<KtLambdaArgument>
-    ): Boolean {
+    private fun KtCallElement.resolveParameters(): List<KtParameter> {
+        return resolveToCall()?.candidateDescriptor?.original?.valueParameters?.mapNotNull {
+            it.source.getPsi() as? KtParameter
+        } ?: emptyList()
+    }
+
+    private fun KtCallElement.matchValueArgumentsSemantics(other: KtCallElement): Boolean {
+        val parameters = other.resolveParameters()
+        val valueArgList = valueArgumentList
+        val otherValueArgList = other.valueArgumentList
+        val lambdaArgList = lambdaArguments
+        val otherLambdaArgList = other.lambdaArguments
         if (valueArgList != null) {
             val handler = getHandler(valueArgList)
             val normalizedOtherArgs = otherValueArgList?.arguments?.toMutableList() ?: mutableListOf()
@@ -404,17 +409,17 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
             }
             val normalizedArgs = valueArgList.arguments.toMutableList()
             normalizedArgs.addAll(lambdaArgList)
-            return matchValueArguments(normalizedArgs, normalizedOtherArgs)
+            return matchValueArgumentsSemantics(normalizedArgs, normalizedOtherArgs)
         }
-        return matchValueArguments(lambdaArgList, otherLambdaArgList)
+        return matchValueArgumentsSemantics(lambdaArgList, otherLambdaArgList)
     }
 
-    private fun matchValueArguments(queryArgs: List<KtValueArgument>, codeArgs: List<KtValueArgument>): Boolean {
+    private fun matchValueArgumentsSemantics(queryArgs: List<KtValueArgument>, codeArgs: List<KtValueArgument>): Boolean {
         var queryIndex = 0
         var codeIndex = 0
         while (queryIndex < queryArgs.size) {
             val queryArg = queryArgs[queryIndex]
-            val codeArg = codeArgs.getOrElse(codeIndex) { return@matchValueArguments false }
+            val codeArg = codeArgs.getOrElse(codeIndex) { return@matchValueArgumentsSemantics false }
             if (getHandler(queryArg) is SubstitutionHandler) {
                 return myMatchingVisitor.matchSequentially(
                     queryArgs.subList(queryIndex, queryArgs.lastIndex + 1),
@@ -427,7 +432,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
                 val spreadArgExpr = queryArg.getArgumentExpression()
                 if (spreadArgExpr is KtCallExpression) {
                     spreadArgExpr.valueArguments.forEach { spreadedArg ->
-                        if (!myMatchingVisitor.match(spreadedArg, codeArgs[codeIndex++])) return@matchValueArguments false
+                        if (!myMatchingVisitor.match(spreadedArg, codeArgs[codeIndex++])) return@matchValueArgumentsSemantics false
                     }
                     queryIndex++
                     continue
@@ -439,7 +444,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
                 val spreadArgExpr = codeArg.getArgumentExpression()
                 if (spreadArgExpr is KtCallExpression) {
                     spreadArgExpr.valueArguments.forEach { spreadedArg ->
-                        if (!myMatchingVisitor.match(queryArgs[queryIndex++], spreadedArg)) return@matchValueArguments false
+                        if (!myMatchingVisitor.match(queryArgs[queryIndex++], spreadedArg)) return@matchValueArgumentsSemantics false
                     }
                     codeIndex++
                     continue
@@ -462,32 +467,18 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
         return true
     }
 
-    private fun resolveParameters(other: KtElement): List<KtParameter> {
-        return other.resolveToCall()?.candidateDescriptor?.original?.valueParameters?.mapNotNull {
-            it.source.getPsi() as? KtParameter
-        } ?: emptyList()
-    }
-
     override fun visitCallExpression(expression: KtCallExpression) {
         val other = getTreeElementDepar<KtExpression>() ?: return
-        val parameters = resolveParameters(other)
         myMatchingVisitor.result = when (other) {
             is KtCallExpression -> {
                 myMatchingVisitor.match(expression.calleeExpression, other.calleeExpression)
                         && myMatchingVisitor.match(expression.typeArgumentList, other.typeArgumentList)
-                        && matchValueArguments(
-                    parameters, expression.valueArgumentList, other.valueArgumentList,
-                    expression.lambdaArguments, other.lambdaArguments
-                )
+                        && expression.matchValueArgumentsSemantics(other)
             }
             is KtDotQualifiedExpression -> other.callExpression is KtCallExpression
                     && myMatchingVisitor.match(expression.calleeExpression, other.receiverExpression)
                     && other.calleeName == "${OperatorNameConventions.INVOKE}"
-                    && matchValueArguments(
-                parameters,
-                expression.valueArgumentList, other.callExpression?.valueArgumentList,
-                expression.lambdaArguments, other.callExpression?.lambdaArguments ?: emptyList()
-            )
+                    && expression.matchValueArgumentsSemantics(other.callExpression as KtCallExpression)
             else -> false
         }
     }
@@ -544,13 +535,9 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
 
     override fun visitConstructorDelegationCall(call: KtConstructorDelegationCall) {
         val other = getTreeElementDepar<KtConstructorDelegationCall>() ?: return
-        val parameters = resolveParameters(other)
         myMatchingVisitor.result = myMatchingVisitor.match(call.calleeExpression, other.calleeExpression)
                 && myMatchingVisitor.match(call.typeArgumentList, other.typeArgumentList)
-                && matchValueArguments(
-            parameters,
-            call.valueArgumentList, other.valueArgumentList, call.lambdaArguments, other.lambdaArguments
-        )
+                && call.matchValueArgumentsSemantics(other)
     }
 
     override fun visitSecondaryConstructor(constructor: KtSecondaryConstructor) {
@@ -581,13 +568,9 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
 
     override fun visitSuperTypeCallEntry(call: KtSuperTypeCallEntry) {
         val other = getTreeElementDepar<KtSuperTypeCallEntry>() ?: return
-        val parameters = resolveParameters(other)
         myMatchingVisitor.result = myMatchingVisitor.match(call.calleeExpression, other.calleeExpression)
                 && myMatchingVisitor.match(call.typeArgumentList, other.typeArgumentList)
-                && matchValueArguments(
-            parameters,
-            call.valueArgumentList, other.valueArgumentList, call.lambdaArguments, other.lambdaArguments
-        )
+                && call.matchValueArgumentsSemantics(other)
     }
 
     override fun visitSuperTypeEntry(specifier: KtSuperTypeEntry) {
@@ -881,13 +864,9 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
 
     override fun visitAnnotationEntry(annotationEntry: KtAnnotationEntry) {
         val other = getTreeElementDepar<KtAnnotationEntry>() ?: return
-        val parameters = resolveParameters(other)
         myMatchingVisitor.result = myMatchingVisitor.match(annotationEntry.calleeExpression, other.calleeExpression)
                 && myMatchingVisitor.match(annotationEntry.typeArgumentList, other.typeArgumentList)
-                && matchValueArguments(
-            parameters,
-            annotationEntry.valueArgumentList, other.valueArgumentList, annotationEntry.lambdaArguments, other.lambdaArguments
-        )
+                && annotationEntry.matchValueArgumentsSemantics(other)
                 && matchTextOrVariable(annotationEntry.useSiteTarget, other.useSiteTarget)
     }
 
