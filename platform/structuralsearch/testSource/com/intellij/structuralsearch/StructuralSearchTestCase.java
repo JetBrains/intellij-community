@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
-import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -100,12 +99,8 @@ public abstract class StructuralSearchTestCase extends LightQuickFixTestCase {
     return null;
   }
 
-  protected List<MatchResult> findMatches(String in, String pattern, LanguageFileType patternFileType) {
-    return findMatches(in, pattern, patternFileType, null, patternFileType, false);
-  }
-
-  protected int findMatchesCount(String in, String pattern) {
-    return findMatchesCount(in, pattern, JavaFileType.INSTANCE);
+  protected List<MatchResult> findMatches(String in, String pattern, LanguageFileType fileType) {
+    return findMatches(in, pattern, fileType, null, fileType, false);
   }
 
   protected String loadFile(String fileName) throws IOException {
