@@ -508,8 +508,11 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
             true,
             KtTypeReference::class.java,
             KtQualifiedExpression::class.java,
-            KtCallableReferenceExpression::class.java
-        ) ?: return false
+            KtCallableReferenceExpression::class.java,
+            KtImportDirective::class.java,
+        )?.let {
+            it.getStrictParentOfType<KtImportDirective>() ?: it
+        } ?: return false
         return parent.isReferenceToBuiltInEnumFunction()
     }
 
