@@ -22,6 +22,10 @@ internal class SettingsFields {
     @JvmField
     val DEFAULT_PROJECT_FIELD = EventFields.Boolean("default_project")
 
+    // used only in tests, not part of the scheme
+    @JvmField
+    val DEFAULT_FIELD = EventFields.Boolean("default")
+
     @JvmField
     val ID_FIELD = EventFields.Int("id")
 
@@ -33,9 +37,5 @@ internal class SettingsFields {
 
     @JvmField
     val PLUGIN_INFO_FIELD = EventFields.PluginInfo
-
-    // used only in tests, not part of the scheme
-    @JvmField
-    val DEFAULT = EventFields.Boolean("default")
   }
 }

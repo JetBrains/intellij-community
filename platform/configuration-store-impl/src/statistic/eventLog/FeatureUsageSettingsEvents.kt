@@ -123,8 +123,7 @@ open class FeatureUsageSettingsEventPrinter(private val recordDefault: Boolean) 
       if (recordDefault) {
         val default = jdomSerializer.getDefaultSerializationFilter().getDefaultValue(clazz)
         logConfigurationState(componentName, default, project)
-      }
-      else if (clazz != Element::class.java) {
+      } else if (clazz != Element::class.java) {
         val pluginInfo = getPluginInfo(clazz)
         if (pluginInfo.isDevelopedByJetBrains()) {
           recordedComponents.add(componentName)
@@ -144,18 +143,25 @@ open class FeatureUsageSettingsEventPrinter(private val recordDefault: Boolean) 
     for (data in optionsValues) {
       logSettingsChanged(SettingsChangesCollector::logComponentChangedOption, project, data, id)
     }
-
-    logSettingsChanged(SettingsChangesCollector::logComponentChanged, project, createComponentData(project, componentName, pluginInfo), id)
+    if (!recordDefault) {
+      logSettingsChanged(
+        SettingsChangesCollector::logComponentChanged,
+        project,
+        createComponentData(project, componentName, pluginInfo),
+        id)
+    }
   }
 
   fun logConfigurationState(componentName: String, state: Any, project: Project?) {
     val (optionsValues, pluginInfo) = valuesExtractor.extract(project, componentName, state) ?: return
+    val eventId = if (recordDefault) SettingsCollector::logOption else SettingsCollector::logNotDefault
     val id = counter.incrementAndGet()
     for (data in optionsValues) {
-      logConfig(SettingsCollector::logNotDefault, project, data, id)
+      logConfig(eventId, project, data, id)
     }
-
-    logConfig(SettingsCollector::logInvoked, project, createComponentData(project, componentName, pluginInfo), id)
+    if (!recordDefault) {
+      logConfig(SettingsCollector::logInvoked, project, createComponentData(project, componentName, pluginInfo), id)
+    }
   }
 
   protected open fun logConfig(@NonNls eventFunction: (Project?, List<EventPair<*>>) -> Unit,
@@ -283,7 +289,7 @@ internal class ConfigurationStateExtractor(private val recordDefault: Boolean) {
     data.add(SettingsFields.NAME_FIELD.with(accessor.name))
     recordedOptionNames.add(accessor.name)
     if (recordDefault) {
-      data.add(SettingsFields.DEFAULT.with(isDefault))
+      data.add(SettingsFields.DEFAULT_FIELD.with(isDefault))
     }
     return data
   }

@@ -965,7 +965,7 @@
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.internal.statistic.collectors.fus.ui.SettingsCounterUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.configurationStore.statistic.eventLog.SettingsChangesCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.configurationStore.statistic.eventLog.SettingsCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.configurationStore.statistic.eventLog.SettingsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollectorGroup"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.ui.BalloonUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.application.options.colors.ReaderModeStatsCollector"/>
