@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 
 class MavenImportCollector : CounterUsagesCollector() {
   companion object {
-    val GROUP = EventLogGroup("maven.import", 4)
+    val GROUP = EventLogGroup("maven.import", 5)
 
     @JvmField
     val HAS_USER_ADDED_LIBRARY_DEP = GROUP.registerEvent("hasUserAddedLibraryDependency")
