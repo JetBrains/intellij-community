@@ -436,6 +436,17 @@ abstract class OrderEnumeratorBase extends OrderEnumerator implements OrderEnume
     return false;
   }
 
+  static void addCustomRootsUrlsForModule(@NotNull OrderRootType type,
+                                         @NotNull ModuleRootModel rootModel,
+                                         @NotNull Collection<String> result,
+                                         boolean includeProduction,
+                                         boolean includeTests,
+                                         @NotNull List<? extends OrderEnumerationHandler> customHandlers) {
+    for (OrderEnumerationHandler handler : customHandlers) {
+      handler.addCustomModuleRoots(type, rootModel, result, includeProduction, includeTests);
+    }
+  }
+
   @Override
   public boolean isRuntimeOnly() {
     return myRuntimeOnly;

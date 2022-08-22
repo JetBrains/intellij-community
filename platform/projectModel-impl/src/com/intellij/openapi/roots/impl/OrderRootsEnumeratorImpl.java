@@ -114,7 +114,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
 
       if (orderEntry instanceof ModuleSourceOrderEntry) {
         boolean includeTests = !myOrderEnumerator.isProductionOnly();
-        collectModuleRootsUrls(type, ((ModuleSourceOrderEntry)orderEntry).getRootModel(), result, true, includeTests);
+        collectModuleRootsUrls(type, ((ModuleSourceOrderEntry)orderEntry).getRootModel(), result, true, includeTests, customHandlers);
       }
       else if (orderEntry instanceof ModuleOrderEntry) {
         ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)orderEntry;
@@ -124,7 +124,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
           boolean productionOnTests = ((ModuleOrderEntry)orderEntry).isProductionOnTestDependency();
           boolean includeTests = !myOrderEnumerator.isProductionOnly() && OrderEnumeratorBase.shouldIncludeTestsFromDependentModulesToTestClasspath(customHandlers)
                                  || productionOnTests;
-          collectModuleRootsUrls(type, rootModel, result, !productionOnTests, includeTests);
+          collectModuleRootsUrls(type, rootModel, result, !productionOnTests, includeTests, customHandlers);
         }
       }
       else if (orderEntry instanceof LibraryOrSdkOrderEntry) {
@@ -217,8 +217,9 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
 
   private void collectModuleRootsUrls(@NotNull OrderRootType type,
                                       @NotNull ModuleRootModel rootModel,
-                                      @NotNull Collection<? super String> result,
-                                      boolean includeProduction, boolean includeTests) {
+                                      @NotNull Collection<String> result,
+                                      boolean includeProduction, boolean includeTests,
+                                      @NotNull List<? extends OrderEnumerationHandler> customHandlers) {
     if (type.equals(OrderRootType.SOURCES)) {
       if (includeProduction) {
         Collections.addAll(result, rootModel.getSourceRootUrls(includeTests));
@@ -263,6 +264,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
         }
       }
     }
+    OrderEnumeratorBase.addCustomRootsUrlsForModule(type, rootModel, result, includeProduction, includeTests, customHandlers);
   }
 
   @NotNull
