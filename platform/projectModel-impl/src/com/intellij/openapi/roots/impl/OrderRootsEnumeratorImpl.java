@@ -21,7 +21,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
   private final OrderRootType myRootType;
   private final NotNullFunction<? super OrderEntry, ? extends OrderRootType> myRootTypeProvider;
   private boolean myUsingCache;
-  private NotNullFunction<? super OrderEntry, VirtualFile[]> myCustomRootProvider;
+  private NotNullFunction<? super JdkOrderEntry, VirtualFile[]> myCustomSdkRootProvider;
   private boolean myWithoutSelfModuleOutput;
 
   OrderRootsEnumeratorImpl(@NotNull OrderEnumeratorBase orderEnumerator, @NotNull OrderRootType rootType) {
@@ -62,7 +62,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
 
   private void checkCanUseCache() {
     LOG.assertTrue(myRootTypeProvider == null, "Caching not supported for OrderRootsEnumerator with root type provider");
-    LOG.assertTrue(myCustomRootProvider == null, "Caching not supported for OrderRootsEnumerator with 'usingCustomRootProvider' option");
+    LOG.assertTrue(myCustomSdkRootProvider == null, "Caching not supported for OrderRootsEnumerator with 'usingCustomRootProvider' option");
     LOG.assertTrue(!myWithoutSelfModuleOutput, "Caching not supported for OrderRootsEnumerator with 'withoutSelfModuleOutput' option");
   }
 
@@ -89,8 +89,8 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
         }
       }
       else {
-        if (myCustomRootProvider != null) {
-          Collections.addAll(result, myCustomRootProvider.fun(orderEntry));
+        if (myCustomSdkRootProvider != null && orderEntry instanceof JdkOrderEntry) {
+          Collections.addAll(result, myCustomSdkRootProvider.fun((JdkOrderEntry)orderEntry));
           return true;
         }
         if (OrderEnumeratorBase.addCustomRootsForLibrary(orderEntry, type, result, customHandlers)) {
@@ -165,7 +165,12 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
   @NotNull
   @Override
   public OrderRootsEnumerator usingCustomRootProvider(@NotNull NotNullFunction<? super OrderEntry, VirtualFile[]> provider) {
-    myCustomRootProvider = provider;
+    return usingCustomSdkRootProvider(provider);
+  }
+
+  @Override
+  public @NotNull OrderRootsEnumerator usingCustomSdkRootProvider(@NotNull NotNullFunction<? super JdkOrderEntry, VirtualFile[]> provider) {
+    myCustomSdkRootProvider = provider;
     return this;
   }
 
