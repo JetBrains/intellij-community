@@ -33,5 +33,9 @@ internal class SettingsFields {
 
     @JvmField
     val PLUGIN_INFO_FIELD = EventFields.PluginInfo
+
+    // used only in tests, not part of the scheme
+    @JvmField
+    val DEFAULT = EventFields.Boolean("default")
   }
 }

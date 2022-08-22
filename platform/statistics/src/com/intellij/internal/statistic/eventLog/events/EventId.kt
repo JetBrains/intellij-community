@@ -177,6 +177,10 @@ class VarargEventId internal constructor(
     }, false)
   }
 
+  fun logState(project: Project?, pairs: List<EventPair<*>>) {
+    getLogger().logAsync(group, eventId, buildUsageData(pairs).addProject(project).build(), true)
+  }
+
   fun metric(vararg pairs: EventPair<*>): MetricEvent {
     return metric(listOf(*pairs))
   }
