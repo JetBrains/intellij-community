@@ -54,7 +54,7 @@ open class ShortcutTextPart(text: String, val isRaw: Boolean, private val addSpa
     val shortcutAttributes = attributes
     val sepAttributes = separatorAttributes
     if (addSpaceAround) {
-      curOffset = insertText(textPane, " ", curOffset, shortcutAttributes)
+      curOffset = insertText(textPane, "\u00A0", curOffset, shortcutAttributes)
     }
     for (part in split) {
       curOffset = insertText(textPane, shortcut.substring(start, part.first), curOffset, sepAttributes)
@@ -70,7 +70,7 @@ open class ShortcutTextPart(text: String, val isRaw: Boolean, private val addSpa
     }
     curOffset = insertText(textPane, shortcut.substring(start), curOffset, sepAttributes)
     if (addSpaceAround) {
-      curOffset = insertText(textPane, " ", curOffset, shortcutAttributes)
+      curOffset = insertText(textPane, "\u00A0", curOffset, shortcutAttributes)
     }
     return curOffset
   }
