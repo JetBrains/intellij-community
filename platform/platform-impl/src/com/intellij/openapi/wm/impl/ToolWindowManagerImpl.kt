@@ -32,6 +32,7 @@ import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapManagerListener
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.*
 import com.intellij.openapi.project.ex.ProjectEx
@@ -456,7 +457,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
       }
       else if (currentState == KeyState.RELEASED) {
         currentState = KeyState.HOLD
-        toolWindowPanes.values.forEach { it.setStripesOverlaid(value = true) }
+        if (!AdvancedSettings.getBoolean("ide.suppress.double.click.handler")) {
+          toolWindowPanes.values.forEach { it.setStripesOverlaid(value = true) }
+        }
       }
     }
     else {
