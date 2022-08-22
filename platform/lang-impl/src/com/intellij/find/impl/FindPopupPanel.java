@@ -1064,6 +1064,12 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
   private void updateControls() {
     myReplaceAllButton.setVisible(myHelper.isReplaceState());
     myReplaceSelectedButton.setVisible(myHelper.isReplaceState());
+    if (myHelper.isReplaceState()) {
+      JRootPane pane = getRootPane();
+      if (pane != null) {
+        pane.setDefaultButton(myReplaceSelectedButton);
+      }
+    }
     myNavigationHintLabel.setVisible(mySearchComponent.getText().contains("\n"));
     mySearchTextArea.updateExtraActions();
     myReplaceTextArea.updateExtraActions();
