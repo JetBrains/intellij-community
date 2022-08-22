@@ -429,7 +429,17 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     }
   }
 
-  private static void doProcessDoubleClick(@NotNull MouseEvent e) {
+  private void doProcessDoubleClick(@NotNull MouseEvent e) {
+    TabInfo info = myTabs.findInfo(e);
+    if (info != null) {
+      EditorComposite composite = ((EditorWindow.TComp)info.getComponent()).myComposite;
+      if (composite.isPreview()) {
+        composite.setPreview(false);
+        myWindow.getOwner().updateFileColor(composite.getFile());
+        return;
+      }
+    }
+
     if (!AdvancedSettings.getBoolean("editor.maximize.on.double.click") && !AdvancedSettings.getBoolean("editor.maximize.in.splits.on.double.click")) return;
     ActionManager actionManager = ActionManager.getInstance();
     DataContext context = DataManager.getInstance().getDataContext();
