@@ -104,7 +104,7 @@ open class ShortcutTextPart(text: String, val isRaw: Boolean, private val addSpa
       if (keyStroke != null) {
         ShortcutsRenderingUtil.getKeyStrokeData(keyStroke)
       }
-      else text to listOf(text.indices)
+      else ShortcutsRenderingUtil.getRawShortcutData(text)
     }
   }
 }

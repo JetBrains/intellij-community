@@ -110,6 +110,27 @@ object ShortcutsRenderingUtil {
     return Pair(builder.toString(), intervals)
   }
 
+  /**
+   * Converts raw shortcut to presentable form. The parts should be separated by plus sign.
+   * Example of input: Ctrl + Shift + T
+   */
+  fun getRawShortcutData(shortcut: String): Pair<@NlsSafe String, List<IntRange>> {
+    val parts = shortcut.split(Regex(""" *\+ *"""))
+    val separator = "\u00A0\u00A0\u00A0\u00A0"
+    val builder = StringBuilder()
+    val ranges = mutableListOf<IntRange>()
+    var curInd = 0
+    for ((ind, part) in parts.withIndex()) {
+      builder.append(part)
+      ranges.add(curInd until builder.length)
+      if (ind != parts.lastIndex) {
+        builder.append(separator)
+      }
+      curInd = builder.length
+    }
+    return builder.toString() to ranges
+  }
+
   fun getGotoActionData(@NonNls actionId: String): Pair<String, List<IntRange>> {
     val gotoActionShortcut = getShortcutByActionId("GotoAction")
     val gotoAction = getKeyboardShortcutData(gotoActionShortcut)
