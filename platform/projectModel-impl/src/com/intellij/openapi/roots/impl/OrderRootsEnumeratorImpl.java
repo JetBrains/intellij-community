@@ -93,7 +93,8 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
           Collections.addAll(result, myCustomSdkRootProvider.fun((JdkOrderEntry)orderEntry));
           return true;
         }
-        if (OrderEnumeratorBase.addCustomRootsForLibrary(orderEntry, type, result, customHandlers)) {
+        if (orderEntry instanceof LibraryOrderEntry 
+            && OrderEnumeratorBase.addCustomRootsForLibraryOrSdk((LibraryOrSdkOrderEntry)orderEntry, type, result, customHandlers)) {
           return true;
         }
         Collections.addAll(result, orderEntry.getFiles(type));
@@ -125,7 +126,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
         }
       }
       else {
-        if (OrderEnumeratorBase.addCustomRootUrlsForLibrary(orderEntry, type, result, customHandlers)) {
+        if (orderEntry instanceof LibraryOrSdkOrderEntry && OrderEnumeratorBase.addCustomRootUrlsForLibraryOrSdk((LibraryOrSdkOrderEntry)orderEntry, type, result, customHandlers)) {
           return true;
         }
         Collections.addAll(result, orderEntry.getUrls(type));

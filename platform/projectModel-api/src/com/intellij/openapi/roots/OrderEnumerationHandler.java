@@ -70,6 +70,20 @@ public abstract class OrderEnumerationHandler {
     return true;
   }
 
+  /**
+   * Override this method to contribute custom roots for a library or SDK instead of the configured ones.
+   * @return {@code false} if no customization was performed, and therefore the default roots should be added.
+   */
+  public boolean addCustomRootsForLibraryOrSdk(@NotNull LibraryOrSdkOrderEntry forOrderEntry,
+                                               @NotNull OrderRootType type,
+                                               @NotNull Collection<String> urls) {
+    return addCustomRootsForLibrary(forOrderEntry, type, urls);
+  }
+
+  /**
+   * @deprecated override {@link #addCustomRootsForLibraryOrSdk(LibraryOrSdkOrderEntry, OrderRootType, Collection)} instead.
+   */
+  @Deprecated
   public boolean addCustomRootsForLibrary(@NotNull OrderEntry forOrderEntry,
                                           @NotNull OrderRootType type,
                                           @NotNull Collection<String> urls) {
