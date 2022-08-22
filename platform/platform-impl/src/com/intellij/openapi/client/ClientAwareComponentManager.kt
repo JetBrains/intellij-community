@@ -33,7 +33,7 @@ abstract class ClientAwareComponentManager constructor(
       super.doGetService(ClientSessionsManager::class.java, false)
     }
     else {
-      super.getService(ClientSessionsManager::class.java)
+      super.doGetService(ClientSessionsManager::class.java, true)
     }
 
     val session = sessionsManager?.getSession(ClientId.current) as? ClientSessionImpl
