@@ -59,7 +59,6 @@ object WorkspaceModelGenerator {
         val sourceFolderType = if (sourceFolder.isTestSource) JavaSourceRootType.TEST_SOURCE else JavaSourceRootType.SOURCE
         contentEntry.addSourceFolder(generatedFolder, sourceFolderType, properties)
         WriteAction.run<RuntimeException>(modifiableModel::commit)
-        module.project.save()
         return generatedFolder
       }
     }
