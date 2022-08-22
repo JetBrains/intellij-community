@@ -109,9 +109,6 @@ class WorkspaceMetaModelProviderImpl : WorkspaceMetaModelProvider {
             val superClass = findObjClass(superDescriptor)
             objType.addSuperType(superClass)
           }
-          else if (superDescriptor != null) {
-            objType.addSuperType(KtInterfaceType(superDescriptor.name.identifier))
-          }
         }
         module.addType(objType)
       }

@@ -130,13 +130,11 @@ sealed class ValueType<T> {
   ) : JvmClass<T>(javaClassName, javaSuperClasses)
 
   class Blob<T>(
-    //todo always store qualified name 
     javaClassName: kotlin.String,
     javaSuperClasses: kotlin.collections.List<kotlin.String>,
   ) : JvmClass<T>(javaClassName, javaSuperClasses)
 
   class Object<T>(
-    //todo always store qualified name
     javaClassName: kotlin.String,
     javaSuperClasses: kotlin.collections.List<kotlin.String>,
   ) : JvmClass<T>(javaClassName, javaSuperClasses)

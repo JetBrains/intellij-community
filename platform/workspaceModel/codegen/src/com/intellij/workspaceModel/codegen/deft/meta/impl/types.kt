@@ -62,6 +62,3 @@ class ObjClassImpl<T : Obj>(
     return 31 * module.hashCode() + name.hashCode()
   }
 }
-
-//todo get rid of this
-class KtInterfaceType(val shortName: String) : ObjTypeImpl<Any>()

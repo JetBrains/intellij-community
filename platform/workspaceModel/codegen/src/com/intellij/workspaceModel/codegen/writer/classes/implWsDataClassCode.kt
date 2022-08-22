@@ -5,7 +5,6 @@ import com.intellij.workspaceModel.codegen.*
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
-import com.intellij.workspaceModel.codegen.deft.meta.impl.KtInterfaceType
 import com.intellij.workspaceModel.codegen.fields.implWsDataFieldCode
 import com.intellij.workspaceModel.codegen.fields.implWsDataFieldInitializedCode
 import com.intellij.workspaceModel.codegen.fields.javaType
@@ -30,8 +29,7 @@ val ObjClass<*>.javaDataName
 
 val ObjClass<*>.isEntityWithPersistentId: Boolean
   get() = superTypes.any { 
-    it is KtInterfaceType && it.shortName == WorkspaceEntityWithPersistentId::class.java.simpleName
-    || it is ObjClass<*> && (it.javaFullName.decoded == WorkspaceEntityWithPersistentId::class.java.name || it.isEntityWithPersistentId)
+    it is ObjClass<*> && (it.javaFullName.decoded == WorkspaceEntityWithPersistentId::class.java.name || it.isEntityWithPersistentId)
   }
 
 fun ObjClass<*>.implWsDataClassCode(): String {

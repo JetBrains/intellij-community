@@ -75,9 +75,7 @@ internal fun ValueType<*>.hasSoftLinks(): Boolean = when (this) {
 }
 
 val ValueType.JvmClass<*>.isPersistentId: Boolean
-  get() = PersistentEntityId::class.java.simpleName in javaSuperClasses || //todo check qualified name only
-          PersistentEntityId::class.java.name in javaSuperClasses        
-
+  get() = PersistentEntityId::class.java.name in javaSuperClasses        
 
 private fun ObjClass<*>.operate(
   context: LinesBuilder,
