@@ -2074,11 +2074,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
             }
           }
         }
-        return false;
       }
-      else {
-        return e.getKeyCode() == KeyEvent.VK_ESCAPE && e.getModifiers() == 0;
-      }
+      return e.getKeyCode() == KeyEvent.VK_ESCAPE && e.getModifiers() == 0;
     }
     return false;
   }
