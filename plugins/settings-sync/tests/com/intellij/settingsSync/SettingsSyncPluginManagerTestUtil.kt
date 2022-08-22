@@ -55,6 +55,7 @@ class TestPluginManager : PluginManagerProxy {
 
   fun addPluginDescriptor(descriptor: IdeaPluginDescriptor) {
     ownPluginDescriptors[descriptor.pluginId] = descriptor
+    SettingsSyncPluginManager.getInstance().getPluginStateListener().install(descriptor)
   }
 }
 
@@ -96,6 +97,7 @@ class TestPluginDescriptor(idString: String, dependencies: List<TestPluginDepend
   override fun getReleaseDate(): Date? = null
   override fun getReleaseVersion(): Int = 1
   override fun isLicenseOptional(): Boolean = true
+  @Deprecated("Deprecated in Java")
   override fun getOptionalDependentPluginIds(): Array<PluginId> = PluginId.EMPTY_ARRAY
   override fun getVendor(): String? = null
   override fun getVersion(): String = "1.0"

@@ -204,6 +204,9 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
   }
 
 
+  @TestOnly
+  fun getPluginStateListener() = pluginStateListener
+
   override fun dispose() {
     DisabledPluginsState.removeDisablePluginListener(disabledListener)
     PluginStateManager.removeStateListener(pluginStateListener)
