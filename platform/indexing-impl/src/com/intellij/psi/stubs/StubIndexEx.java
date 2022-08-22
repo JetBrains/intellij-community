@@ -134,7 +134,7 @@ public abstract class StubIndexEx extends StubIndex {
     var trace = lookupStubEntriesStarted(indexKey)
       .withProject(project);
 
-    try (trace) {
+    try {
       boolean dumb = DumbService.isDumb(project);
       if (dumb) {
         if (project instanceof LightEditCompatible) return false;
@@ -226,6 +226,12 @@ public abstract class StubIndexEx extends StubIndex {
     catch (Throwable t) {
       trace.lookupFailed();
       throw t;
+    }
+    finally {
+      //Not using try-with-resources because in case of exceptions are thrown, .close() needs to be called _after_ catch,
+      //  so .lookupFailed() is invoked on a not-yet-closed trace -- but TWR does the opposite: first close resources, then
+      //  do all catch/finally blocks
+      trace.close();
     }
   }
 

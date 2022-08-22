@@ -23,9 +23,9 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * <p>
  * There are 3 type of lookups measured now:
  * <ol>
- *   <li>lookup all keys in index ({@link #INDEX_ALL_KEYS_LOOKUP_EVENT})</li>
- * <li>lookup entries by key(s) from file-based index ({@link #INDEX_LOOKUP_ENTRIES_BY_KEYS_EVENT})</li>
- * <li>lookup entries by key from stub-index ({@link #STUB_INDEX_LOOKUP_ENTRIES_BY_KEY_EVENT})</li>
+ *   <li>lookup all keys in index ({@link #EVENT_INDEX_ALL_KEYS_LOOKUP})</li>
+ * <li>lookup entries by key(s) from file-based index ({@link #EVENT_INDEX_LOOKUP_ENTRIES_BY_KEYS})</li>
+ * <li>lookup entries by key from stub-index ({@link #EVENT_STUB_INDEX_LOOKUP_ENTRIES_BY_KEY})</li>
  * </ol>
  * <p>
  * Lookups have phases which could be worth to time on its own: e.g. 'ensure-up-to-date' phase (there delayed
@@ -47,14 +47,14 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
   private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, SECONDS.toMillis(10));
 
   /**
-   * If true -> throw exception if tracing methods are called in incorrect order (e.g. .finish() before start()).
+   * If true -> throw exception if tracing methods are (likely) called in incorrect order (e.g. .finish() before start(),
+   * or .finish() without .start() beforehand).
    * if false (default) -> log warning on incorrect sequence of calls, but try to continue normal operation afterwards.
    * <p>
-   * Really, value=true is only useful for debugging -- in production reporting are generally not expected to throw exceptions.
    */
   @VisibleForTesting
   static final boolean THROW_ON_INCORRECT_USAGE =
-    Boolean.getBoolean("IndexOperationFusStatisticsCollector.THROW_ON_INCORRECT_USAGE");
+    "true".equals(System.getProperty("IndexOperationFusCollector.THROW_ON_INCORRECT_USAGE"));
 
   /**
    * Report lookup operation X to analytics only if total duration of the operation X {@code >REPORT_ONLY_OPERATIONS_LONGER_THAN_MS}.
@@ -65,84 +65,93 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
    * different event schema _version_.
    */
   public static final int REPORT_ONLY_OPERATIONS_LONGER_THAN_MS =
-    Integer.getInteger("IndexOperationFusStatisticsCollector.REPORT_ONLY_OPERATIONS_LONGER_THAN_MS", 10);
+    Integer.getInteger("IndexOperationFusCollector.REPORT_ONLY_OPERATIONS_LONGER_THAN_MS", 10);
+
+  /**
+   * How many recursive lookups to allow before suspect it is not a recursive lookup, but
+   * just buggy code (missed {@linkplain LookupTraceBase#close()} call) and throw exception
+   */
+  public static final int MAX_LOOKUP_DEPTH = Integer.getInteger(
+    "IndexOperationFusCollector.MAX_LOOKUP_DEPTH", 16);
 
 
   private static final EventLogGroup INDEX_USAGE_GROUP = new EventLogGroup("index.usage", 1);
 
+  private static final EventLogGroup INDEX_USAGE_AGGREGATES_GROUP = new EventLogGroup("index.usage-aggregates", 1);
+
   // ================== EVENTS FIELDS:
 
-  private static final StringEventField INDEX_ID_FIELD =
+  private static final StringEventField FIELD_INDEX_ID =
     EventFields.StringValidatedByCustomRule("index_id", IndexIdRuleValidator.class);
 
-  private static final BooleanEventField LOOKUP_FAILED_FIELD = EventFields.Boolean("lookup_failed");
+  private static final BooleanEventField FIELD_LOOKUP_FAILED = EventFields.Boolean("lookup_failed");
 
   /**
    * Total lookup time, as it is seen by 'client' (i.e. including up-to-date/validation, and stubs deserializing, etc...)
    */
-  private static final LongEventField LOOKUP_DURATION_MS_FIELD = EventFields.Long("lookup_duration_ms");
-  private static final LongEventField UP_TO_DATE_CHECK_DURATION_MS_FIELD = EventFields.Long("up_to_date_check_ms");
-  private static final LongEventField STUB_TREE_DESERIALIZING_DURATION_MS_FIELD = EventFields.Long("psi_tree_deserializing_ms");
+  private static final LongEventField FIELD_LOOKUP_DURATION_MS = EventFields.Long("lookup_duration_ms");
+  private static final LongEventField FIELD_UP_TO_DATE_CHECK_DURATION_MS = EventFields.Long("up_to_date_check_ms");
+  private static final LongEventField FIELD_STUB_TREE_DESERIALIZING_DURATION_MS = EventFields.Long("psi_tree_deserializing_ms");
 
   /**
    * How many keys were lookup-ed (there are methods to lookup >1 keys at once)
    */
-  private static final IntEventField LOOKUP_KEYS_COUNT_FIELD = EventFields.Int("keys");
+  private static final IntEventField FIELD_LOOKUP_KEYS_COUNT = EventFields.Int("keys");
   /**
    * For cases >1 keys lookup: what operation is applied (AND/OR)
    */
-  private static final EnumEventField<LookupOperation> LOOKUP_KEYS_OP_FIELD =
+  private static final EnumEventField<LookupOperation> FIELD_LOOKUP_KEYS_OP =
     EventFields.Enum("lookup_op", LookupOperation.class, kind -> kind.name().toLowerCase(Locale.US));
   /**
    * How many keys (approximately) current index contains in total -- kind of 'lookup scale'
    */
-  private static final IntEventField TOTAL_KEYS_INDEXED_COUNT_FIELD = EventFields.Int("total_keys_indexed");
-  private static final IntEventField LOOKUP_RESULT_ENTRIES_COUNT_FIELD = EventFields.Int("entries_found");
+  private static final IntEventField FIELD_TOTAL_KEYS_INDEXED_COUNT = EventFields.Int("total_keys_indexed");
+  private static final IntEventField FIELD_LOOKUP_RESULT_ENTRIES_COUNT = EventFields.Int("entries_found");
 
   // ================== EVENTS:
 
-  private static final VarargEventId INDEX_ALL_KEYS_LOOKUP_EVENT = INDEX_USAGE_GROUP.registerVarargEvent(
+  private static final VarargEventId EVENT_INDEX_ALL_KEYS_LOOKUP = INDEX_USAGE_GROUP.registerVarargEvent(
     "lookup.all_keys",
-    INDEX_ID_FIELD,
+    FIELD_INDEX_ID,
 
-    LOOKUP_FAILED_FIELD,
+    FIELD_LOOKUP_FAILED,
 
-    LOOKUP_DURATION_MS_FIELD,          //LOOKUP_DURATION = (UP_TO_DATE_CHECK_DURATION) + (pure index lookup time)
-    UP_TO_DATE_CHECK_DURATION_MS_FIELD,
+    FIELD_LOOKUP_DURATION_MS,          //LOOKUP_DURATION = (UP_TO_DATE_CHECK_DURATION) + (pure index lookup time)
+    FIELD_UP_TO_DATE_CHECK_DURATION_MS,
 
-    TOTAL_KEYS_INDEXED_COUNT_FIELD
+    FIELD_TOTAL_KEYS_INDEXED_COUNT
     //LOOKUP_RESULT_ENTRIES_COUNT is useless here, since it == TOTAL_KEYS_INDEXED_COUNT
   );
 
-  private static final VarargEventId INDEX_LOOKUP_ENTRIES_BY_KEYS_EVENT = INDEX_USAGE_GROUP.registerVarargEvent(
+  private static final VarargEventId EVENT_INDEX_LOOKUP_ENTRIES_BY_KEYS = INDEX_USAGE_GROUP.registerVarargEvent(
     "lookup.entries",
-    INDEX_ID_FIELD,
+    FIELD_INDEX_ID,
 
-    LOOKUP_FAILED_FIELD,
+    FIELD_LOOKUP_FAILED,
 
-    LOOKUP_DURATION_MS_FIELD,       //LOOKUP_DURATION = (UP_TO_DATE_CHECK_DURATION) + (pure index lookup time)
-    UP_TO_DATE_CHECK_DURATION_MS_FIELD,
+    FIELD_LOOKUP_DURATION_MS,       //LOOKUP_DURATION = (UP_TO_DATE_CHECK_DURATION) + (pure index lookup time)
+    FIELD_UP_TO_DATE_CHECK_DURATION_MS,
 
-    LOOKUP_KEYS_COUNT_FIELD,
-    LOOKUP_KEYS_OP_FIELD,
-    TOTAL_KEYS_INDEXED_COUNT_FIELD,
-    LOOKUP_RESULT_ENTRIES_COUNT_FIELD
+    FIELD_LOOKUP_KEYS_COUNT,
+    FIELD_LOOKUP_KEYS_OP,
+    FIELD_TOTAL_KEYS_INDEXED_COUNT,
+    FIELD_LOOKUP_RESULT_ENTRIES_COUNT
   );
 
-  private static final VarargEventId STUB_INDEX_LOOKUP_ENTRIES_BY_KEY_EVENT = INDEX_USAGE_GROUP.registerVarargEvent(
+  private static final VarargEventId EVENT_STUB_INDEX_LOOKUP_ENTRIES_BY_KEY = INDEX_USAGE_GROUP.registerVarargEvent(
     "lookup.stub_entries",
-    INDEX_ID_FIELD,
+    FIELD_INDEX_ID,
 
-    LOOKUP_FAILED_FIELD,
+    FIELD_LOOKUP_FAILED,
 
     //LOOKUP_DURATION = (UP_TO_DATE_CHECK_DURATION) + (pure index lookup time) + (STUB_TREE_DESERIALIZING_DURATION)
-    LOOKUP_DURATION_MS_FIELD,
-    UP_TO_DATE_CHECK_DURATION_MS_FIELD,
-    STUB_TREE_DESERIALIZING_DURATION_MS_FIELD,
+    FIELD_LOOKUP_DURATION_MS,
+    FIELD_UP_TO_DATE_CHECK_DURATION_MS,
+    FIELD_STUB_TREE_DESERIALIZING_DURATION_MS,
 
     //RC: StubIndex doesn't have methods to lookup >1 keys at once, so LOOKUP_KEYS_COUNT/LOOKUP_KEYS_OP is useless here
-    TOTAL_KEYS_INDEXED_COUNT_FIELD,
-    LOOKUP_RESULT_ENTRIES_COUNT_FIELD
+    FIELD_TOTAL_KEYS_INDEXED_COUNT,
+    FIELD_LOOKUP_RESULT_ENTRIES_COUNT
   );
 
   // ================== IMPLEMENTATION METHODS:
@@ -154,8 +163,21 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
 
   //========================== CLASSES:
 
-  private static abstract class LookupTraceBase<T extends LookupTraceBase<T>> implements AutoCloseable {
-    protected boolean traceWasStarted = false;
+  protected static abstract class LookupTraceBase<T extends LookupTraceBase<T>> implements AutoCloseable,
+                                                                                           Cloneable {
+    /**
+     * In case of re-entrant lookup (i.e. lookup invoked inside another lookup's callback) this field
+     * links to a trace of lookup above current one on the callstack. This way 'traces' form a (linked)
+     * stack, with top of the stack sitting in {@linkplain #currentTraceHolder}
+     */
+    protected T parentTrace = null;
+    /**
+     * depth of current lookup trace object, 0 for top-level lookup trace
+     * -1 for un-initialized trace, before {@link #lookupStarted(IndexId)} call
+     */
+    protected int depth = -1;
+    protected final ThreadLocal<T> currentTraceHolder;
+
     protected @Nullable IndexId<?, ?> indexId;
     protected @Nullable Project project;
 
@@ -164,22 +186,54 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
     protected int totalKeysIndexed;
     protected int lookupResultSize;
 
-    protected T lookupStarted(final @NotNull IndexId<?, ?> indexId) {
-      ensureNotYetStarted();
-      //if not thrown -> continue as-if no previous trace exists, i.e. overwrite all data remaining from unfinished trace
+    protected LookupTraceBase(ThreadLocal<T> current) {
+      this.currentTraceHolder = current;
+    }
 
+    protected T lookupStarted(final @NotNull IndexId<?, ?> indexId) {
+      if (depth > MAX_LOOKUP_DEPTH) {
+        logOrThrowMisuse();
+        //Even if !THROW_ON_INCORRECT_USAGE -> still do not allow to unwind traces deeper than MAX_LOOKUP_DEPTH, as
+        // this is a risk of OoM. Instead, just overwrite current trace fields with new values (compromises stats
+        // correctness, yes)
+      }
+      else if (depth >= 0 /* && depth <= MAX_LOOKUP_DEPTH */) {
+        //Since MAX_DEPTH is limited, we could pre-allocate MAX_DEPTH trace instances in advance, and keep them
+        // in array, thus avoiding allocation altogether. But I didn't go this route because re-entrant lookups are
+        // considered a suspicious case: it is either misuse of index API, or a valid but unexpected use, and
+        // optimize for either of them seems to be premature
+        final T childTrace = this.clone();
+        currentTraceHolder.set(childTrace);
+
+        childTrace.setupTraceBeforeStart(indexId, /* parent = */ typeSafeThis());
+        return childTrace;
+      }
+
+      // if (depth < 0)
+      setupTraceBeforeStart(indexId, /* parent = */ null);
+      return typeSafeThis();
+    }
+
+    protected void setupTraceBeforeStart(@NotNull final IndexId<?, ?> indexId,
+                                         @Nullable final T parentTrace) {
       this.indexId = indexId;
       this.project = null;
       this.lookupFailed = false;
       this.totalKeysIndexed = -1;
       this.lookupResultSize = -1;
 
-      traceWasStarted = true;
+      this.parentTrace = parentTrace;
+      if (this.parentTrace == null) {
+        depth = 0;
+      }
+      else {
+        depth = this.parentTrace.depth + 1;
+      }
       lookupStartedAtMs = System.currentTimeMillis();
-      return typeSafeThis();
     }
 
-    public void lookupFinished() {
+
+    public final void lookupFinished() {
       if (!mustBeStarted()) {
         //if trace wasn't started -> nothing (meaningful) to report
         return;
@@ -194,9 +248,16 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
         }
       }
       finally {
-        traceWasStarted = false;
-        indexId = null;
-        project = null;//don't hold reference in thread-local
+        //indexId = null; //intentionally not clear it to provide a bit more debugging info
+        project = null;//avoid keeping reference to project in a thread-locals
+
+        if (parentTrace != null) {
+          currentTraceHolder.set(parentTrace);
+        }
+        else {
+          depth = -1;//since we re-use root trace object, we need to put it back to un-initialized state
+          //or how we will know it is ready-to-use next time?
+        }
       }
     }
 
@@ -207,34 +268,59 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
       lookupFinished();
     }
 
-    //=== Additional info about what was lookup-ed, and context/environment:
+
+    /* === Additional info about what was lookup-ed, and context/environment: ================================================ */
+
 
     public T withProject(final @Nullable Project project) {
-      if (traceWasStarted) {
+      if (traceWasStarted()) {
         this.project = project;
       }
       return typeSafeThis();
     }
 
     public T lookupFailed() {
-      if (traceWasStarted) {
+      if (traceWasStarted()) {
         this.lookupFailed = true;
       }
       return typeSafeThis();
     }
 
     public T totalKeysIndexed(final int totalKeysIndexed) {
-      if (traceWasStarted) {
+      if (traceWasStarted()) {
         this.totalKeysIndexed = totalKeysIndexed;
       }
       return typeSafeThis();
     }
 
     public T lookupResultSize(final int size) {
-      if (traceWasStarted) {
+      if (traceWasStarted()) {
         this.lookupResultSize = size;
       }
       return typeSafeThis();
+    }
+
+    public String toString() {
+      return getClass().getSimpleName() +
+             "{indexId=" + indexId +
+             ", project=" + project +
+             ", depth=" + depth +
+             ", is started? =" + traceWasStarted() +
+             ", lookupStartedAtMs=" + lookupStartedAtMs +
+             '}';
+    }
+
+    /* ======= infrastructure: ================================================================================================ */
+
+    @Override
+    @SuppressWarnings("unchecked")
+    protected T clone() {
+      try {
+        return (T)super.clone();
+      }
+      catch (CloneNotSupportedException e) {
+        throw new AssertionError("Code bug: Cloneable must not throw CloneNotSupportedException", e);
+      }
     }
 
     @NotNull
@@ -243,20 +329,21 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
       return (T)this;
     }
 
-    private void ensureNotYetStarted() {
-      if (traceWasStarted) {
-        final String errorMessage = "Code bug: .lookupStarted() was already called, not paired with .lookupFinished() yet. " + this;
-        if (THROW_ON_INCORRECT_USAGE) {
-          throw new AssertionError(errorMessage);
-        }
-        else {
-          THROTTLED_LOG.warn(errorMessage);
-        }
+    private void logOrThrowMisuse() {
+      final String errorMessage =
+        ".lookupStarted() was called " + depth + " times (>" + MAX_LOOKUP_DEPTH + " max) without matching " +
+        ".close()/.lookupFinished() -> probably code bug?\n" + this;
+      if (THROW_ON_INCORRECT_USAGE) {
+        throw new AssertionError(errorMessage);
+      }
+      else {
+        THROTTLED_LOG.warn(errorMessage);
       }
     }
 
     protected boolean mustBeStarted() {
-      if (!traceWasStarted) {
+      final boolean wasStarted = traceWasStarted();
+      if (!wasStarted) {
         final String errorMessage = "Code bug: .lookupStarted() must be called before. " + this;
         if (THROW_ON_INCORRECT_USAGE) {
           throw new AssertionError(errorMessage);
@@ -266,29 +353,23 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
         }
       }
 
-      return traceWasStarted;
+      return wasStarted;
     }
 
-    public String toString() {
-      return getClass().getSimpleName() +
-             "{indexId=" + indexId +
-             ", project=" + project +
-             ", is started? =" + traceWasStarted +
-             ", lookupStartedAtMs=" + lookupStartedAtMs +
-             '}';
+    protected boolean traceWasStarted() {
+      return depth >= 0;
     }
   }
 
 
   //========================== 'All keys' lookup reporting:
 
-  //FIXME RC: I expected index lookup are not re-entrant, hence single thread-local buffer for params is enough. But
-  //          this proves to be false: index lookups are re-entrant, and there are regular scenarios there index lookup
-  //          invoked inside another index lookup. Right now this leads to only the deepest lookup be reported, and all
-  //          data of lookups above it are dropped, with WARN-ings in logs -- which is not a big issue, but still an issue.
-  //          To deal with it correctly thread-local _stack_ of buffers is needed really
-
-  public static final ThreadLocal<LookupAllKeysTrace> TRACE_OF_ALL_KEYS_LOOKUP = ThreadLocal.withInitial(LookupAllKeysTrace::new);
+  public static final ThreadLocal<LookupAllKeysTrace> TRACE_OF_ALL_KEYS_LOOKUP = new ThreadLocal<>() {
+    @Override
+    protected LookupAllKeysTrace initialValue() {
+      return new LookupAllKeysTrace(this);
+    }
+  };
 
   /**
    * Holds a trace (timestamps, pieces of data) for a 'lookup entries' index query. To be used as thread-local
@@ -297,16 +378,21 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
   public static class LookupAllKeysTrace extends LookupTraceBase<LookupAllKeysTrace> {
     private long indexValidationFinishedAtMs;
 
+    protected LookupAllKeysTrace(final ThreadLocal<LookupAllKeysTrace> current) {
+      super(current);
+    }
+
     @Override
     public LookupAllKeysTrace lookupStarted(final @NotNull IndexId<?, ?> indexId) {
-      super.lookupStarted(indexId);
+      final LookupAllKeysTrace trace = super.lookupStarted(indexId);
       this.indexValidationFinishedAtMs = -1;
 
-      return this;
+      //for re-entrant calls could be != this
+      return trace;
     }
 
     public LookupAllKeysTrace indexValidationFinished() {
-      if (traceWasStarted) {
+      if (traceWasStarted()) {
         indexValidationFinishedAtMs = System.currentTimeMillis();
       }
       return this;
@@ -315,20 +401,20 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
     @Override
     protected void reportGatheredDataToAnalytics() {
       final long lookupFinishedAtMs = System.currentTimeMillis();
-      INDEX_ALL_KEYS_LOOKUP_EVENT.log(
+      EVENT_INDEX_ALL_KEYS_LOOKUP.log(
         project,
 
-        INDEX_ID_FIELD.with(indexId.getName()),
+        FIELD_INDEX_ID.with(indexId.getName()),
 
         //indexValidationFinishedAtMs==lookupStartedAtMs if not set due to exception
         // => UP_TO_DATE_CHECK_DURATION_MS would be 0 in that case
-        UP_TO_DATE_CHECK_DURATION_MS_FIELD.with(indexValidationFinishedAtMs - lookupStartedAtMs),
+        FIELD_UP_TO_DATE_CHECK_DURATION_MS.with(indexValidationFinishedAtMs - lookupStartedAtMs),
 
-        LOOKUP_DURATION_MS_FIELD.with(lookupFinishedAtMs - lookupStartedAtMs),
+        FIELD_LOOKUP_DURATION_MS.with(lookupFinishedAtMs - lookupStartedAtMs),
 
-        LOOKUP_FAILED_FIELD.with(lookupFailed),
+        FIELD_LOOKUP_FAILED.with(lookupFailed),
 
-        TOTAL_KEYS_INDEXED_COUNT_FIELD.with(totalKeysIndexed)
+        FIELD_TOTAL_KEYS_INDEXED_COUNT.with(totalKeysIndexed)
       );
     }
   }
@@ -340,8 +426,12 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
 
   //========================== Entries lookup reporting:
 
-  public static final ThreadLocal<LookupEntriesByKeysTrace> TRACE_OF_ENTRIES_LOOKUP =
-    ThreadLocal.withInitial(LookupEntriesByKeysTrace::new);
+  public static final ThreadLocal<LookupEntriesByKeysTrace> TRACE_OF_ENTRIES_LOOKUP = new ThreadLocal<>() {
+    @Override
+    protected LookupEntriesByKeysTrace initialValue() {
+      return new LookupEntriesByKeysTrace(this);
+    }
+  };
 
   /**
    * Holds a trace (timestamps, pieces of data) for a 'lookup entries' index query. To be used as thread-local
@@ -356,20 +446,24 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
     private int lookupKeysCount = -1;
     private LookupOperation lookupOperation = LookupOperation.UNKNOWN;
 
+    protected LookupEntriesByKeysTrace(final ThreadLocal<LookupEntriesByKeysTrace> current) {
+      super(current);
+    }
 
     @Override
     public LookupEntriesByKeysTrace lookupStarted(final @NotNull IndexId<?, ?> indexId) {
-      super.lookupStarted(indexId);
+      final LookupEntriesByKeysTrace trace = super.lookupStarted(indexId);
 
       this.lookupOperation = LookupOperation.UNKNOWN;
       this.lookupKeysCount = -1;
       this.indexValidationFinishedAtMs = -1;
 
-      return this;
+      //for re-entrant calls could be != this
+      return trace;
     }
 
     public LookupEntriesByKeysTrace indexValidationFinished() {
-      if (traceWasStarted) {
+      if (traceWasStarted()) {
         indexValidationFinishedAtMs = System.currentTimeMillis();
       }
       return this;
@@ -378,23 +472,23 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
     @Override
     protected void reportGatheredDataToAnalytics() {
       final long lookupFinishedAtMs = System.currentTimeMillis();
-      INDEX_LOOKUP_ENTRIES_BY_KEYS_EVENT.log(
+      EVENT_INDEX_LOOKUP_ENTRIES_BY_KEYS.log(
         project,
 
-        INDEX_ID_FIELD.with(indexId.getName()),
+        FIELD_INDEX_ID.with(indexId.getName()),
 
-        UP_TO_DATE_CHECK_DURATION_MS_FIELD.with(
+        FIELD_UP_TO_DATE_CHECK_DURATION_MS.with(
           indexValidationFinishedAtMs > 0 ? indexValidationFinishedAtMs - lookupStartedAtMs : 0),
 
-        LOOKUP_DURATION_MS_FIELD.with(lookupFinishedAtMs - lookupStartedAtMs),
+        FIELD_LOOKUP_DURATION_MS.with(lookupFinishedAtMs - lookupStartedAtMs),
 
-        LOOKUP_FAILED_FIELD.with(lookupFailed),
+        FIELD_LOOKUP_FAILED.with(lookupFailed),
 
-        LOOKUP_KEYS_OP_FIELD.with(lookupOperation),
-        LOOKUP_KEYS_COUNT_FIELD.with(lookupKeysCount),
+        FIELD_LOOKUP_KEYS_OP.with(lookupOperation),
+        FIELD_LOOKUP_KEYS_COUNT.with(lookupKeysCount),
 
-        TOTAL_KEYS_INDEXED_COUNT_FIELD.with(totalKeysIndexed),
-        LOOKUP_RESULT_ENTRIES_COUNT_FIELD.with(lookupResultSize)
+        FIELD_TOTAL_KEYS_INDEXED_COUNT.with(totalKeysIndexed),
+        FIELD_LOOKUP_RESULT_ENTRIES_COUNT.with(lookupResultSize)
       );
     }
 
@@ -421,8 +515,12 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
 
   //========================== Stub-Index Entries lookup reporting:
 
-  public static final ThreadLocal<LookupStubEntriesByKeyTrace> TRACE_OF_STUB_ENTRIES_LOOKUP = ThreadLocal.withInitial(
-    LookupStubEntriesByKeyTrace::new);
+  public static final ThreadLocal<LookupStubEntriesByKeyTrace> TRACE_OF_STUB_ENTRIES_LOOKUP = new ThreadLocal<>() {
+    @Override
+    protected LookupStubEntriesByKeyTrace initialValue() {
+      return new LookupStubEntriesByKeyTrace(this);
+    }
+  };
 
   /**
    * Holds a trace (timestamps, pieces of data) for a 'lookup entries' stub-index query. To be used as thread-local
@@ -433,25 +531,30 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
     private long indexValidationFinishedAtMs;
     private long stubTreesDeserializingStarted;
 
+    protected LookupStubEntriesByKeyTrace(final ThreadLocal<LookupStubEntriesByKeyTrace> current) {
+      super(current);
+    }
+
     @Override
     public LookupStubEntriesByKeyTrace lookupStarted(final @NotNull IndexId<?, ?> indexId) {
-      super.lookupStarted(indexId);
+      final LookupStubEntriesByKeyTrace trace = super.lookupStarted(indexId);
 
       indexValidationFinishedAtMs = -1;
       stubTreesDeserializingStarted = -1;
 
-      return this;
+      //for re-entrant calls could be != this;
+      return trace;
     }
 
     public LookupStubEntriesByKeyTrace indexValidationFinished() {
-      if (traceWasStarted) {
+      if (traceWasStarted()) {
         indexValidationFinishedAtMs = System.currentTimeMillis();
       }
       return this;
     }
 
     public LookupStubEntriesByKeyTrace stubTreesDeserializingStarted() {
-      if (traceWasStarted) {
+      if (traceWasStarted()) {
         stubTreesDeserializingStarted = System.currentTimeMillis();
       }
       return this;
@@ -460,23 +563,23 @@ public class IndexOperationFusCollector extends CounterUsagesCollector {
     @Override
     protected void reportGatheredDataToAnalytics() {
       final long lookupFinishedAtMs = System.currentTimeMillis();
-      STUB_INDEX_LOOKUP_ENTRIES_BY_KEY_EVENT.log(
+      EVENT_STUB_INDEX_LOOKUP_ENTRIES_BY_KEY.log(
         project,
 
-        INDEX_ID_FIELD.with(indexId.getName()),
+        FIELD_INDEX_ID.with(indexId.getName()),
 
-        UP_TO_DATE_CHECK_DURATION_MS_FIELD.with(
+        FIELD_UP_TO_DATE_CHECK_DURATION_MS.with(
           indexValidationFinishedAtMs > 0 ? indexValidationFinishedAtMs - lookupStartedAtMs : 0),
 
-        STUB_TREE_DESERIALIZING_DURATION_MS_FIELD.with(
+        FIELD_STUB_TREE_DESERIALIZING_DURATION_MS.with(
           stubTreesDeserializingStarted > 0 ? lookupFinishedAtMs - stubTreesDeserializingStarted : 0),
 
-        LOOKUP_DURATION_MS_FIELD.with(lookupFinishedAtMs - lookupStartedAtMs),
+        FIELD_LOOKUP_DURATION_MS.with(lookupFinishedAtMs - lookupStartedAtMs),
 
-        LOOKUP_FAILED_FIELD.with(lookupFailed),
+        FIELD_LOOKUP_FAILED.with(lookupFailed),
 
-        TOTAL_KEYS_INDEXED_COUNT_FIELD.with(totalKeysIndexed),
-        LOOKUP_RESULT_ENTRIES_COUNT_FIELD.with(lookupResultSize)
+        FIELD_TOTAL_KEYS_INDEXED_COUNT.with(totalKeysIndexed),
+        FIELD_LOOKUP_RESULT_ENTRIES_COUNT.with(lookupResultSize)
       );
     }
   }

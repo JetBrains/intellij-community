@@ -41,7 +41,6 @@ import com.intellij.util.indexing.roots.IndexableFilesContributor;
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.snapshot.SnapshotInputMappingException;
-import com.intellij.util.io.MeasurableIndexStore;
 import it.unimi.dsi.fastutil.ints.*;
 import it.unimi.dsi.fastutil.objects.ObjectIterators;
 import org.jetbrains.annotations.ApiStatus;
@@ -163,7 +162,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                     @Nullable IdFilter idFilter) {
     var trace = lookupAllKeysStarted(indexId)
       .withProject(scope.getProject());
-    try (trace) {
+    try {
       waitUntilIndicesAreInitialized();
       UpdatableIndex<K, ?, FileContent, ?> index = getIndex(indexId);
       if (!ensureUpToDate(indexId, scope.getProject(), scope, null)) {
@@ -193,6 +192,12 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       else {
         throw e;
       }
+    }
+    finally {
+      //Not using try-with-resources because in case of exceptions are thrown, .close() needs to be called _after_ catch,
+      //  so .lookupFailed() is invoked on a not-yet-closed trace -- but TWR does the opposite: first close resources, then
+      //  do all catch/finally blocks
+      trace.close();
     }
 
     return false;

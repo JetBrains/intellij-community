@@ -3,16 +3,20 @@ package com.intellij.util.indexing.diagnostic;
 
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.indexing.IndexId;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import java.util.HashSet;
+import java.util.Stack;
 
 import static com.intellij.util.indexing.diagnostic.IndexOperationFusCollector.*;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 /**
- * Tests for [IndexOperationFusCollector].
+ * Tests for {@linkplain IndexOperationFusCollector}
  */
 @RunWith(JUnit4.class)
 public class IndexOperationFusCollectorTest extends JavaCodeInsightFixtureTestCase {
@@ -58,12 +62,64 @@ public class IndexOperationFusCollectorTest extends JavaCodeInsightFixtureTestCa
 
 
   @Test
-  public void reportingDontThrowAnythingIfStartedCalledTwice_without_THROW_ON_INCORRECT_USAGE() {
+  public void reportingCouldBeReEnteredUpToMaxDepthAndDifferentTracesProvidedForEachReEntrantCall() {
+    //check for 'allKeys' only because all them have same superclass
+    final Stack<LookupAllKeysTrace> tracesStack = new Stack<>();
+    try {
+      for (int i = 0; i < MAX_LOOKUP_DEPTH; i++) {
+        final LookupAllKeysTrace trace = lookupAllKeysStarted(INDEX_ID);
+        if (!tracesStack.isEmpty()) {
+          assertNotSame(
+            "Each lookupStarted() call should return unique Trace instance",
+            tracesStack.peek(),
+            trace
+          );
+        }
+        tracesStack.push(trace);
+      }
+      assertEquals(
+        "All traces up to MAX_DEPTH must be different",
+        new HashSet<>(tracesStack).size(),
+        MAX_LOOKUP_DEPTH
+      );
+    }
+    finally {//unwind stack back to not affect other tests:
+      for (int i = 0; i < MAX_LOOKUP_DEPTH; i++) {
+        TRACE_OF_ALL_KEYS_LOOKUP.get().lookupFinished();
+      }
+    }
+  }
+
+  @Test
+  public void reportingCouldBeReEnteredIfNotMoreThanMaxDepth() {
+    //check for 'allKeys' only because all them have same superclass
+    try {
+      for (int i = 0; i < MAX_LOOKUP_DEPTH; i++) {
+        lookupAllKeysStarted(INDEX_ID);
+      }
+    }
+    finally {//unwind stack back to not affect other tests:
+      for (int i = 0; i < MAX_LOOKUP_DEPTH; i++) {
+        TRACE_OF_ALL_KEYS_LOOKUP.get().lookupFinished();
+      }
+    }
+  }
+
+  @Test
+  public void reportingDontThrowExceptionIfStartedCalledMoreThanMaxDepth_without_THROW_ON_INCORRECT_USAGE() {
     assumeFalse("Check only if !THROW_ON_INCORRECT_USAGE",
                 THROW_ON_INCORRECT_USAGE);
     //check for 'allKeys' only because all them have same superclass
-    var trace = lookupAllKeysStarted(INDEX_ID);
-    trace.lookupStarted(INDEX_ID);
+    try {
+      for (int i = 0; i <= MAX_LOOKUP_DEPTH; i++) {
+        lookupAllKeysStarted(INDEX_ID);
+      }
+    }
+    finally {//unwind stack back to not affect other tests:
+      for (int i = 0; i <= MAX_LOOKUP_DEPTH; i++) {
+        TRACE_OF_ALL_KEYS_LOOKUP.get().lookupFinished();
+      }
+    }
   }
 
   @Test
@@ -79,32 +135,6 @@ public class IndexOperationFusCollectorTest extends JavaCodeInsightFixtureTestCa
       trace.lookupFailed();
       trace.lookupFinished();
     }
-  }
-
-  @Test
-  public void reportingThrowExceptionIfStartedCalledTwice_with_THROW_ON_INCORRECT_USAGE() {
-    assumeTrue("Check only if THROW_ON_INCORRECT_USAGE",
-               THROW_ON_INCORRECT_USAGE);
-
-    //check for 'allKeys' only, because the logic is in a shared superclass for all variants
-    var trace = lookupAllKeysStarted(INDEX_ID);
-
-    boolean subsequentStartFails;
-    try {
-      trace.lookupStarted(INDEX_ID);
-      subsequentStartFails = false;
-    }
-    catch (AssertionError e) {
-      subsequentStartFails = true;
-    }
-    finally {
-      trace.lookupFinished();//without finishing -> legit tests run after will start to fail
-    }
-    
-    assertTrue(
-      "Subsequent .started() without finish should throw exception if THROW_ON_INCORRECT_USAGE=true",
-      subsequentStartFails
-    );
   }
 
   @Test
@@ -126,5 +156,25 @@ public class IndexOperationFusCollectorTest extends JavaCodeInsightFixtureTestCa
       ".started() must be called throw exception if THROW_ON_INCORRECT_USAGE=true",
       finishWithoutStartFails
     );
+  }
+
+  @After
+  public void checkTestCleansAfterItself() {
+    final LookupTraceBase<?>[] traces = {
+      TRACE_OF_ALL_KEYS_LOOKUP.get(),
+      TRACE_OF_ENTRIES_LOOKUP.get(),
+      TRACE_OF_STUB_ENTRIES_LOOKUP.get()
+    };
+    for (LookupTraceBase<?> trace : traces) {
+      if (trace.traceWasStarted()) {
+        final String message = "All traces must be returned to un-initialized state after test: " + trace;
+        //now fix it, so next tests are not affected
+        while (trace.traceWasStarted()) {
+          trace.lookupFinished();
+        }
+        //fail: i.e. assume test must clean for itself, and lack of cleanup is a test bug
+        fail(message);
+      }
+    }
   }
 }
