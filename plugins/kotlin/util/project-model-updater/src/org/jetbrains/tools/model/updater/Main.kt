@@ -14,13 +14,14 @@ fun main(args: Array<String>) {
         it.resolve(".idea").isDirectory && !it.resolve("community").isDirectory
     }
     val monorepoRoot = communityRoot.resolve("..").takeIf { it.resolve(".idea").isDirectory }
+    val parsedArgs = Args(defaultArgs + manualArgs)
 
     for ((root, isCommunity) in listOf(monorepoRoot to false, communityRoot to true)) {
         if (root == null) continue
-        val parsedArgs = Args(defaultArgs + manualArgs)
         generateProjectModelFiles(root.resolve(".idea"), parsedArgs, isCommunity)
         patchProjectModelFiles(root.resolve(".idea"), parsedArgs, isCommunity)
     }
+    updateLatestGradlePluginVersion(communityRoot, parsedArgs.kotlinGradlePluginVersion)
 }
 
 private fun generateProjectModelFiles(dotIdea: File, args: Args, isCommunity: Boolean) {
@@ -86,6 +87,28 @@ private fun patchKotlincLibs(args: Args, isCommunity: Boolean, dotIdea: File) {
             artifactXmlFile.writeText(newText)
         }
     }
+}
+
+/**
+ * Updates the `KotlinGradlePluginVersions.kt` source file to contain the latest [kotlinGradlePluginVersion] in the source code.
+ * The `KotlinGradlePluginVersions` source file can't directly read the `model.properties` file directly, since
+ * the project model can be overwritten by the [main] args (see also [GeneratorPreferences.parse])
+ *
+ * kt-[221|213]-* notes:
+ * In these branches still used the KOTLIN_GRADLE_PLUGIN_VERSION property to set up gradle plugin version for testing,
+ * but sometimes in new places the KotlinGradlePluginVersion is used.
+ *
+ */
+private fun updateLatestGradlePluginVersion(communityRoot: File, kotlinGradlePluginVersion: String) {
+    val sourceFile = communityRoot.resolve(
+        "plugins/kotlin/gradle/gradle-java/tests/test/org/jetbrains/kotlin/idea/codeInsight/gradle/KotlinGradlePluginVersions.kt"
+    )
+
+    val updatedFileContent = sourceFile.readText().replace(
+        Regex("""val latest = .*"""), "val latest = \"$kotlinGradlePluginVersion\""
+    )
+
+    sourceFile.writeText(updatedFileContent)
 }
 
 private fun Iterable<String>.toMapOfArgs(): Map<String, String> = associate { arg ->
