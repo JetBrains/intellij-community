@@ -94,12 +94,6 @@
       type="fast"/>
   </extensions>
 
-  <extensions defaultExtensionNs="org.jetbrains.plugins.notebooks">
-    <notebookCellGutterController
-      order="first"
-      implementation="org.jetbrains.plugins.notebooks.visualization.CellBackgroundGutterController"/>
-  </extensions>
-
   <extensions defaultExtensionNs="org.jetbrains.plugins.notebooks.visualization.r.inlays.visualisation">
     <uiCustomizer implementation="org.jetbrains.plugins.notebooks.visualization.r.ui.DefaultUiCustomizer"/>
   </extensions>

@@ -322,7 +322,7 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
           textAttributesForHighlighter(),
           HighlighterTargetArea.LINES_IN_RANGE
         )
-        highlighter.customRenderer = NotebookCellHighlighterRenderer
+          highlighter.customRenderer = NotebookCellHighlighterRenderer
       }
     }
   }
