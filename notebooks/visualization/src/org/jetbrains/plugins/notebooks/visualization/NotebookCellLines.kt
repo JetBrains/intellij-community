@@ -49,8 +49,12 @@ interface NotebookCellLines {
   }
 
   interface IntervalListener : EventListener {
-    /** Called when document is changed. */
-    fun segmentChanged(event: NotebookCellLinesEvent)
+    /**
+     * Called each time when document is changed, even if intervals are the same.
+     * Contains DocumentEvent and additional information about intervals.
+     * Components which work with intervals can simply listen for NotebookCellLinesEvent and don't subscribe for DocumentEvent.
+     */
+    fun documentChanged(event: NotebookCellLinesEvent)
   }
 
   fun intervalsIterator(startLine: Int = 0): ListIterator<Interval>

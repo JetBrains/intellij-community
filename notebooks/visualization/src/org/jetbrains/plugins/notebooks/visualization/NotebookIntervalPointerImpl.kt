@@ -47,7 +47,7 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
     }
   }
 
-  override fun segmentChanged(e: NotebookCellLinesEvent) {
+  override fun documentChanged(e: NotebookCellLinesEvent) {
     when {
       !e.isIntervalsChanged() -> {
         // content edited without affecting intervals values

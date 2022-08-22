@@ -67,7 +67,7 @@ class NonIncrementalCellLines private constructor(private val document: Document
       newAffectedIntervals = newAffectedCells,
       modificationStamp = modificationStamp,
     )
-    intervalListeners.multicaster.segmentChanged(event)
+    intervalListeners.multicaster.documentChanged(event)
   }
 
   private fun createDocumentListener() = object : DocumentListener {
