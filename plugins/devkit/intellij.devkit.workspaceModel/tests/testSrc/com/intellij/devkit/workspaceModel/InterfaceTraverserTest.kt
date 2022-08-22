@@ -7,9 +7,9 @@ import com.intellij.workspaceModel.codegen.deft.meta.Obj
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
-import com.intellij.workspaceModel.codegen.deft.meta.impl.ObjClassImpl
-import com.intellij.workspaceModel.codegen.deft.meta.impl.ObjModuleImpl
-import com.intellij.workspaceModel.codegen.deft.meta.impl.OwnPropertyImpl
+import com.intellij.devkit.workspaceModel.metaModel.impl.ObjClassImpl
+import com.intellij.devkit.workspaceModel.metaModel.impl.ObjModuleImpl
+import com.intellij.devkit.workspaceModel.metaModel.impl.OwnPropertyImpl
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
