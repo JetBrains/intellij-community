@@ -42,8 +42,8 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Function;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 
 public final class MavenProjectsTree {
@@ -1544,21 +1544,42 @@ public final class MavenProjectsTree {
     }
   }
 
-  public MavenProjectsTree getCopyForReimport(){
-    MavenProjectsTree result = new MavenProjectsTree(myProject);
+  public MavenProjectsTree getCopyForReimport() {
+    readLock();
+    try {
+      MavenProjectsTree result = new MavenProjectsTree(myProject);
 
-    result.myExplicitProfiles = myExplicitProfiles;
-    result.myRootProjects.addAll(myRootProjects);
-    result.myIgnoredFilesPaths.addAll(myIgnoredFilesPaths);
-    result.myIgnoredFilesPatterns.addAll(myIgnoredFilesPatterns);
-    result.myAggregatorToModuleMapping.putAll(myAggregatorToModuleMapping);
-    result.myIgnoredFilesPatternsCache = myIgnoredFilesPatternsCache;
-    result.myManagedFilesPaths.addAll(myManagedFilesPaths);
-    result.myMavenIdToProjectMapping.putAll(myMavenIdToProjectMapping);
-    result.myModuleToAggregatorMapping.putAll(myModuleToAggregatorMapping);
-    result.myVirtualFileToProjectMapping.putAll(myVirtualFileToProjectMapping);
-    result.myTimestamps.putAll(myTimestamps);
-    myWorkspaceMap.copyInto(result.myWorkspaceMap);
-    return result;
+      result.myExplicitProfiles = myExplicitProfiles;
+      result.myRootProjects.addAll(myRootProjects);
+      result.myIgnoredFilesPaths.addAll(myIgnoredFilesPaths);
+      result.myIgnoredFilesPatterns.addAll(myIgnoredFilesPatterns);
+      deepCopyInto(myAggregatorToModuleMapping, result.myAggregatorToModuleMapping);
+      result.myIgnoredFilesPatternsCache = myIgnoredFilesPatternsCache;
+      result.myManagedFilesPaths.addAll(myManagedFilesPaths);
+      result.myMavenIdToProjectMapping.putAll(myMavenIdToProjectMapping);
+      result.myModuleToAggregatorMapping.putAll(myModuleToAggregatorMapping);
+      result.myVirtualFileToProjectMapping.putAll(myVirtualFileToProjectMapping);
+      result.myTimestamps.putAll(myTimestamps);
+      myWorkspaceMap.copyInto(result.myWorkspaceMap);
+      return result;
+    }
+    finally {
+      readUnlock();
+    }
+  }
+
+  private static <K, V> Map<K, List<V>> deepCopyInto(Map<K, List<V>> from, Map<K, List<V>> to) {
+    return deepCopyInto(from, to, Function.identity());
+  }
+
+  private static <K, V> Map<K, List<V>> deepCopyInto(Map<K, List<V>> from, Map<K, List<V>> to, Function<V, V> copyFunc) {
+    for (Map.Entry<K, List<V>> entry : from.entrySet()) {
+      List<V> newVal = new ArrayList<>(entry.getValue().size());
+      for (V v : entry.getValue()) {
+        newVal.add(copyFunc.apply(v));
+      }
+      to.put(entry.getKey(), newVal);
+    }
+    return to;
   }
 }
