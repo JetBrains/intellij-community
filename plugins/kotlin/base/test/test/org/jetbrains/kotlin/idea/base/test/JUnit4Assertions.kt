@@ -2,14 +2,40 @@
 
 package org.jetbrains.kotlin.idea.base.test
 
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.util.io.exists
+import com.intellij.util.io.readText
+import junit.framework.TestCase
 import org.jetbrains.kotlin.test.Assertions
+import org.jetbrains.kotlin.test.util.trimTrailingWhitespacesAndAddNewlineAtEOF
 import org.junit.Assert
 import java.io.File
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.writeText
 
 object JUnit4Assertions : Assertions() {
     override fun assertEqualsToFile(expectedFile: File, actual: String, sanitizer: (String) -> String, message: () -> String) {
-        KotlinTestHelpers.assertEqualsToPath(expectedFile.toPath(), actual, sanitizer, message)
+        val expectedPath = expectedFile.toPath()
+        if (!expectedPath.exists()) {
+            expectedPath.writeText(actual)
+            TestCase.fail("File didn't exist. New file was created (${expectedPath.absolutePathString()}).")
+        }
+
+        fun process(output: String): String {
+            return output
+                .trim()
+                .let(StringUtil::convertLineSeparators)
+                .trimTrailingWhitespacesAndAddNewlineAtEOF()
+                .let(sanitizer)
+        }
+
+        val processedExpected = process(expectedPath.readText())
+        val processedActual = process(actual)
+        if (processedExpected != processedActual) {
+            throw FileComparisonFailure(message(), processedExpected, processedActual, expectedPath.absolutePathString())
+        }
     }
 
     override fun assertEquals(expected: Any?, actual: Any?, message: (() -> String)?) {

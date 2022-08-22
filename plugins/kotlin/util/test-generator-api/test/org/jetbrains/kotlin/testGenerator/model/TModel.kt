@@ -20,6 +20,7 @@ data class TModel(
     val targetBackend: TargetBackend,
     val excludedDirectories: List<String>,
     val depth: Int,
+    val passTestDataPath: Boolean,
     val classPerTest: Boolean,
     val bucketSize: Int?,
 )
@@ -67,6 +68,7 @@ fun MutableTSuite.model(
     targetBackend: TargetBackend = TargetBackend.ANY,
     excludedDirectories: List<String> = emptyList(),
     depth: Int = Int.MAX_VALUE,
+    passTestDataPath: Boolean = true,
     classPerTest: Boolean = false,
     splitToBuckets: Boolean = false,
     bucketSize: Int = 20,
@@ -80,6 +82,7 @@ fun MutableTSuite.model(
         targetBackend = targetBackend,
         excludedDirectories = excludedDirectories,
         depth = if (!isRecursive) 0 else depth,
+        passTestDataPath = passTestDataPath,
         classPerTest = classPerTest,
         bucketSize = if (!splitToBuckets) null else bucketSize,
     )

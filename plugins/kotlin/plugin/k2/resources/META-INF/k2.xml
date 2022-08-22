@@ -228,6 +228,7 @@
     <module name="kotlin.code-insight.inspections-k2"/>
     <module name="kotlin.code-insight.k2"/>
     <module name="kotlin.code-insight.live-templates-k2"/>
+    <module name="kotlin.code-insight.postfix-templates-k2"/>
 
     <module name="kotlin.refactorings.rename.k2"/>
 
