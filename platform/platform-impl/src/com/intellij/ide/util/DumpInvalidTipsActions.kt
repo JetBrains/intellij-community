@@ -9,20 +9,22 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
+import java.awt.datatransfer.StringSelection
 
 @Suppress("HardCodedStringLiteral") // it is the internal action, so localization is not required
 @ApiStatus.Internal
 open class DumpInvalidTipsAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     runBackgroundableTask("Analyzing tips", e.getData(CommonDataKeys.PROJECT)) {
-      printInvalidTipsToLog(TipAndTrickBean.EP_NAME.extensionList)
+      dumpInvalidTips(TipAndTrickBean.EP_NAME.extensionList)
     }
   }
 
-  protected fun printInvalidTipsToLog(tips: List<TipAndTrickBean>) {
+  protected fun dumpInvalidTips(tips: List<TipAndTrickBean>) {
     val tipToError: List<Pair<TipAndTrickBean, Throwable>> = tips.mapNotNull { tip ->
       try {
         @Suppress("TestOnlyProblems")
@@ -34,20 +36,25 @@ open class DumpInvalidTipsAction : AnAction() {
       }
     }
 
+    val builder = StringBuilder()
     if (tipToError.isEmpty()) {
-      LOG.warn("There is no invalid tips among ${tips.size} listed")
+      builder.append("There is no invalid tips among ${tips.size} listed")
     }
     else {
-      LOG.warn("Found following problems during tips loading and parsing:")
+      builder.append("Found following problems during tips loading and parsing:\n")
       for (ind in tipToError.indices) {
         val (tip, throwable) = tipToError[ind]
         val message = if (throwable.message?.startsWith("Warning:") == true) {
           throwable.message
         }
         else throwable.stackTraceToString()
-        LOG.warn("${ind + 1}. ${tip.fileName.substringAfterLast("/")}\n$message")
+        builder.append("${ind + 1}. ${tip.fileName.substringAfterLast("/")}\n$message\n")
       }
     }
+
+    val issues = builder.toString()
+    LOG.warn(issues)
+    CopyPasteManager.getInstance().setContents(StringSelection(issues))
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {
@@ -73,7 +80,7 @@ class SelectAndDumpInvalidTipsAction : DumpInvalidTipsAction() {
       val tipFiles = mutableListOf<VirtualFile>()
       chosenFiles.forEach { collectTipFilesRecursively(it, tipFiles) }
       val tips = tipFiles.map { file -> TipAndTrickBean().apply { fileName = file.path } }
-      printInvalidTipsToLog(tips)
+      dumpInvalidTips(tips)
     }
   }
 
