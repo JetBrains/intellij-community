@@ -10,6 +10,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -538,13 +539,14 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       if (e.isConsumed()) {
         updateLastPattern();
         String s = mySearchField.getText();
-        int keyCode = e.getKeyCode();
         Object element;
-        if (isUpDownHomeEnd(keyCode)) {
-          element = findTargetElement(keyCode, s);
+
+        int navKeyCode = getNavigationKeyCode(e);
+        if (navKeyCode != 0) {
+          element = findTargetElement(navKeyCode, s);
           if (myClearSearchOnNavigateNoMatch && element == null) {
             manageSearchPopup(null);
-            element = findTargetElement(keyCode, "");
+            element = findTargetElement(navKeyCode, "");
           }
         }
         else {
@@ -574,6 +576,32 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
       fireStateChanged();
     }
+  }
+
+  private int getNavigationKeyCode(KeyEvent e) {
+    KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(e);
+    if (isUpDownHomeEnd(e.getKeyCode())) {
+      return e.getKeyCode();
+    }
+    KeymapManager keymapManager = KeymapManager.getInstance();
+    if (keymapManager != null) {
+      @NotNull String[] actionIds = keymapManager.getActiveKeymap().getActionIds(keyStroke);
+      for (String id : actionIds) {
+        if (id.equals(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)) {
+          return KeyEvent.VK_UP;
+        }
+        else if (id.equals(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)) {
+          return KeyEvent.VK_DOWN;
+        }
+        else if (id.equals(IdeActions.ACTION_EDITOR_MOVE_LINE_START)) {
+          return KeyEvent.VK_HOME;
+        }
+        else if (id.equals(IdeActions.ACTION_EDITOR_MOVE_LINE_END)) {
+          return KeyEvent.VK_END;
+        }
+      }
+    }
+    return 0;
   }
 
   protected void onSearchFieldUpdated(String pattern) {
