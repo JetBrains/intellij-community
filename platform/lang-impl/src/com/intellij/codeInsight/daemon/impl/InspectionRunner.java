@@ -113,8 +113,9 @@ class InspectionRunner {
     List<InspectionContext> redundantContexts = new ArrayList<>();
     InspectionEngine.withSession(myPsiFile, myRestrictRange, TextRange.create(finalPriorityRange), myIsOnTheFly, session -> {
       long start = System.nanoTime();
-      filteredWrappers.forEach(wrapper -> ContainerUtil.addIfNotNull(init, createContext(wrapper, session,
-                                                                                         applyIncrementallyCallback)));
+      for (LocalInspectionToolWrapper wrapper : filteredWrappers) {
+        ContainerUtil.addIfNotNull(init, createContext(wrapper, session, applyIncrementallyCallback));
+      }
       //sort init according to the priorities saved earlier to run in order
       InspectionProfilerDataHolder profileData = InspectionProfilerDataHolder.getInstance(myPsiFile.getProject());
       profileData.sort(myPsiFile, init);
@@ -134,7 +135,7 @@ class InspectionRunner {
       };
       visitElements(init, outside, false, finalPriorityRange, TOMB_STONE, afterOutside, foundInjected, injectedContexts,
                     toolWrappers, empty(), enabledToolsPredicate);
-      boolean isWholeFileInspectionsPass = !toolWrappers.isEmpty() && toolWrappers.get(0).getTool().runForWholeFile();
+      boolean isWholeFileInspectionsPass = !init.isEmpty() && init.get(0).tool.runForWholeFile();
       if (myIsOnTheFly && !isWholeFileInspectionsPass) {
         // do not save stats for batch process, there could be too many files
         InspectionProfilerDataHolder.getInstance(myPsiFile.getProject()).saveStats(myPsiFile, init, System.nanoTime() - start);
