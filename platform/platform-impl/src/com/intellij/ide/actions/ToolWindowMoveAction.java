@@ -117,6 +117,10 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
       }
     }
 
+    static Anchor[] getNewUIAnchors() {
+      return new Anchor[]{LeftTop, BottomLeft, RightTop, BottomRight};
+    }
+
     boolean isApplied(@NotNull ToolWindow window) {
       return getAnchor() == window.getAnchor() && window.isSplitMode() == isSplit();
     }
@@ -200,7 +204,7 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
     @Override
     public void update(@NotNull AnActionEvent e) {
       if (!isInitialized) {
-        for (ToolWindowMoveAction.Anchor anchor : ToolWindowMoveAction.Anchor.values()) {
+        for (ToolWindowMoveAction.Anchor anchor : ExperimentalUI.isNewUI() ? Anchor.getNewUIAnchors() : Anchor.values()) {
           add(new ToolWindowMoveAction(anchor));
         }
         isInitialized = true;
