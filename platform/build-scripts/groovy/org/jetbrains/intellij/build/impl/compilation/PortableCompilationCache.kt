@@ -89,7 +89,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
       if (forceRebuild || forceDownload) {
         clean()
       }
-      if (!isLocalCacheUsed()) {
+      if (!forceRebuild && !isLocalCacheUsed()) {
         downloadCache()
       }
       CompilationTasks.create(context).resolveProjectDependencies()
