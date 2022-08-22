@@ -245,6 +245,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../idea/tests/testData/quickfix/autoImports/extensionFunctionImportImplicitReceiver.before.Main.kt");
         }
 
+        @TestMetadata("extensionFunctionWithGenericImport.before.Main.kt")
+        public void testExtensionFunctionWithGenericImport() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/extensionFunctionWithGenericImport.before.Main.kt");
+        }
+
         @TestMetadata("extensionPreferDeprecatedSinceApplicable.test")
         public void testExtensionPreferDeprecatedSinceApplicable() throws Exception {
             runTest("../idea/tests/testData/quickfix/autoImports/extensionPreferDeprecatedSinceApplicable.test");

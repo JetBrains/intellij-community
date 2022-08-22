@@ -348,6 +348,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/extensionFunctionImportImplicitReceiver.before.Main.kt");
             }
 
+            @TestMetadata("extensionFunctionWithGenericImport.before.Main.kt")
+            public void testExtensionFunctionWithGenericImport() throws Exception {
+                runTest("testData/quickfix/autoImports/extensionFunctionWithGenericImport.before.Main.kt");
+            }
+
             @TestMetadata("extensionPreferDeprecatedSinceApplicable.test")
             public void testExtensionPreferDeprecatedSinceApplicable() throws Exception {
                 runTest("testData/quickfix/autoImports/extensionPreferDeprecatedSinceApplicable.test");
