@@ -291,26 +291,23 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
       final PsiElement element = previewDescriptor.getPsiElement();
       final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
       if (method == null) return IntentionPreviewInfo.EMPTY;
-      final PsiParameter parameter = findParameter(method, element);
+      final PsiParameter parameter = findParameterByName(method);
       if (parameter == null) return IntentionPreviewInfo.EMPTY;
-      var references = ReferencesSearch.search(parameter).findAll();
+      Collection<PsiReference> references = ReferencesSearch.search(parameter).findAll();
       final PsiExpression defToInline = JavaPsiFacade.getElementFactory(project).createExpressionFromText(myValue, parameter);
       references.forEach((ref) -> ref.getElement().replace(defToInline));
+      parameter.delete();
       return IntentionPreviewInfo.DIFF;
     }
 
     private @Nullable PsiParameter findParameter(PsiMethod method, PsiElement descriptorElement) {
       PsiParameter parameter = PsiTreeUtil.getParentOfType(descriptorElement, PsiParameter.class, false);
-      if (parameter == null) {
-        final PsiParameter[] parameters = method.getParameterList().getParameters();
-        for (PsiParameter psiParameter : parameters) {
-          if (Comparing.strEqual(psiParameter.getName(), myParameterName)) {
-            parameter = psiParameter;
-            break;
-          }
-        }
-      }
+      if (parameter == null) parameter = findParameterByName(method);
       return parameter;
+    }
+
+    private @Nullable PsiParameter findParameterByName(PsiMethod method) {
+      return ContainerUtil.find(method.getParameterList().getParameters(), (param) -> Comparing.strEqual(param.getName(), myParameterName));
     }
 
     @Override
