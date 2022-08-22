@@ -188,19 +188,18 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   private fun runBeforeCommitChecks(sessionInfo: CommitSessionInfo): CommitChecksResult {
     var result: CommitChecksResult? = null
 
-    var checks = Runnable {
+    val backgroundChecks = Runnable {
       ProgressManager.checkCanceled()
       FileDocumentManager.getInstance().saveAllDocuments()
       result = runBeforeCommitHandlersChecks(sessionInfo, commitHandlers)
     }
 
-    commitHandlers.filterIsInstance<CheckinMetaHandler>().forEach { metaHandler ->
-      checks = wrapWithCommitMetaHandler(metaHandler, checks)
-    }
+    val metaHandlers = commitHandlers.filterIsInstance<CheckinMetaHandler>()
+    val checksWithMetaHandlers = runMetaHandlers(metaHandlers, backgroundChecks)
 
     val task = Runnable {
       try {
-        checks.run()
+        checksWithMetaHandlers.run()
         if (result == null) LOG.warn("No commit handlers result. Seems CheckinMetaHandler returned before invoking its callback.")
       }
       catch (ignore: ProcessCanceledException) {
@@ -215,6 +214,14 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   }
 
   open fun getBeforeCommitChecksChangelist(): LocalChangeList? = null
+
+  private fun runMetaHandlers(metaHandlers: List<CheckinMetaHandler>, backgroundChecks: Runnable): Runnable {
+    var task = backgroundChecks
+    metaHandlers.forEach { metaHandler ->
+      task = wrapWithCommitMetaHandler(metaHandler, task)
+    }
+    return task
+  }
 
   protected fun wrapWithCommitMetaHandler(metaHandler: CheckinMetaHandler, task: Runnable): Runnable =
     Runnable {
