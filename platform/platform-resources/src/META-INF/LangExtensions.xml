@@ -99,6 +99,9 @@
     <!--suppress PluginXmlCapitalization -->
     <registryKey defaultValue="true" key="use.dependencies.cache.service" restartRequired="true"
                  description="Rescan delta of AdditionalLibraryProvider, IndexableSetContributor, DirectoryIndexExcludePolicy values instead of full project."/>
+    <projectService serviceImplementation="com.intellij.util.indexing.roots.IndexableFilesIndex"/>
+    <registryKey defaultValue="false" key="indexing.use.indexable.files.index" restartRequired="true"
+                 description="Use separate index to determine fileset to index; needs `indexing.enable.entity.provider.based.indexing` enabled to become enabled"/>
 
     <applicationService serviceImplementation="com.intellij.packageDependencies.DependencyUISettings"/>
 
