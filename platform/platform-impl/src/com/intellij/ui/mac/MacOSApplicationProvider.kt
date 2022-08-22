@@ -64,7 +64,7 @@ internal object MacOSApplicationProvider {
       desktop.setPreferencesHandler {
         if (LoadingState.COMPONENTS_LOADED.isOccurred) {
           val project = getProject(true)!!
-          submit("Preferences") { ShowSettingsAction.perform(project) }
+          submit("Settings") { ShowSettingsAction.perform(project) }
         }
       }
       desktop.setQuitHandler { _: QuitEvent?, response: QuitResponse ->
