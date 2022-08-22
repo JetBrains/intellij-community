@@ -282,7 +282,6 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
       log(e);
     }
 
-    LoadingState.BASE_LAF_INITIALIZED.checkOccurred();
     ideEventQueueInitialized(IdeEventQueue.getInstance());
   }
 

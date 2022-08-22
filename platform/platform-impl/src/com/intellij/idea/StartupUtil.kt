@@ -13,7 +13,6 @@ import com.intellij.ide.customize.CommonCustomizeIDEWizardDialog
 import com.intellij.ide.gdpr.ConsentOptions
 import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.ide.gdpr.showDataSharingAgreement
-import com.intellij.ide.gdpr.showEndUserAndDataSharingAgreements
 import com.intellij.ide.instrument.WriteIntentLockInstrumenter
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.html.GlobalStyleSheetHolder
@@ -114,8 +113,6 @@ fun CoroutineScope.startApplication(args: List<String>,
     ApplicationInfoImpl.getShadowInstance()
   }
   val euaDocumentDeferred = loadEuaDocument(appInfoDeferred)
-  // this must happen before LaF loading
-  val checkGraphicsJob = checkGraphics()
   val pathDeferred = async(CoroutineName("config path computing") + Dispatchers.IO) {
     Pair(canonicalPath(PathManager.getConfigPath()), canonicalPath(PathManager.getSystemPath()))
   }
@@ -127,8 +124,6 @@ fun CoroutineScope.startApplication(args: List<String>,
     !isHeadless && (!Files.exists(configPath) || Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME)))
   }
 
-  // this should happen before UI initialization - if we're not going to show UI (in case another IDE instance is already running),
-  // we shouldn't initialize AWT toolkit in order to avoid unnecessary focus stealing and space switching on macOS.
   val lockSystemDirsJob = lockSystemDirs(configImportNeededDeferred = configImportNeededDeferred,
                                          pathDeferred = pathDeferred,
                                          args = args,
@@ -142,13 +137,15 @@ fun CoroutineScope.startApplication(args: List<String>,
     }
   }
 
-  val preloadLafClassesJob = preloadLafClasses()
-
   // LookAndFeel type is not specified to avoid class loading
-  val initUiDeferred = async {
-    checkGraphicsJob?.join()
-    lockSystemDirsJob.join()
-    initUi(preloadLafClassesJob, busyThread = busyThread)
+  val initAwtToolkitAndEventQueueJob = launch {
+    // this should happen before UI initialization - if we're not going to show UI (in case another IDE instance is already running),
+    // we shouldn't initialize AWT toolkit in order to avoid unnecessary focus stealing and space switching on macOS.
+    initAwtToolkit(lockSystemDirsJob, busyThread).join()
+
+    withContext(SwingDispatcher) {
+      patchSystem(isHeadless)
+    }
   }
 
   val zipFilePoolDeferred = async(Dispatchers.IO) {
@@ -159,14 +156,21 @@ fun CoroutineScope.startApplication(args: List<String>,
   }
 
   val schedulePluginDescriptorLoading = launch {
-    ComponentManagerImpl.mainScope = mainScope
-
     // plugins cannot be loaded when a config import is needed, because plugins may be added after importing
-    Java11Shim.INSTANCE = Java11ShimImpl()
+    launch(Dispatchers.IO) {
+      Java11Shim.INSTANCE = Java11ShimImpl()
+    }
     if (!configImportNeededDeferred.await()) {
       PluginManagerCore.scheduleDescriptorLoading(mainScope, zipFilePoolDeferred)
     }
   }
+
+  launch(Dispatchers.IO) {
+    ComponentManagerImpl.mainScope = mainScope
+  }
+
+  // LookAndFeel type is not specified to avoid class loading
+  val initLafJob = initUi(initAwtToolkitAndEventQueueJob)
 
   // system dirs checking must happen after locking system dirs
   val checkSystemDirJob = checkSystemDirs(lockSystemDirsJob, pathDeferred)
@@ -174,18 +178,18 @@ fun CoroutineScope.startApplication(args: List<String>,
   // log initialization must happen only after locking the system directory
   val logDeferred = setupLogger(consoleLoggerJob, checkSystemDirJob)
 
-  val showEuaIfNeededJob = showEuaIfNeeded(euaDocumentDeferred, initUiDeferred)
-  val patchHtmlStyleJob = if (isHeadless) null else patchHtmlStyle(initUiDeferred)
+  val showEuaIfNeededJob = showEuaIfNeeded(euaDocumentDeferred, initLafJob)
+  val patchHtmlStyleJob = if (isHeadless) null else patchHtmlStyle(initLafJob)
 
   shellEnvDeferred = async(CoroutineName("environment loading") + Dispatchers.IO) {
     EnvironmentUtil.loadEnvironment()
   }
 
   if (!isHeadless) {
-    showSplashIfNeeded(initUiDeferred, showEuaIfNeededJob, appInfoDeferred, args)
+    showSplashIfNeeded(initLafJob, showEuaIfNeededJob, appInfoDeferred, args)
 
     // must happen after initUi
-    updateFrameClassAndWindowIconAndPreloadSystemFonts(initUiDeferred)
+    updateFrameClassAndWindowIconAndPreloadSystemFonts(initLafJob)
   }
 
   if (java.lang.Boolean.getBoolean("idea.enable.coroutine.dump")) {
@@ -194,7 +198,7 @@ fun CoroutineScope.startApplication(args: List<String>,
     }
   }
 
-  loadSystemLibsAndLogInfoAndInitMacApp(logDeferred, appInfoDeferred, initUiDeferred, args)
+  loadSystemLibsAndLogInfoAndInitMacApp(logDeferred, appInfoDeferred, initLafJob, args)
 
   val telemetryInitJob = launch {
     appInfoDeferred.join()
@@ -222,9 +226,9 @@ fun CoroutineScope.startApplication(args: List<String>,
       runPreAppClass(log, args)
     }
 
-    // we must wait for UI before creating application and before AppStarter.start (some appStarter dialogs) - EDT thread is required
+    // we must wait for UI before creating application - EDT thread is required
     runActivity("prepare ui waiting") {
-      initUiDeferred.join()
+      initAwtToolkitAndEventQueueJob.join()
     }
 
     val app = runActivity("app instantiation") {
@@ -251,7 +255,7 @@ fun CoroutineScope.startApplication(args: List<String>,
     showEuaIfNeededJob.join()
 
     if (!isHeadless && configImportNeededDeferred.await()) {
-      initUiDeferred.join()
+      initLafJob.join()
       val imported = importConfig(
         args = args,
         log = logDeferred.await(),
@@ -307,7 +311,7 @@ private fun CoroutineScope.loadSystemLibsAndLogInfoAndInitMacApp(logDeferred: De
   }
 }
 
-private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Deferred<Any>,
+private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job,
                                               showEuaIfNeededJob: Deferred<Boolean>,
                                               appInfoDeferred: Deferred<ApplicationInfoEx>,
                                               args: List<String>) {
@@ -330,7 +334,7 @@ private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Deferred<Any>,
   }
 }
 
-private fun CoroutineScope.patchHtmlStyle(initUiJob: Deferred<Any>): Job {
+private fun CoroutineScope.patchHtmlStyle(initUiJob: Job): Job {
   return launch {
     initUiJob.join()
 
@@ -375,18 +379,12 @@ private suspend fun prepareSplash(appInfoDeferred: Deferred<ApplicationInfoEx>, 
   }
 }
 
-private fun CoroutineScope.checkGraphics(): Job? {
-  if (AppMode.isHeadless()) {
-    return null
-  }
-
-  return launch {
-    runActivity("graphics environment checking") {
-      if (GraphicsEnvironment.isHeadless()) {
-        StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.startup.error"),
-                                         BootstrapBundle.message("bootstrap.error.message.no.graphics.environment"), true)
-        exitProcess(AppExitCodes.NO_GRAPHICS)
-      }
+private fun checkGraphics() {
+  runActivity("graphics environment checking") {
+    if (GraphicsEnvironment.isHeadless()) {
+      StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.startup.error"),
+                                       BootstrapBundle.message("bootstrap.error.message.no.graphics.environment"), true)
+      exitProcess(AppExitCodes.NO_GRAPHICS)
     }
   }
 }
@@ -480,51 +478,63 @@ private suspend fun importConfig(args: List<String>,
 }
 
 // return type (LookAndFeel) is not specified to avoid class loading
-private suspend fun initUi(preloadLafClassesJob: Job, busyThread: Thread): Any {
-  // calls `sun.util.logging.PlatformLogger#getLogger` - it takes enormous time (up to 500 ms)
-  // only non-logging tasks can be executed before `setupLogger`
-  val activityQueue = StartUpMeasurer.startActivity("base LaF preparation")
-
-  val isHeadless = AppMode.isHeadless()
-  coroutineScope {
+private fun CoroutineScope.initAwtToolkit(lockSystemDirsJob: Job, busyThread: Thread): Job {
+  return launch {
     launch {
+      lockSystemDirsJob.join()
+
       checkHiDPISettings()
       blockATKWrapper()
 
       @Suppress("SpellCheckingInspection")
       System.setProperty("sun.awt.noerasebackground", "true")
 
-      activityQueue.startChild("awt toolkit creating").let { activity ->
+      runActivity("awt toolkit creating") {
         Toolkit.getDefaultToolkit()
-        activity.end()
+      }
+
+      runActivity("awt auto shutdown configuring") {
+        AWTAutoShutdown.getInstance().notifyThreadBusy(busyThread)
       }
     }
 
     // IdeaLaF uses AllIcons - icon manager must be activated
-    if (!isHeadless) {
+    if (!AppMode.isHeadless()) {
       launch(CoroutineName("icon manager activation")) {
         IconManager.activate(CoreIconManager())
       }
     }
 
-    launch(CoroutineName("IdeEventQueue class preloading")) {
+    launch(CoroutineName("IdeEventQueue class preloading") + Dispatchers.IO) {
       val classLoader = AppStarter::class.java.classLoader
       // preload class not in EDT
       Class.forName(IdeEventQueue::class.java.name, true, classLoader)
+      Class.forName(AWTExceptionHandler::class.java.name, true, classLoader)
     }
   }
+}
 
+private fun CoroutineScope.initUi(initAwtToolkitAndEventQueueJob: Job): Job = launch {
+  val preloadLafClassesJob = preloadLafClasses()
+  initAwtToolkitAndEventQueueJob.join()
+
+  val isHeadless = AppMode.isHeadless()
+  if (!isHeadless) {
+    checkGraphics()
+  }
+
+  initAwtToolkitAndEventQueueJob.join()
   preloadLafClassesJob.join()
 
   // SwingDispatcher must be used after Toolkit init
-  val baseLaF = withContext(SwingDispatcher) {
-    activityQueue.end()
+  withContext(SwingDispatcher) {
     // we don't need Idea LaF to show splash, but we do need some base LaF to compute system font data (see below for what)
     var activity = StartUpMeasurer.startActivity("base LaF creation")
     val baseLaF = DarculaLaf.createBaseLaF()
     activity = activity.endAndStart("base LaF initialization")
     // LaF is useless until initialized (`getDefaults` "should only be invoked ... after `initialize` has been invoked.")
     baseLaF.initialize()
+    DarculaLaf.setPreInitializedBaseLaf(baseLaF)
 
     // to compute the system scale factor on non-macOS (JRE HiDPI is not enabled), we need to know system font data,
     // and to compute system font data we need to know `Label.font` UI default (that's why we compute base LaF first)
@@ -536,7 +546,6 @@ private suspend fun initUi(preloadLafClassesJob: Job, busyThread: Thread): Any {
       activity = activity.endAndStart("scale initialization")
       JBUIScale.scale(1f)
     }
-    StartUpMeasurer.setCurrentState(LoadingState.BASE_LAF_INITIALIZED)
     activity = activity.endAndStart("awt thread busy notification")
     /*
 Make EDT to always persist while the main thread is alive. Otherwise, it's possible to have EDT being
@@ -544,10 +553,7 @@ terminated by [AWTAutoShutdown], which will break a `ReadMostlyRWLock` instance.
 [AWTAutoShutdown.notifyThreadBusy(Thread)] will put the main thread into the thread map,
 and thus will effectively disable auto shutdown behavior for this application.
 */
-    AWTAutoShutdown.getInstance().notifyThreadBusy(busyThread)
     activity.end()
-    patchSystem(isHeadless)
-    baseLaF
   }
 
   if (isUsingSeparateWriteThread) {
@@ -555,14 +561,11 @@ and thus will effectively disable auto shutdown behavior for this application.
       WriteIntentLockInstrumenter.instrument()
     }
   }
-
-  DarculaLaf.setPreInitializedBaseLaf(baseLaF)
-  return baseLaF
 }
 
 private fun CoroutineScope.preloadLafClasses(): Job {
-  val classLoader = AppStarter::class.java.classLoader
-  return launch(CoroutineName("LaF class preloading")) {
+  return launch(CoroutineName("LaF class preloading") + Dispatchers.IO) {
+    val classLoader = AppStarter::class.java.classLoader
     // preload class not in EDT
     Class.forName(DarculaLaf::class.java.name, true, classLoader)
     Class.forName(IdeaLaf::class.java.name, true, classLoader)
@@ -589,29 +592,37 @@ private fun blockATKWrapper() {
   activity.end()
 }
 
-private fun CoroutineScope.showEuaIfNeeded(euaDocumentDeferred: Deferred<Any?>?, initUiJob: Deferred<Any>): Deferred<Boolean> {
+private fun CoroutineScope.showEuaIfNeeded(euaDocumentDeferred: Deferred<Any?>?, initUiJob: Job): Deferred<Boolean> {
+  val asyncScope = this
   return async {
     if (euaDocumentDeferred == null) {
       return@async true
     }
 
-    val euaDocument = euaDocumentDeferred.await()
-    initUiJob.join()
-    runActivity("eua showing") {
-      val document = euaDocument as EndUserAgreement.Document?
-      withContext(Dispatchers.IO) {
-        EndUserAgreement.updateCachedContentToLatestBundledVersion()
+    val document = euaDocumentDeferred.await() as EndUserAgreement.Document?
+
+    val updateCached = asyncScope.launch(CoroutineName("eua cache updating") + Dispatchers.IO) {
+      EndUserAgreement.updateCachedContentToLatestBundledVersion()
+    }
+
+    suspend fun prepareAndExecuteInEdt(task: () -> Unit) {
+      updateCached.join()
+      initUiJob.join()
+      withContext(SwingDispatcher) {
+        UIManager.setLookAndFeel(IntelliJLaf())
+        task()
       }
+    }
+
+    runActivity("eua showing") {
       if (document != null) {
-        withContext(SwingDispatcher) {
+        prepareAndExecuteInEdt {
           UIManager.setLookAndFeel(IntelliJLaf())
-          showEndUserAndDataSharingAgreements(document)
         }
         true
       }
       else if (ConsentOptions.needToShowUsageStatsConsent()) {
-        withContext(SwingDispatcher) {
-          UIManager.setLookAndFeel(IntelliJLaf())
+        prepareAndExecuteInEdt {
           showDataSharingAgreement()
         }
         false
@@ -990,17 +1001,17 @@ fun runStartupWizard() {
 
 // the method must be called on EDT
 private fun patchSystem(isHeadless: Boolean) {
-  var activity = StartUpMeasurer.startActivity("event queue replacing")
-  // replace system event queue
-  IdeEventQueue.getInstance()
-  if (!isHeadless && "true" == System.getProperty("idea.check.swing.threading")) {
-    activity = activity.endAndStart("repaint manager set")
-    RepaintManager.setCurrentManager(AssertiveRepaintManager())
+  runActivity("event queue replacing") {
+    // replace system event queue
+    IdeEventQueue.getInstance()
+    // do not crash AWT on exceptions
+    AWTExceptionHandler.register()
   }
-
-  // do not crash AWT on exceptions
-  AWTExceptionHandler.register()
-  activity.end()
+  if (!isHeadless && "true" == System.getProperty("idea.check.swing.threading")) {
+    runActivity("repaint manager set") {
+      RepaintManager.setCurrentManager(AssertiveRepaintManager())
+    }
+  }
 }
 
 fun canonicalPath(path: String): Path {

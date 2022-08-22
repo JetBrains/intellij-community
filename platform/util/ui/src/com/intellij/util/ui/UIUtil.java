@@ -76,7 +76,7 @@ import java.util.regex.Pattern;
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
 public final class UIUtil {
   static {
-    LoadingState.BASE_LAF_INITIALIZED.checkOccurred();
+    LoadingState.COMPONENTS_REGISTERED.checkOccurred();
   }
 
   public static final @NlsSafe String BORDER_LINE = "<hr size=1 noshade>";
