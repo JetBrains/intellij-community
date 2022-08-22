@@ -6,6 +6,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.executors.ExecutorGroup;
 import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.runToolbar.RunToolbarSlotManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.idea.ActionsBundle;
@@ -49,7 +50,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   public static final Icon EMPTY_ICON = EmptyIcon.ICON_16;
 
   public static boolean hasRunCurrentFileItem(@NotNull Project project) {
-    if (RunManager.getInstance(project).isRunWidgetActive()) {
+    if (RunToolbarSlotManager.Companion.getInstance(project).getActive$intellij_platform_execution_impl()) {
       // Run Widget shows up only in Rider. In other IDEs it's a secret feature backed by the "ide.run.widget" Registry key.
       // The 'Run Current File' feature doesn't look great together with the Run Widget.
       return false;
