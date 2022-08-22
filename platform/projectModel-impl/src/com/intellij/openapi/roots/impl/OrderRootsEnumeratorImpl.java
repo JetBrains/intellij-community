@@ -88,16 +88,18 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
           collectModuleRoots(type, rootModel, result, !productionOnTests, includeTests, customHandlers);
         }
       }
-      else {
+      else if (orderEntry instanceof LibraryOrSdkOrderEntry) {
         if (myCustomSdkRootProvider != null && orderEntry instanceof JdkOrderEntry) {
           Collections.addAll(result, myCustomSdkRootProvider.fun((JdkOrderEntry)orderEntry));
           return true;
         }
-        if (orderEntry instanceof LibraryOrderEntry 
-            && OrderEnumeratorBase.addCustomRootsForLibraryOrSdk((LibraryOrSdkOrderEntry)orderEntry, type, result, customHandlers)) {
+        if (OrderEnumeratorBase.addCustomRootsForLibraryOrSdk((LibraryOrSdkOrderEntry)orderEntry, type, result, customHandlers)) {
           return true;
         }
-        Collections.addAll(result, orderEntry.getFiles(type));
+        Collections.addAll(result, ((LibraryOrSdkOrderEntry)orderEntry).getRootFiles(type));
+      }
+      else {
+        LOG.error("Unexpected implementation of OrderEntry: " + orderEntry.getClass().getName());
       }
       return true;
     });
@@ -125,11 +127,14 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
           collectModuleRootsUrls(type, rootModel, result, !productionOnTests, includeTests);
         }
       }
-      else {
-        if (orderEntry instanceof LibraryOrSdkOrderEntry && OrderEnumeratorBase.addCustomRootUrlsForLibraryOrSdk((LibraryOrSdkOrderEntry)orderEntry, type, result, customHandlers)) {
+      else if (orderEntry instanceof LibraryOrSdkOrderEntry) {
+        if (OrderEnumeratorBase.addCustomRootUrlsForLibraryOrSdk((LibraryOrSdkOrderEntry)orderEntry, type, result, customHandlers)) {
           return true;
         }
-        Collections.addAll(result, orderEntry.getUrls(type));
+        Collections.addAll(result, ((LibraryOrSdkOrderEntry)orderEntry).getRootUrls(type));
+      }
+      else {
+        LOG.error("Unexpected implementation of OrderEntry: " + orderEntry.getClass().getName());
       }
       return true;
     });
