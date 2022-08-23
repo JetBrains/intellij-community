@@ -164,7 +164,13 @@ public final class ScratchFileActions {
     }
 
     private void updatePresentationTextAndIcon(@NotNull AnActionEvent e, @NotNull Presentation presentation) {
-      presentation.setText(myActionText.getValue());
+      if (e.getPlace().equals(ActionPlaces.PROJECT_VIEW_POPUP)) {
+        presentation.setText(ActionsBundle.actionText(ACTION_ID));
+      }
+      else {
+        presentation.setText(myActionText.getValue());
+      }
+
       presentation.setIcon(ICON);
       if (ActionPlaces.MAIN_MENU.equals(e.getPlace()) && !NewActionGroup.isActionInNewPopupMenu(this)) {
         presentation.setIcon(null);
