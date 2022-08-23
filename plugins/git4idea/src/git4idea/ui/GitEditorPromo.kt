@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui
 
 import com.intellij.codeInsight.hint.HintUtil
@@ -11,46 +11,46 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.IconButton
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
+import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.InplaceButton
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepositoryFiles
 import git4idea.repo.GitRepositoryManager
 import java.awt.BorderLayout
+import java.util.function.Function
+import javax.swing.JComponent
 
-private val KEY: Key<EditorNotificationPanel> = Key.create("GitEditorPromo")
 private const val PROMO_DISMISSED_KEY = "git.editor.promo.dismissed"
 
-class GitEditorPromo : EditorNotifications.Provider<EditorNotificationPanel>() {
-  override fun getKey(): Key<EditorNotificationPanel> = KEY
-
-  override fun createNotificationPanel(file: VirtualFile,
-                                       fileEditor: FileEditor,
-                                       project: Project): EditorNotificationPanel? {
-    return if (isEnabled() && CommandLineWaitingManager.getInstance().hasHookFor(file)
-               && file.name == GitRepositoryFiles.COMMIT_EDITMSG) {
-      EditorNotificationPanel(HintUtil.PROMOTION_PANE_KEY, EditorNotificationPanel.Status.Info).apply {
-        icon(AllIcons.Ide.Gift)
-        text = GitBundle.message("editor.promo.commit.text", ApplicationNamesInfo.getInstance().fullProductName)
-        val repository = GitRepositoryManager.getInstance(project).repositories.find { it.repositoryFiles.isCommitMessageFile(file.path) }
-        if (repository != null) {
-          createActionLabel(GitBundle.message("editor.promo.commit.try.link"), IdeActions.ACTION_CHECKIN_PROJECT, false)
-        }
-        else {
-          createActionLabel(GitBundle.message("editor.promo.help.link")) {
-            HelpManager.getInstance().invokeHelp("Commit and push changes")
-          }
-        }
-        add(InplaceButton(IconButton(GitBundle.message("editor.promo.close.link"), AllIcons.Actions.Close, AllIcons.Actions.CloseHovered)) {
-          PropertiesComponent.getInstance().setValue(PROMO_DISMISSED_KEY, true)
-          EditorNotifications.getInstance(project).updateNotifications(this@GitEditorPromo)
-        }, BorderLayout.EAST)
-      }
+private class GitEditorPromo : EditorNotificationProvider {
+  override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
+    if (!isEnabled() || !CommandLineWaitingManager.getInstance().hasHookFor(file) || file.name != GitRepositoryFiles.COMMIT_EDITMSG) {
+      return null
     }
-    else null
+
+    return Function {
+      val panel = EditorNotificationPanel(HintUtil.PROMOTION_PANE_KEY, EditorNotificationPanel.Status.Info)
+      panel.icon(AllIcons.Ide.Gift)
+      panel.text = GitBundle.message("editor.promo.commit.text", ApplicationNamesInfo.getInstance().fullProductName)
+      val repository = GitRepositoryManager.getInstance(project).repositories.find { it.repositoryFiles.isCommitMessageFile(file.path) }
+      if (repository == null) {
+        panel.createActionLabel(GitBundle.message("editor.promo.help.link")) {
+          HelpManager.getInstance().invokeHelp("Commit and push changes")
+        }
+      }
+      else {
+        panel.createActionLabel(GitBundle.message("editor.promo.commit.try.link"), IdeActions.ACTION_CHECKIN_PROJECT, false)
+      }
+      panel.add(
+        InplaceButton(IconButton(GitBundle.message("editor.promo.close.link"), AllIcons.Actions.Close, AllIcons.Actions.CloseHovered)) {
+          PropertiesComponent.getInstance().setValue(PROMO_DISMISSED_KEY, true)
+          EditorNotifications.getInstance(project).updateNotifications(this)
+        }, BorderLayout.EAST)
+      panel
+    }
   }
 
   private fun isEnabled(): Boolean = !PropertiesComponent.getInstance().getBoolean(PROMO_DISMISSED_KEY)

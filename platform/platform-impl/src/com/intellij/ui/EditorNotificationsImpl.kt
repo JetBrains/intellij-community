@@ -6,8 +6,8 @@ package com.intellij.ui
 import com.intellij.ProjectTopics
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -26,11 +26,11 @@ import com.intellij.psi.PsiFile
 import com.intellij.refactoring.listeners.RefactoringElementAdapter
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider
+import com.intellij.util.SingleAlarm
+import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -39,10 +39,14 @@ import java.util.concurrent.CancellationException
 import java.util.function.BiFunction
 import javax.swing.JComponent
 
-class EditorNotificationsImpl(private val  project: Project) : EditorNotifications() {
-  private val updateMerger = MergingUpdateQueue("EditorNotifications update merger", 100, true, null, project).usePassThroughInUnitTestMode()
+class EditorNotificationsImpl(private val project: Project) : EditorNotifications(), Disposable {
+  private val updateAllAlarm = SingleAlarm(::doUpdateAllNotifications, 100, this)
 
   private val fileToUpdateNotificationJob = CollectionFactory.createConcurrentWeakMap<VirtualFile, Job>()
+  private val fileEditorToMap =
+    CollectionFactory.createConcurrentWeakMap<FileEditor, MutableMap<Class<out EditorNotificationProvider>, JComponent>>()
+
+  private val coroutineScope: CoroutineScope = project.coroutineScope.childScope()
 
   init {
     val connection = project.messageBus.connect()
@@ -52,11 +56,11 @@ class EditorNotificationsImpl(private val  project: Project) : EditorNotificatio
       }
 
       override fun selectionChanged(event: FileEditorManagerEvent) {
-        val file = event.newFile
-        val editor = event.newEditor
-        if (file != null && editor != null && java.lang.Boolean.TRUE == editor.getUserData(PENDING_UPDATE)) {
+        val file = event.newFile ?: return
+        val editor = event.newEditor ?: return
+        if (editor.getUserData(PENDING_UPDATE) == java.lang.Boolean.TRUE) {
           editor.putUserData(PENDING_UPDATE, null)
-          updateEditor(file, editor)
+          updateEditors(file, listOf(editor))
         }
       }
     })
@@ -87,142 +91,139 @@ class EditorNotificationsImpl(private val  project: Project) : EditorNotificatio
       }, false, null)
   }
 
+  override fun dispose() {
+    coroutineScope.cancel()
+    // help GC
+    fileToUpdateNotificationJob.clear()
+    fileEditorToMap.clear()
+  }
+
   companion object {
-    private val EDITOR_NOTIFICATION_PROVIDER =
-      Key.create<MutableMap<Class<out EditorNotificationProvider>, JComponent?>>("editor.notification.provider")
-
     private val PENDING_UPDATE = Key.create<Boolean>("pending.notification.update")
+  }
 
-    @VisibleForTesting
-    @JvmStatic
-    fun getNotificationPanels(editor: FileEditor): MutableMap<Class<out EditorNotificationProvider>, JComponent?> {
-      editor.getUserData(EDITOR_NOTIFICATION_PROVIDER)?.let {
-        return it
-      }
+  @VisibleForTesting
+  fun getNotificationPanels(fileEditor: FileEditor): MutableMap<Class<out EditorNotificationProvider>, JComponent> {
+    return fileEditorToMap.computeIfAbsent(fileEditor) { WeakHashMap() }
+  }
 
-      editor.putUserData(EDITOR_NOTIFICATION_PROVIDER, WeakHashMap())
-      editor.getUserData(EDITOR_NOTIFICATION_PROVIDER)?.let {
-        return it
-      }
-      val editorClass = editor.javaClass
-      val pluginException = PluginException.createByClass(
-        "User data is not supported; editorClass='${editorClass.name}'; key='$EDITOR_NOTIFICATION_PROVIDER'",
-        null,
-        editorClass)
-      Logger.getInstance(editorClass).error(pluginException)
-      throw pluginException
-    }
-
-    @TestOnly
-    @JvmStatic
-    fun completeAsyncTasks(project: Project) {
-      runUnderModalProgressIfIsEdt {
+  @TestOnly
+  fun completeAsyncTasks() {
+    runUnderModalProgressIfIsEdt {
+      val parentJob = coroutineScope.coroutineContext[Job]!!
+      while (true) {
+        // process all events in EDT
         withContext(Dispatchers.EDT) {
           yield()
         }
 
-        val editorNotificationManager = getInstance(project) as EditorNotificationsImpl
-        for (job in editorNotificationManager.fileToUpdateNotificationJob.values.toList()) {
-          try {
-            job.join()
-          }
-          catch (ignore: CancellationException) {
-          }
+        val jobs = parentJob.children.toList()
+        if (jobs.isEmpty()) {
+          break
         }
 
+        jobs.joinAll()
+
+        // process all events in EDT
         withContext(Dispatchers.EDT) {
           yield()
         }
       }
     }
+    check(fileToUpdateNotificationJob.isEmpty())
   }
 
   override fun updateNotifications(provider: EditorNotificationProvider) {
     for (file in FileEditorManager.getInstance(project).openFilesWithRemotes) {
-      for (editor in getEditors(file)) {
-        updateNotification(editor, provider, null)
+      for (editor in getEditors(file).toList()) {
+        updateNotification(fileEditor = editor, provider = provider, component = null)
       }
     }
   }
 
   override fun updateNotifications(file: VirtualFile) {
-    AppUIExecutor
-      .onUiThread(ModalityState.any())
-      .expireWith(project)
-      .execute {
-        if (project.isDisposed || !file.isValid) {
-          return@execute
-        }
-        var editors = getEditors(file)
-        if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
-          editors = editors.filter { fileEditor ->
-            val visible = UIUtil.isShowing(fileEditor.component)
-            if (!visible) {
-              fileEditor.putUserData(PENDING_UPDATE, java.lang.Boolean.TRUE)
-            }
-            visible
-          }
-        }
-        for (editor in editors) {
-          updateEditor(file, editor)
-        }
-      }
-  }
-
-  private fun getEditors(file: VirtualFile): List<FileEditor> {
-    return FileEditorManager.getInstance(project).getAllEditors(file).filter { it !is TextEditor || isEditorLoaded(it.editor) }
-  }
-
-  private fun updateEditor(file: VirtualFile, fileEditor: FileEditor) {
-    // light project is not disposed in tests
-    if (project.isDisposed) {
-      return
-    }
-
-    val job = project.coroutineScope.launch(start = CoroutineStart.LAZY) {
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       if (!file.isValid) {
         return@launch
       }
 
+      doUpdateNotifications(file)
+    }
+  }
+
+  @RequiresEdt
+  private fun doUpdateNotifications(file: VirtualFile) {
+    var editors = getEditors(file)
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
+      editors = editors.filter { fileEditor ->
+        val visible = UIUtil.isShowing(fileEditor.component)
+        if (!visible) {
+          fileEditor.putUserData(PENDING_UPDATE, java.lang.Boolean.TRUE)
+        }
+        visible
+      }
+    }
+    updateEditors(file, editors.toList())
+  }
+
+  private fun getEditors(file: VirtualFile): Sequence<FileEditor> {
+    return FileEditorManager.getInstance(project).getAllEditors(file).asSequence().filter { it !is TextEditor || isEditorLoaded(it.editor) }
+  }
+
+  private fun updateEditors(file: VirtualFile, fileEditors: List<FileEditor>) {
+    val job = coroutineScope.launch(start = CoroutineStart.LAZY) {
+      // delay for debounce
+      delay(100)
+
+      if (!file.isValid) {
+        return@launch
+      }
+
+      // light project is not disposed in tests
+      if (project.isDisposed) {
+        return@launch
+      }
+
       coroutineContext.ensureActive()
-      try {
-        val point = EditorNotificationProvider.EP_NAME.getPoint(project) as ExtensionPointImpl<EditorNotificationProvider>
-        for (adapter in point.sortedAdapters) {
+      val point = EditorNotificationProvider.EP_NAME.getPoint(project) as ExtensionPointImpl<EditorNotificationProvider>
+      for (adapter in point.sortedAdapters) {
+        coroutineContext.ensureActive()
+
+        try {
+          val provider = adapter.createInstance<EditorNotificationProvider>(project) ?: continue
+
           coroutineContext.ensureActive()
 
-          try {
-            val provider = adapter.createInstance<EditorNotificationProvider>(project) ?: continue
+          if (DumbService.isDumb(project) && !DumbService.isDumbAware(provider)) {
+            continue
+          }
 
-            coroutineContext.ensureActive()
-
-            if (DumbService.isDumb(project) && !DumbService.isDumbAware(provider)) {
-              continue
+          val componentProvider = readAction {
+            if (file.isValid) {
+              provider.collectNotificationData(project, file)
+            }
+            else {
+              null
+            }
+          } ?: continue
+          withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+            if (!file.isValid) {
+              return@withContext
             }
 
-            val componentProvider = readAction {
-              if (file.isValid) {
-                provider.collectNotificationData(project, file)
-              }
-              else {
-                null
-              }
-            } ?: continue
-            withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+            for (fileEditor in fileEditors) {
               val component = componentProvider.apply(fileEditor)
-              updateNotification(fileEditor, provider, component)
+              updateNotification(fileEditor = fileEditor, provider = provider, component = component)
             }
-          }
-          catch (e: CancellationException) {
-            throw e
-          }
-          catch (e: Exception) {
-            val pluginException = if (e is PluginException) e else PluginException(e, adapter.pluginDescriptor.pluginId)
-            logger<EditorNotificationsImpl>().error(pluginException)
           }
         }
-      }
-      finally {
-        fileToUpdateNotificationJob.remove(file, coroutineContext.job)
+        catch (e: CancellationException) {
+          throw e
+        }
+        catch (e: Exception) {
+          val pluginException = if (e is PluginException) e else PluginException(e, adapter.pluginDescriptor.pluginId)
+          logger<EditorNotificationsImpl>().error(pluginException)
+        }
       }
     }
     job.invokeOnCompletion { fileToUpdateNotificationJob.remove(file, job) }
@@ -235,11 +236,11 @@ class EditorNotificationsImpl(private val  project: Project) : EditorNotificatio
   }
 
   @RequiresEdt
-  private fun updateNotification(editor: FileEditor, provider: EditorNotificationProvider, component: JComponent?) {
-    val panels = getNotificationPanels(editor)
+  private fun updateNotification(fileEditor: FileEditor, provider: EditorNotificationProvider, component: JComponent?) {
+    val panels = fileEditorToMap.get(fileEditor)
     val providerClass = provider.javaClass
-    panels.get(providerClass)?.let { old ->
-      FileEditorManager.getInstance(project).removeTopComponent(editor, old)
+    panels?.get(providerClass)?.let { old ->
+      FileEditorManager.getInstance(project).removeTopComponent(fileEditor, old)
     }
     if (component != null) {
       if (component is EditorNotificationPanel) {
@@ -248,9 +249,13 @@ class EditorNotificationsImpl(private val  project: Project) : EditorNotificatio
         }
       }
       logNotificationShown(project, provider)
-      FileEditorManager.getInstance(project).addTopComponent(editor, component)
+      FileEditorManager.getInstance(project).addTopComponent(fileEditor, component)
+
+      (panels ?: getNotificationPanels(fileEditor)).put(providerClass, component)
     }
-    panels.put(providerClass, component)
+    else {
+      panels?.remove(providerClass)
+    }
   }
 
   override fun updateAllNotifications() {
@@ -258,14 +263,20 @@ class EditorNotificationsImpl(private val  project: Project) : EditorNotificatio
       throw UnsupportedOperationException("Editor notifications aren't supported for default project")
     }
 
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      doUpdateAllNotifications()
+    }
+    else {
+      updateAllAlarm.cancelAndRequest()
+    }
+  }
+
+  @RequiresEdt
+  private fun doUpdateAllNotifications() {
     val fileEditorManager = FileEditorManager.getInstance(project) ?: throw IllegalStateException("No FileEditorManager for $project")
-    updateMerger.queue(object : Update("update") {
-      override fun run() {
-        for (file in fileEditorManager.openFilesWithRemotes) {
-          updateNotifications(file)
-        }
-      }
-    })
+    for (file in fileEditorManager.openFilesWithRemotes) {
+      doUpdateNotifications(file)
+    }
   }
 
   internal class RefactoringListenerProvider : RefactoringElementListenerProvider {
@@ -277,10 +288,8 @@ class EditorNotificationsImpl(private val  project: Project) : EditorNotificatio
       return object : RefactoringElementAdapter() {
         override fun elementRenamedOrMoved(newElement: PsiElement) {
           if (newElement is PsiFile) {
-            val vFile = newElement.getContainingFile().virtualFile
-            if (vFile != null) {
-              getInstance(element.getProject()).updateNotifications(vFile)
-            }
+            val vFile = newElement.getContainingFile().virtualFile ?: return
+            getInstance(element.getProject()).updateNotifications(vFile)
           }
         }
 

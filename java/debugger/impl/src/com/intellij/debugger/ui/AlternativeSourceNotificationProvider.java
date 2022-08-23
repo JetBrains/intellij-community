@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerManagerEx;
@@ -44,14 +44,14 @@ public final class AlternativeSourceNotificationProvider implements EditorNotifi
   private static final Key<Boolean> FILE_PROCESSED_KEY = Key.create("AlternativeSourceCheckDone");
 
   @Override
-  public @NotNull Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
+  public @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
                                                                                                                 @NotNull VirtualFile file) {
     if (!DebuggerSettings.getInstance().SHOW_ALTERNATIVE_SOURCE) {
-      return CONST_NULL;
+      return null;
     }
 
     if (DumbService.getInstance(project).isDumb()) {
-      return CONST_NULL;
+      return null;
     }
 
     DebuggerSession javaSession = DebuggerManagerEx.getInstanceEx(project).getContext().getDebuggerSession();
@@ -59,29 +59,29 @@ public final class AlternativeSourceNotificationProvider implements EditorNotifi
 
     if (session == null) {
       setFileProcessed(file, false);
-      return CONST_NULL;
+      return null;
     }
 
     XSourcePosition position = session.getCurrentPosition();
     if (position == null || !file.equals(position.getFile())) {
       setFileProcessed(file, false);
-      return CONST_NULL;
+      return null;
     }
 
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     if (!(psiFile instanceof PsiJavaFile)) {
-      return CONST_NULL;
+      return null;
     }
 
     PsiClass[] classes = ((PsiJavaFile)psiFile).getClasses();
     if (classes.length == 0) {
-      return CONST_NULL;
+      return null;
     }
 
     PsiClass baseClass = classes[0];
     String name = baseClass.getQualifiedName();
     if (name == null) {
-      return CONST_NULL;
+      return null;
     }
 
     PsiClass[] altClasses = JavaPsiFacade.getInstance(project).findClasses(name, javaSession.getSearchScope());
@@ -94,7 +94,7 @@ public final class AlternativeSourceNotificationProvider implements EditorNotifi
     setFileProcessed(file, true);
 
     if (alts.size() <= 1) {
-      return CONST_NULL;
+      return null;
     }
 
     for (PsiClass cls : alts) {

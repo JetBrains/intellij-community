@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
-import com.intellij.ui.EditorNotificationProvider.CONST_NULL
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.base.util.isGradleModule
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
@@ -21,16 +20,16 @@ import javax.swing.JComponent
 
 class JavaOutsideModuleDetector : EditorNotificationProvider {
 
-    override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?> {
+    override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
         if (file.extension != JavaFileType.DEFAULT_EXTENSION && !FileTypeRegistry.getInstance().isFileOfType(file, JavaFileType.INSTANCE)) {
-            return CONST_NULL
+            return null
         }
-        val module = ModuleUtilCore.findModuleForFile(file, project)?.takeIf { it.isGradleModule } ?: return CONST_NULL
-        val facetSettings = KotlinFacet.get(module)?.configuration?.settings ?: return CONST_NULL
+        val module = ModuleUtilCore.findModuleForFile(file, project)?.takeIf { it.isGradleModule } ?: return null
+        val facetSettings = KotlinFacet.get(module)?.configuration?.settings ?: return null
 
         val filePath = file.path
         val nonKotlinPath = module.sourceRoots.map { it.path } - facetSettings.pureKotlinSourceFolders
-        if (nonKotlinPath.any { filePath.startsWith(it) }) return CONST_NULL
+        if (nonKotlinPath.any { filePath.startsWith(it) }) return null
 
         return Function {
             EditorNotificationPanel(it, EditorNotificationPanel.Status.Warning).apply {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.compiler.CompilerManager;
@@ -30,37 +30,36 @@ import java.util.function.Function;
 final class ConfigureGroovyLibraryNotificationProvider implements EditorNotificationProvider {
 
   @Override
-  public @NotNull Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
+  public @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
                                                                                                                 @NotNull VirtualFile file) {
     try {
       if (!file.getFileType().equals(GroovyFileType.GROOVY_FILE_TYPE)) {
-        return CONST_NULL;
+        return null;
       }
       // do not show the panel for Gradle build scripts
       // expecting groovy library to always be available at the gradle distribution
       if (StringUtil.endsWith(file.getName(), ".gradle") ||
           CompilerManager.getInstance(project).isExcludedFromCompilation(file)) {
-        return CONST_NULL;
+        return null;
       }
 
       final Module module = ModuleUtilCore.findModuleForFile(file, project);
-      if (module == null ||
-          isMavenModule(module)) {
-        return CONST_NULL;
+      if (module == null || isMavenModule(module)) {
+        return null;
       }
 
       for (GroovyFrameworkConfigNotification configNotification : GroovyFrameworkConfigNotification.EP_NAME.getExtensions()) {
         if (configNotification.hasFrameworkStructure(module)) {
           return configNotification.hasFrameworkLibrary(module) ?
-                 CONST_NULL :
+                 null :
                  fileEditor -> createConfigureNotificationPanel(module, fileEditor);
         }
       }
 
-      return CONST_NULL;
+      return null;
     }
     catch (ProcessCanceledException | IndexNotReadyException ignored) {
-      return CONST_NULL;
+      return null;
     }
   }
 
