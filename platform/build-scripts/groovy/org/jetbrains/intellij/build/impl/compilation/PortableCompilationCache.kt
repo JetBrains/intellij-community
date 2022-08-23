@@ -20,7 +20,9 @@ class PortableCompilationCache(private val context: CompilationContext) {
   }
 
   init {
-    require(IS_ENABLED)
+    require(IS_ENABLED) {
+      "JPS Caches are expected to be enabled"
+    }
   }
 
   private val git = Git(context.paths.projectHome)
