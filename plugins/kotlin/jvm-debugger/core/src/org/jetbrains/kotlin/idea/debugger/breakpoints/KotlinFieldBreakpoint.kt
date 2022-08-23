@@ -181,7 +181,7 @@ class KotlinFieldBreakpoint(
             }
 
             if (descriptor is PropertyDescriptor) {
-                if (bindingContext.get(BindingContext.BACKING_FIELD_REQUIRED, descriptor)!!) {
+                if (bindingContext.get(BindingContext.BACKING_FIELD_REQUIRED, descriptor) == true) {
                     BreakpointType.FIELD
                 } else {
                     BreakpointType.METHOD
