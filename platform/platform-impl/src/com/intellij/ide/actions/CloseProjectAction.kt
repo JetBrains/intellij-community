@@ -27,7 +27,7 @@ class CloseProjectAction : CloseProjectsActionBase() {
       e.presentation.setText(IdeBundle.messagePointer("action.close.projects.in.current.window"))
     }
     else {
-      e.presentation.text = templatePresentation.text
+      e.presentation.setTextWithMnemonic(templatePresentation.textWithPossibleMnemonic)
       e.presentation.description = templatePresentation.description
     }
   }
