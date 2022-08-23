@@ -372,6 +372,9 @@
     <registryKey key="python.create.namespace.package.action" defaultValue="false"
                  description="Possibility to create namespace packages from New | Python Package"/>
 
+    <!-- asyncio REPL -->
+    <registryKey key="python.console.asyncio.repl" defaultValue="true" restartRequired="false" description="Possibility to write await outside of function"/>
+
     <!-- asyncio REPL for Python Console/Debugger -->
     <registryKey key="python.debug.asyncio.repl" defaultValue="true" restartRequired="false" description="Possibility to write await outside of function"/>
 
