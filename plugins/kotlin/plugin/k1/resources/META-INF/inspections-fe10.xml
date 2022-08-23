@@ -926,6 +926,20 @@
 
     <intentionAction>
       <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.intentions.ConvertTrimMarginToTrimIndentIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.intentions.ConvertTrimIndentToTrimMarginIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertPropertyGetterToInitializerIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>

@@ -9405,6 +9405,92 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/intentions/convertTrimIndentToTrimMargin")
+    public static class ConvertTrimIndentToTrimMargin extends AbstractIntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("differentIndent.kt")
+        public void testDifferentIndent() throws Exception {
+            runTest("testData/intentions/convertTrimIndentToTrimMargin/differentIndent.kt");
+        }
+
+        @TestMetadata("notBlankFirst.kt")
+        public void testNotBlankFirst() throws Exception {
+            runTest("testData/intentions/convertTrimIndentToTrimMargin/notBlankFirst.kt");
+        }
+
+        @TestMetadata("notBlankLast.kt")
+        public void testNotBlankLast() throws Exception {
+            runTest("testData/intentions/convertTrimIndentToTrimMargin/notBlankLast.kt");
+        }
+
+        @TestMetadata("notRawString.kt")
+        public void testNotRawString() throws Exception {
+            runTest("testData/intentions/convertTrimIndentToTrimMargin/notRawString.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("testData/intentions/convertTrimIndentToTrimMargin/simple.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/intentions/convertTrimMarginToTrimIndent")
+    public static class ConvertTrimMarginToTrimIndent extends AbstractIntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("differentIndent.kt")
+        public void testDifferentIndent() throws Exception {
+            runTest("testData/intentions/convertTrimMarginToTrimIndent/differentIndent.kt");
+        }
+
+        @TestMetadata("escapedMarginPrefixArgument.kt")
+        public void testEscapedMarginPrefixArgument() throws Exception {
+            runTest("testData/intentions/convertTrimMarginToTrimIndent/escapedMarginPrefixArgument.kt");
+        }
+
+        @TestMetadata("noMarginPrefix.kt")
+        public void testNoMarginPrefix() throws Exception {
+            runTest("testData/intentions/convertTrimMarginToTrimIndent/noMarginPrefix.kt");
+        }
+
+        @TestMetadata("notBlankFirst.kt")
+        public void testNotBlankFirst() throws Exception {
+            runTest("testData/intentions/convertTrimMarginToTrimIndent/notBlankFirst.kt");
+        }
+
+        @TestMetadata("notBlankLast.kt")
+        public void testNotBlankLast() throws Exception {
+            runTest("testData/intentions/convertTrimMarginToTrimIndent/notBlankLast.kt");
+        }
+
+        @TestMetadata("notRawString.kt")
+        public void testNotRawString() throws Exception {
+            runTest("testData/intentions/convertTrimMarginToTrimIndent/notRawString.kt");
+        }
+
+        @TestMetadata("referenceMarginPrefixArgument.kt")
+        public void testReferenceMarginPrefixArgument() throws Exception {
+            runTest("testData/intentions/convertTrimMarginToTrimIndent/referenceMarginPrefixArgument.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("testData/intentions/convertTrimMarginToTrimIndent/simple.kt");
+        }
+
+        @TestMetadata("simple2.kt")
+        public void testSimple2() throws Exception {
+            runTest("testData/intentions/convertTrimMarginToTrimIndent/simple2.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertTryFinallyToUseCall")
     public static class ConvertTryFinallyToUseCall extends AbstractIntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
