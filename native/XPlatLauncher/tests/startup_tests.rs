@@ -82,6 +82,9 @@ mod tests {
     use std::time::Duration;
     use std::{fs, thread, time};
 
+    // TODO: test for additionalJvmArguments in product-info.json being set
+    // (e.g. "-Didea.vendor.name=JetBrains")
+
     fn start_launcher(test_dir: PathBuf) -> ExitStatus {
         let mut launcher_process = Command::new(test_dir.join("xplat-launcher")) // for windows xplat-launcher.exe???
             .current_dir(test_dir)

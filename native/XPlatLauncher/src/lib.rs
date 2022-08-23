@@ -111,9 +111,26 @@ pub struct ProductInfo {
 #[allow(non_snake_case)]
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct ProductInfoLaunchField {
+    pub os: String,
     pub vmOptionsFilePath: String,
     pub bootClassPathJarNames: Vec<String>,
     pub additionalJvmArguments: Vec<String>
+}
+
+impl ProductInfo {
+    pub fn get_current_platform_launch_field(&self) -> Result<&ProductInfoLaunchField> {
+        let current_os = env::consts::OS;
+        let os_specific_launch_field =
+            self.launch.iter().find(|&l| l.os.to_lowercase() == current_os);
+
+        match os_specific_launch_field {
+            None => {
+                let message = format!("Could not find current os {current_os} launch element in product-info.json 'launch' field");
+                err_from_string(message)
+            }
+            Some(x) => Ok(x),
+        }
+    }
 }
 
 trait LaunchConfiguration {
@@ -202,77 +219,17 @@ fn get_full_vm_options(configuration: &Box<dyn LaunchConfiguration>) -> Result<V
         }
     };
 
-    debug!("Resolving IDE VM options from files");
-    // 2. .vmoptions
-    let intellij_vm_options = configuration.get_intellij_vm_options()?;
-    for vm_option in intellij_vm_options {
-        full_vm_options.push(vm_option);
-    }
-
     debug!("Resolving classpath");
-    // 3. classpath
+    // 2. classpath
     let class_path_separator = get_class_path_separator();
     let class_path = configuration.get_class_path()?.join(class_path_separator);
     let class_path_vm_option = "-Djava.class.path=".to_string() + class_path.as_str();
-
     full_vm_options.push(class_path_vm_option);
 
-    // 4. TODO: find out if that's still needed
-    // full_vm_options.push("-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader".to_string());
-    full_vm_options.push("-XX:+StartAttachListener".to_string());
-
-    // TODO: shouldn't this already be in .vmoptions?
-    // answer: it's platform-specific :D
-    // linux - replaced
-    // windows - resource file
-    // macos - plist
-    // answer: add to product-info.json
-    full_vm_options.push("--add-opens=java.base/java.io=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/java.lang=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/java.lang.reflect=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/java.net=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/java.nio=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/java.nio.charset=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/java.text=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/java.time=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/java.util=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/java.util.concurrent=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/java.util.concurrent.atomic=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/jdk.internal.vm=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/sun.nio.ch=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/sun.security.ssl=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.base/sun.security.util=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/com.apple.eawt=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/com.apple.eawt.event=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/com.apple.laf=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/com.sun.java.swing.plaf.gtk=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/java.awt=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/java.awt.dnd.peer=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/java.awt.event=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/java.awt.image=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/java.awt.peer=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/java.awt.font=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/javax.swing=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/javax.swing.plaf.basic=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/javax.swing.text.html=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/sun.awt.X11=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/sun.awt.datatransfer=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/sun.awt.image=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/sun.awt.windows=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/sun.awt=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/sun.font=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/sun.java2d=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/sun.lwawt=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/sun.lwawt.macosx=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=java.desktop/sun.swing=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=jdk.attach/sun.tools.attach=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=jdk.internal.jvmstat/sun.jvmstat.monitor=ALL-UNNAMED".to_string());
-    full_vm_options.push("--add-opens=jdk.jdi/com.sun.tools.jdi=ALL-UNNAMED".to_string());
-
-    // TODO:
-    // "-XX:ErrorFile=$HOME/java_error_in___vm_options___%p.log" \
-    // "-XX:HeapDumpPath=$HOME/java_error_in___vm_options___.hprof" \
+    debug!("Resolving IDE VM options");
+    // 3. vmoptions
+    let intellij_vm_options = configuration.get_intellij_vm_options()?;
+    full_vm_options.extend_from_slice(&intellij_vm_options);
 
     Ok(full_vm_options)
 }
@@ -284,7 +241,8 @@ fn get_class_path_separator<'a>() -> &'a str {
 
 #[cfg(target_os = "windows")]
 fn get_class_path_separator<'a>() -> &'a str {
-    ";"
+    ";
+            }"
 }
 
 fn show_fail_to_start_message(title: &str, text: &str) {

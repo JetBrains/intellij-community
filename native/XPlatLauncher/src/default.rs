@@ -22,7 +22,14 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
     }
 
     fn get_intellij_vm_options(&self) -> Result<Vec<String>> {
-        self.get_merged_vm_options()
+        let vm_options_from_files = self.get_merged_vm_options_from_files()?;
+        let additional_jvm_arguments = &self.product_info.get_current_platform_launch_field()?.additionalJvmArguments;
+
+        let mut result = Vec::with_capacity(vm_options_from_files.capacity() + additional_jvm_arguments.capacity());
+        result.extend_from_slice(&vm_options_from_files);
+        result.extend_from_slice(additional_jvm_arguments);
+
+        Ok(result)
     }
 
     fn get_properties_file(&self) -> Result<PathBuf> {
@@ -345,7 +352,7 @@ impl DefaultLaunchConfiguration {
     // else
     //   message "Cannot find a VM options file"
     // fi
-    pub fn get_merged_vm_options(&self) -> Result<Vec<String>> {
+    pub fn get_merged_vm_options_from_files(&self) -> Result<Vec<String>> {
         let vm_options_file = self.get_vm_options_file();
         let user_vm_options_file = self.get_user_vm_options_file();
 
