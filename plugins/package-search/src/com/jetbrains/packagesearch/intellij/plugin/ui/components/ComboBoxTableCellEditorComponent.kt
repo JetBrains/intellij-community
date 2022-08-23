@@ -57,42 +57,4 @@ internal class ComboBoxTableCellEditorComponent<T : Any>(
         super.setColumn(column)
         myColumn = column
     }
-//
-//    override fun addNotify() {
-//        super.addNotify()
-//        initAndShowPopup()
-//    }
-//
-//    private fun initAndShowPopup() {
-//        val cellRect = table.getCellRect(myRow, column, true)
-//        val surrendersFocusOnKeystrokeOldValue = table.surrendersFocusOnKeyStroke()
-//
-//        val popup = JBPopupFactory.getInstance()
-//            .createPopupChooserBuilder(options.toList())
-//            .setRenderer(cellRenderer)
-//            .setItemChosenCallback { selectedItem ->
-//                value = selectedItem
-//                TableUtil.stopEditing(table)
-//                table.setValueAt(value, myRow, column) // on Mac getCellEditorValue() is called before myValue is set.
-//                table.tableChanged(TableModelEvent(table.model, myRow)) // force repaint
-//            }
-//            .setCancelCallback {
-//                TableUtil.stopEditing(table)
-//                true
-//            }
-//            .addListener(object : JBPopupListener {
-//                override fun beforeShown(event: LightweightWindowEvent) {
-//                    table.surrendersFocusOnKeystroke = false
-//                }
-//
-//                override fun onClosed(event: LightweightWindowEvent) {
-//                    table.surrendersFocusOnKeystroke = surrendersFocusOnKeystrokeOldValue
-//                }
-//            })
-//            .setMinSize(if (isForcePopupMatchCellWidth) Dimension(cellRect.size.getWidth().toInt(), -1) else null)
-//            .createPopup()
-//
-//        val popupLocation = Point(cellRect.left, if (isShowBelowCell) cellRect.bottom else cellRect.top)
-//        popup.show(RelativePoint(table, popupLocation))
-//    }
 }
