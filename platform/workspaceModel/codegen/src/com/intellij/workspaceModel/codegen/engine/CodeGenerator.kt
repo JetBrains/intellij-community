@@ -23,6 +23,8 @@ sealed interface ProblemLocation {
   class Class(val objClass: ObjClass<*>) : ProblemLocation {
     override val objModule: ObjModule
       get() = objClass.module
+
+    override fun toString(): String = objClass.name
   }
   class Property(val property: ObjProperty<*, *>) : ProblemLocation {
     override val objModule: ObjModule
@@ -30,6 +32,8 @@ sealed interface ProblemLocation {
         is ExtProperty<*, *> -> property.module
         else -> property.receiver.module
       }
+
+    override fun toString(): String = property.toString()
   }
 }
 

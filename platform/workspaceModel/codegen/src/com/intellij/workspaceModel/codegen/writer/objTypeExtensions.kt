@@ -11,7 +11,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
 val ObjClass<*>.isStandardInterface: Boolean
   get() = name in setOf(WorkspaceEntity::class.java.simpleName, WorkspaceEntityWithPersistentId::class.java.simpleName)
 
-private val ObjClass<*>.allSuperClasses: List<ObjClass<*>>
+val ObjClass<*>.allSuperClasses: List<ObjClass<*>>
   get() = superTypes.filterIsInstance<ObjClass<*>>().flatMapTo(LinkedHashSet()) { it.allSuperClasses + listOf(it) }.toList() 
 
 val ObjClass<*>.allFields: List<OwnProperty<*, *>>

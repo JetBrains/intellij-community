@@ -35,19 +35,23 @@ interface GrandParentEntity : WorkspaceEntity {
   //endregion
 }
 
+@Open
 interface ParentEntity : GrandParentEntity {
   val data2: String
 
   //region generated code
   @GeneratedCodeApiVersion(1)
-  interface Builder : ParentEntity, GrandParentEntity.Builder<ParentEntity>, ModifiableWorkspaceEntity<ParentEntity>, ObjBuilder<ParentEntity> {
+  interface Builder<T : ParentEntity> : ParentEntity, GrandParentEntity.Builder<T>, ModifiableWorkspaceEntity<T>, ObjBuilder<T> {
     override var entitySource: EntitySource
     override var data1: String
     override var data2: String
   }
 
-  companion object : Type<ParentEntity, Builder>(GrandParentEntity) {
-    operator fun invoke(data1: String, data2: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ParentEntity {
+  companion object : Type<ParentEntity, Builder<ParentEntity>>(GrandParentEntity) {
+    operator fun invoke(data1: String,
+                        data2: String,
+                        entitySource: EntitySource,
+                        init: (Builder<ParentEntity>.() -> Unit)? = null): ParentEntity {
       val builder = builder()
       builder.data1 = data1
       builder.data2 = data2
@@ -58,11 +62,6 @@ interface ParentEntity : GrandParentEntity {
   }
   //endregion
 }
-
-//region generated code
-fun MutableEntityStorage.modifyEntity(entity: ParentEntity, modification: ParentEntity.Builder.() -> Unit) = modifyEntity(
-  ParentEntity.Builder::class.java, entity, modification)
-//endregion
 
 interface ChildEntity: ParentEntity {
   val data3: String

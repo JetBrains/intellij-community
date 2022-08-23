@@ -34,8 +34,6 @@ import java.util.concurrent.ConcurrentHashMap
 
 class WorkspaceMetaModelProviderImpl : WorkspaceMetaModelProvider {
   private val objModuleByName = ConcurrentHashMap<String, Pair<CompiledObjModule, ModuleDescriptor>>()
-  private val keepUnknownFields: Boolean
-    get() = Registry.`is`("workspace.model.generator.keep.unknown.fields")
 
   private fun getObjClass(entityInterface: ClassDescriptor): ObjClass<*> {
     val containingPackage = entityInterface.containingPackage() ?: error("${entityInterface.fqNameUnsafe.asString()} has no package")
@@ -173,9 +171,7 @@ class WorkspaceMetaModelProviderImpl : WorkspaceMetaModelProvider {
             convertType(it.defaultType, propertyDescription) as ValueType.JvmClass<*>
           })
         }
-        if (ObjTypeConverter.isKnownInterface(fqName) || keepUnknownFields) {
-          return ValueType.Blob<Any>(fqName.asString(), superTypes)
-        }
+        return ValueType.Blob<Any>(fqName.asString(), superTypes)
       }                             
       throw IncorrectObjInterfaceException("Property '$propertyDescription' has unsupported type '$type'")
     }
@@ -235,14 +231,8 @@ private object ObjTypeConverter {
     "kotlin.Char" to ValueType.Char,
     "kotlin.String" to ValueType.String,
   )
-  private val knownInterfaces = setOf(
-    VirtualFileUrl::class.qualifiedName!!,
-    EntitySource::class.qualifiedName!!,
-    PersistentEntityId::class.qualifiedName!!,
-  ).map { FqName(it) }
   
   fun findPrimitive(fqName: FqName): ValueType.Primitive<*>? = primitiveTypes[fqName.asString()]
-  fun isKnownInterface(fqName: FqName): Boolean = fqName in knownInterfaces
 }
 
 private object StandardNames {

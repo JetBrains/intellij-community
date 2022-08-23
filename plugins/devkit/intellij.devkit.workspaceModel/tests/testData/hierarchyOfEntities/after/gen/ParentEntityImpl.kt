@@ -119,7 +119,7 @@ open class ParentEntityImpl : ParentEntity, WorkspaceEntityBase() {
         changedProperty.add("data2")
       }
 
-    override fun getEntityData(): ParentEntityData = result ?: super.getEntityData() as ParentEntityData
+    override fun getEntityData(): ParentEntityData<T> = result ?: super.getEntityData() as ParentEntityData<T>
     override fun getEntityClass(): Class<ParentEntity> = ParentEntity::class.java
   }
 }
