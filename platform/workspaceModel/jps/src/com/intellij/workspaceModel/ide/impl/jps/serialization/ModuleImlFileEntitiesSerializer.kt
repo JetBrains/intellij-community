@@ -70,9 +70,6 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       val moduleEntity = loadModuleEntity(reader, builder, errorReporter, virtualFileManager)
       if (moduleEntity != null) {
         createFacetSerializer().loadFacetEntities(builder, moduleEntity, reader)
-        //CUSTOM_MODULE_RELATED_ENTITY_SERIALIZER_EP.extensionList.forEach { entitySerializer ->
-        //  entitySerializer.loadEntities(builder, moduleEntity, reader, fileUrl)
-        //}
       }
     }
     else {
@@ -82,9 +79,6 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       if (moduleEntity != null) {
         createFacetSerializer().loadFacetEntities(builder, moduleEntity, reader)
         externalSerializer?.createFacetSerializer()?.loadFacetEntities(builder, moduleEntity, reader)
-        CUSTOM_MODULE_RELATED_ENTITY_SERIALIZER_EP.extensionList.forEach { entitySerializer ->
-          entitySerializer.loadEntities(builder, moduleEntity, reader, fileUrl)
-        }
       }
     }
   }

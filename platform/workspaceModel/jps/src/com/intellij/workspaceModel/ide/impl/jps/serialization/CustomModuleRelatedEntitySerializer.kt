@@ -1,9 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
+import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.serialization.facet.FacetState
 
@@ -13,7 +13,8 @@ import org.jetbrains.jps.model.serialization.facet.FacetState
  */
 @ApiStatus.Internal
 interface CustomModuleRelatedEntitySerializer {
-  fun loadEntities(builder: MutableEntityStorage, moduleEntity: ModuleEntity, reader: JpsFileContentReader, imlFileUrl: VirtualFileUrl)
-
-  fun saveEntities(moduleEntity: ModuleEntity?, writer: JpsFileContentWriter, imlFileUrl: VirtualFileUrl): FacetState?
+  fun supportedType() : String
+  fun loadEntities(builder: MutableEntityStorage, moduleEntity: ModuleEntity, entitySource: EntitySource,
+                   facetState: FacetState, storeExternally: Boolean)
+  fun saveEntities(moduleEntity: ModuleEntity?, storeExternally: Boolean): FacetState?
 }
