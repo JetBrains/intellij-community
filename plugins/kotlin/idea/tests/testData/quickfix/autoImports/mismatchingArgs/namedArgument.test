@@ -1,5 +1,5 @@
 // FILE: first.before.kt
-// "Import" "true"
+// "Import extension function 'X.foo'" "true"
 // ERROR: Cannot find a parameter with this name: p2
 /* IGNORE_FIR */
 
@@ -22,7 +22,7 @@ import main.X
 fun X.foo(p1: Int = 1, p2: Int = 2, p3: Int = 3){}
 
 // FILE: first.after.kt
-// "Import" "true"
+// "Import extension function 'X.foo'" "true"
 // ERROR: Cannot find a parameter with this name: p2
 /* IGNORE_FIR */
 

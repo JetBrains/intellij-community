@@ -30,12 +30,12 @@ import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.Severity
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.actions.KotlinAddImportAction
 import org.jetbrains.kotlin.idea.actions.createGroupedImportsAction
 import org.jetbrains.kotlin.idea.actions.createSingleImportAction
 import org.jetbrains.kotlin.idea.actions.createSingleImportActionForConstructor
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
@@ -60,12 +60,15 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.KtPsiUtil.isSelectorInQualified
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoBefore
 import org.jetbrains.kotlin.resolve.calls.context.ContextDependency
 import org.jetbrains.kotlin.resolve.calls.inference.model.TypeVariableTypeConstructor
 import org.jetbrains.kotlin.resolve.calls.util.getParentCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
+import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
+import org.jetbrains.kotlin.resolve.descriptorUtil.isExtensionProperty
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.ExplicitImportsScope
 import org.jetbrains.kotlin.resolve.scopes.utils.addImportingScope
@@ -87,8 +90,11 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
 
     private val modificationCountOnCreate = PsiModificationTracker.getInstance(project).modificationCount
 
+    private val suggestionDescriptors = lazy(::collectSuggestionDescriptors)
+
     protected val suggestions = lazy(::collectSuggestions)
 
+    private val text = lazy(::calculateText)
     fun computeSuggestions() {
         suggestions.value
     }
@@ -117,7 +123,29 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
         return createAction(project, editor, element).showHint()
     }
 
-    override fun getText() = KotlinBundle.message("fix.import")
+    private fun calculateText(): String {
+        val descriptor = suggestionDescriptors.value.mapTo(hashSetOf()) { it.original }.singleOrNull()
+
+        val kind = when {
+            descriptor?.isExtensionProperty == true -> KotlinBundle.message("text.extension.property")
+            descriptor is FunctionDescriptor && descriptor.isExtension -> KotlinBundle.message("text.extension.function")
+            descriptor != null && DescriptorUtils.isObject(descriptor) -> KotlinBundle.message("text.object")
+            descriptor is ClassDescriptor -> KotlinBundle.message("text.class")
+            else -> null
+        } ?: return KotlinBundle.message("fix.import")
+
+        val name = buildString {
+            descriptor.safeAs<CallableDescriptor>()?.extensionReceiverParameter?.type?.constructor?.declarationDescriptor?.safeAs<ClassDescriptor>()?.name?.let{
+                append(it.asString()).append('.')
+            }
+
+            append(descriptor?.name?.asString())
+        }
+
+        return KotlinBundle.message("fix.import.0.1", kind, name)
+    }
+
+    override fun getText(): String = text.value
 
     override fun getFamilyName() = KotlinBundle.message("fix.import")
 
@@ -147,7 +175,7 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
         return createSingleImportAction(project, editor, element, filteredSuggestions)
     }
 
-    fun collectSuggestions(): Collection<FqName> {
+    private fun collectSuggestionDescriptors(): Collection<DeclarationDescriptor> {
         element?.takeIf(PsiElement::isValid)?.takeIf { it.containingFile is KtFile } ?: return emptyList()
 
         val callTypeAndReceiver = getCallTypeAndReceiver() ?: return emptyList()
@@ -157,12 +185,15 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
 
         return importNames
             .flatMap { collectSuggestionsForName(it, callTypeAndReceiver) }
+    }
+
+    fun collectSuggestions(): Collection<FqName> =
+        suggestionDescriptors.value
             .asSequence()
             .distinct()
             .map { it.fqNameSafe }
             .distinct()
             .toList()
-    }
 
     private fun collectSuggestionsForName(name: Name, callTypeAndReceiver: CallTypeAndReceiver<*, *>): Collection<DeclarationDescriptor> {
         val element = element ?: return emptyList()
