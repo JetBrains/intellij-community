@@ -762,16 +762,17 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
   public void testMultipleSourcesConsistencyCompilerOutput() throws Exception {
     createProjectSubFile("src/main/java/A.java", "class A {}");
     createProjectSubFile("src/main/kotlin/A.kt", "class A {}");
-    GradleBuildScriptBuilder buildScript = createBuildScriptBuilder()
-      .withMavenCentral()
-      .withKotlinJvmPlugin()
-      .withJavaLibraryPlugin();
     importPerSourceSet(false);
-    importProject(buildScript.generate());
+    importProject(
+      createBuildScriptBuilder()
+        .withMavenCentral()
+        .withKotlinJvmPlugin()
+        .withJavaLibraryPlugin()
+        .generate()
+    );
     assertModules("project");
     assertContentEntryExists("project");
-    assertSourceExists("project",
-                       "src/main/java","src/main/kotlin");
+    assertSourceExists("project", "src/main/java", "src/main/kotlin");
     assertModuleOutput("project", getProjectPath() + "/build/classes/java/main", getProjectPath() + "/build/classes/java/test");
   }
 
