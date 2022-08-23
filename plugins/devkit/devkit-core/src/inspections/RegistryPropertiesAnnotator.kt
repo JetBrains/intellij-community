@@ -3,6 +3,8 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
@@ -58,6 +60,10 @@ class RegistryPropertiesAnnotator : Annotator {
   private class ShowEPDeclarationIntention(private val propertyName: String) : IntentionAction {
     override fun startInWriteAction(): Boolean = false
 
+    override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+      return IntentionPreviewInfo.EMPTY
+    }
+
     override fun getFamilyName(): String = DevKitBundle.message("registry.properties.annotator.show.ep.family.name")
 
     override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = true
@@ -102,7 +108,9 @@ class RegistryPropertiesAnnotator : Annotator {
       val descriptionProperty = propertiesFile.addPropertyAfter(myPropertyName + DESCRIPTION_SUFFIX, "Description", originalProperty)
 
       val valueNode = (descriptionProperty.psiElement as PropertyImpl).valueNode!!
-      PsiNavigateUtil.navigate(valueNode.psi)
+      if (!IntentionPreviewUtils.isPreviewElement(valueNode.psi) ) {
+        PsiNavigateUtil.navigate(valueNode.psi)
+      }
     }
 
     override fun startInWriteAction(): Boolean = true
