@@ -1,6 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-package org.jetbrains.kotlin.idea.inspections
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
@@ -11,12 +10,11 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.intentions.getLeftMostReceiverExpression
-import org.jetbrains.kotlin.idea.intentions.replaceFirstReceiver
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.utils.getLeftMostReceiverExpression
+import org.jetbrains.kotlin.idea.codeinsight.utils.replaceFirstReceiver
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class WrapUnaryOperatorInspection : AbstractKotlinInspection() {
 

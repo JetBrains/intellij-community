@@ -4,17 +4,16 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
-import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.functions.FunctionInvokeDescriptor
 import org.jetbrains.kotlin.builtins.isKSuspendFunctionType
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.getDeepestSuperDeclarations
 import org.jetbrains.kotlin.idea.core.getLastLambdaExpression
-import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.core.setType
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
@@ -225,28 +224,6 @@ fun KtExpression.isCountCall(predicate: (KtCallExpression) -> Boolean = { true }
         ?: return false
     if (!predicate(callExpression)) return false
     return callExpression.isCalling(COUNT_FUNCTIONS)
-}
-
-fun KtDotQualifiedExpression.getLeftMostReceiverExpression(): KtExpression =
-    (receiverExpression as? KtDotQualifiedExpression)?.getLeftMostReceiverExpression() ?: receiverExpression
-
-fun KtDotQualifiedExpression.replaceFirstReceiver(
-    factory: KtPsiFactory,
-    newReceiver: KtExpression,
-    safeAccess: Boolean = false
-): KtExpression {
-    val replaced = (if (safeAccess) {
-        this.replaced(factory.createExpressionByPattern("$0?.$1", receiverExpression, selectorExpression!!))
-    } else this) as KtQualifiedExpression
-    when (val receiver = replaced.receiverExpression) {
-        is KtDotQualifiedExpression -> {
-            receiver.replace(receiver.replaceFirstReceiver(factory, newReceiver, safeAccess))
-        }
-        else -> {
-            receiver.replace(newReceiver)
-        }
-    }
-    return replaced
 }
 
 fun KtDotQualifiedExpression.deleteFirstReceiver(): KtExpression {

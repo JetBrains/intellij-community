@@ -427,11 +427,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         public void testUnusedSymbol_typeParameter_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/unusedSymbol/typeParameter/inspectionData/inspections.test");
         }
-
-        @TestMetadata("wrapUnaryOperator/inspectionData/inspections.test")
-        public void testWrapUnaryOperator_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/wrapUnaryOperator/inspectionData/inspections.test");
-        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

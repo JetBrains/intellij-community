@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.base.psi.deleteBody
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -107,4 +108,26 @@ fun removeRedundantSetter(setter: KtPropertyAccessor) {
     } else {
         setter.deleteBody()
     }
+}
+
+fun KtDotQualifiedExpression.getLeftMostReceiverExpression(): KtExpression =
+    (receiverExpression as? KtDotQualifiedExpression)?.getLeftMostReceiverExpression() ?: receiverExpression
+
+fun KtDotQualifiedExpression.replaceFirstReceiver(
+    factory: KtPsiFactory,
+    newReceiver: KtExpression,
+    safeAccess: Boolean = false
+): KtExpression {
+    val replaced = (if (safeAccess) {
+        this.replaced(factory.createExpressionByPattern("$0?.$1", receiverExpression, selectorExpression!!))
+    } else this) as KtQualifiedExpression
+    when (val receiver = replaced.receiverExpression) {
+        is KtDotQualifiedExpression -> {
+            receiver.replace(receiver.replaceFirstReceiver(factory, newReceiver, safeAccess))
+        }
+        else -> {
+            receiver.replace(newReceiver)
+        }
+    }
+    return replaced
 }

@@ -112,5 +112,13 @@
                      level="WARNING"
                      language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.remove.setter.parameter.type.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.WrapUnaryOperatorInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     key="inspection.wrap.unary.operator.display.name" bundle="messages.KotlinBundle"/>
   </extensions>
 </idea-plugin>

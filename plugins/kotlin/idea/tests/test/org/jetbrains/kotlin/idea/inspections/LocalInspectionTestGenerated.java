@@ -16624,17 +16624,4 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             }
         }
     }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/inspectionsLocal/wrapUnaryOperator")
-    public static class WrapUnaryOperator extends AbstractLocalInspectionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("testData/inspectionsLocal/wrapUnaryOperator/simple.kt");
-        }
-    }
 }

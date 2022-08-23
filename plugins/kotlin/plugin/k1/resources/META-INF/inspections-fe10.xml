@@ -1812,14 +1812,6 @@
                      language="kotlin"
                      key="inspection.nullable.boolean.elvis.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.WrapUnaryOperatorInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
-                     enabledByDefault="true"
-                     level="WEAK WARNING"
-                     language="kotlin"
-                     key="inspection.wrap.unary.operator.display.name" bundle="messages.KotlinBundle"/>
-
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.EmptyRangeInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"

@@ -686,4 +686,17 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/sortModifiers/simple.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/wrapUnaryOperator")
+    public static class WrapUnaryOperator extends AbstractSharedK1LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../testData/inspectionsLocal/wrapUnaryOperator/simple.kt");
+        }
+    }
 }
