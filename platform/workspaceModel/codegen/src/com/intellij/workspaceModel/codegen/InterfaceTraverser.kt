@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.codegen.deft.meta.OwnProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.fields.javaType
 import com.intellij.workspaceModel.codegen.utils.LinesBuilder
-import org.jetbrains.kotlin.utils.addToStdlib.popLast
 
 class InterfaceTraverser {
   fun traverse(myInterface: ObjClass<*>, visitor: InterfaceVisitor): Boolean {
@@ -112,7 +111,7 @@ class DeserializationVisitor(linesBuilder: LinesBuilder) : InterfaceVisitor {
   override fun visitListEnd(varName: String, itemVarName: String, traverseResult: Boolean, listArgumentType: ValueType<*>): Boolean {
     if (listArgumentType.isRefType()) return true
 
-    val myInListBuilder = builders.popLast()
+    val myInListBuilder = builders.removeLast()
     if (myInListBuilder.result.isNotBlank()) {
       val varCounter = "counter" + counter()
       val varCollector = "collector" + counter()
@@ -156,7 +155,7 @@ class DeserializationVisitor(linesBuilder: LinesBuilder) : InterfaceVisitor {
   override fun visitOptionalEnd(varName: String, notNullVarName: String, type: ValueType<*>, traverseResult: Boolean): Boolean {
     if (type.isRefType()) return true
 
-    val popLast = builders.popLast()
+    val popLast = builders.removeLast()
     builder.section("if (de.acceptNull())") {
       line("$varName = null")
     }
@@ -228,7 +227,7 @@ class SerializatorVisitor private constructor(private val linesBuilder: ArrayDeq
   override fun visitListEnd(varName: String, itemVarName: String, traverseResult: Boolean, listArgumentType: ValueType<*>): Boolean {
     if (listArgumentType.isRefType()) return true
 
-    val myInListBuilder = linesBuilder.popLast()
+    val myInListBuilder = linesBuilder.removeLast()
     if (myInListBuilder.result.isNotBlank()) {
       builder.line("ser.saveInt($varName.size)")
       builder.line("for ($itemVarName in $varName) {")
@@ -258,7 +257,7 @@ class SerializatorVisitor private constructor(private val linesBuilder: ArrayDeq
                            traverseResult: Boolean): Boolean {
     if (keyType.isRefType() || valueType.isRefType()) return true
 
-    val inMapBuilder = linesBuilder.popLast()
+    val inMapBuilder = linesBuilder.removeLast()
     if (inMapBuilder.result.isNotBlank()) {
       builder.line("ser.saveInt($varName.size)")
       builder.line("for (($keyVarName, $valueVarName) in $varName) {")
@@ -279,7 +278,7 @@ class SerializatorVisitor private constructor(private val linesBuilder: ArrayDeq
   override fun visitOptionalEnd(varName: String, notNullVarName: String, type: ValueType<*>, traverseResult: Boolean): Boolean {
     if (type.isRefType()) return true
 
-    val inMapBuilder = linesBuilder.popLast()
+    val inMapBuilder = linesBuilder.removeLast()
     if (inMapBuilder.result.isNotBlank()) {
       builder.line("val $notNullVarName = $varName")
       builder.line("if ($notNullVarName != null) {")
