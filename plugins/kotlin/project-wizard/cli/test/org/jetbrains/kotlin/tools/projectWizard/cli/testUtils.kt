@@ -64,14 +64,14 @@ enum class BuildSystem(
 ) {
     GRADLE_KOTLIN_DSL(
         buildFileName = "build.gradle.kts",
-        additionalFileNames = listOf("settings.gradle.kts", "gradle-wrapper.properties"),
+        additionalFileNames = listOf("settings.gradle.kts", "gradle-wrapper.properties", "gradle.properties"),
         yaml = """buildSystem:
                             type: GradleKotlinDsl
                             """.trimIndent()
     ),
     GRADLE_GROOVY_DSL(
         buildFileName = "build.gradle",
-        additionalFileNames = listOf("settings.gradle", "gradle-wrapper.properties"),
+        additionalFileNames = listOf("settings.gradle", "gradle-wrapper.properties", "gradle.properties"),
         yaml = """buildSystem:
                             type: GradleGroovyDsl
                             """.trimIndent()
