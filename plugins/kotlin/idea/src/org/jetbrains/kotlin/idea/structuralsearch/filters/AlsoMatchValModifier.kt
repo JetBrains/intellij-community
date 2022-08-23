@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
 class AlsoMatchValModifier : OneStateFilter(
     KotlinBundle.lazyMessage("ssr.modifier.match.val"),
-    KotlinBundle.message("ssr.modifier.also.match.val"),
+    KotlinBundle.message("ssr.modifier.match.val"),
     CONSTRAINT_NAME
 ) {
     companion object {
