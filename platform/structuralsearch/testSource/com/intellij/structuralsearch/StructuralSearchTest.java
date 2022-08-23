@@ -2387,7 +2387,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals(1, findMatchesCount(source, pattern3));
 
     String pattern4 = "class '_A {" +
-                      "  '_type 'method () throws '_E{0,0}:[ regex( E2 )];" +
+                      "  '_type 'method () throws '_E{0,0}:[ regex( E2 ) ];" +
                       "}";
     assertEquals(2, findMatchesCount(source, pattern4));
   }
