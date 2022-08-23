@@ -56,7 +56,29 @@ object MppModuleConfigurator : ModuleConfigurator,
         module: Module,
         modulePath: Path,
     ): TaskResult<Unit> = compute {
-        GradlePlugin.gradleProperties.addValues("kotlin.mpp.enableGranularSourceSetsMetadata" to true)
-        GradlePlugin.gradleProperties.addValues("kotlin.native.enableDependencyPropagation" to false)
+        if (shouldApplyHmppGradleProperties(configurationData)) {
+            GradlePlugin.gradleProperties.addValues("kotlin.mpp.enableGranularSourceSetsMetadata" to true)
+            GradlePlugin.gradleProperties.addValues("kotlin.native.enableDependencyPropagation" to false)
+        }
     }
+
+    private fun shouldApplyHmppGradleProperties(configurationData: ModulesToIrConversionData): Boolean {
+        val kotlinVersionText = configurationData.kotlinVersion.version.text
+        val kotlinVersion = kotlinVersionText.toKotlinVersion() ?: return false
+        return kotlinVersion < HMPP_BY_DEFAULT_VERSION
+    }
+
+    private fun String.toKotlinVersion(): KotlinVersion? {
+        val semanticParts = split(".").takeIf { it.size >= 3 }?.take(3) ?: return null
+        val (major, minor, patch) = semanticParts.map { partString ->
+            try {
+                partString.toInt()
+            } catch (_: NumberFormatException) {
+                return null
+            }
+        }
+        return KotlinVersion(major, minor, patch)
+    }
+
+    private val HMPP_BY_DEFAULT_VERSION = KotlinVersion(1, 6, 20)
 }
