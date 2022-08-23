@@ -18,21 +18,74 @@ data class LaunchParameters(
   val parameters: MutableList<ParameterValue>
 )
 
+// sample of generated JSON
+// [
+//  {
+//    "groupOfParametersName": "vmOptions",
+//    "parameters": [
+//      {
+//        "parameterName": "vmOption.0",
+//        "parameterValue": "-Xmx2g"
+//      },
+//      {
+//        "parameterName": "vmOption.1",
+//        "parameterValue": "-XX:ReservedCodeCacheSize=240m"
+//      }
+//    ]
+//  },
+//  {
+//    "groupOfParametersName": "arguments",
+//    "parameters": [
+//      {
+//        "parameterName": "argument.0",
+//        "parameterValue": "dump-launch-parameters"
+//      },
+//      {
+//        "parameterName": "argument.3",
+//        "parameterValue": "--system-property"
+//      },
+//      {
+//        "parameterName": "argument.4",
+//        "parameterValue": "java.vendor"
+//      }
+//    ]
+//  },
+//  {
+//    "groupOfParametersName": "javaSystemProperties",
+//    "parameters": [
+//      {
+//        "parameterName": "java.vendor",
+//        "parameterValue": "JetBrains s.r.o."
+//      },
+//    ]
+//  },
+//  {
+//    "groupOfParametersName": "environmentVariables",
+//    "parameters": [
+//      {
+//        "parameterName": "HOME",
+//        "parameterValue": "/Users/Eugene.Lazurin"
+//      }
+//    ]
+//  }
+//]
 internal class DumpLaunchParametersStarter : ModernApplicationStarter() {
   override val commandName: String
     get() = "dump-launch-parameters"
 
   override fun premain(args: List<String>) {
+    // --output <path to dir>/launchParameters.json --system-property java.class.path --system-property java.home --environment-variable PATH HOME
     val argsMap = args.fold(Pair(emptyMap<String, List<String>>(), "")) { (map, lastKey), elem ->
-      if (elem.startsWith("-")) Pair(map + (elem to emptyList()), elem)
+      if (elem.startsWith("-") && !map.containsKey(elem)) Pair(map + (elem to emptyList()), elem)
+      else if (elem.startsWith("-") && map.containsKey(elem)) Pair(map + (elem to map.getOrDefault(elem, emptyList())), elem)
       else Pair(map + (lastKey to map.getOrDefault(lastKey, emptyList()) + elem), lastKey)
     }.first
 
-    if (!argsMap.containsKey("-f") || argsMap["-f"]!!.isEmpty()) {
+    if ((!argsMap.containsKey("-o") || argsMap["-o"]!!.isEmpty()) && (!argsMap.containsKey("--output") || argsMap["--output"]!!.isEmpty())) {
       exitProcess(AppExitCodes.STARTUP_EXCEPTION)
     }
 
-    val outputFile = argsMap["-f"]!![0]
+    val outputFile = if (argsMap.containsKey("-o")) argsMap["-o"]!![0] else argsMap["--output"]!![0]
 
     val launchParametersDump = File(outputFile)
     val launchParameters = mutableListOf<LaunchParameters>()
@@ -40,15 +93,15 @@ internal class DumpLaunchParametersStarter : ModernApplicationStarter() {
     launchParameters.add(getVmOptions())
     launchParameters.add(getCommandLineArguments(args))
 
-    if (argsMap.containsKey("-p") && !argsMap["-p"]!!.isEmpty()) {
+    if (argsMap.containsKey("--system-property") && !argsMap["--system-property"]!!.isEmpty()) {
       val javaSystemProperties: MutableList<ParameterValue> = mutableListOf()
-      argsMap["-p"]?.forEach { javaSystemProperties.add(getJavaSystemProperty(it)) }
+      argsMap["--system-property"]?.forEach { javaSystemProperties.add(getJavaSystemProperty(it)) }
       launchParameters.add(LaunchParameters("javaSystemProperties", javaSystemProperties))
     }
 
-    if (argsMap.containsKey("-e") && !argsMap["-e"]!!.isEmpty()) {
+    if (argsMap.containsKey("--environment-variable") && !argsMap["--environment-variable"]!!.isEmpty()) {
       val environmentVariables: MutableList<ParameterValue> = mutableListOf()
-      argsMap["-e"]?.forEach { environmentVariables.add(getEnvironmentVariable(it)) }
+      argsMap["--environment-variable"]?.forEach { environmentVariables.add(getEnvironmentVariable(it)) }
       launchParameters.add(LaunchParameters("environmentVariables", environmentVariables))
     }
 
