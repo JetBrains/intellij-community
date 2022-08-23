@@ -31,6 +31,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -180,7 +181,7 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
       element = askToDefineVariables ? new CreateFromTemplateDialog(project, dir, template, null, properties).create()
                                      : FileTemplateUtil.createFromTemplate(template, fileName, properties, dir);
     }
-    catch (IncorrectOperationException e) {
+    catch (IncorrectOperationException | ProcessCanceledException e) {
       throw e;
     }
     catch (Exception e) {
