@@ -243,6 +243,7 @@ public final class PySdkUtil {
 
   /**
    * Finds sdk for provided directory. Takes into account both project and module SDK
+   * @param allowRemote - indicates whether remote interpreter is acceptable
    */
   public static @Nullable Sdk findSdkForDirectory(@NotNull Project project, @NotNull Path workingDirectory, boolean allowRemote) {
     VirtualFile workingDirectoryVirtualFile = LocalFileSystem.getInstance().findFileByNioFile(workingDirectory);
