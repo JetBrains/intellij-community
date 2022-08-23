@@ -9405,6 +9405,39 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/intentions/convertTrimIndentToTrimMargin")
+    public static class ConvertTrimIndentToTrimMargin extends AbstractIntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("differentIndent.kt")
+        public void testDifferentIndent() throws Exception {
+            runTest("testData/intentions/convertTrimIndentToTrimMargin/differentIndent.kt");
+        }
+
+        @TestMetadata("notBlankFirst.kt")
+        public void testNotBlankFirst() throws Exception {
+            runTest("testData/intentions/convertTrimIndentToTrimMargin/notBlankFirst.kt");
+        }
+
+        @TestMetadata("notBlankLast.kt")
+        public void testNotBlankLast() throws Exception {
+            runTest("testData/intentions/convertTrimIndentToTrimMargin/notBlankLast.kt");
+        }
+
+        @TestMetadata("notRawString.kt")
+        public void testNotRawString() throws Exception {
+            runTest("testData/intentions/convertTrimIndentToTrimMargin/notRawString.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("testData/intentions/convertTrimIndentToTrimMargin/simple.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertTryFinallyToUseCall")
     public static class ConvertTryFinallyToUseCall extends AbstractIntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
