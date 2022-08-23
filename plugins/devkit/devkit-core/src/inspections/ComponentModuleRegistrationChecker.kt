@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("ComponentModuleRegistrationChecker")
 
 package org.jetbrains.idea.devkit.inspections
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
@@ -198,6 +199,10 @@ class ComponentModuleRegistrationChecker(private val moduleToModuleSet: Clearabl
 
   inner class MoveRegistrationQuickFix(private val myTargetModule: Module,
                                        private val myTargetFileName: String) : LocalQuickFix {
+
+    override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
+      return IntentionPreviewInfo.EMPTY
+    }
 
     @Nls
     override fun getName(): String = DevKitBundle.message("inspections.plugin.xml.ComponentModuleRegistrationChecker.fix.move.registration.name", myTargetFileName)
