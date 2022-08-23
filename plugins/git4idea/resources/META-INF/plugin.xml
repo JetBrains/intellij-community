@@ -205,6 +205,7 @@
 
     <group id="Git.Branches.Popup.Settings" class="git4idea.ui.branch.GitBranchesTreePopupSettings" icon="AllIcons.Actions.More">
       <action class="git4idea.ui.branch.GitBranchesTreePopupResizeAction"/>
+      <action class="git4idea.ui.branch.GitBranchesTreePopupTrackReposSynchronouslyAction"/>
     </group>
 
     <group id="Git.Branches.List">
