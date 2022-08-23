@@ -29,6 +29,7 @@ import org.jetbrains.idea.maven.importing.tree.MavenTreeModuleImportData
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.statistics.MavenImportCollector
 import org.jetbrains.idea.maven.utils.MavenLog
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.nio.file.Path
 import java.util.function.Function
@@ -81,16 +82,7 @@ internal class WorkspaceProjectImporter(
 
     stats.finish(numberOfModules = projectsWithModuleEntities.sumOf { it.modules.size })
 
-    postTasks.add(MavenProjectsProcessorTask { _, _, _, indicator ->
-      val context = object : MavenAfterImportConfigurator.Context, UserDataHolder by contextData {
-        override val project = myProject
-        override val mavenProjectsWithModules = appliedProjectsWithModules.asSequence()
-      }
-      for (configurator in AFTER_IMPORT_CONFIGURATOR_EP.extensionList) {
-        indicator.checkCanceled()
-        configurator.afterImport(context)
-      }
-    })
+    postTasks.add(AfterImportConfiguratorsTask(contextData, appliedProjectsWithModules))
 
     return postTasks
 
@@ -265,7 +257,7 @@ internal class WorkspaceProjectImporter(
       override val storage = builder
       override val mavenProjectsTree = myProjectsTree
       override val mavenProjectsWithModules = projectsWithModules.asSequence()
-      override fun <T : WorkspaceEntity> importedEntities(clazz: Class<T>): Sequence<T> = Companion.importedEntities(builder, clazz)
+      override fun <T : WorkspaceEntity> importedEntities(clazz: Class<T>): Sequence<T> = importedEntities(builder, clazz)
     }
     WORKSPACE_CONFIGURATOR_EP.extensions.forEach { configurator ->
       stats.recordConfigurator(configurator, MavenImportCollector.BEFORE_APPLY_DURATION_MS) {
@@ -288,7 +280,7 @@ internal class WorkspaceProjectImporter(
       override val storage = builder
       override val mavenProjectsTree = myProjectsTree
       override val mavenProjectsWithModules = projectsWithModules.asSequence()
-      override fun <T : WorkspaceEntity> importedEntities(clazz: Class<T>): Sequence<T> = Companion.importedEntities(builder, clazz)
+      override fun <T : WorkspaceEntity> importedEntities(clazz: Class<T>): Sequence<T> = importedEntities(builder, clazz)
     }
     WORKSPACE_CONFIGURATOR_EP.extensions.forEach { configurator ->
       stats.recordConfigurator(configurator, MavenImportCollector.AFTER_APPLY_DURATION_MS) {
@@ -377,6 +369,23 @@ internal class WorkspaceProjectImporter(
         numberOfModules++
       }
       stats.finish(numberOfModules)
+    }
+  }
+}
+
+private class AfterImportConfiguratorsTask(private val contextData: UserDataHolderBase,
+                                           private val appliedProjectsWithModules: List<MavenProjectWithModulesData<Module>>) : MavenProjectsProcessorTask {
+  override fun perform(project: Project,
+                       embeddersManager: MavenEmbeddersManager,
+                       console: MavenConsole,
+                       indicator: MavenProgressIndicator) {
+    val context = object : MavenAfterImportConfigurator.Context, UserDataHolder by contextData {
+      override val project = project
+      override val mavenProjectsWithModules = appliedProjectsWithModules.asSequence()
+    }
+    for (configurator in AFTER_IMPORT_CONFIGURATOR_EP.extensionList) {
+      indicator.checkCanceled()
+      configurator.afterImport(context)
     }
   }
 }
