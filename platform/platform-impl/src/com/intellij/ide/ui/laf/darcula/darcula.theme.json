@@ -594,11 +594,7 @@
         "selectedForeground": "#bbbbbb"
       },
       "PackageTagSelected.background": "#78ade2",
-      "PackageTagSelected.foreground": "#bbbbbb",
-      "PackageDetails.infoBanner": {
-        "background": "#1c3956",
-        "border": "#323232"
-      }
+      "PackageTagSelected.foreground": "#bbbbbb"
     }
   },
 

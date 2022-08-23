@@ -119,6 +119,7 @@ import javax.swing.JScrollPane
 import javax.swing.JViewport
 import javax.swing.event.DocumentEvent
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
@@ -188,12 +189,15 @@ internal class PackagesListPanel(
             isSelected = false
         }
 
-    private val mainToolbar = ActionManager.getInstance()
+    private val searchFiltersToolbar = ActionManager.getInstance()
         .createActionToolbar("Packages.Manage", createActionGroup(), true)
         .apply {
-            component.background = if (PackageSearchUI.isNewUI) PackageSearchUI.Colors.panelBackgroundColor else PackageSearchUI.Colors.headerBackgroundColor
-            val separatorColor = JBUI.CurrentTheme.CustomFrameDecorations.paneBackground()
-            component.border = BorderFactory.createMatteBorder(0, 1.scaled(), 0, 0, separatorColor)
+            component.background = if (PackageSearchUI.isNewUI) {
+                PackageSearchUI.Colors.panelBackground
+            } else {
+                PackageSearchUI.Colors.headerBackground
+            }
+            component.border = JBUI.Borders.customLineLeft(PackageSearchUI.Colors.panelBackground)
         }
 
     private fun createActionGroup() = DefaultActionGroup().apply {
@@ -210,23 +214,25 @@ internal class PackagesListPanel(
             init {
                 layout = MigLayout("ins 0, fill", "[left, fill, grow][right]", "center")
                 add(searchTextField)
-                add(mainToolbar.component)
-                mainToolbar.targetComponent = this
+                add(searchFiltersToolbar.component)
+
+                searchFiltersToolbar.targetComponent = this
+
                 if (PackageSearchUI.isNewUI) {
                     project.coroutineScope.launch {
                         // This is a hack — the ActionToolbar will reset its own background colour,
                         // so we need to wait for the next frame to set it
-                        delay(16)
-                        withContext(Dispatchers.EDT) { mainToolbar.component.background = PackageSearchUI.Colors.panelBackgroundColor }
+                        delay(16.milliseconds)
+                        withContext(Dispatchers.EDT) {
+                            searchFiltersToolbar.component.background = PackageSearchUI.Colors.panelBackground
+                        }
                     }
                 }
 
-                if (PackageSearchUI.isNewUI) {
-                    border = BorderFactory.createMatteBorder(0, 0, 1.scaled(), 0, JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground())
-                }
+                border = JBUI.Borders.customLineBottom(PackageSearchUI.Colors.separator)
             }
 
-            override fun getBackground() = PackageSearchUI.Colors.panelBackgroundColor
+            override fun getBackground() = PackageSearchUI.Colors.panelBackground
         })
     }
 
@@ -235,6 +241,8 @@ internal class PackagesListPanel(
             "The user has clicked the update all link. This will cause many operation(s) to be executed."
         }
         operationExecutor.executeOperations(it)
+    }.apply {
+        border = JBUI.Borders.customLineTop(PackageSearchUI.Colors.separator)
     }
 
     private val tableScrollPane = JBScrollPane(
@@ -270,8 +278,8 @@ internal class PackagesListPanel(
         emptyText.text = PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.base")
         layout = BorderLayout()
         add(tableScrollPane, BorderLayout.CENTER)
-        background = PackageSearchUI.Colors.panelBackgroundColor
-        border = BorderFactory.createMatteBorder(1.scaled(), 0, 0, 0, JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground())
+        background = PackageSearchUI.Colors.panelBackground
+        border = JBUI.Borders.customLineTop(PackageSearchUI.Colors.separator)
     }
 
     internal data class SearchCommandModel(
@@ -542,7 +550,7 @@ internal class PackagesListPanel(
             textEditor.putClientProperty("JTextField.Search.GapEmptyText", (-1).scaled())
             textEditor.border = emptyBorder(left = 6)
             textEditor.isOpaque = true
-            textEditor.background = PackageSearchUI.Colors.headerBackgroundColor
+            textEditor.background = PackageSearchUI.Colors.headerBackground
         }
     }
 

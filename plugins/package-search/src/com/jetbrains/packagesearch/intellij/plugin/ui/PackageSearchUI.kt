@@ -24,6 +24,7 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBEmptyBorder
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
@@ -58,15 +59,18 @@ object PackageSearchUI {
 
     internal object Colors {
 
-        private val mainBackgroundColor: Color = JBColor.namedColor("Plugins.background", UIUtil.getListBackground())
+        val border = JBColor.border()
+        val separator = JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()
 
-        val infoLabelColor: Color = JBColor.namedColor("Label.infoForeground", JBColor(Gray._120, Gray._135))
+        private val mainBackground: Color = JBColor.namedColor("Plugins.background", UIUtil.getListBackground())
 
-        val headerBackgroundColor = mainBackgroundColor
-        val sectionHeaderBackgroundColor = JBColor.namedColor("Plugins.SectionHeader.background", 0xF7F7F7, 0x3C3F41)
+        val infoLabelForeground: Color = JBColor.namedColor("Label.infoForeground", JBColor(Gray._120, Gray._135))
 
-        val panelBackgroundColor
-            get() = if (isNewUI) JBColor.namedColor("Panel.background") else mainBackgroundColor
+        val headerBackground = mainBackground
+        val sectionHeaderBackground = JBColor.namedColor("Plugins.SectionHeader.background", 0xF7F7F7, 0x3C3F41)
+
+        val panelBackground
+            get() = if (isNewUI) JBColor.namedColor("Panel.background") else mainBackground
 
         interface StatefulColor {
 
@@ -242,19 +246,9 @@ object PackageSearchUI {
 
         object InfoBanner {
 
-            val background
-                get() = color(
-                    propertyName = "PackageSearch.PackageDetails.infoBanner.background",
-                    newUILight = 0xCFDEFC, newUIDark = 0x35538F,
-                    oldUILight = 0xE6EEF7, oldUIDark = 0x1C3956
-                )
+            val background = JBUI.CurrentTheme.Banner.INFO_BACKGROUND
 
-            val border
-                get() = color(
-                    propertyName = "PackageSearch.PackageDetails.infoBanner.border",
-                    newUILight = 0xCFDEFC, newUIDark = 0x35538F,
-                    oldUILight = 0xD1D1D1, oldUIDark = 0x323232
-                )
+            val border = JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR
         }
 
         private fun color(
@@ -291,10 +285,10 @@ object PackageSearchUI {
             init()
         }
 
-        override fun getBackground() = Colors.headerBackgroundColor
+        override fun getBackground() = Colors.headerBackground
     }
 
-    internal fun cardPanel(cards: List<JPanel> = emptyList(), backgroundColor: Color = Colors.panelBackgroundColor, init: JPanel.() -> Unit) =
+    internal fun cardPanel(cards: List<JPanel> = emptyList(), backgroundColor: Color = Colors.panelBackground, init: JPanel.() -> Unit) =
         object : JPanel() {
             init {
                 layout = CardLayout()
@@ -305,7 +299,7 @@ object PackageSearchUI {
             override fun getBackground() = backgroundColor
         }
 
-    internal fun borderPanel(backgroundColor: Color = Colors.panelBackgroundColor, init: BorderLayoutPanel.() -> Unit) =
+    internal fun borderPanel(backgroundColor: Color = Colors.panelBackground, init: BorderLayoutPanel.() -> Unit) =
         object : BorderLayoutPanel() {
 
             init {
@@ -315,7 +309,7 @@ object PackageSearchUI {
             override fun getBackground() = backgroundColor
         }
 
-    internal fun boxPanel(axis: Int = BoxLayout.Y_AXIS, backgroundColor: Color = Colors.panelBackgroundColor, init: JPanel.() -> Unit) =
+    internal fun boxPanel(axis: Int = BoxLayout.Y_AXIS, backgroundColor: Color = Colors.panelBackground, init: JPanel.() -> Unit) =
         object : JPanel() {
             init {
                 layout = BoxLayout(this, axis)
@@ -325,7 +319,7 @@ object PackageSearchUI {
             override fun getBackground() = backgroundColor
         }
 
-    internal fun flowPanel(backgroundColor: Color = Colors.panelBackgroundColor, init: JPanel.() -> Unit) = object : JPanel() {
+    internal fun flowPanel(backgroundColor: Color = Colors.panelBackground, init: JPanel.() -> Unit) = object : JPanel() {
         init {
             layout = FlowLayout(FlowLayout.LEFT)
             init()
@@ -340,7 +334,7 @@ object PackageSearchUI {
             init()
         }
 
-        override fun getBackground() = Colors.panelBackgroundColor
+        override fun getBackground() = Colors.panelBackground
     }
 
     fun textField(init: JTextField.() -> Unit): JTextField = JTextField().apply {
@@ -372,7 +366,7 @@ object PackageSearchUI {
 
     internal fun getTextColorSecondary(isSelected: Boolean = false): Color = when {
         isSelected -> getTextColorPrimary(true)
-        else -> Colors.infoLabelColor
+        else -> Colors.infoLabelForeground
     }
 
     internal fun setHeight(component: JComponent, @ScalableUnits height: Int, keepWidth: Boolean = false) {
@@ -394,7 +388,7 @@ object PackageSearchUI {
     ) {
         init {
             border = BorderFactory.createEmptyBorder()
-            viewport.background = Colors.panelBackgroundColor
+            viewport.background = Colors.panelBackground
         }
     }
 
@@ -424,7 +418,7 @@ object PackageSearchUI {
         override fun getScrollableBlockIncrement(visibleRect: Rectangle, orientation: Int, direction: Int) = 100
         override fun getScrollableTracksViewportWidth() = true
         override fun getScrollableTracksViewportHeight() = false
-        override fun getBackground() = Colors.panelBackgroundColor
+        override fun getBackground() = Colors.panelBackground
     }
 }
 

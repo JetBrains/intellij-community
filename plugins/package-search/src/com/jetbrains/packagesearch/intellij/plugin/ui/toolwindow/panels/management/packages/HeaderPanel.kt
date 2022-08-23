@@ -46,7 +46,7 @@ internal class HeaderPanel(
     }
 
     private val countLabel = JLabel().apply {
-        foreground = PackageSearchUI.Colors.infoLabelColor
+        foreground = PackageSearchUI.Colors.infoLabelForeground
         border = emptyBorder(right = 8)
     }
 
@@ -68,10 +68,10 @@ internal class HeaderPanel(
     init {
         PackageSearchUI.setHeightPreScaled(this, PackageSearchUI.smallHeaderHeight.get())
         border = emptyBorder(top = 5, left = 5, right = 1 + scrollbarWidth())
-        background = PackageSearchUI.Colors.sectionHeaderBackgroundColor
+        background = PackageSearchUI.Colors.sectionHeaderBackground
 
         add(
-            PackageSearchUI.flowPanel(PackageSearchUI.Colors.sectionHeaderBackgroundColor) {
+            PackageSearchUI.flowPanel(PackageSearchUI.Colors.sectionHeaderBackground) {
                 layout = FlowLayout(FlowLayout.LEFT, 6.scaled(), 0)
 
                 add(titleLabel)
@@ -82,7 +82,7 @@ internal class HeaderPanel(
         )
 
         add(
-            PackageSearchUI.flowPanel(PackageSearchUI.Colors.sectionHeaderBackgroundColor) {
+            PackageSearchUI.flowPanel(PackageSearchUI.Colors.sectionHeaderBackground) {
                 layout = FlowLayout(FlowLayout.RIGHT, 6.scaled(), 0)
                 add(updateAllLink)
             },
@@ -136,5 +136,5 @@ internal class HeaderPanel(
         updateAndRepaint()
     }
 
-    override fun getBackground() = PackageSearchUI.Colors.sectionHeaderBackgroundColor
+    override fun getBackground() = PackageSearchUI.Colors.sectionHeaderBackground
 }

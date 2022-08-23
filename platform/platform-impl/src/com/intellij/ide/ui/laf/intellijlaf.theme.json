@@ -975,11 +975,7 @@
         "selectedForeground": "white"
       },
       "PackageTagSelected.background": "#4395e2",
-      "PackageTagSelected.foreground": "white",
-      "PackageDetails.infoBanner": {
-        "background": "#e6eef7",
-        "border": "grey09"
-      }
+      "PackageTagSelected.foreground": "white"
     }
   }
 }

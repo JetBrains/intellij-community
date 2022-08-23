@@ -111,9 +111,7 @@ internal sealed class PackagesTableItem<T : PackageModel> : DataProvider, CopyPr
     ) : PackagesTableItem<PackageModel.Installed>() {
 
         init {
-            if (allScopes.isEmpty()) {
-                logWarn { "An installed package must have at least one installed scope. Entry:\n$uiPackageModel" }
-            }
+            require(allScopes.isNotEmpty()) { "An installed package must have at least one installed scope" }
         }
 
         override fun additionalCopyText() = buildString {
@@ -136,7 +134,7 @@ internal sealed class PackagesTableItem<T : PackageModel> : DataProvider, CopyPr
     ) : PackagesTableItem<PackageModel.SearchResult>() {
 
         init {
-            require(allScopes.isNotEmpty()) { "A package must have at least one available scope" }
+            require(allScopes.isNotEmpty()) { "An installable package must have at least one available scope" }
         }
 
         override fun additionalCopyText() = ""

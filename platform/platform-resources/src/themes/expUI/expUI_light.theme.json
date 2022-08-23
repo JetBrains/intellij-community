@@ -595,11 +595,7 @@
         "selectedForeground": "Grey13"
       },
       "PackageTagSelected.background": "Blue10",
-      "PackageTagSelected.foreground": "Grey13",
-      "PackageDetails.infoBanner": {
-        "background": "Blue15",
-        "border": "Blue13"
-      }
+      "PackageTagSelected.foreground": "Grey13"
     }
   },
 

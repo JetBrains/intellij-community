@@ -178,8 +178,6 @@ internal class PackagesTable(
         selectionModel.selectionMode = ListSelectionModel.SINGLE_SELECTION
         putClientProperty("terminateEditOnFocusLost", true)
 
-        intercellSpacing = Dimension(0, 2)
-
         // By default, JTable uses Tab/Shift-Tab for navigation between cells; Ctrl-Tab/Ctrl-Shift-Tab allows to break out of the JTable.
         // In this table, we don't want to navigate between cells - so override the traversal keys by default values.
         setFocusTraversalKeys(
@@ -426,7 +424,7 @@ internal class PackagesTable(
     }
 
     override fun getBackground(): Color =
-        if (PackageSearchUI.isNewUI) PackageSearchUI.Colors.panelBackgroundColor else UIUtil.getTableBackground()
+        if (PackageSearchUI.isNewUI) PackageSearchUI.Colors.panelBackground else UIUtil.getTableBackground()
 
     override fun getForeground(): Color =
         if (PackageSearchUI.isNewUI) UIUtil.getListForeground() else UIUtil.getTableForeground()

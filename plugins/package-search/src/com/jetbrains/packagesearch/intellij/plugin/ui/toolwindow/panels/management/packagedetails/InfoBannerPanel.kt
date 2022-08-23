@@ -17,12 +17,11 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packagedetails
 
 import com.intellij.icons.AllIcons
-import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.ui.JBUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import org.jetbrains.annotations.Nls
+import java.awt.BorderLayout
 import javax.swing.Icon
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -54,13 +53,13 @@ class InfoBannerPanel(
 
         PackageSearchUI.setHeight(this, 28)
 
-        layout = HorizontalLayout(16.scaled())
+        layout = BorderLayout()
         bannerLabel.border = emptyBorder(vSize = 6, hSize = 12)
 
         this.text = text
         this.icon = icon
 
-        add(bannerLabel)
+        add(bannerLabel, BorderLayout.NORTH)
     }
 
     override fun getBorder() = JBUI.Borders.customLineBottom(PackageSearchUI.Colors.InfoBanner.border)

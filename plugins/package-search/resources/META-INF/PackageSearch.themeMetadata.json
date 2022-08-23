@@ -3,18 +3,6 @@
     "fixed": false,
     "ui": [
         {
-            "key": "PackageSearch.PackageDetails.infoBanner.background",
-            "description": "Color of the information banner background in the details panel",
-            "source": "",
-            "since": "2022.3"
-        },
-        {
-            "key": "PackageSearch.PackageDetails.infoBanner.border",
-            "description": "Color of the information banner border in the details panel",
-            "source": "",
-            "since": "2022.3"
-        },
-        {
             "key": "PackageSearch.PackageTag.background",
             "description": "Dependency tag (e.g., 'multiplatform') background color",
             "source": "",
