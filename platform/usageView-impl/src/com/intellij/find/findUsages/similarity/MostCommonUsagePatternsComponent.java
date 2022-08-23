@@ -49,6 +49,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
   private final @NotNull UsageViewImpl myUsageView;
   private final @NotNull JBPanelWithEmptyText myMainPanel;
   private final @NotNull JScrollPane myMostCommonUsageScrollPane;
+  private final @NotNull Ref<Collection<UsageCluster>> mySortedClusters;
   private @NotNull MostCommonUsagesToolbar myMostCommonUsagesToolbar;
   private final @NotNull RefreshAction myRefreshAction;
   private @NotNull Set<Usage> mySelectedUsages;
@@ -61,12 +62,12 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     mySession = session;
     myUsageView = usageView;
     myProject = usageView.getProject();
+    mySortedClusters = new Ref<>();
     mySelectedUsages = myUsageView.getSelectedUsages();
     myMainPanel = new JBPanelWithEmptyText();
     myMainPanel.setLayout(new VerticalLayout(0));
     myMainPanel.setBackground(UIUtil.getTextFieldBackground());
-    myMostCommonUsageScrollPane = ScrollPaneFactory.createScrollPane(myMainPanel, true);
-    myMostCommonUsageScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+    myMostCommonUsageScrollPane = createLazyLoadingScrollPane();
     myRefreshAction =
       new RefreshAction(IdeBundle.messagePointer("action.refresh"), IdeBundle.messagePointer("action.refresh"), AllIcons.Actions.Refresh) {
         @Override
@@ -76,8 +77,9 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
           mySelectedUsages = myUsageView.getSelectedUsages();
           setToolbar(null);
           myMostCommonUsagesToolbar = new MostCommonUsagesToolbar(myMostCommonUsageScrollPane,
-                                      UsageViewBundle.message("similar.usages.0.results", mySelectedUsages.size()),
-                                      myRefreshAction);
+                                                                  UsageViewBundle.message("similar.usages.0.results",
+                                                                                          mySelectedUsages.size()),
+                                                                  myRefreshAction);
           setToolbar(myMostCommonUsagesToolbar);
           addInternalClusteringSessionActions(usageView);
           addMostCommonUsagesForSelectedGroups();
@@ -98,6 +100,21 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     setContent(myMostCommonUsageScrollPane);
   }
 
+  @NotNull
+  private JScrollPane createLazyLoadingScrollPane() {
+    JScrollPane lazyLoadingScrollPane = ScrollPaneFactory.createScrollPane(myMainPanel, true);
+    lazyLoadingScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+    BoundedRangeModelThresholdListener.install(lazyLoadingScrollPane.getVerticalScrollBar(), () -> {
+      if (!mySortedClusters.isNull()) {
+        mySortedClusters.get().stream().skip(myAlreadyRenderedSnippets).limit(CLUSTER_LIMIT).forEach(cluster -> {
+          renderClusterDescription(cluster.getUsages());
+        });
+      }
+      return Unit.INSTANCE;
+    });
+    return lazyLoadingScrollPane;
+  }
+
   private void addInternalClusteringSessionActions(@NotNull UsageViewImpl usageView) {
     if (Registry.is("similarity.import.clustering.results.action.enabled")) {
       myMostCommonUsagesToolbar.add(new ExportClusteringResultActionLink(myProject, mySession,
@@ -112,7 +129,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     final ActionLink actionLink =
       new ActionLink(UsageViewBundle.message("similar.usages.show.0.similar.usages.title", usagesToRender.size() - 1), e -> {
         final SimilarUsagesComponent similarComponent = new SimilarUsagesComponent(info, this);
-        setToolbar(null);
+        removeAll();
         setToolbar(new SimilarUsagesToolbar(similarComponent, UsageViewBundle.message("0.similar.usages", usagesToRender.size() - 1),
                                             myRefreshAction,
                                             new ActionLink(
@@ -138,19 +155,12 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     }
   }
 
-  private void createSummaryComponent(@Nullable ClusteringSearchSession session, @NotNull Collection<UsageCluster> clustersToShow) {
+  private void startRenderClusters(@Nullable ClusteringSearchSession session, @NotNull Collection<UsageCluster> clustersToShow) {
     if (session == null) return;
     myMainPanel.removeAll();
     myAlreadyRenderedSnippets = 0;
     clustersToShow.stream().limit(CLUSTER_LIMIT).forEach(cluster -> {
       renderClusterDescription(cluster.getUsages());
-    });
-    final JScrollBar verticalScrollBar = myMostCommonUsageScrollPane.getVerticalScrollBar();
-    BoundedRangeModelThresholdListener.install(verticalScrollBar, () -> {
-      clustersToShow.stream().skip(myAlreadyRenderedSnippets).limit(CLUSTER_LIMIT).forEach(cluster -> {
-        renderClusterDescription(cluster.getUsages());
-      });
-      return Unit.INSTANCE;
     });
   }
 
@@ -168,14 +178,13 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
   }
 
   private void addMostCommonUsagesForSelectedGroups() {
-    Ref<Collection<UsageCluster>> sortedClusters = new Ref<>();
     Task.Backgroundable loadMostCommonUsagePatternsTask =
       new Task.Backgroundable(myProject, UsageViewBundle.message(
         "similar.usages.loading.most.common.usage.patterns.progress.title")) {
         @Override
         public void onSuccess() {
-          if (!sortedClusters.isNull()) {
-            createSummaryComponent(mySession, sortedClusters.get());
+          if (!mySortedClusters.isNull()) {
+            startRenderClusters(mySession, mySortedClusters.get());
             myMainPanel.revalidate();
           }
         }
@@ -183,7 +192,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           ApplicationManager.getApplication().runReadAction(() -> {
-            sortedClusters.set(mySession.getClustersForSelectedUsages(indicator, mySelectedUsages));
+            mySortedClusters.set(mySession.getClustersForSelectedUsages(indicator, mySelectedUsages));
           });
         }
       };
