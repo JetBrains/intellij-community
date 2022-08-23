@@ -73,7 +73,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       return;
     }
 
-    final MatchingHandler handler = (MatchingHandler)comment.getUserData(CompiledPattern.HANDLER_KEY);
+    final MatchingHandler handler = comment.getUserData(CompiledPattern.HANDLER_KEY);
     if (handler instanceof SubstitutionHandler) {
       final IElementType tokenType = other.getTokenType();
       final int length = other.getTextLength();
@@ -1197,7 +1197,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     if (type1 != null && !myMatchingVisitor.setResult(type1.equals(other.getType()))) {
       return;
     }
-    final MatchingHandler handler = (MatchingHandler)expression.getUserData(CompiledPattern.HANDLER_KEY);
+    final MatchingHandler handler = expression.getUserData(CompiledPattern.HANDLER_KEY);
     if (handler instanceof SubstitutionHandler) {
       int offset = 0;
       int length = other.getTextLength();

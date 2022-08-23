@@ -74,7 +74,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       super.visitReferenceElement(reference);
     }
 
-    private boolean isClassFromJavaLangPackage(PsiElement target) {
+    private static boolean isClassFromJavaLangPackage(PsiElement target) {
       if (!(target instanceof PsiClass)) {
         return false;
       }

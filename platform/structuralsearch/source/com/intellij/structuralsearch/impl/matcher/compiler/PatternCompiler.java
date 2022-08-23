@@ -133,7 +133,7 @@ public final class PatternCompiler {
           }
         }
 
-        private void collectNode(PsiElement element, Object handler) {
+        private void collectNode(PsiElement element, MatchingHandler handler) {
           if (handler instanceof DelegatingHandler) {
             handler = ((DelegatingHandler)handler).getDelegate();
           }
