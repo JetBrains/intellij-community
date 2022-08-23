@@ -16,7 +16,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -141,7 +140,8 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
       }
       //noinspection SynchronizeOnThis
       synchronized (this) {
-        myEntriesList.add(HistoryEntry.createHeavy(myProject, file, providers, states, providers[selectedProviderIndex]));
+        myEntriesList.add(HistoryEntry.createHeavy(myProject, file, providers, states, providers[selectedProviderIndex],
+                                                   editorComposite != null && editorComposite.isPreview()));
       }
       trimToSize();
     }
@@ -159,10 +159,12 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
     FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(myProject);
     FileEditor[] editors;
     FileEditorProvider[] providers;
+    boolean preview = false;
     if (fileEditor == null || fileEditorProvider == null) {
       EditorCompositeBase composite = editorManager.getComposite(file);
       editors = composite == null ? FileEditor.EMPTY_ARRAY : composite.getAllEditors().toArray(FileEditor.EMPTY_ARRAY);
       providers = composite == null ? FileEditorProvider.EMPTY_ARRAY : composite.getAllProviders().toArray(FileEditorProvider.EMPTY_ARRAY);
+      preview = composite != null && composite.isPreview();
     }
     else {
       editors = new FileEditor[] {fileEditor};
@@ -213,6 +215,10 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
       if (changeEntryOrderOnly) {
         moveOnTop(entry);
       }
+    }
+
+    if (preview) {
+      entry.setPreview(true);
     }
   }
 

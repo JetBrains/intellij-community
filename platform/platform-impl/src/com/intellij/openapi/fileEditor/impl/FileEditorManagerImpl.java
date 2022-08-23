@@ -1050,6 +1050,9 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
         options = options.clone().withRequestFocus(false);
       }
     }
+    if (entry != null && entry.isPreview()) {
+      options = options.clone().withUsePreviewTab();
+    }
 
     EditorComposite composite = window.getComposite(file);
     boolean newEditor = composite == null;

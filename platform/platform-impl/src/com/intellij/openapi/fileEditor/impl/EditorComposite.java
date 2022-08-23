@@ -660,7 +660,7 @@ public class EditorComposite extends EditorCompositeBase implements Disposable {
     final int selectedProviderIndex = ArrayUtil.find(editors, getSelectedEditor());
     LOG.assertTrue(selectedProviderIndex != -1);
     final FileEditorProvider[] providers = getProviders();
-    return HistoryEntry.createLight(getFile(), providers, states, providers[selectedProviderIndex]);
+    return HistoryEntry.createLight(getFile(), providers, states, providers[selectedProviderIndex], myPreview);
   }
 
   /**

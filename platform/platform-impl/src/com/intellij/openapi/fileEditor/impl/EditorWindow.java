@@ -559,7 +559,7 @@ public final class EditorWindow {
   }
 
   public void setComposite(@NotNull EditorComposite composite, boolean focusEditor) {
-    setComposite(composite, new FileEditorOpenOptions().withRequestFocus(focusEditor));
+    setComposite(composite, new FileEditorOpenOptions().withRequestFocus(focusEditor).withUsePreviewTab(composite.isPreview()));
   }
 
   public void setComposite(@NotNull EditorComposite composite, @NotNull FileEditorOpenOptions options) {
@@ -1298,7 +1298,7 @@ public final class EditorWindow {
     }
     boolean wasPinned = composite.isPinned();
     composite.setPinned(pinned);
-    if (composite.isPreview()) {
+    if (composite.isPreview() && pinned) {
       composite.setPreview(false);
       myOwner.updateFileColor(file);
     }
