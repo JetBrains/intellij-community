@@ -14,10 +14,10 @@ import kotlinx.coroutines.launch
  * @param A - account type
  */
 abstract class PersistentDefaultAccountHolder<A : Account>(protected val project: Project)
-  : PersistentStateComponent<PersistentDefaultAccountHolder.AccountState>, Disposable {
+  : PersistentStateComponent<PersistentDefaultAccountHolder.AccountState>, Disposable, DefaultAccountHolder<A> {
 
   @Volatile
-  var account: A? = null
+  override var account: A? = null
 
   private val accountManager: AccountManager<A, *>
     get() = accountManager()

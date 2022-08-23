@@ -6,7 +6,7 @@ import com.intellij.collaboration.async.DisposingMainScope
 import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.auth.AccountManager
 import com.intellij.collaboration.auth.AccountsListener
-import com.intellij.collaboration.auth.PersistentDefaultAccountHolder
+import com.intellij.collaboration.auth.DefaultAccountHolder
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.findIndex
 import com.intellij.collaboration.ui.items
@@ -40,12 +40,12 @@ import kotlin.properties.Delegates.observable
 class AccountsPanelFactory<A : Account, Cred>
 private constructor(disposable: Disposable,
                     private val accountManager: AccountManager<A, Cred>,
-                    private val defaultAccountHolder: PersistentDefaultAccountHolder<A>?,
+                    private val defaultAccountHolder: DefaultAccountHolder<A>?,
                     private val accountsModel: AccountsListModel<A, Cred>,
                     private val detailsLoader: AccountsDetailsLoader<A, *>) {
 
   constructor(accountManager: AccountManager<A, Cred>,
-              defaultAccountHolder: PersistentDefaultAccountHolder<A>,
+              defaultAccountHolder: DefaultAccountHolder<A>,
               accountsModel: AccountsListModel.WithDefault<A, Cred>,
               detailsLoader: AccountsDetailsLoader<A, *>,
               disposable: Disposable) : this(disposable, accountManager, defaultAccountHolder, accountsModel, detailsLoader)
