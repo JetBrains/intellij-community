@@ -213,7 +213,7 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
         }
       }
       toolbar.targetComponent = targetComponent
-      toolbar.putClientProperty("ActionToolbarImpl.fastTrackFailed", true)
+      toolbar.putClientProperty(ActionToolbarImpl.SUPPRESS_FAST_TRACK, true)
       toolbar.setReservePlaceAutoPopupIcon(false)
       UIUtil.markAsShowing(toolbar, true)
       toolbar.updateActionsImmediately(true)

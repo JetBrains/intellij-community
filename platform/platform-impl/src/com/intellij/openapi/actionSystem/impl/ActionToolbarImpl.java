@@ -69,6 +69,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private static final String SUPPRESS_ACTION_COMPONENT_WARNING = "ActionToolbarImpl.suppressCustomComponentWarning";
   private static final String SUPPRESS_TARGET_COMPONENT_WARNING = "ActionToolbarImpl.suppressTargetComponentWarning";
   public static final String DO_NOT_ADD_CUSTOMIZATION_HANDLER = "ActionToolbarImpl.suppressTargetComponentWarning";
+  public static final String SUPPRESS_FAST_TRACK = "ActionToolbarImpl.suppressFastTrack";
 
   static {
     JBUIScale.addUserScaleChangeListener(__ -> {
@@ -1279,8 +1280,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   private void updateActionsImplFastTrack(@NotNull ActionUpdater updater) {
-    String failedKey = "ActionToolbarImpl.fastTrackFailed";
-    if (!(myVisibleActions.isEmpty() && getComponentCount() == 1 && getClientProperty(failedKey) == null)) {
+    boolean firstTime = myVisibleActions.isEmpty() &&
+                        getComponentCount() == 1 &&
+                        getClientProperty(SUPPRESS_FAST_TRACK) == null;
+    if (!firstTime) {
       return;
     }
     List<AnAction> actions = Utils.expandActionGroupFastTrack(updater, myActionGroup, myHideDisabled, null);
@@ -1288,7 +1291,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       actionsUpdated(true, actions);
     }
     else {
-      putClientProperty(failedKey, true);
+      putClientProperty(SUPPRESS_FAST_TRACK, true);
     }
   }
 
