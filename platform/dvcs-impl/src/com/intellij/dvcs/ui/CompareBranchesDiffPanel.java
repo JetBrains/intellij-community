@@ -9,6 +9,7 @@ import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -190,6 +191,11 @@ public class CompareBranchesDiffPanel extends JPanel {
             DvcsBundle.messagePointer("compare.branches.diff.panel.get.from.branch.action.description", myBranchName),
             AllIcons.Actions.Download);
       copyShortcutFrom(ActionManager.getInstance().getAction("Vcs.GetVersion"));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

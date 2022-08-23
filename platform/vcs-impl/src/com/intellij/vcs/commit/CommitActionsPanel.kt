@@ -117,6 +117,10 @@ class CommitActionsPanel : JBPanel<CommitActionsPanel>(null), CommitActionsUi {
       shortcutSet = DEFAULT_COMMIT_ACTION_SHORTCUT
     }
 
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
+    }
+
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabledAndVisible = isDefaultExecutorEnabled() && commitButton.isDefaultButton
     }
@@ -127,6 +131,10 @@ class CommitActionsPanel : JBPanel<CommitActionsPanel>(null), CommitActionsUi {
   private inner class ShowCustomCommitActions : DumbAwareAction() {
     init {
       shortcutSet = getDefaultShowPopupShortcut()
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.EDT
     }
 
     override fun update(e: AnActionEvent) {

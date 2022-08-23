@@ -675,6 +675,11 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   private class MyToggleSelectionAction extends AnAction implements DumbAware {
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(isShowCheckboxes());
     }

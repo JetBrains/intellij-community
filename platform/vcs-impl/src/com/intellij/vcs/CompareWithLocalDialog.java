@@ -198,6 +198,11 @@ public class CompareWithLocalDialog {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       MyLoadingChangesPanel changesPanel = e.getData(MyLoadingChangesPanel.DATA_KEY);
@@ -262,6 +267,11 @@ public class CompareWithLocalDialog {
             VcsBundle.messagePointer("action.description.refresh.compare.with.local.panel"),
             AllIcons.Actions.Refresh);
       copyShortcutFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_REFRESH));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

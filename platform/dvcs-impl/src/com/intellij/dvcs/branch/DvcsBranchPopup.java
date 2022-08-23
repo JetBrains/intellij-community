@@ -166,6 +166,11 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return myVcsSettings.getSyncSetting() == DvcsSyncSettings.Value.SYNC;
     }
