@@ -1761,7 +1761,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiPattern pattern = expression.getPattern();
     PsiExpression operand = expression.getOperand();
     PsiType operandType = operand.getType();
-    PsiTypeElement checkType = expression.getCheckType();
+    PsiTypeElement checkType = InstanceOfUtils.findCheckTypeElement(expression);
     CFGBuilder builder = new CFGBuilder(this);
     DfaVariableValue expressionValue;
     PsiPatternVariable patternVariable = pattern == null ? null : JavaPsiPatternUtil.getPatternVariable(pattern);
