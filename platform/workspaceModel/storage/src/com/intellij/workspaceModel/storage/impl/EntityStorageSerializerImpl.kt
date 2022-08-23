@@ -334,7 +334,7 @@ class EntityStorageSerializerImpl(
           collectAndRegisterClasses(kryo, output, storage)
         }
         catch (e: NotGeneratedRuntimeException) {
-          LOG.error(e)
+          LOG.warn(e)
           newCacheType = false
         }
       }
