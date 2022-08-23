@@ -16,10 +16,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
-import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
-import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
+import com.intellij.openapi.fileEditor.ex.*;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -57,7 +54,7 @@ import java.util.function.Supplier;
  * It's a composite what can be pinned in the tabs list or opened as a preview, not concrete file editors.
  * It also manages the internal UI structure: bottom and top components, panels, labels, actions for navigating between editors it owns.
  */
-public class EditorComposite extends UserDataHolderBase implements Disposable {
+public class EditorComposite extends EditorCompositeBase implements Disposable {
   private static final Logger LOG = Logger.getInstance(EditorComposite.class);
 
   /**
@@ -236,6 +233,7 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
     }
   }
 
+  @Override
   public boolean isPreview() {
     return myPreview;
   }
@@ -313,6 +311,7 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
     return getAllEditors().toArray(FileEditor.EMPTY_ARRAY);
   }
 
+  @Override
   public @NotNull List<@NotNull FileEditor> getAllEditors() {
     return ContainerUtil.map(getAllEditorsWithProviders(), it -> it.getFileEditor());
   }
@@ -667,7 +666,7 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
   /**
    * A mapper for old API with arrays and pairs
    */
-  public static @NotNull Pair<FileEditor @NotNull [], FileEditorProvider @NotNull []> retrofit(@Nullable EditorComposite composite) {
+  public static @NotNull Pair<FileEditor @NotNull [], FileEditorProvider @NotNull []> retrofit(@Nullable EditorCompositeBase composite) {
     if (composite == null) return new Pair<>(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY);
 
     FileEditor[] editors = composite.getAllEditors().toArray(FileEditor.EMPTY_ARRAY);

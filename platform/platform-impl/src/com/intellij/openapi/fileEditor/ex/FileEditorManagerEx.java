@@ -49,6 +49,8 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
 
   public abstract @NotNull Pair<FileEditor[], FileEditorProvider[]> getEditorsWithProviders(@NotNull VirtualFile file);
 
+  public abstract @Nullable EditorCompositeBase getComposite(@NotNull VirtualFile file);
+
   /** @deprecated use {@link FileEditor#getFile()} instead */
   @Deprecated(forRemoval = true)
   public abstract @Nullable VirtualFile getFile(@NotNull FileEditor editor);

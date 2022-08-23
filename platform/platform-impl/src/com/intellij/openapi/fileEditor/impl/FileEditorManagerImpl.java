@@ -1595,6 +1595,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     return result.toArray(FileEditor.EMPTY_ARRAY);
   }
 
+  @Override
   public @Nullable EditorComposite getComposite(@NotNull VirtualFile file) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!ClientId.isCurrentlyUnderLocalId()) {
