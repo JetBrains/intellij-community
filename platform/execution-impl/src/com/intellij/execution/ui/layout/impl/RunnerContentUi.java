@@ -2036,6 +2036,11 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       myContentUi.toggleContentPopup(e.getData(JBTabsEx.NAVIGATION_ACTIONS_KEY));
     }
@@ -2056,6 +2061,11 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     public boolean isSelected(@NotNull AnActionEvent e) {
       boolean isSelected = delegate.isSelected(e);
       return myInverted ? !isSelected : isSelected;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return delegate.getActionUpdateThread();
     }
 
     @Override

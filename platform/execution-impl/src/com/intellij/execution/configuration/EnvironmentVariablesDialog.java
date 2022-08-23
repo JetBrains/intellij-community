@@ -7,6 +7,7 @@ import com.intellij.execution.util.EnvVariablesTable;
 import com.intellij.execution.util.EnvironmentVariable;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
@@ -254,6 +255,11 @@ public class EnvironmentVariablesDialog extends DialogWrapper {
                                       if (myParent.isModifiedSysEnv(variable)) return true;
                                     }
                                     return false;
+                                  }
+
+                                  @Override
+                                  public @NotNull ActionUpdateThread getActionUpdateThread() {
+                                    return ActionUpdateThread.EDT;
                                   }
                                 });
     }

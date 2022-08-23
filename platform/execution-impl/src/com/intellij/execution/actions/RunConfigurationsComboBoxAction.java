@@ -336,6 +336,11 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       }
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
     private static void disable(final Presentation presentation) {
       presentation.setEnabledAndVisible(false);
     }
@@ -395,6 +400,11 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(e.getProject() != null && hasRunCurrentFileItem(e.getProject()));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -517,6 +527,11 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       updateIcon(e.getPresentation());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 }

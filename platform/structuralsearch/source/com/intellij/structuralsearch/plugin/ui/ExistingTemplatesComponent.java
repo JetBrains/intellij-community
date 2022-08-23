@@ -115,6 +115,11 @@ public final class ExistingTemplatesComponent {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         removeTemplate(project);
       }
@@ -126,6 +131,11 @@ public final class ExistingTemplatesComponent {
         if (mySearchEditorProducer != null) {
           e.getPresentation().setEnabled(!StringUtil.isEmptyOrSpaces(mySearchEditorProducer.get().getText()));
         }
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
 
       @Override

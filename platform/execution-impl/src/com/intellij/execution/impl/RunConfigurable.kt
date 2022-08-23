@@ -1072,6 +1072,8 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       e.presentation.isEnabled = isEnabled(e)
     }
 
+    override fun getActionUpdateThread() = ActionUpdateThread.EDT
+
     override fun isEnabled(e: AnActionEvent): Boolean {
       var enabled = false
       val selections = tree.selectionPaths
@@ -1124,6 +1126,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       val configuration = selectedConfiguration
       e.presentation.isEnabled = configuration != null && configuration.configuration.type.isManaged
     }
+    override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
     override fun isDumbAware(): Boolean {
       val configuration = selectedConfiguration
@@ -1152,6 +1155,8 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
         else -> configuration.settings.isTemporary
       }
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.EDT
   }
 
   /**
@@ -1207,6 +1212,8 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabled = isEnabled(e)
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
     override fun isEnabled(e: AnActionEvent) = getAvailableDropPosition(direction) != null
   }
@@ -1281,6 +1288,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
                             else ExecutionBundle.message("run.configuration.create.folder.text")
       e.presentation.isEnabled = isEnabled
     }
+    override fun getActionUpdateThread() = ActionUpdateThread.EDT
   }
 
   protected inner class MySortFolderAction : AnAction(ExecutionBundle.message("run.configuration.sort.folder.text"),
@@ -1336,6 +1344,8 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       }
       e.presentation.isEnabled = false
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.EDT
   }
 
   private val selectedNodes: Array<DefaultMutableTreeNode>

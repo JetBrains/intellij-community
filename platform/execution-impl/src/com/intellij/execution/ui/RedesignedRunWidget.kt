@@ -216,6 +216,8 @@ private class OtherRunOptions : TogglePopupAction(
     val selectedConfiguration = RunManager.getInstance(project).selectedConfiguration
     return createOtherRunnersSubgroup(selectedConfiguration, project)
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 }
 
 internal val excludeRunAndDebug: (Executor) -> Boolean = {
@@ -253,6 +255,8 @@ private class RunConfigurationSelector : TogglePopupAction(), CustomComponentAct
     val runConfigAction = action as? RunConfigurationsComboBoxAction ?: return
     runConfigAction.update(e)
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   override fun displayTextInToolbar(): Boolean {
     return true

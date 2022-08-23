@@ -197,6 +197,11 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
         presentation.putClientProperty(CURSOR_KEY, cursor);
       }
 
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
       private boolean isSelected() {
         return myLikenessState != null && myLikenessState == isLike;
       }

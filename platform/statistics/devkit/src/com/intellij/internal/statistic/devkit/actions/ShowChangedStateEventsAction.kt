@@ -10,6 +10,7 @@ import com.intellij.internal.statistic.devkit.toolwindow.ChangedStateEventsPanel
 import com.intellij.internal.statistic.devkit.toolwindow.eventLogToolWindowsId
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.runBackgroundableTask
@@ -61,6 +62,10 @@ internal class ShowChangedStateEventsAction(private val recorderId: String) : Du
   override fun update(event: AnActionEvent) {
     super.update(event)
     event.presentation.isEnabled = FusStatesRecorder.isComparisonAvailable()
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
   }
 
   companion object {
