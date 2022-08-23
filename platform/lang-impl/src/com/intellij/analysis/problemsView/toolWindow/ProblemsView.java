@@ -54,15 +54,6 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
     }
   }
 
-  public static void showProjectErrorsView(@NotNull Project project) {
-    ToolWindow toolWindow = getToolWindow(project);
-    if (toolWindow == null) return;
-    ProblemsViewToolWindowUtils.INSTANCE.selectContent(toolWindow.getContentManager(), ProblemsViewProjectErrorsPanelProvider.ID);
-    if (!toolWindow.isActive()) {
-      toolWindow.activate(null);
-    }
-  }
-  
   public static void selectHighlighterIfVisible(@NotNull Project project, @NotNull RangeHighlighterEx highlighter) {
     HighlightingPanel panel = get(HighlightingPanel.class, getSelectedContent(project));
     if (panel != null && panel.isShowing()) panel.selectHighlighter(highlighter);

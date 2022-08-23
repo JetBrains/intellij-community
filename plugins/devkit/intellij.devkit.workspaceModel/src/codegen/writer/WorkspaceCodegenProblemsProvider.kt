@@ -5,7 +5,7 @@ import com.intellij.analysis.problemsView.FileProblem
 import com.intellij.analysis.problemsView.Problem
 import com.intellij.analysis.problemsView.ProblemsCollector
 import com.intellij.analysis.problemsView.ProblemsProvider
-import com.intellij.analysis.problemsView.toolWindow.ProblemsView
+import com.intellij.analysis.problemsView.toolWindow.ProblemsViewToolWindowUtils.selectProjectErrorsTab
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.devkit.workspaceModel.metaModel.ObjMetaElementWithSource
 import com.intellij.openapi.application.ApplicationManager
@@ -44,7 +44,7 @@ class WorkspaceCodegenProblemsProvider(override val project: Project): ProblemsP
       ProblemsCollector.getInstance(project).problemAppeared(currentProblem)
     }
     if (problems.isNotEmpty()) {
-      ProblemsView.showProjectErrorsView(project)
+      selectProjectErrorsTab(project)
     }
   }
 
