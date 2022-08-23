@@ -48,6 +48,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -117,6 +118,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
                                                              "sys.path.extend([" + WORKING_DIR_AND_PYTHON_PATHS + "])\n";
   public static final @NonNls String STARTED_BY_RUNNER = "startedByRunner";
   public static final @NonNls String INLINE_OUTPUT_SUPPORTED = "INLINE_OUTPUT_SUPPORTED";
+
+  private static final @NonNls String ASYNCIO_REPL_ENV = "ASYNCIO_REPL";
+  private static final @NonNls String ASYNCIO_REPL_COMMAND = "-m asyncio";
+
   private static final Long WAIT_BEFORE_FORCED_CLOSE_MILLIS = 2000L;
   private static final Logger LOG = Logger.getInstance(PydevConsoleRunnerImpl.class);
   @SuppressWarnings("SpellCheckingInspection")
@@ -1340,6 +1345,12 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       }
       if (PyConsoleOutputCustomizer.Companion.getInstance().isInlineOutputSupported()) {
         myEnvironmentVariables.put(INLINE_OUTPUT_SUPPORTED, "True");
+      }
+      if (RegistryManager.getInstance().is("python.console.asyncio.repl")) {
+        myEnvironmentVariables.put(ASYNCIO_REPL_ENV, "True");
+      }
+      if (myConsoleSettings.myInterpreterOptions.contains(ASYNCIO_REPL_COMMAND)) {
+        myConsoleSettings.myInterpreterOptions = "";
       }
     }
 
