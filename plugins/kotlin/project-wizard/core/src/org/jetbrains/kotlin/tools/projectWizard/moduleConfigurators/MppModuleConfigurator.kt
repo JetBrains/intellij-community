@@ -21,7 +21,6 @@ object MppModuleConfigurator : ModuleConfigurator,
     ModuleConfiguratorWithTests,
     ModuleConfiguratorSettings() {
 
-    @OptIn(ExperimentalStdlibApi::class)
     override fun getConfiguratorSettings(): List<ModuleConfiguratorSetting<*, *>> = buildList {
         addAll(super<ModuleConfiguratorWithTests>.getConfiguratorSettings())
     }
