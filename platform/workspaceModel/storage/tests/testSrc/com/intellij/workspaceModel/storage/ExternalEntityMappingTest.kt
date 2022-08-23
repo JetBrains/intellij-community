@@ -6,8 +6,9 @@ import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
 import com.intellij.workspaceModel.storage.entities.test.addSourceEntity
 import com.intellij.workspaceModel.storage.entities.test.api.SampleEntity
 import com.intellij.workspaceModel.storage.entities.test.api.SampleEntitySource
-import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.entities.test.api.modifyEntity
+import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
+import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMappingImpl
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -522,5 +523,18 @@ class ExternalEntityMappingTest {
     mergeBuilder.addDiff(diff2)
     val merged = mergeBuilder.toSnapshot()
     assertEmpty(merged.entities(SampleEntity::class.java).toList())
+  }
+
+  @Test
+  fun `check double mapping adding`() {
+    val initialBuilder = createEmptyBuilder()
+    val foo = initialBuilder.addSampleEntity("foo")
+    initialBuilder.getMutableExternalMapping<Int>(INDEX_ID).addMapping(foo, 1)
+    initialBuilder.getMutableExternalMapping<Int>(INDEX_ID).addMapping(foo, 2)
+    assertEquals(2, (((initialBuilder.getMutableExternalMapping<Int>(INDEX_ID) as MutableExternalEntityMappingImpl)
+      .indexLogBunches
+      .chain
+      .single() as MutableExternalEntityMappingImpl.IndexLogOperation.Changes)
+      .changes.values.single() as MutableExternalEntityMappingImpl.IndexLogRecord.Add<*>).data)
   }
 }
