@@ -70,11 +70,11 @@ internal object PackageScopeTableCellEditor : AbstractTableCellEditor() {
 
         val colors = computeColors(isSelected, isHover = false, isSearchResult)
         return ComboBoxTableCellEditorComponent(table, cellRenderer).apply {
-            options = scopeViewModels
+            setOptions(*scopeViewModels.toTypedArray())
             value = selectedViewModel
             isShowBelowCell = false
             isForcePopupMatchCellWidth = false
-
+            colors.applyTo(this)
         }
     }
 }

@@ -15,6 +15,12 @@
             "since": "2022.1"
         },
         {
+            "key": "PackageSearch.PackagesList.rowHeight",
+            "description": "Height (in pixels) of the rows of the packages list",
+            "source": "",
+            "since": "2022.3"
+        },
+        {
             "key": "PackageSearch.PackageTag.selectedBackground",
             "description": "Dependency tag (e.g., 'multiplatform') selected background color",
             "source": "",

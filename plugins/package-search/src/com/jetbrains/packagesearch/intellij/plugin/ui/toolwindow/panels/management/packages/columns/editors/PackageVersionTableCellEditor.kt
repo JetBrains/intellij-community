@@ -72,7 +72,7 @@ internal class PackageVersionTableCellEditor : AbstractTableCellEditor() {
         return ComboBoxTableCellEditorComponent(table, cellRenderer).apply {
             isShowBelowCell = false
             isForcePopupMatchCellWidth = false
-            options = versionViewModels
+            setOptions(*versionViewModels.toTypedArray())
             value = selectedViewModel
         }
     }

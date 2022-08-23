@@ -41,7 +41,7 @@ internal class HeaderPanel(
 ) : BorderLayoutPanel() {
 
     private val titleLabel = JLabel().apply {
-        border = emptyBorder(right = 20)
+        border = emptyBorder(right = 10)
         font = RelativeFont.BOLD.derive(font)
     }
 

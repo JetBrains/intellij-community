@@ -212,7 +212,7 @@ internal class PackagesListPanel(
 
         addToCenter(object : JPanel() {
             init {
-                layout = MigLayout("ins 0, fill", "[left, fill, grow][right]", "center")
+                layout = MigLayout("ins 0, fill", "[left, fill, grow][right]", "fill")
                 add(searchTextField)
                 add(searchFiltersToolbar.component)
 

@@ -38,9 +38,6 @@ class PackagesSmartSearchField(
 
     init {
         @Suppress("MagicNumber") // Swing dimension constants
-        PackageSearchUI.setHeight(this, height = 25)
-
-        @Suppress("MagicNumber") // Swing dimension constants
         minimumSize = Dimension(100.scaled(), minimumSize.height)
 
         textEditor.setTextToTriggerEmptyTextStatus(PackageSearchBundle.message("packagesearch.search.hint"))

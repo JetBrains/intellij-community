@@ -165,7 +165,7 @@ object PackageSearchUI {
                     private val searchResultTagForeground
                         get() = color(
                             propertyName = "PackageSearch.SearchResult.PackageTag.foreground",
-                            newUILight = 0xE3E4E6, newUIDark = 0xDFE1E5,
+                            newUILight = 0x000000, newUIDark = 0xDFE1E5,
                             oldUILight = 0x000000, oldUIDark = 0x8E8F8F
                         )
 

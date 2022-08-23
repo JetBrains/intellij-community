@@ -581,7 +581,7 @@
         "hoverBackground": "#dbe1ec",
         "PackageTag": {
           "background": "#d5dbe6",
-          "foreground": "#e3e4e6",
+          "foreground": "Grey1",
           "hoverBackground": "#c9cfd9",
           "selectedBackground": "Blue11",
           "selectedForeground": "Grey1"
