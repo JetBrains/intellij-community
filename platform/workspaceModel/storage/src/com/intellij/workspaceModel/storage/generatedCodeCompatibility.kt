@@ -5,10 +5,14 @@ package com.intellij.workspaceModel.storage
 import org.jetbrains.annotations.TestOnly
 
 object CodeGeneratorVersions {
+  /** these constants are accessed from WorkspaceImplObsoleteInspection */
+  private const val API_VERSION_INTERNAL = 1
+  private const val IMPL_VERSION_INTERNAL = 1
+  
   @set:TestOnly
-  var API_VERSION = 1
+  var API_VERSION = API_VERSION_INTERNAL
   @set:TestOnly
-  var IMPL_VERSION = 1
+  var IMPL_VERSION = IMPL_VERSION_INTERNAL
 
   var checkApiInInterface = true
   var checkApiInImpl = true
