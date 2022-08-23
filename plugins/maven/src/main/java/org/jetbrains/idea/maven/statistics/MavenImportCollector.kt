@@ -4,10 +4,12 @@ package org.jetbrains.idea.maven.statistics
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class MavenImportCollector : CounterUsagesCollector() {
   companion object {
-    val GROUP = EventLogGroup("maven.import", 5)
+    val GROUP = EventLogGroup("maven.import", 6)
 
     @JvmField
     val HAS_USER_ADDED_LIBRARY_DEP = GROUP.registerEvent("hasUserAddedLibraryDependency")
@@ -59,6 +61,9 @@ class MavenImportCollector : CounterUsagesCollector() {
     val TOTAL_DURATION_MS = EventFields.Long("total_duration_ms")
 
     @JvmField
+    val ACTIVITY_ID = EventFields.IdeActivityIdField
+
+    @JvmField
     val COLLECT_FOLDERS_DURATION_MS = EventFields.Long("collect_folders_duration_ms")
 
     @JvmField
@@ -74,13 +79,14 @@ class MavenImportCollector : CounterUsagesCollector() {
     val IMPORTER_CLASS = EventFields.Class("importer_class")
 
     @JvmField
-    val IMPORTER_RUN = GROUP.registerEvent("importer_run", IMPORTER_CLASS, NUMBER_OF_MODULES, TOTAL_DURATION_MS)
+    val IMPORTER_RUN = GROUP.registerVarargEvent("importer_run", ACTIVITY_ID, IMPORTER_CLASS, NUMBER_OF_MODULES, TOTAL_DURATION_MS)
 
     @JvmField
     val CONFIGURATOR_CLASS = EventFields.Class("configurator_class")
 
     @JvmField
     val CONFIGURATOR_RUN = GROUP.registerVarargEvent("workspace_import.configurator_run",
+                                                     ACTIVITY_ID,
                                                      CONFIGURATOR_CLASS,
                                                      NUMBER_OF_MODULES,
                                                      TOTAL_DURATION_MS,
