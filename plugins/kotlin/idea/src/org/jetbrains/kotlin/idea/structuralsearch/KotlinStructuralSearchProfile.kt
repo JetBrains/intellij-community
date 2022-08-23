@@ -26,13 +26,11 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType
-import org.jetbrains.kotlin.idea.structuralsearch.filters.AlsoMatchCompanionObjectModifier
-import org.jetbrains.kotlin.idea.structuralsearch.filters.AlsoMatchValModifier
-import org.jetbrains.kotlin.idea.structuralsearch.filters.AlsoMatchVarModifier
-import org.jetbrains.kotlin.idea.structuralsearch.filters.OneStateFilter
+import org.jetbrains.kotlin.idea.structuralsearch.filters.*
 import org.jetbrains.kotlin.idea.structuralsearch.predicates.KotlinAlsoMatchCompanionObjectPredicate
 import org.jetbrains.kotlin.idea.structuralsearch.predicates.KotlinAlsoMatchValVarPredicate
 import org.jetbrains.kotlin.idea.structuralsearch.predicates.KotlinExprTypePredicate
+import org.jetbrains.kotlin.idea.structuralsearch.predicates.KotlinMatchCallSemantics
 import org.jetbrains.kotlin.idea.structuralsearch.visitor.KotlinCompilingVisitor
 import org.jetbrains.kotlin.idea.structuralsearch.visitor.KotlinMatchingVisitor
 import org.jetbrains.kotlin.idea.structuralsearch.visitor.KotlinRecursiveElementWalkingVisitor
@@ -209,6 +207,7 @@ class KotlinStructuralSearchProfile : StructuralSearchProfile() {
                 AlsoMatchValModifier.CONSTRAINT_NAME -> variableNode.parent is KtProperty && (variableNode.parent as KtProperty).isVar
                 AlsoMatchCompanionObjectModifier.CONSTRAINT_NAME -> variableNode.parent is KtObjectDeclaration &&
                         !(variableNode.parent as KtObjectDeclaration).isCompanion()
+                MatchCallSemanticsModifier.CONSTRAINT_NAME -> variableNode.parent.parent is KtCallElement
                 else -> super.isApplicableConstraint(constraintName, variableNode, completePattern, target)
             }
 
@@ -339,6 +338,9 @@ class KotlinStructuralSearchProfile : StructuralSearchProfile() {
             ) result.add(KotlinAlsoMatchValVarPredicate())
             if (getAdditionalConstraint(AlsoMatchCompanionObjectModifier.CONSTRAINT_NAME) == OneStateFilter.ENABLED) {
                 result.add(KotlinAlsoMatchCompanionObjectPredicate())
+            }
+            if (getAdditionalConstraint(MatchCallSemanticsModifier.CONSTRAINT_NAME) == OneStateFilter.ENABLED) {
+                result.add(KotlinMatchCallSemantics())
             }
         }
         return result

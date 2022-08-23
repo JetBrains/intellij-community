@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.structuralsearch.*
 import org.jetbrains.kotlin.idea.structuralsearch.predicates.KotlinAlsoMatchCompanionObjectPredicate
 import org.jetbrains.kotlin.idea.structuralsearch.predicates.KotlinAlsoMatchValVarPredicate
+import org.jetbrains.kotlin.idea.structuralsearch.predicates.KotlinMatchCallSemantics
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocImpl
@@ -72,7 +73,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
             null
         }
     }
-    
+
     private inline fun <reified T:KtElement> factory(context: PsiElement, f: KtPsiFactory.() -> T): T {
         val psiFactory = KtPsiFactory(context, true)
         val result = psiFactory.f()
@@ -335,9 +336,9 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
             (!lambdaExpression.functionLiteral.hasParameterSpecification()
                     || myMatchingVisitor.matchSequentially(lambdaVP, otherVP)
                     || lambdaVP.map { p -> getHandler(p).let { if (it is SubstitutionHandler) it.minOccurs else 1 } }.sum() == 1
-                            && !other.functionLiteral.hasParameterSpecification()
-                            && (other.functionLiteral.descriptor as AnonymousFunctionDescriptor).valueParameters.size == 1)
-                && myMatchingVisitor.match(lambdaExpression.bodyExpression, other.bodyExpression)
+                    && !other.functionLiteral.hasParameterSpecification()
+                    && (other.functionLiteral.descriptor as AnonymousFunctionDescriptor).valueParameters.size == 1)
+                    && myMatchingVisitor.match(lambdaExpression.bodyExpression, other.bodyExpression)
     }
 
     override fun visitTypeProjection(typeProjection: KtTypeProjection) {
@@ -394,7 +395,17 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
         } ?: emptyList()
     }
 
-    private fun KtCallElement.matchValueArgumentsSemantics(other: KtCallElement): Boolean {
+    private fun KtCallElement.matchArguments(other: KtCallElement): Boolean {
+        val handler = getHandler(calleeExpression ?: return false)
+        return if (handler is SubstitutionHandler && handler.findPredicate(KotlinMatchCallSemantics::class.java) != null) {
+            matchArgumentsSemantically(other)
+        } else {
+            myMatchingVisitor.matchSequentially(valueArgumentList?.arguments ?: emptyList(), other.valueArgumentList?.arguments ?: emptyList())
+                    && myMatchingVisitor.matchSequentially(lambdaArguments, other.lambdaArguments)
+        }
+    }
+
+    private fun KtCallElement.matchArgumentsSemantically(other: KtCallElement): Boolean {
         val parameters = other.resolveParameters()
         val valueArgList = valueArgumentList
         val otherValueArgList = other.valueArgumentList
@@ -402,25 +413,26 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
         val otherLambdaArgList = other.lambdaArguments
         if (valueArgList != null) {
             val handler = getHandler(valueArgList)
-            val normalizedOtherArgs = otherValueArgList?.arguments?.toMutableList() ?: mutableListOf()
-            normalizedOtherArgs.addAll(otherLambdaArgList)
-            normalizedOtherArgs.addDefaultArguments(parameters)
+            val normalizedOtherArgs = (otherValueArgList?.arguments?.toMutableList() ?: mutableListOf()).apply {
+                addAll(otherLambdaArgList)
+                addDefaultArguments(parameters)
+            }
             if (normalizedOtherArgs.isEmpty() && handler is SubstitutionHandler && handler.minOccurs == 0) {
                 return myMatchingVisitor.matchSequentially(lambdaArgList, otherLambdaArgList)
             }
             val normalizedArgs = valueArgList.arguments.toMutableList()
             normalizedArgs.addAll(lambdaArgList)
-            return matchValueArgumentsSemantics(normalizedArgs, normalizedOtherArgs)
+            return matchArgumentsSemantically(normalizedArgs, normalizedOtherArgs)
         }
-        return matchValueArgumentsSemantics(lambdaArgList, otherLambdaArgList)
+        return matchArgumentsSemantically(lambdaArgList, otherLambdaArgList)
     }
 
-    private fun matchValueArgumentsSemantics(queryArgs: List<KtValueArgument>, codeArgs: List<KtValueArgument>): Boolean {
+    private fun matchArgumentsSemantically(queryArgs: List<KtValueArgument>, codeArgs: List<KtValueArgument>): Boolean {
         var queryIndex = 0
         var codeIndex = 0
         while (queryIndex < queryArgs.size) {
             val queryArg = queryArgs[queryIndex]
-            val codeArg = codeArgs.getOrElse(codeIndex) { return@matchValueArgumentsSemantics false }
+            val codeArg = codeArgs.getOrElse(codeIndex) { return@matchArgumentsSemantically false }
             if (getHandler(queryArg) is SubstitutionHandler) {
                 return myMatchingVisitor.matchSequentially(
                     queryArgs.subList(queryIndex, queryArgs.lastIndex + 1),
@@ -433,7 +445,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
                 val spreadArgExpr = queryArg.getArgumentExpression()
                 if (spreadArgExpr is KtCallExpression) {
                     spreadArgExpr.valueArguments.forEach { spreadedArg ->
-                        if (!myMatchingVisitor.match(spreadedArg, codeArgs[codeIndex++])) return@matchValueArgumentsSemantics false
+                        if (!myMatchingVisitor.match(spreadedArg, codeArgs[codeIndex++])) return@matchArgumentsSemantically false
                     }
                     queryIndex++
                     continue
@@ -445,7 +457,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
                 val spreadArgExpr = codeArg.getArgumentExpression()
                 if (spreadArgExpr is KtCallExpression) {
                     spreadArgExpr.valueArguments.forEach { spreadedArg ->
-                        if (!myMatchingVisitor.match(queryArgs[queryIndex++], spreadedArg)) return@matchValueArgumentsSemantics false
+                        if (!myMatchingVisitor.match(queryArgs[queryIndex++], spreadedArg)) return@matchArgumentsSemantically false
                     }
                     codeIndex++
                     continue
@@ -474,12 +486,12 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
             is KtCallExpression -> {
                 myMatchingVisitor.match(expression.calleeExpression, other.calleeExpression)
                         && myMatchingVisitor.match(expression.typeArgumentList, other.typeArgumentList)
-                        && expression.matchValueArgumentsSemantics(other)
+                        && expression.matchArguments(other)
             }
             is KtDotQualifiedExpression -> other.callExpression is KtCallExpression
                     && myMatchingVisitor.match(expression.calleeExpression, other.receiverExpression)
                     && other.calleeName == "${OperatorNameConventions.INVOKE}"
-                    && expression.matchValueArgumentsSemantics(other.callExpression as KtCallExpression)
+                    && expression.matchArguments(other.callExpression as KtCallElement)
             else -> false
         }
     }
@@ -538,7 +550,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
         val other = getTreeElementDepar<KtConstructorDelegationCall>() ?: return
         myMatchingVisitor.result = myMatchingVisitor.match(call.calleeExpression, other.calleeExpression)
                 && myMatchingVisitor.match(call.typeArgumentList, other.typeArgumentList)
-                && call.matchValueArgumentsSemantics(other)
+                && call.matchArguments(other)
     }
 
     override fun visitSecondaryConstructor(constructor: KtSecondaryConstructor) {
@@ -571,7 +583,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
         val other = getTreeElementDepar<KtSuperTypeCallEntry>() ?: return
         myMatchingVisitor.result = myMatchingVisitor.match(call.calleeExpression, other.calleeExpression)
                 && myMatchingVisitor.match(call.typeArgumentList, other.typeArgumentList)
-                && call.matchValueArgumentsSemantics(other)
+                && call.matchArguments(other)
     }
 
     override fun visitSuperTypeEntry(specifier: KtSuperTypeEntry) {
@@ -624,7 +636,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
         var matchNameIdentifiers = matchTextOrVariable(identifier, otherIdentifier)
                 || identifier != null && otherIdentifier != null && matchTypeAgainstElement(
             (otherDescriptor as LazyClassDescriptor).defaultType.fqName.toString(), identifier, otherIdentifier
-                )
+        )
 
         // Possible match if "within hierarchy" is set
         if (!matchNameIdentifiers && identifier != null && otherIdentifier != null) {
@@ -681,12 +693,12 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
             true // match count filter with companion object without identifier
         } else matchTextOrVariableEq(declaration.nameIdentifier, other.nameIdentifier)
         myMatchingVisitor.result =
-                (declaration.isCompanion() == other.isCompanion() ||
-                        (handler is SubstitutionHandler && handler.predicate is KotlinAlsoMatchCompanionObjectPredicate))
-                && myMatchingVisitor.match(declaration.modifierList, other.modifierList)
-                && matchIdentifier
-                && myMatchingVisitor.match(declaration.getSuperTypeList(), other.getSuperTypeList())
-                && myMatchingVisitor.match(declaration.body, other.body)
+            (declaration.isCompanion() == other.isCompanion() ||
+                    (handler is SubstitutionHandler && handler.predicate is KotlinAlsoMatchCompanionObjectPredicate))
+                    && myMatchingVisitor.match(declaration.modifierList, other.modifierList)
+                    && matchIdentifier
+                    && myMatchingVisitor.match(declaration.getSuperTypeList(), other.getSuperTypeList())
+                    && myMatchingVisitor.match(declaration.body, other.body)
         if (myMatchingVisitor.result && handler is SubstitutionHandler) {
             handler.handle(other.nameIdentifier, myMatchingVisitor.matchContext)
         }
@@ -803,7 +815,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
             myMatchingVisitor.result = handler.handle(other, myMatchingVisitor.matchContext)
         } else {
             myMatchingVisitor.result = other is KtWhenConditionWithExpression
-                                       && myMatchingVisitor.match(condition.expression, other.expression)
+                    && myMatchingVisitor.match(condition.expression, other.expression)
         }
     }
 
@@ -867,7 +879,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
         val other = getTreeElementDepar<KtAnnotationEntry>() ?: return
         myMatchingVisitor.result = myMatchingVisitor.match(annotationEntry.calleeExpression, other.calleeExpression)
                 && myMatchingVisitor.match(annotationEntry.typeArgumentList, other.typeArgumentList)
-                && annotationEntry.matchValueArgumentsSemantics(other)
+                && annotationEntry.matchArguments(other)
                 && matchTextOrVariable(annotationEntry.useSiteTarget, other.useSiteTarget)
     }
 

@@ -8,6 +8,7 @@ class KotlinFilterProvider : FilterProvider {
     override fun getFilters(): List<FilterAction> = listOf(
         AlsoMatchValModifier(),
         AlsoMatchVarModifier(),
-        AlsoMatchCompanionObjectModifier()
+        AlsoMatchCompanionObjectModifier(),
+        MatchCallSemanticsModifier()
     )
 }
