@@ -82,10 +82,9 @@ class MLSorter : CompletionFinalSorter() {
     val queryLength = lookup.queryLength()
     val prefix = lookup.prefix()
 
-    val element2score = mutableMapOf<LookupElement, Double?>()
-    val elements = items.toList()
-
-    val positionsBefore = elements.withIndex().associate { it.value to it.index }
+    val positionsBefore = items.withIndex().associate { it.value to it.index }
+    val elements = positionsBefore.keys.toList()
+    val element2score = HashMap<LookupElement, Double?>(elements.size)
 
     tryFillFromCache(element2score, elements, queryLength)
     val itemsForScoring = if (element2score.size == elements.size) emptyList() else elements
