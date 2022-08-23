@@ -27,6 +27,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +39,8 @@ import java.util.function.Supplier;
 /**
  * @deprecated Use {@link InjectedLanguageManager} instead
  */
-@Deprecated(forRemoval = true)
+@Deprecated
+@ApiStatus.Internal
 public class InjectedLanguageUtilBase {
   public static final Key<IElementType> INJECTED_FRAGMENT_TYPE = Key.create("INJECTED_FRAGMENT_TYPE");
 
