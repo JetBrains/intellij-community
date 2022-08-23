@@ -783,6 +783,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/inlineVariableOrProperty/stringTemplates/addBraces.kt");
             }
 
+            @TestMetadata("addBracesToPrevEntry.kt")
+            public void testAddBracesToPrevEntry() throws Exception {
+                runTest("testData/refactoring/inline/inlineVariableOrProperty/stringTemplates/addBracesToPrevEntry.kt");
+            }
+
             @TestMetadata("blockEntry.kt")
             public void testBlockEntry() throws Exception {
                 runTest("testData/refactoring/inline/inlineVariableOrProperty/stringTemplates/blockEntry.kt");
