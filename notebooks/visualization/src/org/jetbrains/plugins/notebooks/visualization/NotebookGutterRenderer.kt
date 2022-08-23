@@ -1,11 +1,12 @@
 package org.jetbrains.plugins.notebooks.visualization
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorKind
-import com.intellij.openapi.editor.LogicalPosition
-import com.intellij.openapi.editor.VisualPosition
+import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorFontType
+import com.intellij.openapi.editor.event.CaretEvent
+import com.intellij.openapi.editor.event.CaretListener
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.view.FontLayoutService
@@ -23,14 +24,38 @@ import kotlin.math.min
 class NotebookGutterRenderer {
 
   fun attachHighlighter(editor: EditorEx) {
-    editor.markupModel.addRangeHighlighter(
-      null,
-      0,
-      editor.document.textLength,
-      HighlighterLayer.FIRST - 100,  // Border should be seen behind any syntax highlighting, selection or any other effect.
-      HighlighterTargetArea.LINES_IN_RANGE
-    ).also {
-      it.lineMarkerRenderer = lineMarkerRenderer
+    editor.addEditorDocumentListener(object : DocumentListener {
+      override fun documentChanged(event: DocumentEvent) = putHighlighters(editor)
+      override fun bulkUpdateFinished(document: Document) = putHighlighters(editor)
+    })
+
+    editor.caretModel.addCaretListener(object : CaretListener {
+      override fun caretPositionChanged(event: CaretEvent) {
+        putHighlighters(editor)
+      }
+    })
+
+    putHighlighters(editor)
+  }
+
+  private fun putHighlighters(editor: EditorEx) {
+    val highlighters = editor.markupModel.allHighlighters.filter { it.lineMarkerRenderer is NotebookGutterLineMarker }
+    highlighters.forEach { editor.markupModel.removeHighlighter(it) }
+
+    val notebookCellLines = NotebookCellLines.get(editor)
+
+    for (interval in notebookCellLines.intervals) {
+      val startOffset = editor.document.getLineStartOffset(interval.lines.first)
+      val endOffset = editor.document.getLineEndOffset(interval.lines.last)
+      editor.markupModel.addRangeHighlighter(
+        null,
+        startOffset,
+        endOffset,
+        HighlighterLayer.FIRST - 100,  // Border should be seen behind any syntax highlighting, selection or any other effect.
+        HighlighterTargetArea.LINES_IN_RANGE
+      ).also {
+        it.lineMarkerRenderer = NotebookGutterLineMarker(interval)
+      }
     }
   }
 
@@ -126,7 +151,7 @@ class NotebookGutterRenderer {
 
 
 
-  private val lineMarkerRenderer = object : LineMarkerRendererEx {
+  inner class NotebookGutterLineMarker(private val interval: NotebookCellLines.Interval) : LineMarkerRendererEx {
     override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
       editor as EditorImpl
 
@@ -139,13 +164,10 @@ class NotebookGutterRenderer {
         val logicalLineStart = editor.visualToLogicalPosition(VisualPosition(visualLineStart, 0)).line
         val logicalLineEnd = editor.visualToLogicalPosition(VisualPosition(visualLineEnd, 0)).line
 
-        val notebookCellLines = NotebookCellLines.get(editor)
-        for (interval in notebookCellLines.intervalsIterator(logicalLineStart)) {
-          if (interval.lines.first > logicalLineEnd) break
+        if (interval.lines.first > logicalLineEnd || interval.lines.last < logicalLineStart) return
 
-          paintBackground(editor, g, r, interval)
-          paintLineNumbers(editor, g, r, interval, visualLineStart, visualLineEnd, logicalLineStart, logicalLineEnd)
-        }
+        paintBackground(editor, g, r, interval)
+        paintLineNumbers(editor, g, r, interval, visualLineStart, visualLineEnd, logicalLineStart, logicalLineEnd)
       }
     }
 
