@@ -29,6 +29,7 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
 import com.intellij.usages.similarity.clustering.UsageCluster;
+import com.intellij.usages.similarity.statistics.SimilarUsagesCollector;
 import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -59,6 +60,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
 
   public MostCommonUsagePatternsComponent(@NotNull UsageViewImpl usageView, @NotNull ClusteringSearchSession session) {
     super(true);
+    SimilarUsagesCollector.logMoreSimilarUsagePatternsShow(session.hashCode());
     mySession = session;
     myUsageView = usageView;
     myProject = usageView.getProject();
@@ -72,6 +74,8 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
       new RefreshAction(IdeBundle.messagePointer("action.refresh"), IdeBundle.messagePointer("action.refresh"), AllIcons.Actions.Refresh) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
+          SimilarUsagesCollector.logMostCommonUsagePatternsRefreshClicked(mySession.hashCode());
+          mySortedClusters.set(null);
           myMainPanel.removeAll();
           myMainPanel.revalidate();
           mySelectedUsages = myUsageView.getSelectedUsages();
@@ -106,6 +110,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     lazyLoadingScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
     BoundedRangeModelThresholdListener.install(lazyLoadingScrollPane.getVerticalScrollBar(), () -> {
       if (!mySortedClusters.isNull()) {
+        SimilarUsagesCollector.logMoreClustersLoaded(mySession.hashCode());
         mySortedClusters.get().stream().skip(myAlreadyRenderedSnippets).limit(CLUSTER_LIMIT).forEach(cluster -> {
           renderClusterDescription(cluster.getUsages());
         });
@@ -128,7 +133,8 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
   private @NotNull ActionLink createOpenSimilarUsagesActionLink(@NotNull UsageInfo info, @NotNull Set<SimilarUsage> usagesToRender) {
     final ActionLink actionLink =
       new ActionLink(UsageViewBundle.message("similar.usages.show.0.similar.usages.title", usagesToRender.size() - 1), e -> {
-        final SimilarUsagesComponent similarComponent = new SimilarUsagesComponent(info, this);
+        SimilarUsagesCollector.logShowSimilarUsagesLinkClicked(mySession.hashCode());
+        final SimilarUsagesComponent similarComponent = new SimilarUsagesComponent(mySession, info, this);
         removeAll();
         setToolbar(new SimilarUsagesToolbar(similarComponent, UsageViewBundle.message("0.similar.usages", usagesToRender.size() - 1),
                                             myRefreshAction,
