@@ -309,9 +309,7 @@ public final class CompletionServiceImpl extends BaseCompletionService {
 
   @Override
   protected void getVariantsFromContributor(CompletionParameters params, CompletionContributor contributor, CompletionResultSet result) {
-    Span contributionSpan = completionTracer.spanBuilder("contribution")
-      .setAttribute("contributor", contributor.getClass().getName())
-      .startSpan();
+    Span contributionSpan = completionTracer.spanBuilder(contributor.getClass().getSimpleName()).startSpan();
 
     try (Scope ignored = contributionSpan.makeCurrent()) {
       super.getVariantsFromContributor(params, contributor, result);
