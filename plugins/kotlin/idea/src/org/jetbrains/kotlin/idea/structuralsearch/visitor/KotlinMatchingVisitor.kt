@@ -694,7 +694,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
         } else matchTextOrVariableEq(declaration.nameIdentifier, other.nameIdentifier)
         myMatchingVisitor.result =
             (declaration.isCompanion() == other.isCompanion() ||
-                    (handler is SubstitutionHandler && handler.predicate is KotlinAlsoMatchCompanionObjectPredicate))
+                    (handler is SubstitutionHandler && handler.findPredicate(KotlinAlsoMatchCompanionObjectPredicate::class.java) != null))
                     && myMatchingVisitor.match(declaration.modifierList, other.modifierList)
                     && matchIdentifier
                     && myMatchingVisitor.match(declaration.getSuperTypeList(), other.getSuperTypeList())
@@ -897,7 +897,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
         val other = getTreeElementDepar<KtProperty>() ?: return
         val handler = getHandler(property.nameIdentifier!!)
         myMatchingVisitor.result = (
-                property.isVar == other.isVar || (handler is SubstitutionHandler && handler.predicate is KotlinAlsoMatchValVarPredicate)
+                property.isVar == other.isVar || (handler is SubstitutionHandler && handler.findPredicate(KotlinAlsoMatchValVarPredicate::class.java) != null)
                 ) && myMatchingVisitor.match(property.typeReference, other.typeReference)
                 && myMatchingVisitor.match(property.modifierList, other.modifierList)
                 && matchTextOrVariable(property.nameIdentifier, other.nameIdentifier)
