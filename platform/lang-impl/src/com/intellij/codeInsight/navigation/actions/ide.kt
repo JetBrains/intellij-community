@@ -9,6 +9,7 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.navigation.impl.NavigationRequestor
 import com.intellij.codeInsight.navigation.impl.gtdTargetNavigatable
 import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.ui.UISettings
 import com.intellij.idea.ActionsBundle
 import com.intellij.lang.LanguageNamesValidation
 import com.intellij.navigation.NavigationRequest
@@ -58,7 +59,11 @@ internal fun navigateRequest(project: Project, request: NavigationRequest) {
   when (request) {
     is SourceNavigationRequest -> {
       // TODO support pure source request without OpenFileDescriptor
-      OpenFileDescriptor(project, request.file, request.offset).navigate(true)
+      val openFileDescriptor = OpenFileDescriptor(project, request.file, request.offset)
+      if (UISettings.getInstance().openInPreviewTabIfPossible && Registry.`is`("editor.preview.tab.navigation")) {
+        openFileDescriptor.isUsePreviewTab = true
+      }
+      openFileDescriptor.navigate(true)
     }
     is RawNavigationRequest -> {
       request.navigatable.navigate(true)
