@@ -18,10 +18,6 @@ package com.jetbrains.packagesearch.intellij.plugin.gradle.configuration
 
 internal object PackageSearchGradleConfigurationDefaults {
 
-    @Deprecated("Use GradleScopes instead", ReplaceWith("GradleScopes"))
-    const val LegacyGradleScopes = "api,implementation,testImplementation,annotationProcessor,kapt"
-
-    val GradleScopes = setOf("api", "implementation", "testImplementation", "annotationProcessor", "kapt")
-
+    const val GradleScopes = "api,implementation,testImplementation,annotationProcessor,kapt"
     const val GradleDefaultScope = "implementation"
 }

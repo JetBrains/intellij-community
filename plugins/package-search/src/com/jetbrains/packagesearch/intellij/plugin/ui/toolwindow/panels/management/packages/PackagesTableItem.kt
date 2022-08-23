@@ -28,7 +28,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageM
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiPackageModel
 import com.jetbrains.packagesearch.intellij.plugin.util.VersionNameComparator
-import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
 import java.awt.datatransfer.StringSelection
 
 internal sealed class PackagesTableItem<T : PackageModel> : DataProvider, CopyProvider {

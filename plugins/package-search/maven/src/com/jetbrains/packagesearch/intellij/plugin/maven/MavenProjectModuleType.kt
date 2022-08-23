@@ -36,7 +36,7 @@ internal object MavenProjectModuleType : ProjectModuleType {
         PackageSearchBundle.message("packagesearch.terminology.dependency.scope")
 
     override fun defaultScope(project: Project): String =
-        PackageSearchMavenConfiguration.getInstance(project).defaultMavenScope
+        PackageSearchMavenConfiguration.getInstance(project).determineDefaultMavenScope()
 
     override fun userDefinedScopes(project: Project): List<String> =
         PackageSearchMavenConfiguration.getInstance(project).getMavenScopes()
