@@ -114,7 +114,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
           if (JavaPsiConstructorUtil.isChainedConstructorCall(call) || (call == null && DfaUtil.hasImplicitImpureSuperCall(aClass, method))) {
             initialStates = Collections.singletonList(runner.createMemoryState());
           } else {
-            initialStates = StreamEx.of(states).map(DfaMemoryState::createCopy).toList();
+            initialStates = ContainerUtil.map(states, DfaMemoryState::createCopy);
           }
           analyzeMethod(method, runner, initialStates);
         }

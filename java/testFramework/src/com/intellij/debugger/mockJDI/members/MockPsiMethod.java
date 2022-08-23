@@ -7,10 +7,8 @@ import com.intellij.debugger.mockJDI.types.MockType;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiType;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -36,18 +34,12 @@ public class MockPsiMethod extends MockMirror implements Method {
 
   @Override
   public List<String> argumentTypeNames() {
-    return StreamEx.of(myPsiMethod.getParameterList().getParameters())
-      .map(PsiParameter::getType)
-      .map(PsiType::getCanonicalText)
-      .toList();
+    return ContainerUtil.map(myPsiMethod.getParameterList().getParameters(), parameter -> parameter.getType().getCanonicalText());
   }
 
   @Override
   public List<Type> argumentTypes() {
-    return StreamEx.of(myPsiMethod.getParameterList().getParameters())
-      .map(PsiParameter::getType)
-      .<Type>map(t -> MockType.createType(myVirtualMachine, t))
-      .toList();
+    return ContainerUtil.map(myPsiMethod.getParameterList().getParameters(), parameter -> MockType.createType(myVirtualMachine, parameter.getType()));
   }
 
   @Override
@@ -127,9 +119,7 @@ public class MockPsiMethod extends MockMirror implements Method {
 
   @Override
   public List<LocalVariable> arguments() {
-    return StreamEx.of(myPsiMethod.getParameterList().getParameters())
-      .<LocalVariable>map(p -> new MockLocalVariable(myVirtualMachine, p))
-      .toList();
+    return ContainerUtil.map(myPsiMethod.getParameterList().getParameters(), p -> new MockLocalVariable(myVirtualMachine, p));
   }
 
   @Override

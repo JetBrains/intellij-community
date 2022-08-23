@@ -19,7 +19,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jdi.ThreadReferenceImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.request.EventRequestManager;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -228,7 +227,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
    * @return a list of threadGroupProxies
    */
   public List<ThreadGroupReferenceProxyImpl> topLevelThreadGroups() {
-    return StreamEx.of(getVirtualMachine().topLevelThreadGroups()).map(this::getThreadGroupReferenceProxy).toList();
+    return ContainerUtil.map(getVirtualMachine().topLevelThreadGroups(), this::getThreadGroupReferenceProxy);
   }
 
   public void threadGroupCreated(ThreadGroupReference threadGroupReference){
