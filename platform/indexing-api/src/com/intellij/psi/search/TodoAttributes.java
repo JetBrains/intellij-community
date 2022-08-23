@@ -11,9 +11,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author Vladimir Kondratyev
- */
 public final class TodoAttributes implements Cloneable {
   private Icon myIcon;
   private TextAttributes myTextAttributes;

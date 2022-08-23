@@ -5,9 +5,6 @@ import org.jdom.Element;
 
 import java.awt.*;
 
-/**
- * @author Anton Katilin
- */
 public final class LwIntroDimensionProperty extends LwIntrospectedProperty {
   LwIntroDimensionProperty(final String name) {
     super(name, "java.awt.Dimension");

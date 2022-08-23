@@ -60,10 +60,6 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class TreeFileChooserDialog extends DialogWrapper implements TreeFileChooser {
   private Tree myTree;
   private PsiFile mySelectedFile = null;

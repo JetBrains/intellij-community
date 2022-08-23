@@ -17,9 +17,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
-/**
- * @author Vladimir Kondratyev
- */
 public class ShowPopupMenuAction extends DumbAwareAction implements PopupAction {
   public ShowPopupMenuAction() {
     setEnabledInModalContext(true);

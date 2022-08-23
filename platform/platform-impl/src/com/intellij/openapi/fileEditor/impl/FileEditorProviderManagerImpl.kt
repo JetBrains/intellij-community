@@ -20,10 +20,6 @@ import com.intellij.util.SlowOperations.allowSlowOperations
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.TestOnly
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 @State(name = "FileEditorProviderManager",
        storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED)])
 class FileEditorProviderManagerImpl : FileEditorProviderManager,

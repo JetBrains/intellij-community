@@ -52,9 +52,6 @@ import javax.swing.*;
 import java.util.*;
 import java.util.function.Consumer;
 
-/**
- * @author Vladimir Kondratyev
- */
 public abstract class TodoTreeBuilder implements Disposable {
   private static final Logger LOG = Logger.getInstance(TodoTreeBuilder.class);
   public static final Comparator<NodeDescriptor<?>> NODE_DESCRIPTOR_COMPARATOR =

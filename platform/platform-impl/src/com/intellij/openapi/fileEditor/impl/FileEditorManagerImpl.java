@@ -110,9 +110,7 @@ import static com.intellij.openapi.actionSystem.IdeActions.ACTION_OPEN_IN_NEW_WI
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT;
 
 /**
- * @author Anton Katilin
  * @author Eugene Belyaev
- * @author Vladimir Kondratyev
  */
 @State(name = "FileEditorManager", storages = {
   @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),

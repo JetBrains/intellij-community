@@ -15,10 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 final class FormPropertyTableCellRenderer extends ColoredTableCellRenderer{
   private static final Logger LOG = Logger.getInstance(FormPropertyTableCellRenderer.class);
 

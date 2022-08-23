@@ -17,8 +17,6 @@ import java.lang.ref.WeakReference;
 
 /**
  * Spies how focus goes in the component.
- *
- * @author Vladimir Kondratyev
  */
 public class FocusWatcher implements ContainerListener, FocusListener {
   private WeakReference<Component> myTopComponent;

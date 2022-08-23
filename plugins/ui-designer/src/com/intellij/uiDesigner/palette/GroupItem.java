@@ -14,9 +14,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
-/**
- * @author Vladimir Kondratyev
- */
 public final class GroupItem implements Cloneable, PaletteGroup {
   private static final Logger LOG = Logger.getInstance(GroupItem.class);
 

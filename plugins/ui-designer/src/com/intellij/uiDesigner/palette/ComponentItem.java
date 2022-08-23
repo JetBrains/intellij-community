@@ -37,10 +37,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class ComponentItem implements Cloneable, PaletteItem {
   private static final Logger LOG = Logger.getInstance(ComponentItem.class);
 

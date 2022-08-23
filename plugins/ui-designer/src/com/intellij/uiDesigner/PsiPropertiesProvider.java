@@ -16,10 +16,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class PsiPropertiesProvider implements PropertiesProvider {
   private final Module myModule;
   private final HashMap<String, HashMap> myCache;

@@ -53,10 +53,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 @ApiStatus.Internal
 public class IdeRootPane extends JRootPane implements UISettingsListener {
   /**

@@ -22,9 +22,6 @@ import javax.swing.plaf.basic.BasicGraphicsUtils;
 import javax.swing.plaf.basic.BasicMenuUI;
 import java.awt.*;
 
-/**
- * @author Vladimir Kondratyev
- */
 public class IdeaMenuUI extends BasicMenuUI {
   private static final Rectangle ourZeroRect = new Rectangle(0, 0, 0, 0);
   private static final Rectangle ourTextRect = new Rectangle();

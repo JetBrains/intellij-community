@@ -25,10 +25,6 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class RadRootContainer extends RadContainer implements IRootContainer {
   private String myClassToBind;
   private String myMainComponentBinding;

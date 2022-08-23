@@ -34,10 +34,6 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Supplier;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public class ContentManagerImpl implements ContentManager, PropertyChangeListener, Disposable.Parent {
   private static final Logger LOG = Logger.getInstance(ContentManagerImpl.class);
 
