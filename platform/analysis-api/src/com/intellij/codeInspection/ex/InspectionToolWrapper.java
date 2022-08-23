@@ -10,7 +10,6 @@ import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.Language;
-import com.intellij.lang.MetaLanguage;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Set;
 
 import static com.intellij.DynamicBundle.findLanguageBundle;
 
@@ -38,6 +38,8 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   protected T myTool;
   protected final E myEP;
   @Nullable private HighlightDisplayKey myDisplayKey;
+
+  private volatile Set<String> applicableToLanguages; // lazy initialized
 
   protected InspectionToolWrapper(@NotNull E ep) {
     this(null, ep);
@@ -104,32 +106,16 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   }
 
   public boolean isApplicable(@NotNull Language language) {
-    String langId = getLanguage();
-    return isApplicable(language, langId);
-  }
+    String myLangId = getLanguage();
+    if (myLangId == null) return true;
 
-  private boolean isApplicable(@NotNull Language language, @Nullable String toolLang) {
-    if (toolLang == null) {
-      return true;
+    Set<String> languages = applicableToLanguages;
+    if (languages == null) {
+      boolean applyToDialects = applyToDialects();
+      applicableToLanguages = languages = ToolLanguageUtil.getAllMatchingLanguages(myLangId, applyToDialects, applyToDialects);
     }
-    if (language.getID().equals(toolLang)) {
-      return true;
-    }
-    if (applyToDialects()) {
-      if (language.isKindOf(toolLang)) {
-        return true;
-      }
 
-      Language toolLanguage = Language.findLanguageByID(toolLang);
-      if (toolLanguage instanceof MetaLanguage) {
-        for (Language lang : ((MetaLanguage)toolLanguage).getMatchingLanguages()) {
-          if (isApplicable(language, lang.getID())) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
+    return languages.contains(language.getID());
   }
 
   public boolean isCleanupTool() {
