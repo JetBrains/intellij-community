@@ -17,9 +17,14 @@ package org.jetbrains.intellij.build
 
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import kotlin.Pair
+import org.jetbrains.intellij.build.io.FileKt
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.jps.model.module.JpsModule
 
@@ -215,6 +220,9 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         new FileSet(buildContext.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/win"))
           .includeAll()
           .copyToDir(Path.of(targetDirectory, "plugins/c-clangd/bin/clang/win"))
+
+        Path distBinDir = Paths.get(targetDirectory).resolve("bin")
+        buildGameToolsScriptsForWindows(buildContext, distBinDir)
       }
     }
   }
@@ -238,6 +246,9 @@ class AndroidStudioProperties extends BaseIdeaProperties {
           .includeAll()
           .copyToDir(targetDirectory.resolve("plugins/c-clangd/bin/clang/linux"))
         extraExecutables = List.of("plugins/c-clangd/bin/clang/linux/clangd", "plugins/c-clangd/bin/clang/linux/clang-tidy")
+
+        Path distBinDir = targetDirectory.resolve("bin")
+        buildGameToolsScriptsForUnix(buildContext, distBinDir, OsFamily.LINUX)
       }
     }
   }
@@ -267,6 +278,9 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         .includeAll()
         .copyToDir(Path.of(targetDirectory, "plugins/c-clangd/bin/clang/mac"))
       extraExecutables = List.of("plugins/c-clangd/bin/clang/mac/clangd", "plugins/c-clangd/bin/clang/mac/clang-tidy")
+
+      Path distBinDir = Paths.get(targetDirectory).resolve("bin")
+      buildGameToolsScriptsForUnix(buildContext, distBinDir, OsFamily.MACOS)
     }
   }
 
@@ -283,4 +297,99 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
   @Override
   String getOutputDirectoryName(ApplicationInfoProperties applicationInfo) { "studio" }
+
+  private static void buildGameToolsScriptsForWindows(BuildContext buildContext, Path distBinDir) {
+    List<String> classPathJars = buildContext.bootClassPathJarNames
+    String classPath = "SET \"CLASS_PATH=%IDE_HOME%\\lib\\${classPathJars.get(0)}\""
+    for (int i = 1; i < classPathJars.size(); i++) {
+      classPath += "\nSET \"CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\\lib\\${classPathJars.get(i)}\""
+    }
+    String fullName = buildContext.applicationInfo.productName
+    String baseName = buildContext.productProperties.baseFileName
+    String vmOptionsFileName = "${baseName}64.exe"
+
+    // We manually set the classpath to include everything the game tools need and disable all plugin loading at runtime with
+    // `-Didea.load.plugins=false`. This change on classpath is needed since AndroidGameDevelopmentToolsPlugin.xml, the starting plugin XML, is
+    // located in plugins/android/lib/game-tools.jar, which is not in classpath by default. In addition, AndroidGameDevelopmentToolsPlugin.xml
+    // directly references all needed Intellij platform components so that the unneeded ones (for example, shift-shift to find everything)
+    // are ignored. See go/project-aplos-design for more details.
+    String gameToolsClassPath = classPath + "\n" + [
+      "plugins/android/lib/*",
+      "plugins/android/resources/*",
+      "plugins/java/lib/java-api.jar",
+      "plugins/java/lib/java-impl.jar",
+      "plugins/java/lib/resources.jar",
+      "plugins/java/lib/java_resources_en.jar"
+    ].collect { "SET CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\\$it" }.join("\n")
+
+    Path winScripts = buildContext.paths.communityHomeDir.resolve("platform/build-scripts/resources/win/scripts")
+    FileKt.substituteTemplatePlaceholders(
+      winScripts.resolve("executable-template.bat"),
+      distBinDir.resolve("game-tools.bat"),
+      "@@",
+      [
+        new Pair<String, String>("product_full", fullName + "GameTools"),
+        new Pair<String, String>("product_uc", buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo)),
+        new Pair<String, String>("product_vendor", buildContext.applicationInfo.shortCompanyName),
+        new Pair<String, String>("vm_options", vmOptionsFileName),
+        new Pair<String, String>("system_selector", "AndroidGameDevelopmentTools"),
+        new Pair<String, String>("ide_jvm_args", buildContext.getAdditionalJvmArguments(OsFamily.WINDOWS).join(' ') + " -Didea.platform.prefix=AndroidGameDevelopmentTools -Didea.load.plugins=false -Didea.initially.ask.config=force-not"),
+        new Pair<String, String>("class_path", gameToolsClassPath),
+        new Pair<String, String>("base_name", "game_tools"),
+     ]
+    )
+
+    Files.copy(
+      winScripts.resolve("profiler.bat"),
+      distBinDir.resolve("profiler.bat"),
+      StandardCopyOption.REPLACE_EXISTING)
+
+    // Copy the profiler launcher executable.
+    Files.copy(
+      Paths.get(buildContext.paths.communityHome)
+        .resolve("../../prebuilts/tools/windows/game-tools/GameToolsWinLauncher/ProfilerWinLauncher.exe"),
+      distBinDir.resolve("profiler.exe"),
+      StandardCopyOption.REPLACE_EXISTING)
+  }
+
+  private static void buildGameToolsScriptsForUnix(BuildContext buildContext, Path distBinDir, OsFamily os) {
+    String platformClassPath = "CLASS_PATH=\"\$IDE_HOME/lib/${buildContext.bootClassPathJarNames[0]}\"\n"
+    platformClassPath += buildContext.bootClassPathJarNames[1..-1].collect { "CLASS_PATH=\"\$CLASS_PATH:\$IDE_HOME/lib/${it}\"" }.join("\n")
+
+    // We manually set the classpath to include everything the game tools need and disable all plugin loading at runtime with
+    // `-Didea.load.plugins=false`. This change on classpath is needed since AndroidGameDevelopmentToolsPlugin.xml, the starting plugin XML, is
+    // located in plugins/android/lib/game-tools.jar, which is not in classpath by default. In addition, AndroidGameDevelopmentToolsPlugin.xml
+    // directly references all needed Intellij platform components so that the unneeded ones (for example, shift-shift to find everything)
+    // are ignored. See go/project-aplos-design for more details.
+    String gameToolsClassPath = platformClassPath + "\n" + [
+      "plugins/android/lib/*",
+      "plugins/android/resources/*",
+      "plugins/java/lib/java-api.jar",
+      "plugins/java/lib/java-impl.jar",
+      "plugins/java/lib/resources.jar",
+      "plugins/java/lib/java_resources_en.jar"].
+      collect { "CLASS_PATH=\"\$CLASS_PATH:\$IDE_HOME/${it}\"" }.join("\n")
+
+
+    Path linuxScripts = buildContext.paths.communityHomeDir.resolve("platform/build-scripts/resources/linux/scripts")
+    FileKt.substituteTemplatePlaceholders(
+      linuxScripts.resolve("executable-template.sh"),
+      distBinDir.resolve("game-tools.sh"),
+      "__",
+      [
+        new Pair<String, String>("product_full", buildContext.applicationInfo.productName + "GameTools"),
+        new Pair<String, String>("product_uc", buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo)),
+        new Pair<String, String>("product_vendor", buildContext.applicationInfo.shortCompanyName),
+        new Pair<String, String>("vm_options", buildContext.productProperties.baseFileName),
+        new Pair<String, String>("system_selector", "AndroidGameDevelopmentTools"),
+        new Pair<String, String>("ide_jvm_args", buildContext.getAdditionalJvmArguments(os).join(' ') + " -Didea.platform.prefix=AndroidGameDevelopmentTools -Didea.load.plugins=false -Didea.initially.ask.config=force-not"),
+        new Pair<String, String>("class_path", gameToolsClassPath),
+      ]
+    )
+
+    Files.copy(
+      linuxScripts.resolve("profiler.sh"),
+      distBinDir.resolve("profiler.sh"),
+      StandardCopyOption.REPLACE_EXISTING)
+  }
 }
