@@ -659,6 +659,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
   private static File getGradleOutputDir(@Nullable ExternalSourceDirectorySet sourceDirectorySet) {
     if (sourceDirectorySet == null) return null;
     String firstExistingLang = sourceDirectorySet.getSrcDirs().stream()
+      .sorted()
       .filter(File::exists)
       .findFirst()
       .map(File::getName)
