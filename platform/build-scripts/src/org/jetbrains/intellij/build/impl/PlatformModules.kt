@@ -298,7 +298,6 @@ object PlatformModules {
       "intellij.platform.icons",
       "intellij.platform.resources",
       "intellij.platform.resources.en",
-      "intellij.platform.colorSchemes",
 
       "intellij.platform.sqlite",
     ), productLayout, layout)
