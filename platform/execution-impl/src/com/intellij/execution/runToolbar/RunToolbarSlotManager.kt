@@ -24,7 +24,7 @@ import java.util.*
 import javax.swing.SwingUtilities
 
 @Service(Service.Level.PROJECT)
-internal class RunToolbarSlotManager(private val project: Project) {
+class RunToolbarSlotManager(private val project: Project) {
   companion object {
     private val LOG = Logger.getInstance(RunToolbarSlotManager::class.java)
     fun getInstance(project: Project): RunToolbarSlotManager = project.service()
