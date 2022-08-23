@@ -172,7 +172,7 @@ public class GlobalCompilingVisitor {
       if (handler == null) throw new MalformedPatternException();
 
       handlers.add(handler);
-      RegExpPredicate predicate = handler.findRegExpPredicate();
+      RegExpPredicate predicate = handler.findPredicate(RegExpPredicate.class);
 
       if (predicate == null || !predicate.isWholeWords()) {
         buf.append("(.*?)");

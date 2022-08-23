@@ -17,6 +17,7 @@ import com.intellij.structuralsearch.impl.matcher.compiler.WordOptimizer
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
 import com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandler
+import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate
 import org.jetbrains.kotlin.idea.structuralsearch.getCommentText
 import org.jetbrains.kotlin.idea.structuralsearch.handler.CommentedDeclarationHandler
 import org.jetbrains.kotlin.idea.structuralsearch.withinHierarchyTextFilterSet
@@ -122,7 +123,7 @@ class KotlinCompilingVisitor(private val myCompilingVisitor: GlobalCompilingVisi
             KDocTokens.TAG_NAME -> {
                 val handler = getHandler(leafPsiElement)
                 if (handler is SubstitutionHandler) {
-                    handler.findRegExpPredicate()?.setNodeTextGenerator { it.text.drop(1) }
+                    handler.findPredicate(RegExpPredicate::class.java)?.setNodeTextGenerator { it.text.drop(1) }
                     if (handler.minOccurs != 1 || handler.maxOccurs != 1) {
                         setHandler(
                             leafPsiElement.parent, SubstitutionHandler(

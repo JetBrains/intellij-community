@@ -207,7 +207,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       }
 
       comment.putUserData(CompiledPattern.HANDLER_KEY, handler);
-      final RegExpPredicate predicate = handler.findRegExpPredicate();
+      final RegExpPredicate predicate = handler.findPredicate(RegExpPredicate.class);
       if (GlobalCompilingVisitor.isSuitablePredicate(predicate, handler)) {
         myCompilingVisitor.processTokenizedName(predicate.getRegExp(), COMMENT);
       }

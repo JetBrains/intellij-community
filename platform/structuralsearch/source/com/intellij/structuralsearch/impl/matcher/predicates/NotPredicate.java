@@ -33,4 +33,8 @@ public final class NotPredicate extends MatchPredicate {
   public boolean match(@NotNull PsiElement matchedNode, int start, int end, @NotNull MatchContext context) {
     return !myPredicate.match(matchedNode, start, end, context);
   }
+
+  public MatchPredicate getPredicate() {
+    return myPredicate;
+  }
 }

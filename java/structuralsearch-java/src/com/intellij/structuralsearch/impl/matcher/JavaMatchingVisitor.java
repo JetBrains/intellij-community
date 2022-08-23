@@ -80,7 +80,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       final int start = tokenType == JavaDocTokenType.DOC_COMMENT_START ? 3 : 2;
       final int end = tokenType == JavaTokenType.END_OF_LINE_COMMENT || length < 4 ? length : length - 2;
       final SubstitutionHandler substitutionHandler = (SubstitutionHandler)handler;
-      final RegExpPredicate predicate = substitutionHandler.findRegExpPredicate();
+      final RegExpPredicate predicate = substitutionHandler.findPredicate(RegExpPredicate.class);
       if (predicate != null) {
         predicate.setNodeTextGenerator(e -> JavaMatchUtil.getCommentText((PsiComment)e).trim());
         myMatchingVisitor.setResult(substitutionHandler.handle(other, myMatchingVisitor.getMatchContext()));
@@ -875,7 +875,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         }
       }
       else if (matchedArrayDimensions != 0) {
-        regExpPredicate = handler.findRegExpPredicate();
+        regExpPredicate = handler.findPredicate(RegExpPredicate.class);
 
         if (regExpPredicate != null) {
           regExpPredicate.setNodeTextGenerator(

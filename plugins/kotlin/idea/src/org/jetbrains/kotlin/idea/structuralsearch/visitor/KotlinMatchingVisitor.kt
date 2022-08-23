@@ -11,6 +11,7 @@ import com.intellij.structuralsearch.impl.matcher.CompiledPattern
 import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor
 import com.intellij.structuralsearch.impl.matcher.handlers.LiteralWithSubstitutionHandler
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
+import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
@@ -208,7 +209,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
             }
             if (referenced is ClassifierDescriptor) {
                 val fqName = referenced.fqNameOrNull()
-                val predicate = exprHandler.findRegExpPredicate()
+                val predicate = exprHandler.findPredicate(RegExpPredicate::class.java)
                 if (predicate != null && fqName != null && predicate.doMatch(fqName.asString(), myMatchingVisitor.matchContext, other)) {
                     myMatchingVisitor.result = true
                     exprHandler.addResult(other, myMatchingVisitor.matchContext)
@@ -583,7 +584,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
         element: PsiElement,
         other: PsiElement
     ): Boolean {
-        return when (val predicate = (getHandler(element) as? SubstitutionHandler)?.findRegExpPredicate()) {
+        return when (val predicate = (getHandler(element) as? SubstitutionHandler)?.findPredicate(RegExpPredicate::class.java)) {
             null -> element.text == type
                     // Ignore type parameters if absent from the pattern
                     || !element.text.contains('<') && element.text == type.removeTypeParameters()
@@ -995,7 +996,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
                 }
             }
             is SubstitutionHandler -> {
-                handler.findRegExpPredicate()?.let {
+                handler.findPredicate(RegExpPredicate::class.java)?.let {
                     it.setNodeTextGenerator { comment -> getCommentText(comment as PsiComment) }
                 }
                 myMatchingVisitor.result = handler.handle(
