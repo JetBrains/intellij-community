@@ -9,6 +9,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
+@Suppress("MarkdownIncorrectTableFormatting")
 class MarkdownTableColumnShrinkTest: LightPlatformCodeInsightTestCase() {
   @get:Rule
   val rule = RegistryKeyRule("markdown.tables.editing.support.enable", true)

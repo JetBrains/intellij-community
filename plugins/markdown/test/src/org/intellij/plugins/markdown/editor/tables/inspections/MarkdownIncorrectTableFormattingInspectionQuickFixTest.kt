@@ -14,6 +14,7 @@ import org.junit.runners.JUnit4
  * These are just sanity checks, since actual tests for reformatting are in the other files.
  */
 @RunWith(JUnit4::class)
+@Suppress("MarkdownIncorrectTableFormatting")
 class MarkdownIncorrectTableFormattingInspectionQuickFixTest: LightPlatformCodeInsightFixture4TestCase() {
   @get:Rule
   val rule = RegistryKeyRule("markdown.tables.editing.support.enable", true)
