@@ -49,7 +49,7 @@ public final class JavaFxRedundantPropertyValueInspection extends XmlSuppressabl
 
     return new XmlElementVisitor() {
       @Override
-      public void visitXmlAttribute(XmlAttribute attribute) {
+      public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
         super.visitXmlAttribute(attribute);
         final XmlAttributeDescriptor descriptor = attribute.getDescriptor();
         if (!(descriptor instanceof JavaFxPropertyAttributeDescriptor)) return;
@@ -77,7 +77,7 @@ public final class JavaFxRedundantPropertyValueInspection extends XmlSuppressabl
       }
 
       @Override
-      public void visitXmlTag(XmlTag tag) {
+      public void visitXmlTag(@NotNull XmlTag tag) {
         super.visitXmlTag(tag);
         final XmlElementDescriptor descriptor = tag.getDescriptor();
         if (!(descriptor instanceof JavaFxPropertyTagDescriptor)) {

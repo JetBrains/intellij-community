@@ -185,7 +185,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doDoTest(true,false);
     myFile.accept(new XmlRecursiveElementVisitor() {
       @Override
-      public void visitXmlAttributeValue(XmlAttributeValue value) {
+      public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
         final PsiElement[] children = value.getChildren();
         for (PsiElement child : children) {
           if (child instanceof XmlEntityRef) {
@@ -215,12 +215,12 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     final List<PsiReference> refs = new ArrayList<>();
     myFile.accept(new XmlRecursiveElementVisitor() {
       @Override
-      public void visitXmlAttribute(final XmlAttribute attribute) {
+      public void visitXmlAttribute(final @NotNull XmlAttribute attribute) {
         refs.add(attribute.getReference());
       }
 
       @Override
-      public void visitXmlTag(final XmlTag tag) {
+      public void visitXmlTag(final @NotNull XmlTag tag) {
         refs.add(tag.getReference());
         super.visitXmlTag(tag);
       }
@@ -284,7 +284,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
     myFile.acceptChildren(new XmlRecursiveElementVisitor() {
 
-      @Override public void visitXmlTag(XmlTag tag) {
+      @Override public void visitXmlTag(@NotNull XmlTag tag) {
         super.visitXmlTag(tag);
 
         addRefsInPresent(tag, "base", refs);
@@ -510,7 +510,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     final List<XmlTag> myTypesAndElementDecls = new ArrayList<>(1);
 
     myFile.accept(new XmlRecursiveElementVisitor() {
-      @Override public void visitXmlAttributeValue(XmlAttributeValue value) {
+      @Override public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
         final PsiElement parent = value.getParent();
         if (!(parent instanceof XmlAttribute)) return;
         final String name = ((XmlAttribute)parent).getName();
@@ -519,7 +519,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
         }
       }
 
-      @Override public void visitXmlTag(XmlTag tag) {
+      @Override public void visitXmlTag(@NotNull XmlTag tag) {
         super.visitXmlTag(tag);
         final String localName = tag.getLocalName();
         if ("complexType".equals(localName) || "simpleType".equals(localName) || "element".equals(localName)) {
@@ -634,7 +634,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
         myFile.acceptChildren(new XmlRecursiveElementVisitor() {
           @Override
-          public void visitXmlAttribute(final XmlAttribute attribute) {
+          public void visitXmlAttribute(final @NotNull XmlAttribute attribute) {
             if (attribute.getDescriptor() != null) attrs.add(attribute);
           }
         });
@@ -1781,7 +1781,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
     myFile.acceptChildren(new XmlRecursiveElementVisitor() {
       @Override
-      public void visitXmlAttribute(final XmlAttribute attribute) {
+      public void visitXmlAttribute(final @NotNull XmlAttribute attribute) {
         if (!attribute.isNamespaceDeclaration()) attrs.add(attribute);
       }
     });

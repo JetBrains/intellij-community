@@ -880,7 +880,7 @@ public final class XmlUtil {
         if (enforceNamespacesDeep) {
           retTag.acceptChildren(new XmlRecursiveElementVisitor() {
             @Override
-            public void visitXmlTag(XmlTag tag) {
+            public void visitXmlTag(@NotNull XmlTag tag) {
               final String namespacePrefix = tag.getNamespacePrefix();
               if (namespacePrefix.isEmpty()) {
                 String qname;

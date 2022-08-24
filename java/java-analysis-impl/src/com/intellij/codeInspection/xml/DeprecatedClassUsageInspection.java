@@ -26,14 +26,14 @@ public class DeprecatedClassUsageInspection extends XmlSuppressableInspectionToo
                                         @NotNull LocalInspectionToolSession session) {
     return new XmlElementVisitor() {
       @Override
-      public void visitXmlTag(XmlTag tag) {
+      public void visitXmlTag(@NotNull XmlTag tag) {
         if (tag.getValue().getTextElements().length > 0) {
           checkReferences(tag, holder);
         }
       }
 
       @Override
-      public void visitXmlAttributeValue(XmlAttributeValue value) {
+      public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
         checkReferences(value, holder);
       }
     };

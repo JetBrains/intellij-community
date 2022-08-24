@@ -104,7 +104,7 @@ public class HtmlQuotesFormatPreprocessor implements PreFormatProcessor {
     }
 
     @Override
-    public void visitXmlAttributeValue(XmlAttributeValue value) {
+    public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
       //use original range to check because while we are modifying document, element ranges returned from getTextRange() are not updated.
       if (myOriginalRange.contains(value.getTextRange())) {
         PsiElement child = value.getFirstChild();

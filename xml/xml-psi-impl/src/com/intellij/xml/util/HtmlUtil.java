@@ -756,7 +756,7 @@ public final class HtmlUtil {
     final List<XmlAttributeValue> result = new ArrayList<>();
     file.acceptChildren(new XmlRecursiveElementWalkingVisitor() {
       @Override
-      public void visitXmlTag(XmlTag tag) {
+      public void visitXmlTag(@NotNull XmlTag tag) {
         XmlAttribute attribute = null;
         if ("link".equalsIgnoreCase(tag.getName())) {
           attribute = tag.getAttribute("href");

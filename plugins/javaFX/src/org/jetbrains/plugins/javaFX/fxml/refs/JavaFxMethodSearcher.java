@@ -90,13 +90,13 @@ public class JavaFxMethodSearcher implements QueryExecutor<PsiReference, Referen
     final Ref<Boolean> stopped = new Ref<>(false);
     file.accept(new XmlRecursiveElementVisitor() {
       @Override
-      public void visitXmlElement(XmlElement element) {
+      public void visitXmlElement(@NotNull XmlElement element) {
         if (stopped.get()) return;
         super.visitXmlElement(element);
       }
 
       @Override
-      public void visitXmlAttribute(XmlAttribute attribute) {
+      public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
         if (stopped.get()) return;
         final PsiReference[] references = attribute.getReferences();
         for (PsiReference reference : references) {

@@ -53,7 +53,7 @@ public abstract class HtmlLocalInspectionTool extends XmlSuppressableInspectionT
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new XmlElementVisitor() {
       @Override
-      public void visitXmlToken(final XmlToken token) {
+      public void visitXmlToken(final @NotNull XmlToken token) {
         IElementType tokenType = token.getTokenType();
         if (tokenType == XmlTokenType.XML_NAME || tokenType == XmlTokenType.XML_TAG_NAME) {
           PsiElement element = token.getPrevSibling();
@@ -71,7 +71,7 @@ public abstract class HtmlLocalInspectionTool extends XmlSuppressableInspectionT
       }
 
       @Override
-      public void visitXmlAttribute(final XmlAttribute attribute) {
+      public void visitXmlAttribute(final @NotNull XmlAttribute attribute) {
         checkAttribute(attribute, holder, isOnTheFly);
       }
     };
