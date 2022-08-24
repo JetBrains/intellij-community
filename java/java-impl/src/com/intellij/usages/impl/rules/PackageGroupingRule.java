@@ -124,7 +124,7 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
       if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
         return myPackage;
       }
-      return false;
+      return null;
     }
   }
 }
