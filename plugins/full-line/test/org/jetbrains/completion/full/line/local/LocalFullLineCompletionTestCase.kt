@@ -23,7 +23,6 @@ abstract class LocalFullLineCompletionTestCase(private val language: Language) :
   protected fun initModel() {
     val model = service<LocalModelsCache>().tryGetModel(language)
     if (model != null) return
-    //if (model != null) return
 
     Thread.sleep(5000)
     val modelAfterSleep = service<LocalModelsCache>().tryGetModel(language)

@@ -21,16 +21,6 @@
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module-library">
-      <library name="rauschig.jarchivelib" type="repository">
-        <properties maven-id="org.rauschig:jarchivelib:1.2.0" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/rauschig/jarchivelib/1.2.0/jarchivelib-1.2.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
       <library name="fl-inference" type="repository">
         <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:fl-inference:0.0.20" />
         <CLASSES>

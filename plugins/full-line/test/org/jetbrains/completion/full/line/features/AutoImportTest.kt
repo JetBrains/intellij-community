@@ -1,22 +1,21 @@
 package org.jetbrains.completion.full.line.features
 
-//import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
+import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
 import org.jetbrains.completion.full.line.platform.FullLineLookupElement
 import org.jetbrains.completion.full.line.platform.tests.FullLineCompletionTestCase
 import org.jetbrains.completion.full.line.platform.tests.JavaProject
+import org.jetbrains.completion.full.line.platform.tests.PythonProject
 
-//import org.jetbrains.completion.full.line.platform.tests.PythonProject
-
-//class PythonAutoImportTest : AutoImportTest(), PythonProject {
-//    fun `test simple python`() {
-//        myFixture.enableInspections(PyUnresolvedReferencesInspection::class.java)
-//        doTest(
-//            "main.py",
-//            "custom_lib = MyCustomLib",
-//            "from pkg.lib import MyCustomLib"
-//        )
-//    }
-//}
+class PythonAutoImportTest : AutoImportTest(), PythonProject {
+  fun `test simple python`() {
+    myFixture.enableInspections(PyUnresolvedReferencesInspection::class.java)
+    doTest(
+      "main.py",
+      "custom_lib = MyCustomLib",
+      "from pkg.lib import MyCustomLib"
+    )
+  }
+}
 
 class JavaAutoImportTest : AutoImportTest(), JavaProject {
   fun `test simple java`() = doTest(

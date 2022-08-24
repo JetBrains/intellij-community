@@ -1,8 +1,7 @@
 package org.jetbrains.completion.full.line.platform.tests
 
-//import com.jetbrains.python.psi.LanguageLevel
-//import org.jetbrains.completion.full.line.platform.tests.python.PyLightProjectDescriptor
-//import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
+import com.jetbrains.python.psi.LanguageLevel
+import org.jetbrains.completion.full.line.platform.tests.python.PyLightProjectDescriptor
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.lang.Language
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -36,7 +35,7 @@ interface ProjectDescriptorWrapper
 // default function for ProjectDescriptorWrapper
 fun ProjectDescriptorWrapper.getProjectDescriptor(basePath: String): LightProjectDescriptor? {
   return when (this) {
-    //is PythonProject                 -> PyLightProjectDescriptor(basePath, LanguageLevel.PYTHON36)
+    is PythonProject                 -> PyLightProjectDescriptor(basePath, LanguageLevel.PYTHON36)
     //LightJavaCodeInsightFixtureTestCase.JAVA_8_ANNOTATED
     is JavaProject, is KotlinProject -> null
     else -> throw IllegalStateException("Cannot find project descriptor for ${this::class.simpleName}")

@@ -1,12 +1,14 @@
-//package org.jetbrains.completion.full.line.platform.tests.python
-//
-//import com.intellij.testFramework.LightProjectDescriptor
-//import com.jetbrains.python.psi.LanguageLevel
-//
-//class PyLightProjectDescriptor(
-//    private val dataPath: String,
-//    private val myLevel: LanguageLevel = LanguageLevel.getLatest(),
-//    private val myName: String? = null,
-//) : LightProjectDescriptor() {
-//    override fun getSdk() = PythonMockSdk.create(myLevel, myName, dataPath)
-//}
+package org.jetbrains.completion.full.line.platform.tests.python
+
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.LightProjectDescriptor
+import com.jetbrains.python.PythonMockSdk
+import com.jetbrains.python.psi.LanguageLevel
+
+class PyLightProjectDescriptor(
+    private val dataPath: String,
+    private val myLevel: LanguageLevel = LanguageLevel.getLatest(),
+    private val myName: String? = null,
+) : LightProjectDescriptor() {
+    override fun getSdk() = PythonMockSdk.create(myLevel)
+}
