@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.ui.JBColor
 import com.intellij.ui.switcher.QuickActionProvider
 import com.intellij.util.ui.UIUtil
+import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
 import java.awt.Container
@@ -92,7 +93,7 @@ internal class SimpleToolWindowWithTwoToolbarsPanel(
         val x = leftToolbar.bounds.maxX.toInt()
         val y = topToolbar.bounds.maxY.toInt()
         g.apply {
-            color = JBColor.border()
+            color = PackageSearchUI.Colors.border
             drawLine(0, y, width, y)
             drawLine(x, 0, x, height)
         }

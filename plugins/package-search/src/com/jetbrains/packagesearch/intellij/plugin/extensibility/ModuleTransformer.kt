@@ -60,5 +60,3 @@ interface ModuleTransformer {
      */
     fun transformModules(project: Project, nativeModules: List<Module>): List<ProjectModule>
 }
-
-
