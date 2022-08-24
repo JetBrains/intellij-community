@@ -497,6 +497,7 @@ public final class MavenServerManager implements Disposable {
     result.setPluginUpdatePolicy(settings.getPluginUpdatePolicy().getServerPolicy());
     result.setSnapshotUpdatePolicy(
       settings.isAlwaysUpdateSnapshots() ? MavenServerSettings.UpdatePolicy.ALWAYS_UPDATE : MavenServerSettings.UpdatePolicy.DO_NOT_UPDATE);
+    result.setEnableTychoSupport(settings.isEnableTychoSupport());
     return result;
   }
 

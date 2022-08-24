@@ -39,6 +39,7 @@ public class MavenGeneralSettings implements Cloneable {
   private boolean usePluginRegistry = false;
   private boolean nonRecursive = false;
   private boolean alwaysUpdateSnapshots = false;
+  private boolean enableTychoSupport = false;
   private boolean showDialogWithAdvancedSettings = false;
   private boolean useMavenConfig = false;
   private String threads;
@@ -345,9 +346,20 @@ public class MavenGeneralSettings implements Cloneable {
     return alwaysUpdateSnapshots;
   }
 
+  public boolean isEnableTychoSupport() {
+    return enableTychoSupport;
+  }
+
   public void setAlwaysUpdateSnapshots(boolean value) {
     if (!Comparing.equal(this.alwaysUpdateSnapshots, value)) {
       this.alwaysUpdateSnapshots = value;
+      changed();
+    }
+  }
+
+  public void setEnableTychoSupport(final boolean value) {
+    if (this.enableTychoSupport != value) {
+      this.enableTychoSupport = value;
       changed();
     }
   }
@@ -397,6 +409,7 @@ public class MavenGeneralSettings implements Cloneable {
     if (outputLevel != that.outputLevel) return false;
     if (pluginUpdatePolicy != that.pluginUpdatePolicy) return false;
     if (alwaysUpdateSnapshots != that.alwaysUpdateSnapshots) return false;
+    if (enableTychoSupport != that.enableTychoSupport) return false;
     if (showDialogWithAdvancedSettings != that.showDialogWithAdvancedSettings) return false;
     if (printErrorStackTraces != that.printErrorStackTraces) return false;
     if (usePluginRegistry != that.usePluginRegistry) return false;

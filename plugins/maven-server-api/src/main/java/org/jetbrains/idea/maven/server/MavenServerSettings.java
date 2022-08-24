@@ -39,6 +39,7 @@ public class MavenServerSettings implements Serializable, Cloneable {
   private boolean isOffline;
   @NotNull private UpdatePolicy myPluginUpdatePolicy = UpdatePolicy.DO_NOT_UPDATE;
   @NotNull private UpdatePolicy mySnapshotUpdatePolicy = UpdatePolicy.ALWAYS_UPDATE;
+  private boolean isEnableTychoSupport;
 
   private String projectJdk;
 
@@ -128,6 +129,14 @@ public class MavenServerSettings implements Serializable, Cloneable {
 
   public void setSnapshotUpdatePolicy(@NotNull UpdatePolicy snapshotUpdatePolicy) {
     mySnapshotUpdatePolicy = snapshotUpdatePolicy;
+  }
+
+  public boolean isEnableTychoSupport() {
+    return isEnableTychoSupport;
+  }
+
+  public void setEnableTychoSupport(final boolean isEnableTychoSupport) {
+    this.isEnableTychoSupport = isEnableTychoSupport;
   }
 
   @Override

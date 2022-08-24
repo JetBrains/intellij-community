@@ -36,6 +36,7 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
   private MavenEnvironmentForm mavenPathsForm;
   private JBLabel myMultiProjectBuildFailPolicyLabel;
   private JCheckBox alwaysUpdateSnapshotsCheckBox;
+  private JCheckBox enableTychoSupportCheckBox;
   private JTextField threadsEditor;
   private final DefaultComboBoxModel outputLevelComboModel = new DefaultComboBoxModel();
   private final DefaultComboBoxModel checksumPolicyComboModel = new DefaultComboBoxModel();
@@ -107,6 +108,7 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
     data.setFailureBehavior((MavenExecutionOptions.FailureMode)ComboBoxUtil.getSelectedValue(failPolicyComboModel));
     data.setPluginUpdatePolicy((MavenExecutionOptions.PluginUpdatePolicy)ComboBoxUtil.getSelectedValue(pluginUpdatePolicyComboModel));
     data.setAlwaysUpdateSnapshots(alwaysUpdateSnapshotsCheckBox.isSelected());
+    data.setEnableTychoSupport(enableTychoSupportCheckBox.isSelected());
     data.setThreads(threadsEditor.getText());
 
     data.setShowDialogWithAdvancedSettings(showDialogWithAdvancedSettingsCheckBox.isSelected());
@@ -128,6 +130,7 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
     checkboxUsePluginRegistry.setSelected(data.isUsePluginRegistry());
     checkboxRecursive.setSelected(!data.isNonRecursive());
     alwaysUpdateSnapshotsCheckBox.setSelected(data.isAlwaysUpdateSnapshots());
+    enableTychoSupportCheckBox.setSelected(data.isEnableTychoSupport());
     threadsEditor.setText(StringUtil.notNullize(data.getThreads()));
 
     ComboBoxUtil.select(outputLevelComboModel, data.getOutputLevel());

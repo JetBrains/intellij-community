@@ -137,6 +137,16 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   @NotNull private final MavenImporterSpy myImporterSpy;
 
+  @SuppressWarnings("SSBasedInspection")
+  private static final Set<String> TYCHO_BANNED_PACKAGING = new HashSet<>(Arrays.asList(
+    "eclipse-feature",
+    "eclipse-repository",
+    "eclipse-application",
+    "eclipse-update-site",
+    "eclipse-target-definition",
+    "p2-installable-unit"
+  ));
+
   public Maven3XServerEmbedder(MavenEmbedderSettings settings) throws RemoteException {
     super(settings.getSettings());
 
@@ -797,6 +807,10 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
     request.setUpdateSnapshots(myAlwaysUpdateSnapshots);
 
+    if (myServerSettings.isEnableTychoSupport()) {
+      request.setDegreeOfConcurrency(2);
+    }
+
     final Collection<MavenExecutionResult> executionResults = new ArrayList<MavenExecutionResult>();
 
     executeWithMavenSession(request, (Runnable)() -> {
@@ -817,48 +831,114 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         }
 
         List<ProjectBuildingResult> buildingResults = getProjectBuildingResults(request, files);
-        fillSessionCache(mavenSession, repositorySession, buildingResults);
 
-        for (ProjectBuildingResult buildingResult : buildingResults) {
-          MavenProject project = buildingResult.getProject();
+        if (myServerSettings.isEnableTychoSupport()) {
+          Map<MavenProject, List<MavenProject>> rootProjectsMap = new HashMap<MavenProject, List<MavenProject>>();
+          List<MavenProject> allProjects = new ArrayList<MavenProject>(buildingResults.size());
 
-          if (project == null) {
-            List<Exception> exceptions = new ArrayList<Exception>();
-            for (ModelProblem problem : buildingResult.getProblems()) {
-              exceptions.add(problem.getException());
-            }
-            MavenExecutionResult mavenExecutionResult = new MavenExecutionResult(buildingResult.getPomFile(), exceptions);
-            executionResults.add(mavenExecutionResult);
-            continue;
-          }
-
-
+          fillSessionCache(mavenSession, repositorySession, buildingResults);
           List<ModelProblem> modelProblems = new ArrayList<ModelProblem>();
 
-          if (buildingResult.getProblems() != null) {
-            modelProblems.addAll(buildingResult.getProblems());
+          for (ProjectBuildingResult buildingResult : buildingResults) {
+            MavenProject project = buildingResult.getProject();
+
+            if (project == null) {
+              List<Exception> exceptions = new ArrayList<Exception>();
+              for (ModelProblem problem : buildingResult.getProblems()) {
+                exceptions.add(problem.getException());
+              }
+              MavenExecutionResult mavenExecutionResult = new MavenExecutionResult(buildingResult.getPomFile(), exceptions);
+              executionResults.add(mavenExecutionResult);
+              continue;
+            }
+
+            if (buildingResult.getProblems() != null) {
+              modelProblems.addAll(buildingResult.getProblems());
+            }
+
+            MavenProject rootProject = project;
+
+            while (rootProject.getParent() != null) {
+              rootProject = rootProject.getParent();
+            }
+
+            List<MavenProject> projects = rootProjectsMap.get(rootProject);
+
+            if (projects == null) {
+              projects = new ArrayList<>(32);
+              rootProjectsMap.put(rootProject, projects);
+            }
+
+            projects.add(project);
+
+            if (TYCHO_BANNED_PACKAGING.contains(project.getPackaging())) {
+              Maven3ServerGlobals.getLogger().print("Excluded Tycho project: " + project);
+            } else {
+              allProjects.add(project);
+            }
           }
 
-          List<Exception> exceptions = new ArrayList<Exception>();
+          for (Map.Entry<MavenProject, List<MavenProject>> entry : rootProjectsMap.entrySet()) {
+            final MavenProject rootProject = entry.getKey();
+            final List<Exception> exceptions = new ArrayList<>();
+            loadExtensions(rootProject, allProjects, exceptions);
 
-          loadExtensions(project, exceptions);
+            for (MavenProject project : entry.getValue()) {
+              project.setDependencyArtifacts(project.createArtifacts(getComponent(ArtifactFactory.class), null, null));
 
-          project.setDependencyArtifacts(project.createArtifacts(getComponent(ArtifactFactory.class), null, null));
-          //
-
-          if (USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING) {
-            addMvn2CompatResults(project, exceptions, listeners, myLocalRepository, executionResults);
+              if (USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING) {
+                addMvn2CompatResults(project, exceptions, listeners, myLocalRepository, executionResults);
+              } else {
+                final DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
+                final boolean addUnresolved = System.getProperty("idea.maven.no.use.dependency.graph") == null;
+                project.setArtifacts(resolveArtifacts(dependencyResolutionResult, addUnresolved));
+                executionResults.add(new MavenExecutionResult(project, dependencyResolutionResult, exceptions, modelProblems));
+              }
+            }
           }
-          else {
-            final DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
-            boolean addUnresolved = System.getProperty("idea.maven.no.use.dependency.graph") == null;
-            Set<Artifact> artifacts = resolveArtifacts(dependencyResolutionResult, addUnresolved);
-            project.setArtifacts(artifacts);
-            executionResults.add(new MavenExecutionResult(project, dependencyResolutionResult, exceptions, modelProblems));
+        } else {
+          fillSessionCache(mavenSession, repositorySession, buildingResults);
+
+          for (ProjectBuildingResult buildingResult : buildingResults) {
+            MavenProject project = buildingResult.getProject();
+
+            if (project == null) {
+              List<Exception> exceptions = new ArrayList<Exception>();
+              for (ModelProblem problem : buildingResult.getProblems()) {
+                exceptions.add(problem.getException());
+              }
+              MavenExecutionResult mavenExecutionResult = new MavenExecutionResult(buildingResult.getPomFile(), exceptions);
+              executionResults.add(mavenExecutionResult);
+              continue;
+            }
+
+
+            List<ModelProblem> modelProblems = new ArrayList<ModelProblem>();
+
+            if (buildingResult.getProblems() != null) {
+              modelProblems.addAll(buildingResult.getProblems());
+            }
+
+            List<Exception> exceptions = new ArrayList<Exception>();
+
+            loadExtensions(project, Collections.singletonList(project), exceptions);
+
+            project.setDependencyArtifacts(project.createArtifacts(getComponent(ArtifactFactory.class), null, null));
+            //
+
+            if (USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING) {
+              addMvn2CompatResults(project, exceptions, listeners, myLocalRepository, executionResults);
+            }
+            else {
+              final DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
+              boolean addUnresolved = System.getProperty("idea.maven.no.use.dependency.graph") == null;
+              Set<Artifact> artifacts = resolveArtifacts(dependencyResolutionResult, addUnresolved);
+              project.setArtifacts(artifacts);
+              executionResults.add(new MavenExecutionResult(project, dependencyResolutionResult, exceptions, modelProblems));
+            }
           }
         }
-      }
-      catch (Exception e) {
+      } catch (Exception e) {
         executionResults.add(handleException(e));
       }
     });
@@ -1005,7 +1085,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   /**
    * adapted from {@link DefaultMaven#doExecute(MavenExecutionRequest)}
    */
-  private void loadExtensions(MavenProject project, List<Exception> exceptions) {
+  private void loadExtensions(MavenProject project, List<MavenProject> projects, List<Exception> exceptions) {
     ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
     Collection<AbstractMavenLifecycleParticipant> lifecycleParticipants = getLifecycleParticipants(Collections.singletonList(project));
     if (!lifecycleParticipants.isEmpty()) {
@@ -1014,11 +1094,13 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       session.setCurrentProject(project);
       try {
         // the method can be removed
-        session.setAllProjects(Collections.singletonList(project));
+        //session.setAllProjects(Collections.singletonList(project));
+        session.setAllProjects(projects);
       }
       catch (NoSuchMethodError ignore) {
       }
-      session.setProjects(Collections.singletonList(project));
+      //session.setProjects(Collections.singletonList(project));
+      session.setProjects(projects);
 
       for (AbstractMavenLifecycleParticipant listener : lifecycleParticipants) {
         Thread.currentThread().setContextClassLoader(listener.getClass().getClassLoader());

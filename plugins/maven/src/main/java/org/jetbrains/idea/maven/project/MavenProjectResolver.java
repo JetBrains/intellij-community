@@ -29,9 +29,17 @@ import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
+import java.util.stream.Collectors;
+
+import static org.jetbrains.idea.maven.project.MavenEmbeddersManager.FOR_DEPENDENCIES_RESOLVE;
 
 public class MavenProjectResolver {
   public static final Key<Collection<MavenArtifact>> UNRESOLVED_ARTIFACTS = new Key<>("Unresolved Artifacts");
@@ -61,6 +69,11 @@ public class MavenProjectResolver {
                       @NotNull MavenConsole console,
                       @NotNull ResolveContext context,
                       @NotNull MavenProgressIndicator process) throws MavenProcessCanceledException {
+    if (generalSettings.isEnableTychoSupport()) {
+      resolveTycho(project, mavenProjects, generalSettings, embeddersManager, console, context, process);
+      return;
+    }
+
     MultiMap<Path, MavenProject> projectMultiMap = groupByBasedir(mavenProjects);
 
     for (Map.Entry<Path, Collection<MavenProject>> entry : projectMultiMap.entrySet()) {
@@ -97,6 +110,182 @@ public class MavenProjectResolver {
     }
   }
 
+  private void resolveTycho(@NotNull final Project project,
+                            @NotNull final Collection<MavenProject> mavenProjects,
+                            @NotNull final MavenGeneralSettings generalSettings,
+                            @NotNull final MavenEmbeddersManager embeddersManager,
+                            @NotNull final MavenConsole console,
+                            @NotNull final ResolveContext context,
+                            @NotNull final MavenProgressIndicator process) throws MavenProcessCanceledException {
+    final MavenProjectsManager mavenProjectsManager = MavenProjectsManager.getInstance(project);
+    final List<MavenProject> allProjects = mavenProjectsManager.getProjects();
+    final Set<MavenProject> requiredProjects = new HashSet<>(mavenProjects);
+
+    if (mavenProjects.size() != allProjects.size()) {
+      final List<MavenOsgiProjectInfo> mavenOsgiProjects = parseProjects(allProjects);
+
+      for (final MavenProject mavenProject : mavenProjects) {
+        collectRequiredProjects(mavenProject, requiredProjects, mavenOsgiProjects);
+      }
+    }
+
+    final MavenEmbedderWrapper embedder = embeddersManager.getEmbedder(FOR_DEPENDENCIES_RESOLVE, project.getBasePath(), "");
+    final Properties userProperties = new Properties();
+
+    for (MavenProject mavenProject : requiredProjects) {
+      mavenProject.setConfigFileError(null);
+
+      for (final MavenImporter mavenImporter : MavenImporter.getSuitableImporters(mavenProject)) {
+        mavenImporter.customizeUserProperties(project, mavenProject, userProperties);
+      }
+    }
+
+    boolean updateSnapshots = mavenProjectsManager.getForceUpdateSnapshots();
+    updateSnapshots = updateSnapshots || generalSettings.isAlwaysUpdateSnapshots();
+    embedder.customizeForResolve(myTree.getWorkspaceMap(), console, process, updateSnapshots, userProperties);
+
+    try {
+      doResolve(project, requiredProjects, generalSettings, embedder, context, process);
+    } catch (final Throwable t) {
+      final MavenConfigParseException cause = findParseException(t);
+
+      if (cause != null) {
+        MavenLog.LOG.warn("Cannot parse maven config", cause);
+      } else {
+        throw t;
+      }
+    } finally {
+      embeddersManager.release(embedder);
+    }
+
+    MavenUtil.restartConfigHighlightning(project, requiredProjects);
+  }
+
+  private static List<MavenOsgiProjectInfo> parseProjects(final List<MavenProject> projects) {
+    return projects.stream()
+      .map(MavenProjectResolver::parseProject)
+      .filter(Objects::nonNull)
+      .collect(Collectors.toList());
+  }
+
+  private static MavenOsgiProjectInfo parseProject(final MavenProject project) {
+    final String directory = project.getDirectory();
+    final Path manifestPath = Paths.get(directory, "META-INF/MANIFEST.MF");
+
+    if (Files.notExists(manifestPath)) {
+      return null;
+    }
+
+    final Set<String> requiredBundles = new HashSet<>(32);
+    final Set<String> importedPackages = new HashSet<>(16);
+    final Set<String> exportedPackages = new HashSet<>(16);
+
+    try {
+      final Manifest manifest = new Manifest(Files.newInputStream(manifestPath));
+      final Attributes manifestAttributes = manifest.getMainAttributes();
+      final String requiredBundlesStr = manifestAttributes.getValue("Require-Bundle");
+
+      if (requiredBundlesStr != null) {
+        for (final String bundle : requiredBundlesStr.split(",")) {
+          requiredBundles.add(getBundleName(bundle));
+        }
+      }
+
+      final String importedPackagesStr = manifestAttributes.getValue("Import-Package");
+
+      if (importedPackagesStr != null) {
+        for (final String packageName : importedPackagesStr.split(",")) {
+          importedPackages.add(packageName.trim());
+        }
+      }
+
+      final String exportedPackagesStr = manifestAttributes.getValue("Export-Package");
+
+      if (exportedPackagesStr != null) {
+        for (final String packageName : exportedPackagesStr.split(",")) {
+          exportedPackages.add(packageName.trim());
+        }
+      }
+    } catch (final IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    return new MavenOsgiProjectInfo(project, requiredBundles, importedPackages, exportedPackages);
+  }
+
+  @SuppressWarnings("ClassCanBeRecord")
+  private static class MavenOsgiProjectInfo {
+    private final MavenProject project;
+    private final Set<String> requiredBundles;
+    private final Set<String> importedPackages;
+    private final Set<String> exportedPackages;
+
+    MavenOsgiProjectInfo(
+      final MavenProject project,
+      final Set<String> requiredBundles,
+      final Set<String> importedPackages,
+      final Set<String> exportedPackages) {
+      this.project = project;
+      this.requiredBundles = requiredBundles;
+      this.importedPackages = importedPackages;
+      this.exportedPackages = exportedPackages;
+    }
+
+    MavenProject getProject() {
+      return project;
+    }
+
+    Set<String> getRequiredBundles() {
+      return requiredBundles;
+    }
+
+    Set<String> getImportedPackages() {
+      return importedPackages;
+    }
+
+    Set<String> getExportedPackages() {
+      return exportedPackages;
+    }
+  }
+
+  private static void collectRequiredProjects(
+    final MavenProject project,
+    final Set<MavenProject> requiredProjects,
+    final Collection<MavenOsgiProjectInfo> mavenOsgiProjects) {
+    final MavenOsgiProjectInfo osgiInfo = ContainerUtil.find(mavenOsgiProjects, info -> info.getProject() == project);
+
+    if (osgiInfo == null) {
+      return;
+    }
+
+    for (final String requiredBundle : osgiInfo.getRequiredBundles()) {
+      for (final MavenOsgiProjectInfo projectInfo : mavenOsgiProjects) {
+        final MavenProject requiredProject = projectInfo.getProject();
+
+        if (requiredBundle.equals(requiredProject.getMavenId().getArtifactId())) {
+          requiredProjects.add(requiredProject);
+          collectRequiredProjects(requiredProject, requiredProjects, mavenOsgiProjects);
+        }
+      }
+    }
+
+    for (final String importedPackage : osgiInfo.getImportedPackages()) {
+      for (final MavenOsgiProjectInfo projectInfo : mavenOsgiProjects) {
+        for (final String exportedPackage : projectInfo.getExportedPackages()) {
+          if (importedPackage.equals(exportedPackage)) {
+            final MavenProject requiredProject = projectInfo.getProject();
+            requiredProjects.add(requiredProject);
+            collectRequiredProjects(requiredProject, requiredProjects, mavenOsgiProjects);
+          }
+        }
+      }
+    }
+  }
+
+  private static String getBundleName(final String bundle) {
+    final String[] parts = bundle.split(";");
+    return parts[0].trim();
+  }
 
   private static MavenConfigParseException findParseException(Throwable t) {
     MavenConfigParseException parseException = ExceptionUtil.findCause(t, MavenConfigParseException.class);
