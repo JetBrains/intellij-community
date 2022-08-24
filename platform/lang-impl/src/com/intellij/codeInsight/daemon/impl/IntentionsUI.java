@@ -15,7 +15,7 @@ public abstract class IntentionsUI {
     return project.getService(IntentionsUI.class);
   }
 
-  public IntentionsUI(@NotNull Project project) {
+  IntentionsUI(@NotNull Project project) {
     myProject = project;
   }
 
@@ -31,7 +31,6 @@ public abstract class IntentionsUI {
         return new CachedIntentions(myProject, file, editor);
       }
     });
-
   }
 
   public void invalidate() {
