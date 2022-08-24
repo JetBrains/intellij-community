@@ -1,65 +1,64 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.application;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.application
 
-import com.intellij.openapi.util.text.Strings;
-import com.intellij.psi.codeStyle.MinusculeMatcher;
-import com.intellij.util.xml.dom.XmlDomReader;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.xxh3.Xx3UnencodedString;
-
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import com.fasterxml.aalto.`in`.ReaderConfig
+import com.intellij.diff.comparison.ComparisonUtil
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.text.Strings
+import com.intellij.psi.codeStyle.MinusculeMatcher
+import com.intellij.util.lang.UrlClassLoader
+import com.sun.jna.TypeMapper
+import com.sun.jna.platform.FileUtils
+import gnu.trove.THashSet
+import it.unimi.dsi.fastutil.objects.Object2IntMap
+import net.jpountz.lz4.LZ4Factory
+import org.apache.log4j.Appender
+import org.apache.oro.text.regex.PatternMatcher
+import org.codehaus.stax2.XMLStreamReader2
+import org.intellij.lang.annotations.Flow
+import org.jdom.Document
+import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-public final class ClassPathUtil {
-  private ClassPathUtil() {
+object ClassPathUtil {
+  @JvmStatic
+  fun getUtilClassPath(): Collection<String> {
+    val classes = getUtilClasses()
+    val result = classes.mapNotNullTo(HashSet(classes.size), PathManager::getJarPathForClass)
+    addKotlinStdlib(result)
+    return result
   }
 
-  public static @NotNull Collection<String> getUtilClassPath() {
-    Class<?>[] classes = getUtilClasses();
-
-    Set<String> classPath = new HashSet<>(classes.length);
-    for (Class<?> aClass : classes) {
-      String path = PathManager.getJarPathForClass(aClass);
-      if (path != null) {
-        classPath.add(path);
-      }
-    }
-
-    addKotlinStdlib(classPath);
-    return classPath;
+  @JvmStatic
+  fun addKotlinStdlib(classPath: MutableCollection<String>) {
+    val classLoader = PathManager::class.java.classLoader
+    PathManager.getResourceRoot(classLoader, "kotlin/jdk7/AutoCloseableKt.class")?.let(classPath::add) // kotlin-stdlib-jdk7
+    PathManager.getResourceRoot(classLoader, "kotlin/streams/jdk8/StreamsKt.class")?.let(classPath::add) // kotlin-stdlib-jdk8
   }
 
-  public static void addKotlinStdlib(@NotNull Collection<String> classPath) {
-    classPath.add(PathManager.getResourceRoot(PathManager.class, "/kotlin/jdk7/AutoCloseableKt.class")); // kotlin-stdlib-jdk7
-    classPath.add(PathManager.getResourceRoot(PathManager.class, "/kotlin/streams/jdk8/StreamsKt.class")); // kotlin-stdlib-jdk8
-  }
-
-  public static @NotNull Class<?> @NotNull [] getUtilClasses() {
-    @SuppressWarnings({"UnnecessaryFullyQualifiedName", "deprecation"}) Class<?>[] classes = {
-      PathManager.class,                                  // module 'intellij.platform.util'
-      Strings.class,                                      // module 'intellij.platform.util.base'
-      XmlDomReader.class,                                 // module 'intellij.platform.util.xmlDom'
-      MinusculeMatcher.class,                             // module 'intellij.platform.util.text.matching'
-      com.intellij.openapi.util.SystemInfoRt.class,       // module 'intellij.platform.util.rt'
-      com.intellij.diff.comparison.ComparisonUtil.class,  // module 'intellij.platform.util.diff'
-      com.intellij.util.lang.UrlClassLoader.class,        // module 'intellij.platform.util.classLoader'
-      Xx3UnencodedString.class,                           // intellij.platform.util.rt.java8 (required for classLoader)
-      org.intellij.lang.annotations.Flow.class,           // jetbrains-annotations-java5
-      org.jdom.Document.class,                            // jDOM
-      org.apache.log4j.Appender.class,                    // Log4J
-      it.unimi.dsi.fastutil.objects.Object2IntMap.class,  // fastutil
-      gnu.trove.THashSet.class,                           // Trove,
-      com.sun.jna.TypeMapper.class,                       // JNA
-      com.sun.jna.platform.FileUtils.class,               // JNA (jna-platform)
-      org.apache.oro.text.regex.PatternMatcher.class,     // OROMatcher
-      net.jpountz.lz4.LZ4Factory.class,                   // LZ4-Java
-      com.fasterxml.aalto.in.ReaderConfig.class,          // Aalto XML
-      org.codehaus.stax2.XMLStreamReader2.class,          // Aalto XML
-      kotlin.Pair.class, // kotlin-stdlib
-    };
-    return classes;
+  @JvmStatic
+  fun getUtilClasses(): Array<Class<*>> {
+    val classLoader = ClassPathUtil::class.java.classLoader
+    return arrayOf(
+      PathManager::class.java,  // module 'intellij.platform.util'
+      Strings::class.java,  // module 'intellij.platform.util.base'
+      classLoader.loadClass("com.intellij.util.xml.dom.XmlDomReader"),  // module 'intellij.platform.util.xmlDom'
+      MinusculeMatcher::class.java,  // module 'intellij.platform.util.text.matching'
+      SystemInfoRt::class.java,  // module 'intellij.platform.util.rt'
+      ComparisonUtil::class.java,  // module 'intellij.platform.util.diff'
+      UrlClassLoader::class.java,  // module 'intellij.platform.util.classLoader'
+      classLoader.loadClass("org.jetbrains.xxh3.Xx3UnencodedString"),  // intellij.platform.util.rt.java8 (required for classLoader)
+      Flow::class.java,  // jetbrains-annotations-java5
+      Document::class.java,  // jDOM
+      Appender::class.java,  // Log4J
+      Object2IntMap::class.java,  // fastutil
+      THashSet::class.java,  // Trove,
+      TypeMapper::class.java,  // JNA
+      FileUtils::class.java,  // JNA (jna-platform)
+      PatternMatcher::class.java,  // OROMatcher
+      LZ4Factory::class.java,  // LZ4-Java
+      ReaderConfig::class.java,  // Aalto XML
+      XMLStreamReader2::class.java,  // Aalto XML
+      Pair::class.java)
   }
 }
