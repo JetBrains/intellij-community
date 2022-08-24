@@ -47,6 +47,8 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.remote.ProcessControlWithMappings;
+import com.intellij.remote.RemoteSdkProperties;
+import com.intellij.util.PathMappingSettings;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
@@ -485,7 +487,30 @@ public abstract class PythonCommandLineState extends CommandLineState {
       }
       return new PythonProcessHandler(process, commandLineString, commandLine.getCharset());
     }
-    return new ProcessHandlerWithPyPositionConverter(process, commandLineString, commandLine.getCharset(), targetEnvironment);
+    PathMappingSettings consolidatedPathMappings = new PathMappingSettings();
+    // add mappings from run configuration on top
+    PathMappingSettings runConfigurationPathMappings = myConfig.myMappingSettings;
+    if (runConfigurationPathMappings != null) {
+      consolidatedPathMappings.addAll(runConfigurationPathMappings);
+    }
+    // add path mappings configured in SDK, they will be handled in second place
+    PathMappingSettings sdkPathMappings = getSdkPathMappings();
+    if (sdkPathMappings != null) {
+      consolidatedPathMappings.addAll(sdkPathMappings);
+    }
+    return new ProcessHandlerWithPyPositionConverter(process, commandLineString, commandLine.getCharset(), targetEnvironment,
+                                                     consolidatedPathMappings);
+  }
+
+  private @Nullable PathMappingSettings getSdkPathMappings() {
+    Sdk sdk = myConfig.getSdk();
+    if (sdk != null) {
+      SdkAdditionalData sdkAdditionalData = sdk.getSdkAdditionalData();
+      if (sdkAdditionalData instanceof RemoteSdkProperties) {
+        return ((RemoteSdkProperties)sdkAdditionalData).getPathMappings();
+      }
+    }
+    return null;
   }
 
   /**
