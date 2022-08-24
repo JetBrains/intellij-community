@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.elementType
-import com.intellij.structuralsearch.StructuralSearchUtil
+import com.intellij.structuralsearch.MatchUtil
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern
 import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor
 import com.intellij.structuralsearch.impl.matcher.handlers.LiteralWithSubstitutionHandler
@@ -1019,8 +1019,8 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
                 )
             }
             else -> myMatchingVisitor.result = myMatchingVisitor.matchText(
-                StructuralSearchUtil.normalize(getCommentText(comment)),
-                StructuralSearchUtil.normalize(getCommentText(other))
+                MatchUtil.normalize(getCommentText(comment)),
+                MatchUtil.normalize(getCommentText(other))
             )
         }
     }

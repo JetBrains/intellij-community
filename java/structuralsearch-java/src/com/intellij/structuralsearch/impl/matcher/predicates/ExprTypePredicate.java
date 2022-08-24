@@ -3,7 +3,7 @@ package com.intellij.structuralsearch.impl.matcher.predicates;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.structuralsearch.StructuralSearchUtil;
+import com.intellij.structuralsearch.MatchUtil;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -42,14 +42,14 @@ public class ExprTypePredicate extends MatchPredicate {
     while (true) {
       int index = types.indexOf('|', pos);
       if (index == -1) break;
-      String token = StructuralSearchUtil.normalizeWhiteSpace(types.substring(pos, index));
+      String token = MatchUtil.normalizeWhiteSpace(types.substring(pos, index));
       if (!token.isEmpty()) {
         result.add(token);
       }
       pos = index + 1;
     }
     if (pos < types.length()) {
-      result.add(StructuralSearchUtil.normalizeWhiteSpace(types.substring(pos)));
+      result.add(MatchUtil.normalizeWhiteSpace(types.substring(pos)));
     }
     return result;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
@@ -6,7 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.xml.*;
-import com.intellij.structuralsearch.StructuralSearchUtil;
+import com.intellij.structuralsearch.MatchUtil;
 import com.intellij.structuralsearch.XmlMatchUtil;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.iterators.ListNodeIterator;
@@ -125,8 +125,8 @@ public class XmlMatchingVisitor extends XmlElementVisitor {
                                                  myMatchingVisitor.getMatchContext()));
     }
     else {
-      myMatchingVisitor.setResult(myMatchingVisitor.matchText(StructuralSearchUtil.normalize(text.getText()),
-                                                              StructuralSearchUtil.normalize(other.getCommentText())));
+      myMatchingVisitor.setResult(myMatchingVisitor.matchText(MatchUtil.normalize(text.getText()),
+                                                              MatchUtil.normalize(other.getCommentText())));
     }
   }
 }

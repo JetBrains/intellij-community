@@ -5,13 +5,13 @@ import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
-import com.intellij.testFramework.LightPlatformTestCase;
+import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
-public class StringToConstraintsTransformerTest extends LightPlatformTestCase {
+public class StringToConstraintsTransformerTest extends TestCase {
 
   private MatchOptions myOptions;
 

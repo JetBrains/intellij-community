@@ -5,6 +5,7 @@ import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MalformedPatternException;
+import com.intellij.structuralsearch.MatchUtil;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
@@ -163,7 +164,7 @@ public class GlobalCompilingVisitor {
       word = content.substring(start, matcher.start());
       if (!word.isEmpty()) {
         hasLiteralContent = true;
-        buf.append(StructuralSearchUtil.makeExtremeSpacesOptional(StructuralSearchUtil.shieldRegExpMetaChars(word)));
+        buf.append(MatchUtil.makeExtremeSpacesOptional(MatchUtil.shieldRegExpMetaChars(word)));
 
         processTokenizedName(word, kind);
       }
@@ -192,7 +193,7 @@ public class GlobalCompilingVisitor {
 
     if (!word.isEmpty()) {
       hasLiteralContent = true;
-      buf.append(StructuralSearchUtil.makeExtremeSpacesOptional(StructuralSearchUtil.shieldRegExpMetaChars(word)));
+      buf.append(MatchUtil.makeExtremeSpacesOptional(MatchUtil.shieldRegExpMetaChars(word)));
 
       processTokenizedName(word, kind);
     }

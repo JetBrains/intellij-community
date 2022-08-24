@@ -14,6 +14,7 @@ import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.structuralsearch.MatchOptions;
+import com.intellij.structuralsearch.MatchUtil;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.handlers.LiteralWithSubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
@@ -106,8 +107,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       myMatchingVisitor.setResult(handler.match(comment, other, myMatchingVisitor.getMatchContext()));
     }
     else {
-      myMatchingVisitor.setResult(myMatchingVisitor.matchText(StructuralSearchUtil.normalize(JavaMatchUtil.getCommentText(comment)),
-                                                              StructuralSearchUtil.normalize(JavaMatchUtil.getCommentText(other))));
+      myMatchingVisitor.setResult(myMatchingVisitor.matchText(MatchUtil.normalize(JavaMatchUtil.getCommentText(comment)),
+                                                              MatchUtil.normalize(JavaMatchUtil.getCommentText(other))));
     }
   }
 
@@ -1218,8 +1219,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       if ((value1 instanceof String || value1 instanceof Character) && (value2 instanceof String || value2 instanceof Character)) {
         String patternValue = value1.toString();
         if (!patternValue.isEmpty() && patternValue.equals(patternValue.trim())) {
-          myMatchingVisitor.setResult(myMatchingVisitor.matchText(StructuralSearchUtil.normalize(patternValue),
-                                                                  StructuralSearchUtil.normalize(value2.toString())));
+          myMatchingVisitor.setResult(myMatchingVisitor.matchText(MatchUtil.normalize(patternValue),
+                                                                  MatchUtil.normalize(value2.toString())));
         }
         else {
           myMatchingVisitor.setResult(myMatchingVisitor.matchText(patternValue, value2.toString()));

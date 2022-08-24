@@ -278,7 +278,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
       if (StringUtil.isQuotedString(value)) {
         if (mySubstitutionPatterns == null) {
           final String[] prefixes = myGlobalVisitor.getContext().getPattern().getTypedVarPrefixes();
-          mySubstitutionPatterns = StructuralSearchUtil.createPatterns(prefixes);
+          mySubstitutionPatterns = MatchUtil.createPatterns(prefixes);
         }
 
         for (Pattern substitutionPattern : mySubstitutionPatterns) {
