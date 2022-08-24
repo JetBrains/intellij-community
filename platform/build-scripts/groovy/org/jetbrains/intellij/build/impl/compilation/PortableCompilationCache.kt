@@ -182,12 +182,11 @@ class PortableCompilationCache(private val context: CompilationContext) {
         downloadCache()
         successMessage = "Compilation successful after retry with fresh Remote Cache"
       }
-      context.compilationData.compiledModules.clear()
-      context.compilationData.compiledModuleTests.clear()
-      context.compilationData.statisticsReported = false
+      context.compilationData.reset()
       jps.buildAll()
       context.messages.info(successMessage)
       println("##teamcity[buildStatus status='SUCCESS' text='$successMessage']")
+      context.messages.reportStatisticValue("Incremental compilation failures", "1")
     }
   }
 

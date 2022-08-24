@@ -130,17 +130,38 @@ object CompiledClasses {
     context.messages.progress("Compiling project")
     context.compilationData.statisticsReported = false
     val runner = JpsCompilationRunner(context)
+    try {
+      runner.compile(context, moduleNames, includingTestsInModules)
+    }
+    catch (e: Exception) {
+      if (!context.options.incrementalCompilation) {
+        throw e
+      }
+      context.messages.warning("Incremental compilation failed. Re-trying with clean build.")
+      context.options.incrementalCompilation = false
+      context.compilationData.reset()
+      runner.compile(context, moduleNames, includingTestsInModules)
+      val successMessage = "Compilation successful after clean build retry"
+      context.messages.info(successMessage)
+      println("##teamcity[buildStatus status='SUCCESS' text='$successMessage']")
+      context.messages.reportStatisticValue("Incremental compilation failures", "1")
+    }
+  }
+
+  private fun JpsCompilationRunner.compile(context: CompilationContext,
+                                           moduleNames: Collection<String>?,
+                                           includingTestsInModules: List<String>?) {
     when {
-      moduleNames != null -> runner.buildModules(moduleNames.map(context::findRequiredModule))
-      includingTestsInModules != null -> runner.buildProduction()
+      moduleNames != null -> buildModules(moduleNames.map(context::findRequiredModule))
+      includingTestsInModules != null -> buildProduction()
       else -> {
-        runner.buildAll()
+        buildAll()
         context.options.useCompiledClassesFromProjectOutput = true
       }
     }
     context.options.incrementalCompilation = true
     includingTestsInModules?.forEach {
-      runner.buildModuleTests(context.findRequiredModule(it))
+      buildModuleTests(context.findRequiredModule(it))
     }
   }
 }

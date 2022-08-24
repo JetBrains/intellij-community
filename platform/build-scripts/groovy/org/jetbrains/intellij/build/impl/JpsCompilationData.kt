@@ -11,4 +11,9 @@ class JpsCompilationData(val dataStorageRoot: Path, val buildLogFile: Path, cate
   var projectDependenciesResolved: Boolean = false
 
   val categoriesWithDebugLevel: String = categoriesWithDebugLevelNullable ?: ""
+  fun reset() {
+    compiledModules.clear()
+    compiledModuleTests.clear()
+    statisticsReported = false
+  }
 }
