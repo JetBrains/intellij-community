@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -43,7 +43,6 @@ import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.LayeredIcon;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -52,7 +51,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
@@ -69,8 +67,6 @@ public final class ScratchFileActions {
 
 
   public static class NewFileAction extends DumbAwareAction {
-    private static final Icon ICON = LayeredIcon.create(AllIcons.FileTypes.Text, AllIcons.Actions.Scratch);
-
     private static final String ACTION_ID = "NewScratchFile";
 
     private final NotNullLazyValue<@Nls String> myActionText = NotNullLazyValue.lazy(() -> {
@@ -80,7 +76,7 @@ public final class ScratchFileActions {
     });
 
     public NewFileAction() {
-      getTemplatePresentation().setIcon(ICON);
+      getTemplatePresentation().setIcon(new ScratchFileTypeIcon(AllIcons.FileTypes.Text));
     }
 
     @Override
@@ -171,7 +167,7 @@ public final class ScratchFileActions {
         presentation.setText(myActionText.getValue());
       }
 
-      presentation.setIcon(ICON);
+      presentation.setIcon(new ScratchFileTypeIcon(AllIcons.FileTypes.Text));
       if (ActionPlaces.MAIN_MENU.equals(e.getPlace()) && !NewActionGroup.isActionInNewPopupMenu(this)) {
         presentation.setIcon(null);
       }
