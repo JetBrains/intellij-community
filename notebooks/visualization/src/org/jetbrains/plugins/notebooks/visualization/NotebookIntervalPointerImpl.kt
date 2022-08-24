@@ -38,7 +38,7 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
       mySavedChanges = changes
       return modifyDocumentAction().also {
         if (mySavedChanges != null) {
-          applyChanges()
+          applySavedChanges()
         }
       }
     }
@@ -86,7 +86,7 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
 
     updatePointersFrom(invalidPointersStart)
 
-    applyChanges()
+    applySavedChanges()
   }
 
   private fun onEdited(intervals: List<NotebookCellLines.Interval>, excluded: List<NotebookCellLines.Interval> = emptyList()) {
@@ -102,37 +102,41 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
     }
   }
 
-  private fun applyChanges() {
+  private fun applySavedChanges() {
     mySavedChanges?.forEach { hint ->
       when (hint) {
-        is NotebookIntervalPointerFactory.Invalidate -> {
-          val ordinal = hint.ptr.get()?.ordinal
-          invalidate((hint.ptr as NotebookIntervalPointerImpl))
-          if (ordinal != null) {
-            changeListeners.multicaster.let { listener ->
-              listener.onRemoved(ordinal)
-              listener.onInserted(ordinal)
-            }
-          }
-        }
-        is NotebookIntervalPointerFactory.Reuse -> {
-          val oldPtr = hint.ptr as NotebookIntervalPointerImpl
-          pointers.getOrNull(hint.ordinalAfterChange)?.let { newPtr ->
-            if (oldPtr !== newPtr) {
-              val oldOrdinal = oldPtr.interval?.ordinal
-              invalidate(oldPtr)
-              oldPtr.interval = newPtr.interval
-              newPtr.interval = null
-              pointers[hint.ordinalAfterChange] = oldPtr
-              if (oldOrdinal != null && oldOrdinal != hint.ordinalAfterChange) {
-                changeListeners.multicaster.onMoved(oldOrdinal, hint.ordinalAfterChange)
-              }
-            }
-          }
-        }
+        is NotebookIntervalPointerFactory.Invalidate -> applySavedChange(hint)
+        is NotebookIntervalPointerFactory.Reuse -> applySavedChange(hint)
       }
     }
     mySavedChanges = null
+  }
+
+  private fun applySavedChange(hint: NotebookIntervalPointerFactory.Invalidate) {
+    val ordinal = hint.ptr.get()?.ordinal
+    invalidate((hint.ptr as NotebookIntervalPointerImpl))
+    if (ordinal != null) {
+      changeListeners.multicaster.let { listener ->
+        listener.onRemoved(ordinal)
+        listener.onInserted(ordinal)
+      }
+    }
+  }
+
+  private fun applySavedChange(hint: NotebookIntervalPointerFactory.Reuse) {
+    val oldPtr = hint.ptr as NotebookIntervalPointerImpl
+    pointers.getOrNull(hint.ordinalAfterChange)?.let { newPtr ->
+      if (oldPtr !== newPtr) {
+        val oldOrdinal = oldPtr.interval?.ordinal
+        invalidate(oldPtr)
+        oldPtr.interval = newPtr.interval
+        newPtr.interval = null
+        pointers[hint.ordinalAfterChange] = oldPtr
+        if (oldOrdinal != null && oldOrdinal != hint.ordinalAfterChange) {
+          changeListeners.multicaster.onMoved(oldOrdinal, hint.ordinalAfterChange)
+        }
+      }
+    }
   }
 
   private fun invalidate(ptr: NotebookIntervalPointerImpl) {
