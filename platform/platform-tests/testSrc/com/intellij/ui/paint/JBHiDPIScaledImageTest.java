@@ -3,6 +3,7 @@ package com.intellij.ui.paint;
 
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.ScaleContext;
+import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import org.junit.Assert;
@@ -27,13 +28,21 @@ public class JBHiDPIScaledImageTest {
     }
     Icon testIcon = new ImageIcon(testImg);
     ScaleContext ctx = ScaleContext.create();
-    BufferedImage image = GraphicsEnvironment.getLocalGraphicsEnvironment()
-      .getDefaultScreenDevice().getDefaultConfiguration()
-      .createCompatibleImage(PaintUtil.RoundingMode.ROUND.round(ctx.apply(testIcon.getIconWidth(), DerivedScaleType.DEV_SCALE)),
-                             PaintUtil.RoundingMode.ROUND.round(ctx.apply(testIcon.getIconHeight(), DerivedScaleType.DEV_SCALE)),
-                             Transparency.TRANSLUCENT);
-    if (StartupUiUtil.isJreHiDPI(ctx)) {
-      image = (BufferedImage)ImageUtil.ensureHiDPI(image, ctx, testIcon.getIconWidth(), testIcon.getIconHeight());
+    BufferedImage image;
+    if (GraphicsEnvironment.isHeadless()) {
+      // for testing purpose
+      image = ImageUtil.createImage(ctx, testIcon.getIconWidth(), testIcon.getIconHeight(), BufferedImage.TYPE_INT_ARGB, PaintUtil.RoundingMode.ROUND);
+    } else {
+      if (StartupUiUtil.isJreHiDPI(ctx)) {
+        image = new JBHiDPIScaledImage(ctx, testIcon.getIconWidth(), testIcon.getIconHeight(), BufferedImage.TYPE_INT_ARGB_PRE,
+                                       PaintUtil.RoundingMode.ROUND);
+      } else {
+        image = GraphicsEnvironment.getLocalGraphicsEnvironment()
+          .getDefaultScreenDevice().getDefaultConfiguration()
+          .createCompatibleImage(PaintUtil.RoundingMode.ROUND.round(ctx.apply(testIcon.getIconWidth(), DerivedScaleType.DEV_SCALE)),
+                                 PaintUtil.RoundingMode.ROUND.round(ctx.apply(testIcon.getIconHeight(), DerivedScaleType.DEV_SCALE)),
+                                 Transparency.TRANSLUCENT);
+      }
     }
 
     Graphics2D g = image.createGraphics();
@@ -43,6 +52,19 @@ public class JBHiDPIScaledImageTest {
     finally {
       g.dispose();
     }
+
+    if (StartupUiUtil.isJreHiDPI(ctx)) {
+      JBHiDPIScaledImage bi = new JBHiDPIScaledImage(testIcon.getIconWidth(), testIcon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
+      g = bi.createGraphics();
+      try {
+        testIcon.paintIcon(null, g, 0, 0);
+      }
+      finally {
+        g.dispose();
+      }
+    }
+
+    //BufferedImage bi = ImageUtil.toBufferedImage(image);
 
     Assert.assertEquals(image.getRGB(0, 0), testColor1.getRGB());
     Assert.assertEquals(image.getRGB(image.getWidth() - 1, image.getHeight() - 1), testColor2.getRGB());
