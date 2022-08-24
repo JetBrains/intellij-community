@@ -186,7 +186,7 @@ class EditorNotificationsImpl(private val project: Project) : EditorNotification
 
       coroutineContext.ensureActive()
       val point = EditorNotificationProvider.EP_NAME.getPoint(project) as ExtensionPointImpl<EditorNotificationProvider>
-      for (adapter in point.sortedAdapters) {
+      for (adapter in point.sortedAdapters.toTypedArray()) {
         coroutineContext.ensureActive()
 
         try {
