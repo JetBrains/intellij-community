@@ -326,16 +326,26 @@ open class PluginAdvertiserService {
   }
 
   @ApiStatus.Internal
-  open fun collectDependencyUnknownFeatures(project: Project, includeIgnored: Boolean = false): Sequence<UnknownFeature> {
-    return DependencyCollectorBean.EP_NAME.extensions.asSequence()
+  open fun collectDependencyUnknownFeatures(project: Project, includeIgnored: Boolean = false) {
+    val featuresCollector = UnknownFeaturesCollector.getInstance(project)
+
+    featuresCollector.getUnknownFeaturesOfType(DEPENDENCY_SUPPORT_FEATURE)
+      .forEach { featuresCollector.unregisterUnknownFeature(it) }
+
+    DependencyCollectorBean.EP_NAME.extensions
+      .asSequence()
       .flatMap { dependencyCollectorBean ->
         dependencyCollectorBean.instance.collectDependencies(project).map { coordinate ->
-          UnknownFeature(DEPENDENCY_SUPPORT_FEATURE,
-                         IdeBundle.message("plugins.advertiser.feature.dependency"),
-                         dependencyCollectorBean.kind + ":" + coordinate, null)
+          UnknownFeature(
+            DEPENDENCY_SUPPORT_FEATURE,
+            IdeBundle.message("plugins.advertiser.feature.dependency"),
+            dependencyCollectorBean.kind + ":" + coordinate,
+            null,
+          )
         }
+      }.forEach {
+        featuresCollector.registerUnknownFeature(it)
       }
-      .filter { includeIgnored || !UnknownFeaturesCollector.getInstance(project).isIgnored(it) }
   }
 
   protected fun collectFeaturesByName(ids: Set<PluginId>,
@@ -348,7 +358,8 @@ open class PluginAdvertiserService {
   }
 
   suspend fun rescanDependencies(project: Project) {
-    val dependencyUnknownFeatures = collectDependencyUnknownFeatures(project).toList()
+    collectDependencyUnknownFeatures(project)
+    val dependencyUnknownFeatures = UnknownFeaturesCollector.getInstance(project).unknownFeatures
     if (dependencyUnknownFeatures.isNotEmpty()) {
       getInstance().run(
         project = project,

@@ -32,8 +32,8 @@ internal class PluginsAdvertiserStartupActivity : ProjectPostStartupActivity {
     val extensionsService = PluginFeatureCacheService.getInstance()
     val oldExtensions = extensionsService.extensions
 
-    val unknownFeatures = UnknownFeaturesCollector.getInstance(project).unknownFeatures.toMutableList()
-    unknownFeatures.addAll(PluginAdvertiserService.getInstance().collectDependencyUnknownFeatures(project, includeIgnored))
+    PluginAdvertiserService.getInstance().collectDependencyUnknownFeatures(project, includeIgnored)
+    val unknownFeatures = UnknownFeaturesCollector.getInstance(project).unknownFeatures
 
     if (oldExtensions != null && unknownFeatures.isEmpty()) {
       if (includeIgnored) {
