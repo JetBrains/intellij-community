@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.idea.k2.codeInsight.intentions.shared.AbstractShared
 import org.jetbrains.kotlin.idea.k2.codeInsight.intentions.shared.AbstractSharedK2LocalInspectionTest
 import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2InspectionTest
 import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2LocalInspectionTest
+import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2QuickFixTest
 import org.jetbrains.kotlin.testGenerator.model.*
 
 
@@ -27,6 +28,11 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
         testClass<AbstractK2InspectionTest> {
             val pattern = Patterns.forRegex("^(inspections\\.test)$")
             model("${idea}/inspections/redundantUnitReturnType", pattern = pattern)
+            model("${idea}/inspections/redundantIf", pattern = pattern)
+        }
+
+        testClass<AbstractK2QuickFixTest> {
+            model("${idea}/quickfix/redundantIf", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$"))
         }
     }
 
