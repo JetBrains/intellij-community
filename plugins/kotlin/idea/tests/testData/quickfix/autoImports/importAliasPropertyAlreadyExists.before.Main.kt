@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import property 'importedValA'" "true"
 // ERROR: Unresolved reference: importedValA
 
 import editor.completion.apx.importedValA as valA

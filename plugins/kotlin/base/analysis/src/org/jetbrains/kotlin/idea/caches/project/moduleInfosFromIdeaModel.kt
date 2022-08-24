@@ -217,7 +217,7 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
             action()
         }
 
-        override final fun changed(event: VersionedStorageChange) {
+        final override fun changed(event: VersionedStorageChange) {
             applyIfPossible {
                 modelChanged(event)
             }

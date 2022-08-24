@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import class 'Some'" "true"
 // ERROR: Unresolved reference: Some
 package p1
 

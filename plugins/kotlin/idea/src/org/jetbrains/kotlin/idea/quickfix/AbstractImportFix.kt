@@ -128,21 +128,36 @@ internal abstract class ImportFixBase<T : KtExpression> protected constructor(
 
         val kind = when {
             descriptor?.isExtensionProperty == true -> KotlinBundle.message("text.extension.property")
+            descriptor is PropertyDescriptor -> KotlinBundle.message("text.property")
+            descriptor is ClassConstructorDescriptor -> KotlinBundle.message("text.class")
             descriptor is FunctionDescriptor && descriptor.isExtension -> KotlinBundle.message("text.extension.function")
+            descriptor is FunctionDescriptor -> KotlinBundle.message("text.function")
             descriptor != null && DescriptorUtils.isObject(descriptor) -> KotlinBundle.message("text.object")
             descriptor is ClassDescriptor -> KotlinBundle.message("text.class")
             else -> null
         } ?: return KotlinBundle.message("fix.import")
 
         val name = buildString {
-            descriptor.safeAs<CallableDescriptor>()?.extensionReceiverParameter?.type?.constructor?.declarationDescriptor?.safeAs<ClassDescriptor>()?.name?.let{
-                append(it.asString()).append('.')
+            descriptor.safeAs<CallableDescriptor>()?.let { callableDescriptor ->
+                val extensionReceiverParameter = callableDescriptor.extensionReceiverParameter
+                if (extensionReceiverParameter != null) {
+                    extensionReceiverParameter.type.constructor.declarationDescriptor.safeAs<ClassDescriptor>()?.name?.let {
+                        append(it.asString())
+                    }
+                } else {
+                    callableDescriptor.containingDeclaration.safeAs<ClassDescriptor>()?.name?.let {
+                        append(it.asString())
+                    }
+                }
             }
 
-            append(descriptor?.name?.asString())
+            descriptor?.name?.takeUnless { it.isSpecial }?.let {
+                if (this.isNotEmpty()) append('.')
+                append(it.asString())
+            }
         }
 
-        return KotlinBundle.message("fix.import.0.1", kind, name)
+        return KotlinBundle.message("fix.import.kind.0.name.1", kind, name)
     }
 
     override fun getText(): String = text.value
