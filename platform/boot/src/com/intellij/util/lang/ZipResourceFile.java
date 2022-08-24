@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.lang.ZipFile.ZipResource;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -326,8 +325,8 @@ final class ZipResourceFile implements ResourceFile {
 
     @Override
     public JarFile getJarFile() throws IOException {
-      //noinspection LoggerInitializedWithForeignClass
-      Logger.getInstance(ZipResourceFile.class).warn("Do not use URL connection as JarURLConnection");
+      //noinspection UseOfSystemOutOrSystemErr
+      System.out.println("Do not use URL connection as JarURLConnection");
       return new JarFile(jarLoader.getPath().toFile());
     }
   }

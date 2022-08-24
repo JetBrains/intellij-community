@@ -237,7 +237,6 @@ object PlatformModules {
       "intellij.platform.util.rt.java8",
       "intellij.platform.util.zip",
       "intellij.platform.util.classLoader",
-      "intellij.platform.bootstrap",
       "intellij.platform.util",
       "intellij.platform.util.text.matching",
       "intellij.platform.util.base",
@@ -259,13 +258,13 @@ object PlatformModules {
     jar(BaseLayout.APP_JAR, PLATFORM_IMPLEMENTATION_MODULES, productLayout, layout)
     // util.jar is loaded by JVM classloader as part of loading our custom PathClassLoader class - reduce file size
     jar(BaseLayout.APP_JAR, listOf(
+      "intellij.platform.bootstrap",
+
       "intellij.platform.util.ui",
       "intellij.platform.util.ex",
       "intellij.platform.ide.util.io.impl",
       "intellij.platform.ide.util.netty",
-      ), productLayout, layout)
 
-    jar(BaseLayout.APP_JAR, listOf(
       "intellij.relaxng",
       "intellij.json",
       "intellij.spellchecker",

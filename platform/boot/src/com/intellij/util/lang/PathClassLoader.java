@@ -33,7 +33,7 @@ public final class PathClassLoader extends UrlClassLoader {
     }
   }
 
-  private static final boolean isParallelCapable = registerAsParallelCapable();
+  private static final boolean isParallelCapable = ClassLoader.registerAsParallelCapable();
 
   private BytecodeTransformer transformer;
 
@@ -63,10 +63,10 @@ public final class PathClassLoader extends UrlClassLoader {
   // for java.system.class.loader
   @SuppressWarnings("unused")
   public PathClassLoader(@NotNull ClassLoader parent) {
-    super(createDefaultBuilderForJdk(parent), RESOURCE_FILE_FACTORY, isParallelCapable);
+    super(UrlClassLoader.createDefaultBuilderForJdk(parent), RESOURCE_FILE_FACTORY, isParallelCapable);
 
     transformer = null;
-    registerInClassLoaderValueMap(parent, this);
+    UrlClassLoader.registerInClassLoaderValueMap(parent, this);
   }
 
   @Override
