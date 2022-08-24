@@ -10,18 +10,18 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.util.containers.ContainerUtil.filterIsInstance
-import com.jetbrains.python.psi.LanguageLevel
+//import com.jetbrains.python.psi.LanguageLevel
 import org.jetbrains.completion.full.line.FullLineProposal.BasicSyntaxCorrectness
 import org.jetbrains.completion.full.line.RawFullLineProposal
 import org.jetbrains.completion.full.line.ReferenceCorrectness
 import org.jetbrains.completion.full.line.language.RedCodePolicy
 import org.jetbrains.completion.full.line.platform.FullLineContributor
 import org.jetbrains.completion.full.line.platform.FullLineLookupElement
-import org.jetbrains.completion.full.line.platform.tests.python.PyLightProjectDescriptor
+//import org.jetbrains.completion.full.line.platform.tests.python.PyLightProjectDescriptor
 import org.jetbrains.completion.full.line.providers.FullLineCompletionProvider
 import org.jetbrains.completion.full.line.services.TestFullLineCompletionProvider
 import org.jetbrains.completion.full.line.settings.state.MLServerCompletionSettings
-import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
+//import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.assertAll
@@ -37,7 +37,7 @@ interface ProjectDescriptorWrapper
 // default function for ProjectDescriptorWrapper
 fun ProjectDescriptorWrapper.getProjectDescriptor(basePath: String): LightProjectDescriptor? {
     return when (this) {
-        is PythonProject                 -> PyLightProjectDescriptor(basePath, LanguageLevel.PYTHON36)
+        //is PythonProject                 -> PyLightProjectDescriptor(basePath, LanguageLevel.PYTHON36)
         //LightJavaCodeInsightFixtureTestCase.JAVA_8_ANNOTATED
         is JavaProject, is KotlinProject -> null
         else                             -> throw IllegalStateException("Cannot find project descriptor for ${this::class.simpleName}")
@@ -66,6 +66,7 @@ abstract class FullLineCompletionTestCase(private val mockCompletionProvider: Bo
         MLServerCompletionSettings.getInstance().state.useTopN = false
     }
 
+    @Suppress("SSBasedInspection")
     override fun tearDown() {
         try {
             TestFullLineCompletionProvider.clear()
@@ -178,7 +179,7 @@ abstract class FullLineCompletionTestCase(private val mockCompletionProvider: Bo
         assertNotNull(myFixture.lookup)
 
         // Select item
-        myFixture.lookup.currentItem = myFixture.lookupElements?.firstIsInstance<FullLineLookupElement>()
+        myFixture.lookup.currentItem = myFixture.lookupElements?.filterIsInstance<FullLineLookupElement>()?.first()
         myFixture.finishLookup(completionChar)
 
         // Asserts

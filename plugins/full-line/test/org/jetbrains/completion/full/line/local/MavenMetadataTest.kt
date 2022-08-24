@@ -1,7 +1,5 @@
 package org.jetbrains.completion.full.line.local
 
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test
 
@@ -18,17 +16,17 @@ class MavenMetadataTest : XmlSerializationTest() {
         )
         val xmlString = schema.fromPattern()
 
-        val models = xml.decodeFromString<MavenMetadata>(xmlString)
+        val models = decodeFromXml<MavenMetadata>(xmlString)
         assertEqualsWithoutIndent(schema, models)
 
-        val raw = xml.encodeToString(schema)
+        val raw = encodeToXml(schema)
         // Check that group and artifact are not in string and add them, because pattern contains them.
         val group = xml("<groupId>ml.intellij</groupId>")
         val art = xml("<artifactId>completion-engine</artifactId>")
         assertFalse(raw.contains(group), "Group was added by serialization")
         assertFalse(raw.contains(art), "Artifact was added by serialization")
 
-        val fixed = xml.encodeToString(schema).lines().toMutableList()
+        val fixed = encodeToXml(schema).lines().toMutableList()
             .apply { addAll(1, listOf(group, art)) }
             .joinToString("\n")
         assertEqualsWithoutIndent(xmlString, fixed)
@@ -46,7 +44,7 @@ class MavenMetadataTest : XmlSerializationTest() {
         )
         val expected = xml(
             """
-                <metadata>
+            <metadata>
                 <groupId>ml.intellij</groupId>
                 <artifactId>completion-engine</artifactId>
                 <versioning>
@@ -80,7 +78,7 @@ class MavenMetadataTest : XmlSerializationTest() {
                     <latest>${versioning.latest}</latest>
                     <release>${versioning.release}</release>
                     <versions>
-                        $versions
+                        ${versions}
                     </versions>
                     <lastUpdated>${versioning.lastUpdated}</lastUpdated>
                 </versioning>

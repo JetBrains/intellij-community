@@ -46,13 +46,13 @@ class StepByStep(val myFixture: CodeInsightTestFixture) {
             myFixture.complete(CompletionType.BASIC)
         }
 
-        block(myFixture.lookupElements.filterIsInstance<FullLineLookupElement>())
+        block(myFixture.lookupElements!!.filterIsInstance<FullLineLookupElement>())
     }
 
     private fun selectAndCheck(expected: String, completionChar: Char, suggestion: String?) {
         myFixture.lookup.currentItem = myFixture.lookupElements
-            .filterIsInstance<FullLineLookupElement>()
-            .find { it.lookupString + it.suffix == pickingSuggestion }
+            ?.filterIsInstance<FullLineLookupElement>()
+            ?.find { it.lookupString + it.suffix == pickingSuggestion }
         if (suggestion != null) {
             patchProvider(suggestion)
             pickingSuggestion = currentLine.toString() + expected + suggestion

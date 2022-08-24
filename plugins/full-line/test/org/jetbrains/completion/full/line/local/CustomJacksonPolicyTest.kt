@@ -1,7 +1,5 @@
 package org.jetbrains.completion.full.line.local
 
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
 import org.junit.jupiter.api.Test
 
 class CustomJacksonPolicyTest : XmlSerializationTest() {
@@ -13,7 +11,7 @@ class CustomJacksonPolicyTest : XmlSerializationTest() {
             """.trimIndent()
         )
 
-        val schema = xml.decodeFromString<LocalModelsSchema>(xmlString)
+        val schema = decodeFromXml<LocalModelsSchema>(xmlString)
         assertEqualsWithoutIndent(LocalModelsSchema(null, mutableListOf()), schema)
     }
 
@@ -49,11 +47,11 @@ class CustomJacksonPolicyTest : XmlSerializationTest() {
             """.trimIndent()
         )
 
-        val models = xml.decodeFromString<LocalModelsSchema>(xmlString)
-        assertEqualsWithoutIndent(LocalModelsSchema(1, mutableListOf(pyModel, javaModel)), models)
+      val models = decodeFromXml<LocalModelsSchema>(xmlString)
+      assertEqualsWithoutIndent(LocalModelsSchema(1, mutableListOf(pyModel, javaModel)), models)
 
-        val raw = xml.encodeToString(LocalModelsSchema(1, mutableListOf(pyModel, javaModel)))
-        assertEqualsWithoutIndent(xmlString, raw)
+      val raw = encodeToXml(LocalModelsSchema(1, mutableListOf(pyModel, javaModel)))
+      assertEqualsWithoutIndent(xmlString, raw)
     }
 
     @Test

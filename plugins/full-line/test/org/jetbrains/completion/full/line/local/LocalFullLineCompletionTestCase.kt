@@ -10,7 +10,6 @@ import org.jetbrains.completion.full.line.tasks.SetupLocalModelsTask
 import org.junit.jupiter.api.AfterAll
 
 abstract class LocalFullLineCompletionTestCase(private val language: Language) : FullLineCompletionTestCase(false) {
-
     override fun setUp() {
         super.setUp()
         val manager = service<ConfigurableModelsManager>()
@@ -26,6 +25,7 @@ abstract class LocalFullLineCompletionTestCase(private val language: Language) :
     protected fun initModel() {
         val model = service<LocalModelsCache>().tryGetModel(language)
         if (model != null) return
+        //if (model != null) return
 
         Thread.sleep(5000)
         val modelAfterSleep = service<LocalModelsCache>().tryGetModel(language)
