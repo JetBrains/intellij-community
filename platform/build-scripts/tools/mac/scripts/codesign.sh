@@ -1,7 +1,8 @@
 #!/bin/bash
 # Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-set -euox pipefail
+set -euo pipefail
+set -x
 
 function isForced() {
   for arg in "$@"; do

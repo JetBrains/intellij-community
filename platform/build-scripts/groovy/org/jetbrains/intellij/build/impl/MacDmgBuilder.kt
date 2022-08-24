@@ -195,13 +195,13 @@ private fun buildDmgLocally(tempDir: Path, targetFileName: String, customizer: M
   Files.copy(Path.of((if (context.applicationInfo.isEAP) customizer.dmgImagePathForEAP else null) ?: customizer.dmgImagePath),
              dmgImageCopy)
   val scriptDir = context.paths.communityHomeDir.communityRoot.resolve("platform/build-scripts/tools/mac/scripts")
-  sequenceOf("sh", "py").forEach {
-    Files.copy(scriptDir.resolve("makedmg.$it"), tempDir.resolve("makedmg.$it"),
-               StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
-  }
+  Files.copy(scriptDir.resolve("makedmg.sh"), tempDir.resolve("makedmg.sh"),
+             StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+  Files.copy(scriptDir.resolve("makedmg.py"), tempDir.resolve("makedmg.py"),
+             StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
   val artifactDir = context.paths.artifactDir
   Files.createDirectories(artifactDir)
   val dmgFile = artifactDir.resolve("${targetFileName}.dmg")
-  runProcess(args = listOf("sh", "makedmg.sh", targetFileName, context.fullBuildNumber, dmgFile.toString()), workingDir = tempDir)
+  runProcess(args = listOf("./makedmg.sh", targetFileName, context.fullBuildNumber, dmgFile.toString()), workingDir = tempDir)
   context.notifyArtifactBuilt(dmgFile)
 }
