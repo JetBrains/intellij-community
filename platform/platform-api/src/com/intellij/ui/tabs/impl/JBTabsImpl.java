@@ -390,10 +390,10 @@ public class JBTabsImpl extends JComponent
         gp.addMouseMotionPreprocessor(myTabActionsAutoHideListener, myTabActionsAutoHideListenerDisposable);
         myGlassPane = gp;
 
-        UIUtil.addAwtListener(__ -> {
-          if (!JBPopupFactory.getInstance().getChildPopups(JBTabsImpl.this).isEmpty()) return;
-          processFocusChange();
-        }, AWTEvent.FOCUS_EVENT_MASK, parentDisposable);
+        StartupUiUtil.addAwtListener(__ -> {
+              if (!JBPopupFactory.getInstance().getChildPopups(JBTabsImpl.this).isEmpty()) return;
+              processFocusChange();
+            }, AWTEvent.FOCUS_EVENT_MASK, parentDisposable);
 
         myDragHelper = createDragHelper(child, parentDisposable);
         myDragHelper.start();

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.table;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -64,7 +64,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private int myRowHeight = -1;
   private boolean myRowHeightIsExplicitlySet;
   private boolean myRowHeightIsComputing;
-  private boolean myUiUpdating = true;
+  private boolean myUiUpdating;
 
   private Integer myMinRowHeight;
   private boolean myStriped;
@@ -830,7 +830,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         @Override
         public void run() {
           Component c = focusManager.getFocusOwner();
-          if (UIUtil.isMeaninglessFocusOwner(c)) {
+          if (ComponentUtil.isMeaninglessFocusOwner(c)) {
             // this allows using popup menus and menu bar without stopping cell editing
             return;
           }
@@ -884,7 +884,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
   }
 
-  @SuppressWarnings({"unchecked"})
+  @SuppressWarnings("unchecked")
   protected TableRowSorter<TableModel> createRowSorter(final TableModel model) {
     return new DefaultColumnInfoBasedRowSorter(model);
   }

@@ -262,8 +262,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   }
 
   @Override
-  @Nullable
-  public Container getContentPane() {
+  public @Nullable Container getContentPane() {
     return getRootPane() != null ? myDialog.getContentPane() : null;
   }
 
@@ -366,9 +365,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     myDialog.setResizable(resizable);
   }
 
-  @NotNull
   @Override
-  public Point getLocation() {
+  public @NotNull Point getLocation() {
     return myDialog.getLocation();
   }
 
@@ -559,8 +557,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
         @Override
         public boolean accept(Component aComponent) {
-          if (UIUtil.isFocusProxy(aComponent)) return false;
-          return super.accept(aComponent);
+          return !ComponentUtil.isFocusProxy(aComponent) && super.accept(aComponent);
         }
       });
 
@@ -637,9 +634,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       super.setBounds(r);
     }
 
-    @NotNull
     @Override
-    protected JRootPane createRootPane() {
+    protected @NotNull JRootPane createRootPane() {
       return new DialogRootPane();
     }
 
@@ -749,14 +745,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       return size;
     }
 
-    @Nullable
-    private Project getProject() {
+    private @Nullable Project getProject() {
       return SoftReference.dereference(myProject);
     }
 
-    @NotNull
     @Override
-    public IdeFocusManager getFocusManager() {
+    public @NotNull IdeFocusManager getFocusManager() {
       Project project = getProject();
       if (project != null && !project.isDisposed()) {
         return IdeFocusManager.getInstance(project);
@@ -938,9 +932,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         setBorder(UIManager.getBorder("Window.border"));
       }
 
-      @NotNull
       @Override
-      protected JLayeredPane createLayeredPane() {
+      protected @NotNull JLayeredPane createLayeredPane() {
         JLayeredPane p = new JBLayeredPane();
         p.setName(this.getName()+".layeredPane");
         return p;
@@ -1007,8 +1000,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
     }
 
-    @NotNull
-    private static WindowStateService getWindowStateService(@Nullable Project project) {
+    private static @NotNull WindowStateService getWindowStateService(@Nullable Project project) {
       return project == null ? WindowStateService.getInstance() : WindowStateService.getInstance(project);
     }
   }

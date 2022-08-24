@@ -360,8 +360,6 @@ public final class UIUtil {
 
   private static final Pattern CLOSE_TAG_PATTERN = Pattern.compile("<\\s*([^<>/ ]+)([^<>]*)/\\s*>", Pattern.CASE_INSENSITIVE);
 
-  private static final @NonNls String FOCUS_PROXY_KEY = "isFocusProxy";
-
   public static final Key<Integer> KEEP_BORDER_SIDES = Key.create("keepBorderSides");
   private static final Key<UndoManager> UNDO_MANAGER = Key.create("undoManager");
   /**
@@ -1625,9 +1623,8 @@ public final class UIUtil {
     EDT.dispatchAllInvocationEvents();
   }
 
-  public static void addAwtListener(final @NotNull AWTEventListener listener, long mask, @NotNull Disposable parent) {
-    Toolkit.getDefaultToolkit().addAWTEventListener(listener, mask);
-    Disposer.register(parent, () -> Toolkit.getDefaultToolkit().removeAWTEventListener(listener));
+  public static void addAwtListener(@NotNull AWTEventListener listener, long mask, @NotNull Disposable parent) {
+    StartupUiUtil.addAwtListener(listener, mask, parent);
   }
 
   public static void addParentChangeListener(@NotNull Component component, @NotNull PropertyChangeListener listener) {
@@ -2190,10 +2187,6 @@ public final class UIUtil {
     }
   }
 
-  public static boolean isFocusProxy(@Nullable Component c) {
-    return c instanceof JComponent && Boolean.TRUE.equals(((JComponent)c).getClientProperty(FOCUS_PROXY_KEY));
-  }
-
   public static void maybeInstall(@NotNull InputMap map, String action, KeyStroke stroke) {
     if (map.get(stroke) == null) {
       map.put(stroke, action);
@@ -2511,12 +2504,6 @@ public final class UIUtil {
 
   public static void setFutureRootPane(@NotNull JComponent c, @NotNull JRootPane pane) {
     c.putClientProperty(ROOT_PANE, new WeakReference<>(pane));
-  }
-
-  public static boolean isMeaninglessFocusOwner(@Nullable Component c) {
-    if (c == null || !c.isShowing()) return true;
-
-    return c instanceof JFrame || c instanceof JDialog || c instanceof JWindow || c instanceof JRootPane || isFocusProxy(c);
   }
 
   public static boolean isDialogRootPane(JRootPane rootPane) {

@@ -57,7 +57,7 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.xml.dom.XmlElement;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -1682,15 +1682,15 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
           result.setRejected();
           return;
         }
-        UIUtil.addAwtListener(event1 -> {
-          if (event1.getID() == WindowEvent.WINDOW_OPENED || event1.getID() == WindowEvent.WINDOW_ACTIVATED) {
-            if (!result.isProcessed()) {
-              final WindowEvent we = (WindowEvent)event1;
-              IdeFocusManager.findInstanceByComponent(we.getWindow()).doWhenFocusSettlesDown(
-                result.createSetDoneRunnable(), ModalityState.defaultModalityState());
-            }
-          }
-        }, AWTEvent.WINDOW_EVENT_MASK, result);
+        StartupUiUtil.addAwtListener(event1 -> {
+              if (event1.getID() == WindowEvent.WINDOW_OPENED || event1.getID() == WindowEvent.WINDOW_ACTIVATED) {
+                if (!result.isProcessed()) {
+                  final WindowEvent we = (WindowEvent)event1;
+                  IdeFocusManager.findInstanceByComponent(we.getWindow()).doWhenFocusSettlesDown(
+                    result.createSetDoneRunnable(), ModalityState.defaultModalityState());
+                }
+              }
+            }, AWTEvent.WINDOW_EVENT_MASK, result);
         try {
           ActionUtil.performActionDumbAwareWithCallbacks(action, event);
         }
