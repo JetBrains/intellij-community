@@ -16,19 +16,28 @@ class AccountManagerBaseTest {
   private val account2 = MockAccount()
 
   private lateinit var accountsRepository: AccountsRepository<MockAccount>
-  private lateinit var passwordSafe: PasswordSafe
+  private lateinit var mockPasswordSafe: PasswordSafe
   private lateinit var accountsListener: AccountsListener<MockAccount>
-  private lateinit var manager: TestManager
+
+  private lateinit var manager: AccountManager<MockAccount, String>
 
   @Before
   fun createMocks() {
     accountsRepository = object : AccountsRepository<MockAccount> {
       override var accounts: Set<MockAccount> = setOf()
     }
-    passwordSafe = mock(PasswordSafe::class.java)
+    mockPasswordSafe = mock(PasswordSafe::class.java)
     @Suppress("UNCHECKED_CAST")
     accountsListener = mock(AccountsListener::class.java) as AccountsListener<MockAccount>
-    manager = TestManager(accountsRepository, passwordSafe).apply {
+
+    manager = object : AccountManagerBase<MockAccount, String>("test") {
+      override fun accountsRepository() = accountsRepository
+      override val passwordSafe = mockPasswordSafe
+
+      override fun messageBusConnection(): MessageBusConnection = mock(MessageBusConnection::class.java)
+      override fun serializeCredentials(credentials: String): String = credentials
+      override fun deserializeCredentials(credentials: String): String = credentials
+    }.apply {
       addListener(accountsListener)
     }
   }
@@ -104,27 +113,18 @@ class AccountManagerBaseTest {
   fun `test credentials not cleared on bulk update`() {
     manager.updateAccounts(mapOf(account to "test", account2 to "test"))
     manager.updateAccounts(mapOf(account to null, account2 to null))
-    verify(passwordSafe, times(2)).set(any(), any())
+    verify(mockPasswordSafe, times(2)).set(any(), any())
   }
 
   @Test
   fun `test account usable after notified`() {
     `when`(accountsListener.onAccountListChanged(anyCollection(), anyCollection())).then {
-      verify(passwordSafe, atLeast(1)).set(any(), any())
+      verify(mockPasswordSafe, atLeast(1)).set(any(), any())
     }
     manager.updateAccount(account, "test")
   }
 
   private class MockAccount(override val id: String = generateId()) : Account() {
     override val name: String = ""
-  }
-
-  private class TestManager(private val persistentAccounts: AccountsRepository<MockAccount>,
-                            override val passwordSafe: PasswordSafe)
-    : AccountManagerBase<MockAccount, String>("test") {
-    override fun accountsRepository() = persistentAccounts
-    override fun messageBusConnection(): MessageBusConnection = mock(MessageBusConnection::class.java)
-    override fun serializeCredentials(credentials: String): String = credentials
-    override fun deserializeCredentials(credentials: String): String = credentials
   }
 }

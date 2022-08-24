@@ -2,6 +2,7 @@
 package com.intellij.collaboration.auth.ui
 
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
+import com.intellij.collaboration.async.DisposingMainScope
 import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.auth.AccountManager
 import com.intellij.collaboration.auth.AccountsListener
@@ -28,6 +29,7 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.launch
 import java.awt.event.MouseEvent
 import java.util.concurrent.CompletableFuture
 import javax.swing.*
@@ -54,11 +56,11 @@ private constructor(disposable: Disposable,
               disposable: Disposable) : this(disposable, accountManager, null, accountsModel, detailsLoader)
 
   init {
-    accountManager.addListener(disposable, object : AccountsListener<A> {
-      override fun onAccountCredentialsChanged(account: A) {
+    DisposingMainScope(disposable).launch {
+      accountManager.accountsState.collect {
         if (!isModified()) reset()
       }
-    })
+    }
   }
 
   fun accountsPanelCell(row: Row, needAddBtnWithDropdown: Boolean, defaultAvatarIcon: Icon = EmptyIcon.ICON_16): Cell<JComponent> {

@@ -136,6 +136,7 @@ abstract class AccountManagerBase<A : Account, Cred>(private val serviceName: St
   protected abstract fun serializeCredentials(credentials: Cred): String
   protected abstract fun deserializeCredentials(credentials: String): Cred
 
+  @Deprecated("replaced with stateFlow", ReplaceWith("accountsState"))
   override fun addListener(disposable: Disposable, listener: AccountsListener<A>) {
     listeners.add(listener)
     Disposer.register(disposable) {

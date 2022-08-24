@@ -21,6 +21,10 @@ fun DisposingMainScope(parentDisposable: Disposable): CoroutineScope =
   }
 
 @ApiStatus.Experimental
+fun Disposable.disposingMainScope(): CoroutineScope =
+  DisposingMainScope(this)
+
+@ApiStatus.Experimental
 @Suppress("FunctionName")
 fun DisposingScope(parentDisposable: Disposable, context: CoroutineContext = SupervisorJob()): CoroutineScope =
   CoroutineScope(context).also {

@@ -25,7 +25,7 @@ internal class GHAccountAuthData(val account: GithubAccount, login: String, toke
  * Entry point for interactions with Github authentication subsystem
  */
 class GithubAuthenticationManager internal constructor() {
-  private val accountManager: GHAccountManager get() = service()
+  internal val accountManager: GHAccountManager get() = service()
 
   @CalledInAny
   fun hasAccounts() = accountManager.accounts.isNotEmpty()
@@ -143,6 +143,7 @@ class GithubAuthenticationManager internal constructor() {
     project.service<GithubProjectDefaultAccountHolder>().account
     ?: accountManager.accounts.singleOrNull()
 
+  @Deprecated("replaced with stateFlow", ReplaceWith("accountManager.accountsState"))
   @RequiresEdt
   fun addListener(disposable: Disposable, listener: AccountsListener<GithubAccount>) = accountManager.addListener(disposable, listener)
 
