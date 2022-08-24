@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.propertyBased;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.util.RecursionManager;
@@ -69,7 +70,7 @@ public class JavaFeatureSpecificSanityTest extends LightJavaCodeInsightFixtureTe
   }
 
   private void enableInspections() {
-    MadTestingUtil.enableAllInspections(getProject());
+    MadTestingUtil.enableAllInspections(getProject(), JavaLanguage.INSTANCE);
     RecursionManager.disableMissedCacheAssertions(getTestRootDisposable()); // https://youtrack.jetbrains.com/issue/IDEA-228814
   }
 

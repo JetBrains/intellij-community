@@ -18,6 +18,7 @@ import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.javaee.UriUtil;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.ant.dom.AntResolveInspection;
+import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.model.psi.PsiSymbolService;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -1241,7 +1242,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testBigPrologHighlightingPerformance() {
-    MadTestingUtil.enableAllInspections(myProject);
+    MadTestingUtil.enableAllInspections(myProject, XMLLanguage.INSTANCE);
     configureByText(XmlFileType.INSTANCE,
                     "<!DOCTYPE rules [\n" +
                     IntStream.range(0, 10000).mapToObj(i -> "<!ENTITY pnct" + i + " \"x\">\n").collect(Collectors.joining()) +
