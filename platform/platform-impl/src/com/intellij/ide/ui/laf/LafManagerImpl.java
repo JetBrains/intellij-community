@@ -565,15 +565,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       LOG.error("Could not find OS X L&F: " + className);
     }
 
-    String appLafName = WelcomeWizardUtil.getDefaultLAF();
-    if (appLafName != null) {
-      UIManager.LookAndFeelInfo laf = findLaf(appLafName);
-      if (laf != null) {
-        return laf;
-      }
-      LOG.error("Could not find app L&F: " + appLafName);
-    }
-
     // Use HighContrast theme for IDE in Windows if HighContrast desktop mode is set.
     if (SystemInfoRt.isWindows && Toolkit.getDefaultToolkit().getDesktopProperty("win.highContrast.on") == Boolean.TRUE) {
       for (UIManager.LookAndFeelInfo laf : lafList.getValue()) {

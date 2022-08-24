@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import org.jetbrains.annotations.NonNls;
@@ -9,7 +9,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 public final class WelcomeWizardUtil {
-  private static volatile @NonNls String ourDefaultLAF;
   private static volatile @NonNls String ourWizardLAF;
   private static volatile @NonNls String ourWizardMacKeymap;
   private static volatile @NonNls String ourWizardEditorScheme;
@@ -22,14 +21,6 @@ public final class WelcomeWizardUtil {
   private static volatile @NonNls String ourAppearanceFontFace;
   private static volatile Boolean ourDisableBreakpointsOnClick;
   private static final Set<String> ourFeaturedPluginsToInstall = new HashSet<>();
-
-  public static void setDefaultLAF(@NonNls String laf) {
-    ourDefaultLAF = laf;
-  }
-
-  public static @NonNls String getDefaultLAF() {
-    return ourDefaultLAF;
-  }
 
   public static void setWizardLAF(@NonNls String laf) {
     ourWizardLAF = laf;
