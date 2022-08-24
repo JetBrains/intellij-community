@@ -87,5 +87,7 @@
     <module name="kotlin.code-insight.inspections-shared"/>
     <module name="kotlin.code-insight.live-templates-shared"/>
     <module name="kotlin.code-insight.live-templates-k1"/>
+    <module name="kotlin.code-insight.postfix-templates-k1"/>
+    <module name="kotlin.code-insight.structural-search-k1"/>
   </content>
 </idea-plugin>

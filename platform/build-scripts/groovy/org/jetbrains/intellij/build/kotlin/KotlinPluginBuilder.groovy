@@ -174,6 +174,8 @@ final class KotlinPluginBuilder {
     "kotlin.code-insight.live-templates-shared",
     "kotlin.code-insight.live-templates-k1",
     "kotlin.code-insight.live-templates-k2",
+    "kotlin.code-insight.postfix-templates-k1",
+    "kotlin.code-insight.structural-search-k1",
     "kotlin.fir",
     "kotlin.highlighting",
     "kotlin.uast.uast-kotlin-fir",

@@ -26,7 +26,6 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.isBoolean
 
-
 class KtPostfixTemplateProvider : PostfixTemplateProvider {
     private val templatesSet by lazy {
         setOf(
