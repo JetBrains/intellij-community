@@ -128,8 +128,6 @@ abstract class ComponentManagerImpl(
   @Volatile
   private var isServicePreloadingCancelled = false
 
-  private var componentConfigCount = -1
-
   @Suppress("LeakingThis")
   internal val serviceParentDisposable = Disposer.newDisposable("services of ${javaClass.name}@${System.identityHashCode(this)}")
 
@@ -236,7 +234,6 @@ abstract class ComponentManagerImpl(
                               listenerCallbacks: MutableList<in Runnable>?) {
     val activityNamePrefix = activityNamePrefix()
 
-    var newComponentConfigCount = 0
     var map: ConcurrentMap<String, MutableList<ListenerDescriptor>>? = null
     val isHeadless = app == null || app.isHeadlessEnvironment
     val isUnitTestMode = app?.isUnitTestMode ?: false
@@ -250,7 +247,7 @@ abstract class ComponentManagerImpl(
       executeRegisterTask(rootModule) { module ->
         val containerDescriptor = getContainerDescriptor(module)
         registerServices(containerDescriptor.services, module)
-        newComponentConfigCount += registerComponents(module, containerDescriptor, isHeadless)
+        registerComponents(module, containerDescriptor, isHeadless)
 
         containerDescriptor.listeners?.let { listeners ->
           var m = map
@@ -300,10 +297,6 @@ abstract class ComponentManagerImpl(
 
     activity?.end()
 
-    if (componentConfigCount == -1) {
-      componentConfigCount = newComponentConfigCount
-    }
-
     // app - phase must be set before getMessageBus()
     if (parent == null && !LoadingState.COMPONENTS_REGISTERED.isOccurred /* loading plugin on the fly */) {
       StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_REGISTERED)
@@ -347,9 +340,8 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  private fun registerComponents(pluginDescriptor: IdeaPluginDescriptor, containerDescriptor: ContainerDescriptor, headless: Boolean): Int {
-    var count = 0
-    for (descriptor in (containerDescriptor.components ?: return 0)) {
+  private fun registerComponents(pluginDescriptor: IdeaPluginDescriptor, containerDescriptor: ContainerDescriptor, headless: Boolean) {
+    for (descriptor in (containerDescriptor.components ?: return)) {
       var implementationClassName = descriptor.implementationClass
       if (headless && descriptor.headlessImplementationClass != null) {
         if (descriptor.headlessImplementationClass.isEmpty()) {
@@ -375,13 +367,11 @@ abstract class ComponentManagerImpl(
           config = descriptor,
           pluginDescriptor = pluginDescriptor,
         )
-        count++
       }
       catch (e: Throwable) {
         handleInitComponentError(e, componentClassName, pluginDescriptor.pluginId)
       }
     }
-    return count
   }
 
   fun createInitOldComponentsTask(): (() -> Unit)? {
@@ -1211,8 +1201,6 @@ abstract class ComponentManagerImpl(
     if (!containerState.compareAndSet(ContainerState.DISPOSED, ContainerState.DISPOSE_COMPLETED)) {
       throw IllegalStateException("Expected current state is DISPOSED, but actual state is ${containerState.get()} ($this)")
     }
-
-    componentConfigCount = -1
   }
 
   fun stopServicePreloading() {
