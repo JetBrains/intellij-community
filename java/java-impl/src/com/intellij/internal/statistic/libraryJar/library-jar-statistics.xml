@@ -239,4 +239,5 @@
   <technology class="org.springframework.graphql.data.GraphQlRepository" name="spring-graphql"/>
   <technology class="jakarta.nosql.mapping.Column" name="jakarta-nosql"/>
   <technology class="org.aspectj.lang.annotation.Aspect" name="aspectj"/>
+  <technology class="org.axonframework.commandhandling.CommandHandler" name="axonframework"/>
 </technologies>

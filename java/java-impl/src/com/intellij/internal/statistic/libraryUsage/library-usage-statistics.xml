@@ -311,4 +311,5 @@
   <technology name="spring-graphql" root="org.springframework.graphql"/>
   <technology name="jakarta-nosql" root="jakarta.nosql"/>
   <technology name="aspectj" root="org.aspectj.lang"/>
+  <technology name="axonframework" root="org.axonframework"/>
 </technologies>
