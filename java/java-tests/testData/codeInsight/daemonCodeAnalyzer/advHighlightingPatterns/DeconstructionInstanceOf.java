@@ -17,4 +17,38 @@ public class Test {
       if (<error descr="Inconvertible types; cannot cast 'java.lang.Integer' to 'Wrong'">i instanceof Wrong(int x)</error>) { }
     }
   }
+
+  void resolveHighlighting1(Object o){
+    if (o instanceof Child(A a, B b) c){
+      System.out.println(a);
+      System.out.println(c);
+    }
+    else {
+      System.out.println(<error descr="Cannot resolve symbol 'a'">a</error>);
+      System.out.println(<error descr="Cannot resolve symbol 'c'">c</error>);
+    }
+  }
+
+  void resolveHighlighting2(Object o){
+    if (!(o instanceof Child(A a, B b) c)){
+      System.out.println(<error descr="Cannot resolve symbol 'a'">a</error>);
+      System.out.println(<error descr="Cannot resolve symbol 'c'">c</error>);
+    }
+    else {
+      System.out.println(a);
+      System.out.println(c);
+    }
+  }
+
+  void resolveHighlighting3(Object o){
+    if (!(o instanceof Child(A a, B b) c)) return;
+    System.out.println(a);
+    System.out.println(c);
+  }
+
+  void resolveHighlighting4(Object o){
+    if (o instanceof Child(A a, B b) c) return;
+    System.out.println(<error descr="Cannot resolve symbol 'a'">a</error>);
+    System.out.println(<error descr="Cannot resolve symbol 'c'">c</error>);
+  }
 }
