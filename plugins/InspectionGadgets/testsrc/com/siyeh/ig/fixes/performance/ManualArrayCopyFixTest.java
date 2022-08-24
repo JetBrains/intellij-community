@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes.performance;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -17,7 +18,6 @@ public class ManualArrayCopyFixTest extends IGQuickFixesTestCase {
   public void testSimple() { doTest(); }
   public void testDecrement() { doTest(); }
   public void testLengthSmallerThanOffset() { doTest(); }
-  public void testInitializerContainsSubtraction() {
-    doTest();
-  }
+  public void testInitializerContainsSubtraction() { doTest(); }
+  public void testNotEqual() { doTest(); }
 }
