@@ -18,7 +18,6 @@ import com.intellij.refactoring.util.duplicates.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,13 +106,13 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
     myMethodVisibility = from.myMethodVisibility;
     myNullability = from.myNullability;
     myReturnType = from.myReturnType != null ? from.myReturnType.getType() : null;
-    myOutputVariables = StreamEx.of(from.myOutputVariables).map(SmartPsiElementPointer::getElement).toArray(new PsiVariable[0]);
+    myOutputVariables = ContainerUtil.map2Array(from.myOutputVariables, new PsiVariable[0], SmartPsiElementPointer::getElement);
     LOG.assertTrue(!ArrayUtil.contains(null, myOutputVariables));
 
     myOutputVariable = ArrayUtil.getFirstElement(myOutputVariables);
     myArtificialOutputVariable = from.myArtificialOutputVariable != null ? from.myArtificialOutputVariable.getElement() : null;
 
-    myVariableDatum = StreamEx.of(from.myVariableDatum).map(VariableDataSnapshot::getData).toArray(new VariableData[0]);
+    myVariableDatum = ContainerUtil.map2Array(from.myVariableDatum, new VariableData[0], VariableDataSnapshot::getData);
     LOG.assertTrue(!ArrayUtil.contains(null, myVariableDatum));
   }
 
