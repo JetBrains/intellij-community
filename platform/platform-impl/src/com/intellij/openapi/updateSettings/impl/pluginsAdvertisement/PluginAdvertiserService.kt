@@ -26,10 +26,12 @@ import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.coroutineContext
 
 open class PluginAdvertiserService {
+
   private val notificationManager: SingletonNotificationManager =
     SingletonNotificationManager(notificationGroup.displayId, NotificationType.INFORMATION)
 
   companion object {
+
     @JvmStatic
     fun getInstance(): PluginAdvertiserService = service()
   }
@@ -81,12 +83,13 @@ open class PluginAdvertiserService {
     }
 
     val descriptorsById = PluginManagerCore.buildPluginIdMap()
-    val pluginManagerFilter = PluginManagerFilters.getInstance()
-    val notLoadedDescriptors = plugins.asSequence()
+    val pluginManagerFilters = PluginManagerFilters.getInstance()
+    val disabledDescriptors = plugins.asSequence()
       .map { it.pluginId }
       .mapNotNull { descriptorsById[it] }
       .filterNot { it.isEnabled }
-      .filter { pluginManagerFilter.allowInstallingPlugin(it) }
+      .filter { pluginManagerFilters.allowInstallingPlugin(it) }
+      .filterNot { it.isOnDemand }
       .toList()
 
     val suggestToInstall = if (plugins.isEmpty())
@@ -95,7 +98,7 @@ open class PluginAdvertiserService {
       fetchPluginSuggestions(
         pluginIds = plugins.asSequence().map { it.pluginId }.toSet(),
         customPlugins = customPlugins,
-        org = pluginManagerFilter,
+        org = pluginManagerFilters,
       )
 
     ApplicationManager.getApplication().invokeLater(
@@ -103,7 +106,7 @@ open class PluginAdvertiserService {
         project = project,
         bundledPlugins = getBundledPluginToInstall(plugins, descriptorsById),
         suggestionPlugins = suggestToInstall,
-        notLoadedDescriptors = notLoadedDescriptors,
+        disabledDescriptors = disabledDescriptors,
         customPlugins = customPlugins,
         featuresMap = featuresMap,
         allUnknownFeatures = unknownFeatures,
@@ -142,30 +145,13 @@ open class PluginAdvertiserService {
     project: Project,
     bundledPlugins: List<String>,
     suggestionPlugins: List<PluginDownloader>,
-    notLoadedDescriptors: List<IdeaPluginDescriptorImpl>,
+    disabledDescriptors: List<IdeaPluginDescriptorImpl>,
     customPlugins: List<PluginNode>,
     featuresMap: MultiMap<PluginId, UnknownFeature>,
     allUnknownFeatures: Collection<UnknownFeature>,
     dependencies: PluginFeatureMap?,
     includeIgnored: Boolean,
   ) = Runnable {
-    val (onDemandDescriptors, disabledDescriptors) = notLoadedDescriptors.partition { it.isOnDemand }
-    if (onDemandDescriptors.isNotEmpty()) {
-      ApplicationManager.getApplication().invokeLater {
-        PluginBooleanOptionDescriptor.togglePluginState(onDemandDescriptors, true)
-
-        val message = IdeBundle.message(
-          "plugins.advertiser.enabled.on.demand",
-          onDemandDescriptors.size,
-          onDemandDescriptors.map { it.name },
-        )
-
-        notificationGroup.createNotification(message, NotificationType.INFORMATION)
-          .setDisplayId("advertiser.enable.on.demand")
-          .notify(project)
-      }
-    }
-
     val (notificationMessage, notificationActions) = if (suggestionPlugins.isNotEmpty() || disabledDescriptors.isNotEmpty()) {
       val action = if (disabledDescriptors.isEmpty()) {
         NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.configure.plugins")) {

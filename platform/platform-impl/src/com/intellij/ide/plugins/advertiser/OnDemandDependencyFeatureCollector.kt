@@ -20,7 +20,7 @@ private class OnDemandDependencyFeatureCollector : ProjectPostStartupActivity {
     val featureMap = LinkedHashMap<String, FeaturePluginData>()
 
     PluginManagerCore.getPluginSet()
-      .allPlugins // todo modules
+      .allPlugins // todo assert dependencySupport is in the main descriptors only
       .filter { it.pluginClassLoader == null }
       .filter { it.isOnDemand }
       .associateWith { it.epNameToExtensions?.get(DependencySupportBean.EP_NAME.name) ?: emptyList() }
