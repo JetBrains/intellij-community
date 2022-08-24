@@ -8,6 +8,7 @@ group = "testGroupId"
 version = "1.0-SNAPSHOT"
 
 repositories {
+    mavenLocal()
     mavenCentral()
     maven("KOTLIN_BOOTSTRAP_REPO")
     maven("KOTLIN_REPO")
