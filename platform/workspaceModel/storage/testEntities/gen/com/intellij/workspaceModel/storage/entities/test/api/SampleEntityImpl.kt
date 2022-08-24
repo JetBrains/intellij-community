@@ -403,9 +403,9 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
   }
 
   override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.add(UUID::class.java)
     this.stringMapProperty?.let { collector.add(it::class.java) }
     this.stringListProperty?.let { collector.add(it::class.java) }
+    this.randomUUID?.let { collector.addDataToInspect(it) }
     this.fileProperty?.let { collector.add(it::class.java) }
     collector.sameForAllEntities = false
   }

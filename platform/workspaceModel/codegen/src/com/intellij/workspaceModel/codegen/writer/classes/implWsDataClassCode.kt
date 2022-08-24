@@ -295,7 +295,7 @@ private fun ValueType<*>.getClasses(fieldName: String, clazzes: HashSet<String>,
     is ValueType.Blob -> {
       val className = this.javaClassName
       if (className !in setOf(VirtualFileUrl::class.java.name, EntitySource::class.java.name, PersistentEntityId::class.java.name)) {
-        clazzes.add(className)
+        accessors.add("this.$fieldName?.let { collector.addDataToInspect(it) }")
         return res
       }
       if (className == VirtualFileUrl::class.java.name) {
@@ -303,6 +303,11 @@ private fun ValueType<*>.getClasses(fieldName: String, clazzes: HashSet<String>,
         return false
       }
       return true
+    }
+    is ValueType.Enum -> {
+      val className = this.javaClassName
+      clazzes.add(className)
+      return res
     }
     is ValueType.DataClass -> {
       // Here we might filter PersistentIds and get them from the index, but in this case we would need to inspect their fields on the fly

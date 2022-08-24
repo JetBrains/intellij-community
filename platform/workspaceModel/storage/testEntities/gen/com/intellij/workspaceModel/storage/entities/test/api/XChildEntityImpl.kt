@@ -2,7 +2,6 @@ package com.intellij.workspaceModel.storage.entities.test.api
 
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntityInformation
-import com.intellij.workspaceModel.storage.EntityReference
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
@@ -331,8 +330,8 @@ class XChildEntityData : WorkspaceEntityData<XChildEntity>() {
   }
 
   override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.add(EntityReference::class.java)
     collector.add(DataClassX::class.java)
+    this.dataClass?.let { collector.addDataToInspect(it) }
     collector.sameForAllEntities = true
   }
 }

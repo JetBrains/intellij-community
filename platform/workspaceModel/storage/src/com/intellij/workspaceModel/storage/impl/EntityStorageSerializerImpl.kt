@@ -411,12 +411,17 @@ class EntityStorageSerializerImpl(
       collector.add(it::class.java)
       recursiveClassFinder(kryo, it, simpleClasses, objectClasses)
     }
-    simpleClasses.forEach { collector.add(it.value) }
-    objectClasses.forEach { collector.add(it.value) }
 
     entityStorage.indexes.virtualFileIndex.vfu2EntityId.forEach { virtualFileUrl, object2LongOpenHashMap ->
       collector.add(virtualFileUrl::class.java)
     }
+
+    collector.collectionToInspection.forEach { data ->
+      recursiveClassFinder(kryo, data, simpleClasses, objectClasses)
+    }
+
+    simpleClasses.forEach { collector.add(it.value) }
+    objectClasses.forEach { collector.addObject(it.value) }
 
     output.writeVarInt(collector.collectionObjects.size, true)
     collector.collectionObjects.forEach { clazz ->

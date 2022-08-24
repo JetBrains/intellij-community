@@ -134,6 +134,10 @@ sealed class ValueType<T> {
     javaSuperClasses: kotlin.collections.List<kotlin.String>,
   ) : JvmClass<T>(javaClassName, javaSuperClasses)
 
+  class Enum<T>(
+    javaClassName: kotlin.String,
+  ) : JvmClass<T>(javaClassName, emptyList())
+
   class Object<T>(
     javaClassName: kotlin.String,
     javaSuperClasses: kotlin.collections.List<kotlin.String>,

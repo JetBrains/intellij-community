@@ -4,13 +4,9 @@ package com.intellij.devkit.workspaceModel.metaModel.impl
 import com.intellij.devkit.workspaceModel.metaModel.IncorrectObjInterfaceException
 import com.intellij.devkit.workspaceModel.metaModel.WorkspaceMetaModelProvider
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.workspaceModel.codegen.deft.meta.*
 import com.intellij.workspaceModel.deft.api.annotations.Default
-import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EqualsBy
-import com.intellij.workspaceModel.storage.PersistentEntityId
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.annotations.Abstract
 import org.jetbrains.deft.annotations.Child
 import org.jetbrains.deft.annotations.Open
@@ -161,7 +157,7 @@ class WorkspaceMetaModelProviderImpl : WorkspaceMetaModelProvider {
           return ValueType.Object<Any>(fqName.asString(), superTypes)
         }
         if (descriptor.kind == ClassKind.ENUM_CLASS) {
-          return ValueType.Blob<Any>(fqName.asString(), emptyList())
+          return ValueType.Enum<Any>(fqName.asString())
         }
         if (descriptor.isData) {
           return ValueType.DataClass<Any>(fqName.asString(), superTypes, createProperties(descriptor))
