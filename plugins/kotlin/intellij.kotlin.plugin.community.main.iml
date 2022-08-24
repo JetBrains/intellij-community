@@ -118,6 +118,7 @@
     <orderEntry type="module" module-name="kotlin.project-wizard.cli" exported="" />
     <orderEntry type="module" module-name="kotlin.project-wizard.core" exported="" />
     <orderEntry type="module" module-name="kotlin.project-wizard.idea" exported="" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.idea-k1" exported="" />
     <orderEntry type="module" module-name="kotlin.project-wizard.compose" exported="" />
     <orderEntry type="module" module-name="kotlin.repl" exported="" />
     <orderEntry type="module" module-name="kotlin.scripting" exported="" />

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceOrNull
@@ -12,6 +13,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.enableInspectionTool
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
@@ -19,6 +21,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.getKtFile
 import org.jetbrains.kotlin.idea.gradleJava.scripting.getGradleProjectSettings
+import org.jetbrains.kotlin.idea.inspections.ReplaceUntilWithRangeUntilInspection
 import org.jetbrains.kotlin.idea.test.KotlinSdkCreationChecker
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import org.jetbrains.kotlin.idea.test.runAll
@@ -92,6 +95,10 @@ abstract class AbstractNewWizardProjectImportTest : HeavyPlatformTestCase() {
     }
 
     private fun doTest(directoryPath: String, buildSystem: BuildSystem) {
+        // Enable inspection to avoid "Can't find tools" exception (only reproducible on TeamCity)
+        val wrapper = LocalInspectionToolWrapper(ReplaceUntilWithRangeUntilInspection());
+        enableInspectionTool(project, wrapper, testRootDisposable);
+
         val directory = Paths.get(directoryPath)
 
         val parameters = DefaultTestParameters.fromTestDataOrDefault(directory)

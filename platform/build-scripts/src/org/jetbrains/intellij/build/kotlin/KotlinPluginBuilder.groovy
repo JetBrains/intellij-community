@@ -136,6 +136,7 @@ final class KotlinPluginBuilder {
     "kotlin.project-wizard.cli",
     "kotlin.project-wizard.core",
     "kotlin.project-wizard.idea",
+    "kotlin.project-wizard.idea-k1",
     "kotlin.project-wizard.maven",
     "kotlin.project-wizard.gradle",
     "kotlin.project-wizard.compose",
