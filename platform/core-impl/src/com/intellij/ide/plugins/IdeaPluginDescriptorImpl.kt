@@ -95,10 +95,12 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   }
 
   companion object {
-    @VisibleForTesting
-    const val ON_DEMAND_ENABLED_KEY = "idea.on.demand.plugins"
 
-    val isOnDemandEnabled
+    @VisibleForTesting
+    const val ON_DEMAND_ENABLED_KEY: String = "idea.on.demand.plugins"
+
+    @JvmStatic
+    val isOnDemandEnabled: Boolean
       @ApiStatus.Experimental get() = java.lang.Boolean.getBoolean(ON_DEMAND_ENABLED_KEY)
   }
 
