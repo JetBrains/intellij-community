@@ -6,10 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.ui.ImageDataByPathLoader;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.Gray;
-import com.intellij.ui.IconManager;
-import com.intellij.ui.JreHiDpiUtil;
-import com.intellij.ui.RetrievableIcon;
+import com.intellij.ui.*;
 import com.intellij.ui.icons.*;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.*;
@@ -1181,7 +1178,7 @@ public final class IconLoader {
         }
         catch (Throwable e) {
           LOG.error("Cannot compute icon", e);
-          icon = IconManager.getInstance().getStubIcon();
+          icon = IconManager.getInstance().getPlatformIcon(PlatformIcons.Stub);
         }
 
         myIcon = icon;

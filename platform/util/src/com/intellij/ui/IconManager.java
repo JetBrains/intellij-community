@@ -16,6 +16,7 @@ import java.lang.invoke.MethodType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
@@ -35,7 +36,7 @@ public interface IconManager {
     IconManagerHelper.deactivate();
   }
 
-  @NotNull Icon getStubIcon();
+  @NotNull Icon getPlatformIcon(@NotNull PlatformIcons id);
 
   @NotNull Icon getIcon(@NotNull String path, @NotNull Class<?> aClass);
 
@@ -116,8 +117,12 @@ final class DummyIconManager implements IconManager {
   }
 
   @Override
-  public @NotNull Icon getStubIcon() {
-    return DummyIcon.INSTANCE;
+  public @NotNull Icon getPlatformIcon(@NotNull PlatformIcons id) {
+    String path = id.testId;
+    if (path == null) {
+      path = id.name();
+    }
+    return new DummyIcon(path);
   }
 
   @Override
@@ -195,7 +200,7 @@ final class DummyIconManager implements IconManager {
 
     @Override
     public boolean equals(Object obj) {
-      return this == obj || (obj instanceof DummyIcon && ((DummyIcon)obj).path == path);
+      return this == obj || (obj instanceof DummyIcon && Objects.equals(((DummyIcon)obj).path, path));
     }
 
     @Override

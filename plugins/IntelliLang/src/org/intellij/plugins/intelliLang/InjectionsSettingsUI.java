@@ -34,7 +34,10 @@ import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.table.TableView;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
+import com.intellij.util.FileContentUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
@@ -141,7 +144,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     decorator.setEditAction(button -> performEditAction());
     decorator.addExtraAction(new DumbAwareActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.duplicate"),
                                                        IntelliLangBundle.messagePointer("action.AnActionButton.description.duplicate"),
-                                                       PlatformIcons.COPY_ICON) {
+                                                       IconManager.getInstance().getPlatformIcon(PlatformIcons.Copy)) {
 
       @Override
       public boolean isEnabled() {
@@ -161,7 +164,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     decorator.addExtraAction(
       new DumbAwareActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.enable.selected.injections"),
                                 IntelliLangBundle.messagePointer("action.AnActionButton.description.enable.selected.injections"),
-                                PlatformIcons.SELECT_ALL_ICON) {
+                                com.intellij.util.PlatformIcons.SELECT_ALL_ICON) {
 
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
@@ -171,7 +174,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     decorator.addExtraAction(
       new DumbAwareActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.disable.selected.injections"),
                                 IntelliLangBundle.messagePointer("action.AnActionButton.description.disable.selected.injections"),
-                                PlatformIcons.UNSELECT_ALL_ICON) {
+                                com.intellij.util.PlatformIcons.UNSELECT_ALL_ICON) {
 
         @Override
         public void actionPerformed(@NotNull final AnActionEvent e) {
@@ -195,7 +198,7 @@ public final class InjectionsSettingsUI extends SearchableConfigurable.Parent.Ab
     if (myInfos.length > 1) {
       AnActionButton shareAction =
         new DumbAwareActionButton(IntelliLangBundle.messagePointer("action.AnActionButton.text.move.to.ide.scope"),
-                                  PlatformIcons.IMPORT_ICON) {
+                                  com.intellij.util.PlatformIcons.IMPORT_ICON) {
         {
           addCustomUpdater(e -> {
             CfgInfo cfg = getTargetCfgInfo(getSelectedInjections());

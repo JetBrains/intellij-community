@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -12,12 +12,12 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.IconManager;
-import com.intellij.util.PlatformIcons;
+import com.intellij.ui.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class PsiClassInitializerImpl extends JavaStubPsiElement<PsiClassInitializerStub> implements PsiClassInitializer {
+public final class PsiClassInitializerImpl extends JavaStubPsiElement<PsiClassInitializerStub> implements PsiClassInitializer {
   public PsiClassInitializerImpl(PsiClassInitializerStub stub) {
     super(stub, JavaStubElementTypes.CLASS_INITIALIZER);
   }
@@ -49,8 +49,7 @@ public class PsiClassInitializerImpl extends JavaStubPsiElement<PsiClassInitiali
   }
 
   @Override
-  @NotNull
-  public PsiCodeBlock getBody(){
+  public @NotNull PsiCodeBlock getBody(){
     return (PsiCodeBlock)((CompositeElement)getNode()).findChildByRoleAsPsiElement(ChildRole.METHOD_BODY);
   }
 
@@ -77,6 +76,8 @@ public class PsiClassInitializerImpl extends JavaStubPsiElement<PsiClassInitiali
 
   @Override
   public Icon getElementIcon(int flags) {
-    return IconManager.getInstance().createLayeredIcon(this, PlatformIcons.CLASS_INITIALIZER, ElementPresentationUtil.getFlags(this, false));
+    IconManager iconManager = IconManager.getInstance();
+    return iconManager.createLayeredIcon(this, iconManager.getPlatformIcon(PlatformIcons.ClassInitializer),
+                                         ElementPresentationUtil.getFlags(this, false));
   }
 }
