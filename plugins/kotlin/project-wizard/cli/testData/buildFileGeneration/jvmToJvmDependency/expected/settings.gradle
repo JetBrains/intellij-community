@@ -1,5 +1,6 @@
 pluginManagement {
     repositories {
+        mavenLocal()
         gradlePluginPortal()
         maven { url 'KOTLIN_BOOTSTRAP_REPO' }
         maven { url 'KOTLIN_REPO' }
