@@ -310,4 +310,5 @@
   <technology name="spring-websocket" root="org.springframework.web.socket"/>
   <technology name="spring-graphql" root="org.springframework.graphql"/>
   <technology name="jakarta-nosql" root="jakarta.nosql"/>
+  <technology name="aspectj" root="org.aspectj.lang"/>
 </technologies>
