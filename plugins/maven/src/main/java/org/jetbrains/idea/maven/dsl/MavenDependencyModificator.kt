@@ -220,8 +220,6 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
         addTagIfNotExists(tagName = domValue.xmlElementName, parentElement = domDependency, siblingsBeforeTag = siblingsBeforeTag)
         updateVariableOrValue(model, domValue, newValue)
       }
-
-      else -> domValue.xmlTag?.delete()
     }
   }
 
