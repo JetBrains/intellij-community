@@ -579,26 +579,24 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }
   }
 
-  private int getNavigationKeyCode(KeyEvent e) {
+  private static int getNavigationKeyCode(KeyEvent e) {
     KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(e);
     if (isUpDownHomeEnd(e.getKeyCode())) {
       return e.getKeyCode();
     }
     KeymapManager keymapManager = KeymapManager.getInstance();
     if (keymapManager != null) {
-      @NotNull String[] actionIds = keymapManager.getActiveKeymap().getActionIds(keyStroke);
+      @NotNull String @NotNull[] actionIds = keymapManager.getActiveKeymap().getActionIds(keyStroke);
       for (String id : actionIds) {
-        if (id.equals(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)) {
-          return KeyEvent.VK_UP;
-        }
-        else if (id.equals(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)) {
-          return KeyEvent.VK_DOWN;
-        }
-        else if (id.equals(IdeActions.ACTION_EDITOR_MOVE_LINE_START)) {
-          return KeyEvent.VK_HOME;
-        }
-        else if (id.equals(IdeActions.ACTION_EDITOR_MOVE_LINE_END)) {
-          return KeyEvent.VK_END;
+        switch (id) {
+          case IdeActions.ACTION_EDITOR_MOVE_CARET_UP:
+            return KeyEvent.VK_UP;
+          case IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN:
+            return KeyEvent.VK_DOWN;
+          case IdeActions.ACTION_EDITOR_MOVE_LINE_START:
+            return KeyEvent.VK_HOME;
+          case IdeActions.ACTION_EDITOR_MOVE_LINE_END:
+            return KeyEvent.VK_END;
         }
       }
     }
