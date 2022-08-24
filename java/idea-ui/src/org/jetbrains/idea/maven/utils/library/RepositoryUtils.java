@@ -96,42 +96,45 @@ public final class RepositoryUtils {
       ApplicationManager.getApplication().invokeLater(
         roots == null || roots.isEmpty() ?
         () -> {
-          String message = JavaUiBundle.message("notification.content.no.files.were.downloaded", properties.getMavenId());
-          Notifications.Bus.notify(
-            JarRepositoryManager.GROUP.createNotification(
-                JavaUiBundle.message("notification.title.repository.library.synchronization"),
-                message, NotificationType.ERROR),
-            project);
-          promise.setError(message);
+          RepositoryLibraryResolveErrorNotification.showOrUpdate(properties, project);
+          promise.setError("Library '" + properties.getMavenId() + "' resolution failed");
         } :
         () -> {
-          if (!library.isDisposed()) {
-            LOG.debug("Loaded dependencies for '" + properties.getMavenId() + "' repository library");
-            WriteAction.run(() -> {
-              final NewLibraryEditor editor = new NewLibraryEditor(null, properties);
-              editor.setKeepInvalidUrls(false);
-              editor.removeAllRoots();
-              editor.addRoots(roots);
-              for (String url : annotationUrls) {
-                editor.addRoot(url, AnnotationOrderRootType.getInstance());
-              }
-              List<String> allRootUrls = editor.getOrderRootTypes().stream()
-                                               .flatMap(type -> Arrays.stream(editor.getUrls(type)))
-                                               .collect(Collectors.toList());
-              for (String excludedRootUrl: excludedRootUrls) {
-                if (VfsUtilCore.isUnder(excludedRootUrl, allRootUrls)) {
-                  editor.addExcludedRoot(excludedRootUrl);
-                }
-              }
-              final LibraryEx.ModifiableModelEx model = library.getModifiableModel();
-              editor.applyTo(model);
-              model.commit();
-            });
-          }
+          setupLibraryRoots(library, properties, annotationUrls, excludedRootUrls, roots);
           promise.setResult(roots);
         });
       return promise;
     });
+  }
+
+  private static void setupLibraryRoots(@NotNull LibraryEx library,
+                                        RepositoryLibraryProperties properties,
+                                        String[] annotationUrls,
+                                        String[] excludedRootUrls,
+                                        List<OrderRoot> roots) {
+    if (!library.isDisposed()) {
+      LOG.debug("Loaded dependencies for '" + properties.getMavenId() + "' repository library");
+      WriteAction.run(() -> {
+        final NewLibraryEditor editor = new NewLibraryEditor(null, properties);
+        editor.setKeepInvalidUrls(false);
+        editor.removeAllRoots();
+        editor.addRoots(roots);
+        for (String url : annotationUrls) {
+          editor.addRoot(url, AnnotationOrderRootType.getInstance());
+        }
+        List<String> allRootUrls = editor.getOrderRootTypes().stream()
+                                         .flatMap(type -> Arrays.stream(editor.getUrls(type)))
+                                         .collect(Collectors.toList());
+        for (String excludedRootUrl: excludedRootUrls) {
+          if (VfsUtilCore.isUnder(excludedRootUrl, allRootUrls)) {
+            editor.addExcludedRoot(excludedRootUrl);
+          }
+        }
+        final LibraryEx.ModifiableModelEx model = library.getModifiableModel();
+        editor.applyTo(model);
+        model.commit();
+      });
+    }
   }
 
   public static Promise<List<OrderRoot>> reloadDependencies(@NotNull final Project project, @NotNull final LibraryEx library) {
