@@ -757,7 +757,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
       }
       if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
         TreePath[] paths = getSelectionPaths();
-        return paths != null ? ContainerUtil.map(paths, p -> p.getLastPathComponent()) : null;
+        return paths != null ? ContainerUtil.map2Array(paths, p -> p.getLastPathComponent()) : null;
       }
       if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
         TreePath path = getSelectionPath();
