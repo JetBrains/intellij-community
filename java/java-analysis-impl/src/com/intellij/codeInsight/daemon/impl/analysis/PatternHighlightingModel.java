@@ -24,6 +24,14 @@ class PatternHighlightingModel {
       holder.add(info);
       return;
     }
+    if (recordClass.hasTypeParameters() &&
+        deconstructionType instanceof PsiClassType && !((PsiClassType)deconstructionType).hasParameters()) {
+      String message = JavaErrorBundle.message("error.raw.deconstruction", typeElement.getText());
+      HighlightInfo info =
+        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(message).create();
+      holder.add(info);
+      return;
+    }
     PsiRecordComponent[] recordComponents = recordClass.getRecordComponents();
     PsiPattern[] patternComponents = deconstructionPattern.getDeconstructionList().getDeconstructionComponents();
     if (recordComponents.length != patternComponents.length) {
