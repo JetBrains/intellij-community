@@ -187,7 +187,7 @@ class UnknownPropertyTypeEntityData : WorkspaceEntityData<UnknownPropertyTypeEnt
   }
 
   override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    collector.add(Date::class.java)
+    this.date?.let { collector.addDataToInspect(it) }
     collector.sameForAllEntities = true
   }
 }
