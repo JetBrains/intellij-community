@@ -235,7 +235,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     }, this)
   }
 
-  private fun resetCommitChecksResult() {
+  protected fun resetCommitChecksResult() {
     isCommitChecksResultUpToDate = RecentCommitChecks.UNKNOWN
     hideCommitChecksFailureNotification()
   }
