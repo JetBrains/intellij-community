@@ -29,6 +29,7 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
   private val pluginStateListener = object : PluginStateListener {
 
     override fun install(descriptor: IdeaPluginDescriptor) {
+      LOG.info("Installed plugin ${descriptor.pluginId.idString}")
       sessionUninstalledPlugins.remove(descriptor.pluginId.idString)
       if (shouldSaveState(descriptor)) {
         savePluginState(descriptor)
@@ -37,7 +38,11 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
 
     override fun uninstall(descriptor: IdeaPluginDescriptor) {
       val idString = descriptor.pluginId.idString
-      state.plugins[idString]?.let { it.isEnabled = false }
+      LOG.info("Uninstalled plugin ${idString}")
+      state.plugins[idString]?.let {
+        it.isEnabled = false
+        LOG.info("${idString} state changed to disabled.")
+      }
       sessionUninstalledPlugins.add(idString)
     }
   }
@@ -46,6 +51,7 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
     val disabledIds = DisabledPluginsState.getDisabledIds()
     val disabledIdStrings = HashSet<String>()
     disabledIds.forEach {
+      LOG.info("Plugin ${it.idString} is disabled.")
       disabledIdStrings.add(it.idString)
       if (!state.plugins.containsKey(it.idString)) {
         PluginManagerCore.getPlugin(it)?.let { descriptor ->
@@ -62,6 +68,7 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
       PluginManagerCore.findPlugin(pluginId)?.let {
         if (disabledIdStrings.contains(entry.key)) {
           entry.value.isEnabled = false
+          LOG.info("${pluginId.idString} state changed to disabled")
         }
         else {
           if (it.isBundled) {
@@ -69,11 +76,15 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
           }
           else {
             entry.value.isEnabled = true
+            LOG.info("${pluginId.idString} state changed to enabled")
           }
         }
       }
     }
-    droppedKeys.forEach { state.plugins.remove(it) }
+    droppedKeys.forEach {
+      state.plugins.remove(it)
+      LOG.info("Removed plugin data for ${it}")
+    }
   }
 
   init {
@@ -139,6 +150,7 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
       }
     }
     state.plugins[idString] = pluginData
+    LOG.info("Updated plugin state: ${idString}, enabled = ${pluginData.isEnabled}")
     return pluginData
   }
 
@@ -152,11 +164,11 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
           if (mapEntry.value.isEnabled != isPluginEnabled(plugin.pluginId)) {
             if (mapEntry.value.isEnabled) {
               pluginManagerProxy.enablePlugin(plugin.pluginId)
-              LOG.info("Disabled plugin: ${plugin.pluginId.idString}")
+              LOG.info("Enabled plugin: ${plugin.pluginId.idString}")
             }
             else {
               pluginManagerProxy.disablePlugin(plugin.pluginId)
-              LOG.info("Enabled plugin: ${plugin.pluginId.idString}")
+              LOG.info("Disabled plugin: ${plugin.pluginId.idString}")
             }
           }
         }
