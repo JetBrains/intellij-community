@@ -227,8 +227,10 @@ private fun readOutputAndBlock(process: Process,
           val message = jObject.get("message")?.asText() ?: error("Missing field: 'message'")
           when (val level = jObject.get("level")?.asText() ?: error("Missing field: 'level'")) {
             "SEVERE" -> {
+/* Android Studio: b/243687086
               firstError?.compareAndSet(null, message)
               throw RuntimeException(message)
+Android Studio: b/243687086 */  logger.warn(message)
             }
             "WARNING" -> {
               logger.warn(message)
