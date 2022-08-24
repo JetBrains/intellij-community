@@ -1,30 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="JAVA_MODULE" version="4">
-  <component name="FacetManager">
-    <facet type="kotlin-language" name="Kotlin">
-      <configuration version="3" platform="JVM 11" allPlatforms="JVM [11]" useProjectSettings="false">
-        <compilerSettings>
-          <option name="additionalArguments" value="-version -Xjvm-default=enable" />
-        </compilerSettings>
-        <compilerArguments>
-          <option name="jvmTarget" value="11" />
-          <option name="languageVersion" value="1.8" />
-          <option name="apiVersion" value="1.8" />
-          <option name="pluginOptions">
-            <array />
-          </option>
-          <option name="pluginClasspaths">
-            <array>
-              <option value="$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar" />
-            </array>
-          </option>
-          <option name="errors">
-            <ArgumentParseErrors />
-          </option>
-        </compilerArguments>
-      </configuration>
-    </facet>
-  </component>
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
