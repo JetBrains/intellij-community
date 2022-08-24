@@ -6,6 +6,7 @@ import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfIntType;
+import com.intellij.codeInspection.dataFlow.types.DfStreamStateType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -20,6 +21,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import static com.intellij.codeInspection.dataFlow.jvm.SpecialField.COLLECTION_SIZE;
+import static com.intellij.codeInspection.dataFlow.jvm.SpecialField.CONSUMED_STREAM;
 import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
@@ -62,7 +64,9 @@ class SideEffectHandlers {
                     instanceCall(JAVA_UTIL_MAP, "remove").parameterTypes(JAVA_LANG_OBJECT, JAVA_LANG_OBJECT)),
               (factory, state, arguments) -> collectionRemove(factory, state, arguments, false))
     .register(instanceCall(JAVA_UTIL_LIST, "remove").parameterTypes("int"),
-              (factory, state, arguments) -> collectionRemove(factory, state, arguments, true));
+              (factory, state, arguments) -> collectionRemove(factory, state, arguments, true))
+    .register(ConsumedStreamUtils.getCallToMarkConsumedStreamMatchers(),
+              (factory, state, arguments) -> streamConsume(factory, state, arguments));
 
   private static void collectionAdd(DfaValueFactory factory, DfaMemoryState state, DfaCallArguments arguments, boolean list) {
     DfaVariableValue size = tryCast(COLLECTION_SIZE.createValue(factory, arguments.myQualifier), DfaVariableValue.class);
@@ -79,7 +83,7 @@ class SideEffectHandlers {
           resultSize = COLLECTION_SIZE.getDefaultValue();
         }
       }
-      updateSize(state, size, resultSize);
+      updateState(state, size, resultSize);
     }
   }
 
@@ -92,7 +96,7 @@ class SideEffectHandlers {
         resultSize = sizeType.eval(DfTypes.intRange(LongRangeSet.range(strict ? 1 : 0, 1)), LongRangeBinOp.MINUS)
           .meet(DfTypes.intRange(JvmPsiRangeSetUtil.indexRange()));
       }
-      updateSize(state, size, resultSize);
+      updateState(state, size, resultSize);
     }
   }
 
@@ -120,7 +124,7 @@ class SideEffectHandlers {
           resultSize = COLLECTION_SIZE.getDefaultValue();
         }
       }
-      updateSize(state, size, resultSize);
+      updateState(state, size, resultSize);
     }
   }
 
@@ -133,14 +137,21 @@ class SideEffectHandlers {
         LongRangeSet newSize = sizeType.getRange().fromRelation(RelationType.LE).meet(JvmPsiRangeSetUtil.indexRange());
         resultSize = sizeType.join(DfTypes.intRange(newSize));
       }
-      updateSize(state, size, resultSize);
+      updateState(state, size, resultSize);
     }
   }
 
   private static void collectionClear(DfaValueFactory factory, DfaMemoryState state, DfaCallArguments arguments) {
     DfaVariableValue size = tryCast(COLLECTION_SIZE.createValue(factory, arguments.myQualifier), DfaVariableValue.class);
     if (size != null) {
-      updateSize(state, size, DfTypes.intValue(0));
+      updateState(state, size, DfTypes.intValue(0));
+    }
+  }
+
+  private static void streamConsume(DfaValueFactory factory, DfaMemoryState state, DfaCallArguments arguments) {
+    DfaVariableValue consumedStream = tryCast(CONSUMED_STREAM.createValue(factory, arguments.myQualifier), DfaVariableValue.class);
+    if (consumedStream != null) {
+      updateState(state, consumedStream, DfStreamStateType.CONSUMED);
     }
   }
 
@@ -163,7 +174,7 @@ class SideEffectHandlers {
     void handleSideEffect(DfaValueFactory factory, DfaMemoryState state, DfaCallArguments arguments);
   }
 
-  private static void updateSize(DfaMemoryState state, DfaVariableValue var, DfType type) {
+  private static void updateState(DfaMemoryState state, DfaVariableValue var, DfType type) {
     // Dependent states may appear which we are not tracking (e.g. one visible list is sublist of another list)
     // so let's conservatively flush everything that could be affected
     state.flushFieldsQualifiedBy(Set.of(Objects.requireNonNull(var.getQualifier())));

@@ -69,6 +69,20 @@ public final class HardcodedContracts {
     return NO_PARAMETER_LEAK_METHODS.methodMatches(method);
   }
 
+  private static final CallMatcher NO_QUALIFIER_LEAK_MATCHERS = anyOf(
+    //not fully clear, but they don't affect on CONSUMED_STREAM and other tracked parameters
+    ConsumedStreamUtils.getAllNonLeakStreamMatchers()
+  );
+
+  /**
+   * @param method   method to test
+   * @return true if given method doesn't spoil its qualifier
+   */
+  public static boolean isKnownNoQualifierLeak(@Nullable PsiMethod method) {
+    if (method == null) return false;
+    return NO_QUALIFIER_LEAK_MATCHERS.methodMatches(method);
+  }
+
   @FunctionalInterface
   interface ContractProvider {
     List<MethodContract> getContracts(PsiMethodCallExpression call, int paramCount);
@@ -180,7 +194,9 @@ public final class HardcodedContracts {
       instanceCall("java.time.YearMonth", "isBefore", "isAfter")
     ), ContractProvider.of(
       singleConditionContract(ContractValue.qualifier(), RelationType.EQ, ContractValue.argument(0), returnFalse())
-    ));
+    ))
+    //for propagation CONSUMED_STREAM
+    .register(ConsumedStreamUtils.getSkipStreamMatchers(), ContractProvider.of(trivialContract(returnThis())));
 
   private static @NotNull ContractProvider getArraycopyContract() {
     ContractValue src = ContractValue.argument(0);

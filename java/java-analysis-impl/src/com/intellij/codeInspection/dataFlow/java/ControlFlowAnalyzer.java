@@ -16,6 +16,7 @@ import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.TrapTracker;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.*;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ArrayIndexProblem;
+import com.intellij.codeInspection.dataFlow.jvm.problems.ConsumedStreamProblem;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ContractFailureProblem;
 import com.intellij.codeInspection.dataFlow.jvm.problems.NegativeArraySizeProblem;
 import com.intellij.codeInspection.dataFlow.jvm.transfer.*;
@@ -28,6 +29,7 @@ import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow.ControlFlowOffse
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow.DeferredOffset;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.types.DfStreamStateType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
@@ -842,12 +844,26 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
             generateBoxingUnboxingInstructionFor(returnValue, LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression));
           }
         }
+        if (InheritanceUtil.isInheritor(returnValue.getType(), JAVA_UTIL_STREAM_BASE_STREAM)) {
+          addConsumedStreamCheckInstructions(returnValue, null);
+        }
         addInstruction(new PopInstruction());
       }
 
       addInstruction(new ReturnInstruction(myFactory, myTrapTracker.trapStack(), statement));
     }
     finishElement(statement);
+  }
+
+  private void addConsumedStreamCheckInstructions(@Nullable PsiExpression reference, @Nullable String exception) {
+    if (reference == null) {
+      return;
+    }
+    DfaControlTransferValue transferValue = exception != null ? createTransfer(exception) : null;
+    addInstruction(new DupInstruction());
+    addInstruction(new UnwrapDerivedVariableInstruction(SpecialField.CONSUMED_STREAM));
+    addInstruction(new EnsureInstruction(new ConsumedStreamProblem(reference), RelationType.NE, DfStreamStateType.CONSUMED, transferValue));
+    addInstruction(new PopInstruction());
   }
 
   @Override
@@ -1891,6 +1907,10 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     JavaResolveResult result = methodExpression.advancedResolve(false);
     PsiElement method = result.getElement();
     PsiParameter[] parameters = method instanceof PsiMethod ? ((PsiMethod)method).getParameterList().getParameters() : null;
+
+    if (method instanceof PsiMethod && ConsumedStreamUtils.isCheckedCallForConsumedStream((PsiMethod)method)) {
+      addConsumedStreamCheckInstructions(methodExpression.getQualifierExpression(), "java.lang.IllegalStateException");
+    }
 
     for (int i = 0; i < expressions.length; i++) {
       PsiExpression paramExpr = expressions[i];

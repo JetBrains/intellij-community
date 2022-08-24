@@ -19,10 +19,12 @@ import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
+import com.intellij.codeInspection.dataFlow.types.DfStreamStateType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ThreeState;
@@ -32,9 +34,14 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
+import static com.intellij.codeInspection.dataFlow.jvm.SpecialField.CONSUMED_STREAM;
 import static com.intellij.codeInspection.dataFlow.types.DfTypes.*;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 
@@ -379,6 +386,15 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
     DfaValue precalculated = getPrecalculatedReturnValue();
     PsiType type = getResultType();
 
+    if (InheritanceUtil.isInheritor(type, JAVA_UTIL_STREAM_BASE_STREAM)) {
+      DfType customObject = customObject(TypeConstraints.TOP, DfaNullability.fromNullability(myReturnNullability),
+                                                        Mutability.UNKNOWN, CONSUMED_STREAM, DfStreamStateType.OPEN);
+      if (myReturnNullability == Nullability.NOT_NULL) {
+        customObject = customObject.meet(LOCAL_OBJECT);
+      }
+      return factory.fromDfType(customObject);
+    }
+
     VariableDescriptor descriptor = JavaDfaValueFactory.getAccessedVariableOrGetter(myTargetMethod);
     if (descriptor instanceof SpecialField || descriptor != null && qualifierValue instanceof DfaVariableValue) {
       return descriptor.createValue(factory, qualifierValue);
@@ -458,10 +474,14 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
       }
     }
     TypeConstraint constraint = TypeConstraint.fromDfType(dfType);
-    if (!constraint.isArray() && (constraint.isComparedByEquals() || mayLeakThis(memState, argValues))) {
+    if (!knownQualifierLeak() && !constraint.isArray() && (constraint.isComparedByEquals() || mayLeakThis(memState, argValues))) {
       value = JavaDfaHelpers.dropLocality(value, memState);
     }
     return value;
+  }
+
+  private boolean knownQualifierLeak() {
+    return HardcodedContracts.isKnownNoQualifierLeak(getTargetMethod());
   }
 
   private DfaValue @Nullable [] popCallArguments(DataFlowInterpreter interpreter, DfaMemoryState memState) {
