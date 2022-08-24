@@ -143,8 +143,7 @@
       <reference ref="CheckinProject"/>
       <reference ref="ChangesView.ToggleCommitUi"/>
       <reference ref="ChangesView.Revert"/>
-      <action id="ChangesView.Diff" class="com.intellij.diff.actions.ShowDiffAction" icon="AllIcons.Actions.Diff"
-              use-shortcut-of="Diff.ShowDiff"/>
+      <reference ref="Diff.ShowDiff"/>
       <group icon="AllIcons.Vcs.Changelist" id="ChangesView.Changelists" popup="true">
         <action id="ChangesView.NewChangeList" class="com.intellij.openapi.vcs.changes.actions.AddChangeListAction"
                 icon="AllIcons.General.Add"/>
