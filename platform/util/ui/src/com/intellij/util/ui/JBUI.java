@@ -824,6 +824,21 @@ public final class JBUI {
       }
     }
 
+    public static final class Toolbar {
+
+      public static Insets toolbarButtonInsets(boolean isMainToolbar) {
+        return isMainToolbar ? mainToolbarButtonInsets() : toolbarButtonInsets();
+      }
+
+      public static Insets toolbarButtonInsets() {
+        return insets("Toolbar.Button.buttonInsets", JBInsets.create(1, 2));
+      }
+
+      public static Insets mainToolbarButtonInsets() {
+        return insets("MainToolbar.Button.buttonInsets", JBInsets.create(1, 2));
+      }
+    }
+
     public static final class Label {
       public static @NotNull Color foreground(boolean selected) {
         return selected ? JBColor.namedColor("Label.selectedForeground", 0xFFFFFF)

@@ -8,32 +8,27 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.IdeRootPane
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.HeaderToolbarButtonLook
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.MainMenuButton
-import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory.Position
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets
 import java.awt.Dimension
+import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
-import java.util.*
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-private val EP_NAME = ExtensionPointName<MainToolbarProjectWidgetFactory>("com.intellij.projectToolbarWidget")
-
 internal class MainToolbar: JPanel(HorizontalLayout(10)) {
-  private val layoutMap = EnumMap(mapOf(
-    Position.Left to HorizontalLayout.LEFT,
-    Position.Right to HorizontalLayout.RIGHT,
-    Position.Center to HorizontalLayout.CENTER
-  ))
+
   private val visibleComponentsPool = VisibleComponentsPool()
   private val disposable = Disposer.newDisposable()
   private val mainMenuButton: MainMenuButton?
@@ -54,20 +49,13 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
   // as part of EDT task scheduled in a start-up activity, do fill it. That's to avoid flickering due to resizing.
   fun init(project: Project?) {
     mainMenuButton?.let {
-      addWidget(it.button, Position.Left)
+      addWidget(it.button, HorizontalLayout.LEFT)
     }
 
-    for (factory in MainToolbarAppWidgetFactory.EP_NAME.extensionList) {
-      addWidget(factory.createWidget(), factory.getPosition())
-    }
-
-    project?.let {
-      for (factory in EP_NAME.extensionList) {
-        addWidget(factory.createWidget(project), factory.getPosition())
-      }
-    }
-
-    createActionBar()?.let { addWidget(it, Position.Right) }
+    createActionBar("MainToolbarLeft")?.let { addWidget(it, HorizontalLayout.LEFT) }
+    createActionBar("MainToolbarCenter")?.let { addWidget(it, HorizontalLayout.CENTER) }
+    createActionBar("RunToolbarWidgetCustomizableActionGroup")?.let { addWidget(it, HorizontalLayout.RIGHT) }
+    createActionBar(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_ACTIONS)?.let { addWidget(it, HorizontalLayout.RIGHT) }
     addComponentListener(ResizeListener())
   }
 
@@ -82,17 +70,17 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
     Disposer.dispose(disposable)
   }
 
-  private fun addWidget(widget: JComponent, position: Position) {
-    add(layoutMap[position], widget)
+  private fun addWidget(widget: JComponent, position: String) {
+    add(position, widget)
     visibleComponentsPool.addElement(widget, position)
     (widget as? Disposable)?.let { Disposer.register(disposable, it) }
   }
 
-  private fun createActionBar(): JComponent? {
-    val group = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_ACTIONS) as ActionGroup?
+  private fun createActionBar(groupId: String): JComponent? {
+    val group = CustomActionsSchema.getInstance().getCorrectedAction(groupId) as ActionGroup?
     return group?.let {
-      val toolbar = TitleActionToolbar(ActionPlaces.MAIN_TOOLBAR, it, true)
-      toolbar.setMinimumButtonSize(Dimension(40, 40))
+      val toolbar = createToolbar(it)
+      toolbar.setMinimumButtonSize(ActionToolbar.EXPERIMENTAL_TOOLBAR_MINIMUM_BUTTON_SIZE)
       toolbar.targetComponent = null
       toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
       val comp = toolbar.component
@@ -101,6 +89,24 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
       comp
     }
   }
+
+  private fun createToolbar(group: ActionGroup): ActionToolbar =
+    object : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true) {
+
+      override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) = super.calculateBounds(size2Fit, bounds).apply {
+        bounds.forEach { fitRectangle(it) }
+      }
+
+      private fun fitRectangle(rect: Rectangle) {
+        val minSize = ActionToolbar.EXPERIMENTAL_TOOLBAR_MINIMUM_BUTTON_SIZE
+        rect.width = Integer.max(rect.width, minSize.width)
+        rect.height = Integer.max(rect.height, minSize.height)
+        rect.y = 0
+      }
+    }.apply {
+      setActionButtonBorder(JBUI.Borders.empty(mainToolbarButtonInsets()))
+      setCustomButtonLook(HeaderToolbarButtonLook())
+    }
 
   private inner class ResizeListener : ComponentAdapter() {
     override fun componentResized(e: ComponentEvent?) {
@@ -139,24 +145,24 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
 }
 
 private class VisibleComponentsPool {
-  val elements = EnumMap(mapOf<Position, MutableList<JComponent>>(
-    Position.Left to mutableListOf(),
-    Position.Right to mutableListOf(),
-    Position.Center to mutableListOf()
-  ))
+  val elements = mapOf<String, MutableList<JComponent>>(
+    HorizontalLayout.LEFT to mutableListOf(),
+    HorizontalLayout.RIGHT to mutableListOf(),
+    HorizontalLayout.CENTER to mutableListOf()
+  )
 
-  fun addElement(comp: JComponent, position: Position) = elements[position]!!.add(comp)
+  fun addElement(comp: JComponent, position: String) = elements[position]!!.add(comp)
 
   fun nextToShow(): JComponent? {
-    return elements[Position.Center]!!.firstOrNull { !it.isVisible }
-           ?: elements[Position.Right]!!.firstOrNull { !it.isVisible }
-           ?: elements[Position.Left]!!.firstOrNull { !it.isVisible }
+    return elements[HorizontalLayout.CENTER]!!.firstOrNull { !it.isVisible }
+           ?: elements[HorizontalLayout.RIGHT]!!.firstOrNull { !it.isVisible }
+           ?: elements[HorizontalLayout.LEFT]!!.firstOrNull { !it.isVisible }
   }
 
   fun nextToHide(): JComponent? {
-    return elements[Position.Left]!!.lastOrNull { it.isVisible }
-           ?: elements[Position.Right]!!.lastOrNull { it.isVisible }
-           ?: elements[Position.Center]!!.lastOrNull { it.isVisible }
+    return elements[HorizontalLayout.LEFT]!!.lastOrNull { it.isVisible }
+           ?: elements[HorizontalLayout.RIGHT]!!.lastOrNull { it.isVisible }
+           ?: elements[HorizontalLayout.CENTER]!!.lastOrNull { it.isVisible }
   }
 }
 

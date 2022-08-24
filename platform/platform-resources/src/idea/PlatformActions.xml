@@ -909,6 +909,12 @@
       <reference ref="SettingsEntryPoint"/>
     </group>
 
+    <group id="MainToolbarLeft"/>
+    <group id="MainToolbarCenter">
+      <action id="ProjectToolbarWidget" class="com.intellij.openapi.wm.impl.headertoolbar.ProjectToolbarWidgetAction"/>
+    </group>
+    <group id="MainToolbarRight"/>
+
     <group id="ExperimentalToolbarActions">
       <reference ref="SearchEverywhere"/>
       <reference ref="SettingsEntryPoint"/>

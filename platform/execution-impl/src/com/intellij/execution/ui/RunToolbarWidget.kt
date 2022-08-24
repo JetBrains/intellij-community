@@ -82,14 +82,6 @@ private const val PROFILER: String = "Profiler"
 private const val LOADING: String = "Loading"
 private const val RESTART: String = "Restart"
 
-internal class RunToolbarWidgetFactory : MainToolbarProjectWidgetFactory {
-  override fun createWidget(project: Project): JComponent =
-    if (Registry.`is`("ide.experimental.ui.redesigned.run.widget")) createRunToolbarWithoutStop(project).component
-    else RunToolbarWidget(project)
-
-  override fun getPosition() = MainToolbarWidgetFactory.Position.Right
-}
-
 internal class RunToolbarWidgetCustomizableActionGroupProvider : CustomizableActionGroupProvider() {
   override fun registerGroups(registrar: CustomizableActionGroupRegistrar?) {
     if (ExperimentalUI.isNewUI()) {
@@ -107,17 +99,17 @@ internal class RunToolbarWidget(val project: Project) : JBPanel<RunToolbarWidget
   }
 
   private fun createRunActionToolbar(): ActionToolbar {
-    val actionGroup = CustomActionsSchema.getInstance().getCorrectedAction(RUN_TOOLBAR_WIDGET_GROUP) as ActionGroup
-    return ActionManager.getInstance().createActionToolbar(
-      ActionPlaces.MAIN_TOOLBAR,
-      actionGroup,
-      true
-    ).apply {
-      targetComponent = null
-      setReservePlaceAutoPopupIcon(false)
-      layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
-    }
+  val actionGroup = CustomActionsSchema.getInstance().getCorrectedAction(RUN_TOOLBAR_WIDGET_GROUP) as ActionGroup
+  return ActionManager.getInstance().createActionToolbar(
+    ActionPlaces.MAIN_TOOLBAR,
+    actionGroup,
+    true
+  ).apply {
+    targetComponent = null
+    setReservePlaceAutoPopupIcon(false)
+    layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
   }
+}
 }
 
 internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), CustomComponentAction, DumbAware {
@@ -209,7 +201,7 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
           actionPerformed(anActionEvent)
         }
       }
-    }.let { Wrapper(it).apply { border = JBUI.Borders.emptyLeft(6) } }
+    }.let { Wrapper(it).apply { border = JBUI.Borders.empty(7,6) } }
   }
 
   override fun updateCustomComponent(wrapper: JComponent, presentation: Presentation) {
@@ -338,7 +330,7 @@ class StopWithDropDownAction : AnAction(), CustomComponentAction, DumbAware {
       }
       isPaintEnable = false
       isCombined = true
-    }.let { Wrapper(it).apply { border = JBUI.Borders.emptyLeft(6) } }
+    }.let { Wrapper(it).apply { border = JBUI.Borders.empty(7,6) } }
   }
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {

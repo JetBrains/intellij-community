@@ -525,6 +525,9 @@
         "background": "Grey2",
         "hoverBackground": "Grey1",
         "pressedBackground": "Grey1"
+      },
+      "Button": {
+        "buttonInsets": "0,0,0,0"
       }
     },
 
