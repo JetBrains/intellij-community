@@ -2,16 +2,11 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.CommonClassNames;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
-import com.intellij.util.ReflectionUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 
 public final class CharTableImpl implements CharTable {
   private static final int INTERN_THRESHOLD = 40; // 40 or more characters long tokens won't be interned.
@@ -28,11 +23,14 @@ public final class CharTableImpl implements CharTable {
 
   @NotNull
   private CharSequence doIntern(@NotNull CharSequence text, int startOffset, int endOffset) {
-    int hashCode = subSequenceHashCode(text, startOffset, endOffset);
-    CharSequence interned;
-    synchronized (STATIC_ENTRIES) {
-      interned = STATIC_ENTRIES.getSubSequenceWithHashCode(hashCode, text, startOffset, endOffset);
+    int hashCode;
+    if (startOffset == 0 && endOffset == text.length()) {
+      hashCode = StringUtil.stringHashCode(text);
     }
+    else {
+      hashCode = StringUtil.stringHashCode(text, startOffset, endOffset);
+    }
+    CharSequence interned = STATIC_ENTRIES.getSubSequenceWithHashCode(hashCode, text, startOffset, endOffset);
     if (interned != null) {
       return interned;
     }
@@ -50,12 +48,8 @@ public final class CharTableImpl implements CharTable {
   @NotNull
   @Override
   public CharSequence intern(@NotNull CharSequence baseText, int startOffset, int endOffset) {
-    CharSequence result;
-    if (endOffset - startOffset == baseText.length()) result = intern(baseText);
-    else if (endOffset - startOffset > INTERN_THRESHOLD) result = substring(baseText, startOffset, endOffset);
-    else result = doIntern(baseText, startOffset, endOffset);
-
-    return result;
+    return endOffset - startOffset > INTERN_THRESHOLD ? substring(baseText, startOffset, endOffset)
+                                                      : doIntern(baseText, startOffset, endOffset);
   }
 
   @NotNull
@@ -71,87 +65,81 @@ public final class CharTableImpl implements CharTable {
     return STATIC_ENTRIES.get(text);
   }
 
-  public static void staticIntern(@NotNull String text) {
-    synchronized(STATIC_ENTRIES) {
-      STATIC_ENTRIES.add(text);
-    }
-  }
-
   @NotNull
   private static StringHashToCharSequencesMap newStaticSet() {
     StringHashToCharSequencesMap r = new StringHashToCharSequencesMap(10, 0.9f);
-    r.add("==" );
-    r.add("!=" );
-    r.add("||" );
-    r.add("++" );
-    r.add("--" );
+    r.add("==");
+    r.add("!=");
+    r.add("||");
+    r.add("++");
+    r.add("--");
 
-    r.add("<" );
-    r.add("<=" );
-    r.add("<<=" );
-    r.add("<<" );
-    r.add(">" );
-    r.add("&" );
-    r.add("&&" );
+    r.add("<");
+    r.add("<=");
+    r.add("<<=");
+    r.add("<<");
+    r.add(">");
+    r.add("&");
+    r.add("&&");
 
-    r.add("+=" );
-    r.add("-=" );
-    r.add("*=" );
-    r.add("/=" );
-    r.add("&=" );
-    r.add("|=" );
-    r.add("^=" );
-    r.add("%=" );
+    r.add("+=");
+    r.add("-=");
+    r.add("*=");
+    r.add("/=");
+    r.add("&=");
+    r.add("|=");
+    r.add("^=");
+    r.add("%=");
 
-    r.add("("   );
-    r.add(")"   );
-    r.add("{"   );
-    r.add("}"   );
-    r.add("["   );
-    r.add("]"   );
-    r.add(";"   );
-    r.add(","   );
-    r.add("..." );
-    r.add("."   );
+    r.add("(");
+    r.add(")");
+    r.add("{");
+    r.add("}");
+    r.add("[");
+    r.add("]");
+    r.add(";");
+    r.add(",");
+    r.add("...");
+    r.add(".");
 
-    r.add("=" );
-    r.add("!" );
-    r.add("~" );
-    r.add("?" );
-    r.add(":" );
-    r.add("+" );
-    r.add("-" );
-    r.add("*" );
-    r.add("/" );
-    r.add("|" );
-    r.add("^" );
-    r.add("%" );
-    r.add("@" );
+    r.add("=");
+    r.add("!");
+    r.add("~");
+    r.add("?");
+    r.add(":");
+    r.add("+");
+    r.add("-");
+    r.add("*");
+    r.add("/");
+    r.add("|");
+    r.add("^");
+    r.add("%");
+    r.add("@");
 
-    r.add(" " );
-    r.add("  " );
-    r.add("   " );
-    r.add("    " );
-    r.add("     " );
-    r.add("      " );
-    r.add("       " );
-    r.add("        " );
-    r.add("         " );
-    r.add("          " );
-    r.add("           " );
-    r.add("            " );
-    r.add("             " );
-    r.add("              " );
-    r.add("               " );
-    r.add("\n" );
-    r.add("\n  " );
-    r.add("\n    " );
-    r.add("\n      " );
-    r.add("\n        " );
-    r.add("\n          " );
-    r.add("\n            " );
-    r.add("\n              " );
-    r.add("\n                " );
+    r.add(" ");
+    r.add("  ");
+    r.add("   ");
+    r.add("    ");
+    r.add("     ");
+    r.add("      ");
+    r.add("       ");
+    r.add("        ");
+    r.add("         ");
+    r.add("          ");
+    r.add("           ");
+    r.add("            ");
+    r.add("             ");
+    r.add("              ");
+    r.add("               ");
+    r.add("\n");
+    r.add("\n  ");
+    r.add("\n    ");
+    r.add("\n      ");
+    r.add("\n        ");
+    r.add("\n          ");
+    r.add("\n            ");
+    r.add("\n              ");
+    r.add("\n                ");
 
     r.add("<");
     r.add(">");
@@ -159,47 +147,15 @@ public final class CharTableImpl implements CharTable {
     r.add("/>");
     r.add("\"");
     r.add("'");
-    r.add("<![CDATA[");
-    r.add("]]>");
-    r.add("<!--");
-    r.add("-->");
-    r.add("<!DOCTYPE");
-    r.add("SYSTEM");
-    r.add("PUBLIC");
-    r.add("<?");
-    r.add("?>");
 
-    r.add("<%");
-    r.add("%>");
-    r.add("<%=");
-    r.add("<%@");
-    r.add("${");
     r.add("");
     return r;
   }
 
-  static {
-    addStringsFromClassToStatics(CommonClassNames.class);
-  }
-  public static void addStringsFromClassToStatics(@NotNull Class<?> aClass) {
-    for (Field field : aClass.getDeclaredFields()) {
-      if ((field.getModifiers() & Modifier.STATIC) == 0) continue;
-      if ((field.getModifiers() & Modifier.PUBLIC) == 0) continue;
-      if (!String.class.equals(field.getType())) continue;
-      String typeName = ReflectionUtil.getStaticFieldValue(aClass, String.class, field.getName());
-      if (typeName != null) {
-        staticIntern(typeName);
-      }
-    }
-  }
-
+  // hashCode -> CharSequence|CharSequence[]
   private static final class StringHashToCharSequencesMap extends Int2ObjectOpenHashMap<Object> {
     private StringHashToCharSequencesMap(int capacity, float loadFactor) {
       super(capacity, loadFactor);
-    }
-
-    private CharSequence get(@NotNull CharSequence sequence, int startOffset, int endOffset) {
-      return getSubSequenceWithHashCode(subSequenceHashCode(sequence, startOffset, endOffset), sequence, startOffset, endOffset);
     }
 
     private CharSequence getSubSequenceWithHashCode(int hashCode, @NotNull CharSequence sequence, int startOffset, int endOffset) {
@@ -233,12 +189,14 @@ public final class CharTableImpl implements CharTable {
     }
 
     private CharSequence get(@NotNull CharSequence sequence) {
-      return get(sequence, 0, sequence.length());
+      int endOffset = sequence.length();
+      int hashCode = StringUtil.stringHashCode(sequence);
+      return getSubSequenceWithHashCode(hashCode, sequence, 0, endOffset);
     }
 
     private void add(@NotNull CharSequence sequence) {
       int endOffset = sequence.length();
-      int hashCode = subSequenceHashCode(sequence, 0, endOffset);
+      int hashCode = StringUtil.stringHashCode(sequence);
       getOrAddSubSequenceWithHashCode(hashCode, sequence, 0, endOffset);
     }
 
@@ -276,12 +234,5 @@ public final class CharTableImpl implements CharTable {
       }
       return addedSequence;
     }
-  }
-
-  private static int subSequenceHashCode(@NotNull CharSequence sequence, int startOffset, int endOffset) {
-    if (startOffset == 0 && endOffset == sequence.length()) {
-      return StringUtil.stringHashCode(sequence);
-    }
-    return StringUtil.stringHashCode(sequence, startOffset, endOffset);
   }
 }
