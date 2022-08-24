@@ -58,7 +58,7 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
 
   private static @NotNull Set<String> getLanguageWithDialects(@Nullable String langId) {
     if (langId == null || "any".equals(langId) || langId.isBlank()) return emptySet();
-    return ToolLanguageUtil.getAllMatchingLanguages(langId, true, true);
+    return ToolLanguageUtil.getAllMatchingLanguages(langId, true);
   }
 
   @Override

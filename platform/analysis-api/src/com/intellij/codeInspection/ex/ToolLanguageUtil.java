@@ -14,14 +14,14 @@ public final class ToolLanguageUtil {
   private ToolLanguageUtil() {
   }
 
-  public static @NotNull Set<String> getAllMatchingLanguages(@NotNull String langId, boolean applyToDialects, boolean includeKindOf) {
+  public static @NotNull Set<String> getAllMatchingLanguages(@NotNull String langId, boolean applyToDialects) {
     Language language = Language.findLanguageByID(langId);
-    Set<String> result;
     if (language == null) {
       // unknown language in plugin.xml, ignore
       return Set.of(langId);
     }
 
+    Set<String> result;
     if (language instanceof MetaLanguage) {
       Collection<Language> matchingLanguages = ((MetaLanguage)language).getMatchingLanguages();
       result = new HashSet<>();
@@ -31,11 +31,6 @@ public final class ToolLanguageUtil {
     }
     else {
       result = getLanguageWithDialects(language, applyToDialects);
-    }
-
-    if (includeKindOf) {
-      result = new HashSet<>(result);
-      addKindOf(language, result);
     }
 
     return Set.copyOf(result);
@@ -55,15 +50,6 @@ public final class ToolLanguageUtil {
     for (Language dialect : language.getDialects()) {
       if (result.add(dialect.getID())) {
         addDialects(dialect, result);
-      }
-    }
-  }
-
-  private static void addKindOf(@NotNull Language language, @NotNull Set<String> result) {
-    for (Language registeredLanguage : Language.getRegisteredLanguages()) {
-      if (!result.contains(registeredLanguage.getID())
-          && registeredLanguage.isKindOf(language)) {
-        result.add(registeredLanguage.getID());
       }
     }
   }

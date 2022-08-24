@@ -418,7 +418,7 @@ public final class InspectionEngine {
   }
 
   private static @NotNull Set<String> getDialectIdsSpecifiedForTool(@NotNull String langId, boolean applyToDialects) {
-    return ToolLanguageUtil.getAllMatchingLanguages(langId, applyToDialects, false);
+    return ToolLanguageUtil.getAllMatchingLanguages(langId, applyToDialects);
   }
 
   public static @NotNull Set<String> calcElementDialectIds(@NotNull List<? extends PsiElement> inside, @NotNull List<? extends PsiElement> outside) {

@@ -111,8 +111,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
 
     Set<String> languages = applicableToLanguages;
     if (languages == null) {
-      boolean applyToDialects = applyToDialects();
-      applicableToLanguages = languages = ToolLanguageUtil.getAllMatchingLanguages(myLangId, applyToDialects, applyToDialects);
+      applicableToLanguages = languages = ToolLanguageUtil.getAllMatchingLanguages(myLangId, applyToDialects());
     }
 
     return languages.contains(language.getID());
