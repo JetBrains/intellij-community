@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images.sync
 
-import com.intellij.ide.plugins.newui.PluginLogo
 import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.intellij.build.images.imageSize
 import org.jetbrains.intellij.build.images.isImage
@@ -39,5 +38,18 @@ internal class Icon(private val file: Path) {
       return path.endsWith(pluginIcon) || path.endsWith(pluginIconDark)
     }
     return false
+  }
+
+  /**
+   * Copied from [com.intellij.ide.plugins.newui.PluginLogo] not to depend on huge intellij.platform.ide.impl module
+   */
+  private object PluginLogo {
+    private const val PLUGIN_ICON = "pluginIcon.svg"
+    private const val PLUGIN_ICON_DARK = "pluginIcon_dark.svg"
+    private const val PLUGIN_ICON_SIZE = 40
+    private const val META_INF = "META-INF/"
+    fun getIconFileName(light: Boolean) = META_INF + if (light) PLUGIN_ICON else PLUGIN_ICON_DARK
+    fun height() = PLUGIN_ICON_SIZE
+    fun width() = PLUGIN_ICON_SIZE
   }
 }

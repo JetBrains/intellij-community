@@ -6,11 +6,8 @@ import java.io.OutputStream
 import java.io.PrintStream
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
-import java.util.function.Consumer
 
-internal var logger: Consumer<String> = Consumer { println(it) }
-
-internal fun log(msg: String) = logger.accept(msg)
+internal fun log(msg: String) = println(msg)
 
 internal fun String.splitWithSpace(): List<String> = this.splitNotBlank(" ")
 

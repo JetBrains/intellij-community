@@ -3,7 +3,6 @@ package org.jetbrains.intellij.build.images.sync
 
 import java.nio.file.Path
 import java.util.stream.Collectors
-import kotlin.streams.toList
 
 internal fun report(context: Context, skipped: Int): String {
   val (devIcons, icons) = context.devIcons.size to context.icons.size
@@ -50,7 +49,7 @@ internal fun Map<Path, Collection<CommitInfo>>.commitMessage(): String =
     it.subject + "\n" + "https://jetbrains.team/p/ij/repositories/IntelliJIcons/revision/${it.hash}"
   }
 
-internal fun commitAndPush(context: Context) {
+internal fun commit(context: Context) {
   if (context.iconsCommitsToSync.isEmpty()) {
     return
   }
@@ -58,7 +57,9 @@ internal fun commitAndPush(context: Context) {
   val repos = context.iconsChanges().map {
     findRepo(context.devRepoRoot.resolve(it))
   }.distinct()
-  verifyDevIcons(context, repos)
+  repos.forEach { repo ->
+    stageFiles(gitStatus(repo).all(), repo)
+  }
   if (repos.all { gitStage(it).isEmpty() }) {
     log("Nothing to commit")
     context.byDesigners.clear()
@@ -66,14 +67,7 @@ internal fun commitAndPush(context: Context) {
   else {
     val user = triggeredBy()
     val branch = repos.parallelStream().map(::head).collect(Collectors.toSet()).single()
-    commitAndPush(branch, user.name, user.email, context.iconsCommitsToSync.commitMessage(), repos)
-  }
-}
-
-private fun verifyDevIcons(context: Context, repos: Collection<Path>) {
-  context.verifyDevIcons(repos)
-  repos.forEach { repo ->
-    stageFiles(gitStatus(repo).all(), repo)
+    commit(branch, user.name, user.email, context.iconsCommitsToSync.commitMessage(), repos)
   }
 }
 
@@ -146,6 +140,14 @@ private fun commitAndPush(branch: String, user: String,
                           repos: Collection<Path>) = repos.parallelStream().map {
   execute(it, GIT, "checkout", "-B", branch)
   commitAndPush(it, branch, message, user, email)
+}.toList()
+
+private fun commit(branch: String, user: String,
+                   email: String, message: String,
+                   repos: Collection<Path>) = repos.parallelStream().map { repo ->
+  execute(repo, GIT, "checkout", "-B", branch)
+  commit(repo, message, user, email)
+  commitInfo(repo) ?: error("Unable to read last commit")
 }.toList()
 
 private val CHANNEL_WEB_HOOK = System.getProperty("intellij.icons.slack.channel")

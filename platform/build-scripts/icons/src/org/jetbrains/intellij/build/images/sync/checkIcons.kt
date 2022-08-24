@@ -5,20 +5,15 @@ import org.jetbrains.intellij.build.images.ImageExtension
 import org.jetbrains.intellij.build.images.isImage
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.function.Consumer
 import java.util.stream.Collectors
 import java.util.stream.Stream
-import kotlin.streams.toList
 
 fun main(args: Array<String>) {
   if (args.isNotEmpty()) System.setProperty(Context.iconsCommitHashesToSyncArg, args.joinToString())
   checkIcons()
 }
 
-internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<String> = Consumer(::println)) {
-  // required to load com.intellij.ide.plugins.newui.PluginLogo
-  System.setProperty("java.awt.headless", "true")
-  logger = loggerImpl
+internal fun checkIcons(context: Context = Context()) {
   val devRepoVcsRoots = vcsRoots(context.devRepoRoot)
   callWithTimer("Searching for changed icons..") {
     when {
@@ -48,7 +43,7 @@ internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<Strin
         throw e
       }
       if (context.doSyncDevRepo || context.iconsCommitHashesToSync.isNotEmpty()) {
-        commitAndPush(context)
+        commit(context)
       }
     }
     else -> syncIconsRepo(context)
