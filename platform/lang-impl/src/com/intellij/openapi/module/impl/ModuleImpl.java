@@ -226,7 +226,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   public void moduleAdded(List<com.intellij.openapi.module.ModuleComponent> oldComponents) {
     isModuleAdded = true;
     //noinspection removal,UnnecessaryFullyQualifiedName
-    processInitializedComponents(com.intellij.openapi.module.ModuleComponent.class, (component, __) -> {
+    processInitializedComponents(com.intellij.openapi.module.ModuleComponent.class, (component) -> {
       oldComponents.add(component);
       return Unit.INSTANCE;
     });

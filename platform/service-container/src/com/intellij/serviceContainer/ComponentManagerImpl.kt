@@ -1362,13 +1362,13 @@ abstract class ComponentManagerImpl(
     return null
   }
 
-  fun <T : Any> processInitializedComponents(aClass: Class<T>, processor: (T, PluginDescriptor) -> Unit) {
+  fun <T : Any> processInitializedComponents(aClass: Class<T>, processor: (T) -> Unit) {
     // we must use instances only from our adapter (could be service or something else).
     for (adapter in componentAdapters.getImmutableSet()) {
       val component = adapter.getInitializedInstance()
       if (component != null && aClass.isAssignableFrom(component.javaClass)) {
         @Suppress("UNCHECKED_CAST")
-        processor(component as T, adapter.pluginDescriptor)
+        processor(component as T)
       }
     }
   }
