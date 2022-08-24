@@ -5,20 +5,19 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.download.DownloadableFileService
 import com.intellij.util.io.HttpRequests
-import kotlinx.serialization.decodeFromString
-import nl.adaptivity.xmlutil.serialization.XML
 import org.jetbrains.completion.full.line.local.MavenMetadata
 import org.jetbrains.completion.full.line.local.ModelSchema
+import org.jetbrains.completion.full.line.local.decodeFromXml
 import java.io.File
 
-class MavenModelsManager(private val root: File, private val xml: XML) : ModelsManager {
+class MavenModelsManager(private val root: File) : ModelsManager {
     private val cached: HashMap<String, ModelSchema> = HashMap()
 
     override fun getLatest(language: Language, force: Boolean): ModelSchema {
         return if (force || !cached.containsKey(language.id)) {
             val metadata = HttpRequests.request("${mavenHost(language)}/maven-metadata.xml").connect { r ->
                 val content = r.reader.readText()
-                xml.decodeFromString<MavenMetadata>(content)
+                decodeFromXml<MavenMetadata>(content)
             }
 
             val latest = if (Registry.`is`("full.line.local.models.beta")) {
@@ -29,7 +28,7 @@ class MavenModelsManager(private val root: File, private val xml: XML) : ModelsM
 
             HttpRequests.request("${mavenHost(language)}/$latest/model.xml").connect { r ->
                 val content = r.reader.readText()
-                xml.decodeFromString<ModelSchema>(content)
+                decodeFromXml<ModelSchema>(content)
             }.also { cached[language.id] = it }
         } else {
             cached.getValue(language.id)

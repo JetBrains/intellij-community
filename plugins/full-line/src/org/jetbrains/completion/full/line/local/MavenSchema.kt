@@ -1,20 +1,29 @@
 package org.jetbrains.completion.full.line.local
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import nl.adaptivity.xmlutil.serialization.XmlChildrenName
+import com.intellij.util.xmlb.annotations.Property
+import com.intellij.util.xmlb.annotations.Tag
+import com.intellij.util.xmlb.annotations.XCollection
 
-@Serializable
-@SerialName("metadata")
+@Tag("metadata")
 data class MavenMetadata(
-    val versioning: Versioning,
-)
+  @Property(surroundWithTag = false)
+  val versioning: Versioning,
+) {
+  @Suppress("unused")
+  constructor() : this(Versioning())
+}
 
-@Serializable
+@Tag("versioning")
 data class Versioning(
-    val latest: String,
-    val release: String,
-    @XmlChildrenName("version", "", "")
-    val versions: List<String>,
-    val lastUpdated: Long,
-)
+  @Tag
+  val latest: String,
+  @Tag
+  val release: String,
+  @XCollection(propertyElementName = "versions", elementName = "version", valueAttributeName = "")
+  val versions: List<String>,
+  @Tag
+  val lastUpdated: Long,
+) {
+  @Suppress("unused")
+  constructor() : this("", "", emptyList(), 0)
+}

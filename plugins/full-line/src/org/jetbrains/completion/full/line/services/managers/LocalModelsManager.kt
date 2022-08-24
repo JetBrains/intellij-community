@@ -3,27 +3,20 @@ package org.jetbrains.completion.full.line.services.managers
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
-import nl.adaptivity.xmlutil.serialization.XML
-import org.jetbrains.completion.full.line.local.CustomJacksonPolicy
+import com.intellij.util.io.ZipUtil
 import org.jetbrains.completion.full.line.local.LocalModelsSchema
 import org.jetbrains.completion.full.line.local.ModelSchema
+import org.jetbrains.completion.full.line.local.decodeFromXml
+import org.jetbrains.completion.full.line.local.encodeToXml
 import org.jetbrains.completion.full.line.services.LocalModelsCache
-import org.rauschig.jarchivelib.ArchiverFactory
 import java.io.File
 import java.nio.file.Files
 
 class LocalModelsManager : ConfigurableModelsManager {
-    private val xml = XML {
-        policy = CustomJacksonPolicy()
-        // Skipping unknown without any exception
-        unknownChildHandler = { _, _, _, _ -> }
-    }
 
     private val modelsFile = root.resolve("models.xml")
 
-    private val mavenManager = MavenModelsManager(root, xml)
+    private val mavenManager = MavenModelsManager(root)
 
     override val modelsSchema: LocalModelsSchema
 
@@ -33,11 +26,11 @@ class LocalModelsManager : ConfigurableModelsManager {
 
     private fun initSchema(): LocalModelsSchema {
         return if (modelsFile.exists()) {
-            xml.decodeFromString(modelsFile.readText())
+            decodeFromXml(modelsFile.readText())
         } else {
             LocalModelsSchema(1, mutableListOf()).also {
                 modelsFile.createNewFile()
-                modelsFile.writeText(xml.encodeToString(it))
+                modelsFile.writeText(encodeToXml(it))
             }
         }
     }
@@ -92,24 +85,20 @@ class LocalModelsManager : ConfigurableModelsManager {
         val tmpFolder = root.resolve("tmp")
 
         return try {
-            val modelFolder = if (!modelFile.isDirectory) {
-                val archiver = ArchiverFactory.createArchiver(modelFile)
-                tmpFolder.also {
-                    archiver.extract(modelFile, it)
-                }
+            if (!modelFile.isDirectory) {
+                ZipUtil.extract(modelFile.toPath(), tmpFolder.toPath(), null, true)
             } else {
                 modelFile.copyRecursively(tmpFolder, true)
-                tmpFolder
             }
 
-            val model = ModelSchema.generateFromLocal(language, modelFolder)
+            val model = ModelSchema.generateFromLocal(language, tmpFolder)
 
             root.resolve(model.uid()).let { destination ->
                 if (!destination.exists()) {
                     destination.mkdir()
                 }
                 listOf(model.binary.path, model.bpe.path, model.config.path).forEach {
-                    modelFolder.resolve(it).renameTo(destination.resolve(it))
+                  tmpFolder.resolve(it).renameTo(destination.resolve(it))
                 }
             }
 
@@ -128,7 +117,7 @@ class LocalModelsManager : ConfigurableModelsManager {
         removeExcessModels(false)
 
         modelsSchema.also {
-            modelsFile.writeText(xml.encodeToString(it))
+            modelsFile.writeText(encodeToXml(it))
         }
 
         LocalModelsCache.getInstance().invalidate()
@@ -137,7 +126,7 @@ class LocalModelsManager : ConfigurableModelsManager {
     override fun reset() {
         removeExcessModels(true)
         modelsSchema.models.clear()
-        modelsSchema.models.addAll(xml.decodeFromString<LocalModelsSchema>(modelsFile.readText()).models)
+        modelsSchema.models.addAll(decodeFromXml<LocalModelsSchema>(modelsFile.readText()).models)
     }
 
     /**
@@ -145,12 +134,12 @@ class LocalModelsManager : ConfigurableModelsManager {
      */
     private fun removeExcessModels(removeOutdated: Boolean) {
         val currentModels = modelsSchema.models
-        val previousModels = xml.decodeFromString<LocalModelsSchema>(modelsFile.readText()).models
+        val previousModels = decodeFromXml<LocalModelsSchema>(modelsFile.readText()).models
 
         if (removeOutdated) {
-            currentModels - previousModels
+          currentModels - previousModels.toSet()
         } else {
-            previousModels - currentModels
+          previousModels - currentModels.toSet()
         }.forEach {
             root.resolve(it.uid()).deleteRecursively()
         }

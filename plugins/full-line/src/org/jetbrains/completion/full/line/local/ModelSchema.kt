@@ -1,27 +1,28 @@
 package org.jetbrains.completion.full.line.local
 
-import com.fasterxml.jackson.annotation.JsonInclude
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import nl.adaptivity.xmlutil.serialization.XmlChildrenName
-import nl.adaptivity.xmlutil.serialization.XmlElement
-import nl.adaptivity.xmlutil.serialization.XmlValue
+import com.intellij.util.xmlb.annotations.Attribute
+import com.intellij.util.xmlb.annotations.Tag
+import com.intellij.util.xmlb.annotations.Text
+import com.intellij.util.xmlb.annotations.XCollection
+import com.intellij.util.xmlb.annotations.*
 import org.jetbrains.completion.full.line.models.CachingLocalPipeline
 import org.jetbrains.completion.full.line.services.managers.LocalModelsManager
 import java.io.File
 import java.util.*
 
-@Serializable
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-@SerialName("models")
+@Tag("models")
 data class LocalModelsSchema(
-    @XmlElement(false)
+    @Attribute
     val version: Int?,
-    @SerialName("model")
+    @Property(surroundWithTag = false)
+    @XCollection(propertyElementName = "model")
     val models: MutableList<ModelSchema>
 ) {
+    @Suppress("unused")
+    constructor(): this(null, mutableListOf())
+
     // Getting model for current language with fix if (somehow) config has multiple models with same currentLanguage
     fun targetLanguage(id: String): ModelSchema? {
         val models = models.filter { it.currentLanguage == id }
@@ -37,23 +38,30 @@ data class LocalModelsSchema(
     fun targetLanguage(language: Language): ModelSchema? = targetLanguage(language.id.toLowerCase())
 }
 
-@Serializable
-@SerialName("model")
+@Tag("model")
 data class ModelSchema(
+    @Tag
     val version: String,
+    @Tag
     val size: Long,
 
-    @XmlElement(false)
+    @Attribute
     var currentLanguage: String?,
-    @XmlChildrenName("language", "", "")
+    @XCollection(propertyElementName = "languages", elementName = "language", valueAttributeName = "")
     val languages: List<String>,
 
+    @Property(surroundWithTag = false)
     val binary: BinarySchema,
+    @Property(surroundWithTag = false)
     val bpe: BPESchema,
+    @Property(surroundWithTag = false)
     val config: ConfigSchema,
-
+    @Tag
     val changelog: String,
 ) {
+    @Suppress("unused")
+    constructor(): this("", 1, "", emptyList(), BinarySchema(), BPESchema(),ConfigSchema(),"")
+
     private val root by lazy { LocalModelsManager.root.resolve(this.uid()) }
 
     fun uid() = UUID.nameUUIDFromBytes("${version}-${languages.joinToString()}".toByteArray()).toString()
@@ -112,20 +120,29 @@ data class ModelSchema(
     }
 }
 
-@Serializable
+@Tag("bpe")
 data class BPESchema(
-    @XmlValue(true)
+    @Text
     val path: String,
-)
+) {
+  @Suppress("unused")
+  constructor(): this("")
+}
 
-@Serializable
+@Tag("config")
 data class ConfigSchema(
-    @XmlValue(true)
+    @Text
     val path: String,
-)
+) {
+  @Suppress("unused")
+  constructor(): this("")
+}
 
-@Serializable
+@Tag("binary")
 data class BinarySchema(
-    @XmlValue(true)
+    @Text
     val path: String,
-)
+) {
+  @Suppress("unused")
+  constructor(): this("")
+}
