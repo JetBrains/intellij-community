@@ -13,42 +13,36 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.checkin.*
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
 private val LOG = logger<NonModalCommitWorkflow>()
 
 abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow(project) {
-  suspend fun executeBackgroundSession(sessionInfo: CommitSessionInfo, checker: suspend () -> CommitChecksResult) {
-    var result: CommitChecksResult = CommitChecksResult.ExecutionError
-    try {
-      result = checkCommit(sessionInfo, checker)
-    }
-    finally {
-      if (result.shouldCommit) {
-        performCommit(sessionInfo)
+  internal fun asyncSession(scope: CoroutineScope,
+                            sessionInfo: CommitSessionInfo,
+                            commitChecks: suspend () -> CommitChecksResult) {
+    check(isExecuting)
+    scope.launch {
+      try {
+        fireBeforeCommitChecksStarted(sessionInfo)
+        val result = commitChecks()
+        fireBeforeCommitChecksEnded(sessionInfo, result)
+
+        if (result.shouldCommit) {
+          performCommit(sessionInfo)
+        }
+        else {
+          endExecution()
+        }
       }
-      else {
+      catch (e: Throwable) {
         endExecution()
+        throw e
       }
     }
-  }
-
-  private suspend fun checkCommit(sessionInfo: CommitSessionInfo, checker: suspend () -> CommitChecksResult): CommitChecksResult {
-    var result: CommitChecksResult = CommitChecksResult.ExecutionError
-
-    fireBeforeCommitChecksStarted(sessionInfo)
-    try {
-      result = checker()
-    }
-    catch (e: ProcessCanceledException) {
-      result = CommitChecksResult.Cancelled
-    }
-    finally {
-      fireBeforeCommitChecksEnded(sessionInfo, result)
-    }
-
-    return result
   }
 
   suspend fun runBackgroundBeforeCommitChecks(sessionInfo: CommitSessionInfo,

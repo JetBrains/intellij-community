@@ -307,20 +307,18 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
       return workflow.executeSession(sessionInfo)
     }
 
-    coroutineScope.launch {
-      workflow.executeBackgroundSession(sessionInfo) {
-        val isOnlyRunCommitChecks = commitContext.isOnlyRunCommitChecks
-        commitContext.isOnlyRunCommitChecks = false
+    workflow.asyncSession(coroutineScope, sessionInfo) {
+      val isOnlyRunCommitChecks = commitContext.isOnlyRunCommitChecks
+      commitContext.isOnlyRunCommitChecks = false
 
-        val isSkipCommitChecks = isCommitChecksResultUpToDate == RecentCommitChecks.FAILED
-        if (isSkipCommitChecks && !isOnlyRunCommitChecks) {
-          return@executeBackgroundSession CommitChecksResult.Passed
-        }
+      val isSkipCommitChecks = isCommitChecksResultUpToDate == RecentCommitChecks.FAILED
+      if (isSkipCommitChecks && !isOnlyRunCommitChecks) {
+        return@asyncSession CommitChecksResult.Passed
+      }
 
-        runWithProgress(isOnlyRunCommitChecks) { indicator ->
-          val problem = workflow.runBackgroundBeforeCommitChecks(sessionInfo, indicator)
-          handleCommitProblem(problem, isOnlyRunCommitChecks)
-        }
+      runWithProgress(isOnlyRunCommitChecks) { indicator ->
+        val problem = workflow.runBackgroundBeforeCommitChecks(sessionInfo, indicator)
+        handleCommitProblem(problem, isOnlyRunCommitChecks)
       }
     }
 
