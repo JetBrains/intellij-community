@@ -820,15 +820,16 @@ abstract class ComponentManagerImpl(
   /**
    * Use only if approved by core team.
    */
-  fun registerService(serviceInterface: Class<*>,
-                      implementation: Class<*>,
-                      pluginDescriptor: PluginDescriptor,
-                      override: Boolean,
-                      preloadMode: PreloadMode = PreloadMode.FALSE) {
+  fun registerService(
+    serviceInterface: Class<*>,
+    implementation: Class<*>,
+    pluginDescriptor: PluginDescriptor,
+    override: Boolean,
+  ) {
     checkState()
 
     val descriptor = ServiceDescriptor(serviceInterface.name, implementation.name, null, null, false,
-                                       null, preloadMode, null, null)
+                                       null, PreloadMode.FALSE, null, null)
     val adapter = ServiceComponentAdapter(descriptor, pluginDescriptor, this, implementation)
     if (override) {
       overrideAdapter(adapter, pluginDescriptor)

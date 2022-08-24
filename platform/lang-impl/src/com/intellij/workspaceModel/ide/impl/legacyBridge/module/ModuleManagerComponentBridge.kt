@@ -7,7 +7,6 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -328,8 +327,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     (module as ModuleBridgeImpl).registerService(serviceInterface = IComponentStore::class.java,
                                                  implementation = NonPersistentModuleStore::class.java,
                                                  pluginDescriptor = ComponentManagerImpl.fakeCorePluginDescriptor,
-                                                 override = true,
-                                                 preloadMode = ServiceDescriptor.PreloadMode.FALSE)
+                                                 override = true)
   }
 
   override fun loadModuleToBuilder(moduleName: String, filePath: String, diff: MutableEntityStorage): ModuleEntity {
