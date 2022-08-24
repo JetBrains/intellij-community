@@ -9,8 +9,9 @@ import com.intellij.execution.target.getTargetPaths
 import com.intellij.openapi.util.io.FileUtil
 import com.jetbrains.python.debugger.remote.vfs.PyRemotePositionConverter
 import com.jetbrains.python.remote.PyRemotePathMapper
+import org.jetbrains.annotations.ApiStatus
 
-fun createTargetedPositionConverter(debugProcess: PyDebugProcess, targetEnvironment: TargetEnvironment): PyPositionConverter {
+internal fun createTargetedPositionConverter(debugProcess: PyDebugProcess, targetEnvironment: TargetEnvironment): PyPositionConverter {
   val pathMapper = PyTargetPathMapper(targetEnvironment)
   return PyRemotePositionConverter(debugProcess, pathMapper)
 }

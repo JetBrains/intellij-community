@@ -9,10 +9,10 @@ import com.jetbrains.python.debugger.PyPositionConverter
 import com.jetbrains.python.debugger.createTargetedPositionConverter
 import java.nio.charset.Charset
 
-class ProcessHandlerWithPyPositionConverter(process: Process,
-                                            commandLine: String,
-                                            charset: Charset,
-                                            private val targetEnvironment: TargetEnvironment)
+internal class ProcessHandlerWithPyPositionConverter(process: Process,
+                                                     commandLine: String,
+                                                     charset: Charset,
+                                                     private val targetEnvironment: TargetEnvironment)
   : KillableColoredProcessHandler(process, commandLine, charset), PositionConverterProvider {
   override fun createPositionConverter(debugProcess: PyDebugProcess): PyPositionConverter =
     createTargetedPositionConverter(debugProcess, targetEnvironment)
