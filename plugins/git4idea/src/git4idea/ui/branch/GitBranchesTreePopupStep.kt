@@ -59,6 +59,10 @@ class GitBranchesTreePopupStep(private val project: Project, internal val reposi
     return _treeModel.getPreferredSelection()
   }
 
+  internal fun setPrefixGrouping(state: Boolean) {
+    _treeModel.isPrefixGrouping = state
+  }
+
   internal fun isSeparatorAboveRequired(path: TreePath) = path.lastPathComponent == GitBranchType.LOCAL
 
   private val LOCAL_SEARCH_PREFIX = "/l"
@@ -151,7 +155,9 @@ class GitBranchesTreePopupStep(private val project: Project, internal val reposi
       GitBranchType.LOCAL -> GitBundle.message("group.Git.Local.Branch.title")
       GitBranchType.REMOTE -> GitBundle.message("group.Git.Remote.Branch.title")
       is GitBranchesTreeModel.BranchesPrefixGroup -> value.prefix.last()
-      is GitBranch -> value.name.split('/').last()
+      is GitBranch -> {
+        if (_treeModel.isPrefixGrouping) value.name.split('/').last() else value.name
+      }
       is PopupFactoryImpl.ActionItem -> value.text
       else -> value.toString()
     }

@@ -2,6 +2,7 @@
 package git4idea.ui.branch
 
 import com.intellij.dvcs.branch.DvcsSyncSettings
+import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.dvcs.branch.TrackReposSynchronouslyAction
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -50,4 +51,11 @@ internal class GitBranchesTreePopupTrackReposSynchronouslyAction : TrackReposSyn
   }
 
   override fun getSettings(e: AnActionEvent): DvcsSyncSettings = GitVcsSettings.getInstance(e.project!!)
+}
+
+internal class GitBranchesTreePopupGroupByPrefixAction : BranchGroupingAction(GroupingKey.GROUPING_BY_DIRECTORY) {
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    e.presentation.setText(DvcsBundle.messagePointer("action.text.branch.group.by.prefix"))
+  }
 }

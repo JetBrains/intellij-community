@@ -1,11 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch
 
+import com.intellij.dvcs.branch.DvcsBranchManager
+import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupListener
@@ -79,6 +82,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
     installShortcutActions(step.treeModel)
     installHeaderToolbar()
     installResizeListener()
+    installBranchSettingsListener()
     DataManager.registerDataProvider(component, DataProvider { dataId -> if (POPUP_KEY.`is`(dataId)) this else null })
   }
 
@@ -125,6 +129,18 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep)
         popupWindow.removeComponentListener(windowListener)
       }
     })
+  }
+
+  private fun installBranchSettingsListener() {
+    project.messageBus.connect(this)
+      .subscribe(DvcsBranchManager.DVCS_BRANCH_SETTINGS_CHANGED,
+                 object : DvcsBranchManager.DvcsBranchManagerListener {
+                   override fun branchGroupingSettingsChanged(key: GroupingKey, state: Boolean) {
+                     runInEdt {
+                       treeStep.setPrefixGrouping(state)
+                     }
+                   }
+                 })
   }
 
   override fun storeDimensionSize() {
