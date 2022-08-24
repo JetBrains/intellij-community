@@ -16,19 +16,18 @@ class KotlinVersionProviderTestWizardService : KotlinVersionProviderService(), T
         if (projectKind == ProjectKind.COMPOSE) {
             kotlinVersionWithDefaultValues(Versions.KOTLIN_VERSION_FOR_COMPOSE)
         } else {
+            val repositories = listOf(
+                Repositories.JETBRAINS_KOTLIN_BOOTSTRAP,
+                getKotlinVersionRepository(TEST_KOTLIN_VERSION),
+                DefaultRepository.MAVEN_LOCAL
+            )
             WizardKotlinVersion(
                 TEST_KOTLIN_VERSION,
                 getKotlinVersionKind(TEST_KOTLIN_VERSION),
-                listOf(
-                    Repositories.JETBRAINS_KOTLIN_BOOTSTRAP,
-                    getKotlinVersionRepository(TEST_KOTLIN_VERSION)
-                ),
+                repositories,
                 getBuildSystemPluginRepository(
                     getKotlinVersionKind(TEST_KOTLIN_VERSION),
-                    listOf(
-                        Repositories.JETBRAINS_KOTLIN_BOOTSTRAP,
-                        getKotlinVersionRepository(TEST_KOTLIN_VERSION)
-                    )
+                    repositories
                 ),
             )
         }

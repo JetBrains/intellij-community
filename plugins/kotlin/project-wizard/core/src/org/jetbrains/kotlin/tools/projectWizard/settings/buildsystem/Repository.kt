@@ -17,7 +17,8 @@ data class DefaultRepository(val type: Type) : Repository {
         JCENTER("jcenter", "https://jcenter.bintray.com/"),
         MAVEN_CENTRAL("mavenCentral", "https://repo1.maven.org/maven2/"),
         GOOGLE("google", "https://dl.google.com/dl/android/maven2/"),
-        GRADLE_PLUGIN_PORTAL("gradlePluginPortal", "https://plugins.gradle.org/m2/")
+        GRADLE_PLUGIN_PORTAL("gradlePluginPortal", "https://plugins.gradle.org/m2/"),
+        MAVEN_LOCAL("mavenLocal", "")
     }
 
     companion object {
@@ -25,6 +26,7 @@ data class DefaultRepository(val type: Type) : Repository {
         val MAVEN_CENTRAL = DefaultRepository(Type.MAVEN_CENTRAL)
         val GOOGLE = DefaultRepository(Type.GOOGLE)
         val GRADLE_PLUGIN_PORTAL = DefaultRepository(Type.GRADLE_PLUGIN_PORTAL)
+        val MAVEN_LOCAL = DefaultRepository(Type.MAVEN_LOCAL)
     }
 }
 
