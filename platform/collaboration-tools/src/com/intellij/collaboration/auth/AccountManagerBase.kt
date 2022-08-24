@@ -35,7 +35,7 @@ abstract class AccountManagerBase<A : Account, Cred>(private val serviceName: St
   @VisibleForTesting
   protected open fun messageBusConnection() = ApplicationManager.getApplication().messageBus.connect(this)
 
-  override val accounts: Set<A>
+  final override val accounts: Set<A>
     get() = persistentAccounts.accounts
 
   init {
