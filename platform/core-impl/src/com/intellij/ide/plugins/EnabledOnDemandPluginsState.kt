@@ -4,6 +4,7 @@ package com.intellij.ide.plugins
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -25,11 +26,8 @@ class EnabledOnDemandPluginsState : PluginEnabler {
       get() = Logger.getInstance(EnabledOnDemandPluginsState::class.java)
 
     @JvmStatic
-    fun getInstance(): EnabledOnDemandPluginsState? =
-      if (IdeaPluginDescriptorImpl.isOnDemandEnabled)
-        ApplicationManager.getApplication().getService(EnabledOnDemandPluginsState::class.java)
-      else
-        null
+    fun getInstanceIfEnabled(): EnabledOnDemandPluginsState? =
+      ApplicationManager.getApplication().getServiceIfCreated(EnabledOnDemandPluginsState::class.java)
 
     @JvmStatic
     val enabledPluginIds: Set<PluginId>
@@ -73,6 +71,9 @@ class EnabledOnDemandPluginsState : PluginEnabler {
   init {
     if (IdeaPluginDescriptorImpl.isOnDemandEnabled) {
       logger.info(enabledPluginIds.joinedPluginIds("load"))
+    }
+    else {
+      throw ExtensionNotApplicableException.create()
     }
   }
 
