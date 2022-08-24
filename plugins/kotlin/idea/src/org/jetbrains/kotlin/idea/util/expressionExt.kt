@@ -8,7 +8,6 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
-import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -55,8 +54,9 @@ fun KtNamedDeclaration.nameIdentifierTextRangeInThis(): TextRange? = nameIdentif
 fun PsiElement.hasComments(): Boolean = anyDescendantOfType<PsiComment>()
 
 fun KtDotQualifiedExpression.hasNotReceiver(): Boolean {
-    val element = getQualifiedElementSelector()?.mainReference?.resolve() ?: return false
-    return element is KtClassOrObject ||
+    val selector = getQualifiedElementSelector() ?: return false
+    val element = selector.mainReference?.resolve() ?: return false
+    return element is KtClassOrObject && selector.text !in listOf("copy", "toString", "hashCode", "equals") ||
             element is KtConstructor<*> ||
             element is KtCallableDeclaration && element.receiverTypeReference == null && (element.containingClassOrObject is KtObjectDeclaration?) ||
             element is PsiMember && element.hasModifier(JvmModifier.STATIC) ||
