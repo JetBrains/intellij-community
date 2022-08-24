@@ -2,24 +2,23 @@
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.*;
-import com.intellij.ide.plugins.org.PluginManagerFilters;
+import com.intellij.ide.plugins.PluginNode;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.updateSettings.impl.DetectedPluginsPanel;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ui.JBDimension;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * @author anna
@@ -53,6 +52,11 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
                                  @NotNull Collection<PluginDownloader> pluginsToInstall,
                                  @NotNull List<PluginNode> customPlugins) {
     this(project, pluginsToInstall, customPlugins, false, null);
+
+    JRootPane rootPane = getPeer().getRootPane();
+    if (rootPane != null) {
+      rootPane.setPreferredSize(new JBDimension(800, 600));
+    }
   }
 
   @Override
