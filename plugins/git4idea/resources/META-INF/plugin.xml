@@ -449,7 +449,7 @@
       <reference id="git4idea.actions.GitDumpLogIndexDataAction"/>
       <add-to-group group-id="Vcs.Log.Internal"/>
     </group>
-    
+
     <action id="main.toolbar.git.Branches" class="git4idea.ui.toolbar.GitToolbarWidgetAction" >
       <add-to-group group-id="MainToolbarLeft"/>
     </action>

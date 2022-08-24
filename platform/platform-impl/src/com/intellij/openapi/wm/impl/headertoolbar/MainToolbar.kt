@@ -93,11 +93,12 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
     return component
   }
 
-  private fun createToolbar(group: ActionGroup): ActionToolbar {
-    val result = object : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true) {
-      override fun calculateBounds(size2Fit: Dimension, bounds: List<Rectangle>) {
-        super.calculateBounds(size2Fit, bounds)
-        bounds.forEach(::fitRectangle)
+
+  private fun createToolbar(group: ActionGroup): ActionToolbar =
+    object : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true) {
+
+      override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) = super.calculateBounds(size2Fit, bounds).apply {
+        bounds.forEach { fitRectangle(it) }
       }
 
       private fun fitRectangle(rect: Rectangle) {
@@ -106,11 +107,10 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
         rect.height = Integer.max(rect.height, minSize.height)
         rect.y = 0
       }
+    }.apply {
+      setActionButtonBorder(JBUI.Borders.empty(mainToolbarButtonInsets()))
+      setCustomButtonLook(HeaderToolbarButtonLook())
     }
-    result.setActionButtonBorder(JBUI.Borders.empty(mainToolbarButtonInsets()))
-    result.setCustomButtonLook(HeaderToolbarButtonLook())
-    return result
-  }
 
   private inner class ResizeListener : ComponentAdapter() {
     override fun componentResized(e: ComponentEvent?) {
