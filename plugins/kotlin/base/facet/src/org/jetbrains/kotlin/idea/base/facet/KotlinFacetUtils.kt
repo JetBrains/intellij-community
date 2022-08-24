@@ -15,7 +15,6 @@ import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
@@ -32,6 +31,7 @@ import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.platforms.StableModuleNameProvider
 import org.jetbrains.kotlin.idea.base.util.caching.FineGrainedEntityCache.Companion.isFineGrainedCacheInvalidationEnabled
 import org.jetbrains.kotlin.idea.base.util.caching.StorageProvider
+import org.jetbrains.kotlin.idea.base.util.caching.findModuleByEntityWithHack
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.idea.util.application.runReadAction
@@ -39,7 +39,6 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 import java.io.File
-import java.util.concurrent.ConcurrentHashMap
 
 fun Module.hasKotlinFacet(): Boolean {
     return FacetManager.getInstance(this).getFacetByType(KotlinFacetType.TYPE_ID) != null
@@ -135,11 +134,7 @@ class ModulesByLinkedKeyCache(private val project: Project): Disposable, Workspa
 
         val newModuleNames = changes.asSequence()
             .mapNotNull(EntityChange<ModuleEntity>::newEntity)
-            .mapNotNull {
-                storageAfter.findModuleByEntity(it) ?:
-                // TODO: workaround to bypass bug with new modules not present in storageAfter
-                WorkspaceModel.getInstance(project).entityStorage.current.findModuleByEntity(it)
-            }
+            .mapNotNull { storageAfter.findModuleByEntityWithHack(it, project) }
             .associateBy(stableNameProvider::getStableModuleName)
 
         useCache { cache ->

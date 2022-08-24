@@ -20,7 +20,6 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.messages.MessageBusConnection
-import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
@@ -39,6 +38,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceIn
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
 import org.jetbrains.kotlin.idea.base.util.caching.FineGrainedEntityCache
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
+import org.jetbrains.kotlin.idea.base.util.caching.findModuleByEntityWithHack
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -257,11 +257,7 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
             for (moduleChange in moduleChanges) {
                 when (moduleChange) {
                     is EntityChange.Added -> {
-                        val moduleBridge =
-                            storageAfter.findModuleByEntity(moduleChange.newEntity) ?:
-                            // TODO: workaround to bypass bug with new modules not present in storageAfter
-                            WorkspaceModel.getInstance(project).entityStorage.current.findModuleByEntity(moduleChange.newEntity)
-                        moduleBridge?.scheduleRegister()
+                        storageAfter.findModuleByEntityWithHack(moduleChange.newEntity, project)?.scheduleRegister()
                     }
 
                     is EntityChange.Removed -> storageBefore.findModuleByEntity(moduleChange.entity)?.scheduleRemove()
@@ -277,9 +273,7 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
             for (sourceRootChange in sourceRootChanges) {
                 val modules: List<Module> = when (sourceRootChange) {
                     is EntityChange.Added -> listOfNotNull(
-                        storageAfter.findModuleByEntity(sourceRootChange.newEntity.contentRoot.module) ?:
-                        // TODO: workaround to bypass bug with new modules not present in storageAfter
-                        WorkspaceModel.getInstance(project).entityStorage.current.findModuleByEntity(sourceRootChange.newEntity.contentRoot.module)
+                        storageAfter.findModuleByEntityWithHack(sourceRootChange.newEntity.contentRoot.module, project)
                     )
 
                     is EntityChange.Removed -> listOfNotNull(storageBefore.findModuleByEntity(sourceRootChange.entity.contentRoot.module))
@@ -427,11 +421,7 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
 
             val updatedModuleSdks: Set<Sdk> = moduleChanges.asSequence()
                 .mapNotNull { it.newEntity }
-                .mapNotNull {
-                    storageAfter.findModuleByEntity(it) ?:
-                    // TODO: workaround to bypass bug with new modules not present in storageAfter
-                    WorkspaceModel.getInstance(project).entityStorage.current.findModuleByEntity(it)
-                }
+                .mapNotNull { storageAfter.findModuleByEntityWithHack(it, project) }
                 .flatMapTo(hashSetOf(), ::moduleSdks)
 
             updatedModuleSdks.forEach(::get)
