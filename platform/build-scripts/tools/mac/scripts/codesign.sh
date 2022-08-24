@@ -79,6 +79,9 @@ elif [[ "$JETSIGN_CLIENT" == "null" ]]; then
 elif ! isMacOsBinary "$pathToBeSigned" && [[ "$pathToBeSigned" != *.sit ]]; then
   echo "$pathToBeSigned won't be signed, assumed not to be a macOS executable"
 else
+  if isMacOsBinary "$pathToBeSigned" && ! isSigned "$pathToBeSigned" ; then
+    echo "Unsigned macOS binary: $pathToBeSigned"
+  fi
   workDir=$(dirname "$pathToBeSigned")
   pathSigned="$workDir/signed/${pathToBeSigned##*/}"
   jetSignExtensions=$(jetSignExtensions "${jetSignArgs[@]}")
