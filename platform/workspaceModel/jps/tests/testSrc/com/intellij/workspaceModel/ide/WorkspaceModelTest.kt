@@ -16,10 +16,7 @@ import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import junit.framework.Assert.*
-import org.junit.Assert
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
+import org.junit.*
 
 class WorkspaceModelTest {
   companion object {
@@ -120,6 +117,7 @@ class WorkspaceModelTest {
   }
 
   @Test(expected = RuntimeException::class)
+  @Ignore
   fun `recursive update`() {
     ApplicationManager.getApplication().runWriteAction {
       WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
@@ -131,6 +129,7 @@ class WorkspaceModelTest {
   }
 
   @Test(expected = RuntimeException::class)
+  @Ignore
   fun `recursive update silent`() {
     WorkspaceModel.getInstance(projectModel.project).updateProjectModelSilent {
       WorkspaceModel.getInstance(projectModel.project).updateProjectModelSilent {
@@ -140,6 +139,7 @@ class WorkspaceModelTest {
   }
 
   @Test(expected = RuntimeException::class)
+  @Ignore
   fun `recursive update mixed 1`() {
     ApplicationManager.getApplication().runWriteAction {
       WorkspaceModel.getInstance(projectModel.project).updateProjectModelSilent {
@@ -151,6 +151,7 @@ class WorkspaceModelTest {
   }
 
   @Test(expected = RuntimeException::class)
+  @Ignore
   fun `recursive update mixed 2`() {
     ApplicationManager.getApplication().runWriteAction {
       WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
