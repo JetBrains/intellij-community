@@ -27,7 +27,7 @@ class WorkspaceModelTest {
 
   @Rule
   @JvmField
-  val projectModel = ProjectModelRule(forceEnableWorkspaceModel = true)
+  val projectModel = ProjectModelRule()
 
   @Test
   fun `do not fire rootsChanged if there were no changes`() {

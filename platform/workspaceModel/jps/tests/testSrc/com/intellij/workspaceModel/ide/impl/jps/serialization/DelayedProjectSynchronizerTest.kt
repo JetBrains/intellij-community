@@ -47,7 +47,7 @@ import kotlin.io.path.name
 class DelayedProjectSynchronizerTest {
   @Rule
   @JvmField
-  val projectModel = ProjectModelRule(true)
+  val projectModel = ProjectModelRule()
 
   @Rule
   @JvmField

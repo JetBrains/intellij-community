@@ -22,7 +22,7 @@ import kotlin.system.measureTimeMillis
 class ImlSerializationTest {
   @Rule
   @JvmField
-  val projectModel = ProjectModelRule(true)
+  val projectModel = ProjectModelRule()
 
   private lateinit var virtualFileManager: VirtualFileUrlManager
 

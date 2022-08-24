@@ -30,7 +30,7 @@ import java.io.File
 class WorkspaceCacheTest {
   @Rule
   @JvmField
-  val projectModel = ProjectModelRule(true)
+  val projectModel = ProjectModelRule()
 
   @Rule
   @JvmField
