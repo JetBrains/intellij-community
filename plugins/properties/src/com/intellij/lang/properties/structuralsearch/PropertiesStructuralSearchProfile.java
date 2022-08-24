@@ -211,8 +211,4 @@ public class PropertiesStructuralSearchProfile extends StructuralSearchProfile {
   public StructuralReplaceHandler getReplaceHandler(@NotNull Project project, @NotNull ReplaceOptions replaceOptions) {
     return new DocumentBasedReplaceHandler(project);
   }
-
-  @Override
-  public void checkReplacementPattern(@NotNull Project project, @NotNull ReplaceOptions options) {
-  }
 }
