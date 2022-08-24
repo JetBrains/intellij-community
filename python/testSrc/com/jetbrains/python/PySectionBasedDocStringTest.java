@@ -235,11 +235,10 @@ public class PySectionBasedDocStringTest extends PyTestCase {
                  "Line after single break", param1.getDescription());
   }
 
-  public void testNumpyCombinesParameterSections() {
+  // PY-21883
+  public void testNumpyCombinesParamsAndOtherParamsSections() {
     final NumpyDocString docString = findAndParseNumpyStyleDocString();
-
     final List<String> parameters = docString.getParameters();
-
     assertEquals(List.of("x", "y", "z"), parameters);
   }
 
@@ -426,14 +425,6 @@ public class PySectionBasedDocStringTest extends PyTestCase {
   public void testGoogleDescriptionOfReturnValueOnNextLine() {
     final GoogleCodeStyleDocString docString = findAndParseGoogleStyleDocString();
     assertEquals("return value description", docString.getReturnDescription());
-  }
-
-  public void testGoogleCombinesParameterSections() {
-    final GoogleCodeStyleDocString docString = findAndParseGoogleStyleDocString();
-
-    final List<String> parameters = docString.getParameters();
-
-    assertEquals(List.of("x", "y", "z"), parameters);
   }
 
   @Override

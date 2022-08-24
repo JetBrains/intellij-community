@@ -368,7 +368,6 @@ public abstract class SectionBasedDocString extends DocStringLineParser implemen
     final List<Section> parameters = new ArrayList<>();
     parameters.addAll(getSectionsWithNormalizedTitle(PARAMETERS_SECTION));
     parameters.addAll(getSectionsWithNormalizedTitle(OTHER_PARAMETERS_SECTION));
-    parameters.addAll(getSectionsWithNormalizedTitle(KEYWORD_ARGUMENTS_SECTION));
     return parameters;
   }
 

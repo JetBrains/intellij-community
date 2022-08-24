@@ -1,4 +1,4 @@
-def func(param1):
+def func(x, y, z):
     """
     Parameters
     ----------
