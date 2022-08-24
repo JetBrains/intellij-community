@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.compareDescriptors
 import org.jetbrains.kotlin.idea.core.unwrapIfFakeOverride
@@ -36,8 +37,6 @@ import org.jetbrains.kotlin.resolve.lazy.descriptors.LazyClassDescriptor
 import org.jetbrains.kotlin.resolve.scopes.utils.findFirstClassifierWithDeprecationStatus
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import javax.swing.JComponent
-
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     /**
@@ -92,7 +91,9 @@ class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection(), Clean
                 } ?: return
 
                 val applicableExpression = expressionForAnalyze.firstApplicableExpression(
-                    validator = { applicableExpression(originalExpression, context, originalDescriptor, unwrapFakeOverrides) },
+                    validator = {
+                        applicableExpression(originalExpression, context, originalDescriptor, receiverReference, unwrapFakeOverrides)
+                    },
                     generator = { firstChild as? KtDotQualifiedExpression }
                 ) ?: return
 
@@ -134,6 +135,7 @@ private fun KtDotQualifiedExpression.applicableExpression(
     originalExpression: KtExpression,
     oldContext: BindingContext,
     originalDescriptor: DeclarationDescriptor,
+    receiverReference: DeclarationDescriptor?,
     unwrapFakeOverrides: Boolean
 ): KtDotQualifiedExpression? {
     if (!receiverExpression.isApplicableReceiver(oldContext) || !ShortenReferences.canBePossibleToDropReceiver(this, oldContext)) {
@@ -152,6 +154,13 @@ private fun KtDotQualifiedExpression.applicableExpression(
     val originalDescriptorFqName = originalDescriptor.unwrapFakeOverrideIfNecessary().fqNameSafe
     val newDescriptorFqName = newDescriptor.unwrapFakeOverrideIfNecessary().fqNameSafe
     if (originalDescriptorFqName != newDescriptorFqName) return null
+
+    if (newExpression is KtQualifiedExpression && !compareDescriptors(
+            project,
+            newExpression.receiverExpression.declarationDescriptor(newContext)?.containingDeclaration,
+            receiverReference?.containingDeclaration
+        )
+    ) return null
 
     return this.takeIf {
         if (newDescriptor is ImportedFromObjectCallableDescriptor<*>)

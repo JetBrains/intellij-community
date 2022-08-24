@@ -10508,6 +10508,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/removeRedundantQualifierName/companionWithOuterName.kt");
         }
 
+        @TestMetadata("copy.kt")
+        public void testCopy() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantQualifierName/copy.kt");
+        }
+
         @TestMetadata("enumEntry.kt")
         public void testEnumEntry() throws Exception {
             runTest("testData/inspectionsLocal/removeRedundantQualifierName/enumEntry.kt");
@@ -10801,6 +10806,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("notApplicableSameNameVariable2.kt")
         public void testNotApplicableSameNameVariable2() throws Exception {
             runTest("testData/inspectionsLocal/removeRedundantQualifierName/notApplicableSameNameVariable2.kt");
+        }
+
+        @TestMetadata("notApplicableSameNameVariableWithCopy.kt")
+        public void testNotApplicableSameNameVariableWithCopy() throws Exception {
+            runTest("testData/inspectionsLocal/removeRedundantQualifierName/notApplicableSameNameVariableWithCopy.kt");
         }
 
         @TestMetadata("notApplicableThis.kt")
