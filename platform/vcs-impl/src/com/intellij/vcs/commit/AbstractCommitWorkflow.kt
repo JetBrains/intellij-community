@@ -191,7 +191,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     val backgroundChecks = Runnable {
       ProgressManager.checkCanceled()
       FileDocumentManager.getInstance().saveAllDocuments()
-      result = runBeforeCommitHandlersChecks(sessionInfo, commitHandlers)
+      result = runBeforeCommitHandlersChecks(sessionInfo, commitContext, commitHandlers)
     }
 
     val metaHandlers = commitHandlers.filterIsInstance<CheckinMetaHandler>()
@@ -214,53 +214,6 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   }
 
   open fun getBeforeCommitChecksChangelist(): LocalChangeList? = null
-
-  private fun runMetaHandlers(metaHandlers: List<CheckinMetaHandler>, backgroundChecks: Runnable): Runnable {
-    var task = backgroundChecks
-    metaHandlers.forEach { metaHandler ->
-      task = wrapWithCommitMetaHandler(metaHandler, task)
-    }
-    return task
-  }
-
-  protected fun wrapWithCommitMetaHandler(metaHandler: CheckinMetaHandler, task: Runnable): Runnable =
-    Runnable {
-      try {
-        LOG.debug("CheckinMetaHandler.runCheckinHandlers: $metaHandler")
-        metaHandler.runCheckinHandlers(task)
-      }
-      catch (e: ProcessCanceledException) {
-        LOG.debug("CheckinMetaHandler cancelled $metaHandler")
-        throw e
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
-        task.run()
-      }
-    }
-
-  fun runBeforeCommitHandlersChecks(sessionInfo: CommitSessionInfo, handlers: List<CheckinHandler>): CommitChecksResult {
-    handlers.forEachLoggingErrors(LOG) { handler ->
-      try {
-        val executor = sessionInfo.executor
-        if (!handler.acceptExecutor(executor)) return@forEachLoggingErrors // continue
-        LOG.debug("CheckinHandler.beforeCheckin: $handler")
-
-        val result = handler.beforeCheckin(executor, commitContext.additionalDataConsumer)
-        when (result) {
-          null, CheckinHandler.ReturnResult.COMMIT -> Unit // continue
-          CheckinHandler.ReturnResult.CANCEL -> return CommitChecksResult.Failed()
-          CheckinHandler.ReturnResult.CLOSE_WINDOW -> return CommitChecksResult.Failed(toCloseWindow = true)
-        }
-      }
-      catch (e: ProcessCanceledException) {
-        LOG.debug("CheckinHandler cancelled $handler")
-        return CommitChecksResult.Cancelled
-      }
-    }
-
-    return CommitChecksResult.Passed
-  }
 
   open fun canExecute(sessionInfo: CommitSessionInfo, changes: Collection<Change>): Boolean {
     val executor = sessionInfo.executor
@@ -299,6 +252,56 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       return vcses.flatMap { it.commitExecutors } +
              ChangeListManager.getInstance(project).registeredExecutors +
              LocalCommitExecutor.LOCAL_COMMIT_EXECUTOR.getExtensions(project)
+    }
+
+    private fun runMetaHandlers(metaHandlers: List<CheckinMetaHandler>, backgroundChecks: Runnable): Runnable {
+      var task = backgroundChecks
+      metaHandlers.forEach { metaHandler ->
+        task = wrapWithCommitMetaHandler(metaHandler, task)
+      }
+      return task
+    }
+
+    fun wrapWithCommitMetaHandler(metaHandler: CheckinMetaHandler, task: Runnable): Runnable {
+      return Runnable {
+        try {
+          LOG.debug("CheckinMetaHandler.runCheckinHandlers: $metaHandler")
+          metaHandler.runCheckinHandlers(task)
+        }
+        catch (e: ProcessCanceledException) {
+          LOG.debug("CheckinMetaHandler cancelled $metaHandler")
+          throw e
+        }
+        catch (e: Throwable) {
+          LOG.error(e)
+          task.run()
+        }
+      }
+    }
+
+    fun runBeforeCommitHandlersChecks(sessionInfo: CommitSessionInfo,
+                                      commitContext: CommitContext,
+                                      handlers: List<CheckinHandler>): CommitChecksResult {
+      handlers.forEachLoggingErrors(LOG) { handler ->
+        try {
+          val executor = sessionInfo.executor
+          if (!handler.acceptExecutor(executor)) return@forEachLoggingErrors // continue
+          LOG.debug("CheckinHandler.beforeCheckin: $handler")
+
+          val result = handler.beforeCheckin(executor, commitContext.additionalDataConsumer)
+          when (result) {
+            null, CheckinHandler.ReturnResult.COMMIT -> Unit // continue
+            CheckinHandler.ReturnResult.CANCEL -> return CommitChecksResult.Failed()
+            CheckinHandler.ReturnResult.CLOSE_WINDOW -> return CommitChecksResult.Failed(toCloseWindow = true)
+          }
+        }
+        catch (e: ProcessCanceledException) {
+          LOG.debug("CheckinHandler cancelled $handler")
+          return CommitChecksResult.Cancelled
+        }
+      }
+
+      return CommitChecksResult.Passed
     }
   }
 }

@@ -47,6 +47,9 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.containers.nullize
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
+import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.runBeforeCommitHandlersChecks
+import com.intellij.vcs.commit.NonModalCommitWorkflow.Companion.runCommitChecks
+import com.intellij.vcs.commit.NonModalCommitWorkflow.Companion.runMetaHandlers
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
 import java.lang.Runnable
@@ -358,15 +361,15 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     isOnlyRunCommitChecks: Boolean
   ): CommitChecksResult {
     val metaHandlers = commitHandlers.filterIsInstance<CheckinMetaHandler>()
-    workflow.runMetaHandlers(metaHandlers, ui.commitProgressUi, indicator)
+    runMetaHandlers(project, metaHandlers, ui.commitProgressUi, indicator)
     FileDocumentManager.getInstance().saveAllDocuments()
 
     val plainHandlers = commitHandlers.filterNot { it is CommitCheck }
-    val plainHandlersResult = workflow.runBeforeCommitHandlersChecks(sessionInfo, plainHandlers)
+    val plainHandlersResult = runBeforeCommitHandlersChecks(sessionInfo, commitContext, plainHandlers)
     if (!plainHandlersResult.shouldCommit) return plainHandlersResult
 
     val commitChecks = commitHandlers.filterNot { it is CheckinMetaHandler }.filterIsInstance<CommitCheck>()
-    val checksPassed = workflow.runCommitChecks(commitChecks, ui.commitProgressUi, indicator)
+    val checksPassed = runCommitChecks(project, commitChecks, ui.commitProgressUi, indicator)
     when {
       isOnlyRunCommitChecks -> {
         isCommitChecksResultUpToDate = true
