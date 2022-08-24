@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Set;
 
 /**
  * @author Sergey Evdokimov
@@ -55,7 +56,17 @@ public class MavenGeneralConfigurable extends MavenGeneralPanel implements Searc
 
   @Override
   public void apply() {
-    setData(getState());
+    final MavenGeneralSettings state = getState();
+    setData(state);
+
+    if (state.isEnableTychoSupport()) {
+      final MavenProjectsManager mavenProjectsManager = MavenProjectsManager.getInstance(myProject);
+      final MavenImportingSettings importingSettings = mavenProjectsManager.getImportingSettings();
+      final Set<String> dependencyTypes = importingSettings.getDependencyTypesAsSet();
+      dependencyTypes.add("eclipse-plugin");
+      dependencyTypes.add("eclipse-test-plugin");
+      importingSettings.setDependencyTypes(String.join(", ", dependencyTypes));
+    }
   }
 
   @Override
