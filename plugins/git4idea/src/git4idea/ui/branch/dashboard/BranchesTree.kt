@@ -23,7 +23,6 @@ import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.*
 import com.intellij.ui.hover.TreeHoverListener
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.util.EditSourceOnDoubleClickHandler.isToggleEvent
@@ -137,7 +136,7 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
     override fun paint(g: Graphics) {
       super.paint(g)
       incomingOutgoingIcon?.let { (icon, locationX) ->
-        icon.paintIcon(this@BranchTreeCellRenderer, g, locationX, JBUIScale.scale(2))
+        icon.paintIcon(this@BranchTreeCellRenderer, g, locationX, (size.height - icon.iconHeight) / 2)
       }
     }
   }

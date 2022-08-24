@@ -5,6 +5,7 @@ import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.dvcs.branch.GroupingKey.GROUPING_BY_DIRECTORY
 import com.intellij.dvcs.branch.GroupingKey.GROUPING_BY_REPOSITORY
+import com.intellij.dvcs.ui.BranchActionGroup
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.NlsSafe
@@ -45,7 +46,7 @@ internal enum class IncomingOutgoing {
     get() = when (this) {
       INCOMING -> DvcsImplIcons.Incoming
       OUTGOING -> DvcsImplIcons.Outgoing
-      INCOMING_AND_OUTGOING -> DvcsImplIcons.IncomingOutgoing
+      INCOMING_AND_OUTGOING -> BranchActionGroup.getIncomingOutgoingIcon()
     }
 }
 
