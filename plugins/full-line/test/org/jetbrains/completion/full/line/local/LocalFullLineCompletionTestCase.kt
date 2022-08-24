@@ -5,36 +5,34 @@ import com.intellij.openapi.components.service
 import org.jetbrains.completion.full.line.platform.tests.FullLineCompletionTestCase
 import org.jetbrains.completion.full.line.services.LocalModelsCache
 import org.jetbrains.completion.full.line.services.managers.ConfigurableModelsManager
-import org.jetbrains.completion.full.line.services.managers.LocalModelsManager
 import org.jetbrains.completion.full.line.tasks.SetupLocalModelsTask
-import org.junit.jupiter.api.AfterAll
 
 abstract class LocalFullLineCompletionTestCase(private val language: Language) : FullLineCompletionTestCase(false) {
-    override fun setUp() {
-        super.setUp()
-        val manager = service<ConfigurableModelsManager>()
-        val model = manager.modelsSchema.targetLanguage(language)
-        if (model == null) {
-            SetupLocalModelsTask(
-                myFixture.project,
-                SetupLocalModelsTask.ToDoParams(language, SetupLocalModelsTask.Action.DOWNLOAD)
-            ).queue()
-        }
+  override fun setUp() {
+    super.setUp()
+    val manager = service<ConfigurableModelsManager>()
+    val model = manager.modelsSchema.targetLanguage(language)
+    if (model == null) {
+      SetupLocalModelsTask(
+        myFixture.project,
+        SetupLocalModelsTask.ToDoParams(language, SetupLocalModelsTask.Action.DOWNLOAD)
+      ).queue()
     }
+  }
 
-    protected fun initModel() {
-        val model = service<LocalModelsCache>().tryGetModel(language)
-        if (model != null) return
-        //if (model != null) return
+  protected fun initModel() {
+    val model = service<LocalModelsCache>().tryGetModel(language)
+    if (model != null) return
+    //if (model != null) return
 
-        Thread.sleep(5000)
-        val modelAfterSleep = service<LocalModelsCache>().tryGetModel(language)
-        assertNotNull(modelAfterSleep)
+    Thread.sleep(5000)
+    val modelAfterSleep = service<LocalModelsCache>().tryGetModel(language)
+    assertNotNull(modelAfterSleep)
 
-        myFixture.configureByText(fileTypeFromLanguage(language.id), "<caret>")
-        myFixture.completeBasic()
+    myFixture.configureByText(fileTypeFromLanguage(language.id), "<caret>")
+    myFixture.completeBasic()
 
 
-        Thread.sleep(5000)
-    }
+    Thread.sleep(5000)
+  }
 }

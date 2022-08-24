@@ -5,6 +5,6 @@ import org.jetbrains.completion.full.line.settings.ui.FullLineIcons
 import javax.swing.Icon
 
 enum class ModelType(val icon: Icon) {
-    Cloud(FullLineIcons.Cloud),
-    Local(if (SystemInfo.isMac) FullLineIcons.DesktopMac else FullLineIcons.DesktopWindows),
+  Cloud(FullLineIcons.Cloud),
+  Local(if (SystemInfo.isMac) FullLineIcons.DesktopMac else FullLineIcons.DesktopWindows),
 }

@@ -11,51 +11,54 @@ import org.jetbrains.completion.full.line.local.decodeFromXml
 import java.io.File
 
 class MavenModelsManager(private val root: File) : ModelsManager {
-    private val cached: HashMap<String, ModelSchema> = HashMap()
+  private val cached: HashMap<String, ModelSchema> = HashMap()
 
-    override fun getLatest(language: Language, force: Boolean): ModelSchema {
-        return if (force || !cached.containsKey(language.id)) {
-            val metadata = HttpRequests.request("${mavenHost(language)}/maven-metadata.xml").connect { r ->
-                val content = r.reader.readText()
-                decodeFromXml<MavenMetadata>(content)
-            }
+  override fun getLatest(language: Language, force: Boolean): ModelSchema {
+    return if (force || !cached.containsKey(language.id)) {
+      val metadata = HttpRequests.request("${mavenHost(language)}/maven-metadata.xml").connect { r ->
+        val content = r.reader.readText()
+        decodeFromXml<MavenMetadata>(content)
+      }
 
-            val latest = if (Registry.`is`("full.line.local.models.beta")) {
-                metadata.versioning.release
-            } else {
-                metadata.versioning.latest
-            }
+      val latest = if (Registry.`is`("full.line.local.models.beta")) {
+        metadata.versioning.release
+      }
+      else {
+        metadata.versioning.latest
+      }
 
-            HttpRequests.request("${mavenHost(language)}/$latest/model.xml").connect { r ->
-                val content = r.reader.readText()
-                decodeFromXml<ModelSchema>(content)
-            }.also { cached[language.id] = it }
-        } else {
-            cached.getValue(language.id)
-        }
+      HttpRequests.request("${mavenHost(language)}/$latest/model.xml").connect { r ->
+        val content = r.reader.readText()
+        decodeFromXml<ModelSchema>(content)
+      }.also { cached[language.id] = it }
     }
-
-    override fun download(language: Language, force: Boolean): ModelSchema {
-        val model = if (force || !cached.containsKey(language.id)) {
-            getLatest(language, force)
-        } else {
-            cached.getValue(language.id)
-        }
-        val downloadableService = service<DownloadableFileService>()
-
-        downloadableService.createDownloader(
-            listOf(model.binary.path, model.bpe.path, model.config.path).map {
-                downloadableService.createFileDescription("${mavenHost(language)}/${model.version}/${it}", it)
-            }, "${language.displayName} model"
-        ).download(root.resolve(model.uid()))
-
-        return model
+    else {
+      cached.getValue(language.id)
     }
+  }
 
-    override fun update(language: Language, force: Boolean) = download(language, force)
-
-    private fun mavenHost(language: Language): String {
-        return "https://packages.jetbrains.team/maven/p/ccrm/flcc-local-models" +
-                "/org/jetbrains/completion/full/line/local-model-${language.id.toLowerCase()}"
+  override fun download(language: Language, force: Boolean): ModelSchema {
+    val model = if (force || !cached.containsKey(language.id)) {
+      getLatest(language, force)
     }
+    else {
+      cached.getValue(language.id)
+    }
+    val downloadableService = service<DownloadableFileService>()
+
+    downloadableService.createDownloader(
+      listOf(model.binary.path, model.bpe.path, model.config.path).map {
+        downloadableService.createFileDescription("${mavenHost(language)}/${model.version}/${it}", it)
+      }, "${language.displayName} model"
+    ).download(root.resolve(model.uid()))
+
+    return model
+  }
+
+  override fun update(language: Language, force: Boolean) = download(language, force)
+
+  private fun mavenHost(language: Language): String {
+    return "https://packages.jetbrains.team/maven/p/ccrm/flcc-local-models" +
+           "/org/jetbrains/completion/full/line/local-model-${language.id.toLowerCase()}"
+  }
 }

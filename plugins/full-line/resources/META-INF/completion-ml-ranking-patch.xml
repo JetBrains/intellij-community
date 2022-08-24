@@ -1,6 +1,6 @@
 <idea-plugin>
-    <depends>com.intellij.completion.ml.ranking</depends>
-    <extensions defaultExtensionNs="com.intellij.completion.ml.ranking">
-        <policy language="" implementationClass="org.jetbrains.completion.full.line.platform.ranking.FullLineCompletionPolicy"/>
-    </extensions>
+  <depends>com.intellij.completion.ml.ranking</depends>
+  <extensions defaultExtensionNs="com.intellij.completion.ml.ranking">
+    <policy language="" implementationClass="org.jetbrains.completion.full.line.platform.ranking.FullLineCompletionPolicy"/>
+  </extensions>
 </idea-plugin>

@@ -4,5 +4,5 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 
 class DummyPsiCodeFormatter : PsiCodeFormatterBase() {
-    override fun cutTree(psiFile: PsiFile, position: PsiElement, offset: Int): List<String> = emptyList()
+  override fun cutTree(psiFile: PsiFile, position: PsiElement, offset: Int): List<String> = emptyList()
 }

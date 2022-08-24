@@ -13,35 +13,35 @@ import com.intellij.ui.content.ContentFactory
 internal const val FULL_LINE_TOOL_WINDOW_ID = "Full Line Diagnostics"
 
 class FullLineDiagnosticsToolWindowFactory : ToolWindowFactory, DumbAware {
-    override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-        val windowContent = FullLineToolWindowContent(project)
-        val content = ContentFactory.SERVICE.getInstance()
-            .createContent(windowContent.component, "Log", true)
-        toolWindow.contentManager.apply {
-            addContent(content)
-            setSelectedContent(content)
-        }
-        toolWindow.setToHideOnEmptyContent(false)
+  override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
+    val windowContent = FullLineToolWindowContent(project)
+    val content = ContentFactory.SERVICE.getInstance()
+      .createContent(windowContent.component, "Log", true)
+    toolWindow.contentManager.apply {
+      addContent(content)
+      setSelectedContent(content)
     }
+    toolWindow.setToHideOnEmptyContent(false)
+  }
 
-    override fun isApplicable(project: Project): Boolean {
-        return Registry.`is`("full.line.enable.diagnostics")
-    }
+  override fun isApplicable(project: Project): Boolean {
+    return Registry.`is`("full.line.enable.diagnostics")
+  }
 }
 
 private class FullLineToolWindowContent(project: Project) : SimpleToolWindowPanel(false, true), Disposable {
-    private val consoleLog: DiagnosticsLogConsole = DiagnosticsLogConsole(project)
+  private val consoleLog: DiagnosticsLogConsole = DiagnosticsLogConsole(project)
 
-    init {
-        Disposer.register(this, consoleLog)
-        setContent(consoleLog.component)
-        DiagnosticsService.getInstance().subscribe(object : DiagnosticsListener {
-            override fun messageReceived(message: DiagnosticsListener.Message) {
-                consoleLog.addMessage(message)
-            }
-        }, this)
-    }
+  init {
+    Disposer.register(this, consoleLog)
+    setContent(consoleLog.component)
+    DiagnosticsService.getInstance().subscribe(object : DiagnosticsListener {
+      override fun messageReceived(message: DiagnosticsListener.Message) {
+        consoleLog.addMessage(message)
+      }
+    }, this)
+  }
 
-    override fun dispose() {
-    }
+  override fun dispose() {
+  }
 }

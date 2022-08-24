@@ -3,71 +3,71 @@ package org.jetbrains.completion.full.line.local
 import org.junit.jupiter.api.Test
 
 class CustomJacksonPolicyTest : XmlSerializationTest() {
-    @Test
-    fun `ensure support versionless schema`() {
-        val xmlString = xml(
-            """
+  @Test
+  fun `ensure support versionless schema`() {
+    val xmlString = xml(
+      """
             <models/>
             """.trimIndent()
-        )
+    )
 
-        val schema = decodeFromXml<LocalModelsSchema>(xmlString)
-        assertEqualsWithoutIndent(LocalModelsSchema(null, mutableListOf()), schema)
-    }
+    val schema = decodeFromXml<LocalModelsSchema>(xmlString)
+    assertEqualsWithoutIndent(LocalModelsSchema(null, mutableListOf()), schema)
+  }
 
-    @Test
-    fun `encode & decode LocalModelsSchema`() {
-        val pyModel = ModelSchema(
-            "1.2.3",
-            1234567890,
-            "python",
-            listOf("python", "kt"),
-            BinarySchema("flcc.model"),
-            BPESchema("flcc.bpe"),
-            ConfigSchema("flcc.json"),
-            "Lorem ipsum"
-        )
-        val javaModel = ModelSchema(
-            "3.2.1",
-            987654321,
-            "java",
-            listOf("java", "kotlin"),
-            BinarySchema("flcc.model"),
-            BPESchema("flcc.bpe"),
-            ConfigSchema("flcc.json"),
-            "Lorem ipsum!"
-        )
+  @Test
+  fun `encode & decode LocalModelsSchema`() {
+    val pyModel = ModelSchema(
+      "1.2.3",
+      1234567890,
+      "python",
+      listOf("python", "kt"),
+      BinarySchema("flcc.model"),
+      BPESchema("flcc.bpe"),
+      ConfigSchema("flcc.json"),
+      "Lorem ipsum"
+    )
+    val javaModel = ModelSchema(
+      "3.2.1",
+      987654321,
+      "java",
+      listOf("java", "kotlin"),
+      BinarySchema("flcc.model"),
+      BPESchema("flcc.bpe"),
+      ConfigSchema("flcc.json"),
+      "Lorem ipsum!"
+    )
 
-        val xmlString = xml(
-            """
+    val xmlString = xml(
+      """
             <models version="1">
                 ${pyModel.fromPattern()}
                 ${javaModel.fromPattern()}
             </models>
             """.trimIndent()
-        )
+    )
 
-      val models = decodeFromXml<LocalModelsSchema>(xmlString)
-      assertEqualsWithoutIndent(LocalModelsSchema(1, mutableListOf(pyModel, javaModel)), models)
+    val models = decodeFromXml<LocalModelsSchema>(xmlString)
+    assertEqualsWithoutIndent(LocalModelsSchema(1, mutableListOf(pyModel, javaModel)), models)
 
-      val raw = encodeToXml(LocalModelsSchema(1, mutableListOf(pyModel, javaModel)))
-      assertEqualsWithoutIndent(xmlString, raw)
-    }
+    val raw = encodeToXml(LocalModelsSchema(1, mutableListOf(pyModel, javaModel)))
+    assertEqualsWithoutIndent(xmlString, raw)
+  }
 
-    @Test
-    fun `test pattern in test`() {
-        val schema = ModelSchema(
-            "snapshot",
-            123,
-            "java",
-            listOf("java", "py", "kt"),
-            BinarySchema("p1"),
-            BPESchema("p2"),
-            ConfigSchema("p3"),
-            "changes"
-        )
-        val expected = xml(
-            """
+  @Test
+  fun `test pattern in test`() {
+    val schema = ModelSchema(
+      "snapshot",
+      123,
+      "java",
+      listOf("java", "py", "kt"),
+      BinarySchema("p1"),
+      BPESchema("p2"),
+      ConfigSchema("p3"),
+      "changes"
+    )
+    val expected = xml(
+      """
                 <model currentLanguage="java">
                     <version>snapshot</version>
                     <size>123</size>
@@ -82,18 +82,18 @@ class CustomJacksonPolicyTest : XmlSerializationTest() {
                     <changelog>changes</changelog>
                 </model>
             """.trimIndent()
-        )
+    )
 
-        val xml = schema.fromPattern()
-        assertEqualsWithoutIndent(expected, xml)
+    val xml = schema.fromPattern()
+    assertEqualsWithoutIndent(expected, xml)
+  }
+
+  private fun ModelSchema.fromPattern(): String {
+    val languages = languages.joinToString("\n") {
+      xml("<language>$it</language>")
     }
-
-    private fun ModelSchema.fromPattern(): String {
-        val languages = languages.joinToString("\n") {
-            xml("<language>$it</language>")
-        }
-        return xml(
-            """
+    return xml(
+      """
                 <model currentLanguage="${currentLanguage}">
                     <version>${version}</version>
                     <size>${size}</size>
@@ -106,6 +106,6 @@ class CustomJacksonPolicyTest : XmlSerializationTest() {
                     <changelog>${changelog}</changelog>
                 </model>
             """.trimIndent()
-        )
-    }
+    )
+  }
 }

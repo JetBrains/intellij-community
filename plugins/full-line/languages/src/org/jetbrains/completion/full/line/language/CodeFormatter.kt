@@ -5,5 +5,5 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 
 interface CodeFormatter {
-    fun format(element: PsiElement, range: TextRange, editor: Editor): String
+  fun format(element: PsiElement, range: TextRange, editor: Editor): String
 }

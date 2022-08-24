@@ -10,19 +10,19 @@ import org.jetbrains.completion.full.line.language.formatters.DummyPsiCodeFormat
 import org.jetbrains.completion.full.line.language.formatters.TSCodeFormatter
 
 class TSSupporter : JSDialectSupporter() {
-    override val fileType: FileType = TypeScriptFileType.INSTANCE
+  override val fileType: FileType = TypeScriptFileType.INSTANCE
 
-    override val language = Language.getRegisteredLanguages().find { it.id == "TypeScript" } as TypeScriptLanguageDialect
+  override val language = Language.getRegisteredLanguages().find { it.id == "TypeScript" } as TypeScriptLanguageDialect
 
-    override val iconSet = TSIconSet()
+  override val iconSet = TSIconSet()
 
-    override val formatter = TSCodeFormatter()
+  override val formatter = TSCodeFormatter()
 
-    override val psiFormatter = DummyPsiCodeFormatter()
+  override val psiFormatter = DummyPsiCodeFormatter()
 
-    override val langState: LangState = LangState(
-        enabled = false,
-        localModelState = ModelState(numIterations = 8),
-        redCodePolicy = RedCodePolicy.DECORATE
-    )
+  override val langState: LangState = LangState(
+    enabled = false,
+    localModelState = ModelState(numIterations = 8),
+    redCodePolicy = RedCodePolicy.DECORATE
+  )
 }

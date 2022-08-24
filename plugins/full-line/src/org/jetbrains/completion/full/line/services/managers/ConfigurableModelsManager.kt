@@ -6,21 +6,21 @@ import org.jetbrains.completion.full.line.local.ModelSchema
 import org.jetbrains.completion.full.line.settings.state.MLServerCompletionSettings
 
 interface ConfigurableModelsManager : ModelsManager {
-    val modelsSchema: LocalModelsSchema
+  val modelsSchema: LocalModelsSchema
 
-    fun importLocal(language: Language, modelPath: String): ModelSchema
+  fun importLocal(language: Language, modelPath: String): ModelSchema
 
-    fun remove(language: Language)
+  fun remove(language: Language)
 
-    fun checkFile(language: Language): Boolean
+  fun checkFile(language: Language): Boolean
 
-    fun apply()
+  fun apply()
 
-    fun reset()
+  fun reset()
 }
 
 fun ConfigurableModelsManager.missedLanguage(language: Language): Boolean {
-    return modelsSchema.targetLanguage(language) == null && MLServerCompletionSettings.getInstance().isEnabled(language)
+  return modelsSchema.targetLanguage(language) == null && MLServerCompletionSettings.getInstance().isEnabled(language)
 }
 
 //fun ConfigurableModelsManager.missedFiles(language: Language): Boolean {
@@ -30,5 +30,5 @@ fun ConfigurableModelsManager.missedLanguage(language: Language): Boolean {
 //}
 
 fun ConfigurableModelsManager.excessLanguage(language: Language): Boolean {
-    return modelsSchema.targetLanguage(language) != null && !MLServerCompletionSettings.getInstance().isEnabled(language)
+  return modelsSchema.targetLanguage(language) != null && !MLServerCompletionSettings.getInstance().isEnabled(language)
 }

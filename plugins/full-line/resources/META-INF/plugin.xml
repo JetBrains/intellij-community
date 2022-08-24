@@ -1,10 +1,10 @@
 <idea-plugin require-restart="true">
-    <id>org.jetbrains.completion.full.line</id>
-    <name>Full Line Code Completion</name>
-    <idea-version since-build="203.4203.26"/>
-    <vendor url="https://www.jetbrains.com">JetBrains</vendor>
+  <id>org.jetbrains.completion.full.line</id>
+  <name>Full Line Code Completion</name>
+  <idea-version since-build="203.4203.26"/>
+  <vendor url="https://www.jetbrains.com">JetBrains</vendor>
 
-    <description><![CDATA[
+  <description><![CDATA[
            <div>
     <h3>Full Line</h3>
     <p>
@@ -130,116 +130,116 @@
 
     ]]></description>
 
-    <depends>com.intellij.modules.platform</depends>
-    <depends optional="true" config-file="completion-ml-ranking-patch.xml">com.intellij.completion.ml.ranking</depends>
-    <depends optional="true" config-file="python.xml">com.intellij.modules.python</depends>
-    <depends optional="true" config-file="java.xml">com.intellij.java</depends>
-    <depends optional="true" config-file="kotlin.xml">org.jetbrains.kotlin</depends>
-    <depends optional="true" config-file="js.xml">JavaScript</depends>
+  <depends>com.intellij.modules.platform</depends>
+  <depends optional="true" config-file="completion-ml-ranking-patch.xml">com.intellij.completion.ml.ranking</depends>
+  <depends optional="true" config-file="python.xml">com.intellij.modules.python</depends>
+  <depends optional="true" config-file="java.xml">com.intellij.java</depends>
+  <depends optional="true" config-file="kotlin.xml">org.jetbrains.kotlin</depends>
+  <depends optional="true" config-file="js.xml">JavaScript</depends>
 
-    <extensions defaultExtensionNs="com.intellij">
-        <postStartupActivity implementation="org.jetbrains.completion.full.line.actions.FullLineStartupActivity"/>
-        <applicationService
-                serviceImplementation="org.jetbrains.completion.full.line.settings.state.MlServerCompletionAuthState"/>
-        <applicationService
-                serviceImplementation="org.jetbrains.completion.full.line.settings.state.MLServerCompletionSettings"/>
-        <applicationService
-                serviceInterface="org.jetbrains.completion.full.line.services.TabSelectedItemStorage"
-                serviceImplementation="org.jetbrains.completion.full.line.services.TabSelectedItemStorageImpl"/>
-        <applicationService
-                serviceInterface="org.jetbrains.completion.full.line.services.managers.ConfigurableModelsManager"
-                serviceImplementation="org.jetbrains.completion.full.line.services.managers.LocalModelsManager"/>
-        <completion.contributor language="any"
-                                id="FullLineCompletionContributor"
-                                order="first, before KotlinCompletionContributor"
-                                implementationClass="org.jetbrains.completion.full.line.platform.FullLineContributor"/>
+  <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="org.jetbrains.completion.full.line.actions.FullLineStartupActivity"/>
+    <applicationService
+      serviceImplementation="org.jetbrains.completion.full.line.settings.state.MlServerCompletionAuthState"/>
+    <applicationService
+      serviceImplementation="org.jetbrains.completion.full.line.settings.state.MLServerCompletionSettings"/>
+    <applicationService
+      serviceInterface="org.jetbrains.completion.full.line.services.TabSelectedItemStorage"
+      serviceImplementation="org.jetbrains.completion.full.line.services.TabSelectedItemStorageImpl"/>
+    <applicationService
+      serviceInterface="org.jetbrains.completion.full.line.services.managers.ConfigurableModelsManager"
+      serviceImplementation="org.jetbrains.completion.full.line.services.managers.LocalModelsManager"/>
+    <completion.contributor language="any"
+                            id="FullLineCompletionContributor"
+                            order="first, before KotlinCompletionContributor"
+                            implementationClass="org.jetbrains.completion.full.line.platform.FullLineContributor"/>
 
-        <!-- HOST CONFIG BEGIN -->
-        <registryKey key="full.line.server.host.python" defaultValue="https://python.flcc.iml.aws.intellij.net"
-                     description="Full line completion server"/>
-        <registryKey key="full.line.server.host.java" defaultValue="https://java.flcc.iml.aws.intellij.net"
-                     description="Full line completion server"/>
-        <registryKey key="full.line.server.host.kotlin" defaultValue="https://kotlin.flcc.iml.aws.intellij.net"
-                     description="Full line completion server"/>
-        <registryKey key="full.line.server.host.javascript" defaultValue="http://35.157.179.218:5005"
-                     description="Full line completion server"/>
-        <registryKey key="full.line.server.host.typescript" defaultValue="http://35.157.179.218:5005"
-                     description="Full line completion server"/>
+    <!-- HOST CONFIG BEGIN -->
+    <registryKey key="full.line.server.host.python" defaultValue="https://python.flcc.iml.aws.intellij.net"
+                 description="Full line completion server"/>
+    <registryKey key="full.line.server.host.java" defaultValue="https://java.flcc.iml.aws.intellij.net"
+                 description="Full line completion server"/>
+    <registryKey key="full.line.server.host.kotlin" defaultValue="https://kotlin.flcc.iml.aws.intellij.net"
+                 description="Full line completion server"/>
+    <registryKey key="full.line.server.host.javascript" defaultValue="http://35.157.179.218:5005"
+                 description="Full line completion server"/>
+    <registryKey key="full.line.server.host.typescript" defaultValue="http://35.157.179.218:5005"
+                 description="Full line completion server"/>
 
-        <registryKey key="full.line.server.host.psi.java" defaultValue="http://0.0.0.0:5000/"
-                     description="Full line psi completion server"/>
+    <registryKey key="full.line.server.host.psi.java" defaultValue="http://0.0.0.0:5000/"
+                 description="Full line psi completion server"/>
 
-        <registryKey key="full.line.server.host.max.latency" defaultValue="1000"
-                     description="Maximum latency"/>
-        <!-- HOST CONFIG END -->
+    <registryKey key="full.line.server.host.max.latency" defaultValue="1000"
+                 description="Maximum latency"/>
+    <!-- HOST CONFIG END -->
 
-        <registryKey key="full.line.server.emulate.model.response" defaultValue="-1"
-                     description="Adds delay before adding full lines proposals"/>
+    <registryKey key="full.line.server.emulate.model.response" defaultValue="-1"
+                 description="Adds delay before adding full lines proposals"/>
 
-        <registryKey key="full.line.expand.settings" defaultValue="false"
-                     description="Show expanded settings panel for ML server completion"/>
+    <registryKey key="full.line.expand.settings" defaultValue="false"
+                 description="Show expanded settings panel for ML server completion"/>
 
-        <registryKey key="full.line.local.models.beta" defaultValue="false"
-                     description="Use Beta local models"/>
+    <registryKey key="full.line.local.models.beta" defaultValue="false"
+                 description="Use Beta local models"/>
 
-        <registryKey key="full.line.use.all.providers" defaultValue="false"
-                     description="Show proposals from all available providers"/>
+    <registryKey key="full.line.use.all.providers" defaultValue="false"
+                 description="Show proposals from all available providers"/>
 
-        <registryKey key="full.line.only.proposals" defaultValue="false"
-                     description="Keep only full line proposals in lookup"/>
+    <registryKey key="full.line.only.proposals" defaultValue="false"
+                 description="Keep only full line proposals in lookup"/>
 
-        <registryKey key="full.line.enable.diagnostics" defaultValue="false"
-                     description="Enable diagnostics tool window" restartRequired="true"/>
+    <registryKey key="full.line.enable.diagnostics" defaultValue="false"
+                 description="Enable diagnostics tool window" restartRequired="true"/>
 
-        <registryKey key="full.line.multi.token.everywhere" defaultValue="false"
-                     description="Provide multi-token suggestions in all locations"/>
+    <registryKey key="full.line.multi.token.everywhere" defaultValue="false"
+                 description="Provide multi-token suggestions in all locations"/>
 
-        <registryKey key="full.line.enable.caching" defaultValue="true"
-                     description="Enable caching requests for full line suggestions"/>
+    <registryKey key="full.line.enable.caching" defaultValue="true"
+                 description="Enable caching requests for full line suggestions"/>
 
-        <toolWindow id="Full Line Diagnostics"
-                    factoryClass="org.jetbrains.completion.full.line.platform.diagnostics.FullLineDiagnosticsToolWindowFactory"
-                    icon="AllIcons.Nodes.Console"
-                    doNotActivateOnStart="false"
-                    anchor="bottom"
-                    order="last, after Terminal"
-        />
+    <toolWindow id="Full Line Diagnostics"
+                factoryClass="org.jetbrains.completion.full.line.platform.diagnostics.FullLineDiagnosticsToolWindowFactory"
+                icon="AllIcons.Nodes.Console"
+                doNotActivateOnStart="false"
+                anchor="bottom"
+                order="last, after Terminal"
+    />
 
-        <codeCompletionConfigurable
-                id="full.line.completion"
-                bundle="messages.MLServerCompletionBundle"
-                instance="org.jetbrains.completion.full.line.settings.ui.FullLineReducedConfigurable"/>
+    <codeCompletionConfigurable
+      id="full.line.completion"
+      bundle="messages.MLServerCompletionBundle"
+      instance="org.jetbrains.completion.full.line.settings.ui.FullLineReducedConfigurable"/>
 
-        <lookup.charFilter implementation="org.jetbrains.completion.full.line.platform.filter.FullLineCharFilter"/>
+    <lookup.charFilter implementation="org.jetbrains.completion.full.line.platform.filter.FullLineCharFilter"/>
 
-        <notificationGroup
-                id="Full Line Completion Plugin"
-                displayType="STICKY_BALLOON"
-                isLogByDefault="true"
-                bundle="messages.MLServerCompletionBundle"
-                key="full.line.plugin.title"/>
-    </extensions>
+    <notificationGroup
+      id="Full Line Completion Plugin"
+      displayType="STICKY_BALLOON"
+      isLogByDefault="true"
+      bundle="messages.MLServerCompletionBundle"
+      key="full.line.plugin.title"/>
+  </extensions>
 
-    <extensionPoints>
-        <extensionPoint
-                name="fullLineLanguageSupport"
-                interface="org.jetbrains.completion.full.line.language.FullLineLanguageSupporter"
-                dynamic="true"/>
-    </extensionPoints>
+  <extensionPoints>
+    <extensionPoint
+      name="fullLineLanguageSupport"
+      interface="org.jetbrains.completion.full.line.language.FullLineLanguageSupporter"
+      dynamic="true"/>
+  </extensionPoints>
 
-    <actions>
-        <group id="FullLineGroup" text="Full Line Code Completion" popup="true">
-            <add-to-group group-id="CodeMenu" anchor="after" relative-to-action="CodeCompletionGroup"/>
-            <action id="org.jetbrains.completion.full.line.actions.ShowSettingsAction"
-                    class="org.jetbrains.completion.full.line.actions.ShowSettingsAction"
-                    text="Show Extended Settings"
-                    description="Show extended full line settings for each configuration">
-            </action>
-            <action id="org.jetbrains.completion.full.line.actions.VerifyCloudAction"
-                    class="org.jetbrains.completion.full.line.actions.VerifyCloudAction"
-                    text="Verify Cloud"
-                    description="Verify cloud completion for extended usage">
-            </action>
-        </group>
-    </actions>
+  <actions>
+    <group id="FullLineGroup" text="Full Line Code Completion" popup="true">
+      <add-to-group group-id="CodeMenu" anchor="after" relative-to-action="CodeCompletionGroup"/>
+      <action id="org.jetbrains.completion.full.line.actions.ShowSettingsAction"
+              class="org.jetbrains.completion.full.line.actions.ShowSettingsAction"
+              text="Show Extended Settings"
+              description="Show extended full line settings for each configuration">
+      </action>
+      <action id="org.jetbrains.completion.full.line.actions.VerifyCloudAction"
+              class="org.jetbrains.completion.full.line.actions.VerifyCloudAction"
+              text="Verify Cloud"
+              description="Verify cloud completion for extended usage">
+      </action>
+    </group>
+  </actions>
 </idea-plugin>

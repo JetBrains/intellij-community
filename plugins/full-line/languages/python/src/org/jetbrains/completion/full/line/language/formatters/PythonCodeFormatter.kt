@@ -7,19 +7,19 @@ import com.intellij.psi.templateLanguages.OuterLanguageElement
 import org.jetbrains.completion.full.line.language.formatters.python.*
 
 class PythonCodeFormatter : CodeFormatterBase(
-        WhitespaceFormatter(),
-        SkippedElementsFormatter(PsiComment::class.java, OuterLanguageElement::class.java),
-        NumericalFormatter(false),
-        ImportFormatter(),
-        ParenthesizedWithoutTuplesFormatter(),
-        StringFormatter(),
-        ListLiteralFormatter(),
-        ArgumentListFormatter(),
-        SequenceFormatter(),
-        ParameterListFormatter(),
-        PlainTextFormatter()
+  WhitespaceFormatter(),
+  SkippedElementsFormatter(PsiComment::class.java, OuterLanguageElement::class.java),
+  NumericalFormatter(false),
+  ImportFormatter(),
+  ParenthesizedWithoutTuplesFormatter(),
+  StringFormatter(),
+  ListLiteralFormatter(),
+  ArgumentListFormatter(),
+  SequenceFormatter(),
+  ParameterListFormatter(),
+  PlainTextFormatter()
 ) {
-    override fun formatFinalElement(element: PsiElement, range: TextRange): String {
-        return super.formatFinalElement(element, range).replace(TABULATION, "\t")
-    }
+  override fun formatFinalElement(element: PsiElement, range: TextRange): String {
+    return super.formatFinalElement(element, range).replace(TABULATION, "\t")
+  }
 }

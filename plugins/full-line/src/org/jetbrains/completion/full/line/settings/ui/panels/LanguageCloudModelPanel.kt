@@ -12,38 +12,38 @@ import org.jetbrains.completion.full.line.settings.ui.components.pingButton
 import org.jetbrains.completion.full.line.settings.ui.fullRow
 
 class LanguageCloudModelPanel(
-    languages: Collection<Language>,
-    private val flccEnabled: ComponentPredicate,
-    authTokenTextField: JBPasswordField? = null,
+  languages: Collection<Language>,
+  private val flccEnabled: ComponentPredicate,
+  authTokenTextField: JBPasswordField? = null,
 ) : ComplexPanel {
-    private val rows = languages.map {
-        LanguageRow(
-            it,
-            authTokenTextField,
-            MLServerCompletionSettings.getInstance().state.langStates.keys.maxByOrNull { it.length },
-        )
+  private val rows = languages.map {
+    LanguageRow(
+      it,
+      authTokenTextField,
+      MLServerCompletionSettings.getInstance().state.langStates.keys.maxByOrNull { it.length },
+    )
+  }
+
+  override val panel = panel {
+    rows.forEach {
+      it.row(this).enableIf(flccEnabled)
     }
 
-    override val panel = panel {
-        rows.forEach {
-            it.row(this).enableIf(flccEnabled)
-        }
+  }.apply {
+    name = ModelType.Cloud.name
+  }
 
-    }.apply {
-        name = ModelType.Cloud.name
+  private class LanguageRow(val language: Language, val authTokenTextField: JBPasswordField?, biggestLang: String?) : ComplexRow {
+    private val checkBox = languageCheckBox(language, biggestLang)
+    private val loadingIcon = LoadingComponent()
+
+    override fun row(builder: LayoutBuilder) = builder.fullRow {
+      component(checkBox)
+        .withSelectedBinding(MLServerCompletionSettings.getInstance().getLangState(language)::enabled.toBinding())
+      component(pingButton(language, loadingIcon, authTokenTextField))
+        .enableIf(checkBox.selected)
+      loadingStatus(loadingIcon)
+        .forEach { it.enableIf(checkBox.selected) }
     }
-
-    private class LanguageRow(val language: Language, val authTokenTextField: JBPasswordField?, biggestLang: String?) : ComplexRow {
-        private val checkBox = languageCheckBox(language, biggestLang)
-        private val loadingIcon = LoadingComponent()
-
-        override fun row(builder: LayoutBuilder) = builder.fullRow {
-            component(checkBox)
-                .withSelectedBinding(MLServerCompletionSettings.getInstance().getLangState(language)::enabled.toBinding())
-            component(pingButton(language, loadingIcon, authTokenTextField))
-                .enableIf(checkBox.selected)
-            loadingStatus(loadingIcon)
-                .forEach { it.enableIf(checkBox.selected) }
-        }
-    }
+  }
 }

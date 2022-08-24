@@ -12,52 +12,52 @@ import java.math.RoundingMode
 import java.text.DecimalFormat
 
 class FullLineLookupElement(
-    val head: String,
-    val prefix: String,
-    val proposal: AnalyzedFullLineProposal,
-    private val supporter: FullLineLanguageSupporter,
-    val selectedByTab: Boolean = false
+  val head: String,
+  val prefix: String,
+  val proposal: AnalyzedFullLineProposal,
+  private val supporter: FullLineLanguageSupporter,
+  val selectedByTab: Boolean = false
 ) : LookupElement() {
-    val suffix
-        get() = proposal.suffix
+  val suffix
+    get() = proposal.suffix
 
-    private val settings = MLServerCompletionSettings.getInstance()
+  private val settings = MLServerCompletionSettings.getInstance()
 
-    override fun renderElement(presentation: LookupElementPresentation) {
-        super.renderElement(presentation)
+  override fun renderElement(presentation: LookupElementPresentation) {
+    super.renderElement(presentation)
 
-        presentation.apply {
-            icon = supporter.iconSet.let { if (proposal.refCorrectness.isCorrect()) it.regular else it.redCode }
-            typeText = typeText(proposal)
-            tailText = proposal.suffix + '\t' + (when {
-                selectedByTab                          -> TAIL_TEXT
-                settings.showScore(supporter.language) -> " ${scoreFormatter.format(proposal.score * 100)}%"
-                else                                   -> null
-            } ?: "")
-        }
-
+    presentation.apply {
+      icon = supporter.iconSet.let { if (proposal.refCorrectness.isCorrect()) it.regular else it.redCode }
+      typeText = typeText(proposal)
+      tailText = proposal.suffix + '\t' + (when {
+                                             selectedByTab -> TAIL_TEXT
+                                             settings.showScore(supporter.language) -> " ${scoreFormatter.format(proposal.score * 100)}%"
+                                             else -> null
+                                           } ?: "")
     }
 
-    override fun getLookupString(): String {
-        return proposal.suggestion
+  }
+
+  override fun getLookupString(): String {
+    return proposal.suggestion
+  }
+
+  override fun handleInsert(context: InsertionContext) {
+    FullLineInsertHandler.of(context, supporter).handleInsert(context, this)
+  }
+
+  private companion object {
+    const val TYPE_TEXT = "full-line"
+    const val TAIL_TEXT = " tab-selected"
+
+    private val scoreFormatter = DecimalFormat("#.####").apply { roundingMode = RoundingMode.DOWN }
+
+    private fun typeText(proposal: AnalyzedFullLineProposal): String {
+      if (Registry.`is`("full.line.use.all.providers")) {
+        return (proposal.provider?.let { "$it-" } ?: "") + TYPE_TEXT
+      }
+
+      return TYPE_TEXT
     }
-
-    override fun handleInsert(context: InsertionContext) {
-        FullLineInsertHandler.of(context, supporter).handleInsert(context, this)
-    }
-
-    private companion object {
-        const val TYPE_TEXT = "full-line"
-        const val TAIL_TEXT = " tab-selected"
-
-        private val scoreFormatter = DecimalFormat("#.####").apply { roundingMode = RoundingMode.DOWN }
-
-        private fun typeText(proposal: AnalyzedFullLineProposal): String {
-            if (Registry.`is`("full.line.use.all.providers")) {
-                return (proposal.provider?.let { "$it-" } ?: "") + TYPE_TEXT
-            }
-
-            return TYPE_TEXT
-        }
-    }
+  }
 }

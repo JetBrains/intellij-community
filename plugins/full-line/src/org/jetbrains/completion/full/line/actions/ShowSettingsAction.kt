@@ -6,8 +6,8 @@ import com.intellij.openapi.project.DumbAware
 import org.jetbrains.completion.full.line.settings.FullSettingsDialog
 
 class ShowSettingsAction : AnAction(), DumbAware {
-    override fun actionPerformed(e: AnActionEvent) {
-        val settingsDialog = FullSettingsDialog()
-        settingsDialog.show()
-    }
+  override fun actionPerformed(e: AnActionEvent) {
+    val settingsDialog = FullSettingsDialog()
+    settingsDialog.show()
+  }
 }

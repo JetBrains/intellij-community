@@ -7,19 +7,19 @@ import org.jetbrains.completion.full.line.language.LangState
 import org.jetbrains.completion.full.line.models.ModelType
 
 data class GeneralState(
-    // General server settings
-    var enable: Boolean = true,
+  // General server settings
+  var enable: Boolean = true,
 
-    @CheckboxFlag
-    var useTopN: Boolean = true,
-    var topN: Int = 3,
-    var useGrayText: Boolean = false,
-    var modelType: ModelType = ModelType.Local,
+  @CheckboxFlag
+  var useTopN: Boolean = true,
+  var topN: Int = 3,
+  var useGrayText: Boolean = false,
+  var modelType: ModelType = ModelType.Local,
 
-    // Language-specific settings (i.e. things that depend on model, server, language)
-    @IgnoreInInference
-    var langStates: HashMap<String, LangState> =
-        MLServerCompletionSettings.availableLanguages
-            .map { it.id to (FullLineLanguageSupporter.getInstance(it)?.langState?.copy() ?: LangState()) }
-            .toMap(HashMap())
+  // Language-specific settings (i.e. things that depend on model, server, language)
+  @IgnoreInInference
+  var langStates: HashMap<String, LangState> =
+    MLServerCompletionSettings.availableLanguages
+      .map { it.id to (FullLineLanguageSupporter.getInstance(it)?.langState?.copy() ?: LangState()) }
+      .toMap(HashMap())
 )

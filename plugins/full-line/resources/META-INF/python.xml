@@ -1,6 +1,6 @@
 <idea-plugin>
-    <depends>com.intellij.modules.python</depends>
-    <extensions defaultExtensionNs="org.jetbrains.completion.full.line">
-        <fullLineLanguageSupport implementation="org.jetbrains.completion.full.line.language.supporters.PythonSupporter"/>
-    </extensions>
+  <depends>com.intellij.modules.python</depends>
+  <extensions defaultExtensionNs="org.jetbrains.completion.full.line">
+    <fullLineLanguageSupport implementation="org.jetbrains.completion.full.line.language.supporters.PythonSupporter"/>
+  </extensions>
 </idea-plugin>

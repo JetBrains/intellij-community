@@ -13,46 +13,47 @@ import org.jetbrains.completion.full.line.settings.state.MlServerCompletionAuthS
 import org.jetbrains.completion.full.line.tasks.SetupLocalModelsTask
 
 class FullLineStartupActivity : StartupActivity {
-    /**
-     * Activity running only if token is provided, but plugin is not verified (for ex, when updating plugin from below 0.2.53 version)
-     */
-    override fun runActivity(project: Project) {
-        if (MLServerCompletionSettings.availableLanguages.isEmpty()) return
+  /**
+   * Activity running only if token is provided, but plugin is not verified (for ex, when updating plugin from below 0.2.53 version)
+   */
+  override fun runActivity(project: Project) {
+    if (MLServerCompletionSettings.availableLanguages.isEmpty()) return
 
-        checkDeprecatedVerificationStatus()
+    checkDeprecatedVerificationStatus()
 
-        checkAndDownloadLocalModels()
+    checkAndDownloadLocalModels()
+  }
+
+  private fun checkDeprecatedVerificationStatus() {
+    if (MlServerCompletionAuthState.getInstance().state.verified != FLVerificationStatus.UNKNOWN) return
+
+    if (MlServerCompletionAuthState.getInstance().authToken().isEmpty()) {
+      MlServerCompletionAuthState.getInstance().state.verified = FLVerificationStatus.UNVERIFIED
+    }
+    else {
+      CloudFullLineCompletionProvider.checkStatus(
+        MLServerCompletionSettings.availableLanguages.first(),
+        MlServerCompletionAuthState.getInstance().authToken()
+      ).onSuccess {
+        MlServerCompletionAuthState.getInstance().state.verified = FLVerificationStatus.fromStatusCode(it)
+      }.onError {
+        MlServerCompletionAuthState.getInstance().state.verified = FLVerificationStatus.UNVERIFIED
+      }
+    }
+  }
+
+  private fun checkAndDownloadLocalModels() {
+    val settings = MLServerCompletionSettings.getInstance()
+    if (settings.getModelMode() == ModelType.Cloud) return
+
+    val actions = MLServerCompletionSettings.availableLanguages.filter {
+      service<ConfigurableModelsManager>().missedLanguage(it)
+    }.map {
+      SetupLocalModelsTask.ToDoParams(it, SetupLocalModelsTask.Action.DOWNLOAD)
     }
 
-    private fun checkDeprecatedVerificationStatus() {
-        if (MlServerCompletionAuthState.getInstance().state.verified != FLVerificationStatus.UNKNOWN) return
-
-        if (MlServerCompletionAuthState.getInstance().authToken().isEmpty()) {
-            MlServerCompletionAuthState.getInstance().state.verified = FLVerificationStatus.UNVERIFIED
-        } else {
-            CloudFullLineCompletionProvider.checkStatus(
-                MLServerCompletionSettings.availableLanguages.first(),
-                MlServerCompletionAuthState.getInstance().authToken()
-            ).onSuccess {
-                MlServerCompletionAuthState.getInstance().state.verified = FLVerificationStatus.fromStatusCode(it)
-            }.onError {
-                MlServerCompletionAuthState.getInstance().state.verified = FLVerificationStatus.UNVERIFIED
-            }
-        }
+    if (actions.isNotEmpty()) {
+      SetupLocalModelsTask.queue(actions)
     }
-
-    private fun checkAndDownloadLocalModels() {
-        val settings = MLServerCompletionSettings.getInstance()
-        if (settings.getModelMode() == ModelType.Cloud) return
-
-        val actions = MLServerCompletionSettings.availableLanguages.filter {
-            service<ConfigurableModelsManager>().missedLanguage(it)
-        }.map {
-            SetupLocalModelsTask.ToDoParams(it, SetupLocalModelsTask.Action.DOWNLOAD)
-        }
-
-        if (actions.isNotEmpty()) {
-            SetupLocalModelsTask.queue(actions)
-        }
-    }
+  }
 }

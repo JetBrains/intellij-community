@@ -7,18 +7,18 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.text.DateFormatUtil
 
 class DiagnosticsLogConsole(private val project: Project) :
-    LogConsoleBase(project, null, "Diagnostics", true, DefaultLogFilterModel(project)) {
-    override fun isActive(): Boolean {
-        return ToolWindowManager.getInstance(project).getToolWindow(FULL_LINE_TOOL_WINDOW_ID)?.isVisible ?: false
-    }
+  LogConsoleBase(project, null, "Diagnostics", true, DefaultLogFilterModel(project)) {
+  override fun isActive(): Boolean {
+    return ToolWindowManager.getInstance(project).getToolWindow(FULL_LINE_TOOL_WINDOW_ID)?.isVisible ?: false
+  }
 
-    fun addMessage(message: DiagnosticsListener.Message) {
-        val time = DateFormatUtil.formatTime(message.time)
-        val part = message.part.toString().padStart(PAD_COUNT)
-        addMessage("[ $time | $part ] ${message.text}")
-    }
+  fun addMessage(message: DiagnosticsListener.Message) {
+    val time = DateFormatUtil.formatTime(message.time)
+    val part = message.part.toString().padStart(PAD_COUNT)
+    addMessage("[ $time | $part ] ${message.text}")
+  }
 
-    private companion object {
-        val PAD_COUNT = FullLinePart.values().maxOf { it.name.length }
-    }
+  private companion object {
+    val PAD_COUNT = FullLinePart.values().maxOf { it.name.length }
+  }
 }
