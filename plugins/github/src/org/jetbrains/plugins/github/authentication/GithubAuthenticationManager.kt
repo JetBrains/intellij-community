@@ -2,13 +2,11 @@
 package org.jetbrains.plugins.github.authentication
 
 import com.intellij.collaboration.auth.AccountsListener
-import com.intellij.collaboration.auth.createAccountsFlow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.AuthData
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.github.api.GithubServerPath
@@ -147,9 +145,6 @@ class GithubAuthenticationManager internal constructor() {
 
   @RequiresEdt
   fun addListener(disposable: Disposable, listener: AccountsListener<GithubAccount>) = accountManager.addListener(disposable, listener)
-
-  @RequiresEdt
-  fun createAccountsFlow(disposable: Disposable): StateFlow<Set<GithubAccount>> = accountManager.createAccountsFlow(disposable)
 
   companion object {
     @JvmStatic

@@ -29,13 +29,13 @@ class GHPRRepositorySelectorViewModelImpl(private val project: Project,
 
   override val repoSelectionState = MutableStateFlow<GHGitRepositoryMapping?>(null)
 
-  override val accountsState = combineState(scope, authManager.createAccountsFlow(this), repoSelectionState) { accounts, repo ->
+  override val accountsState = combineState(scope, authManager.accountManager.accountsState, repoSelectionState) { accountsMap, repo ->
     if (repo == null) {
       emptyList()
     }
     else {
       val server = repo.repository.serverPath
-      accounts.filter { it.server.equals(server, true) }
+      accountsMap.keys.filter { it.server.equals(server, true) }
     }
   }
 

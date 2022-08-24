@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.collaboration.async.DisposingMainScope
-import com.intellij.collaboration.auth.AccountsListener
 import git4idea.remote.hosting.knownRepositories
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
@@ -72,18 +71,10 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
     }
 
   init {
-    val accountsState = authManager.createAccountsFlow(tabDisposable)
-    val credChangeFlow = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-    authManager.addListener(tabDisposable, object : AccountsListener<GithubAccount> {
-      override fun onAccountCredentialsChanged(account: GithubAccount) {
-        credChangeFlow.tryEmit(Unit)
-      }
-    })
-    credChangeFlow.tryEmit(Unit)
-
     scope.launch {
-      combine(repositoryManager.knownRepositoriesState, accountsState, credChangeFlow,  resetRequestFlow) { repos, accounts, _, _ ->
-        Updater(repos, accounts)
+      combine(repositoryManager.knownRepositoriesState, authManager.accountManager.accountsState,
+              resetRequestFlow) { repos, accountsMap, _ ->
+        Updater(repos, accountsMap.keys)
       }.collectLatest {
         it.update()
       }
