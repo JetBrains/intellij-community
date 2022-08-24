@@ -53,19 +53,6 @@ public class JBHiDPIScaledImageTest {
       g.dispose();
     }
 
-    if (StartupUiUtil.isJreHiDPI(ctx)) {
-      JBHiDPIScaledImage bi = new JBHiDPIScaledImage(testIcon.getIconWidth(), testIcon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
-      g = bi.createGraphics();
-      try {
-        testIcon.paintIcon(null, g, 0, 0);
-      }
-      finally {
-        g.dispose();
-      }
-    }
-
-    //BufferedImage bi = ImageUtil.toBufferedImage(image);
-
     Assert.assertEquals(image.getRGB(0, 0), testColor1.getRGB());
     Assert.assertEquals(image.getRGB(image.getWidth() - 1, image.getHeight() - 1), testColor2.getRGB());
   }
