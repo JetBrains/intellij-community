@@ -1,0 +1,7 @@
+{
+  "icons": {
+    "expui": {
+      "ant.svg": "icons/build.svg"
+    }
+  }
+}
