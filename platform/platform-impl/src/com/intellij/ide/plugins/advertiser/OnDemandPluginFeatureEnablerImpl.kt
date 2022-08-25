@@ -5,25 +5,33 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.*
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.notificationGroup
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import kotlin.coroutines.coroutineContext
 
 private val LOG get() = logger<OnDemandPluginFeatureEnablerImpl>()
 
 @ApiStatus.Experimental
 private class OnDemandPluginFeatureEnablerImpl(private val project: Project) : PluginFeatureEnabler {
 
-  override fun enableSuggested() {
+  override suspend fun enableSuggested(): Boolean {
     val application = ApplicationManager.getApplication()
     LOG.assertTrue(!application.isDispatchThread && !application.isReadAccessAllowed
                    || application.isUnitTestMode)
 
     if (!IdeaPluginDescriptorImpl.isOnDemandEnabled) {
-      return
+      return false
     }
+
+    coroutineContext.ensureActive()
 
     val featureService = PluginFeatureService.instance
     val pluginEnabler = PluginEnabler.getInstance()
@@ -44,21 +52,23 @@ private class OnDemandPluginFeatureEnablerImpl(private val project: Project) : P
       .filter { it.isOnDemand }
       .toList()
 
-    if (!descriptors.isEmpty()) {
-      application.invokeAndWait {
-        pluginEnabler.enable(descriptors)
-      }
+    if (descriptors.isEmpty()) {
+      return false
+    }
+
+    return withContext(Dispatchers.EDT) {
+      val result = pluginEnabler.enable(descriptors)
 
       if (!application.isUnitTestMode) {
-        application.invokeLater(
-          notifyUser(descriptors),
-          project.disposed,
-        )
+        notifyUser(descriptors)
       }
+
+      result
     }
   }
 
-  private fun notifyUser(descriptors: List<IdeaPluginDescriptorImpl>) = Runnable {
+  @RequiresEdt
+  private fun notifyUser(descriptors: List<IdeaPluginDescriptorImpl>) {
     val message = IdeBundle.message(
       "plugins.advertiser.enabled.on.demand",
       descriptors.size,
