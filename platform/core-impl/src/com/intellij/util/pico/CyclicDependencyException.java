@@ -8,10 +8,9 @@
  * Idea by Rachel Davies, Original code by Aslak Hellesoy and Paul Hammant
  */
 
-package org.picocontainer.defaults;
+package com.intellij.util.pico;
 
 import org.jetbrains.annotations.NonNls;
-import org.picocontainer.PicoIntrospectionException;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -21,13 +20,13 @@ import java.util.List;
  * @author J&ouml;rg Schaible
  * @version $Revision: 1801 $
  */
-public class CyclicDependencyException extends PicoIntrospectionException {
+final class CyclicDependencyException extends PicoIntrospectionException {
     private final List stack;
 
     /**
      * @since 1.1
      */
-    public CyclicDependencyException(Class element) {
+    CyclicDependencyException(Class element) {
         super((Throwable)null);
         this.stack = new LinkedList();
         push(element);

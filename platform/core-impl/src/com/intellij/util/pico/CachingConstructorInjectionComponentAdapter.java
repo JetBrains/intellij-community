@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.pico;
 
 import com.intellij.util.ExceptionUtilRt;
@@ -7,9 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.ComponentAdapter;
 import org.picocontainer.PicoContainer;
-import org.picocontainer.PicoInitializationException;
-import org.picocontainer.PicoIntrospectionException;
-import org.picocontainer.defaults.*;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -22,14 +19,14 @@ import java.util.*;
 @SuppressWarnings("DeprecatedIsStillUsed")
 @Deprecated
 @ApiStatus.ScheduledForRemoval
-public final class CachingConstructorInjectionComponentAdapter implements ComponentAdapter {
+final class CachingConstructorInjectionComponentAdapter implements ComponentAdapter {
   private static final ThreadLocal<Set<Class<?>>> ourGuard = new ThreadLocal<>();
   private Object myInstance;
 
   private final Object key;
   private final Class<?> componentImplementation;
 
-  public CachingConstructorInjectionComponentAdapter(@NotNull Object key, @NotNull Class<?> componentImplementation) {
+  CachingConstructorInjectionComponentAdapter(@NotNull Object key, @NotNull Class<?> componentImplementation) {
     this.key = key;
     this.componentImplementation = componentImplementation;
   }
@@ -111,7 +108,10 @@ public final class CachingConstructorInjectionComponentAdapter implements Compon
     }
     catch (InvocationTargetException e) {
       ExceptionUtilRt.rethrowUnchecked(e.getTargetException());
-      throw new PicoInvocationTargetInitializationException(e.getTargetException());
+      Throwable cause = e.getTargetException();
+      throw new PicoInitializationException("InvocationTargetException: "
+                                            + cause.getClass().getName()
+                                            + " " + cause.getMessage(), cause);
     }
     catch (InstantiationException e) {
       throw new PicoInitializationException("Should never get here");
@@ -124,8 +124,7 @@ public final class CachingConstructorInjectionComponentAdapter implements Compon
   private static @NotNull Constructor<?> getGreediestSatisfiableConstructor(@Nullable ComponentAdapter adapter,
                                                                             @NotNull DefaultPicoContainer container,
                                                                             @NotNull Class<?> componentImplementation) throws
-                                                                                                                       PicoIntrospectionException,
-                                                                                                                       AssignabilityRegistrationException {
+                                                                                                                       PicoIntrospectionException {
     Set<Constructor<?>> conflicts = new HashSet<>();
     Set<Class<?>[]> unsatisfiableDependencyTypes = new HashSet<>();
     // filter out all constructors that will definitely not match
@@ -180,7 +179,11 @@ public final class CachingConstructorInjectionComponentAdapter implements Compon
     }
 
     if (greediestConstructor == null && !unsatisfiableDependencyTypes.isEmpty()) {
-      throw new UnsatisfiableDependenciesException(componentImplementation, unsatisfiedDependencyType, unsatisfiableDependencyTypes, container);
+      @NotNull Class<?> componentImplementation1 = componentImplementation;
+      throw new PicoIntrospectionException(componentImplementation1.getName() + " has unsatisfied dependency: " + unsatisfiedDependencyType
+                                           + " among unsatisfiable dependencies: " +
+                                           unsatisfiableDependencyTypes + " where " + container
+                                           + " was the leaf container being asked for dependencies.");
     }
     if (greediestConstructor == null) {
       // be nice to the user, show all constructors that were filtered out

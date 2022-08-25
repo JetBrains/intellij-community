@@ -58,7 +58,9 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   @Deprecated
   <T> T @NotNull [] getComponents(@NotNull Class<T> baseClass);
 
+  @Deprecated
   @ApiStatus.Internal
+  @ApiStatus.ScheduledForRemoval
   @NotNull PicoContainer getPicoContainer();
 
   @ApiStatus.Internal

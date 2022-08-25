@@ -7,7 +7,7 @@
  *                                                                           *
  * Idea by Rachel Davies, Original code by Aslak Hellesoy and Paul Hammant   *
 */
-package org.picocontainer;
+package com.intellij.util.pico;
 
 /**
  * Subclass of {@link PicoException} that is thrown when there is a problem initializing the container or some other
@@ -15,14 +15,14 @@ package org.picocontainer;
  *
  * @since 1.0
  */
-public class PicoInitializationException extends PicoException {
+final class PicoInitializationException extends PicoException {
   /**
    * Construct a new exception with no cause and the specified detail message.  Note modern JVMs may still track the
    * exception that caused this one.
    *
    * @param message the message detailing the exception.
    */
-  public PicoInitializationException(final String message) {
+  PicoInitializationException(final String message) {
     super(message);
   }
 
@@ -31,7 +31,7 @@ public class PicoInitializationException extends PicoException {
    *
    * @param cause the exception that caused this one.
    */
-  public PicoInitializationException(final Throwable cause) {
+  PicoInitializationException(final Throwable cause) {
     super(cause);
   }
 
@@ -41,7 +41,7 @@ public class PicoInitializationException extends PicoException {
    * @param message the message detailing the exception.
    * @param cause   the exception that caused this one.
    */
-  public PicoInitializationException(final String message, final Throwable cause) {
+  PicoInitializationException(final String message, final Throwable cause) {
     super(message, cause);
   }
 }

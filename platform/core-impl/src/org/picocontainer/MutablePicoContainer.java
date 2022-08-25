@@ -10,12 +10,14 @@
 package org.picocontainer;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * @author Paul Hammant
  * @author Aslak Helles&oslash;y
  * @author Jon Tirs&eacute;n
  */
+@TestOnly
 public interface MutablePicoContainer extends PicoContainer {
   /**
    * @deprecated Use services.

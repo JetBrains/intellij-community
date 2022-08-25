@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.pico;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -7,8 +7,6 @@ import org.jetbrains.annotations.Nullable;
 import org.picocontainer.ComponentAdapter;
 import org.picocontainer.MutablePicoContainer;
 import org.picocontainer.PicoContainer;
-import org.picocontainer.PicoRegistrationException;
-import org.picocontainer.defaults.AmbiguousComponentResolutionException;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -103,7 +101,8 @@ public class DefaultPicoContainer implements MutablePicoContainer {
 
   public final ComponentAdapter registerComponent(@NotNull ComponentAdapter componentAdapter) {
     if (componentKeyToAdapter.putIfAbsent(componentAdapter.getComponentKey(), componentAdapter) != null) {
-      throw new PicoRegistrationException("Key " + componentAdapter.getComponentKey() + " duplicated");
+      @NotNull String message = "Key " + componentAdapter.getComponentKey() + " duplicated";
+      throw new PicoException(message);
     }
     componentAdapters.add(componentAdapter);
     return componentAdapter;
@@ -137,11 +136,6 @@ public class DefaultPicoContainer implements MutablePicoContainer {
 
     //noinspection unchecked
     return (T)adapter.getComponentInstance(this);
-  }
-
-  @ApiStatus.Internal
-  public final @Nullable ComponentAdapter getServiceAdapter(@NotNull String key) {
-    return componentKeyToAdapter.get(key);
   }
 
   @Override

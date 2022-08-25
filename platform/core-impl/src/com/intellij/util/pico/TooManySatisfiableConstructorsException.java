@@ -7,16 +7,21 @@
  *                                                                           *
  * Idea by Rachel Davies, Original code by Aslak Hellesoy and Paul Hammant
  */
+package com.intellij.util.pico;
 
-package org.picocontainer.defaults;
+import java.lang.reflect.Constructor;
+import java.util.Collection;
 
-import org.picocontainer.PicoInitializationException;
+final class TooManySatisfiableConstructorsException extends PicoIntrospectionException {
+  private final Collection<Constructor<?>> constructors;
 
-public class PicoInvocationTargetInitializationException extends PicoInitializationException {
-    public PicoInvocationTargetInitializationException(Throwable cause) {
-        super("InvocationTargetException: "
-                + cause.getClass().getName()
-                + " " + cause.getMessage()
-                , cause);
-    }
+  TooManySatisfiableConstructorsException(Collection<Constructor<?>> constructors) {
+    super("Too many satisfiable constructors:" + constructors.toString());
+
+    this.constructors = constructors;
+  }
+
+  public Collection<Constructor<?>> getConstructors() {
+    return constructors;
+  }
 }

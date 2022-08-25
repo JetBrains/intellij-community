@@ -7,11 +7,10 @@
  *                                                                           *
  * Idea by Rachel Davies, Original code by Aslak Hellesoy and Paul Hammant
  */
-package org.picocontainer.defaults;
+package com.intellij.util.pico;
 
 import org.jetbrains.annotations.NonNls;
 import org.picocontainer.ComponentAdapter;
-import org.picocontainer.PicoIntrospectionException;
 
 import java.util.Arrays;
 

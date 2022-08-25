@@ -7,7 +7,7 @@
  *                                                                           *
  * Idea by Rachel Davies, Original code by Aslak Hellesoy and Paul Hammant
  */
-package org.picocontainer;
+package com.intellij.util.pico;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -24,18 +24,11 @@ import java.io.PrintWriter;
  * @version $Revision: 1812 $
  * @since 1.0
  */
-public class PicoException extends RuntimeException {
+class PicoException extends RuntimeException {
   /**
    * The exception that caused this one.
    */
   private Throwable cause;
-
-  /**
-   * Construct a new exception with no cause and no detail message. Note modern JVMs may still track the exception
-   * that caused this one.
-   */
-  public PicoException() {
-  }
 
   /**
    * Construct a new exception with no cause and the specified detail message.  Note modern JVMs may still track the
@@ -43,7 +36,7 @@ public class PicoException extends RuntimeException {
    *
    * @param message the message detailing the exception.
    */
-  public PicoException(@NotNull String message) {
+  PicoException(@NotNull String message) {
     super(message);
   }
 
@@ -52,7 +45,7 @@ public class PicoException extends RuntimeException {
    *
    * @param cause the exception that caused this one.
    */
-  public PicoException(final Throwable cause) {
+  PicoException(final Throwable cause) {
     this.cause = cause;
   }
 
@@ -62,7 +55,7 @@ public class PicoException extends RuntimeException {
    * @param message the message detailing the exception.
    * @param cause   the exception that caused this one.
    */
-  public PicoException(final String message, final Throwable cause) {
+  PicoException(final String message, final Throwable cause) {
     super(message);
     this.cause = cause;
   }
