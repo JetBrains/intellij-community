@@ -14,6 +14,8 @@ import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.impl.ToolbarComboWidget
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarProjectWidgetFactory
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory.Position
@@ -86,8 +88,10 @@ private class GitWidgetUpdater(val project: Project, val widget: GitToolbarWidge
     updateIcons()
   }
 
+  @NlsSafe
   private fun GitRepository.calcText(): String = cutText(GitBranchUtil.getBranchNameOrRev(this))
 
+  @NlsContexts.Tooltip
   private fun GitRepository.calcTooltip(): String {
     if (state == Repository.State.DETACHED) {
       return GitBundle.message("git.status.bar.widget.tooltip.detached")
@@ -124,7 +128,7 @@ private fun cutText(value: String): String {
 
   val beginRange = IntRange(0, SHORTENED_BEGIN_PART - 1)
   val endRange = IntRange(value.length - SHORTENED_END_PART, value.length - 1)
-  return value.substring(beginRange) + "..." + value.substring(endRange)
+  return value.substring(beginRange) + '…' + value.substring(endRange)
 }
 
 private class GitToolbarWidget : ToolbarComboWidget(), Disposable {

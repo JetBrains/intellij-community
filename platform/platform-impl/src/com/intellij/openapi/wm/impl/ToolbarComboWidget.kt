@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
+import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.event.ActionListener
 import java.awt.event.InputEvent
@@ -14,7 +15,8 @@ abstract class ToolbarComboWidget: JComponent() {
 
   val pressListeners = mutableListOf<ActionListener>()
 
-  var text: String? by Delegates.observable("", this::fireUpdateEvents)
+  var text: @Nls String? by Delegates.observable("", this::fireUpdateEvents)
+
   var leftIcons: List<Icon> by Delegates.observable(emptyList(), this::fireUpdateEvents)
   var rightIcons: List<Icon> by Delegates.observable(emptyList(), this::fireUpdateEvents)
   var leftIconsGap: Int by Delegates.observable(0, this::fireUpdateEvents)

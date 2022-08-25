@@ -88,11 +88,11 @@ private class ProjectWidgetUpdater(private val proj: Project,
     val name = value.substringBeforeLast(".")
     if (name.length + extension.length <= maxLength) return value
 
-    return name.substring(0, maxLength - extension.length) + "..." + extension
+    return name.substring(0, maxLength - extension.length) + '…' + extension
   }
 
   private fun cutProject(value: String, maxLength: Int): String {
-    return if (value.length <= maxLength) value else value.substring(0, maxLength) + "..."
+    return if (value.length <= maxLength) value else value.substring(0, maxLength) + '…'
   }
 
   fun subscribe() {
