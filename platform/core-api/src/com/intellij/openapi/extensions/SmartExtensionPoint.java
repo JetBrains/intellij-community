@@ -15,21 +15,26 @@ import java.util.List;
 public abstract class SmartExtensionPoint<Extension, V> {
   private final Collection<V> myExplicitExtensions;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  private volatile ExtensionPoint<Extension> myExtensionPoint;
+  private volatile ExtensionPoint<@NotNull Extension> myExtensionPoint;
   private volatile List<V> myCache;
   private final ExtensionPointAndAreaListener<Extension> myExtensionPointAndAreaListener;
 
   protected SmartExtensionPoint(@NotNull Collection<V> explicitExtensions) {
     myExplicitExtensions = explicitExtensions;
 
-    myExtensionPointAndAreaListener = new ExtensionPointAdapter<Extension>() {
+    myExtensionPointAndAreaListener = new ExtensionPointAndAreaListener<Extension>() {
       @Override
       public void areaReplaced(@NotNull ExtensionsArea oldArea) {
         dropCache();
       }
 
       @Override
-      public void extensionListChanged() {
+      public void extensionAdded(@NotNull Extension extension, @NotNull PluginDescriptor pluginDescriptor) {
+        dropCache();
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull Extension extension, @NotNull PluginDescriptor pluginDescriptor) {
         dropCache();
       }
 
@@ -41,7 +46,7 @@ public abstract class SmartExtensionPoint<Extension, V> {
         synchronized (myExplicitExtensions) {
           if (myCache != null) {
             myCache = null;
-            ExtensionPoint<Extension> extensionPoint = myExtensionPoint;
+            ExtensionPoint<@NotNull Extension> extensionPoint = myExtensionPoint;
             if (extensionPoint != null) {
               extensionPoint.removeExtensionPointListener(this);
               myExtensionPoint = null;
@@ -52,7 +57,7 @@ public abstract class SmartExtensionPoint<Extension, V> {
     };
   }
 
-  protected abstract @NotNull ExtensionPoint<Extension> getExtensionPoint();
+  protected abstract @NotNull ExtensionPoint<@NotNull Extension> getExtensionPoint();
 
   public final void addExplicitExtension(@NotNull V extension) {
     synchronized (myExplicitExtensions) {
@@ -77,7 +82,7 @@ public abstract class SmartExtensionPoint<Extension, V> {
     }
 
     // it is ok to call getExtensionPoint several times - call is cheap and implementation is thread-safe
-    ExtensionPoint<Extension> extensionPoint = myExtensionPoint;
+    ExtensionPoint<@NotNull Extension> extensionPoint = myExtensionPoint;
     if (extensionPoint == null) {
       extensionPoint = getExtensionPoint();
       myExtensionPoint = extensionPoint;
