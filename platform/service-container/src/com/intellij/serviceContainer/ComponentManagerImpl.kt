@@ -103,9 +103,6 @@ abstract class ComponentManagerImpl(
             o.getInstance<Any>(componentManager, null)
           }
         }
-        catch (e: ExtensionNotApplicableException) {
-          LOG.info("$implementation is not applicable")
-        }
         catch (e: Throwable) {
           LOG.error("Cannot create $implementation", e)
         }

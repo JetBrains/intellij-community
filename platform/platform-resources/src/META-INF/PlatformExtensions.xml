@@ -610,7 +610,8 @@
                         headlessImplementation="com.intellij.ide.plugins.DisabledPluginsState"
                         testServiceImplementation="com.intellij.ide.plugins.DynamicPluginEnabler"
                         preload="true"/>
-    <applicationService serviceImplementation="com.intellij.ide.plugins.EnabledOnDemandPluginsState"/>
+    <applicationService serviceImplementation="com.intellij.ide.plugins.EnabledOnDemandPluginsState"
+                        preload="true"/>
     <applicationService serviceImplementation="com.intellij.ide.plugins.ExpiredPluginsState"
                         preload="true"/>
     <projectService serviceInterface="com.intellij.ide.plugins.advertiser.PluginFeatureEnabler"

@@ -161,10 +161,7 @@ public class ImportSpecBuilder {
       }
       final boolean synchronous = myExecutionMode == ProgressExecutionMode.MODAL_SYNC;
 
-      PluginFeatureEnabler featureEnabler = PluginFeatureEnabler.getInstanceIfCreated(myProject);
-      if (featureEnabler != null) {
-        featureEnabler.enableSuggested();
-      }
+      PluginFeatureEnabler.getInstance(myProject).enableSuggested();
 
       ProjectDataManager.getInstance().importData(externalProject,
                                                   myProject,

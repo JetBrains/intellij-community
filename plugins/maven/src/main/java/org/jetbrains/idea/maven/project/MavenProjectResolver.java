@@ -157,10 +157,7 @@ public class MavenProjectResolver {
       mavenProjectCandidate
         .set(result, generalSettings, false, MavenProjectReaderResult.shouldResetDependenciesAndFolders(result), false);
       if (result.nativeMavenProject != null) {
-        PluginFeatureEnabler featureEnabler = PluginFeatureEnabler.getInstanceIfCreated(myProject);
-        if (featureEnabler != null) {
-          featureEnabler.enableSuggested();
-        }
+        PluginFeatureEnabler.getInstance(myProject).enableSuggested();
 
         for (MavenImporter eachImporter : MavenImporter.getSuitableImporters(mavenProjectCandidate)) {
           eachImporter.resolve(project, mavenProjectCandidate, result.nativeMavenProject, embedder, context);

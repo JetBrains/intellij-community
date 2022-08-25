@@ -5,29 +5,25 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.*
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.notificationGroup
 import org.jetbrains.annotations.ApiStatus
 
-private val logger: Logger
-  get() = Logger.getInstance(OnDemandPluginFeatureEnablerImpl::class.java)
+private val LOG get() = logger<OnDemandPluginFeatureEnablerImpl>()
 
 @ApiStatus.Experimental
 private class OnDemandPluginFeatureEnablerImpl(private val project: Project) : PluginFeatureEnabler {
 
-  init {
-    if (!IdeaPluginDescriptorImpl.isOnDemandEnabled) {
-      throw ExtensionNotApplicableException.create()
-    }
-  }
-
   override fun enableSuggested() {
     val application = ApplicationManager.getApplication()
-    logger.assertTrue(!application.isDispatchThread)
-    logger.assertTrue(!application.isReadAccessAllowed)
+    LOG.assertTrue(!application.isDispatchThread && !application.isReadAccessAllowed
+                   || application.isUnitTestMode)
+
+    if (!IdeaPluginDescriptorImpl.isOnDemandEnabled) {
+      return
+    }
 
     val featureService = PluginFeatureService.instance
     val pluginEnabler = PluginEnabler.getInstance()
@@ -53,10 +49,12 @@ private class OnDemandPluginFeatureEnablerImpl(private val project: Project) : P
         pluginEnabler.enable(descriptors)
       }
 
-      application.invokeLater(
-        notifyUser(descriptors),
-        project.disposed,
-      )
+      if (!application.isUnitTestMode) {
+        application.invokeLater(
+          notifyUser(descriptors),
+          project.disposed,
+        )
+      }
     }
   }
 
