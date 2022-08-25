@@ -20,7 +20,7 @@ private class ReaderModeFileEditorListener : FileEditorManagerListener {
 
     file.fileSystem.addVirtualFileListener(object : VirtualFileListener {
       override fun propertyChanged(event: VirtualFilePropertyEvent) {
-        if (event.propertyName == VirtualFile.PROP_WRITABLE) {
+        if (event.propertyName == VirtualFile.PROP_WRITABLE && event.file == file) {
           ReaderModeSettings.applyReaderMode(project, fileEditor.editor, file, fileIsOpenAlready = true, forceUpdate = true)
         }
       }
