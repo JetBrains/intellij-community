@@ -1,30 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.extensions;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.extensions
 
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
-import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
+import org.jetbrains.annotations.NonNls
 
-public abstract class BaseExtensionPointName<T> {
-  private final String myName;
+abstract class BaseExtensionPointName<T : Any>(val name: @NonNls String) {
+  override fun toString(): String = name
 
-  public BaseExtensionPointName(@NotNull @NonNls String name) {
-    myName = name;
-  }
-
-  public final @NotNull String getName() {
-    return myName;
-  }
-
-  @Override
-  public final String toString() {
-    return myName;
-  }
-
-  protected final @NotNull ExtensionPointImpl<T> getPointImpl(@Nullable AreaInstance areaInstance) {
-    ExtensionsAreaImpl area = (ExtensionsAreaImpl)(areaInstance == null ? Extensions.getRootArea() : areaInstance.getExtensionArea());
-    return area.getExtensionPoint(getName());
+  protected fun getPointImpl(areaInstance: AreaInstance?): ExtensionPointImpl<T> {
+    val area = (areaInstance?.extensionArea ?: Extensions.getRootArea()) as ExtensionsAreaImpl
+    return area.getExtensionPoint(name)
   }
 }

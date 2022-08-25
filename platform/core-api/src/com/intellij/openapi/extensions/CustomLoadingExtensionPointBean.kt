@@ -1,41 +1,35 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.extensions;
+package com.intellij.openapi.extensions
 
-import com.intellij.openapi.components.ComponentManager;
-import com.intellij.serviceContainer.BaseKeyedLazyInstance;
-import com.intellij.util.xmlb.annotations.Attribute;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
+import com.intellij.openapi.components.ComponentManager
+import com.intellij.serviceContainer.BaseKeyedLazyInstance
+import com.intellij.util.xmlb.annotations.Attribute
+import org.jetbrains.annotations.TestOnly
 
-public abstract class CustomLoadingExtensionPointBean<T> extends BaseKeyedLazyInstance<T> {
+abstract class CustomLoadingExtensionPointBean<T : Any> : BaseKeyedLazyInstance<T> {
   @Attribute
-  public String factoryClass;
+  @JvmField
+  var factoryClass: String? = null
 
   @Attribute
-  public String factoryArgument;
+  @JvmField
+  var factoryArgument: String? = null
 
-  protected CustomLoadingExtensionPointBean() {
-  }
+  protected constructor()
 
   @TestOnly
-  protected CustomLoadingExtensionPointBean(@NotNull T instance) {
-    super(instance);
-  }
+  protected constructor(instance: T) : super(instance)
 
-  public final @NotNull T createInstance(@NotNull ComponentManager componentManager) {
-    T instance;
-    if (factoryClass == null) {
-      instance = super.createInstance(componentManager, getPluginDescriptor());
+  fun createInstance(componentManager: ComponentManager): T {
+    val instance: T = if (factoryClass == null) {
+      super.createInstance(componentManager, pluginDescriptor)
     }
     else {
-      ExtensionFactory factory = componentManager.instantiateClass(factoryClass, getPluginDescriptor());
-      //noinspection unchecked
-      instance = (T)factory.createInstance(factoryArgument, getImplementationClassName());
+      val factory = componentManager.instantiateClass<ExtensionFactory>(factoryClass!!, pluginDescriptor)
+      @Suppress("UNCHECKED_CAST")
+      factory.createInstance(factoryArgument!!, implementationClassName) as T
     }
-
-    if (instance instanceof PluginAware) {
-      ((PluginAware)instance).setPluginDescriptor(getPluginDescriptor());
-    }
-    return instance;
+    (instance as? PluginAware)?.setPluginDescriptor(pluginDescriptor)
+    return instance
   }
 }
