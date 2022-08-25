@@ -22,7 +22,7 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.VersionedStorageChange
@@ -405,7 +405,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             val oldModules = mutableListOf<Module>()
             val newModules = mutableListOf<Module>()
             for (change in moduleChanges) {
-                oldEntity(change)?.let { oldModules.addIfNotNull(storageBefore.findModuleByEntity(it)) }
+                oldEntity(change)?.let { oldModules.addIfNotNull(it.findModule(storageBefore)) }
                 newEntity(change)?.let {
                     val moduleBridge = storageAfter.findModuleByEntityWithHack(it, project)
                     newModules.addIfNotNull(moduleBridge)

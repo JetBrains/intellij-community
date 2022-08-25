@@ -23,7 +23,7 @@ import com.intellij.util.messages.MessageBusConnection
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
@@ -260,10 +260,10 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
                         storageAfter.findModuleByEntityWithHack(moduleChange.newEntity, project)?.scheduleRegister()
                     }
 
-                    is EntityChange.Removed -> storageBefore.findModuleByEntity(moduleChange.entity)?.scheduleRemove()
+                    is EntityChange.Removed -> moduleChange.entity.findModule(storageBefore)?.scheduleRemove()
                     is EntityChange.Replaced -> {
-                        storageBefore.findModuleByEntity(moduleChange.oldEntity)?.scheduleRemove()
-                        storageAfter.findModuleByEntity(moduleChange.newEntity)?.scheduleRegister()
+                        moduleChange.oldEntity.findModule(storageBefore)?.scheduleRemove()
+                        moduleChange.newEntity.findModule(storageAfter)?.scheduleRegister()
                     }
                 }
             }
@@ -276,10 +276,10 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
                         storageAfter.findModuleByEntityWithHack(sourceRootChange.newEntity.contentRoot.module, project)
                     )
 
-                    is EntityChange.Removed -> listOfNotNull(storageBefore.findModuleByEntity(sourceRootChange.entity.contentRoot.module))
+                    is EntityChange.Removed -> listOfNotNull(sourceRootChange.entity.contentRoot.module.findModule(storageBefore))
                     is EntityChange.Replaced -> listOfNotNull(
-                        storageBefore.findModuleByEntity(sourceRootChange.oldEntity.contentRoot.module),
-                        storageAfter.findModuleByEntity(sourceRootChange.newEntity.contentRoot.module)
+                        sourceRootChange.oldEntity.contentRoot.module.findModule(storageBefore),
+                        sourceRootChange.newEntity.contentRoot.module.findModule(storageAfter)
                     )
                 }
 
@@ -412,7 +412,7 @@ class  FineGrainedIdeaModelInfosCache(private val project: Project): IdeaModelIn
 
             val outdatedModuleSdks: Set<Sdk> = moduleChanges.asSequence()
                 .mapNotNull { it.oldEntity }
-                .mapNotNull { storageBefore.findModuleByEntity(it) }
+                .mapNotNull { it.findModule(storageBefore) }
                 .flatMapTo(hashSetOf(), ::moduleSdks)
 
             if (outdatedModuleSdks.isNotEmpty()) {
