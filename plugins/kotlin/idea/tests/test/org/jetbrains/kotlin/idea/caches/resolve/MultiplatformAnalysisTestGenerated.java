@@ -133,6 +133,11 @@ public class MultiplatformAnalysisTestGenerated extends AbstractMultiplatformAna
         runTest("testData/multiplatform/duplicateExpectsWithStrongIncompatibility/");
     }
 
+    @TestMetadata("enumFromCommonSerlializableSupertype")
+    public void testEnumFromCommonSerlializableSupertype() throws Exception {
+        runTest("testData/multiplatform/enumFromCommonSerlializableSupertype/");
+    }
+
     @TestMetadata("expectActualLineMarkers")
     public void testExpectActualLineMarkers() throws Exception {
         runTest("testData/multiplatform/expectActualLineMarkers/");

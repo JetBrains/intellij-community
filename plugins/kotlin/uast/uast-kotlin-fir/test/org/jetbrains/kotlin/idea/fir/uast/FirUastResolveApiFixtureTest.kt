@@ -149,6 +149,10 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         doCheck("ListIterator", ::checkListIterator)
     }
 
+    fun testStringJVM() {
+        doCheck("StringJVM", ::checkStringJVM)
+    }
+
     fun testDivByZero() {
         doCheck("DivByZero", ::checkDivByZero)
     }
@@ -203,6 +207,10 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
 
     fun testResolveKotlinPropertyAccessor() {
         doCheck("ResolveKotlinPropertyAccessor", ::checkResolveKotlinPropertyAccessor)
+    }
+
+    fun testResolveToSubstituteOverride() {
+        doCheck("ResolveToSubstituteOverride", ::checkResolveToSubstituteOverride)
     }
 
 }

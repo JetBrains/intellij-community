@@ -1,9 +1,11 @@
 pluginManagement {
     repositories {
+        mavenLocal()
         google()
         jcenter()
         gradlePluginPortal()
-        mavenCentral()
+        maven { url 'KOTLIN_BOOTSTRAP_REPO' }
+        maven { url 'KOTLIN_REPO' }
     }
 
 }

@@ -97,6 +97,7 @@
     <orderEntry type="module" module-name="kotlin.code-insight.utils" />
     <orderEntry type="module" module-name="kotlin.code-insight.impl-base" />
     <orderEntry type="module" module-name="kotlin.code-insight.descriptions" />
+    <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared" />
     <orderEntry type="module" module-name="kotlin.completion.api" />
     <orderEntry type="module" module-name="kotlin.completion.impl-shared" />
     <orderEntry type="module" module-name="kotlin.completion.impl-k1" />

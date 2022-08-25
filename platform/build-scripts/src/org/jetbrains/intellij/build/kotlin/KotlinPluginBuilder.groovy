@@ -182,7 +182,8 @@ final class KotlinPluginBuilder {
     "kotlin.uast.uast-kotlin-idea-fir",
     "kotlin.fir.fir-low-level-api-ide-impl",
     "kotlin.navigation",
-    )
+    "kotlin.refactorings.rename.k2",
+  )
 
   @SuppressWarnings('SpellCheckingInspection')
   private static final List<String> LIBRARIES = List.of(

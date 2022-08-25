@@ -6,7 +6,10 @@ group = "me.user"
 version = "1.0-SNAPSHOT"
 
 repositories {
+    mavenLocal()
     mavenCentral()
+    maven("KOTLIN_BOOTSTRAP_REPO")
+    maven("KOTLIN_REPO")
 }
 
 kotlin {
@@ -22,7 +25,9 @@ kotlin {
     js(BOTH) {
         browser {
             commonWebpackConfig {
-                cssSupport.enabled = true
+                cssSupport {
+                    enabled.set(true)
+                }
             }
         }
     }

@@ -6,21 +6,26 @@ group = "testGroupId"
 version = "1.0-SNAPSHOT"
 
 repositories {
+    mavenLocal()
     mavenCentral()
+    maven("KOTLIN_BOOTSTRAP_REPO")
+    maven("KOTLIN_REPO")
 }
 
 kotlin {
-    js("nodeJs", LEGACY) {
+    js("nodeJs", IR) {
         binaries.executable()
         nodejs {
 
         }
     }
-    js("browser", LEGACY) {
+    js("browser", IR) {
         binaries.executable()
         browser {
             commonWebpackConfig {
-                cssSupport.enabled = true
+                cssSupport {
+                    enabled.set(true)
+                }
             }
         }
     }

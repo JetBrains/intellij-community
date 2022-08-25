@@ -7,8 +7,11 @@ group = 'me.user'
 version = '1.0-SNAPSHOT'
 
 repositories {
+    mavenLocal()
     jcenter()
     mavenCentral()
+    maven { url 'KOTLIN_BOOTSTRAP_REPO' }
+    maven { url 'KOTLIN_REPO' }
     maven { url 'https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven' }
 }
 
@@ -22,11 +25,13 @@ kotlin {
             useJUnitPlatform()
         }
     }
-    js(LEGACY) {
+    js(IR) {
         binaries.executable()
         browser {
             commonWebpackConfig {
-                cssSupport.enabled = true
+                cssSupport {
+                    it.enabled.set(true)
+                }
             }
         }
     }
