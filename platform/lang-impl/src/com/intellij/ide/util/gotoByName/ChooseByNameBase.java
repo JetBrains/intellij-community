@@ -1641,6 +1641,11 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       e.getPresentation().setEnabled(elements.length > 0);
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
     public abstract PsiElement @NotNull [] getElements();
   }
 

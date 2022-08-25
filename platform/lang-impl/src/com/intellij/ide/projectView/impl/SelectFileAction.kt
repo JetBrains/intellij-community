@@ -9,6 +9,7 @@ import com.intellij.ide.impl.ProjectViewSelectInGroupTarget
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys.TOOL_WINDOW
 import com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText
@@ -57,6 +58,7 @@ internal class SelectFileAction : DumbAwareAction() {
     }
   }
 
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   private data class Selector(val target: SelectInTarget, val context: SelectInContext)
 
