@@ -1,5 +1,5 @@
 // AFTER-WARNING: Variable 'x' is never used
-// INTENTION_TEXT: "Convert to trimMargin() call"
+// INTENTION_TEXT: "Convert to 'trimMargin()' call"
 // WITH_STDLIB
 fun test() {
     val x =
