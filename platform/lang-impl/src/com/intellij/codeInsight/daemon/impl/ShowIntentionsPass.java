@@ -23,7 +23,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
-import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -47,7 +46,6 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
 
   private final PsiFile myFile;
   private final int myPassIdToShowIntentionsFor;
-  private final IntentionsInfo myIntentionsInfo = new IntentionsInfo();
   private final boolean myQueryIntentionActions;
   private volatile CachedIntentions myCachedIntentions;
   private volatile boolean myActionsChanged;
@@ -242,6 +240,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
     if (!UIUtil.hasFocus(myEditor.getContentComponent())) return;
     TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
     if (state != null && !state.isFinished()) return;
+    IntentionsInfo myIntentionsInfo = new IntentionsInfo();
     getActionsToShow(myEditor, myFile, myIntentionsInfo, myPassIdToShowIntentionsFor, myQueryIntentionActions);
     myCachedIntentions = IntentionsUI.getInstance(myProject).getCachedIntentions(myEditor, myFile);
     myActionsChanged = myCachedIntentions.wrapAndUpdateActions(myIntentionsInfo, false);
@@ -313,8 +312,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
     List<HighlightInfo.IntentionActionDescriptor> fixes = new ArrayList<>();
     DaemonCodeAnalyzerImpl.HighlightByOffsetProcessor highestPriorityInfoFinder = new DaemonCodeAnalyzerImpl.HighlightByOffsetProcessor(true);
     CommonProcessors.CollectProcessor<HighlightInfo> infos = new CommonProcessors.CollectProcessor<>();
-    DaemonCodeAnalyzerImpl.processHighlightsNearOffset(
-      hostEditor.getDocument(), hostFile.getProject(), HighlightSeverity.INFORMATION, offset, true, infos);
+    DaemonCodeAnalyzerImpl.processHighlightsNearOffset(hostEditor.getDocument(), hostFile.getProject(), HighlightSeverity.INFORMATION, offset, true, infos);
     for (HighlightInfo info : infos.getResults()) {
       addAvailableFixesForGroups(info, hostEditor, hostFile, fixes, passIdToShowIntentionsFor, offset);
       highestPriorityInfoFinder.process(info);
@@ -380,9 +378,9 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
     intentions.filterActions(hostFile);
   }
 
-  private static Collection<String> getLanguagesForIntentions(@NotNull PsiFile hostFile,
-                                                              @Nullable PsiElement psiElementAtOffset,
-                                                              @Nullable PsiFile injectedFile) {
+  private static @NotNull Collection<String> getLanguagesForIntentions(@NotNull PsiFile hostFile,
+                                                                       @Nullable PsiElement psiElementAtOffset,
+                                                                       @Nullable PsiFile injectedFile) {
     Set<String> languageIds = new HashSet<>();
     for (Language language : hostFile.getViewProvider().getLanguages()) {
       languageIds.add(language.getID());

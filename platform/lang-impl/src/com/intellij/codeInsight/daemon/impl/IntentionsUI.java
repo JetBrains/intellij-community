@@ -27,9 +27,7 @@ public abstract class IntentionsUI {
       if (cachedIntentions != null && editor == cachedIntentions.getEditor() && file == cachedIntentions.getFile()) {
         return cachedIntentions;
       }
-      else {
-        return new CachedIntentions(myProject, file, editor);
-      }
+      return new CachedIntentions(myProject, file, editor);
     });
   }
 
