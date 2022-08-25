@@ -170,7 +170,7 @@ class CodeFragmentAnalyzer(
 
     private fun refineContextElement(context: PsiElement?): KtElement? {
         return when (context) {
-            is KtParameter -> context.getParentOfType<KtFunction>(true)?.let { it }
+            is KtParameter -> context.getParentOfType<KtFunction>(true)
             is KtProperty -> context.delegateExpressionOrInitializer
             is KtConstructor<*> -> context
             is KtFunctionLiteral -> context.bodyExpression?.statements?.lastOrNull()

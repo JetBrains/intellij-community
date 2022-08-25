@@ -27,7 +27,7 @@ fun nonExhaustiveNullable(c: Color?) = <error descr="[NO_ELSE_IN_WHEN] 'when' ex
 }
 
 fun whenOnEnum(c: Color) {
-    <warning descr="[NON_EXHAUSTIVE_WHEN_STATEMENT] Non exhaustive 'when' statements on enum will be prohibited in 1.7, add 'RED' branch or 'else' branch instead">when</warning>(c) {
+    <error descr="[NO_ELSE_IN_WHEN] 'when' expression must be exhaustive, add necessary 'RED' branch or 'else' branch instead">when</error>(c) {
         Color.BLUE -> {}
         Color.GREEN -> {}
     }
@@ -60,6 +60,6 @@ fun nonExhaustiveNullableSealed(v: Variant?) = <error descr="[NO_ELSE_IN_WHEN] '
 
 sealed class Empty
 
-fun nonExhaustiveEmpty(e: Empty) = <error descr="[NO_ELSE_IN_WHEN] 'when' expression must be exhaustive, add necessary 'else' branch">when</error>(<warning>e</warning>) {}
+fun nonExhaustiveEmpty(e: Empty) = <error descr="[NO_ELSE_IN_WHEN] 'when' expression must be exhaustive, add necessary 'else' branch">when</error>(<warning descr="[UNUSED_EXPRESSION] The expression is unused">e</warning>) {}
 
-fun nonExhaustiveNullableEmpty(e: Empty?) = <error descr="[NO_ELSE_IN_WHEN] 'when' expression must be exhaustive, add necessary 'else' branch">when</error>(<warning>e</warning>) {}
+fun nonExhaustiveNullableEmpty(e: Empty?) = <error descr="[NO_ELSE_IN_WHEN] 'when' expression must be exhaustive, add necessary 'else' branch">when</error>(<warning descr="[UNUSED_EXPRESSION] The expression is unused">e</warning>) {}

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -88,10 +88,8 @@ val KtQualifiedExpression.callExpression: KtCallExpression?
 val KtQualifiedExpression.calleeName: String?
     get() = (callExpression?.calleeExpression as? KtNameReferenceExpression)?.text
 
-fun KtQualifiedExpression.toResolvedCall(bodyResolveMode: BodyResolveMode): ResolvedCall<out CallableDescriptor>? {
-    val callExpression = callExpression ?: return null
-    return callExpression.resolveToCall(bodyResolveMode) ?: return null
-}
+fun KtQualifiedExpression.toResolvedCall(bodyResolveMode: BodyResolveMode): ResolvedCall<out CallableDescriptor>? =
+    callExpression?.resolveToCall(bodyResolveMode)
 
 fun KtExpression.isExitStatement(): Boolean = when (this) {
     is KtContinueExpression, is KtBreakExpression, is KtThrowExpression, is KtReturnExpression -> true
@@ -272,15 +270,17 @@ fun KtDotQualifiedExpression.deleteFirstReceiver(): KtExpression {
     return this
 }
 
-private val ARRAY_OF_METHODS = setOf(ArrayFqNames.ARRAY_OF_FUNCTION) +
+private val ARRAY_OF_FUNCTION_NAMES = setOf(ArrayFqNames.ARRAY_OF_FUNCTION) +
         ArrayFqNames.PRIMITIVE_TYPE_TO_ARRAY.values.toSet() +
         Name.identifier("emptyArray")
 
-fun KtCallExpression.isArrayOfMethod(): Boolean {
+fun KtCallExpression.isArrayOfFunction(): Boolean {
+    val functionName = calleeExpression?.text ?: return false
+    if (!ARRAY_OF_FUNCTION_NAMES.any { it.asString() == functionName }) return false
     val resolvedCall = resolveToCall() ?: return false
     val descriptor = resolvedCall.candidateDescriptor
     return (descriptor.containingDeclaration as? PackageFragmentDescriptor)?.fqName == StandardNames.BUILT_INS_PACKAGE_FQ_NAME &&
-            ARRAY_OF_METHODS.contains(descriptor.name)
+            ARRAY_OF_FUNCTION_NAMES.contains(descriptor.name)
 }
 
 fun KtBlockExpression.getParentLambdaLabelName(): String? {

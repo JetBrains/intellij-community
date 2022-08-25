@@ -111,7 +111,7 @@ internal class ConfigurationSchemaTest : BasePlatformTestCase() {
         componentStateJsonSchemaGenerator.doGenerate(rootBuilder, mapOf(path to beanClass))
       }
 
-      override val definitionNodeKey: CharSequence?
+      override val definitionNodeKey: CharSequence
         get() = componentStateJsonSchemaGenerator.definitionNodeKey
 
       override fun generateDefinitions() = componentStateJsonSchemaGenerator.generateDefinitions()

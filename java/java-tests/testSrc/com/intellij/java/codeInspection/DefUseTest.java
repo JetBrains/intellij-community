@@ -16,6 +16,7 @@ public class DefUseTest extends LightJavaCodeInsightFixtureTestCase {
   public void testSCR5144() { doTest(); }
   public void testSCR6843() { doTest(); }
   public void testUnusedVariable() { doTest(); }
+  public void testUnusedAssignmentInCompound() { doTest(); }
   public void testArrayIndexUsages() { doTest(); }
   public void testSCR28019() { doTest(); }
   public void testSCR40364() { doTest(); }

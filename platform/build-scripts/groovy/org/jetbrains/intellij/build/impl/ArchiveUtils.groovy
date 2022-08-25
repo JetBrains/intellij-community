@@ -14,48 +14,29 @@ import java.util.concurrent.TimeUnit
 
 @CompileStatic
 final class ArchiveUtils {
-  private static boolean isZipFile(String fileName) {
-    return fileName.endsWith(".zip") || fileName.endsWith(".jar")
-  }
-
-  private static final String TAR_DOCKER_IMAGE = "ubuntu:18.04"
   static boolean isGnuTarAvailable() {
     try {
       if (SystemInfoRt.isLinux) {
         callProcess(["tar", "--version"])
+        return true
       }
-      else {
-        callProcess(["docker", "run", "--rm", TAR_DOCKER_IMAGE, "tar", "--version"])
-      }
-      return true
     }
     catch (Exception e) {
       e.printStackTrace(System.err)
-      return false
     }
+    return false
   }
 
   /**
    * For Linux hosts GNU Tar command is used for performance reasons.
-   *
-   * @param fallbackToPortableTar ignored for Linux hosts since production installers are built there
    */
-  static void tar(Path archive, String rootDir, List<String> paths, long buildDateInSeconds, boolean fallbackToPortableTar = true) {
+  static void tar(Path archive, String rootDir, List<String> paths, long buildDateInSeconds) {
     if (rootDir.endsWith("/")) {
       def trailingSlash = rootDir.lastIndexOf("/")
       rootDir = rootDir.substring(0, trailingSlash)
     }
     if (!SystemInfoRt.isLinux) {
-      try {
-        gnuTarArchiveInDocker(archive, rootDir, paths, buildDateInSeconds)
-      }
-      catch (Exception e) {
-        if (!fallbackToPortableTar) {
-          throw e
-        }
-        e.printStackTrace(System.err)
-        portableTarArchive(archive, rootDir, paths, buildDateInSeconds)
-      }
+      portableTarArchive(archive, rootDir, paths, buildDateInSeconds)
     }
     else if (!isGnuTarAvailable()) {
       throw new Exception("GNU Tar is required")
@@ -68,12 +49,8 @@ final class ArchiveUtils {
   /**
    * GNU Tar is assumed to be available locally
    */
-  private static void gnuTarArchive(Path archive, String rootDir, List<String> paths, long buildDateInSeconds) {
-    new GnuTarArchive(archive, rootDir, paths, buildDateInSeconds).create(false)
-  }
-
-  private static void gnuTarArchiveInDocker(Path archive, String rootDir, List<String> paths, long buildDateInSeconds) {
-    new GnuTarArchive(archive, rootDir, paths, buildDateInSeconds).create(true)
+  static void gnuTarArchive(Path archive, String rootDir, List<String> paths, long buildDateInSeconds) {
+    new GnuTarArchive(archive, rootDir, paths, buildDateInSeconds).create()
   }
 
   static void portableTarArchive(Path archive, String rootDir, List<String> paths, long buildDateInSeconds) {
@@ -160,22 +137,8 @@ final class ArchiveUtils {
       this.args = args
     }
 
-    void create(boolean useDocker) {
-      if (useDocker) {
-        callProcess(
-          [
-            "docker", "run", "--rm",
-            "--workdir", workDirs[0].toString()
-          ] + env.entrySet().toList().<String, Map.Entry> collectMany {
-            ["--env", "${it.key}=${it.value}".toString(),]
-          } + workDirs.<String, Path> collectMany {
-            ["--volume", "$it:$it".toString()]
-          } + [TAR_DOCKER_IMAGE] + args, workDirs[0]
-        )
-      }
-      else {
-        callProcess(args, workDirs[0], env)
-      }
+    void create() {
+      callProcess(args, workDirs[0], env)
     }
   }
 

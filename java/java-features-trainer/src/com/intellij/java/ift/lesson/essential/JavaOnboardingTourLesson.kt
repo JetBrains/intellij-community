@@ -4,6 +4,7 @@ package com.intellij.java.ift.lesson.essential
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.RunManager
+import com.intellij.execution.ui.UIExperiment
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
@@ -39,7 +40,6 @@ import com.intellij.openapi.ui.ex.MultiLineLabel
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.WindowStateService
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.FocusManagerImpl
 import com.intellij.toolWindow.StripeButton
@@ -333,7 +333,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
       rehighlightPreviousUi = true
       text(JavaLessonsBundle.message("java.onboarding.balloon.about.debug.panel",
                                      strong(UIBundle.message("tool.window.name.debug")),
-                                     if (Registry.`is`("debugger.new.tool.window.layout")) 0 else 1,
+                                     if (UIExperiment.isNewDebuggerUIEnabled()) 0 else 1,
                                      strong(LessonsBundle.message("debug.workflow.lesson.name"))))
       proceedLink()
       restoreIfModified(sample)

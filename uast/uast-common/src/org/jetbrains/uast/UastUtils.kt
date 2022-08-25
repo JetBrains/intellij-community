@@ -147,7 +147,7 @@ fun UReferenceExpression?.getQualifiedName(): String? = (this?.resolve() as? Psi
  */
 fun UExpression.evaluateString(): String? = evaluate().takeIf { it is String || isIntegralLiteral() }?.toString()
 
-fun UExpression.skipParenthesizedExprDown(): UExpression? {
+fun UExpression.skipParenthesizedExprDown(): UExpression {
   var expression = this
   while (expression is UParenthesizedExpression) {
     expression = expression.expression

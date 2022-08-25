@@ -42,14 +42,16 @@ import org.jetbrains.plugins.textmate.plist.PlistReader;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public final class TextMateServiceImpl extends TextMateService {
   public static final String BUNDLED_BUNDLES_PATH = PluginPathManager.getPluginHome("textmate") + "/lib/bundles";
 
   private boolean ourBuiltinBundlesDisabled;
 
-  private final AtomicBoolean myInitialized = new AtomicBoolean(false);
+  private volatile boolean myInitialized;
+  private final Lock myRegistrationLock = new ReentrantLock();
 
   private final Map<CharSequence, TextMateTextAttributesAdapter> myCustomHighlightingColors = new HashMap<>();
   private Map<String, CharSequence> myExtensionsMapping = new HashMap<>();
@@ -74,44 +76,50 @@ public final class TextMateServiceImpl extends TextMateService {
   }
 
   private void registerBundles(boolean fireEvents) {
-    Map<String, CharSequence> oldExtensionsMapping = new HashMap<>(myExtensionsMapping);
-    unregisterAllBundles();
+    myRegistrationLock.lock();
+    try {
+      Map<String, CharSequence> oldExtensionsMapping = new HashMap<>(myExtensionsMapping);
+      unregisterAllBundles();
 
-    TextMateSettings settings = TextMateSettings.getInstance();
-    if (settings == null) {
-      return;
-    }
-    if (!ourBuiltinBundlesDisabled) {
-      loadBuiltinBundles(settings);
-    }
+      TextMateSettings settings = TextMateSettings.getInstance();
+      if (settings == null) {
+        return;
+      }
+      if (!ourBuiltinBundlesDisabled) {
+        loadBuiltinBundles(settings);
+      }
 
-    Map<String, CharSequence> newExtensionsMapping = new HashMap<>();
-    for (BundleConfigBean bundleConfigBean : settings.getBundles()) {
-      if (bundleConfigBean.isEnabled()) {
-        VirtualFile bundleFile = LocalFileSystem.getInstance().findFileByPath(bundleConfigBean.getPath());
-        boolean result = registerBundle(bundleFile, newExtensionsMapping);
-        if (!result && (bundleFile != null || !bundleConfigBean.getPath().startsWith(BUNDLED_BUNDLES_PATH))) {
-          String bundleName = bundleConfigBean.getName();
-          String errorMessage = bundleFile != null ? TextMateBundle.message("textmate.cant.register.bundle", bundleName)
-                                                   : TextMateBundle.message("textmate.cant.find.bundle", bundleName);
-          new Notification("TextMate Bundles", TextMateBundle.message("textmate.bundle.load.error", bundleName), errorMessage, NotificationType.ERROR)
-            .addAction(NotificationAction.createSimpleExpiring(TextMateBundle.message("textmate.disable.bundle.notification.action", bundleName), () -> bundleConfigBean.setEnabled(false)))
-            .notify(null);
+      Map<String, CharSequence> newExtensionsMapping = new HashMap<>();
+      for (BundleConfigBean bundleConfigBean : settings.getBundles()) {
+        if (bundleConfigBean.isEnabled()) {
+          VirtualFile bundleFile = LocalFileSystem.getInstance().findFileByPath(bundleConfigBean.getPath());
+          boolean result = registerBundle(bundleFile, newExtensionsMapping);
+          if (!result && (bundleFile != null || !bundleConfigBean.getPath().startsWith(BUNDLED_BUNDLES_PATH))) {
+            String bundleName = bundleConfigBean.getName();
+            String errorMessage = bundleFile != null ? TextMateBundle.message("textmate.cant.register.bundle", bundleName)
+                                                     : TextMateBundle.message("textmate.cant.find.bundle", bundleName);
+            new Notification("TextMate Bundles", TextMateBundle.message("textmate.bundle.load.error", bundleName), errorMessage, NotificationType.ERROR)
+              .addAction(NotificationAction.createSimpleExpiring(TextMateBundle.message("textmate.disable.bundle.notification.action", bundleName), () -> bundleConfigBean.setEnabled(false)))
+              .notify(null);
+          }
         }
       }
-    }
 
-    if (!oldExtensionsMapping.equals(newExtensionsMapping)) {
-      if (fireEvents) {
-        fireFileTypesChangedEvent("old mappings = " + oldExtensionsMapping + ", new mappings" + newExtensionsMapping, () -> {
+      if (!oldExtensionsMapping.equals(newExtensionsMapping)) {
+        if (fireEvents) {
+          fireFileTypesChangedEvent("old mappings = " + oldExtensionsMapping + ", new mappings" + newExtensionsMapping, () -> {
+            myExtensionsMapping = newExtensionsMapping;
+          });
+        }
+        else {
           myExtensionsMapping = newExtensionsMapping;
-        });
+        }
       }
-      else {
-        myExtensionsMapping = newExtensionsMapping;
-      }
+      mySyntaxTable.compact();
     }
-    mySyntaxTable.compact();
+    finally {
+      myRegistrationLock.unlock();
+    }
   }
 
   private static void fireFileTypesChangedEvent(@NonNls @NotNull String reason, @NotNull Runnable update) {
@@ -232,8 +240,16 @@ public final class TextMateServiceImpl extends TextMateService {
   }
 
   private void ensureInitialized() {
-    if (myInitialized.compareAndSet(false, true)) {
-      registerBundles(false);
+    if (!myInitialized) {
+      myRegistrationLock.lock();
+      try {
+        if (myInitialized) return;
+        registerBundles(false);
+        myInitialized = true;
+      }
+      finally {
+        myRegistrationLock.unlock();
+      }
     }
   }
 
@@ -307,11 +323,11 @@ public final class TextMateServiceImpl extends TextMateService {
   public void disableBuiltinBundles(Disposable disposable) {
     ourBuiltinBundlesDisabled = true;
     TextMateService.getInstance().reloadEnabledBundles();
-    myInitialized.set(true);
+    myInitialized = true;
     Disposer.register(disposable, () -> {
       ourBuiltinBundlesDisabled = false;
       unregisterAllBundles();
-      myInitialized.set(false);
+      myInitialized = false;
     });
   }
 }

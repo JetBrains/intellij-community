@@ -26,6 +26,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.MessageDialogBuilder;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -203,11 +204,16 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
   }
 
-  private static void deleteConfiguration(ChooseRunConfigurationPopup popup, final Project project, @NotNull final RunnerAndConfigurationSettings configurationSettings) {
+  public static void deleteConfiguration(@NotNull Project project,
+                                         @NotNull RunnerAndConfigurationSettings configurationSettings,
+                                         @Nullable JBPopup popupToCancel) {
     RunManagerConfig runManagerConfig = RunManagerImpl.getInstanceImpl(project).getConfig();
     boolean confirmed;
     if (runManagerConfig.isDeletionFromPopupRequiresConfirmation()) {
-      popup.myPopup.cancel();
+      if (popupToCancel != null) {
+        popupToCancel.cancel();
+      }
+
       confirmed = MessageDialogBuilder.yesNo(CommonBundle.message("title.confirmation"),
                                              ExecutionBundle.message("are.you.sure.you.want.to.delete.0", configurationSettings.getName()))
                     .doNotAsk(new DoNotAskOption.Adapter() {
@@ -378,7 +384,10 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
         @Override
         public void perform(@NotNull Project project, @NotNull Executor executor, @NotNull DataContext context) {
           RunnerAndConfigurationSettings config = getValue();
-          RunManager.getInstance(project).setSelectedConfiguration(config);
+
+          final RunManager manager = RunManager.getInstance(project);
+
+          if (!manager.isRunWidgetActive()) RunManager.getInstance(project).setSelectedConfiguration(config);
           MacroManager.getInstance().cacheMacrosPreview(context);
           ExecutionUtil.doRunConfiguration(config, executor, null, null, context);
         }
@@ -658,7 +667,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
       result.add(new ActionWrapper(ExecutionBundle.message("choose.run.popup.delete"), AllIcons.Actions.Cancel) {
         @Override
         public void perform() {
-          deleteConfiguration(action, project, settings);
+          deleteConfiguration(project, settings, action.myPopup);
         }
       });
 
@@ -808,7 +817,8 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
 
       final Object o = getListModel().get(index);
       if (o instanceof ItemWrapper && ((ItemWrapper<?>)o).canBeDeleted()) {
-        deleteConfiguration(ChooseRunConfigurationPopup.this, myProject, (RunnerAndConfigurationSettings)((ItemWrapper<?>)o).getValue());
+        RunnerAndConfigurationSettings runConfig = (RunnerAndConfigurationSettings)((ItemWrapper<?>)o).getValue();
+        deleteConfiguration(myProject, runConfig, ChooseRunConfigurationPopup.this.myPopup);
         getListModel().deleteItem(o);
         final List<Object> values = getListStep().getValues();
         values.remove(o);

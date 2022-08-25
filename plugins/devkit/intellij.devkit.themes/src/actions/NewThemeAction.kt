@@ -88,7 +88,7 @@ class NewThemeAction : AnAction(), UpdateInBackground {
   }
 
   private fun registerTheme(dir: PsiDirectory, file: PsiFile, module: Module) {
-    val relativeLocation = getSourceRootRelativeLocation(module, file) ?: return
+    val relativeLocation = getSourceRootRelativeLocation(module, file)
 
     val pluginXml = DevkitActionsUtil.choosePluginModuleDescriptor(dir) ?: return
     DescriptorUtil.checkPluginXmlsWritable(module.project, pluginXml)
@@ -102,7 +102,7 @@ class NewThemeAction : AnAction(), UpdateInBackground {
     }
   }
 
-  private fun getSourceRootRelativeLocation(module: Module, file: PsiFile): String? {
+  private fun getSourceRootRelativeLocation(module: Module, file: PsiFile): String {
     val rootManager = ModuleRootManager.getInstance(module)
     val sourceRoots = rootManager.getSourceRoots(false)
     val virtualFile = file.virtualFile
@@ -129,7 +129,7 @@ class NewThemeAction : AnAction(), UpdateInBackground {
       init()
     }
 
-    override fun createCenterPanel(): JComponent? {
+    override fun createCenterPanel(): JComponent {
       return panel {
         row(DevKitThemesBundle.message("new.theme.dialog.name.text.field.text")) {
           cell {

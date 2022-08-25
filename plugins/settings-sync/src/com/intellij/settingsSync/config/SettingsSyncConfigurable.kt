@@ -41,9 +41,6 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
       SettingsSyncAuthService.getInstance().addListener(object : SettingsSyncAuthService.Listener {
         override fun stateChanged() {
           listener(invoke())
-          if (SettingsSyncAuthService.getInstance().isLoggedIn() && !SettingsSyncSettings.getInstance().syncEnabled) {
-            syncEnabler.checkServerState()
-          }
         }
       }, disposable!!)
 
@@ -127,6 +124,13 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
           .onIsModified { categoriesPanel.isModified() }
       }
     }
+    SettingsSyncAuthService.getInstance().addListener(object : SettingsSyncAuthService.Listener {
+      override fun stateChanged() {
+        if (SettingsSyncAuthService.getInstance().isLoggedIn() && !SettingsSyncSettings.getInstance().syncEnabled) {
+          syncEnabler.checkServerState()
+        }
+      }
+    }, disposable!!)
     return configPanel
   }
 

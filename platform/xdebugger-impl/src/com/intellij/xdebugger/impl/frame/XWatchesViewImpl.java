@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame;
 
+import com.intellij.execution.ui.UIExperiment;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.DnDEvent;
@@ -193,7 +194,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   }
 
   private @Nullable JComponent createTopPanel() {
-    //if (Registry.is("debugger.new.tool.window.layout")) {
+    //if (UIExperiment.isNewDebuggerUIEnabled()) {
       XDebuggerTree tree = getTree();
       Ref<AnAction> addToWatchesActionRef = new Ref<>();
       XDebuggerEditorsProvider provider = tree.getEditorsProvider();
@@ -296,7 +297,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
       JComponent component = myEvaluateComboBox.getComponent();
       //component.setBackground(tree.getBackground());
       component.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));
-      if (!Registry.is("debugger.new.tool.window.layout")) {
+      if (!UIExperiment.isNewDebuggerUIEnabled()) {
         XToggleEvaluateExpressionFieldAction.markAsEvaluateExpressionField(component);
       }
       return component;

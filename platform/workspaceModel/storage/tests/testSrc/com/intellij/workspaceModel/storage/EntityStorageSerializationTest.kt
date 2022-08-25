@@ -1,14 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage
 
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId
 import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
-import com.intellij.workspaceModel.storage.entities.addSampleEntity
+import com.intellij.workspaceModel.storage.entities.test.addSampleEntity
+import com.intellij.workspaceModel.storage.entities.test.api.MySource
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
+import com.intellij.workspaceModel.storage.impl.MutableEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import junit.framework.Assert.*
-import org.junit.Assert.assertArrayEquals
 import org.junit.Test
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -19,7 +19,7 @@ class EntityStorageSerializationTest {
     val builder = createEmptyBuilder()
     builder.addSampleEntity("MyEntity")
 
-    SerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toStorage(), VirtualFileUrlManagerImpl())
+    SerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), VirtualFileUrlManagerImpl())
   }
 
   @Test
@@ -29,7 +29,7 @@ class EntityStorageSerializationTest {
                             stringListProperty = mutableListOf("a", "b"),
                             stringSetProperty = mutableSetOf("c", "d"))
 
-    SerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toStorage(), VirtualFileUrlManagerImpl())
+    SerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), VirtualFileUrlManagerImpl())
   }
 
   @Test
@@ -42,10 +42,10 @@ class EntityStorageSerializationTest {
       .also { it.serializerDataFormatVersion = "XYZ" }
 
     val stream = ByteArrayOutputStream()
-    serializer.serializeCache(stream, builder.toStorage())
+    serializer.serializeCache(stream, builder.toSnapshot())
 
     val byteArray = stream.toByteArray()
-    val deserialized = (deserializer.deserializeCache(ByteArrayInputStream(byteArray)) as? WorkspaceEntityStorageBuilderImpl)?.toStorage()
+    val deserialized = (deserializer.deserializeCache(ByteArrayInputStream(byteArray)) as? MutableEntityStorageImpl)?.toSnapshot()
 
     assertNull(deserialized)
   }
@@ -72,7 +72,7 @@ class EntityStorageSerializationTest {
     builder.addLibraryEntity("myName", LibraryTableId.ProjectLibraryTableId, ArrayList(), ArrayList(), MySource)
 
     val stream = ByteArrayOutputStream()
-    serializer.serializeCache(stream, builder.toStorage())
+    serializer.serializeCache(stream, builder.toSnapshot())
   }
 
   @Test
@@ -85,7 +85,7 @@ class EntityStorageSerializationTest {
     builder.addSampleEntity("myString")
 
     val stream = ByteArrayOutputStream()
-    val result = serializer.serializeCache(stream, builder.toStorage())
+    val result = serializer.serializeCache(stream, builder.toSnapshot())
 
     assertTrue(result is SerializationResult.Success)
   }
@@ -100,7 +100,7 @@ class EntityStorageSerializationTest {
     builder.addSampleEntity("myString")
 
     val stream = ByteArrayOutputStream()
-    serializer.serializeCache(stream, builder.toStorage())
+    serializer.serializeCache(stream, builder.toSnapshot())
 
     // Remove random byte from a serialised store
     val inputStream = stream.toByteArray().filterIndexed { i, _ -> i != 3 }.toByteArray().inputStream()
@@ -108,27 +108,6 @@ class EntityStorageSerializationTest {
     val result = serializer.deserializeCache(inputStream)
 
     assertNull(result)
-  }
-
-  @Test
-  fun `serialize array`() {
-    val virtualFileManager = VirtualFileUrlManagerImpl()
-    val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), virtualFileManager)
-
-    val builder = createEmptyBuilder()
-    val infoArray = arrayOf(Info("hello"))
-    builder.addEntity(ModifiableWithArrayEntity::class.java, MySource) {
-      stringArrayProperty = arrayOf("1", "2", "3")
-      info = infoArray
-    }
-
-    val stream = ByteArrayOutputStream()
-    serializer.serializeCache(stream, builder.toStorage())
-
-    val result = serializer.deserializeCache(stream.toByteArray().inputStream())!!
-
-    assertArrayEquals(arrayOf("1", "2", "3"), result.entities(WithArrayEntity::class.java).single().stringArrayProperty)
-    assertArrayEquals(infoArray, result.entities(WithArrayEntity::class.java).single().info)
   }
 }
 

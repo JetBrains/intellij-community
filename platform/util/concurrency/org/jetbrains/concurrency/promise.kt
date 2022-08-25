@@ -105,7 +105,7 @@ inline fun <T> Promise<T>.onSuccess(node: Obsolescent, crossinline handler: (T) 
   override fun accept(param: T) = handler(param)
 })
 
-inline fun Promise<*>.processed(node: Obsolescent, crossinline handler: () -> Unit): Promise<Any?>? {
+inline fun Promise<*>.processed(node: Obsolescent, crossinline handler: () -> Unit): Promise<Any?> {
   @Suppress("UNCHECKED_CAST")
   return (this as Promise<Any?>)
     .onProcessed(object : ObsolescentConsumer<Any?>(node) {

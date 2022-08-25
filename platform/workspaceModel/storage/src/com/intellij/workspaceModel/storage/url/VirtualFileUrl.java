@@ -5,6 +5,15 @@ import java.util.List;
 
 public interface VirtualFileUrl {
   String getUrl();
+
+  default String getUrlWithoutTrailingSlash() {
+    String url = getUrl();
+    if (!url.isEmpty() && url.charAt(url.length() -1) == '/') {
+      return url.substring(0, url.length() - 1);
+    }
+    return url;
+  }
+
   String getFileName();
 
   /**

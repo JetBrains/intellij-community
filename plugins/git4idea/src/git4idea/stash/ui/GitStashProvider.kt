@@ -186,7 +186,7 @@ class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesP
     override fun createPainter(tree: ChangesTree,
                                renderer: ChangesTreeCellRenderer,
                                row: Int,
-                               selected: Boolean): SavedPatchesProvider.PatchObject.Painter? {
+                               selected: Boolean): SavedPatchesProvider.PatchObject.Painter {
       val painter = GitStashPainter(tree, renderer, iconCache)
       painter.customise(data, row, selected)
       return painter

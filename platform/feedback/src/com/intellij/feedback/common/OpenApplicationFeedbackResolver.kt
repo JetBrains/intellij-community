@@ -10,6 +10,7 @@ import com.intellij.ide.feedback.kotlinRejecters.state.KotlinRejectersInfoServic
 import com.intellij.notification.NotificationAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.util.PlatformUtils
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -44,6 +45,9 @@ class OpenApplicationFeedbackShower : AppLifecycleListener {
   }
 
   override fun appStarted() {
+    if (!PlatformUtils.isIdeaUltimate() && !PlatformUtils.isIdeaCommunity()) {
+      return
+    }
     //Try to show only one possible feedback form - Kotlin Rejecters form
     val kotlinRejectersInfoState = KotlinRejectersInfoService.getInstance().state
     if (!kotlinRejectersInfoState.feedbackSent && kotlinRejectersInfoState.showNotificationAfterRestart &&

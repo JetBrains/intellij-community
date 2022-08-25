@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 
 package com.jetbrains.python.testing
@@ -45,7 +45,7 @@ class PyUnitTestConfiguration(project: Project, factory: PyUnitTestFactory) :
   @ConfigField("runcfg.unittest.config.pattern")
   var pattern: String? = null
 
-  override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? =
+  override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState =
     PyUnitTestExecutionEnvironment(this, environment)
 
   override fun createConfigurationEditor(): SettingsEditor<PyAbstractTestConfiguration> =

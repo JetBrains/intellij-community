@@ -33,12 +33,14 @@ import com.siyeh.ig.psiutils.TypeUtils
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.getReturnTypeFromFunctionType
 import org.jetbrains.kotlin.contracts.description.CallsEffectDeclaration
 import org.jetbrains.kotlin.contracts.description.ContractProviderKey
 import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.*
@@ -65,9 +67,9 @@ import java.util.concurrent.ConcurrentHashMap
 
 class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpression) {
     private val flow = ControlFlow(factory, context)
+    private val trapTracker = TrapTracker(factory, KtClassDef.typeConstraintFactory(context))
+    private val stringType = KtClassDef.getClassConstraint(context, StandardNames.FqNames.string)
     private var broken: Boolean = false
-    private val trapTracker = TrapTracker(factory, context)
-    private val stringType = PsiType.getJavaLangString(context.manager, context.resolveScope)
 
     fun buildFlow(): ControlFlow? {
         processExpression(context)
@@ -250,8 +252,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 val arguments = kotlinType.arguments
                 if (arguments.size == 1) {
                     val kType = arguments[0].type
-                    val kClassPsiType = kotlinType.toPsiType(expr)
-                    if (kClassPsiType != null) {
+                    val kClassPsiType = TypeConstraint.fromDfType(kotlinType.toDfType(expr))
+                    if (kClassPsiType != TypeConstraints.TOP) {
                         val kClassConstant: DfType = DfTypes.referenceConstant(kType, kClassPsiType)
                         addInstruction(PushValueInstruction(kClassConstant, KotlinExpressionAnchor(expr)))
                         return
@@ -299,7 +301,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             addInstruction(PushValueInstruction(DfTypes.NULL, anchor))
             setOffset(endOffset)
         } else {
-            val transfer = trapTracker.maybeTransferValue("java.lang.ClassCastException")
+            val transfer = trapTracker.maybeTransferValue("kotlin.ClassCastException")
             addInstruction(EnsureInstruction(KotlinCastProblem(operand, expr), RelationType.IS, type, transfer))
             if (typeReference != null) {
                 val castType = typeReference.getAbbreviatedTypeOrType(typeReference.safeAnalyzeNonSourceRootCode(BodyResolveMode.FULL))
@@ -339,7 +341,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 if (indexType.canBeNull()) {
                     addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
                 }
-                val transfer = trapTracker.maybeTransferValue("java.lang.ArrayIndexOutOfBoundsException")
+                val transfer = trapTracker.maybeTransferValue("kotlin.IndexOutOfBoundsException")
                 val elementType = expr.builtIns.getArrayElementType(curType)
                 if (lastIndex && storedValue != null) {
                     processExpression(storedValue)
@@ -355,7 +357,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                     if (indexType.canBeNull()) {
                         addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
                     }
-                    val transfer = trapTracker.maybeTransferValue("java.lang.StringIndexOutOfBoundsException")
+                    val transfer = trapTracker.maybeTransferValue("kotlin.IndexOutOfBoundsException")
                     addInstruction(EnsureIndexInBoundsInstruction(KotlinArrayIndexProblem(SpecialField.STRING_LENGTH, idx), transfer))
                     if (lastIndex && storedValue != null) {
                         processExpression(storedValue)
@@ -367,7 +369,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                     if (indexType.canBeNull()) {
                         addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
                     }
-                    val transfer = trapTracker.maybeTransferValue("java.lang.IndexOutOfBoundsException")
+                    val transfer = trapTracker.maybeTransferValue("kotlin.IndexOutOfBoundsException")
                     addInstruction(EnsureIndexInBoundsInstruction(KotlinArrayIndexProblem(SpecialField.COLLECTION_SIZE, idx), transfer))
                     if (lastIndex && storedValue != null) {
                         processExpression(storedValue)
@@ -406,16 +408,16 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         var first = true
         val entries = expr.entries
         if (entries.isEmpty()) {
-            addInstruction(PushValueInstruction(DfTypes.constant("", stringType)))
+            addInstruction(PushValueInstruction(DfTypes.referenceConstant("", stringType)))
             return
         }
         val lastEntry = entries.last()
         for (entry in entries) {
             when (entry) {
                 is KtEscapeStringTemplateEntry ->
-                    addInstruction(PushValueInstruction(DfTypes.constant(entry.unescapedValue, stringType)))
+                    addInstruction(PushValueInstruction(DfTypes.referenceConstant(entry.unescapedValue, stringType)))
                 is KtLiteralStringTemplateEntry ->
-                    addInstruction(PushValueInstruction(DfTypes.constant(entry.text, stringType)))
+                    addInstruction(PushValueInstruction(DfTypes.referenceConstant(entry.text, stringType)))
                 is KtStringTemplateEntryWithExpression ->
                     processExpression(entry.expression)
                 else ->
@@ -429,7 +431,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
         if (entries.size == 1 && entries[0] !is KtLiteralStringTemplateEntry) {
             // Implicit toString conversion for "$myVar" string
-            addInstruction(PushValueInstruction(DfTypes.constant("", stringType)))
+            addInstruction(PushValueInstruction(DfTypes.referenceConstant("", stringType)))
             addInstruction(StringConcatInstruction(KotlinExpressionAnchor(expr), stringType))
         }
     }
@@ -705,7 +707,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     }
 
     private fun addCall(expr: KtExpression, args: Int, qualifierOnStack: Boolean = false) {
-        val transfer = trapTracker.maybeTransferValue(CommonClassNames.JAVA_LANG_THROWABLE)
+        val transfer = trapTracker.maybeTransferValue("kotlin.Throwable")
         addInstruction(KotlinFunctionCallInstruction(expr, args, qualifierOnStack, transfer))
     }
 
@@ -751,9 +753,9 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         if (selector == null || !selector.textMatches("java")) return false
         if (!receiver.getKotlinType().fqNameEquals("kotlin.reflect.KClass")) return false
         val kotlinType = expr.getKotlinType() ?: return false
-        val classPsiType = kotlinType.toPsiType(expr) ?: return false
-        if (!classPsiType.equalsToText(CommonClassNames.JAVA_LANG_CLASS)) return false
-        addInstruction(KotlinClassToJavaClassInstruction(KotlinExpressionAnchor(expr), classPsiType))
+        val classType = TypeConstraint.fromDfType(kotlinType.toDfType(expr))
+        if (!classType.isExact(CommonClassNames.JAVA_LANG_CLASS)) return false
+        addInstruction(KotlinClassToJavaClassInstruction(KotlinExpressionAnchor(expr), classType))
         return true
     }
 
@@ -849,7 +851,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 }
             }
         } else if (ref == "!!") {
-            val transfer: DfaControlTransferValue? = trapTracker.maybeTransferValue("java.lang.NullPointerException")
+            val transfer: DfaControlTransferValue? = trapTracker.maybeTransferValue("kotlin.NullPointerException")
             val operandType = operand?.getKotlinType()
             if (operandType?.canBeNull() == true) {
                 addInstruction(EnsureInstruction(KotlinNullCheckProblem(expr), RelationType.NE, DfTypes.NULL, transfer))
@@ -1140,9 +1142,9 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         processExpression(exception)
         addInstruction(PopInstruction())
         if (exception != null) {
-            val psiType = exception.getKotlinType()?.toPsiType(expr)
-            if (psiType != null) {
-                val kind = ExceptionTransfer(TypeConstraints.instanceOf(psiType))
+            val constraint = TypeConstraint.fromDfType(exception.getKotlinType().toDfType(expr))
+            if (constraint != TypeConstraints.TOP) {
+                val kind = ExceptionTransfer(constraint)
                 addInstruction(ThrowInstruction(trapTracker.transferValue(kind), expr))
                 return
             }
@@ -1199,10 +1201,11 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 }
             }
             is KtEnumEntry -> {
-                val enumClass = target.containingClass()?.toLightClass()
-                val enumConstant = enumClass?.fields?.firstOrNull { f -> f is PsiEnumConstant && f.name == target.name }
-                if (enumConstant != null) {
-                    DfTypes.referenceConstant(enumConstant, TypeConstraints.exactClass(enumClass).instanceOf())
+                val ktClass = target.containingClass()
+                val classDescriptor = ktClass?.resolveToDescriptorIfAny()
+                val enumConstant = ktClass?.toLightClass()?.fields?.firstOrNull { f -> f is PsiEnumConstant && f.name == target.name }
+                if (enumConstant != null && classDescriptor != null) {
+                    DfTypes.referenceConstant(enumConstant, TypeConstraints.exactClass(KtClassDef(classDescriptor, expr)).instanceOf())
                 } else {
                     DfType.TOP
                 }
@@ -1392,7 +1395,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
         if ((mathOp == LongRangeBinOp.DIV || mathOp == LongRangeBinOp.MOD) && resultType != null &&
             (resultType.isLong() || resultType.isInt())) {
-            val transfer: DfaControlTransferValue? = trapTracker.maybeTransferValue("java.lang.ArithmeticException")
+            val transfer: DfaControlTransferValue? = trapTracker.maybeTransferValue("kotlin.ArithmeticException")
             val zero = if (resultType.isLong()) DfTypes.longValue(0) else DfTypes.intValue(0)
             addInstruction(EnsureInstruction(null, RelationType.NE, zero, transfer, true))
         }
@@ -1408,18 +1411,17 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         actualType ?: return
         expectedType ?: return
         if (actualType == expectedType) return
-        val actualPsiType = actualType.toPsiType(expression)
-        val expectedPsiType = expectedType.toPsiType(expression)
-        if (actualPsiType !is PsiPrimitiveType && expectedPsiType is PsiPrimitiveType) {
+        val actualDfType = actualType.toDfType(expression)
+        val expectedDfType = expectedType.toDfType(expression)
+        if (actualDfType !is DfPrimitiveType && expectedDfType is DfPrimitiveType) {
             addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
         }
-        else if (expectedPsiType !is PsiPrimitiveType && actualPsiType is PsiPrimitiveType) {
-            val boxedType = actualPsiType.getBoxedType(expression)
-            val dfType = if (boxedType != null) DfTypes.typedObject(boxedType, Nullability.NOT_NULL) else DfTypes.NOT_NULL_OBJECT
+        else if (expectedDfType !is DfPrimitiveType && actualDfType is DfPrimitiveType) {
+            val dfType = actualType.makeNullable().toDfType(expression).meet(DfTypes.NOT_NULL_OBJECT)
             addInstruction(WrapDerivedVariableInstruction(expectedType.toDfType(expression).meet(dfType), SpecialField.UNBOX))
         }
-        if (actualPsiType is PsiPrimitiveType && expectedPsiType is PsiPrimitiveType) {
-            addInstruction(PrimitiveConversionInstruction(expectedPsiType, null))
+        if (actualDfType is DfPrimitiveType && expectedDfType is DfPrimitiveType) {
+            addInstruction(PrimitiveConversionInstruction(expectedType.toPsiPrimitiveType(), null))
         }
     }
 
@@ -1441,7 +1443,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             processExpression(right)
             addImplicitConversion(right, balancedType)
             if (forceEqualityByContent && !mayCompareByContent(leftDfType, rightDfType)) {
-                val transfer = trapTracker.maybeTransferValue(CommonClassNames.JAVA_LANG_THROWABLE)
+                val transfer = trapTracker.maybeTransferValue("kotlin.Throwable")
                 addInstruction(KotlinEqualityInstruction(expr, relation != RelationType.EQ, transfer))
             } else {
                 addInstruction(BooleanBinaryInstruction(relation, forceEqualityByContent, KotlinExpressionAnchor(expr)))
@@ -1611,15 +1613,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         if (typeReference == null) return DfType.TOP
         val kotlinType = typeReference.getAbbreviatedTypeOrType(typeReference.safeAnalyzeNonSourceRootCode(BodyResolveMode.FULL))
         if (kotlinType == null || kotlinType.constructor.declarationDescriptor is TypeParameterDescriptor) return DfType.TOP
-        val type = kotlinType.toDfType(typeReference)
-        return if (type is DfPrimitiveType) {
-            val boxedType = (kotlinType.toPsiType(typeReference) as? PsiPrimitiveType)?.getBoxedType(typeReference)
-            if (boxedType != null) {
-                DfTypes.typedObject(boxedType, Nullability.NOT_NULL)
-            } else {
-                DfType.TOP
-            }
-        } else type
+        if (kotlinType.isMarkedNullable) return kotlinType.toDfType(typeReference)
+        // makeNullable to convert primitive to boxed
+        val dfType = kotlinType.makeNullable().toDfType(typeReference).meet(DfTypes.NOT_NULL_OBJECT)
+        return if (dfType is DfReferenceType) dfType.dropSpecialField() else dfType
     }
 
     private fun processIfExpression(ifExpression: KtIfExpression) {

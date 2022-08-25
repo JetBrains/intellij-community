@@ -10,8 +10,8 @@ import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
 import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.ide.isEqualOrParentOf
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
 class ModuleRootsIndexableIteratorHandler : IndexableIteratorBuilderHandler {
@@ -20,7 +20,7 @@ class ModuleRootsIndexableIteratorHandler : IndexableIteratorBuilderHandler {
 
   override fun instantiate(builders: Collection<IndexableEntityProvider.IndexableIteratorBuilder>,
                            project: Project,
-                           entityStorage: WorkspaceEntityStorage): List<IndexableFilesIterator> {
+                           entityStorage: EntityStorage): List<IndexableFilesIterator> {
     val fullIndexedModules: Set<ModuleId> = builders.mapNotNull { (it as? FullModuleContentIteratorBuilder)?.moduleId }.toSet()
 
     @Suppress("UNCHECKED_CAST")
@@ -36,10 +36,9 @@ class ModuleRootsIndexableIteratorHandler : IndexableIteratorBuilderHandler {
       }
     }
 
-    val moduleMap = entityStorage.moduleMap
     partialIteratorsMap.forEach { pair ->
       entityStorage.resolve(pair.key)?.also { entity ->
-        result.addAll(IndexableEntityProviderMethods.createIterators(entity, resolveRoots(pair.value), moduleMap, project))
+        result.addAll(IndexableEntityProviderMethods.createIterators(entity, resolveRoots(pair.value), entityStorage))
       }
     }
     return result

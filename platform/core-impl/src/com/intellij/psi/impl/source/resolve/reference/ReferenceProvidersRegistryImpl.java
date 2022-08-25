@@ -108,7 +108,8 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
     return registrar;
   }
 
-  private static void registerContributedReferenceProviders(@NotNull PsiReferenceRegistrarImpl registrar, @NotNull PsiReferenceContributor contributor) {
+  private static void registerContributedReferenceProviders(@NotNull PsiReferenceRegistrarImpl registrar,
+                                                            @NotNull PsiReferenceContributor contributor) {
     contributor.registerReferenceProviders(new TrackingReferenceRegistrar(registrar, contributor));
     Disposer.register(ApplicationManager.getApplication(), contributor);
   }
@@ -156,14 +157,10 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
   //  we create priorities map: "priority" ->  non-empty references from providers
   //  if provider returns EMPTY_ARRAY or array with "null" references then this provider isn't added in priorities map.
   private static @NotNull Double2ObjectMap<List<PsiReference[]>> mapNotEmptyReferencesFromProviders(@NotNull PsiElement context,
-                                                                                                            @NotNull List<? extends ProviderBinding.ProviderInfo<ProcessingContext>> providers) {
+                                                                                                    @NotNull List<? extends ProviderBinding.ProviderInfo<ProcessingContext>> providers) {
     Double2ObjectMap<List<PsiReference[]>> map = new Double2ObjectOpenHashMap<>();
     for (ProviderBinding.ProviderInfo<ProcessingContext> trinity : providers) {
       final PsiReference[] refs = getReferences(context, trinity);
-      if ((ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal())
-          && Registry.is("ide.check.reference.provider.underlying.element")) {
-        assertReferenceUnderlyingElement(context, refs, trinity.provider);
-      }
       if (refs.length > 0) {
         List<PsiReference[]> list = map.get(trinity.priority);
         if (list == null) {
@@ -177,20 +174,6 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
       }
     }
     return map;
-  }
-
-  private static void assertReferenceUnderlyingElement(@NotNull PsiElement context,
-                                                       PsiReference[] refs, PsiReferenceProvider provider) {
-    for (PsiReference reference : refs) {
-      if (reference == null) continue;
-      assert reference.getElement() == context : "reference " +
-                                                 reference +
-                                                 " was created for " +
-                                                 context +
-                                                 " but target " +
-                                                 reference.getElement() +
-                                                 ", provider " + provider;
-    }
   }
 
   private static PsiReference @NotNull [] getReferences(@NotNull PsiElement context,

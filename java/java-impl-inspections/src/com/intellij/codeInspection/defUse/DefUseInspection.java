@@ -85,7 +85,9 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
         else if (context instanceof PsiAssignmentExpression) {
           PsiElement parent = PsiUtil.skipParenthesizedExprUp(context.getParent());
           if (parent == psiVariable) continue; // int x = x = 5; -- compilation error and reported as reassigned var
-          if (parent instanceof PsiAssignmentExpression && EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(
+          if (parent instanceof PsiAssignmentExpression &&
+              ((PsiAssignmentExpression)parent).getOperationTokenType() == JavaTokenType.EQ &&
+              EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(
             ((PsiAssignmentExpression)parent).getLExpression(), ((PsiAssignmentExpression)context).getLExpression())) {
             // x = x = 5; reported by "Variable is assigned to itself"
             continue;

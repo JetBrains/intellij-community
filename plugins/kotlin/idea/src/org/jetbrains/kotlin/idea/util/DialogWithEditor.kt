@@ -28,7 +28,7 @@ open class DialogWithEditor(
         setTitle(title)
     }
 
-    override final fun init() {
+    final override fun init() {
         super.init()
     }
 

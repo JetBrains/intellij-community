@@ -38,6 +38,6 @@ public class RunPythonOrDebugConsoleAction extends AnAction implements DumbAware
   public void actionPerformed(@NotNull final AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return;
-    PyExecuteInConsole.executeCodeInConsole(project, null, null, true, true, true, null);
+    PyExecuteInConsole.executeCodeInConsole(project, (String)null, null, true, true, true, null);
   }
 }

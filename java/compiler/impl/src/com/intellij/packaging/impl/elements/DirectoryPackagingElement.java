@@ -12,11 +12,10 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.workspaceModel.storage.EntitySource;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
-import com.intellij.workspaceModel.storage.bridgeEntities.BridgeModelModifiableEntitiesKt;
-import com.intellij.workspaceModel.storage.bridgeEntities.DirectoryPackagingElementEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableDirectoryPackagingElementEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.PackagingElementEntity;
+import com.intellij.workspaceModel.storage.MutableEntityStorage;
+import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.DirectoryPackagingElementEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.PackagingElementEntity;
 import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -74,7 +73,7 @@ public class DirectoryPackagingElement extends CompositeElementWithManifest<Dire
     this.update(
       () -> myDirectoryName = newName,
       (builder, entity) -> {
-        builder.modifyEntity(ModifiableDirectoryPackagingElementEntity.class, entity, ent ->{
+        builder.modifyEntity(DirectoryPackagingElementEntity.Builder.class, entity, ent ->{
           ent.setDirectoryName(newName);
           return Unit.INSTANCE;
         });
@@ -93,7 +92,7 @@ public class DirectoryPackagingElement extends CompositeElementWithManifest<Dire
   }
 
   @Override
-  public WorkspaceEntity getOrAddEntity(@NotNull WorkspaceEntityStorageBuilder diff,
+  public WorkspaceEntity getOrAddEntity(@NotNull MutableEntityStorage diff,
                                         @NotNull EntitySource source,
                                         @NotNull Project project) {
     WorkspaceEntity existingEntity = getExistingEntity(diff);
@@ -103,7 +102,7 @@ public class DirectoryPackagingElement extends CompositeElementWithManifest<Dire
       return (PackagingElementEntity)o.getOrAddEntity(diff, source, project);
     });
 
-    var entity = BridgeModelModifiableEntitiesKt.addDirectoryPackagingElementEntity(diff, this.myDirectoryName, children, source);
+    var entity = ExtensionsKt.addDirectoryPackagingElementEntity(diff, this.myDirectoryName, children, source);
     diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(entity, this);
     return entity;
   }

@@ -213,7 +213,7 @@ object CachedCompilerArgumentsRestoringManager {
             override fun restoreArgument(
                 cachedArgument: KotlinCachedBooleanCompilerArgument,
                 cacheAware: CompilerArgumentsCacheAware
-            ): KotlinRawBooleanCompilerArgument? =
+            ): KotlinRawBooleanCompilerArgument =
                 KotlinRawBooleanCompilerArgument(java.lang.Boolean.valueOf(cachedArgument.data))
         }
 

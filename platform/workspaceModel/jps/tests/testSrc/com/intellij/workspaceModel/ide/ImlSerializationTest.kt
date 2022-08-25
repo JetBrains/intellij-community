@@ -7,8 +7,8 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.asConfigLocation
 import com.intellij.workspaceModel.ide.impl.jps.serialization.loadProject
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.SerializationRoundTripChecker
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.entities.test.api.SampleEntity2
 import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.Assert.assertTrue
@@ -46,7 +46,7 @@ class ImlSerializationTest {
     checkSerializationSize(bytes, expectedSize, 2_000)
 
     assertTrue("This assertion is a reminder. Have you updated the serializer? Update the serializer version!",
-               23_000 == expectedSize && "v30" == EntityStorageSerializerImpl.SERIALIZER_VERSION)
+               23_000 == expectedSize && "v31" == EntityStorageSerializerImpl.SERIALIZER_VERSION)
   }
 
   @Test
@@ -57,10 +57,9 @@ class ImlSerializationTest {
 
   @Test
   fun externalIndexIsNotSerialized() {
-    val builder = WorkspaceEntityStorageBuilder.create()
-    val entity = builder.addEntity(ModifiableSampleEntity::class.java, Source) {
-      this.data = "Test"
-    }
+    val builder = MutableEntityStorage.create()
+    val entity = SampleEntity2("Test", Source, true)
+    builder.addEntity(entity)
     val index = builder.getMutableExternalMapping<String>("test.my.index")
     index.addMapping(entity, "Hello")
 
@@ -78,13 +77,13 @@ class ImlSerializationTest {
   }
 
   private fun loadProjectAndCheck(projectFile: File): ByteArray {
-    val storageBuilder = WorkspaceEntityStorageBuilder.create()
+    val storageBuilder = MutableEntityStorage.create()
     loadProject(projectFile.asConfigLocation(virtualFileManager), storageBuilder, virtualFileManager)
     return serializationRoundTrip(storageBuilder)
   }
 
-  private fun serializationRoundTrip(storageBuilder: WorkspaceEntityStorageBuilder): ByteArray {
-    val storage = storageBuilder.toStorage()
+  private fun serializationRoundTrip(storageBuilder: MutableEntityStorage): ByteArray {
+    val storage = storageBuilder.toSnapshot()
     val byteArray: ByteArray
     val timeMillis = measureTimeMillis {
       byteArray = SerializationRoundTripChecker.verifyPSerializationRoundTrip(storage, virtualFileManager)
@@ -99,20 +98,6 @@ class ImlSerializationTest {
     @ClassRule
     val appRule = ApplicationRule()
   }
-}
-
-@Suppress("unused")
-internal class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
-  lateinit var data: String
-  override fun createEntity(snapshot: WorkspaceEntityStorage): SampleEntity {
-    return SampleEntity(data).also { addMetaData(it, snapshot) }
-  }
-}
-
-internal class SampleEntity(val data: String) : WorkspaceEntityBase()
-
-internal class ModifiableSampleEntity : ModifiableWorkspaceEntityBase<SampleEntity>() {
-  var data: String by EntityDataDelegation()
 }
 
 internal object Source : EntitySource

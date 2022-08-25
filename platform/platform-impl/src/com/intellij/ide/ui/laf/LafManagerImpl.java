@@ -53,6 +53,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tree.ui.DefaultTreeUI;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import kotlin.Lazy;
 import org.intellij.lang.annotations.JdkConstants;
@@ -268,11 +269,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
         if (isNewUIPlugin(pluginDescriptor)) {
           ExperimentalUI.getInstance().onExpUIDisabled();
-          if (getCurrentLookAndFeel().getName().equals("Dark") || getCurrentLookAndFeel().getName().equals("Light")) {
-            setCurrentLookAndFeel(JBColor.isBright() ? getDefaultLightLaf() : getDefaultDarkLaf());
-          }
-          ApplicationManager.getApplication().invokeLater(() -> RegistryBooleanOptionDescriptor.suggestRestart(null),
-                                                          ModalityState.NON_MODAL);
         }
       }
 
@@ -292,12 +288,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       private void enableExpUI() {
         if (!Registry.is("ide.experimental.ui")) {
           ExperimentalUI.getInstance().onExpUIEnabled();
-          String name = JBColor.isBright() ? "Light" : "Dark";
-          Optional<UIManager.LookAndFeelInfo> laf = Arrays.stream(getInstalledLookAndFeels())
-                                                          .filter(x -> x.getName().equals(name))
-                                                          .findFirst();
-          laf.ifPresent(info -> setCurrentLookAndFeel(info));
-          ApplicationManager.getApplication().invokeLater(() -> RegistryBooleanOptionDescriptor.suggestRestart(null));
         }
       }
     });
@@ -471,14 +461,17 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     return myLafComboBoxModel.getValue();
   }
 
+  private List<UIManager.LookAndFeelInfo> lafListWithoutExcluded() {
+    List<String> excludedThemes = UiThemeProviderListManager.Companion.getExcludedThemes();
+    return ContainerUtil.filter(lafList.getValue(), info -> !excludedThemes.contains(info.getName()));
+  }
+
   private @NotNull List<LafReference> getAllReferences() {
     List<LafReference> result = new ArrayList<>();
     boolean addSeparator = false;
     Map<String, Integer> lafNameOrder = UiThemeProviderListManager.Companion.getLafNameOrder();
-    List<String> excludedThemes = UiThemeProviderListManager.Companion.getExcludedThemes();
     int maxNameOrder = Collections.max(lafNameOrder.values());
-    for (UIManager.LookAndFeelInfo info : lafList.getValue()) {
-      if (excludedThemes.contains(info.getName())) continue;
+    for (UIManager.LookAndFeelInfo info : lafListWithoutExcluded()) {
       if (addSeparator) {
         result.add(SEPARATOR);
         addSeparator = false;
@@ -740,11 +733,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private static void updateColors(UIDefaults defaults) {
-    for (Object key : defaults.keySet().toArray()) {
-      Object value = defaults.get(key);
+    // MultiUIDefaults doesn't override keySet() in JDK 11 (JDK 17 is ok) and returns set of UIDefaults,
+    // but not expected UI pairs with key/value. So don't use it
+    for (Map.Entry<Object, Object> entry : defaults.entrySet()) {
+      Object value = entry.getValue();
       if (value instanceof Color && !(value instanceof JBColor && ((JBColor)value).getName() != null)) {
-        defaults.remove(key);
-        defaults.put(key, wrapColorToNamedColor((Color)value, key.toString()));
+        entry.setValue(wrapColorToNamedColor((Color)value, entry.getKey().toString()));
       }
     }
   }
@@ -1284,6 +1278,11 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
       // when updating a theme plugin that doesn't provide the current theme, don't select any of its themes as current
       UITheme newTheme = newLaF.getTheme();
+      ClassLoader pluginClassLoader = pluginDescriptor.getPluginClassLoader();
+      if (pluginClassLoader != null) {
+        newTheme.setProviderClassLoader(pluginClassLoader);
+      }
+
       if (!autodetect && (!isUpdatingPlugin || newTheme.getId().equals(themeIdBeforePluginUpdate))) {
         setLookAndFeelImpl(newLaF, true, false);
         JBColor.setDark(newTheme.isDark());
@@ -1298,7 +1297,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         return;
       }
 
-      boolean isDark = oldLaF.getTheme().isDark();
+      UITheme oldTheme = oldLaF.getTheme();
+      oldTheme.setProviderClassLoader(null);
+
+      boolean isDark = oldTheme.isDark();
       UIManager.LookAndFeelInfo defaultLaF;
       if (oldLaF == getCurrentLookAndFeel()) {
         defaultLaF = isDark ? defaultDarkLaf.getValue() : getDefaultLightLaf();
@@ -1394,7 +1396,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       List<UIManager.LookAndFeelInfo> lightLafs = new ArrayList<>();
       List<UIManager.LookAndFeelInfo> darkLafs = new ArrayList<>();
 
-      for (UIManager.LookAndFeelInfo lafInfo : lafList.getValue()) {
+      for (UIManager.LookAndFeelInfo lafInfo : lafListWithoutExcluded()) {
         if (lafInfo instanceof UIThemeBasedLookAndFeelInfo && ((UIThemeBasedLookAndFeelInfo)lafInfo).getTheme().isDark() ||
             lafInfo.getName().equals(DarculaLaf.NAME)) {
           darkLafs.add(lafInfo);

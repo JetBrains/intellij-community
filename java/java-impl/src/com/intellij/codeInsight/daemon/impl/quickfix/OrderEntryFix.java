@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
@@ -34,9 +34,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.UAnnotation;
-import org.jetbrains.uast.UImportStatement;
-import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.*;
 
 import java.io.File;
 import java.util.*;
@@ -323,11 +321,18 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     if (psiElement.getLanguage() == JavaLanguage.INSTANCE && !PsiUtil.isLanguageLevel5OrHigher(psiElement)) {
       return ThreeState.NO;
     }
-    if (UastContextKt.getUastParentOfType(psiElement, UAnnotation.class) != null) {
-      return ThreeState.YES;
-    }
-    if (UastContextKt.getUastParentOfType(psiElement, UImportStatement.class) != null) {
-      return ThreeState.UNSURE;
+    UElement uElement = UastContextKt.toUElement(psiElement);
+    while (uElement != null) {
+      if (uElement instanceof UAnnotation) {
+        return ThreeState.YES;
+      }
+      if (uElement instanceof UImportStatement) {
+        return ThreeState.UNSURE;  
+      }
+      if (uElement instanceof UDeclaration || uElement instanceof UFile) {
+        break;
+      }
+      uElement = uElement.getUastParent();
     }
     return ThreeState.NO;
   }

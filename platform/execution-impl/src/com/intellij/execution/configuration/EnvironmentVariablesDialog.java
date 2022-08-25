@@ -76,6 +76,16 @@ public class EnvironmentVariablesDialog extends DialogWrapper {
     init();
   }
 
+  @Override
+  public Dimension getInitialSize() {
+    var size = super.getInitialSize();
+    if (size != null){
+      return size;
+    }
+
+    return new Dimension(500, 500);
+  }
+
   @Nullable
   @Override
   protected String getDimensionServiceKey() {

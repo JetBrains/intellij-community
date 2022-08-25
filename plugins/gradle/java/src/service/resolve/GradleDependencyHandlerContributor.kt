@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve
 
 import com.intellij.psi.*
@@ -16,7 +16,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessMethods
 
 class GradleDependencyHandlerContributor : NonCodeMembersContributor() {
 
-  override fun getParentClassName(): String? = GRADLE_API_DEPENDENCY_HANDLER
+  override fun getParentClassName(): String = GRADLE_API_DEPENDENCY_HANDLER
 
   override fun processDynamicElements(qualifierType: PsiType,
                                       clazz: PsiClass?,

@@ -71,7 +71,7 @@ class IterableTypesDetection(
             )
             val expressionReceiver = ExpressionReceiver.create(expression, type.type, context.trace.bindingContext)
             val elementType = forLoopConventionsChecker.checkIterableConvention(expressionReceiver, context)
-            return elementType?.let { it.toFuzzyType(type.freeParameters) }
+            return elementType?.toFuzzyType(type.freeParameters)
         }
 
         private fun canBeIterable(type: FuzzyType): Boolean {

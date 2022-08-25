@@ -300,6 +300,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("match literal by value", 1, findMatchesCount(s3, "32"));
     assertEquals("match char with substitution", 3, findMatchesCount(s3, "\\''_x\\'"));
     assertEquals("string literal should not match char", 0, findMatchesCount(s3, "\"a\""));
+
+    String s4 = "class X {" +
+                "  String s = \"\\n\";" +
+                "  String t = \" \";" +
+                "  String u = \" \";" +
+                "  String v = \"\";" +
+                "}";
+    assertEquals("match empty string", 1, findMatchesCount(s4, "\"\""));
+    assertEquals("match space", 2, findMatchesCount(s4, "\" \""));
   }
 
   public void testCovariantArraySearch() {

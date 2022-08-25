@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.runToolbar.RunToolbarProcessData;
 import com.intellij.execution.target.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.Disposable;
@@ -279,7 +280,8 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
   }
 
   private static final class CachingDataContext implements DataContext {
-    private static final DataKey[] keys = {PROJECT, PROJECT_FILE_DIRECTORY, EDITOR, VIRTUAL_FILE, MODULE, PSI_FILE};
+    private static final DataKey[] keys = {PROJECT, PROJECT_FILE_DIRECTORY, EDITOR, VIRTUAL_FILE, MODULE, PSI_FILE,
+      RunToolbarProcessData.RW_SLOT};
     private final Map<String, Object> values = new HashMap<>();
 
     @NotNull

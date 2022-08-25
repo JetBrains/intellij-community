@@ -21,7 +21,7 @@ class ConvertFormDialog(val project: Project, var className: String) : DialogWra
     title = DevKitUIDesignerBundle.message("convert.form.dialog.title")
   }
 
-  override fun createCenterPanel(): JComponent? {
+  override fun createCenterPanel(): JComponent {
     return panel {
       row(DevKitUIDesignerBundle.message("convert.form.dialog.label.target.class.name")) {
         textField(::className, columns = 40).focused()

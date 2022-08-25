@@ -32,9 +32,16 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactRootElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addCustomPackagingElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactPropertiesEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactRootElementEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import junit.framework.TestCase
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 import org.junit.Assume.assumeTrue
 import org.junit.runner.RunWith
 import java.util.concurrent.Callable
@@ -56,7 +63,7 @@ class ArtifactTest : ArtifactsTestCase() {
 
     WorkspaceModel.getInstance(project).updateProjectModel {
       val artifactEntity = it.entities(ArtifactEntity::class.java).single()
-      it.modifyEntity(ModifiableArtifactEntity::class.java, artifactEntity) {
+      it.modifyEntity(artifactEntity) {
         name = anotherName
       }
     }
@@ -113,7 +120,7 @@ class ArtifactTest : ArtifactsTestCase() {
 
     workspaceModel.updateProjectModel {
       val artifactEntity = it.resolve(ArtifactId("MyName"))!!
-      it.modifyEntity(ModifiableArtifactEntity::class.java, artifactEntity) {
+      it.modifyEntity(artifactEntity) {
         name = "NameThree"
       }
     }
@@ -134,7 +141,7 @@ class ArtifactTest : ArtifactsTestCase() {
       WorkspaceModel.getInstance(project).updateProjectModel { builder ->
         val artifactEntity = builder.entities(ArtifactEntity::class.java).single()
         val elementEntity = artifactEntity.rootElement!!.children.single() as FileCopyPackagingElementEntity
-        builder.modifyEntity(ModifiableFileCopyPackagingElementEntity::class.java, elementEntity) {
+        builder.modifyEntity(FileCopyPackagingElementEntity.Builder::class.java, elementEntity) {
           filePath = VirtualFileUrlManager.getInstance(project).fromPath(file2.systemIndependentPath)
         }
       }
@@ -154,7 +161,7 @@ class ArtifactTest : ArtifactsTestCase() {
       WorkspaceModel.getInstance(project).updateProjectModel { builder ->
         val artifactEntity = builder.entities(ArtifactEntity::class.java).single()
         val elementEntity = artifactEntity.rootElement!!.children.single() as FileCopyPackagingElementEntity
-        builder.modifyEntity(ModifiableFileCopyPackagingElementEntity::class.java, elementEntity) {
+        builder.modifyEntity(FileCopyPackagingElementEntity.Builder::class.java, elementEntity) {
           renamedOutputFileName = "AnotherName"
         }
       }
@@ -173,7 +180,7 @@ class ArtifactTest : ArtifactsTestCase() {
       WorkspaceModel.getInstance(project).updateProjectModel { builder ->
         val artifactEntity = builder.entities(ArtifactEntity::class.java).single()
         val elementEntity = artifactEntity.rootElement!!.children.single() as DirectoryPackagingElementEntity
-        builder.modifyEntity(ModifiableDirectoryPackagingElementEntity::class.java, elementEntity) {
+        builder.modifyEntity(DirectoryPackagingElementEntity.Builder::class.java, elementEntity) {
           this.directoryName = "AnotherName"
         }
       }
@@ -192,7 +199,7 @@ class ArtifactTest : ArtifactsTestCase() {
       WorkspaceModel.getInstance(project).updateProjectModel { builder ->
         val artifactEntity = builder.entities(ArtifactEntity::class.java).single()
         val elementEntity = artifactEntity.rootElement!!.children.single() as ArchivePackagingElementEntity
-        builder.modifyEntity(ModifiableArchivePackagingElementEntity::class.java, elementEntity) {
+        builder.modifyEntity(elementEntity) {
           this.fileName = "AnotherName"
         }
       }
@@ -215,7 +222,7 @@ class ArtifactTest : ArtifactsTestCase() {
       WorkspaceModel.getInstance(project).updateProjectModel { builder ->
         val artifactEntity = builder.entities(ArtifactEntity::class.java).single()
         val elementEntity = artifactEntity.rootElement!!.children.single() as LibraryFilesPackagingElementEntity
-        builder.modifyEntity(ModifiableLibraryFilesPackagingElementEntity::class.java, elementEntity) {
+        builder.modifyEntity(elementEntity) {
           this.library = LibraryId("123", LibraryTableId.ModuleLibraryTableId(ModuleId("MyModule")))
         }
       }
@@ -236,7 +243,7 @@ class ArtifactTest : ArtifactsTestCase() {
       WorkspaceModel.getInstance(project).updateProjectModel { builder ->
         val artifactEntity = builder.entities(ArtifactEntity::class.java).single()
         val elementEntity = artifactEntity.rootElement!!.children.single() as ExtractedDirectoryPackagingElementEntity
-        builder.modifyEntity(ModifiableExtractedDirectoryPackagingElementEntity::class.java, elementEntity) {
+        builder.modifyEntity(ExtractedDirectoryPackagingElementEntity.Builder::class.java, elementEntity) {
           this.pathInArchive = "/another/test"
         }
       }
@@ -255,7 +262,7 @@ class ArtifactTest : ArtifactsTestCase() {
       WorkspaceModel.getInstance(project).updateProjectModel { builder ->
         val artifactEntity = builder.entities(ArtifactEntity::class.java).single()
         val elementEntity = artifactEntity.rootElement!!.children.single() as FileCopyPackagingElementEntity
-        builder.modifyEntity(ModifiableFileCopyPackagingElementEntity::class.java, elementEntity) {
+        builder.modifyEntity(FileCopyPackagingElementEntity.Builder::class.java, elementEntity) {
           this.renamedOutputFileName = "output"
         }
       }
@@ -282,7 +289,7 @@ class ArtifactTest : ArtifactsTestCase() {
 
     workspaceModel.updateProjectModel {
       val artifactEntity = it.resolve(ArtifactId("MyName"))!!
-      it.modifyEntity(ModifiableArtifactEntity::class.java, artifactEntity) {
+      it.modifyEntity(artifactEntity) {
         name = "NameThree"
       }
     }

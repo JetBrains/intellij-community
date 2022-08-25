@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable
 
@@ -21,7 +21,7 @@ object CreateHasNextFunctionActionFactory : CreateCallableMemberFromUsageFactory
         return diagnostic.psiElement.findParentOfType(strict = false)
     }
 
-    override fun createCallableInfo(element: KtForExpression, diagnostic: Diagnostic): CallableInfo? {
+    override fun createCallableInfo(element: KtForExpression, diagnostic: Diagnostic): CallableInfo {
         val diagnosticWithParameters =
             DiagnosticFactory.cast(diagnostic, Errors.HAS_NEXT_MISSING, Errors.HAS_NEXT_FUNCTION_NONE_APPLICABLE)
         val ownerType = TypeInfo(diagnosticWithParameters.a, Variance.IN_VARIANCE)

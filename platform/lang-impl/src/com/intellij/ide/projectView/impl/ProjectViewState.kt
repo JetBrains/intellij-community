@@ -65,7 +65,7 @@ class ProjectViewState : PersistentStateComponent<ProjectViewState> {
     XmlSerializerUtil.copyBean(state, this)
   }
 
-  override fun getState(): ProjectViewState? {
+  override fun getState(): ProjectViewState {
     return this
   }
 }

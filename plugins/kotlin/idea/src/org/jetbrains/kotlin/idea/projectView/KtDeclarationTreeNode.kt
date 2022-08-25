@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.projectView
 
 import com.intellij.ide.projectView.PresentationData
@@ -36,7 +36,7 @@ internal class KtDeclarationTreeNode(
         private fun String?.orErrorName() = if (!isNullOrBlank()) this else ERROR_NAME
 
         @NlsSafe
-        fun tryGetRepresentableText(declaration: KtDeclaration): String? {
+        fun tryGetRepresentableText(declaration: KtDeclaration): String {
             val settings = declaration.containingKtFile.kotlinCustomSettings
             fun StringBuilder.appendColon() {
                 if (settings.SPACE_BEFORE_TYPE_COLON) append(" ")
@@ -80,7 +80,7 @@ internal class KtDeclarationTreeNode(
                 }
             }
 
-            fun KtObjectDeclaration.presentableText(): String? = buildString {
+            fun KtObjectDeclaration.presentableText(): String = buildString {
 
                 if (isCompanion()) {
                     append("companion object")

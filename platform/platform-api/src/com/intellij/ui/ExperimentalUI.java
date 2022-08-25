@@ -68,9 +68,11 @@ public abstract class ExperimentalUI {
         if (getInstance().isIconPatcherSet.compareAndSet(false, true)) {
           IconLoader.installPathPatcher(getInstance().iconPathPatcher);
         }
+        getInstance().onExpUIEnabled();
       }
       else if (getInstance().isIconPatcherSet.compareAndSet(true, false)) {
         IconLoader.removePathPatcher(getInstance().iconPathPatcher);
+        getInstance().onExpUIDisabled();
       }
     }
   }

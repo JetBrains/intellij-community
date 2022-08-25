@@ -61,7 +61,7 @@ interface KotlinGradleModel : Serializable {
     val gradleUserHome: String
     val cacheAware: CompilerArgumentsCacheAware
 
-    @Deprecated(level = DeprecationLevel.ERROR, message = "Use KotlinGradleModel#cacheAware instead")
+    @Deprecated(level = DeprecationLevel.WARNING, message = "Use KotlinGradleModel#cacheAware instead")
     val partialCacheAware: CompilerArgumentsCacheAware
 }
 
@@ -86,7 +86,7 @@ data class KotlinGradleModelImpl(
     )
     @Suppress("OverridingDeprecatedMember")
     override val partialCacheAware: CompilerArgumentsCacheAware
-        get() = throw UnsupportedOperationException("Not yet implemented")
+        get() = cacheAware
 }
 
 abstract class AbstractKotlinGradleModelBuilder : ModelBuilderService {

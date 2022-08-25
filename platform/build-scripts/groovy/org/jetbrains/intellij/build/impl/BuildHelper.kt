@@ -12,6 +12,7 @@ import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.StatusCode
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildScriptsLoggedError
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.io.copyDir
@@ -178,7 +179,12 @@ fun runApplicationStarter(context: BuildContext,
     val logFileToPublish = File.createTempFile("idea-", ".log")
     logFile.copyTo(logFileToPublish.toPath(), true)
     context.notifyArtifactBuilt(logFileToPublish.toPath())
-    context.messages.error("Log file: ${logFileToPublish.canonicalPath} attached to build artifacts")
+    try {
+      context.messages.error("Log file: ${logFileToPublish.canonicalPath} attached to build artifacts")
+    }
+    catch (_: BuildScriptsLoggedError) {
+      // skip exception thrown by logger.error
+    }
   }
 }
 

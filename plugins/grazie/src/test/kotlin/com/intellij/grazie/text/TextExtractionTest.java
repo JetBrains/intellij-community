@@ -213,7 +213,25 @@ public class TextExtractionTest extends BasePlatformTestCase {
         myFixture.type(' ');
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); // drop file caches
       })
-      .usesAllCPUCores()
+      .assertTiming();
+  }
+
+  public void testLargeXmlWithUnclosedDoctypePerformance() {
+    String text = "<!DOCTYPE rules [\n<!ENTITY some \"x\">\n<rules> " +
+                  IntStreamEx.range(0, 10_000).mapToObj(i -> "<tag> content" + i + "</tag>\n").joining() +
+                  " </rules>";
+    PsiFile file = myFixture.configureByText("a.xml", text);
+
+    PlatformTestUtil
+      .startPerformanceTest("text extraction", 1_500, () -> {
+        for (PsiElement element : SyntaxTraverser.psiTraverser(file)) {
+          TextExtractor.findTextsAt(element, TextContent.TextDomain.ALL);
+        }
+      })
+      .setup(() -> {
+        myFixture.type(' ');
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); // drop file caches
+      })
       .assertTiming();
   }
 

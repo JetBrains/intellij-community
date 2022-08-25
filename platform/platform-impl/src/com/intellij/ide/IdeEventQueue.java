@@ -2,6 +2,7 @@
 package com.intellij.ide;
 
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.EventWatcher;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -43,7 +44,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import sun.awt.AppContext;
-import sun.awt.SunToolkit;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.ComboPopup;
@@ -916,14 +916,16 @@ public final class IdeEventQueue extends EventQueue {
     if (!EventQueue.isDispatchThread()) {
       throw new IllegalStateException("Must be called from EDT but got: " + Thread.currentThread());
     }
-    while (true) {
-      AWTEvent event = peekEvent();
-      if (event == null) return;
-      try {
-        dispatchEvent(getNextEvent());
-      }
-      catch (Exception e) {
-        Logs.LOG.error(e); //?
+    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+      while (true) {
+        AWTEvent event = peekEvent();
+        if (event == null) return;
+        try {
+          dispatchEvent(getNextEvent());
+        }
+        catch (Exception e) {
+          Logs.LOG.error(e); //?
+        }
       }
     }
   }

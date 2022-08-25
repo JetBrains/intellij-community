@@ -4,6 +4,7 @@ package com.intellij.codeInspection.test
 import com.intellij.codeInspection.*
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.testIntegration.TestFailedLineManager
 import com.intellij.uast.UastHintedVisitorAdapter
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
@@ -16,10 +17,10 @@ class TestFailedLineInspection : AbstractBaseUastLocalInspectionTool() {
     override fun visitCallExpression(node: UCallExpression): Boolean {
       val sourceNode = node.sourcePsi ?: return true
       val testFailProvider = TestFailedLineManager.getInstance(holder.project)
-      val testInfo = testFailProvider.getTestInfo(node) ?: return true
+      val testInfo = testFailProvider.getTestInfo(sourceNode) ?: return true
       val fixes = listOfNotNull(
-        testFailProvider.debugConfigurationQuickFix(sourceNode, testInfo.topStacktraceLine),
-        testFailProvider.ruConfigurationQuickFix(sourceNode)
+        testFailProvider.getDebugQuickFix(sourceNode, testInfo.topStackTraceLine),
+        testFailProvider.getRunQuickFix(sourceNode)
       ).toTypedArray()
       val identifier = node.methodIdentifier?.sourcePsi ?: return true
       val descriptor = InspectionManager.getInstance(holder.project).createProblemDescriptor(

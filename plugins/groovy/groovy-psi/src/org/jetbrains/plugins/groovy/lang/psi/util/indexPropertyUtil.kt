@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GroovyIndexPropertyUtil")
 
 package org.jetbrains.plugins.groovy.lang.psi.util
@@ -6,7 +6,6 @@ package org.jetbrains.plugins.groovy.lang.psi.util
 import com.intellij.psi.*
 import com.intellij.util.lazyPub
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBuiltinTypeClassExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -75,7 +74,7 @@ class ListArgument(
     ListLiteralType(expressions, context)
   }
 
-  fun unwrap(): Arguments? {
+  fun unwrap(): Arguments {
     return expressions.map(::ExpressionArgument)
   }
 }

@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.extensions.AreaInstance;
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,7 +23,8 @@ import java.util.List;
  * <a href="https://www.jetbrains.com/help/idea/content-roots.html#exclude-files-folders">excluded</a> from the project and its modules.
  */
 public interface DirectoryIndexExcludePolicy {
-  ExtensionPointName<DirectoryIndexExcludePolicy> EP_NAME = ExtensionPointName.create("com.intellij.directoryIndexExcludePolicy");
+  ProjectExtensionPointName<DirectoryIndexExcludePolicy> EP_NAME =
+    new ProjectExtensionPointName<>("com.intellij.directoryIndexExcludePolicy");
 
   /**
    * @deprecated Override {@link #getExcludeUrlsForProject()} instead
@@ -48,9 +49,9 @@ public interface DirectoryIndexExcludePolicy {
   }
 
   @Contract(pure = true)
-  default VirtualFilePointer @NotNull [] getExcludeRootsForModule(@NotNull ModuleRootModel rootModel) { return VirtualFilePointer.EMPTY_ARRAY;}
+  default VirtualFilePointer @NotNull [] getExcludeRootsForModule(@NotNull ModuleRootModel rootModel) { return VirtualFilePointer.EMPTY_ARRAY; }
 
   static DirectoryIndexExcludePolicy @NotNull [] getExtensions(@NotNull AreaInstance areaInstance) {
-    return EP_NAME.getExtensions(areaInstance);
+    return EP_NAME.getExtensions(areaInstance).toArray(new DirectoryIndexExcludePolicy[0]);
   }
 }

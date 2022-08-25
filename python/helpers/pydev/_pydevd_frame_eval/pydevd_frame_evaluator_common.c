@@ -1717,7 +1717,7 @@ static int __pyx_pf_18_pydevd_frame_eval_29pydevd_frame_evaluator_common_10Threa
  *         self.thread_trace_func = None
  * 
  *     def initialize_if_possible(self):             # <<<<<<<<<<<<<<
- *         # Don't call threading.currentThread because if we're too early in the process
+ *         # Don't call threading.current_thread because if we're too early in the process
  *         # we may create a dummy thread.
  */
 
@@ -1770,7 +1770,7 @@ static PyObject *__pyx_pf_18_pydevd_frame_eval_29pydevd_frame_evaluator_common_1
   __Pyx_RefNannySetupContext("initialize_if_possible", 0);
 
   /* "_pydevd_frame_eval/pydevd_frame_evaluator_common.pyx":29
- *         # Don't call threading.currentThread because if we're too early in the process
+ *         # Don't call threading.current_thread because if we're too early in the process
  *         # we may create a dummy thread.
  *         self.inside_frame_eval += 1             # <<<<<<<<<<<<<<
  * 
@@ -2461,7 +2461,7 @@ static PyObject *__pyx_pf_18_pydevd_frame_eval_29pydevd_frame_evaluator_common_1
  *         self.thread_trace_func = None
  * 
  *     def initialize_if_possible(self):             # <<<<<<<<<<<<<<
- *         # Don't call threading.currentThread because if we're too early in the process
+ *         # Don't call threading.current_thread because if we're too early in the process
  *         # we may create a dummy thread.
  */
 

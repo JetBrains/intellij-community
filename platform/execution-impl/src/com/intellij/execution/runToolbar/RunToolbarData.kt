@@ -7,7 +7,6 @@ import com.intellij.execution.impl.EditConfigurationsDialog
 import com.intellij.execution.impl.ProjectRunConfigurationConfigurable
 import com.intellij.execution.impl.RunConfigurable
 import com.intellij.execution.impl.SingleConfigurationConfigurable
-import com.intellij.execution.runToolbar.data.RWWaitingForAProcesses
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.icons.AllIcons
@@ -31,9 +30,6 @@ interface RunToolbarData {
     @JvmField val RUN_TOOLBAR_POPUP_STATE_KEY: DataKey<Boolean> = DataKey.create("RUN_TOOLBAR_POPUP_STATE_KEY")
     @JvmField val RUN_TOOLBAR_MAIN_STATE: DataKey<RunToolbarMainSlotState> = DataKey.create("RUN_TOOLBAR_MAIN_STATE")
 
-    @ApiStatus.Internal
-    @JvmField val RUN_TOOLBAR_SUPPRESS_MAIN_SLOT_USER_DATA_KEY = Key<Boolean>("RUN_TOOLBAR_SUPPRESS_MAIN_SLOT_USER_DATA_KEY")
-
     internal fun prepareDescription(@Nls text: String, @Nls description: String): @Nls String {
       return HtmlBuilder().append(text)
           .br()
@@ -48,7 +44,6 @@ interface RunToolbarData {
   val id: String
   var configuration: RunnerAndConfigurationSettings?
   val environment: ExecutionEnvironment?
-  val waitingForAProcesses: RWWaitingForAProcesses
 
   fun clear()
 }
@@ -81,10 +76,6 @@ private fun getConfiguration(dataContext: DataContext): RunnerAndConfigurationSe
 
 internal fun AnActionEvent.isActiveProcess(): Boolean {
   return this.environment() != null
-}
-
-fun RunToolbarData.startWaitingForAProcess(project: Project, settings: RunnerAndConfigurationSettings, executorId: String) {
-  RunToolbarSlotManager.getInstance(project).startWaitingForAProcess(this, settings, executorId)
 }
 
 internal fun AnActionEvent.setConfiguration(value: RunnerAndConfigurationSettings?) {

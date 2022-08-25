@@ -92,6 +92,7 @@ class ActionStepBuilder {
   }
 
   private void appendActionsFromGroup(@NotNull ActionGroup actionGroup) {
+    boolean multiChoicePopup = Utils.isMultiChoiceGroup(actionGroup);
     List<AnAction> newVisibleActions = Utils.expandActionGroup(
       actionGroup, myPresentationFactory, myDataContext, myActionPlace);
     List<AnAction> filtered = myShowDisabled ? newVisibleActions : ContainerUtil.filter(
@@ -103,13 +104,16 @@ class ActionStepBuilder {
         mySeparatorText = ((Separator)action).getText();
       }
       else {
-        appendAction(action);
+        Presentation presentation = myPresentationFactory.getPresentation(action);
+        if (multiChoicePopup && action instanceof Toggleable) {
+          presentation.setMultiChoice(true);
+        }
+        appendAction(action, presentation);
       }
     }
   }
 
-  private void appendAction(@NotNull AnAction action) {
-    Presentation presentation = myPresentationFactory.getPresentation(action);
+  private void appendAction(@NotNull AnAction action, @NotNull Presentation presentation) {
     Character mnemonic = null;
     if (myShowNumbers) {
       if (myCurrentNumber < 9) {

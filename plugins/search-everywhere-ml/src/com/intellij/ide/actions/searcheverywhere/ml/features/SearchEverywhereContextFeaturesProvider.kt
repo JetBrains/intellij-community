@@ -19,6 +19,8 @@ internal class SearchEverywhereContextFeaturesProvider {
     internal val LOCAL_MIN_USAGE_SE_COUNT_KEY = EventFields.Int("minUsageSE")
 
     private val GLOBAL_STATISTICS_CONTEXT_DEFAULT = GlobalStatisticsContextFields(ActionsGlobalSummaryManager.getDefaultStatisticsVersion())
+    private val GLOBAL_STATISTICS_CONTEXT_UPDATED = GlobalStatisticsContextFields(ActionsGlobalSummaryManager.getUpdatedStatisticsVersion())
+
 
     internal val OPEN_FILE_TYPES_KEY = EventFields.StringListValidatedByCustomRule("openFileTypes", "file_type")
     internal val NUMBER_OF_OPEN_EDITORS_KEY = EventFields.Int("numberOfOpenEditors")
@@ -29,7 +31,8 @@ internal class SearchEverywhereContextFeaturesProvider {
         LOCAL_MAX_USAGE_COUNT_KEY, LOCAL_MIN_USAGE_COUNT_KEY, LOCAL_MAX_USAGE_SE_COUNT_KEY, LOCAL_MIN_USAGE_SE_COUNT_KEY,
         OPEN_FILE_TYPES_KEY, NUMBER_OF_OPEN_EDITORS_KEY, IS_SINGLE_MODULE_PROJECT
       )
-      fields.addAll(GLOBAL_STATISTICS_CONTEXT_DEFAULT.getFieldsDeclaration())
+      fields.addAll(GLOBAL_STATISTICS_CONTEXT_DEFAULT.getFieldsDeclaration() +
+                    GLOBAL_STATISTICS_CONTEXT_UPDATED.getFieldsDeclaration())
       return fields
     }
   }
@@ -43,7 +46,8 @@ internal class SearchEverywhereContextFeaturesProvider {
     data.add(LOCAL_MIN_USAGE_SE_COUNT_KEY.with(localTotalStats.minUsageFromSearchEverywhere))
 
     val globalSummary = ApplicationManager.getApplication().getService(ActionsGlobalSummaryManager::class.java)
-    data.addAll(GLOBAL_STATISTICS_CONTEXT_DEFAULT.getGlobalUsageStatistics(globalSummary.totalSummary))
+    data.addAll(GLOBAL_STATISTICS_CONTEXT_DEFAULT.getGlobalUsageStatistics(globalSummary.totalSummary) +
+                GLOBAL_STATISTICS_CONTEXT_UPDATED.getGlobalUsageStatistics(globalSummary.updatedTotalSummary))
 
     project?.let {
       if (project.isDisposed) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language.messages
 
 import com.intellij.ide.util.PropertiesComponent
@@ -35,7 +35,7 @@ class EditorConfigWrongFileEncodingNotificationProvider : EditorNotifications.Pr
     return buildPanel(project, editor, file)
   }
 
-  private fun buildPanel(project: Project, editor: Editor, file: VirtualFile): EditorNotificationPanel? {
+  private fun buildPanel(project: Project, editor: Editor, file: VirtualFile): EditorNotificationPanel {
     val result = EditorNotificationPanel(editor, null, null)
     result.text(EditorConfigBundle.get("notification.encoding.message"))
 

@@ -4,6 +4,7 @@ package training.dsl
 import com.intellij.codeInsight.documentation.DocumentationComponent
 import com.intellij.codeInsight.documentation.DocumentationEditorPane
 import com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enabled
+import com.intellij.execution.ui.UIExperiment
 import com.intellij.execution.ui.layout.impl.RunnerLayoutSettings
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -423,7 +424,7 @@ fun LessonContext.highlightDebugActionsToolbar() {
   }
 
   task {
-    if (!Registry.`is`("debugger.new.tool.window.layout")) {
+    if (!UIExperiment.isNewDebuggerUIEnabled()) {
       highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "ShowExecutionPoint", clearPreviousHighlights = false)
     }
   }

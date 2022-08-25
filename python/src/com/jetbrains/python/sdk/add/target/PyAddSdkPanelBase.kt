@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk.add.target
 
 import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.readableFs.TargetConfigurationReadableFs
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -32,6 +33,12 @@ abstract class PyAddSdkPanelBase(protected val project: Project?,
 
   protected val targetEnvironmentConfiguration: TargetEnvironmentConfiguration?
     get() = targetSupplier?.get()
+
+  /**
+   *  For targets providing access to FS returns instance to map target path to abstraction used by validation.
+   *  Otherwise return null, so [validateExecutableFile] and [validateEmptyDir] skips validations
+   */
+  protected val pathInfoProvider: TargetConfigurationReadableFs? = targetEnvironmentConfiguration as? TargetConfigurationReadableFs
 
   protected val isUnderLocalTarget: Boolean
     get() = targetEnvironmentConfiguration == null
@@ -77,10 +84,7 @@ abstract class PyAddSdkPanelBase(protected val project: Project?,
 
       return sdk
     }
-
-    private fun generateSdkHomePath(data: PyTargetAwareAdditionalData): String {
-      // TODO [targets] Add identifier PyTargetAwareAdditionalData
-      return "target://" + data.interpreterPath
-    }
+    // TODO [targets] Add identifier PyTargetAwareAdditionalData
+    private fun generateSdkHomePath(data: PyTargetAwareAdditionalData): String = data.interpreterPath
   }
 }

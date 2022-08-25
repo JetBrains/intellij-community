@@ -79,7 +79,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
   }
 
   override fun removeToolbar() {
-    myToolbar?.let { it.removeComponentListener(contentResizeListener) }
+    myToolbar?.removeComponentListener(contentResizeListener)
     myToolbarPlaceholder.removeAll()
     myToolbarPlaceholder.revalidate()
   }
@@ -94,7 +94,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
     super.uninstallListeners()
     mainMenuButton.menuShortcutHandler.unregisterShortcuts()
     myMenuBar.removeComponentListener(contentResizeListener)
-    myToolbar?.let { it.removeComponentListener(contentResizeListener) }
+    myToolbar?.removeComponentListener(contentResizeListener)
   }
 
   override fun updateMenuActions(forceRebuild: Boolean) {} //todo remove

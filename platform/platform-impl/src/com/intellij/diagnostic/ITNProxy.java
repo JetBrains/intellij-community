@@ -277,9 +277,7 @@ final class ITNProxy {
 
   private static void append(StringBuilder builder, String key, @Nullable String value) {
     if (value != null && !value.isEmpty()) {
-      String encoded;
-      try { encoded = URLEncoder.encode(value, StandardCharsets.UTF_8.name()); }
-      catch (UnsupportedEncodingException e) { throw new IllegalStateException(e); }  // not expected to happen
+      String encoded = URLEncoder.encode(value, StandardCharsets.UTF_8);
       if (builder.length() > 0) builder.append('&');
       builder.append(key).append('=').append(encoded);
     }

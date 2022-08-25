@@ -9,9 +9,9 @@ import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.workspaceModel.storage.*;
-import com.intellij.workspaceModel.storage.bridgeEntities.BridgeModelModifiableEntitiesKt;
-import com.intellij.workspaceModel.storage.bridgeEntities.CustomPackagingElementEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.PackagingElementEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.CustomPackagingElementEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.PackagingElementEntity;
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +60,7 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
   /**
    * This method gets an entity from the diff mappings and create a new one for the current element
    */
-  public WorkspaceEntity getOrAddEntity(@NotNull WorkspaceEntityStorageBuilder diff,
+  public WorkspaceEntity getOrAddEntity(@NotNull MutableEntityStorage diff,
                                         @NotNull EntitySource source,
                                         @NotNull Project project) {
     WorkspaceEntity existingEntity = getExistingEntity(diff);
@@ -81,13 +81,13 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
     }
 
     CustomPackagingElementEntity addedEntity =
-      BridgeModelModifiableEntitiesKt.addCustomPackagingElementEntity(diff, this.getType().getId(), xmlTag, children, source);
+      ExtensionsKt.addCustomPackagingElementEntity(diff, this.getType().getId(), xmlTag, children, source);
 
     diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(addedEntity, this);
     return addedEntity;
   }
 
-  protected @Nullable WorkspaceEntity getExistingEntity(WorkspaceEntityStorageBuilder diff) {
+  protected @Nullable WorkspaceEntity getExistingEntity(MutableEntityStorage diff) {
     ExternalEntityMapping<Object> mapping = diff.getExternalMapping("intellij.artifacts.packaging.elements");
     Optional<WorkspaceEntity> existing = mapping.getEntities(this).stream().findFirst();
 
@@ -112,7 +112,7 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
   }
 
   protected void update(Runnable noStorageChange,
-                        BiConsumer<? super WorkspaceEntityStorageBuilder, ? super PackagingElementEntity> changeOnBuilder) {
+                        BiConsumer<? super MutableEntityStorage, ? super PackagingElementEntity> changeOnBuilder) {
     update(
       () -> {
         noStorageChange.run();
@@ -126,7 +126,7 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
   }
 
   protected <T> T update(Supplier<? extends T> noStorageChange,
-                         BiFunction<? super WorkspaceEntityStorageBuilder, ? super PackagingElementEntity, T> changeOnBuilder) {
+                         BiFunction<? super MutableEntityStorage, ? super PackagingElementEntity, T> changeOnBuilder) {
     if (myStorage == null) {
       return noStorageChange.get();
     }
@@ -137,7 +137,7 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
       }
       else {
         noStorageChange.get();
-        WorkspaceEntityStorageBuilder builder = ((VersionedEntityStorageOnBuilder)myStorage).getBase();
+        MutableEntityStorage builder = ((VersionedEntityStorageOnBuilder)myStorage).getBase();
         MutableExternalEntityMapping<PackagingElement<?>> mapping = builder.getMutableExternalMapping("intellij.artifacts.packaging.elements");
         PackagingElementEntity entity = (PackagingElementEntity)ContainerUtil.getFirstItem(mapping.getEntities(this));
         if (entity == null) {
@@ -150,7 +150,7 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
 
   protected @NotNull PackagingElementEntity getThisEntity() {
     assert myStorage != null;
-    WorkspaceEntityStorage base = myStorage.getBase();
+    EntityStorage base = myStorage.getBase();
     ExternalEntityMapping<Object> externalMapping = base.getExternalMapping("intellij.artifacts.packaging.elements");
     PackagingElementEntity entity = (PackagingElementEntity)ContainerUtil.getFirstItem(externalMapping.getEntities(this));
     if (entity == null) {

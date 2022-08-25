@@ -22,8 +22,12 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.workspaceModel.storage.EntitySource;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
-import com.intellij.workspaceModel.storage.bridgeEntities.*;
+import com.intellij.workspaceModel.storage.MutableEntityStorage;
+import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryFilesPackagingElementEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId;
 import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -121,7 +125,7 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
       (builder, entity) -> {
         if (levelBefore.equals(level)) return;
 
-        builder.modifyEntity(ModifiableLibraryFilesPackagingElementEntity.class, entity, ent -> {
+        builder.modifyEntity(LibraryFilesPackagingElementEntity.Builder.class, entity, ent -> {
           LibraryId libraryId = ent.getLibrary();
           if (libraryId != null) {
             LibraryTableId newTableId;
@@ -151,7 +155,7 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
     this.update(
       () -> myLibraryName = libraryName,
       (builder, entity) -> {
-        builder.modifyEntity(ModifiableLibraryFilesPackagingElementEntity.class, entity, ent -> {
+        builder.modifyEntity(LibraryFilesPackagingElementEntity.Builder.class, entity, ent -> {
           LibraryId libraryId = ent.getLibrary();
           if (libraryId != null) {
             ent.setLibrary(libraryId.copy(libraryName, libraryId.getTableId()));
@@ -174,7 +178,7 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
       (builder, entity) -> {
         if (moduleNameBefore.equals(moduleName)) return;
 
-        builder.modifyEntity(ModifiableLibraryFilesPackagingElementEntity.class, entity, ent -> {
+        builder.modifyEntity(LibraryFilesPackagingElementEntity.Builder.class, entity, ent -> {
           LibraryId libraryId = ent.getLibrary();
           if (libraryId != null) {
             LibraryTableId newTableId = new LibraryTableId.ModuleLibraryTableId(new ModuleId(moduleName));
@@ -192,7 +196,7 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
   }
 
   @Override
-  public WorkspaceEntity getOrAddEntity(@NotNull WorkspaceEntityStorageBuilder diff,
+  public WorkspaceEntity getOrAddEntity(@NotNull MutableEntityStorage diff,
                                         @NotNull EntitySource source,
                                         @NotNull Project project) {
     WorkspaceEntity existingEntity = getExistingEntity(diff);
@@ -200,7 +204,7 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
 
     LibraryFilesPackagingElementEntity entity;
     if (myLibraryName == null) {
-      entity = BridgeModelModifiableEntitiesKt.addLibraryFilesPackagingElementEntity(diff, null, source);
+      entity = ExtensionsKt.addLibraryFilesPackagingElementEntity(diff, null, source);
     }
     else {
       LibraryId id;
@@ -213,7 +217,7 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
       else {
         id = new LibraryId(myLibraryName, new LibraryTableId.GlobalLibraryTableId(myLevel));
       }
-      entity = BridgeModelModifiableEntitiesKt.addLibraryFilesPackagingElementEntity(diff, id, source);
+      entity = ExtensionsKt.addLibraryFilesPackagingElementEntity(diff, id, source);
     }
     diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(entity, this);
     return entity;

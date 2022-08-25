@@ -17,7 +17,7 @@ import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
@@ -304,7 +304,7 @@ class ModuleLevelLibrariesInRootModelTest {
     addLibrary("a")
     addLibrary("b")
 
-    val builder = WorkspaceEntityStorageBuilder.from(WorkspaceModel.getInstance(projectModel.project).entityStorage.current)
+    val builder = MutableEntityStorage.from(WorkspaceModel.getInstance(projectModel.project).entityStorage.current)
     val moduleModel = (projectModel.moduleManager as ModuleManagerBridgeImpl).getModifiableModel(builder)
     moduleModel.disposeModule(module)
     val newModule = projectModel.createModule("module", moduleModel)
@@ -369,7 +369,7 @@ class ModuleLevelLibrariesInRootModelTest {
 
   private fun doTestMultiCommitForModuleLevelLibrary(newScope: DependencyScope) {
     addLibrary("a")
-    val builder = WorkspaceEntityStorageBuilder.from(WorkspaceModel.getInstance(projectModel.project).entityStorage.current)
+    val builder = MutableEntityStorage.from(WorkspaceModel.getInstance(projectModel.project).entityStorage.current)
     val moduleModel = (projectModel.moduleManager as ModuleManagerBridgeImpl).getModifiableModel(builder)
     val rootModel = ModuleRootManagerEx.getInstanceEx(module).getModifiableModelForMultiCommit(RootAccessorWithWorkspaceModel(builder))
     getSingleLibraryOrderEntry(rootModel).scope = newScope
@@ -391,6 +391,6 @@ class ModuleLevelLibrariesInRootModelTest {
     model.commit()
   }
 
-  class RootAccessorWithWorkspaceModel(override val actualDiffBuilder: WorkspaceEntityStorageBuilder?)
+  class RootAccessorWithWorkspaceModel(override val actualDiffBuilder: MutableEntityStorage?)
     : RootConfigurationAccessor(), RootConfigurationAccessorForWorkspaceModel
 }

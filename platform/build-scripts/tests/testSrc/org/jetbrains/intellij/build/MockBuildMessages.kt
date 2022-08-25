@@ -54,17 +54,4 @@ class MockBuildMessages : BuildMessages {
 
   override fun reportStatisticValue(key: String, value: String) {
   }
-
-  override fun forkForParallelTask(taskName: String): BuildMessages {
-    throw UnsupportedOperationException()
-  }
-
-  override fun onAllForksFinished() {
-  }
-
-  override fun onForkStarted() {
-  }
-
-  override fun onForkFinished() {
-  }
 }

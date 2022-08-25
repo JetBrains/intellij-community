@@ -8,6 +8,7 @@ import com.intellij.execution.RunManagerListener
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.compound.CompoundRunConfiguration
 import com.intellij.execution.impl.ExecutionManagerImpl
+import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.runToolbar.data.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.ide.ActivityTracker
@@ -145,7 +146,7 @@ class RunToolbarSlotManager(val project: Project) {
 
   private fun getMoveNewOnTop(executionEnvironment: ExecutionEnvironment): Boolean {
     if (!runToolbarSettings.getMoveNewOnTop()) return false
-    val suppressValue = executionEnvironment.getUserData(RunToolbarData.RUN_TOOLBAR_SUPPRESS_MAIN_SLOT_USER_DATA_KEY) ?: false
+    val suppressValue = executionEnvironment.getUserData(RunToolbarProcessData.RUN_TOOLBAR_SUPPRESS_MAIN_SLOT_USER_DATA_KEY) ?: false
     return !suppressValue
   }
 
@@ -195,20 +196,6 @@ class RunToolbarSlotManager(val project: Project) {
     LOG.trace("!!!!!UPDATE RunToolbar")
   }
 
-  internal fun startWaitingForAProcess(slotDate: RunToolbarData, settings: RunnerAndConfigurationSettings, executorId: String) {
-    slotsData.values.forEach {
-      val waitingForAProcesses = it.waitingForAProcesses
-      if (slotDate == it) {
-        waitingForAProcesses.start(project, settings, executorId)
-      }
-      else {
-        if (waitingForAProcesses.isWaitingForASubProcess(settings, executorId)) {
-          waitingForAProcesses.clear()
-        }
-      }
-    }
-  }
-
   internal fun getMainOrFirstActiveProcess(): RunToolbarProcess? {
     return mainSlotData.environment?.getRunToolbarProcess() ?: activeProcesses.processes.keys.firstOrNull()
   }
@@ -254,18 +241,6 @@ class RunToolbarSlotManager(val project: Project) {
   }
 
   internal fun processNotStarted(env: ExecutionEnvironment) {
-    val config = env.runnerAndConfigurationSettings ?: return
-
-    val appropriateSettings = getAppropriateSettings(env)
-    val emptySlotsWithConfiguration = appropriateSettings.filter { it.environment == null }
-
-    emptySlotsWithConfiguration.map { it.waitingForAProcesses }.firstOrNull {
-      it.isWaitingForASingleProcess(config, env.executor.id)
-    }?.clear() ?: run {
-      slotsData.values.filter { it.configuration?.configuration is CompoundRunConfiguration }.firstOrNull { slotsData ->
-        slotsData.waitingForAProcesses.isWaitingForASubProcess(config, env.executor.id)
-      }?.clear()
-    }
   }
 
   internal fun processStarted(env: ExecutionEnvironment) {
@@ -284,7 +259,7 @@ class RunToolbarSlotManager(val project: Project) {
     val slot = appropriateSettings.firstOrNull { it.environment?.executionId == env.executionId }
                ?: emptySlotsWithConfiguration.firstOrNull { slotData ->
                  env.runnerAndConfigurationSettings?.let {
-                   slotData.waitingForAProcesses.isWaitingForASingleProcess(it, env.executor.id)
+                   slotData.id == env.dataContext?.getData(RunToolbarProcessData.RW_SLOT)
                  } ?: false
                }
                ?: emptySlotsWithConfiguration.firstOrNull()
@@ -297,11 +272,12 @@ class RunToolbarSlotManager(val project: Project) {
     activeProcesses.updateActiveProcesses(slotsData)
 
     if (newSlot) {
-      val isCompoundProcess = slotsData.values.filter { it.configuration?.configuration is CompoundRunConfiguration }.firstOrNull { slotsData ->
-        env.runnerAndConfigurationSettings?.let {
-          slotsData.waitingForAProcesses.checkAndUpdate(it, env.executor.id)
-        } ?: false
-      } != null
+
+      val runManager = RunManagerImpl.getInstanceImpl(project)
+
+      val isCompoundProcess = env.getUserData(RunToolbarProcessData.RW_MAIN_CONFIGURATION_ID)?.let {
+        runManager.getConfigurationById(it)?.configuration is CompoundRunConfiguration
+      } ?: false
 
       if (!isCompoundProcess) {
         if (getMoveNewOnTop(env)) {
@@ -516,16 +492,11 @@ internal open class SlotDate(override var id: String) : RunToolbarData {
         field = value
       value?.let {
         configuration = it.runnerAndConfigurationSettings
-      } ?: run {
-        waitingForAProcesses.clear()
       }
     }
 
-  override val waitingForAProcesses = RWWaitingForAProcesses()
-
   override fun clear() {
     environment = null
-    waitingForAProcesses.clear()
   }
 
   override fun toString(): String {

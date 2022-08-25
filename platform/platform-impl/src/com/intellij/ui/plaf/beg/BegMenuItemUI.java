@@ -37,12 +37,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Method;
+import java.util.function.Consumer;
 
 /**
  * @author Eugene Belyaev
  * @author Vladimir Kondratyev
  */
 public final class BegMenuItemUI extends BasicMenuItemUI {
+  private static final String KEEP_MENU_OPEN_PROP = "BegMenuItemUI.keep-menu-open";
+
   private static final Rectangle b = new Rectangle(0, 0, 0, 0);
   private static final Rectangle j = new Rectangle();
   private static final Rectangle d = new Rectangle();
@@ -506,54 +509,59 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
   }
 
   /** Copied from BasicMenuItemUI */
-  private void doClick(MenuSelectionManager msm,MouseEvent e) {
+  private void doClick(MenuSelectionManager msm, MouseEvent e) {
     // Auditory cue
-    if(!isInternalFrameSystemMenu()){
-      @NonNls ActionMap map=menuItem.getActionMap();
-      if(map!=null){
-        Action audioAction=map.get(getPropertyPrefix()+".commandSound");
-        if(audioAction!=null){
+    if (!isInternalFrameSystemMenu()) {
+      @NonNls ActionMap map = menuItem.getActionMap();
+      if (map != null) {
+        Action audioAction = map.get(getPropertyPrefix() + ".commandSound");
+        if (audioAction != null) {
           // pass off firing the Action to a utility method
-          BasicLookAndFeel lf=(BasicLookAndFeel)UIManager.getLookAndFeel();
+          BasicLookAndFeel lf = (BasicLookAndFeel)UIManager.getLookAndFeel();
           // It's a hack. The method BasicLookAndFeel.playSound has protected access, so
           // it's impossible to normally invoke it.
           try {
-            Method playSoundMethod=BasicLookAndFeel.class.getDeclaredMethod(PLAY_SOUND_METHOD, Action.class);
+            Method playSoundMethod = BasicLookAndFeel.class.getDeclaredMethod(PLAY_SOUND_METHOD, Action.class);
             playSoundMethod.setAccessible(true);
             playSoundMethod.invoke(lf, audioAction);
-          } catch(Exception ignored) {}
+          }
+          catch (Exception ignored) {
+          }
         }
       }
     }
     // Visual feedback
-    if(msm==null){
-      msm=MenuSelectionManager.defaultManager();
+    if (msm == null) {
+      msm = MenuSelectionManager.defaultManager();
     }
     ActionMenuItem item = (ActionMenuItem)menuItem;
     AnAction action = item.getAnAction();
-    if (action != null && ActionPlaces.MAIN_MENU.equals(item.getPlace()) && ApplicationManager.getApplication() != null) {
+    if (ActionPlaces.MAIN_MENU.equals(item.getPlace()) && ApplicationManager.getApplication() != null) {
       MainMenuCollector.getInstance().record(action);
     }
-    if (action == null || !action.getTemplatePresentation().isMultipleChoice()) {
+    if (!item.isKeepMenuOpen()) {
       msm.clearSelectedPath();
     }
-    item.fireActionPerformed(
-      new ActionEvent(
-        menuItem,
-        ActionEvent.ACTION_PERFORMED,
-        null,
-        e.getWhen(),
-        e.getModifiers()
-      )
-    );
-    if (action != null && action.getTemplatePresentation().isMultipleChoice()) {
+    ActionEvent event = new ActionEvent(menuItem, ActionEvent.ACTION_PERFORMED, null, e.getWhen(), e.getModifiers());
+    item.fireActionPerformed(event);
+    if (item.isKeepMenuOpen()) {
       Container parent = item.getParent();
       if (parent instanceof JComponent) {
         //Fake event to trigger update in ActionPopupMenuImpl.MyMenu
-        //noinspection HardCodedStringLiteral
-        ((JComponent)parent).putClientProperty("updateChildren", System.currentTimeMillis());
+        ((JComponent)parent).putClientProperty(KEEP_MENU_OPEN_PROP, System.currentTimeMillis());
       }
     }
+  }
+
+  /**
+   * To update items in case of multiple choice when there are dependencies between items like:
+   * <ol>
+   *   <li>Selected A means unselected B and vise versa</li>
+   *   <li>Selected/unselected A means enabled/disabled B</li>
+   * </ol>
+   */
+  public static void registerMultiChoiceSupport(@NotNull JPopupMenu component, @NotNull Consumer<JPopupMenu> onUpdate) {
+    component.addPropertyChangeListener(KEEP_MENU_OPEN_PROP, evt -> onUpdate.accept((JPopupMenu)evt.getSource()));
   }
 
   @Override

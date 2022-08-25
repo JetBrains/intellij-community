@@ -160,7 +160,7 @@ internal class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, Ty
         type.isArray -> ArrayReader(getFieldTypeParser(null, type.componentType, false, null), false)
         type.isEnum -> EnumReader(type as Class<Enum<*>>)
         else -> {
-          val ref = getTypeRef(type) ?: throw UnsupportedOperationException("Method return type $type (simple class) not supported")
+          val ref = getTypeRef(type)
           ObjectValueReader(ref, isSubtyping, method?.getAnnotation<JsonField>(JsonField::class.java)?.primitiveValue, member?.returnType?.isMarkedNullable ?: false)
         }
       }
@@ -187,7 +187,7 @@ internal class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, Ty
     }
   }
 
-  fun <T> getTypeRef(typeClass: Class<T>): TypeRef<T>? {
+  fun <T> getTypeRef(typeClass: Class<T>): TypeRef<T> {
     val result = TypeRef(typeClass)
     refs.add(result)
     return result
@@ -210,9 +210,6 @@ internal class InterfaceReader(val typeToTypeHandler: LinkedHashMap<Class<*>, Ty
         throw JsonProtocolModelParseException("Already has superclass ${result.typeClass.name}")
       }
       result = getTypeRef(param)
-      if (result == null) {
-        throw JsonProtocolModelParseException("Unknown base class ${param.name}")
-      }
     }
     return result
   }

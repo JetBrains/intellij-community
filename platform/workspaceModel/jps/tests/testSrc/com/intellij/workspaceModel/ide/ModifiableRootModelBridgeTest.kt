@@ -12,7 +12,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBri
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.toBuilder
 import org.junit.ClassRule
 import org.junit.Rule
@@ -58,7 +58,7 @@ class ModifiableRootModelBridgeTest {
       val moduleRootManager = ModuleRootManager.getInstance(newModule) as ModuleRootComponentBridge
 
       // Assert no exceptions
-      val model = moduleRootManager.getModifiableModel(newModule.diff!! as WorkspaceEntityStorageBuilder,
+      val model = moduleRootManager.getModifiableModel(newModule.diff!! as MutableEntityStorage,
                                                        RootConfigurationAccessor.DEFAULT_INSTANCE)
       model.dispose()
       moduleModifiableModel.dispose()

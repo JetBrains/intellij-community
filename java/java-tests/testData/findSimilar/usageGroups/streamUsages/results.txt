@@ -1,0 +1,12 @@
+[{id=0
+, myUsages=14|final| List<Integer> unmodifiableHashcodes = list.|stream|().map(String::hashCode).collect(Collectors.toUnmodifiableList());}
+, {id=1
+, myUsages=15|final| List<Integer> modifiableHashcodes = list.|stream|().map(String::hashCode).collect(Collectors.toList());}
+, {id=2
+, myUsages=17|List<String> nonEmptyEntries = list.|stream|().filter(e -> e.length() > |0|).collect(Collectors.toList());,
+18|List<String> moreThanOneCharEntry = list.|stream|().filter(e -> e.length() > |1|).collect(Collectors.toList());}
+, {id=3
+, myUsages=19|List<String> nonEmptyEntries2 = list.|stream|().filter(e -> e.isEmpty() ).collect(Collectors.toList());}
+, {id=4
+, myUsages=21|Set<String> nonEmptySet = list.|stream|().filter(e -> e.length() > |0|).collect(Collectors.toSet());}
+]

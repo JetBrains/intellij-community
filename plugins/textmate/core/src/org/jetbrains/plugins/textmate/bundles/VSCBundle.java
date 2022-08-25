@@ -1,12 +1,9 @@
 package org.jetbrains.plugins.textmate.bundles;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonIOException;
-import com.google.gson.JsonSyntaxException;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.textmate.plist.JsonPlistReader;
 import org.jetbrains.plugins.textmate.plist.PListValue;
 import org.jetbrains.plugins.textmate.plist.Plist;
 import org.jetbrains.plugins.textmate.plist.PlistReader;
@@ -15,6 +12,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -53,7 +51,7 @@ public class VSCBundle extends Bundle {
     if (!grammarToExtensions.isEmpty()) return;
     File packageJson = new File(bundleFile, "package.json");
     try {
-      Object json = new Gson().fromJson(new FileReader(packageJson), Object.class);
+      Object json = JsonPlistReader.createJsonReader().readValue(new FileReader(packageJson, StandardCharsets.UTF_8), Object.class);
       if (json instanceof Map) {
         Object contributes = ((Map<?, ?>)json).get("contributes");
         if (contributes instanceof Map) {
@@ -117,8 +115,7 @@ public class VSCBundle extends Bundle {
         }
       }
     }
-    catch (FileNotFoundException | JsonSyntaxException ignored) {
-    }
+    catch (Exception ignored) {}
   }
 
   @NotNull
@@ -140,9 +137,8 @@ public class VSCBundle extends Bundle {
 
   @NotNull
   private static Plist loadLanguageConfig(File languageConfig) throws IOException {
-    Gson gson = new GsonBuilder().setLenient().create();
     try {
-      Object json = gson.fromJson(new FileReader(languageConfig), Object.class);
+      Object json = JsonPlistReader.createJsonReader().readValue(new FileReader(languageConfig, StandardCharsets.UTF_8), Object.class);
       Plist settings = new Plist();
       if (json instanceof Map) {
         settings.setEntry(HIGHLIGHTING_PAIRS_KEY, loadBrackets((Map)json, "brackets"));
@@ -151,7 +147,10 @@ public class VSCBundle extends Bundle {
       }
       return settings;
     }
-    catch (JsonSyntaxException | JsonIOException e) {
+    catch (FileNotFoundException e) {
+      return Plist.EMPTY_PLIST;
+    }
+    catch (Exception e) {
       throw new IOException(e);
     }
   }

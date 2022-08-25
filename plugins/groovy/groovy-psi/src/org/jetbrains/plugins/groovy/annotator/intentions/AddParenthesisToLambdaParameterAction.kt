@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -29,12 +29,12 @@ class AddParenthesisToLambdaParameterAction(parameterList: GrLambdaExpression) :
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
     val lambda = myLambda.element ?: return
-    val closureText = closureText(lambda) ?: return
+    val closureText = closureText(lambda)
     val closure = GroovyPsiElementFactory.getInstance(project).createLambdaFromText(closureText)
     lambda.replaceWithExpression(closure, false)
   }
 
-  private fun closureText(lambda: GrLambdaExpression): String? {
+  private fun closureText(lambda: GrLambdaExpression): String {
     val closureText = StringBuilder()
     closureText.append("(")
     val parameterList = lambda.parameterList

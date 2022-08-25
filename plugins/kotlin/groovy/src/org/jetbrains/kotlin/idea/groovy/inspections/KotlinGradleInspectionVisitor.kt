@@ -37,6 +37,13 @@ abstract class KotlinGradleInspectionVisitor : BaseInspectionVisitor() {
     }
 }
 
+@Deprecated("Use findResolvedKotlinGradleVersion() instead.", ReplaceWith("findResolvedKotlinGradleVersion(module)?.rawVersion"))
+fun getResolvedKotlinGradleVersion(file: PsiFile): String? =
+    ModuleUtilCore.findModuleForFile(file.virtualFile, file.project)?.let {
+        @Suppress("DEPRECATION")
+        getResolvedKotlinGradleVersion(it)
+    }
+
 fun findResolvedKotlinGradleVersion(file: PsiFile): IdeKotlinVersion? =
     ModuleUtilCore.findModuleForFile(file.virtualFile, file.project)?.let { findResolvedKotlinGradleVersion(it) }
 

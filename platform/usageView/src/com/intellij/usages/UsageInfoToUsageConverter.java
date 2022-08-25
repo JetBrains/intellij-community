@@ -7,6 +7,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.similarity.bag.Bag;
+import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
+import com.intellij.usages.similarity.clustering.UsageCluster;
+import com.intellij.usages.similarity.features.UsageSimilarityFeaturesProvider;
+import com.intellij.usages.similarity.usageAdapter.SimilarityReadWriteUsageInfo2UsageAdapter;
+import com.intellij.usages.similarity.usageAdapter.SimilarityUsage;
+import com.intellij.usages.similarity.usageAdapter.SimilarityUsageInfo2UsageAdapter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -107,6 +114,33 @@ public final class UsageInfoToUsageConverter {
       }
     }
     return new UsageInfo2UsageAdapter(usageInfo);
+  }
+
+
+  public static @NotNull Usage convertToSimilarUsage(PsiElement @NotNull [] primaryElements,
+                                                     @NotNull UsageInfo usageInfo,
+                                                     @NotNull ClusteringSearchSession session) {
+    PsiElement usageElement = usageInfo.getElement();
+    if (usageElement != null && primaryElements.length != 0) {
+      Bag features = new Bag();
+      UsageSimilarityFeaturesProvider.EP_NAME.forEachExtensionSafe(provider -> {
+        features.addAll(provider.getFeatures(usageElement));
+      });
+      final UsageCluster cluster = session.findOrCreateCluster(features);
+      if (cluster != null) {
+        final ReadWriteAccessDetector.Access readWriteAccess = ReadWriteUtil.getReadWriteAccess(primaryElements, usageElement);
+        final Usage similarityUsageAdapter;
+        if (readWriteAccess != null) {
+          similarityUsageAdapter = new SimilarityReadWriteUsageInfo2UsageAdapter(usageInfo, readWriteAccess, features, session, cluster);
+        }
+        else {
+          similarityUsageAdapter = new SimilarityUsageInfo2UsageAdapter(usageInfo, features, session, cluster);
+        }
+        cluster.addUsage((SimilarityUsage)similarityUsageAdapter);
+        return similarityUsageAdapter;
+      }
+    }
+    return convert(primaryElements, usageInfo);
   }
 
   public static Usage @NotNull [] convert(@NotNull TargetElementsDescriptor descriptor, UsageInfo @NotNull [] usageInfos) {

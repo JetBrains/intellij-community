@@ -12,13 +12,10 @@ import com.intellij.codeInspection.dataFlow.lang.ir.Instruction
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet
 import com.intellij.codeInspection.dataFlow.types.DfJvmIntegralType
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType
 import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.types.DfTypes
-import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue
-import com.intellij.codeInspection.dataFlow.value.DfaValue
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
-import com.intellij.codeInspection.dataFlow.value.RelationType
-import com.intellij.psi.JavaPsiFacade
+import com.intellij.codeInspection.dataFlow.value.*
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -28,7 +25,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.KotlinExpressionAnchor
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.source.PsiSourceElement
 
 // TODO: support Java contracts
@@ -83,8 +79,14 @@ class KotlinFunctionCallInstruction(
         if (method != null && arguments.arguments.size == method.parameterList.parametersCount) {
             val handler = CustomMethodHandlers.find(method)
             if (handler != null) {
-                val dfaValue = handler.getMethodResultValue(arguments, stateBefore, factory, method)
+                var dfaValue = handler.getMethodResultValue(arguments, stateBefore, factory, method)
                 if (dfaValue != null) {
+                    val dfReferenceType = (dfaValue as? DfaTypeValue)?.dfType as? DfReferenceType
+                    if (dfReferenceType != null) {
+                        val newType = dfReferenceType.dropTypeConstraint()
+                            .meet(dfReferenceType.constraint.convert(KtClassDef.typeConstraintFactory(call)).asDfType())
+                        dfaValue = factory.fromDfType(newType)
+                    }
                     return MethodEffect(dfaValue, pure)
                 }
             }
@@ -162,13 +164,10 @@ class KotlinFunctionCallInstruction(
     }
 
     private fun getExpressionDfType(expr: KtExpression): DfType {
-        val constructedClassName = (expr.resolveToCall()?.resultingDescriptor as? ConstructorDescriptor)?.constructedClass?.fqNameOrNull()
-        if (constructedClassName != null) {
+        val constructedClass = (expr.resolveToCall()?.resultingDescriptor as? ConstructorDescriptor)?.constructedClass
+        if (constructedClass != null) {
             // Set exact class type for constructor
-            val psiClass = JavaPsiFacade.getInstance(expr.project).findClass(constructedClassName.asString(), expr.resolveScope)
-            if (psiClass != null) {
-                return TypeConstraints.exactClass(psiClass).asDfType().meet(DfTypes.NOT_NULL_OBJECT)
-            }
+            return TypeConstraints.exactClass(KtClassDef(constructedClass, expr)).asDfType().meet(DfTypes.NOT_NULL_OBJECT)
         }
         return expr.getKotlinType().toDfType(expr)
     }

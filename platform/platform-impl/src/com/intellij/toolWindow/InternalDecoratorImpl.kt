@@ -47,7 +47,7 @@ import javax.swing.border.Border
 
 @ApiStatus.Internal
 class InternalDecoratorImpl internal constructor(
-  internal @JvmField val toolWindow: ToolWindowImpl,
+  @JvmField internal val toolWindow: ToolWindowImpl,
   private val contentUi: ToolWindowContentUi,
   private val myDecoratorChild: JComponent
 ) : InternalDecorator(), Queryable, DataProvider, ComponentWithMnemonics {

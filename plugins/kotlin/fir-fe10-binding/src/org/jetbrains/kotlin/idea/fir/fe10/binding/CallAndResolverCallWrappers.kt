@@ -1,8 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.fe10.binding
 
 import com.intellij.lang.ASTNode
+import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFir
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.fir.declarations.FirClassLikeDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirValueParameter
@@ -14,19 +16,18 @@ import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.types.FirTypeProjectionWithVariance
 import org.jetbrains.kotlin.idea.fir.fe10.*
-import org.jetbrains.kotlin.idea.fir.fe10.FirWeakReference
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFir
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.model.*
 import org.jetbrains.kotlin.resolve.calls.results.ResolutionStatus
 import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind
-import org.jetbrains.kotlin.resolve.scopes.receivers.*
+import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
+import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitClassReceiver
+import org.jetbrains.kotlin.resolve.scopes.receivers.Receiver
+import org.jetbrains.kotlin.resolve.scopes.receivers.ReceiverValue
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import java.util.*
 
 @OptIn(SymbolInternals::class)
 private fun FirExpression?.toExpressionReceiverValue(context: FE10BindingContext): ReceiverValue? {
@@ -210,7 +211,7 @@ internal class FirWrapperResolvedCall(val firSimpleWrapperCall: FirSimpleWrapper
     override fun getTypeArguments(): Map<TypeParameterDescriptor, KotlinType> = _typeArguments
 
     override fun getDataFlowInfoForArguments(): DataFlowInfoForArguments = context.noImplementation()
-    override fun getSmartCastDispatchReceiverType(): KotlinType? = context.noImplementation()
+    override fun getSmartCastDispatchReceiverType(): KotlinType = context.noImplementation()
 }
 
 class CallAndResolverCallWrappers(bindingContext: KtSymbolBasedBindingContext) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.authentication.ui
 
 import com.intellij.openapi.project.Project
@@ -81,7 +81,7 @@ class GithubChooseAccountDialog @JvmOverloads constructor(project: Project?, par
   val setDefault: Boolean get() = setDefaultCheckBox?.isSelected ?: false
 
 
-  override fun createCenterPanel(): JComponent? {
+  override fun createCenterPanel(): JComponent {
     return JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP)
       .apply { description?.run(::addToTop) }
       .addToCenter(JBScrollPane(accountsList).apply {

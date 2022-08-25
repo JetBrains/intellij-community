@@ -140,8 +140,7 @@ class KotlinDetachedUastTest : KotlinLightCodeInsightFixtureTestCase() {
         """
         )
 
-        val anonymousClass = detachedClass.findUElementByTextFromPsi<UObjectLiteralExpression>("object : MyClass() {}")
-            .let { uObjectLiteralExpression -> uObjectLiteralExpression.declaration }
+        val anonymousClass = detachedClass.findUElementByTextFromPsi<UObjectLiteralExpression>("object : MyClass() {}").declaration
         TestCase.assertEquals(
             "UClass (name = null), UObjectLiteralExpression, UField (name = obj), UClass (name = MyClass), UFile (package = )",
             generateSequence<UElement>(anonymousClass, { it.uastParent }).joinToString { it.asLogString() })

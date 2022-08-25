@@ -1,9 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.ml
 
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
-import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
+import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.ml.features.FeaturesProviderCacheDataProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContextFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.statistician.SearchEverywhereStatisticianService
@@ -15,7 +13,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import java.util.concurrent.atomic.AtomicReference
 
-internal class SearchEverywhereMLSearchSession(project: Project?, private val sessionId: Int) {
+internal class SearchEverywhereMLSearchSession(project: Project?,
+                                               private val mixedListInfo: SearchEverywhereMixedListInfo,
+                                               private val sessionId: Int) {
   val itemIdProvider = SearchEverywhereMlItemIdProvider()
   private val sessionStartTime: Long = System.currentTimeMillis()
   private val providersCache = FeaturesProviderCacheDataProvider().getDataToCache(project)
@@ -60,7 +60,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
       logger.onSearchRestarted(
         project, sessionId, prevState.searchIndex,
         itemIdProvider, cachedContextInfo, prevState,
-        prevTimeToResult, previousElementsProvider
+        prevTimeToResult, mixedListInfo, previousElementsProvider
       )
     }
   }
@@ -80,7 +80,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
         state.experimentGroup, state.orderByMl,
         itemIdProvider, cachedContextInfo, state,
         indexes, selectedItems, closePopup,
-        performanceTracker.timeElapsed, elementsProvider
+        performanceTracker.timeElapsed, mixedListInfo, elementsProvider
       )
     }
   }
@@ -94,7 +94,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
         project, sessionId, state.searchIndex,
         state.experimentGroup, state.orderByMl,
         itemIdProvider, cachedContextInfo, state,
-        performanceTracker.timeElapsed, elementsProvider
+        performanceTracker.timeElapsed, mixedListInfo, elementsProvider
       )
     }
   }

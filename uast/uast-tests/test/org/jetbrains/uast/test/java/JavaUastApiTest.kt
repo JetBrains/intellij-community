@@ -21,6 +21,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
 import org.jetbrains.uast.*
+import org.jetbrains.uast.expressions.UInjectionHost
 import org.jetbrains.uast.test.env.findElementByText
 import org.jetbrains.uast.test.env.findElementByTextFromPsi
 import org.junit.Assert
@@ -227,7 +228,7 @@ class JavaUastApiTest : AbstractJavaUastTest() {
       TestCase.assertEquals(parameter, parameterFromField)
     }
   }
-  
+
   @Test
   fun testRecordConstructor() {
     doTest("Simple/Record.java") { _, file ->
@@ -239,5 +240,16 @@ class JavaUastApiTest : AbstractJavaUastTest() {
       TestCase.assertEquals(constructor, constructor.sourcePsi.toUElement())
     }
   }
+
+  @Test
+  fun testStringsRoom() {
+    doTest("Simple/Strings.java") { _, file ->
+      TestCase.assertEquals("\"Hello \"",
+                            file.findElementByTextFromPsi<UInjectionHost>("\"Hello \"").getStringRoomExpression().sourcePsi?.text)
+      TestCase.assertEquals("\"Hello again \" + s1 + \" world\"",
+                            file.findElementByTextFromPsi<UInjectionHost>("\"Hello again \"").getStringRoomExpression().sourcePsi?.text)
+    }
+  }
+
 
 }

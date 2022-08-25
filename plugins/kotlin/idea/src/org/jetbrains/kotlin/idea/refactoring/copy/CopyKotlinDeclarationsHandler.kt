@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.copy
 
@@ -175,8 +175,8 @@ class CopyKotlinDeclarationsHandler : CopyHandlerDelegateBase() {
 
     private fun getTargetDataForUnitTest(sourceData: SourceData): TargetData? {
         with(sourceData) {
-            val targetSourceRoot: VirtualFile? = initialTargetDirectory.sourceRoot ?: return null
-            val newName: String = project.newName ?: singleElementToCopy?.name ?: originalFile.name ?: return null
+            val targetSourceRoot: VirtualFile = initialTargetDirectory.sourceRoot ?: return null
+            val newName: String = project.newName ?: singleElementToCopy?.name ?: originalFile.name
             if (singleElementToCopy != null && newName.isEmpty()) return null
             return TargetData(
                 openInEditor = false,
@@ -202,7 +202,7 @@ class CopyKotlinDeclarationsHandler : CopyHandlerDelegateBase() {
             if (!dialog.showAndGet()) return null
 
             openInEditor = dialog.openInEditor
-            newName = dialog.newName ?: singleNamedSourceElement.name
+            newName = dialog.newName
             targetDirWrapper = dialog.targetDirectory?.toDirectoryWrapper()
             targetSourceRoot = dialog.targetSourceRoot
         } else {

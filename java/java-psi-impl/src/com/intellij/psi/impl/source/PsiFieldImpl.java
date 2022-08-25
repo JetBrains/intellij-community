@@ -4,6 +4,8 @@ package com.intellij.psi.impl.source;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -34,6 +36,7 @@ import java.lang.ref.Reference;
 import java.util.*;
 
 public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements PsiField, PsiVariableEx, Queryable {
+  private static final Logger LOG = Logger.getInstance(PsiFieldImpl.class);
   private volatile Reference<PsiType> myCachedType;
 
   public PsiFieldImpl(final PsiFieldStub stub) {
@@ -121,7 +124,12 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
 
     myCachedType = null;
     PsiTypeElement typeElement = getTypeElement();
-    assert typeElement != null : Arrays.toString(getChildren());
+    if (typeElement == null) {
+      LOG.error("No type element found for field; children classes = " +
+                StringUtil.join(getChildren(), e -> e.getClass().getName(), ", "),
+                new Attachment("tree.txt", DebugUtil.psiTreeToString(this, true)));
+      return PsiType.NULL;
+    }
     return JavaSharedImplUtil.getType(typeElement, getNameIdentifier());
   }
 

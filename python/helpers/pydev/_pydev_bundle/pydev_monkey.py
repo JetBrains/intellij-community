@@ -773,12 +773,12 @@ class _NewThreadStartupWithTrace:
             # Note: if this is a thread from threading.py, we're too early in the boostrap process (because we mocked
             # the start_new_thread internal machinery and thread._bootstrap has not finished), so, the code below needs
             # to make sure that we use the current thread bound to the original function and not use
-            # threading.currentThread() unless we're sure it's a dummy thread.
+            # threading.current_thread() unless we're sure it's a dummy thread.
             t = getattr(self.original_func, '__self__', getattr(self.original_func, 'im_self', None))
             if not isinstance(t, threading.Thread):
                 # This is not a threading.Thread but a Dummy thread (so, get it as a dummy thread using
                 # currentThread).
-                t = threading.currentThread()
+                t = threading.current_thread()
 
             if not getattr(t, 'is_pydev_daemon_thread', False):
                 thread_id = get_current_thread_id(t)

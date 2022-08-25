@@ -41,7 +41,6 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.remote.PyRemoteInterpreterUtil;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
@@ -91,6 +90,12 @@ public final class PythonSdkType extends SdkType {
    * For WSL we use <code>\\wsl.local\</code> or <code>\\wsl$\</code>
    */
   private static final Pattern CUSTOM_PYTHON_SDK_HOME_PATH_PATTERN = Pattern.compile("^([-a-zA-Z_0-9]{2,}:|\\\\\\\\wsl).+");
+
+  /**
+   * Old configuration may have this prefix in homepath. We must remove it
+   */
+  @NotNull
+  private static final String LEGACY_TARGET_PREFIX = "target://";
 
   public static PythonSdkType getInstance() {
     return SdkType.findInstance(PythonSdkType.class);
@@ -305,15 +310,25 @@ public final class PythonSdkType extends SdkType {
   public SdkAdditionalData loadAdditionalData(@NotNull final Sdk currentSdk, @NotNull final Element additional) {
     WSLUtil.fixWslPrefix(currentSdk);
     String homePath = currentSdk.getHomePath();
-    if (homePath != null && homePath.startsWith("target://")) {
-      return PyTargetAwareAdditionalData.loadTargetAwareData(currentSdk, additional);
-    }
-    else if (homePath != null && isCustomPythonSdkHomePath(homePath)) {
-      PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
-      if (manager != null) {
-        return manager.loadRemoteSdkData(currentSdk, additional);
+
+    if (homePath != null) {
+
+      // We decided to get rid of this prefix
+      if (homePath.startsWith(LEGACY_TARGET_PREFIX)) {
+        ((SdkModificator)currentSdk).setHomePath(homePath.substring(LEGACY_TARGET_PREFIX.length()));
       }
-      // TODO we should have "remote" SDK data with unknown credentials anyway!
+
+      var targetAdditionalData = PyTargetAwareAdditionalData.loadTargetAwareData(currentSdk, additional);
+      if (targetAdditionalData != null) {
+        return targetAdditionalData;
+      }
+      else if (isCustomPythonSdkHomePath(homePath)) {
+        PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
+        if (manager != null) {
+          return manager.loadRemoteSdkData(currentSdk, additional);
+        }
+        // TODO we should have "remote" SDK data with unknown credentials anyway!
+      }
     }
     return PySdkProvider.EP_NAME.extensions()
       .map(ext -> ext.loadAdditionalDataForSdk(additional))
@@ -423,7 +438,8 @@ public final class PythonSdkType extends SdkType {
     }
 
     Notification notification =
-      new Notification(SKELETONS_TOPIC, PyBundle.message("sdk.gen.failed.notification.title"), notificationMessage, NotificationType.WARNING);
+      new Notification(SKELETONS_TOPIC, PyBundle.message("sdk.gen.failed.notification.title"), notificationMessage,
+                       NotificationType.WARNING);
     if (notificationListener != null) notification.setListener(notificationListener);
     notification.notify(null);
   }

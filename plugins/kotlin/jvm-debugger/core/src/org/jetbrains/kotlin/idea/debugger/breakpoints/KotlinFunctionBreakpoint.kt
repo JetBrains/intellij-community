@@ -104,7 +104,7 @@ class KotlinFunctionBreakpoint(project: Project, breakpoint: XBreakpoint<*>) : M
     }
 }
 
-private fun SourcePosition.getMethodDescriptor(project: Project): MethodDescriptor? =
+fun SourcePosition.getMethodDescriptor(project: Project): MethodDescriptor? =
     DumbService.getInstance(project).runReadActionInSmartMode<MethodDescriptor> {
         val document = PsiDocumentManager.getInstance(project).getDocument(file) ?: return@runReadActionInSmartMode null
         val descriptor = getMethodDescriptorInReadActionInSmartMode(project, this, document)

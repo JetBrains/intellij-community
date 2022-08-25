@@ -19,7 +19,7 @@ from os.path import basename, splitext
 from _pydevd_bundle.pydevd_breakpoints import stop_on_unhandled_exception
 from _pydevd_bundle.pydevd_collect_try_except_info import collect_try_except_info
 
-threadingCurrentThread = threading.currentThread
+threadingCurrentThread = threading.current_thread
 get_file_type = DONT_TRACE.get
 
 # Note: this is different from pydevd_constants.thread_get_ident because we want Jython
@@ -89,7 +89,7 @@ def fix_top_level_trace_and_get_trace_func(py_db, frame):
                 return None, False
 
             elif f_unhandled.f_code.co_name in ('__bootstrap_inner', '_bootstrap_inner'):
-                # Note: be careful not to use threading.currentThread to avoid creating a dummy thread.
+                # Note: be careful not to use threading.current_thread to avoid creating a dummy thread.
                 t = f_unhandled.f_locals.get('self')
                 force_only_unhandled_tracer = True
                 if t is not None and isinstance(t, threading.Thread):

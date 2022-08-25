@@ -72,3 +72,59 @@ UFile (package = ) [public final class StringTemplateComplexForUInjectionHostKt 
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [simpleForTemplate()] = external simpleForTemplate()()
                                 UIdentifier (Identifier (simpleForTemplate)) [UIdentifier (Identifier (simpleForTemplate))]
                                 USimpleNameReferenceExpression (identifier = simpleForTemplate, resolvesTo = null) [simpleForTemplate] = external simpleForTemplate()()
+        UMethod (name = baz) [public static final fun baz() : void {...}]
+            UBlockExpression [{...}] = Undetermined
+                UDeclarationsExpression [var trimA: java.lang.String = "\n" + "        text=text" + "\n" + "    ".trimIndent()] = Undetermined
+                    ULocalVariable (name = trimA) [var trimA: java.lang.String = "\n" + "        text=text" + "\n" + "    ".trimIndent()]
+                        UQualifiedReferenceExpression ["\n" + "        text=text" + "\n" + "    ".trimIndent()] = external trimIndent()()
+                            UPolyadicExpression (operator = +) ["\n" + "        text=text" + "\n" + "    "] = "
+        text=text
+    "
+                                ULiteralExpression (value = "\n") ["\n"] = "
+"
+                                ULiteralExpression (value = "        text=text") ["        text=text"] = "        text=text"
+                                ULiteralExpression (value = "\n") ["\n"] = "
+"
+                                ULiteralExpression (value = "    ") ["    "] = "    "
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [trimIndent()] = external trimIndent()()
+                                UIdentifier (Identifier (trimIndent)) [UIdentifier (Identifier (trimIndent))]
+                                USimpleNameReferenceExpression (identifier = trimIndent, resolvesTo = null) [trimIndent] = external trimIndent()()
+                UDeclarationsExpression [var trimB: java.lang.String = "\n" + "        | margined" + "\n" + "    ".trimMargin()] = Undetermined
+                    ULocalVariable (name = trimB) [var trimB: java.lang.String = "\n" + "        | margined" + "\n" + "    ".trimMargin()]
+                        UQualifiedReferenceExpression ["\n" + "        | margined" + "\n" + "    ".trimMargin()] = external trimMargin()()
+                            UPolyadicExpression (operator = +) ["\n" + "        | margined" + "\n" + "    "] = "
+        | margined
+    "
+                                ULiteralExpression (value = "\n") ["\n"] = "
+"
+                                ULiteralExpression (value = "        | margined") ["        | margined"] = "        | margined"
+                                ULiteralExpression (value = "\n") ["\n"] = "
+"
+                                ULiteralExpression (value = "    ") ["    "] = "    "
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [trimMargin()] = external trimMargin()()
+                                UIdentifier (Identifier (trimMargin)) [UIdentifier (Identifier (trimMargin))]
+                                USimpleNameReferenceExpression (identifier = trimMargin, resolvesTo = null) [trimMargin] = external trimMargin()()
+                UDeclarationsExpression [var c: boolean = "bar" == "\n" + "        margin=text" + "\n" + "    ".trimIndent()] = Undetermined
+                    ULocalVariable (name = c) [var c: boolean = "bar" == "\n" + "        margin=text" + "\n" + "    ".trimIndent()]
+                        UBinaryExpression (operator = ==) ["bar" == "\n" + "        margin=text" + "\n" + "    ".trimIndent()] = Undetermined
+                            ULiteralExpression (value = "bar") ["bar"] = "bar"
+                            UQualifiedReferenceExpression ["\n" + "        margin=text" + "\n" + "    ".trimIndent()] = external trimIndent()()
+                                UPolyadicExpression (operator = +) ["\n" + "        margin=text" + "\n" + "    "] = "
+        margin=text
+    "
+                                    ULiteralExpression (value = "\n") ["\n"] = "
+"
+                                    ULiteralExpression (value = "        margin=text") ["        margin=text"] = "        margin=text"
+                                    ULiteralExpression (value = "\n") ["\n"] = "
+"
+                                    ULiteralExpression (value = "    ") ["    "] = "    "
+                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [trimIndent()] = external trimIndent()()
+                                    UIdentifier (Identifier (trimIndent)) [UIdentifier (Identifier (trimIndent))]
+                                    USimpleNameReferenceExpression (identifier = trimIndent, resolvesTo = null) [trimIndent] = external trimIndent()()
+                UDeclarationsExpression [var concat: java.lang.String = "abc" + "cde" + "efg"] = Undetermined
+                    ULocalVariable (name = concat) [var concat: java.lang.String = "abc" + "cde" + "efg"]
+                        UBinaryExpression (operator = +) ["abc" + "cde" + "efg"] = "abccdeefg"
+                            UBinaryExpression (operator = +) ["abc" + "cde"] = "abccde"
+                                ULiteralExpression (value = "abc") ["abc"] = "abc"
+                                ULiteralExpression (value = "cde") ["cde"] = "cde"
+                            ULiteralExpression (value = "efg") ["efg"] = "efg"

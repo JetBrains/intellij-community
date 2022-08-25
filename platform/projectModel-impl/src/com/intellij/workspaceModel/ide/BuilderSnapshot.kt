@@ -2,24 +2,24 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorageSnapshot
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 
 class StorageReplacement internal constructor(
   val version: Long,
-  val snapshot: WorkspaceEntityStorage,
+  val snapshot: EntityStorageSnapshot,
   val changes: Map<Class<*>, List<EntityChange<*>>>
 )
 
-class BuilderSnapshot(val version: Long, private val storage: WorkspaceEntityStorage) {
-  val builder: WorkspaceEntityStorageBuilder = WorkspaceEntityStorageBuilder.from(storage)
+class BuilderSnapshot(val version: Long, private val storage: EntityStorageSnapshot) {
+  val builder: MutableEntityStorage = MutableEntityStorage.from(storage)
 
   /**
    * It's suggested to call this method WITHOUT write locks or anything
    */
   fun getStorageReplacement(): StorageReplacement {
     val changes = builder.collectChanges(storage)
-    val newStorage = builder.toStorage()
+    val newStorage = builder.toSnapshot()
     return StorageReplacement(version, newStorage, changes)
   }
 }

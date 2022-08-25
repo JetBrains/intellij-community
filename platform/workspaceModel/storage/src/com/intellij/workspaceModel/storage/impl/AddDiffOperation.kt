@@ -8,13 +8,13 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.workspaceModel.storage.*
 import java.io.File
 
-internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, val diff: WorkspaceEntityStorageBuilderImpl) {
+internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: MutableEntityStorageImpl) {
 
   private val replaceMap = HashBiMap.create<NotThisEntityId, ThisEntityId>()
   private val diffLog = diff.changeLog.changeLog
 
   // Initial storage is required in case something will fail and we need to send a report
-  private val initialStorage = if (ConsistencyCheckingMode.current != ConsistencyCheckingMode.DISABLED) target.toStorage() else null
+  private val initialStorage = if (ConsistencyCheckingMode.current != ConsistencyCheckingMode.DISABLED) target.toSnapshot() else null
 
   fun addDiff() {
     if (target === diff) LOG.error("Trying to apply diff to itself")
@@ -222,8 +222,8 @@ internal class AddDiffOperation(val target: WorkspaceEntityStorageBuilderImpl, v
 
     replaceRestoreParents(change, newEntityId)
 
-    WorkspaceEntityStorageBuilderImpl.addReplaceEvent(target, sourceEntityId.id, beforeChildren, beforeParents, newTargetEntityData,
-      originalEntityData, originalParents)
+    MutableEntityStorageImpl.addReplaceEvent(target, sourceEntityId.id, beforeChildren, beforeParents, newTargetEntityData,
+                                             originalEntityData, originalParents)
   }
 
   private fun replaceRestoreChildren(

@@ -21,7 +21,7 @@ class SetupKotlinJpsPluginBeforeCompileTask : CompileTask {
             onUnsupportedVersion = { context.addErrorWithReferenceToKotlincXml(it) }
         ) ?: return true
 
-        return KotlinArtifactsDownloader.downloadMissingJpsPluginDependencies(
+        return KotlinArtifactsDownloader.lazyDownloadMissingJpsPluginDependencies(
             project = project,
             jpsVersion = jpsVersion,
             indicator = context.progressIndicator,

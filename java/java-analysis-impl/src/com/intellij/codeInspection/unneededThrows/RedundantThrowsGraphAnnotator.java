@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.unneededThrows;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -51,7 +51,7 @@ public final class RedundantThrowsGraphAnnotator extends RefGraphAnnotatorEx {
       if (refMethod == null) return;
       Collection<PsiClassType> finalExceptionTypes = exceptionTypes;
       myRefManager.executeTask(() -> {
-        refMethod.waitForInitialized();
+        refMethod.initializeIfNeeded();
         for (PsiClassType exceptionType : finalExceptionTypes) {
           ((RefMethodImpl)refMethod).updateThrowsList(exceptionType);
         }

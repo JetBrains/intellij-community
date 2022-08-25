@@ -1,0 +1,10 @@
+[{id=0
+, myUsages=9|map.|put|(|"1"|, |"first"|);,
+10|map.|put|(|"2"|, |"second"|);}
+, {id=1
+, myUsages=13|map.|put|(|"1"|, |"first"|);,
+16|map.|put|(|"2"|, |"second"|);}
+, {id=2
+, myUsages=19|map.|put|(|"1"|, |null|);,
+20|map.|put|(|"2"|, |null|);}
+]

@@ -24,25 +24,7 @@ class KotlinFunctionBreakpointType :
         KotlinFunctionBreakpoint(project, breakpoint)
 
     override fun canPutAt(file: VirtualFile, line: Int, project: Project): Boolean =
-        isKtFileWithCommonOrJvmPlatform(file, project) && isBreakpointApplicable(file, line, project) { element ->
-            when (element) {
-                is KtConstructor<*> ->
-                    ApplicabilityResult.DEFINITELY_YES
-                is KtFunction ->
-                    maybe(!KtPsiUtil.isLocal(element) && !element.isInlineOnly())
-                is KtPropertyAccessor ->
-                    maybe(element.hasBody() && !KtPsiUtil.isLocal(element.property))
-                is KtClass ->
-                    maybe(
-                        element !is KtEnumEntry
-                                && !element.isAnnotation()
-                                && !element.isInterface()
-                                && element.hasPrimaryConstructor()
-                    )
-                else ->
-                    ApplicabilityResult.UNKNOWN
-            }
-        }
+        isKtFileWithCommonOrJvmPlatform(file, project) && isFunctionBreakpointApplicable(file, line, project)
 
     private fun isKtFileWithCommonOrJvmPlatform(file: VirtualFile, project: Project): Boolean {
         val psiFile = PsiManager.getInstance(project).findFile(file) as? KtFile ?: return false
@@ -50,3 +32,24 @@ class KotlinFunctionBreakpointType :
         return platform.isCommon() || platform.isJvm()
     }
 }
+
+fun isFunctionBreakpointApplicable(file: VirtualFile, line: Int, project: Project): Boolean =
+    isBreakpointApplicable(file, line, project) { element ->
+        when (element) {
+            is KtConstructor<*> ->
+                ApplicabilityResult.DEFINITELY_YES
+            is KtFunction ->
+                maybe(!KtPsiUtil.isLocal(element) && !element.isInlineOnly())
+            is KtPropertyAccessor ->
+                maybe(element.hasBody() && !KtPsiUtil.isLocal(element.property))
+            is KtClass ->
+                maybe(
+                    element !is KtEnumEntry
+                            && !element.isAnnotation()
+                            && !element.isInterface()
+                            && element.hasPrimaryConstructor()
+                )
+            else ->
+                ApplicabilityResult.UNKNOWN
+        }
+    }

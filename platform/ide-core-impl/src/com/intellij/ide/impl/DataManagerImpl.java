@@ -120,9 +120,6 @@ public class DataManagerImpl extends DataManager {
     if (component instanceof DataProvider) {
       dataProvider = (DataProvider)component;
     }
-    else if (component instanceof TypeSafeDataProvider) {
-      dataProvider = new TypeSafeDataProviderAdapter((TypeSafeDataProvider) component);
-    }
     else if (component instanceof JComponent) {
       dataProvider = getDataProvider((JComponent)component);
     }

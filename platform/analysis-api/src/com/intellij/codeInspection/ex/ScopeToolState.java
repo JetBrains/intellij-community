@@ -32,7 +32,7 @@ public final class ScopeToolState {
   private InspectionToolWrapper<?, ?> myToolWrapper;
   private boolean myEnabled;
   private HighlightDisplayLevel myLevel;
-  private String myTextAttributesKey;
+  private String myEditorAttributesKey;
   private ConfigPanelState myAdditionalConfigPanelState;
 
   public ScopeToolState(@NotNull NamedScope scope,
@@ -51,7 +51,7 @@ public final class ScopeToolState {
     myToolWrapper = toolWrapper;
     myEnabled = enabled;
     myLevel = level;
-    myTextAttributesKey = toolWrapper.getEditorAttributesKeyExternalName();
+    myEditorAttributesKey = toolWrapper.getEditorAttributesKeyExternalName();
   }
 
   @NotNull
@@ -94,19 +94,19 @@ public final class ScopeToolState {
     myLevel = level;
   }
 
-  public @Nullable TextAttributesKey getTextAttributesKey() {
-    if (myTextAttributesKey == null) {
+  public @Nullable TextAttributesKey getEditorAttributesKey() {
+    if (myEditorAttributesKey == null) {
       return null;
     }
-    return TextAttributesKey.find(myTextAttributesKey);
+    return TextAttributesKey.find(myEditorAttributesKey);
   }
   
   public @Nullable String getTextAttributesKeyExternalName() {
-    return myTextAttributesKey;
+    return myEditorAttributesKey;
   }
 
-  public void setTextAttributesKey(String textAttributesKey) {
-    myTextAttributesKey = textAttributesKey;
+  public void setEditorAttributesKey(String textAttributesKey) {
+    myEditorAttributesKey = textAttributesKey;
   }
 
   @Nullable

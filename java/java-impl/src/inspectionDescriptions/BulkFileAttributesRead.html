@@ -24,6 +24,8 @@ boolean isNewFile(File file, long lastModified) throws IOException {
 </code></pre>
 <!-- tooltip end -->
 <p>This inspection does not show a warning if <code>IOException</code> is not handled in the current context, but the quick-fix is still available.</p>
+<p>Note that the replacements are usually not completely equivalent and should be applied with care. In particular, the behavior could differ if
+the file does not exist at all.</p>
 <p>This inspection only reports if the language level of the project or module is 7 or higher.</p>
 <p><small>New in 2022.1</small></p>
 </body>

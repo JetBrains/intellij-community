@@ -1,5 +1,3 @@
-// "Replace with javadoc" "true"
-
 class Main {
   /**
    * 1

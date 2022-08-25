@@ -45,8 +45,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.PATCH_APPLY_NOT_PATCH_FILE;
 import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.PATCH_APPLY_CANNOT_FIND_PATCH_FILE;
+import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.PATCH_APPLY_NOT_PATCH_FILE;
 import static com.intellij.openapi.vcs.changes.patch.PatchFileType.isPatchFile;
 
 public final class ApplyPatchAction extends DumbAwareAction {
@@ -124,26 +124,6 @@ public final class ApplyPatchAction extends DumbAwareAction {
     return dialog.showAndGet();
   }
 
-  public static void applySkipDirs(final List<? extends FilePatch> patches, final int skipDirs) {
-    if (skipDirs < 1) {
-      return;
-    }
-    for (FilePatch patch : patches) {
-      patch.setBeforeName(skipN(patch.getBeforeName(), skipDirs));
-      patch.setAfterName(skipN(patch.getAfterName(), skipDirs));
-    }
-  }
-
-  private static String skipN(final String path, final int num) {
-    final String[] pieces = path.split("/");
-    final StringBuilder sb = new StringBuilder();
-    for (int i = num; i < pieces.length; i++) {
-      final String piece = pieces[i];
-      sb.append('/').append(piece);
-    }
-    return sb.toString();
-  }
-
   public static @NotNull ApplyPatchStatus applyContent(@NotNull Project project,
                                                        @NotNull ApplyFilePatchBase<?> patch,
                                                        @Nullable ApplyPatchContext context,
@@ -172,6 +152,10 @@ public final class ApplyPatchAction extends DumbAwareAction {
     String baseContent = convertLineSeparators(mergeData.getBase());
     String localContent = convertLineSeparators(mergeData.getLocal());
     String patchedContent = mergeData.getPatched();
+
+    if (localContent.equals(patchedContent)) {
+      return ApplyPatchStatus.ALREADY_APPLIED;
+    }
 
     Ref<ApplyPatchStatus> applyPatchStatusReference = new Ref<>();
     Consumer<MergeResult> callback = result13 -> {
@@ -241,9 +225,8 @@ public final class ApplyPatchAction extends DumbAwareAction {
     return WriteAction.compute(() -> {
       try {
         return patch.apply(file, context, project, VcsUtil.getFilePath(file), () -> {
-          BaseRevisionTextPatchEP baseRevisionTextPatchEP = PatchEP.EP_NAME.findExtensionOrFail(BaseRevisionTextPatchEP.class);
           String path = ObjectUtils.chooseNotNull(patchBase.getBeforeName(), patchBase.getAfterName());
-          return baseRevisionTextPatchEP.provideContent(project, path, commitContext);
+          return BaseRevisionTextPatchEP.getBaseContent(project, path, commitContext);
         }, commitContext);
       }
       catch (IOException e) {

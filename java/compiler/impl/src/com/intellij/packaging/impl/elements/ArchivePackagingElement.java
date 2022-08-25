@@ -12,8 +12,10 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.workspaceModel.storage.EntitySource;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
-import com.intellij.workspaceModel.storage.bridgeEntities.*;
+import com.intellij.workspaceModel.storage.MutableEntityStorage;
+import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ArchivePackagingElementEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.PackagingElementEntity;
 import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -73,7 +75,7 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
     this.update(
       () -> myArchiveFileName = archiveFileName,
       (builder, entity) -> {
-        builder.modifyEntity(ModifiableArchivePackagingElementEntity.class, entity, ent -> {
+        builder.modifyEntity(ArchivePackagingElementEntity.Builder.class, entity, ent -> {
           ent.setFileName(archiveFileName);
           return Unit.INSTANCE;
         });
@@ -92,7 +94,7 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
   }
 
   @Override
-  public WorkspaceEntity getOrAddEntity(@NotNull WorkspaceEntityStorageBuilder diff,
+  public WorkspaceEntity getOrAddEntity(@NotNull MutableEntityStorage diff,
                                         @NotNull EntitySource source,
                                         @NotNull Project project) {
     WorkspaceEntity existingEntity = this.getExistingEntity(diff);
@@ -102,7 +104,7 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
       return (PackagingElementEntity)o.getOrAddEntity(diff, source, project);
     });
 
-    var entity = BridgeModelModifiableEntitiesKt.addArchivePackagingElementEntity(diff, myArchiveFileName, children, source);
+    var entity = ExtensionsKt.addArchivePackagingElementEntity(diff, myArchiveFileName, children, source);
     diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(entity, this);
     return entity;
   }

@@ -72,7 +72,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
       LOG.info("Native file watcher is disabled");
     }
     else if (myExecutable == null) {
-      if (SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isLinux && CpuArch.isIntel64()) {
+      if (SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isLinux && (CpuArch.isIntel64() || CpuArch.isArm64())) {
         notifyOnFailure(IdeCoreBundle.message("watcher.exe.not.found"), null);
       }
       else if (SystemInfo.isLinux) {
@@ -151,6 +151,9 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
     else if (SystemInfo.isLinux && CpuArch.isIntel64()) {
       name = "fsnotifier";
+    }
+    else if (SystemInfo.isLinux && CpuArch.isArm64()) {
+      name = "fsnotifier-aarch64";
     }
     if (name != null) {
       Path file = PathManager.findBinFile(name);

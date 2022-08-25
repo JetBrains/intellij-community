@@ -166,14 +166,11 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
   }
 
   override fun validateAll(): List<ValidationInfo> =
-    if (isUnderLocalTarget) {
-      when (newEnvironmentModeSelected()) {
-        true -> listOfNotNull(validateEnvironmentDirectoryLocation(locationField),
-                              validateSdkComboBox(baseInterpreterCombobox, this))
-        false -> listOfNotNull(validateSdkComboBox(interpreterCombobox, this))
-      }
+    when (newEnvironmentModeSelected()) {
+      true -> listOfNotNull(validateEnvironmentDirectoryLocation(locationField, pathInfoProvider),
+                            validateSdkComboBox(baseInterpreterCombobox, this))
+      false -> listOfNotNull(validateSdkComboBox(interpreterCombobox, this))
     }
-    else emptyList()
 
   override fun getOrCreateSdk(): Sdk? = getOrCreateSdk(targetEnvironmentConfiguration = null)
 

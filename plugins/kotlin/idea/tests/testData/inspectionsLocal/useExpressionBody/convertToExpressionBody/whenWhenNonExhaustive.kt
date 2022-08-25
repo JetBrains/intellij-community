@@ -1,3 +1,4 @@
+// ERROR: 'when' expression must be exhaustive, add necessary 'false' branch or 'else' branch instead
 // PROBLEM: none
 
 enum class AccessMode { READ, WRITE, RW }

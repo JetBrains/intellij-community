@@ -4,6 +4,7 @@ package com.intellij.internal.inspector.components;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaSeparatorUI;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.InternalActionsBundle;
 import com.intellij.internal.inspector.PropertyBean;
@@ -89,24 +90,9 @@ public final class InspectorWindow extends JDialog implements Disposable {
     if (size != null) setSize(size);
     if (location != null) setLocation(location);
 
-    DefaultActionGroup actions = new DefaultActionGroup();
-    actions.addAction(new ToggleHighlightAction());
-    actions.addSeparator();
-    actions.add(new RefreshAction());
-    actions.addSeparator();
-    actions.add(new ToggleAccessibleAction());
-    actions.addSeparator();
-    actions.add(new ShowDataContextAction());
-    actions.addSeparator();
-    actions.add(new MyNavigateAction());
-
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CONTEXT_TOOLBAR, actions, true);
-    toolbar.setTargetComponent(getRootPane());
-    add(toolbar.getComponent(), BorderLayout.NORTH);
-
     myWrapperPanel = new Wrapper();
-
     myInspectorTable = new InspectorTable(component, myProject);
+    myWrapperPanel.setContent(myInspectorTable);
     myHierarchyTree = new HierarchyTree(component) {
       @Override
       public void onComponentsChanged(java.util.List<? extends Component> components) {
@@ -172,13 +158,26 @@ public final class InspectorWindow extends JDialog implements Disposable {
       }
       return null;
     };
-    myWrapperPanel.setContent(myInspectorTable);
+    DataManager.registerDataProvider(getRootPane(), provider);
 
     Splitter splitPane = new JBSplitter(false, "UiInspector.splitter.proportion", 0.5f);
     splitPane.setSecondComponent(myWrapperPanel);
     splitPane.setFirstComponent(new JBScrollPane(myHierarchyTree));
     add(splitPane, BorderLayout.CENTER);
-    DataManager.registerDataProvider(getRootPane(), provider);
+
+    DefaultActionGroup actions = new DefaultActionGroup();
+    actions.addAction(new ToggleHighlightAction());
+    actions.addSeparator();
+    actions.add(new RefreshAction());
+    actions.addSeparator();
+    actions.add(new ToggleAccessibleAction());
+    actions.addSeparator();
+    actions.add(new ShowDataContextAction());
+    actions.addSeparator();
+    actions.add(new MyNavigateAction());
+
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CONTEXT_TOOLBAR, actions, true);
+    toolbar.setTargetComponent(getRootPane());
 
     Consumer<Component> selectionHandler = selectedComponent -> {
       TreePath pathToSelect = TreeUtil.visitVisibleRows(myHierarchyTree, path -> {
@@ -196,7 +195,29 @@ public final class InspectorWindow extends JDialog implements Disposable {
     navBarScroll.setHorizontalScrollBar(new JBThinOverlappingScrollBar(Adjustable.HORIZONTAL));
     navBarScroll.setOverlappingScrollBar(true);
     navBarScroll.setBorder(BorderFactory.createEmptyBorder());
-    add(navBarScroll, BorderLayout.SOUTH);
+    navBarScroll.putClientProperty(JBScrollPane.Flip.class, JBScrollPane.Flip.VERTICAL);
+
+    JPanel topPanel = new JPanel();
+    topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
+    topPanel.add(toolbar.getComponent());
+    topPanel.add(new JSeparator(SwingConstants.HORIZONTAL) {
+      @Override
+      public void updateUI() {
+        setUI(new DarculaSeparatorUI() {
+          @Override
+          protected int getStripeIndent() {
+            return 0;
+          }
+
+          @Override
+          public Dimension getPreferredSize(JComponent c) {
+            return JBUI.size(0, 1);
+          }
+        });
+      }
+    });
+    topPanel.add(navBarScroll);
+    add(topPanel, BorderLayout.NORTH);
 
     myHierarchyTree.expandPath();
 

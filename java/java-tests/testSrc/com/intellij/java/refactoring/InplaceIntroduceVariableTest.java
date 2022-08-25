@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;
@@ -21,6 +22,7 @@ import com.intellij.refactoring.IntroduceVariableUtil;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.ui.ChooserInterceptor;
 import com.intellij.ui.UiInterceptors;
@@ -288,6 +290,10 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
     doTestReplaceChoice("Replace all 0 occurrences");
   }
 
+  public void testTernaryInstanceOfVar() {
+    // Java 17 suggests pattern replacement which is undesired in this test
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_11, () -> doTest(null));
+  }
 
   public void testAnnotationArgument() {
     assertThrows(CommonRefactoringUtil.RefactoringErrorHintException.class,

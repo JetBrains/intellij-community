@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.builtInHelp.mapping
 
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
-import java.util.*
 import javax.xml.bind.annotation.XmlAccessType
 import javax.xml.bind.annotation.XmlAccessorType
 import javax.xml.bind.annotation.XmlElement
@@ -21,13 +20,13 @@ class HelpMap {
   var mappings: List<HelpMapId> = ArrayList()
 
   @Nullable
-  fun getUrlForId(@NotNull target: String): String? {
+  fun getUrlForId(@NotNull target: String): String {
     return mappings
              .firstOrNull { it.target == target }?.url ?: getDefaultUrl()
   }
 
   @NotNull
-  private fun getDefaultUrl(): String? {
+  private fun getDefaultUrl(): String {
     return mappings
       .first { "yes" == it.isDefault }.url
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k.inference.common
 
@@ -74,7 +74,7 @@ abstract class ContextCollector(private val resolutionFacade: ResolutionFacade) 
             return typeVariable.asBoundType()
         }
 
-        fun KotlinType.toBoundType(): BoundType? {
+        fun KotlinType.toBoundType(): BoundType {
             val classReference = classReference() ?: NoClassReference
             val state = classReference.getState(typeElement = null)
 
@@ -82,7 +82,7 @@ abstract class ContextCollector(private val resolutionFacade: ResolutionFacade) 
                 if (classReference is DescriptorClassReference) {
                     arguments.zip(classReference.descriptor.declaredTypeParameters) { typeArgument, typeParameter ->
                         TypeParameter(
-                            typeArgument.type.toBoundType() ?: BoundType.STAR_PROJECTION,
+                            typeArgument.type.toBoundType(),
                             typeParameter.variance
                         )
                     }
@@ -163,7 +163,7 @@ abstract class ContextCollector(private val resolutionFacade: ResolutionFacade) 
                     is KtLambdaExpression -> {
                         val context = expression.analyze(resolutionFacade)
                         val returnType = expression.getType(context)?.arguments?.lastOrNull()?.type ?: return@forEachDescendantOfType
-                        val typeVariable = returnType.toBoundType()?.typeVariable ?: return@forEachDescendantOfType
+                        val typeVariable = returnType.toBoundType().typeVariable ?: return@forEachDescendantOfType
                         declarationToTypeVariable[expression.functionLiteral] = typeVariable
                     }
                     is KtBinaryExpressionWithTypeRHS -> {

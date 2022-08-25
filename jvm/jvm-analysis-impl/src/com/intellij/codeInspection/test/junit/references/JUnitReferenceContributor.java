@@ -1,6 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.test.junit.references;
 
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.patterns.InitialPatternCondition;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.PsiElementPattern;
@@ -9,13 +12,18 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.FilterPattern;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
+
+import java.util.concurrent.ConcurrentMap;
 
 final class JUnitReferenceContributor extends PsiReferenceContributor {
   private static PsiElementPattern.Capture<PsiLanguageInjectionHost> getElementPattern(String annotation, String paramName) {
@@ -86,37 +94,56 @@ final class JUnitReferenceContributor extends PsiReferenceContributor {
     }
 
     @Override
-    public boolean isAcceptable(Object element, PsiElement context) {
+    public boolean isAcceptable(Object __, PsiElement context) {
+      if (context == null) {
+        return false;
+      }
+      if (DumbService.isDumb(context.getProject())) {
+        return false;
+      }
+      if (getMapOfAnnotationClasses(context.getContainingFile()).get(myAnnotation) == null) {
+        return false;
+      }
       UElement type = UastContextKt.toUElement(context, UElement.class);
       if (type == null) return false;
-      UAnnotation annotation = findAnnotationParent(type);
-      if (annotation == null || !myAnnotation.equals(annotation.getQualifiedName())) return false;
-      UNamedExpression uPair = UastUtils.getParentOfType(type, UNamedExpression.class);
-      if (uPair == null) return false;
-      String name = ObjectUtils.notNull(uPair.getName(), PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
-      return myParameterName.equals(name);
-    }
-
-    private static UAnnotation findAnnotationParent(UElement element) {
-      for (int i = 0; i < 5; i++) {
+      UElement element = type.getUastParent();
+      boolean parameterFound = false;
+      for (int i = 0; i < 5 && element != null; i++) {
+        if (element instanceof UFile) {
+          return false;
+        }
+        if (element instanceof UNamedExpression) {
+          UNamedExpression uPair = (UNamedExpression)element;
+          String name = ObjectUtils.notNull(uPair.getName(), PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
+          if (!myParameterName.equals(name)) {
+            return false;
+          }
+          parameterFound = true;
+        }
         if (element instanceof UDeclarationsExpression) {
-          return null;
+          return false;
         }
         if (element instanceof UAnnotation) {
-          return (UAnnotation)element;
+          UAnnotation annotation = (UAnnotation)element;
+          return parameterFound && myAnnotation.equals(annotation.getQualifiedName());
         }
-        UElement parent = element.getUastParent();
-        if (parent == null || parent instanceof UFile) {
-          return null;
-        }
-        element = parent;
+        element = element.getUastParent();
       }
-      return null;
+      return false;
     }
 
     @Override
     public boolean isClassAcceptable(Class hintClass) {
       return PsiLanguageInjectionHost.class.isAssignableFrom(hintClass);
     }
+  }
+
+  private static ConcurrentMap<String, PsiClass> getMapOfAnnotationClasses(PsiFile containingFile) {
+    return CachedValuesManager.getCachedValue(containingFile, () -> {
+      Project project = containingFile.getProject();
+      return new CachedValueProvider.Result<>(
+        ConcurrentFactoryMap.createMap(annoName -> JavaPsiFacade.getInstance(project).findClass(annoName, containingFile.getResolveScope())),
+        ProjectRootModificationTracker.getInstance(project));
+    });
   }
 }

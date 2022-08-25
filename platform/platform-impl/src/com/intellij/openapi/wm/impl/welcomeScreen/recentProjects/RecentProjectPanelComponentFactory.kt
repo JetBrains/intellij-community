@@ -19,11 +19,11 @@ internal object RecentProjectPanelComponentFactory {
   private const val UPDATE_INTERVAL = 50 // 50ms -- 20 frames per second
 
   @JvmStatic
-  fun createComponent(parentDisposable: Disposable): RecentProjectFilteringTree {
+  fun createComponent(parentDisposable: Disposable, collectors: List<() -> List<RecentProjectTreeItem>>): RecentProjectFilteringTree {
     ProjectDetector.runDetectors {} // Run detectors that will add projects to the RecentProjectsManagerBase
 
     val tree = Tree()
-    val filteringTree = RecentProjectFilteringTree(tree, parentDisposable).apply {
+    val filteringTree = RecentProjectFilteringTree(tree, parentDisposable, collectors).apply {
       installSearchField()
     }
 

@@ -22,10 +22,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class ToolsImpl implements Tools {
   @NonNls static final String ENABLED_BY_DEFAULT_ATTRIBUTE = "enabled_by_default";
@@ -168,7 +165,7 @@ public final class ToolsImpl implements Tools {
     InspectionToolWrapper<?,?> toolWrapper = myDefaultState.getTool();
     String editorAttributes = toolElement.getAttributeValue("editorAttributes");
     if (editorAttributes != null) {
-      myDefaultState.setTextAttributesKey(editorAttributes);
+      myDefaultState.setEditorAttributesKey(editorAttributes);
     }
     String enabled = toolElement.getAttributeValue(ENABLED_ATTRIBUTE);
     boolean isEnabled = Boolean.parseBoolean(enabled);
@@ -211,7 +208,7 @@ public final class ToolsImpl implements Tools {
 
         editorAttributes = scopeElement.getAttributeValue("editorAttributes");
         if (editorAttributes != null) {
-          state.setTextAttributesKey(editorAttributes);
+          state.setEditorAttributesKey(editorAttributes);
         }
         scopeNames.add(scopeName);
       }
@@ -355,17 +352,17 @@ public final class ToolsImpl implements Tools {
   
   @Nullable
   public TextAttributesKey getAttributesKey(PsiElement element) {
-    if (myTools == null || element == null) return myDefaultState.getTextAttributesKey();
+    if (myTools == null || element == null) return myDefaultState.getEditorAttributesKey();
     Project project = element.getProject();
     DependencyValidationManager manager = DependencyValidationManager.getInstance(project);
     for (ScopeToolState state : myTools) {
       NamedScope scope = state.getScope(project);
       PackageSet set = scope != null ? scope.getValue() : null;
       if (set != null && set.contains(element.getContainingFile(), manager)) {
-        return state.getTextAttributesKey();
+        return state.getEditorAttributesKey();
       }
     }
-    return myDefaultState.getTextAttributesKey();
+    return myDefaultState.getEditorAttributesKey();
   }
 
   @NotNull
@@ -501,6 +498,18 @@ public final class ToolsImpl implements Tools {
     return myDefaultState.getLevel();
   }
 
+  @Nullable
+  public TextAttributesKey getEditorAttributesKey(NamedScope scope, Project project) {
+    if (myTools != null && scope != null) {
+      for (ScopeToolState state : myTools) {
+        if (Objects.equals(state.getScopeName(), scope.getScopeId())) {
+          return state.getEditorAttributesKey();
+        }
+      }
+    }
+    return myDefaultState.getEditorAttributesKey();
+  }
+
   @Override
   public boolean equals(Object o) {
     if (!(o instanceof ToolsImpl)) return false;
@@ -517,16 +526,16 @@ public final class ToolsImpl implements Tools {
     return true;
   }
 
-  
-  public void setTextAttributesKey(@NotNull String externalName, @Nullable String scopeName) {
+
+  public void setEditorAttributesKey(@NotNull String externalName, @Nullable String scopeName) {
     if (scopeName == null) {
-      myDefaultState.setTextAttributesKey(externalName);
+      myDefaultState.setEditorAttributesKey(externalName);
     }
     else {
       if (myTools == null) return;
       for (ScopeToolState tool : myTools) {
         if (scopeName.equals(tool.getScopeName())) {
-          tool.setTextAttributesKey(externalName);
+          tool.setEditorAttributesKey(externalName);
           break;
         }
       }

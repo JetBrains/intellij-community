@@ -17,6 +17,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,23 +32,39 @@ import java.util.Objects;
 public final class ShelvedChange {
   private static final Logger LOG = Logger.getInstance(ShelvedChange.class);
 
-  private final Path myPatchPath;
-  private final String myBeforePath;
-  private final String myAfterPath;
-  private final FileStatus myFileStatus;
+  @NotNull private final Path myPatchPath;
+  @NotNull private final String myBeforePath;
+  @NotNull private final String myAfterPath;
+  @NotNull private final FileStatus myFileStatus;
   @NotNull private final Change myChange;
 
-  public ShelvedChange(@NotNull Project project,
-                       @NotNull Path patchPath,
-                       String beforePath,
-                       String afterPath,
-                       FileStatus fileStatus) {
+  private ShelvedChange(@NotNull Path patchPath,
+                        @NotNull String beforePath,
+                        @NotNull String afterPath,
+                        @NotNull FileStatus fileStatus,
+                        @NotNull Change change) {
     myPatchPath = patchPath;
     myBeforePath = beforePath;
-    // optimisation: memory
-    myAfterPath = Objects.equals(beforePath, afterPath) ? beforePath : afterPath;
+    myAfterPath = afterPath;
     myFileStatus = fileStatus;
-    myChange = createChange(project);
+    myChange = change;
+  }
+
+  public static ShelvedChange create(@NotNull Project project,
+                                     @NotNull Path patchPath,
+                                     @NotNull String beforePath,
+                                     @NotNull String afterPath,
+                                     @NotNull FileStatus fileStatus) {
+    // optimisation: memory
+    afterPath = Objects.equals(beforePath, afterPath) ? beforePath : afterPath;
+    Change change = createChange(project, patchPath, beforePath, afterPath, fileStatus);
+    return new ShelvedChange(patchPath, beforePath, afterPath, fileStatus, change);
+  }
+
+  public static ShelvedChange copyToNewPatch(@NotNull Project project,
+                                             @NotNull Path newPatchPath,
+                                             @NotNull ShelvedChange shelvedChange) {
+    return create(project, newPatchPath, shelvedChange.getBeforePath(), shelvedChange.getAfterPath(), shelvedChange.getFileStatus());
   }
 
   public boolean isConflictingChange() {
@@ -64,14 +81,17 @@ public final class ShelvedChange {
     return false;
   }
 
+  @NotNull
   public String getBeforePath() {
     return myBeforePath;
   }
 
+  @NotNull
   public String getAfterPath() {
     return myAfterPath;
   }
 
+  @NotNull
   public FileStatus getFileStatus() {
     return myFileStatus;
   }
@@ -81,20 +101,28 @@ public final class ShelvedChange {
     return myChange;
   }
 
+  /**
+   * @deprecated Parameter unused, use {@link #getChange()}
+   */
   @NotNull
   @Deprecated(forRemoval = true)
   public Change getChange(@NotNull Project project) {
     return myChange;
   }
 
-  private Change createChange(@NotNull Project project) {
+  private static Change createChange(@NotNull Project project,
+                                     @NotNull Path patchPath,
+                                     @NotNull String beforePath,
+                                     @NotNull String afterPath,
+                                     @NotNull FileStatus fileStatus) {
     File baseDir = new File(Objects.requireNonNull(project.getBasePath()));
 
-    File file = getAbsolutePath(baseDir, myBeforePath);
-    FilePath beforePath = VcsUtil.getFilePath(file, false);
+    FilePath beforeFilePath = VcsUtil.getFilePath(getAbsolutePath(baseDir, beforePath), false);
+    FilePath afterFilePath = VcsUtil.getFilePath(getAbsolutePath(baseDir, afterPath), false);
+
     ContentRevision beforeRevision = null;
-    if (myFileStatus != FileStatus.ADDED) {
-      beforeRevision = new CurrentContentRevision(beforePath) {
+    if (fileStatus != FileStatus.ADDED) {
+      beforeRevision = new CurrentContentRevision(beforeFilePath) {
         @Override
         @NotNull
         public VcsRevisionNumber getRevisionNumber() {
@@ -103,14 +131,13 @@ public final class ShelvedChange {
       };
     }
     ContentRevision afterRevision = null;
-    if (myFileStatus != FileStatus.DELETED) {
-      FilePath afterPath = VcsUtil.getFilePath(getAbsolutePath(baseDir, myAfterPath), false);
-      afterRevision = new PatchedContentRevision(project, beforePath, afterPath);
+    if (fileStatus != FileStatus.DELETED) {
+      afterRevision = new PatchedContentRevision(project, patchPath, beforePath, beforeFilePath, afterFilePath);
     }
-    return new Change(beforeRevision, afterRevision, myFileStatus);
+    return new Change(beforeRevision, afterRevision, fileStatus);
   }
 
-  private static File getAbsolutePath(final File baseDir, final String relativePath) {
+  private static File getAbsolutePath(@NotNull File baseDir, @NotNull String relativePath) {
     File file;
     try {
       file = new File(baseDir, relativePath).getCanonicalFile();
@@ -123,9 +150,13 @@ public final class ShelvedChange {
   }
 
   @Nullable
-  public TextFilePatch loadFilePatch(final Project project, CommitContext commitContext) throws IOException, PatchSyntaxException {
-    List<TextFilePatch> filePatches = ShelveChangesManager.loadPatches(project, myPatchPath, commitContext);
-    return ContainerUtil.find(filePatches, patch -> myBeforePath.equals(patch.getBeforeName()));
+  private static TextFilePatch loadFilePatch(@NotNull Project project,
+                                             @NotNull Path patchPath,
+                                             @NotNull String beforePath,
+                                             @Nullable CommitContext commitContext)
+    throws IOException, PatchSyntaxException {
+    List<TextFilePatch> filePatches = ShelveChangesManager.loadPatches(project, patchPath, commitContext);
+    return ContainerUtil.find(filePatches, patch -> beforePath.equals(patch.getBeforeName()));
   }
 
   @Override
@@ -148,13 +179,21 @@ public final class ShelvedChange {
     return Objects.hash(myPatchPath, myBeforePath, myAfterPath, myFileStatus);
   }
 
-  private class PatchedContentRevision implements ContentRevision {
-    private final Project myProject;
-    private final FilePath myBeforeFilePath;
-    private final FilePath myAfterFilePath;
+  private static class PatchedContentRevision implements ContentRevision {
+    @NotNull private final Project myProject;
+    @NotNull private final Path myPatchPath;
+    @NotNull private final String myBeforePath;
+    @NotNull private final FilePath myBeforeFilePath;
+    @NotNull private final FilePath myAfterFilePath;
 
-    PatchedContentRevision(Project project, final FilePath beforeFilePath, final FilePath afterFilePath) {
+    PatchedContentRevision(@NotNull Project project,
+                           @NotNull Path patchPath,
+                           @NotNull String beforePath,
+                           @NotNull FilePath beforeFilePath,
+                           @NotNull FilePath afterFilePath) {
       myProject = project;
+      myPatchPath = patchPath;
+      myBeforePath = beforePath;
       myBeforeFilePath = beforeFilePath;
       myAfterFilePath = afterFilePath;
     }
@@ -166,21 +205,24 @@ public final class ShelvedChange {
         // content based on local shouldn't be cached because local file may be changed (during show diff also)
         return loadContent();
       }
+      catch (VcsException e) {
+        throw e;
+      }
       catch (Exception e) {
         throw new VcsException(e);
       }
     }
 
     @Nullable
-    private String loadContent() throws IOException, PatchSyntaxException, ApplyPatchException {
-      TextFilePatch patch = loadFilePatch(myProject, null);
+    private String loadContent() throws IOException, PatchSyntaxException, VcsException {
+      TextFilePatch patch = loadFilePatch(myProject, myPatchPath, myBeforePath, null);
       if (patch != null) {
         return loadContent(patch);
       }
       return null;
     }
 
-    private String loadContent(final TextFilePatch patch) throws ApplyPatchException {
+    private String loadContent(final TextFilePatch patch) throws VcsException {
       if (patch.isNewFile()) {
         return patch.getSingleHunkPatchText();
       }
@@ -191,12 +233,16 @@ public final class ShelvedChange {
       if (appliedPatch != null) {
         return appliedPatch.patchedText;
       }
-      throw new ApplyPatchException("Apply patch conflict");
+      throw new VcsException(VcsBundle.message("patch.apply.error.conflict"));
     }
 
-    private String getBaseContent() {
+    @NotNull
+    private String getBaseContent() throws VcsException {
       return ReadAction.compute(() -> {
-        final Document doc = FileDocumentManager.getInstance().getDocument(myBeforeFilePath.getVirtualFile());
+        VirtualFile file = myBeforeFilePath.getVirtualFile();
+        if (file == null) throw new VcsException(VcsBundle.message("patch.apply.error.file.not.found", myBeforeFilePath));
+        final Document doc = FileDocumentManager.getInstance().getDocument(file);
+        if (doc == null) throw new VcsException(VcsBundle.message("patch.apply.error.document.not.found", file));
         return doc.getText();
       });
     }
@@ -219,6 +265,6 @@ public final class ShelvedChange {
   }
 
   public String toString() {
-    return FileUtil.toSystemDependentName(myBeforePath == null ? myAfterPath : myBeforePath);
+    return FileUtil.toSystemDependentName(myBeforePath);
   }
 }

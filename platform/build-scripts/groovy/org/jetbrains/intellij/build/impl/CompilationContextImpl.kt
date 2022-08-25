@@ -34,8 +34,14 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.function.BiFunction
 import kotlin.io.path.exists
+
+fun createCompilationContext(communityHome: Path, projectHome: Path, defaultOutputRoot: Path): CompilationContextImpl {
+  return CompilationContextImpl.create(communityHome = communityHome,
+                                       projectHome = projectHome,
+                                       buildOutputRootEvaluator = { defaultOutputRoot },
+                                       options = BuildOptions())
+}
 
 class CompilationContextImpl : CompilationContext {
   private constructor(model: JpsModel,
@@ -43,7 +49,7 @@ class CompilationContextImpl : CompilationContext {
                       projectHome: Path,
                       messages: BuildMessages,
                       oldToNewModuleName: Map<String, String>,
-                      buildOutputRootEvaluator: BiFunction<JpsProject, BuildMessages, String>,
+                      buildOutputRootEvaluator: (JpsProject) -> Path,
                       options: BuildOptions) {
     projectModel = model
     project = model.project
@@ -54,7 +60,7 @@ class CompilationContextImpl : CompilationContext {
     newToOldModuleName = oldToNewModuleName.entries.associate { it.value to it.key }
     val modules = model.project.modules
     this.nameToModule = modules.associateBy { it.name }
-    val buildOut = Path.of(options.outputRootPath ?: buildOutputRootEvaluator.apply(project, messages)).toAbsolutePath().normalize()
+    val buildOut = options.outputRootPath?.let { Path.of(it) } ?: buildOutputRootEvaluator(project)
     val logDir = options.logPath?.let { Path.of(it).toAbsolutePath().normalize() } ?: buildOut.resolve("log")
     paths = BuildPathsImpl(communityHome, projectHome, buildOut, logDir)
     dependenciesProperties = DependenciesProperties(this)
@@ -65,7 +71,7 @@ class CompilationContextImpl : CompilationContext {
 
   fun createCopy(messages: BuildMessages,
                  options: BuildOptions,
-                 buildOutputRootEvaluator: BiFunction<JpsProject, BuildMessages, String>): CompilationContextImpl {
+                 buildOutputRootEvaluator: (JpsProject) -> Path): CompilationContextImpl {
     val copy = CompilationContextImpl(model = projectModel,
                                       communityHome = paths.communityHomeDir,
                                       projectHome = paths.projectHomeDir,
@@ -288,14 +294,6 @@ class CompilationContextImpl : CompilationContext {
 
   companion object {
     @JvmStatic
-    fun create(communityHome: Path, projectHome: Path, defaultOutputRoot: String): CompilationContextImpl {
-      return create(communityHome = communityHome,
-                    projectHome = projectHome,
-                    buildOutputRootEvaluator = BiFunction { _, _ -> defaultOutputRoot },
-                    options = BuildOptions())
-    }
-
-    @JvmStatic
     fun printEnvironmentDebugInfo() {
       // print it to the stdout since TeamCity will remove any sensitive fields from build log automatically
       // don't write it to debug log file!
@@ -313,7 +311,7 @@ class CompilationContextImpl : CompilationContext {
     @JvmStatic
     fun create(communityHome: Path,
                projectHome: Path,
-               buildOutputRootEvaluator: BiFunction<JpsProject, BuildMessages, String>,
+               buildOutputRootEvaluator: (JpsProject) -> Path,
                options: BuildOptions): CompilationContextImpl {
       // This is not a proper place to initialize tracker for downloader
       // but this is the only place which is called in most build scripts

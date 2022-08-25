@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.artifacts
 
 import com.intellij.openapi.Disposable
@@ -109,7 +109,7 @@ private class MockArtifactType : ArtifactType("mock", Supplier { "Mock" }) {
 
   override fun getIcon(): Icon = EmptyIcon.ICON_16
 
-  override fun getDefaultPathFor(kind: PackagingElementOutputKind): String? = ""
+  override fun getDefaultPathFor(kind: PackagingElementOutputKind): String = ""
 
   override fun createRootElement(artifactName: String): CompositePackagingElement<*> {
     return PackagingElementFactory.getInstance().createArtifactRootElement()

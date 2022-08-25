@@ -3,7 +3,7 @@ package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
-import com.intellij.workspaceModel.storage.bridgeEntities.JavaModuleSettingsEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.JavaModuleSettingsEntity;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -21,7 +21,7 @@ class JavaModuleSettingsIndexableEntityProvider implements IndexableEntityProvid
   public @NotNull Collection<? extends IndexableIteratorBuilder> getAddedEntityIteratorBuilders(@NotNull JavaModuleSettingsEntity entity,
                                                                                                 @NotNull Project project) {
     if (entity.getLanguageLevelId() != null) {
-      return IndexableIteratorBuilders.INSTANCE.forModuleContent(entity.getModule().persistentId());
+      return IndexableIteratorBuilders.INSTANCE.forModuleContent(entity.getModule().getPersistentId());
     }
     return Collections.emptyList();
   }
@@ -30,7 +30,7 @@ class JavaModuleSettingsIndexableEntityProvider implements IndexableEntityProvid
   public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull JavaModuleSettingsEntity oldEntity,
                                                                                                    @NotNull JavaModuleSettingsEntity newEntity) {
     if (!Objects.equals(newEntity.getLanguageLevelId(), oldEntity.getLanguageLevelId())) {
-      return IndexableIteratorBuilders.INSTANCE.forModuleContent(newEntity.getModule().persistentId());
+      return IndexableIteratorBuilders.INSTANCE.forModuleContent(newEntity.getModule().getPersistentId());
     }
     return Collections.emptyList();
   }

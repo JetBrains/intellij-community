@@ -3,6 +3,7 @@ package com.intellij.execution.target
 
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.UIUtil
@@ -41,10 +42,17 @@ class TargetCustomToolPanel(private val project: Project,
   /**
    * While [targetSupplier] might return temp [TargetEnvironmentConfiguration], [preparedConfiguration] is the actual configuration that can be
    * used for creating Python SDK.
+   * Call [validateCustomTool] before this method to make sure there are no errors
    */
   fun createCustomTool(preparedConfiguration: TargetEnvironmentConfiguration): Any? {
-    return (languagePanel?.configurable as? CustomToolLanguageConfigurable<*>)?.createCustomTool(preparedConfiguration)
+    return customToolLanguageConfigurable?.createCustomTool(preparedConfiguration)
   }
+
+  fun validateCustomTool(): Collection<ValidationInfo> = customToolLanguageConfigurable?.validate() ?: emptyList()
+
+  private val customToolLanguageConfigurable: CustomToolLanguageConfigurable<*>?
+    get() =
+      (languagePanel?.configurable as? CustomToolLanguageConfigurable<*>)
 
   fun disposeUIResources() = Unit
 

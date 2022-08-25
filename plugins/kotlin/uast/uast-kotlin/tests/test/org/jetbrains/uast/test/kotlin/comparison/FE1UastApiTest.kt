@@ -202,5 +202,10 @@ class FE1UastApiTest : AbstractFE1UastTest() {
         fun testSimple() {
             doTest("Simple", ::checkCallbackForSimple)
         }
+        
+        @TestMetadata("StringTemplateComplexForUInjectionHost.kt")
+        fun testStringTemplateComplexForUInjectionHost() {
+            doTest("StringTemplateComplexForUInjectionHost", ::checkCallbackForComplexStrings)
+        }
     }
 }

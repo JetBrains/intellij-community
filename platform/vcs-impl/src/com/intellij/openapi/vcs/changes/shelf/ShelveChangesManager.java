@@ -145,7 +145,8 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
    */
   public static @NotNull Path getDefaultShelfPath(@NotNull Project project) {
     IProjectStore store = ProjectKt.getStateStore(project);
-    return store.getProjectFilePath().getParent().resolve(ProjectKt.isDirectoryBased(project) ? SHELVE_MANAGER_DIR_PATH : "." + SHELVE_MANAGER_DIR_PATH);
+    return store.getProjectFilePath().getParent().resolve(ProjectKt.isDirectoryBased(project) ? SHELVE_MANAGER_DIR_PATH
+                                                                                              : "." + SHELVE_MANAGER_DIR_PATH);
   }
 
   /**
@@ -338,6 +339,17 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   }
 
   @NotNull
+  private static List<ShelvedChange> copyTextFiles(@NotNull Project project,
+                                                   @NotNull ShelvedChangeList changeList,
+                                                   @NotNull Path newPatchPath) {
+    List<ShelvedChange> copied = new ArrayList<>();
+    for (ShelvedChange change : changeList.getChanges()) {
+      copied.add(ShelvedChange.copyToNewPatch(project, newPatchPath, change));
+    }
+    return copied;
+  }
+
+  @NotNull
   private static List<ShelvedBinaryFile> copyBinaryFiles(@NotNull ShelvedChangeList list, @NotNull Path targetDirectory)
     throws IOException {
     Files.createDirectories(targetDirectory);
@@ -349,7 +361,8 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
           Path newShelvedFile = targetDirectory.resolve(PathUtil.getFileName(file.AFTER_PATH));
           try {
             Files.copy(shelvedFile, newShelvedFile);
-            copied.add(new ShelvedBinaryFile(file.BEFORE_PATH, file.AFTER_PATH, FileUtil.toSystemIndependentName(newShelvedFile.toString())));
+            copied.add(new ShelvedBinaryFile(file.BEFORE_PATH, file.AFTER_PATH,
+                                             FileUtil.toSystemIndependentName(newShelvedFile.toString())));
           }
           catch (IOException e) {
             LOG.error("Can't copy binary file: " + list.path);
@@ -366,7 +379,8 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   }
 
   private @NotNull List<ShelvedChangeList> getRecycled(boolean recycled) {
-    return ContainerUtil.newUnmodifiableList(ContainerUtil.filter(mySchemeManager.getAllSchemes(), list -> recycled == list.isRecycled() && !list.isDeleted()));
+    return ContainerUtil.newUnmodifiableList(ContainerUtil.filter(mySchemeManager.getAllSchemes(),
+                                                                  list -> recycled == list.isRecycled() && !list.isDeleted()));
   }
 
   @NotNull
@@ -1209,8 +1223,9 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     Files.copy(changeList.path, newPath);
     changeList.loadChangesIfNeeded(myProject);
 
-    ShelvedChangeList listCopy = new ShelvedChangeList(newPath, changeList.DESCRIPTION, copyBinaryFiles(changeList, targetDir),
-                                                       new ArrayList<>(Objects.requireNonNull(changeList.getChanges())),
+    ShelvedChangeList listCopy = new ShelvedChangeList(newPath, changeList.DESCRIPTION,
+                                                       copyBinaryFiles(changeList, targetDir),
+                                                       copyTextFiles(myProject, changeList, newPath),
                                                        changeList.DATE.getTime());
     listCopy.markToDelete(changeList.isMarkedToDelete());
     listCopy.setRecycled(changeList.isRecycled());
@@ -1284,11 +1299,13 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   private static void removeChanges(@NotNull ShelvedChangeList list, @NotNull List<ShelvedChange> shelvedChanges) {
     for (Iterator<ShelvedChange> iterator = Objects.requireNonNull(list.getChanges()).iterator(); iterator.hasNext(); ) {
       final ShelvedChange change = iterator.next();
-      for (ShelvedChange newChange : shelvedChanges) {
-        if (Objects.equals(change.getBeforePath(), newChange.getBeforePath()) &&
-            Objects.equals(change.getAfterPath(), newChange.getAfterPath())) {
-          iterator.remove();
-        }
+
+      boolean toRemove = ContainerUtil.exists(shelvedChanges, newChange ->
+        Objects.equals(change.getBeforePath(), newChange.getBeforePath()) &&
+        Objects.equals(change.getAfterPath(), newChange.getAfterPath())
+      );
+      if (toRemove) {
+        iterator.remove();
       }
     }
   }
@@ -1410,6 +1427,6 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
                                     @NotNull CommitContext context) throws IOException {
     try (Writer writer = Files.newBufferedWriter(patchFile)) {
       UnifiedDiffWriter.write(project, ProjectKt.getStateStore(project).getProjectBasePath(), patches, writer, "\n", context, extensions);
-      }
     }
+  }
 }

@@ -11,7 +11,6 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.Formats
 import com.intellij.util.io.Decompressor
 import com.intellij.util.lang.CompoundRuntimeException
-import com.intellij.util.system.CpuArch
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -138,12 +137,8 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
     CompilationTasks.create(context).compileModules(moduleNames)
   }
 
-  override fun buildUpdaterJar() {
-    doBuildUpdaterJar("updater.jar", context)
-  }
-
   override fun buildFullUpdaterJar() {
-    doBuildUpdaterJar("updater-full.jar", context)
+    doBuildUpdaterJar(context)
   }
 
   override fun runTestBuild() {
@@ -165,7 +160,7 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
     BundledMavenDownloader.downloadMavenCommonLibs(context.paths.buildDependenciesCommunityRoot)
     BundledMavenDownloader.downloadMavenDistribution(context.paths.buildDependenciesCommunityRoot)
     DistributionJARsBuilder(compileModulesForDistribution(context)).buildJARs(context, true)
-    val arch = if (CpuArch.isArm64()) JvmArchitecture.aarch64 else JvmArchitecture.x64
+    val arch = JvmArchitecture.currentJvmArch
     layoutShared(context)
     if (includeBinAndRuntime) {
       val propertiesFile = patchIdeaPropertiesFile(context)
@@ -193,6 +188,7 @@ val SUPPORTED_DISTRIBUTIONS: List<SupportedDistribution> = listOf(
   SupportedDistribution(os = OsFamily.MACOS, arch = JvmArchitecture.aarch64),
   SupportedDistribution(os = OsFamily.WINDOWS, arch = JvmArchitecture.x64),
   SupportedDistribution(os = OsFamily.LINUX, arch = JvmArchitecture.x64),
+  SupportedDistribution(os = OsFamily.LINUX, arch = JvmArchitecture.aarch64),
 )
 
 private fun isSourceFile(path: String): Boolean {
@@ -451,11 +447,12 @@ private fun runInParallel(tasks: List<BuildTaskRunnable>, context: BuildContext)
   return futures.map { it.rawResult }
 }
 
-private fun copyDependenciesFile(context: BuildContext) {
+private fun copyDependenciesFile(context: BuildContext): Path {
   val outputFile = context.paths.artifactDir.resolve("dependencies.txt")
   Files.createDirectories(outputFile.parent)
-  Files.copy(context.dependenciesProperties.file, outputFile, StandardCopyOption.REPLACE_EXISTING)
+  context.dependenciesProperties.copy(outputFile)
   context.notifyArtifactWasBuilt(outputFile)
+  return outputFile
 }
 
 private fun checkProjectLibraries(names: Collection<String>, fieldName: String, context: BuildContext) {
@@ -939,7 +936,7 @@ internal fun logFreeDiskSpace(buildMessages: BuildMessages, dir: Path, phase: St
     "Free disk space $phase: ${Formats.formatFileSize(Files.getFileStore(dir).usableSpace)} (on disk containing $dir)")
 }
 
-private fun doBuildUpdaterJar(artifactName: String, context: BuildContext) {
+private fun doBuildUpdaterJar(context: BuildContext) {
   val updaterModule = context.findRequiredModule("intellij.platform.updater")
   val updaterModuleSource = DirSource(context.getModuleOutputDir(updaterModule))
   val librarySources = JpsJavaExtensionService.dependencies(updaterModule)
@@ -950,7 +947,7 @@ private fun doBuildUpdaterJar(artifactName: String, context: BuildContext) {
     .flatMap { it.getRootUrls(JpsOrderRootType.COMPILED) }
     .filter { !JpsPathUtil.isJrtUrl(it) }
     .map { ZipSource(Path.of(JpsPathUtil.urlToPath(it)), listOf(Regex("^META-INF/.*"))) }
-  val updaterJar = context.paths.artifactDir.resolve(artifactName)
+  val updaterJar = context.paths.artifactDir.resolve("updater-full.jar")
   buildJar(targetFile = updaterJar, sources = (sequenceOf(updaterModuleSource) + librarySources).toList(), compress = true)
   context.notifyArtifactBuilt(updaterJar)
 }
@@ -979,7 +976,7 @@ private fun buildCrossPlatformZip(distDirs: List<DistributionForOsTaskResult>, c
 
   val zipFileName = context.productProperties.getCrossPlatformZipFileName(context.applicationInfo, context.buildNumber)
   val targetFile = context.paths.artifactDir.resolve(zipFileName)
-
+  val dependenciesFile = copyDependenciesFile(context)
   crossPlatformZip(
     macX64DistDir = distDirs.first { it.os == OsFamily.MACOS && it.arch == JvmArchitecture.x64 }.outDir,
     macAarch64DistDir = distDirs.first { it.os == OsFamily.MACOS && it.arch == JvmArchitecture.aarch64 }.outDir,
@@ -991,7 +988,7 @@ private fun buildCrossPlatformZip(distDirs: List<DistributionForOsTaskResult>, c
     macExtraExecutables = context.macDistributionCustomizer!!.extraExecutables,
     linuxExtraExecutables = context.linuxDistributionCustomizer!!.extraExecutables,
     distFiles = context.getDistFiles(),
-    extraFiles = mapOf("dependencies.txt" to context.dependenciesProperties.file),
+    extraFiles = mapOf("dependencies.txt" to dependenciesFile),
     distAllDir = context.paths.distAllDir,
   )
 

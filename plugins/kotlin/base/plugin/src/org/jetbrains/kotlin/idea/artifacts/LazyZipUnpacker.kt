@@ -25,4 +25,7 @@ class LazyZipUnpacker(private val destination: File) : AbstractLazyFileOutputPro
 
     fun lazyUnpack(zip: File) = lazyProduceOutput(zip, Unit).singleOrNull()
         ?: error("${LazyZipUnpacker::produceOutput.name} returns only single element")
+
+    fun getUnpackedIfUpToDateOrNull(zip: File): File? = getOutputIfUpToDateOrEmpty(zip).ifEmpty { return null }.singleOrNull()
+        ?: error("${LazyZipUnpacker::produceOutput.name} returns only single element")
 }

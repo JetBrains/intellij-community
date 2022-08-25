@@ -157,7 +157,7 @@ class GitPullDialog(private val project: Project,
       ValidationInfo(GitBundle.message("pull.remote.not.selected"), remoteField)
   }
 
-  private fun validateBranchField() = validateBranchExists(branchField, "pull.branch.not.selected.error")
+  private fun validateBranchField() = validateBranchExists(branchField, GitBundle.message("pull.branch.not.selected.error"))
 
   private fun getSelectedRepository(): GitRepository? = repositoryField.item
 

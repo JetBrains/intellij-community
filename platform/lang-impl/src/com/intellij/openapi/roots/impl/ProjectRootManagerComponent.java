@@ -172,7 +172,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     try {
       DirectoryIndex directoryIndex = DirectoryIndex.getInstance(myProject);
       if (directoryIndex instanceof DirectoryIndexImpl) {
-        ((DirectoryIndexImpl)directoryIndex).reset();
+        ((DirectoryIndexImpl)directoryIndex).reset(DirectoryIndexAnalyticsReporter.ResetReason.ROOT_MODEL);
       }
       myProject.getMessageBus().syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(new ModuleRootEventImpl(myProject, fileTypes));
     }
@@ -187,7 +187,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     try {
       DirectoryIndex directoryIndex = DirectoryIndex.getInstance(myProject);
       if (directoryIndex instanceof DirectoryIndexImpl) {
-        ((DirectoryIndexImpl)directoryIndex).reset();
+        ((DirectoryIndexImpl)directoryIndex).reset(DirectoryIndexAnalyticsReporter.ResetReason.ROOT_MODEL);
       }
       ThreeState isFromWorkspaceOnly = ThreeState.UNSURE;
       for (RootsChangeRescanningInfo info : indexingInfos) {
@@ -246,7 +246,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
 
     Set<String> excludedUrls = CollectionFactory.createSmallMemoryFootprintSet();
     // changes in files provided by this method should be watched manually because no-one's bothered to set up correct pointers for them
-    for (DirectoryIndexExcludePolicy excludePolicy : DirectoryIndexExcludePolicy.EP_NAME.getExtensionList(myProject)) {
+    for (DirectoryIndexExcludePolicy excludePolicy : DirectoryIndexExcludePolicy.EP_NAME.getExtensions(myProject)) {
       Collections.addAll(excludedUrls, excludePolicy.getExcludeUrlsForProject());
     }
 

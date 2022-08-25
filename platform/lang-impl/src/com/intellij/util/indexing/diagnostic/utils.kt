@@ -23,9 +23,9 @@ object IndexDiagnosticDumperUtils {
     jacksonMapper.writerWithDefaultPrettyPrinter().writeValue(file.toFile(), value)
   }
 
-  fun getDumpFilePath(prefix: String, time: LocalDateTime, extension: String, parent: Path): Path {
+  fun getDumpFilePath(prefix: String, time: LocalDateTime, extension: String, parent: Path, suffix: String = "", ): Path {
     val timestamp = time.format(diagnosticTimestampFormat)
-    return parent / "$prefix$timestamp.$extension"
+    return parent / "$prefix$suffix$timestamp.$extension"
   }
 
   val indexingDiagnosticDir: Path by lazy {

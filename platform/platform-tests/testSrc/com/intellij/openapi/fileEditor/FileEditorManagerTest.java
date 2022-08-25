@@ -71,6 +71,15 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     assertOpenFiles("foo.xml", "3.txt");
   }
 
+  public void testTabLimitWithJupyterNotebooks() {
+    myManager.openFile(getFile("/src/test.ipynb"), true);
+    myManager.closeAllFiles();
+    myManager.openFile(getFile("/src/1.txt"), true);
+    UISettings.getInstance().getState().setEditorTabLimit(1);
+    myManager.openFile(getFile("/src/test.ipynb"), true);
+    assertOpenFiles("test.ipynb");
+  }
+
   public void testSingleTabLimit() throws Exception {
     UISettings.getInstance().getState().setEditorTabLimit(1);
     openFiles(STRING.replace("pinned=\"true\"", "pinned=\"false\""));

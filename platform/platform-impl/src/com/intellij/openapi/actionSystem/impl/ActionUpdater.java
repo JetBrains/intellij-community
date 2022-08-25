@@ -56,7 +56,9 @@ final class ActionUpdater {
   private static final String NESTED_WA_REASON_PREFIX = "nested write-action requested by ";
 
   static final Executor ourBeforePerformedExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Exclusive)", 1);
-  private static final Executor ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Common)", 2);
+  private static final Executor ourCommonExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Common)", 2);
+  private static final Executor ourFastTrackExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Fast)", 1);
+
   private static final List<CancellablePromise<?>> ourPromises = new CopyOnWriteArrayList<>();
   private static FList<String> ourInEDTActionOperationStack = FList.emptyList();
 
@@ -158,7 +160,7 @@ final class ActionUpdater {
   }
 
   private <T> T callAction(@NotNull AnAction action, @NotNull Op operation, @NotNull Supplier<? extends T> call) {
-    String operationName = action.getClass().getSimpleName() + "#" + operation + " (" + action.getClass().getName() + ")";
+    String operationName = action.getClass().getSimpleName() + "#" + operation + " (" + action.getClass().getName() + ", " + myPlace + ")";
     // `CodeInsightAction.beforeActionUpdate` runs `commitAllDocuments`, allow it
     boolean canAsync = Utils.isAsyncDataContext(myDataContext) && operation != Op.beforeActionPerformedUpdate;
     boolean shallAsync = myForceAsync || canAsync && UpdateInBackground.isUpdateInBackground(action);
@@ -317,14 +319,8 @@ final class ActionUpdater {
       }
     });
 
-    if (myLaterInvocator != null && SlowOperations.isInsideActivity(SlowOperations.FAST_TRACK)) {
-      cancelAllUpdates("fast-track requested by '" + myPlace + "'");
-    }
     if (myToolbarAction) {
       cancelOnUserActivity(promise, disposableParent);
-    }
-    else if (myContextMenuAction) {
-      cancelAllUpdates("context menu requested");
     }
 
     Computable<Computable<Void>> computable = () -> {
@@ -344,7 +340,9 @@ final class ActionUpdater {
     };
     ourPromises.add(promise);
     ClientId clientId = ClientId.getCurrent();
-    ourExecutor.execute(() -> {
+    boolean isFastTrack = myLaterInvocator != null && SlowOperations.isInsideActivity(SlowOperations.FAST_TRACK);
+    Executor executor = isFastTrack ? ourFastTrackExecutor : ourCommonExecutor;
+    executor.execute(() -> {
       Ref<Computable<Void>> applyRunnableRef = Ref.create();
       try (AccessToken ignored = ClientId.withClientId(clientId)) {
         BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposableParent, () -> {
@@ -394,7 +392,7 @@ final class ActionUpdater {
 
   static void waitForAllUpdatesToFinish() {
     try {
-      ((BoundedTaskExecutor)ourExecutor).waitAllTasksExecuted(1, TimeUnit.MINUTES);
+      ((BoundedTaskExecutor)ourCommonExecutor).waitAllTasksExecuted(1, TimeUnit.MINUTES);
     }
     catch (Exception e) {
       ExceptionUtil.rethrow(e);

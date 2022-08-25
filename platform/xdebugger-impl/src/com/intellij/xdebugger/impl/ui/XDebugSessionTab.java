@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.debugger.ui.DebuggerContentInfo;
@@ -78,7 +78,11 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       tab = new XDebugSessionTab2(session, icon, environment);
     }
     else {
-      tab = new XDebugSessionTab(session, icon, environment, true);
+      if (DebuggerUIExperimentCollector.startExperiment()) {
+        tab = new XDebugSessionTab3(session, icon, environment);
+      } else {
+        tab = new XDebugSessionTab(session, icon, environment, true);
+      }
     }
 
     tab.init(session);
@@ -353,6 +357,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
   public void detachFromSession() {
     assert mySession != null;
+    DebuggerUIExperimentCollector.stopExperiment();
     mySession = null;
   }
 

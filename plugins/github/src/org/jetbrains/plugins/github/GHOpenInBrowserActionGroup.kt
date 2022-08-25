@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github
 
 import com.intellij.icons.AllIcons
@@ -198,7 +198,7 @@ open class GHOpenInBrowserActionGroup
         }
 
         val githubUrl = GHPathUtil.makeUrlToOpen(editor, relativePath, hash, path)
-        if (githubUrl != null) BrowserUtil.browse(githubUrl)
+        BrowserUtil.browse(githubUrl)
       }
 
       private fun getCurrentFileRevisionHash(project: Project, file: VirtualFile): String? {
@@ -236,7 +236,7 @@ object GHPathUtil {
     return makeUrlToOpen(editor, relativePath, hash, path)
   }
 
-  fun makeUrlToOpen(editor: Editor?, relativePath: String, branch: String, path: GHRepositoryCoordinates): String? {
+  fun makeUrlToOpen(editor: Editor?, relativePath: String, branch: String, path: GHRepositoryCoordinates): String {
     val builder = StringBuilder()
 
     if (StringUtil.isEmptyOrSpaces(relativePath)) {

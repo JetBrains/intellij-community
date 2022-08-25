@@ -14,6 +14,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneablePro
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneableProject
 import com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RemoveSelectedProjectsAction
 import com.intellij.util.BitUtil
+import com.intellij.util.SystemProperties
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.event.InputEvent
 import java.nio.file.Files
@@ -34,15 +35,7 @@ sealed interface RecentProjectTreeItem {
   fun children(): List<RecentProjectTreeItem>
 
   fun removeItem(event: AnActionEvent) {
-    val exitCode = Messages.showYesNoDialog(
-      IdeBundle.message("dialog.message.remove.0.from.recent.projects.list", displayName()),
-      IdeBundle.message("dialog.title.remove.recent.project"),
-      Messages.getQuestionIcon()
-    )
-
-    if (exitCode == Messages.OK) {
-      RemoveSelectedProjectsAction().actionPerformed(event)
-    }
+    RemoveSelectedProjectsAction().actionPerformed(event)
   }
 }
 
@@ -88,6 +81,17 @@ data class RecentProjectItem(
 
     RecentProjectsManagerBase.instanceEx.openProject(file, options)
   }
+
+  fun searchName(): String {
+    val home = SystemProperties.getUserHome()
+    var path = projectPath
+    if (FileUtil.startsWith(path, home)) {
+      path = path.substring(home.length)
+    }
+    val groupName = RecentProjectsManagerBase.instanceEx.findGroup(projectPath)?.name.orEmpty()
+
+    return "$groupName $path $displayName"
+  }
 }
 
 data class ProjectsGroupItem(
@@ -111,15 +115,19 @@ data class CloneableProjectItem(
 }
 
 // The root node is required for the filtering tree
-object RootItem : RecentProjectTreeItem {
+class RootItem(private val collectors: List<() -> List<RecentProjectTreeItem>>) : RecentProjectTreeItem {
   override fun displayName(): String = "" // Not visible in tree
 
-  override fun children(): List<RecentProjectTreeItem> {
-    val projects = mutableListOf<RecentProjectTreeItem>().apply {
-      addAll(CloneableProjectsService.getInstance().collectCloneableProjects())
-      addAll(RecentProjectListActionProvider.getInstance().collectProjects())
-    }
+  override fun children(): List<RecentProjectTreeItem> = collectors.flatMap { collector -> collector() }
+}
 
-    return projects
-  }
+object ProjectCollectors {
+  @JvmField
+  val recentProjectsCollector: () -> List<RecentProjectTreeItem> = { RecentProjectListActionProvider.getInstance().collectProjects() }
+
+  @JvmField
+  val cloneableProjectsCollector: () -> List<RecentProjectTreeItem> = { CloneableProjectsService.getInstance().collectCloneableProjects() }
+
+  @JvmField
+  val all = listOf(cloneableProjectsCollector, recentProjectsCollector)
 }

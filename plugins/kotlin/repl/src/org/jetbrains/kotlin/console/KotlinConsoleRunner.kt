@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.console
 
@@ -133,12 +133,12 @@ class KotlinConsoleRunner(
         override fun getScriptName(script: KtScript) = Name.identifier("REPL")
     }
 
-    override fun createProcess(): Process? {
+    override fun createProcess(): Process {
         environment = environmentRequest.prepareEnvironment(TargetProgressIndicator.EMPTY)
         return environment.createProcess(cmdLine, ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator())
     }
 
-    override fun createConsoleView(): LanguageConsoleView? {
+    override fun createConsoleView(): LanguageConsoleView {
         val builder = LanguageConsoleBuilder()
 
         val consoleView = builder.gutterContentProvider(ConsoleGutterContentProvider()).build(project, KotlinLanguage.INSTANCE)

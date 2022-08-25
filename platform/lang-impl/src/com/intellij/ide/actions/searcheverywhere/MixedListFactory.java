@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.JBList;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,11 +28,7 @@ class MixedListFactory extends SEResultsListFactory {
   public SearchListModel createModel() {
     MixedSearchListModel mixedModel = new MixedSearchListModel();
 
-    Map<String, Integer> priorities = new HashMap<>();
-    for (int i = 0; i < prioritizedContributors.size(); i++) {
-      priorities.put(prioritizedContributors.get(i), prioritizedContributors.size() - i);
-    }
-
+    Map<String, Integer> priorities = getContributorsPriorities();
     Comparator<SearchEverywhereFoundElementInfo> prioritizedContributorsComparator = (element1, element2) -> {
       int firstElementPriority = priorities.getOrDefault(element1.getContributor().getSearchProviderId(), 0);
       int secondElementPriority = priorities.getOrDefault(element2.getContributor().getSearchProviderId(), 0);
@@ -44,6 +41,15 @@ class MixedListFactory extends SEResultsListFactory {
     mixedModel.setElementsComparator(comparator);
 
     return mixedModel;
+  }
+
+  @NotNull
+  public Map<String, Integer> getContributorsPriorities() {
+    Map<String, Integer> priorities = new HashMap<>();
+    for (int i = 0; i < prioritizedContributors.size(); i++) {
+      priorities.put(prioritizedContributors.get(i), prioritizedContributors.size() - i);
+    }
+    return priorities;
   }
 
   @Override

@@ -763,6 +763,107 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                  "    print(path_or_buf)\n");
   }
 
+  // PY-50403
+  public void testFunctionNamedParameterUnification() {
+    doTestByText("from collections.abc import Callable\n" +
+                 "from typing import ParamSpec\n" +
+                 "\n" +
+                 "P = ParamSpec(\"P\")\n" +
+                 "\n" +
+                 "\n" +
+                 "def twice(f: Callable[P, int], *args: P.args, **kwargs: P.kwargs) -> int:\n" +
+                 "    return f(*args, **kwargs) + f(*args, **kwargs)\n" +
+                 "\n" +
+                 "\n" +
+                 "def a_int_b_str(a: int, b: str) -> int:\n" +
+                 "    return a + len(b)\n" +
+                 "\n" +
+                 "\n" +
+                 "res1 = twice(a_int_b_str, 1, \"A\")\n" +
+                 "\n" +
+                 "res2 = twice(a_int_b_str, b=\"A\", a=1)\n" +
+                 "\n" +
+                 "res3 = twice(a_int_b_str, <warning descr=\"Expected type 'int', got 'str' instead\">\"A\"</warning>, <warning descr=\"Expected type 'str', got 'int' instead\">1</warning>)\n" +
+                 "\n" +
+                 "res4 = twice(a_int_b_str, <warning descr=\"Expected type 'str', got 'int' instead\">b=1</warning>, <warning descr=\"Expected type 'int', got 'str' instead\">a=\"A\"</warning>)");
+  }
+
+  // PY-50403
+  public void testFunctionNotEnoughArgumentsToMatchWithParamSpec() {
+    doTestByText("from typing import ParamSpec, Callable, TypeVar\n" +
+                 "\n" +
+                 "P = ParamSpec('P')\n" +
+                 "T = TypeVar('T')\n" +
+                 "\n" +
+                 "\n" +
+                 "def caller(f: Callable[P, T], *args: P.args, **kwargs: P.kwargs):\n" +
+                 "    f(*args, **kwargs)\n" +
+                 "\n" +
+                 "\n" +
+                 "def func(n: int, s: str) -> None:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "\n" +
+                 "caller(func, 42<warning descr=\"Parameter 's' unfilled (from ParamSpec 'P')\">)</warning>\n");
+  }
+
+  // PY-50403
+  public void testFunctionTooManyArgumentsToMatchWithParamSpec() {
+    doTestByText("from typing import ParamSpec, Callable, TypeVar\n" +
+                 "\n" +
+                 "P = ParamSpec('P')\n" +
+                 "T = TypeVar('T')\n" +
+                 "\n" +
+                 "\n" +
+                 "def caller(f: Callable[P, T], *args: P.args, **kwargs: P.kwargs):\n" +
+                 "    f(*args, **kwargs)\n" +
+                 "\n" +
+                 "\n" +
+                 "def func(n: int, s: str) -> None:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "\n" +
+                 "caller(func, 42, 'foo', <warning descr=\"Unexpected argument (from ParamSpec 'P')\">None</warning>)");
+  }
+
+  // PY-50403
+  public void testFunctionNamedArgumentNotMatchWithParamSpec() {
+    doTestByText("from typing import ParamSpec, Callable, TypeVar\n" +
+                 "\n" +
+                 "P = ParamSpec('P')\n" +
+                 "T = TypeVar('T')\n" +
+                 "\n" +
+                 "\n" +
+                 "def caller(f: Callable[P, T], *args: P.args, **kwargs: P.kwargs):\n" +
+                 "    f(*args, **kwargs)\n" +
+                 "\n" +
+                 "\n" +
+                 "def func(foo: int) -> None:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "\n" +
+                 "caller(func, <warning descr=\"Unexpected argument (from ParamSpec 'P')\">bar=42</warning><warning descr=\"Parameter 'foo' unfilled (from ParamSpec 'P')\">)</warning>");
+  }
+
+  // PY-50403
+  public void testSameArgumentPassedTwiceInParamSpec() {
+    doTestByText("from typing import ParamSpec, Callable, TypeVar\n" +
+                 "\n" +
+                 "P = ParamSpec('P')\n" +
+                 "T = TypeVar('T')\n" +
+                 "\n" +
+                 "\n" +
+                 "def caller(f: Callable[P, T], *args: P.args, **kwargs: P.kwargs):\n" +
+                 "    f(*args, **kwargs)\n" +
+                 "\n" +
+                 "\n" +
+                 "def func(n: int) -> None:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "\n" +
+                 "caller(func, 42, <warning descr=\"Unexpected argument (from ParamSpec 'P')\">n=42</warning>)");
+  }
+
   // PY-46661
   public void testTypedDictInReturnType() {
     doTest();

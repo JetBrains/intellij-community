@@ -692,8 +692,8 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return getTools(shortName, element != null ? element.getProject() : null).getAttributesKey(element);
   }
 
-  public void setTextAttributesKey(@NotNull String shortName, @NotNull String externalName, String scopeName, @Nullable Project project) {
-    getTools(shortName, project).setTextAttributesKey(externalName, scopeName);
+  public void setEditorAttributesKey(@NotNull String shortName, @NotNull String externalName, String scopeName, @Nullable Project project) {
+    getTools(shortName, project).setEditorAttributesKey(externalName, scopeName);
     schemeState = SchemeState.POSSIBLY_CHANGED;
   }
   
@@ -859,6 +859,12 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return tools != null ? tools.getLevel(scope, project) : HighlightDisplayLevel.WARNING;
   }
 
+  @Transient
+  public @Nullable TextAttributesKey getEditorAttributesKey(@NotNull HighlightDisplayKey key, NamedScope scope, Project project) {
+    ToolsImpl tools = getToolsOrNull(key.toString(), project);
+    return tools != null ? tools.getEditorAttributesKey(scope, project) : null;
+  }
+
   public ScopeToolState addScope(@NotNull InspectionToolWrapper<?,?> toolWrapper,
                                  NamedScope scope,
                                  @NotNull HighlightDisplayLevel level,
@@ -875,6 +881,12 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   public void setErrorLevel(@NotNull List<? extends HighlightDisplayKey> keys, @NotNull HighlightDisplayLevel level, String scopeName, Project project) {
     for (HighlightDisplayKey key : keys) {
       setErrorLevel(key, level, scopeName, project);
+    }
+  }
+
+  public void setEditorAttributeKey(@NotNull List<? extends HighlightDisplayKey> keys, @NotNull TextAttributesKey attributesKey, String scopeName, Project project) {
+    for (HighlightDisplayKey key : keys) {
+      setEditorAttributesKey(key.toString(), attributesKey.toString(), scopeName, project);
     }
   }
 

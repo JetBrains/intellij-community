@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase
 
 import com.intellij.openapi.project.Project
@@ -41,7 +41,7 @@ class GitSelectRootDialog(project: Project,
     return roots.first()
   }
 
-  override fun createCenterPanel(): JComponent? {
+  override fun createCenterPanel(): JComponent {
     return panel {
       row {
         label(description)
@@ -52,7 +52,7 @@ class GitSelectRootDialog(project: Project,
     }
   }
 
-  override fun getPreferredFocusedComponent(): JComponent? = rootComboBox
+  override fun getPreferredFocusedComponent(): JComponent = rootComboBox
 
   fun selectRoot(): GitRepository? {
     return if (showAndGet()) rootComboBox.selectedItem as GitRepository? else null

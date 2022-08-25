@@ -418,6 +418,7 @@
 
     "TabbedPane": {
       "tabHeight": 40,
+      "tabInsets": "0,8,0,8",
       "tabSelectionArc": 4,
       "hoverColor": "Grey11",
       "contentAreaColor": "Grey11",

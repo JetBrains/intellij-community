@@ -41,9 +41,10 @@ class JavaTypeHintsPresentationFactory(private val myFactory: PresentationFactor
   private fun classTypeHint(classType: PsiClassType, level: Int, context: Context): InlayPresentation {
     val qualifierPresentation = when (val aClass = classType.resolve()) {
       null -> null
-      else -> when (val qualifier = aClass.containingClass) {
-        null -> null
-        else -> classHint(qualifier, level, context)
+      else -> {
+        val qualifier = aClass.containingClass
+        if (qualifier == null || aClass.hasModifierProperty(PsiModifier.STATIC)) null
+        else classHint(qualifier, level, context)
       }
     }
 

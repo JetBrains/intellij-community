@@ -85,7 +85,7 @@ class DataNodeTest {
   fun `proxy instance referenced from invocation handler (de-)serialized`() {
     val handler = object: InvocationHandler, Serializable {
       var counter: Int = 0
-      override fun invoke(proxy: Any?, method: Method?, args: Array<out Any>?): Any? {
+      override fun invoke(proxy: Any?, method: Method?, args: Array<out Any>?): Any {
         return when (method?.name) {
           "incrementAndGet" -> ++counter
           else -> Unit

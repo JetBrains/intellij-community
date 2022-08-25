@@ -40,6 +40,8 @@ internal class SearchEverywhereActionFeaturesProvider :
     internal val PLUGIN_ID = EventFields.StringValidatedByCustomRule("pluginId", "plugin")
 
     private val GLOBAL_STATISTICS_DEFAULT = GlobalStatisticsFields(ActionsGlobalSummaryManager.getDefaultStatisticsVersion())
+    private val GLOBAL_STATISTICS_UPDATED = GlobalStatisticsFields(ActionsGlobalSummaryManager.getUpdatedStatisticsVersion())
+
 
     internal val USAGE = EventFields.Int("usage")
     internal val USAGE_SE = EventFields.Int("usageSe")
@@ -70,7 +72,8 @@ internal class SearchEverywhereActionFeaturesProvider :
       WAS_USED_IN_LAST_DAY, WAS_USED_IN_LAST_DAY_SE,
       WAS_USED_IN_LAST_MONTH, WAS_USED_IN_LAST_MONTH_SE,
     )
-    fields.addAll(GLOBAL_STATISTICS_DEFAULT.getFieldsDeclaration())
+    fields.addAll(GLOBAL_STATISTICS_DEFAULT.getFieldsDeclaration() + GLOBAL_STATISTICS_UPDATED.getFieldsDeclaration())
+
     return fields
   }
 
@@ -113,6 +116,11 @@ internal class SearchEverywhereActionFeaturesProvider :
     val actionStats = globalSummary.getActionStatistics(actionId)
     val maxUsageCount = globalSummary.totalSummary.maxUsageCount
     data.addAll(GLOBAL_STATISTICS_DEFAULT.getGlobalUsageStatistics(actionStats, maxUsageCount))
+
+    val updatedActionStats = globalSummary.getUpdatedActionStatistics(actionId)
+    val updatedMaxUsageCount = globalSummary.updatedTotalSummary.maxUsageCount
+    data.addAll(GLOBAL_STATISTICS_UPDATED.getGlobalUsageStatistics(updatedActionStats, updatedMaxUsageCount))
+
 
     val pluginInfo = getPluginInfo(action.javaClass)
     if (pluginInfo.isSafeToReport()) {

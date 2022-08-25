@@ -11,14 +11,12 @@ import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
-import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.impl.EntityDataDelegation
-import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
-import com.intellij.workspaceModel.storage.impl.references.MutableOneToOneChild
-import com.intellij.workspaceModel.storage.impl.references.OneToOneChild
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
@@ -27,6 +25,7 @@ import org.jetbrains.jps.model.serialization.SerializationConstants
 import org.jetbrains.jps.model.serialization.artifact.ArtifactPropertiesState
 import org.jetbrains.jps.model.serialization.artifact.ArtifactState
 import org.jetbrains.jps.util.JpsPathUtil
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 
 internal class JpsArtifactsDirectorySerializerFactory(override val directoryUrl: String) : JpsDirectoryEntitiesSerializerFactory<ArtifactEntity> {
   override val componentName: String
@@ -44,7 +43,7 @@ internal class JpsArtifactsDirectorySerializerFactory(override val directoryUrl:
     return entity.name
   }
 
-  override fun changeEntitySourcesToDirectoryBasedFormat(builder: WorkspaceEntityStorageBuilder, configLocation: JpsProjectConfigLocation) {
+  override fun changeEntitySourcesToDirectoryBasedFormat(builder: MutableEntityStorage, configLocation: JpsProjectConfigLocation) {
     /// XXX In fact, we suppose that all packaging element have a connection to the corresponding artifact.
     // However, technically, it's possible to create a packaging element without artifact or connection to another packaging element.
     // Here we could check that the amount of "processed" packaging elements equals to the amount of packaging elements in store,
@@ -52,17 +51,23 @@ internal class JpsArtifactsDirectorySerializerFactory(override val directoryUrl:
     builder.entities(ArtifactEntity::class.java).forEach {
       // Convert artifact to the new source
       val artifactSource = JpsEntitySourceFactory.createJpsEntitySourceForArtifact(configLocation)
-      builder.changeSource(it, artifactSource)
+      builder.modifyEntity(it) {
+        this.entitySource = artifactSource
+      }
 
       // Convert it's packaging elements
       it.rootElement!!.forThisAndFullTree {
-        builder.changeSource(it, artifactSource)
+        builder.modifyEntity(PackagingElementEntity.Builder::class.java, it) {
+          this.entitySource = artifactSource
+        }
       }
     }
 
     // Convert properties
     builder.entities(ArtifactPropertiesEntity::class.java).forEach {
-      builder.changeSource(it, it.artifact.entitySource)
+      builder.modifyEntity(it) {
+        this.entitySource = it.artifact.entitySource
+      }
     }
   }
 
@@ -136,26 +141,6 @@ internal class JpsArtifactsFileSerializer(fileUrl: VirtualFileUrl, entitySource:
   }
 }
 
-/**
- * This entity stores order of artifacts in ipr file. This is needed to ensure that artifact tags are saved in the same order to avoid
- * unnecessary modifications of ipr file.
- */
-@Suppress("unused")
-internal class ArtifactsOrderEntityData : WorkspaceEntityData<ArtifactsOrderEntity>() {
-  lateinit var orderOfArtifacts: List<String>
-  override fun createEntity(snapshot: WorkspaceEntityStorage): ArtifactsOrderEntity {
-    return ArtifactsOrderEntity(orderOfArtifacts).also { addMetaData(it, snapshot) }
-  }
-}
-
-internal class ArtifactsOrderEntity(
-  val orderOfArtifacts: List<String>
-) : WorkspaceEntityBase()
-
-internal class ModifiableArtifactsOrderEntity : ModifiableWorkspaceEntityBase<ArtifactsOrderEntity>()  {
-  var orderOfArtifacts: List<String> by EntityDataDelegation()
-}
-
 internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualFileUrl,
                                                   override val internalEntitySource: JpsFileEntitySource,
                                                   private val preserveOrder: Boolean,
@@ -166,7 +151,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
   override val mainEntityClass: Class<ArtifactEntity>
     get() = ArtifactEntity::class.java
 
-  override fun loadEntities(builder: WorkspaceEntityStorageBuilder,
+  override fun loadEntities(builder: MutableEntityStorage,
                             reader: JpsFileContentReader,
                             errorReporter: ErrorReporter,
                             virtualFileManager: VirtualFileUrlManager) {
@@ -186,24 +171,21 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
       }
       val externalSystemId = actifactElement.getAttributeValue(SerializationConstants.EXTERNAL_SYSTEM_ID_IN_INTERNAL_STORAGE_ATTRIBUTE)
       if (externalSystemId != null && !isExternalStorage) {
-        builder.addEntity(ModifiableArtifactExternalSystemIdEntity::class.java, entitySource) {
-          this.externalSystemId = externalSystemId
-          artifact = artifactEntity
-        }
+        builder.addEntity(ArtifactExternalSystemIdEntity(externalSystemId, entitySource) {
+          this.artifactEntity = artifactEntity
+        })
       }
       orderOfItems += state.name
     }
     if (preserveOrder) {
       val entity = builder.entities(ArtifactsOrderEntity::class.java).firstOrNull()
       if (entity != null) {
-        builder.modifyEntity(ModifiableArtifactsOrderEntity::class.java, entity) {
+        builder.modifyEntity(entity) {
           orderOfArtifacts = orderOfItems
         }
       }
       else {
-        builder.addEntity(ModifiableArtifactsOrderEntity::class.java, internalEntitySource) {
-          orderOfArtifacts = orderOfItems
-        }
+        builder.addEntity(ArtifactsOrderEntity(orderOfItems, internalEntitySource))
       }
     }
 
@@ -212,12 +194,12 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
   protected open fun createEntitySource(artifactTag: Element): EntitySource? = internalEntitySource
 
   protected open fun getExternalSystemId(artifactEntity: ArtifactEntity): String? {
-    return artifactEntity.externalSystemId?.externalSystemId
+    return artifactEntity.artifactExternalSystemIdEntity?.externalSystemId
   }
 
   private fun loadPackagingElement(element: Element,
                                    source: EntitySource,
-                                   builder: WorkspaceEntityStorageBuilder): PackagingElementEntity {
+                                   builder: MutableEntityStorage): PackagingElementEntity {
     fun loadElementChildren() = element.children.mapTo(ArrayList()) { loadPackagingElement(it, source, builder) }
     fun getAttribute(name: String) = element.getAttributeValue(name)!!
     fun getOptionalAttribute(name: String) = element.getAttributeValue(name)
@@ -258,7 +240,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
 
   override fun saveEntities(mainEntities: Collection<ArtifactEntity>,
                             entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
-                            storage: WorkspaceEntityStorage,
+                            storage: EntityStorage,
                             writer: JpsFileContentWriter) {
     if (mainEntities.isEmpty()) return
 
@@ -386,28 +368,3 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
 
   override fun toString(): String = "${javaClass.simpleName.substringAfterLast('.')}($fileUrl)"
 }
-
-/**
- * This property indicates that external-system-id attribute should be stored in artifact configuration file to avoid unnecessary modifications
- */
-@Suppress("unused")
-internal class ArtifactExternalSystemIdEntityData : WorkspaceEntityData<ArtifactExternalSystemIdEntity>() {
-  lateinit var externalSystemId: String
-
-  override fun createEntity(snapshot: WorkspaceEntityStorage): ArtifactExternalSystemIdEntity {
-    return ArtifactExternalSystemIdEntity(externalSystemId).also { addMetaData(it, snapshot) }
-  }
-}
-
-internal class ArtifactExternalSystemIdEntity(
-  val externalSystemId: String
-) : WorkspaceEntityBase() {
-  val artifact: ArtifactEntity by OneToOneChild.NotNull(ArtifactEntity::class.java)
-}
-
-internal class ModifiableArtifactExternalSystemIdEntity : ModifiableWorkspaceEntityBase<ArtifactExternalSystemIdEntity>() {
-  var externalSystemId: String by EntityDataDelegation()
-  var artifact: ArtifactEntity by MutableOneToOneChild.NotNull(ArtifactExternalSystemIdEntity::class.java, ArtifactEntity::class.java)
-}
-
-private val ArtifactEntity.externalSystemId get() = referrers(ArtifactExternalSystemIdEntity::artifact).firstOrNull()

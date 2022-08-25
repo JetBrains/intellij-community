@@ -10,13 +10,13 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridgeFactory
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableJavaModuleSettingsEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addJavaModuleSettingsEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 
 class LanguageLevelModuleExtensionBridge private constructor(private val module: ModuleBridge,
                                                              private val entityStorage: VersionedEntityStorage,
-                                                             private val diff: WorkspaceEntityStorageDiffBuilder?) : LanguageLevelModuleExtensionImpl(), ModuleExtensionBridge {
+                                                             private val diff: MutableEntityStorage?) : LanguageLevelModuleExtensionImpl(), ModuleExtensionBridge {
   private var changed = false
   private val moduleEntity
     get() = entityStorage.current.findModuleEntity(module)
@@ -26,7 +26,7 @@ class LanguageLevelModuleExtensionBridge private constructor(private val module:
     val moduleEntity = moduleEntity ?: error("Cannot find entity for $module")
     val javaSettings = moduleEntity.javaSettings
     if (javaSettings != null) {
-      diff.modifyEntity(ModifiableJavaModuleSettingsEntity::class.java, javaSettings) {
+      diff.modifyEntity(javaSettings) {
         this.languageLevel = languageLevel
       }
     }
@@ -53,7 +53,7 @@ class LanguageLevelModuleExtensionBridge private constructor(private val module:
   companion object : ModuleExtensionBridgeFactory<LanguageLevelModuleExtensionBridge> {
     override fun createExtension(module: ModuleBridge,
                                  entityStorage: VersionedEntityStorage,
-                                 diff: WorkspaceEntityStorageDiffBuilder?): LanguageLevelModuleExtensionBridge {
+                                 diff: MutableEntityStorage?): LanguageLevelModuleExtensionBridge {
       return LanguageLevelModuleExtensionBridge(module, entityStorage, diff)
     }
   }

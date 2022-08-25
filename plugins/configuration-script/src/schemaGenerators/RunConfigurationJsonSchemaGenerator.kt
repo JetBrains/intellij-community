@@ -38,7 +38,7 @@ private inline fun processFactories(factories: Array<ConfigurationFactory>,
 internal class RunConfigurationJsonSchemaGenerator : SchemaGenerator {
   private val objectSchemaGenerator = OptionClassJsonSchemaGenerator("runConfigurationDefinitions")
 
-  override val definitionNodeKey: CharSequence?
+  override val definitionNodeKey: CharSequence
     get() = objectSchemaGenerator.definitionNodeKey
 
   override fun generate(rootBuilder: JsonObjectBuilder) {

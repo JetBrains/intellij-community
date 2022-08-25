@@ -512,7 +512,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       try {
         String[] files = chooseRemoteFiles();
 
-        final String sourcesLocalPath = PythonSdkUtil.getRemoteSourcesLocalPath(mySdk.getHomePath());
+        final String sourcesLocalPath = PySdkExtKt.getRemoteSourcesLocalPath(mySdk).toString();
 
         VirtualFile[] vFiles = new VirtualFile[files.length];
 

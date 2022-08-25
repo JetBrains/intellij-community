@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -33,7 +33,7 @@ class PublicApiImplicitTypeInspection(
                 KotlinBundle.message("for.api.stability.it.s.recommended.to.specify.explicitly.declaration.types")
         }
 
-    override fun createOptionsPanel(): JComponent? {
+    override fun createOptionsPanel(): JComponent {
         val panel = MultipleCheckboxOptionsPanel(this)
         panel.addCheckbox(KotlinBundle.message("apply.also.to.internal.members"), "reportInternal")
         panel.addCheckbox(KotlinBundle.message("apply.also.to.private.members"), "reportPrivate")

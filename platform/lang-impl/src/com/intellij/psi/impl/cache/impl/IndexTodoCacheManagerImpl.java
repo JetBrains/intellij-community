@@ -5,6 +5,7 @@ package com.intellij.psi.impl.cache.impl;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -52,14 +53,25 @@ public class IndexTodoCacheManagerImpl implements TodoCacheManager {
   @Override
   public boolean processFilesWithTodoItems(@NotNull Processor<? super PsiFile> processor) {
     if (myProject.isDefault()) return true;
-    GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
+    GlobalSearchScope scope = new GlobalSearchScope(myProject) {
+      @Override
+      public boolean isSearchInModuleContent(@NotNull Module module) { return true; }
+
+      @Override
+      public boolean isSearchInLibraries() { return false; }
+
+      @Override
+      public boolean contains(@NotNull VirtualFile file) {
+        return TodoIndexers.belongsToProject(myProject, file);
+      }
+    };
     ConcurrentBitSet idSet = ConcurrentBitSet.create();
 
     ManagingFS fs = ManagingFS.getInstance();
     PsiManager psiManager = PsiManager.getInstance(myProject);
     IntPredicate consumer = fileId -> {
       VirtualFile file = fs.findFileById(fileId);
-      if (file == null || !file.isValid() || !scope.contains(file) || !TodoIndexers.belongsToProject(myProject, file)) return true;
+      if (file == null || !file.isValid() || !scope.contains(file)) return true;
       PsiFile psiFile = psiManager.findFile(file);
       return psiFile == null || processor.process(psiFile);
     };

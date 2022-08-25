@@ -8,7 +8,7 @@ interface ApplicationInfoProperties {
   val patchVersion: String
   val fullVersionFormat: String
   val isEAP: Boolean
-  val versionSuffix: String
+  val versionSuffix: String?
   /**
    * The first number from 'minor' part of the version. This property is temporary added because some products specify composite number (like '1.3')
    * in 'minor version' attribute instead of using 'micro version' (i.e. set minor='1' micro='3').
@@ -18,17 +18,17 @@ interface ApplicationInfoProperties {
   val productCode: String
   val productName: String
   val majorReleaseDate: String
-  val edition: String
-  val motto: String
+  val edition: String?
+  val motto: String?
   val companyName: String
   val shortCompanyName: String
   val svgRelativePath: String?
   val svgProductIcons: List<String>
-  val patchesUrl: String
+  val patchesUrl: String?
 
   val upperCaseProductName: String
   val fullVersion: String
   val productNameWithEdition: String
 
-  fun getAppInfoXml(): String
+  val appInfoXml: String
 }

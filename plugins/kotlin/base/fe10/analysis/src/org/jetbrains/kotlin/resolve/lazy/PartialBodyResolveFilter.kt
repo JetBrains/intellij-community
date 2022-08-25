@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.resolve.lazy
 
@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.StatementFilter
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.swap
-import java.util.*
 
 //TODO: do resolve anonymous object's body
 
@@ -30,7 +29,7 @@ class PartialBodyResolveFilter(
     private val contextNothingFunctionNames = HashSet<String>()
     private val contextNothingVariableNames = HashSet<String>()
 
-    override val filter: ((KtExpression) -> Boolean)? = { statementMarks.statementMark(it) != MarkLevel.NONE }
+    override val filter: (KtExpression) -> Boolean = { statementMarks.statementMark(it) != MarkLevel.NONE }
 
     val allStatementsToResolve: Collection<KtExpression>
         get() = statementMarks.allMarkedStatements()

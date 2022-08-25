@@ -25,10 +25,10 @@ class LegacyModuleData(val module: Module,
                        javaVersionHolder: MavenJavaVersionHolder,
                        val isNewModule: Boolean) : ModuleData(module.name, type, javaVersionHolder)
 
-class MavenModuleImportData(val mavenProject: MavenProject,
-                            val moduleData: ModuleData,
-                            val dependencies: List<MavenImportDependency<*>>,
-                            val changes: MavenProjectChanges?) {
+data class MavenModuleImportData(val mavenProject: MavenProject,
+                                 val moduleData: ModuleData,
+                                 val dependencies: List<MavenImportDependency<*>>,
+                                 val changes: MavenProjectChanges?) {
 
   val legacyModuleData: LegacyModuleData
     get() = moduleData as LegacyModuleData

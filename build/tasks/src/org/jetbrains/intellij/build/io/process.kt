@@ -6,6 +6,7 @@ import com.intellij.diagnostic.telemetry.use
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.StatusCode
+import org.jetbrains.intellij.build.BuildScriptsLoggedError
 import org.jetbrains.intellij.build.tracer
 import java.io.File
 import java.io.InputStream
@@ -229,7 +230,12 @@ private fun readOutputAndBlock(process: Process,
             "SEVERE" -> {
 /* Android Studio: b/243687086
               firstError?.compareAndSet(null, message)
-              throw RuntimeException(message)
+              try {
+                logger.error(message)
+              } catch (_: BuildScriptsLoggedError) {
+                // skip exception thrown by logger.error
+                // we want to continue consuming stream
+              }
 Android Studio: b/243687086 */  logger.warn(message)
             }
             "WARNING" -> {
@@ -255,7 +261,15 @@ Android Studio: b/243687086 */  logger.warn(message)
             }
           }
         } catch (e: Throwable)  {
-          logger.error("Unable to parse line: ${it}, error: ${e.message}")
+          try {
+            val message = "Unable to parse line: ${it}, error: ${e.message}\n${e.stackTraceToString()}"
+            firstError?.compareAndSet(null, message)
+            logger.error(message)
+          }
+          catch (_: BuildScriptsLoggedError) {
+            // skip exception thrown by logger.error
+            // we want to continue consuming stream
+          }
         }
       } else {
         logger.info(it)

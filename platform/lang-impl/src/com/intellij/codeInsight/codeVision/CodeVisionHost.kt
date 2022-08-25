@@ -60,10 +60,6 @@ import java.util.concurrent.CompletableFuture
 open class CodeVisionHost(val project: Project) {
   companion object {
     private val logger = getLogger<CodeVisionHost>()
-
-    @JvmStatic
-    fun getInstance(project: Project): CodeVisionHost = project.getService(CodeVisionHost::class.java)
-
     const val defaultVisibleLenses = 5
     const val settingsLensProviderId = "!Settings"
     const val moreLensProviderId = "!More"
@@ -103,74 +99,74 @@ open class CodeVisionHost(val project: Project) {
   var providers: List<CodeVisionProvider<*>> = CodeVisionProviderFactory.createAllProviders(project)
 
 
-  init {
+  open fun initialize() {
     lifeSettingModel.isRegistryEnabled.whenTrue(codeVisionLifetime) { enableCodeVisionLifetime ->
-      ApplicationManager.getApplication().invokeLater {
-        runReadAction {
-          if (project.isDisposed) return@runReadAction
-          val liveEditorList = ProjectEditorLiveList(enableCodeVisionLifetime, project)
-          liveEditorList.editorList.view(enableCodeVisionLifetime) { editorLifetime, editor ->
-            if (isEditorApplicable(editor)) {
-              subscribeForFrontendEditor(editorLifetime, editor)
-            }
+      runReadAction {
+        if (project.isDisposed) return@runReadAction
+        val liveEditorList = ProjectEditorLiveList(enableCodeVisionLifetime, project)
+        liveEditorList.editorList.view(enableCodeVisionLifetime) { editorLifetime, editor ->
+          if (isEditorApplicable(editor)) {
+            subscribeForFrontendEditor(editorLifetime, editor)
           }
-
-          val viewService = project.service<CodeVisionView>()
-          viewService.setPerAnchorLimits(
-            CodeVisionAnchorKind.values().associateWith { (lifeSettingModel.getAnchorLimit(it) ?: defaultVisibleLenses) })
-
-
-          invalidateProviderSignal.advise(enableCodeVisionLifetime) { invalidateSignal ->
-            if (invalidateSignal.editor == null && invalidateSignal.providerIds.isEmpty())
-              viewService.setPerAnchorLimits(
-                CodeVisionAnchorKind.values().associateWith { (lifeSettingModel.getAnchorLimit(it) ?: defaultVisibleLenses) })
-          }
-
-
-          lifeSettingModel.visibleMetricsAboveDeclarationCount.advise(codeVisionLifetime) {
-            invalidateProviderSignal.fire(LensInvalidateSignal(null, emptyList()))
-          }
-
-          lifeSettingModel.visibleMetricsNextToDeclarationCount.advise(codeVisionLifetime) {
-            invalidateProviderSignal.fire(LensInvalidateSignal(null, emptyList()))
-          }
-
-
-          rearrangeProviders()
-
-          project.messageBus.connect(enableCodeVisionLifetime.createNestedDisposable())
-            .subscribe(DynamicPluginListener.TOPIC,
-                       object : DynamicPluginListener {
-                         private fun recollectAndRearrangeProviders() {
-                           providers = CodeVisionProviderFactory.createAllProviders(
-                             project)
-                           rearrangeProviders()
-                         }
-
-                         override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
-                           recollectAndRearrangeProviders()
-                         }
-
-                         override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor,
-                                                     isUpdate: Boolean) {
-                           recollectAndRearrangeProviders()
-                         }
-                       })
-          project.messageBus.connect(enableCodeVisionLifetime.createNestedDisposable())
-            .subscribe(CodeVisionSettings.CODE_LENS_SETTINGS_CHANGED, object : CodeVisionSettings.CodeVisionSettingsListener {
-              override fun groupPositionChanged(id: String, position: CodeVisionAnchorKind) {
-
-              }
-
-              override fun providerAvailabilityChanged(id: String, isEnabled: Boolean) {
-                PsiManager.getInstance(project).dropPsiCaches()
-                DaemonCodeAnalyzer.getInstance(project).restart()
-              }
-            })
         }
+
+        val viewService = project.service<CodeVisionView>()
+        viewService.setPerAnchorLimits(
+          CodeVisionAnchorKind.values().associateWith { (lifeSettingModel.getAnchorLimit(it) ?: defaultVisibleLenses) })
+
+
+        invalidateProviderSignal.advise(enableCodeVisionLifetime) { invalidateSignal ->
+          if (invalidateSignal.editor == null && invalidateSignal.providerIds.isEmpty())
+            viewService.setPerAnchorLimits(
+              CodeVisionAnchorKind.values().associateWith { (lifeSettingModel.getAnchorLimit(it) ?: defaultVisibleLenses) })
+        }
+
+
+        lifeSettingModel.visibleMetricsAboveDeclarationCount.advise(codeVisionLifetime) {
+          invalidateProviderSignal.fire(LensInvalidateSignal(null, emptyList()))
+        }
+
+        lifeSettingModel.visibleMetricsNextToDeclarationCount.advise(codeVisionLifetime) {
+          invalidateProviderSignal.fire(LensInvalidateSignal(null, emptyList()))
+        }
+
+
+        rearrangeProviders()
+
+        project.messageBus.connect(enableCodeVisionLifetime.createNestedDisposable())
+          .subscribe(DynamicPluginListener.TOPIC,
+                     object : DynamicPluginListener {
+                       private fun recollectAndRearrangeProviders() {
+                         providers = CodeVisionProviderFactory.createAllProviders(
+                           project)
+                         rearrangeProviders()
+                       }
+
+                       override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
+                         recollectAndRearrangeProviders()
+                       }
+
+                       override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor,
+                                                   isUpdate: Boolean) {
+                         recollectAndRearrangeProviders()
+                       }
+                     })
+        project.messageBus.connect(enableCodeVisionLifetime.createNestedDisposable())
+          .subscribe(CodeVisionSettings.CODE_LENS_SETTINGS_CHANGED, object : CodeVisionSettings.CodeVisionSettingsListener {
+            override fun groupPositionChanged(id: String, position: CodeVisionAnchorKind) {
+
+            }
+
+            override fun providerAvailabilityChanged(id: String, isEnabled: Boolean) {
+              PsiManager.getInstance(project).dropPsiCaches()
+              DaemonCodeAnalyzer.getInstance(project).restart()
+            }
+          })
       }
     }
+
   }
+
 
   // run in read action
   fun collectPlaceholders(editor: Editor,
@@ -517,5 +513,4 @@ open class CodeVisionHost(val project: Project) {
       editor.lensContextOrThrow.setResults(lenses)
     }
   }
-
 }

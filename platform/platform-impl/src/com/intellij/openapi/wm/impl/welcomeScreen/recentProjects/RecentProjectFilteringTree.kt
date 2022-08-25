@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.addKeyboardAction
-import com.intellij.openapi.ui.setEmptyState
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
@@ -29,7 +28,6 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.ui.tree.ui.Control
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.IconUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.castSafelyTo
@@ -39,10 +37,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
-import java.awt.BorderLayout
-import java.awt.Component
-import java.awt.Point
-import java.awt.Rectangle
+import java.awt.*
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
@@ -56,21 +51,23 @@ import javax.swing.tree.TreePath
 
 class RecentProjectFilteringTree(
   treeComponent: Tree,
-  parentDisposable: Disposable
+  parentDisposable: Disposable,
+  collectors: List<() -> List<RecentProjectTreeItem>>
 ) : FilteringTree<DefaultMutableTreeNode, RecentProjectTreeItem>(
   ProjectManager.getInstance().defaultProject,
   treeComponent,
-  DefaultMutableTreeNode(RootItem)
+  DefaultMutableTreeNode(RootItem(collectors))
 ) {
   init {
     treeComponent.apply {
+      val projectActionButtonViewModel = ProjectActionButtonViewModel()
       val filePathChecker = createFilePathChecker()
       Disposer.register(parentDisposable, filePathChecker)
 
-      setEmptyState(IdeBundle.message("empty.text.no.project.open.yet"))
       addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) { activateItem(this) }
-      addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0)) { removeItem(this) }
-      addMouseListener(ProjectActionMouseListener(this))
+      val mouseListener = ProjectActionMouseListener(this, projectActionButtonViewModel)
+      addMouseListener(mouseListener)
+      addMouseMotionListener(mouseListener)
       addTreeWillExpandListener(ToggleStateListener())
       putClientProperty(Control.Painter.KEY, Control.Painter.LEAF_WITHOUT_INDENT)
       putClientProperty(
@@ -82,12 +79,13 @@ class RecentProjectFilteringTree(
       TreeHoverToSelectionListener().addTo(this)
 
       isRootVisible = false
-      cellRenderer = ProjectActionRenderer(filePathChecker::isValid)
+      cellRenderer = ProjectActionRenderer(filePathChecker::isValid, projectActionButtonViewModel)
       rowHeight = 0 // Fix tree renderer size on macOS
       background = WelcomeScreenUIManager.getProjectsBackground()
-      toggleClickCount = 1
+      toggleClickCount = 0
 
       setExpandableItemsEnabled(false)
+      UIUtil.setCursor(this, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
     }
   }
 
@@ -98,7 +96,10 @@ class RecentProjectFilteringTree(
 
   override fun getNodeClass() = DefaultMutableTreeNode::class.java
 
-  override fun getText(item: RecentProjectTreeItem?): String = item?.displayName().orEmpty()
+  override fun getText(item: RecentProjectTreeItem?): String = when(item) {
+    is RecentProjectItem -> item.searchName()
+    else -> item?.displayName().orEmpty()
+  }
 
   override fun getChildren(item: RecentProjectTreeItem): Iterable<RecentProjectTreeItem> = item.children()
 
@@ -171,11 +172,23 @@ class RecentProjectFilteringTree(
     }
   }
 
-  private class ProjectActionMouseListener(private val tree: Tree) : PopupHandler() {
+  private class ProjectActionMouseListener(
+    private val tree: Tree,
+    private val projectActionButtonViewModel: ProjectActionButtonViewModel
+  ) : PopupHandler() {
+
+    override fun mouseMoved(mouseEvent: MouseEvent) {
+      val point = mouseEvent.point
+      val row = TreeUtil.getRowForLocation(tree, point.x, point.y)
+
+      projectActionButtonViewModel.hoveredRow = row
+      projectActionButtonViewModel.isButtonHovered = intersectWithActionIcon(point)
+    }
+
     override fun mousePressed(mouseEvent: MouseEvent) {
       super.mousePressed(mouseEvent)
 
-      if (mouseEvent.isConsumed || EditSourceOnDoubleClickHandler.isToggleEvent(tree, mouseEvent)) {
+      if (mouseEvent.isConsumed) {
         return
       }
 
@@ -183,13 +196,22 @@ class RecentProjectFilteringTree(
       val treePath = TreeUtil.getPathForLocation(tree, point.x, point.y) ?: return
       val item = TreeUtil.getLastUserObject(RecentProjectTreeItem::class.java, treePath) ?: return
 
-      if (intersectWithActionIcon(point)) {
-        when (item) {
-          is CloneableProjectItem -> cancelCloneProject(item.cloneableProject)
-          else -> invokePopup(mouseEvent.component, point.x, point.y)
+      // Avoid double-clicking an arrow button
+      if (item is ProjectsGroupItem && intersectWithArrowIcon(point)) {
+        return
+      }
+
+      if (mouseEvent.clickCount == 1 && SwingUtilities.isLeftMouseButton(mouseEvent)) {
+        if (intersectWithActionIcon(point)) {
+          when (item) {
+            is CloneableProjectItem -> cancelCloneProject(item.cloneableProject)
+            else -> invokePopup(mouseEvent.component, point.x, point.y)
+          }
+        }
+        else {
+          activateItem(tree, item)
         }
       }
-      else activateItem(mouseEvent, item)
 
       mouseEvent.consume()
     }
@@ -199,17 +221,18 @@ class RecentProjectFilteringTree(
       ActionManager.getInstance().createActionPopupMenu(ActionPlaces.WELCOME_SCREEN, group).component.show(component, x, y)
     }
 
+    private fun intersectWithArrowIcon(point: Point): Boolean {
+      val row = TreeUtil.getRowForLocation(tree, point.x, point.y)
+      val bounds = tree.getRowBounds(row)
+      val icon = AllIcons.Ide.Notification.Expand
+      val iconBounds = Rectangle(0, bounds.y + (bounds.height - icon.iconHeight) / 2, icon.iconWidth, icon.iconHeight)
+
+      return iconBounds.contains(point)
+    }
+
     private fun intersectWithActionIcon(point: Point): Boolean {
       val row = TreeUtil.getRowForLocation(tree, point.x, point.y)
       return row != -1 && getCloseIconRect(row).contains(point)
-    }
-
-    private fun activateItem(mouseEvent: MouseEvent, item: RecentProjectTreeItem) {
-      if (mouseEvent.clickCount == 1 && SwingUtilities.isLeftMouseButton(mouseEvent)) {
-        if (item is RecentProjectItem) {
-          item.openProject(createActionEvent(tree))
-        }
-      }
     }
 
     private fun getCloseIconRect(row: Int): Rectangle {
@@ -258,7 +281,8 @@ class RecentProjectFilteringTree(
   }
 
   private class ProjectActionRenderer(
-    private val isProjectPathValid: (String) -> Boolean
+    private val isProjectPathValid: (String) -> Boolean,
+    private val buttonViewModel: ProjectActionButtonViewModel
   ) : TreeCellRenderer {
     private val recentProjectComponent = RecentProjectComponent()
     private val projectGroupComponent = ProjectGroupComponent()
@@ -271,13 +295,13 @@ class RecentProjectFilteringTree(
     ): Component {
       return when (val item = (value as DefaultMutableTreeNode).userObject as RecentProjectTreeItem) {
         is RootItem -> JBUI.Panels.simplePanel()
-        is RecentProjectItem -> recentProjectComponent.customizeComponent(item, selected, isProjectPathValid(item.projectPath))
-        is ProjectsGroupItem -> projectGroupComponent.customizeComponent(item, selected)
-        is CloneableProjectItem -> cloneableProjectComponent.customizeComponent(item)
+        is RecentProjectItem -> recentProjectComponent.customizeComponent(item, row, selected)
+        is ProjectsGroupItem -> projectGroupComponent.customizeComponent(item, row, selected)
+        is CloneableProjectItem -> cloneableProjectComponent.customizeComponent(item, row)
       }
     }
 
-    private class RecentProjectComponent : BorderLayoutPanel() {
+    private inner class RecentProjectComponent : BorderLayoutPanel() {
       private val recentProjectsManager: RecentProjectsManagerBase
         get() = RecentProjectsManagerBase.instanceEx
 
@@ -312,10 +336,11 @@ class RecentProjectFilteringTree(
         add(projectActions, BorderLayout.EAST)
       }
 
-      fun customizeComponent(item: RecentProjectItem, isSelected: Boolean, isProjectPathValid: Boolean): JComponent {
+      fun customizeComponent(item: RecentProjectItem, row: Int, isSelected: Boolean): JComponent {
+        val isPathValid = isProjectPathValid(item.projectPath)
         projectNameLabel.apply {
           text = item.displayName
-          foreground = if (isProjectPathValid) UIUtil.getListForeground() else UIUtil.getInactiveTextColor()
+          foreground = if (isPathValid) UIUtil.getListForeground() else UIUtil.getInactiveTextColor()
         }
         projectPathLabel.apply {
           text = FileUtil.getLocationRelativeToUserHome(PathUtil.toSystemDependentName(item.projectPath), false)
@@ -323,12 +348,17 @@ class RecentProjectFilteringTree(
         projectIconLabel.apply {
           icon = recentProjectsManager.getProjectIcon(item.projectPath, true)
           disabledIcon = IconUtil.desaturate(icon)
-          isEnabled = isProjectPathValid
+          isEnabled = isPathValid
         }
-        projectActions.isVisible = isSelected
+        projectActions.apply {
+          icon = IconUtil.toSize(buttonViewModel.selectIcon(row, AllIcons.Ide.Notification.Gear, AllIcons.Ide.Notification.GearHover),
+                                 ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getWidth().toInt(),
+                                 ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getHeight().toInt())
+          isVisible = isSelected
+        }
 
         val toolTipPath = PathUtil.toSystemDependentName(item.projectPath)
-        toolTipText = if (isProjectPathValid) toolTipPath else "$toolTipPath ${IdeBundle.message("recent.project.unavailable")}"
+        toolTipText = if (isPathValid) toolTipPath else "$toolTipPath ${IdeBundle.message("recent.project.unavailable")}"
 
         AccessibleContextUtil.setCombinedName(this, projectNameLabel, "-", projectPathLabel) // NON-NLS
         AccessibleContextUtil.setCombinedDescription(this, projectNameLabel, "-", projectPathLabel) // NON-NLS
@@ -337,7 +367,7 @@ class RecentProjectFilteringTree(
       }
     }
 
-    private class ProjectGroupComponent : BorderLayoutPanel() {
+    private inner class ProjectGroupComponent : BorderLayoutPanel() {
       private val projectGroupNameLabel = SimpleColoredComponent().apply {
         isOpaque = false
         border = JBUI.Borders.empty(4)
@@ -356,12 +386,17 @@ class RecentProjectFilteringTree(
         add(projectGroupActions, BorderLayout.EAST)
       }
 
-      fun customizeComponent(item: ProjectsGroupItem, isSelected: Boolean): JComponent {
+      fun customizeComponent(item: ProjectsGroupItem, row: Int, isSelected: Boolean): JComponent {
         projectGroupNameLabel.apply {
           clear()
           append(item.displayName(), SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, UIUtil.getListForeground())) // NON-NLS
         }
-        projectGroupActions.isVisible = isSelected
+        projectGroupActions.apply {
+          icon = IconUtil.toSize(buttonViewModel.selectIcon(row, AllIcons.Ide.Notification.Gear, AllIcons.Ide.Notification.GearHover),
+                                 ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getWidth().toInt(),
+                                 ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.getHeight().toInt())
+          isVisible = isSelected
+        }
 
         AccessibleContextUtil.setName(this, projectGroupNameLabel) // NON-NLS
         AccessibleContextUtil.setDescription(this, projectGroupNameLabel) // NON-NLS
@@ -370,7 +405,7 @@ class RecentProjectFilteringTree(
       }
     }
 
-    private class CloneableProjectComponent : BorderLayoutPanel() {
+    private inner class CloneableProjectComponent : BorderLayoutPanel() {
       private val recentProjectsManager: RecentProjectsManagerBase
         get() = RecentProjectsManagerBase.instanceEx
 
@@ -394,7 +429,7 @@ class RecentProjectFilteringTree(
       }
       private val projectCancelButton = JLabel().apply {
         icon = AllIcons.Actions.DeleteTag
-        border = JBUI.Borders.empty(0, 0, 0, 14)
+        border = JBUI.Borders.empty(0, 8, 0, 14)
       }
       private val projectProgressLabel = JLabel().apply {
         foreground = UIUtil.getInactiveTextColor()
@@ -405,6 +440,7 @@ class RecentProjectFilteringTree(
       private val projectProgressBarPanel = JBUI.Panels.simplePanel().apply {
         isOpaque = false
         border = JBUI.Borders.empty(8)
+        preferredSize = JBUI.size(preferredSize).withWidth(PROGRESS_BAR_WIDTH)
 
         add(projectProgressLabel, BorderLayout.NORTH)
         add(projectProgressBar, BorderLayout.SOUTH)
@@ -425,7 +461,7 @@ class RecentProjectFilteringTree(
         add(projectCloneStatusPanel, BorderLayout.EAST)
       }
 
-      fun customizeComponent(item: CloneableProjectItem): JComponent {
+      fun customizeComponent(item: CloneableProjectItem, row: Int): JComponent {
         val cloneableProject = item.cloneableProject
         val taskInfo = cloneableProject.cloneTaskInfo
         val progressIndicator = cloneableProject.progressIndicator
@@ -433,13 +469,20 @@ class RecentProjectFilteringTree(
 
         projectNameLabel.text = item.displayName() // NON-NLS
         projectPathLabel.text = FileUtil.getLocationRelativeToUserHome(PathUtil.toSystemDependentName(item.projectPath), false)
+        projectCancelButton.icon = buttonViewModel.selectIcon(row, AllIcons.Actions.DeleteTag, AllIcons.Actions.DeleteTagHover)
+        projectCloneStatusPanel.apply {
+          isVisible = false
+          isEnabled = false
+        }
+        toolTipText = null
+        cursor = Cursor(Cursor.HAND_CURSOR)
 
         projectProgressBar.apply {
           val isProgressIndeterminate = progressIndicator.isIndeterminate
           if (isProgressIndeterminate) {
             val progressBarUI = projectProgressBar.ui
             if (progressBarUI is DarculaProgressBarUI) {
-              progressBarUI.updateIndeterminateAnimationIndex(startMillis)
+              progressBarUI.updateIndeterminateAnimationIndex(START_MILLIS)
             }
           }
 
@@ -450,6 +493,12 @@ class RecentProjectFilteringTree(
           isIndeterminate = isProgressIndeterminate
         }
 
+        projectCloneStatusPanel.apply {
+          isVisible = false
+          isEnabled = false
+        }
+        toolTipText = null
+
         val icon = recentProjectsManager.getProjectIcon(item.projectPath, true)
         when (cloneStatus) {
           CloneStatus.PROGRESS -> {
@@ -457,30 +506,38 @@ class RecentProjectFilteringTree(
             projectCloneStatusPanel.isEnabled = true
             projectProgressLabel.text = taskInfo.actionTitle
             projectIconLabel.icon = icon
+            toolTipText = taskInfo.actionTooltipText
           }
           CloneStatus.FAILURE -> {
-            projectCloneStatusPanel.isVisible = false
-            projectCloneStatusPanel.isEnabled = false
             projectPathLabel.text = taskInfo.failedTitle
             projectIconLabel.icon = IconUtil.desaturate(icon)
           }
           CloneStatus.CANCEL -> {
-            projectCloneStatusPanel.isVisible = false
-            projectCloneStatusPanel.isEnabled = false
             projectPathLabel.text = taskInfo.canceledTitle
             projectIconLabel.icon = IconUtil.desaturate(icon)
           }
           else -> {}
         }
 
-        toolTipText = taskInfo.actionTooltipText
-
         return this
       }
+    }
 
-      companion object {
-        private const val startMillis = 0L
-      }
+    companion object {
+      private const val START_MILLIS = 0L
+      private const val PROGRESS_BAR_WIDTH = 200
+    }
+  }
+
+  private class ProjectActionButtonViewModel(
+    var hoveredRow: Int = -1,
+    var isButtonHovered: Boolean = false
+  ) {
+    fun selectIcon(row: Int, icon: Icon, hoveredIcon: Icon): Icon {
+      return if (isButtonHovered && hoveredRow == row)
+        hoveredIcon
+      else
+        icon
     }
   }
 
@@ -498,6 +555,10 @@ class RecentProjectFilteringTree(
     private fun activateItem(tree: Tree) {
       val node = tree.lastSelectedPathComponent.castSafelyTo<DefaultMutableTreeNode>() ?: return
       val item = node.userObject.castSafelyTo<RecentProjectTreeItem>() ?: return
+      activateItem(tree, item)
+    }
+
+    private fun activateItem(tree: Tree, item: RecentProjectTreeItem) {
       when (item) {
         is RecentProjectItem -> {
           val actionEvent = createActionEvent(tree)

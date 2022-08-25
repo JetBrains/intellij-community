@@ -2,17 +2,12 @@
 package org.jetbrains.intellij.build.impl.support
 
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.util.system.CpuArch
 import groovy.transform.CompileStatic
 import io.opentelemetry.api.trace.Span
 import kotlin.Unit
 import kotlin.jvm.functions.Function0
 import org.jetbrains.annotations.Nullable
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildContextKt
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.JvmArchitecture
-import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.io.ProcessKt
 
@@ -44,6 +39,7 @@ final class RepairUtilityBuilder {
 
   private static final Collection<Binary> BINARIES = List.of(
     new Binary(OsFamily.LINUX, JvmArchitecture.x64, 'bin/repair-linux-amd64', 'bin/repair'),
+    new Binary(OsFamily.LINUX, JvmArchitecture.aarch64, 'bin/repair-linux-arm64', 'bin/repair'),
     new Binary(OsFamily.WINDOWS, JvmArchitecture.x64, 'bin/repair.exe', 'bin/repair.exe'),
     new Binary(OsFamily.MACOS, JvmArchitecture.x64, 'bin/repair-darwin-amd64', 'bin/repair'),
     new Binary(OsFamily.MACOS, JvmArchitecture.aarch64, 'bin/repair-darwin-arm64', 'bin/repair')
@@ -75,7 +71,7 @@ final class RepairUtilityBuilder {
         }
 
         if (cache.isEmpty()) {
-          return
+          return Unit.INSTANCE
         }
 
         Binary binary = findBinary(context, os, arch)
@@ -106,12 +102,9 @@ final class RepairUtilityBuilder {
           BINARIES_CACHE = buildBinaries(context)
         }
         if (BINARIES_CACHE.isEmpty()) {
-          return
+          return Unit.INSTANCE
         }
-        OsFamily currentOs = SystemInfoRt.isWindows ? OsFamily.WINDOWS :
-                             SystemInfoRt.isMac ? OsFamily.MACOS :
-                             SystemInfoRt.isLinux ? OsFamily.LINUX : null
-        Binary binary = findBinary(context, currentOs, CpuArch.isArm64() ? JvmArchitecture.aarch64 : JvmArchitecture.x64)
+        Binary binary = findBinary(context, OsFamily.currentOs, JvmArchitecture.currentJvmArch)
         def binaryPath = repairUtilityProjectHome(context).resolve(binary.relativeSourcePath)
         def tmpDir = context.paths.tempDir.resolve(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP + UUID.randomUUID().toString())
         Files.createDirectories(tmpDir)
@@ -198,7 +191,7 @@ final class RepairUtilityBuilder {
         Map<Binary, Path> binaries = BINARIES.collectEntries {
           [(it): projectHome.resolve(it.relativeSourcePath)]
         }
-        def executablePermissions = Set.of(
+        def executablePermissions = EnumSet.of(
           OWNER_READ, OWNER_WRITE, OWNER_EXECUTE, GROUP_READ, GROUP_EXECUTE, OTHERS_READ, OTHERS_EXECUTE
         )
         for (Path file in binaries.values()) {

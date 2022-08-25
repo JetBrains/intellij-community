@@ -119,6 +119,7 @@
       "manifest.svg": "fileTypes/manifest.svg",
       "markdown.svg": "icons/MarkdownPlugin.svg",
       "maven.svg": "icons/repositoryLibraryLogo.svg",
+      "modified.svg": "general/modified.svg",
       "patch.svg": "vcs/patch_file.svg",
       "php.svg": "icons/php-icon.svg",
       "properties.svg": "fileTypes/properties.svg",
@@ -165,7 +166,9 @@
         "actions/findAndShowNextMatchesSmall.svg",
         "general/arrowDown.svg",
         "general/chevron-down.svg",
-        "general/linkDropTriangle.svg"
+        "general/linkDropTriangle.svg",
+        "ide/notification/expand.svg",
+        "ide/notification/expandHover.svg"
       ],
       "chevronDownLarge.svg": "toolbar/expand.svg",
       "chevronLeft.svg": [
@@ -183,12 +186,16 @@
         "actions/findAndShowPrevMatches.svg",
         "actions/findAndShowPrevMatchesSmall.svg",
         "general/arrowUp.svg",
-        "general/chevron-up.svg"
+        "general/chevron-up.svg",
+        "ide/notification/collapse.svg",
+        "ide/notification/collapseHover.svg"
       ],
       "chevronUpLarge.svg": "toolbar/collapse.svg",
       "close.svg": [
         "actions/cancel.svg",
-        "codeWithMe/cwmTerminate.svg"
+        "codeWithMe/cwmTerminate.svg",
+        "ide/notification/close.svg",
+        "ide/notification/closeHover.svg"
       ],
       "closeSmall.svg": "actions/close.svg",
       "closeSmallHovered.svg": "actions/closeHovered.svg",
@@ -221,7 +228,12 @@
       "locate.svg": "general/locate.svg",
       "locked.svg": "ide/readonly.svg",
       "moreHorizontal.svg": "actions/moreHorizontal.svg",
-      "moreVertical.svg": "actions/more.svg",
+      "moreVertical.svg":
+      [
+        "actions/more.svg",
+        "ide/notification/gear.svg",
+        "ide/notification/gearHover.svg"
+      ],
       "moveDown.svg": "actions/moveDown.svg",
       "moveUp.svg": "actions/moveUp.svg",
       "open.svg": "actions/menu-open.svg",
@@ -363,6 +375,25 @@
         "general/inlineVariablesHover.svg"
       ]
     },
+    "kotlin": {
+      "enumKotlin.svg": "org/jetbrains/kotlin/idea/icons/enumKotlin.svg",
+      "typeAlias.svg": "org/jetbrains/kotlin/idea/icons/typeAlias.svg",
+      "classKotlin.svg": "org/jetbrains/kotlin/idea/icons/classKotlin.svg",
+      "annotationKotlin.svg": "org/jetbrains/kotlin/idea/icons/annotationKotlin.svg",
+      "abstractClassKotlin.svg": "org/jetbrains/kotlin/idea/icons/abstractClassKotlin.svg",
+      "expect.svg": "org/jetbrains/kotlin/idea/icons/expect.svg",
+      "actual.svg": "org/jetbrains/kotlin/idea/icons/actual.svg",
+      "lambda.svg": "org/jetbrains/kotlin/idea/icons/lambda.svg",
+      "abstract_extension_function.svg": "org/jetbrains/kotlin/idea/icons/abstract_extension_function.svg",
+      "function.svg": "org/jetbrains/kotlin/idea/icons/function.svg",
+      "classInitializerKotlin.svg": "org/jetbrains/kotlin/idea/icons/classInitializerKotlin.svg",
+      "interfaceKotlin.svg": "org/jetbrains/kotlin/idea/icons/interfaceKotlin.svg",
+      "field_variable.svg": "org/jetbrains/kotlin/idea/icons/field_variable.svg",
+      "objectKotlin.svg": "org/jetbrains/kotlin/idea/icons/objectKotlin.svg",
+      "field_value.svg": "org/jetbrains/kotlin/idea/icons/field_value.svg",
+      "value.svg": "org/jetbrains/kotlin/idea/icons/value.svg",
+      "kotlin_gradle_script.svg": "org/jetbrains/kotlin/idea/icons/kotlin_gradle_script.svg"
+    },
     "nodes": {
       "abstractException.svg": "nodes/abstractException.svg",
       "annotation.svg": "nodes/annotationtype.svg",
@@ -432,6 +463,9 @@
       ],
       "phpWeb.svg": "icons/run_web_app.svg"
     },
+    "plugins/space": {
+      "spaceToolWindow.svg": "icons/spaceToolWindow.svg"
+    },
     "run": {
       "attachToProcess.svg": "debugger/attachToProcess.svg",
       "debug.svg": "actions/startDebugger.svg",
@@ -469,7 +503,11 @@
       "webApp.svg": "runConfigurations/web_app.svg"
     },
     "status": {
-      "error.svg": "general/balloonError.svg",
+      "error.svg": [
+        "general/balloonError.svg",
+        "ide/fatalError.svg"
+      ],
+      "errorOutline.svg": "ide/fatalError-read.svg",
       "info.svg": "general/balloonInformation.svg",
       "warning.svg": "general/balloonWarning.svg",
       "warningOutline.svg": "general/showWarning.svg"
@@ -483,6 +521,7 @@
       "build.svg": "toolwindows/toolWindowBuild.svg",
       "commit.svg": "toolwindows/toolWindowCommit.svg",
       "database.svg": "icons/toolWindowDatabase.svg",
+      "databaseChanges.svg": "icons/toolwindowDatabaseChanges.svg",
       "debug.svg": "toolwindows/toolWindowDebugger.svg",
       "dependencies.svg": [
         "icons/artifact.svg",

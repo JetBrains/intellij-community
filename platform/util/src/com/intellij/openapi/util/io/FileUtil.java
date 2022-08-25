@@ -23,10 +23,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.InvalidPathException;
-import java.nio.file.LinkOption;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
@@ -1499,6 +1496,10 @@ public class FileUtil extends FileUtilRt {
     }
 
     return true;
+  }
+
+  public static boolean deleteWithRenamingIfExists(@NotNull Path file) {
+    return Files.exists(file) && deleteWithRenaming(file);
   }
 
   public static boolean deleteWithRenaming(@NotNull Path file) {

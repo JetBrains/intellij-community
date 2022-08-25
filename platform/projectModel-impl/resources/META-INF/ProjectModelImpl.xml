@@ -1,6 +1,7 @@
 <idea-plugin>
   <extensionPoints>
-    <extensionPoint name="additionalLibraryRootsProvider" interface="com.intellij.openapi.roots.AdditionalLibraryRootsProvider" dynamic="true"/>
+    <extensionPoint name="additionalLibraryRootsProvider" interface="com.intellij.openapi.roots.AdditionalLibraryRootsProvider"
+                    dynamic="true"/>
     <extensionPoint name="directoryIndexExcludePolicy" interface="com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy"
                     area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint name="projectExtension" interface="com.intellij.openapi.roots.ProjectExtension" area="IDEA_PROJECT" dynamic="true"/>
@@ -9,11 +10,12 @@
                     dynamic="true"/>
     <extensionPoint name="projectPathMacroContributor" interface="com.intellij.openapi.components.impl.ProjectWidePathMacroContributor"
                     dynamic="true"/>
+    <extensionPoint name="directoryIndexAnalyticsReporter" interface="com.intellij.openapi.roots.impl.DirectoryIndexAnalyticsReporter"
+                    area="IDEA_PROJECT" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.openapi.roots.impl.DirectoryIndex"
                     serviceImplementation="com.intellij.openapi.roots.impl.DirectoryIndexImpl" preload="true"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.roots.impl.DirectoryIndexCollector"/>
 
     <projectService serviceInterface="com.intellij.openapi.components.PathMacroManager"
                     serviceImplementation="com.intellij.openapi.components.impl.ProjectPathMacroManager"/>

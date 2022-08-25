@@ -63,7 +63,7 @@ class CustomFrame:
 def add_custom_frame(frame, name, thread_id):
     CustomFramesContainer.custom_frames_lock.acquire()
     try:
-        curr_thread_id = get_current_thread_id(threading.currentThread())
+        curr_thread_id = get_current_thread_id(threading.current_thread())
         next_id = CustomFramesContainer._next_frame_id = CustomFramesContainer._next_frame_id + 1
 
         # Note: the frame id kept contains an id and thread information on the thread where the frame was added

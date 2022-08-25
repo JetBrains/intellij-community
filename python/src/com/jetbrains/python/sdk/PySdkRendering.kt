@@ -52,7 +52,7 @@ fun path(sdk: Sdk): String? {
   val homePath = sdk.homePath ?: return null
 
   if (sdk.isTargetBased()) {
-    return homePath.removePrefix("target://")
+    return homePath
   }
 
   if (sdk.sdkAdditionalData is PyRemoteSdkAdditionalDataMarker) {

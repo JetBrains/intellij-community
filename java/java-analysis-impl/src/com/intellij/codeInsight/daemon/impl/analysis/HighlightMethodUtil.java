@@ -815,6 +815,7 @@ public final class HighlightMethodUtil {
     WrapObjectWithOptionalOfNullableFix.REGISTAR.registerCastActions(candidates, methodCall, info, fixRange);
     WrapExpressionFix.registerWrapAction(candidates, list.getExpressions(), info, fixRange);
     PermuteArgumentsFix.registerFix(info, methodCall, candidates, fixRange);
+    QuickFixAction.registerQuickFixAction(info, fixRange, RemoveRepeatingCallFix.createFix(methodCall));
     registerChangeParameterClassFix(methodCall, list, info, fixRange);
     if (candidates.length == 0 && info != null) {
       UnresolvedReferenceQuickFixProvider.registerReferenceFixes(methodCall.getMethodExpression(), new QuickFixActionRegistrarImpl(info));

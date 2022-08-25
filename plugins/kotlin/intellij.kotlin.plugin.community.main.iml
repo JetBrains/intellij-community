@@ -103,7 +103,6 @@
     <orderEntry type="library" exported="" name="kotlinc.kotlin-reflect" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="kotlinc.kotlin-script-runtime" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="javaslang" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="completion-ranking-kotlin" level="project" />
     <orderEntry type="module" module-name="intellij.markdown" scope="RUNTIME" />
     <orderEntry type="library" scope="RUNTIME" name="javax-inject" level="project" />
   </component>

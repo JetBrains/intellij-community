@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -22,13 +23,22 @@ public final class ApplyBinaryShelvedFilePatch extends ApplyFilePatchBase<Shelve
   }
 
   @Override
-  protected void applyCreate(Project project, final VirtualFile newFile, @Nullable CommitContext commitContext) throws IOException {
-    applyChange(project, newFile, null, null);
+  protected void applyCreate(@NotNull Project project,
+                             @NotNull VirtualFile newFile,
+                             @Nullable CommitContext commitContext) throws IOException {
+    writeContentTo(newFile);
   }
 
   @Override
-  protected Result applyChange(Project project, final VirtualFile fileToPatch, FilePath pathBeforeRename, Supplier<? extends CharSequence> baseContents)
-    throws IOException {
+  protected Result applyChange(@NotNull Project project,
+                               @NotNull VirtualFile fileToPatch,
+                               @NotNull FilePath pathBeforeRename,
+                               @Nullable Supplier<? extends CharSequence> baseContents) throws IOException {
+    writeContentTo(fileToPatch);
+    return SUCCESS;
+  }
+
+  private void writeContentTo(@NotNull VirtualFile fileToPatch) throws IOException {
     ShelvedBinaryFile shelvedBinaryFile = myPatch.getShelvedBinaryFile();
     if (shelvedBinaryFile.SHELVED_PATH == null) {
       fileToPatch.delete(this);
@@ -39,6 +49,5 @@ public final class ApplyBinaryShelvedFilePatch extends ApplyFilePatchBase<Shelve
       FileUtil.copyContent(fromFile, toFile);
       VfsUtil.markDirty(false, false, fileToPatch);
     }
-    return SUCCESS;
   }
 }

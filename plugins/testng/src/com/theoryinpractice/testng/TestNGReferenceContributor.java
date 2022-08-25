@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupValueFactory;
 import com.intellij.codeInspection.InspectionProfile;
+import com.intellij.codeInspection.reference.PsiMemberReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PlatformPatterns;
@@ -71,7 +72,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
     });
   }
 
-  private static class MethodReference extends PsiReferenceBase<PsiLiteral> {
+  private static class MethodReference extends PsiReferenceBase<PsiLiteral> implements PsiMemberReference {
 
     MethodReference(PsiLiteral element) {
       super(element, false);

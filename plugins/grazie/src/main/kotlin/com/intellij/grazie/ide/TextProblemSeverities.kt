@@ -17,17 +17,18 @@ class TextProblemSeverities: SeveritiesProvider() {
       TextHighlightInfoType(STYLE_ERROR, STYLE_ERROR_ATTRIBUTES, GrazieIcons.StyleError),
       TextHighlightInfoType(STYLE_WARNING, STYLE_WARNING_ATTRIBUTES, GrazieIcons.StyleWarning),
       TextHighlightInfoType(STYLE_SUGGESTION, STYLE_SUGGESTION_ATTRIBUTES, GrazieIcons.StyleSuggestion),
-      TextHighlightInfoType(GRAMMAR_ERROR, GRAMMAR_ERROR_ATTRIBUTES, GrazieIcons.GrammarError)
+      TextHighlightInfoType(GRAMMAR_ERROR, GRAMMAR_ERROR_ATTRIBUTES, GrazieIcons.GrammarError, applicableToInspections = true)
     )
   }
 
   private class TextHighlightInfoType(
     severity: HighlightSeverity,
     attributesKey: TextAttributesKey,
-    private val icon: Icon
+    private val icon: Icon,
+    private val applicableToInspections: Boolean = false
   ): HighlightInfoTypeImpl(severity, attributesKey), HighlightInfoType.Iconable {
     override fun getIcon(): Icon = icon
-    override fun isApplicableToInspections() = false
+    override fun isApplicableToInspections() = applicableToInspections
   }
 
   companion object {
@@ -80,15 +81,15 @@ class TextProblemSeverities: SeveritiesProvider() {
     )
 
     @JvmField
-    val STYLE_ERROR_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("GRAZIE_STYLE_ERROR")
+    val STYLE_ERROR_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("TEXT_STYLE_ERROR")
 
     @JvmField
-    val STYLE_WARNING_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("GRAZIE_STYLE_WARNING")
+    val STYLE_WARNING_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("TEXT_STYLE_WARNING")
 
     @JvmField
-    val STYLE_SUGGESTION_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("GRAZIE_STYLE_SUGGESTION")
+    val STYLE_SUGGESTION_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("TEXT_STYLE_SUGGESTION")
 
     @JvmField
-    val GRAMMAR_ERROR_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("GRAZIE_GRAMMAR_ERROR")
+    val GRAMMAR_ERROR_ATTRIBUTES = TextAttributesKey.createTextAttributesKey("GRAMMAR_ERROR")
   }
 }

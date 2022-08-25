@@ -94,7 +94,7 @@ private class GlobalSyntheticPackageViewDescriptor(
         override fun getVariableNames(): Set<Name> = shouldNotBeCalled()
         override fun getClassifierNames(): Set<Name> = shouldNotBeCalled()
 
-        override fun getContributedClassifier(name: Name, location: LookupLocation): ClassifierDescriptor? = shouldNotBeCalled()
+        override fun getContributedClassifier(name: Name, location: LookupLocation): ClassifierDescriptor = shouldNotBeCalled()
 
         override fun printScopeStructure(p: Printer) {
             p.printIndent()

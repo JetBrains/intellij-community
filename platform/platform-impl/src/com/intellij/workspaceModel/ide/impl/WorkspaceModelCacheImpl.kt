@@ -15,13 +15,12 @@ import com.intellij.openapi.project.projectsDataDir
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SingleAlarm
-import com.intellij.util.SystemProperties
 import com.intellij.util.io.exists
 import com.intellij.util.io.inputStream
 import com.intellij.util.io.lastModified
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.storage.impl.isConsistent
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -95,20 +94,20 @@ class WorkspaceModelCacheImpl(private val project: Project) : Disposable, Worksp
     }
   }
 
-  private fun cachePreProcess(storage: WorkspaceEntityStorage): WorkspaceEntityStorage {
-    val builder = WorkspaceEntityStorageBuilder.from(storage)
+  private fun cachePreProcess(storage: EntityStorage): EntityStorageSnapshot {
+    val builder = MutableEntityStorage.from(storage)
     val nonPersistentModules = builder.entities(ModuleEntity::class.java)
       .filter { it.entitySource == NonPersistentEntitySource }
       .toList()
     nonPersistentModules.forEach {
       builder.removeEntity(it)
     }
-    return builder.toStorage()
+    return builder.toSnapshot()
   }
 
   override fun dispose() = Unit
 
-  override fun loadCache(): WorkspaceEntityStorage? {
+  override fun loadCache(): EntityStorage? {
     try {
       if (!cacheFile.exists()) return null
 
@@ -134,7 +133,7 @@ class WorkspaceModelCacheImpl(private val project: Project) : Disposable, Worksp
   }
 
   // Serialize and atomically replace cacheFile. Delete temporary file in any cache to avoid junk in cache folder
-  private fun saveCache(storage: WorkspaceEntityStorage) {
+  private fun saveCache(storage: EntityStorageSnapshot) {
     val tmpFile = FileUtil.createTempFile(cacheFile.parent.toFile(), "cache", ".tmp")
     try {
       val serializationResult = tmpFile.outputStream().use { serializer.serializeCache(it, storage) }

@@ -134,7 +134,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
       project.messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(schemeManager, project))
     }
 
-    override fun createFileChangeSubscriber(): FileChangeSubscriber? {
+    override fun createFileChangeSubscriber(): FileChangeSubscriber {
       return { schemeManager ->
         if (!ApplicationManager.getApplication().isUnitTestMode || project.getUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE) == true) {
           StartupManagerEx.getInstanceEx(project).runAfterOpened {

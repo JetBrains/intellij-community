@@ -61,13 +61,13 @@ public class UndoHelper {
     });
   }
 
-  final void startListeningDocuments() {
+  public final void startListeningDocuments() {
     for (final Document document : myCurrentDocuments) {
       document.addDocumentListener(myDocumentAdapter);
     }
   }
 
-  final void stopListeningDocuments() {
+  public final void stopListeningDocuments() {
     for (final Document document : myCurrentDocuments) {
       document.removeDocumentListener(myDocumentAdapter);
     }
@@ -87,7 +87,7 @@ public class UndoHelper {
     startListeningDocuments();
   }
 
-  final void removeWatchedDocument(@NotNull Document document) {
+  public final void removeWatchedDocument(@NotNull Document document) {
     stopListeningDocuments();
     myCurrentDocuments.remove(document);
     startListeningDocuments();

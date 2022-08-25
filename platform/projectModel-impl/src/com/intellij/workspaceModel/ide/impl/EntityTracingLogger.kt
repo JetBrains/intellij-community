@@ -6,10 +6,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.FacetId
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
+import com.intellij.workspaceModel.storage.bridgeEntities.api.FacetEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.FacetId
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
 
 class EntityTracingLogger {
   /** specifies ID of an entity which changes should be printed to the log */
@@ -31,7 +31,7 @@ class EntityTracingLogger {
     }
   }
 
-  fun printInfoAboutTracedEntity(storage: WorkspaceEntityStorage, storageDescription: String) {
+  fun printInfoAboutTracedEntity(storage: EntityStorage, storageDescription: String) {
     if (entityToTrace != null) {
       LOG.info("Traced entity from $storageDescription: ${storage.resolve(entityToTrace)?.toDebugString()}")
     }
@@ -52,7 +52,7 @@ class EntityTracingLogger {
     }
 
     private fun printInfo(action: String, entity: WorkspaceEntity) {
-      if ((entity as? WorkspaceEntityWithPersistentId)?.persistentId() == entityId) {
+      if ((entity as? WorkspaceEntityWithPersistentId)?.persistentId == entityId) {
         LOG.info("$action: ${entity.toDebugString()}", Throwable())
       }
     }

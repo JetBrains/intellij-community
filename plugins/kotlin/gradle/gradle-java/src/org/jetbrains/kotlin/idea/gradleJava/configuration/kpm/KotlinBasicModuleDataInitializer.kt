@@ -9,7 +9,7 @@ import com.intellij.openapi.externalSystem.util.Order
 import org.gradle.tooling.model.UnsupportedMethodException
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.idea.gradle.configuration.kpm.ModuleDataInitializer
-import org.jetbrains.kotlin.idea.gradleJava.configuration.kpm.KotlinKPMGradleProjectResolver.Companion.getIdeaKotlinProjectModel
+import org.jetbrains.kotlin.idea.gradleJava.configuration.kpm.KotlinKPMGradleProjectResolver.Companion.getIdeaKpmProject
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 
 @Order(ExternalSystemConstants.UNORDERED)
@@ -21,7 +21,7 @@ class KotlinBasicModuleDataInitializer : ModuleDataInitializer {
         resolverCtx: ProjectResolverContext,
         initializerContext: ModuleDataInitializer.Context
     ) {
-        initializerContext.model = resolverCtx.getIdeaKotlinProjectModel(gradleModule)
+        initializerContext.model = resolverCtx.getIdeaKpmProject(gradleModule)
         val mainModuleData = mainModuleNode.data ?: return
         with(mainModuleData) {
             initializerContext.mainModuleConfigPath = linkedExternalProjectPath

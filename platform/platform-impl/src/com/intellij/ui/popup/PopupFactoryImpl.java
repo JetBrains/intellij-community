@@ -268,13 +268,11 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
     @Override
     public void handleSelect(boolean handleFinalChoices, InputEvent e) {
-      Object value = getList().getSelectedValue();
+      ActionItem item = ObjectUtils.tryCast(getList().getSelectedValue(), ActionItem.class);
       ActionPopupStep step = ObjectUtils.tryCast(getListStep(), ActionPopupStep.class);
-      AnAction action = step == null ? null : getActionFromValue(value, step);
-      if (action instanceof KeepingPopupOpenAction ||
-          action != null && value instanceof ActionItem && ((ActionItem)value).isKeepPopupOpen()) {
-        step.performAction(action, e != null ? e.getModifiers() : 0, e);
-        step.updateStepItems(() -> getList().repaint());
+      if (step != null && item != null && step.isSelectable(item) && item.isKeepPopupOpen()) {
+        step.performAction(item.getAction(), e != null ? e.getModifiers() : 0, e);
+        step.updateStepItems(getList());
       }
       else {
         super.handleSelect(handleFinalChoices, e);
@@ -287,20 +285,15 @@ public class PopupFactoryImpl extends JBPopupFactory {
       if (step == null) return;
       boolean updateStep = false;
       for (Object value : selectedValues) {
-        AnAction action = getActionFromValue(value, step);
-        if (action instanceof Toggleable) {
-          step.performAction(action, 0);
+        ActionItem item = ObjectUtils.tryCast(value, ActionItem.class);
+        if (item != null && step.isSelectable(item) && item.getAction() instanceof Toggleable) {
+          step.performAction(item.getAction(), 0);
           updateStep = true;
         }
       }
       if (updateStep) {
-        step.updateStepItems(() -> getList().repaint());
+        step.updateStepItems(getList());
       }
-    }
-
-    private static @Nullable AnAction getActionFromValue(@Nullable Object value, @NotNull ActionPopupStep step) {
-      ActionItem item = value instanceof ActionItem ? (ActionItem)value : null;
-      return item == null || !step.isSelectable(item) ? null : item.getAction();
     }
   }
 
@@ -667,12 +660,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
       myMaxIconHeight = maxIconHeight;
       myPrependWithSeparator = prependWithSeparator;
       mySeparatorText = separatorText;
-
-      myAction.getTemplatePresentation().addPropertyChangeListener(evt -> {
-        if (evt.getPropertyName() == Presentation.PROP_TEXT) {
-          myText = myAction.getTemplatePresentation().getText();
-        }
-      });
     }
 
     ActionItem(@NotNull AnAction action,
@@ -703,7 +690,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       myIsEnabled = presentation.isEnabled();
       myIsPerformGroup = myAction instanceof ActionGroup && presentation.isPerformGroup();
       myIsSubstepSuppressed = myAction instanceof ActionGroup && Utils.isSubmenuSuppressed(presentation);
-      myIsKeepPopupOpen = presentation.isMultipleChoice();
+      myIsKeepPopupOpen = myIsKeepPopupOpen || presentation.isMultiChoice() || myAction instanceof KeepingPopupOpenAction;
 
       Couple<Icon> icons = ActionStepBuilder.calcRawIcons(myAction, presentation);
       Icon icon = icons.first;

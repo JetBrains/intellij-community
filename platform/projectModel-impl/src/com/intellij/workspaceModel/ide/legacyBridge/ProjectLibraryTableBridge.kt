@@ -3,10 +3,10 @@ package com.intellij.workspaceModel.ide.legacyBridge
 
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTable
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import org.jetbrains.annotations.ApiStatus
 
 interface ProjectLibraryTableBridge : ProjectLibraryTable {
   @ApiStatus.Internal
-  fun getModifiableModel(diff: WorkspaceEntityStorageBuilder): LibraryTable.ModifiableModel
+  fun getModifiableModel(diff: MutableEntityStorage): LibraryTable.ModifiableModel
 }

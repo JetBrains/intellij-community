@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.impl.status.TextPanel
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.breadcrumbs.Breadcrumbs
@@ -112,6 +113,7 @@ class CopyUiLabelAction : UiMouseAction("CopyUiLabel") {
       is AbstractButton -> c.text
       is SimpleColoredComponent -> c.toString()
       is JTextComponent -> c.text
+      is TextPanel -> c.text
       is JComboBox<*> -> {
         when (val item = c.selectedItem) {
           null, is String -> item?.toString()

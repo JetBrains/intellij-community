@@ -2,10 +2,7 @@
 package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.workspaceModel.storage.ClassConversion
-import com.intellij.workspaceModel.storage.PersistentEntityId
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
+import com.intellij.workspaceModel.storage.*
 
 internal open class ImmutableEntitiesBarrel internal constructor(
   override val entityFamilies: List<ImmutableEntityFamily<out WorkspaceEntity>?>
@@ -78,6 +75,7 @@ internal class MutableEntitiesBarrel private constructor(
     fillEmptyFamilies(unmodifiableEntityId)
 
     val entityFamily = entityFamilies[unmodifiableEntityId] ?: run {
+      GeneratedCodeCompatibilityChecker.checkCode(unmodifiableEntityId.findWorkspaceEntity())
       val emptyEntityFamily = MutableEntityFamily.createEmptyMutable<WorkspaceEntity>()
       entityFamilies[unmodifiableEntityId] = emptyEntityFamily
       emptyEntityFamily
@@ -117,7 +115,7 @@ internal sealed class EntitiesBarrel {
       val hasPersistentId = WorkspaceEntityWithPersistentId::class.java.isAssignableFrom(clazz)
       family.assertConsistency { entityData ->
         // Assert correctness of the class
-        val immutableClass = ClassConversion.entityDataToEntity(entityData.javaClass)
+        val immutableClass = entityData.getEntityInterface()
         assert(clazz == immutableClass) {
           """EntityFamily contains entity data of wrong type:
                 | - EntityFamily class:   $clazz

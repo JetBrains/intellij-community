@@ -2,13 +2,14 @@
 package org.jetbrains.kotlin.idea.testIntegration.framework
 
 import com.intellij.execution.junit.JUnitUtil
-import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFrameworkUtils.cached
-import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFrameworkUtils.isAnnotated
-import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFrameworkUtils.getTopmostClass
-import org.jetbrains.kotlin.idea.refactoring.isAbstract
+import com.intellij.psi.util.PsiUtil
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFramework.Companion.KOTLIN_TEST_TEST
+import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFrameworkUtils.cached
+import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFrameworkUtils.getTopmostClass
+import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFrameworkUtils.isAnnotated
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class JUnit5KotlinTestFramework : AbstractKotlinTestFramework() {
 
@@ -27,6 +28,9 @@ class JUnit5KotlinTestFramework : AbstractKotlinTestFramework() {
     }
 
     private fun isJUnit5TestClass(ktClassOrObject: KtClassOrObject): Boolean {
+        if (ktClassOrObject.safeAs<KtClass>()?.isInner() == true && !ktClassOrObject.isAnnotated("org.junit.jupiter.api.Nested"))
+            return false
+
         val topmostClass = getTopmostClass(ktClassOrObject)
         if (topmostClass == ktClassOrObject && ktClassOrObject.isAnnotated("org.junit.jupiter.api.extension.ExtendWith"))
             return true

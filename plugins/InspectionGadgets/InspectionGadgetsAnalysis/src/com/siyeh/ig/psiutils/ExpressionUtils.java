@@ -985,8 +985,8 @@ public final class ExpressionUtils {
       if (containingClass == null) {
         containingClass = PsiTreeUtil.getContextOfType(ref, PsiClass.class);
       }
-      if (!member.hasModifierProperty(PsiModifier.STATIC) && isStaticMember(containingClass)) return null;
       if (!InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
+        if (!member.hasModifierProperty(PsiModifier.STATIC) && isStaticMember(containingClass)) return null;
         containingClass = ClassUtils.getContainingClass(containingClass);
         while (containingClass != null && !InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
           if (!member.hasModifierProperty(PsiModifier.STATIC) && isStaticMember(containingClass)) return null;

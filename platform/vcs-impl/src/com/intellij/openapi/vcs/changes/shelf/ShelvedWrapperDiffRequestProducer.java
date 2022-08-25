@@ -10,7 +10,6 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP;
-import com.intellij.openapi.diff.impl.patch.PatchEP;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.PlainSimplePatchApplier;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -121,8 +120,7 @@ public class ShelvedWrapperDiffRequestProducer implements DiffRequestProducer, C
     }
 
     String path = chooseNotNull(patch.getAfterName(), patch.getBeforeName());
-    CharSequence baseContents = PatchEP.EP_NAME.findExtensionOrFail(BaseRevisionTextPatchEP.class)
-      .provideContent(myProject, path, commitContext);
+    CharSequence baseContents = BaseRevisionTextPatchEP.getBaseContent(myProject, path, commitContext);
     if (baseContents != null) {
       String patchedContent = PlainSimplePatchApplier.apply(baseContents, patch.getHunks());
       if (patchedContent != null) {

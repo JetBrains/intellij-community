@@ -5,9 +5,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.Function;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.JavaSourceRootEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.JavaSourceRootEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.SourceRootEntity;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +38,7 @@ class JavaSourceRootIndexableEntityProvider implements IndexableEntityProvider<J
   static <E extends WorkspaceEntity> Collection<IndexableIteratorBuilder> collectBuildersOnAddedEntityWithDataExtractor(@NotNull E entity,
                                                                                                                         @NotNull Function<? super E, @NotNull Pair<VirtualFileUrl, ModuleEntity>> extractor) {
     Pair<VirtualFileUrl, ModuleEntity> data = extractor.fun(entity);
-    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(data.getSecond().persistentId(), data.getFirst());
+    return IndexableIteratorBuilders.INSTANCE.forModuleRoots(data.getSecond().getPersistentId(), data.getFirst());
   }
 
   @NotNull
@@ -50,7 +50,7 @@ class JavaSourceRootIndexableEntityProvider implements IndexableEntityProvider<J
     if (newData != null) {
       Pair<VirtualFileUrl, ModuleEntity> oldData = extractor.fun(oldEntity);
       if (oldData == null || !newData.getFirst().equals(oldData.getFirst())) {
-        return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newData.getSecond().persistentId(), newData.getFirst());
+        return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newData.getSecond().getPersistentId(), newData.getFirst());
       }
     }
     return Collections.emptyList();

@@ -7,6 +7,7 @@ import com.intellij.ui.components.JBScrollPane.Alignment;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.Timer;
 import javax.swing.*;
@@ -130,19 +131,17 @@ class DefaultScrollBarUI extends ScrollBarUI {
       }
     }
 
-    int inset = insetForSmall(small);
-    if (inset != 0) {
-      x += inset;
-      y += inset;
-      width -= 2 * inset;
-      height -= 2 * inset;
-    }
+    Insets insets = getInsets(small);
+    x += insets.left;
+    y += insets.top;
+    width -= (insets.left + insets.right);
+    height -= (insets.top + insets.bottom);
 
     p.paint(g, x, y, width, height, p.animator.myValue);
   }
 
-  protected int insetForSmall(boolean small) {
-    return small ? 1 : 0;
+  protected @NotNull Insets getInsets(boolean small) {
+    return small ? JBUI.insets(1) : JBUI.emptyInsets();
   }
 
   private int getTrackOffset(int offset) {

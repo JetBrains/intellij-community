@@ -4,34 +4,34 @@ package org.jetbrains.kotlin.idea.gradleJava.configuration.kpm
 
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import org.gradle.tooling.model.idea.IdeaModule
-import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKotlinFragment
-import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKotlinFragmentCoordinates
+import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmFragment
+import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmFragmentCoordinates
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import java.io.File
 
 
-private val IdeaKotlinFragmentCoordinates.fullName
+private val IdeaKpmFragmentCoordinates.fullName
     get() = fragmentName + (module.moduleName).capitalizeAsciiOnly()
 
-private val IdeaKotlinFragment.isTestFragment
+private val IdeaKpmFragment.isTestFragment
     get() = coordinates.module.moduleName == "test"
 
 internal fun calculateKotlinFragmentModuleId(
     gradleModule: IdeaModule,
-    fragment: IdeaKotlinFragmentCoordinates,
+    fragment: IdeaKpmFragmentCoordinates,
     resolverCtx: ProjectResolverContext
 ): String =
     GradleProjectResolverUtil.getModuleId(resolverCtx, gradleModule) + ":" + fragment.fullName
 
-fun IdeaKotlinFragment.computeSourceType(): ExternalSystemSourceType =
+fun IdeaKpmFragment.computeSourceType(): ExternalSystemSourceType =
     if (isTestFragment) ExternalSystemSourceType.TEST else ExternalSystemSourceType.SOURCE
 
-fun IdeaKotlinFragment.computeResourceType(): ExternalSystemSourceType =
+fun IdeaKpmFragment.computeResourceType(): ExternalSystemSourceType =
     if (isTestFragment) ExternalSystemSourceType.TEST_RESOURCE else ExternalSystemSourceType.RESOURCE
 
-val IdeaKotlinFragment.sourceDirs: Collection<File>
+val IdeaKpmFragment.sourceDirs: Collection<File>
     get() = sourceDirectories.map { it.file }
-val IdeaKotlinFragment.resourceDirs: Collection<File>
+val IdeaKpmFragment.resourceDirs: Collection<File>
     get() = resourceDirectories.map { it.file }

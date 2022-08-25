@@ -3,6 +3,7 @@ package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeInsight.codeVision.CodeVisionHost;
+import com.intellij.codeInsight.codeVision.CodeVisionInitializer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter;
 import com.intellij.codeInsight.documentation.render.DocRenderManager;
@@ -66,7 +67,7 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
                                        : null;
 
     HintsBuffer buffer = psiFile != null ? InlayHintsPassFactory.Companion.collectPlaceholders(psiFile, editor) : null;
-    var placeholders = CodeVisionHost.getInstance(myProject).collectPlaceholders(editor, psiFile);
+    var placeholders = CodeVisionInitializer.Companion.getInstance(myProject).getCodeVisionHost().collectPlaceholders(editor, psiFile);
 
     return () -> {
       baseResult.run();

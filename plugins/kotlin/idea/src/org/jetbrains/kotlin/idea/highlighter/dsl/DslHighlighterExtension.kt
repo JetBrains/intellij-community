@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.highlighter.dsl
 
@@ -47,7 +47,7 @@ class DslHighlighterExtension : HighlighterExtension() {
 
         fun styleOptionDisplayName(index: Int) = KotlinBundle.message("highlighter.name.style") + index
 
-        fun styleIdByMarkerAnnotation(markerAnnotation: ClassDescriptor): Int? {
+        fun styleIdByMarkerAnnotation(markerAnnotation: ClassDescriptor): Int {
             val markerAnnotationFqName = markerAnnotation.fqNameSafe
             return (markerAnnotationFqName.asString().hashCode() % numStyles).absoluteValue + 1
         }
@@ -57,7 +57,7 @@ class DslHighlighterExtension : HighlighterExtension() {
                 annotation.annotationClass?.isDslHighlightingMarker() ?: false
             }?.annotationClass ?: return null
 
-            val styleId = styleIdByMarkerAnnotation(markerAnnotation) ?: return null
+            val styleId = styleIdByMarkerAnnotation(markerAnnotation)
             return styleById(styleId)
         }
 

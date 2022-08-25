@@ -67,8 +67,8 @@ public class HgCheckoutProvider implements CheckoutProvider {
       @NotNull
       @Override
       public CloneTaskInfo taskInfo() {
-        return new CloneTaskInfo(HgBundle.message("hg4idea.clone.progress", sourceRepositoryURL),
-                                 HgBundle.message("hg4idea.clone.progress.failed", sourceRepositoryURL),
+        return new CloneTaskInfo(DvcsBundle.message("cloning.repository", sourceRepositoryURL),
+                                 DvcsBundle.message("cloning.repository.cancel", sourceRepositoryURL),
                                  DvcsBundle.message("clone.repository"),
                                  DvcsBundle.message("clone.repository.tooltip"),
                                  DvcsBundle.message("clone.repository.failed"),

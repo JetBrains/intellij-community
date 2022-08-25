@@ -30,8 +30,8 @@ class KotlinBasicFragmentDataInitializer : ModuleDataInitializer {
 
             if (fragmentGradleSourceSetDataNode.findAll(KotlinFragmentData.KEY).isNotEmpty()) return@forEach
             val refinesFragmentsIds = fragment.dependencies
-                .filterIsInstance<IdeaKotlinFragmentDependency>()
-                .filter { it.type == IdeaKotlinFragmentDependency.Type.Refines }
+                .filterIsInstance<IdeaKpmFragmentDependency>()
+                .filter { it.type == IdeaKpmFragmentDependency.Type.Refines }
                 .map { calculateKotlinFragmentModuleId(gradleModule, it.coordinates, resolverCtx) }
 
             // TODO use platformDetails to calculate more precised platform

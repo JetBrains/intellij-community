@@ -178,7 +178,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
     myMlService = SearchEverywhereMlService.getInstance();
     if (myMlService != null) {
-      myMlService.onSessionStarted(myProject);
+      myMlService.onSessionStarted(myProject, new SearchEverywhereMixedListInfo(myListFactory));
     }
     Disposer.register(this, SearchFieldStatisticsCollector.createAndStart(mySearchField, myProject));
   }

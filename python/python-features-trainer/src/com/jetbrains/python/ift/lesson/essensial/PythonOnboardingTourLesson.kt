@@ -4,6 +4,7 @@ package com.jetbrains.python.ift.lesson.essensial
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.RunManager
+import com.intellij.execution.ui.UIExperiment
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
@@ -26,7 +27,6 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.WindowStateService
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.FocusManagerImpl
 import com.intellij.openapi.wm.impl.status.TextPanel
@@ -247,7 +247,7 @@ class PythonOnboardingTourLesson :
       rehighlightPreviousUi = true
       text(PythonLessonsBundle.message("python.onboarding.balloon.about.debug.panel",
                                        strong(UIBundle.message("tool.window.name.debug")),
-                                       if (Registry.`is`("debugger.new.tool.window.layout")) 0 else 1,
+                                       if (UIExperiment.isNewDebuggerUIEnabled()) 0 else 1,
                                        strong(LessonsBundle.message("debug.workflow.lesson.name"))))
       proceedLink()
       restoreIfModified(sample)

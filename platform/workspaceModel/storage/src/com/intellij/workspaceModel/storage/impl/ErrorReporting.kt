@@ -6,10 +6,7 @@ import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.io.Compressor
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
@@ -24,7 +21,7 @@ import kotlin.io.path.name
 import kotlin.io.path.writeText
 
 @ApiStatus.Internal
-fun reportErrorAndAttachStorage(message: String, storage: WorkspaceEntityStorage) {
+fun reportErrorAndAttachStorage(message: String, storage: EntityStorage) {
   reportConsistencyIssue(message, IllegalStateException(), null, null, null, storage)
 }
 
@@ -33,14 +30,10 @@ internal fun serializeContent(path: Path, howToSerialize: (EntityStorageSerializ
   path.toFile().outputStream().use { howToSerialize(serializer, it) }
 }
 
-internal fun serializeEntityStorage(path: Path, storage: WorkspaceEntityStorage) {
+internal fun serializeEntityStorage(path: Path, storage: EntityStorage) {
   serializeContent(path) { serializer, stream ->
-    serializer.serializeCache(stream, storage.makeSureItsStore())
+    serializer.serializeCache(stream, storage.toSnapshot())
   }
-}
-
-private fun WorkspaceEntityStorage.makeSureItsStore(): WorkspaceEntityStorage {
-  return if (this is WorkspaceEntityStorageBuilderImpl) this.toStorage() else this
 }
 
 internal fun getStoreDumpDirectory(): Path {
@@ -72,27 +65,29 @@ private fun formatTime(timeMs: Long) = SimpleDateFormat("yyyyMMdd-HHmmss").forma
 
 private fun ageInDays(file: File) = TimeUnit.DAYS.convert(System.currentTimeMillis() - file.lastModified(), TimeUnit.MILLISECONDS)
 
-internal fun WorkspaceEntityStorage.serializeTo(stream: OutputStream) {
+internal fun EntityStorage.serializeTo(stream: OutputStream) {
   val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl())
-  serializer.serializeCache(stream, this.makeSureItsStore())
+  serializer.serializeCache(stream, this.toSnapshot())
 }
 
-internal fun WorkspaceEntityStorageBuilderImpl.serializeDiff(stream: OutputStream) {
+internal fun MutableEntityStorageImpl.serializeDiff(stream: OutputStream) {
   val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl())
   serializeDiff(serializer, stream)
 }
 
-private fun WorkspaceEntityStorageBuilderImpl.serializeDiff(serializer: EntityStorageSerializerImpl, stream: OutputStream) {
+private fun MutableEntityStorageImpl.serializeDiff(serializer: EntityStorageSerializerImpl, stream: OutputStream) {
   serializer.serializeDiffLog(stream, this.changeLog.changeLog.anonymize())
 }
 
-internal fun WorkspaceEntityStorage.anonymize(sourceFilter: ((EntitySource) -> Boolean)?): WorkspaceEntityStorage {
+internal fun EntityStorage.anonymize(sourceFilter: ((EntitySource) -> Boolean)?): EntityStorage {
   if (!isWrapped()) return this
-  val builder = WorkspaceEntityStorageBuilder.from(this)
+  val builder = MutableEntityStorage.from(this)
   builder.entitiesBySource { true }.flatMap { it.value.flatMap { it.value } }.forEach { entity ->
-    builder.changeSource(entity, entity.entitySource.anonymize(sourceFilter))
+    builder.modifyEntity(ModifiableWorkspaceEntity::class.java, entity) {
+      this.entitySource = entity.entitySource.anonymize(sourceFilter)
+    }
   }
-  return builder.toStorage()
+  return builder.toSnapshot()
 }
 
 internal fun ChangeLog.anonymize(): ChangeLog {
@@ -163,13 +158,13 @@ data class MatchedEntitySource(val originalSourceDump: String) : EntitySource
 data class UnmatchedEntitySource(val originalSourceDump: String) : EntitySource
 
 private fun serializeContentToFolder(contentFolder: Path,
-                                     left: WorkspaceEntityStorage?,
-                                     right: WorkspaceEntityStorage?,
-                                     resulting: WorkspaceEntityStorage,
+                                     left: EntityStorage?,
+                                     right: EntityStorage?,
+                                     resulting: EntityStorage,
                                      sourceFilter: ((EntitySource) -> Boolean)?): File? {
-  if (right is WorkspaceEntityStorageBuilder) {
+  if (right is MutableEntityStorage) {
     serializeContent(contentFolder.resolve("Right_Diff_Log")) { serializer, stream ->
-      right as WorkspaceEntityStorageBuilderImpl
+      right as MutableEntityStorageImpl
       right.serializeDiff(serializer, stream)
     }
   }
@@ -206,9 +201,9 @@ private fun serializeContentToFolder(contentFolder: Path,
 internal fun reportConsistencyIssue(message: String,
                                     e: Throwable,
                                     sourceFilter: ((EntitySource) -> Boolean)?,
-                                    left: WorkspaceEntityStorage?,
-                                    right: WorkspaceEntityStorage?,
-                                    resulting: WorkspaceEntityStorage) {
+                                    left: EntityStorage?,
+                                    right: EntityStorage?,
+                                    resulting: EntityStorage) {
   var finalMessage = "$message\n\n"
   finalMessage += "\nVersion: ${EntityStorageSerializerImpl.SERIALIZER_VERSION}"
 

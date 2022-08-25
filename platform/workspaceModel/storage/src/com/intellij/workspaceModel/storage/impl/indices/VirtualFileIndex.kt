@@ -9,8 +9,10 @@ import com.intellij.openapi.util.text.Strings
 import com.intellij.util.containers.CollectionFactory.createSmallMemoryFootprintMap
 import com.intellij.util.containers.CollectionFactory.createSmallMemoryFootprintSet
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot
-import com.intellij.workspaceModel.storage.impl.*
+import com.intellij.workspaceModel.storage.impl.AbstractEntityStorage
+import com.intellij.workspaceModel.storage.impl.EntityId
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.asString
 import com.intellij.workspaceModel.storage.impl.containers.BidirectionalLongMultiMap
 import com.intellij.workspaceModel.storage.impl.containers.putAll
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
@@ -23,10 +25,6 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import org.jetbrains.annotations.TestOnly
-import kotlin.properties.ReadWriteProperty
-import kotlin.reflect.KProperty
-import kotlin.reflect.KProperty1
-import kotlin.reflect.full.memberProperties
 
 /**
  * EntityId2Vfu may contains these possible variants, due to memory optimization:
@@ -409,91 +407,5 @@ private val CASE_INSENSITIVE_STRATEGY: Hash.Strategy<VirtualFileUrl> = object : 
   override fun hashCode(fileUrl: VirtualFileUrl?): Int {
     if (fileUrl == null) return 0
     return Strings.stringHashCodeInsensitive(fileUrl.url)
-  }
-}
-
-//---------------------------------------------------------------------
-class VirtualFileUrlProperty<T : ModifiableWorkspaceEntityBase<out WorkspaceEntityBase>> : ReadWriteProperty<T, VirtualFileUrl> {
-  @Suppress("UNCHECKED_CAST")
-  override fun getValue(thisRef: T, property: KProperty<*>): VirtualFileUrl {
-    return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>)
-      .get(thisRef.original) as VirtualFileUrl
-  }
-
-  override fun setValue(thisRef: T, property: KProperty<*>, value: VirtualFileUrl) {
-    if (!thisRef.modifiable.get()) {
-      throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
-    }
-    val field = thisRef.original.javaClass.getDeclaredField(property.name)
-    field.isAccessible = true
-    field.set(thisRef.original, value)
-    (thisRef.diff as WorkspaceEntityStorageBuilderImpl).indexes.virtualFileIndex.index(thisRef.id, property.name, value)
-  }
-}
-
-//---------------------------------------------------------------------
-class VirtualFileUrlNullableProperty<T : ModifiableWorkspaceEntityBase<out WorkspaceEntityBase>> : ReadWriteProperty<T, VirtualFileUrl?> {
-  @Suppress("UNCHECKED_CAST")
-  override fun getValue(thisRef: T, property: KProperty<*>): VirtualFileUrl? {
-    return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>)
-      .get(thisRef.original) as VirtualFileUrl?
-  }
-
-  override fun setValue(thisRef: T, property: KProperty<*>, value: VirtualFileUrl?) {
-    if (!thisRef.modifiable.get()) {
-      throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
-    }
-    val field = thisRef.original.javaClass.getDeclaredField(property.name)
-    field.isAccessible = true
-    field.set(thisRef.original, value)
-    (thisRef.diff as WorkspaceEntityStorageBuilderImpl).indexes.virtualFileIndex.index(thisRef.id, property.name, value)
-  }
-}
-
-//---------------------------------------------------------------------
-class VirtualFileUrlListProperty<T : ModifiableWorkspaceEntityBase<out WorkspaceEntityBase>> : ReadWriteProperty<T, List<VirtualFileUrl>> {
-  @Suppress("UNCHECKED_CAST")
-  override fun getValue(thisRef: T, property: KProperty<*>): List<VirtualFileUrl> {
-    return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>)
-      .get(thisRef.original) as List<VirtualFileUrl>
-  }
-
-  override fun setValue(thisRef: T, property: KProperty<*>, value: List<VirtualFileUrl>) {
-    if (!thisRef.modifiable.get()) {
-      throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
-    }
-    val field = thisRef.original.javaClass.getDeclaredField(property.name)
-    field.isAccessible = true
-    field.set(thisRef.original, value)
-    (thisRef.diff as WorkspaceEntityStorageBuilderImpl).indexes.virtualFileIndex.index(thisRef.id, property.name, value.toHashSet())
-  }
-}
-
-/**
- * This delegate was created specifically for the handling VirtualFileUrls from LibraryRoot
- */
-class VirtualFileUrlLibraryRootProperty<T : ModifiableWorkspaceEntityBase<out WorkspaceEntityBase>> : ReadWriteProperty<T, List<LibraryRoot>> {
-  @Suppress("UNCHECKED_CAST")
-  override fun getValue(thisRef: T, property: KProperty<*>): List<LibraryRoot> {
-    return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>)
-      .get(thisRef.original) as List<LibraryRoot>
-  }
-
-  override fun setValue(thisRef: T, property: KProperty<*>, value: List<LibraryRoot>) {
-    if (!thisRef.modifiable.get()) {
-      throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
-    }
-    val field = thisRef.original.javaClass.getDeclaredField(property.name)
-    field.isAccessible = true
-    field.set(thisRef.original, value)
-
-    val jarDirectories = mutableSetOf<VirtualFileUrl>()
-    (thisRef.diff as WorkspaceEntityStorageBuilderImpl).indexes.virtualFileIndex.index(thisRef.id, property.name, value.map {
-      if (it.inclusionOptions != LibraryRoot.InclusionOptions.ROOT_ITSELF) {
-        jarDirectories.add(it.url)
-      }
-      it.url
-    }.toHashSet())
-    (thisRef.diff as WorkspaceEntityStorageBuilderImpl).indexes.virtualFileIndex.indexJarDirectories(thisRef.id, jarDirectories)
   }
 }

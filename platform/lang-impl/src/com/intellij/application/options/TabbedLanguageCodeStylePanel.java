@@ -63,7 +63,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
   private Ref<LanguageCodeStyleSettingsProvider> myProviderRef;
 
-  protected TabbedLanguageCodeStylePanel(@Nullable Language language, CodeStyleSettings currentSettings, CodeStyleSettings settings) {
+  protected TabbedLanguageCodeStylePanel(@Nullable Language language, CodeStyleSettings currentSettings, @NotNull CodeStyleSettings settings) {
     super(language, currentSettings, settings);
     myPredefinedCodeStyles = getPredefinedStyles();
     CodeStyleSettingsProvider.EXTENSION_POINT_NAME.addExtensionPointListener(
@@ -217,7 +217,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   }
 
   private void addTab(Configurable configurable) {
-    ConfigurableWrapper wrapper = new ConfigurableWrapper(configurable, getSettings());
+    CodeStyleConfigurableWrapperPanel wrapper = new CodeStyleConfigurableWrapperPanel(configurable, getSettings());
     addTab(wrapper);
   }
 
@@ -462,9 +462,8 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     }
   }
 
-  protected class MyBlankLinesPanel extends CodeStyleBlankLinesPanel {
-
-    public MyBlankLinesPanel(CodeStyleSettings settings) {
+  class MyBlankLinesPanel extends CodeStyleBlankLinesPanel {
+    MyBlankLinesPanel(CodeStyleSettings settings) {
       super(settings);
     }
 
@@ -489,12 +488,12 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
   //========================================================================================================================================
 
-  private class ConfigurableWrapper extends CodeStyleAbstractPanel {
+  private class CodeStyleConfigurableWrapperPanel extends CodeStyleAbstractPanel {
 
     private final Configurable myConfigurable;
     private JComponent myComponent;
 
-    ConfigurableWrapper(@NotNull Configurable configurable, CodeStyleSettings settings) {
+    CodeStyleConfigurableWrapperPanel(@NotNull Configurable configurable, @NotNull CodeStyleSettings settings) {
       super(settings);
       myConfigurable = configurable;
 

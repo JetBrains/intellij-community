@@ -11,7 +11,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.intentions.isArrayOfMethod
+import org.jetbrains.kotlin.idea.intentions.isArrayOfFunction
 import org.jetbrains.kotlin.idea.refactoring.replaceWithCopyWithResolveCheck
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -31,7 +31,7 @@ class RemoveRedundantSpreadOperatorInspection : AbstractKotlinInspection() {
             val endOffset =
                 when (argumentExpression) {
                     is KtCallExpression -> {
-                        if (!argumentExpression.isArrayOfMethod()) return
+                        if (!argumentExpression.isArrayOfFunction()) return
                         val call = argument.getStrictParentOfType<KtCallExpression>() ?: return
                         val bindingContext = call.analyze(BodyResolveMode.PARTIAL)
                         val argumentIndex = call.valueArguments.indexOfFirst { it == argument }

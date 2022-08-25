@@ -8,8 +8,11 @@ import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.addJavaModuleSettingsEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.maven.importing.MavenModelUtil
@@ -29,7 +32,7 @@ import java.io.File
 class WorkspaceModuleImporter(
   private val importData: MavenModuleImportData,
   private val virtualFileUrlManager: VirtualFileUrlManager,
-  private val builder: WorkspaceEntityStorageBuilder,
+  private val builder: MutableEntityStorage,
   private val importingSettings: MavenImportingSettings,
   private val mavenImportFoldersByMavenId: MutableMap<String, MavenImportFolderHolder>,
   private val project: Project) {
@@ -46,10 +49,11 @@ class WorkspaceModuleImporter(
     val dependencies = collectDependencies(importData, entitySource)
     val moduleName = importData.moduleData.moduleName
     val moduleEntity = builder.addModuleEntity(moduleName, dependencies, entitySource, ModuleTypeId.JAVA_MODULE)
-    builder.addEntity(ModifiableExternalSystemModuleOptionsEntity::class.java, entitySource) {
+    val externalSystemModuleOptionsEntity = ExternalSystemModuleOptionsEntity(entitySource) {
       module = moduleEntity
       externalSystem = externalSource.id
     }
+    builder.addEntity(externalSystemModuleOptionsEntity)
     val folderImporter = WorkspaceFolderImporter(builder, virtualFileUrlManager, importingSettings)
 
     when (importData.moduleData.type) {

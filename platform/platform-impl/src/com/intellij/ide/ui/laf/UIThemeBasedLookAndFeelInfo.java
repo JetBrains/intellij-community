@@ -152,7 +152,6 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
     unsetBackgroundProperties(IdeBackgroundUtil.FRAME_PROP);
 
     myInitialised = false;
-    myTheme.setProviderClassLoader(null);
   }
 
   private void unsetBackgroundProperties(String backgroundPropertyKey) {

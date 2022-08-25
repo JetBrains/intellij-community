@@ -14,9 +14,9 @@ import com.intellij.openapi.vfs.ex.http.HttpFileSystem
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.ide.toPath
-import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryRoot
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.idea.eclipse.AbstractEclipseClasspathReader
@@ -25,7 +25,6 @@ import org.jetbrains.idea.eclipse.EclipseXml
 import org.jetbrains.idea.eclipse.conversion.EJavadocUtil
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
-import java.nio.file.Paths
 
 private val LOG = logger<EclipseModuleRootsSerializer>()
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage
 
 import com.intellij.ProjectTopics
@@ -33,7 +33,7 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.toBuilder
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
@@ -226,7 +226,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
     if (properties != null) properties.isForGeneratedSources = generated
   }
 
-  override fun getState(): SourceFolderManagerState? {
+  override fun getState(): SourceFolderManagerState {
     synchronized(mutex) {
       return SourceFolderManagerState(sourceFolders.valueSequence
                                         .mapNotNull { model ->
@@ -305,8 +305,8 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   }
 }
 
-class ExternalSystemRootConfigurationAccessor(override val actualDiffBuilder: WorkspaceEntityStorageBuilder) : RootConfigurationAccessor(),
-                                                                                                                RootConfigurationAccessorForWorkspaceModel
+class ExternalSystemRootConfigurationAccessor(override val actualDiffBuilder: MutableEntityStorage) : RootConfigurationAccessor(),
+                                                                                                      RootConfigurationAccessorForWorkspaceModel
 
 data class SourceFolderManagerState(@get:XCollection(style = XCollection.Style.v2) val sourceFolders: Collection<SourceFolderModelState>) {
   constructor() : this(mutableListOf())

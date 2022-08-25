@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiRecordComponent;
 import com.intellij.psi.PsiResolveHelper;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.util.ObjectUtils;
@@ -34,6 +35,10 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
     final RefElementImpl owner = (RefElementImpl)refElement;
     if (owner != null) {
       owner.add(this);
+    }
+
+    if (psi instanceof PsiRecordComponent) {
+      setUsedForReading();
     }
 
     //TODO kotlin receiver parameter must be used

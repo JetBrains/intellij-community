@@ -20,16 +20,15 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibr
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.FileContainerDescription
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.JarDirectoryDescription
 import com.intellij.workspaceModel.ide.toExternalSource
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryPropertiesEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot
-import com.intellij.workspaceModel.storage.bridgeEntities.getCustomProperties
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryPropertiesEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryRoot
 import java.io.StringReader
 
 class LibraryStateSnapshot(
   val libraryEntity: LibraryEntity,
-  val storage: WorkspaceEntityStorage,
+  val storage: EntityStorage,
   val libraryTable: LibraryTable,
   val parentDisposable: Disposable) {
   private val roots = collectFiles(libraryEntity)
@@ -40,7 +39,7 @@ class LibraryStateSnapshot(
   else null
 
   private val kindProperties by lazy {
-    val customProperties = libraryEntity.getCustomProperties()
+    val customProperties = libraryEntity.libraryProperties
     val k = customProperties?.libraryType?.let {
       LibraryKindRegistry.getInstance().findKindById(it) ?: UnknownLibraryKind.getOrCreate(it)
     } as? PersistentLibraryKind<*>
@@ -64,7 +63,7 @@ class LibraryStateSnapshot(
   }
 
   val name: String?
-    get() = LibraryNameGenerator.getLegacyLibraryName(libraryEntity.persistentId())
+    get() = LibraryNameGenerator.getLegacyLibraryName(libraryEntity.persistentId)
 
   val module: Module?
     get() = (libraryTable as? ModuleLibraryTableBridge)?.module

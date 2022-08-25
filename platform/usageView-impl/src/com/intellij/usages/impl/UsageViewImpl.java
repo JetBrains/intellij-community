@@ -980,11 +980,7 @@ public class UsageViewImpl implements UsageViewEx {
     group.getTemplatePresentation().setIcon(AllIcons.Actions.GroupBy);
     group.getTemplatePresentation().setText(UsageViewBundle.messagePointer("action.group.by.title"));
     group.getTemplatePresentation().setDescription(UsageViewBundle.messagePointer("action.group.by.title"));
-    group.getTemplatePresentation().setMultipleChoice(true);
     AnAction[] groupingActions = createGroupingActions();
-    for (AnAction a : groupingActions) {
-      a.getTemplatePresentation().setMultipleChoice(true);
-    }
     if (groupingActions.length > 0) {
       group.add(new Separator(UsageViewBundle.message("action.group.by.title")));
       group.addAll(groupingActions);
@@ -1543,7 +1539,7 @@ public class UsageViewImpl implements UsageViewEx {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myCurrentUsageContextPanel != null) {
       try {
-        myCurrentUsageContextPanel.updateLayout(getSelectedUsageInfos());
+        myCurrentUsageContextPanel.updateLayout(getSelectedUsageInfos(), getSelectedGroups());
       }
       catch (IndexNotReadyException ignore) {
       }
@@ -2228,6 +2224,28 @@ public class UsageViewImpl implements UsageViewEx {
   private List<UsageInfo> getSelectedUsageInfos() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return USAGE_INFO_LIST_KEY.getData(DataManager.getInstance().getDataContext(myRootPanel));
+  }
+
+  private @NotNull Collection<@NotNull Collection<? extends UsageGroup>> getSelectedGroups() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    Collection<Collection<? extends UsageGroup>> groupPaths = new ArrayList<>();
+    for (TreeNode node : selectedNodes()) {
+      if (node instanceof GroupNode) {
+        List<UsageGroup> groupPath = new ArrayList<>();
+        TreeNode parent = node;
+        while (parent != null) {
+          if (parent instanceof GroupNode) {
+            final UsageGroup group = ((GroupNode)parent).getGroup();
+            if (group != null) {
+              groupPath.add(group);
+            }
+          }
+          parent = parent.getParent();
+        }
+        groupPaths.add(groupPath);
+      }
+    }
+    return groupPaths;
   }
 
   @NotNull

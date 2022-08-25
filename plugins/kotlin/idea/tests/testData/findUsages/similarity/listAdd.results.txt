@@ -1,0 +1,9 @@
+[{id=0
+, myUsages=3|numbers.|add| (|"five"|),
+4|numbers.|add|(|"zero"|)}
+, {id=1
+, myUsages=5|numbers.|add|(getStr())}
+, {id=2
+, myUsages=6|numbers.|add|(getStr() + |"a"|),
+7|numbers.|add|(getStr() + |"b"|)}
+]

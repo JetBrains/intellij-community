@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+@SuppressWarnings("InspectionDescriptionNotFoundInspection") // via UnusedDeclarationInspection
 class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
   @Override
   public CommonProblemDescriptor @Nullable [] checkElement(@NotNull final RefEntity refEntity,

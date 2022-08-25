@@ -370,7 +370,7 @@
     <projectService serviceImplementation="com.intellij.psi.util.ProjectIconsAccessor"/>
     <projectService serviceImplementation="com.intellij.codeInsight.JavaProjectCodeInsightSettings"/>
     <projectService serviceImplementation="com.intellij.javadoc.JavadocGenerationManager"/>
-    <projectService serviceInterface="com.intellij.codeInspection.test.TestFailedLineManager"
+    <projectService serviceInterface="com.intellij.testIntegration.TestFailedLineManager"
                     serviceImplementation="com.intellij.execution.codeInspection.TestFailedLineManagerImpl"/>
     <projectService serviceInterface="com.intellij.codeInspection.ex.EntryPointsManager"
                     serviceImplementation="com.intellij.codeInspection.ex.EntryPointsManagerImpl"/>
@@ -1885,7 +1885,7 @@
     <localInspection groupPath="Java" language="JAVA" shortName="BulkFileAttributesRead"
                      key="inspection.bulk.file.attributes.read.description" bundle="messages.JavaBundle"
                      groupKey="group.names.performance.issues" groupBundle="messages.InspectionsBundle"
-                     enabledByDefault="true" level="WARNING"
+                     enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.BulkFileAttributesReadInspection"/>
     <globalInspection groupPath="Java" language="JAVA" shortName="EmptyMethod" groupKey="group.names.declaration.redundancy" enabledByDefault="true" groupBundle="messages.InspectionsBundle"
                       level="WARNING" implementationClass="com.intellij.codeInspection.emptyMethod.EmptyMethodInspection"
@@ -2273,6 +2273,8 @@
                  description="The host is used to download dependency config updates for framework starters"/>
 
     <dependencyCollector kind="java" implementation="com.intellij.ide.JavaDependencyCollector"/>
+
+    <usageFeaturesProvider implementation="com.intellij.find.findUsages.similarity.JavaUsageSimilarityFeaturesProvider"/>
 
     <registryKey key="java.formatter.chained.calls.pre212.compatibility"
                  defaultValue="false"

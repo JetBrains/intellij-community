@@ -11,8 +11,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
 @ApiStatus.Internal
 public final class DirectBufferWrapper {
-  @NotNull
-  private static final ByteOrder ourNativeByteOrder = ByteOrder.nativeOrder();
+  private static final DirectByteBufferAllocator ALLOCATOR = new DirectByteBufferAllocator();
   private static final int RELEASED_CODE = -1;
 
   private static final AtomicIntegerFieldUpdater<DirectBufferWrapper> REF_UPDATER =
@@ -31,7 +30,7 @@ public final class DirectBufferWrapper {
   DirectBufferWrapper(@NotNull PagedFileStorage file, long offset) throws IOException {
     myFile = file;
     myPosition = offset;
-    myBuffer = DirectByteBufferAllocator.allocate(() -> create());
+    myBuffer = create();
     myFile.getStorageLockContext().assertUnderSegmentAllocationLock();
   }
 
@@ -57,17 +56,11 @@ public final class DirectBufferWrapper {
   }
 
   public ByteBuffer copy() {
-    try {
-      return DirectByteBufferAllocator.allocate(() -> {
-        ByteBuffer duplicate = myBuffer.duplicate();
-        duplicate.order(myBuffer.order());
-        return duplicate;
-      });
-    }
-    catch (IOException e) {
-      // not expected there
-      throw new RuntimeException(e);
-    }
+    return DirectByteBufferAllocator.allocate(() -> {
+      ByteBuffer duplicate = myBuffer.duplicate();
+      duplicate.order(myBuffer.order());
+      return duplicate;
+    });
   }
 
   public byte get(int index) {
@@ -163,8 +156,9 @@ public final class DirectBufferWrapper {
 
 
   private ByteBuffer create() throws IOException {
-    ByteBuffer buffer = ByteBuffer.allocateDirect(myFile.myPageSize);
-    assert buffer.capacity() > 0;
+    ByteBuffer buffer = ALLOCATOR.allocate(myFile.myPageSize);
+    buffer.order(myFile.useNativeByteOrder() ? ByteOrder.nativeOrder() : ByteOrder.BIG_ENDIAN);
+    assert buffer.limit() > 0;
     return myFile.useChannel(ch -> {
       ch.read(buffer, myPosition);
       return buffer;
@@ -178,7 +172,7 @@ public final class DirectBufferWrapper {
 
       if (isDirty()) force();
       if (myBuffer != null) {
-        ByteBufferUtil.cleanBuffer(myBuffer);
+        ALLOCATOR.release(myBuffer);
         myBuffer = null;
       }
 
@@ -224,16 +218,6 @@ public final class DirectBufferWrapper {
   @Override
   public String toString() {
     return "Buffer for " + myFile + ", offset:" + myPosition + ", size: " + myFile.myPageSize;
-  }
-
-  public void useNativeByteOrder() {
-    if (myBuffer.order() != ourNativeByteOrder) {
-      myBuffer.order(ourNativeByteOrder);
-    }
-  }
-
-  boolean belongs(@NotNull StorageLockContext context) {
-    return myFile.getStorageLockContext() == context;
   }
 
   public boolean tryLock() {

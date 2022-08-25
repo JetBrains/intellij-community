@@ -350,8 +350,13 @@ abstract class ToolWindowHeader internal constructor(
     return Dimension(size.width, height)
   }
 
-  private inner class ShowOptionsAction : DumbAwareAction() {
+  private inner class ShowOptionsAction : DumbAwareAction(), UpdateInBackground {
     val myPopupState = PopupState.forPopupMenu()
+
+    override fun update(e: AnActionEvent) {
+      e.presentation.isEnabledAndVisible = true
+    }
+
     override fun actionPerformed(e: AnActionEvent) {
       if (myPopupState.isRecentlyHidden) return // do not show new popup
       val inputEvent = e.inputEvent
@@ -372,13 +377,13 @@ abstract class ToolWindowHeader internal constructor(
     }
   }
 
-  private inner class HideAction : DumbAwareAction() {
-    override fun actionPerformed(e: AnActionEvent) {
-      hideToolWindow()
+  private inner class HideAction : DumbAwareAction(), UpdateInBackground {
+    override fun update(e: AnActionEvent) {
+      e.presentation.isEnabledAndVisible = true
     }
 
-    override fun update(event: AnActionEvent) {
-      event.presentation.isEnabled = toolWindow.isVisible
+    override fun actionPerformed(e: AnActionEvent) {
+      hideToolWindow()
     }
 
     init {

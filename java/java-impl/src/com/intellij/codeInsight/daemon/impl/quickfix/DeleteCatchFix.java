@@ -22,6 +22,8 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class DeleteCatchFix implements IntentionActionWithFixAllOption {
@@ -81,18 +83,24 @@ public class DeleteCatchFix implements IntentionActionWithFixAllOption {
         final PsiElement firstElement = tryBlock.getFirstBodyElement();
         if (firstElement != null) {
           final PsiElement tryParent = tryStatement.getParent();
-          if (tryParent instanceof PsiCodeBlock) {
-            final PsiElement lastBodyElement = tryBlock.getLastBodyElement();
-            assert lastBodyElement != null : tryBlock.getText();
-            tryParent.addRangeBefore(firstElement, lastBodyElement, tryStatement);
-            lastAddedStatement = tryStatement.getPrevSibling();
-            while (lastAddedStatement != null && (lastAddedStatement instanceof PsiWhiteSpace || lastAddedStatement.getTextLength() == 0)) {
-              lastAddedStatement = lastAddedStatement.getPrevSibling();
-            }
-          }
-          else {
+          if (!(tryParent instanceof PsiCodeBlock)) {
             tryStatement.replace(tryBlock);
             return tryBlock;
+          }
+          boolean mayCompleteNormally = ControlFlowUtils.codeBlockMayCompleteNormally(tryBlock);
+          if (!mayCompleteNormally) {
+            PsiElement nextElement = PsiTreeUtil.skipWhitespacesAndCommentsForward(tryStatement.getNextSibling());
+            PsiElement lastElement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(((PsiCodeBlock)tryParent).getRBrace());
+            if (nextElement != null && lastElement != null) {
+              tryParent.deleteChildRange(nextElement, lastElement);
+            }
+          }
+          final PsiElement lastBodyElement = tryBlock.getLastBodyElement();
+          assert lastBodyElement != null : tryBlock.getText();
+          tryParent.addRangeBefore(firstElement, lastBodyElement, tryStatement);
+          lastAddedStatement = tryStatement.getPrevSibling();
+          while (lastAddedStatement != null && (lastAddedStatement instanceof PsiWhiteSpace || lastAddedStatement.getTextLength() == 0)) {
+            lastAddedStatement = lastAddedStatement.getPrevSibling();
           }
         }
       }

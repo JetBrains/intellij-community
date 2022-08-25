@@ -88,7 +88,7 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
     String familyName = intention.getFamilyName();
     boolean isCommentChangingAction = intentionText.startsWith("Replace with end-of-line comment") ||
                                       intentionText.startsWith("Replace with block comment") ||
-                                      intentionText.startsWith("Replace with javadoc") ||
+                                      intentionText.equals("Replace with Javadoc comment") ||
                                       intentionText.startsWith("Remove //noinspection") ||
                                       intentionText.startsWith("Convert to Basic Latin") ||
                                       intentionText.startsWith("Unwrap 'if' statement") ||//remove ifs content
@@ -180,7 +180,8 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
       familyName.equals("Simplify boolean expression") ||
       // A parenthesized enum switch case label is a compilation error
       familyName.equals("Create missing enum switch branches") ||
-      familyName.equals("Reformat the whole file");
+      familyName.equals("Reformat the whole file") ||
+      familyName.equals("Fix whitespace");
   }
 
   @NotNull

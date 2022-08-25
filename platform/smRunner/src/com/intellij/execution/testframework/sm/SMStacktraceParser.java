@@ -16,6 +16,9 @@
 package com.intellij.execution.testframework.sm;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.testframework.sm.runner.SMTestProxy;
+import com.intellij.execution.testframework.sm.runner.ui.TestStackTraceParser;
+import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,4 +32,8 @@ public interface SMStacktraceParser {
    */
   @Nullable
   Navigatable getErrorNavigatable(@NotNull Location<?> location, @NotNull String stacktrace);
+
+  default TestStackTraceParser getTestStackTraceParser(@NotNull String url, @NotNull SMTestProxy proxy, @NotNull Project project) {
+    return new TestStackTraceParser(url, proxy.getStacktrace(), proxy.getErrorMessage(), proxy.getLocator(), project);
+  }
 }

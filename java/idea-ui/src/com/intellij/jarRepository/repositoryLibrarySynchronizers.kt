@@ -12,9 +12,8 @@ import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.*
-import java.util.function.Consumer
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 
 internal class GlobalChangedRepositoryLibrarySynchronizer(private val queue: LibrarySynchronizationQueue,
                                                           private val disposable: Disposable)
@@ -62,7 +61,7 @@ internal class ChangedRepositoryLibrarySynchronizer(private val project: Project
   override fun beforeChanged(event: VersionedStorageChange) {
     for (change in event.getChanges(LibraryEntity::class.java)) {
       val removed = change as? EntityChange.Removed ?: continue
-      val library = findLibrary(removed.entity.persistentId(), event.storageBefore)
+      val library = findLibrary(removed.entity.persistentId, event.storageBefore)
       if (library != null) {
         queue.revokeSynchronization(library)
       }
@@ -91,7 +90,7 @@ internal class ChangedRepositoryLibrarySynchronizer(private val project: Project
                      is EntityChange.Replaced -> change.newEntity
                      is EntityChange.Removed -> null
                    } ?: continue
-      val library = findLibrary(entity.persistentId(), event.storageAfter)
+      val library = findLibrary(entity.persistentId, event.storageAfter)
       if (library != null) {
         queue.requestSynchronization(library)
         libraryReloadRequested = true
@@ -117,7 +116,7 @@ internal class ChangedRepositoryLibrarySynchronizer(private val project: Project
     }
   }
 
-  private fun findLibrary(libraryId: LibraryId, storage: WorkspaceEntityStorage): LibraryEx? {
+  private fun findLibrary(libraryId: LibraryId, storage: EntityStorage): LibraryEx? {
     val library = when (val tableId = libraryId.tableId) {
       is LibraryTableId.GlobalLibraryTableId ->
         LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(tableId.level, project)?.getLibraryByName(libraryId.name)
@@ -126,7 +125,7 @@ internal class ChangedRepositoryLibrarySynchronizer(private val project: Project
     return library as? LibraryEx
   }
 
-  private fun findLibrary(libDep: ModuleDependencyItem.Exportable.LibraryDependency, storage: WorkspaceEntityStorage): LibraryEx? =
+  private fun findLibrary(libDep: ModuleDependencyItem.Exportable.LibraryDependency, storage: EntityStorage): LibraryEx? =
     findLibrary(libDep.library, storage)
 
   private fun ModuleEntity.libraryDependencies(): Set<ModuleDependencyItem.Exportable.LibraryDependency> =

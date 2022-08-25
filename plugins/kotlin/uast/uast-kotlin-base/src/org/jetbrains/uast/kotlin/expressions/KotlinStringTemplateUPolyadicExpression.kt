@@ -4,7 +4,10 @@ package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiLanguageInjectionHost
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
 
@@ -33,4 +36,18 @@ class KotlinStringTemplateUPolyadicExpression(
 
     override fun asRenderString(): String = if (operands.isEmpty()) "\"\"" else super<UPolyadicExpression>.asRenderString()
     override fun asLogString(): String = if (operands.isEmpty()) "UPolyadicExpression (value = \"\")" else super.asLogString()
+
+    override fun getStringRoomExpression(): UExpression {
+        val uParent = this.uastParent as? UExpression ?: return this
+        val dotQualifiedExpression = uParent.sourcePsi as? KtDotQualifiedExpression
+        if (dotQualifiedExpression != null) {
+            val callExpression = dotQualifiedExpression.selectorExpression.safeAs<KtCallExpression>() ?: return this
+            val resolvedFunctionName = baseResolveProviderService.resolvedFunctionName(callExpression)
+            if (resolvedFunctionName == "trimIndent" || resolvedFunctionName == "trimMargin")
+                return uParent
+        }
+        if (uParent is UPolyadicExpression && uParent.operator == UastBinaryOperator.PLUS)
+            return uParent
+        return super.getStringRoomExpression()
+    }
 }

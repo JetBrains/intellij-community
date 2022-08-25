@@ -16,7 +16,6 @@ import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
-import org.gradle.api.tasks.testing.AbstractTestTask
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.util.PatternFilterable
 import org.gradle.plugins.ide.idea.IdeaPlugin
@@ -106,16 +105,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     defaultExternalProject.group = wrap(project.group)
     defaultExternalProject.projectDir = project.projectDir
     defaultExternalProject.sourceSets = getSourceSets(project, context, resolveSourceSetDependencies, sourceSetFinder)
-    // Android Studio: provide the option to not build Gradle tasks list, because this triggers full task graph configuration, which is
-    // very slow for large Android projects.
-    def skipTasks;
-    try {
-      skipTasks = Boolean.parseBoolean(String.valueOf(project.getProperties().get("idea.gradle.do.not.build.tasks")).trim())
-    }
-    catch (Throwable ignored) {
-      skipTasks = false
-    }
-    defaultExternalProject.tasks = skipTasks ? getTestTasks(project) : getTasks(project, tasksFactory)
+    defaultExternalProject.tasks = getTasks(project, tasksFactory)
     defaultExternalProject.sourceCompatibility = getSourceCompatibility(project)
     defaultExternalProject.targetCompatibility = getTargetCompatibility(project)
 
@@ -173,21 +163,6 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
       }
     }
     externalProject.setArtifactsByConfiguration(artifactsByConfiguration)
-  }
-
-  private static Map<String, DefaultExternalTask> getTestTasks(Project project) {  // Android Studio: b/235320590
-    def result = [:] as Map<String, DefaultExternalTask>
-    project.tasks.withType(AbstractTestTask.class).getNames().forEach { name ->
-      DefaultExternalTask externalTask = new DefaultExternalTask()
-      externalTask.name = name
-      externalTask.test = true
-
-      def projectTaskPath = (project.path == ':' ? ':' : project.path + ':') + name
-      externalTask.QName = projectTaskPath
-
-      result.put(externalTask.name, externalTask)
-    }
-    return result
   }
 
   static Map<String, DefaultExternalTask> getTasks(Project project, TasksFactory tasksFactory) {

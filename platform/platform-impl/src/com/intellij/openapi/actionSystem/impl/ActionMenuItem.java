@@ -21,6 +21,7 @@ import com.intellij.ui.components.JBCheckBoxMenuItem;
 import com.intellij.ui.mac.screenmenu.Menu;
 import com.intellij.ui.mac.screenmenu.MenuItem;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
+import com.intellij.ui.popup.KeepingPopupOpenAction;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.LafIconLookup;
 import org.jetbrains.annotations.NotNull;
@@ -29,63 +30,60 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
-public class ActionMenuItem extends JBCheckBoxMenuItem {
+public final class ActionMenuItem extends JBCheckBoxMenuItem {
   static final Icon EMPTY_ICON = EmptyIcon.create(16, 1);
 
   private final ActionRef<AnAction> myAction;
-  private final Presentation myPresentation;
   private final String myPlace;
   private final boolean myInsideCheckedGroup;
   private final boolean myEnableMnemonics;
   private final boolean myToggleable;
   private final DataContext myContext;
-  private boolean myToggled;
   private final boolean myUseDarkIcons;
   private final @Nullable MenuItem myScreenMenuItemPeer;
 
-  public ActionMenuItem(@NotNull AnAction action,
-                        @NotNull Presentation presentation,
-                        @NotNull String place,
-                        @NotNull DataContext context,
-                        boolean enableMnemonics,
-                        boolean unused,
-                        boolean insideCheckedGroup,
-                        boolean useDarkIcons) {
+  private String myDescription;
+  private boolean myToggled;
+  private boolean myKeepMenuOpen;
+
+  ActionMenuItem(@NotNull AnAction action,
+                 @NotNull String place,
+                 @NotNull DataContext context,
+                 boolean enableMnemonics,
+                 boolean insideCheckedGroup,
+                 boolean useDarkIcons) {
     myAction = ActionRef.fromAction(action);
-    myPresentation = presentation;
     myPlace = place;
     myContext = context;
     myEnableMnemonics = enableMnemonics;
     myToggleable = action instanceof Toggleable;
     myInsideCheckedGroup = insideCheckedGroup;
     myUseDarkIcons = useDarkIcons;
-    final ActionTransmitter actionTransmitter = new ActionTransmitter();
-    addActionListener(actionTransmitter);
+    addActionListener(e -> performAction(e.getModifiers()));
     setBorderPainted(false);
 
     if (Menu.isJbScreenMenuEnabled() && ActionPlaces.MAIN_MENU.equals(myPlace)) {
       myScreenMenuItemPeer = new MenuItem();
-      myScreenMenuItemPeer.setActionDelegate(()-> {
+      myScreenMenuItemPeer.setActionDelegate(() -> {
         // Called on AppKit when user activates menu item
         if (isToggleable()) {
           myToggled = !myToggled;
           myScreenMenuItemPeer.setState(myToggled);
         }
-        ApplicationManager.getApplication().invokeLater(()->{
-          actionTransmitter.performAction(0);
-        });//invokeLater
-      });//setActionDelegate
-    } else
+        ApplicationManager.getApplication().invokeLater(() -> performAction(0));
+      });
+    }
+    else {
       myScreenMenuItemPeer = null;
+    }
 
     updateUI();
-    init();
+    updateAccelerator();
   }
 
   public @NotNull AnAction getAnAction() {
@@ -111,9 +109,7 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> super.fireActionPerformed(event));
   }
 
-  private void init() {
-    updateFromPresentation();
-
+  private void updateAccelerator() {
     AnAction action = myAction.getAction();
     String id = ActionManager.getInstance().getId(action);
     if (id != null) {
@@ -125,13 +121,16 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     }
   }
 
-  void updateFromPresentation() {
-    setVisible(myPresentation.isVisible());
-    setEnabled(myPresentation.isEnabled());
-    setText(myPresentation.getText(myEnableMnemonics));
-    setMnemonic(myPresentation.getMnemonic());
-    setDisplayedMnemonicIndex(myPresentation.getDisplayedMnemonicIndex());
-    updateIcon();
+  void updateFromPresentation(@NotNull Presentation presentation) {
+    // all items must be visible at this point
+    //setVisible(presentation.isVisible());
+    setEnabled(presentation.isEnabled());
+    setText(presentation.getText(myEnableMnemonics));
+    setMnemonic(presentation.getMnemonic());
+    setDisplayedMnemonicIndex(presentation.getDisplayedMnemonicIndex());
+    updateIcon(presentation);
+    myDescription = presentation.getDescription();
+    myKeepMenuOpen = myKeepMenuOpen || presentation.isMultiChoice() || myAction.getAction() instanceof KeepingPopupOpenAction;
 
     if (myScreenMenuItemPeer != null) {
       myScreenMenuItemPeer.setLabel(getText(), getAccelerator());
@@ -179,7 +178,8 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
   @Override
   public void menuSelectionChanged(boolean isIncluded) {
     super.menuSelectionChanged(isIncluded);
-    ActionMenu.showDescriptionInStatusBar(isIncluded, this, myPresentation.getDescription());
+    //noinspection HardCodedStringLiteral
+    ActionMenu.showDescriptionInStatusBar(isIncluded, this, myDescription);
   }
 
   @NlsSafe
@@ -187,9 +187,9 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     return KeymapUtil.getFirstKeyboardShortcutText(myAction.getAction());
   }
 
-  private void updateIcon() {
-    myToggled = isToggleable() && Toggleable.isSelected(myPresentation);
-    if (isToggleable() && (myPresentation.getIcon() == null || myInsideCheckedGroup || !UISettings.getInstance().getShowIconsInMenus())) {
+  private void updateIcon(@NotNull Presentation presentation) {
+    myToggled = isToggleable() && Toggleable.isSelected(presentation);
+    if (isToggleable() && (presentation.getIcon() == null || myInsideCheckedGroup || !UISettings.getInstance().getShowIconsInMenus())) {
       if (ActionPlaces.MAIN_MENU.equals(myPlace) && SystemInfo.isMacSystemMenu) {
         setState(myToggled);
         if (myScreenMenuItemPeer != null) myScreenMenuItemPeer.setState(myToggled);
@@ -215,20 +215,20 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
       }
     }
     else if (UISettings.getInstance().getShowIconsInMenus()) {
-      Icon icon = myPresentation.getIcon();
+      Icon icon = presentation.getIcon();
       if (isToggleable() && myToggled) {
         icon = new PoppedIcon(icon, 16, 16);
       }
-      Icon disabled = myPresentation.getDisabledIcon();
+      Icon disabled = presentation.getDisabledIcon();
       if (disabled == null) {
         disabled = icon == null ? null : IconLoader.getDisabledIcon(icon);
       }
-      Icon selected = myPresentation.getSelectedIcon();
+      Icon selected = presentation.getSelectedIcon();
       if (selected == null) {
         selected = icon;
       }
 
-      setIcon(wrapNullIcon(myPresentation.isEnabled() ? icon : disabled));
+      setIcon(wrapNullIcon(presentation.isEnabled() ? icon : disabled));
       setSelectedIcon(wrapNullIcon(selected));
       setDisabledIcon(wrapNullIcon(disabled));
     }
@@ -253,7 +253,8 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
       if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
         // JDK can't paint correctly our HiDPI icons at the system menu bar
         icon = IconLoader.getMenuBarIcon(icon, myUseDarkIcons);
-      } else if (ActionMenu.shouldConvertIconToDarkVariant()) {
+      }
+      else if (ActionMenu.shouldConvertIconToDarkVariant()) {
         icon = IconLoader.getDarkIcon(icon, true);
       }
     }
@@ -270,30 +271,27 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     return myToggled;
   }
 
-  private final class ActionTransmitter implements ActionListener {
-    void performAction(int modifiers) {
-      IdeFocusManager focusManager = IdeFocusManager.findInstanceByContext(myContext);
-      String id = ActionManager.getInstance().getId(myAction.getAction());
-      if (id != null) {
-        FeatureUsageTracker.getInstance().triggerFeatureUsed("context.menu.click.stats." + id.replace(' ', '.'));
+  public boolean isKeepMenuOpen() {
+    return myKeepMenuOpen;
+  }
+
+  private void performAction(int modifiers) {
+    IdeFocusManager focusManager = IdeFocusManager.findInstanceByContext(myContext);
+    AnAction action = myAction.getAction();
+    String id = ActionManager.getInstance().getId(action);
+    if (id != null) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed("context.menu.click.stats." + id.replace(' ', '.'));
+    }
+
+    focusManager.runOnOwnContext(myContext, () -> {
+      AWTEvent currentEvent = IdeEventQueue.getInstance().getTrueCurrentEvent();
+      AnActionEvent event = new AnActionEvent(
+        currentEvent instanceof InputEvent ? (InputEvent)currentEvent : null,
+        myContext, myPlace, action.getTemplatePresentation().clone(),
+        ActionManager.getInstance(), modifiers, true, false);
+      if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+        ActionUtil.performActionDumbAwareWithCallbacks(action, event);
       }
-
-      focusManager.runOnOwnContext(myContext, () -> {
-        AWTEvent currentEvent = IdeEventQueue.getInstance().getTrueCurrentEvent();
-        final AnActionEvent event = new AnActionEvent(
-          currentEvent instanceof InputEvent ? (InputEvent)currentEvent : null,
-          myContext, myPlace, myPresentation, ActionManager.getInstance(), modifiers, true, false
-        );
-        AnAction menuItemAction = myAction.getAction();
-        if (ActionUtil.lastUpdateAndCheckDumb(menuItemAction, event, false)) {
-          ActionUtil.performActionDumbAwareWithCallbacks(menuItemAction, event);
-        }
-      });
-    }
-
-    @Override
-    public void actionPerformed(@NotNull ActionEvent e) {
-      performAction(e.getModifiers());
-    }
+    });
   }
 }

@@ -34,7 +34,7 @@ class Test(unittest.TestCase):
             time.sleep(.3)  #let's give it some time to start the threads
 
             from _pydev_bundle import pydev_localhost
-            interpreter = pydevconsole.InterpreterInterface(threading.currentThread(), rpc_client=rpc_client)
+            interpreter = pydevconsole.InterpreterInterface(threading.current_thread(), rpc_client=rpc_client)
 
             (result,) = interpreter.hello("Hello pydevconsole")
             self.assertEqual(result, "Hello eclipse")
@@ -54,7 +54,7 @@ class Test(unittest.TestCase):
             from _pydev_bundle import pydev_localhost
             from _pydev_bundle.pydev_console_types import CodeFragment
 
-            interpreter = pydevconsole.InterpreterInterface(threading.currentThread(), rpc_client=rpc_client)
+            interpreter = pydevconsole.InterpreterInterface(threading.current_thread(), rpc_client=rpc_client)
             sys.stdout = pydevd_io.IOBuf()
             interpreter.add_exec(CodeFragment('class Foo:\n    CONSTANT=1\n'))
             interpreter.add_exec(CodeFragment('foo=Foo()'))

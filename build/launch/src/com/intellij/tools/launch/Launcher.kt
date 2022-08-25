@@ -67,7 +67,8 @@ object Launcher {
       "-XX:ReservedCodeCacheSize=240m",
       "-XX:SoftRefLRUPolicyMSPerMB=50",
       "--jbr-illegal-access",
-      "-XX:+IgnoreUnrecognizedVMOptions"
+      "-XX:+IgnoreUnrecognizedVMOptions",
+      "-Dshared.indexes.download.auto.consent=true"
     )
 
     if (options.platformPrefix != null) {

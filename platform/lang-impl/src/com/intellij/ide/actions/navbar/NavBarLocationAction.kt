@@ -6,6 +6,8 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.project.DumbAware
+import com.intellij.ui.ExperimentalUI
+
 abstract class NavBarLocationAction(private val location: NavBarLocation) : ToggleAction(), DumbAware {
   override fun isSelected(e: AnActionEvent): Boolean {
     val settings = UISettings.getInstance()
@@ -18,6 +20,14 @@ abstract class NavBarLocationAction(private val location: NavBarLocation) : Togg
       it.showNavigationBar = true
       it.fireUISettingsChanged()
     }
+  }
+
+  override fun update(e: AnActionEvent) {
+    if (!ExperimentalUI.isNewUI()) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    super.update(e)
   }
 }
 

@@ -29,13 +29,13 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsCha
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher.Companion.calculateAffectedEntities
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -122,7 +122,7 @@ internal class RootsChangeWatcher(val project: Project) {
         }
       }
 
-      private fun getIncludingJarDirectory(storage: WorkspaceEntityStorage,
+      private fun getIncludingJarDirectory(storage: EntityStorage,
                                            virtualFileUrl: VirtualFileUrl): VirtualFileUrl? {
         val indexedJarDirectories = (storage.getVirtualFileUrlIndex() as VirtualFileIndex).getIndexedJarDirectories()
         var parentVirtualFileUrl: VirtualFileUrl? = virtualFileUrl
@@ -133,7 +133,7 @@ internal class RootsChangeWatcher(val project: Project) {
       }
 
       private fun calculateEntityChangesIfNeeded(entityChanges: EntityChangeStorage,
-                                                 storage: WorkspaceEntityStorage,
+                                                 storage: EntityStorage,
                                                  virtualFileUrl: VirtualFileUrl,
                                                  allRootsWereRemoved: Boolean) {
         val includingJarDirectory = getIncludingJarDirectory(storage, virtualFileUrl)
@@ -188,7 +188,7 @@ internal class RootsChangeWatcher(val project: Project) {
         val workspaceModel = WorkspaceModel.getInstance(project)
         val moduleEntity = workspaceModel.entityStorage.current.resolve(ModuleId(oldModuleName)) ?: return
         workspaceModel.updateProjectModel { diff ->
-          diff.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) { this.name = newModuleName }
+          diff.modifyEntity(moduleEntity) { this.name = newModuleName }
         }
       }
 

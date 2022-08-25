@@ -22,11 +22,18 @@ internal fun isSmartCastNecessary(expr: KtExpression, value: Boolean): Boolean {
     val resolutionFacade = expr.getResolutionFacade()
     val factory = resolutionFacade.dataFlowValueFactory
     val moduleDescriptor = expr.findModuleDescriptor()
+    val receiverCastType = values.firstOrNull { info -> info.id is IdentifierInfo.Receiver }?.type
     return getConditionScopes(expr, value)
         .asSequence()
         .flatMap { scope -> SyntaxTraverser.psiTraverser(scope) }
         .filterIsInstance(KtExpression::class.java)
         .any { e ->
+            if (receiverCastType != null) {
+                val receiverCast = bindingContext.get(BindingContext.IMPLICIT_RECEIVER_SMARTCAST, e)
+                if (receiverCast != null && receiverCast.receiverTypes.any { (receiver, _) -> receiver.type == receiverCastType }) {
+                    return@any true
+                }
+            }
             val type = e.getKotlinType() ?: return@any false
             val dfValue = factory.createDataFlowValue(e, type, bindingContext, moduleDescriptor)
             if (!dfValue.isStable) return@any false

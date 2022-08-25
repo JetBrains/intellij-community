@@ -82,13 +82,6 @@ interface BuildContext: CompilationContext {
 
   fun shouldBuildDistributionForOS(os: String): Boolean
 
-  /**
-   * Creates copy of this context which can be used to start a parallel task.
-   * @param taskName short name of the task. It will be prepended to the messages from that task to distinguish them from messages from
-   * other tasks running in parallel
-   */
-  fun forkForParallelTask(taskName: String): BuildContext
-
   fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path): BuildContext
 
   /**

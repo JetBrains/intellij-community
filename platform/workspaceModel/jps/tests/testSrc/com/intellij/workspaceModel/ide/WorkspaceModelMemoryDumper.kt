@@ -10,8 +10,8 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.asConfigLocation
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectSerializers
 import com.intellij.workspaceModel.ide.impl.jps.serialization.TestErrorReporter
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.impl.url.VirtualFileUrlManagerImpl
 import java.io.File
 import java.nio.file.Paths
@@ -30,11 +30,11 @@ fun main() {
   exitProcess(0)
 }
 
-private fun loadProject(): Pair<JpsProjectSerializers, WorkspaceEntityStorage> {
-  val builder = WorkspaceEntityStorageBuilder.create()
+private fun loadProject(): Pair<JpsProjectSerializers, EntityStorage> {
+  val builder = MutableEntityStorage.create()
   val virtualFileManager = VirtualFileUrlManagerImpl()
   val projectDir = File(PathManager.getHomePath()).asConfigLocation(virtualFileManager)
   val serializers = JpsProjectEntitiesLoader.loadProject(projectDir, builder, Paths.get("/tmp"), TestErrorReporter,
                                                          virtualFileManager)
-  return Pair(serializers, builder.toStorage())
+  return Pair(serializers, builder.toSnapshot())
 }

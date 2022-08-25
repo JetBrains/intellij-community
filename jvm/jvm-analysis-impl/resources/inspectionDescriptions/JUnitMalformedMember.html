@@ -1,0 +1,77 @@
+<html>
+<body>
+Reports JUnit member declarations that are malformed and are likely to not be recognized by the JUnit framework.
+The following problems are reported by this inspection:
+<ul>
+  <li>Fields annotated by <code>@RegisterExtension</code> which have a wrong type or are not declared as static when it is required.</li>
+  <li>Static inner classes annotated with <code>@Nested</code>.</li>
+  <li>Parameterized tests that are defined without a source.</li>
+  <li>Parameterized tests with a <code>MethodSource</code> that has an unknown, non-static or no-arg target.</li>
+  <li>
+    Parameterized tests with a <code>ValueSource</code> or <code>EnumSource</code> which types cannot be converted to method parameters.
+  </li>
+  <li>Tests that are annotated by both `@Test`, `@ParameterizedTest` or `@RepeatedTest`.</li>
+  <li><code>setup()</code> or <code>tearDown()</code></li> methods that are not public, whose return type is not void or take arguments.
+  <li>
+    Methods annotated by <code>@BeforeClass</code>, <code>@AfterClass</code>, <code>@BeforeAll</code> or <code>@AfterAll</code> that are
+    not public, not static, whose return type is not void or do not have a valid parameter list.
+  </li>
+  <li>
+    Methods annotated by <code>@Before</code>, <code>@After</code>, <code>@BeforeEach</code> or <code>AfterEach</code> that are
+    not public, whose return type is not void or take arguments.
+  </li>
+  <li>Injected <code>RepetitionInfo</code> in <code>@BeforeAll</code> or <code>@AfterAll</code> methods.</li>
+  <li>
+    Injected <code>RepetitionInfo</code> in <code>@BeforeEach</code> or <code>@AfterEach</code> methods that are used by <code>@Test</code>
+    annotated tests.
+  </li>
+  <li>Fields and methods annotated by <code>@DataPoint</code> or <code>@DataPoints</code> that are not public or not static.</li>
+  <li>
+    Fields and method annotated by <code>@Rule</code> that are not public or not a subtype of <code>TestRule</code> or
+    <code>MethodRule</code>.
+  </li>
+  <li>Fields and method annotated by <code>@ClassRule</code> that are not public, not static or not a subtype of <code>TestRule</code>.</li>
+  <li>
+    Methods inside a <code>TestCase</code> with a <code>test</code> prefix that are not public, whose return type is not void, take arguments or
+    is static.
+  </li>
+  <li>
+    Methods annotated by <code>@Test</code> that are not public, whose return type is not void, take arguments or is static.
+  </li>
+</ul>
+
+<p><b>Malformed <code>@Before</code> method example (Java):</b></p>
+<pre><code>@Before private int foo(int arg) { ... } </code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>@Before public void foo() { ... } </code></pre>
+
+<p><b>Missing method source example (Kotlin):</b></p>
+<pre><code>
+  class Example {
+    @MethodSource("parameters")
+    @ParameterizedTest
+    fun foo(param: String) { ... }
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  class Example {
+    @MethodSource("parameters")
+    @ParameterizedTest
+    fun foo(param: String) { ... }
+
+    companion object {
+      @JvmStatic
+      fun parameters(): Stream&lt;Arguments&gt; {
+        TODO("Not yet implemented")
+      }
+    }
+  }
+</code></pre>
+
+<!-- tooltip end -->
+<p>Use the inspection options to specify annotations. Any parameter annotated with one of these annotations will not be reported in test
+  methods.
+</p>
+</body>
+</html>

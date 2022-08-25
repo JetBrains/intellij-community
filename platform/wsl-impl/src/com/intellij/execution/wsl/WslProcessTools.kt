@@ -20,8 +20,13 @@ fun AbstractWslDistribution.runCommand(vararg commands: String,
   return stdout.get().decodeToString().trimEnd('\n')
 }
 
+
+class ProcessExistedNotZeroException(val stdError: String, val exitCode: Int, val tool: String) :
+  Exception("Can't execute $tool: $exitCode. $stdError")
+
 /**
  * Waits for process, and in case of error (exit code != 0) throws exception with stderr
+ * if not [ignoreExitCode] throws [ProcessExistedNotZeroException] in case of error
  */
 internal fun waitProcess(process: Process, tool: String, ignoreExitCode: Boolean = false) {
   val stderr = CompletableFuture.supplyAsync {
@@ -29,6 +34,6 @@ internal fun waitProcess(process: Process, tool: String, ignoreExitCode: Boolean
   }
   val exitCode = process.waitFor()
   if (exitCode != 0 && !ignoreExitCode) {
-    throw Exception("Can't execute $tool: $exitCode. ${stderr.get().decodeToString()}")
+    throw ProcessExistedNotZeroException(stderr.get().decodeToString(), exitCode, tool)
   }
 }

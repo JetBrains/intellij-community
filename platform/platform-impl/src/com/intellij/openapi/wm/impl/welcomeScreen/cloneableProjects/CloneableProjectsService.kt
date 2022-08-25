@@ -21,11 +21,11 @@ import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.CloneableProjec
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.Nls
-import java.util.Collections.synchronizedList
+import java.util.*
 
 @Service(Level.APP)
 class CloneableProjectsService {
-  private val cloneableProjects: MutableList<CloneableProject> = synchronizedList(mutableListOf())
+  private val cloneableProjects: MutableSet<CloneableProject> = Collections.synchronizedSet(mutableSetOf())
 
   @RequiresEdt
   fun runCloneTask(projectPath: String, cloneTask: CloneTask) {
@@ -83,6 +83,7 @@ class CloneableProjectsService {
   }
 
   private fun addCloneableProject(cloneableProject: CloneableProject) {
+    cloneableProjects.removeIf { it.projectPath == cloneableProject.projectPath }
     cloneableProjects.add(cloneableProject)
     fireCloneAddedEvent(cloneableProject)
   }

@@ -13,10 +13,9 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.workspaceModel.ide.VirtualFileUrlManagerUtil;
 import com.intellij.workspaceModel.storage.EntitySource;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
-import com.intellij.workspaceModel.storage.bridgeEntities.BridgeModelModifiableEntitiesKt;
-import com.intellij.workspaceModel.storage.bridgeEntities.ExtractedDirectoryPackagingElementEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableExtractedDirectoryPackagingElementEntity;
+import com.intellij.workspaceModel.storage.MutableEntityStorage;
+import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ExtractedDirectoryPackagingElementEntity;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager;
 import kotlin.Unit;
@@ -93,7 +92,7 @@ public class ExtractedDirectoryPackagingElement extends FileOrDirectoryCopyPacka
       (builder, entity) -> {
         if (myPathInJarBefore.equals(pathInJar)) return;
 
-        builder.modifyEntity(ModifiableExtractedDirectoryPackagingElementEntity.class, entity, ent -> {
+        builder.modifyEntity(ExtractedDirectoryPackagingElementEntity.Builder.class, entity, ent -> {
           ent.setPathInArchive(pathInJar);
           return Unit.INSTANCE;
         });
@@ -101,7 +100,7 @@ public class ExtractedDirectoryPackagingElement extends FileOrDirectoryCopyPacka
   }
 
   @Override
-  public WorkspaceEntity getOrAddEntity(@NotNull WorkspaceEntityStorageBuilder diff,
+  public WorkspaceEntity getOrAddEntity(@NotNull MutableEntityStorage diff,
                                         @NotNull EntitySource source,
                                         @NotNull Project project) {
     WorkspaceEntity existingEntity = getExistingEntity(diff);
@@ -111,7 +110,7 @@ public class ExtractedDirectoryPackagingElement extends FileOrDirectoryCopyPacka
     VirtualFileUrl fileUrl = fileUrlManager.fromPath(this.myFilePath);
 
     ExtractedDirectoryPackagingElementEntity addedEntity =
-      BridgeModelModifiableEntitiesKt.addExtractedDirectoryPackagingElementEntity(diff, fileUrl, this.myPathInJar, source);
+      ExtensionsKt.addExtractedDirectoryPackagingElementEntity(diff, fileUrl, this.myPathInJar, source);
     diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(addedEntity, this);
     return addedEntity;
   }

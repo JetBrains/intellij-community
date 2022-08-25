@@ -27,10 +27,10 @@ import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactId
-import com.intellij.workspaceModel.storage.bridgeEntities.CustomPackagingElementEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableCustomPackagingElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactId
+import com.intellij.workspaceModel.storage.bridgeEntities.api.CustomPackagingElementEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 
 class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), Disposable {
 
@@ -125,7 +125,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
 
   override fun createModifiableModel(): ModifiableArtifactModel {
     val storage = WorkspaceModel.getInstance(project).entityStorage.current
-    return ArtifactModifiableModelBridge(project, WorkspaceEntityStorageBuilder.from(storage), this)
+    return ArtifactModifiableModelBridge(project, MutableEntityStorage.from(storage), this)
   }
 
   override fun getResolvingContext(): PackagingElementResolvingContext = resolvingContext
@@ -255,14 +255,14 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     }
   }
 
-  private fun updateCustomElements(diff: WorkspaceEntityStorageBuilder) {
+  private fun updateCustomElements(diff: MutableEntityStorage) {
     val customEntities = diff.entities(CustomPackagingElementEntity::class.java).toList()
     for (customEntity in customEntities) {
       val packagingElement = diff.elements.getDataByEntity(customEntity) ?: continue
       val state = packagingElement.state ?: continue
       val newState = JDOMUtil.write(XmlSerializer.serialize(state))
       if (newState != customEntity.propertiesXmlTag) {
-        diff.modifyEntity(ModifiableCustomPackagingElementEntity::class.java, customEntity) {
+        diff.modifyEntity(customEntity) {
           this.propertiesXmlTag = newState
         }
       }
@@ -306,10 +306,10 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     private val lock = Any()
     private const val ARTIFACT_BRIDGE_MAPPING_ID = "intellij.artifacts.bridge"
 
-    val WorkspaceEntityStorage.artifactsMap: ExternalEntityMapping<ArtifactBridge>
+    val EntityStorage.artifactsMap: ExternalEntityMapping<ArtifactBridge>
       get() = getExternalMapping(ARTIFACT_BRIDGE_MAPPING_ID)
 
-    internal val WorkspaceEntityStorageBuilder.mutableArtifactsMap: MutableExternalEntityMapping<ArtifactBridge>
+    internal val MutableEntityStorage.mutableArtifactsMap: MutableExternalEntityMapping<ArtifactBridge>
       get() = getMutableExternalMapping(ARTIFACT_BRIDGE_MAPPING_ID)
 
     private val LOG = logger<ArtifactManagerBridge>()

@@ -16,8 +16,9 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBri
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.getInstance
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.addModuleGroupPathEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 
@@ -57,7 +58,7 @@ class ModuleModelProxyWrapper(val delegate: ModifiableModuleModel) : ModuleModel
 
 }
 
-class ModuleModelProxyImpl(private val diff: WorkspaceEntityStorageBuilder,
+class ModuleModelProxyImpl(private val diff: MutableEntityStorage,
                            private val project: Project) : ModuleModelProxy {
   private val virtualFileManager: VirtualFileUrlManager = project.getService(VirtualFileUrlManager::class.java)
   private val versionedStorage: VersionedEntityStorage
@@ -105,11 +106,10 @@ class ModuleModelProxyImpl(private val diff: WorkspaceEntityStorageBuilder,
                                                                       PathUtil.getParentPath(
                                                                         systemIndependentPath)), ExternalProjectSystemRegistry.getInstance().getSourceById(
       ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID))
-    val moduleEntity = diff.addEntity(ModifiableModuleEntity::class.java, source) {
-      this.name = name
+    val moduleEntity = ModuleEntity(name, source, listOf(ModuleDependencyItem.ModuleSourceDependency)) {
       type = moduleTypeId
-      dependencies = listOf(ModuleDependencyItem.ModuleSourceDependency)
     }
+    diff.addEntity(moduleEntity)
     val moduleManager = getInstance(project)
     val module = moduleManager.createModuleInstance(moduleEntity, versionedStorage, diff, true, null)
     diff.getMutableExternalMapping<Module>("intellij.modules.bridge").addMapping(moduleEntity, module)
@@ -133,7 +133,7 @@ class ModuleModelProxyImpl(private val diff: WorkspaceEntityStorageBuilder,
 
         moduleGroupEntity == null && groupPathList == null -> Unit
         moduleGroupEntity != null && groupPathList == null -> diff.removeEntity(moduleGroupEntity)
-        moduleGroupEntity != null && groupPathList != null -> diff.modifyEntity(ModifiableModuleGroupPathEntity::class.java,
+        moduleGroupEntity != null && groupPathList != null -> diff.modifyEntity(ModuleGroupPathEntity.Builder::class.java,
                                                                                 moduleGroupEntity) {
           path = groupPathList
         }

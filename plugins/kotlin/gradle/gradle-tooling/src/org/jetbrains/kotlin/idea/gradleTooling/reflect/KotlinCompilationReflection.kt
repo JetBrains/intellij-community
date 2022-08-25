@@ -48,6 +48,5 @@ private class KotlinCompilationReflectionImpl(private val instance: Any) : Kotli
 
     companion object {
         private val logger: ReflectionLogger = ReflectionLogger(KotlinCompilationReflection::class.java)
-        private const val NATIVE_COMPILATION_CLASS = "org.jetbrains.kotlin.gradle.plugin.mpp.AbstractKotlinNativeCompilation"
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ignore
 
 import com.intellij.openapi.Disposable
@@ -173,7 +173,7 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, p
     val projectBasePath = project.basePath ?: return null
     val projectBaseDir = LocalFileSystem.getInstance().findFileByPath(projectBasePath) ?: return null
 
-    return getProjectStoreDirectory(projectBaseDir) ?: return null
+    return getProjectStoreDirectory(projectBaseDir)
   }
 
   private fun VirtualFile.underProjectStoreDir(storeDir: VirtualFile): Boolean {
@@ -199,10 +199,10 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, p
   override val showActionText: String = VcsBundle.message("ignored.file.manage.view")
 
   override val forCurrentProjectActionText: String = VcsBundle.message("ignored.file.manage.this.project")
-  override val forAllProjectsActionText: String? = VcsBundle.message("ignored.file.manage.all.project")
+  override val forAllProjectsActionText: String = VcsBundle.message("ignored.file.manage.all.project")
   override val muteActionText: String = VcsBundle.message("ignored.file.manage.notmanage")
 
-  override val viewFilesDialogTitle: String? = VcsBundle.message("ignored.file.manage.view.dialog.title")
+  override val viewFilesDialogTitle: String = VcsBundle.message("ignored.file.manage.view.dialog.title")
   override val viewFilesDialogOkActionName: String = VcsBundle.message("ignored.file.manage.view.dialog.ignore.action")
 
   override fun notificationTitle() = ""

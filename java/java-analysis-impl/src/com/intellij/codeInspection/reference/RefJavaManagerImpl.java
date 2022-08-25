@@ -203,7 +203,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     LOG.assertTrue(sourcePsi != null, "UParameter " + param + " has null sourcePsi");
     RefElement result = myRefManager.getFromRefTableOrCache(sourcePsi, () -> {
       RefParameterImpl ref = new RefParameterImpl(param, sourcePsi, index, myRefManager, refElement);
-      ref.waitForInitialized();
+      ref.initializeIfNeeded();
       return (RefElement)ref;
     });
     return result instanceof RefParameter ? (RefParameter)result : null;
@@ -358,12 +358,6 @@ public final class RefJavaManagerImpl extends RefJavaManager {
           if (element instanceof PsiJavaModule) {
             visitJavaModule((PsiJavaModule)element);
           }
-          else if (element instanceof PsiFunctionalExpression) {
-            RefElement refElement = myRefManager.getReference(element);
-            if (refElement != null) {
-              myRefManager.buildReferences(refElement);
-            }
-          }
         }
 
         private void visitJavaModule(PsiJavaModule module) {
@@ -473,6 +467,15 @@ public final class RefJavaManagerImpl extends RefJavaManager {
         if (uAnnotation != null) {
           retrieveSuppressions(uAnnotation, node);
         }
+      }
+      return true;
+    }
+
+    @Override
+    public boolean visitExpression(@NotNull UExpression node) {
+      RefElement refElement = myRefManager.getReference(node.getSourcePsi());
+      if (refElement != null) {
+        myRefManager.buildReferences(refElement);
       }
       return true;
     }

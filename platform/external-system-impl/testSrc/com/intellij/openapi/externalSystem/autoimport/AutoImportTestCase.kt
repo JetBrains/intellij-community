@@ -447,6 +447,12 @@ abstract class AutoImportTestCase : ExternalSystemTestCase() {
 
     fun registerSettingsFile(relativePath: String) = projectAware.registerSettingsFile(getPath(relativePath))
 
+    fun ignoreSettingsFileWhen(file: VirtualFile, condition: (ExternalSystemSettingsFilesModificationContext) -> Boolean) =
+      projectAware.ignoreSettingsFileWhen(file.path, condition)
+
+    fun ignoreSettingsFileWhen(relativePath: String, condition: (ExternalSystemSettingsFilesModificationContext) -> Boolean) =
+      projectAware.ignoreSettingsFileWhen(getPath(relativePath), condition)
+
     fun onceDuringRefresh(action: (ExternalSystemProjectReloadContext) -> Unit) = projectAware.onceDuringRefresh(action)
     fun duringRefresh(times: Int, action: (ExternalSystemProjectReloadContext) -> Unit) = projectAware.duringRefresh(times, action)
     fun duringRefresh(action: (ExternalSystemProjectReloadContext) -> Unit, parentDisposable: Disposable) =

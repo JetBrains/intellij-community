@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.sourceToSink;
 
 import com.intellij.psi.*;
@@ -206,7 +206,7 @@ public class TaintAnalyzer {
   private @NotNull TaintValue fromExpression(@Nullable UExpression uExpression, boolean goDeep) {
     if (uExpression == null) return TaintValue.UNTAINTED;
     uExpression = UastUtils.skipParenthesizedExprDown(uExpression);
-    if (uExpression == null || uExpression instanceof ULiteralExpression) return TaintValue.UNTAINTED;
+    if (uExpression instanceof ULiteralExpression) return TaintValue.UNTAINTED;
     if (uExpression instanceof UResolvable) return analyze(uExpression);
     UPolyadicExpression uConcatenation = getConcatenation(uExpression);
     if (uConcatenation != null) return StreamEx.of(uConcatenation.getOperands()).collect(joining(true));

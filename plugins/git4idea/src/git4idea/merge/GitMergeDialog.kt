@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.CollectionComboBoxModel
@@ -40,7 +41,6 @@ import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.annotations.PropertyKey
 import java.awt.BorderLayout
 import java.awt.Insets
 import java.awt.event.ItemEvent
@@ -70,10 +70,10 @@ internal fun createSouthPanelWithOptionsDropDown(southPanel: JComponent, optionD
 }
 
 internal fun validateBranchExists(branchField: ComboBoxWithAutoCompletion<String>,
-                                  @PropertyKey(resourceBundle = GitBundle.BUNDLE) emptyFieldMessage: String): ValidationInfo? {
+                                  emptyFieldMessage: @NlsContexts.DialogMessage String): ValidationInfo? {
   val value = branchField.getText()
   if (value.isNullOrEmpty()) {
-    return ValidationInfo(GitBundle.message(emptyFieldMessage), branchField)
+    return ValidationInfo(emptyFieldMessage, branchField)
   }
 
   val items = (branchField.model as CollectionComboBoxModel).items

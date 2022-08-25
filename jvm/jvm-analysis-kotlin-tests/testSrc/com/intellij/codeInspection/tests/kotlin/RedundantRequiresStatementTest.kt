@@ -33,7 +33,7 @@ class RedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureTestCa
     return KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/codeInspection/redundantRequires/"
   }
 
-  override fun getTestDataPath(): String? {
+  override fun getTestDataPath(): String {
     return PathManager.getCommunityHomePath().replace(File.separatorChar, '/') + basePath
   }
 

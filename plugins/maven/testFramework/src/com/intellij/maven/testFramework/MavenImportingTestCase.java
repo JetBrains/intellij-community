@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -65,7 +66,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected MavenProjectResolver myProjectResolver;
   protected MavenProjectsManager myProjectsManager;
   private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
-  protected final boolean isNewImportingProcess = Boolean.parseBoolean(System.getProperty("maven.linear.import"));
+  protected boolean isNewImportingProcess;
   protected MavenReadContext myReadContext;
   protected MavenResolvedContext myResolvedContext;
   protected MavenImportedContext myImportedContext;
@@ -85,6 +86,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     if (settingsFile != null) {
       VfsRootAccess.allowRootAccess(getTestRootDisposable(), settingsFile.getAbsolutePath());
     }
+    isNewImportingProcess = Registry.is("maven.linear.import");
   }
 
   @Override
@@ -107,6 +109,29 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     );
   }
 
+  public boolean supportModuleGroups() {
+    return !MavenProjectImporter.isImportToWorkspaceModelEnabled()
+           && !MavenProjectImporter.isImportToTreeStructureEnabled(myProject);
+  }
+
+  public boolean supportsKeepingManualChanges() {
+    return !MavenProjectImporter.isImportToWorkspaceModelEnabled();
+  }
+
+  public boolean supportsKeepingModulesFromPreviousImport() {
+    return !MavenProjectImporter.isImportToWorkspaceModelEnabled()
+           && !MavenProjectImporter.isImportToTreeStructureEnabled(myProject);
+  }
+
+  public boolean supportsKeepingFoldersFromPreviousImport() {
+    return !MavenProjectImporter.isImportToWorkspaceModelEnabled();
+  }
+
+  public boolean supportsCreateAggregatorOption() {
+    return !MavenProjectImporter.isImportToWorkspaceModelEnabled()
+           && !MavenProjectImporter.isImportToTreeStructureEnabled(myProject);
+  }
+
   protected void stopMavenImportManager() {
     if (!isNewImportingProcess) return;
     MavenImportingManager manager = MavenImportingManager.getInstance(myProject);
@@ -120,10 +145,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     super.setUpInWriteAction();
     myProjectsManager = MavenProjectsManager.getInstance(myProject);
     removeFromLocalRepository("test");
-  }
-
-  protected void assertModules(String expectedName) {
-
   }
 
   protected String mn(String parent, String moduleName) {
@@ -385,9 +406,15 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void assertModuleGroupPath(String moduleName, String... expected) {
+    assertModuleGroupPath(moduleName, false, expected);
+  }
+
+  protected void assertModuleGroupPath(String moduleName, boolean groupWasManuallyAdded, String... expected) {
+    boolean moduleGroupsSupported = supportModuleGroups() || groupWasManuallyAdded && supportsKeepingManualChanges();
+
     String[] path = ModuleManager.getInstance(myProject).getModuleGroupPath(getModule(moduleName));
 
-    if (expected.length == 0) {
+    if (!moduleGroupsSupported || expected.length == 0) {
       assertNull(path);
     }
     else {

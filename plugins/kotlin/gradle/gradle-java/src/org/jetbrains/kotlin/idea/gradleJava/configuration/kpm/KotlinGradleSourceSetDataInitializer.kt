@@ -10,7 +10,7 @@ import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathUtilRt
 import org.gradle.tooling.model.idea.IdeaModule
-import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKotlinFragment
+import org.jetbrains.kotlin.gradle.kpm.idea.IdeaKpmFragment
 import org.jetbrains.kotlin.gradle.kpm.idea.name
 import org.jetbrains.kotlin.idea.gradle.configuration.kpm.ModuleDataInitializer
 import org.jetbrains.plugins.gradle.model.*
@@ -84,13 +84,13 @@ class KotlinGradleSourceSetDataInitializer : ModuleDataInitializer {
 
     companion object {
         //TODO should it be visible for anyone outside initializer? Maybe introduce services for naming/routing fragments?
-        private fun calculateFragmentExternalModuleName(gradleModule: IdeaModule, fragment: IdeaKotlinFragment): String =
+        private fun calculateFragmentExternalModuleName(gradleModule: IdeaModule, fragment: IdeaKpmFragment): String =
             "${gradleModule.name}:${fragment.coordinates.module.moduleName}.${fragment.name}"
 
         private fun calculateFragmentInternalModuleName(
             gradleModule: IdeaModule,
             externalProject: ExternalProject,
-            fragment: IdeaKotlinFragment,
+            fragment: IdeaKpmFragment,
             resolverCtx: ProjectResolverContext,
         ): String {
             val delimiter: String
@@ -125,7 +125,7 @@ class KotlinGradleSourceSetDataInitializer : ModuleDataInitializer {
     }
 
     private fun createExternalSourceSet(
-        fragment: IdeaKotlinFragment,
+        fragment: IdeaKpmFragment,
         gradleSourceSetData: GradleSourceSetData,
     ): ExternalSourceSet {
         return DefaultExternalSourceSet().also { sourceSet ->

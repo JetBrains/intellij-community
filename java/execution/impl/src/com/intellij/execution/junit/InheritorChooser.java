@@ -129,7 +129,10 @@ public class InheritorChooser {
     }
     
     if (containingClass != null) {
-      return runMethodInAbstractClass(context, performRunnable, psiMethod, containingClass.getContainingClass(), acceptAbstractCondition);
+      PsiClass gContainingClass = containingClass.getContainingClass();
+      if (gContainingClass != null && !containingClass.isInheritor(gContainingClass, true)) {
+        return runMethodInAbstractClass(context, performRunnable, psiMethod, gContainingClass, acceptAbstractCondition);
+      }
     }
     return false;
   }
@@ -143,7 +146,7 @@ public class InheritorChooser {
       if (container != null && container.hasModifierProperty(PsiModifier.ABSTRACT)) {
         containers.add(container);
       }
-      else if (isJUnit5 && JUnitUtil.isJUnit5TestClass(aClass, true) || PsiClassUtil.isRunnableClass(aClass, true, true)) {
+      if (isJUnit5 && JUnitUtil.isJUnit5TestClass(aClass, true) || PsiClassUtil.isRunnableClass(aClass, true, true)) {
         classes.add(aClass);
       }
       return true;

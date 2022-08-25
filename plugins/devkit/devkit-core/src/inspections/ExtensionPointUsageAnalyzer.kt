@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInsight.hint.HintManager
@@ -576,12 +576,12 @@ private class EPUsageTarget(private val field: PsiField) : UsageTarget {
     return field.containingFile?.virtualFile?.let { arrayOf(it) }
   }
 
-  override fun getPresentation(): ItemPresentation? {
+  override fun getPresentation(): ItemPresentation {
     return object : ItemPresentation {
 
       override fun getIcon(unused: Boolean): Icon? = field.getIcon(0)
 
-      override fun getPresentableText(): String? {
+      override fun getPresentableText(): String {
         return "${field.containingClass?.qualifiedName}.${field.name}"
       }
     }
@@ -591,7 +591,7 @@ private class EPUsageTarget(private val field: PsiField) : UsageTarget {
     return (field as? Navigatable)?.canNavigate() ?: false
   }
 
-  override fun getName(): String? {
+  override fun getName(): String {
     return "${field.containingClass?.qualifiedName}.${field.name}"
   }
 
@@ -613,18 +613,18 @@ private class EPUsageTarget(private val field: PsiField) : UsageTarget {
 }
 
 private class DummyUsageTarget(@Nls val text: String) : UsageTarget {
-  override fun getPresentation(): ItemPresentation? {
+  override fun getPresentation(): ItemPresentation {
     return object : ItemPresentation {
 
       override fun getIcon(unused: Boolean): Icon? = null
 
-      override fun getPresentableText(): String? = text
+      override fun getPresentableText(): String = text
     }
   }
 
   override fun canNavigate(): Boolean = false
 
-  override fun getName(): String? = text
+  override fun getName(): String = text
 
   override fun findUsages() {
     TODO("not implemented") //To change body of created functions use File | Settings | File Templates.

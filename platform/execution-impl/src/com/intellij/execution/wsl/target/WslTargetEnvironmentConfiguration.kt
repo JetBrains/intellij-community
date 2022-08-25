@@ -1,14 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl.target
 
+import com.intellij.execution.target.readableFs.PathInfo
+import com.intellij.execution.target.readableFs.TargetConfigurationReadableFs
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.diagnostic.thisLogger
+import java.nio.file.Paths
 
 class WslTargetEnvironmentConfiguration() : TargetEnvironmentConfiguration(WslTargetType.TYPE_ID),
-                                            PersistentStateComponent<WslTargetEnvironmentConfiguration.MyState> {
+                                            PersistentStateComponent<WslTargetEnvironmentConfiguration.MyState>, TargetConfigurationReadableFs {
   private var distributionMsId: String? = null
   var distribution: WSLDistribution?
     get() {
@@ -37,6 +41,17 @@ class WslTargetEnvironmentConfiguration() : TargetEnvironmentConfiguration(WslTa
   override fun toString(): String {
     val distributionIdText = distributionMsId?.let { "'$it'" }
     return "WslTargetEnvironmentConfiguration(distributionId=$distributionIdText, projectRootOnTarget='$projectRootOnTarget')"
+  }
+
+  override fun getPathInfo(targetPath: String): PathInfo? {
+    val distribution = distribution
+    if (distribution == null) {
+      thisLogger().warn("No distribution, cant check path")
+      return null
+    }
+    val pathInfo = PathInfo.getPathInfoForLocalPath(Paths.get(distribution.getWindowsPath(targetPath)))
+    // We can't check if file is executable or not (we could but it is too heavy), so we set this flag
+    return if (pathInfo is PathInfo.RegularFile) pathInfo.copy(executable = true) else pathInfo
   }
 
   class MyState : BaseState() {

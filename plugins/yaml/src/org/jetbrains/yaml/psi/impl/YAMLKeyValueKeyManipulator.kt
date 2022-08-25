@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.psi.impl
 
 import com.intellij.openapi.util.TextRange
@@ -14,7 +14,7 @@ import org.jetbrains.yaml.psi.YAMLValue
  * Handles only key manipulation
  */
 class YAMLKeyValueKeyManipulator : AbstractElementManipulator<YAMLKeyValue>() {
-  override fun handleContentChange(element: YAMLKeyValue, range: TextRange, newContent: String?): YAMLKeyValue? {
+  override fun handleContentChange(element: YAMLKeyValue, range: TextRange, newContent: String?): YAMLKeyValue {
     val originalContent = element.getRawKeyText() ?: return element
     if (newContent == null) return element
     val updatedKey = originalContent.replaceRange(range.startOffset, range.endOffset, newContent)

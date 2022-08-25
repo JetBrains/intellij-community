@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console
 
 import com.intellij.execution.ui.ConsoleViewContentType
@@ -68,9 +68,9 @@ class ConsolePromptDecorator(private val myEditorEx: EditorEx) : EditorLinePaint
 
   override fun getStyle(line: Int, editor: Editor): EditorFontType = EditorFontType.CONSOLE_PLAIN
 
-  override fun getColor(line: Int, editor: Editor): ColorKey? = promptColor
+  override fun getColor(line: Int, editor: Editor): ColorKey = promptColor
 
-  override fun getBgColor(line: Int, editor: Editor): Color? {
+  override fun getBgColor(line: Int, editor: Editor): Color {
     var backgroundColor: Color? = this.promptAttributes.attributes.backgroundColor
     if (backgroundColor == null) {
       backgroundColor = myEditorEx.backgroundColor

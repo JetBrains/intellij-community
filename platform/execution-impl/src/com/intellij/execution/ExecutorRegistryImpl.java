@@ -4,13 +4,16 @@ package com.intellij.execution;
 import com.intellij.execution.actions.*;
 import com.intellij.execution.compound.CompoundRunConfiguration;
 import com.intellij.execution.compound.SettingsAndEffectiveTarget;
+import com.intellij.execution.configurations.LocatableConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.executors.ExecutorGroup;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.impl.ExecutionManagerImplKt;
+import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runToolbar.*;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
@@ -32,6 +35,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.psi.PsiDocumentManager;
@@ -41,6 +45,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -49,6 +54,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public final class ExecutorRegistryImpl extends ExecutorRegistry {
@@ -302,7 +308,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
       RunnerAndConfigurationSettings selectedSettings = getSelectedConfiguration(e);
       boolean enabled = false;
-      boolean hideDisabledExecutorButtons = false;
+      boolean runConfigAsksToHideDisabledExecutorButtons = false;
       String text;
       if (selectedSettings != null) {
         if (DumbService.isDumb(project) && !selectedSettings.getType().isDumbAware()) {
@@ -322,7 +328,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
           }
         }
         if (!(configuration instanceof CompoundRunConfiguration)) {
-          hideDisabledExecutorButtons = configuration.hideDisabledExecutorButtons();
+          runConfigAsksToHideDisabledExecutorButtons = configuration.hideDisabledExecutorButtons();
         }
         if (enabled) {
           presentation.setDescription(myExecutor.getDescription());
@@ -341,7 +347,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         }
       }
 
-      if (hideDisabledExecutorButtons) {
+      if (runConfigAsksToHideDisabledExecutorButtons || hideDisabledExecutorButtons()) {
         presentation.setEnabledAndVisible(enabled);
       }
       else {
@@ -352,6 +358,10 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         presentation.setVisible(myExecutor.isApplicable(project));
       }
       presentation.setText(text);
+    }
+
+    protected boolean hideDisabledExecutorButtons() {
+      return false;
     }
 
     private @NotNull RunCurrentFileActionStatus getRunCurrentFileActionStatus(@NotNull AnActionEvent e, boolean resetCache) {
@@ -505,14 +515,13 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       }
     }
 
-    @Nullable
-    protected RunnerAndConfigurationSettings getSelectedConfiguration(@NotNull AnActionEvent e) {
-      if(e.getProject() == null ) return null;
+    protected @Nullable RunnerAndConfigurationSettings getSelectedConfiguration(@NotNull AnActionEvent e) {
+      if (e.getProject() == null) return null;
       return RunManager.getInstance(e.getProject()).getSelectedConfiguration();
     }
 
-    private void run(@NotNull Project project, @Nullable RunConfiguration configuration, @Nullable RunnerAndConfigurationSettings settings, @NotNull DataContext dataContext) {
-      RunnerHelper.run(project, configuration, settings, dataContext, myExecutor);
+    protected void run(@NotNull Project project, @NotNull RunnerAndConfigurationSettings settings, @NotNull DataContext dataContext) {
+      RunnerHelper.run(project, settings.getConfiguration(), settings, dataContext, myExecutor);
     }
 
     @Override
@@ -525,7 +534,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       MacroManager.getInstance().cacheMacrosPreview(e.getDataContext());
       RunnerAndConfigurationSettings selectedConfiguration = getSelectedConfiguration(e);
       if (selectedConfiguration != null) {
-        run(project, selectedConfiguration.getConfiguration(), selectedConfiguration, e.getDataContext());
+        run(project, selectedConfiguration, e.getDataContext());
       }
       else if (RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
         runCurrentFile(e);
@@ -533,13 +542,14 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
 
     private void runCurrentFile(@NotNull AnActionEvent e) {
+      Project project = Objects.requireNonNull(e.getProject());
       List<RunnerAndConfigurationSettings> runConfigs = getRunCurrentFileActionStatus(e, true).myRunConfigs;
       if (runConfigs.isEmpty()) {
         return;
       }
 
       if (runConfigs.size() == 1) {
-        ExecutionUtil.doRunConfiguration(runConfigs.get(0), myExecutor, null, null, e.getDataContext());
+        doRunCurrentFile(project, runConfigs.get(0), e.getDataContext());
         return;
       }
 
@@ -555,14 +565,14 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
             return result;
           }
         })
-        .setItemChosenCallback(runConfig -> ExecutionUtil.doRunConfiguration(runConfig, myExecutor, null, null, e.getDataContext()));
+        .setItemChosenCallback(runConfig -> doRunCurrentFile(project, runConfig, e.getDataContext()));
 
       InputEvent inputEvent = e.getInputEvent();
       if (inputEvent instanceof MouseEvent) {
         builder.createPopup().showUnderneathOf(inputEvent.getComponent());
       }
       else {
-        Editor editor = FileEditorManager.getInstance(Objects.requireNonNull(e.getProject())).getSelectedTextEditor();
+        Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
         if (editor == null) {
           // Not expected to happen because we are running a file from the current editor.
           LOG.warn("Run Current File (" + runConfigs + "): getSelectedTextEditor() == null");
@@ -573,6 +583,125 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
           .setTitle(myExecutor.getActionName())
           .createPopup()
           .showInBestPositionFor(editor);
+      }
+    }
+
+    protected void doRunCurrentFile(@NotNull Project project,
+                                    @NotNull RunnerAndConfigurationSettings runConfig,
+                                    @NotNull DataContext dataContext) {
+      ExecutionUtil.doRunConfiguration(runConfig, myExecutor, null, null, dataContext);
+    }
+  }
+
+  public static class RunSpecifiedConfigExecutorAction extends ExecutorAction {
+    private final RunnerAndConfigurationSettings myRunConfig;
+    private final boolean myEditConfigBeforeRun;
+
+    public RunSpecifiedConfigExecutorAction(@NotNull Executor executor,
+                                            @NotNull RunnerAndConfigurationSettings runConfig,
+                                            boolean editConfigBeforeRun) {
+      super(executor);
+      myRunConfig = runConfig;
+      myEditConfigBeforeRun = editConfigBeforeRun;
+    }
+
+    @Override
+    protected @NotNull RunnerAndConfigurationSettings getSelectedConfiguration(@NotNull AnActionEvent e) {
+      return myRunConfig;
+    }
+
+    @Override
+    protected boolean hideDisabledExecutorButtons() {
+      // no need in a list of disabled actions in the secondary menu of the Run Configuration item in the combo box drop-down menu.
+      return true;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+
+      if (myEditConfigBeforeRun) {
+        Presentation presentation = e.getPresentation();
+        presentation.setText(ExecutionBundle.message("choose.run.popup.edit"));
+        presentation.setDescription(ExecutionBundle.message("choose.run.popup.edit.description"));
+        presentation.setIcon(AllIcons.Actions.EditSource);
+      }
+    }
+
+    @Override
+    protected void run(@NotNull Project project, @NotNull RunnerAndConfigurationSettings settings, @NotNull DataContext dataContext) {
+      LOG.assertTrue(myRunConfig == settings);
+
+      if (myEditConfigBeforeRun) {
+        String dialogTitle = ExecutionBundle.message("dialog.title.edit.configuration.settings");
+        if (!RunDialog.editConfiguration(project, myRunConfig, dialogTitle, myExecutor)) {
+          return;
+        }
+      }
+
+      super.run(project, myRunConfig, dataContext);
+
+      RunManager.getInstance(project).setSelectedConfiguration(myRunConfig);
+    }
+  }
+
+  public static class RunCurrentFileExecutorAction extends ExecutorAction {
+    public RunCurrentFileExecutorAction(@NotNull Executor executor) {
+      super(executor);
+    }
+
+    @Override
+    protected @Nullable RunnerAndConfigurationSettings getSelectedConfiguration(@NotNull AnActionEvent e) {
+      return null; // null means 'run current file, not the selected run configuration'
+    }
+
+    @Override
+    protected boolean hideDisabledExecutorButtons() {
+      // no need in a list of disabled actions in the secondary menu of the 'Current File' item in the combo box drop-down menu.
+      return true;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      Presentation presentation = e.getPresentation();
+      if (e.getProject() == null || !RunConfigurationsComboBoxAction.hasRunCurrentFileItem(e.getProject())) {
+        presentation.setEnabledAndVisible(false);
+        return;
+      }
+
+      super.update(e);
+    }
+  }
+
+  public static class EditRunConfigAndRunCurrentFileExecutorAction extends RunCurrentFileExecutorAction {
+    public EditRunConfigAndRunCurrentFileExecutorAction(@NotNull Executor executor) {
+      super(executor);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+
+      Presentation presentation = e.getPresentation();
+      presentation.setText(ExecutionBundle.message("run.configurations.popup.edit.run.config.and.run.current.file"));
+      presentation.setDescription(ExecutionBundle.message("run.configurations.popup.edit.run.config.and.run.current.file.description"));
+      presentation.setIcon(AllIcons.Actions.EditSource);
+    }
+
+    @Override
+    protected void doRunCurrentFile(@NotNull Project project,
+                                    @NotNull RunnerAndConfigurationSettings runConfig,
+                                    @NotNull DataContext dataContext) {
+      String suggestedName = StringUtil.notNullize(((LocatableConfiguration)runConfig.getConfiguration()).suggestedName(),
+                                                   runConfig.getName());
+      List<String> usedNames = ContainerUtil.map(RunManager.getInstance(project).getAllSettings(), RunnerAndConfigurationSettings::getName);
+      String uniqueName = UniqueNameGenerator.generateUniqueName(suggestedName, "", "", " (", ")", s -> !usedNames.contains(s));
+      runConfig.setName(uniqueName);
+
+      String dialogTitle = ExecutionBundle.message("dialog.title.edit.configuration.settings");
+      if (RunDialog.editConfiguration(project, runConfig, dialogTitle, myExecutor)) {
+        RunManager.getInstance(project).setTemporaryConfiguration(runConfig);
+        super.doRunCurrentFile(project, runConfig, dataContext);
       }
     }
   }
@@ -622,16 +751,27 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
   public static final class RunnerHelper {
     public static void run(@NotNull Project project,
-                            @Nullable RunConfiguration configuration,
-                            @Nullable RunnerAndConfigurationSettings settings,
-                            @NotNull DataContext dataContext,
-                            @NotNull Executor executor) {
+                           @Nullable RunConfiguration configuration,
+                           @Nullable RunnerAndConfigurationSettings settings,
+                           @NotNull DataContext dataContext,
+                           @NotNull Executor executor) {
+
+      runSubProcess(project, configuration, settings, dataContext, executor, RunToolbarProcessData.prepareBaseSettingCustomization(settings, null));
+    }
+
+    public static void runSubProcess(@NotNull Project project,
+                                     @Nullable RunConfiguration configuration,
+                                     @Nullable RunnerAndConfigurationSettings settings,
+                                     @NotNull DataContext dataContext,
+                                     @NotNull Executor executor,
+                                     @Nullable Consumer<ExecutionEnvironment> environmentCustomization) {
+
       if (configuration instanceof CompoundRunConfiguration) {
         RunManager runManager = RunManager.getInstance(project);
         for (SettingsAndEffectiveTarget settingsAndEffectiveTarget : ((CompoundRunConfiguration)configuration)
           .getConfigurationsWithEffectiveRunTargets()) {
           RunConfiguration subConfiguration = settingsAndEffectiveTarget.getConfiguration();
-          run(project, subConfiguration, runManager.findSettings(subConfiguration), dataContext, executor);
+          runSubProcess(project, subConfiguration, runManager.findSettings(subConfiguration), dataContext, executor, environmentCustomization);
         }
       }
       else {
@@ -639,7 +779,9 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         if (builder == null) {
           return;
         }
-        ExecutionManager.getInstance(project).restartRunProfile(builder.activeTarget().dataContext(dataContext).build());
+        ExecutionEnvironment environment = builder.activeTarget().dataContext(dataContext).build();
+        if(environmentCustomization != null) environmentCustomization.accept(environment);
+        ExecutionManager.getInstance(project).restartRunProfile(environment);
       }
     }
 

@@ -1769,6 +1769,22 @@ public class PyTypingTest extends PyTestCase {
            "expr = A() | A()");
   }
 
+  public void testClassVarTypeResolvedFromAnnotation() {
+    doTest("int",
+           "from typing import ClassVar\n" +
+           "class A:\n" +
+           "    x: ClassVar[int] = 1\n" +
+           "expr = A.x");
+  }
+
+  public void testClassVarTypeResolvedFromTypeComment() {
+    doTest("int",
+           "from typing import ClassVar\n" +
+           "class A:\n" +
+           "    x = 1  # type: ClassVar[int]\n" +
+           "expr = A.x");
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

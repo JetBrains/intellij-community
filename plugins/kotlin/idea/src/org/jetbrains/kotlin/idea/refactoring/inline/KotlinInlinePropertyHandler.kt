@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.inline
 
@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtProperty
 
 class KotlinInlinePropertyHandler(private val withPrompt: Boolean = true) : KotlinInlineActionHandler() {
-    override val helpId: String? get() = HelpID.INLINE_VARIABLE
+    override val helpId: String get() = HelpID.INLINE_VARIABLE
 
     override val refactoringName: String get() = KotlinBundle.message("title.inline.property")
 

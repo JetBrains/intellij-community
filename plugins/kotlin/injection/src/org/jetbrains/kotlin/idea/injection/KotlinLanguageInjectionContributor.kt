@@ -430,7 +430,7 @@ class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
         return Configuration.getProjectInstance(project).advancedConfiguration.dfaOption == Configuration.DfaOption.OFF
     }
 
-    private fun processAnnotationInjectionInner(annotations: Array<PsiAnnotation>): InjectionInfo? {
+    private fun processAnnotationInjectionInner(annotations: Array<PsiAnnotation>): InjectionInfo {
         val id = AnnotationUtilEx.calcAnnotationValue(annotations, "value")
         val prefix = AnnotationUtilEx.calcAnnotationValue(annotations, "prefix")
         val suffix = AnnotationUtilEx.calcAnnotationValue(annotations, "suffix")

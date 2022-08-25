@@ -2,16 +2,18 @@
 package com.jetbrains.python.sdk.flavors;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.target.readableFs.PathInfo;
+import com.intellij.execution.target.readableFs.TargetConfigurationReadableFs;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.add.target.PathValidatorKt;
+import com.jetbrains.python.sdk.add.target.ValidationRequest;
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
@@ -90,27 +92,19 @@ public final class CondaEnvSdkFlavor extends CPythonSdkFlavor {
     return PythonIcons.Python.Anaconda;
   }
 
-  @Nullable
   public static ValidationInfo validateCondaPath(@Nullable @SystemDependent String condaExecutable) {
-    final String message;
+    return validateCondaPath(condaExecutable, PathInfo.Companion.getLocalPathInfoProvider());
+  }
 
-    if (StringUtil.isEmptyOrSpaces(condaExecutable)) {
-      message = PyBundle.message("python.add.sdk.conda.executable.path.is.empty");
-    }
-    else {
-      final var file = new File(condaExecutable);
-
-      if (!file.exists()) {
-        message = PyBundle.message("python.add.sdk.conda.executable.not.found");
-      }
-      else if (!file.isFile() || !file.canExecute()) {
-        message = PyBundle.message("python.add.sdk.conda.executable.path.is.not.executable");
-      }
-      else {
-        message = null;
-      }
-    }
-
-    return message == null ? null : new ValidationInfo(message);
+  @Nullable
+  public static ValidationInfo validateCondaPath(@Nullable @SystemDependent String condaExecutable,
+                                                 @Nullable TargetConfigurationReadableFs pathInfoProvider) {
+    return PathValidatorKt.validateExecutableFile(
+      new ValidationRequest(
+        condaExecutable,
+        PyBundle.message("python.add.sdk.conda.executable.path.is.empty"),
+        pathInfoProvider,
+        null
+      ));
   }
 }

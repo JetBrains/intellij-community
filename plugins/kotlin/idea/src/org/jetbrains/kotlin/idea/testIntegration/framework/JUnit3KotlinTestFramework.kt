@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFrameworkUt
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFrameworkUtils.isResolvable
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 open class JUnit3KotlinTestFramework : AbstractKotlinTestFramework() {
 
@@ -28,6 +29,9 @@ open class JUnit3KotlinTestFramework : AbstractKotlinTestFramework() {
     }
 
     private fun isJUnit3TestClass(declaration: KtClassOrObject): Boolean {
+        if (declaration.safeAs<KtClass>()?.isInner() == true)
+            return false
+
         val superTypeListEntries = declaration.superTypeListEntries
             .filterIsInstance<KtSuperTypeCallEntry>().firstOrNull()
             ?: return false

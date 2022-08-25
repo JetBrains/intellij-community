@@ -15,8 +15,8 @@ import java.io.OutputStream
 class IonSerializer(@Suppress("UNUSED_PARAMETER") virtualFileManager: VirtualFileUrlManager) : EntityStorageSerializer {
   override val serializerDataFormatVersion: String = "v1"
 
-  override fun serializeCache(stream: OutputStream, storage: WorkspaceEntityStorage): SerializationResult {
-    storage as WorkspaceEntityStorageImpl
+  override fun serializeCache(stream: OutputStream, storage: EntityStorageSnapshot): SerializationResult {
+    storage as EntityStorageSnapshotImpl
     val configuration = WriteConfiguration(allowAnySubTypes = true)
     val ion = ObjectSerializer.instance
 
@@ -36,7 +36,7 @@ class IonSerializer(@Suppress("UNUSED_PARAMETER") virtualFileManager: VirtualFil
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun deserializeCache(stream: InputStream): WorkspaceEntityStorageBuilder {
+  override fun deserializeCache(stream: InputStream): MutableEntityStorage {
     val configuration = ReadConfiguration(allowAnySubTypes = true)
     val ion = ObjectSerializer.instance
 
@@ -55,8 +55,8 @@ class IonSerializer(@Suppress("UNUSED_PARAMETER") virtualFileManager: VirtualFil
     val persistentIdIndex = ion.read(PersistentIdInternalIndex::class.java, stream, configuration)
     val storageIndexes = StorageIndexes(softLinks, virtualFileIndex, entitySourceIndex, persistentIdIndex)
 
-    val storage = WorkspaceEntityStorageImpl(entitiesBarrel, refsTable, storageIndexes)
-    val builder = WorkspaceEntityStorageBuilderImpl.from(storage)
+    val storage = EntityStorageSnapshotImpl(entitiesBarrel, refsTable, storageIndexes)
+    val builder = MutableEntityStorageImpl.from(storage)
 
     builder.entitiesByType.entityFamilies.forEach { family ->
       family?.entities?.asSequence()?.filterNotNull()?.forEach { entityData -> builder.createAddEvent(entityData) }

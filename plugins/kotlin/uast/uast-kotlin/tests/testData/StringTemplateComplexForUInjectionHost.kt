@@ -17,3 +17,20 @@ fun foo() {
     val template1 = "${simpleForTemplate()}"
     val template2 = ".${simpleForTemplate()}"
 }
+
+fun baz(){
+    
+    val trimA = """
+        text=text
+    """.trimIndent()
+    
+    val trimB = """
+        | margined
+    """.trimMargin()
+    
+    val c = "bar" == """
+        margin=text
+    """.trimIndent()
+    
+    val concat = "abc" + "cde" + "efg"
+}

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.intentions.style.inference
 
@@ -54,7 +54,7 @@ class SubstitutorTypeMapper(private val substitutor: PsiSubstitutor) : PsiTypeMa
     return substitutor.substitute(correctClassType)
   }
 
-  override fun visitArrayType(type: PsiArrayType): PsiType? {
+  override fun visitArrayType(type: PsiArrayType): PsiType {
     val substitution = removeWildcard(type.componentType.accept(this))
     return substitution.createArrayType()
 
@@ -156,7 +156,7 @@ private fun buildResidualTypeParameterList(resultMethod: GrMethod,
   val outerClassParameters = collectClassParameters(resultMethod.containingClass).map { it.name!! }.toSet()
   val visitor = object : PsiTypeMapper() {
 
-    override fun visitClassType(classType: PsiClassType): PsiType? {
+    override fun visitClassType(classType: PsiClassType): PsiType {
       val resolvedTypeParameter = classType.typeParameter()
       if (resolvedTypeParameter != null &&
           resolvedTypeParameter.name.run { this !in outerClassParameters && this !in necessaryTypeNames }) {

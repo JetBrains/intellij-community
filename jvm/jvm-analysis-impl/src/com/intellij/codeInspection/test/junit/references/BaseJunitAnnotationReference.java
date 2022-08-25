@@ -3,6 +3,7 @@ package com.intellij.codeInspection.test.junit.references;
 
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInspection.reference.PsiMemberReference;
 import com.intellij.lang.jvm.JvmMethod;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -22,7 +23,7 @@ import java.util.List;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 
-public abstract class BaseJunitAnnotationReference extends PsiReferenceBase<PsiLanguageInjectionHost> {
+public abstract class BaseJunitAnnotationReference extends PsiReferenceBase<PsiLanguageInjectionHost> implements PsiMemberReference {
   public BaseJunitAnnotationReference(PsiLanguageInjectionHost element) {
     super(element, false);
   }

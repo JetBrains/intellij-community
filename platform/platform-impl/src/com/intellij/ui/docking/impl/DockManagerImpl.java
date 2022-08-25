@@ -578,8 +578,10 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
           continue;
         }
         IdeRootPaneNorthExtension toInstall = each.copy();
-        myNorthExtensions.put(toInstall.getKey(), toInstall);
-        myNorthPanel.add(toInstall.getComponent());
+        if(toInstall != null) {
+          myNorthExtensions.put(toInstall.getKey(), toInstall);
+          myNorthPanel.add(toInstall.getComponent());
+        }
       }
 
       Iterator<String> existing = myNorthExtensions.keySet().iterator();

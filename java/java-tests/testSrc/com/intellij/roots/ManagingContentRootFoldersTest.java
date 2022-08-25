@@ -16,11 +16,9 @@
 package com.intellij.roots;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ContentFolder;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.JavaProjectTestCase;
@@ -161,6 +159,21 @@ public class ManagingContentRootFoldersTest extends JavaProjectTestCase {
     String url = dir.getUrl();
 
     ContentFolder f = entry.addExcludeFolder(url);
+    assertEquals(dir, f.getFile());
+    assertEquals(url, f.getUrl());
+  }
+
+  public void testAddingExcludeWithoutSlash() {
+    VirtualFile dir = createSrc();
+    String url = dir.getUrl();
+
+    Ref<ContentEntry> ref = Ref.create();
+    ModuleRootModificationUtil.updateModel(myModule, model -> {
+      var entry = model.addContentEntry(url + "/");
+      ref.set(entry);
+    });
+
+    ContentFolder f = ref.get().addExcludeFolder(url);
     assertEquals(dir, f.getFile());
     assertEquals(url, f.getUrl());
   }

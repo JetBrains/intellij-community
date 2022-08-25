@@ -30,8 +30,13 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBri
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.EntityStorageSnapshot
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.addContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.addSourceRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.*
 import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.toBuilder
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -40,6 +45,7 @@ import org.jetbrains.jps.model.module.UnknownSourceRootType
 import org.jetbrains.jps.model.module.UnknownSourceRootTypeProperties
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
+import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
@@ -180,7 +186,7 @@ class ModuleBridgesTest {
     WriteCommandAction.runWriteCommandAction(project) {
       val checkModuleDependency = { moduleName: String, dependencyModuleName: String ->
         assertNotNull(WorkspaceModel.getInstance(project).entityStorage.current.entities(ModuleEntity::class.java)
-                        .first { it.persistentId().name == moduleName }.dependencies
+                        .first { it.persistentId.name == moduleName }.dependencies
                         .find { it is ModuleDependencyItem.Exportable.ModuleDependency && it.module.name == dependencyModuleName })
       }
 
@@ -420,7 +426,7 @@ class ModuleBridgesTest {
 
   @Test
   fun `test module libraries loaded from cache`() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
 
     val tempDir = temporaryDirectoryRule.newPath()
 
@@ -430,18 +436,18 @@ class ModuleBridgesTest {
     val moduleEntity = builder.addModuleEntity(name = "test", dependencies = emptyList(), source = source)
     val moduleLibraryEntity = builder.addLibraryEntity(
       name = "some",
-      tableId = LibraryTableId.ModuleLibraryTableId(moduleEntity.persistentId()),
+      tableId = LibraryTableId.ModuleLibraryTableId(moduleEntity.persistentId),
       roots = listOf(LibraryRoot(tempDir.toVirtualFileUrl(virtualFileManager), LibraryRootTypeId.COMPILED)),
       excludedRoots = emptyList(),
       source = source
     )
-    builder.modifyEntity(ModifiableModuleEntity::class.java, moduleEntity) {
+    builder.modifyEntity(moduleEntity) {
       dependencies = listOf(
-        ModuleDependencyItem.Exportable.LibraryDependency(moduleLibraryEntity.persistentId(), false, ModuleDependencyItem.DependencyScope.COMPILE)
+        ModuleDependencyItem.Exportable.LibraryDependency(moduleLibraryEntity.persistentId, false, ModuleDependencyItem.DependencyScope.COMPILE)
       )
     }
 
-    WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {
+    WorkspaceModelInitialTestContent.withInitialContent(builder.toSnapshot()) {
       val project = PlatformTestUtil.loadAndOpenProject(iprFile, disposableRule.disposable)
 
       val module = ModuleManager.getInstance(project).findModuleByName("test")
@@ -460,7 +466,7 @@ class ModuleBridgesTest {
 
   @Test
   fun `test libraries are loaded from cache`() {
-    val builder = WorkspaceEntityStorageBuilder.create()
+    val builder = MutableEntityStorage.create()
 
     val tempDir = temporaryDirectoryRule.newPath()
 
@@ -474,7 +480,7 @@ class ModuleBridgesTest {
       source = JpsEntitySourceFactory.createJpsEntitySourceForProjectLibrary(toConfigLocation(iprFile, virtualFileManager))
     )
 
-    WorkspaceModelInitialTestContent.withInitialContent(builder.toStorage()) {
+    WorkspaceModelInitialTestContent.withInitialContent(builder.toSnapshot()) {
       val project = PlatformTestUtil.loadAndOpenProject(iprFile, disposableRule.disposable)
 
       val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
@@ -764,7 +770,7 @@ class ModuleBridgesTest {
 
     WorkspaceModel.getInstance(project).updateProjectModel { builder ->
       val entity = builder.resolve(ModuleId("xxx"))!!
-      builder.modifyEntity(ModifiableModuleEntity::class.java, entity) {
+      builder.modifyEntity(entity) {
         this.name = "yyy"
       }
     }
@@ -804,7 +810,7 @@ class ModuleBridgesTest {
 
 internal fun createEmptyTestProject(temporaryDirectory: TemporaryDirectory, disposableRule: DisposableRule): Project {
   val projectDir = temporaryDirectory.newPath("project")
-  val project = WorkspaceModelInitialTestContent.withInitialContent(WorkspaceEntityStorageBuilder.create()) {
+  val project = WorkspaceModelInitialTestContent.withInitialContent(EntityStorageSnapshot.empty()) {
     PlatformTestUtil.loadAndOpenProject(projectDir.resolve("testProject.ipr"), disposableRule.disposable)
   }
   return project

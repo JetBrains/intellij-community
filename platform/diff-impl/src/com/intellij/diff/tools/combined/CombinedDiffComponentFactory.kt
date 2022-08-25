@@ -106,7 +106,7 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
 
       if (blockIdToSelect != null) {
         combinedViewer.diffBlocks[blockIdToSelect]?.let { block ->
-          combinedViewer.selectDiffBlock(block, ScrollPolicy.DIFF_BLOCK)
+          combinedViewer.selectDiffBlock(block, ScrollPolicy.DIFF_BLOCK, false)
         }
       }
     }
@@ -151,9 +151,9 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
       model.unloadRequestContents(blockIds)
     }
 
-    override fun blocksVisible(blocks: Collection<CombinedDiffBlock<*>>, blockToSelect: CombinedDiffBlock<*>?) {
+    override fun blocksVisible(blocks: Collection<CombinedDiffBlock<*>>, blockToSelect: CombinedBlockId?) {
       val blockIds = blocks.asSequence().map(CombinedDiffBlock<*>::id).toSet()
-      model.loadRequestContents(blockIds, blockToSelect?.id)
+      model.loadRequestContents(blockIds, blockToSelect)
     }
   }
 
@@ -162,6 +162,7 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
       Runnable {
         val childCount = model.requests.size
         val visibleBlockCount = min(combinedViewer.scrollPane.visibleRect.height / CombinedLazyDiffViewer.HEIGHT.get(), childCount)
+        val blockToSelect = model.context.getUserData(COMBINED_DIFF_SCROLL_TO_BLOCK)
 
         BackgroundTaskUtil.executeOnPooledThread(ourDisposable) {
          val indicator = EmptyProgressIndicator()
@@ -178,12 +179,17 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
 
               allRequests.drop(visibleBlockCount).forEachIndexed { index, childRequest ->
                 invokeAndWaitIfNeeded {
-                  combinedViewer.addChildBlock(buildLoadingBlockContent(childRequest.blockId), index > 0)
+                  combinedViewer.addChildBlock(buildLoadingBlockContent(childRequest.blockId), index > 0 || visibleBlockCount > 0)
                 }
               }
             }
             finally {
-              runInEdt { mainUi.stopProgress() }
+              runInEdt {
+                mainUi.stopProgress()
+                if (blockToSelect != null) {
+                  combinedViewer.selectDiffBlock(blockToSelect, ScrollPolicy.DIFF_BLOCK, true)
+                }
+              }
             }
 
           }, indicator)

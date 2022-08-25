@@ -12,9 +12,9 @@ import com.intellij.util.CachedValueImpl
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.ide.isEqualOrParentOf
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableContentRootEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addSourceRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.asJavaResourceRoot
 import com.intellij.workspaceModel.storage.bridgeEntities.asJavaSourceRoot
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -27,7 +27,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer
 
 internal class ModifiableContentEntryBridge(
-  private val diff: WorkspaceEntityStorageDiffBuilder,
+  private val diff: MutableEntityStorage,
   private val modifiableRootModel: ModifiableRootModelBridgeImpl,
   val contentEntryUrl: VirtualFileUrl
 ) : ContentEntry {
@@ -137,8 +137,8 @@ internal class ModifiableContentEntryBridge(
     }
   }
 
-  private fun updateContentEntry(updater: ModifiableContentRootEntity.() -> Unit) {
-    diff.modifyEntity(ModifiableContentRootEntity::class.java, currentContentEntry.value.entity, updater)
+  private fun updateContentEntry(updater: ContentRootEntity.Builder.() -> Unit) {
+    diff.modifyEntity(ContentRootEntity.Builder::class.java, currentContentEntry.value.entity, updater)
   }
 
   override fun removeExcludeFolder(url: String): Boolean {

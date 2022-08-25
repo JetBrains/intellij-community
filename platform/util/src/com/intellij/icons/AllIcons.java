@@ -960,6 +960,11 @@ public class AllIcons {
     /** 12x12 */ public static final @NotNull Icon StopSmallHovered = load("process/stopSmallHovered.svg", -1328761307, 0);
   }
 
+  public static final class Profiler {
+    /** 12x12 */ public static final @NotNull Icon Rec = load("profiler/rec.svg", -2004362820, 2);
+    /** 12x12 */ public static final @NotNull Icon RecInactive = load("profiler/recInactive.svg", 438194600, 2);
+  }
+
   public static final class Providers {
     /** 16x16 */ public static final @NotNull Icon Apache = load("providers/apache.svg", 1150623716, 2);
     /** 16x16 */ public static final @NotNull Icon ApacheDerby = load("providers/apacheDerby.svg", 85626247, 2);

@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.concurrency.SensitiveProgressWrapper;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.openapi.actionSystem.*;
@@ -119,7 +120,7 @@ public final class Utils {
                                                                           @NotNull PresentationFactory presentationFactory,
                                                                           @NotNull DataContext context,
                                                                           @NotNull String place) {
-    return expandActionGroupAsync(group, presentationFactory, context, place, false);
+    return expandActionGroupAsync(group, presentationFactory, context, place, false, false);
   }
 
   @ApiStatus.Internal
@@ -127,10 +128,11 @@ public final class Utils {
                                                                           @NotNull PresentationFactory presentationFactory,
                                                                           @NotNull DataContext context,
                                                                           @NotNull String place,
-                                                                          boolean isToolbarAction) {
+                                                                          boolean isToolbarAction,
+                                                                          boolean skipFastTrack) {
     LOG.assertTrue(isAsyncDataContext(context), "Async data context required in '" + place + "': " + context.getClass().getName());
     ActionUpdater updater = new ActionUpdater(presentationFactory, context, place, ActionPlaces.isPopupPlace(place), isToolbarAction);
-    List<AnAction> actions = expandActionGroupFastTrack(updater, group, group instanceof CompactActionGroup, null);
+    List<AnAction> actions = skipFastTrack ? null : expandActionGroupFastTrack(updater, group, group instanceof CompactActionGroup, null);
     if (actions != null) {
       return Promises.resolvedCancellablePromise(actions);
     }
@@ -190,6 +192,9 @@ public final class Utils {
     Project project = CommonDataKeys.PROJECT.getData(context);
     List<AnAction> list;
     if (async) {
+      if (isContextMenu) {
+        ActionUpdater.cancelAllUpdates("context menu requested");
+      }
       if (expander.allowsFastUpdate(project, place) && !Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt")) {
         Set<String> missedKeys = new HashSet<>();
         list = expandActionGroupFastTrack(updater, group, group instanceof CompactActionGroup, missedKeys::add);
@@ -308,7 +313,8 @@ public final class Utils {
       () -> expandActionGroupImpl(group, presentationFactory, context, place, true, removeIcon, component),
       expire, removeIcon);
     boolean checked = group instanceof CheckedActionGroup;
-    fillMenuInner(component, list, checked, enableMnemonics, presentationFactory, context, place, isWindowMenu, useDarkIcons);
+    boolean multiChoice = isMultiChoiceGroup(group);
+    fillMenuInner(component, list, checked, multiChoice, enableMnemonics, presentationFactory, context, place, isWindowMenu, useDarkIcons);
   }
 
   private static @NotNull Runnable addLoadingIcon(@Nullable RelativePoint point, @NotNull String place) {
@@ -350,6 +356,7 @@ public final class Utils {
   private static void fillMenuInner(@NotNull JComponent component,
                                     @NotNull List<? extends AnAction> list,
                                     boolean checked,
+                                    boolean multiChoice,
                                     boolean enableMnemonics,
                                     @NotNull PresentationFactory presentationFactory,
                                     @NotNull DataContext context,
@@ -357,24 +364,31 @@ public final class Utils {
                                     boolean isWindowMenu,
                                     boolean useDarkIcons) {
     component.removeAll();
-    final @Nullable Menu nativePeer = component instanceof ActionMenu ? ((ActionMenu)component).getScreenMenuPeer() : null;
+    Menu nativePeer = component instanceof ActionMenu ? ((ActionMenu)component).getScreenMenuPeer() : null;
     if (nativePeer != null) nativePeer.beginFill();
-    final ArrayList<Component> children = new ArrayList<>();
+    ArrayList<Component> children = new ArrayList<>();
 
     for (int i = 0, size = list.size(); i < size; i++) {
-      final AnAction action = list.get(i);
+      AnAction action = list.get(i);
       Presentation presentation = presentationFactory.getPresentation(action);
-      if (!(action instanceof Separator) && presentation.isVisible() && StringUtil.isEmpty(presentation.getText())) {
-        String message = "Skipping empty menu item for action '" + action + "' (" + action.getClass()+")";
+      if (!presentation.isVisible()) {
+        LOG.error("Invisible menu item for '" + action + "' (" + action.getClass() + ") in '" + place + "'");
+        continue;
+      }
+      else if (!(action instanceof Separator) && StringUtil.isEmpty(presentation.getText())) {
+        String message = "Empty menu item for '" + action + "' (" + action.getClass() + ") in '" + place + "'";
         if (action.getTemplatePresentation().getText() == null) {
           message += ". Please specify some default action text in plugin.xml or action constructor";
         }
         LOG.warn(message);
         continue;
       }
+      if (multiChoice && action instanceof Toggleable) {
+        presentation.setMultiChoice(true);
+      }
 
       if (action instanceof Separator) {
-        final String text = ((Separator)action).getText();
+        String text = ((Separator)action).getText();
         if (!StringUtil.isEmpty(text) || (i > 0 && i < size - 1)) {
           JPopupMenu.Separator separator = createSeparator(text);
           component.add(separator);
@@ -389,7 +403,8 @@ public final class Utils {
         if (nativePeer != null) nativePeer.add(menu.getScreenMenuPeer());
       }
       else {
-        ActionMenuItem each = new ActionMenuItem(action, presentation, place, context, enableMnemonics, true, checked, useDarkIcons);
+        ActionMenuItem each = new ActionMenuItem(action, place, context, enableMnemonics, checked, useDarkIcons);
+        each.updateFromPresentation(presentation);
         component.add(each);
         children.add(each);
         if (nativePeer != null) nativePeer.add(each.getScreenMenuItemPeer());
@@ -397,8 +412,9 @@ public final class Utils {
     }
 
     if (list.isEmpty()) {
-      ActionMenuItem each = new ActionMenuItem(EMPTY_MENU_FILLER, presentationFactory.getPresentation(EMPTY_MENU_FILLER),
-                                               place, context, enableMnemonics, true, checked, useDarkIcons);
+      Presentation presentation = presentationFactory.getPresentation(EMPTY_MENU_FILLER);
+      ActionMenuItem each = new ActionMenuItem(EMPTY_MENU_FILLER, place, context, enableMnemonics, checked, useDarkIcons);
+      each.updateFromPresentation(presentation);
       component.add(each);
       children.add(each);
     }
@@ -427,6 +443,68 @@ public final class Utils {
           }
         }
       }
+    }
+  }
+
+  public static boolean isMultiChoiceGroup(@NotNull ActionGroup actionGroup) {
+    Presentation p = actionGroup.getTemplatePresentation();
+    if (p.isMultiChoice()) return true;
+    if (p.getIcon() == AllIcons.Actions.GroupBy ||
+        p.getIcon() == AllIcons.Actions.Show ||
+        p.getIcon() == AllIcons.General.GearPlain ||
+        p.getIcon() == AllIcons.Debugger.RestoreLayout) {
+      return true;
+    }
+    if (actionGroup.getClass() == DefaultActionGroup.class) {
+      for (AnAction child : actionGroup.getChildren(null)) {
+        if (child instanceof Separator) continue;
+        if (!(child instanceof Toggleable)) return false;
+      }
+      return true;
+    }
+    return false;
+  }
+
+  static <T> void updateMenuItems(@NotNull JPopupMenu popupMenu,
+                                  @NotNull DataContext dataContext,
+                                  @NotNull String place,
+                                  @NotNull PresentationFactory presentationFactory) {
+    List<ActionMenuItem> items = ContainerUtil.filterIsInstance(popupMenu.getComponents(), ActionMenuItem.class);
+    updateComponentActions(
+      popupMenu, ContainerUtil.map(items, ActionMenuItem::getAnAction), dataContext, place, presentationFactory,
+      () -> {
+        for (ActionMenuItem item : items) {
+          item.updateFromPresentation(presentationFactory.getPresentation(item.getAnAction()));
+        }
+      });
+  }
+
+  @ApiStatus.Internal
+  public static <T> void updateComponentActions(@NotNull JComponent component,
+                                                @NotNull Iterable<AnAction> actions,
+                                                @NotNull DataContext dataContext,
+                                                @NotNull String place,
+                                                @NotNull PresentationFactory presentationFactory,
+                                                @NotNull Runnable onUpdate) {
+    DefaultActionGroup actionGroup = new DefaultActionGroup();
+    for (AnAction action : actions) {
+      actionGroup.add(action);
+    }
+    // note that no retries are attempted
+    if (isAsyncDataContext(dataContext)) {
+      expandActionGroupAsync(actionGroup, presentationFactory, dataContext, place)
+        .onSuccess(__ -> {
+          try {
+            onUpdate.run();
+          }
+          finally {
+            component.repaint();
+          }
+        });
+    }
+    else {
+      expandActionGroupImpl(actionGroup, presentationFactory, dataContext, place, ActionPlaces.isPopupPlace(place), null, null);
+      onUpdate.run();
     }
   }
 

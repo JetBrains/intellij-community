@@ -216,7 +216,7 @@ internal class NewToolbarRootPaneExtension(private val project: Project) : IdeRo
     NewToolbarRootPaneManager.getInstance(project).startUpdateActionGroups(this)
   }
 
-  override fun copy() = NewToolbarRootPaneExtension(project)
+  override fun copy() = null//NewToolbarRootPaneExtension(project)
 
   override fun revalidate() {
     NewToolbarRootPaneManager.getInstance(project).startUpdateActionGroups(this)

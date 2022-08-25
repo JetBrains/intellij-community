@@ -1,10 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.ml
 
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlService
-import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
+import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.ml.settings.SearchEverywhereMlSettings
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -45,9 +42,9 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
     return null
   }
 
-  override fun onSessionStarted(project: Project?) {
+  override fun onSessionStarted(project: Project?, mixedListInfo: SearchEverywhereMixedListInfo) {
     if (experiment.isAllowed) {
-      activeSession.updateAndGet { SearchEverywhereMLSearchSession(project, sessionIdCounter.incrementAndGet()) }
+      activeSession.updateAndGet { SearchEverywhereMLSearchSession(project, mixedListInfo, sessionIdCounter.incrementAndGet()) }
     }
   }
 

@@ -20,8 +20,8 @@ import com.intellij.util.PathUtil;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.storage.CachedValue;
 import com.intellij.workspaceModel.storage.ExternalEntityMapping;
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
-import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactEntity;
+import com.intellij.workspaceModel.storage.EntityStorage;
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactEntity;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -36,7 +36,7 @@ final class ArtifactVirtualFileListener implements BulkFileListener {
     parentPathsToArtifacts = new CachedValue<>(ArtifactVirtualFileListener::computeParentPathToArtifactMap);
   }
 
-  private static Map<String, List<ArtifactEntity>> computeParentPathToArtifactMap(WorkspaceEntityStorage storage) {
+  private static Map<String, List<ArtifactEntity>> computeParentPathToArtifactMap(EntityStorage storage) {
     Map<String, List<ArtifactEntity>> result = new HashMap<>();
     Iterator<ArtifactEntity> entities = storage.entities(ArtifactEntity.class).iterator();
     while (entities.hasNext()) {
@@ -75,7 +75,7 @@ final class ArtifactVirtualFileListener implements BulkFileListener {
     //this is needed to set up mapping from ArtifactEntity to ArtifactBridge
     artifactManager.getArtifacts();
     
-    WorkspaceEntityStorage storage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
+    EntityStorage storage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
     ExternalEntityMapping<ArtifactBridge> artifactsMap = ArtifactManagerBridge.Companion.getArtifactsMap(storage);
     ModifiableArtifactModel model = artifactManager.createModifiableModel();
     for (ArtifactEntity artifactEntity : artifactEntities) {

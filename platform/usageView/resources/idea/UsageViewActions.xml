@@ -9,6 +9,18 @@
     <postStartupActivity implementation="com.intellij.usages.impl.rules.UsageFilteringRulesActivity"/>
     <usages.usageReferenceClassProvider implementation="com.intellij.usages.impl.PsiElementUsageReferenceClassProvider"/>
     <generatedSourceUsageFilter implementation="com.intellij.usages.impl.rules.DefaultGeneratedSourceUsageFilter"/>
+    <registryKey key="similarity.find.usages.enable" defaultValue="true" description="Enables grouping usages by similarity"/>
+    <registryKey key="similarity.find.usages.groups.threshold" defaultValue="0.9"
+                 description="Similarity threshold for groups in find usages"/>
+    <registryKey key="similarity.find.usages.use.parent.features.with.child.number" defaultValue="false"
+                 description="Take in account what child number is in parent node"/>
+    <registryKey defaultValue="true" description="Use information from parent nodes" key="similarity.find.usages.use.parent.features"/>
+    <registryKey defaultValue="true" description="Enable similarity clustering for Kotlin usages"
+                 key="similarity.find.usages.kotlin.clustering.enable"/>
+    <registryKey defaultValue="true" description="Clustering without resolve" key="similarity.find.usages.fast.clustering"/>
+    <registryKey defaultValue="false" description="Parent statement condition feature"
+                 key="similarity.find.usages.parent.statement.condition.feature"/>
+    <registryKey defaultValue="true" description="Use information from sibling nodes" key="similarity.find.usages.use.sibling.features"/>
   </extensions>
   <actions resource-bundle="messages.UsageViewBundle">
     <group id="UsageGroupingActionGroup">

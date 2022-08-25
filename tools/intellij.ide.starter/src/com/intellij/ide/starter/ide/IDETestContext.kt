@@ -152,12 +152,10 @@ data class IDETestContext(
       addSystemProperty("memory.snapshots.path", paths.logsDir)
     }
 
-
   fun setPathForSnapshots(): IDETestContext =
     addVMOptionsPatch {
       addSystemProperty("snapshots.path", paths.snapshotsDir)
     }
-
 
   fun collectMemorySnapshotOnFailedPluginUnload(): IDETestContext =
     addVMOptionsPatch {
@@ -514,24 +512,25 @@ data class IDETestContext(
           xmlDoc.documentElement.normalize()
 
           val gradleProjectSettingsElements: NodeList = xmlDoc.getElementsByTagName("GradleProjectSettings")
-          check(gradleProjectSettingsElements.length == 1)
+          if (gradleProjectSettingsElements.length == 1) {
 
-          for (i in 0 until gradleProjectSettingsElements.length) {
-            val component: Node = gradleProjectSettingsElements.item(i)
+            for (i in 0 until gradleProjectSettingsElements.length) {
+              val component: Node = gradleProjectSettingsElements.item(i)
 
-            if (component.nodeType == Node.ELEMENT_NODE) {
-              val optionElement = xmlDoc.createElement("option")
-              optionElement.setAttribute("name", "delegatedBuild")
-              optionElement.setAttribute("value", "false")
-              component.appendChild(optionElement)
+              if (component.nodeType == Node.ELEMENT_NODE) {
+                val optionElement = xmlDoc.createElement("option")
+                optionElement.setAttribute("name", "delegatedBuild")
+                optionElement.setAttribute("value", "false")
+                component.appendChild(optionElement)
+              }
             }
+            val source = DOMSource(xmlDoc)
+            val outputStream = FileOutputStream(gradle.toFile())
+            val result = StreamResult(outputStream)
+            val transformerFactory = TransformerFactory.newInstance()
+            val transformer = transformerFactory.newTransformer()
+            transformer.transform(source, result)
           }
-          val source = DOMSource(xmlDoc)
-          val outputStream = FileOutputStream(gradle.toFile())
-          val result = StreamResult(outputStream)
-          val transformerFactory = TransformerFactory.newInstance()
-          val transformer = transformerFactory.newTransformer()
-          transformer.transform(source, result)
         }
       }
     }
@@ -569,7 +568,9 @@ data class IDETestContext(
     if (!pathToGeneralXml.exists()) {
       pathToGeneralXml.parent.createDirectories()
       patchedIdeGeneralXml.use {
-        pathToGeneralXml.writeBytes(it.readAllBytes())
+        if (it != null) {
+          pathToGeneralXml.writeBytes(it.readAllBytes())
+        }
       }
     }
     return this

@@ -1,18 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.compiler.configuration
 
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsContexts
-import com.intellij.util.io.DigestUtil
 import org.jetbrains.kotlin.idea.artifacts.*
+import org.jetbrains.kotlin.idea.compiler.configuration.LazyKotlinMavenArtifactDownloader.DownloadContext
 import java.io.File
 import java.security.MessageDigest
 
 /**
  * This class represents the pipeline:
  * ```
- *                                kotlin version
+ *                                   Internet
  *                                      │
  *                     ┌────────────────┴────────────────┐
  *                     │                                 │
@@ -24,54 +21,35 @@ import java.security.MessageDigest
  *                                  jars are structured in "kotlinc dist layout"
  *                             (`./gradlew dist` in kotlin repo defines the layout)
  * ```
+ * For each Kotlin version separate pipeline is created (`uniquePipelineId` in [AbstractLazyFileOutputProducer])
+ *
  * It's important to declare the pom as an output (even thought it doesn't participate in further pipeline) because we want to re-calculate
  * the whole pipeline if the pom changes ([AbstractLazyFileOutputProducer] guarantees us that). It's convenient for the local testing
  * ("install to maven local -> test" development cycle)
  */
-class LazyKotlincDistDownloaderAndUnpacker(version: String) : LazyFileOutputProducer<String, LazyPomAndJarsDownloader.Context> {
-    private val downloader = LazyPomAndJarsDownloader(version)
+class LazyKotlincDistDownloaderAndUnpacker(version: String) : LazyFileOutputProducer<Unit, DownloadContext> {
+    private val downloader =
+        LazyKotlinMavenArtifactDownloader(KotlinArtifacts.KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID, version, artifactIsPom = true)
     private val distLayoutProducer = LazyDistDirLayoutProducer(version, KotlinArtifactsDownloader.getUnpackedKotlinDistPath(version))
 
-    override fun isUpToDate(input: String): Boolean { // input is version
-        val downloaded = downloader.getOutputIfUpToDateOrEmpty(input)
+    override fun isUpToDate(input: Unit): Boolean {
+        val downloaded = downloader.getDownloadedIfUpToDateOrEmpty()
             .filter { it.extension == "jar" }
             .takeIf { it.isNotEmpty() }
             ?: return false
         return distLayoutProducer.isUpToDate(downloaded)
     }
 
-    override fun lazyProduceOutput(input: String, computationContext: LazyPomAndJarsDownloader.Context): List<File> {
-        val downloaded = downloader.lazyProduceOutput(input, computationContext)
+    override fun lazyProduceOutput(input: Unit, computationContext: DownloadContext): List<File> {
+        val downloaded = downloader.lazyDownload(computationContext)
             .filter { it.extension == "jar" }
             .takeIf { it.isNotEmpty() }
             ?: return emptyList()
         return listOf(distLayoutProducer.lazyProduceDist(downloaded))
     }
 
-    fun lazyProduceDist(input: String, context: LazyPomAndJarsDownloader.Context): File? {
-        return lazyProduceOutput(input, context).singleOrNull()
-    }
-}
-
-class LazyPomAndJarsDownloader(version: String) :
-    AbstractLazyFileOutputProducer<String, LazyPomAndJarsDownloader.Context>("${LazyPomAndJarsDownloader::class.java.name}-$version") {
-
-    override fun produceOutput(input: String, computationContext: Context): List<File> { // input is a version
-        computationContext.indicator.text = computationContext.indicatorDownloadText
-        return KotlinArtifactsDownloader.downloadMavenArtifacts(
-            KotlinArtifacts.KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID,
-            version = input,
-            computationContext.project,
-            computationContext.indicator,
-            artifactIsPom = true
-        )
-    }
-
-    override fun updateMessageDigestWithInput(messageDigest: MessageDigest, input: String, buffer: ByteArray) {
-        input.byteInputStream().use { DigestUtil.updateContentHash(messageDigest, it, buffer) }
-    }
-
-    data class Context(val project: Project, val indicator: ProgressIndicator, @NlsContexts.ProgressText val indicatorDownloadText: String)
+    fun lazyProduceDist(context: DownloadContext): File? = lazyProduceOutput(Unit, context).singleOrNull()
+    fun isUpToDate() = isUpToDate(Unit)
 }
 
 private class LazyDistDirLayoutProducer(version: String, private val unpackedDistDestination: File) :
@@ -84,6 +62,8 @@ private class LazyDistDirLayoutProducer(version: String, private val unpackedDis
         for (jarInMavenRepo in input) {
             jarInMavenRepo.copyTo(lib.resolve(getDistJarNameFromMavenJar(jarInMavenRepo) ?: continue))
         }
+        val jsEngines = KotlinPluginLayout.instance.jsEngines
+        jsEngines.copyTo(lib.resolve(jsEngines.name)) // js.engines is required to avoid runtime errors when compiling kts via JPS
         return listOf(unpackedDistDestination)
     }
 
@@ -116,6 +96,12 @@ private class LazyDistDirLayoutProducer(version: String, private val unpackedDis
             nameWithoutExtension.startsWith("kotlin-maven-lombok") || nameWithoutExtension.startsWith("kotlin-maven-noarg")
         ) {
             return nameWithoutExtension.removePrefix("kotlin-maven-").removeSuffix("-$version") + "-compiler-plugin.jar"
+        }
+        if (nameWithoutExtension.startsWith("kotlin-android-extensions-runtime")) {
+            return "android-extensions-runtime.jar"
+        }
+        if (nameWithoutExtension.startsWith("kotlin-android-extensions")) {
+            return "android-extensions-compiler.jar"
         }
         return nameWithoutExtension.removeSuffix("-$version") + ".jar"
     }

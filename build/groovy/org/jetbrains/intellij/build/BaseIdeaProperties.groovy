@@ -62,6 +62,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.xpath",
     "intellij.xslt.debugger",
     "intellij.android.plugin",
+    "intellij.android.design-plugin",
     "intellij.javaFX.community",
     "intellij.java.i18n",
     "intellij.ant",

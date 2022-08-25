@@ -1609,4 +1609,22 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       }
     });
   }
+
+  @Test
+  public void testDontStopTwiceOnException() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_double_stop_on_exception.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 3);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        // Check: debugger doesn't stop on the breakpoint second time
+        resume();
+        waitForTerminate();
+      }
+    });
+  }
 }

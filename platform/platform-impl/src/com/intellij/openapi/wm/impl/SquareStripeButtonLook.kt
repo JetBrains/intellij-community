@@ -22,6 +22,10 @@ import javax.swing.UIManager
  * @author Konstantin Bulenkov
  */
 internal class SquareStripeButtonLook(private val button: ActionButton) : IdeaActionButtonLook() {
+  companion object {
+    val ICON_PADDING = JBUI.insets(5)
+  }
+
   override fun paintBackground(g: Graphics, component: JComponent, state: Int) {
     if (state == ActionButtonComponent.NORMAL && !component.isBackgroundSet) {
       return
@@ -75,34 +79,29 @@ internal class SquareStripeButtonLook(private val button: ActionButton) : IdeaAc
 
   override fun paintIcon(g: Graphics?, actionButton: ActionButtonComponent?, icon: Icon?) {
     val color = UIManager.getColor("ToolWindow.Button.selectedForeground")
-    if (actionButton is SquareStripeButton && actionButton.isFocused() && color != null) {
-      val fg = ColorUtil.toHtmlColor(color)
-      val map: Map<String, String> = mapOf("#767a8a" to fg,
-                                           "#6c707e" to fg,
-                                           "#ced0d6" to fg,
-                                           "#6e6e6e" to fg,
-                                           "#afb1b3" to fg)
-      val alpha: MutableMap<String, Int> = HashMap(map.size)
-      map.values.forEach { alpha[it] = 255 }
-      SVGLoader.setContextColorPatcher(object : SvgElementColorPatcherProvider {
-        override fun forPath(path: String?): SvgElementColorPatcher? {
-          return SVGLoader.newPatcher(null, map, alpha)
-        }
-      })
-      SVGLoader.setColorRedefinitionContext(true)
+    if (actionButton !is SquareStripeButton || !actionButton.isFocused() || color == null) {
       super.paintIcon(g, actionButton, icon)
-      SVGLoader.setColorRedefinitionContext(false)
-      SVGLoader.setContextColorPatcher(null)
       return
     }
 
-
+    val fg = ColorUtil.toHtmlColor(color)
+    val map: Map<String, String> = mapOf("#767a8a" to fg,
+                                         "#6c707e" to fg,
+                                         "#ced0d6" to fg,
+                                         "#6e6e6e" to fg,
+                                         "#afb1b3" to fg)
+    val alpha = HashMap<String, Int>(map.size)
+    map.values.forEach { alpha[it] = 255 }
+    SVGLoader.setContextColorPatcher(object : SvgElementColorPatcherProvider {
+      override fun forPath(path: String?): SvgElementColorPatcher? {
+        return SVGLoader.newPatcher(digest = null, map, alpha)
+      }
+    })
+    SVGLoader.isColorRedefinitionContext = true
     super.paintIcon(g, actionButton, icon)
+    SVGLoader.isColorRedefinitionContext = false
+    SVGLoader.setContextColorPatcher(null)
   }
 
   override fun getButtonArc() = JBValue.UIInteger("Button.ToolWindow.arc", 12)
-
-  companion object {
-    val ICON_PADDING = JBUI.insets(5)
-  }
 }
