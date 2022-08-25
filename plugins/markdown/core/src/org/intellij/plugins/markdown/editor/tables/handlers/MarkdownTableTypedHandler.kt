@@ -5,20 +5,15 @@ import com.intellij.codeInsight.editorActions.TypedHandlerDelegate
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.editor.tables.TableFormattingUtils.reformatColumnOnChange
 import org.intellij.plugins.markdown.editor.tables.TableUtils
-import org.intellij.plugins.markdown.lang.MarkdownFileType
-import org.intellij.plugins.markdown.settings.MarkdownSettings
+import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownType
 
 internal class MarkdownTableTypedHandler: TypedHandlerDelegate() {
   override fun charTyped(char: Char, project: Project, editor: Editor, file: PsiFile): Result {
-    if (!Registry.`is`("markdown.tables.editing.support.enable") || !MarkdownSettings.getInstance(project).isEnhancedEditingEnabled) {
-      return super.charTyped(char, project, editor, file)
-    }
-    if (file.fileType != MarkdownFileType.INSTANCE) {
+    if (!TableUtils.isFormattingEnabledForTables(file) || !file.fileType.isMarkdownType()) {
       return super.charTyped(char, project, editor, file)
     }
     val caretOffset = editor.caretModel.currentCaret.offset
