@@ -128,7 +128,7 @@ public final class TreeModelWrapper implements StructureViewModel, ProvidingTree
   }
 
   @Override
-  public boolean isEnabled(@NotNull NodeProvider provider) {
+  public boolean isEnabled(@NotNull NodeProvider<?> provider) {
     return myStructureView.isActionActive(provider.getName());
   }
 }

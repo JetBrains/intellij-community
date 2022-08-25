@@ -193,7 +193,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
   }
 
   @Override
-  public boolean isEnabled(@NotNull NodeProvider provider) {
+  public boolean isEnabled(@NotNull NodeProvider<?> provider) {
     return false;
   }
 }
