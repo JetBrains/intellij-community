@@ -5,8 +5,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Author: dmitrylomov
+ * @deprecated Use coroutines or CompletableFuture.
  */
+@Deprecated
 public abstract class AsyncFutureFactory {
   public static AsyncFutureFactory getInstance() {
     return ApplicationManager.getApplication().getService(AsyncFutureFactory.class);

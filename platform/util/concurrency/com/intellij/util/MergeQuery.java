@@ -4,11 +4,11 @@ package com.intellij.util;
 import com.intellij.concurrency.AsyncFuture;
 import com.intellij.concurrency.AsyncFutureFactory;
 import com.intellij.concurrency.AsyncFutureResult;
-import com.intellij.concurrency.DefaultResultConsumer;
+import com.intellij.concurrency.ResultConsumer;
 import com.intellij.util.concurrency.SameThreadExecutor;
 import org.jetbrains.annotations.NotNull;
 
-public class MergeQuery<T> extends AbstractQuery<T>{
+public final class MergeQuery<T> extends AbstractQuery<T>{
   private final Query<? extends T> myQuery1;
   private final Query<? extends T> myQuery2;
 
@@ -42,6 +42,24 @@ public class MergeQuery<T> extends AbstractQuery<T>{
       }
     });
     return result;
+  }
+
+  private static class DefaultResultConsumer<V> implements ResultConsumer<V> {
+    private final AsyncFutureResult<? super V> myResult;
+
+    private DefaultResultConsumer(@NotNull AsyncFutureResult<? super V> result) {
+      myResult = result;
+    }
+
+    @Override
+    public void onSuccess(V value) {
+      myResult.set(value);
+    }
+
+    @Override
+    public void onFailure(@NotNull Throwable t) {
+      myResult.setException(t);
+    }
   }
 
 }
