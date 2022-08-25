@@ -6,15 +6,15 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileTypes.FileType
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.idea.KotlinModuleFileType
-import org.jetbrains.kotlin.idea.base.psi.fileTypes.KotlinJavaScriptMetaFileType
 import org.jetbrains.kotlin.idea.base.psi.fileTypes.KlibMetaFileType
+import org.jetbrains.kotlin.idea.base.psi.fileTypes.KotlinJavaScriptMetaFileType
 
 abstract class KotlinBinaryExtension(val fileType: FileType) {
     companion object {
         val EP_NAME: ExtensionPointName<KotlinBinaryExtension> = ExtensionPointName.create("org.jetbrains.kotlin.binaryExtension")
 
         val kotlinBinaries: List<FileType> by lazy(LazyThreadSafetyMode.PUBLICATION) {
-            EP_NAME.extensions.map { it.fileType }
+            EP_NAME.extensionList.map { it.fileType }
         }
     }
 }
