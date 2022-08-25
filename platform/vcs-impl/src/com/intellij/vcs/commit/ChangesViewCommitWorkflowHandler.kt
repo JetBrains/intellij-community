@@ -30,6 +30,7 @@ internal class ChangesViewCommitWorkflowHandler(
 
   override val commitPanel: CheckinProjectPanel = CommitProjectPanelAdapter(this)
   override val amendCommitHandler: NonModalAmendCommitHandler = NonModalAmendCommitHandler(this)
+  override val commitAuthorTracker: CommitAuthorTracker get() = ui
 
   private fun getCommitState(): ChangeListCommitState {
     val changes = getIncludedChanges()
