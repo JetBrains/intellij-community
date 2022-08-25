@@ -24,7 +24,7 @@ internal class RunToolbarComponentService(private val project: Project): Disposa
       project.messageBus.connect(this).subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
         override fun processNotStarted(executorId: String, env: ExecutionEnvironment) {
           ApplicationManager.getApplication().invokeLater {
-            if (env.project == project) {
+            if (env.project == project && !project.isDisposed) {
               processNotStarted(env)
             }
           }
@@ -32,7 +32,7 @@ internal class RunToolbarComponentService(private val project: Project): Disposa
 
         override fun processStarted(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler) {
           ApplicationManager.getApplication().invokeLater {
-            if (env.project == project) {
+            if (env.project == project && !project.isDisposed) {
               start(env)
             }
           }
@@ -40,7 +40,7 @@ internal class RunToolbarComponentService(private val project: Project): Disposa
 
         override fun processTerminating(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler) {
           ApplicationManager.getApplication().invokeLater {
-            if (env.project == project) {
+            if (env.project == project && !project.isDisposed) {
               terminating(env)
             }
           }
@@ -48,7 +48,7 @@ internal class RunToolbarComponentService(private val project: Project): Disposa
 
         override fun processTerminated(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler, exitCode: Int) {
           ApplicationManager.getApplication().invokeLater {
-            if (env.project == project) {
+            if (env.project == project && !project.isDisposed) {
               terminated(env)
             }
           }
