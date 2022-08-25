@@ -31,6 +31,7 @@ import com.intellij.openapi.util.text.StringUtil.*
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitExecutorWithRichDescription
 import com.intellij.openapi.vcs.changes.actions.DefaultCommitExecutorAction
@@ -44,7 +45,6 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.containers.nullize
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
-import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.runBeforeCommitHandlersChecks
 import com.intellij.vcs.commit.NonModalCommitWorkflow.Companion.runCommitChecks
 import com.intellij.vcs.commit.NonModalCommitWorkflow.Companion.runMetaHandlers
 import kotlinx.coroutines.*
@@ -294,7 +294,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   }
 
   private fun getCommitCheckFailureDescription(): @NlsContexts.NotificationContent String {
-    return ui.commitProgressUi.getCommitCheckFailures().joinToString { it.text }
+    return ui.commitProgressUi.getCommitCheckFailures().mapNotNull { it.text }.joinToString()
   }
 
   private fun createShowDetailsNotificationAction(): NotificationAction {
@@ -358,20 +358,19 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     isOnlyRunCommitChecks: Boolean
   ): CommitChecksResult {
     val handlers = commitHandlers
-    val (modificationPlainHandlers, plainHandlers) = handlers.filterNot { it is CommitCheck }.partition { it is CheckinModificationHandler }
-    val (modificationCommitChecks, commitChecks) = handlers.filterIsInstance<CommitCheck>().partition { it is CheckinModificationHandler }
+    val (modificationHandlers, plainHandlers) = handlers.partition { it is CheckinModificationHandler }
+    val modificationCommitChecks = modificationHandlers.map { it.asCommitCheck(sessionInfo, commitContext) }
+    val commitChecks = plainHandlers.map { it.asCommitCheck(sessionInfo, commitContext) }
 
     val metaHandlers = handlers.filterIsInstance<CheckinMetaHandler>()
     runMetaHandlers(metaHandlers)
 
-    val plainModificationHandlersResult = runBeforeCommitHandlersChecks(sessionInfo, commitContext, modificationPlainHandlers)
-    if (!plainModificationHandlersResult.shouldCommit) return plainModificationHandlersResult
-    runCommitChecks(project, modificationCommitChecks, ui.commitProgressUi, indicator)
+    var checksPassed = runCommitChecks(project, modificationCommitChecks, ui.commitProgressUi, indicator)
     FileDocumentManager.getInstance().saveAllDocuments()
 
-    val plainHandlersResult = runBeforeCommitHandlersChecks(sessionInfo, commitContext, plainHandlers)
-    if (!plainHandlersResult.shouldCommit) return plainHandlersResult
-    val checksPassed = runCommitChecks(project, commitChecks, ui.commitProgressUi, indicator)
+    if (checksPassed) {
+      checksPassed = runCommitChecks(project, commitChecks, ui.commitProgressUi, indicator)
+    }
     when {
       isOnlyRunCommitChecks -> {
         isCommitChecksResultUpToDate = true
@@ -449,4 +448,29 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
       updateDefaultCommitActionName()
     }
   }
+}
+
+private fun CheckinHandler.asCommitCheck(sessionInfo: CommitSessionInfo, commitContext: CommitContext): CommitCheck {
+  if (this is CommitCheck) return this
+  return ProxyCommitCheck(this, sessionInfo, commitContext)
+}
+
+private class ProxyCommitCheck(private val checkinHandler: CheckinHandler,
+                               private val sessionInfo: CommitSessionInfo,
+                               private val commitContext: CommitContext) : CommitCheck {
+  override fun isEnabled(): Boolean = checkinHandler.acceptExecutor(sessionInfo.executor)
+
+  override suspend fun runCheck(indicator: ProgressIndicator): CommitProblem? {
+    val result = checkinHandler.beforeCheckin(sessionInfo.executor, commitContext.additionalDataConsumer)
+    if (result == null || result == CheckinHandler.ReturnResult.COMMIT) return null
+    return UnknownCommitProblem()
+  }
+
+  override fun toString(): String {
+    return "ProxyCommitCheck: $checkinHandler"
+  }
+}
+
+internal class UnknownCommitProblem : CommitProblem {
+  override val text: String get() = message("before.checkin.error.unknown")
 }

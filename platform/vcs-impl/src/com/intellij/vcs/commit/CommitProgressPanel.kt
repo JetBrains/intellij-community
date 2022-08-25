@@ -201,7 +201,7 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
     }
 }
 
-class CommitCheckFailure(@Nls val text: String, val detailsViewer: (() -> Unit)?)
+class CommitCheckFailure(@Nls val text: String?, val detailsViewer: (() -> Unit)?)
 
 private class FailuresPanel : JBPanel<FailuresPanel>() {
   private var nextFailureId = 0
@@ -269,14 +269,16 @@ private class FailuresDescriptionPanel : HtmlPanel() {
   private fun buildDescription(): HtmlChunk {
     if (failures.isEmpty()) return HtmlChunk.empty()
 
-    val failureLinks = formatNarrowAndList(failures.map {
+    val failureLinks = formatNarrowAndList(failures.mapNotNull {
+      val text = it.value.text ?: return@mapNotNull null
       if (it.value.detailsViewer != null) {
-        HtmlChunk.link(it.key.toString(), it.value.text)
+        HtmlChunk.link(it.key.toString(), text)
       }
       else {
-        HtmlChunk.text(it.value.text)
+        HtmlChunk.text(text)
       }
     })
+    if (failureLinks.isBlank()) return HtmlChunk.text(message("label.commit.checks.failed.unknown.reason"))
     return HtmlChunk.raw(message("label.commit.checks.failed", failureLinks))
   }
 

@@ -68,11 +68,14 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
         val problem = runCommitCheck(project, commitCheck, indicator)
         if (problem == null) continue
 
-        if (problem is CommitProblemWithDetails) {
-          commitProgressUi.addCommitCheckFailure(problem.text) { problem.showDetails(project) }
+        if (problem is UnknownCommitProblem) {
+          commitProgressUi.addCommitCheckFailure(CommitCheckFailure(null, null))
+        }
+        else if (problem is CommitProblemWithDetails) {
+          commitProgressUi.addCommitCheckFailure(CommitCheckFailure(problem.text) { problem.showDetails(project) })
         }
         else {
-          commitProgressUi.addCommitCheckFailure(problem.text, null)
+          commitProgressUi.addCommitCheckFailure(CommitCheckFailure(problem.text, null))
         }
         return false
       }
