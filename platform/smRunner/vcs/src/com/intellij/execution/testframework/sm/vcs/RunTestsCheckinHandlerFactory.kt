@@ -40,10 +40,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
-import com.intellij.openapi.vcs.checkin.BaseCommitCheck
-import com.intellij.openapi.vcs.checkin.CheckinHandler
-import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
-import com.intellij.openapi.vcs.checkin.CommitProblemWithDetails
+import com.intellij.openapi.vcs.checkin.*
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -109,7 +106,7 @@ class FailedTestCommitProblem(val problems: List<FailureDescription>) : CommitPr
       return str
     }
 
-  override fun showDetails(project: Project) {
+  override fun showDetails(project: Project, commitInfo: CommitInfo) {
     showFailedTests(project, this)
   }
 }

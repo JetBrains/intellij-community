@@ -33,10 +33,7 @@ import com.intellij.openapi.vcs.changes.CommitExecutorWithRichDescription
 import com.intellij.openapi.vcs.changes.actions.DefaultCommitExecutorAction
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
-import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
-import com.intellij.openapi.vcs.checkin.CommitProblem
-import com.intellij.openapi.vcs.checkin.CommitProblemWithDetails
-import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory
+import com.intellij.openapi.vcs.checkin.*
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
@@ -303,8 +300,12 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   }
 
   override fun doExecuteSession(sessionInfo: CommitSessionInfo): Boolean {
+    val isAmend = amendCommitHandler.isAmendCommitMode
+    val actionName = getActionTextWithoutEllipsis(sessionInfo.executor, isAmend, false)
+    val commitInfo = CommitInfoImpl(actionName)
+
     if (!sessionInfo.isVcsCommit) {
-      return workflow.executeSession(sessionInfo)
+      return workflow.executeSession(sessionInfo, commitInfo)
     }
 
     workflow.asyncSession(coroutineScope, sessionInfo) {
@@ -318,7 +319,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
       runWithProgress(isOnlyRunCommitChecks) { indicator ->
         val problem = workflow.runBackgroundBeforeCommitChecks(sessionInfo, indicator)
-        handleCommitProblem(problem, isOnlyRunCommitChecks)
+        handleCommitProblem(problem, isOnlyRunCommitChecks, commitInfo)
       }
     }
 
@@ -340,11 +341,13 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     }
   }
 
-  private fun handleCommitProblem(problem: CommitProblem?, isOnlyRunCommitChecks: Boolean): CommitChecksResult {
+  private fun handleCommitProblem(problem: CommitProblem?,
+                                  isOnlyRunCommitChecks: Boolean,
+                                  commitInfo: CommitInfo): CommitChecksResult {
     if (problem != null) {
       val checkFailure = when (problem) {
         is UnknownCommitProblem -> CommitCheckFailure(null, null)
-        is CommitProblemWithDetails -> CommitCheckFailure(problem.text) { problem.showDetails(project) }
+        is CommitProblemWithDetails -> CommitCheckFailure(problem.text) { problem.showDetails(project, commitInfo) }
         else -> CommitCheckFailure(problem.text, null)
       }
       ui.commitProgressUi.addCommitCheckFailure(checkFailure)

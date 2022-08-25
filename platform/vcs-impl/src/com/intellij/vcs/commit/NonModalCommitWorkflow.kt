@@ -77,9 +77,9 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
   }
 
   companion object {
-    suspend fun runCommitChecks(project: Project,
-                                commitChecks: List<CommitCheck>,
-                                indicator: ProgressIndicator): CommitProblem? {
+    private suspend fun runCommitChecks(project: Project,
+                                        commitChecks: List<CommitCheck>,
+                                        indicator: ProgressIndicator): CommitProblem? {
       for (commitCheck in commitChecks) {
         val problem = runCommitCheck(project, commitCheck, indicator)
         if (problem != null) return problem

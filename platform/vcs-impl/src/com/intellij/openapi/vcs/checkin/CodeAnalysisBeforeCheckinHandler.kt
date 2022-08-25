@@ -84,7 +84,7 @@ class CodeAnalysisCommitProblem(val codeSmells: List<CodeSmellInfo>) : CommitPro
       return formatAndList(listOfNotNull(errorsText, warningsText))
     }
 
-  override fun showDetails(project: Project) {
+  override fun showDetails(project: Project, commitInfo: CommitInfo) {
     CodeSmellDetector.getInstance(project).showCodeSmellErrors(codeSmells)
   }
 }

@@ -50,7 +50,7 @@ class TodoCheckinHandlerFactory : CheckinHandlerFactory() {
 class TodoCommitProblem(val changes: Collection<Change>, val todoItems: Collection<TodoItem>) : CommitProblemWithDetails {
   override val text: String get() = message("label.todo.items.found", todoItems.size)
 
-  override fun showDetails(project: Project) {
+  override fun showDetails(project: Project, commitInfo: CommitInfo) {
     TodoCheckinHandler.showTodoItems(project, changes, todoItems)
   }
 }

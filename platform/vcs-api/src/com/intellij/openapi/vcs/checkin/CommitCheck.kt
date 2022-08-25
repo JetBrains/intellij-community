@@ -56,6 +56,14 @@ interface CommitProblem {
   @get:Nls(capitalization = Sentence)
   val text: String
 
+  /**
+   * Show modal resolution dialog for modal commit mode, if needed.
+   */
+  @RequiresEdt
+  fun showModalSolution(project: Project, commitInfo: CommitInfo): CheckinHandler.ReturnResult {
+    return CheckinHandler.ReturnResult.CANCEL
+  }
+
   companion object {
     fun createError(e: Throwable): CommitProblem {
       val err = e.message
@@ -75,7 +83,14 @@ interface CommitProblemWithDetails : CommitProblem {
    * E.g. navigates to the tool window with problem details.
    */
   @RequiresEdt
-  fun showDetails(project: Project)
+  fun showDetails(project: Project, commitInfo: CommitInfo)
 }
 
 class TextCommitProblem(override val text: String) : CommitProblem
+
+interface CommitInfo {
+  /**
+   * Commit action name, without mnemonics and ellipsis. Ex: 'Amend Commit'.
+   */
+  val commitActionText: @Nls String
+}
