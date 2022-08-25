@@ -201,6 +201,11 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
                 runTest("../testData/basic/common/autoPopup/AutopopupInFunExtensionReceiver.kt");
             }
 
+            @TestMetadata("FunInterface.kt")
+            public void testFunInterface() throws Exception {
+                runTest("../testData/basic/common/autoPopup/FunInterface.kt");
+            }
+
             @TestMetadata("GenericExtensionFunTypeArgument.kt")
             public void testGenericExtensionFunTypeArgument() throws Exception {
                 runTest("../testData/basic/common/autoPopup/GenericExtensionFunTypeArgument.kt");
