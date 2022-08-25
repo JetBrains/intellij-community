@@ -1,18 +1,32 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.ui
 
+import com.intellij.collaboration.ui.util.bind
 import com.intellij.collaboration.ui.util.getName
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.Nls
+import javax.swing.Action
 import javax.swing.JList
 
 class SimpleComboboxWithActionsFactory<T : Any>(
-  private val model: ComboBoxWithActionsModel<T> // TODO: replace with viewmodel
+  private val mappingsState: StateFlow<Collection<T>>,
+  private val selectionState: MutableStateFlow<T?>
 ) {
 
-  fun create(presenter: (T) -> Presentation): ComboBox<*> =
-    ComboBox(model).apply {
+  fun create(scope: CoroutineScope,
+             presenter: (T) -> Presentation,
+             actions: StateFlow<List<Action>> = MutableStateFlow(emptyList()),
+             sortComparator: Comparator<T> = Comparator.comparing { presenter(it).name }): ComboBox<*> {
+
+    val comboModel = ComboBoxWithActionsModel<T>().apply {
+      bind(scope, mappingsState, selectionState, actions, sortComparator)
+    }
+
+    return ComboBox(comboModel).apply {
       renderer = object : ColoredListCellRenderer<ComboBoxWithActionsModel.Item<T>>() {
         override fun customizeCellRenderer(list: JList<out ComboBoxWithActionsModel.Item<T>>,
                                            value: ComboBoxWithActionsModel.Item<T>?,
@@ -43,6 +57,7 @@ class SimpleComboboxWithActionsFactory<T : Any>(
         }
       }
     }
+  }
 
   data class Presentation(val name: @Nls String, val secondaryName: @Nls String?)
 }

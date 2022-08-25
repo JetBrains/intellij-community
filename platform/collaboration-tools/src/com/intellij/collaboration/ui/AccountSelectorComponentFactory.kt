@@ -4,6 +4,7 @@ package com.intellij.collaboration.ui
 import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.auth.ServerAccount
 import com.intellij.collaboration.ui.codereview.avatar.IconsProvider
+import com.intellij.collaboration.ui.util.bind
 import com.intellij.collaboration.ui.util.getName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupListener
@@ -11,6 +12,9 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.ui.popup.list.ComboBoxPopup
 import com.intellij.util.ui.cloneDialog.AccountMenuItem
 import com.intellij.util.ui.cloneDialog.AccountMenuItemRenderer
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Cursor
@@ -22,25 +26,37 @@ import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
 class AccountSelectorComponentFactory<A : Account>(
-  private val accountsModel: ComboBoxWithActionsModel<A>, // TODO: replace with viewmodel
-  private val avatarIconsProvider: IconsProvider<A>
+  private val accountsState: StateFlow<Collection<A>>,
+  private val selectionState: MutableStateFlow<A?>
 ) {
 
-  fun create(avatarSize: Int, popupAvatarSize: Int, emptyStateTooltip: @Nls String): JComponent {
+  fun create(scope: CoroutineScope,
+             avatarIconsProvider: IconsProvider<A>,
+             avatarSize: Int,
+             popupAvatarSize: Int,
+             emptyStateTooltip: @Nls String,
+             actions: StateFlow<List<Action>> = MutableStateFlow(emptyList())): JComponent {
+
+    val comboModel = ComboBoxWithActionsModel<A>().apply {
+      bind(scope, accountsState, selectionState, actions, Comparator.comparing { it.name })
+    }
+
     val label = JLabel().apply {
       isOpaque = false
       cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
       isFocusable = true
       border = SimpleFocusBorder()
     }
-    Controller(label, avatarSize, popupAvatarSize, emptyStateTooltip)
+    Controller(comboModel, label, avatarIconsProvider, avatarSize, popupAvatarSize, emptyStateTooltip)
     return label
   }
 
-  private inner class Controller(private val label: JLabel,
-                                 private val avatarSize: Int,
-                                 private val popupAvatarSize: Int,
-                                 private val emptyStateTooltip: @Nls String)
+  private class Controller<A : Account>(private val accountsModel: ComboBoxWithActionsModel<A>,
+                                        private val label: JLabel,
+                                        private val avatarIconsProvider: IconsProvider<A>,
+                                        private val avatarSize: Int,
+                                        private val popupAvatarSize: Int,
+                                        private val emptyStateTooltip: @Nls String)
     : ComboBoxPopup.Context<ComboBoxWithActionsModel.Item<A>> {
 
     private var popup: ComboBoxPopup<*>? = null

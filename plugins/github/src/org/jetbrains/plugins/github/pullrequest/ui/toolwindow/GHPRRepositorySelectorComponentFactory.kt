@@ -2,9 +2,9 @@
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
+import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.ui.AccountSelectorComponentFactory
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.defaultButton
-import com.intellij.collaboration.ui.ComboBoxWithActionsModel
 import com.intellij.collaboration.ui.SimpleComboboxWithActionsFactory
 import com.intellij.collaboration.ui.codereview.avatar.CachingCircleImageIconsProvider
 import com.intellij.ide.plugins.newui.HorizontalLayout
@@ -16,10 +16,7 @@ import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.cloneDialog.VcsCloneDialogUiSpec
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -38,29 +35,10 @@ import java.awt.Image
 import java.awt.event.ActionEvent
 import java.util.concurrent.CompletableFuture
 import javax.swing.*
-import javax.swing.event.ListDataEvent
-import javax.swing.event.ListDataListener
 
 class GHPRRepositorySelectorComponentFactory(private val vm: GHPRRepositorySelectorViewModel) {
 
   fun create(scope: CoroutineScope): JComponent {
-    val repositoriesModel = ComboBoxWithActionsModel<GHGitRepositoryMapping>().apply {
-      //todo: add remote actions
-      sync(scope, vm.repositoriesState, vm.repoSelectionState)
-    }
-
-    val accountsModel = ComboBoxWithActionsModel<GithubAccount>().apply {
-      sync(scope, vm.accountsState, vm.accountSelectionState)
-    }
-
-    scope.launch {
-      vm.repoSelectionState.map { repo ->
-        createPopupLoginActions(repo)
-      }.collect {
-        accountsModel.actions = it
-      }
-    }
-
     val applyAction = object : AbstractAction(GithubBundle.message("pull.request.view.list")) {
       override fun actionPerformed(e: ActionEvent?) {
         vm.trySubmitSelection()
@@ -101,18 +79,27 @@ class GHPRRepositorySelectorComponentFactory(private val vm: GHPRRepositorySelec
       }
     }
 
-
-    val repoCombo = SimpleComboboxWithActionsFactory(repositoriesModel).create { mapping ->
-      val allRepositories = repositoriesModel.items.map { it.repository }
+    val repoCombo = SimpleComboboxWithActionsFactory(vm.repositoriesState, vm.repoSelectionState).create(scope, { mapping ->
+      val allRepositories = vm.repositoriesState.value.map { it.repository }
       SimpleComboboxWithActionsFactory.Presentation(
         GHUIUtil.getRepositoryDisplayName(allRepositories, mapping.repository, true),
         mapping.remote.remote.name
       )
-    }.apply {
+    }).apply {
       putClientProperty(PlatformDefaults.VISUAL_PADDING_PROPERTY, insets)
     }
-    val accountCombo = AccountSelectorComponentFactory(accountsModel, AccountAvatarIconsProvider()).create(
-      GHUIUtil.AVATAR_SIZE, VcsCloneDialogUiSpec.Components.popupMenuAvatarSize, GithubBundle.message("account.choose.link")
+
+    val accountActions = vm.repoSelectionState.mapState(scope) { repo ->
+      createPopupLoginActions(repo)
+    }
+
+    val accountCombo = AccountSelectorComponentFactory(vm.accountsState, vm.accountSelectionState).create(
+      scope,
+      AccountAvatarIconsProvider(),
+      GHUIUtil.AVATAR_SIZE,
+      VcsCloneDialogUiSpec.Components.popupMenuAvatarSize,
+      GithubBundle.message("account.choose.link"),
+      accountActions
     ).apply {
       putClientProperty(PlatformDefaults.VISUAL_PADDING_PROPERTY, insets)
     }
@@ -206,37 +193,6 @@ class GHPRRepositorySelectorComponentFactory(private val vm: GHPRRepositorySelec
         label.isVisible = action.getValue(ACTION_VISIBLE_KEY) as? Boolean ?: true
       }
       return label
-    }
-
-    private fun <T> ComboBoxModel<T>.addSelectionChangeListener(listener: () -> Unit) {
-      addListDataListener(object : ListDataListener {
-        override fun contentsChanged(e: ListDataEvent) {
-          if (e.index0 == -1 && e.index1 == -1) listener()
-        }
-
-        override fun intervalAdded(e: ListDataEvent) {}
-        override fun intervalRemoved(e: ListDataEvent) {}
-      })
-    }
-
-    private fun <T : Any> ComboBoxWithActionsModel<T>.sync(scope: CoroutineScope,
-                                                           listState: StateFlow<List<T>>,
-                                                           selectionState: MutableStateFlow<T?>) {
-      scope.launch {
-        listState.collect {
-          items = it
-        }
-      }
-      addSelectionChangeListener {
-        selectionState.value = selectedItem?.wrappee
-      }
-      scope.launch {
-        selectionState.collect { item ->
-          if (selectedItem?.wrappee != item) {
-            selectedItem = item?.let { ComboBoxWithActionsModel.Item.Wrapper(it) }
-          }
-        }
-      }
     }
   }
 
