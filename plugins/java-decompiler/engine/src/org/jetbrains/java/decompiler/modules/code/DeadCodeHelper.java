@@ -529,7 +529,7 @@ public final class DeadCodeHelper {
     while (true) {
 
       boolean merged = false;
-
+      int originBlocksCount = graph.getBlocks().size();
       for (BasicBlock block : graph.getBlocks()) {
 
         InstructionSequence seq = block.getSeq();
@@ -565,7 +565,9 @@ public final class DeadCodeHelper {
           }
         }
       }
-
+      if(graph.getBlocks().size() == originBlocksCount && merged){
+        break;
+      }
       if (!merged) {
         break;
       }
