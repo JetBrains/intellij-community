@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcsUtil;
 
 import com.intellij.diff.DiffContentFactoryImpl;
@@ -64,10 +64,13 @@ public final class VcsImplUtil {
 
   @Nullable
   public static IgnoredFileContentProvider findIgnoredFileContentProvider(@NotNull Project project, @NotNull VcsKey vcsKey) {
-    IgnoredFileContentProvider ignoreContentProvider = IgnoredFileContentProvider.IGNORE_FILE_CONTENT_PROVIDER.extensions(project)
-      .filter((provider) -> provider.getSupportedVcs().equals(vcsKey))
-      .findFirst()
-      .orElse(null);
+    IgnoredFileContentProvider ignoreContentProvider = null;
+    for (IgnoredFileContentProvider provider : IgnoredFileContentProvider.IGNORE_FILE_CONTENT_PROVIDER.getExtensionList(project)) {
+      if (provider.getSupportedVcs().equals(vcsKey)) {
+        ignoreContentProvider = provider;
+        break;
+      }
+    }
 
     if (ignoreContentProvider == null) {
       LOG.debug("Cannot get ignore content provider for vcs " + vcsKey.getName());

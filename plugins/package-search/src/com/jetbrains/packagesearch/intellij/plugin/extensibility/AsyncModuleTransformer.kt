@@ -22,17 +22,15 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.jetbrains.packagesearch.intellij.plugin.util.asCoroutine
 import java.util.concurrent.CompletableFuture
-import kotlin.streams.asSequence
 
 interface AsyncModuleTransformer {
 
     companion object {
+        private val extensionPointName = ExtensionPointName<AsyncModuleTransformer>("com.intellij.packagesearch.asyncModuleTransformer")
 
-        private val extensionPointName: ExtensionPointName<AsyncModuleTransformer> =
-          ExtensionPointName.create("com.intellij.packagesearch.asyncModuleTransformer")
-
-        internal fun extensions(areaInstance: AreaInstance) =
-            extensionPointName.extensions(areaInstance).asSequence().map { it.asCoroutine() }.toList()
+        internal fun extensions(areaInstance: AreaInstance): List<CoroutineModuleTransformer> {
+            return extensionPointName.getExtensionList(areaInstance).asSequence().map { it.asCoroutine() }.toList()
+        }
     }
 
     /**
