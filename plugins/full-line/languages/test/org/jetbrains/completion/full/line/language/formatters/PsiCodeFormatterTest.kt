@@ -8,10 +8,10 @@ import org.jetbrains.completion.full.line.FilesTest
 import org.jetbrains.completion.full.line.language.PsiCodeFormatter
 
 abstract class PsiCodeFormatterTest(private val formatter: PsiCodeFormatter, private val fileType: FileType) : BasePlatformTestCase() {
-  protected fun testFile(originFilename: String, expectedRollbackPrefix: List<String>) {
-    val origin = FilesTest.readFile("${FilesTest.FORMAT_BEFORE_FOLDER}/$originFilename")
+  protected fun testFile(originFilename: String, expectedRollbackPrefix: List<String>, lang: String) {
+    val origin = FilesTest.readFile("${FilesTest.FORMAT_BEFORE_FOLDER}/$originFilename", lang)
     val newFilename = "${originFilename.substringBeforeLast('.')}.json"
-    val formatted = FilesTest.readFile("${FilesTest.FORMAT_AFTER_FOLDER}/$newFilename")
+    val formatted = FilesTest.readFile("${FilesTest.FORMAT_AFTER_FOLDER}/$newFilename", lang)
 
     testCode(origin, formatted, expectedRollbackPrefix)
   }

@@ -11,14 +11,14 @@ abstract class PythonCodeFormatterTest : CodeFormatterTest(PythonCodeFormatter()
 
   protected fun testFile(originFilename: String, formattedFilename: String? = null) {
     if (formattedFilename == null) {
-      val origin = readFile("${FilesTest.FORMAT_BEFORE_FOLDER}/$originFilename")
-      val formatted = readFile("${FilesTest.FORMAT_AFTER_FOLDER}/$originFilename").replace(Regex("[\\n]+"), "\n")
+      val origin = readFile("${FilesTest.FORMAT_BEFORE_FOLDER}/$originFilename", "python")
+      val formatted = readFile("${FilesTest.FORMAT_AFTER_FOLDER}/$originFilename", "python").replace(Regex("[\\n]+"), "\n")
 
       testCodeFragment(origin, formatted)
     }
     else {
-      val origin = readFile(originFilename)
-      val formatted = readFile(formattedFilename).replace(Regex("[\\n]+"), "\n")
+      val origin = readFile(originFilename, "python")
+      val formatted = readFile(formattedFilename, "python").replace(Regex("[\\n]+"), "\n")
 
       testCodeFragment(origin, formatted)
     }

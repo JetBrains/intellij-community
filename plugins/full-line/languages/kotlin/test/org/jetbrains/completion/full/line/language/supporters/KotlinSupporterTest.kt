@@ -15,7 +15,7 @@ import java.util.stream.Stream
 class KotlinSupporterTest : BasePlatformTestCase() {
 
   fun `test string template`() {
-    val file = myFixture.configureByText(KotlinFileType.INSTANCE, FilesTest.readFile("supporter/StringFormats.kt"))
+    val file = myFixture.configureByText(KotlinFileType.INSTANCE, FilesTest.readFile("supporter/StringFormats.kt", "kotlin"))
     val supporter = KotlinSupporter()
 
     val amountOfLinesToSkip = 1

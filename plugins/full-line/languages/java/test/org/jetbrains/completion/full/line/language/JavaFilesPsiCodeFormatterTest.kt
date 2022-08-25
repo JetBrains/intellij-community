@@ -5,7 +5,7 @@ internal sealed class JavaFilesPsiCodeFormatterTest : JavaPsiCodeFormatterTest()
   protected abstract val folder: String
 
   protected fun doTest(vararg tokens: String) {
-    testFile("$folder/${getTestName(true)}.java", tokens.asList())
+    testFile("$folder/${getTestName(true)}.java", tokens.asList(), "java")
   }
 
   internal class InsideFunctionTests : JavaFilesPsiCodeFormatterTest() {

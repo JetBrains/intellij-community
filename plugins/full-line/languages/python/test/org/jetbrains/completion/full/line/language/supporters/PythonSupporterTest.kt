@@ -14,7 +14,7 @@ import java.util.stream.Stream
 class PythonSupporterTest : BasePlatformTestCase() {
 
   fun `test string template`() {
-    val file = myFixture.configureByText(PythonFileType.INSTANCE, FilesTest.readFile("supporter/string-formats.py"))
+    val file = myFixture.configureByText(PythonFileType.INSTANCE, FilesTest.readFile("supporter/string-formats.py","python"))
     val supporter = PythonSupporter()
     Regex("[^\r\n]+").findAll(file.text).map {
       Executable {
@@ -34,7 +34,7 @@ class PythonSupporterTest : BasePlatformTestCase() {
 
     val file = myFixture.configureByText(
       PythonFileType.INSTANCE,
-      FilesTest.readFile("supporter/missing-braces.py")
+      FilesTest.readFile("supporter/missing-braces.py", "python")
     )
     val supporter = PythonSupporter()
 

@@ -1,5 +1,7 @@
 package org.jetbrains.completion.full.line.language.formatters
 
+import com.google.gson.GsonBuilder
+import com.google.gson.annotations.SerializedName
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -7,10 +9,6 @@ import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import org.jetbrains.completion.full.line.language.PsiCodeFormatter
 
 abstract class PsiCodeFormatterBase : PsiCodeFormatter {
@@ -34,7 +32,7 @@ abstract class PsiCodeFormatterBase : PsiCodeFormatter {
     val rollbackSuffix = cutTree(psiFile, position, offset)
     val representation = getTreeRepresentation(psiFile)
     return PsiCodeFormatter.FormatResult(
-      jsonSerializer.encodeToString(representation),
+      gson.toJson(representation),
       rollbackSuffix
     )
   }
@@ -75,18 +73,18 @@ abstract class PsiCodeFormatterBase : PsiCodeFormatter {
     return nodeToId
   }
 
-  private val jsonSerializer = Json { encodeDefaults = false }
+  private val gson = GsonBuilder().apply {
+    disableHtmlEscaping()
+  }.create()
 
-  @Serializable
   private data class NodeRepresentation(
     val node: String,
     val children: List<Int>? = null,
     val token: String
   )
 
-  @Serializable
   private data class TreeRepresentation(
     val label: String,
-    @SerialName("AST") val tree: List<NodeRepresentation>
+    @SerializedName("AST") val tree: List<NodeRepresentation>
   )
 }
