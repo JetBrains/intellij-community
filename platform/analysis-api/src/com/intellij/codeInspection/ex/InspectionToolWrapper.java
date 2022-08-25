@@ -37,7 +37,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
 
   protected T myTool;
   protected final E myEP;
-  @Nullable private HighlightDisplayKey myDisplayKey;
+  private @Nullable HighlightDisplayKey myDisplayKey;
 
   private volatile Set<String> applicableToLanguages; // lazy initialized
 
@@ -72,11 +72,9 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     getTool().initialize(context);
   }
 
-  @NotNull
-  public abstract InspectionToolWrapper<T, E> createCopy();
+  public abstract @NotNull InspectionToolWrapper<T, E> createCopy();
 
-  @NotNull
-  public T getTool() {
+  public @NotNull T getTool() {
     T tool = myTool;
     if (tool == null) {
       //noinspection unchecked
@@ -96,8 +94,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
    * @see #applyToDialects()
    * @see #isApplicable(Language)
    */
-  @Nullable
-  public String getLanguage() {
+  public @Nullable String getLanguage() {
     return myEP == null ? null : myEP.language;
   }
 
@@ -121,8 +118,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     return myEP != null ? myEP.cleanupTool : getTool() instanceof CleanupLocalInspectionTool;
   }
 
-  @NotNull
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return myEP != null ? myEP.getShortName() : getTool().getShortName();
   }
 
@@ -130,14 +126,11 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     return myEP == null ? getTool().getEditorAttributesKey() : myEP.editorAttributes;
   }
 
-  @NotNull
-  public String getID() {
+  public @NotNull String getID() {
     return getShortName();
   }
 
-  @NotNull
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  public String getDisplayName() {
+  public @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getDisplayName() {
     if (myEP == null) {
       return getTool().getDisplayName();
     }
@@ -147,9 +140,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     }
   }
 
-  @NotNull
-  @Nls
-  public String getGroupDisplayName() {
+  public @NotNull @Nls String getGroupDisplayName() {
     if (myEP == null) {
       return getTool().getGroupDisplayName();
     }
@@ -163,8 +154,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     return myEP == null ? getTool().isEnabledByDefault() : myEP.enabledByDefault;
   }
 
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
+  public @NotNull HighlightDisplayLevel getDefaultLevel() {
     return myEP == null ? getTool().getDefaultLevel() : myEP.getDefaultLevel();
   }
 
@@ -210,8 +200,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
                                       fileName);
   }
 
-  @Nullable
-  private static InputStream getLanguagePluginStream(@NotNull String fileName) {
+  private static @Nullable InputStream getLanguagePluginStream(@NotNull String fileName) {
     DynamicBundle.LanguageBundleEP langBundle = findLanguageBundle();
     if (langBundle == null) return null;
 
@@ -221,18 +210,15 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
            null;
   }
 
-  @NotNull
-  private String getDescriptionFileName() {
+  private @NotNull String getDescriptionFileName() {
     return getShortName() + ".html";
   }
 
-  @NotNull
-  public final String getFolderName() {
+  public final @NotNull String getFolderName() {
     return getShortName();
   }
 
-  @NotNull
-  public Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
+  public @NotNull Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
     return getTool().getClass();
   }
 

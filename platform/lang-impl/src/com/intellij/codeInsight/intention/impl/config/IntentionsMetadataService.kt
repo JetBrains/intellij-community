@@ -11,8 +11,7 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.util.containers.Interner
-import java.util.AbstractMap
-import java.util.LinkedHashMap
+import java.util.*
 
 @Service(Service.Level.APP)
 internal class IntentionsMetadataService {
@@ -32,7 +31,7 @@ internal class IntentionsMetadataService {
     dynamicRegistrationMeta = ArrayList()
     extensionMetaMap = LinkedHashMap(IntentionManagerImpl.EP_INTENTION_ACTIONS.point.size())
     IntentionManagerImpl.EP_INTENTION_ACTIONS.forEachExtensionSafe { registerMetaDataForEp(it) }
-    IntentionManagerImpl.EP_INTENTION_ACTIONS.addExtensionPointListener(object : ExtensionPointListener<IntentionActionBean?> {
+    IntentionManagerImpl.EP_INTENTION_ACTIONS.addExtensionPointListener(object : ExtensionPointListener<IntentionActionBean> {
       override fun extensionAdded(extension: IntentionActionBean, pluginDescriptor: PluginDescriptor) {
         // on each plugin load/unload SearchableOptionsRegistrarImpl drops the cache, so, it will be recomputed later on demand
         registerMetaDataForEp(extension)

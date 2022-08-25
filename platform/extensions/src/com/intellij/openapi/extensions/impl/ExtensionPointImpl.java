@@ -36,7 +36,7 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
   // guarded by this
   private static Set<ExtensionPointImpl<?>> POINTS_IN_READONLY_MODE;
 
-  private static final ArrayFactory<ExtensionPointListener<?>> LISTENER_ARRAY_FACTORY = n -> n == 0 ? ExtensionPointListener.emptyArray() : new ExtensionPointListener[n];
+  private static final ArrayFactory<ExtensionPointListener<?>> LISTENER_ARRAY_FACTORY = n -> n == 0 ? ExtensionPointListener.Companion.emptyArray() : new ExtensionPointListener[n];
 
   private final String name;
   private final String className;
@@ -57,7 +57,7 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
   private volatile boolean adaptersAreSorted = true;
 
   // guarded by this
-  private ExtensionPointListener<T> @NotNull [] listeners = ExtensionPointListener.emptyArray();
+  private ExtensionPointListener<T> @NotNull [] listeners = ExtensionPointListener.Companion.emptyArray();
 
   private @Nullable Class<T> extensionClass;
 
@@ -706,12 +706,12 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
     List<ExtensionComponentAdapter> finalRemovedAdapters = removedAdapters;
     if (!priorityListeners.isEmpty()) {
       priorityListenerCallbacks.add((Runnable)() ->
-        notifyListeners(true, finalRemovedAdapters, priorityListeners.toArray(ExtensionPointListener.emptyArray()))
+        notifyListeners(true, finalRemovedAdapters, priorityListeners.toArray(ExtensionPointListener.Companion.emptyArray()))
       );
     }
     if (!regularListeners.isEmpty()) {
       listenerCallbacks.add((Runnable)() ->
-        notifyListeners(true, finalRemovedAdapters, regularListeners.toArray(ExtensionPointListener.emptyArray()))
+        notifyListeners(true, finalRemovedAdapters, regularListeners.toArray(ExtensionPointListener.Companion.emptyArray()))
       );
     }
     return true;
@@ -845,7 +845,7 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
     }
 
     // help GC
-    listeners = ExtensionPointListener.emptyArray();
+    listeners = ExtensionPointListener.Companion.emptyArray();
     extensionClass = null;
   }
 
