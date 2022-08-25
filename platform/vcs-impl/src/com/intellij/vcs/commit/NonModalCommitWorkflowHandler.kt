@@ -23,9 +23,6 @@ import com.intellij.openapi.project.DumbService.DumbModeListener
 import com.intellij.openapi.project.DumbService.isDumb
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.registry.RegistryValue
-import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.util.text.StringUtil.*
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.VcsBundle.message
@@ -52,9 +49,6 @@ import kotlin.properties.Delegates.observable
 
 private val LOG = logger<NonModalCommitWorkflowHandler<*, *>>()
 
-private val isBackgroundCommitChecksValue: RegistryValue get() = Registry.get("vcs.background.commit.checks")
-fun isBackgroundCommitChecks(): Boolean = isBackgroundCommitChecksValue.asBoolean()
-
 abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : NonModalCommitWorkflowUi> :
   AbstractCommitWorkflowHandler<W, U>() {
 
@@ -78,9 +72,6 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
                                                                        NotificationType.ERROR)
 
   protected fun setupCommitHandlersTracking() {
-    isBackgroundCommitChecksValue.addListener(object : RegistryValueListener {
-      override fun afterValueChanged(value: RegistryValue) = commitHandlersChanged()
-    }, this)
     CheckinHandlerFactory.EP_NAME.addChangeListener(Runnable { commitHandlersChanged() }, this)
     VcsCheckinHandlerFactory.EP_NAME.addChangeListener(Runnable { commitHandlersChanged() }, this)
   }
@@ -310,14 +301,10 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     }
   }
 
-  protected fun isSkipCommitChecks(): Boolean = isBackgroundCommitChecks() && isCommitChecksResultUpToDate
+  protected fun isSkipCommitChecks(): Boolean = isCommitChecksResultUpToDate
 
   override fun doExecuteSession(sessionInfo: CommitSessionInfo): Boolean {
     if (!sessionInfo.isVcsCommit) {
-      return workflow.executeSession(sessionInfo)
-    }
-
-    if (!isBackgroundCommitChecks()) {
       return workflow.executeSession(sessionInfo)
     }
 

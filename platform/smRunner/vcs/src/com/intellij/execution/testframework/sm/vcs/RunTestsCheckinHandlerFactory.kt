@@ -40,7 +40,10 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
-import com.intellij.openapi.vcs.checkin.*
+import com.intellij.openapi.vcs.checkin.BaseCommitCheck
+import com.intellij.openapi.vcs.checkin.CheckinHandler
+import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
+import com.intellij.openapi.vcs.checkin.CommitProblemWithDetails
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -49,7 +52,6 @@ import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.NullCommitWorkflowHandler
-import com.intellij.vcs.commit.isBackgroundCommitChecks
 import com.intellij.vcs.commit.isNonModalCommit
 import kotlinx.coroutines.*
 import javax.swing.JComponent
@@ -74,7 +76,7 @@ class TestsVcsConfiguration : PersistentStateComponent<TestsVcsConfiguration.MyS
 
 class RunTestsCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
-    if (isBackgroundCommitChecks() && (panel.isNonModalCommit || panel.commitWorkflowHandler is NullCommitWorkflowHandler)) {
+    if (panel.isNonModalCommit || panel.commitWorkflowHandler is NullCommitWorkflowHandler) {
       return RunTestsBeforeCheckinHandler(panel)
     }
     return CheckinHandler.DUMMY
