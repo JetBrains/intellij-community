@@ -1,13 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
+import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
+import com.intellij.collaboration.ui.AccountSelectorComponentFactory
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.defaultButton
 import com.intellij.collaboration.ui.ComboBoxWithActionsModel
+import com.intellij.collaboration.ui.SimpleComboboxWithActionsFactory
+import com.intellij.collaboration.ui.codereview.avatar.CachingCircleImageIconsProvider
 import com.intellij.ide.plugins.newui.HorizontalLayout
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.cloneDialog.VcsCloneDialogUiSpec
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,13 +25,18 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.layout.PlatformDefaults
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.plugins.github.GithubIcons
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
+import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.ui.component.GHAccountSelectorComponentFactory
-import org.jetbrains.plugins.github.ui.component.GHRepositorySelectorComponentFactory
+import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.getName
+import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
+import java.awt.Image
 import java.awt.event.ActionEvent
+import java.util.concurrent.CompletableFuture
 import javax.swing.*
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
@@ -90,10 +102,18 @@ class GHPRRepositorySelectorComponentFactory(private val vm: GHPRRepositorySelec
     }
 
 
-    val repoCombo = GHRepositorySelectorComponentFactory().create(repositoriesModel).apply {
+    val repoCombo = SimpleComboboxWithActionsFactory(repositoriesModel).create { mapping ->
+      val allRepositories = repositoriesModel.items.map { it.repository }
+      SimpleComboboxWithActionsFactory.Presentation(
+        GHUIUtil.getRepositoryDisplayName(allRepositories, mapping.repository, true),
+        mapping.remote.remote.name
+      )
+    }.apply {
       putClientProperty(PlatformDefaults.VISUAL_PADDING_PROPERTY, insets)
     }
-    val accountCombo = GHAccountSelectorComponentFactory().create(accountsModel).apply {
+    val accountCombo = AccountSelectorComponentFactory(accountsModel, AccountAvatarIconsProvider()).create(
+      GHUIUtil.AVATAR_SIZE, VcsCloneDialogUiSpec.Components.popupMenuAvatarSize, GithubBundle.message("account.choose.link")
+    ).apply {
       putClientProperty(PlatformDefaults.VISUAL_PADDING_PROPERTY, insets)
     }
 
@@ -216,6 +236,23 @@ class GHPRRepositorySelectorComponentFactory(private val vm: GHPRRepositorySelec
             selectedItem = item?.let { ComboBoxWithActionsModel.Item.Wrapper(it) }
           }
         }
+      }
+    }
+  }
+
+  private class AccountAvatarIconsProvider : CachingCircleImageIconsProvider<GithubAccount>(GithubIcons.DefaultAvatar) {
+
+    private val requestExecutorManager = GithubApiRequestExecutorManager.getInstance()
+    private val accountInformationProvider = GithubAccountInformationProvider.getInstance()
+    private val avatarLoader = CachingGHUserAvatarLoader.getInstance()
+
+    override fun loadImageAsync(key: GithubAccount): CompletableFuture<Image?> {
+      val executor = requestExecutorManager.getExecutor(key)
+      return ProgressManager.getInstance().submitIOTask(EmptyProgressIndicator()) {
+        accountInformationProvider.getInformation(executor, it, key)
+      }.thenCompose {
+        val url = it.avatarUrl ?: return@thenCompose CompletableFuture.completedFuture(null)
+        avatarLoader.requestAvatar(executor, url)
       }
     }
   }
