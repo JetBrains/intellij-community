@@ -3,6 +3,7 @@ package com.jetbrains.python.debugger;
 
 import com.jetbrains.python.debugger.pydev.tables.PyNumericContainerPopupCustomizer;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 
 public class PyNumericContainerValueEvaluator extends PyFullValueEvaluator {
 
@@ -13,6 +14,11 @@ public class PyNumericContainerValueEvaluator extends PyFullValueEvaluator {
   @Override
   protected void showCustomPopup(PyFrameAccessor debugProcess, PyDebugValue debugValue) {
     PyNumericContainerPopupCustomizer.Companion.getInstance().showFullValuePopup(debugProcess, debugValue);
+  }
+
+  @Override
+  public void startEvaluation(@NotNull XFullValueEvaluationCallback callback) {
+    doEvaluate(callback, !isCopyValueCallback(callback));
   }
 
   @Override

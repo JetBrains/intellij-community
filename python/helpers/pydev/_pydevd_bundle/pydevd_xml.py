@@ -199,14 +199,14 @@ class TypeResolveHandler(object):
 
             return self._base_get_type(o, type_name, type_name)
 
-    def str_from_providers(self, o, type_object, type_name):
+    def str_from_providers(self, o, type_object, type_name, do_trim=True):
         provider = self._type_to_str_provider_cache.get(type_object)
 
         if provider is self.NO_PROVIDER:
             return None
 
         if provider is not None:
-            return provider.get_str(o)
+            return provider.get_str(o, do_trim)
 
         if not self._initialized:
             self._initialize()
@@ -214,7 +214,7 @@ class TypeResolveHandler(object):
         for provider in self._str_providers:
             if provider.can_provide(type_object, type_name):
                 self._type_to_str_provider_cache[type_object] = provider
-                return provider.get_str(o)
+                return provider.get_str(o, do_trim)
 
         self._type_to_str_provider_cache[type_object] = self.NO_PROVIDER
         return None
@@ -270,7 +270,7 @@ def frame_vars_to_xml(frame_f_locals, group_type, hidden_ns=None, user_type_rend
 
 
 def _get_default_var_string_representation(v, _type, typeName, format, do_trim=True):
-    str_from_provider = _str_from_providers(v, _type, typeName)
+    str_from_provider = _str_from_providers(v, _type, typeName, do_trim)
     if str_from_provider is not None:
         return str_from_provider
 

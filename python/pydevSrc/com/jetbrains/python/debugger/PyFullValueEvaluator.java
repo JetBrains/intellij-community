@@ -28,6 +28,14 @@ public class PyFullValueEvaluator extends XFullValueEvaluator {
 
   @Override
   public void startEvaluation(@NotNull XFullValueEvaluationCallback callback) {
+    doEvaluate(callback, false);
+  }
+
+  protected boolean isCopyValueCallback(XFullValueEvaluationCallback callback) {
+    return callback instanceof PyCopyValueEvaluationCallback;
+  }
+
+  protected void doEvaluate(@NotNull XFullValueEvaluationCallback callback, boolean doTrunc) {
     String expression = myExpression.trim();
     if (expression.isEmpty()) {
       callback.evaluated("");
@@ -36,12 +44,14 @@ public class PyFullValueEvaluator extends XFullValueEvaluator {
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
-        final PyDebugValue value = myDebugProcess.evaluate(expression, false, false);
+        final PyDebugValue value = myDebugProcess.evaluate(expression, false, doTrunc);
         if (value.getValue() == null) {
           throw new PyDebuggerException("Failed to Load Value");
         }
         callback.evaluated(value.getValue());
-        ApplicationManager.getApplication().invokeLater(() -> showCustomPopup(myDebugProcess, value));
+        if (!isCopyValueCallback(callback)) {
+          ApplicationManager.getApplication().invokeLater(() -> showCustomPopup(myDebugProcess, value));
+        }
       }
       catch (PyDebuggerException e) {
         callback.errorOccurred(e.getTracebackError());

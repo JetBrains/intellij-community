@@ -1682,6 +1682,32 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
+  @Test
+  public void testGetFullValueFromCopyAction() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_get_full_value_from_copy_action.py") {
+
+      private static final int MINIMAL_LENGTH = 10000;
+
+      private void testLength(String value) throws PyDebuggerException {
+        // PyXCopyAction uses PyFullValueEvaluator, it uses myDebugProcess.evaluate
+        PyDebugValue result = myDebugProcess.evaluate(value, false, false);
+        assertTrue(result.getValue().length() > MINIMAL_LENGTH);
+      }
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 5);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        testLength("lst");
+        testLength("np_arr");
+        resume();
+      }
+    });
+  }
+
   private static class PyDebuggerTaskTagAware extends PyDebuggerTask {
 
     private PyDebuggerTaskTagAware(@Nullable String relativeTestDataPath, String scriptName) {

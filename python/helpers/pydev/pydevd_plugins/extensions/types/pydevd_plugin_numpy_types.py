@@ -6,6 +6,7 @@ from _pydevd_bundle.pydevd_repr_utils import get_value_repr
 from .pydevd_helpers import find_mod_attr
 
 import inspect
+import sys
 
 try:
     from collections import OrderedDict
@@ -106,13 +107,23 @@ class NDArrayTypeResolveProvider(object):
         return ret
 
 
-class NDArrayStrProvider(object):
+class NDArrayStrProvider(StrPresentationProvider):
     def can_provide(self, type_object, type_name):
         nd_array = find_mod_attr('numpy', 'ndarray')
         return nd_array is not None and inspect.isclass(type_object) and issubclass(type_object, nd_array)
 
-    def get_str(self, val):
-        return get_value_repr(val)
+    def _to_str_no_trim(self, val):
+        return str(val).replace('\n', ',').strip()
+
+    def get_str(self, val, do_trim=True):
+        if do_trim:
+            return get_value_repr(val)
+        try:
+            import numpy as np
+            with np.printoptions(threshold=sys.maxsize):
+                return self._to_str_no_trim(val)
+        except:
+            return self._to_str_no_trim(val)
 
 
 class NdArrayItemsContainerProvider(object):
@@ -142,8 +153,6 @@ class NdArrayItemsContainerProvider(object):
         d['__len__'] = l
         return d
 
-
-import sys
 
 if not sys.platform.startswith("java"):
     TypeResolveProvider.register(NDArrayTypeResolveProvider)

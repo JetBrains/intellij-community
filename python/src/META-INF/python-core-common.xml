@@ -837,6 +837,8 @@
       <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
     </group>
 
+    <action overrides="true" id="XDebugger.CopyValue" class="com.jetbrains.python.debugger.actions.PyXCopyValueAction" />
+
     <action id="PyConvertModuleToPackage" class="com.jetbrains.python.refactoring.convertModulePackage.PyConvertModuleToPackageAction"
     >
       <add-to-group group-id="RefactoringMenu" anchor="last"/>
