@@ -41,11 +41,14 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.CoreIconManager
 import com.intellij.ui.IconManager
+import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.mac.MacOSApplicationProvider
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ReflectionUtil
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.lang.Java11Shim
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.ui.EDT
@@ -155,6 +158,8 @@ fun CoroutineScope.startApplication(args: List<String>,
     result
   }
 
+  val preloadLafClassesJob = preloadLafClasses()
+
   val schedulePluginDescriptorLoading = launch {
     // plugins cannot be loaded when a config import is needed, because plugins may be added after importing
     launch(Dispatchers.IO) {
@@ -170,7 +175,7 @@ fun CoroutineScope.startApplication(args: List<String>,
   }
 
   // LookAndFeel type is not specified to avoid class loading
-  val initLafJob = initUi(initAwtToolkitAndEventQueueJob)
+  val initLafJob = initUi(initAwtToolkitAndEventQueueJob, preloadLafClassesJob)
 
   // system dirs checking must happen after locking system dirs
   val checkSystemDirJob = checkSystemDirs(lockSystemDirsJob, pathDeferred)
@@ -179,7 +184,6 @@ fun CoroutineScope.startApplication(args: List<String>,
   val logDeferred = setupLogger(consoleLoggerJob, checkSystemDirJob)
 
   val showEuaIfNeededJob = showEuaIfNeeded(euaDocumentDeferred, initLafJob)
-  val patchHtmlStyleJob = if (isHeadless) null else patchHtmlStyle(initLafJob)
 
   shellEnvDeferred = async(CoroutineName("environment loading") + Dispatchers.IO) {
     EnvironmentUtil.loadEnvironment()
@@ -239,7 +243,7 @@ fun CoroutineScope.startApplication(args: List<String>,
       telemetryInitJob.join()
     }
 
-    app to patchHtmlStyleJob
+    app to initLafJob
   }
 
   mainScope.launch {
@@ -334,27 +338,6 @@ private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job,
   }
 }
 
-private fun CoroutineScope.patchHtmlStyle(initUiJob: Job): Job {
-  return launch {
-    initUiJob.join()
-
-    withContext(SwingDispatcher) {
-      runActivity("html style patching") {
-        // patch html styles
-        val uiDefaults = UIManager.getDefaults()
-        // create a separate copy for each case
-        val globalStyleSheet = GlobalStyleSheetHolder.getGlobalStyleSheet()
-        uiDefaults.put("javax.swing.JLabel.userStyleSheet", globalStyleSheet)
-        uiDefaults.put("HTMLEditorKit.jbStyleSheet", globalStyleSheet)
-
-        runActivity("global styleSheet updating") {
-          GlobalStyleSheetHolder.updateGlobalSwingStyleSheet()
-        }
-      }
-    }
-  }
-}
-
 private suspend fun prepareSplash(appInfoDeferred: Deferred<ApplicationInfoEx>, args: List<String>): Runnable? {
   var showSplash = false
   for (arg in args) {
@@ -376,16 +359,6 @@ private suspend fun prepareSplash(appInfoDeferred: Deferred<ApplicationInfoEx>, 
   val appInfo = appInfoDeferred.await()
   return runActivity("splash preparation") {
     SplashManager.scheduleShow(appInfo)
-  }
-}
-
-private fun checkGraphics() {
-  runActivity("graphics environment checking") {
-    if (GraphicsEnvironment.isHeadless()) {
-      StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.startup.error"),
-                                       BootstrapBundle.message("bootstrap.error.message.no.graphics.environment"), true)
-      exitProcess(AppExitCodes.NO_GRAPHICS)
-    }
   }
 }
 
@@ -494,6 +467,12 @@ private fun CoroutineScope.initAwtToolkit(lockSystemDirsJob: Job, busyThread: Th
       }
 
       runActivity("awt auto shutdown configuring") {
+        /*
+    Make EDT to always persist while the main thread is alive. Otherwise, it's possible to have EDT being
+    terminated by [AWTAutoShutdown], which will break a `ReadMostlyRWLock` instance.
+    [AWTAutoShutdown.notifyThreadBusy(Thread)] will put the main thread into the thread map,
+    and thus will effectively disable auto shutdown behavior for this application.
+    */
         AWTAutoShutdown.getInstance().notifyThreadBusy(busyThread)
       }
     }
@@ -514,46 +493,56 @@ private fun CoroutineScope.initAwtToolkit(lockSystemDirsJob: Job, busyThread: Th
   }
 }
 
-private fun CoroutineScope.initUi(initAwtToolkitAndEventQueueJob: Job): Job = launch {
-  val preloadLafClassesJob = preloadLafClasses()
+private fun CoroutineScope.initUi(initAwtToolkitAndEventQueueJob: Job, preloadLafClassesJob: Job): Job = launch {
   initAwtToolkitAndEventQueueJob.join()
-
-  val isHeadless = AppMode.isHeadless()
-  if (!isHeadless) {
-    checkGraphics()
-  }
-
-  initAwtToolkitAndEventQueueJob.join()
-  preloadLafClassesJob.join()
 
   // SwingDispatcher must be used after Toolkit init
   withContext(SwingDispatcher) {
+    val isHeadless = AppMode.isHeadless()
+    if (!isHeadless) {
+      val env = runActivity("GraphicsEnvironment init") {
+        GraphicsEnvironment.getLocalGraphicsEnvironment()
+      }
+      runActivity("graphics environment checking") {
+        if (env.isHeadlessInstance) {
+          StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.startup.error"),
+                                           BootstrapBundle.message("bootstrap.error.message.no.graphics.environment"), true)
+          exitProcess(AppExitCodes.NO_GRAPHICS)
+        }
+      }
+    }
+
+    preloadLafClassesJob.join()
+
     // we don't need Idea LaF to show splash, but we do need some base LaF to compute system font data (see below for what)
-    var activity = StartUpMeasurer.startActivity("base LaF creation")
-    val baseLaF = DarculaLaf.createBaseLaF()
-    activity = activity.endAndStart("base LaF initialization")
-    // LaF is useless until initialized (`getDefaults` "should only be invoked ... after `initialize` has been invoked.")
-    baseLaF.initialize()
-    DarculaLaf.setPreInitializedBaseLaf(baseLaF)
+
+    val baseLaF = runActivity("base LaF creation") { DarculaLaf.createBaseLaF() }
+    runActivity("base LaF initialization") {
+      // LaF is useless until initialized (`getDefaults` "should only be invoked ... after `initialize` has been invoked.")
+      baseLaF.initialize()
+      DarculaLaf.setPreInitializedBaseLaf(baseLaF)
+    }
 
     // to compute the system scale factor on non-macOS (JRE HiDPI is not enabled), we need to know system font data,
     // and to compute system font data we need to know `Label.font` UI default (that's why we compute base LaF first)
-    activity = activity.endAndStart("system font data initialization")
     if (!isHeadless) {
-      JBUIScale.getSystemFontData {
+      JBUIScale.preload {
         runActivity("base LaF defaults getting") { baseLaF.defaults }
       }
-      activity = activity.endAndStart("scale initialization")
-      JBUIScale.scale(1f)
     }
-    activity = activity.endAndStart("awt thread busy notification")
-    /*
-Make EDT to always persist while the main thread is alive. Otherwise, it's possible to have EDT being
-terminated by [AWTAutoShutdown], which will break a `ReadMostlyRWLock` instance.
-[AWTAutoShutdown.notifyThreadBusy(Thread)] will put the main thread into the thread map,
-and thus will effectively disable auto shutdown behavior for this application.
-*/
-    activity.end()
+
+    val uiDefaults = runActivity("app-specific laf state initialization") { UIManager.getDefaults() }
+
+    runActivity("html style patching") {
+      // create a separate copy for each case
+      val globalStyleSheet = GlobalStyleSheetHolder.getGlobalStyleSheet()
+      uiDefaults.put("javax.swing.JLabel.userStyleSheet", globalStyleSheet)
+      uiDefaults.put("HTMLEditorKit.jbStyleSheet", globalStyleSheet)
+
+      runActivity("global styleSheet updating") {
+        GlobalStyleSheetHolder.updateGlobalSwingStyleSheet()
+      }
+    }
   }
 
   if (isUsingSeparateWriteThread) {
@@ -570,6 +559,10 @@ private fun CoroutineScope.preloadLafClasses(): Job {
     Class.forName(DarculaLaf::class.java.name, true, classLoader)
     Class.forName(IdeaLaf::class.java.name, true, classLoader)
     Class.forName(JBUIScale::class.java.name, true, classLoader)
+    Class.forName(JreHiDpiUtil::class.java.name, true, classLoader)
+    Class.forName(SynchronizedClearableLazy::class.java.name, true, classLoader)
+    Class.forName(ScaleContext::class.java.name, true, classLoader)
+    Class.forName(GlobalStyleSheetHolder::class.java.name, true, classLoader)
   }
 }
 

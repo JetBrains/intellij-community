@@ -33,22 +33,28 @@ object JBUIScale {
    * The user scale factor, see [ScaleType.USR_SCALE].
    */
   private val userScaleFactor: SynchronizedClearableLazy<Float> = SynchronizedClearableLazy {
-    DEBUG_USER_SCALE_FACTOR.value ?: computeUserScaleFactor(if (JreHiDpiUtil.isJreHiDPIEnabled()) 1f else sysScale())
+    DEBUG_USER_SCALE_FACTOR.value ?: computeUserScaleFactor(if (JreHiDpiUtil.isJreHiDPIEnabled()) 1f else systemScaleFactor.value)
   }
 
   @Internal
   fun preload(uiDefaults: Supplier<UIDefaults?>) {
+    if (!systemScaleFactor.isInitialized()) {
+      runActivity("system scale factor computation") {
+        computeSystemScaleFactor(uiDefaults).let {
+          systemScaleFactor.value = it
+        }
+      }
+    }
+
     runActivity("user scale factor computation") {
       userScaleFactor.value
     }
 
-    runActivity("system font data computation") {
-      getSystemFontData(uiDefaults)
-    }
+    getSystemFontData(uiDefaults)
   }
 
   private val systemScaleFactor: SynchronizedClearableLazy<Float> = SynchronizedClearableLazy {
-    computeSystemScaleFactor()
+    computeSystemScaleFactor(uiDefaults = null)
   }
 
   private val PROPERTY_CHANGE_SUPPORT = PropertyChangeSupport(JBUIScale)
@@ -68,7 +74,9 @@ object JBUIScale {
   }
 
   private var systemFontData = SynchronizedClearableLazy<Pair<String?, Int>> {
-    computeSystemFontData(null)
+    runActivity("system font data computation") {
+      computeSystemFontData(null)
+    }
   }
 
   private fun computeSystemFontData(uiDefaults: Supplier<UIDefaults?>?): Pair<String, Int> {
@@ -157,7 +165,7 @@ object JBUIScale {
     }
   }
 
-  private fun computeSystemScaleFactor(): Float {
+  private fun computeSystemScaleFactor(uiDefaults: Supplier<UIDefaults?>?): Float {
     if (!java.lang.Boolean.parseBoolean(System.getProperty("hidpi", "true"))) {
       return 1f
     }
@@ -169,10 +177,17 @@ object JBUIScale {
       catch (ignore: HeadlessException) {
         null
       }
-      return if (gd?.defaultConfiguration == null) 1f else sysScale(gd.defaultConfiguration)
+
+      val gc = gd?.defaultConfiguration
+      if (gc == null || gc.device.type == GraphicsDevice.TYPE_PRINTER) {
+        return 1f
+      }
+      else {
+        return gc.defaultTransform.scaleX.toFloat()
+      }
     }
 
-    val result = getFontScale(getSystemFontData(null).second.toFloat())
+    val result = getFontScale(getSystemFontData(uiDefaults).second.toFloat())
     thisLogger().info("System scale factor: $result (${if (JreHiDpiUtil.isJreHiDPIEnabled()) "JRE" else "IDE"}-managed HiDPI)")
     return result
   }
@@ -248,7 +263,7 @@ object JBUIScale {
 
     // downgrading user scale below 1.0 may be uncomfortable (tiny icons),
     // whereas some users prefer font size slightly below normal which is ok
-    if (scale < 1 && sysScale() >= 1) {
+    if (scale < 1 && systemScaleFactor.value >= 1) {
       scale = 1f
     }
 
@@ -291,7 +306,7 @@ object JBUIScale {
       return gc.defaultTransform.scaleX.toFloat()
     }
     else {
-      return sysScale()
+      return systemScaleFactor.value
     }
   }
 

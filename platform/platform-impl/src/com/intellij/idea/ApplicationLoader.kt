@@ -72,7 +72,7 @@ suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Any>)
     PluginManagerCore.getInitPluginFuture().await()
   }
 
-  val (app, patchHtmlStyleJob) = initAppActivity.runChild("app waiting") {
+  val (app, initLafJob) = initAppActivity.runChild("app waiting") {
     @Suppress("UNCHECKED_CAST")
     appDeferred.await() as Pair<ApplicationImpl, Job?>
   }
@@ -89,10 +89,14 @@ suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Any>)
   }
 
   coroutineScope {
+    // LaF must be initialized before app init because icons maybe requested and as result,
+    // scale must be already initialized (especially important for Linux)
+    runActivity("init laf waiting") {
+      initLafJob?.join()
+    }
+
     // executed in main thread
     launch {
-      patchHtmlStyleJob?.join()
-
       val lafManagerDeferred = launch(CoroutineName("laf initialization") + SwingDispatcher) {
         // don't wait for result - we just need to trigger initialization if not yet created
         app.getServiceAsync(LafManager::class.java)
