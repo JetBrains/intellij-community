@@ -58,7 +58,7 @@ To build IntelliJ IDEA Community Edition from source, choose **Build | Build Pro
 To build installation packages, run the `installers.cmd` command in `<IDEA_HOME>` directory. `installers.cmd` will work on both Windows and Unix systems.
 
 Options to build installers are passed as system properties to `installers.cmd` command.
-You may find the list of available properties in [BuildOptions.groovy](platform/build-scripts/groovy/org/jetbrains/intellij/build/BuildOptions.groovy)
+You may find the list of available properties in [BuildOptions.kt](platform/build-scripts/src/org/jetbrains/intellij/build/BuildOptions.kt)
 
 Examples (`./` should be added only for Linux/macOS):
  * Build installers only for current operating system: `./installers.cmd -Dintellij.build.target.os=current`
@@ -83,7 +83,7 @@ The "Contribute Code" section of that site describes how you can contribute to I
 To run tests outside of IntelliJ IDEA, run the `tests.cmd` command in `<IDEA_HOME>` directory. `tests.cmd` will work on both Windows and Unix systems.
 
 Options to run tests are passed as system properties to `tests.cmd` command.
-You may find the list of available properties in [TestingOptions.groovy](platform/build-scripts/groovy/org/jetbrains/intellij/build/TestingOptions.groovy)
+You may find the list of available properties in [TestingOptions.kt](platform/build-scripts/src/org/jetbrains/intellij/build/TestingOptions.kt)
 
 Examples (`./` should be added only for Linux/macOS):
 * Build source code _incrementally_ (do not build what was already built before): `./tests.cmd -Dintellij.build.incremental.compilation=true`

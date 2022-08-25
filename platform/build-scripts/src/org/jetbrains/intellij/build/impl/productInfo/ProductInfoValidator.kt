@@ -43,7 +43,7 @@ internal fun validateProductJson(jsonText: String,
                                  installationArchives: List<Pair<Path, String>>,
                                  context: CompilationContext) {
   val schemaPath = context.paths.communityHomeDir.communityRoot
-    .resolve("platform/build-scripts/groovy/org/jetbrains/intellij/build/product-info.schema.json")
+    .resolve("platform/build-scripts/src/org/jetbrains/intellij/build/product-info.schema.json")
   val messages = context.messages
   verifyJsonBySchema(jsonText, schemaPath, messages)
   val productJson = jsonEncoder.decodeFromString<ProductInfoData>(jsonText)

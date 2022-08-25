@@ -8,7 +8,6 @@ import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.containers.MultiMap
-import groovy.transform.CompileStatic
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import org.jetbrains.annotations.Nls
@@ -42,7 +41,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.function.BiConsumer
 
-@CompileStatic
 internal class JpsCompilationRunner(private val context: CompilationContext) {
   private val compilationData = context.compilationData
 

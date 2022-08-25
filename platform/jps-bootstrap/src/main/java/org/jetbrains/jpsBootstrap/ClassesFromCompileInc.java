@@ -5,7 +5,6 @@ import com.google.common.base.StandardSystemProperty;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.openapi.util.Pair;
-import groovy.transform.CompileStatic;
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader;
 import org.jetbrains.jps.model.JpsProject;
@@ -93,7 +92,6 @@ public final class ClassesFromCompileInc {
       .stream().collect(Collectors.toUnmodifiableMap(pair -> pair.getFirst(), pair -> pair.getSecond()));
   }
 
-  @CompileStatic
   private static final class CompilationPartsMetadata {
     @SerializedName("server-url")
     public String serverUrl;
