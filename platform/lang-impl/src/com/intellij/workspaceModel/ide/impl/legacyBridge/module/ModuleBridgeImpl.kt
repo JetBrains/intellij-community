@@ -58,7 +58,7 @@ internal class ModuleBridgeImpl(
             val currentStore = entityStorage.current
             val storage = if (currentStore is MutableEntityStorage) currentStore.toSnapshot() else currentStore
             entityStorage = VersionedEntityStorageOnStorage(storage)
-            assert(entityStorage.current.resolve(moduleEntityId) != null) {
+            assert(moduleEntityId in entityStorage.current) {
               // If we ever get this assertion, replace use `event.storeBefore` instead of current
               // As it made in ArtifactBridge
               "Cannot resolve module $moduleEntityId. Current store: $currentStore"

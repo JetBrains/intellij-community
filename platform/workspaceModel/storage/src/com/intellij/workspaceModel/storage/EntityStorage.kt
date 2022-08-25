@@ -216,6 +216,7 @@ interface EntityStorage {
   fun <E : WorkspaceEntity, R : WorkspaceEntity> referrers(e: E, entityClass: KClass<R>, property: KProperty1<R, EntityReference<E>>): Sequence<R>
   fun <E : WorkspaceEntityWithPersistentId, R : WorkspaceEntity> referrers(id: PersistentEntityId<E>, entityClass: Class<R>): Sequence<R>
   fun <E : WorkspaceEntityWithPersistentId> resolve(id: PersistentEntityId<E>): E?
+  operator fun <E : WorkspaceEntityWithPersistentId> contains(id: PersistentEntityId<E>): Boolean
 
   /**
    * Please select a name for your mapping in a form `<product_id>.<mapping_name>`.

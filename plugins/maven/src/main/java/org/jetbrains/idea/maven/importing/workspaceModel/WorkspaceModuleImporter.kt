@@ -175,7 +175,7 @@ internal class WorkspaceModuleImporter(
     sourceUrls: List<String>,
     javadocUrls: List<String>,
     source: EntitySource) {
-    if (builder.resolve(libraryId) != null) return
+    if (libraryId in builder) return
 
     val roots = mutableListOf<LibraryRoot>()
 

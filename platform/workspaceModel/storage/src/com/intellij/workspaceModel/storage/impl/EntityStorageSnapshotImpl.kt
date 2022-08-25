@@ -713,8 +713,10 @@ internal sealed class AbstractEntityStorage : EntityStorage {
     return entityDataById(entityIds)?.createEntity(this) as E?
   }
 
-  // Do not remove cast to Class<out TypedEntity>. kotlin fails without it
-  @Suppress("USELESS_CAST")
+  operator override fun <E : WorkspaceEntityWithPersistentId> contains(id: PersistentEntityId<E>): Boolean {
+    return indexes.persistentIdIndex.getIdsByEntry(id) != null
+  }
+
   override fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>> {
     return indexes.entitySourceIndex.entries().asSequence().filter { sourceFilter(it) }.associateWith { source ->
       indexes.entitySourceIndex

@@ -149,7 +149,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
 
   override fun isNewFacet(facet: Facet<*>): Boolean {
     val entity = diff.facetMapping().getEntities(facet).singleOrNull() as FacetEntity?
-    return entity != null && initialStorage.resolve(entity.persistentId) == null
+    return entity != null && entity.persistentId !in initialStorage
   }
 
   override fun addListener(listener: ModifiableFacetModel.Listener, parentDisposable: Disposable) {
