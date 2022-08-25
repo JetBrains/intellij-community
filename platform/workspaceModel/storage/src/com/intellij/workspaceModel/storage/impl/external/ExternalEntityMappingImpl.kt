@@ -21,7 +21,11 @@ internal open class ExternalEntityMappingImpl<T> internal constructor(internal o
 
   override fun getDataByEntity(entity: WorkspaceEntity): T? {
     entity as WorkspaceEntityBase
-    return index[entity.id]
+    return getDataByEntityId(entity.id)
+  }
+
+  internal fun getDataByEntityId(entityId: EntityId): T? {
+    return index[entityId]
   }
 
   override fun size(): Int = index.size

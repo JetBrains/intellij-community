@@ -214,7 +214,7 @@ public class MavenFoldersUpdatingTest extends MavenMultiVersionImportingTestCase
     });
 
     updateTargetFolders();
-    assertEquals(supportsZeroEventsOnNoProjectChange() ? 0 : 1, count[0]);
+    assertEquals(0, count[0]);
   }
 
   @Test 
