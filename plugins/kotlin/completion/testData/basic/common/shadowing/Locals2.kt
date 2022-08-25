@@ -8,5 +8,5 @@ class C {
     }
 }
 
-// EXIST: { lookupString: "xxx", itemText: "xxx", typeText: "String", icon: "nodes/parameter.svg"}
+// EXIST: { lookupString: "xxx", itemText: "xxx", typeText: "String", icon: "Parameter"}
 // NOTHING_ELSE

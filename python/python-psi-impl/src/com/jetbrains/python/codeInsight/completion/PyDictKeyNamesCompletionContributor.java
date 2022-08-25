@@ -12,7 +12,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.PlatformIcons;
+import com.intellij.ui.IconManager;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
@@ -201,7 +201,7 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor i
     item = LookupElementBuilder
       .create(key)
       .withTypeText("dict key")
-      .withIcon(PlatformIcons.PARAMETER_ICON);
+      .withIcon(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Parameter));
 
     if (addHandler) {
       item = item.withInsertHandler(new InsertHandler<>() {

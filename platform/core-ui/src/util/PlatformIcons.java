@@ -2,6 +2,7 @@
 package com.intellij.util;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ui.IconManager;
 import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
@@ -10,12 +11,12 @@ public interface PlatformIcons {
   Icon PUBLIC_ICON = AllIcons.Nodes.C_public;
   Icon LOCKED_ICON = AllIcons.Nodes.Locked;
   Icon SYMLINK_ICON = AllIcons.Nodes.Symlink;
-  Icon PRIVATE_ICON = AllIcons.Nodes.C_private;
-  Icon PROTECTED_ICON = AllIcons.Nodes.C_protected;
-  Icon PACKAGE_LOCAL_ICON = AllIcons.Nodes.C_plocal;
-  Icon PACKAGE_ICON = AllIcons.Nodes.Package;
+  Icon PRIVATE_ICON = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Private);
+  Icon PROTECTED_ICON = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Protected);
+  Icon PACKAGE_LOCAL_ICON = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Local);
+  Icon PACKAGE_ICON = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Package);
 
-  Icon CLASS_ICON = AllIcons.Nodes.Class;
+  Icon CLASS_ICON = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class);
   Icon EXCEPTION_CLASS_ICON = AllIcons.Nodes.ExceptionClass;
   Icon ANONYMOUS_CLASS_ICON = AllIcons.Nodes.AnonymousClass;
   Icon ABSTRACT_CLASS_ICON = AllIcons.Nodes.AbstractClass;
@@ -23,12 +24,12 @@ public interface PlatformIcons {
   Icon ENUM_ICON = AllIcons.Nodes.Enum;
   Icon RECORD_ICON = AllIcons.Nodes.Record;
   Icon INTERFACE_ICON = AllIcons.Nodes.Interface;
-  Icon METHOD_ICON = AllIcons.Nodes.Method;
-  Icon FUNCTION_ICON = AllIcons.Nodes.Function;
+  Icon METHOD_ICON = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method);
+  Icon FUNCTION_ICON = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Function);
   Icon ABSTRACT_METHOD_ICON = AllIcons.Nodes.AbstractMethod;
-  Icon FIELD_ICON = AllIcons.Nodes.Field;
-  Icon PARAMETER_ICON = AllIcons.Nodes.Parameter;
-  Icon VARIABLE_ICON = AllIcons.Nodes.Variable;
+  Icon FIELD_ICON = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Field);
+  Icon PARAMETER_ICON = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Parameter);
+  Icon VARIABLE_ICON = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Variable);
   Icon XML_TAG_ICON = AllIcons.Nodes.Tag;
   Icon LIBRARY_ICON = AllIcons.Nodes.PpLib;
   Icon WEB_ICON = AllIcons.Nodes.PpWeb;

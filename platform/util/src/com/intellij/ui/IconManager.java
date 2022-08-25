@@ -172,7 +172,6 @@ final class DummyIconManager implements IconManager {
   }
 
   private static class DummyIcon implements ScalableIcon {
-    static final DummyIcon INSTANCE = new DummyIcon("<DummyIcon>");
     private final String path;
 
     private DummyIcon(@NotNull String path) {

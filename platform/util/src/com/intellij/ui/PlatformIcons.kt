@@ -47,8 +47,8 @@ enum class PlatformIcons(@JvmField internal val testId: String? = null) {
   Annotation,
   Function,
   Interface,
-  Method("nodes/method.svg"),
-  AbstractMethod,
+  Method,
+  AbstractMethod("nodes/abstractMethod.svg"),
   AbstractException,
   MethodReference,
   Parameter,
@@ -62,6 +62,7 @@ enum class PlatformIcons(@JvmField internal val testId: String? = null) {
 
   StaticMark,
   FinalMark,
+  TestMark,
   JunitTestMark,
   RunnableMark,
 }

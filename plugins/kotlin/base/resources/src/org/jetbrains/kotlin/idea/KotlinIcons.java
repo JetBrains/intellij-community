@@ -1,9 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.util.PlatformIcons;
+import com.intellij.ui.IconManager;
 import icons.KotlinBaseResourcesIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,11 +20,11 @@ public interface KotlinIcons {
     /** 12x12 */ @NotNull Icon DSL_MARKER_ANNOTATION = KotlinBaseResourcesIcons.DslMarkerAnnotation;
     /** 16x16 */ @NotNull Icon ENUM = KotlinBaseResourcesIcons.EnumKotlin;
     /** 16x16 */ @NotNull Icon EXPECT = KotlinBaseResourcesIcons.Expect;
-    Icon EXTENSION_FUNCTION = PlatformIcons.FUNCTION_ICON;
+    Icon EXTENSION_FUNCTION = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Function);
     /** 16x16 */ @NotNull Icon FIELD_VAL = KotlinBaseResourcesIcons.Field_value;
     /** 16x16 */ @NotNull Icon FIELD_VAR = KotlinBaseResourcesIcons.Field_variable;
     /** 16x16 */ @NotNull Icon FIR = KotlinBaseResourcesIcons.Fir;
-    Icon FUNCTION = AllIcons.Nodes.Function;
+    Icon FUNCTION = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Function);
     /** 16x16 */ @NotNull Icon INTERFACE = KotlinBaseResourcesIcons.InterfaceKotlin;
     /** 16x16 */ @NotNull Icon FILE = KotlinBaseResourcesIcons.Kotlin_file;
     /** 16x16 */ @NotNull Icon GRADLE_SCRIPT = KotlinBaseResourcesIcons.Kotlin_gradle_script;
@@ -37,10 +36,10 @@ public interface KotlinIcons {
     /** 16x16 */ @NotNull Icon LAMBDA = KotlinBaseResourcesIcons.Lambda;
     /** 16x16 */ @NotNull Icon LOAD_SCRIPT_CONFIGURATION = KotlinBaseResourcesIcons.LoadScriptConfiguration;
     /** 16x16 */ @NotNull Icon OBJECT = KotlinBaseResourcesIcons.ObjectKotlin;
-    Icon PARAMETER = PlatformIcons.PARAMETER_ICON;
+    Icon PARAMETER = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Parameter);
     /** 12x12 */ @NotNull Icon SUSPEND_CALL = KotlinBaseResourcesIcons.SuspendCall;
     /** 16x16 */ @NotNull Icon TYPE_ALIAS = KotlinBaseResourcesIcons.TypeAlias;
-    Icon VAR = PlatformIcons.VARIABLE_ICON;
+    Icon VAR = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Variable);
     /** 16x16 */ @NotNull Icon VAL = KotlinBaseResourcesIcons.Value;
 
     final class Wizard {

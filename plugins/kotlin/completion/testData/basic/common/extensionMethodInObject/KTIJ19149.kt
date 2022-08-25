@@ -1,3 +1,5 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 open class A {
     fun String.fooInherited() {}
 }
@@ -10,5 +12,5 @@ fun usage() {
     "".foo<caret>
 }
 
-// EXIST: { "lookupString": "fooExplicit", "itemText": "fooExplicit", icon: "nodes/function.svg"}
-// EXIST: { "lookupString": "fooInherited", "itemText": "fooInherited", icon: "nodes/function.svg"}
+// EXIST: { "lookupString": "fooExplicit", "itemText": "fooExplicit", icon: "Function"}
+// EXIST: { "lookupString": "fooInherited", "itemText": "fooInherited", icon: "Function"}

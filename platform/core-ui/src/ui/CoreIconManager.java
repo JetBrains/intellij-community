@@ -98,6 +98,7 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
 
       case StaticMark -> AllIcons.Nodes.StaticMark;
       case FinalMark -> AllIcons.Nodes.FinalMark;
+      case TestMark -> AllIcons.RunConfigurations.TestMark;
       case JunitTestMark -> AllIcons.Nodes.JunitTestMark;
       case RunnableMark -> AllIcons.Nodes.RunnableMark;
     };
