@@ -145,12 +145,12 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
   }
 }
 
-private class NotebookIntervalPointersEventBuilder{
+private class NotebookIntervalPointersEventBuilder {
   val accumulatedChanges = mutableListOf<Change>()
 
   fun applyEvent(eventDispatcher: EventDispatcher<NotebookIntervalPointerFactory.ChangeListener>) {
     for (change in accumulatedChanges) {
-      when(change) {
+      when (change) {
         is OnInserted -> eventDispatcher.multicaster.onInserted(change.ordinal)
         is OnEdited -> eventDispatcher.multicaster.onEdited(change.ordinal)
         is OnRemoved -> eventDispatcher.multicaster.onRemoved(change.ordinal)
@@ -195,8 +195,8 @@ private class NotebookIntervalPointersEventBuilder{
   }
 
   sealed interface Change
-  data class OnInserted(val ordinal: Int): Change
-  data class OnEdited(val ordinal: Int): Change
-  data class OnRemoved(val ordinal: Int): Change
-  data class OnMoved(val fromOrdinal: Int, val toOrdinal: Int): Change
+  data class OnInserted(val ordinal: Int) : Change
+  data class OnEdited(val ordinal: Int) : Change
+  data class OnRemoved(val ordinal: Int) : Change
+  data class OnMoved(val fromOrdinal: Int, val toOrdinal: Int) : Change
 }
