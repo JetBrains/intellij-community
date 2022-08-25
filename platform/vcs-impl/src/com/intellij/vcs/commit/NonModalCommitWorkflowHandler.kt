@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.DumbModeListener
@@ -31,22 +30,21 @@ import com.intellij.openapi.util.text.StringUtil.*
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitExecutorWithRichDescription
 import com.intellij.openapi.vcs.changes.actions.DefaultCommitExecutorAction
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
-import com.intellij.openapi.vcs.checkin.*
-import com.intellij.openapi.vcs.impl.PartialChangesUtil
+import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
+import com.intellij.openapi.vcs.checkin.CommitProblem
+import com.intellij.openapi.vcs.checkin.CommitProblemWithDetails
+import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.containers.nullize
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
-import com.intellij.vcs.commit.NonModalCommitWorkflow.Companion.runCommitChecks
-import com.intellij.vcs.commit.NonModalCommitWorkflow.Companion.runMetaHandlers
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
 import java.lang.Runnable
@@ -339,10 +337,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
         try {
           indicator.start()
 
-          val problem = PartialChangesUtil.underChangeList(project, workflow.getBeforeCommitChecksChangelist()) {
-            runCommitHandlers(sessionInfo, indicator)
-          }
-
+          val problem = workflow.runBackgroundBeforeCommitChecks(sessionInfo, indicator)
           handleCommitProblem(problem, isOnlyRunCommitChecks)
         }
         finally {
@@ -377,36 +372,6 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
         isCommitChecksResultUpToDate = true
         return CommitChecksResult.Failed()
       }
-    }
-  }
-
-  private suspend fun runCommitHandlers(
-    sessionInfo: CommitSessionInfo,
-    indicator: ProgressIndicator
-  ): CommitProblem? {
-    try {
-      val handlers = commitHandlers
-      val (modificationHandlers, plainHandlers) = handlers.partition { it is CheckinModificationHandler }
-      val modificationCommitChecks = modificationHandlers.map { it.asCommitCheck(sessionInfo, commitContext) }
-      val commitChecks = plainHandlers.map { it.asCommitCheck(sessionInfo, commitContext) }
-
-      val metaHandlers = handlers.filterIsInstance<CheckinMetaHandler>()
-      runMetaHandlers(metaHandlers)
-
-      runCommitChecks(project, modificationCommitChecks, indicator)?.let { return it }
-      FileDocumentManager.getInstance().saveAllDocuments()
-
-      runCommitChecks(project, commitChecks, indicator)?.let { return it }
-
-      return null // checks passed
-    }
-    catch (e: Throwable) {
-      // Do not report error on cancellation
-      // DO report error if someone threw PCE for no reason, ex: IDEA-234006
-      if (e is ProcessCanceledException && indicator.isCanceled) throw e
-
-      LOG.warn(Throwable(e))
-      return CommitProblem.createError(e)
     }
   }
 
@@ -472,29 +437,4 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
       updateDefaultCommitActionName()
     }
   }
-}
-
-private fun CheckinHandler.asCommitCheck(sessionInfo: CommitSessionInfo, commitContext: CommitContext): CommitCheck {
-  if (this is CommitCheck) return this
-  return ProxyCommitCheck(this, sessionInfo, commitContext)
-}
-
-private class ProxyCommitCheck(private val checkinHandler: CheckinHandler,
-                               private val sessionInfo: CommitSessionInfo,
-                               private val commitContext: CommitContext) : CommitCheck {
-  override fun isEnabled(): Boolean = checkinHandler.acceptExecutor(sessionInfo.executor)
-
-  override suspend fun runCheck(indicator: ProgressIndicator): CommitProblem? {
-    val result = checkinHandler.beforeCheckin(sessionInfo.executor, commitContext.additionalDataConsumer)
-    if (result == null || result == CheckinHandler.ReturnResult.COMMIT) return null
-    return UnknownCommitProblem()
-  }
-
-  override fun toString(): String {
-    return "ProxyCommitCheck: $checkinHandler"
-  }
-}
-
-internal class UnknownCommitProblem : CommitProblem {
-  override val text: String get() = message("before.checkin.error.unknown")
 }

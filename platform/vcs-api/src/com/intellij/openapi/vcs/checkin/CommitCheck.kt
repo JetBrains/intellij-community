@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.checkin
 
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.PossiblyDumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -21,7 +22,7 @@ import org.jetbrains.annotations.Nls.Capitalization.Sentence
  * Note that [CommitCheck] API is only supported in Commit Tool Window.
  */
 @ApiStatus.Experimental
-interface CommitCheck {
+interface CommitCheck : PossiblyDumbAware {
   /**
    * Indicates if commit check should be run for the commit.
    * E.g. if corresponding option is enabled in settings.

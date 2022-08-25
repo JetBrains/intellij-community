@@ -216,7 +216,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     return result ?: CommitChecksResult.ExecutionError.also { LOG.debug("No commit handlers result. Cancelling commit.") }
   }
 
-  open fun getBeforeCommitChecksChangelist(): LocalChangeList? = null
+  protected open fun getBeforeCommitChecksChangelist(): LocalChangeList? = null
 
   open fun canExecute(sessionInfo: CommitSessionInfo, changes: Collection<Change>): Boolean {
     val executor = sessionInfo.executor
