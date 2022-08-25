@@ -5,7 +5,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.DebugUtil;
 import com.intellij.structuralsearch.PatternContextInfo;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
@@ -43,11 +42,7 @@ public final class MatcherImplUtil {
                                                           boolean physical) {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(language);
     if (profile != null) {
-      final PsiElement @NotNull [] tree = profile.createPatternTree(text, contextInfo, fileType, language, project, physical);
-      for (PsiElement branch : tree) {
-        System.out.println(DebugUtil.psiToString(branch, true));
-      }
-      return tree;
+      return profile.createPatternTree(text, contextInfo, fileType, language, project, physical);
     }
     return PsiElement.EMPTY_ARRAY;
   }

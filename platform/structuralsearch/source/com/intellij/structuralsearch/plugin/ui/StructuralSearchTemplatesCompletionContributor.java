@@ -10,10 +10,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.impl.TemplateImplUtil;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.DebugUtil;
 import com.intellij.ui.TextFieldWithAutoCompletionListProvider;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,35 +19,34 @@ import java.util.Set;
 public class StructuralSearchTemplatesCompletionContributor extends CompletionContributor {
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-    final Editor editor = parameters.getEditor();
-    final StructuralSearchDialog dialog = editor.getUserData(StructuralSearchDialog.STRUCTURAL_SEARCH_DIALOG);
+    final StructuralSearchDialog dialog = parameters.getEditor().getUserData(StructuralSearchDialog.STRUCTURAL_SEARCH_DIALOG);
     if (dialog == null) {
-      final Boolean test = editor.getUserData(StructuralSearchDialog.TEST_STRUCTURAL_SEARCH_DIALOG);
+      final Boolean test = parameters.getEditor().getUserData(StructuralSearchDialog.TEST_STRUCTURAL_SEARCH_DIALOG);
       if (test == null || !test) return;
     }
 
-    final Document document = editor.getDocument();
+    final Document document = parameters.getEditor().getDocument();
     final int end = parameters.getOffset();
     final int line = document.getLineNumber(end);
     final int start = document.getLineStartOffset(line);
-    String shortPrefix = getCompletionPrefix(parameters);
+    String shortPrefix = TextFieldWithAutoCompletionListProvider.getCompletionPrefix(parameters);
     final CharSequence text = document.getCharsSequence();
     if (StringUtil.startsWithChar(shortPrefix, '$')) {
-      Set<String> variableNames = TemplateImplUtil.parseVariableNames(dialog != null ? dialog.getSearchText() : text);
-      System.out.println("variableNames = " + variableNames);
+      shortPrefix = shortPrefix.substring(1);
+      Set<String> variableNames = TemplateImplUtil.parseVariableNames(text);
       for (String name : variableNames) {
-        result.addElement(LookupElementBuilder.create('$' + name + '$')
-                            .withInsertHandler(
-                              (context, item) -> {
-                                final int offset = context.getTailOffset();
-                                if (text.length() > offset) {
-                                  final char c = text.charAt(offset);
-                                  if (c == '$') {
-                                    document.deleteString(offset, offset + 1);
-                                  }
-                                }
-                              })
-        );
+        if (name.startsWith(shortPrefix) && !name.equals(shortPrefix)) {
+          result.addElement(LookupElementBuilder.create('$' + name + '$')
+          .withInsertHandler((context, item) -> {
+            final int offset = context.getTailOffset();
+            if (text.length() > offset + 1) {
+              final char c = text.charAt(offset);
+              if (c == '$') {
+                document.deleteString(offset, offset + 1);
+              }
+            }
+          }));
+        }
       }
     }
     final String prefix = parameters.isExtendedCompletion()
@@ -80,22 +76,5 @@ public class StructuralSearchTemplatesCompletionContributor extends CompletionCo
           ));
         insensitive.addElement(element);
     }
-  }
-
-  @NotNull
-  private static String getCompletionPrefix(CompletionParameters parameters) {
-    final PsiFile file = parameters.getOriginalFile();
-    final String psi = DebugUtil.psiToString(file, false);
-    System.out.println("psi = " + psi);
-    String text = file.getText();
-    int offset = parameters.getOffset();
-    return getCompletionPrefix(text, offset);
-  }
-
-  @NotNull
-  private static String getCompletionPrefix(String text, int offset) {
-    int i = text.lastIndexOf(' ', offset - 1) + 1;
-    int j = text.lastIndexOf('\n', offset - 1) + 1;
-    return text.substring(Math.max(i, j), offset);
   }
 }
