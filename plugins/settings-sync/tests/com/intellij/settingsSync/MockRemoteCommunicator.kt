@@ -21,7 +21,7 @@ internal class MockRemoteCommunicator : TestRemoteCommunicator() {
 
   override fun receiveUpdates(): UpdateResult {
     downloadedLatestVersion = true
-    return versionOnServer?.let { UpdateResult.Success(it) } ?: UpdateResult.Error("Unexpectedly null update result")
+    return versionOnServer?.let { UpdateResult.Success(it, null) } ?: UpdateResult.Error("Unexpectedly null update result")
   }
 
   override fun awaitForPush(): SettingsSnapshot? {
@@ -30,10 +30,10 @@ internal class MockRemoteCommunicator : TestRemoteCommunicator() {
     return latestPushedSnapshot
   }
 
-  override fun push(snapshot: SettingsSnapshot, force: Boolean): SettingsSyncPushResult {
+  override fun push(snapshot: SettingsSnapshot, force: Boolean, expectedServerVersionId: String?): SettingsSyncPushResult {
     latestPushedSnapshot = snapshot
     if (::pushedLatch.isInitialized) pushedLatch.countDown()
-    return SettingsSyncPushResult.Success
+    return SettingsSyncPushResult.Success(null)
   }
 
   override fun delete() {}

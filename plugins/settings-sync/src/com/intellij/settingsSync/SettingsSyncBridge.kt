@@ -20,11 +20,11 @@ import java.util.concurrent.TimeUnit
  */
 @ApiStatus.Internal
 class SettingsSyncBridge(parentDisposable: Disposable,
-                                  private val appConfigPath: Path,
-                                  private val settingsLog: SettingsLog,
-                                  private val ideMediator: SettingsSyncIdeMediator,
-                                  private val remoteCommunicator: SettingsSyncRemoteCommunicator,
-                                  private val updateChecker: SettingsSyncUpdateChecker) {
+                         private val appConfigPath: Path,
+                         private val settingsLog: SettingsLog,
+                         private val ideMediator: SettingsSyncIdeMediator,
+                         private val remoteCommunicator: SettingsSyncRemoteCommunicator,
+                         private val updateChecker: SettingsSyncUpdateChecker) {
 
   private val pendingEvents = ContainerUtil.createConcurrentList<SyncSettingsEvent>()
 
@@ -64,22 +64,23 @@ class SettingsSyncBridge(parentDisposable: Disposable,
     settingsLog.logExistingSettings()
 
     when (initMode) {
-      is InitMode.TakeFromServer -> applySnapshotFromServer(initMode.cloudEvent.snapshot)
+      is InitMode.TakeFromServer -> applySnapshotFromServer(initMode.cloudEvent)
       InitMode.PushToServer -> mergeAndPush(previousIdePosition, previousCloudPosition, FORCE_PUSH)
       InitMode.JustInit -> mergeAndPush(previousIdePosition, previousCloudPosition, PUSH_IF_NEEDED)
       is InitMode.MigrateFromOldStorage -> migrateFromOldStorage(initMode.migration)
     }
   }
 
-  private fun applySnapshotFromServer(settingsSnapshot: SettingsSnapshot) {
+  private fun applySnapshotFromServer(cloudEvent: SyncSettingsEvent.CloudChange) {
     settingsLog.advanceMaster() // merge (preserve) 'ide' changes made by logging existing settings
 
-    val masterPosition = settingsLog.forceWriteToMaster(settingsSnapshot, "Remote changes to initialize settings by data from cloud")
+    val masterPosition = settingsLog.forceWriteToMaster(cloudEvent.snapshot, "Remote changes to initialize settings by data from cloud")
     pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition)
 
     // normally we set cloud position only after successful push to cloud, but in this case we already take all settings from the cloud,
     // so no push is needed, and we know the cloud settings state.
     settingsLog.setCloudPosition(masterPosition)
+    SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId = cloudEvent.serverVersionId
   }
 
   private fun migrateFromOldStorage(migration: SettingsSyncMigration) {
@@ -94,6 +95,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
       if (updateResult is UpdateResult.Success) {
         val snapshot = updateResult.settingsSnapshot
         masterPosition = settingsLog.forceWriteToMaster(snapshot, "Remote changes to overwrite migration data by settings from cloud")
+        SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId = updateResult.serverVersionId
       }
       else {
         // otherwise we place our migrated data to the cloud
@@ -112,8 +114,9 @@ class SettingsSyncBridge(parentDisposable: Disposable,
     val pushResult = pushToCloud(settingsLog.collectCurrentSnapshot(), force = true)
     LOG.info("Result of pushing settings to the cloud: $pushResult")
     when (pushResult) {
-      SettingsSyncPushResult.Success -> {
+      is SettingsSyncPushResult.Success -> {
         settingsLog.setCloudPosition(masterPosition)
+        SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId = pushResult.serverVersionId
         SettingsSyncStatusTracker.getInstance().updateOnSuccess()
       }
       is SettingsSyncPushResult.Error -> {
@@ -131,7 +134,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
   internal sealed class InitMode {
     object JustInit : InitMode()
     class TakeFromServer(val cloudEvent: SyncSettingsEvent.CloudChange) : InitMode()
-    class MigrateFromOldStorage(val migration: SettingsSyncMigration): InitMode()
+    class MigrateFromOldStorage(val migration: SettingsSyncMigration) : InitMode()
     object PushToServer : InitMode()
   }
 
@@ -149,6 +152,7 @@ class SettingsSyncBridge(parentDisposable: Disposable,
       }
       else if (event is SyncSettingsEvent.CloudChange) {
         settingsLog.applyCloudState(event.snapshot, "Remote changes")
+        SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId = event.serverVersionId
       }
       else if (event is SyncSettingsEvent.LogCurrentSettings) {
         settingsLog.logExistingSettings()
@@ -184,8 +188,9 @@ class SettingsSyncBridge(parentDisposable: Disposable,
       val pushResult: SettingsSyncPushResult = pushToCloud(settingsLog.collectCurrentSnapshot(), pushRequestMode == FORCE_PUSH)
       LOG.info("Result of pushing settings to the cloud: $pushResult")
       when (pushResult) {
-        SettingsSyncPushResult.Success -> {
+        is SettingsSyncPushResult.Success -> {
           settingsLog.setCloudPosition(masterPosition)
+          SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId = pushResult.serverVersionId
           SettingsSyncStatusTracker.getInstance().updateOnSuccess()
         }
         is SettingsSyncPushResult.Error -> {
@@ -217,14 +222,15 @@ class SettingsSyncBridge(parentDisposable: Disposable,
   }
 
   private fun pushToCloud(settingsSnapshot: SettingsSnapshot, force: Boolean): SettingsSyncPushResult {
+    val versionId = SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId
     if (force) {
-      return remoteCommunicator.push(settingsSnapshot, force = true)
+      return remoteCommunicator.push(settingsSnapshot, force = true, versionId)
     }
     else if (remoteCommunicator.checkServerState() is ServerState.UpdateNeeded) {
       return SettingsSyncPushResult.Rejected
     }
     else {
-      return remoteCommunicator.push(settingsSnapshot, force = false)
+      return remoteCommunicator.push(settingsSnapshot, force = false, versionId)
     }
   }
 
