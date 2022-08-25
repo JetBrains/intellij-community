@@ -51,7 +51,6 @@
 
   <actions>
     <group id="SettingsSync">
-      <action class="com.intellij.settingsSync.ManualSyncAction" id="settingsSync.manualUpdate" icon="AllIcons.Chooser.Bottom"/>
       <action class="com.intellij.settingsSync.ManualPushAction" id="settingsSync.manualPush" icon="AllIcons.Chooser.Top" internal="true"/>
       <action class="com.intellij.settingsSync.SettingsSyncTroubleshootingAction" id="settingsSync.troubleShoot"
               icon="AllIcons.General.Settings"/>
