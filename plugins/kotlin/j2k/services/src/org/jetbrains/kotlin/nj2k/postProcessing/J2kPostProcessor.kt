@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.nj2k.postProcessing
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
@@ -54,14 +55,16 @@ class NewJ2kPostProcessor : PostProcessor {
         for ((i, group) in processings.withIndex()) {
             onPhaseChanged?.invoke(i, group.description)
             for (processing in group.processings) {
+                ProgressManager.checkCanceled()
                 try {
                     processing.runProcessingConsideringOptions(target, converterContext)
+
+                    target.files().forEach(::commitFile)
                 } catch (e: ProcessCanceledException) {
                     throw e
                 } catch (t: Throwable) {
-                    LOG.error(t)
-                } finally {
                     target.files().forEach(::commitFile)
+                    LOG.error(t)
                 }
             }
         }
