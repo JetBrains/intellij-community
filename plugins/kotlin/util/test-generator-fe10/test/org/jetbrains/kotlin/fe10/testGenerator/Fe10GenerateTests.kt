@@ -1155,17 +1155,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("project-wizard/cli") {
-        testClass<AbstractYamlBuildFileGenerationTest> {
-            model("buildFileGeneration", isRecursive = false, pattern = DIRECTORY)
-        }
-
-        testClass<AbstractProjectTemplateBuildFileGenerationTest> {
-            model("projectTemplatesBuildFileGeneration", isRecursive = false, pattern = DIRECTORY)
-        }
-    }
-
-    testGroup("project-wizard/tests", testDataPath = "../cli/testData") {
+    testGroup("project-wizard/tests") {
         fun MutableTSuite.allBuildSystemTests(relativeRootPath: String) {
             for (testClass in listOf("GradleKts", "GradleGroovy", "Maven")) {
                 model(
@@ -1176,6 +1166,14 @@ private fun assembleWorkspace(): TWorkspace = workspace {
                     testClassName = testClass,
                 )
             }
+        }
+
+        testClass<AbstractYamlBuildFileGenerationTest> {
+            model("buildFileGeneration", isRecursive = false, pattern = DIRECTORY)
+        }
+
+        testClass<AbstractProjectTemplateBuildFileGenerationTest> {
+            model("projectTemplatesBuildFileGeneration", isRecursive = false, pattern = DIRECTORY)
         }
 
         testClass<AbstractYamlNewWizardProjectImportTest> {
