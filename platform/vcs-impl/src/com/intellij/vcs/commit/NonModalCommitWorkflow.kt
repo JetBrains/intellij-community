@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
 import com.intellij.openapi.vcs.checkin.CommitCheck
 import com.intellij.openapi.vcs.checkin.CommitProblem
-import com.intellij.openapi.vcs.checkin.CommitProblemWithDetails
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
@@ -62,24 +61,12 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
 
     suspend fun runCommitChecks(project: Project,
                                 commitChecks: List<CommitCheck>,
-                                commitProgressUi: CommitProgressUi,
-                                indicator: ProgressIndicator): Boolean {
+                                indicator: ProgressIndicator): CommitProblem? {
       for (commitCheck in commitChecks) {
         val problem = runCommitCheck(project, commitCheck, indicator)
-        if (problem == null) continue
-
-        if (problem is UnknownCommitProblem) {
-          commitProgressUi.addCommitCheckFailure(CommitCheckFailure(null, null))
-        }
-        else if (problem is CommitProblemWithDetails) {
-          commitProgressUi.addCommitCheckFailure(CommitCheckFailure(problem.text) { problem.showDetails(project) })
-        }
-        else {
-          commitProgressUi.addCommitCheckFailure(CommitCheckFailure(problem.text, null))
-        }
-        return false
+        if (problem != null) return problem
       }
-      return true
+      return null
     }
 
     private suspend fun runCommitCheck(project: Project,
@@ -99,17 +86,7 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
       indicator.text = ""
       indicator.text2 = ""
 
-      try {
-        return commitCheck.runCheck(indicator)
-      }
-      catch (e: Throwable) {
-        // Do not report error on cancellation
-        // DO report error if someone threw PCE for no reason, ex: IDEA-234006
-        if (e is ProcessCanceledException && indicator.isCanceled) throw e
-
-        LOG.warn(Throwable(e))
-        return CommitProblem.createError(e)
-      }
+      return commitCheck.runCheck(indicator)
     }
   }
 }

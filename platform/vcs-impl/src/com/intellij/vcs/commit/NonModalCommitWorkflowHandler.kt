@@ -339,9 +339,11 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
         try {
           indicator.start()
 
-          PartialChangesUtil.underChangeList(project, workflow.getBeforeCommitChecksChangelist()) {
-            runAllHandlers(sessionInfo, indicator, isOnlyRunCommitChecks)
+          val problem = PartialChangesUtil.underChangeList(project, workflow.getBeforeCommitChecksChangelist()) {
+            runCommitHandlers(sessionInfo, indicator)
           }
+
+          handleCommitProblem(problem, isOnlyRunCommitChecks)
         }
         finally {
           indicator.stop()
@@ -352,25 +354,17 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     return true
   }
 
-  private suspend fun runAllHandlers(
-    sessionInfo: CommitSessionInfo,
-    indicator: ProgressIndicator,
-    isOnlyRunCommitChecks: Boolean
-  ): CommitChecksResult {
-    val handlers = commitHandlers
-    val (modificationHandlers, plainHandlers) = handlers.partition { it is CheckinModificationHandler }
-    val modificationCommitChecks = modificationHandlers.map { it.asCommitCheck(sessionInfo, commitContext) }
-    val commitChecks = plainHandlers.map { it.asCommitCheck(sessionInfo, commitContext) }
-
-    val metaHandlers = handlers.filterIsInstance<CheckinMetaHandler>()
-    runMetaHandlers(metaHandlers)
-
-    var checksPassed = runCommitChecks(project, modificationCommitChecks, ui.commitProgressUi, indicator)
-    FileDocumentManager.getInstance().saveAllDocuments()
-
-    if (checksPassed) {
-      checksPassed = runCommitChecks(project, commitChecks, ui.commitProgressUi, indicator)
+  private fun handleCommitProblem(problem: CommitProblem?, isOnlyRunCommitChecks: Boolean): CommitChecksResult {
+    if (problem != null) {
+      val checkFailure = when (problem) {
+        is UnknownCommitProblem -> CommitCheckFailure(null, null)
+        is CommitProblemWithDetails -> CommitCheckFailure(problem.text) { problem.showDetails(project) }
+        else -> CommitCheckFailure(problem.text, null)
+      }
+      ui.commitProgressUi.addCommitCheckFailure(checkFailure)
     }
+
+    val checksPassed = problem == null
     when {
       isOnlyRunCommitChecks -> {
         isCommitChecksResultUpToDate = true
@@ -383,6 +377,36 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
         isCommitChecksResultUpToDate = true
         return CommitChecksResult.Failed()
       }
+    }
+  }
+
+  private suspend fun runCommitHandlers(
+    sessionInfo: CommitSessionInfo,
+    indicator: ProgressIndicator
+  ): CommitProblem? {
+    try {
+      val handlers = commitHandlers
+      val (modificationHandlers, plainHandlers) = handlers.partition { it is CheckinModificationHandler }
+      val modificationCommitChecks = modificationHandlers.map { it.asCommitCheck(sessionInfo, commitContext) }
+      val commitChecks = plainHandlers.map { it.asCommitCheck(sessionInfo, commitContext) }
+
+      val metaHandlers = handlers.filterIsInstance<CheckinMetaHandler>()
+      runMetaHandlers(metaHandlers)
+
+      runCommitChecks(project, modificationCommitChecks, indicator)?.let { return it }
+      FileDocumentManager.getInstance().saveAllDocuments()
+
+      runCommitChecks(project, commitChecks, indicator)?.let { return it }
+
+      return null // checks passed
+    }
+    catch (e: Throwable) {
+      // Do not report error on cancellation
+      // DO report error if someone threw PCE for no reason, ex: IDEA-234006
+      if (e is ProcessCanceledException && indicator.isCanceled) throw e
+
+      LOG.warn(Throwable(e))
+      return CommitProblem.createError(e)
     }
   }
 
