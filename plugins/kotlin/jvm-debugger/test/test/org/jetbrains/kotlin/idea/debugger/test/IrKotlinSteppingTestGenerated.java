@@ -1365,6 +1365,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/custom/smartStepIntoInterfaceImpl.kt");
         }
 
+        @TestMetadata("smartStepIntoLambdaWithparametersDestructuring.kt")
+        public void testSmartStepIntoLambdaWithparametersDestructuring() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoLambdaWithparametersDestructuring.kt");
+        }
+
         @TestMetadata("smartStepIntoLambdasOnManyLines.kt")
         public void testSmartStepIntoLambdasOnManyLines() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoLambdasOnManyLines.kt");

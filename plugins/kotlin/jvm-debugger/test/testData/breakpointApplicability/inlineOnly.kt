@@ -3,31 +3,31 @@ fun foo() { /// M
 
     require(true) { val a = 5 } /// *, L, λ
 
-    require(true) { /// L
+    require(true) { /// *, L, λ
         val a = 5 /// L
     } /// L
 
     block { val a = 5 } /// *, L, λ
 
-    block { /// L
+    block { /// *, L, λ
         val a = 5 /// L
     } /// L
 
     inlineBlock { val a = 5} /// *, L, λ
 
-    inlineBlock { /// L
+    inlineBlock { /// *, L, λ
         val a = 5 /// L
     } /// L
 
     inlineOnlyBlock { val a = 5 } /// *, L, λ
 
-    inlineOnlyBlock { /// L
+    inlineOnlyBlock { /// *, L, λ
         val a = 5 /// L
     } /// L
 
     inlineOnlyBlock2 { val a = 5 } /// *, L, λ
 
-    inlineOnlyBlock2 { /// L
+    inlineOnlyBlock2 { /// *, L, λ
         val a = 5 /// L
     } /// L
 } /// L
