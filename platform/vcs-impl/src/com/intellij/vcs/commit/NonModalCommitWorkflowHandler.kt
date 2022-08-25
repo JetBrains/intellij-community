@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.DumbService.DumbModeListener
 import com.intellij.openapi.project.DumbService.isDumb
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.NlsContexts
@@ -57,8 +58,7 @@ private val isBackgroundCommitChecksValue: RegistryValue get() = Registry.get("v
 fun isBackgroundCommitChecks(): Boolean = isBackgroundCommitChecksValue.asBoolean()
 
 abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : NonModalCommitWorkflowUi> :
-  AbstractCommitWorkflowHandler<W, U>(),
-  DumbService.DumbModeListener {
+  AbstractCommitWorkflowHandler<W, U>() {
 
   abstract override val amendCommitHandler: NonModalAmendCommitHandler
 
@@ -107,16 +107,16 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   }
 
   protected fun setupDumbModeTracking() {
-    if (isDumb(project)) enteredDumbMode()
-    project.messageBus.connect(this).subscribe(DumbService.DUMB_MODE, this)
-  }
+    if (isDumb(project)) ui.commitProgressUi.isDumbMode = true
+    project.messageBus.connect(this).subscribe(DumbService.DUMB_MODE, object : DumbModeListener{
+      override fun enteredDumbMode() {
+        ui.commitProgressUi.isDumbMode = true
+      }
 
-  override fun enteredDumbMode() {
-    ui.commitProgressUi.isDumbMode = true
-  }
-
-  override fun exitDumbMode() {
-    ui.commitProgressUi.isDumbMode = false
+      override fun exitDumbMode() {
+        ui.commitProgressUi.isDumbMode = false
+      }
+    })
   }
 
   override fun executionStarted() = updateDefaultCommitActionEnabled()
