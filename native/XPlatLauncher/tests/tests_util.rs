@@ -1,8 +1,62 @@
-use std::{fs, io};
-use std::env::current_dir;
+use std::{env, fs, io};
 use std::fs::{create_dir, File};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
+use std::sync::Once;
+use std::time::SystemTime;
+
+static INIT: Once = Once::new();
+
+// @BeforeAll
+pub fn initialize() {
+    INIT.call_once(|| {
+        let project_root = env::current_dir().expect("Failed to get project root");
+
+        // gradle_command_wrapper("clean");
+        gradle_command_wrapper("jar");
+
+        let gradle_jvm = project_root
+            .join("resources")
+            .join("TestProject")
+            .join("gradle-jvm");
+
+        // TODO: remove after wrapper with https://github.com/mfilippov/gradle-jvm-wrapper/pull/31
+        let java_dir_prefix = match env::consts::OS {
+            "windows" => { "jdk" }
+            _ => { "jbrsdk" }
+        };
+
+        // jbrsdk-17.0.3-osx-x64-b469.37-f87880
+        let jbrsdk_gradle_parent = get_child_dir(&gradle_jvm, java_dir_prefix).expect("");
+
+        // jbrsdk-17.0.3-x64-b469
+        let jbrsdk_root = get_child_dir(&jbrsdk_gradle_parent, java_dir_prefix).expect("");
+
+        let os = env::consts::OS;
+        let kek = format!("resources/product_info_{os}.json");
+        let product_info_path = Path::new(&kek);
+        let jar_path = Path::new("resources/TestProject/build/libs/app.jar");
+        let jar_absolute_path = env::current_dir().unwrap().join(jar_path);
+        let product_info_absolute_path = env::current_dir().unwrap().join(product_info_path);
+
+        // create tmp dir
+        let dir_name = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .expect("Failed to compute current unix timestamp")
+            .as_secs();
+        let test_dir_path = env::temp_dir().join(dir_name.to_string());
+        create_dir(&test_dir_path).expect("Failed to create temp dir");
+
+        env::set_current_dir(test_dir_path).expect("Failed to set current dir");
+
+        layout_into_test_dir(
+            &project_root,
+            jbrsdk_root,
+            jar_absolute_path,
+            product_info_absolute_path,
+        );
+    });
+}
 
 pub fn gradle_command_wrapper(gradle_command: &str) {
     let executable_name = get_gradlew_executable_name();
@@ -177,8 +231,8 @@ pub fn layout_into_test_dir(
 
 pub fn resolve_test_dir() -> PathBuf {
     if cfg!(target_os = "macos") {
-        current_dir().unwrap().join("Contents").join("bin")
+        env::current_dir().unwrap().join("Contents").join("bin")
     } else {
-        current_dir().unwrap().join("bin")
+        env::current_dir().unwrap().join("bin")
     }
 }
