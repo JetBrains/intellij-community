@@ -19,12 +19,18 @@ dependencies {
 }
 
 val fatJar = task("fatJar", type = Jar::class) {
+  dependsOn.addAll(listOf("compileJava", "compileKotlin", "processResources")) // We need this for Gradle optimization to work
+  archiveClassifier.set("standalone") // Naming the jar
+  duplicatesStrategy = DuplicatesStrategy.EXCLUDE
   archiveFileName.set("app.jar")
   manifest {
     attributes["Main-Class"] = "com.intellij.idea.Main"
   }
-  from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
-  with(tasks.jar.get() as CopySpec)
+  val sourcesMain = sourceSets.main.get()
+  val contents = configurations.runtimeClasspath.get()
+    .map { if (it.isDirectory) it else zipTree(it) } +
+    sourcesMain.output
+  from(contents)
 }
 
 val jbrsdkVersion: String by project

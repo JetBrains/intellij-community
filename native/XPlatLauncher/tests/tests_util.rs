@@ -13,7 +13,7 @@ pub fn initialize() {
         let project_root = env::current_dir().expect("Failed to get project root");
 
         // gradle_command_wrapper("clean");
-        gradle_command_wrapper("jar");
+        gradle_command_wrapper("fatJar");
 
         let gradle_jvm = project_root
             .join("resources")
