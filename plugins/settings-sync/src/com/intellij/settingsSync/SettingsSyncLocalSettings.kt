@@ -4,7 +4,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import java.util.*
 
-@State(name = "SettingsSyncLocalSettings", storages = [Storage("settings-sync-local.xml")])
+@State(name = "SettingsSyncLocalSettings", storages = [Storage("settings-sync-local.xml", roamingType = RoamingType.DISABLED)])
 @Service
 internal class SettingsSyncLocalSettings : SimplePersistentStateComponent<SettingsSyncLocalSettings.State>(State()) {
 
@@ -12,9 +12,9 @@ internal class SettingsSyncLocalSettings : SimplePersistentStateComponent<Settin
     fun getInstance(): SettingsSyncLocalSettings = ApplicationManager.getApplication().getService(SettingsSyncLocalSettings::class.java)
   }
 
-  class State: BaseState() {
-    var applicationId : String? by string(UUID.randomUUID().toString())
+  class State : BaseState() {
+    var applicationId: String? by string(UUID.randomUUID().toString())
   }
 
-  val applicationId = UUID.fromString(state.applicationId)
+  val applicationId: UUID = UUID.fromString(state.applicationId)
 }
