@@ -456,7 +456,7 @@ public abstract class SingleRowLayoutStrategy {
 
     @Override
     public Rectangle getLayoutRec(int position, int fixedPos, int length, int fixedFitLength) {
-      return new Rectangle(fixedPos, position, fixedFitLength - 1, length);
+      return new Rectangle(fixedPos, position, fixedFitLength, length);
     }
 
     @Override
