@@ -314,7 +314,7 @@ public class ExtensionPointImplTest {
         return 1;
       }
     };
-    extensionPoint.registerExtension(extension, LoadingOrder.ANY);
+    extensionPoint.registerExtension(extension);
     Disposable disposable = ExtensionPointUtil.createKeyedExtensionDisposable(extension.getInstance(), extensionPoint);
     extensionPoint.unregisterExtension(extension);
     assertThat(Disposer.isDisposed(disposable)).isTrue();

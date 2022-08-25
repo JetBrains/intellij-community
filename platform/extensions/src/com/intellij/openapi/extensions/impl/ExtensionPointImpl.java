@@ -92,8 +92,7 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
     return name;
   }
 
-  @Override
-  public final  @NotNull String getClassName() {
+  public final @NotNull String getClassName() {
     return className;
   }
 
@@ -103,8 +102,8 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
   }
 
   @Override
-  public final void registerExtension(@NotNull T extension, @NotNull LoadingOrder order) {
-    doRegisterExtension(extension, order, getPluginDescriptor(), null);
+  public final void registerExtension(@NotNull T extension) {
+    doRegisterExtension(extension, LoadingOrder.ANY, getPluginDescriptor(), null);
   }
 
   @Override
@@ -622,15 +621,6 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
   }
 
   @Override
-  public final synchronized void unregisterExtensions(@NotNull Predicate<? super T> filter) {
-    getExtensionList();
-    unregisterExtensions((clsName, adapter) -> {
-      @Nullable T extension = adapter.createInstance(componentManager);
-      return !filter.test(extension);
-    }, false);
-  }
-
-  @Override
   public final synchronized void unregisterExtension(@NotNull T extension) {
     if (!unregisterExtensions((__, adapter) ->
                                 !adapter.isInstanceCreated$intellij_platform_extensions() ||
@@ -919,7 +909,7 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
    *
    * myAdapters is modified directly without copying - method must be called only during start-up.
    */
-  public final synchronized void registerExtensions(@NotNull List<? extends ExtensionDescriptor> extensionElements,
+  public final synchronized void registerExtensions(@NotNull List<ExtensionDescriptor> extensionElements,
                                                     @NotNull PluginDescriptor pluginDescriptor,
                                                     @Nullable List<? super Runnable> listenerCallbacks) {
     List<ExtensionComponentAdapter> adapters = this.adapters;
