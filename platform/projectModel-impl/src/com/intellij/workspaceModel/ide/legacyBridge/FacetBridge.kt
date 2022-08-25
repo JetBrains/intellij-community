@@ -1,6 +1,5 @@
 package com.intellij.workspaceModel.ide.legacyBridge
 
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
