@@ -3,11 +3,13 @@ package com.intellij.util.indexing.diagnostic;
 
 import com.intellij.testFramework.LightPlatform4TestCase;
 import com.intellij.util.indexing.IndexId;
+import com.intellij.util.indexing.diagnostic.IndexOperationFUS.IndexOperationAggregatesCollector;
 import org.junit.After;
 import org.junit.Test;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashSet;
-import java.util.Stack;
 
 import static com.intellij.util.indexing.diagnostic.IndexOperationFUS.IndexOperationFusCollector.*;
 import static com.intellij.util.indexing.diagnostic.IndexOperationFUS.MAX_LOOKUP_DEPTH;
@@ -62,7 +64,7 @@ public class IndexOperationFusCollectorTest extends LightPlatform4TestCase/*Java
   @Test
   public void reportingCouldBeReEnteredUpToMaxDepthAndDifferentTracesProvidedForEachReEntrantCall() {
     //check for 'allKeys' only, because all them have same superclass
-    final Stack<LookupAllKeysTrace> tracesStack = new Stack<>();
+    final Deque<LookupAllKeysTrace> tracesStack = new ArrayDeque<>();
     try {
       for (int i = 0; i < MAX_LOOKUP_DEPTH; i++) {
         final LookupAllKeysTrace trace = lookupAllKeysStarted(INDEX_ID);
@@ -156,6 +158,22 @@ public class IndexOperationFusCollectorTest extends LightPlatform4TestCase/*Java
     );
   }
 
+  /** Checks IDEA-300630 */
+  @Test
+  public void bigValuesReportingDoesntThrowExceptions() {
+    IndexOperationAggregatesCollector.recordAllKeysLookup(
+      INDEX_ID, false, IndexOperationAggregatesCollector.MAX_TRACKABLE_DURATION_MS + 1
+    );
+  }
+
+  /** Checks IDEA-300630 */
+  @Test
+  public void negativeValuesReportingDoesntThrowExceptions() {
+    IndexOperationAggregatesCollector.recordAllKeysLookup(
+      INDEX_ID, false, -1
+    );
+  }
+
   @After
   public void checkTestCleansAfterItself() {
     final LookupTraceBase<?>[] traces = {
@@ -175,4 +193,6 @@ public class IndexOperationFusCollectorTest extends LightPlatform4TestCase/*Java
       }
     }
   }
+
+
 }

@@ -641,7 +641,7 @@ public final class IndexOperationFUS {
    */
   public static class IndexOperationAggregatesCollector extends ApplicationUsagesCollector {
 
-    private static final int MAX_TRACKABLE_DURATION_MS = 5000;
+    public static final int MAX_TRACKABLE_DURATION_MS = SystemProperties.getIntProperty("IndexOperationFUS.MAX_TRACKABLE_DURATION_MS", 5000);
 
     private static final IntEventField FIELD_LOOKUPS_TOTAL = EventFields.Int("lookups_total");
     private static final IntEventField FIELD_LOOKUPS_FAILED = EventFields.Int("lookups_failed");
