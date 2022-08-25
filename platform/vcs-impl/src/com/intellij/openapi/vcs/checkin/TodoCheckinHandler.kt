@@ -11,7 +11,6 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.JBPopupMenu
@@ -21,21 +20,19 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Messages.YesNoCancelResult
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.DialogMessage
-import com.intellij.openapi.util.text.StringUtil.removeEllipsisSuffix
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
-import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
+import com.intellij.openapi.vcs.checkin.TodoCheckinHandler.Companion.showDialog
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.wm.ToolWindowId.TODO_VIEW
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.psi.search.TodoItem
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
-import com.intellij.util.PairConsumer
 import com.intellij.util.text.DateFormatUtil.formatDateTime
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil.getWarningIcon
@@ -47,11 +44,15 @@ class TodoCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler = TodoCheckinHandler(panel)
 }
 
-class TodoCommitProblem(val changes: Collection<Change>, val todoItems: Collection<TodoItem>) : CommitProblemWithDetails {
-  override val text: String get() = message("label.todo.items.found", todoItems.size)
+class TodoCommitProblem(val worker: TodoCheckinHandlerWorker) : CommitProblemWithDetails {
+  override val text: String get() = message("label.todo.items.found", worker.inOneList().size)
 
   override fun showDetails(project: Project, commitInfo: CommitInfo) {
-    TodoCheckinHandler.showTodoItems(project, changes, todoItems)
+    TodoCheckinHandler.showTodoItems(project, worker.changes, worker.inOneList())
+  }
+
+  override fun showModalSolution(project: Project, commitInfo: CommitInfo): CheckinHandler.ReturnResult {
+    return showDialog(project, worker, commitInfo.commitActionText)
   }
 }
 
@@ -77,8 +78,11 @@ class TodoCheckinHandler(private val commitPanel: CheckinProjectPanel) : Checkin
       )
     }
 
-    val todoItems = worker.inOneList()
-    return if (todoItems.isNotEmpty()) TodoCommitProblem(changes, todoItems) else null
+    val noTodo = worker.inOneList().isEmpty()
+    val noSkipped = worker.skipped.isEmpty()
+    if (noTodo && noSkipped) return null
+
+    return TodoCommitProblem(worker)
   }
 
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
@@ -108,32 +112,32 @@ class TodoCheckinHandler(private val commitPanel: CheckinProjectPanel) : Checkin
       }
     }
 
-  override fun beforeCheckin(executor: CommitExecutor?, additionalDataConsumer: PairConsumer<Any, Any>): ReturnResult {
-    if (!isEnabled()) return ReturnResult.COMMIT
-
-    val worker = FindTodoItemsTask(project, commitPanel.selectedChanges, todoFilter).find() ?: return ReturnResult.CANCEL
-    val commitActionText = removeEllipsisSuffix(executor?.actionText ?: commitPanel.commitActionName)
-    val noTodo = worker.addedOrEditedTodos.isEmpty() && worker.inChangedTodos.isEmpty()
-    val noSkipped = worker.skipped.isEmpty()
-
-    return when {
-      noTodo && noSkipped -> ReturnResult.COMMIT
-      noTodo -> if (confirmCommitWithSkippedFiles(worker, commitActionText)) ReturnResult.COMMIT else ReturnResult.CANCEL
-      else -> processFoundTodoItems(worker, commitActionText)
-    }
-  }
-
-  private fun processFoundTodoItems(worker: TodoCheckinHandlerWorker, @NlsContexts.Button commitActionText: String): ReturnResult =
-    when (askReviewCommitCancel(worker, commitActionText)) {
-      Messages.YES -> {
-        showTodoItems(project, worker.changes, worker.inOneList())
-        ReturnResult.CLOSE_WINDOW
-      }
-      Messages.NO -> ReturnResult.COMMIT
-      else -> ReturnResult.CANCEL
-    }
-
   companion object {
+    internal fun showDialog(project: Project,
+                            worker: TodoCheckinHandlerWorker,
+                            @NlsContexts.Button commitActionText: String): ReturnResult {
+      val noTodo = worker.addedOrEditedTodos.isEmpty() && worker.inChangedTodos.isEmpty()
+      val noSkipped = worker.skipped.isEmpty()
+
+      return when {
+        noTodo && noSkipped -> ReturnResult.COMMIT
+        noTodo -> if (confirmCommitWithSkippedFiles(worker, commitActionText)) ReturnResult.COMMIT else ReturnResult.CANCEL
+        else -> processFoundTodoItems(project, worker, commitActionText)
+      }
+    }
+
+    private fun processFoundTodoItems(project: Project,
+                                      worker: TodoCheckinHandlerWorker,
+                                      @NlsContexts.Button commitActionText: String): ReturnResult =
+      when (askReviewCommitCancel(worker, commitActionText)) {
+        Messages.YES -> {
+          showTodoItems(project, worker.changes, worker.inOneList())
+          ReturnResult.CLOSE_WINDOW
+        }
+        Messages.NO -> ReturnResult.COMMIT
+        else -> ReturnResult.CANCEL
+      }
+
     internal fun showTodoItems(project: Project, changes: Collection<Change>, todoItems: Collection<TodoItem>) {
       val todoView = project.service<TodoView>()
       todoView.addCustomTodoView(
@@ -158,27 +162,6 @@ class TodoCheckinHandler(private val commitPanel: CheckinProjectPanel) : Checkin
 internal class TextToText2Indicator(indicator: ProgressIndicator) : DelegatingProgressIndicator(indicator) {
   override fun setText(text: String?) = super.setText2(text)
   override fun setText2(text: String?) = Unit
-}
-
-private class FindTodoItemsTask(project: Project, changes: Collection<Change>, todoFilter: TodoFilter?) :
-  Task.Modal(project, message("checkin.dialog.title.looking.for.new.edited.todo.items"), true) {
-
-  private val worker = TodoCheckinHandlerWorker(project, changes, todoFilter)
-  private var result: TodoCheckinHandlerWorker? = null
-
-  fun find(): TodoCheckinHandlerWorker? {
-    queue()
-    return result
-  }
-
-  override fun run(indicator: ProgressIndicator) {
-    indicator.isIndeterminate = false
-    worker.execute()
-  }
-
-  override fun onSuccess() {
-    result = worker
-  }
 }
 
 private fun confirmCommitWithSkippedFiles(worker: TodoCheckinHandlerWorker, @NlsContexts.Button commitActionText: String) =

@@ -6,7 +6,6 @@ import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsConfiguration
@@ -29,14 +28,6 @@ abstract class CodeProcessorCheckinHandler(
   val settings: VcsConfiguration get() = VcsConfiguration.getInstance(project)
 
   abstract fun createCodeProcessor(): AbstractLayoutCodeProcessor
-
-  override fun beforeCheckin(): ReturnResult {
-    if (isEnabled() && !DumbService.isDumb(project)) {
-      createCodeProcessor().run()
-      FileDocumentManager.getInstance().saveAllDocuments()
-    }
-    return ReturnResult.COMMIT
-  }
 
   override suspend fun runCheck(indicator: ProgressIndicator): CommitProblem? {
     val processor = createCodeProcessor()

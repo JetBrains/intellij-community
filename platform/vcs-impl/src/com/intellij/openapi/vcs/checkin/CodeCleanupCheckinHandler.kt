@@ -9,7 +9,6 @@ import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.InspectionProfile
 import com.intellij.codeInspection.actions.PerformFixesTask
 import com.intellij.codeInspection.ex.CleanupProblems
-import com.intellij.codeInspection.ex.GlobalInspectionContextBase
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.command.CommandProcessor
@@ -18,7 +17,6 @@ import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressWrapper
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vcs.CheckinProjectPanel
@@ -51,22 +49,6 @@ private class CodeCleanupCheckinHandler(private val panel: CheckinProjectPanel) 
                    settings::CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT_PROFILE,
                    "before.checkin.cleanup.code",
                    "before.checkin.cleanup.code.profile")
-
-  /**
-   * Won't be called for Commit Tool Window as [CommitCheck] is implemented.
-   *
-   * @see com.intellij.vcs.commit.NonModalCommitWorkflow.runMetaHandler
-   */
-  override fun beforeCheckin(): ReturnResult {
-    if (settings.CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT && !DumbService.isDumb(project)) {
-      val filesToProcess = filterOutGeneratedAndExcludedFiles(panel.virtualFiles, project)
-      val globalContext = InspectionManager.getInstance(project).createNewGlobalContext() as GlobalInspectionContextBase
-      val profile = getProfile()
-
-      globalContext.codeCleanup(AnalysisScope(project, filesToProcess), profile, null, null, true)
-    }
-    return ReturnResult.COMMIT
-  }
 
   override fun isEnabled(): Boolean = settings.CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT
 

@@ -4,6 +4,7 @@ package com.intellij.vcs.commit
 import com.intellij.CommonBundle.getCancelButtonText
 import com.intellij.ide.impl.runBlockingUnderModalProgress
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -12,6 +13,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -216,6 +218,10 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       val modificationCommitChecks = modificationHandlers.map { it.asCommitCheck(sessionInfo, commitContext) }
       val commitChecks = plainHandlers.map { it.asCommitCheck(sessionInfo, commitContext) }
 
+      if (!checkDumbMode(modificationCommitChecks + commitChecks, commitInfo)) {
+        return CommitChecksResult.Cancelled
+      }
+
       val metaHandlers = handlers.filterIsInstance<CheckinMetaHandler>()
       runMetaHandlers(metaHandlers)
 
@@ -233,6 +239,17 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       LOG.warn(Throwable(e))
       return CommitChecksResult.ExecutionError
     }
+  }
+
+  private fun checkDumbMode(commitChecks: List<CommitCheck>, commitInfo: CommitInfo): Boolean {
+    if (!DumbService.isDumb(project)) return true
+    if (commitChecks.none { commitCheck -> commitCheck.isEnabled() && !DumbService.isDumbAware(commitCheck) }) return true
+
+    return !MessageDialogBuilder.yesNo(message("commit.checks.error.indexing"),
+                                       message("commit.checks.error.indexing.message", ApplicationNamesInfo.getInstance().productName))
+      .yesText(message("checkin.wait"))
+      .noText(commitInfo.commitActionText)
+      .ask(project)
   }
 
   protected open fun getBeforeCommitChecksChangelist(): LocalChangeList? = null
