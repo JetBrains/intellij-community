@@ -372,6 +372,11 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
+  public <T> @Nullable T getServiceByClassName(@NotNull String serviceClassName) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public boolean isWriteActionInProgress() {
     return false;
   }

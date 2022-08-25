@@ -34,11 +34,5 @@ public interface ComponentAdapter {
    */
   Class<?> getComponentImplementation();
 
-  /**
-   * @param container the {@link PicoContainer}, that is used to resolve any possible dependencies of the instance.
-   * @return the component instance.
-   *                                     instantiation of the component lead to an ambiguous situation within the
-   *                                     container.
-   */
-  Object getComponentInstance(PicoContainer container);
+  Object getComponentInstance();
 }

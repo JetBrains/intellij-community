@@ -13,7 +13,6 @@ import com.intellij.openapi.progress.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
 import org.picocontainer.ComponentAdapter
-import org.picocontainer.PicoContainer
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.VarHandle
 
@@ -69,7 +68,7 @@ internal sealed class BaseComponentAdapter(
 
   @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated("Do not use")
-  final override fun getComponentInstance(container: PicoContainer): Any? {
+  final override fun getComponentInstance(): Any? {
     //LOG.error("Use getInstance() instead")
     return getInstance(componentManager, null)
   }

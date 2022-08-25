@@ -6,7 +6,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.ComponentAdapter;
 import org.picocontainer.MutablePicoContainer;
-import org.picocontainer.PicoContainer;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -123,7 +122,7 @@ public class DefaultPicoContainer implements MutablePicoContainer {
   public @Nullable Object getComponentInstance(@NotNull Object componentKey) {
     ComponentAdapter adapter = getFromCache(componentKey);
     if (adapter != null) {
-      return adapter.getComponentInstance(this);
+      return adapter.getComponentInstance();
     }
     return parent == null ? null : parent.getComponentInstance(componentKey);
   }
@@ -135,7 +134,7 @@ public class DefaultPicoContainer implements MutablePicoContainer {
     }
 
     //noinspection unchecked
-    return (T)adapter.getComponentInstance(this);
+    return (T)adapter.getComponentInstance();
   }
 
   @Override
@@ -146,7 +145,7 @@ public class DefaultPicoContainer implements MutablePicoContainer {
 
   private @Nullable Object getInstance(@NotNull ComponentAdapter componentAdapter) {
     if (componentAdapters.getImmutableSet().contains(componentAdapter)) {
-      return componentAdapter.getComponentInstance(this);
+      return componentAdapter.getComponentInstance();
     }
     if (parent != null) {
       return parent.getComponentInstance(componentAdapter.getComponentKey());
@@ -162,7 +161,7 @@ public class DefaultPicoContainer implements MutablePicoContainer {
   @Override
   public final ComponentAdapter registerComponentImplementation(@NotNull Object componentKey, @NotNull Class<?> componentImplementation) {
     //noinspection deprecation
-    return registerComponent(new CachingConstructorInjectionComponentAdapter(componentKey, componentImplementation));
+    return registerComponent(new CachingConstructorInjectionComponentAdapter(this, componentKey, componentImplementation));
   }
 
   public final DefaultPicoContainer getParent() {
@@ -241,7 +240,7 @@ public class DefaultPicoContainer implements MutablePicoContainer {
     }
 
     @Override
-    public Object getComponentInstance(PicoContainer container) {
+    public Object getComponentInstance() {
       return componentInstance;
     }
 

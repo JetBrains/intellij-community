@@ -23,10 +23,12 @@ final class CachingConstructorInjectionComponentAdapter implements ComponentAdap
   private static final ThreadLocal<Set<Class<?>>> ourGuard = new ThreadLocal<>();
   private Object myInstance;
 
+  private PicoContainer container;
   private final Object key;
   private final Class<?> componentImplementation;
 
-  CachingConstructorInjectionComponentAdapter(@NotNull Object key, @NotNull Class<?> componentImplementation) {
+  CachingConstructorInjectionComponentAdapter(@NotNull PicoContainer container, @NotNull Object key, @NotNull Class<?> componentImplementation) {
+    this.container = container;
     this.key = key;
     this.componentImplementation = componentImplementation;
   }
@@ -46,7 +48,7 @@ final class CachingConstructorInjectionComponentAdapter implements ComponentAdap
   }
 
   @Override
-  public Object getComponentInstance(@NotNull PicoContainer container) {
+  public Object getComponentInstance() {
     Object instance = myInstance;
     if (instance == null) {
       instance = instantiateGuarded(this, container, getComponentImplementation());

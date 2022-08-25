@@ -58,6 +58,9 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   @Deprecated
   <T> T @NotNull [] getComponents(@NotNull Class<T> baseClass);
 
+  /**
+   * @deprecated Use ComponentManager API
+   */
   @Deprecated
   @ApiStatus.Internal
   @ApiStatus.ScheduledForRemoval
@@ -157,14 +160,7 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   <T> @NotNull Class<T> loadClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) throws ClassNotFoundException;
 
   @ApiStatus.Internal
-  default @NotNull <T> T instantiateClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor) {
-    try {
-      return ReflectionUtil.newInstance(loadClass(className, pluginDescriptor));
-    }
-    catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
-    }
-  }
+  @NotNull <T> T instantiateClass(@NotNull String className, @NotNull PluginDescriptor pluginDescriptor);
 
   @NotNull ActivityCategory getActivityCategory(boolean isExtension);
 
