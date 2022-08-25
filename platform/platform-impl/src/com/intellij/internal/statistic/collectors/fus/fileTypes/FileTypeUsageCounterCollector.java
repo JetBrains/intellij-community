@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
 import com.intellij.codeInsight.actions.ReaderModeSettings;
@@ -49,7 +49,7 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
   private static final ExtensionPointName<FileTypeUsageSchemaDescriptorEP<FileTypeUsageSchemaDescriptor>> EP =
     new ExtensionPointName<>("com.intellij.fileTypeUsageSchemaDescriptor");
 
-  private static final EventLogGroup GROUP = new EventLogGroup("file.types.usage", 66);
+  private static final EventLogGroup GROUP = new EventLogGroup("file.types.usage", 67);
 
   private static final ClassEventField FILE_EDITOR = EventFields.Class("file_editor");
   private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", FileTypeSchemaValidator.class);
