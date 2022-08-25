@@ -77,6 +77,21 @@ public abstract class DvcsBranchManager {
     });
   }
 
+  public boolean isGroupingEnabled(@NotNull GroupingKey key) {
+    return myBranchSettings.getGroupingKeyIds().contains(key.getId());
+  }
+
+  public void setGrouping(@NotNull GroupingKey key, boolean state) {
+    if (state) {
+      myBranchSettings.getGroupingKeyIds().add(key.getId());
+    }
+    else {
+      myBranchSettings.getGroupingKeyIds().remove(key.getId());
+    }
+
+    myBranchSettings.intIncrementModificationCount();
+  }
+
   public interface DvcsBranchManagerListener {
     void branchSettingsChanged();
   }
