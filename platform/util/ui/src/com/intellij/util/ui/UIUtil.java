@@ -85,6 +85,8 @@ public final class UIUtil {
 
   public static final Key<Boolean> LAF_WITH_THEME_KEY = Key.create("Laf.with.ui.theme");
   public static final Key<String> PLUGGABLE_LAF_KEY = Key.create("Pluggable.laf.name");
+
+  private static final Key<WeakReference<Component>> FOSTER_PARENT = Key.create("Component.fosterParent");
   private static final Key<Boolean> IS_SHOWING = Key.create("Component.isShowing");
   private static final Key<Boolean> HAS_FOCUS = Key.create("Component.hasFocus");
 
@@ -1712,6 +1714,48 @@ public final class UIUtil {
       if (hasFocus(component)) return true;
       component = component.getParent();
     }
+    return false;
+  }
+
+  /**
+   * Get the parent of a component in a more general sense than UI parent, i.e.,
+   * if it doesn't have a real UI parent, use a foster one instead.
+   * @see UIUtil#setFosterParent(JComponent, Component)
+   */
+  @ApiStatus.Experimental
+  public static @Nullable Component getParent(@NotNull Component component) {
+    Component realParent = component.getParent();
+    if (realParent != null) {
+      return realParent;
+    }
+    WeakReference<Component> ref = ClientProperty.get(component, FOSTER_PARENT);
+    return ref != null ? ref.get() : null;
+  }
+
+  /**
+   * Set a foster parent for a component, i.e., explicitly specify what should be treated
+   * as the component's parent if it doesn't have a real UI one.
+   * @throws IllegalArgumentException if the establishment of requested link
+   * will form a cycle in a generalized hierarchy graph.
+   * @see UIUtil#getParent(Component)
+   */
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public static void setFosterParent(@NotNull JComponent component, @Nullable Component parent) {
+    if (parent != null && isGeneralizedAncestor(component, parent)) {
+      throw new IllegalArgumentException("Setting this component as a foster parent will form a cycle in a hierarchy graph");
+    }
+    WeakReference<Component> ref = parent != null ? new WeakReference<>(parent) : null;
+    ClientProperty.put(component, FOSTER_PARENT, ref);
+  }
+
+  private static boolean isGeneralizedAncestor(@NotNull Component ancestor, @NotNull Component descendant) {
+    do {
+      if (descendant == ancestor) {
+        return true;
+      }
+      descendant = getParent(descendant);
+    } while (descendant != null);
     return false;
   }
 
