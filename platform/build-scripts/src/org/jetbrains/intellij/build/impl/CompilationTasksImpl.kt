@@ -8,24 +8,21 @@ import org.jetbrains.intellij.build.impl.compilation.CompiledClasses
 
 class CompilationTasksImpl(private val context: CompilationContext) : CompilationTasks {
   override fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>?) {
+    resolveProjectDependencies()
     context.messages.block("Compiling modules") {
-      resolveProjectDependencies()
       CompiledClasses.reuseOrCompile(context, moduleNames, includingTestsInModules)
     }
   }
 
   override fun buildProjectArtifacts(artifactNames: Set<String>) {
-    if (artifactNames.isEmpty()) {
-      return
-    }
-    try {
-      resolveProjectDependencies()
-      CompiledClasses.reuseOrCompile(context)
-      val buildIncludedModules = !context.options.useCompiledClassesFromProjectOutput
-      JpsCompilationRunner(context).buildArtifacts(artifactNames, buildIncludedModules)
-    }
-    catch (e: Throwable) {
-      context.messages.error("Building project artifacts failed with exception: $e", e)
+    if (artifactNames.isNotEmpty()) {
+      val jps = JpsCompilationRunner(context)
+      if (!context.options.useCompiledClassesFromProjectOutput) {
+        compileModules(jps.getModulesIncludedInArtifacts(artifactNames))
+      }
+      context.messages.block("Building project artifacts $artifactNames") {
+        jps.buildArtifacts(artifactNames, buildIncludedModules = false)
+      }
     }
   }
 

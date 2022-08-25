@@ -75,6 +75,9 @@ interface CompilationTasks {
    */
   fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>? = emptyList())
 
+  /**
+   * [compileModules] is called if required
+   */
   fun buildProjectArtifacts(artifactNames: Set<String>)
 
   fun resolveProjectDependencies()

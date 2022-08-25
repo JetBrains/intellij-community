@@ -159,6 +159,9 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
              resolveProjectDependencies = false)
   }
 
+  fun getModulesIncludedInArtifacts(artifactNames: Collection<String>): Collection<String> =
+    getModulesIncludedInArtifacts(getArtifactsWithIncluded(artifactNames))
+
   private fun getModulesIncludedInArtifacts(artifacts: Collection<JpsArtifact>): Set<String> {
     val modulesSet: MutableSet<String> = LinkedHashSet()
     for (artifact in artifacts) {
@@ -172,7 +175,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
     return modulesSet
   }
 
-  private fun getArtifactsWithIncluded(artifactNames: Set<String>): Set<JpsArtifact> {
+  private fun getArtifactsWithIncluded(artifactNames: Collection<String>): Set<JpsArtifact> {
     val artifacts = JpsArtifactService.getInstance().getArtifacts(context.project).filter { it.name in artifactNames }
     return ArtifactSorter.addIncludedArtifacts(artifacts)
   }
