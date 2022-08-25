@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.CallType
 import org.jetbrains.kotlin.idea.util.CallTypeAndReceiver
 import org.jetbrains.kotlin.idea.util.getResolutionScope
+import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
 import org.jetbrains.kotlin.name.FqName
@@ -208,6 +209,13 @@ class BasicCompletionSession(
                                     prefixMatcher.prefix.let { it.isEmpty() || it[0].isLowerCase() /* function name usually starts with lower case letter */ }
                             )
                 ) {
+                    if (declaration is KtNamedFunction &&
+                        declaration.modifierList?.allChildren.orEmpty()
+                            .map { it.node.elementType }
+                            .none { it is KtModifierKeywordToken && it !in KtTokens.VISIBILITY_MODIFIERS }
+                    ) {
+                        KEYWORDS_ONLY.doComplete()
+                    }
                     return
                 }
             }
