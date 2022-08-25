@@ -6,20 +6,20 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
-import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory
-import com.intellij.openapi.vcs.checkin.CheckinHandler
-import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
-import com.intellij.openapi.vcs.checkin.CheckinModificationHandler
+import com.intellij.openapi.vcs.checkin.*
 import com.intellij.openapi.vcs.impl.CheckinHandlersManager
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vcs.impl.PartialChangesUtil.getPartialTracker
@@ -28,7 +28,9 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil.newUnmodifiableList
 import com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptySet
 import com.intellij.util.containers.forEachLoggingErrors
+import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.*
+import kotlin.coroutines.resume
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
@@ -282,6 +284,36 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       }
     }
 
+    suspend fun runMetaHandlers(metaHandlers: List<CheckinMetaHandler>) {
+      // reversed to have the same order as when wrapping meta handlers into each other
+      for (metaHandler in metaHandlers.reversed()) {
+        suspendCancellableCoroutine<Unit> { continuation ->
+          val handlerCall = wrapWithCommitMetaHandler(metaHandler) { continuation.resume(Unit) }
+          handlerCall.run()
+        }
+      }
+    }
+
+    suspend fun runCommitCheck(project: Project,
+                               commitCheck: CommitCheck,
+                               indicator: ProgressIndicator): CommitProblem? {
+      if (!commitCheck.isEnabled()) {
+        LOG.debug("Commit check disabled $commitCheck")
+        return null
+      }
+      if (DumbService.isDumb(project) && !DumbService.isDumbAware(commitCheck)) {
+        LOG.debug("Skipped commit check in dumb mode $commitCheck")
+        return null
+      }
+
+      LOG.debug("Running commit check $commitCheck")
+      indicator.checkCanceled()
+      indicator.text = ""
+      indicator.text2 = ""
+
+      return commitCheck.runCheck(indicator)
+    }
+
     private fun runBeforeCommitHandlersChecks(sessionInfo: CommitSessionInfo,
                                               commitContext: CommitContext,
                                               handlers: List<CheckinHandler>): CommitChecksResult {
@@ -335,4 +367,33 @@ sealed class CommitSessionInfo {
 
   class Custom(override val executor: CommitExecutor,
                override val session: CommitSession) : CommitSessionInfo()
+}
+
+internal fun CheckinHandler.asCommitCheck(sessionInfo: CommitSessionInfo, commitContext: CommitContext): CommitCheck {
+  if (this is CommitCheck) return this
+  return ProxyCommitCheck(this, sessionInfo, commitContext)
+}
+
+private class ProxyCommitCheck(private val checkinHandler: CheckinHandler,
+                               private val sessionInfo: CommitSessionInfo,
+                               private val commitContext: CommitContext) : CommitCheck {
+  override fun isDumbAware(): Boolean {
+    return DumbService.isDumbAware(checkinHandler)
+  }
+
+  override fun isEnabled(): Boolean = checkinHandler.acceptExecutor(sessionInfo.executor)
+
+  override suspend fun runCheck(indicator: ProgressIndicator): CommitProblem? {
+    val result = checkinHandler.beforeCheckin(sessionInfo.executor, commitContext.additionalDataConsumer)
+    if (result == null || result == CheckinHandler.ReturnResult.COMMIT) return null
+    return UnknownCommitProblem()
+  }
+
+  override fun toString(): String {
+    return "ProxyCommitCheck: $checkinHandler"
+  }
+}
+
+internal class UnknownCommitProblem : CommitProblem {
+  override val text: String get() = VcsBundle.message("before.checkin.error.unknown")
 }
