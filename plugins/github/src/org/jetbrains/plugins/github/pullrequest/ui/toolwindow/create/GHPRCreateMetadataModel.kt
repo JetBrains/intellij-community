@@ -9,7 +9,7 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedR
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import com.intellij.collaboration.ui.SimpleEventListener
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataModelBase
-import org.jetbrains.plugins.github.util.CollectionDelta
+import com.intellij.collaboration.util.CollectionDelta
 import java.util.concurrent.CompletableFuture
 import kotlin.properties.Delegates.observable
 

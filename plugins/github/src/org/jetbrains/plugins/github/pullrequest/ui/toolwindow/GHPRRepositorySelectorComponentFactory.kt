@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.defaultButton
+import com.intellij.collaboration.ui.ComboBoxWithActionsModel
 import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.JBUI
@@ -19,7 +20,6 @@ import net.miginfocom.layout.PlatformDefaults
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.ui.component.ComboBoxWithActionsModel
 import org.jetbrains.plugins.github.ui.component.GHAccountSelectorComponentFactory
 import org.jetbrains.plugins.github.ui.component.GHRepositorySelectorComponentFactory
 import org.jetbrains.plugins.github.ui.util.getName
@@ -199,9 +199,9 @@ class GHPRRepositorySelectorComponentFactory(private val vm: GHPRRepositorySelec
       })
     }
 
-    private fun <T> ComboBoxWithActionsModel<T>.sync(scope: CoroutineScope,
-                                                     listState: StateFlow<List<T>>,
-                                                     selectionState: MutableStateFlow<T?>) {
+    private fun <T : Any> ComboBoxWithActionsModel<T>.sync(scope: CoroutineScope,
+                                                           listState: StateFlow<List<T>>,
+                                                           selectionState: MutableStateFlow<T?>) {
       scope.launch {
         listState.collect {
           items = it

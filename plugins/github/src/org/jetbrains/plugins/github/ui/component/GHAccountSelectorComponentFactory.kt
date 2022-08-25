@@ -2,18 +2,15 @@
 package org.jetbrains.plugins.github.ui.component
 
 import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
+import com.intellij.collaboration.ui.ComboBoxWithActionsModel
 import com.intellij.collaboration.ui.SimpleFocusBorder
 import com.intellij.collaboration.ui.codereview.avatar.CachingCircleImageIconsProvider
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.ui.popup.list.ComboBoxPopup
-import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.cloneDialog.AccountMenuItem
 import com.intellij.util.ui.cloneDialog.AccountMenuItemRenderer
 import com.intellij.util.ui.cloneDialog.VcsCloneDialogUiSpec
@@ -31,7 +28,6 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.util.concurrent.CompletableFuture
 import javax.swing.*
-import javax.swing.border.Border
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 

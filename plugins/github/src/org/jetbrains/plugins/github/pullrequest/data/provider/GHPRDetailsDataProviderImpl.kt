@@ -12,10 +12,9 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
-import org.jetbrains.plugins.github.pullrequest.data.service.GHPRCommentService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRDetailsService
 import com.intellij.collaboration.ui.SimpleEventListener
-import org.jetbrains.plugins.github.util.CollectionDelta
+import com.intellij.collaboration.util.CollectionDelta
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import java.util.concurrent.CompletableFuture
 import kotlin.properties.Delegates
