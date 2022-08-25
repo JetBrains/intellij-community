@@ -37,7 +37,7 @@ interface ModuleBridge : ModuleEx {
                          modules: List<IdeaPluginDescriptorImpl>,
                          precomputedExtensionModel: PrecomputedExtensionModel?,
                          app: Application?,
-                         listenerCallbacks: MutableList<in Runnable>?)
+                         listenerCallbacks: MutableList<Runnable>?)
 
   fun callCreateComponents()
 

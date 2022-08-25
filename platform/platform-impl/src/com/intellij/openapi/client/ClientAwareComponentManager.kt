@@ -43,7 +43,7 @@ abstract class ClientAwareComponentManager constructor(
   override fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,
                                   app: Application?,
                                   precomputedExtensionModel: PrecomputedExtensionModel?,
-                                  listenerCallbacks: MutableList<in Runnable>?) {
+                                  listenerCallbacks: MutableList<Runnable>?) {
     super.registerComponents(modules, app, precomputedExtensionModel, listenerCallbacks)
 
     val sessionsManager = super.getService(ClientSessionsManager::class.java)!!

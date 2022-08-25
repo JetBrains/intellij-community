@@ -77,7 +77,7 @@ abstract class ClientSessionImpl(
   override fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,
                                   app: Application?,
                                   precomputedExtensionModel: PrecomputedExtensionModel?,
-                                  listenerCallbacks: MutableList<in Runnable>?) {
+                                  listenerCallbacks: MutableList<Runnable>?) {
     for (rootModule in modules) {
       registerServices(getContainerDescriptor(rootModule).services, rootModule)
       executeRegisterTaskForOldContent(rootModule) { module ->

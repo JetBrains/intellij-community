@@ -248,7 +248,7 @@ abstract class ComponentManagerImpl(
   open fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,
                               app: Application?,
                               precomputedExtensionModel: PrecomputedExtensionModel?,
-                              listenerCallbacks: MutableList<in Runnable>?) {
+                              listenerCallbacks: MutableList<Runnable>?) {
     val activityNamePrefix = activityNamePrefix()
 
     var map: ConcurrentMap<String, MutableList<ListenerDescriptor>>? = null
@@ -300,7 +300,7 @@ abstract class ComponentManagerImpl(
 
     if (precomputedExtensionModel == null) {
       val immutableExtensionPoints = if (extensionPoints!!.isEmpty()) Collections.emptyMap() else java.util.Map.copyOf(extensionPoints)
-      extensionArea.setPoints(immutableExtensionPoints)
+      extensionArea.extensionPoints = immutableExtensionPoints
 
       for (rootModule in modules) {
         executeRegisterTask(rootModule) { module ->
@@ -329,7 +329,7 @@ abstract class ComponentManagerImpl(
   }
 
   private fun registerExtensionPointsAndExtensionByPrecomputedModel(precomputedExtensionModel: PrecomputedExtensionModel,
-                                                                    listenerCallbacks: MutableList<in Runnable>?) {
+                                                                    listenerCallbacks: List<Runnable>?) {
     assert(extensionArea.extensionPoints.isEmpty())
     val n = precomputedExtensionModel.pluginDescriptors.size
     if (n == 0) {
@@ -345,7 +345,7 @@ abstract class ComponentManagerImpl(
     }
 
     val immutableExtensionPoints = java.util.Map.copyOf(result)
-    extensionArea.setPoints(immutableExtensionPoints)
+    extensionArea.extensionPoints = immutableExtensionPoints
 
     for ((name, pairs) in precomputedExtensionModel.nameToExtensions) {
       val point = immutableExtensionPoints.get(name) ?: continue
