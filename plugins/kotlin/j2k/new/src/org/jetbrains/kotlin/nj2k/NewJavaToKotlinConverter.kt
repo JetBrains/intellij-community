@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.nj2k
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.*
@@ -235,6 +236,7 @@ class NewJ2kWithProgressProcessor(
         fileIndex: Int?,
         description: String
     ) {
+        ProgressManager.checkCanceled()
         progress?.checkCanceled()
         val singlePhaseFraction = 1.0 / phasesCount.toDouble()
         val singleSubPhaseFraction = singlePhaseFraction / subPhaseCount.toDouble()
