@@ -117,14 +117,11 @@ internal abstract class BranchGroupingAction(private val key: GroupingKey,
     return ActionUpdateThread.EDT
   }
 
-  abstract fun setSelected(e: AnActionEvent, key: GroupingKey, state: Boolean)
-
   override fun isSelected(e: AnActionEvent) =
     e.project?.service<GitBranchManager>()?.isGroupingEnabled(key) ?: false
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     val project = e.project ?: return
     project.service<GitBranchManager>().setGrouping(key, state)
-    setSelected(e, key, state)
   }
 }
