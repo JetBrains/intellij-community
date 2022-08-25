@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl
 
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.tabs.JBTabsPosition
 import com.intellij.ui.tabs.impl.themes.EditorTabTheme
 import java.awt.Color
@@ -73,7 +74,12 @@ class JBEditorTabPainter : JBDefaultTabPainter(EditorTabTheme()) {
   override fun underlineRectangle(position: JBTabsPosition, rect: Rectangle, thickness: Int): Rectangle {
     return when (position) {
       JBTabsPosition.bottom -> Rectangle(rect.x, rect.y, rect.width, thickness)
-      JBTabsPosition.left -> Rectangle(rect.x + rect.width - thickness, rect.y, thickness, rect.height)
+      JBTabsPosition.left -> {
+        if (ExperimentalUI.isNewUI()) {
+          Rectangle(rect.x, rect.y, thickness, rect.height)
+        }
+        else Rectangle(rect.x + rect.width - thickness, rect.y, thickness, rect.height)
+      }
       JBTabsPosition.right -> Rectangle(rect.x, rect.y, thickness, rect.height)
       else -> super.underlineRectangle(position, rect, thickness)
     }
