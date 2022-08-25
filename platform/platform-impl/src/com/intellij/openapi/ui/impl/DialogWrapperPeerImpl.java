@@ -591,6 +591,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     @Override
     public Object getData(@NotNull String dataId) {
+      if (CommonDataKeys.PROJECT.is(dataId)) {
+        Project project = getProject();
+        if (project != null && project.isInitialized()) {
+          return project;
+        }
+      }
       DialogWrapper wrapper = myDialogWrapper.get();
       Object wrapperData = wrapper instanceof DataProvider ? ((DataProvider)wrapper).getData(dataId) : null;
       if (wrapperData != null) {
