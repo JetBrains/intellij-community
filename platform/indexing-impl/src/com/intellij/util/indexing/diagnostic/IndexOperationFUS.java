@@ -641,6 +641,8 @@ public final class IndexOperationFUS {
    */
   public static class IndexOperationAggregatesCollector extends ApplicationUsagesCollector {
 
+    private static final int MAX_TRACKABLE_DURATION_MS = 5000;
+
     private static final IntEventField FIELD_LOOKUPS_TOTAL = EventFields.Int("lookups_total");
     private static final IntEventField FIELD_LOOKUPS_FAILED = EventFields.Int("lookups_failed");
     private static final DoubleEventField FIELD_LOOKUP_DURATION_MEAN = EventFields.Double("lookup_duration_mean_ms");
@@ -700,13 +702,15 @@ public final class IndexOperationFUS {
         final Recorder recorder = allKeysLookupDurationsMsByIndexId.computeIfAbsent(
           indexId,
           __ -> new Recorder(
-            /* highest trackable value = */ 2000,
-            /* significant digits      = */ 2     /* ~1% accuracy */
+            MAX_TRACKABLE_DURATION_MS,
+            /* significant digits = */ 2     /* ~1% accuracy */
           )
         );
 
         //Recorder allows concurrent writes:
-        recorder.recordValue(durationMs);
+        recorder.recordValue(
+          Math.max(Math.min(durationMs, MAX_TRACKABLE_DURATION_MS), 0)
+        );
       }
     }
 
@@ -717,13 +721,15 @@ public final class IndexOperationFUS {
         final Recorder recorder = entriesLookupDurationsMsByIndexId.computeIfAbsent(
           indexId,
           __ -> new Recorder(
-            /* highest trackable value = */ 2000,
-            /* significant digits      = */ 2     /* ~1% accuracy */
+            MAX_TRACKABLE_DURATION_MS,
+            /* significant digits = */ 2     /* ~1% accuracy */
           )
         );
 
         //Recorder allows concurrent writes:
-        recorder.recordValue(durationMs);
+        recorder.recordValue(
+          Math.max(Math.min(durationMs, MAX_TRACKABLE_DURATION_MS), 0)
+        );
       }
     }
 
