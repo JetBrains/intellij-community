@@ -120,6 +120,10 @@ public class CloneCaretActionHandler extends EditorActionHandler {
   private boolean isRepeatedActionInvocation() {
     if (myRepeatedInvocation) return true;
     String lastActionId = EditorLastActionTracker.getInstance().getLastActionId();
+    return isSuitableLastAction(lastActionId);
+  }
+
+  protected boolean isSuitableLastAction(String lastActionId){
     return OUR_ACTIONS.contains(lastActionId);
   }
 }
