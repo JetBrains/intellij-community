@@ -91,7 +91,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
   private static final String HELP_PLACEHOLDER = "?";
   private boolean myIsUsedTrigger;
   private volatile ActionCallback myCurrentWorker;
-  private boolean mySkipFocusGain = false;
   @Nullable private final VirtualFile myVirtualFile;
   private JLabel myTextFieldTitle;
   private boolean myIsItemSelected;
@@ -160,16 +159,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     mySearchField.addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
-        if (mySkipFocusGain) {
-          mySkipFocusGain = false;
-          return;
-        }
         rebuildList();
-      }
-
-      @Override
-      public void focusLost(FocusEvent e) {
-        searchFinishedHandler.run();
       }
     });
   }
@@ -398,10 +388,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
         updateViewType(myResultsList.isEmpty() ? ViewType.SHORT : ViewType.FULL);
       }
     });
-  }
-
-  protected void resetFields() {
-    mySkipFocusGain = false;
   }
 
   public void initResultsList() {
@@ -832,9 +818,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
   }
 
   @Override
-  public void dispose() {
-    resetFields();
-  }
+  public void dispose() {}
 
   private final class RunAnythingShowFilterAction extends ShowFilterAction {
     @NotNull private final Collection<RunAnythingGroup> myTemplateGroups;
