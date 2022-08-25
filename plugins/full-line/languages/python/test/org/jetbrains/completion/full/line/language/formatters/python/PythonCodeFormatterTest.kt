@@ -6,7 +6,6 @@ import org.jetbrains.completion.full.line.FilesTest
 import org.jetbrains.completion.full.line.FilesTest.readFile
 import org.jetbrains.completion.full.line.language.formatters.CodeFormatterTest
 import org.jetbrains.completion.full.line.language.formatters.PythonCodeFormatter
-import org.junit.Assert
 
 abstract class PythonCodeFormatterTest : CodeFormatterTest(PythonCodeFormatter()) {
 

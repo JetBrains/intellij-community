@@ -1,8 +1,7 @@
 <idea-plugin require-restart="true">
   <id>org.jetbrains.completion.full.line</id>
   <name>Full Line Code Completion</name>
-  <idea-version since-build="203.4203.26"/>
-  <vendor url="https://www.jetbrains.com">JetBrains</vendor>
+  <vendor>JetBrains</vendor>
 
   <description><![CDATA[
            <div>

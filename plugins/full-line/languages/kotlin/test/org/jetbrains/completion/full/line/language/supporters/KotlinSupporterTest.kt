@@ -3,7 +3,7 @@ package org.jetbrains.completion.full.line.language.supporters
 import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.jetbrains.completion.full.line.FilesTest
-import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains. kotlin.idea.KotlinFileType
 import org.junit.jupiter.api.Assertions.assertAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.function.Executable
