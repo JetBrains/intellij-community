@@ -29,7 +29,7 @@ public final class ExtensionPointName<T> extends BaseExtensionPointName<T> {
   }
 
   /**
-   * Prefer to use {@link #getExtensionList()}.
+   * Consider using {@link #getExtensionList()}.
    */
   public T @NotNull [] getExtensions() {
     return getPointImpl(null).getExtensions();
