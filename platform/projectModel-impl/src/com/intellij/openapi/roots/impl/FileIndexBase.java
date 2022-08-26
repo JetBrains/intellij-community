@@ -96,13 +96,6 @@ abstract class FileIndexBase implements FileIndex {
     return myDirectoryIndex.getInfoForFile(file);
   }
 
-  @Override
-  public boolean isContentSourceFile(@NotNull VirtualFile file) {
-    return !file.isDirectory() &&
-           !myFileTypeRegistry.isFileIgnored(file) &&
-           isInSourceContent(file);
-  }
-
   protected boolean isInContent(@NotNull VirtualFile file, @NotNull DirectoryInfo info) {
     return ProjectFileIndexImpl.isFileInContent(file, info);
   }

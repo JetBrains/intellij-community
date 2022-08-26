@@ -132,11 +132,6 @@ class LightEditProjectFileIndex implements ProjectFileIndex {
   }
 
   @Override
-  public boolean isContentSourceFile(@NotNull VirtualFile file) {
-    return false;
-  }
-
-  @Override
   public boolean isInSourceContent(@NotNull VirtualFile fileOrDir) {
     return false;
   }
