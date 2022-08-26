@@ -4,7 +4,6 @@ package org.jetbrains.intellij.build.impl.compilation
 import com.intellij.openapi.util.text.StringUtil
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
-import kotlin.streams.toList
 
 class Git(private val dir: Path) {
   fun log(commitsCount: Int): List<String> {
@@ -12,12 +11,8 @@ class Git(private val dir: Path) {
   }
 
   fun formatLatestCommit(format: String): String {
-    val lines = execute("git", "log", "--pretty=format:" + format, "-n", "1")
+    val lines = execute("git", "log", "--pretty=format:$format", "-n", "1")
     return StringUtil.join(lines, "\n")
-  }
-
-  fun status(): List<String> {
-    return execute("git", "status", "--short", "--untracked-files=no", "--ignored=no")
   }
 
   fun listFilesUnderVersionControl(refSpec: String = "HEAD"): List<String> {

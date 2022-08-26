@@ -110,7 +110,7 @@ class PortableCompilationCache(private val context: CompilationContext) {
 
   private fun isLocalCacheUsed() = !forceRebuild && !forceDownload && jpsCaches.maybeAvailableLocally
 
-  private fun isRemoteCacheStale() = !downloader.availableForHeadCommit || downloader.anyLocalChanges
+  private fun isRemoteCacheStale() = !downloader.availableForHeadCommit
 
   /**
    * Upload local [PortableCompilationCache] to [PortableCompilationCache.RemoteCache]

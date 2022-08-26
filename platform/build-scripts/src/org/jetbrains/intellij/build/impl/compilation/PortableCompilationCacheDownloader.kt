@@ -59,21 +59,12 @@ internal class PortableCompilationCacheDownloader(
     CommitsHistory(json).commitsForRemote(gitUrl)
   }
 
-  val anyLocalChanges by lazy {
-    val localChanges = git.status()
-    if (!localChanges.isEmpty()) {
-      context.messages.info("Local changes:")
-      localChanges.forEach { context.messages.info("\t$it") }
-    }
-    !localChanges.isEmpty()
-  }
-
   fun download() {
     if (availableCommitDepth in 0 until lastCommits.count()) {
       val lastCachedCommit = lastCommits.get(availableCommitDepth)
       context.messages.info("Using cache for commit $lastCachedCommit ($availableCommitDepth behind last commit).")
       val tasks = mutableListOf<ForkJoinTask<*>>()
-      if (!downloadCompilationOutputsOnly || anyLocalChanges) {
+      if (!downloadCompilationOutputsOnly) {
         tasks.add(ForkJoinTask.adapt { saveJpsCache(lastCachedCommit) })
       }
 
