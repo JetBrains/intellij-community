@@ -13,7 +13,7 @@ import com.intellij.ui.dsl.builder.panel
 /**
  * @author Konstantin Bulenkov
  */
-internal class ExperimentalUIConfigurableUi : BoundSearchableConfigurable(
+internal class ExperimentalUIConfigurable : BoundSearchableConfigurable(
   IdeBundle.message("configurable.new.ui.name"),
   "reference.settings.ide.settings.new.ui") {
 
@@ -35,6 +35,7 @@ internal class ExperimentalUIConfigurableUi : BoundSearchableConfigurable(
         row {
           checkBox(IdeBundle.message("checkbox.main.menu.separate.toolbar"))
             .bindSelected(UISettings.getInstance()::separateMainMenu)
+          comment(IdeBundle.message("main.menu.separate.toolbar.comment"))
         }
       }
     }
