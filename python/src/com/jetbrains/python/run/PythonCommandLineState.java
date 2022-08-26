@@ -1034,8 +1034,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
   @NotNull
   protected Function<TargetEnvironment, String> getTargetPath(@NotNull TargetEnvironmentRequest targetEnvironmentRequest,
                                                               @NotNull Path scriptPath) {
-    return PySdkTargetPaths.getTargetPathForPythonScriptExecution(targetEnvironmentRequest, myConfig.getProject(), myConfig.getSdk(),
-                                                                  createRemotePathMapper(), scriptPath);
+    return PySdkTargetPaths.getTargetPathForPythonScriptExecution(myConfig.getProject(), myConfig.getSdk(), createRemotePathMapper(),
+                                                                  scriptPath);
   }
 
   /**
