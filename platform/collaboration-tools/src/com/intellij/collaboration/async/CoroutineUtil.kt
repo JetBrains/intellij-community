@@ -46,6 +46,15 @@ fun <T1, T2, R> combineState(scope: CoroutineScope,
     .stateIn(scope, SharingStarted.Eagerly, transform(state1.value, state2.value))
 
 @ApiStatus.Experimental
+fun <T1, T2, T3, R> combineState(scope: CoroutineScope,
+                                 state1: StateFlow<T1>,
+                                 state2: StateFlow<T2>,
+                                 state3: StateFlow<T3>,
+                                 transform: (T1, T2, T3) -> R): StateFlow<R> =
+  combine(state1, state2, state3, transform)
+    .stateIn(scope, SharingStarted.Eagerly, transform(state1.value, state2.value, state3.value))
+
+@ApiStatus.Experimental
 fun <T, M> StateFlow<T>.mapState(
   scope: CoroutineScope,
   mapper: (value: T) -> M

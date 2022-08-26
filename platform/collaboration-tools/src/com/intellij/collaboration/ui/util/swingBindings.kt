@@ -3,11 +3,13 @@ package com.intellij.collaboration.ui.util
 
 import com.intellij.collaboration.ui.ComboBoxWithActionsModel
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.swing.Action
 import javax.swing.ComboBoxModel
+import javax.swing.JComponent
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
@@ -57,4 +59,12 @@ private fun <T> ComboBoxModel<T>.addSelectionChangeListener(listener: () -> Unit
     override fun intervalAdded(e: ListDataEvent) {}
     override fun intervalRemoved(e: ListDataEvent) {}
   })
+}
+
+fun JComponent.bindVisibility(scope: CoroutineScope, visibilityFlow: Flow<Boolean>) {
+  scope.launch {
+    visibilityFlow.collect {
+      isVisible = it
+    }
+  }
 }

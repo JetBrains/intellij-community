@@ -2,83 +2,53 @@
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
+import com.intellij.collaboration.async.combineState
+import com.intellij.collaboration.async.disposingMainScope
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.ui.AccountSelectorComponentFactory
-import com.intellij.collaboration.ui.CollaborationToolsUIUtil.defaultButton
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
 import com.intellij.collaboration.ui.SimpleComboboxWithActionsFactory
 import com.intellij.collaboration.ui.codereview.avatar.CachingCircleImageIconsProvider
+import com.intellij.collaboration.ui.util.bindVisibility
 import com.intellij.ide.plugins.newui.HorizontalLayout
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
 import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.cloneDialog.VcsCloneDialogUiSpec
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.layout.PlatformDefaults
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
+import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
-import org.jetbrains.plugins.github.ui.util.getName
 import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
+import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 import java.awt.Image
 import java.awt.event.ActionEvent
 import java.util.concurrent.CompletableFuture
 import javax.swing.*
 
-class GHPRRepositorySelectorComponentFactory(private val vm: GHPRRepositorySelectorViewModel) {
+//TODO: pass login actions from outside
+class GHPRRepositorySelectorComponentFactory internal constructor(private val project: Project,
+                                                                  private val vm: GHPRRepositorySelectorViewModel,
+                                                                  private val authManager: GithubAuthenticationManager) {
 
   fun create(scope: CoroutineScope): JComponent {
-    val applyAction = object : AbstractAction(GithubBundle.message("pull.request.view.list")) {
-      override fun actionPerformed(e: ActionEvent?) {
-        vm.trySubmitSelection()
-      }
-    }
-    val githubLoginAction = object : AbstractAction(GithubBundle.message("action.Github.Accounts.AddGHAccount.text")) {
-      override fun actionPerformed(e: ActionEvent?) {
-        vm.loginToGithub()?.run { vm.trySubmitSelection() }
-      }
-    }
-    val tokenLoginAction = object : AbstractAction(GithubBundle.message("action.Github.Accounts.AddGHAccountWithToken.text")) {
-      override fun actionPerformed(e: ActionEvent?) {
-        vm.loginToGithub(false)?.run { vm.trySubmitSelection() }
-      }
-    }
-    val gheLoginAction = object : AbstractAction(GithubBundle.message("action.Github.Accounts.AddGHEAccount.text")) {
-      override fun actionPerformed(e: ActionEvent?) {
-        vm.loginToGhe()?.run { vm.trySubmitSelection() }
-      }
-    }
-
-    scope.launch {
-      combine(vm.accountsState, vm.repoSelectionState) { accounts, repo ->
-        accounts.isNotEmpty() to (repo?.repository?.serverPath?.isGithubDotCom ?: false)
-      }.collect { (hasAccounts, isDotCom) ->
-        applyAction.visible = hasAccounts
-        githubLoginAction.visible = !hasAccounts && isDotCom
-        tokenLoginAction.visible = !hasAccounts && isDotCom
-        gheLoginAction.visible = !hasAccounts && !isDotCom
-      }
-    }
-
-    scope.launch {
-      combine(vm.repoSelectionState, vm.accountSelectionState) { repo, account ->
-        repo != null && account != null
-      }.collect {
-        applyAction.isEnabled = it
-      }
-    }
-
     val repoCombo = SimpleComboboxWithActionsFactory(vm.repositoriesState, vm.repoSelectionState).create(scope, { mapping ->
       val allRepositories = vm.repositoriesState.value.map { it.repository }
       SimpleComboboxWithActionsFactory.Presentation(
@@ -89,43 +59,78 @@ class GHPRRepositorySelectorComponentFactory(private val vm: GHPRRepositorySelec
       putClientProperty(PlatformDefaults.VISUAL_PADDING_PROPERTY, insets)
     }
 
-    val accountActions = vm.repoSelectionState.mapState(scope) { repo ->
-      createPopupLoginActions(repo)
-    }
-
     val accountCombo = AccountSelectorComponentFactory(vm.accountsState, vm.accountSelectionState).create(
       scope,
       AccountAvatarIconsProvider(),
       GHUIUtil.AVATAR_SIZE,
       VcsCloneDialogUiSpec.Components.popupMenuAvatarSize,
       GithubBundle.message("account.choose.link"),
-      accountActions
+      vm.repoSelectionState.mapState(scope, ::createPopupLoginActions)
     ).apply {
       putClientProperty(PlatformDefaults.VISUAL_PADDING_PROPERTY, insets)
     }
 
-    val applyButton = JButton(applyAction).defaultButton().apply {
+
+    val submitButton = JButton(GithubBundle.message("pull.request.view.list")).apply {
+      isDefault = true
       isOpaque = false
-      controlVisibilityFromAction(this, applyAction)
+
+      addActionListener {
+        vm.submitSelection()
+      }
+
+      bindVisibility(scope, vm.submitAvailableState)
     }
 
-    val githubLoginButton = JButton(githubLoginAction).defaultButton().apply {
+    val githubLoginButton = JButton(GithubBundle.message("action.Github.Accounts.AddGHAccount.text")).apply {
+      isDefault = true
       isOpaque = false
-      controlVisibilityFromAction(this, githubLoginAction)
+
+      addActionListener {
+        if (loginToGithub(true)) {
+          vm.submitSelection()
+        }
+      }
+
+      bindVisibility(scope, vm.githubLoginAvailableState)
     }
-    val tokenLoginLink = createLinkLabel(tokenLoginAction)
-    val gheLoginButton = JButton(gheLoginAction).defaultButton().apply {
+
+    val tokenLoginLink = ActionLink(GithubBundle.message("action.Github.Accounts.AddGHAccountWithToken.text")) {
+      if (loginToGithub(false)) {
+        vm.submitSelection()
+      }
+    }.apply {
+      bindVisibility(scope, vm.githubLoginAvailableState)
+    }
+
+    val gheLoginButton = JButton(GithubBundle.message("action.Github.Accounts.AddGHEAccount.text")).apply {
+      isDefault = true
       isOpaque = false
-      controlVisibilityFromAction(this, gheLoginAction)
+
+      addActionListener {
+        val repo = vm.repoSelectionState.value ?: return@addActionListener
+        if (loginToGhe(false, repo)) {
+          vm.submitSelection()
+        }
+      }
+
+      bindVisibility(scope, vm.gheLoginAvailableState)
     }
+
+    val tokenMissingLabel = JLabel(GithubBundle.message("account.token.missing")).apply {
+      foreground = UIUtil.getErrorForeground()
+      isVisible = false
+      bindVisibility(scope, vm.missingCredentialsState)
+    }
+
     val actionsPanel = JPanel(HorizontalLayout(UI.scale(16))).apply {
       isOpaque = false
-      add(applyButton)
+      add(submitButton)
       add(githubLoginButton)
       add(tokenLoginLink)
       add(gheLoginButton)
 
-      putClientProperty(PlatformDefaults.VISUAL_PADDING_PROPERTY, applyButton.insets)
+      putClientProperty(PlatformDefaults.VISUAL_PADDING_PROPERTY, submitButton.insets)
     }
 
     return JPanel(null).apply {
@@ -135,6 +140,8 @@ class GHPRRepositorySelectorComponentFactory(private val vm: GHPRRepositorySelec
 
       add(repoCombo, CC().growX().push())
       add(accountCombo, CC())
+
+      add(tokenMissingLabel, CC().newline())
 
       add(actionsPanel, CC().newline())
       add(JLabel(GithubBundle.message("pull.request.login.note")).apply {
@@ -148,52 +155,46 @@ class GHPRRepositorySelectorComponentFactory(private val vm: GHPRRepositorySelec
     return if (isDotComServer)
       listOf(object : AbstractAction(GithubBundle.message("action.Github.Accounts.AddGHAccount.text")) {
         override fun actionPerformed(e: ActionEvent?) {
-          vm.loginToGithub()?.let { vm.accountSelectionState.value = it }
+          loginToGithub(true)
         }
       }, object : AbstractAction(GithubBundle.message("action.Github.Accounts.AddGHAccountWithToken.text")) {
         override fun actionPerformed(e: ActionEvent?) {
-          vm.loginToGithub(false)?.let { vm.accountSelectionState.value = it }
+          loginToGithub(true, false)
         }
       })
     else listOf(
       object : AbstractAction(GithubBundle.message("action.Github.Accounts.AddGHEAccount.text")) {
         override fun actionPerformed(e: ActionEvent?) {
-          vm.loginToGhe()?.let { vm.accountSelectionState.value = it }
+          loginToGhe(true, repo!!)
         }
       })
   }
 
-  companion object {
-    private const val ACTION_VISIBLE_KEY = "ACTION_VISIBLE"
-
-    private fun controlVisibilityFromAction(button: JButton, action: Action) {
-      fun update() {
-        button.isVisible = action.getValue(ACTION_VISIBLE_KEY) as? Boolean ?: true
-      }
-      action.addPropertyChangeListener {
-        update()
-      }
-      update()
+  private fun loginToGithub(forceNew: Boolean, withOAuth: Boolean = true): Boolean {
+    val account = vm.accountSelectionState.value
+    if (account == null || forceNew) {
+      return authManager.requestNewAccountForDefaultServer(project, !withOAuth)?.also {
+        vm.accountSelectionState.value = it
+      } != null
     }
-
-    private var Action.visible: Boolean
-      get() = getValue(ACTION_VISIBLE_KEY) as? Boolean ?: true
-      set(value) = putValue(ACTION_VISIBLE_KEY, value)
-
-    private fun createLinkLabel(action: Action): ActionLink {
-      val label = ActionLink(action.getName()) {
-        action.actionPerformed(it)
-      }
-      label.isEnabled = action.isEnabled
-      label.isVisible = action.getValue(ACTION_VISIBLE_KEY) as? Boolean ?: true
-
-      action.addPropertyChangeListener {
-        label.text = action.getName()
-        label.isEnabled = action.isEnabled
-        label.isVisible = action.getValue(ACTION_VISIBLE_KEY) as? Boolean ?: true
-      }
-      return label
+    else if (vm.missingCredentialsState.value) {
+      return authManager.requestReLogin(account, project)
     }
+    return false
+  }
+
+  private fun loginToGhe(forceNew: Boolean, repo: GHGitRepositoryMapping): Boolean {
+    val server = repo.repository.serverPath
+    val account = vm.accountSelectionState.value
+    if (account == null || forceNew) {
+      return authManager.requestNewAccountForServer(server, project)?.also {
+        vm.accountSelectionState.value = it
+      } != null
+    }
+    else if (vm.missingCredentialsState.value) {
+      return authManager.requestReLogin(account, project)
+    }
+    return false
   }
 
   private class AccountAvatarIconsProvider : CachingCircleImageIconsProvider<GithubAccount>(GithubIcons.DefaultAvatar) {
@@ -212,4 +213,63 @@ class GHPRRepositorySelectorComponentFactory(private val vm: GHPRRepositorySelec
       }
     }
   }
+}
+
+internal class GHPRRepositorySelectorViewModel(
+  repositoriesManager: GHHostedRepositoriesManager,
+  accountManager: GHAccountManager,
+  private val onSelected : (GHGitRepositoryMapping, GithubAccount) -> Unit
+) : Disposable {
+  private val scope = disposingMainScope()
+
+  val repositoriesState = repositoriesManager.knownRepositoriesState
+
+  val repoSelectionState = MutableStateFlow<GHGitRepositoryMapping?>(null)
+
+  val accountsState = combineState(scope, accountManager.accountsState, repoSelectionState) { accountsMap, repo ->
+    if (repo == null) {
+      emptyList()
+    }
+    else {
+      val server = repo.repository.serverPath
+      accountsMap.keys.filter { it.server.equals(server, true) }
+    }
+  }
+
+  val accountSelectionState = MutableStateFlow<GithubAccount?>(null)
+
+  val missingCredentialsState: StateFlow<Boolean> =
+    combineState(scope, accountManager.accountsState, accountSelectionState) { accountsMap, account ->
+      account?.let { accountsMap[it] } == null
+    }
+
+  val submitAvailableState: StateFlow<Boolean> =
+    combineState(scope, repoSelectionState, accountSelectionState, missingCredentialsState) { repo, acc, credsMissing ->
+      repo != null && acc != null && !credsMissing
+    }
+
+  val githubLoginAvailableState: StateFlow<Boolean> =
+    combineState(scope, repoSelectionState, accountSelectionState, missingCredentialsState, ::isGithubLoginAvailable)
+
+  private fun isGithubLoginAvailable(repo: GHGitRepositoryMapping?, account: GithubAccount?, credsMissing: Boolean): Boolean {
+    if (repo == null) return false
+    return repo.repository.serverPath.isGithubDotCom && (account == null || credsMissing)
+  }
+
+  val gheLoginAvailableState: StateFlow<Boolean> =
+    combineState(scope, repoSelectionState, accountSelectionState, missingCredentialsState, ::isGheLoginVisible)
+
+
+  private fun isGheLoginVisible(repo: GHGitRepositoryMapping?, account: GithubAccount?, credsMissing: Boolean): Boolean {
+    if (repo == null) return false
+    return !repo.repository.serverPath.isGithubDotCom && (account == null || credsMissing)
+  }
+
+  fun submitSelection() {
+    val repo = repoSelectionState.value ?: return
+    val accounts = accountSelectionState.value ?: return
+    onSelected(repo, accounts)
+  }
+
+  override fun dispose() = Unit
 }

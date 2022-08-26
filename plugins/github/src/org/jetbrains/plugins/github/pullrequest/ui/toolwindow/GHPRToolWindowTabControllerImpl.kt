@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 import com.intellij.collaboration.async.DisposingMainScope
 import git4idea.remote.hosting.knownRepositories
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.panels.Wrapper
@@ -151,29 +152,34 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
     contentDisposable = disposable
     tab.displayName = GithubBundle.message("toolwindow.stripe.Pull_Requests")
 
-    val selectorVm = GHPRRepositorySelectorViewModelImpl(project, repositoryManager, authManager).also {
+    val uiScope = DisposingMainScope(disposable)
+
+    val selectorVm = GHPRRepositorySelectorViewModel(repositoryManager, authManager.accountManager) { repo, account ->
+      val executor = try {
+        service<GithubApiRequestExecutorManager>().getExecutor(account)
+      }
+      catch (e: Exception) {
+        return@GHPRRepositorySelectorViewModel
+      }
+      projectSettings.selectedRepoAndAccount = repo to account
+
+      // TODO: extract and subscribe
+      showPullRequestsComponent(repo, account, executor, false)
+    }.also {
       Disposer.register(disposable, it)
     }
 
-    val uiScope = DisposingMainScope(disposable)
+    val component = GHPRRepositorySelectorComponentFactory(project, selectorVm, authManager).create(uiScope)
 
-    val component = GHPRRepositorySelectorComponentFactory(selectorVm).create(uiScope)
-
-    uiScope.launch {
-      selectorVm.selectionFlow.collect { (repo, account) ->
-        currentRepository = repo
-        currentAccount = account
-        val requestExecutor = GithubApiRequestExecutorManager.getInstance().getExecutor(account, mainPanel) ?: return@collect
-        projectSettings.selectedRepoAndAccount = repo to account
-        showPullRequestsComponent(repo, account, requestExecutor, false)
-        GHUIUtil.focusPanel(mainPanel)
-      }
-    }
+    val focused = GHUIUtil.isFocusParent(mainPanel)
     with(mainPanel) {
       removeAll()
       add(component, BorderLayout.NORTH)
       revalidate()
       repaint()
+    }
+    if (focused) {
+      GHUIUtil.focusPanel(mainPanel)
     }
     showingSelectors = true
   }
@@ -214,11 +220,15 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
       wrapper
     }
 
+    val focused = GHUIUtil.isFocusParent(mainPanel)
     with(mainPanel) {
       removeAll()
       add(panel, BorderLayout.CENTER)
       revalidate()
       repaint()
+    }
+    if (focused) {
+      GHUIUtil.focusPanel(mainPanel)
     }
     showingSelectors = false
   }
