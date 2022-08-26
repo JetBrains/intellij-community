@@ -31,7 +31,19 @@ public abstract class JvmLocalInspection extends LocalInspectionTool {
             // don't build visitor until there is at least one JvmElement
             visitor = buildVisitor(
               holder.getProject(),
-              (message, highlightType, fixes) -> holder.registerProblem(element, message, highlightType, fixes),
+              new HighlightSinkImpl() {
+                @Override
+                public void highlight(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
+                                      @NotNull ProblemHighlightType highlightType,
+                                      LocalQuickFix @NotNull ... fixes) {
+                  holder.registerProblem(element, message, highlightType, fixes);
+                }
+
+                @Override
+                public @NotNull ProblemsHolder getHolder() {
+                  return holder;
+                }
+              },
               isOnTheFly
             );
             if (visitor == null) return;
@@ -54,6 +66,13 @@ public abstract class JvmLocalInspection extends LocalInspectionTool {
     void highlight(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String message,
                    @NotNull ProblemHighlightType highlightType,
                    LocalQuickFix @NotNull ... fixes);
+  }
+
+  public abstract static class HighlightSinkImpl implements HighlightSink {
+    /**
+     * Please highlight only elements withing originally traversed one
+     */
+    public abstract @NotNull ProblemsHolder getHolder();
   }
 
   @Nullable
