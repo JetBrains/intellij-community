@@ -95,3 +95,4 @@ fabric.properties
 *.class
 *.jar
 resources/TestProject/gradle-jvm/
+/about.html

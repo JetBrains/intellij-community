@@ -76,8 +76,10 @@ unlicensed = "deny"
 # See https://spdx.org/licenses/ for list of possible licenses
 # [possible values: any SPDX 3.11 short identifier (+ optional exception)].
 allow = [
-    #"MIT",
-    #"Apache-2.0",
+    "MIT",
+    "Apache-2.0",
+    "ISC", # libloading, MIT / Apache 2.0 alike
+    "Unicode-DFS-2016" # simplelog -> [..] -> unicode-ident
     #"Apache-2.0 WITH LLVM-exception",
 ]
 # List of explicitly disallowed licenses
@@ -87,7 +89,7 @@ deny = [
     #"Nokia",
 ]
 # Lint level for licenses considered copyleft
-copyleft = "warn"
+copyleft = "deny"
 # Blanket approval or denial for OSI-approved or FSF Free/Libre licenses
 # * both - The license will be approved if it is both OSI-approved *AND* FSF
 # * either - The license will be approved if it is either OSI-approved *OR* FSF
@@ -129,8 +131,8 @@ exceptions = [
 # and the crate will be checked normally, which may produce warnings or errors
 # depending on the rest of your configuration
 #license-files = [
-    # Each entry is a crate relative path, and the (opaque) hash of its contents
-    #{ path = "LICENSE", hash = 0xbd0eed23 }
+# Each entry is a crate relative path, and the (opaque) hash of its contents
+#{ path = "LICENSE", hash = 0xbd0eed23 }
 #]
 
 [licenses.private]
@@ -138,7 +140,7 @@ exceptions = [
 # published to private registries.
 # To see how to mark a crate as unpublished (to the official registry),
 # visit https://doc.rust-lang.org/cargo/reference/manifest.html#the-publish-field.
-ignore = false
+ignore = true
 # One or more private registries that you might publish crates to, if a crate
 # is only published to private registries, and ignore is true, the crate will
 # not have its license(s) checked
@@ -151,9 +153,9 @@ registries = [
 # https://embarkstudios.github.io/cargo-deny/checks/bans/cfg.html
 [bans]
 # Lint level for when multiple versions of the same crate are detected
-multiple-versions = "warn"
+multiple-versions = "deny"
 # Lint level for when a crate version requirement is `*`
-wildcards = "allow"
+wildcards = "deny"
 # The graph highlighting used when creating dotgraphs for crates
 # with multiple versions
 # * lowest-version - The path to the lowest versioned duplicate is highlighted
@@ -192,10 +194,10 @@ skip-tree = [
 [sources]
 # Lint level for what to happen when a crate from a crate registry that is not
 # in the allow list is encountered
-unknown-registry = "warn"
+unknown-registry = "deny"
 # Lint level for what to happen when a crate from a git repository that is not
 # in the allow list is encountered
-unknown-git = "warn"
+unknown-git = "deny"
 # List of URLs for allowed crate registries. Defaults to the crates.io index
 # if not specified. If it is specified but empty, no registries are allowed.
 allow-registry = ["https://github.com/rust-lang/crates.io-index"]
@@ -204,8 +206,8 @@ allow-git = []
 
 [sources.allow-org]
 # 1 or more github.com organizations to allow git sources for
-github = [""]
+#github = [""]
 # 1 or more gitlab.com organizations to allow git sources for
-gitlab = [""]
+#gitlab = [""]
 # 1 or more bitbucket.org organizations to allow git sources for
-bitbucket = [""]
+#bitbucket = [""]

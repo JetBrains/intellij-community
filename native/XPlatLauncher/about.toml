@@ -1,0 +1,6 @@
+accepted = [
+    "Apache-2.0",
+    "MIT",
+    "ISC", # libloading, MIT / Apache 2.0 alike
+    "Unicode-DFS-2016" # simplelog -> [..] -> unicode-ident
+]
