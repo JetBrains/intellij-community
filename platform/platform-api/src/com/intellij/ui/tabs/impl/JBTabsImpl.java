@@ -469,7 +469,6 @@ public class JBTabsImpl extends JComponent
 
     myScrollBar = new JBThinOverlappingScrollBar(isHorizontalTabs() ? Adjustable.HORIZONTAL : Adjustable.VERTICAL);
     add(myScrollBar, 0);
-    myScrollBar.setBounds(getScrollBarBounds());
     myScrollBar.setModel(myScrollBarModel);
     myScrollBar.toggle(myScrollBarOn);
     myScrollBar.setVisible(true);
@@ -553,8 +552,20 @@ public class JBTabsImpl extends JComponent
     if (!isWithScrollBar()) return new Rectangle(0, 0, 0, 0);
 
     switch (getTabsPosition()) {
-      case left:
-        return new Rectangle(0, 0, SCROLL_BAR_THICKNESS, getHeight());
+      case left: {
+        if (ExperimentalUI.isNewUI()) {
+          Rectangle tabsRect = myLastLayoutPass.getHeaderRectangle();
+          if (tabsRect != null) {
+            return new Rectangle(tabsRect.x + tabsRect.width - SCROLL_BAR_THICKNESS - 1, 0, SCROLL_BAR_THICKNESS, getHeight());
+          }
+          else {
+            return new Rectangle(0, 0, 0, 0);
+          }
+        }
+        else {
+          return new Rectangle(0, 0, SCROLL_BAR_THICKNESS, getHeight());
+        }
+      }
       case right:
         return new Rectangle(getWidth() - SCROLL_BAR_THICKNESS, 0, SCROLL_BAR_THICKNESS, getHeight());
       case top:
