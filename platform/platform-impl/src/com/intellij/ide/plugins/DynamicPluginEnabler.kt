@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.ide.feedback.kotlinRejecters.recordKotlinPluginDisabling
+import com.intellij.ide.feedback.kotlinRejecters.state.KotlinRejectersInfoService
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
@@ -15,35 +15,39 @@ internal class DynamicPluginEnabler : PluginEnabler {
     PluginEnabler.HEADLESS.isDisabled(pluginId)
 
   override fun enable(descriptors: Collection<IdeaPluginDescriptor>): Boolean =
-    updatePluginsState(descriptors, PluginEnableDisableAction.ENABLE_GLOBALLY)
+    enable(descriptors, project = null)
+
+  fun enable(
+    descriptors: Collection<IdeaPluginDescriptor>,
+    project: Project? = null,
+  ): Boolean {
+    PluginManagerUsageCollector.pluginsStateChanged(descriptors, enable = true, project)
+
+    PluginEnabler.HEADLESS.enable(descriptors)
+    return DynamicPlugins.loadPlugins(descriptors)
+  }
 
   override fun disable(descriptors: Collection<IdeaPluginDescriptor>): Boolean =
-    updatePluginsState(descriptors, PluginEnableDisableAction.DISABLE_GLOBALLY)
+    disable(descriptors, project = null)
 
-  @ApiStatus.Internal
-  @JvmOverloads
-  fun updatePluginsState(
+  fun disable(
     descriptors: Collection<IdeaPluginDescriptor>,
-    action: PluginEnableDisableAction,
     project: Project? = null,
     parentComponent: JComponent? = null,
   ): Boolean {
-    PluginManagerUsageCollector.pluginsStateChanged(descriptors, action, project)
-    recordKotlinPluginDisabling(descriptors, action)
+    PluginManagerUsageCollector.pluginsStateChanged(descriptors, enable = false, project)
 
-    return when (action) {
-      PluginEnableDisableAction.ENABLE_GLOBALLY -> {
-        PluginEnabler.HEADLESS.enable(descriptors)
-        DynamicPlugins.loadPlugins(descriptors)
-      }
-      PluginEnableDisableAction.DISABLE_GLOBALLY -> {
-        PluginEnabler.HEADLESS.disable(descriptors)
-        DynamicPlugins.unloadPlugins(
-          descriptors,
-          project,
-          parentComponent,
-        )
-      }
+    recordKotlinPluginDisabling(descriptors)
+
+    PluginEnabler.HEADLESS.disable(descriptors)
+    return DynamicPlugins.unloadPlugins(descriptors, project, parentComponent)
+  }
+
+  private fun recordKotlinPluginDisabling(descriptors: Collection<IdeaPluginDescriptor>) {
+    // Kotlin Plugin + 4 plugin dependency
+    if (descriptors.size <= 5
+        && descriptors.any { it.pluginId.idString == "org.jetbrains.kotlin" }) {
+      KotlinRejectersInfoService.getInstance().state.showNotificationAfterRestart = true
     }
   }
 }

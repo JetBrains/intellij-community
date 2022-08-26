@@ -234,17 +234,25 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
     boolean appliedWithoutRestart = true;
     for (Map.Entry<PluginEnableDisableAction, List<IdeaPluginDescriptor>> entry : descriptorsByAction.entrySet()) {
-      PluginEnableDisableAction action = entry.getKey();
+      boolean enable = entry.getKey().isEnable();
       List<IdeaPluginDescriptor> descriptors = entry.getValue();
 
-      appliedWithoutRestart &= pluginEnabler instanceof DynamicPluginEnabler ?
-                               ((DynamicPluginEnabler)pluginEnabler).updatePluginsState(descriptors,
-                                                                                        action,
-                                                                                        getProject(),
-                                                                                        parentComponent) :
-                               action.isEnable() ?
-                               pluginEnabler.enable(descriptors) :
-                               pluginEnabler.disable(descriptors);
+
+      boolean applied;
+      if (pluginEnabler instanceof DynamicPluginEnabler dynamicPluginEnabler) {
+        Project project = getProject();
+        applied = enable ?
+                  dynamicPluginEnabler.enable(descriptors, project) :
+                  dynamicPluginEnabler.disable(descriptors, project, parentComponent);
+      }
+      else {
+        applied = enable ?
+                  pluginEnabler.enable(descriptors) :
+                  pluginEnabler.disable(descriptors);
+      }
+
+
+      appliedWithoutRestart &= applied;
     }
     return appliedWithoutRestart;
   }
