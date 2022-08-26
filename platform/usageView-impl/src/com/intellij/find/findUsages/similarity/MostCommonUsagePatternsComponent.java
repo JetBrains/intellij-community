@@ -170,7 +170,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     });
   }
 
-  private void renderClusterDescription(@NotNull Collection<SimilarUsage> clusterUsages) {
+  private void renderClusterDescription(@NotNull Collection<@NotNull SimilarUsage> clusterUsages) {
     final Set<SimilarUsage> usagesFilteredByGroup = new HashSet<>(clusterUsages);
     SimilarUsage usage = ContainerUtil.getFirstItem(usagesFilteredByGroup);
     if (usage instanceof UsageInfo2UsageAdapter) {
