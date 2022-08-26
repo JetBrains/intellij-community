@@ -55,7 +55,7 @@ public class TestCaseLoader {
   private static final int TEST_RUNNER_INDEX = Integer.parseInt(System.getProperty(TEST_RUNNER_INDEX_FLAG, "0"));
 
 
-  private static final AtomicInteger CYCLIC_BUCKET_COUNTER = new AtomicInteger(1);
+  private static final AtomicInteger CYCLIC_BUCKET_COUNTER = new AtomicInteger(0);
   private static final HashMap<String, Integer> BUCKETS = new HashMap<>();
 
   /**
@@ -210,7 +210,7 @@ public class TestCaseLoader {
       BUCKETS.put(testIdentifier, CYCLIC_BUCKET_COUNTER.getAndIncrement());
     }
 
-    if (CYCLIC_BUCKET_COUNTER.get() > testRunnerCount) CYCLIC_BUCKET_COUNTER.set(1);
+    if (CYCLIC_BUCKET_COUNTER.get() == testRunnerCount) CYCLIC_BUCKET_COUNTER.set(0);
 
     return BUCKETS.get(testIdentifier) == testRunnerIndex;
   }
