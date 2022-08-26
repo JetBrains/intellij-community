@@ -66,6 +66,7 @@ class GradleRunner(
     val command = ArrayList<String>()
     command.add("${gradleProjectDir}/$gradleScript")
     command.add("-Djava.io.tmpdir=${System.getProperty("java.io.tmpdir")}")
+    command.add("-Dorg.gradle.internal.repository.max.retries=${options.resolveDependenciesMaxAttempts}")
     command.add("-Dorg.gradle.internal.repository.max.tentatives=${options.resolveDependenciesMaxAttempts}")
     command.add("-Dorg.gradle.internal.repository.initial.backoff=${options.resolveDependenciesDelayMs}")
     command.add("--stacktrace")
