@@ -190,6 +190,10 @@ data class IDETestContext(
     addSystemProperty("idea.diagnostic.opentelemetry.file", paths.logsDir.resolve(OPENTELEMETRY_FILE))
   }
 
+  fun enableVerboseOpenTelemetry() = addVMOptionsPatch {
+    addSystemProperty("idea.diagnostic.opentelemetry.verbose", true)
+  }
+
   fun enableWorkspaceModelVerboseLogs() = addVMOptionsPatch {
     configureLoggers(traceLoggers = listOf("com.intellij.workspaceModel"))
   }
