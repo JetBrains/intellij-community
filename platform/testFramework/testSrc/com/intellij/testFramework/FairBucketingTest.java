@@ -22,32 +22,33 @@ public class FairBucketingTest {
 
   private int totalBucketsCount = 5;
   private List<Data> testItems = Arrays.asList(
-    new Data("com.intellij.integrationTests.smoke.idea.IdeaBuildOnJavaTest", 0),
-    new Data("com.intellij.integrationTests.smoke.idea.IdeaBuildOnKotlinTest", 1),
-    new Data("com.intellij.integrationTests.smoke.idea.IdeaCleanImportMavenProjectTest", 2),
-    new Data("com.intellij.integrationTests.smoke.idea.IdeaCreateAllServicesAndExtensionsTest", 3),
-    new Data("com.intellij.integrationTests.smoke.idea.IdeaGenerationTurbochargedSharedIndexesTest", 4),
-    new Data("com.intellij.integrationTests.smoke.idea.IdeaIndexingJavaProjectTest", 0),
-    new Data("com.intellij.integrationTests.smoke.idea.IdeaInspectionOnJavaProjectTest", 1),
-    new Data("com.intellij.integrationTests.smoke.idea.IdeaInspectionOnKotlinProjectTest", 2),
-    new Data("com.intellij.integrationTests.smoke.idea.IdeaInspectionOnSpringProjectTest", 3),
-    new Data("com.intellij.integrationTests.smoke.idea.IdeaJdkClassesCheckOnRedAfterRestartTest", 4),
-    new Data("com.intellij.integrationTests.smoke.idea.IdeaKotlinGradleOpenFilesTest", 0),
-    new Data("com.intellij.integrationTests.smoke.idea.IdeaOpenGradleProjectTest", 1),
-    new Data("com.intellij.integrationTests.smoke.idea.IdeaOpenMavenProjectTest", 2),
-    new Data("com.intellij.integrationTests.smoke.idea.IdeaReopenKotlinProjectFromCacheTest", 3),
-    new Data("com.intellij.integrationTests.smoke.idea.IdeaSpringCloudOpenFilesTest", 4)
+    new Data("com.intellij.integrationTests.smoke.idea.IdeaBuildOnJavaTest", 1),
+    new Data("com.intellij.integrationTests.smoke.idea.IdeaBuildOnKotlinTest", 2),
+    new Data("com.intellij.integrationTests.smoke.idea.IdeaCleanImportMavenProjectTest", 3),
+    new Data("com.intellij.integrationTests.smoke.idea.IdeaCreateAllServicesAndExtensionsTest", 4),
+    new Data("com.intellij.integrationTests.smoke.idea.IdeaGenerationTurbochargedSharedIndexesTest", 5),
+    new Data("com.intellij.integrationTests.smoke.idea.IdeaIndexingJavaProjectTest", 1),
+    new Data("com.intellij.integrationTests.smoke.idea.IdeaInspectionOnJavaProjectTest", 2),
+    new Data("com.intellij.integrationTests.smoke.idea.IdeaInspectionOnKotlinProjectTest", 3),
+    new Data("com.intellij.integrationTests.smoke.idea.IdeaInspectionOnSpringProjectTest", 4),
+    new Data("com.intellij.integrationTests.smoke.idea.IdeaJdkClassesCheckOnRedAfterRestartTest", 5),
+    new Data("com.intellij.integrationTests.smoke.idea.IdeaKotlinGradleOpenFilesTest", 1),
+    new Data("com.intellij.integrationTests.smoke.idea.IdeaOpenGradleProjectTest", 2),
+    new Data("com.intellij.integrationTests.smoke.idea.IdeaOpenMavenProjectTest", 3),
+    new Data("com.intellij.integrationTests.smoke.idea.IdeaReopenKotlinProjectFromCacheTest", 4),
+    new Data("com.intellij.integrationTests.smoke.idea.IdeaSpringCloudOpenFilesTest", 5)
   );
 
   @Test
   public void fairBucketingWorks() {
-    for (int currentBucket = 0; currentBucket < totalBucketsCount; currentBucket++) {
+    for (int currentBucket = 1; currentBucket <= totalBucketsCount; currentBucket++) {
       for (var testData : testItems) {
-        var isMatchedBucket = testData.expectedBucket == currentBucket;
+        var expectedMatch = testData.expectedBucket == currentBucket;
+        var isMatchedCurrentBucket = TestCaseLoader.matchesCurrentBucketFair(testData.className, totalBucketsCount, currentBucket);
 
-        Assert.assertEquals(String.format("Class `%s` should be in bucket %s", testData.className, currentBucket),
-                            isMatchedBucket,
-                            TestCaseLoader.matchesCurrentBucketFair(testData.className, totalBucketsCount, currentBucket));
+        var errorMessage = String.format("Class `%s` should be in bucket %s. Actual bucket is %s. Expected match: %s Actual match: %s",
+                                         testData.className, testData.expectedBucket, currentBucket, expectedMatch, isMatchedCurrentBucket);
+        Assert.assertEquals(errorMessage, expectedMatch, isMatchedCurrentBucket);
       }
     }
   }
