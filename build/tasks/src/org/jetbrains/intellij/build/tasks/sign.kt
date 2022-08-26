@@ -396,7 +396,7 @@ private fun removeDir(ssh: SSHClient, remoteDir: String) {
   tracer.spanBuilder("remove remote dir").setAttribute("remoteDir", remoteDir).use {
     ssh.startSession().use { session ->
       val command = session.exec("rm -rf '$remoteDir'")
-      command.join(30, TimeUnit.SECONDS)
+      command.join(5, TimeUnit.MINUTES)
       // must be called before checking exit code
       command.close()
       if (command.exitStatus != 0) {
