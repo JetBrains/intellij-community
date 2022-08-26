@@ -22,22 +22,28 @@ import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.util.containers.MultiMap
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.coroutineContext
 
-open class PluginAdvertiserService {
-
-  private val notificationManager: SingletonNotificationManager =
-    SingletonNotificationManager(notificationGroup.displayId, NotificationType.INFORMATION)
+open class PluginAdvertiserService(private val project: Project) {
 
   companion object {
 
+    private val notificationManager = SingletonNotificationManager(notificationGroup.displayId, NotificationType.INFORMATION)
+
     @JvmStatic
-    fun getInstance(): PluginAdvertiserService = service()
+    fun getInstance(project: Project): PluginAdvertiserService = project.service()
+
+    @JvmStatic
+    fun rescanDependencies(project: Project) {
+      project.coroutineScope.launch {
+        getInstance(project).rescanDependencies()
+      }
+    }
   }
 
   open suspend fun run(
-    project: Project,
     customPlugins: List<PluginNode>,
     unknownFeatures: Collection<UnknownFeature>,
     includeIgnored: Boolean = false
@@ -103,7 +109,6 @@ open class PluginAdvertiserService {
 
     ApplicationManager.getApplication().invokeLater(
       notifyUser(
-        project = project,
         bundledPlugins = getBundledPluginToInstall(plugins, descriptorsById),
         suggestionPlugins = suggestToInstall,
         disabledDescriptors = disabledDescriptors,
@@ -142,7 +147,6 @@ open class PluginAdvertiserService {
   }
 
   private fun notifyUser(
-    project: Project,
     bundledPlugins: List<String>,
     suggestionPlugins: List<PluginDownloader>,
     disabledDescriptors: List<IdeaPluginDescriptorImpl>,
@@ -179,7 +183,7 @@ open class PluginAdvertiserService {
 
       val notificationActions = listOf(
         action,
-        createIgnoreUnknownFeaturesAction(project, suggestionPlugins, disabledDescriptors, allUnknownFeatures, dependencies),
+        createIgnoreUnknownFeaturesAction(suggestionPlugins, disabledDescriptors, allUnknownFeatures, dependencies),
       )
       val messagePresentation = getAddressedMessagePresentation(suggestionPlugins, disabledDescriptors, featuresMap)
 
@@ -213,11 +217,12 @@ open class PluginAdvertiserService {
     }
   }
 
-  private fun createIgnoreUnknownFeaturesAction(project: Project,
-                                                plugins: Collection<PluginDownloader>,
-                                                disabledPlugins: Collection<IdeaPluginDescriptor>,
-                                                unknownFeatures: Collection<UnknownFeature>,
-                                                dependencyPlugins: PluginFeatureMap?): NotificationAction {
+  private fun createIgnoreUnknownFeaturesAction(
+    plugins: Collection<PluginDownloader>,
+    disabledPlugins: Collection<IdeaPluginDescriptor>,
+    unknownFeatures: Collection<UnknownFeature>,
+    dependencyPlugins: PluginFeatureMap?,
+  ): NotificationAction {
     val ids = plugins.mapTo(LinkedHashSet()) { it.id } +
               disabledPlugins.map { it.pluginId }
 
@@ -312,7 +317,7 @@ open class PluginAdvertiserService {
   }
 
   @ApiStatus.Internal
-  open fun collectDependencyUnknownFeatures(project: Project, includeIgnored: Boolean = false) {
+  open fun collectDependencyUnknownFeatures(includeIgnored: Boolean = false) {
     val featuresCollector = UnknownFeaturesCollector.getInstance(project)
 
     featuresCollector.getUnknownFeaturesOfType(DEPENDENCY_SUPPORT_FEATURE)
@@ -334,8 +339,10 @@ open class PluginAdvertiserService {
       }
   }
 
-  protected fun collectFeaturesByName(ids: Set<PluginId>,
-                                      features: MultiMap<PluginId, UnknownFeature>): MultiMap<String, String> {
+  private fun collectFeaturesByName(
+    ids: Set<PluginId>,
+    features: MultiMap<PluginId, UnknownFeature>,
+  ): MultiMap<String, String> {
     val result = MultiMap.createSet<String, String>()
     ids
       .flatMap { features[it] }
@@ -343,12 +350,12 @@ open class PluginAdvertiserService {
     return result
   }
 
-  suspend fun rescanDependencies(project: Project) {
-    collectDependencyUnknownFeatures(project)
+  suspend fun rescanDependencies() {
+    collectDependencyUnknownFeatures()
+
     val dependencyUnknownFeatures = UnknownFeaturesCollector.getInstance(project).unknownFeatures
     if (dependencyUnknownFeatures.isNotEmpty()) {
-      getInstance().run(
-        project = project,
+      run(
         customPlugins = loadPluginsFromCustomRepositories(),
         unknownFeatures = dependencyUnknownFeatures,
       )
