@@ -637,6 +637,18 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     }
   }
 
+  public void testDropAllUnsavedDocuments() throws Exception {
+    VirtualFile file = createFile("test.txt", "unedited");
+    Document document = myDocumentManager.getDocument(file);
+    assertEquals("unedited", document.getText());
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.setText("edited"));
+    assertEquals("edited", myDocumentManager.getDocument(file).getText());
+
+    ApplicationManager.getApplication().runWriteAction(myDocumentManager::dropAllUnsavedDocuments);
+    assertEquals("unedited", myDocumentManager.getDocument(file).getText());
+  }
+
   private static void checkDocumentFiles(List<VirtualFile> files) throws Exception {
     FileDocumentManager fdm = FileDocumentManager.getInstance();
 
