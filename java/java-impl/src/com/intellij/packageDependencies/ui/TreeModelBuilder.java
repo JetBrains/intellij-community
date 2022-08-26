@@ -281,7 +281,7 @@ public class TreeModelBuilder {
     final VirtualFile containingDirectory = vFile.getParent();
     LOG.assertTrue(containingDirectory != null);
     PsiPackage aPackage = null;
-    final String packageName = myFileIndex.getPackageNameByDirectory(containingDirectory);
+    final String packageName = PackageIndex.getInstance(myProject).getPackageNameByDirectory(containingDirectory);
     if (packageName != null) {
       aPackage = myJavaPsiFacade.findPackage(packageName);
     }
