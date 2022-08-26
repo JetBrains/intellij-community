@@ -32,6 +32,7 @@ import java.util.*;
  *
  * @author Eric D. Friedman
  */
+@Deprecated
 public class THashMap<K, V> extends TObjectHash<K> implements Map<K, V> {
 
   /**
@@ -234,17 +235,6 @@ public class THashMap<K, V> extends TObjectHash<K> implements Map<K, V> {
       V oValue = _otherMap.get(key);
       return Objects.equals(oValue, value);
     }
-  }
-
-  /**
-   * Executes <tt>procedure</tt> for each key in the map.
-   *
-   * @param procedure a <code>TObjectProcedure</code> value
-   * @return false if the loop over the keys terminated because
-   * the procedure returned false for some key.
-   */
-  public boolean forEachKey(TObjectProcedure<K> procedure) {
-    return forEach(procedure);
   }
 
   /**

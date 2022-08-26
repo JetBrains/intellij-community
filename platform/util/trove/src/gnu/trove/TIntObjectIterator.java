@@ -86,7 +86,7 @@ import java.util.ConcurrentModificationException;
  *
  * @author Eric D. Friedman
  */
-public class TIntObjectIterator<V> extends TIterator {
+public final class TIntObjectIterator<V> extends TIterator {
   /**
    * the collection being iterated over
    */

@@ -29,6 +29,7 @@ import java.io.ObjectOutputStream;
  *
  * @author Eric D. Friedman
  */
+@Deprecated
 public class TObjectIntHashMap<K> extends TObjectHash<K> {
 
   /**

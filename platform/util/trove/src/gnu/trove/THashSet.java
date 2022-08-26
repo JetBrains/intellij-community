@@ -35,7 +35,7 @@ import java.util.Set;
  * @author Eric D. Friedman
  * @version $Id: THashSet.java,v 1.5 2004/09/24 09:11:15 cdr Exp $
  */
-
+@Deprecated
 public class THashSet<E> extends TObjectHash<E> implements Set<E> {
 
   /**
@@ -216,8 +216,16 @@ public class THashSet<E> extends TObjectHash<E> implements Set<E> {
    */
   @Override
   public Object[] toArray() {
-    Object[] result = new Object[size()];
-    forEach(new ToObjectArrayProcedure(result));
+    final Object[] result = new Object[size()];
+    forEach(new TObjectProcedure() {
+      private int pos;
+
+      @Override
+      public boolean execute(Object value) {
+        result[pos++] = value;
+        return true;
+      }
+    });
     return result;
   }
 

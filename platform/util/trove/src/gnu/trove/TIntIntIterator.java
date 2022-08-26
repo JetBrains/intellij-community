@@ -84,8 +84,8 @@ package gnu.trove;
  *
  * @author Eric D. Friedman
  */
-
-public class TIntIntIterator extends TPrimitiveIterator {
+@Deprecated
+public final class TIntIntIterator extends TPrimitiveIterator {
   /**
    * the collection being iterated over
    */

@@ -38,12 +38,6 @@ import java.util.Arrays;
  */
 public final class PrimeFinder {
   /**
-   * The largest prime this class can generate; currently equal to
-   * <tt>Integer.MAX_VALUE</tt>.
-   */
-  public static final int largestPrime = Integer.MAX_VALUE; //yes, it is prime.
-
-  /**
    * The prime number list.
    * Primes are chosen such that for any desired capacity >= 1000
    * the list includes a prime number <= desired capacity * 1.11.

@@ -30,22 +30,22 @@ import java.util.Objects;
  *
  * @author Eric D. Friedman
  */
-public class TIntObjectHashMap<V> extends THash implements TIntHashingStrategy {
+public final class TIntObjectHashMap<V> extends THash implements TIntHashingStrategy {
 
   /**
    * the values of the map
    */
-  protected transient V[] _values;
+  transient V[] _values;
 
   /**
    * the set of ints
    */
-  protected transient int[] _set;
+  transient int[] _set;
 
   /**
    * strategy used to hash values in this collection
    */
-  protected final TIntHashingStrategy _hashingStrategy;
+  private final TIntHashingStrategy _hashingStrategy;
 
   /**
    * Creates a new <code>TIntObjectHashMap</code> instance with the default
@@ -301,7 +301,7 @@ public class TIntObjectHashMap<V> extends THash implements TIntHashingStrategy {
    * @param val an <code>int</code> value
    * @return the index of <tt>val</tt> or -1 if it isn't in the set.
    */
-  protected int index(int val) {
+  private int index(int val) {
     int[] set = _set;
     Object[] values = _values;
     if (values == EMPTY_OBJECT_ARRAY) return -1;
@@ -335,7 +335,7 @@ public class TIntObjectHashMap<V> extends THash implements TIntHashingStrategy {
    * @param val an <code>int</code> value
    * @return an <code>int</code> value
    */
-  protected int insertionIndex(int val) {
+  private int insertionIndex(int val) {
     if (_values == EMPTY_OBJECT_ARRAY) {
       setUp((int)(DEFAULT_INITIAL_CAPACITY / DEFAULT_LOAD_FACTOR + 1));
     }

@@ -30,22 +30,23 @@ import java.util.Objects;
  *
  * @author Eric D. Friedman
  */
-public class TLongObjectHashMap<V> extends THash implements TLongHashingStrategy {
+@Deprecated
+public final class TLongObjectHashMap<V> extends THash implements TLongHashingStrategy {
 
   /**
    * the values of the map
    */
-  protected transient V[] _values;
+  private transient V[] _values;
 
   /**
    * the set of longs
    */
-  protected transient long[] _set;
+  private transient long[] _set;
 
   /**
    * strategy used to hash values in this collection
    */
-  protected final TLongHashingStrategy _hashingStrategy;
+  private final TLongHashingStrategy _hashingStrategy;
 
   /**
    * Creates a new <code>TLongObjectHashMap</code> instance with the default
@@ -126,13 +127,6 @@ public class TLongObjectHashMap<V> extends THash implements TLongHashingStrategy
     m._values = _values == EMPTY_OBJECT_ARRAY ? (V[])EMPTY_OBJECT_ARRAY : _values.clone();
     m._set = _values == EMPTY_OBJECT_ARRAY ? null : _set.clone();
     return m;
-  }
-
-  /**
-   * @return a TLongObjectIterator with access to this map's keys and values
-   */
-  public TLongObjectIterator<V> iterator() {
-    return new TLongObjectIterator<>(this);
   }
 
   /**
@@ -301,7 +295,7 @@ public class TLongObjectHashMap<V> extends THash implements TLongHashingStrategy
    * @param val an <code>long</code> value
    * @return the index of <tt>val</tt> or -1 if it isn't in the set.
    */
-  protected int index(long val) {
+  private int index(long val) {
     long[] set = _set;
     Object[] values = _values;
     if (values == EMPTY_OBJECT_ARRAY) return -1;
@@ -335,7 +329,7 @@ public class TLongObjectHashMap<V> extends THash implements TLongHashingStrategy
    * @param val an <code>long</code> value
    * @return an <code>int</code> value
    */
-  protected int insertionIndex(long val) {
+  private int insertionIndex(long val) {
     if (_values == EMPTY_OBJECT_ARRAY) {
       setUp((int)(DEFAULT_INITIAL_CAPACITY / DEFAULT_LOAD_FACTOR + 1));
     }

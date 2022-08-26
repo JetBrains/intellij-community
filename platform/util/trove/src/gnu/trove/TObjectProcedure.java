@@ -20,7 +20,7 @@
 package gnu.trove;
 
 /**
- * Interface for procedures with one Object paramater.
+ * Interface for procedures with one Object parameter.
  * <p>
  * Created: Mon Nov  5 21:45:49 2001
  *

@@ -33,22 +33,23 @@ import java.util.Random;
  *
  * @author Eric D. Friedman
  */
-public class TLongArrayList implements Serializable, Cloneable {
+@Deprecated
+public final class TLongArrayList implements Serializable, Cloneable {
 
   /**
    * the data of the list
    */
-  protected transient long[] _data; // null means the array list was just created
+  private transient long[] _data; // null means the array list was just created
 
   /**
    * the index after the last entry in the list
    */
-  protected transient int _pos;
+  private transient int _pos;
 
   /**
    * the default capacity for new lists
    */
-  protected static final int DEFAULT_CAPACITY = 4;
+  private static final int DEFAULT_CAPACITY = 4;
 
   /**
    * Creates a new <code>TLongArrayList</code> instance with the

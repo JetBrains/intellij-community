@@ -112,13 +112,6 @@ public class TIntLongHashMap extends TIntHash {
   }
 
   /**
-   * @return a TIntLongIterator with access to this map's keys and values
-   */
-  public TIntLongIterator iterator() {
-    return new TIntLongIterator(this);
-  }
-
-  /**
    * initializes the hashtable to a prime capacity which is at least
    * <tt>initialCapacity + 1</tt>.
    *
@@ -375,17 +368,6 @@ public class TIntLongHashMap extends TIntHash {
    */
   public boolean containsKey(int key) {
     return contains(key);
-  }
-
-  /**
-   * Executes <tt>procedure</tt> for each key in the map.
-   *
-   * @param procedure a <code>TIntProcedure</code> value
-   * @return false if the loop over the keys terminated because
-   * the procedure returned false for some key.
-   */
-  public boolean forEachKey(TIntProcedure procedure) {
-    return forEach(procedure);
   }
 
   /**

@@ -28,12 +28,12 @@ package gnu.trove;
  * @version $Id: TIntStack.java,v 1.5 2004/09/24 09:11:15 cdr Exp $
  */
 
-public class TIntStack {
+public final class TIntStack {
 
   /**
    * the list used to hold the stack values.
    */
-  protected TIntArrayList _list;
+  private TIntArrayList _list;
 
   public static final int DEFAULT_CAPACITY = TIntArrayList.DEFAULT_CAPACITY;
 

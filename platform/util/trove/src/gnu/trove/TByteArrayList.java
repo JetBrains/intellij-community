@@ -33,6 +33,9 @@ import java.util.Random;
  *
  * @author Eric D. Friedman
  */
+// used externally
+@SuppressWarnings("unused")
+@Deprecated
 public class TByteArrayList implements Serializable, Cloneable {
 
   /**

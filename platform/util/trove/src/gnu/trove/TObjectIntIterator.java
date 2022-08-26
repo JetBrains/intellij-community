@@ -87,7 +87,7 @@ import java.util.ConcurrentModificationException;
  * @author Eric D. Friedman
  */
 
-public class TObjectIntIterator<K> extends TIterator {
+public final class TObjectIntIterator<K> extends TIterator {
   private final TObjectIntHashMap<K> _map;
 
   public TObjectIntIterator(TObjectIntHashMap<K> map) {

@@ -30,7 +30,7 @@ import java.util.Arrays;
  *
  * @author Eric D. Friedman
  */
-
+@Deprecated
 public class TLongHashSet extends TLongHash {
 
   /**
@@ -119,13 +119,6 @@ public class TLongHashSet extends TLongHash {
   public TLongHashSet(long[] array, TLongHashingStrategy strategy) {
     this(array.length, strategy);
     addAll(array);
-  }
-
-  /**
-   * @return a TLongIterator with access to the values in this set
-   */
-  public TLongIterator iterator() {
-    return new TLongIterator(this);
   }
 
   /**

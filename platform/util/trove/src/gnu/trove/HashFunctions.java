@@ -18,7 +18,7 @@ package gnu.trove;
  * @author wolfgang.hoschek@cern.ch
  * @version 1.0, 09/24/99
  */
-public final class HashFunctions {
+final class HashFunctions {
   /**
    * Returns a hashcode for the specified value.
    *

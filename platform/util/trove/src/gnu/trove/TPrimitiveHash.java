@@ -31,7 +31,7 @@ package gnu.trove;
  * @author Eric D. Friedman
  * @version $Id: TPrimitiveHash.java,v 1.8 2004/09/24 09:11:15 cdr Exp $
  */
-
+@Deprecated
 public abstract class TPrimitiveHash extends THash {
   /**
    * flags indicating whether each position in the hash is

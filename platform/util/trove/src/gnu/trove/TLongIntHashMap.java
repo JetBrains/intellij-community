@@ -29,6 +29,7 @@ import java.io.ObjectOutputStream;
  *
  * @author Eric D. Friedman
  */
+@Deprecated
 public class TLongIntHashMap extends TLongHash {
 
   /**
@@ -111,12 +112,6 @@ public class TLongIntHashMap extends TLongHash {
     return m;
   }
 
-  /**
-   * @return a TLongIntIterator with access to this map's keys and values
-   */
-  public TLongIntIterator iterator() {
-    return new TLongIntIterator(this);
-  }
 
   /**
    * initializes the hashtable to a prime capacity which is at least
@@ -375,17 +370,6 @@ public class TLongIntHashMap extends TLongHash {
    */
   public boolean containsKey(long key) {
     return contains(key);
-  }
-
-  /**
-   * Executes <tt>procedure</tt> for each key in the map.
-   *
-   * @param procedure a <code>TLongProcedure</code> value
-   * @return false if the loop over the keys terminated because
-   * the procedure returned false for some key.
-   */
-  public boolean forEachKey(TLongProcedure procedure) {
-    return forEach(procedure);
   }
 
   /**

@@ -33,22 +33,23 @@ import java.util.Random;
  *
  * @author Eric D. Friedman
  */
-public class TIntArrayList implements Serializable, Cloneable {
+@Deprecated
+public final class TIntArrayList implements Serializable, Cloneable {
 
   /**
    * the data of the list
    */
-  protected transient int[] _data; // null means the array list was just created
+  private transient int[] _data; // null means the array list was just created
 
   /**
    * the index after the last entry in the list
    */
-  protected transient int _pos;
+  private transient int _pos;
 
   /**
    * the default capacity for new lists
    */
-  protected static final int DEFAULT_CAPACITY = 4;
+  static final int DEFAULT_CAPACITY = 4;
 
   /**
    * Creates a new <code>TIntArrayList</code> instance with the

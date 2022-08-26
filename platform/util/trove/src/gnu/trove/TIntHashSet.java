@@ -30,8 +30,8 @@ import java.util.Arrays;
  *
  * @author Eric D. Friedman
  */
-
-public class TIntHashSet extends TIntHash {
+@Deprecated
+public final class TIntHashSet extends TIntHash {
 
   /**
    * Creates a new <code>TIntHashSet</code> instance with the default

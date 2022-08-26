@@ -38,45 +38,15 @@ import java.io.ObjectOutputStream;
  * @version $Id: SerializationProcedure.java,v 1.6 2004/09/24 09:11:15 cdr Exp $
  */
 
-class SerializationProcedure implements
-                             TDoubleByteProcedure,
-                             TDoubleDoubleProcedure,
-                             TDoubleFloatProcedure,
-                             TDoubleIntProcedure,
-                             TDoubleLongProcedure,
-                             TDoubleObjectProcedure,
-                             TDoubleProcedure,
-                             TFloatByteProcedure,
-                             TFloatDoubleProcedure,
-                             TFloatFloatProcedure,
-                             TFloatIntProcedure,
-                             TFloatLongProcedure,
-                             TFloatObjectProcedure,
-                             TFloatProcedure,
-                             TIntByteProcedure,
-                             TIntDoubleProcedure,
-                             TIntFloatProcedure,
+final class SerializationProcedure implements
                              TIntIntProcedure,
                              TIntLongProcedure,
                              TIntObjectProcedure,
                              TIntProcedure,
-                             TByteByteProcedure,
-                             TByteDoubleProcedure,
-                             TByteFloatProcedure,
-                             TByteIntProcedure,
-                             TByteLongProcedure,
-                             TByteObjectProcedure,
                              TByteProcedure,
-                             TLongByteProcedure,
-                             TLongDoubleProcedure,
-                             TLongFloatProcedure,
                              TLongIntProcedure,
-                             TLongLongProcedure,
                              TLongObjectProcedure,
                              TLongProcedure,
-                             TObjectByteProcedure,
-                             TObjectDoubleProcedure,
-                             TObjectFloatProcedure,
                              TObjectIntProcedure,
                              TObjectLongProcedure,
                              TObjectObjectProcedure,
@@ -117,19 +87,6 @@ class SerializationProcedure implements
 
 
   @Override
-  public boolean execute(double val) {
-    try {
-      stream.writeDouble(val);
-    }
-    catch (IOException e) {
-      exception = e;
-      return false;
-    }
-    return true;
-  }
-
-
-  @Override
   public boolean execute(long val) {
     try {
       stream.writeLong(val);
@@ -140,33 +97,6 @@ class SerializationProcedure implements
     }
     return true;
   }
-
-
-  @Override
-  public boolean execute(float val) {
-    try {
-      stream.writeFloat(val);
-    }
-    catch (IOException e) {
-      exception = e;
-      return false;
-    }
-    return true;
-  }
-
-
-  @Override
-  public boolean execute(Object val) {
-    try {
-      stream.writeObject(val);
-    }
-    catch (IOException e) {
-      exception = e;
-      return false;
-    }
-    return true;
-  }
-
 
   @Override
   public boolean execute(Object key, Object val) {
@@ -181,6 +111,17 @@ class SerializationProcedure implements
     return true;
   }
 
+  @Override
+  public boolean execute(Object val) {
+    try {
+      stream.writeObject(val);
+    }
+    catch (IOException e) {
+      exception = e;
+      return false;
+    }
+    return true;
+  }
 
   @Override
   public boolean execute(Object key, int val) {
@@ -195,21 +136,6 @@ class SerializationProcedure implements
     return true;
   }
 
-
-  @Override
-  public boolean execute(Object key, byte val) {
-    try {
-      stream.writeObject(key);
-      stream.writeByte(val);
-    }
-    catch (IOException e) {
-      exception = e;
-      return false;
-    }
-    return true;
-  }
-
-
   @Override
   public boolean execute(Object key, long val) {
     try {
@@ -222,35 +148,6 @@ class SerializationProcedure implements
     }
     return true;
   }
-
-
-  @Override
-  public boolean execute(Object key, double val) {
-    try {
-      stream.writeObject(key);
-      stream.writeDouble(val);
-    }
-    catch (IOException e) {
-      exception = e;
-      return false;
-    }
-    return true;
-  }
-
-
-  @Override
-  public boolean execute(Object key, float val) {
-    try {
-      stream.writeObject(key);
-      stream.writeFloat(val);
-    }
-    catch (IOException e) {
-      exception = e;
-      return false;
-    }
-    return true;
-  }
-
 
   @Override
   public boolean execute(int key, Object val) {
@@ -293,119 +190,6 @@ class SerializationProcedure implements
     return true;
   }
 
-
-  @Override
-  public boolean execute(int key, double val) {
-    try {
-      stream.writeInt(key);
-      stream.writeDouble(val);
-    }
-    catch (IOException e) {
-      exception = e;
-      return false;
-    }
-    return true;
-  }
-
-
-  @Override
-  public boolean execute(int key, float val) {
-    try {
-      stream.writeInt(key);
-      stream.writeFloat(val);
-    }
-    catch (IOException e) {
-      exception = e;
-      return false;
-    }
-    return true;
-  }
-
-
-  @Override
-  public boolean execute(byte key, byte val) {
-    try {
-      stream.writeByte(key);
-      stream.writeByte(val);
-    }
-    catch (IOException e) {
-      exception = e;
-      return false;
-    }
-    return true;
-  }
-
-
-  @Override
-  public boolean execute(byte key, Object val) {
-    try {
-      stream.writeByte(key);
-      stream.writeObject(val);
-    }
-    catch (IOException e) {
-      exception = e;
-      return false;
-    }
-    return true;
-  }
-
-
-  @Override
-  public boolean execute(byte key, int val) {
-    try {
-      stream.writeByte(key);
-      stream.writeInt(val);
-    }
-    catch (IOException e) {
-      exception = e;
-      return false;
-    }
-    return true;
-  }
-
-
-  @Override
-  public boolean execute(byte key, long val) {
-    try {
-      stream.writeByte(key);
-      stream.writeLong(val);
-    }
-    catch (IOException e) {
-      exception = e;
-      return false;
-    }
-    return true;
-  }
-
-
-  @Override
-  public boolean execute(byte key, double val) {
-    try {
-      stream.writeByte(key);
-      stream.writeDouble(val);
-    }
-    catch (IOException e) {
-      exception = e;
-      return false;
-    }
-    return true;
-  }
-
-
-  @Override
-  public boolean execute(byte key, float val) {
-    try {
-      stream.writeByte(key);
-      stream.writeFloat(val);
-    }
-    catch (IOException e) {
-      exception = e;
-      return false;
-    }
-    return true;
-  }
-
-
   @Override
   public boolean execute(long key, Object val) {
     try {
@@ -425,244 +209,6 @@ class SerializationProcedure implements
     try {
       stream.writeLong(key);
       stream.writeInt(val);
-    }
-    catch (IOException e) {
-      exception = e;
-      return false;
-    }
-    return true;
-  }
-
-
-  @Override
-  public boolean execute(long key, long val) {
-    try {
-      stream.writeLong(key);
-      stream.writeLong(val);
-    }
-    catch (IOException e) {
-      exception = e;
-      return false;
-    }
-    return true;
-  }
-
-
-  @Override
-  public boolean execute(long key, double val) {
-    try {
-      stream.writeLong(key);
-      stream.writeDouble(val);
-    }
-    catch (IOException e) {
-      exception = e;
-      return false;
-    }
-    return true;
-  }
-
-
-  @Override
-  public boolean execute(long key, float val) {
-    try {
-      stream.writeLong(key);
-      stream.writeFloat(val);
-    }
-    catch (IOException e) {
-      exception = e;
-      return false;
-    }
-    return true;
-  }
-
-
-  @Override
-  public boolean execute(double key, Object val) {
-    try {
-      stream.writeDouble(key);
-      stream.writeObject(val);
-    }
-    catch (IOException e) {
-      exception = e;
-      return false;
-    }
-    return true;
-  }
-
-
-  @Override
-  public boolean execute(double key, int val) {
-    try {
-      stream.writeDouble(key);
-      stream.writeInt(val);
-    }
-    catch (IOException e) {
-      exception = e;
-      return false;
-    }
-    return true;
-  }
-
-
-  @Override
-  public boolean execute(double key, long val) {
-    try {
-      stream.writeDouble(key);
-      stream.writeLong(val);
-    }
-    catch (IOException e) {
-      exception = e;
-      return false;
-    }
-    return true;
-  }
-
-
-  @Override
-  public boolean execute(double key, double val) {
-    try {
-      stream.writeDouble(key);
-      stream.writeDouble(val);
-    }
-    catch (IOException e) {
-      exception = e;
-      return false;
-    }
-    return true;
-  }
-
-
-  @Override
-  public boolean execute(double key, float val) {
-    try {
-      stream.writeDouble(key);
-      stream.writeFloat(val);
-    }
-    catch (IOException e) {
-      exception = e;
-      return false;
-    }
-    return true;
-  }
-
-
-  @Override
-  public boolean execute(float key, Object val) {
-    try {
-      stream.writeFloat(key);
-      stream.writeObject(val);
-    }
-    catch (IOException e) {
-      exception = e;
-      return false;
-    }
-    return true;
-  }
-
-
-  @Override
-  public boolean execute(float key, int val) {
-    try {
-      stream.writeFloat(key);
-      stream.writeInt(val);
-    }
-    catch (IOException e) {
-      exception = e;
-      return false;
-    }
-    return true;
-  }
-
-
-  @Override
-  public boolean execute(float key, long val) {
-    try {
-      stream.writeFloat(key);
-      stream.writeLong(val);
-    }
-    catch (IOException e) {
-      exception = e;
-      return false;
-    }
-    return true;
-  }
-
-
-  @Override
-  public boolean execute(float key, double val) {
-    try {
-      stream.writeFloat(key);
-      stream.writeDouble(val);
-    }
-    catch (IOException e) {
-      exception = e;
-      return false;
-    }
-    return true;
-  }
-
-
-  @Override
-  public boolean execute(float key, float val) {
-    try {
-      stream.writeFloat(key);
-      stream.writeFloat(val);
-    }
-    catch (IOException e) {
-      exception = e;
-      return false;
-    }
-    return true;
-  }
-
-
-  @Override
-  public boolean execute(double key, byte val) {
-    try {
-      stream.writeDouble(key);
-      stream.writeByte(val);
-    }
-    catch (IOException e) {
-      exception = e;
-      return false;
-    }
-    return true;
-  }
-
-
-  @Override
-  public boolean execute(float key, byte val) {
-    try {
-      stream.writeFloat(key);
-      stream.writeByte(val);
-    }
-    catch (IOException e) {
-      exception = e;
-      return false;
-    }
-    return true;
-  }
-
-
-  @Override
-  public boolean execute(int key, byte val) {
-    try {
-      stream.writeInt(key);
-      stream.writeByte(val);
-    }
-    catch (IOException e) {
-      exception = e;
-      return false;
-    }
-    return true;
-  }
-
-
-  @Override
-  public boolean execute(long key, byte val) {
-    try {
-      stream.writeLong(key);
-      stream.writeByte(val);
     }
     catch (IOException e) {
       exception = e;

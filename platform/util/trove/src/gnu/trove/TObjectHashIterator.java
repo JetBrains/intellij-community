@@ -26,8 +26,8 @@ package gnu.trove;
  * @version $Id: TObjectHashIterator.java,v 1.8 2004/09/24 09:11:15 cdr Exp $
  */
 
-class TObjectHashIterator<E> extends THashIterator<E> {
-  protected final TObjectHash<E> _objectHash;
+final class TObjectHashIterator<E> extends THashIterator<E> {
+  private final TObjectHash<E> _objectHash;
 
   TObjectHashIterator(TObjectHash<E> hash) {
     super(hash);
