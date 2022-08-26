@@ -58,7 +58,9 @@ public class TestCaseLoader {
   private static final AtomicInteger CYCLIC_BUCKET_COUNTER = new AtomicInteger(0);
   private static final HashMap<String, Integer> BUCKETS = new HashMap<>();
 
-  /** Split tests into buckets equally across all the buckets */
+  /**
+   * Split tests into buckets equally across all the buckets
+   */
   private static final boolean IS_FAIR_BUCKETING = "true".equals(System.getProperty(FAIR_BUCKETING_FLAG));
 
   /**
@@ -193,18 +195,24 @@ public class TestCaseLoader {
       return MathUtil.nonNegativeAbs(testIdentifier.hashCode()) % TEST_RUNNERS_COUNT == TEST_RUNNER_INDEX;
     }
 
+    return matchesCurrentBucketFair(testIdentifier, TEST_RUNNERS_COUNT, TEST_RUNNER_INDEX);
+  }
+
+  public synchronized static boolean matchesCurrentBucketFair(@NotNull String testIdentifier,
+                                                              int testRunnerCount,
+                                                              int testRunnerIndex) {
     var value = BUCKETS.get(testIdentifier);
 
     if (value != null) {
-      return value == TEST_RUNNER_INDEX;
+      return value == testRunnerIndex;
     }
     else {
       BUCKETS.put(testIdentifier, CYCLIC_BUCKET_COUNTER.getAndIncrement());
     }
 
-    if (CYCLIC_BUCKET_COUNTER.get() == TEST_RUNNERS_COUNT) CYCLIC_BUCKET_COUNTER.set(0);
+    if (CYCLIC_BUCKET_COUNTER.get() == testRunnerCount) CYCLIC_BUCKET_COUNTER.set(0);
 
-    return BUCKETS.get(testIdentifier) == TEST_RUNNER_INDEX;
+    return BUCKETS.get(testIdentifier) == testRunnerIndex;
   }
 
   /**
