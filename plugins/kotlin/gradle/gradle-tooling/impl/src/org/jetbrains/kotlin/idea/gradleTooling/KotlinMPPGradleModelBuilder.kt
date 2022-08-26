@@ -2,8 +2,6 @@
 
 package org.jetbrains.kotlin.idea.gradleTooling
 
-import org.gradle.api.Named
-import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
 import org.gradle.api.logging.Logging
 import org.jetbrains.kotlin.idea.gradleTooling.GradleImportProperties.*
@@ -42,11 +40,13 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
         try {
             val kotlinExtension = project.extensions.findByName("kotlin") ?: return null
             val kotlinExtensionReflection = KotlinExtensionReflection(project, kotlinExtension)
+            if (!shouldBuild(kotlinExtensionReflection)) return null
 
             val modelBuilderContext = builderContext ?: return null
-            val argsMapper = CompilerArgumentsCacheMapperImpl()
 
             val kotlinGradlePluginVersion = kotlinExtensionReflection.parseKotlinGradlePluginVersion()
+            val argsMapper = CompilerArgumentsCacheMapperImpl()
+
             val importingContext = MultiplatformModelImportingContextImpl(
                 project, kotlinGradlePluginVersion, argsMapper, modelBuilderContext
             )
@@ -232,6 +232,10 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
             MPP_BUILDER_LOGGER.warn("[sync warning] Failed to parse KotlinGradlePluginVersion: $version")
         }
         return version
+    }
+
+    private fun shouldBuild(extension: KotlinExtensionReflection): Boolean {
+        return extension.kotlinExtension.javaClass.getMethodOrNull("getTargets") != null && extension.targets.isNotEmpty()
     }
 
     companion object {
