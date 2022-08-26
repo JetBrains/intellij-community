@@ -83,6 +83,9 @@
                     testServiceImplementation="com.intellij.toolWindow.ToolWindowHeadlessManagerImpl"
                     headlessImplementation="com.intellij.toolWindow.ToolWindowHeadlessManagerImpl" preload="notHeadless"/>
 
+    <projectService serviceInterface="com.intellij.toolWindow.ToolWindowStripeManager"
+                    serviceImplementation="com.intellij.toolWindow.ToolWindowStripeManagerImpl"/>
+
     <projectService serviceInterface="com.intellij.openapi.wm.impl.ToolWindowManagerState"
                     serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowManagerStateImpl"/>
 

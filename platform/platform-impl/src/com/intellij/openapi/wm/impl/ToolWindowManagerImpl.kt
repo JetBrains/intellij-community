@@ -93,6 +93,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
   : ToolWindowManagerEx(), Disposable {
   private val dispatcher = EventDispatcher.create(ToolWindowManagerListener::class.java)
 
+  private val stripeManager = ToolWindowStripeManager.getInstance(project)
+
   private val state: ToolWindowManagerState
     get() = project.service()
 
@@ -1014,7 +1016,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     }
 
     var info = layoutState.getInfo(task.id)
-    val isButtonNeeded = task.shouldBeAvailable && (info?.isShowStripeButton ?: !isNewUi)
+    val isButtonNeeded = task.shouldBeAvailable && (info?.isShowStripeButton ?: !isNewUi) && stripeManager.allowToShowOnStripe(task.id, info == null, isNewUi)
     // do not create layout for New UI - button is not created for toolwindow by default
     if (info == null) {
       info = layoutState.create(task, isNewUi = isNewUi)
