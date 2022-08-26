@@ -3,7 +3,6 @@
 
 package com.jetbrains.python.run
 
-import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.TargetEnvironmentFunction
@@ -36,11 +35,10 @@ import com.jetbrains.python.sdk.flavors.JythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import java.io.File
 import java.nio.file.Path
-import java.util.function.Function
 
-fun initPythonPath(envs: MutableMap<String, Function<TargetEnvironment, String>>,
+fun initPythonPath(envs: MutableMap<String, TargetEnvironmentFunction<String>>,
                    passParentEnvs: Boolean,
-                   pythonPathList: MutableCollection<Function<TargetEnvironment, String>>,
+                   pythonPathList: MutableCollection<TargetEnvironmentFunction<String>>,
                    targetEnvironmentRequest: TargetEnvironmentRequest) {
   // TODO [Targets API] Passing parent envs logic should be moved somewhere else
   if (passParentEnvs && targetEnvironmentRequest is LocalTargetEnvironmentRequest && !envs.containsKey(PythonEnvUtil.PYTHONPATH)) {
@@ -49,7 +47,7 @@ fun initPythonPath(envs: MutableMap<String, Function<TargetEnvironment, String>>
   appendToPythonPath(envs, pythonPathList, targetEnvironmentRequest.targetPlatform)
 }
 
-private fun appendSystemPythonPath(pythonPath: MutableCollection<Function<TargetEnvironment, String>>) {
+private fun appendSystemPythonPath(pythonPath: MutableCollection<TargetEnvironmentFunction<String>>) {
   val syspath = System.getenv(PythonEnvUtil.PYTHONPATH)
   if (syspath != null) {
     pythonPath.addAll(syspath.split(File.pathSeparator).dropLastWhile(String::isEmpty).map(::constant))
@@ -62,7 +60,7 @@ fun collectPythonPath(project: Project,
                       pathMapper: PyRemotePathMapper?,
                       shouldAddContentRoots: Boolean,
                       shouldAddSourceRoots: Boolean,
-                      isDebug: Boolean): Collection<Function<TargetEnvironment, String>> {
+                      isDebug: Boolean): Collection<TargetEnvironmentFunction<String>> {
   val sdk = PythonSdkUtil.findSdkByPath(sdkHome)
   return collectPythonPath(
     Context(project, sdk, pathMapper),
@@ -79,8 +77,8 @@ private fun collectPythonPath(context: Context,
                               sdkHome: String?,
                               shouldAddContentRoots: Boolean,
                               shouldAddSourceRoots: Boolean,
-                              isDebug: Boolean): Collection<Function<TargetEnvironment, String>> {
-  val pythonPath: MutableSet<Function<TargetEnvironment, String>> = LinkedHashSet(
+                              isDebug: Boolean): Collection<TargetEnvironmentFunction<String>> {
+  val pythonPath: MutableSet<TargetEnvironmentFunction<String>> = LinkedHashSet(
     collectPythonPath(context,
                       module,
                       shouldAddContentRoots,
@@ -100,8 +98,8 @@ private fun collectPythonPath(context: Context,
 private fun collectPythonPath(context: Context,
                               module: Module?,
                               addContentRoots: Boolean,
-                              addSourceRoots: Boolean): Collection<Function<TargetEnvironment, String>> {
-  val pythonPathList: MutableCollection<Function<TargetEnvironment, String>> = LinkedHashSet()
+                              addSourceRoots: Boolean): Collection<TargetEnvironmentFunction<String>> {
+  val pythonPathList: MutableCollection<TargetEnvironmentFunction<String>> = LinkedHashSet()
   if (module != null) {
     val dependencies: MutableSet<Module> = HashSet()
     ModuleUtilCore.getDependencies(module, dependencies)
@@ -130,8 +128,8 @@ private fun collectPythonPath(context: Context,
 /**
  * List of [target->targetPath] functions. TargetPaths are to be added to ``PYTHONPATH`` because user did so
  */
-fun getAddedPaths(sdkAdditionalData: SdkAdditionalData): List<Function<TargetEnvironment, String>> {
-  val pathList: MutableList<Function<TargetEnvironment, String>> = ArrayList()
+fun getAddedPaths(sdkAdditionalData: SdkAdditionalData): List<TargetEnvironmentFunction<String>> {
+  val pathList: MutableList<TargetEnvironmentFunction<String>> = ArrayList()
   if (sdkAdditionalData is PythonSdkAdditionalData) {
     val addedPaths = if (sdkAdditionalData is RemoteSdkProperties) {
       sdkAdditionalData.addedPathFiles.map { sdkAdditionalData.pathMappings.convertToRemote(it.path) }
@@ -148,7 +146,7 @@ fun getAddedPaths(sdkAdditionalData: SdkAdditionalData): List<Function<TargetEnv
 
 private fun addToPythonPath(context: Context,
                             file: VirtualFile,
-                            pathList: MutableCollection<Function<TargetEnvironment, String>>) {
+                            pathList: MutableCollection<TargetEnvironmentFunction<String>>) {
   if (file.fileSystem is JarFileSystem) {
     val realFile = JarFileSystem.getInstance().getVirtualFileForJar(file)
     if (realFile != null) {
@@ -162,7 +160,7 @@ private fun addToPythonPath(context: Context,
 
 private fun addIfNeeded(context: Context,
                         file: VirtualFile,
-                        pathList: MutableCollection<Function<TargetEnvironment, String>>) {
+                        pathList: MutableCollection<TargetEnvironmentFunction<String>>) {
   val filePath = Path.of(FileUtil.toSystemDependentName(file.path))
   pathList.add(getTargetPathForPythonConsoleExecution(context.project, context.sdk, context.pathMapper, filePath))
 }
@@ -196,7 +194,7 @@ private fun addLibrariesFromModule(module: Module,
   }
 }
 
-private fun addRootsFromModule(module: Module, pythonPathList: MutableCollection<Function<TargetEnvironment, String>>) {
+private fun addRootsFromModule(module: Module, pythonPathList: MutableCollection<TargetEnvironmentFunction<String>>) {
   // for Jython
   val extension = CompilerModuleExtension.getInstance(module)
   if (extension != null) {
@@ -212,7 +210,7 @@ private fun addRootsFromModule(module: Module, pythonPathList: MutableCollection
 }
 
 private fun addRoots(context: Context,
-                     pythonPathList: MutableCollection<Function<TargetEnvironment, String>>,
+                     pythonPathList: MutableCollection<TargetEnvironmentFunction<String>>,
                      roots: Array<VirtualFile>) {
   for (root in roots) {
     addToPythonPath(context, root, pythonPathList)
