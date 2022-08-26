@@ -3,140 +3,83 @@
 
 package com.intellij.internal.statistic.utils
 
-import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.intellij.idea.AppExitCodes
 import com.intellij.openapi.application.ModernApplicationStarter
-import java.io.File
 import java.lang.management.ManagementFactory
+import java.nio.file.Files
+import java.nio.file.Path
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.writeText
 import kotlin.system.exitProcess
 
-data class ParameterValue(
-  val parameterName: String,
-  val parameterValue: String
+/*
+{
+  "cmdArguments": [
+    "/private/var/folders/jx/x1bytp2j53n6dj649pdpw7_m0000gr/T/1661441672/Contents/bin/xplat-launcher",
+    "--output",
+    "/private/var/folders/jx/x1bytp2j53n6dj649pdpw7_m0000gr/T/1661441672/Contents/bin/output.json"
+  ],
+  "vmOptions": [
+    "-Didea.vendor.name\u003dJetBrains",
+...
+    "--add-opens\u003djdk.jdi/com.sun.tools.jdi\u003dALL-UNNAMED"
+  ],
+  "environmentVariables": {
+    "PATH": "/Users/haze/Library/Python/3.8/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Users/haze/.cargo/bin:/Users/haze/Library/Application Support/JetBrains/Toolbox/scripts:/opt/homebrew/opt/fzf/bin",
+..
+    "DYLD_FALLBACK_LIBRARY_PATH": "/Users/haze/work/intellij/master/community/native/XPlatLauncher/target/debug/deps:/Users/haze/work/intellij/master/community/native/XPlatLauncher/target/debug:/Users/haze/.rustup/toolchains/stable-aarch64-apple-darwin/lib/rustlib/aarch64-apple-darwin/lib:/Users/haze/.rustup/toolchains/stable-aarch64-apple-darwin/lib:/Users/haze/lib:/usr/local/lib:/usr/lib"
+  },
+  "systemProperties": {
+    "java.specification.version": "17",
+...
+    "splash": "true"
+  }
+}
+ */
+
+data class DumpedLaunchParameters(
+  val cmdArguments: List<String>,
+  val vmOptions: List<String>,
+  val environmentVariables: Map<String, String>,
+  val systemProperties: Map<String, String>
 )
 
-data class LaunchParameters(
-  val groupOfParametersName: String,
-  val parameters: MutableList<ParameterValue>
-)
-
-// sample of generated JSON
-// [
-//  {
-//    "groupOfParametersName": "vmOptions",
-//    "parameters": [
-//      {
-//        "parameterName": "vmOption.0",
-//        "parameterValue": "-Xmx2g"
-//      },
-//      {
-//        "parameterName": "vmOption.1",
-//        "parameterValue": "-XX:ReservedCodeCacheSize=240m"
-//      }
-//    ]
-//  },
-//  {
-//    "groupOfParametersName": "arguments",
-//    "parameters": [
-//      {
-//        "parameterName": "argument.0",
-//        "parameterValue": "dump-launch-parameters"
-//      },
-//      {
-//        "parameterName": "argument.3",
-//        "parameterValue": "--system-property"
-//      },
-//      {
-//        "parameterName": "argument.4",
-//        "parameterValue": "java.vendor"
-//      }
-//    ]
-//  },
-//  {
-//    "groupOfParametersName": "javaSystemProperties",
-//    "parameters": [
-//      {
-//        "parameterName": "java.vendor",
-//        "parameterValue": "JetBrains s.r.o."
-//      },
-//    ]
-//  },
-//  {
-//    "groupOfParametersName": "environmentVariables",
-//    "parameters": [
-//      {
-//        "parameterName": "HOME",
-//        "parameterValue": "/Users/Eugene.Lazurin"
-//      }
-//    ]
-//  }
-//]
 internal class DumpLaunchParametersStarter : ModernApplicationStarter() {
   override val commandName: String
     get() = "dump-launch-parameters"
 
   override fun premain(args: List<String>) {
-    // --output <path to dir>/launchParameters.json --system-property java.class.path --system-property java.home --environment-variable PATH HOME
-    val argsMap = args.fold(Pair(emptyMap<String, List<String>>(), "")) { (map, lastKey), elem ->
-      if (elem.startsWith("-") && !map.containsKey(elem)) Pair(map + (elem to emptyList()), elem)
-      else if (elem.startsWith("-") && map.containsKey(elem)) Pair(map + (elem to map.getOrDefault(elem, emptyList())), elem)
-      else Pair(map + (lastKey to map.getOrDefault(lastKey, emptyList()) + elem), lastKey)
-    }.first
-
-    if ((!argsMap.containsKey("-o") || argsMap["-o"]!!.isEmpty()) && (!argsMap.containsKey("--output") || argsMap["--output"]!!.isEmpty())) {
+    if (args.size < 3 || (args[1] != "-o" && args[1] != "--output")) {
+      System.err.println("Usage: -o/--output /path/to/output/file")
+      System.err.println("Current args: ${args.joinToString(" ")}")
       exitProcess(AppExitCodes.STARTUP_EXCEPTION)
     }
 
-    val outputFile = if (argsMap.containsKey("-o")) argsMap["-o"]!![0] else argsMap["--output"]!![0]
+    val outputFile = Path.of(args[2])
+    Files.createDirectories(outputFile.parent)
 
-    val launchParametersDump = File(outputFile)
-    val launchParameters = mutableListOf<LaunchParameters>()
+    val gson = GsonBuilder().setPrettyPrinting().create()
 
-    launchParameters.add(getVmOptions())
-    launchParameters.add(getCommandLineArguments(args))
+    @Suppress("UNCHECKED_CAST")
+    val dump = DumpedLaunchParameters(
+      cmdArguments = args,
+      vmOptions = ManagementFactory.getRuntimeMXBean().inputArguments,
+      systemProperties = System.getProperties() as? Map<String, String>
+        ?: error("Failed to cast System.getProperties() result to Map<String, String>"),
+      environmentVariables = System.getenv()
+    )
 
-    if (argsMap.containsKey("--system-property") && !argsMap["--system-property"]!!.isEmpty()) {
-      val javaSystemProperties: MutableList<ParameterValue> = mutableListOf()
-      argsMap["--system-property"]?.forEach { javaSystemProperties.add(getJavaSystemProperty(it)) }
-      launchParameters.add(LaunchParameters("javaSystemProperties", javaSystemProperties))
-    }
+    val dumpJsonText = gson.toJson(dump)
+    println(dumpJsonText)
 
-    if (argsMap.containsKey("--environment-variable") && !argsMap["--environment-variable"]!!.isEmpty()) {
-      val environmentVariables: MutableList<ParameterValue> = mutableListOf()
-      argsMap["--environment-variable"]?.forEach { environmentVariables.add(getEnvironmentVariable(it)) }
-      launchParameters.add(LaunchParameters("environmentVariables", environmentVariables))
-    }
+    outputFile.writeText(dumpJsonText, Charsets.UTF_8)
+    println("Dumped to ${outputFile.absolutePathString()}")
 
-    launchParametersDump.appendText(Gson().toJson(launchParameters))
     exitProcess(0)
   }
 
   override suspend fun start(args: List<String>) {
     exitProcess(0)
-  }
-
-  private fun getVmOptions(): LaunchParameters {
-    val vmOptionsFromJava = ManagementFactory.getRuntimeMXBean().inputArguments
-    val vmOptionsParameters: MutableList<ParameterValue> = mutableListOf()
-    vmOptionsFromJava.forEachIndexed { i, vmOption ->
-      vmOptionsParameters.add(ParameterValue("vmOption.$i", vmOption))
-    }
-    return LaunchParameters("vmOptions", vmOptionsParameters)
-  }
-
-  private fun getCommandLineArguments(args: List<String>): LaunchParameters {
-    val arguments: MutableList<ParameterValue> = mutableListOf()
-    args.forEachIndexed { i, argument ->
-      arguments.add(ParameterValue("argument.$i", argument))
-    }
-    return LaunchParameters("arguments", arguments)
-  }
-
-  private fun getJavaSystemProperty(property: String): ParameterValue {
-    return ParameterValue(property, System.getProperty(property))
-  }
-
-  private fun getEnvironmentVariable(envVariable: String): ParameterValue {
-    return ParameterValue(envVariable, System.getenv(envVariable))
   }
 }

@@ -95,13 +95,12 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
 
 impl DefaultLaunchConfiguration {
     pub fn new(args: Vec<String>) -> Result<Self> {
-        // TODO: in real launchers -> let current_exe = env::current_exe().unwrap();
         let current_exe = match get_path_from_env_var("XPLAT_LAUNCHER_CURRENT_EXE_PATH") {
             Ok(x) => {
                 debug!("Using exe path from XPLAT_LAUNCHER_CURRENT_EXE_PATH: {x:?}");
                 x
             }
-            Err(_) => { env::current_dir()?.join("xplat-launcher.exe") }
+            Err(_) => { env::current_exe()? }
         };
 
         debug!("Resolved current executable path as '{current_exe:?}'");
@@ -115,8 +114,7 @@ impl DefaultLaunchConfiguration {
         let config_home = get_config_home();
         debug!("Resolved config home as '{config_home:?}'");
 
-        // TODO: this is a behaviour change (as we're not patching the binary the same way we are patching the executable template)
-        let product_info = get_product_info(&ide_home).expect("Failed to read product info file");
+        let product_info = get_product_info(&ide_home)?;
         assert!(!product_info.launch.is_empty());
 
         let vm_options_file_path = product_info.launch[0].vmOptionsFilePath.as_str();

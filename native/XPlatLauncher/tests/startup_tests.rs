@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 mod tests_util;
 
 #[cfg(test)]
@@ -14,7 +15,7 @@ mod tests_util;
 // | setup JRE                |   X    |
 
 mod tests {
-    use crate::tests_util::{initialize, resolve_test_dir};
+    use crate::tests_util::{IntellijMainDumpedLaunchParameters, prepare_test_env, run_launcher};
     use std::path::PathBuf;
     use std::process::{Command, ExitStatus};
     use std::time::Duration;
@@ -22,203 +23,52 @@ mod tests {
 
     #[test]
     fn correct_launcher_startup_test() {
-        initialize();
-        let test_dir = resolve_test_dir();
+        let test = prepare_test_env();
+        let launcher_result = run_launcher(&test);
 
-        let launcher_exit_status = start_launcher(test_dir);
         assert!(
-            launcher_exit_status.success(),
+            launcher_result.exit_status.success(),
             "The exit code of the launcher is not successful"
         );
     }
 
     #[test]
     fn classpath_test() {
-        // a dummy classpath parameter was added to product_info.json for this test
-        initialize();
-        let test_dir = resolve_test_dir();
+        let dump = run_launcher_and_get_dump();
+        let classpath = &dump.systemProperties["java.class.path"];
 
-        let launcher_exit_status = start_launcher(test_dir);
         assert!(
-            launcher_exit_status.success(),
-            "The exit code of the launcher is not successful"
-        );
-
-        let classpath = read_file("java.class.path.txt");
-
-        let separator = std::path::MAIN_SEPARATOR;
-        assert!(
-            classpath.contains(format!("lib{separator}app.jar").as_str()),
-            "Classpath does not contain app.jar"
-        );
-        assert!(
-            classpath.contains(format!("lib{separator}test.jar").as_str()),
-            "Dummy classpath wasn't read from product_info.json"
+            classpath.contains("app.jar"),
+            "app.jar is not present in classpath"
         );
     }
 
     #[test]
-    fn vm_options_test() {
-        initialize();
-        let test_dir = resolve_test_dir();
+    fn additional_jvm_arguments_in_product_info_test() {
+        let dump = run_launcher_and_get_dump();
+        let idea_vendor_name_vm_option = dump.vmOptions.iter().find(|&vm| vm.starts_with("-Didea.vendor.name=JetBrains"));
 
-        let launcher_exit_status = start_launcher(test_dir);
         assert!(
-            launcher_exit_status.success(),
-            "The exit code of the launcher is not successful"
+            idea_vendor_name_vm_option.is_some(),
+            "Didn't find vmoption which should be set throught product-info.json additionJvmArguments field in launch section"
         );
-
-        let _vm_options = read_file("vm.options.txt");
-        // TODO asserts
     }
 
     #[test]
     fn arguments_test() {
-        // a dummy  arguments was added to launcher for this test
-        initialize();
-        let test_dir = resolve_test_dir();
+        let dump = run_launcher_and_get_dump();
+        let first_arg = &dump.cmdArguments[1];
 
-        let launcher_exit_status = start_launcher(test_dir);
-        assert!(
-            launcher_exit_status.success(),
-            "The exit code of the launcher is not successful"
-        );
-
-        let launcher_dir = resolve_test_dir()
-            .join("xplat-launcher")
-            .into_os_string()
-            .into_string()
-            .unwrap();
-        let arguments = read_file("arguments.txt");
-        let mut arguments_lines = arguments.lines();
-
-        assert_eq!(launcher_dir, arguments_lines.next().unwrap());
         assert_eq!(
-            Some("test_argument1"),
-            arguments_lines.next(),
-            "Incorrect dummy arguments"
-        );
-        assert_eq!(
-            Some("test_argument2"),
-            arguments_lines.next(),
-            "Incorrect dummy arguments"
-        );
-        assert_eq!(
-            0,
-            arguments_lines.count(),
-            "Extra command line arguments detected"
+            first_arg,
+            "--output"
         );
     }
 
-    #[test]
-    fn java_home_test() {
-        initialize();
-        let test_dir = resolve_test_dir();
-
-        let launcher_exit_status = start_launcher(test_dir);
-        assert!(
-            launcher_exit_status.success(),
-            "The exit code of the launcher is not successful"
-        );
-
-        let java_home = read_file("java.home.txt");
-        assert!(!java_home.is_empty(), "Java Home is empty");
-    }
-
-    #[test]
-    fn java_version_test() {
-        initialize();
-        let test_dir = resolve_test_dir();
-
-        let launcher_exit_status = start_launcher(test_dir);
-        assert!(
-            launcher_exit_status.success(),
-            "The exit code of the launcher is not successful"
-        );
-
-        let java_version = read_file("java.version.txt");
-        assert!(
-            java_version.starts_with("17"),
-            "Incorrect Java version. Expected 17"
-        );
-    }
-
-    #[test]
-    fn java_vendor_test() {
-        initialize();
-        let test_dir = resolve_test_dir();
-
-        let launcher_exit_status = start_launcher(test_dir);
-        assert!(
-            launcher_exit_status.success(),
-            "The exit code of the launcher is not successful"
-        );
-
-        let java_version = read_file("java.vendor.txt");
-        assert!(
-            java_version.starts_with("JetBrains"),
-            "Incorrect Java vendor"
-        );
-    }
-
-    #[test]
-    fn work_dir_test() {
-        initialize();
-        let test_dir = resolve_test_dir();
-
-        let launcher_exit_status = start_launcher(test_dir);
-        assert!(
-            launcher_exit_status.success(),
-            "The exit code of the launcher is not successful"
-        );
-
-        let user_dir = read_file("user.dir.txt");
-        assert_eq!(
-            resolve_test_dir().into_os_string().into_string().unwrap(),
-            user_dir,
-            "Incorrect launcher work dir"
-        );
-    }
-
-
-
-    // TODO: test for additionalJvmArguments in product-info.json being set
-    // (e.g. "-Didea.vendor.name=JetBrains")
-
-    fn start_launcher(test_dir: PathBuf) -> ExitStatus {
-        let mut launcher_process = Command::new(test_dir.join("xplat-launcher")) // for windows xplat-launcher.exe???
-            .current_dir(test_dir)
-            .args(["test_argument1", "test_argument2"])
-            .env(xplat_launcher::DO_NOT_SHOW_ERROR_UI_ENV_VAR, "1")
-            .spawn()
-            .expect("Failed to spawn launcher process");
-
-        let started = time::Instant::now();
-
-        loop {
-            let elapsed = time::Instant::now() - started;
-            if elapsed > Duration::from_secs(60) {
-                panic!("Launcher has been running for more than 60 seconds, terminating")
-            }
-
-            match launcher_process.try_wait() {
-                Ok(opt) => match opt {
-                    None => {
-                        println!("Waiting for launcher process to exit");
-                    }
-                    Some(es) => return es,
-                },
-                Err(e) => {
-                    panic!("Failed to get launcher process status: {e:?}")
-                }
-            };
-
-            thread::sleep(Duration::from_secs(1))
-        }
-    }
-
-    fn read_file(filename: &str) -> String {
-        let file_to_open = resolve_test_dir().join(filename);
-        return fs::read_to_string(file_to_open).expect(format!("Can't read {filename}").as_str());
+    fn run_launcher_and_get_dump() -> IntellijMainDumpedLaunchParameters {
+        let test = prepare_test_env();
+        let result = run_launcher(&test);
+        assert!(result.exit_status.success(), "Launcher didn't exit successfully");
+        result.dump
     }
 }
