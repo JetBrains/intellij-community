@@ -29,6 +29,7 @@ import org.apache.commons.compress.archivers.zip.ZipFile
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.io.*
 import org.jetbrains.intellij.build.tracer
+import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.charset.StandardCharsets
@@ -367,7 +368,25 @@ private inline fun executeTask(host: String,
 
   SSHClient(config).use { ssh ->
     ssh.addHostKeyVerifier(PromiscuousVerifier())
-    ssh.connect(host)
+    tracer.spanBuilder("connecting to $host").use { span ->
+      var attempt = 1
+      do {
+        try {
+          ssh.connect(host)
+          break
+        }
+        catch (e: IOException) {
+          span.addEvent("cannot connect to $host", Attributes.of(
+            AttributeKey.longKey("attemptNumber"), attempt.toLong(),
+            AttributeKey.stringKey("error"), e.toString()
+          ))
+          attempt++
+          if (attempt > 3) throw e
+          continue
+        }
+      }
+      while (true)
+    }
     val passwordFinder = object : PasswordFinder {
       override fun reqPassword(resource: Resource<*>?) = password.toCharArray().clone()
       override fun shouldRetry(resource: Resource<*>?) = false
