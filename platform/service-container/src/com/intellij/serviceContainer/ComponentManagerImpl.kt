@@ -41,6 +41,7 @@ import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Modifier
 import java.util.*
 import java.util.concurrent.*
+import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
 
 internal val LOG = logger<ComponentManagerImpl>()
@@ -1262,7 +1263,10 @@ abstract class ComponentManagerImpl(
         }
       }
       else if (adapter is LightServiceComponentAdapter) {
-        processor(adapter.componentInstance)
+        val instance = adapter.componentInstance
+        if (filter == null || filter(instance::class.java)) {
+          processor(instance)
+        }
       }
     }
   }
@@ -1293,8 +1297,20 @@ abstract class ComponentManagerImpl(
     return try {
       adapter.getImplementationClass()
     }
-    catch (e: Throwable) {
+    catch (e: PluginException) {
       // well, the component is registered, but the required jar is not added to the classpath (community edition or junior IDE)
+      if (e.cause is ClassNotFoundException) {
+        LOG.warn(e.message)
+      }
+      else {
+        LOG.warn(e)
+      }
+      null
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Throwable) {
       LOG.warn(e)
       null
     }

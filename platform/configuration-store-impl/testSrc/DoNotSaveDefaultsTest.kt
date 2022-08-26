@@ -52,15 +52,20 @@ internal class DoNotSaveDefaultsTest {
     // wake up (edt, some configurables want read action)
     withContext(Dispatchers.EDT) {
       componentManager.processComponentsAndServices(createIfNeeded = true, filter = { aClass ->
+        if (!PersistentStateComponent::class.java.isAssignableFrom(aClass)) {
+          return@processComponentsAndServices false
+        }
+
         val className = aClass.name
         // CvsTabbedWindow calls invokeLater in constructor
+        className != "com.intellij.diagnostic.EventWatcherImpl"
         className != "com.intellij.cvsSupport2.ui.CvsTabbedWindow"
         && className != "com.intellij.lang.javascript.bower.BowerPackagingService"
         && !className.endsWith(".MessDetectorConfigurationManager")
         && className != "org.jetbrains.plugins.groovy.mvc.MvcConsole"
       }) { instance ->
-        if (isTestEmptyState && instance is PersistentStateComponent<*>) {
-          testEmptyState(instance)
+        if (isTestEmptyState) {
+          testEmptyState(instance as PersistentStateComponent<*>)
         }
       }
     }
