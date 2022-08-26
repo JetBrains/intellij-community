@@ -15,23 +15,22 @@ internal class JavaDependencyCollector : DependencyCollector {
 
   override fun collectDependencies(project: Project): Set<String> {
     return runReadAction {
-      val result = mutableSetOf<String>()
-      val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
-      for (library in projectLibraryTable.libraries) {
-        val properties = (library as? LibraryEx)?.properties as? RepositoryLibraryProperties ?: continue
-        result.add(properties.groupId + ":" + properties.artifactId)
-      }
-      for (module in ModuleManager.getInstance(project).modules) {
-        for (orderEntry in module.rootManager.orderEntries) {
-          if (orderEntry is LibraryOrderEntry && orderEntry.isModuleLevel) {
-            val library = orderEntry.library
-            val properties = (library as? LibraryEx)?.properties as? RepositoryLibraryProperties ?: continue
-            result.add(properties.groupId + ":" + properties.artifactId)
-          }
-        }
-      }
+      val projectLibraries = LibraryTablesRegistrar.getInstance()
+        .getLibraryTable(project)
+        .libraries.asSequence()
 
-      result
+      val moduleLibraries = ModuleManager.getInstance(project)
+        .modules.asSequence()
+        .flatMap { it.rootManager.orderEntries.asSequence() }
+        .filterIsInstance<LibraryOrderEntry>()
+        .filter { it.isModuleLevel }
+        .mapNotNull { it.library }
+
+      (projectLibraries + moduleLibraries)
+        .mapNotNull { it as? LibraryEx }
+        .mapNotNull { it.properties as? RepositoryLibraryProperties }
+        .map { "${it.groupId}:${it.artifactId}" }
+        .toSet()
     }
   }
 }
