@@ -69,19 +69,6 @@ public final class TLongArrayList implements Serializable, Cloneable {
     _pos = 0;
   }
 
-  /**
-   * Creates a new <code>TLongArrayList</code> instance whose
-   * capacity is the greater of the length of <tt>values</tt> and
-   * DEFAULT_CAPACITY and whose initial contents are the specified
-   * values.
-   *
-   * @param values an <code>long[]</code> value
-   */
-  public TLongArrayList(long[] values) {
-    this(Math.max(values.length, DEFAULT_CAPACITY));
-    add(values);
-  }
-
   // sizing
 
   /**

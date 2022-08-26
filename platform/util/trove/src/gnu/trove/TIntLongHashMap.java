@@ -29,6 +29,7 @@ import java.io.ObjectOutputStream;
  *
  * @author Eric D. Friedman
  */
+@Deprecated
 public class TIntLongHashMap extends TIntHash {
 
   /**
