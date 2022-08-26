@@ -7,6 +7,7 @@ import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -20,7 +21,6 @@ import com.jetbrains.python.*;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
@@ -96,7 +96,8 @@ public class PyDocumentationBuilder {
 
     if (!mySectionsMap.isEmpty()) {
       mySections.addItem(DocumentationMarkup.SECTIONS_START);
-      final List<String> firstSections = Lists.newArrayList(PyPsiBundle.message("QDOC.params"),
+      final List<String> firstSections = Lists.newArrayList(PyPsiBundle.message("QDOC.attributes"),
+                                                            PyPsiBundle.message("QDOC.params"),
                                                             PyPsiBundle.message("QDOC.keyword.args"),
                                                             PyPsiBundle.message("QDOC.returns"),
                                                             PyPsiBundle.message("QDOC.raises"));
@@ -207,7 +208,11 @@ public class PyDocumentationBuilder {
     }
 
     if (func != null) {
-      final PyStringLiteralExpression docString = getEffectiveDocStringExpression(func);
+      final PyClass containingClass = func.getContainingClass();
+      final PyStringLiteralExpression functionDocstring = getEffectiveDocStringExpression(func);
+      final PyStringLiteralExpression docString = functionDocstring == null && containingClass != null ?
+                                                  addFunctionInheritedDocString(func, containingClass) :
+                                                  functionDocstring;
       if (docString != null) {
         final StructuredDocString structuredDocString = DocStringUtil.parse(docString.getStringValue());
         final String description = structuredDocString.getParamDescription(parameter.getName());
@@ -328,20 +333,15 @@ public class PyDocumentationBuilder {
       }
     }
 
-    if (elementDefinition instanceof PyClass) {
-      final PyClass pyClass = (PyClass)elementDefinition;
+    if (elementDefinition instanceof PyClass pyClass) {
       myBody.add(PythonDocumentationProvider.describeDecorators(pyClass, WRAP_IN_ITALIC, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, BR, BR));
-      myBody
-        .add(PythonDocumentationProvider.describeClass(pyClass, WRAP_IN_BOLD, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, false, true, myContext));
-      if (docStringExpression == null) {
-        final PyFunction constructor = pyClass.findMethodByName(PyNames.INIT, false, myContext);
-        if (constructor != null) {
-          docStringExpression = constructor.getDocStringExpression();
-        }
-      }
+      myBody.add(
+        PythonDocumentationProvider.describeClass(pyClass, WRAP_IN_BOLD, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, false, true, myContext));
+      docStringExpression = addClassDocumentation(docStringExpression, pyClass);
     }
-    else if (elementDefinition instanceof PyFunction) {
-      final PyFunction pyFunction = (PyFunction)elementDefinition;
+    else if (elementDefinition instanceof PyFunction pyFunction) {
+      myBody.add(PythonDocumentationProvider.describeDecorators(pyFunction, WRAP_IN_ITALIC, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, BR, BR));
+      myBody.add(PythonDocumentationProvider.describeFunction(pyFunction, myContext, false));
       final PyClass pyClass = pyFunction.getContainingClass();
       if (!isProperty && pyClass != null) {
         final String link = getLinkToClass(pyClass, true);
@@ -349,34 +349,102 @@ public class PyDocumentationBuilder {
           myProlog.addItem(link);
         }
       }
-      myBody.add(PythonDocumentationProvider.describeDecorators(pyFunction, WRAP_IN_ITALIC, ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES, BR, BR));
-      myBody.add(PythonDocumentationProvider.describeFunction(pyFunction, myContext, false));
-      if (docStringExpression == null && pyClass != null && !isProperty) {
-        docStringExpression = addInheritedDocString(pyFunction, pyClass);
-      }
-      if (docStringExpression != null) {
-        addFunctionSpecificSections(docStringExpression, pyFunction);
-      }
+      docStringExpression = addFunctionDocumentation(docStringExpression, pyFunction, pyClass, isProperty);
     }
-    else if (elementDefinition instanceof PyFile) {
-      addModulePath((PyFile)elementDefinition);
+    else if (elementDefinition instanceof PyFile pyFile) {
+      addModulePath(pyFile);
     }
-    else if (elementDefinition instanceof PyTargetExpression) {
-      final PyTargetExpression target = (PyTargetExpression)elementDefinition;
-      if (isAttribute() && !isProperty) {
-        @SuppressWarnings("ConstantConditions") final String link = getLinkToClass(target.getContainingClass(), true);
-        if (link != null) {
-          myProlog.addItem(PyUtil.isInstanceAttribute(target) ? "Instance attribute " : "Class attribute ")
-                  .addWith(TagBold, $(elementDefinition.getName()))
-                  .addItem(" of ")
-                  .addItem(link);
-        }
-      }
-      myBody.add(PythonDocumentationProvider.describeTarget(target, myContext));
+    else if (elementDefinition instanceof PyTargetExpression target) {
+      addTargetDocumentation(target, isProperty);
     }
 
     if (docStringExpression != null && !isProperty) {
       myContent.add(formatDocString(myElement, docStringExpression.getStringValue()));
+    }
+  }
+
+  private void addTargetDocumentation(@NotNull PyTargetExpression target, boolean isProperty) {
+    if (isAttribute() && !isProperty) {
+      final PyClass containingClass = target.getContainingClass();
+      @SuppressWarnings("ConstantConditions") final String link = getLinkToClass(containingClass, true);
+      if (link != null) {
+        myProlog.addItem(PyUtil.isInstanceAttribute(target) ? "Instance attribute " : "Class attribute ")
+          .addWith(TagBold, $(target.getName()))
+          .addItem(" of ")
+          .addItem(link);
+      }
+      // if there is no separate doc for attribute we will try to take it from class doc
+      if (getEffectiveDocStringExpression(target) == null) {
+        final PyStringLiteralExpression docString = getEffectiveDocStringExpression(containingClass);
+        if (docString != null) {
+          final StructuredDocString structuredDocString = DocStringUtil.parse(docString.getStringValue());
+          final String description = structuredDocString.getAttributeDescription(target.getName());
+          if (StringUtil.isNotEmpty(description)) {
+            myContent.add($(description));
+          }
+        }
+      }
+    }
+    myBody.add(PythonDocumentationProvider.describeTarget(target, myContext));
+  }
+
+  @Nullable
+  private PyStringLiteralExpression addFunctionDocumentation(@Nullable PyStringLiteralExpression docStringExpression,
+                                                             @NotNull PyFunction pyFunction,
+                                                             @Nullable PyClass pyClass,
+                                                             boolean isProperty) {
+    // if we have containing class, but don't have a function doc
+    if (docStringExpression == null && pyClass != null) {
+      if (!isProperty) {
+        // add docstring from the parent class or function
+        docStringExpression = addFunctionInheritedDocString(pyFunction, pyClass);
+      }
+      if (PyUtil.isInitOrNewMethod(pyFunction)) {
+        final PyStringLiteralExpression classDocstring = getEffectiveDocStringExpression(pyClass);
+        if (classDocstring != null) {
+          // we should add attributes section from class doc because it won't be added with function sections in the end
+          addAttributesSection(classDocstring, pyClass);
+        }
+      }
+    }
+    if (docStringExpression != null) {
+      addFunctionSpecificSections(docStringExpression, pyFunction);
+    }
+    return docStringExpression;
+  }
+
+  @Nullable
+  private PyStringLiteralExpression addClassDocumentation(@Nullable PyStringLiteralExpression docStringExpression,
+                                                          @NotNull PyClass pyClass) {
+    final PyFunction init = pyClass.findMethodByName(PyNames.INIT, false, myContext);
+    if (docStringExpression != null) {
+      addAttributesSection(docStringExpression, pyClass);
+      if (init != null) {
+        // add init parameters described in the class doc
+        addFunctionSpecificSections(docStringExpression, init);
+      }
+      return docStringExpression;
+    }
+    // if class doesn't have any doc add init doc without other sections
+    if (init != null) {
+      return getEffectiveDocStringExpression(init);
+    }
+    return null;
+  }
+
+  private void addAttributesSection(@NotNull PyStringLiteralExpression docstring, @NotNull PyClass cls) {
+    final StructuredDocString structured = DocStringUtil.parseDocString(docstring);
+    final List<String> documentedAttributes = structured.getAttributes();
+
+    final String allAttributes = StreamEx.of(documentedAttributes)
+      .map(name -> {
+        final String description = structured.getAttributeDescription(name);
+        return "<p><code>" + name + "</code> &ndash; " + Strings.notNullize(description) + "</p>";
+      })
+      .joining();
+
+    if (!allAttributes.isEmpty()) {
+      mySectionsMap.get(PyPsiBundle.message("QDOC.attributes")).addItem(allAttributes);
     }
   }
 
@@ -387,13 +455,12 @@ public class PyDocumentationBuilder {
     final List<String> actualNames = ContainerUtil.mapNotNull(parameters, PyCallableParameter::getName);
     // Retain the actual order of parameters
     final String paramList = StreamEx.of(actualNames)
-                                     .filter(name -> structured.getParamDescription(name) != null)
-                                     .map(name -> {
-                                       final String description = structured.getParamDescription(name);
-                                       return "<p><code>" + name + "</code> &ndash; " + description + "</p>";
-                                     })
-                                     .joining();
-
+      .filter(name -> structured.getParamDescription(name) != null)
+      .map(name -> {
+        final String description = structured.getParamDescription(name);
+        return "<p><code>" + name + "</code> &ndash; " + Strings.notNullize(description) + "</p>";
+      })
+      .joining();
 
     if (!paramList.isEmpty()) {
       mySectionsMap.get(PyPsiBundle.message("QDOC.params")).addItem(paramList);
@@ -404,26 +471,27 @@ public class PyDocumentationBuilder {
       allKeywordArgs.retainAll(new HashSet<>(actualNames));
     }
     final String keywordArgsList = StreamEx.of(allKeywordArgs)
-                                           .map(name -> {
-                                             final String description = structured.getKeywordArgumentDescription(name);
-                                             return "<p><code>" + name + "</code> &ndash; " + StringUtil.notNullize(description) + "</p>";
-                                           })
-                                           .joining();
+      .map(name -> {
+        final String description = structured.getKeywordArgumentDescription(name);
+        return "<p><code>" + name + "</code> &ndash; " + StringUtil.notNullize(description) + "</p>";
+      })
+      .joining();
     if (!keywordArgsList.isEmpty()) {
       mySectionsMap.get(PyPsiBundle.message("QDOC.keyword.args")).addItem(keywordArgsList);
     }
 
     final String returnDescription = structured.getReturnDescription();
-    if (returnDescription != null) {
-      mySectionsMap.get(PyPsiBundle.message("QDOC.returns")).addItem(returnDescription);
+    if (returnDescription != null && !mySectionsMap.containsKey(PyPsiBundle.message("QDOC.returns"))) {
+      mySectionsMap.get(PyPsiBundle.message("QDOC.returns")).addItem(Strings.notNullize(returnDescription));
     }
 
     final String exceptionList = StreamEx.of(structured.getRaisedExceptions())
-                                   .map(name -> {
-                                     final String description = structured.getRaisedExceptionDescription(name);
-                                     return "<p><code>" + name + "</code>" +(StringUtil.isNotEmpty(description) ? " &ndash; " + description : "") + "</p>";
-                                   })
-                                   .joining();
+                                          .map(name -> {
+                                            final String description = structured.getRaisedExceptionDescription(name);
+                                            return "<p><code>" + name + "</code>" +
+                                                   (StringUtil.isNotEmpty(description) ? " &ndash; " + description : "") + "</p>";
+                                          })
+                                          .joining();
 
     if (!exceptionList.isEmpty()) {
       mySectionsMap.get(PyPsiBundle.message("QDOC.raises")).addItem(exceptionList);
@@ -465,7 +533,7 @@ public class PyDocumentationBuilder {
   }
 
   @Nullable
-  private PyStringLiteralExpression addInheritedDocString(@NotNull PyFunction pyFunction, @NotNull PyClass pyClass) {
+  private PyStringLiteralExpression addFunctionInheritedDocString(@NotNull PyFunction pyFunction, @NotNull PyClass pyClass) {
     final String methodName = pyFunction.getName();
     if (methodName == null) {
       return null;
@@ -632,7 +700,7 @@ public class PyDocumentationBuilder {
   @Nullable
   static PyStringLiteralExpression getEffectiveDocStringExpression(@NotNull PyDocStringOwner owner) {
     final PyStringLiteralExpression expression = owner.getDocStringExpression();
-    if (expression != null && StringUtil.isNotEmpty(PyPsiUtils.strValue(expression))) {
+    if (expression != null) {
       return expression;
     }
     final PsiElement original = PyiUtil.getOriginalElement(owner);
