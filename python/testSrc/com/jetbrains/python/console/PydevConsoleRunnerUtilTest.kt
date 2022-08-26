@@ -64,7 +64,7 @@ class PydevConsoleRunnerUtilTest {
   }
 
   private class DummyTargetEnvironment(request: DummyTargetEnvironmentRequest) : TargetEnvironment(request) {
-    override fun createProcess(commandLine: TargetedCommandLine, indicator: ProgressIndicator): Process =
+    override fun createProcess(commandLine: TargetedCommandLine, indicator: ProgressIndicator?): Process =
       throw UnsupportedOperationException()
 
     override val targetPlatform: TargetPlatform = request.targetPlatform

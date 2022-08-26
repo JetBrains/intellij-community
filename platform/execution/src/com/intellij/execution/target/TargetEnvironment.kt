@@ -175,7 +175,7 @@ abstract class TargetEnvironment(
   //     Therefore, to indicate the disposable nature of environments, the method might be moved to the `TargetEnvironmentFactory`.
   @Throws(ExecutionException::class)
   abstract fun createProcess(commandLine: TargetedCommandLine,
-                             indicator: ProgressIndicator): Process
+                             indicator: ProgressIndicator?): Process
 
   abstract val targetPlatform: TargetPlatform
 
