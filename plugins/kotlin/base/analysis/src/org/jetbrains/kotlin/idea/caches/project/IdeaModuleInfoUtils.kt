@@ -55,8 +55,13 @@ internal fun TargetPlatform.canDependOn(other: IdeaModuleInfo, isHmppEnabled: Bo
 
 fun IdeaModuleInfo.isLibraryClasses() = this is SdkInfo || this is LibraryInfo
 
-fun IdeaModuleInfo.projectSourceModules(): List<ModuleSourceInfo>? =
-    (this as? ModuleSourceInfo)?.let(::listOf) ?: (this as? PlatformModuleInfo)?.containedModules
+fun IdeaModuleInfo.projectSourceModules(): List<ModuleSourceInfo> {
+    return when (this) {
+        is ModuleSourceInfo -> listOf(this)
+        is PlatformModuleInfo -> containedModules
+        else -> emptyList()
+    }
+}
 
 @Deprecated("Use org.jetbrains.kotlin.idea.base.projectStructure.kotlinSourceRootType' instead.")
 val ModuleSourceInfo.sourceType: SourceType

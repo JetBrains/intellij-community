@@ -1,4 +1,4 @@
-// "Remove 'IOException' from 'f' throws list" "true"
+// "Remove 'IOException' from 'f()' throws list" "true-preview"
 
 import java.io.FileNotFoundException;
 import java.io.IOException;

@@ -202,7 +202,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
       }
     };
 
-    myExternalToolPassFactory.scheduleExternalActivity(update);
+    ExternalAnnotatorManager.getInstance().queue(update);
   }
 
   private boolean documentChanged(long modificationStampBefore) {

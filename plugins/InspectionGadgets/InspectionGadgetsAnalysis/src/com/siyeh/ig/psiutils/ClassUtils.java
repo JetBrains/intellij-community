@@ -32,8 +32,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.intellij.openapi.util.Predicates.nonNull;
 
 public final class ClassUtils {
 
@@ -357,7 +358,7 @@ public final class ClassUtils {
     Stream<PsiField> fieldStream = Arrays.stream(aClass.getFields());
 
     StreamEx<PsiField> enclosingClassFields =
-      StreamEx.iterate(aClass.getContainingClass(), Objects::nonNull, c -> c.getContainingClass()).filter(Objects::nonNull)
+      StreamEx.iterate(aClass.getContainingClass(), nonNull(), c -> c.getContainingClass()).filter(nonNull())
               .flatMap(c -> Stream.of(c.getFields()));
     fieldStream = Stream.concat(fieldStream, enclosingClassFields);
 
@@ -366,7 +367,7 @@ public final class ClassUtils {
                                       .filter(innerClass -> innerClass.hasModifierProperty(PsiModifier.STATIC))
                                       .flatMap(innerClass -> Arrays.stream(innerClass.getFields())));
 
-    final List<PsiField> fields = fieldStream.filter(field -> resolveToSingletonField(aClass, field)).limit(2).collect(Collectors.toList());
+    final List<PsiField> fields = fieldStream.filter(field -> resolveToSingletonField(aClass, field)).limit(2).toList();
     return fields.size() == 1 ? fields.get(0) : null;
   }
 

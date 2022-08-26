@@ -12,13 +12,12 @@ import kotlin.script.experimental.api.ScriptDiagnostic
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
-import kotlin.streams.asSequence
 
 class BridgeScriptDefinitionsContributor(private val project: Project) : ScriptDefinitionSourceAsContributor {
     override val id: String = "BridgeScriptDefinitionsContributor"
 
     override val definitions: Sequence<ScriptDefinition>
-        get() = ScriptDefinitionsProvider.EP_NAME.extensions(project).asSequence().flatMap { provider ->
+        get() = ScriptDefinitionsProvider.EP_NAME.getExtensionList(project).asSequence().flatMap { provider ->
             val explicitClasses = provider.getDefinitionClasses().toList()
             val classPath = provider.getDefinitionsClassPath().toList()
             val baseHostConfiguration = defaultJvmScriptingHostConfiguration

@@ -76,6 +76,11 @@ public class AdjustAutotestDelayActionGroup extends ActionGroup {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       Project project = e.getProject();
       if (project != null) {

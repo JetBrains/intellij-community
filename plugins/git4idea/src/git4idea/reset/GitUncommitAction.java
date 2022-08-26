@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.AbstractDataGetter;
 import com.intellij.vcs.log.data.VcsLogData;
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Map;
 
 import static git4idea.GitNotificationIdsHolder.COULD_NOT_LOAD_CHANGES_OF_COMMIT;
 import static git4idea.reset.GitResetMode.SOFT;
@@ -91,8 +93,14 @@ public class GitUncommitAction extends GitSingleCommitEditingAction {
           return;
         }
 
-        // TODO change notification title
-        new GitResetOperation(project, singletonMap(repository, commit.getParents().get(0)), SOFT, indicator).execute();
+        GitResetOperation.OperationPresentation presentation = new GitResetOperation.OperationPresentation();
+        presentation.activityName = "git.undo.action.process";
+        presentation.operationTitle = "git.undo.action.operation";
+        presentation.notificationSuccess = "git.undo.action.successful.notification.message";
+        presentation.notificationFailure = "git.undo.action.failed.notification.title";
+
+        Map<GitRepository, Hash> targetCommits = singletonMap(repository, commit.getParents().get(0));
+        new GitResetOperation(project, targetCommits, SOFT, indicator, presentation).execute();
 
         if (targetChangeList != null) {
           ChangeListManager changeListManager = ChangeListManager.getInstance(project);

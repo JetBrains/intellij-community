@@ -75,6 +75,7 @@ import training.learn.lesson.general.run.toggleBreakpointTask
 import training.project.ProjectUtils
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiManager
+import training.ui.getFeedbackProposedPropertyName
 import training.util.*
 import java.awt.Point
 import java.awt.event.KeyEvent
@@ -200,7 +201,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
                                                                               LessonUtil.returnToWelcomeScreenRemark()))
         .yesText(JavaLessonsBundle.message("java.onboarding.finish.exit"))
         .noText(JavaLessonsBundle.message("java.onboarding.finish.modules"))
-        .icon(FeaturesTrainerIcons.Img.PluginIcon)
+        .icon(FeaturesTrainerIcons.PluginIcon)
         .show(project)
 
       when (result) {
@@ -225,13 +226,13 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
   }
 
   private fun prepareFeedbackData(project: Project, lessonEndInfo: LessonEndInfo) {
-    val configPropertyName = "ift.idea.onboarding.feedback.proposed"
-    if (PropertiesComponent.getInstance().getBoolean(configPropertyName, false)) {
-      return
-    }
     val primaryLanguage = module.primaryLanguage
     if (primaryLanguage == null) {
       thisLogger().error("Onboarding lesson has no language support for some magical reason")
+      return
+    }
+    val configPropertyName = getFeedbackProposedPropertyName(primaryLanguage)
+    if (PropertiesComponent.getInstance().getBoolean(configPropertyName, false)) {
       return
     }
 

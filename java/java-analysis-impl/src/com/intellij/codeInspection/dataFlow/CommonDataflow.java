@@ -21,8 +21,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -252,7 +252,7 @@ public final class CommonDataflow {
       if (JavaPsiConstructorUtil.isChainedConstructorCall(call) || (call == null && hasImplicitImpureSuperCall((PsiClass)block, method))) {
         initialStates = Collections.singletonList(runner.createMemoryState());
       } else {
-        initialStates = StreamEx.of(states).map(DfaMemoryState::createCopy).toList();
+        initialStates = ContainerUtil.map(states, DfaMemoryState::createCopy);
       }
       if(runner.analyzeBlockRecursively(body, initialStates, interceptor) == RunnerResult.OK) {
         dfr = interceptor.myResult.copy();

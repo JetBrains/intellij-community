@@ -240,7 +240,6 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
    * @param stdout   process stdout
    * @param stderr   process stderr or exception message.
    * @param all      joined stdout and stderr
-   * @param exitCode
    */
   protected abstract void checkTestResults(@NotNull T runner,
                                            @NotNull String stdout,

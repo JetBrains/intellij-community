@@ -1,4 +1,4 @@
-// "Wrap with unmodifiable set" "true"
+// "Wrap with unmodifiable set" "true-preview"
 import java.util.Set;
 import java.util.HashSet;
 

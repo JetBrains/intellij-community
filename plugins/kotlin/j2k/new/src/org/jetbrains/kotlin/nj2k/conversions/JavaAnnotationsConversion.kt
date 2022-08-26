@@ -21,6 +21,7 @@ class JavaAnnotationsConversion(context: NewJ2kConverterContext) : RecursiveAppl
                 TARGET_ANNOTATION.asString() -> it.convertTargetAnnotation()
                 RETENTION_ANNOTATION.asString() -> it.convertRetentionAnnotation()
                 REPEATABLE_ANNOTATION.asString() -> it.convertRepeatableAnnotation()
+                DOCUMENTED_ANNOTATION.asString() -> it.convertDocumentedAnnotation()
                 "java.lang.SuppressWarnings" -> {
                     if (!it.convertSuppressAnnotation()) {
                         element.annotations -= it
@@ -34,6 +35,10 @@ class JavaAnnotationsConversion(context: NewJ2kConverterContext) : RecursiveAppl
     private fun JKAnnotation.convertDeprecatedAnnotation() {
         classSymbol = symbolProvider.provideClassSymbol("kotlin.Deprecated")
         arguments = listOf(JKAnnotationParameterImpl(JKLiteralExpression("\"\"", JKLiteralExpression.LiteralType.STRING)))
+    }
+
+    private fun JKAnnotation.convertDocumentedAnnotation() {
+        classSymbol = symbolProvider.provideClassSymbol("kotlin.annotation.MustBeDocumented")
     }
 
     private fun JKAnnotation.convertTargetAnnotation() {
@@ -99,7 +104,8 @@ class JavaAnnotationsConversion(context: NewJ2kConverterContext) : RecursiveAppl
             setOf(
                 "deprecation",
                 "unused",
-                "SpellCheckingInspection"
+                "SpellCheckingInspection",
+                "HardCodedStringLiteral"
             )
 
         private val targetMappings: Map<String, List<String>> =

@@ -1,4 +1,4 @@
-// "Adapt using 'asIterator()'" "true"
+// "Adapt using 'asIterator()'" "true-preview"
 import java.util.*;
 import java.util.stream.*;
 

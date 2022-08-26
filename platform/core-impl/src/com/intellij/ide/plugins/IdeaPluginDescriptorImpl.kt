@@ -5,6 +5,7 @@ package com.intellij.ide.plugins
 import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.core.CoreBundle
+import com.intellij.idea.AppMode
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
@@ -22,9 +23,22 @@ import java.util.*
 private val LOG: Logger
   get() = PluginManagerCore.getLogger()
 
+
+fun Collection<String>.toPluginIds(): Set<PluginId> = PluginManagerCore.toPluginIds(this)
+
 fun Iterable<IdeaPluginDescriptor>.toPluginIdSet(): Set<PluginId> = mapTo(LinkedHashSet()) { it.pluginId }
 
-fun Iterable<PluginId>.toPluginDescriptors(): List<IdeaPluginDescriptorImpl> = mapNotNull(PluginManagerCore::findPlugin)
+fun Iterable<PluginId>.toPluginDescriptors(): List<IdeaPluginDescriptorImpl> {
+  val pluginIdMap = PluginManagerCore.buildPluginIdMap()
+  return mapNotNull { pluginIdMap[it] }
+}
+
+internal fun Iterable<PluginId>.joinedPluginIds(operation: String): String {
+  return joinToString(
+    prefix = "Plugins to $operation: [",
+    postfix = "]",
+  ) { it.idString }
+}
 
 @ApiStatus.Internal
 class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
@@ -81,14 +95,12 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   }
 
   companion object {
-    @ApiStatus.Internal
-    @JvmField
-    var disableNonBundledPlugins = false
 
     @VisibleForTesting
-    const val ON_DEMAND_ENABLED_KEY = "idea.on.demand.plugins"
+    const val ON_DEMAND_ENABLED_KEY: String = "idea.on.demand.plugins"
 
-    val isOnDemandEnabled
+    @JvmStatic
+    val isOnDemandEnabled: Boolean
       @ApiStatus.Experimental get() = java.lang.Boolean.getBoolean(ON_DEMAND_ENABLED_KEY)
   }
 
@@ -294,7 +306,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
       isEnabled = false
     }
 
-    if (disableNonBundledPlugins) {
+    if (AppMode.isDisableNonBundledPlugins()) {
       markAsIncompatible(PluginLoadingError(
         plugin = this,
         detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.custom.plugin.loading.disabled", getName()) },
@@ -343,7 +355,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   @ApiStatus.Internal
   fun registerExtensions(nameToPoint: Map<String, ExtensionPointImpl<*>>,
                          containerDescriptor: ContainerDescriptor,
-                         listenerCallbacks: MutableList<in Runnable>?) {
+                         listenerCallbacks: MutableList<Runnable>?) {
     containerDescriptor.extensions?.let {
       if (!it.isEmpty()) {
         @Suppress("JavaMapForEach")
@@ -391,7 +403,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   private fun doRegisterExtensions(unsortedMap: Map<String, MutableList<ExtensionDescriptor>>,
                                    nameToPoint: Map<String, ExtensionPointImpl<*>>,
-                                   listenerCallbacks: MutableList<in Runnable>?): Int {
+                                   listenerCallbacks: MutableList<Runnable>?): Int {
     var registeredCount = 0
     for (entry in unsortedMap) {
       val point = nameToPoint.get(entry.key) ?: continue

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("TypeUtils")
 package org.jetbrains.kotlin.idea.util
 
@@ -47,11 +47,12 @@ import java.util.LinkedHashMap
 
 fun KotlinType.approximateFlexibleTypes(
     preferNotNull: Boolean = false,
-    preferStarForRaw: Boolean = false
+    preferStarForRaw: Boolean = false,
+    preferUpperBoundsForCollections: Boolean = false,
 ): KotlinType {
     if (isDynamic()) return this
     if (isDefinitelyNotNullType) return this
-    return unwrapEnhancement().approximateNonDynamicFlexibleTypes(preferNotNull, preferStarForRaw)
+    return unwrapEnhancement().approximateNonDynamicFlexibleTypes(preferNotNull, preferStarForRaw, preferUpperBoundsForCollections)
 }
 
 fun KotlinType.withoutRedundantAnnotations(): KotlinType {
@@ -87,7 +88,8 @@ val FqName.isRedundantJvmAnnotation: Boolean get() = this in NULLABILITY_ANNOTAT
 
 private fun KotlinType.approximateNonDynamicFlexibleTypes(
     preferNotNull: Boolean = false,
-    preferStarForRaw: Boolean = false
+    preferStarForRaw: Boolean = false,
+    preferUpperBoundsForCollections: Boolean = false,
 ): SimpleType {
     if (this is ErrorType) return this
 
@@ -102,16 +104,19 @@ private fun KotlinType.approximateNonDynamicFlexibleTypes(
         // Foo! -> Foo?
         // Foo<Bar!>! -> Foo<Bar>?
         var approximation =
-            if (isCollection)
-            // (Mutable)Collection<T>!
+            if (isCollection) {
+                // (Mutable)Collection<T>!
+                val bound = if (preferUpperBoundsForCollections) upperBound else lowerBound
                 if (lowerBound.isMarkedNullable != upperBound.isMarkedNullable)
-                    lowerBound.makeNullableAsSpecified(!preferNotNull)
+                    bound.makeNullableAsSpecified(!preferNotNull)
                 else
-                    lowerBound
-            else
-                if (this is RawType && preferStarForRaw) upperBound.makeNullableAsSpecified(!preferNotNull)
+                    bound
+            } else {
+                if (this is RawType && preferStarForRaw)
+                    upperBound.makeNullableAsSpecified(!preferNotNull)
                 else
                     if (preferNotNull) lowerBound else upperBound
+            }
 
         approximation = approximation.approximateNonDynamicFlexibleTypes()
 

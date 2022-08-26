@@ -1110,6 +1110,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
         JBValue radius =
           cornerType == PopupCornerType.RoundedTooltip ? JBUI.CurrentTheme.Tooltip.CORNER_RADIUS : IdeaPopupMenuUI.CORNER_RADIUS;
         myContent.getRootPane().putClientProperty("apple.awt.windowCornerRadius", Float.valueOf(radius.getFloat()));
+        myContent.setBorder(myPopupBorder = PopupBorder.Factory.createEmpty());
       }
     }
 
@@ -2077,8 +2078,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
       if (keymapManager != null) {
         Shortcut[] shortcuts = keymapManager.getActiveKeymap().getShortcuts(IdeActions.ACTION_EDITOR_ESCAPE);
         for (Shortcut shortcut : shortcuts) {
-          if (shortcut instanceof KeyboardShortcut) {
-            KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
+          if (shortcut instanceof KeyboardShortcut keyboardShortcut) {
             if (keyboardShortcut.getFirstKeyStroke().getKeyCode() == e.getKeyCode() &&
                 keyboardShortcut.getSecondKeyStroke() == null) {
               int m1 = keyboardShortcut.getFirstKeyStroke().getModifiers() & (InputEvent.SHIFT_MASK | InputEvent.CTRL_MASK | InputEvent.META_MASK | InputEvent.ALT_MASK);
@@ -2087,11 +2087,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
             }
           }
         }
-        return false;
       }
-      else {
-        return e.getKeyCode() == KeyEvent.VK_ESCAPE && e.getModifiers() == 0;
-      }
+      return e.getKeyCode() == KeyEvent.VK_ESCAPE && e.getModifiers() == 0;
     }
     return false;
   }

@@ -1,10 +1,11 @@
 package com.intellij.ide.starter.tests.examples.junit5
 
 import com.intellij.ide.starter.ide.command.CommandChain
+import com.intellij.ide.starter.junit5.JUnit5StarterAssistant
+import com.intellij.ide.starter.junit5.hyphenateWithClass
 import com.intellij.ide.starter.runner.TestContainerImpl
 import com.intellij.ide.starter.tests.examples.data.TestCases
 import com.jetbrains.performancePlugin.commands.chain.exitApp
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.extension.ExtendWith
@@ -16,12 +17,11 @@ class IdeaJUnit5ExampleTest {
   private lateinit var testInfo: TestInfo
   private lateinit var context: TestContainerImpl
 
-  @Disabled("Temporary ignore for not running in Ultimate tests suite")
   @Test
   fun openGradleJitPack() {
 
     val testContext = context
-      .initializeTestRunner(testInfo.hyphenateWithClass(), TestCases.IC.GradleJitPackSimple)
+      .initializeTestContext(testInfo.hyphenateWithClass(), TestCases.IC.GradleJitPackSimple)
       .prepareProjectCleanImport()
       .skipIndicesInitialization()
       .setSharedIndexesDownload(enable = true)
@@ -39,12 +39,11 @@ class IdeaJUnit5ExampleTest {
     )
   }
 
-  @Disabled("Temporary ignore for not running in Ultimate tests suite")
   @Test
   fun openMavenProject() {
 
     val testContext = context
-      .initializeTestRunner(testInfo.hyphenateWithClass(), TestCases.IC.MavenSimpleApp)
+      .initializeTestContext(testInfo.hyphenateWithClass(), TestCases.IC.MavenSimpleApp)
       .prepareProjectCleanImport()
       .skipIndicesInitialization()
       .setSharedIndexesDownload(enable = true)

@@ -13,8 +13,10 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -79,6 +81,9 @@ open class ModuleCustomImlDataEntityImpl : ModuleCustomImlDataEntity, WorkspaceE
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToOneParent<WorkspaceEntityBase>(MODULE_CONNECTION_ID, this) == null) {
           error("Field ModuleCustomImlDataEntity#module should be initialized")
@@ -89,9 +94,6 @@ open class ModuleCustomImlDataEntityImpl : ModuleCustomImlDataEntity, WorkspaceE
           error("Field ModuleCustomImlDataEntity#module should be initialized")
         }
       }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ModuleCustomImlDataEntity#entitySource should be initialized")
-      }
       if (!getEntityData().isCustomModuleOptionsInitialized()) {
         error("Field ModuleCustomImlDataEntity#customModuleOptions should be initialized")
       }
@@ -101,6 +103,26 @@ open class ModuleCustomImlDataEntityImpl : ModuleCustomImlDataEntity, WorkspaceE
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as ModuleCustomImlDataEntity
+      this.entitySource = dataSource.entitySource
+      this.rootManagerTagCustomData = dataSource.rootManagerTagCustomData
+      this.customModuleOptions = dataSource.customModuleOptions.toMutableMap()
+      if (parents != null) {
+        this.module = parents.filterIsInstance<ModuleEntity>().single()
+      }
+    }
+
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var module: ModuleEntity
       get() {
@@ -135,15 +157,6 @@ open class ModuleCustomImlDataEntityImpl : ModuleCustomImlDataEntity, WorkspaceE
           this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
         }
         changedProperty.add("module")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override var rootManagerTagCustomData: String?
@@ -205,6 +218,19 @@ class ModuleCustomImlDataEntityData : WorkspaceEntityData<ModuleCustomImlDataEnt
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ModuleCustomImlDataEntity(customModuleOptions, entitySource) {
+      this.rootManagerTagCustomData = this@ModuleCustomImlDataEntityData.rootManagerTagCustomData
+      this.module = parents.filterIsInstance<ModuleEntity>().single()
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(ModuleEntity::class.java)
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
@@ -233,5 +259,17 @@ class ModuleCustomImlDataEntityData : WorkspaceEntityData<ModuleCustomImlDataEnt
     result = 31 * result + rootManagerTagCustomData.hashCode()
     result = 31 * result + customModuleOptions.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + rootManagerTagCustomData.hashCode()
+    result = 31 * result + customModuleOptions.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    this.customModuleOptions?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = false
   }
 }

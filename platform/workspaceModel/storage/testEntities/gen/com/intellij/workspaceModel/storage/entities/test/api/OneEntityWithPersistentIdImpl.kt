@@ -12,8 +12,10 @@ import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -66,11 +68,11 @@ open class OneEntityWithPersistentIdImpl : OneEntityWithPersistentId, WorkspaceE
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isMyNameInitialized()) {
         error("Field OneEntityWithPersistentId#myName should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field OneEntityWithPersistentId#entitySource should be initialized")
       }
     }
 
@@ -78,14 +80,15 @@ open class OneEntityWithPersistentIdImpl : OneEntityWithPersistentId, WorkspaceE
       return connections
     }
 
-
-    override var myName: String
-      get() = getEntityData().myName
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().myName = value
-        changedProperty.add("myName")
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as OneEntityWithPersistentId
+      this.entitySource = dataSource.entitySource
+      this.myName = dataSource.myName
+      if (parents != null) {
       }
+    }
+
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -94,6 +97,14 @@ open class OneEntityWithPersistentIdImpl : OneEntityWithPersistentId, WorkspaceE
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var myName: String
+      get() = getEntityData().myName
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().myName = value
+        changedProperty.add("myName")
       }
 
     override fun getEntityData(): OneEntityWithPersistentIdData = result ?: super.getEntityData() as OneEntityWithPersistentIdData
@@ -141,14 +152,24 @@ class OneEntityWithPersistentIdData : WorkspaceEntityData.WithCalculablePersiste
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return OneEntityWithPersistentId(myName, entitySource) {
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
 
     other as OneEntityWithPersistentIdData
 
-    if (this.myName != other.myName) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.myName != other.myName) return false
     return true
   }
 
@@ -166,5 +187,15 @@ class OneEntityWithPersistentIdData : WorkspaceEntityData.WithCalculablePersiste
     var result = entitySource.hashCode()
     result = 31 * result + myName.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + myName.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.sameForAllEntities = true
   }
 }

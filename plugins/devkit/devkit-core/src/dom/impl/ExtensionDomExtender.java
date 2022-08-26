@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.google.common.base.CaseFormat;
@@ -96,25 +96,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
         markAsRequired(extension, required);
 
         if (clazz == String.class) {
-          if (PsiUtil.findAnnotation(NonNls.class, field) != null) {
-            extension.addCustomAnnotation(MyNoSpellchecking.INSTANCE);
-          }
-          else if (!fieldType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
-            final PsiClass fieldPsiClass = PsiTypesUtil.getPsiClass(fieldType);
-            if (fieldPsiClass != null && fieldPsiClass.isEnum()) {
-              extension.setConverter(createEnumConverter(fieldPsiClass));
-              return;
-            }
-          }
-
-          if ("language".equals(attributeName) ||
-              StringUtil.endsWith(attributeName, "Language")) // NON-NLS
-          {
-            extension.setConverter(LANGUAGE_CONVERTER);
-          }
-          else if ("action".equals(attributeName)) {
-            extension.setConverter(ACTION_CONVERTER);
-          }
+          markStringProperty(extension, field, fieldType, attributeName);
         }
         else if (clazz == PsiClass.class) {
           markAsClass(extension, true, withElement);
@@ -130,9 +112,8 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
 
         final With withElement = findWithElement(elements, field);
         markAsClass(extension, Extension.isClassField(field.getName()), withElement);
-        if (PsiUtil.findAnnotation(NonNls.class, field) != null) {
-          extension.addCustomAnnotation(MyNoSpellchecking.INSTANCE);
-        }
+
+        markStringProperty(extension, field, field.getType(), tagName);
       }
 
       @Override
@@ -187,6 +168,28 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     }
     else if (required == ExtensionPointBinding.BindingVisitor.RequiredFlag.REQUIRED_ALLOW_EMPTY) {
       extension.addCustomAnnotation(MyRequiredCanBeEmpty.INSTANCE);
+    }
+  }
+
+  private static void markStringProperty(DomExtension extension, PsiField field, PsiType fieldType, String propertyName) {
+    if (PsiUtil.findAnnotation(NonNls.class, field) != null) {
+      extension.addCustomAnnotation(MyNoSpellchecking.INSTANCE);
+    }
+    else if (!fieldType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+      final PsiClass fieldPsiClass = PsiTypesUtil.getPsiClass(fieldType);
+      if (fieldPsiClass != null && fieldPsiClass.isEnum()) {
+        extension.setConverter(createEnumConverter(fieldPsiClass));
+        return;
+      }
+    }
+
+    if ("language".equals(propertyName) ||
+        StringUtil.endsWith(propertyName, "Language")) // NON-NLS
+    {
+      extension.setConverter(LANGUAGE_CONVERTER);
+    }
+    else if ("action".equals(propertyName)) {
+      extension.setConverter(ACTION_CONVERTER);
     }
   }
 
@@ -353,72 +356,89 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
 
   @NotNull
   private static ResolvingConverter<PsiEnumConstant> createEnumConverter(PsiClass fieldPsiClass) {
-    return new ResolvingConverter<>() {
-
-      @Override
-      public String getErrorMessage(@Nullable String s, ConvertContext context) {
-        return DevKitBundle.message("plugin.xml.convert.enum.cannot.resolve", s, fieldPsiClass.getQualifiedName());
-      }
-
-      @NotNull
-      @Override
-      public Collection<? extends PsiEnumConstant> getVariants(ConvertContext context) {
-        return ContainerUtil.findAll(fieldPsiClass.getFields(), PsiEnumConstant.class);
-      }
-
-      @Nullable
-      @Override
-      public LookupElement createLookupElement(PsiEnumConstant constant) {
-        return JavaLookupElementBuilder.forField(constant, toXmlName(constant), null);
-      }
-
-      @Nullable
-      @Override
-      public PsiEnumConstant fromString(@Nullable String s, ConvertContext context) {
-        if (s == null) return null;
-
-        final PsiField name = fieldPsiClass.findFieldByName(fromXmlName(s), false);
-        return name instanceof PsiEnumConstant ? (PsiEnumConstant)name : null;
-      }
-
-      @Nullable
-      @Override
-      public String toString(@Nullable PsiEnumConstant constant, ConvertContext context) {
-        return constant == null ? null : toXmlName(constant);
-      }
-
-      private String fromXmlName(@NotNull String name) {
-        if (doNotTransformName()) return name;
-        if (enumLowerUnderscore()) return CaseFormat.LOWER_UNDERSCORE.to(CaseFormat.UPPER_UNDERSCORE, name);
-        return CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, name);
-      }
-
-      private String toXmlName(PsiEnumConstant constant) {
-        String name = constant.getName();
-        if (doNotTransformName()) return name;
-        if (enumLowerUnderscore()) return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.LOWER_UNDERSCORE, name);
-        return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, name);
-      }
-
-      private boolean doNotTransformName() {
-        return LEGACY_ENUM_NOTATION_CLASSES.contains(fieldPsiClass.getQualifiedName());
-      }
-
-      private boolean enumLowerUnderscore() {
-        return LOWER_UNDERSCORE_ENUM_NOTATION_CLASSES.contains(fieldPsiClass.getQualifiedName());
-      }
-    };
+    return new PsiEnumConstantResolvingConverter(fieldPsiClass.getQualifiedName());
   }
 
-  private static final Set<String> LEGACY_ENUM_NOTATION_CLASSES =
-    ContainerUtil.immutableSet(
-      "com.intellij.compiler.CompileTaskBean.CompileTaskExecutionPhase",
-      "com.intellij.plugins.jboss.arquillian.configuration.container.ArquillianContainerKind",
-      "com.intellij.notification.impl.NotificationGroupEP.DisplayType"
-    );
+  private static class PsiEnumConstantResolvingConverter extends ResolvingConverter<PsiEnumConstant> {
 
-  private static final Set<String> LOWER_UNDERSCORE_ENUM_NOTATION_CLASSES =
-    ContainerUtil.immutableSet(
-      "com.intellij.ui.viewModel.extraction.ToolWindowExtractorMode"
-    );
+    private final String myEnumFqn;
+
+    private static final Set<String> LEGACY_ENUM_NOTATION_CLASSES =
+      ContainerUtil.immutableSet(
+        "com.intellij.compiler.CompileTaskBean.CompileTaskExecutionPhase",
+        "com.intellij.plugins.jboss.arquillian.configuration.container.ArquillianContainerKind",
+        "com.intellij.notification.impl.NotificationGroupEP.DisplayType"
+      );
+
+    private static final Set<String> LOWER_UNDERSCORE_ENUM_NOTATION_CLASSES =
+      ContainerUtil.immutableSet(
+        "com.intellij.ui.viewModel.extraction.ToolWindowExtractorMode"
+      );
+
+    PsiEnumConstantResolvingConverter(String enumFqn) { myEnumFqn = enumFqn; }
+
+    @Override
+    public String getErrorMessage(@Nullable String s, ConvertContext context) {
+      return DevKitBundle.message("plugin.xml.convert.enum.cannot.resolve", s, myEnumFqn);
+    }
+
+    @NotNull
+    @Override
+    public Collection<? extends PsiEnumConstant> getVariants(ConvertContext context) {
+      PsiClass enumClass = getEnumClass(context);
+      if (enumClass == null) return Collections.emptyList();
+
+      return ContainerUtil.findAll(enumClass.getFields(), PsiEnumConstant.class);
+    }
+
+    @Nullable
+    @Override
+    public LookupElement createLookupElement(PsiEnumConstant constant) {
+      return JavaLookupElementBuilder.forField(constant, toXmlName(constant), null);
+    }
+
+    @Nullable
+    @Override
+    public PsiEnumConstant fromString(@Nullable String s, ConvertContext context) {
+      if (s == null) return null;
+
+      PsiClass enumClass = getEnumClass(context);
+      if (enumClass == null) return null;
+
+      final PsiField name = enumClass.findFieldByName(fromXmlName(s), false);
+      return name instanceof PsiEnumConstant ? (PsiEnumConstant)name : null;
+    }
+
+    @Nullable
+    @Override
+    public String toString(@Nullable PsiEnumConstant constant, ConvertContext context) {
+      return constant == null ? null : toXmlName(constant);
+    }
+
+    @Nullable
+    private PsiClass getEnumClass(ConvertContext context) {
+      return DomJavaUtil.findClass(myEnumFqn, context.getInvocationElement());
+    }
+
+    private String fromXmlName(@NotNull String name) {
+      if (doNotTransformName()) return name;
+      if (enumLowerUnderscore()) return CaseFormat.LOWER_UNDERSCORE.to(CaseFormat.UPPER_UNDERSCORE, name);
+      return CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, name);
+    }
+
+    private String toXmlName(PsiEnumConstant constant) {
+      String name = constant.getName();
+      if (doNotTransformName()) return name;
+      if (enumLowerUnderscore()) return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.LOWER_UNDERSCORE, name);
+      return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.LOWER_CAMEL, name);
+    }
+
+    private boolean doNotTransformName() {
+      return LEGACY_ENUM_NOTATION_CLASSES.contains(myEnumFqn);
+    }
+
+    private boolean enumLowerUnderscore() {
+      return LOWER_UNDERSCORE_ENUM_NOTATION_CLASSES.contains(myEnumFqn);
+    }
+  }
 }

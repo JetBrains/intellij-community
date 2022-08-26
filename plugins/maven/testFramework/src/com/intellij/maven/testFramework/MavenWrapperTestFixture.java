@@ -60,7 +60,7 @@ public class MavenWrapperTestFixture {
       .flatMap(e -> e.getChildren().stream())
       .filter(e -> "snapshot".equals(e.getName()))
       .flatMap(e -> e.getChildren().stream())
-      .collect(Collectors.toList());
+      .toList();
     String timestamp = null;
     String build = null;
     for(Element e: timestampAndBuild){

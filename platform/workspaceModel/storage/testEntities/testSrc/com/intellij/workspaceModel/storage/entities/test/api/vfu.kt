@@ -9,6 +9,8 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
 
 
 
@@ -20,8 +22,8 @@ interface VFUEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : VFUEntity, ModifiableWorkspaceEntity<VFUEntity>, ObjBuilder<VFUEntity> {
-    override var data: String
     override var entitySource: EntitySource
+    override var data: String
     override var fileProperty: VirtualFileUrl
   }
 
@@ -32,8 +34,8 @@ interface VFUEntity : WorkspaceEntity {
                         init: (Builder.() -> Unit)? = null): VFUEntity {
       val builder = builder()
       builder.data = data
-      builder.entitySource = entitySource
       builder.fileProperty = fileProperty
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }
@@ -55,8 +57,8 @@ interface VFUWithTwoPropertiesEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : VFUWithTwoPropertiesEntity, ModifiableWorkspaceEntity<VFUWithTwoPropertiesEntity>, ObjBuilder<VFUWithTwoPropertiesEntity> {
-    override var data: String
     override var entitySource: EntitySource
+    override var data: String
     override var fileProperty: VirtualFileUrl
     override var secondFileProperty: VirtualFileUrl
   }
@@ -69,9 +71,9 @@ interface VFUWithTwoPropertiesEntity : WorkspaceEntity {
                         init: (Builder.() -> Unit)? = null): VFUWithTwoPropertiesEntity {
       val builder = builder()
       builder.data = data
-      builder.entitySource = entitySource
       builder.fileProperty = fileProperty
       builder.secondFileProperty = secondFileProperty
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }
@@ -93,8 +95,8 @@ interface NullableVFUEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : NullableVFUEntity, ModifiableWorkspaceEntity<NullableVFUEntity>, ObjBuilder<NullableVFUEntity> {
-    override var data: String
     override var entitySource: EntitySource
+    override var data: String
     override var fileProperty: VirtualFileUrl?
   }
 
@@ -123,9 +125,9 @@ interface ListVFUEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ListVFUEntity, ModifiableWorkspaceEntity<ListVFUEntity>, ObjBuilder<ListVFUEntity> {
-    override var data: String
     override var entitySource: EntitySource
-    override var fileProperty: List<VirtualFileUrl>
+    override var data: String
+    override var fileProperty: MutableList<VirtualFileUrl>
   }
 
   companion object : Type<ListVFUEntity, Builder>() {
@@ -135,8 +137,8 @@ interface ListVFUEntity : WorkspaceEntity {
                         init: (Builder.() -> Unit)? = null): ListVFUEntity {
       val builder = builder()
       builder.data = data
+      builder.fileProperty = fileProperty.toMutableWorkspaceList()
       builder.entitySource = entitySource
-      builder.fileProperty = fileProperty
       init?.invoke(builder)
       return builder
     }
@@ -148,6 +150,39 @@ interface ListVFUEntity : WorkspaceEntity {
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: ListVFUEntity, modification: ListVFUEntity.Builder.() -> Unit) = modifyEntity(
   ListVFUEntity.Builder::class.java, entity, modification)
+//endregion
+
+interface SetVFUEntity : WorkspaceEntity {
+  val data: String
+  val fileProperty: Set<VirtualFileUrl>
+
+  //region generated code
+  @GeneratedCodeApiVersion(1)
+  interface Builder : SetVFUEntity, ModifiableWorkspaceEntity<SetVFUEntity>, ObjBuilder<SetVFUEntity> {
+    override var entitySource: EntitySource
+    override var data: String
+    override var fileProperty: MutableSet<VirtualFileUrl>
+  }
+
+  companion object : Type<SetVFUEntity, Builder>() {
+    operator fun invoke(data: String,
+                        fileProperty: Set<VirtualFileUrl>,
+                        entitySource: EntitySource,
+                        init: (Builder.() -> Unit)? = null): SetVFUEntity {
+      val builder = builder()
+      builder.data = data
+      builder.fileProperty = fileProperty.toMutableWorkspaceSet()
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
+  }
+  //endregion
+}
+
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: SetVFUEntity, modification: SetVFUEntity.Builder.() -> Unit) = modifyEntity(
+  SetVFUEntity.Builder::class.java, entity, modification)
 //endregion
 
 fun MutableEntityStorage.addVFUEntity(

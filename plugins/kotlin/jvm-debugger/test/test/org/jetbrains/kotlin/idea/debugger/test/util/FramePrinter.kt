@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.debugger.test.util
 
 import com.intellij.debugger.SourcePosition
@@ -21,9 +21,9 @@ import com.intellij.xdebugger.XTestValueNode
 import com.intellij.xdebugger.frame.*
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants
 import com.sun.jdi.ArrayType
-import org.jetbrains.kotlin.idea.debugger.GetterDescriptor
-import org.jetbrains.kotlin.idea.debugger.coroutine.data.ContinuationVariableValueDescriptorImpl
+import org.jetbrains.kotlin.idea.debugger.core.GetterDescriptor
 import org.jetbrains.kotlin.idea.debugger.core.invokeInManagerThread
+import org.jetbrains.kotlin.idea.debugger.coroutine.data.ContinuationVariableValueDescriptorImpl
 import org.jetbrains.kotlin.idea.debugger.test.KOTLIN_LIBRARY_NAME
 import org.jetbrains.kotlin.psi.KtFile
 import java.util.concurrent.TimeUnit
@@ -227,7 +227,7 @@ private fun patchHashCode(value: String): String {
  * (See com.intellij.debugger.settings.NodeRendererSettings.MapEntryLabelRenderer.calcLabel method for
  * the implementation of labels calculation)
  */
-private const val MAP_ENTRY_TEST_LABEL = "map_entry_tests_label"
+private const val MAP_ENTRY_TEST_LABEL = "... -> ..."
 
 private val ValueDescriptorImpl.isMapEntryDescriptor
     get() = DebuggerUtils.instanceOf(type, "java.util.Map.Entry")
@@ -237,7 +237,7 @@ private val ValueDescriptorImpl.isMapEntryDescriptor
  * To render an array correctly, it has to fetch all of its values. After that the renderer
  * asynchronously updates the array representation, which results in flaky tests.
  */
-private const val ARRAY_TEST_LABEL = "array_tests_label"
+private const val ARRAY_TEST_LABEL = "[...]"
 
 private val ValueDescriptorImpl.isArrayDescriptor
     get() = type is ArrayType

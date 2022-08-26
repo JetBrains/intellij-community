@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.scroll.LatchingScroll;
@@ -58,6 +59,13 @@ public class JBScrollPane extends JScrollPane {
    * @see UIUtil#putClientProperty(JComponent, Key, Object)
    */
   public static final Key<Boolean> IGNORE_SCROLL_LATCHING = Key.create("IGNORE_SCROLL_LATCHING");
+
+  /**
+   * Set to {@link Boolean#TRUE} if {@code JBScrollPane} has <b>only</b> horizontal scrollbar, and
+   * it has to be scrolled with and without pressed Shift.
+   */
+  @ApiStatus.Experimental
+  public static final Key<Boolean> FORCE_HORIZONTAL_SCROLL = Key.create("FORCE_SHIFT_ON_SCROLL");
 
   private static final Logger LOG = Logger.getInstance(JBScrollPane.class);
 
@@ -224,6 +232,10 @@ public class JBScrollPane extends JScrollPane {
       boolean isScrollPaneEvent = event.getSource() instanceof JScrollPane;
       if (isScrollEvent && isScrollPaneEvent) {
         JScrollPane pane = (JScrollPane)event.getSource();
+        if (Boolean.TRUE.equals(ClientProperty.get(pane, FORCE_HORIZONTAL_SCROLL))) {
+          event = withShiftModifier(event);
+        }
+
         JScrollBar bar = event.isShiftDown() ? pane.getHorizontalScrollBar() : pane.getVerticalScrollBar();
 
         boolean isWheelScrollEnabled = pane.isWheelScrollingEnabled();
@@ -263,6 +275,15 @@ public class JBScrollPane extends JScrollPane {
         }
       }
     }
+  }
+
+  /**
+   * Returns new {@code MouseWheelEvent} copied from given event with Shift modifier
+   */
+  private static @NotNull MouseWheelEvent withShiftModifier(@NotNull MouseWheelEvent event) {
+    return MouseEventAdapter.convert(event, (JComponent)event.getSource(), event.getID(), event.getWhen(),
+                                     UIUtil.getAllModifiers(event) | InputEvent.SHIFT_DOWN_MASK,
+                                     event.getX(), event.getY());
   }
 
   @Override

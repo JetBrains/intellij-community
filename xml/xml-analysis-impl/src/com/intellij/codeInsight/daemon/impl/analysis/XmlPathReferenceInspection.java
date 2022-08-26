@@ -38,17 +38,17 @@ public class XmlPathReferenceInspection extends XmlSuppressableInspectionTool {
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new XmlElementVisitor() {
       @Override
-      public void visitXmlAttributeValue(XmlAttributeValue value) {
+      public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
         checkRefs(value, holder);
       }
 
       @Override
-      public void visitXmlDoctype(XmlDoctype xmlDoctype) {
+      public void visitXmlDoctype(@NotNull XmlDoctype xmlDoctype) {
         checkRefs(xmlDoctype, holder);
       }
 
       @Override
-      public void visitXmlTag(XmlTag tag) {
+      public void visitXmlTag(@NotNull XmlTag tag) {
         checkRefs(tag, holder);
       }
     };

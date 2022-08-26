@@ -28,6 +28,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.ui.IconManager;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
@@ -1034,7 +1035,6 @@ public final class PyUtil {
   }
 
   /**
-   * @param name
    * @return true iff the name looks like a class-private one, starting with two underscores but not ending with two underscores.
    */
   public static boolean isClassPrivateName(@NotNull String name) {
@@ -1065,7 +1065,8 @@ public final class PyUtil {
     } else {
       suffix = "";
     }
-    LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(name + suffix).withIcon(PlatformIcons.PARAMETER_ICON);
+    LookupElementBuilder lookupElementBuilder = LookupElementBuilder.create(name + suffix).withIcon(
+      IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Parameter));
     lookupElementBuilder = lookupElementBuilder.withInsertHandler(OverwriteEqualsInsertHandler.INSTANCE);
     lookupElementBuilder.putUserData(PyCompletionMlElementInfo.Companion.getKey(), PyCompletionMlElementKind.NAMED_ARG.asInfo());
     return PrioritizedLookupElement.withGrouping(lookupElementBuilder, 1);

@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class WaitForContributorsListenerWrapper extends BufferingListenerWrapper {
 
@@ -26,10 +28,8 @@ public class WaitForContributorsListenerWrapper extends BufferingListenerWrapper
   private Future<?> flushFuture;
   private boolean useBuffer = true;
 
-  public WaitForContributorsListenerWrapper(SearchListener delegate, Collection<SearchEverywhereContributor<?>> contributorsToWait,
-                                            SearchListModel model) {
+  public WaitForContributorsListenerWrapper(SearchListener delegate, SearchListModel model) {
     super(delegate);
-    contributorsToWait.forEach(contributor -> contributorsMap.put(contributor, false));
     listModel = model;
   }
 
@@ -56,7 +56,7 @@ public class WaitForContributorsListenerWrapper extends BufferingListenerWrapper
   @Override
   public void searchStarted(@NotNull Collection<? extends SearchEverywhereContributor<?>> contributors) {
     super.searchStarted(contributors);
-    resetState();
+    resetState(contributors);
     flushFuture = scheduleFlash();
   }
 
@@ -111,10 +111,14 @@ public class WaitForContributorsListenerWrapper extends BufferingListenerWrapper
     });
   }
 
-  private void resetState() {
+  private void resetState(Collection<? extends SearchEverywhereContributor<?>> contributors) {
     cancelScheduledFlush();
     clearBuffer();
-    contributorsMap.replaceAll((c, b) -> false);
+    Map<? extends SearchEverywhereContributor<?>, Boolean> map = contributors.stream()
+      .filter(c -> !PossibleSlowContributor.checkSlow(c))
+      .collect(Collectors.toMap(Function.identity(), c -> false));
+    contributorsMap.clear();
+    contributorsMap.putAll(map);
     useBuffer = true;
   }
 }

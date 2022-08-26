@@ -3,10 +3,12 @@ package com.intellij.cce.dialog.configurable
 import com.intellij.cce.EvaluationPluginBundle
 import com.intellij.cce.filter.EvaluationFilter
 import com.intellij.ui.components.JBRadioButton
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.Row
 import java.awt.event.ItemEvent
 
-class StaticUIConfigurable(previousState: EvaluationFilter, private val layout: LayoutBuilder) : UIConfigurable {
+class StaticUIConfigurable(previousState: EvaluationFilter, private val panel: Panel) : UIConfigurable {
   private enum class StaticFilter {
     ALL,
     STATIC,
@@ -29,18 +31,19 @@ class StaticUIConfigurable(previousState: EvaluationFilter, private val layout: 
     }
   }
 
-  private fun createView(): Row = layout.row {
-    buttonGroup {
-      cell {
-        label(EvaluationPluginBundle.message("evaluation.settings.filters.static.title"))
+  private fun createView(): Row {
+    lateinit var result: Row
+    panel.buttonsGroup {
+      result = row(EvaluationPluginBundle.message("evaluation.settings.filters.static.title")) {
         radioButton(EvaluationPluginBundle.message("evaluation.settings.filters.static.all")).configure(StaticFilter.ALL)
         radioButton(EvaluationPluginBundle.message("evaluation.settings.filters.static.yes")).configure(StaticFilter.STATIC)
         radioButton(EvaluationPluginBundle.message("evaluation.settings.filters.static.no")).configure(StaticFilter.NOT_STATIC)
       }
     }
+    return result
   }
 
-  private fun CellBuilder<JBRadioButton>.configure(value: StaticFilter) {
+  private fun Cell<JBRadioButton>.configure(value: StaticFilter) {
     component.isSelected = staticType == value
     component.addItemListener { event ->
       if (event.stateChange == ItemEvent.SELECTED) staticType = value

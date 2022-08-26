@@ -4,7 +4,7 @@ package com.intellij.idea;
 import com.intellij.ide.CliResult;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.rules.TempDirectory;
-import com.intellij.util.ArrayUtil;
+import kotlin.Pair;
 import kotlinx.coroutines.GlobalScope;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Rule;
@@ -12,9 +12,9 @@ import org.junit.Test;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.Assert.assertEquals;
@@ -46,7 +46,7 @@ public class LockSupportTest {
   public void testLock() {
     SocketLock lock = new SocketLock(tempDir.getRoot().toPath().resolve("c"), tempDir.getRoot().toPath().resolve("s"));
     try {
-      assertEquals(SocketLock.ActivationStatus.NO_INSTANCE, lock.lockAndTryActivate(ArrayUtil.EMPTY_STRING_ARRAY, GlobalScope.INSTANCE).getKey());
+      assertEquals(SocketLock.ActivationStatus.NO_INSTANCE, lock.lockAndTryActivate(Collections.emptyList(), GlobalScope.INSTANCE).getFirst());
     }
     finally {
       lock.dispose();
@@ -54,7 +54,7 @@ public class LockSupportTest {
   }
 
   @Test(timeout = 30000)
-  public void testTwoLocks() throws Exception {
+  public void testTwoLocks() {
     List<SocketLock> toClose = new ArrayList<>();
     try {
       assertEquals(SocketLock.ActivationStatus.NO_INSTANCE, createLockAndTryActivate(toClose, tempDir.getRoot().toPath(), "c1", "s1"));
@@ -77,9 +77,9 @@ public class LockSupportTest {
   }
 
   private static SocketLock.ActivationStatus tryActivate(@NotNull SocketLock lock) {
-    Map.Entry<SocketLock.ActivationStatus, CliResult> result = lock.lockAndTryActivate(ArrayUtil.EMPTY_STRING_ARRAY, GlobalScope.INSTANCE);
+    Pair<SocketLock.ActivationStatus, CliResult> result = lock.lockAndTryActivate(Collections.emptyList(), GlobalScope.INSTANCE);
     lock.getServer();
-    return result.getKey();
+    return result.getFirst();
   }
 
   @Test(timeout = 30000)

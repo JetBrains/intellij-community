@@ -3,7 +3,7 @@ package com.intellij.rt.debugger.agent;
 
 import java.lang.instrument.Instrumentation;
 
-@SuppressWarnings({"UseOfSystemOutOrSystemErr"})
+@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class DebuggerAgent {
   public static void premain(String args, Instrumentation instrumentation) {
     // never instrument twice

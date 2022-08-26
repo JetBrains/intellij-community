@@ -68,8 +68,8 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
   }
 
   private static void registerUpdaters(@NotNull Project project, @NotNull Disposable disposable, @NotNull Runnable onUpdate) {
-    ScratchFileService scratchFileService = ScratchFileService.getInstance();
     VirtualFileManager.getInstance().addAsyncFileListener(events -> {
+      ScratchFileService scratchFileService = ScratchFileService.getInstance();
       boolean update = JBIterable.from(events).find(e -> {
         ProgressManager.checkCanceled();
         VirtualFile parent = getNewParent(e);
@@ -191,8 +191,8 @@ public class ScratchTreeStructureProvider implements TreeStructureProvider, Dumb
 
   @Override
   public Object getData(@NotNull Collection<AbstractTreeNode<?>> selected, @NotNull String dataId) {
-    if (PlatformCoreDataKeys.SLOW_DATA_PROVIDERS.is(dataId)) {
-      return Collections.<DataProvider>singletonList(slowId -> getSlowData(slowId, selected));
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      return (DataProvider)slowId -> getSlowData(slowId, selected);
     }
     return null;
   }

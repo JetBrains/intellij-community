@@ -6,7 +6,6 @@ import com.intellij.core.CoreBundle;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,8 +18,10 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
+import com.intellij.util.Java11Shim;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.lang.Java11Shim;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.lang.ZipFilePool;
 import kotlinx.coroutines.CoroutineScope;
@@ -511,13 +512,18 @@ public final class PluginManagerCore {
 
     boolean applied = pluginIds != null;
     if (applied) {
-      for (IdeaPluginDescriptorImpl module : getPluginSet().allPlugins) {
-        if (pluginIds.contains(module.getPluginId())) {
-          module.setEnabled(enabled);
+      List<IdeaPluginDescriptorImpl> descriptors = new ArrayList<>();
+      for (IdeaPluginDescriptorImpl descriptor : getPluginSet().allPlugins) {
+        if (pluginIds.contains(descriptor.getPluginId())) {
+          descriptor.setEnabled(enabled);
+
+          if (descriptor.moduleName == null) {
+            descriptors.add(descriptor);
+          }
         }
       }
 
-      DisabledPluginsState.Companion.setEnabledState$intellij_platform_core_impl(pluginIds, enabled);
+      DisabledPluginsState.Companion.setEnabledState(descriptors, enabled);
     }
     return applied;
   }
@@ -538,7 +544,7 @@ public final class PluginManagerCore {
    */
   @ApiStatus.Internal
   public static @NotNull CompletableFuture<List<IdeaPluginDescriptorImpl>> getEnabledPluginRawList() {
-    scheduleDescriptorLoading(GlobalScope.INSTANCE);
+    scheduleDescriptorLoading(GlobalScope.INSTANCE, null);
     return FutureKt.asCompletableFuture(initFuture).thenApply(it -> it.enabledPlugins);
   }
 
@@ -781,14 +787,20 @@ public final class PluginManagerCore {
                                                                                                      disabledRequired,
                                                                                                      context.disabledPlugins,
                                                                                                      pluginErrorsById);
-      boolean result = loadingError != null;
-      if (result) {
-        pluginErrorsById.put(descriptor.getPluginId(), loadingError);
-        descriptor.setEnabled(false);
+
+      PluginId pluginId = descriptor.getPluginId();
+      boolean isLoadable = loadingError == null;
+      if (!isLoadable) {
+        pluginErrorsById.put(pluginId, loadingError);
         disabledAfterInit.add(descriptor);
       }
 
-      return result;
+      boolean shouldLoad = !context.expiredPlugins.contains(pluginId) &&
+                           (!descriptor.isOnDemand() || context.enabledOnDemandPlugins.contains(pluginId));
+
+      descriptor.setEnabled(descriptor.isEnabled()
+                            && isLoadable && shouldLoad);
+      return !descriptor.isEnabled();
     });
 
     List<Supplier<HtmlChunk>> actions = prepareActions(disabledAfterInit, disabledRequired);
@@ -828,7 +840,7 @@ public final class PluginManagerCore {
   }
 
   @ApiStatus.Internal
-  static @Nullable Boolean isThirdPartyPluginsNoteAccepted() {
+  public static @Nullable Boolean isThirdPartyPluginsNoteAccepted() {
     Boolean result = thirdPartyPluginsNoteAccepted;
     thirdPartyPluginsNoteAccepted = null;
     return result;
@@ -849,16 +861,43 @@ public final class PluginManagerCore {
 
   @ReviseWhenPortedToJDK(value = "10", description = "Set.of")
   private static @NotNull Set<PluginId> get3rdPartyPluginIds() {
-    Path file = PathManager.getConfigDir().resolve(THIRD_PARTY_PLUGINS_FILE);
+    Path path = PathManager.getConfigDir().resolve(THIRD_PARTY_PLUGINS_FILE);
     try {
-      Set<PluginId> ids = DisabledPluginsState.Companion.readPluginIdsFromFile$intellij_platform_core_impl(file);
+      Set<PluginId> ids = readPluginIdsFromFile(path);
       if (!ids.isEmpty()) {
-        Files.delete(file);
+        Files.delete(path);
       }
       return ids;
     }
     catch (IOException e) {
-      getLogger().error(file.toString(), e);
+      getLogger().error(path.toString(), e);
+      return Collections.emptySet();
+    }
+  }
+
+  @ReviseWhenPortedToJDK(value = "10, 11", description = "toUnmodifiableSet, Set.of, String.isBlank")
+  @ApiStatus.Internal
+  public synchronized static @NotNull Set<PluginId> readPluginIdsFromFile(@NotNull Path path) throws IOException {
+    try (Stream<String> lines = Files.lines(path)) {
+      return lines
+        .map(String::trim)
+        .filter(line -> !line.isEmpty())
+        .map(PluginId::getId)
+        .collect(Collectors.toSet());
+    }
+    catch (NoSuchFileException ignored) {
+      return Collections.emptySet();
+    }
+  }
+
+  @ApiStatus.Internal
+  public synchronized static @NotNull Set<PluginId> tryReadPluginIdsFromFile(@NotNull Path path,
+                                                                             @NotNull Logger logger) {
+    try {
+      return readPluginIdsFromFile(path);
+    }
+    catch (IOException e) {
+      logger.warn("Unable to read plugin id list from: " + path, e);
       return Collections.emptySet();
     }
   }
@@ -870,6 +909,21 @@ public final class PluginManagerCore {
     writePluginIdsToFile(path,
                          pluginIds.stream(),
                          openOptions);
+  }
+
+  @ApiStatus.Internal
+  public synchronized static boolean tryWritePluginIdsToFile(@NotNull Path path,
+                                                             @NotNull Set<PluginId> pluginIds,
+                                                             @NotNull Logger logger,
+                                                             OpenOption... openOptions) {
+    try {
+      writePluginIdsToFile(path, pluginIds, openOptions);
+      return true;
+    }
+    catch (IOException e) {
+      logger.warn("Unable to write plugin id list to: " + path, e);
+      return false;
+    }
   }
 
   @ReviseWhenPortedToJDK(value = "10", description = "toUnmodifiableList")
@@ -892,6 +946,17 @@ public final class PluginManagerCore {
                 openOptions);
   }
 
+  @ReviseWhenPortedToJDK(value = "10", description = "toUnmodifiableSet")
+  @VisibleForTesting
+  public static @NotNull Set<PluginId> toPluginIds(@NotNull Collection<String> pluginIdStrings) {
+    Set<PluginId> pluginIds = pluginIdStrings.stream()
+      .map(String::trim)
+      .filter(s -> !s.isEmpty())
+      .map(PluginId::getId)
+      .collect(Collectors.toSet());
+    return Collections.unmodifiableSet(pluginIds);
+  }
+
   private static boolean ask3rdPartyPluginsPrivacyConsent(@NotNull List<IdeaPluginDescriptorImpl> descriptors) {
     String title = CoreBundle.message("third.party.plugins.privacy.note.title");
     String pluginList = descriptors.stream()
@@ -901,7 +966,7 @@ public final class PluginManagerCore {
     String[] buttons =
       {CoreBundle.message("third.party.plugins.privacy.note.accept"), CoreBundle.message("third.party.plugins.privacy.note.disable")};
     int choice = JOptionPane.showOptionDialog(null, text, title, JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE,
-                                              AllIcons.General.WarningDialog, buttons, buttons[0]);
+                                              IconManager.getInstance().getPlatformIcon(PlatformIcons.WarningDialog), buttons, buttons[0]);
     return choice == 0;
   }
 
@@ -1122,15 +1187,6 @@ public final class PluginManagerCore {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-
-  /**
-   * @deprecated Use {@link #isDisabled(PluginId)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static boolean isDisabled(@NotNull String pluginId) {
-    return isDisabled(PluginId.getId(pluginId));
-  }
 
   /** @deprecated Use {@link #disablePlugin(PluginId)} */
   @Deprecated

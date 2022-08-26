@@ -62,7 +62,7 @@ public class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
             .stream()
             .filter(constant -> constant instanceof UStringConstant)
             .map(UConstant::getSource)
-            .collect(Collectors.toList());
+            .toList();
           if (!constants.isEmpty()) {
             UIdentifier identifier = expression.getMethodIdentifier();
             if (identifier != null) {

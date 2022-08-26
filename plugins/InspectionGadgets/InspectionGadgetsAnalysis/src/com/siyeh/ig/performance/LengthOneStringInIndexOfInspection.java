@@ -1,18 +1,4 @@
-/*
- * Copyright 2006-2018 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -81,14 +67,11 @@ public class LengthOneStringInIndexOfInspection extends BaseInspection implement
     final String text = expression.getText();
     final int length = text.length();
     final String character = text.substring(1, length - 1);
-    switch (character) {
-      case "'":
-        return "'\\''";
-      case "\\\"":
-        return "'\"'";
-      default:
-        return '\'' + character + '\'';
-    }
+    return switch (character) {
+      case "'" -> "'\\''";
+      case "\\\"" -> "'\"'";
+      default -> '\'' + character + '\'';
+    };
   }
 
   private static class LengthOneStringsInIndexOfVisitor
@@ -124,10 +107,8 @@ public class LengthOneStringInIndexOfInspection extends BaseInspection implement
       if (!(grandparent instanceof PsiMethodCallExpression)) {
         return false;
       }
-      final PsiMethodCallExpression call =
-        (PsiMethodCallExpression)grandparent;
-      final PsiReferenceExpression methodExpression =
-        call.getMethodExpression();
+      final PsiMethodCallExpression call = (PsiMethodCallExpression)grandparent;
+      final PsiReferenceExpression methodExpression = call.getMethodExpression();
       @NonNls final String name = methodExpression.getReferenceName();
       if (!HardcodedMethodConstants.INDEX_OF.equals(name) &&
           !HardcodedMethodConstants.LAST_INDEX_OF.equals(name)) {

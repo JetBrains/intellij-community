@@ -12,6 +12,7 @@ import com.intellij.collaboration.ui.items
 import com.intellij.collaboration.ui.util.JListHoveredRowMaterialiser
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.application.ModalityState
@@ -162,6 +163,8 @@ private constructor(disposable: Disposable,
         override fun updateButton(e: AnActionEvent) {
           isEnabled = isEnabled && accountsModel.defaultAccount != accountsList.selectedValue
         }
+
+        override fun getActionUpdateThread() = ActionUpdateThread.EDT
       })
     }
 

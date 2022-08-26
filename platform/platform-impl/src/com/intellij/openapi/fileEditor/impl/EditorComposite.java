@@ -3,6 +3,7 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.impl.DataValidators;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -15,10 +16,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
-import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
-import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
+import com.intellij.openapi.fileEditor.ex.*;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -40,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
@@ -55,7 +54,7 @@ import java.util.function.Supplier;
  * It's a composite what can be pinned in the tabs list or opened as a preview, not concrete file editors.
  * It also manages the internal UI structure: bottom and top components, panels, labels, actions for navigating between editors it owns.
  */
-public class EditorComposite extends UserDataHolderBase implements Disposable {
+public class EditorComposite extends EditorCompositeBase implements Disposable {
   private static final Logger LOG = Logger.getInstance(EditorComposite.class);
 
   /**
@@ -95,6 +94,8 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
   private final List<FileEditorWithProvider> myEditorsWithProviders = new CopyOnWriteArrayList<>();
 
   private final EventDispatcher<EditorCompositeListener> myDispatcher = EventDispatcher.create(EditorCompositeListener.class);
+
+  private boolean mySelfBorder;
 
   EditorComposite(final @NotNull VirtualFile file,
                   @NotNull List<@NotNull FileEditorWithProvider> editorsWithProviders,
@@ -232,6 +233,7 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
     }
   }
 
+  @Override
   public boolean isPreview() {
     return myPreview;
   }
@@ -309,6 +311,7 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
     return getAllEditors().toArray(FileEditor.EMPTY_ARRAY);
   }
 
+  @Override
   public @NotNull List<@NotNull FileEditor> getAllEditors() {
     return ContainerUtil.map(getAllEditorsWithProviders(), it -> it.getFileEditor());
   }
@@ -353,6 +356,8 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
     final JComponent container = top ? myTopComponents.get(editor) : myBottomComponents.get(editor);
     assert container != null;
 
+    mySelfBorder = false;
+
     if (remove) {
       container.remove(component.getParent());
       EditorCompositeListener multicaster = myDispatcher.getMulticaster();
@@ -366,7 +371,10 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
     else {
       NonOpaquePanel wrapper = new NonOpaquePanel(component);
       if (!Boolean.TRUE.equals(component.getClientProperty(FileEditorManager.SEPARATOR_DISABLED))) {
-        wrapper.setBorder(createTopBottomSideBorder(top, ClientProperty.get(component, FileEditorManager.SEPARATOR_COLOR)));
+        Border border = ClientProperty.get(component, FileEditorManager.SEPARATOR_BORDER);
+        mySelfBorder = border != null;
+        wrapper.setBorder(
+          border == null ? createTopBottomSideBorder(top, ClientProperty.get(component, FileEditorManager.SEPARATOR_COLOR)) : border);
       }
       int index = calcComponentInsertionIndex(component, container);
       container.add(wrapper, index);
@@ -379,6 +387,10 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
       }
     }
     container.revalidate();
+  }
+
+  public boolean selfBorder() {
+    return mySelfBorder;
   }
 
   private static int calcComponentInsertionIndex(@NotNull JComponent newComponent, @NotNull JComponent container) {
@@ -552,21 +564,22 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
 
     @Override
     public final Object getData(@NotNull String dataId) {
+      if (CommonDataKeys.PROJECT.is(dataId)) {
+        return myProject;
+      }
       if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
         return getSelectedEditor();
       }
       if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-        return myFile.isValid() ? myFile : null;
+        return myFile;
       }
       if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-        return myFile.isValid() ? new VirtualFile[]{myFile} : null;
-      }
-      if (CommonDataKeys.PROJECT.is(dataId)) {
-        return getProject();
+        return new VirtualFile[]{myFile};
       }
       JComponent component = getPreferredFocusedComponent();
       if (component instanceof DataProvider && component != this) {
-        return ((DataProvider)component).getData(dataId);
+        Object data = ((DataProvider)component).getData(dataId);
+        return data == null ? null : DataValidators.validOrNull(data, dataId, component);
       }
       return null;
     }
@@ -647,13 +660,13 @@ public class EditorComposite extends UserDataHolderBase implements Disposable {
     final int selectedProviderIndex = ArrayUtil.find(editors, getSelectedEditor());
     LOG.assertTrue(selectedProviderIndex != -1);
     final FileEditorProvider[] providers = getProviders();
-    return HistoryEntry.createLight(getFile(), providers, states, providers[selectedProviderIndex]);
+    return HistoryEntry.createLight(getFile(), providers, states, providers[selectedProviderIndex], myPreview);
   }
 
   /**
    * A mapper for old API with arrays and pairs
    */
-  public static @NotNull Pair<FileEditor @NotNull [], FileEditorProvider @NotNull []> retrofit(@Nullable EditorComposite composite) {
+  public static @NotNull Pair<FileEditor @NotNull [], FileEditorProvider @NotNull []> retrofit(@Nullable EditorCompositeBase composite) {
     if (composite == null) return new Pair<>(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY);
 
     FileEditor[] editors = composite.getAllEditors().toArray(FileEditor.EMPTY_ARRAY);

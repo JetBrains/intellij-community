@@ -1,5 +1,6 @@
 package com.intellij.workspaceModel.storage.entities.test.api
 
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntityInformation
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -11,6 +12,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToOneParent
@@ -71,6 +73,9 @@ open class ChildSubSubEntityImpl : ChildSubSubEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToOneParent<WorkspaceEntityBase>(PARENTENTITY_CONNECTION_ID, this) == null) {
           error("Field ChildSubSubEntity#parentEntity should be initialized")
@@ -81,9 +86,6 @@ open class ChildSubSubEntityImpl : ChildSubSubEntity, WorkspaceEntityBase() {
           error("Field ChildSubSubEntity#parentEntity should be initialized")
         }
       }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ChildSubSubEntity#entitySource should be initialized")
-      }
       if (!getEntityData().isChildDataInitialized()) {
         error("Field ChildSubSubEntity#childData should be initialized")
       }
@@ -93,6 +95,25 @@ open class ChildSubSubEntityImpl : ChildSubSubEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as ChildSubSubEntity
+      this.entitySource = dataSource.entitySource
+      this.childData = dataSource.childData
+      if (parents != null) {
+        this.parentEntity = parents.filterIsInstance<ChildSubEntity>().single()
+      }
+    }
+
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var parentEntity: ChildSubEntity
       get() {
@@ -127,15 +148,6 @@ open class ChildSubSubEntityImpl : ChildSubSubEntity, WorkspaceEntityBase() {
           this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] = value
         }
         changedProperty.add("parentEntity")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override var childData: String
@@ -187,6 +199,18 @@ class ChildSubSubEntityData : WorkspaceEntityData<ChildSubSubEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ChildSubSubEntity(childData, entitySource) {
+      this.parentEntity = parents.filterIsInstance<ChildSubEntity>().single()
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(ChildSubEntity::class.java)
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
@@ -212,5 +236,15 @@ class ChildSubSubEntityData : WorkspaceEntityData<ChildSubSubEntity>() {
     var result = entitySource.hashCode()
     result = 31 * result + childData.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + childData.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.sameForAllEntities = true
   }
 }

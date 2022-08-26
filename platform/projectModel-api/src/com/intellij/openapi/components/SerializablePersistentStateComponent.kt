@@ -10,22 +10,30 @@ import java.lang.invoke.VarHandle
 @ApiStatus.Experimental
 abstract class SerializablePersistentStateComponent<T : Any> protected constructor(private var state: T)
   : PersistentStateComponentWithModificationTracker<T> {
+
   companion object {
+
     private val STATE_HANDLE: VarHandle
     private val TIMESTAMP_HANDLE: VarHandle
 
     init {
       try {
-        val lookup = MethodHandles.privateLookupIn(SerializablePersistentStateComponent::class.java, MethodHandles.lookup())
-        STATE_HANDLE = lookup.findVarHandle(SerializablePersistentStateComponent::class.java, "state", Any::class.java)
-        TIMESTAMP_HANDLE = lookup.findVarHandle(SerializablePersistentStateComponent::class.java, "timestamp",
-                                                Long::class.javaPrimitiveType)
+        val lookup = MethodHandles.privateLookupIn(
+          /* targetClass = */ SerializablePersistentStateComponent::class.java,
+          /* lookup = */ MethodHandles.lookup(),
+        )
+        STATE_HANDLE = lookup.findVarHandle(
+          /* recv = */ SerializablePersistentStateComponent::class.java,
+          /* name = */ "state",
+          /* type = */ Any::class.java,
+        )
+        TIMESTAMP_HANDLE = lookup.findVarHandle(
+          /* recv = */ SerializablePersistentStateComponent::class.java,
+          /* name = */ "timestamp",
+          /* type = */ Long::class.javaPrimitiveType,
+        )
       }
-      catch (e: IllegalAccessException) {
-        Logger.getInstance(SerializablePersistentStateComponent::class.java).error(e)
-        throw ExtensionNotApplicableException.create()
-      }
-      catch (e: NoSuchFieldException) {
+      catch (e: ReflectiveOperationException) {
         Logger.getInstance(SerializablePersistentStateComponent::class.java).error(e)
         throw ExtensionNotApplicableException.create()
       }
@@ -61,7 +69,7 @@ abstract class SerializablePersistentStateComponent<T : Any> protected construct
    *
    * @param updateFunction a function to merge states
    */
-  protected inline fun updateState(updateFunction: (currentState: T) -> T) {
+  protected inline fun updateState(updateFunction: (currentState: T) -> T): T {
     var prev = getState()
     var next: T? = null
     var haveNext = false
@@ -70,7 +78,7 @@ abstract class SerializablePersistentStateComponent<T : Any> protected construct
         next = updateFunction(prev)
       }
       if (compareAndSet(this, prev, next)) {
-        break
+        return next!!
       }
       haveNext = prev === getState().also { prev = it }
     }

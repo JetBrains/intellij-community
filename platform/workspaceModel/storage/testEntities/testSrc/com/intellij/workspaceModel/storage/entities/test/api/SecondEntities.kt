@@ -4,6 +4,7 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
@@ -19,8 +20,8 @@ interface SampleEntity2 : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : SampleEntity2, ModifiableWorkspaceEntity<SampleEntity2>, ObjBuilder<SampleEntity2> {
-    override var data: String
     override var entitySource: EntitySource
+    override var data: String
     override var boolData: Boolean
     override var optionalData: String?
   }
@@ -29,8 +30,8 @@ interface SampleEntity2 : WorkspaceEntity {
     operator fun invoke(data: String, boolData: Boolean, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SampleEntity2 {
       val builder = builder()
       builder.data = data
-      builder.entitySource = entitySource
       builder.boolData = boolData
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }
@@ -53,11 +54,11 @@ interface VFUEntity2 : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : VFUEntity2, ModifiableWorkspaceEntity<VFUEntity2>, ObjBuilder<VFUEntity2> {
-    override var data: String
     override var entitySource: EntitySource
+    override var data: String
     override var filePath: VirtualFileUrl?
     override var directoryPath: VirtualFileUrl
-    override var notNullRoots: List<VirtualFileUrl>
+    override var notNullRoots: MutableList<VirtualFileUrl>
   }
 
   companion object : Type<VFUEntity2, Builder>() {
@@ -68,9 +69,9 @@ interface VFUEntity2 : WorkspaceEntity {
                         init: (Builder.() -> Unit)? = null): VFUEntity2 {
       val builder = builder()
       builder.data = data
-      builder.entitySource = entitySource
       builder.directoryPath = directoryPath
-      builder.notNullRoots = notNullRoots
+      builder.notNullRoots = notNullRoots.toMutableWorkspaceList()
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }

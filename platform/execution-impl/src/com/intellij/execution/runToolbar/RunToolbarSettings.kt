@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runToolbar
 
 import com.intellij.execution.RunnerAndConfigurationSettings
@@ -9,6 +9,7 @@ import com.intellij.util.xmlb.annotations.XCollection
 import com.intellij.util.xmlb.annotations.XMap
 import java.util.*
 
+@Service(Service.Level.PROJECT)
 @State(name = "RunToolbarSettings", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 class RunToolbarSettings(private val project: Project) : SimplePersistentStateComponent<RunToolbarState>(RunToolbarState()) {
   companion object {
@@ -91,5 +92,5 @@ class RunToolbarState : BaseState() {
 
   var moveNewOnTop by property(defaultValue = true)
   var updateMainBySelected by property(defaultValue = true)
-  var runConfigWidth by property(defaultValue = FixWidthSegmentedActionToolbarComponent.RUN_CONFIG_WIDTH_UNSCALED_MIN)
+  var runConfigWidth by property(defaultValue = RunWidgetWidthHelper.RUN_CONFIG_WIDTH_UNSCALED_MIN)
 }

@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -166,6 +167,11 @@ public class JavaDocFixes {
     @NotNull
     public String getName() {
       return QuickFixBundle.message("add.docTag.to.custom.tags", myTag);
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      return new IntentionPreviewInfo.Html(QuickFixBundle.message("add.docTag.to.custom.tags.preview"));
     }
 
     @Override

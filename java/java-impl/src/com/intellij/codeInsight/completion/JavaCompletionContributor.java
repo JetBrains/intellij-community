@@ -254,17 +254,17 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       };
     }
 
-    final PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(position, PsiSwitchBlock.class);
+    PsiSwitchBlock switchBlock = PsiTreeUtil.getParentOfType(position, PsiSwitchBlock.class);
     if (switchBlock == null) return TrueFilter.INSTANCE;
 
-    final PsiExpression selector = switchBlock.getExpression();
+    PsiExpression selector = switchBlock.getExpression();
     if (selector == null || selector.getType() == null) return TrueFilter.INSTANCE;
 
-    final PsiType selectorType = selector.getType();
-    final ClassFilter constantVariablesFilter = new ClassFilter(PsiVariable.class) {
+    PsiType selectorType = selector.getType();
+    ClassFilter constantVariablesFilter = new ClassFilter(PsiVariable.class) {
       @Override
       public boolean isAcceptable(Object element, PsiElement context) {
-        final PsiVariable variable;
+        PsiVariable variable;
         if (element instanceof PsiField) {
           variable = (PsiField)element;
           if (variable.hasModifierProperty(PsiModifier.FINAL) && variable.hasModifierProperty(PsiModifier.STATIC)) {
@@ -296,9 +296,9 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       return new OrFilter(new ClassFilter(PsiClass.class), constantVariablesFilter);
     }
 
-    final PsiClass typeClass = PsiUtil.resolveClassInType(selectorType);
+    PsiClass typeClass = PsiUtil.resolveClassInType(selectorType);
 
-    final ClassFilter inheritorsFilter = new ClassFilter(PsiClass.class) {
+    ClassFilter inheritorsFilter = new ClassFilter(PsiClass.class) {
       @Override
       public boolean isAcceptable(Object element, PsiElement context) {
         return element instanceof PsiClass && InheritanceUtil.isInheritorOrSelf((PsiClass)element, typeClass, true);
@@ -319,8 +319,8 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     if (type instanceof PsiPrimitiveType) return true;
     if (!(type instanceof PsiClassType)) return false;
 
-    final PsiClass aClass = ((PsiClassType)type).resolve();
-    final Collection<String> boxedPrimitiveTypes = JvmPrimitiveTypeKind.getBoxedFqns();
+    PsiClass aClass = ((PsiClassType)type).resolve();
+    Collection<String> boxedPrimitiveTypes = JvmPrimitiveTypeKind.getBoxedFqns();
     return aClass != null && boxedPrimitiveTypes.contains(aClass.getQualifiedName());
   }
 
@@ -353,8 +353,8 @@ public final class JavaCompletionContributor extends CompletionContributor imple
   }
 
   @Override
-  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet _result) {
-    final PsiElement position = parameters.getPosition();
+  public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet _result) {
+    PsiElement position = parameters.getPosition();
     if (!isInJavaContext(position)) {
       return;
     }
@@ -368,7 +368,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
 
     boolean smart = parameters.getCompletionType() == CompletionType.SMART;
 
-    final CompletionResultSet result = JavaCompletionSorting.addJavaSorting(parameters, _result);
+    CompletionResultSet result = JavaCompletionSorting.addJavaSorting(parameters, _result);
     JavaCompletionSession session = new JavaCompletionSession(result);
 
     PrefixMatcher matcher = result.getPrefixMatcher();
@@ -536,7 +536,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     boolean[] hadItems = new boolean[1];
     for (ExpectedTypeInfo info : new ObjectOpenCustomHashSet<>(infos, JavaSmartCompletionContributor.EXPECTED_TYPE_INFO_STRATEGY)) {
       BasicExpressionCompletionContributor.fillCompletionVariants(new JavaSmartCompletionParameters(parameters, info), lookupElement -> {
-        final PsiType psiType = JavaCompletionUtil.getLookupElementType(lookupElement);
+        PsiType psiType = JavaCompletionUtil.getLookupElementType(lookupElement);
         if (psiType != null && info.getType().isAssignableFrom(psiType)) {
           hadItems[0] = true;
           result.addElement(JavaSmartCompletionContributor.decorate(lookupElement, infos));
@@ -622,7 +622,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     suggestSmartCast(parameters, session, true, items::add);
 
     if (parent instanceof PsiReferenceExpression && !(parent instanceof PsiMethodReferenceExpression)) {
-      final List<ExpectedTypeInfo> expected = Arrays.asList(ExpectedTypesProvider.getExpectedTypes((PsiExpression)parent, true));
+      List<ExpectedTypeInfo> expected = Arrays.asList(ExpectedTypesProvider.getExpectedTypes((PsiExpression)parent, true));
       StreamConversion.addCollectConversion((PsiReferenceExpression)parent, expected,
                                              lookupElement -> items.add(JavaSmartCompletionContributor.decorate(lookupElement, expected)));
       if (!smart) {
@@ -695,11 +695,11 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     }
   }
 
-  private static List<LookupElement> completeReference(CompletionParameters parameters,
-                                                       PsiJavaCodeReferenceElement ref,
-                                                       JavaCompletionSession session,
-                                                       Set<? extends ExpectedTypeInfo> expectedTypes,
-                                                       Condition<? super String> nameCondition) {
+  private static @NotNull List<LookupElement> completeReference(@NotNull CompletionParameters parameters,
+                                                                PsiJavaCodeReferenceElement ref,
+                                                                JavaCompletionSession session,
+                                                                Set<? extends ExpectedTypeInfo> expectedTypes,
+                                                                Condition<? super String> nameCondition) {
     PsiElement position = parameters.getPosition();
     ElementFilter filter = getReferenceFilter(position);
     if (filter == null) return Collections.emptyList();
@@ -778,7 +778,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       }
       if (item instanceof JavaMethodCallElement) {
         JavaMethodCallElement call = (JavaMethodCallElement)item;
-        final PsiMethod method = call.getObject();
+        PsiMethod method = call.getObject();
         if (method.getTypeParameters().length > 0) {
           PsiType returned = TypeConversionUtil.erasure(method.getReturnType());
           ExpectedTypeInfo matchingExpectation = returned == null ? null : ContainerUtil.find(expectedTypes, info ->
@@ -894,7 +894,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       return false;
     }
 
-    final PsiElement parent = position.getParent();
+    PsiElement parent = position.getParent();
     if (!(parent instanceof PsiJavaCodeReferenceElement)) return isSecondCompletion;
     if (((PsiJavaCodeReferenceElement)parent).getQualifier() != null) return isSecondCompletion;
 
@@ -904,7 +904,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     }
 
     if (IN_SWITCH_LABEL.accepts(position)) {
-      return false;
+      return HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(parent);
     }
 
     if (psiElement().inside(PsiImportStatement.class).accepts(parent)) {
@@ -935,7 +935,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     methods: for (PsiMethod method : annoClass.getMethods()) {
       if (!(method instanceof PsiAnnotationMethod)) continue;
 
-      final String attrName = method.getName();
+      String attrName = method.getName();
       for (PsiNameValuePair existingAttr : existingPairs) {
         if (PsiTreeUtil.isAncestor(existingAttr, position, false)) break;
         if (Objects.equals(existingAttr.getName(), attrName) ||
@@ -966,7 +966,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       .withInsertHandler(new InsertHandler<>() {
         @Override
         public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
-          final Editor editor = context.getEditor();
+          Editor editor = context.getEditor();
           if (value == null) {
             EqTailType.INSTANCE.processTail(editor, editor.getCaretModel().getOffset());
           }
@@ -985,14 +985,14 @@ public final class JavaCompletionContributor extends CompletionContributor imple
   }
 
   @Override
-  public String advertise(@NotNull final CompletionParameters parameters) {
+  public String advertise(@NotNull CompletionParameters parameters) {
     if (!(parameters.getOriginalFile() instanceof PsiJavaFile)) return null;
 
     if (parameters.getCompletionType() == CompletionType.BASIC && parameters.getInvocationCount() > 0) {
       PsiElement position = parameters.getPosition();
       if (psiElement().withParent(psiReferenceExpression().withFirstChild(psiReferenceExpression().referencing(psiClass()))).accepts(position)) {
         if (CompletionUtil.shouldShowFeature(parameters, JavaCompletionFeatures.GLOBAL_MEMBER_NAME)) {
-          final String shortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_CODE_COMPLETION);
+          String shortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_CODE_COMPLETION);
           if (StringUtil.isNotEmpty(shortcut)) {
             return JavaBundle.message("pressing.0.twice.without.a.class.qualifier", shortcut);
           }
@@ -1002,7 +1002,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
 
     if (parameters.getCompletionType() != CompletionType.SMART && shouldSuggestSmartCompletion(parameters.getPosition())) {
       if (CompletionUtil.shouldShowFeature(parameters, CodeCompletionFeatures.EDITING_COMPLETION_SMARTTYPE_GENERAL)) {
-        final String shortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_SMART_TYPE_COMPLETION);
+        String shortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_SMART_TYPE_COMPLETION);
         if (StringUtil.isNotEmpty(shortcut)) {
           return JavaBundle.message("completion.smart.hint", shortcut);
         }
@@ -1010,13 +1010,13 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     }
 
     if (parameters.getCompletionType() == CompletionType.SMART && parameters.getInvocationCount() == 1) {
-      final PsiType[] psiTypes = ExpectedTypesGetter.getExpectedTypes(parameters.getPosition(), true);
+      PsiType[] psiTypes = ExpectedTypesGetter.getExpectedTypes(parameters.getPosition(), true);
       if (psiTypes.length > 0) {
         if (CompletionUtil.shouldShowFeature(parameters, JavaCompletionFeatures.SECOND_SMART_COMPLETION_TOAR)) {
-          final String shortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_SMART_TYPE_COMPLETION);
+          String shortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_SMART_TYPE_COMPLETION);
           if (StringUtil.isNotEmpty(shortcut)) {
-            for (final PsiType psiType : psiTypes) {
-              final PsiType type = PsiUtil.extractIterableTypeParameter(psiType, false);
+            for (PsiType psiType : psiTypes) {
+              PsiType type = PsiUtil.extractIterableTypeParameter(psiType, false);
               if (type != null) {
                 return JavaBundle.message("completion.smart.aslist.hint", shortcut, type.getPresentableText());
               }
@@ -1024,11 +1024,11 @@ public final class JavaCompletionContributor extends CompletionContributor imple
           }
         }
         if (CompletionUtil.shouldShowFeature(parameters, JavaCompletionFeatures.SECOND_SMART_COMPLETION_ASLIST)) {
-          final String shortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_SMART_TYPE_COMPLETION);
+          String shortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_SMART_TYPE_COMPLETION);
           if (StringUtil.isNotEmpty(shortcut)) {
-            for (final PsiType psiType : psiTypes) {
+            for (PsiType psiType : psiTypes) {
               if (psiType instanceof PsiArrayType) {
-                final PsiType componentType = ((PsiArrayType)psiType).getComponentType();
+                PsiType componentType = ((PsiArrayType)psiType).getComponentType();
                 if (!(componentType instanceof PsiPrimitiveType)) {
                   return JavaBundle.message("completion.smart.toar.hint", shortcut, componentType.getPresentableText());
                 }
@@ -1038,7 +1038,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
         }
 
         if (CompletionUtil.shouldShowFeature(parameters, JavaCompletionFeatures.SECOND_SMART_COMPLETION_CHAIN)) {
-          final String shortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_SMART_TYPE_COMPLETION);
+          String shortcut = KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_SMART_TYPE_COMPLETION);
           if (StringUtil.isNotEmpty(shortcut)) {
             return JavaBundle.message("completion.smart.chain.hint", shortcut);
           }
@@ -1049,11 +1049,11 @@ public final class JavaCompletionContributor extends CompletionContributor imple
   }
 
   @Override
-  public @NlsContexts.HintText String handleEmptyLookup(@NotNull final CompletionParameters parameters, final Editor editor) {
+  public @NlsContexts.HintText String handleEmptyLookup(@NotNull CompletionParameters parameters, Editor editor) {
     if (!(parameters.getOriginalFile() instanceof PsiJavaFile)) return null;
 
-    final String ad = advertise(parameters);
-    final String suffix = ad == null ? "" : "; " + StringUtil.decapitalize(ad);
+    String ad = advertise(parameters);
+    String suffix = ad == null ? "" : "; " + StringUtil.decapitalize(ad);
     if (parameters.getCompletionType() == CompletionType.SMART) {
       PsiExpression expression = PsiTreeUtil.getContextOfType(parameters.getPosition(), PsiExpression.class, true);
       if (expression instanceof PsiLiteralExpression) {
@@ -1061,17 +1061,17 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       }
 
       if (expression instanceof PsiInstanceOfExpression) {
-        final PsiInstanceOfExpression instanceOfExpression = (PsiInstanceOfExpression)expression;
+        PsiInstanceOfExpression instanceOfExpression = (PsiInstanceOfExpression)expression;
         if (PsiTreeUtil.isAncestor(instanceOfExpression.getCheckType(), parameters.getPosition(), false)) {
           return LangBundle.message("completion.no.suggestions") + suffix;
         }
       }
 
-      final Set<PsiType> expectedTypes = JavaCompletionUtil.getExpectedTypes(parameters);
+      Set<PsiType> expectedTypes = JavaCompletionUtil.getExpectedTypes(parameters);
       if (expectedTypes != null) {
         PsiType type = expectedTypes.size() == 1 ? expectedTypes.iterator().next() : null;
         if (type != null) {
-          final PsiType deepComponentType = type.getDeepComponentType();
+          PsiType deepComponentType = type.getDeepComponentType();
           String expectedType = type.getPresentableText();
           if (expectedType.contains(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)) {
             return null;
@@ -1097,27 +1097,27 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     return typeChar == ':' && JavaTokenType.COLON == PsiUtilCore.getElementType(position);
   }
 
-  private static boolean shouldSuggestSmartCompletion(final PsiElement element) {
+  private static boolean shouldSuggestSmartCompletion(PsiElement element) {
     if (shouldSuggestClassNameCompletion(element)) return false;
 
-    final PsiElement parent = element.getParent();
+    PsiElement parent = element.getParent();
     if (parent instanceof PsiReferenceExpression && ((PsiReferenceExpression)parent).getQualifier() != null) return false;
     if (parent instanceof PsiReferenceExpression && parent.getParent() instanceof PsiReferenceExpression) return true;
 
     return ExpectedTypesGetter.getExpectedTypes(element, false).length > 0;
   }
 
-  private static boolean shouldSuggestClassNameCompletion(final PsiElement element) {
+  private static boolean shouldSuggestClassNameCompletion(PsiElement element) {
     if (element == null) return false;
-    final PsiElement parent = element.getParent();
+    PsiElement parent = element.getParent();
     if (parent == null) return false;
     return parent.getParent() instanceof PsiTypeElement || parent.getParent() instanceof PsiExpressionStatement ||
            parent.getParent() instanceof PsiReferenceList;
   }
 
   @Override
-  public void beforeCompletion(@NotNull final CompletionInitializationContext context) {
-    final PsiFile file = context.getFile();
+  public void beforeCompletion(@NotNull CompletionInitializationContext context) {
+    PsiFile file = context.getFile();
 
     if (file instanceof PsiJavaFile) {
       String dummyIdentifier = customizeDummyIdentifier(context, file);

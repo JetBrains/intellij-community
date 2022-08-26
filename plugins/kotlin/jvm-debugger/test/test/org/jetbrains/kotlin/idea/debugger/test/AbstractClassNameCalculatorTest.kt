@@ -44,7 +44,7 @@ abstract class AbstractClassNameCalculatorTest : KotlinLightCodeInsightFixtureTe
         myFixture.checkResultByFile(testFile)
     }
 
-    private fun checkConsistency(file: KtFile, allNames: Map<KtElement, String>) {
+    protected open fun checkConsistency(file: KtFile, allNames: Map<KtElement, String>) {
         val analysisResult = file.analyzeWithAllCompilerChecks()
         assert(!analysisResult.isError())
 

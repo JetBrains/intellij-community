@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.caches.project
 
 import com.intellij.openapi.progress.ProgressManager
@@ -25,6 +25,30 @@ fun interface LibraryDependenciesFilter {
 object DefaultLibraryDependenciesFilter : LibraryDependenciesFilter {
     override fun invoke(platform: TargetPlatform, candidates: Set<LibraryDependencyCandidate>): Set<LibraryDependencyCandidate> {
         return candidates.filterTo(LinkedHashSet(candidates.size)) { candidate -> platform representsSubsetOf candidate.platform }
+    }
+}
+
+/**
+ * Similar to [DefaultLibraryDependenciesFilter], but checks for precise platforms match for platform dependencies.
+ *
+ *    jvm -> jvm { OK }
+ *    js -> js { OK }
+ *    jvm -> jvm, js { NOT OK } <- difference from [DefaultLibraryDependenciesFilter] !
+ *    jvm, js -> jvm, js, native { OK }.
+ *
+ * It is useful for Gradle Metadata-unaware clients, like Maven, as they might receive
+ * dependencies on the common parts of a library along with platform-specific parts,
+ * leading to potential clash in resolution. See KTIJ-15758
+ */
+@ApiStatus.Internal
+object StrictEqualityForPlatformSpecificCandidatesFilter : LibraryDependenciesFilter {
+    override fun invoke(platform: TargetPlatform, candidates: Set<LibraryDependencyCandidate>): Set<LibraryDependencyCandidate> {
+        return candidates.filterTo(LinkedHashSet(candidates.size)) { candidate ->
+            if (platform.size == 1)
+                platform == candidate.platform
+            else
+                platform representsSubsetOf candidate.platform
+        }
     }
 }
 

@@ -12,8 +12,11 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -65,11 +68,11 @@ open class ArtifactsOrderEntityImpl : ArtifactsOrderEntity, WorkspaceEntityBase(
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isOrderOfArtifactsInitialized()) {
         error("Field ArtifactsOrderEntity#orderOfArtifacts should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ArtifactsOrderEntity#entitySource should be initialized")
       }
     }
 
@@ -77,15 +80,15 @@ open class ArtifactsOrderEntityImpl : ArtifactsOrderEntity, WorkspaceEntityBase(
       return connections
     }
 
-
-    override var orderOfArtifacts: List<String>
-      get() = getEntityData().orderOfArtifacts
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().orderOfArtifacts = value
-
-        changedProperty.add("orderOfArtifacts")
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as ArtifactsOrderEntity
+      this.entitySource = dataSource.entitySource
+      this.orderOfArtifacts = dataSource.orderOfArtifacts.toMutableList()
+      if (parents != null) {
       }
+    }
+
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -96,13 +99,30 @@ open class ArtifactsOrderEntityImpl : ArtifactsOrderEntity, WorkspaceEntityBase(
 
       }
 
+    private val orderOfArtifactsUpdater: (value: List<String>) -> Unit = { value ->
+
+      changedProperty.add("orderOfArtifacts")
+    }
+    override var orderOfArtifacts: MutableList<String>
+      get() {
+        val collection_orderOfArtifacts = getEntityData().orderOfArtifacts
+        if (collection_orderOfArtifacts !is MutableWorkspaceList) return collection_orderOfArtifacts
+        collection_orderOfArtifacts.setModificationUpdateAction(orderOfArtifactsUpdater)
+        return collection_orderOfArtifacts
+      }
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().orderOfArtifacts = value
+        orderOfArtifactsUpdater.invoke(value)
+      }
+
     override fun getEntityData(): ArtifactsOrderEntityData = result ?: super.getEntityData() as ArtifactsOrderEntityData
     override fun getEntityClass(): Class<ArtifactsOrderEntity> = ArtifactsOrderEntity::class.java
   }
 }
 
 class ArtifactsOrderEntityData : WorkspaceEntityData<ArtifactsOrderEntity>() {
-  lateinit var orderOfArtifacts: List<String>
+  lateinit var orderOfArtifacts: MutableList<String>
 
   fun isOrderOfArtifactsInitialized(): Boolean = ::orderOfArtifacts.isInitialized
 
@@ -120,11 +140,18 @@ class ArtifactsOrderEntityData : WorkspaceEntityData<ArtifactsOrderEntity>() {
 
   override fun createEntity(snapshot: EntityStorage): ArtifactsOrderEntity {
     val entity = ArtifactsOrderEntityImpl()
-    entity._orderOfArtifacts = orderOfArtifacts
+    entity._orderOfArtifacts = orderOfArtifacts.toList()
     entity.entitySource = entitySource
     entity.snapshot = snapshot
     entity.id = createEntityId()
     return entity
+  }
+
+  override fun clone(): ArtifactsOrderEntityData {
+    val clonedEntity = super.clone()
+    clonedEntity as ArtifactsOrderEntityData
+    clonedEntity.orderOfArtifacts = clonedEntity.orderOfArtifacts.toMutableWorkspaceList()
+    return clonedEntity
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -137,14 +164,24 @@ class ArtifactsOrderEntityData : WorkspaceEntityData<ArtifactsOrderEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ArtifactsOrderEntity(orderOfArtifacts, entitySource) {
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
 
     other as ArtifactsOrderEntityData
 
-    if (this.orderOfArtifacts != other.orderOfArtifacts) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.orderOfArtifacts != other.orderOfArtifacts) return false
     return true
   }
 
@@ -162,5 +199,16 @@ class ArtifactsOrderEntityData : WorkspaceEntityData<ArtifactsOrderEntity>() {
     var result = entitySource.hashCode()
     result = 31 * result + orderOfArtifacts.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + orderOfArtifacts.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    this.orderOfArtifacts?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = false
   }
 }

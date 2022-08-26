@@ -13,8 +13,10 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
 import org.jetbrains.deft.ObjBuilder
@@ -73,11 +75,11 @@ open class FacetExternalSystemIdEntityImpl : FacetExternalSystemIdEntity, Worksp
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isExternalSystemIdInitialized()) {
         error("Field FacetExternalSystemIdEntity#externalSystemId should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field FacetExternalSystemIdEntity#entitySource should be initialized")
       }
       if (_diff != null) {
         if (_diff.extractOneToOneParent<WorkspaceEntityBase>(FACET_CONNECTION_ID, this) == null) {
@@ -95,14 +97,16 @@ open class FacetExternalSystemIdEntityImpl : FacetExternalSystemIdEntity, Worksp
       return connections
     }
 
-
-    override var externalSystemId: String
-      get() = getEntityData().externalSystemId
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().externalSystemId = value
-        changedProperty.add("externalSystemId")
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as FacetExternalSystemIdEntity
+      this.entitySource = dataSource.entitySource
+      this.externalSystemId = dataSource.externalSystemId
+      if (parents != null) {
+        this.facet = parents.filterIsInstance<FacetEntity>().single()
       }
+    }
+
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -111,6 +115,14 @@ open class FacetExternalSystemIdEntityImpl : FacetExternalSystemIdEntity, Worksp
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var externalSystemId: String
+      get() = getEntityData().externalSystemId
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().externalSystemId = value
+        changedProperty.add("externalSystemId")
       }
 
     override var facet: FacetEntity
@@ -189,14 +201,26 @@ class FacetExternalSystemIdEntityData : WorkspaceEntityData<FacetExternalSystemI
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return FacetExternalSystemIdEntity(externalSystemId, entitySource) {
+      this.facet = parents.filterIsInstance<FacetEntity>().single()
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(FacetEntity::class.java)
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
 
     other as FacetExternalSystemIdEntityData
 
-    if (this.externalSystemId != other.externalSystemId) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.externalSystemId != other.externalSystemId) return false
     return true
   }
 
@@ -214,5 +238,15 @@ class FacetExternalSystemIdEntityData : WorkspaceEntityData<FacetExternalSystemI
     var result = entitySource.hashCode()
     result = 31 * result + externalSystemId.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + externalSystemId.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.sameForAllEntities = true
   }
 }

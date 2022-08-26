@@ -19,7 +19,9 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AlwaysVisibleActionGroup;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.RowIcon;
 import com.intellij.util.ui.EmptyIcon;
 import icons.DvcsImplIcons;
 import org.jetbrains.annotations.NotNull;
@@ -70,16 +72,20 @@ public abstract class BranchActionGroup extends ActionGroup implements DumbAware
     setFavorite(!myIsFavorite);
   }
 
-  public boolean hasIncomingCommits() {return false;}
+  public boolean hasIncomingCommits() { return false; }
 
-  public boolean hasOutgoingCommits() {return false;}
+  public boolean hasOutgoingCommits() { return false; }
 
   @Nullable
   @Override
   public Icon getRightIcon() {
     if (hasIncomingCommits()) {
-      return hasOutgoingCommits() ? DvcsImplIcons.IncomingOutgoing : DvcsImplIcons.Incoming;
+      return hasOutgoingCommits() ? getIncomingOutgoingIcon() : DvcsImplIcons.Incoming;
     }
     return hasOutgoingCommits() ? DvcsImplIcons.Outgoing : null;
+  }
+
+  public static Icon getIncomingOutgoingIcon() {
+    return ExperimentalUI.isNewUI() ? new RowIcon(DvcsImplIcons.Incoming, DvcsImplIcons.Outgoing) : DvcsImplIcons.IncomingOutgoing;
   }
 }

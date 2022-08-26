@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -135,7 +136,7 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   private @Nullable ClientState getClientState() {
-    return getComponentManager().getService(ClientState.class);
+    return ProgressManager.getInstance().computeInNonCancelableSection(() -> getComponentManager().getService(ClientState.class));
   }
 
   private List<ClientState> getAllClientStates() {

@@ -1,11 +1,13 @@
 package com.intellij.settingsSync
 
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Records changes in the settings, merges changes made locally and remotely.
  */
-internal interface SettingsLog {
+@ApiStatus.Internal
+interface SettingsLog {
   interface Position {
     val id: String
   }
@@ -32,7 +34,7 @@ internal interface SettingsLog {
    * Records the current local state of the settings.
    */
   @RequiresBackgroundThread
-  fun applyIdeState(snapshot: SettingsSnapshot)
+  fun applyIdeState(snapshot: SettingsSnapshot, message: String)
 
   /**
    * Records the state of the settings received from the server.
@@ -40,7 +42,7 @@ internal interface SettingsLog {
    * returns true if merge has happened, false in case of fast-forward
    */
   @RequiresBackgroundThread
-  fun applyCloudState(snapshot: SettingsSnapshot)
+  fun applyCloudState(snapshot: SettingsSnapshot, message: String)
 
   /**
    * Returns the current state of the settings as it is now from the SettingsLog point of view,
@@ -77,5 +79,5 @@ internal interface SettingsLog {
    *
    * @return New position of 'master'.
    */
-  fun forceWriteToMaster(snapshot: SettingsSnapshot) : Position
+  fun forceWriteToMaster(snapshot: SettingsSnapshot, message: String) : Position
 }

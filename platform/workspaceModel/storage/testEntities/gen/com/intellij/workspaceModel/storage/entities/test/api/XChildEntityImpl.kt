@@ -12,6 +12,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToManyChildren
@@ -85,11 +86,11 @@ open class XChildEntityImpl : XChildEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isChildPropertyInitialized()) {
         error("Field XChildEntity#childProperty should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field XChildEntity#entitySource should be initialized")
       }
       if (_diff != null) {
         if (_diff.extractOneToManyParent<WorkspaceEntityBase>(PARENTENTITY_CONNECTION_ID, this) == null) {
@@ -118,14 +119,17 @@ open class XChildEntityImpl : XChildEntity, WorkspaceEntityBase() {
       return connections
     }
 
-
-    override var childProperty: String
-      get() = getEntityData().childProperty
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().childProperty = value
-        changedProperty.add("childProperty")
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as XChildEntity
+      this.entitySource = dataSource.entitySource
+      this.childProperty = dataSource.childProperty
+      this.dataClass = dataSource.dataClass
+      if (parents != null) {
+        this.parentEntity = parents.filterIsInstance<XParentEntity>().single()
       }
+    }
+
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -134,6 +138,14 @@ open class XChildEntityImpl : XChildEntity, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var childProperty: String
+      get() = getEntityData().childProperty
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().childProperty = value
+        changedProperty.add("childProperty")
       }
 
     override var dataClass: DataClassX?
@@ -267,14 +279,27 @@ class XChildEntityData : WorkspaceEntityData<XChildEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return XChildEntity(childProperty, entitySource) {
+      this.dataClass = this@XChildEntityData.dataClass
+      this.parentEntity = parents.filterIsInstance<XParentEntity>().single()
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(XParentEntity::class.java)
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
 
     other as XChildEntityData
 
-    if (this.childProperty != other.childProperty) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.childProperty != other.childProperty) return false
     if (this.dataClass != other.dataClass) return false
     return true
   }
@@ -295,5 +320,18 @@ class XChildEntityData : WorkspaceEntityData<XChildEntity>() {
     result = 31 * result + childProperty.hashCode()
     result = 31 * result + dataClass.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + childProperty.hashCode()
+    result = 31 * result + dataClass.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.add(DataClassX::class.java)
+    this.dataClass?.let { collector.addDataToInspect(it) }
+    collector.sameForAllEntities = true
   }
 }

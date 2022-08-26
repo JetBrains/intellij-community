@@ -9,20 +9,29 @@ import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.util.toBufferExposingByteArray
 import com.intellij.util.xmlb.Constants
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.junit.Assert
 import java.nio.charset.StandardCharsets
 import java.time.Instant
 
-internal fun SettingsSnapshot.assertSettingsSnapshot(build: SettingsSnapshotBuilder.() -> Unit) {
+@ApiStatus.Internal
+fun SettingsSnapshot.assertSettingsSnapshot(build: SettingsSnapshotBuilder.() -> Unit) {
   val settingsSnapshotBuilder = SettingsSnapshotBuilder()
   settingsSnapshotBuilder.build()
   val transformation = { fileState: FileState ->
     val content = if (fileState is FileState.Modified) String(fileState.content, StandardCharsets.UTF_8) else DELETED_FILE_MARKER
     fileState.file to content
   }
-  val actualMap = this.fileStates.associate(transformation)
-  val expectedMap = settingsSnapshotBuilder.fileStates.associate(transformation)
-  Assert.assertEquals(expectedMap, actualMap)
+  val actualMap = this.fileStates.associate(transformation).toSortedMap()
+  val expectedMap = settingsSnapshotBuilder.fileStates.associate(transformation).toSortedMap()
+  if (actualMap != expectedMap) {
+    val missingKeys = expectedMap.keys - actualMap.keys
+    val extraKeys = actualMap.keys - expectedMap.keys
+    val message = StringBuilder()
+    if (missingKeys.isNotEmpty()) message.append("Missing: $missingKeys\n")
+    if (extraKeys.isNotEmpty()) message.append("Extra: $extraKeys\n")
+    Assert.assertEquals("Incorrect snapshot: $message", expectedMap, actualMap)
+  }
 }
 
 internal fun PersistentStateComponent<*>.toFileState() : FileState {
@@ -51,7 +60,8 @@ internal fun settingsSnapshot(metaInfo: MetaInfo = MetaInfo(Instant.now(), getLo
   return SettingsSnapshot(metaInfo, builder.fileStates.toSet())
 }
 
-internal class SettingsSnapshotBuilder {
+@ApiStatus.Internal
+class SettingsSnapshotBuilder {
   val fileStates = mutableListOf<FileState>()
 
   fun fileState(function: () -> PersistentStateComponent<*>) {

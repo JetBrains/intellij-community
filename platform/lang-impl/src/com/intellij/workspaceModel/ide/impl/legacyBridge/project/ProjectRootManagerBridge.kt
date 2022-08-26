@@ -206,7 +206,7 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
                     it.copy(library = LibraryId(newName, libraryTableId))
                   else -> it
                 }
-              }
+              } as MutableList<ModuleDependencyItem>
               builder.modifyEntity(module) {
                 dependencies = updated
               }
@@ -259,7 +259,7 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
                 is ModuleDependencyItem.SdkDependency -> ModuleDependencyItem.SdkDependency(jdk.name, jdk.sdkType.name)
                 else -> it
               }
-            }
+            } as MutableList<ModuleDependencyItem>
             builder.modifyEntity(module) {
               dependencies = updated
             }

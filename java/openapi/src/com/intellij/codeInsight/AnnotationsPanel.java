@@ -203,7 +203,7 @@ public class AnnotationsPanel {
           Object selectedItem = myCombo.getSelectedItem();
           List<String> newItems = Stream.concat(
             IntStream.range(0, count).mapToObj(myCombo::getItemAt),
-            advancedAnnotations.stream()).sorted().distinct().collect(Collectors.toList());
+            advancedAnnotations.stream()).sorted().distinct().toList();
           myCombo.removeAllItems();
           newItems.forEach(myCombo::addItem);
           myCombo.setSelectedItem(selectedItem);

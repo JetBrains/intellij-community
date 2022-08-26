@@ -133,12 +133,9 @@ fun signMacApp(
     )
 
     val env = sequenceOf("ARTIFACTORY_URL", "SERVICE_ACCOUNT_NAME", "SERVICE_ACCOUNT_TOKEN")
-                .map { it to System.getenv(it) }
-                .filterNot { it.second.isNullOrEmpty() }
-                .toList().takeIf { it.isNotEmpty() }
-                ?.joinToString(separator = " ", postfix = " ") {
-                  "${it.first}=${it.second}"
-                } ?: ""
+      .joinToString(separator = " ", postfix = " ") {
+        "$it=${System.getenv(it)}"
+      }
     tracer.spanBuilder("sign mac app").setAttribute("file", appArchiveFile.toString()).useWithScope {
       signFile(remoteDir = remoteDir,
                commandString = "$env'$remoteDir/signapp.sh' '${args.joinToString("' '")}'",
@@ -282,6 +279,8 @@ private fun downloadResult(remoteFile: String,
       var attempt = 1
       do {
         try {
+          Files.deleteIfExists(tempFile)
+          Files.createFile(tempFile)
           ftpClient.get(remoteFile, NioFileDestination(tempFile))
         }
         catch (e: Exception) {

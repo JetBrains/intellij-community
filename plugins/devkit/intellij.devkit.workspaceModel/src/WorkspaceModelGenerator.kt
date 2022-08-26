@@ -1,17 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel
 
+import com.intellij.devkit.workspaceModel.codegen.writer.CodeWriter
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.SourceFolder
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.workspaceModel.codegen.CodeWriter
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -29,7 +28,7 @@ object WorkspaceModelGenerator {
     }
     acceptedSourceRoots.forEach{ sourceRoot ->
       WriteAction.run<RuntimeException> {
-        CodeWriter.generate(project, sourceRoot.file!!, Registry.`is`("workspace.model.generator.keep.unknown.fields")) {
+        CodeWriter.generate(project, module, sourceRoot.file!!) {
           createGeneratedSourceFolder(module, sourceRoot)
         }
       }
@@ -60,7 +59,6 @@ object WorkspaceModelGenerator {
         val sourceFolderType = if (sourceFolder.isTestSource) JavaSourceRootType.TEST_SOURCE else JavaSourceRootType.SOURCE
         contentEntry.addSourceFolder(generatedFolder, sourceFolderType, properties)
         WriteAction.run<RuntimeException>(modifiableModel::commit)
-        module.project.save()
         return generatedFolder
       }
     }

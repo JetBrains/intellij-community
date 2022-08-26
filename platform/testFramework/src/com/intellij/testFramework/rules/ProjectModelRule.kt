@@ -40,7 +40,7 @@ import org.junit.runner.Description
 import org.junit.runners.model.Statement
 import java.nio.file.Path
 
-open class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) : TestRule {
+open class ProjectModelRule : TestRule {
   val baseProjectDir = TempDirectory()
   val disposableRule = DisposableRule()
 
@@ -53,14 +53,7 @@ open class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = fal
   inner class ProjectResource : ExternalResource() {
     public override fun before() {
       projectRootDir = baseProjectDir.root.toPath()
-      if (forceEnableWorkspaceModel) {
-        WorkspaceModelInitialTestContent.withInitialContent(EntityStorageSnapshot.empty()) {
-          project = PlatformTestUtil.loadAndOpenProject(projectRootDir, disposableRule.disposable)
-        }
-      }
-      else {
-        project = PlatformTestUtil.loadAndOpenProject(projectRootDir, disposableRule.disposable)
-      }
+      project = PlatformTestUtil.loadAndOpenProject(projectRootDir, disposableRule.disposable)
       filePointerTracker = VirtualFilePointerTracker()
     }
 
@@ -208,7 +201,7 @@ open class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = fal
     get() = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
 }
 
-class ProjectModelExtension(forceEnableWorkspaceModel: Boolean = false) : ProjectModelRule(forceEnableWorkspaceModel), BeforeEachCallback, AfterEachCallback {
+class ProjectModelExtension : ProjectModelRule(), BeforeEachCallback, AfterEachCallback {
   override fun beforeEach(context: ExtensionContext) {
     baseProjectDir.before(context.displayName)
     projectResource.before()

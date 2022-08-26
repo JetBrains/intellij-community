@@ -2,19 +2,23 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.TipsOfTheDayUsagesCollector;
-import com.intellij.ide.util.TipDialog;
+import com.intellij.ide.util.TipAndTrickManager;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 public class ShowTipsAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    TipsOfTheDayUsagesCollector.triggerDialogShown(TipsOfTheDayUsagesCollector.DialogType.manually);
-    TipDialog.showForProject(e.getProject());
+    Project project = e.getProject();
+    if (project != null) {
+      TipsOfTheDayUsagesCollector.triggerDialogShown(TipsOfTheDayUsagesCollector.DialogType.manually);
+      TipAndTrickManager.getInstance().showTipDialog(project);
+    }
   }
 
   @Override

@@ -37,10 +37,6 @@ import javax.swing.event.PopupMenuListener;
 import java.awt.*;
 import java.util.function.Supplier;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivationListener {
   private static final Logger LOG = Logger.getInstance(ActionPopupMenuImpl.class);
   private static final IntSet SEEN_ACTION_GROUPS = new IntOpenHashSet(50);
@@ -83,7 +79,12 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
 
   @Override
   public void setTargetComponent(@NotNull JComponent component) {
-    myDataContextProvider = () -> DataManager.getInstance().getDataContext(component);
+    setDataContext(() -> DataManager.getInstance().getDataContext(component));
+  }
+
+  @Override
+  public void setDataContext(@NotNull Supplier<? extends DataContext> dataProvider) {
+    myDataContextProvider = dataProvider;
   }
 
   private class MyMenu extends JBPopupMenu implements PlaceProvider {

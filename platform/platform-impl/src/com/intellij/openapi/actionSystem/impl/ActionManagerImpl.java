@@ -57,7 +57,7 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.xml.dom.XmlElement;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -104,6 +104,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   private static final String PROJECT_TYPE = "project-type";
   private static final String OVERRIDE_TEXT_ELEMENT_NAME = "override-text";
   private static final String SYNONYM_ELEMENT_NAME = "synonym";
+  private static final String OVERRIDES_ATTR_NAME = "overrides";
 
   private static final Logger LOG = Logger.getInstance(ActionManagerImpl.class);
   private static final int DEACTIVATED_TIMER_DELAY = 5000;
@@ -126,7 +127,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   private String myLastPreformedActionId;
   private String myPrevPerformedActionId;
   private long myLastTimeEditorWasTypedIn;
-  private final Map<OverridingAction, AnAction> myBaseActions = new HashMap<>();
+  private final Map<String, AnAction> myBaseActions = new HashMap<>();
   private int myAnonymousGroupIdCounter;
 
   protected ActionManagerImpl() {
@@ -706,7 +707,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
       if (myProhibitedActionIds.contains(id)) {
         return;
       }
-      if (Boolean.parseBoolean(element.attributes.get("overrides"))) {
+      if (Boolean.parseBoolean(element.attributes.get(OVERRIDES_ATTR_NAME))) {
         if (getActionOrStub(id) == null) {
           LOG.error(element + " '" + id + "' doesn't override anything");
           return;
@@ -1246,7 +1247,17 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
 
   private void unloadActionElement(@NotNull XmlElement element) {
     String className = element.attributes.get(CLASS_ATTR_NAME);
+    boolean overrides = Boolean.parseBoolean(element.attributes.get(OVERRIDES_ATTR_NAME));
     String id = obtainActionId(element, className);
+    if (overrides) {
+      AnAction baseAction = myBaseActions.get(id);
+      if (baseAction != null) {
+        replaceAction(id, baseAction);
+        myBaseActions.remove(id);
+        return;
+      }
+    }
+
     unregisterAction(id);
   }
 
@@ -1484,9 +1495,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
     AnAction oldAction = newAction instanceof OverridingAction ? getAction(actionId) : getActionOrStub(actionId);
     int oldIndex = idToIndex.getOrDefault(actionId, -1);  // Valid indices >= 0
     if (oldAction != null) {
-      if (newAction instanceof OverridingAction) {
-        myBaseActions.put((OverridingAction)newAction, oldAction);
-      }
+      myBaseActions.put(actionId, oldAction);
       boolean isGroup = oldAction instanceof ActionGroup;
       if (isGroup != newAction instanceof ActionGroup) {
         throw new IllegalStateException("cannot replace a group with an action and vice versa: " + actionId);
@@ -1511,7 +1520,8 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
    * Returns the action overridden by the specified overriding action (with overrides="true" in plugin.xml).
    */
   public AnAction getBaseAction(OverridingAction overridingAction) {
-    return myBaseActions.get(overridingAction);
+    String id = getId((AnAction) overridingAction);
+    return id == null ? null : myBaseActions.get(id);
   }
 
   public Collection<String> getParentGroupIds(String actionId) {
@@ -1672,15 +1682,15 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
           result.setRejected();
           return;
         }
-        UIUtil.addAwtListener(event1 -> {
-          if (event1.getID() == WindowEvent.WINDOW_OPENED || event1.getID() == WindowEvent.WINDOW_ACTIVATED) {
-            if (!result.isProcessed()) {
-              final WindowEvent we = (WindowEvent)event1;
-              IdeFocusManager.findInstanceByComponent(we.getWindow()).doWhenFocusSettlesDown(
-                result.createSetDoneRunnable(), ModalityState.defaultModalityState());
-            }
-          }
-        }, AWTEvent.WINDOW_EVENT_MASK, result);
+        StartupUiUtil.addAwtListener(event1 -> {
+              if (event1.getID() == WindowEvent.WINDOW_OPENED || event1.getID() == WindowEvent.WINDOW_ACTIVATED) {
+                if (!result.isProcessed()) {
+                  final WindowEvent we = (WindowEvent)event1;
+                  IdeFocusManager.findInstanceByComponent(we.getWindow()).doWhenFocusSettlesDown(
+                    result.createSetDoneRunnable(), ModalityState.defaultModalityState());
+                }
+              }
+            }, AWTEvent.WINDOW_EVENT_MASK, result);
         try {
           ActionUtil.performActionDumbAwareWithCallbacks(action, event);
         }

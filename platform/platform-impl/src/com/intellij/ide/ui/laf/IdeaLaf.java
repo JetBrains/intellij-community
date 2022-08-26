@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf;
 
 import com.intellij.icons.AllIcons;
@@ -7,6 +7,7 @@ import com.intellij.ui.TableActions;
 import com.intellij.ui.plaf.beg.*;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.StartupUiUtil;
+import kotlin.Pair;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -38,8 +39,8 @@ public final class IdeaLaf extends MetalLookAndFeel {
       defaults.putAll(myCustomFontDefaults);
     }
     else {
-      Map.Entry<String, Integer> systemFont = JBUIScale.getSystemFontData(() -> defaults);
-      StartupUiUtil.initFontDefaults(defaults, StartupUiUtil.getFontWithFallback(systemFont.getKey(), Font.PLAIN, systemFont.getValue()));
+      Pair<String, Integer> systemFont = JBUIScale.getSystemFontData(() -> defaults);
+      StartupUiUtil.initFontDefaults(defaults, StartupUiUtil.getFontWithFallback(systemFont.getFirst(), Font.PLAIN, systemFont.getSecond()));
     }
   }
 

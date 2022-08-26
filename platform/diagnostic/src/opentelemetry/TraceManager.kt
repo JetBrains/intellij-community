@@ -7,6 +7,7 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.util.ShutDownTracker
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.common.Attributes
+import io.opentelemetry.api.metrics.Meter
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.exporter.jaeger.JaegerGrpcSpanExporter
 import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter
@@ -27,6 +28,7 @@ import java.util.concurrent.TimeUnit
 @ApiStatus.Experimental
 object TraceManager {
   private var sdk: OpenTelemetry = OpenTelemetry.noop()
+  private var verboseSdk: OpenTelemetry = OpenTelemetry.noop()
 
   fun init() {
     val serviceName = ApplicationNamesInfo.getInstance().fullProductName
@@ -67,6 +69,11 @@ object TraceManager {
       .setTracerProvider(tracerProvider)
       .buildAndRegisterGlobal()
 
+    val useVerboseSdk = System.getProperty("idea.diagnostic.opentelemetry.verbose")
+    if (useVerboseSdk?.toBooleanStrictOrNull() == true) {
+      verboseSdk = sdk
+    }
+
     if (spanExporters.isNotEmpty()) {
       ShutDownTracker.getInstance().registerShutdownTask(Runnable {
         tracerProvider?.forceFlush()?.join(10, TimeUnit.SECONDS)
@@ -78,5 +85,7 @@ object TraceManager {
   /**
    * We do not provide default tracer - we enforce using of separate scopes for subsystems.
    */
-  fun getTracer(scopeName: String): Tracer = sdk.getTracer(scopeName)
+  @JvmOverloads
+  fun getTracer(scopeName: String, verbose: Boolean = false): Tracer = (if (verbose) verboseSdk else sdk).getTracer(scopeName)
+  fun getMeter(scopeName: String): Meter = sdk.getMeter(scopeName)
 }

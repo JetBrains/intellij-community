@@ -166,7 +166,6 @@ public interface IToken extends Serializable, Comparable{
     String getOriginalWithoutRep();
 
     /**
-     * @return
      */
     int[] getLineColEnd();
 

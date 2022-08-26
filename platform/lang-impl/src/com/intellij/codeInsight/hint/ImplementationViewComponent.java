@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.application.options.CodeStyle;
@@ -191,6 +191,11 @@ public class ImplementationViewComponent extends JPanel {
         super.update(e);
         e.getPresentation().setIcon(AllIcons.Actions.More);
         e.getPresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
       }
     };
     gearActions.setPopup(true);
@@ -416,8 +421,7 @@ public class ImplementationViewComponent extends JPanel {
       }
     }
 
-    final FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(project, vFile);
-    for (FileEditorProvider provider : providers) {
+    for (FileEditorProvider provider : FileEditorProviderManager.getInstance().getProviderList(project, vFile)) {
       if (provider instanceof QuickDefinitionProvider) {
         updateTextElement(foundElement);
         myBinarySwitch.show(myViewingPanel, TEXT_PAGE_KEY);
@@ -545,6 +549,11 @@ public class ImplementationViewComponent extends JPanel {
           presentation.setVisible(false);
         }
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     });
 
     ForwardAction forward = new ForwardAction();
@@ -599,6 +608,11 @@ public class ImplementationViewComponent extends JPanel {
       presentation.setEnabled(myIndex > 0);
       presentation.setVisible(myElements != null && myElements.length > 1);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private class ForwardAction extends AnAction implements HintManagerImpl.ActionToIgnore {
@@ -616,6 +630,11 @@ public class ImplementationViewComponent extends JPanel {
       Presentation presentation = e.getPresentation();
       presentation.setEnabled(myElements != null && myIndex < myElements.length - 1);
       presentation.setVisible(myElements != null && myElements.length > 1);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 
@@ -644,6 +663,11 @@ public class ImplementationViewComponent extends JPanel {
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myFileChooser == null || !myFileChooser.isPopupVisible());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

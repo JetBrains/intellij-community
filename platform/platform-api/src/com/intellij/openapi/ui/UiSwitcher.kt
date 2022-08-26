@@ -40,8 +40,8 @@ interface UiSwitcher {
      */
     @JvmStatic
     fun show(component: Component) {
-      var c = component
-      while (!c.isShowing) {
+      var c: Component?  = component
+      while (c != null && !c.isShowing) {
         if (c is JComponent) {
           val uiSwitcher = c.getUserData(UI_SWITCHER)
           if (uiSwitcher?.show() == false) {

@@ -8,9 +8,12 @@ import com.intellij.workspaceModel.codegen.getRefType
 import com.intellij.workspaceModel.codegen.isRefType
 import com.intellij.workspaceModel.codegen.utils.*
 import com.intellij.workspaceModel.codegen.writer.javaName
-import com.intellij.workspaceModel.codegen.writer.owner
 import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryRoot
 import com.intellij.workspaceModel.storage.impl.*
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceSet
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
 val ObjProperty<*, *>.implWsBuilderFieldCode: String
   get() = valueType.implWsBuilderBlockingCode(this)
@@ -152,13 +155,21 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
     }
     else {
       """
-            override var ${field.javaName}: List<${wsFqn(elementType.javaType)}>
-                get() = getEntityData().${field.javaName}
+            private val ${field.javaName}Updater: (value: List<${elementType.javaType}>) -> Unit = { value ->
+                ${elementType.addVirtualFileIndex(field)}
+                changedProperty.add("${field.javaName}")
+            }
+            override var ${field.javaName}: MutableList<${elementType.javaType}>
+                get() { 
+                    val collection_${field.javaName} = getEntityData().${field.javaName}
+                    if (collection_${field.javaName} !is ${MutableWorkspaceList::class.fqn}) return collection_${field.javaName}
+                    collection_${field.javaName}.setModificationUpdateAction(${field.javaName}Updater)
+                    return collection_${field.javaName}
+                }
                 set(value) {
                     checkModificationAllowed()
                     getEntityData().${field.javaName} = value
-                    ${elementType.addVirtualFileIndex(field)}
-                    changedProperty.add("${field.javaName}")
+                    ${field.javaName}Updater.invoke(value)
                 }
                 
             """.trimIndent()
@@ -170,13 +181,21 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
       error("Set of references is not supported")
     } else {
       """
-            override var ${field.javaName}: Set<${wsFqn(elementType.javaType)}>
-                get() = getEntityData().${field.javaName}
+            private val ${field.javaName}Updater: (value: Set<${elementType.javaType}>) -> Unit = { value ->
+                ${elementType.addVirtualFileIndex(field)}
+                changedProperty.add("${field.javaName}")
+            }
+            override var ${field.javaName}: MutableSet<${elementType.javaType}>
+                get() { 
+                    val collection_${field.javaName} = getEntityData().${field.javaName}
+                    if (collection_${field.javaName} !is ${MutableWorkspaceSet::class.fqn}) return collection_${field.javaName}
+                    collection_${field.javaName}.setModificationUpdateAction(${field.javaName}Updater)
+                    return collection_${field.javaName}
+                }
                 set(value) {
                     checkModificationAllowed()
                     getEntityData().${field.javaName} = value
-                    ${elementType.addVirtualFileIndex(field)}
-                    changedProperty.add("${field.javaName}")
+                    ${field.javaName}Updater.invoke(value)
                 }
                 
             """.trimIndent()
@@ -195,14 +214,14 @@ private fun ValueType<*>.implWsBuilderBlockingCode(field: ObjProperty<*, *>, opt
   is ValueType.Optional<*> -> type.implWsBuilderBlockingCode(field, "?")
   is ValueType.Structure<*> -> "//TODO: ${field.javaName}"
   is ValueType.JvmClass -> """
-            override var ${field.javaName}: ${wsFqn(javaType)}$optionalSuffix
+            override var ${field.javaName}: ${javaType.appendSuffix(optionalSuffix)}
                 get() = getEntityData().${field.javaName}
                 set(value) {
                     checkModificationAllowed()
                     getEntityData().${field.javaName} = value
                     changedProperty.add("${field.javaName}")
                     ${
-    if (javaType.decoded == "VirtualFileUrl")
+    if (javaType.decoded == VirtualFileUrl::class.java.name)
       """val _diff = diff
       |                    if (_diff != null) index(this, "${field.javaName}", value)
                         """.trimMargin()
@@ -271,7 +290,7 @@ fun LinesBuilder.implWsBuilderIsInitializedCode(field: ObjProperty<*, *>) {
       lineComment("Check initialization for list with ref type")
       ifElse("_diff != null", {
         `if`("_diff.${fqn2(EntityStorage::extractOneToManyChildren)}<${WorkspaceEntityBase::class.fqn}>(${field.refsConnectionId}, this) == null") {
-          line("error(\"Field ${field.owner.name}#$javaName should be initialized\")")
+          line("error(\"Field ${field.receiver.name}#$javaName should be initialized\")")
         }
       }) {
         isInitializedBaseCode(field, "this.entityLinks[${EntityLink::class.fqn}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] == null")
@@ -284,7 +303,7 @@ fun LinesBuilder.implWsBuilderIsInitializedCode(field: ObjProperty<*, *>) {
     is ValueType.ObjRef<*> -> {
       ifElse("_diff != null", {
         `if`("_diff.${field.refsConnectionMethodCode("<${WorkspaceEntityBase::class.fqn}>")} == null") {
-          line("error(\"Field ${field.owner.name}#$javaName should be initialized\")")
+          line("error(\"Field ${field.receiver.name}#$javaName should be initialized\")")
         }
       }) {
         isInitializedBaseCode(field, "this.entityLinks[${EntityLink::class.fqn}(${field.valueType.getRefType().child}, ${field.refsConnectionId})] == null")
@@ -300,17 +319,17 @@ fun LinesBuilder.implWsBuilderIsInitializedCode(field: ObjProperty<*, *>) {
 
 private fun LinesBuilder.isInitializedBaseCode(field: ObjProperty<*, *>, expression: String) {
   section("if ($expression)") {
-    line("error(\"Field ${field.owner.name}#${field.javaName} should be initialized\")")
+    line("error(\"Field ${field.receiver.name}#${field.javaName} should be initialized\")")
   }
 }
 
 private fun ValueType<*>.addVirtualFileIndex(field: ObjProperty<*, *>): String {
   return when {
-    this is ValueType.Blob && javaClassName == "VirtualFileUrl" ->
+    this is ValueType.Blob && javaClassName == VirtualFileUrl::class.java.name ->
       """val _diff = diff
 |                    if (_diff != null) index(this, "${field.javaName}", value.toHashSet())
         """.trimMargin()
-    this is ValueType.JvmClass && javaClassName == "LibraryRoot" -> """
+    this is ValueType.JvmClass && javaClassName == LibraryRoot::class.java.name -> """
                     val _diff = diff
                     if (_diff != null) {
                         indexLibraryRoots(value)

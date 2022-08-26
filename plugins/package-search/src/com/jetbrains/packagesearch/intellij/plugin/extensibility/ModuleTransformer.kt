@@ -22,7 +22,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.jetbrains.packagesearch.intellij.plugin.util.asCoroutine
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
-import kotlin.streams.asSequence
 
 /**
  * Extension point used to register [Module]s transformations to [ProjectModule]s.
@@ -41,7 +40,7 @@ interface ModuleTransformer {
             ExtensionPointName.create("com.intellij.packagesearch.moduleTransformer")
 
         internal fun extensions(areaInstance: AreaInstance) =
-            extensionPointName.extensions(areaInstance).asSequence().map { it.asCoroutine() }.toList()
+            extensionPointName.getExtensionList(areaInstance).asSequence().map { it.asCoroutine() }.toList()
     }
 
     /**
@@ -60,5 +59,3 @@ interface ModuleTransformer {
      */
     fun transformModules(project: Project, nativeModules: List<Module>): List<ProjectModule>
 }
-
-

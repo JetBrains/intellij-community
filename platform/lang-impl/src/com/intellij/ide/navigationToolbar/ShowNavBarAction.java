@@ -3,6 +3,7 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.navbar.ide.NavigationBarKt;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
@@ -20,6 +21,15 @@ import java.awt.*;
 public class ShowNavBarAction extends AnAction implements DumbAware, PopupAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e){
+    if (NavigationBarKt.getNavbarV2Enabled()) {
+      showNavBarV2(e);
+    }
+    else {
+      showNavBar(e);
+    }
+  }
+
+  private void showNavBar(@NotNull AnActionEvent e) {
     final DataContext context = e.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(context);
     if (project != null) {
@@ -36,6 +46,10 @@ public class ShowNavBarAction extends AnAction implements DumbAware, PopupAction
         }
       }
     }
+  }
+
+  private void showNavBarV2(@NotNull AnActionEvent e) {
+    // Not implemented yet: show nav bar v2
   }
 
   private static boolean isInsideNavBar(Component c) {

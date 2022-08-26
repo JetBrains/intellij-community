@@ -13,10 +13,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class DataBindingWizard extends AbstractWizard<StepAdapter> {
   private final WizardData myData;
   private final Project myProject;

@@ -199,7 +199,8 @@
     <extensionPoint name="statistic.eventLog.eventLogEndpointSubstitutor" interface="com.intellij.internal.statistic.eventLog.EventLogEndpointSubstitutor" dynamic="true"/>
     <extensionPoint name="statistic.eventLog.externalEventLogSettings" interface="com.intellij.internal.statistic.eventLog.ExternalEventLogSettings" dynamic="true"/>
 
-    <extensionPoint name="productivityFeaturesProvider" interface="com.intellij.featureStatistics.ProductivityFeaturesProvider"/>
+    <extensionPoint name="productivityFeaturesProvider" interface="com.intellij.featureStatistics.ProductivityFeaturesProvider"
+                    dynamic="true"/>
 
     <extensionPoint name="fileIconProvider" interface="com.intellij.ide.FileIconProvider" dynamic="true"/>
     <extensionPoint name="fileIconPatcher" interface="com.intellij.ide.FileIconPatcher" dynamic="true"/>
@@ -222,7 +223,8 @@
     <extensionPoint name="editorNotificationProvider" area="IDEA_PROJECT" interface="com.intellij.ui.EditorNotificationProvider"
                     dynamic="true"/>
 
-    <extensionPoint name="featureStatisticsBundle" beanClass="com.intellij.featureStatistics.FeatureStatisticsBundleEP"/>
+    <extensionPoint name="featureStatisticsBundle" beanClass="com.intellij.featureStatistics.FeatureStatisticsBundleEP"
+                    dynamic="true"/>
 
     <extensionPoint name="toolWindowExtractor" interface="com.intellij.ui.viewModel.extraction.ToolWindowViewModelExtractor"
                     dynamic="true"/>
@@ -476,9 +478,6 @@
 
     <extensionPoint name="fragments.dsl.builder.extender" interface="com.intellij.execution.ui.utils.FragmentsDslBuilderExtender" dynamic="true"/>
 
-    <extensionPoint name="projectToolbarWidget" interface="com.intellij.openapi.wm.impl.headertoolbar.MainToolbarProjectWidgetFactory" dynamic="true"/>
-    <extensionPoint name="appToolbarWidget" interface="com.intellij.openapi.wm.impl.headertoolbar.MainToolbarAppWidgetFactory" dynamic="true"/>
-
     <extensionPoint name="semanticRootProvider" interface="com.intellij.openapi.vfs.newvfs.persistent.RootSemanticAddressProvider"/>
 
     <extensionPoint name="persistentFsConnectionListener" interface="com.intellij.openapi.vfs.newvfs.persistent.PersistentFsConnectionListener"/>
@@ -487,5 +486,9 @@
 
     <extensionPoint name="projectIndexesWarmupSupport" interface="com.intellij.warmup.ProjectIndexesWarmupSupport" area="IDEA_PROJECT" />
     <extensionPoint name="projectBuildWarmupSupport" interface="com.intellij.warmup.ProjectBuildWarmupSupport" area="IDEA_PROJECT" />
+
+    <extensionPoint name="internal.ml.featureProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.internal.ml.MLFeatureProvider"/>
+    </extensionPoint>
   </extensionPoints>
 </idea-plugin>

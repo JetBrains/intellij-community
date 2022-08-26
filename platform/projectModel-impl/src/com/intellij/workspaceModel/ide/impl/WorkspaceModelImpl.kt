@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
-import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer.startActivity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -9,97 +8,129 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.workspaceModel.ide.*
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.EntityStorageSnapshot
-import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
+import com.intellij.workspaceModel.storage.impl.assertConsistency
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.system.measureTimeMillis
 
-class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposable {
-  override val cache: WorkspaceModelCache?
-    get() = WorkspaceModelCache.getInstance(project)
-
+open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposable {
   @Volatile
   var loadedFromCache = false
     private set
 
-  override val entityStorage: VersionedEntityStorageImpl
+  final override val entityStorage: VersionedEntityStorageImpl
 
   val entityTracer: EntityTracingLogger = EntityTracingLogger()
 
-  init {
-    // TODO It's possible to load this cache from the moment we know project path
-    //  Like in ProjectLifecycleListener or something
+  var userWarningLoggingLevel = false
+    @TestOnly set
 
+  private var projectModelUpdating = AtomicBoolean(false)
+
+  init {
     log.debug { "Loading workspace model" }
 
     val initialContent = WorkspaceModelInitialTestContent.pop()
     val cache = WorkspaceModelCache.getInstance(project)
-    val projectEntities: EntityStorageSnapshot = when {
-      initialContent != null -> initialContent
+    val projectEntities: MutableEntityStorage = when {
+      initialContent != null -> initialContent.toBuilder()
       cache != null -> {
-        val activity = startActivity("cache loading", ActivityCategory.DEFAULT)
-        val previousStorage: EntityStorage?
+        val activity = startActivity("cache loading")
+        val previousStorage: MutableEntityStorage?
         val loadingCacheTime = measureTimeMillis {
-          previousStorage = cache.loadCache()
+          previousStorage = cache.loadCache()?.toBuilder()
         }
-        val storage = if (previousStorage != null) {
+        val storage = if (previousStorage == null) {
+          MutableEntityStorage.create()
+        }
+        else {
           log.info("Load workspace model from cache in $loadingCacheTime ms")
           loadedFromCache = true
           entityTracer.printInfoAboutTracedEntity(previousStorage, "cache")
-          previousStorage.toSnapshot()
+          previousStorage
         }
-        else MutableEntityStorage.create().toSnapshot()
         activity.end()
         storage
       }
-      else -> MutableEntityStorage.create().toSnapshot()
+      else -> MutableEntityStorage.create()
     }
 
-    entityStorage = VersionedEntityStorageImpl(projectEntities)
+    @Suppress("LeakingThis")
+    prepareModel(project, projectEntities)
+
+    entityStorage = VersionedEntityStorageImpl(projectEntities.toSnapshot())
     entityTracer.subscribe(project)
   }
+
+  /**
+   * Used only in Rider IDE
+   */
+  @ApiStatus.Internal
+  open fun prepareModel(project: Project, storage: MutableEntityStorage) = Unit
 
   fun ignoreCache() {
     loadedFromCache = false
   }
 
-  override fun <R> updateProjectModel(updater: (MutableEntityStorage) -> R): R {
+  final override fun <R> updateProjectModel(updater: (MutableEntityStorage) -> R): R {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
+    if (!projectModelUpdating.compareAndSet(false, true)) {
+      throw RuntimeException("Recursive call to `updateProjectModel` is not allowed")
+    }
     val before = entityStorage.current
     val builder = MutableEntityStorage.from(before)
     val result = updater(builder)
     startPreUpdateHandlers(before, builder)
     val changes = builder.collectChanges(before)
-    entityStorage.replace(builder.toSnapshot(), changes, this::onBeforeChanged, this::onChanged)
+    val newStorage = builder.toSnapshot()
+    if (Registry.`is`("ide.workspace.model.assertions.on.update", false)) {
+      before.assertConsistency()
+      newStorage.assertConsistency()
+    }
+    entityStorage.replace(newStorage, changes, this::onBeforeChanged, this::onChanged, projectModelUpdating)
     return result
   }
 
-  override fun <R> updateProjectModelSilent(updater: (MutableEntityStorage) -> R): R {
+  final override fun <R> updateProjectModelSilent(updater: (MutableEntityStorage) -> R): R {
+    if (!projectModelUpdating.compareAndSet(false, true)) {
+      //throw RuntimeException("Recursive call to `updateProjectModel` is not allowed")
+      // Need to fix all cases and change to the runtime exception
+      log.warn("Recursive call to `updateProjectModel` is not allowed")
+    }
+    val before = entityStorage.current
     val builder = MutableEntityStorage.from(entityStorage.current)
     val result = updater(builder)
-    entityStorage.replaceSilently(builder.toSnapshot())
+    val newStorage = builder.toSnapshot()
+    if (Registry.`is`("ide.workspace.model.assertions.on.update", false)) {
+      before.assertConsistency()
+      newStorage.assertConsistency()
+    }
+    entityStorage.replaceSilently(newStorage)
+    projectModelUpdating.set(false)
     return result
   }
 
-  override fun getBuilderSnapshot(): BuilderSnapshot {
+  final override fun getBuilderSnapshot(): BuilderSnapshot {
     val current = entityStorage.pointer
     return BuilderSnapshot(current.version, current.storage)
   }
 
-  override fun replaceProjectModel(replacement: StorageReplacement): Boolean {
+  final override fun replaceProjectModel(replacement: StorageReplacement): Boolean {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
 
     if (entityStorage.version != replacement.version) return false
 
-    entityStorage.replace(replacement.snapshot, replacement.changes, this::onBeforeChanged, this::onChanged)
+    entityStorage.replace(replacement.snapshot, replacement.changes, this::onBeforeChanged, this::onChanged, null)
 
     return true
   }
 
-  override fun dispose() = Unit
+  final override fun dispose() = Unit
 
   private fun onBeforeChanged(change: VersionedStorageChange) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
@@ -154,7 +185,12 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
     try {
       action.invoke()
     } catch (e: Throwable) {
-      log.warn("Exception at Workspace Model event handling", e)
+      val message = "Exception at Workspace Model event handling"
+      if (userWarningLoggingLevel) {
+        log.warn(message, e)
+      } else {
+        log.error(message, e)
+      }
     }
   }
 

@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.util.DiffUserDataKeysEx;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -21,7 +20,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.RollbackDialogAction;
@@ -70,7 +68,6 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   @NotNull private LocalChangeList myChangeList;
   private final List<Change> myChanges = new ArrayList<>();
   private final List<FilePath> myUnversioned = new ArrayList<>();
-  private boolean myHasHiddenUnversioned;
 
   @Nullable private Runnable mySelectedListChangeListener;
   private final RollbackDialogAction myRollbackDialogAction;
@@ -162,7 +159,6 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     result.add(ActionManager.getInstance().getAction("ChangesView.Refresh"));
 
     if (myEnableUnversioned) {
-      result.add(new ShowHideUnversionedFilesAction());
       result.add(UnversionedViewDialog.registerUnversionedPopupGroup(myViewer));
     }
     else {
@@ -210,15 +206,6 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     mySelectedListChangeListener = runnable;
   }
 
-  private boolean isShowUnversioned() {
-    return myEnableUnversioned && VcsConfiguration.getInstance(myProject).SHOW_UNVERSIONED_FILES_WHILE_COMMIT;
-  }
-
-  private void setShowUnversioned(boolean value) {
-    VcsConfiguration.getInstance(myProject).SHOW_UNVERSIONED_FILES_WHILE_COMMIT = value;
-    updateDisplayedChanges();
-  }
-
   @NotNull
   @Override
   public LocalChangeList getSelectedChangeList() {
@@ -251,18 +238,12 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   public void updateDisplayedChanges() {
     myChanges.clear();
     myUnversioned.clear();
-    myHasHiddenUnversioned = false;
 
     myChanges.addAll(myChangeList.getChanges());
 
     if (myEnableUnversioned) {
       List<FilePath> unversioned = ChangeListManager.getInstance(myProject).getUnversionedFilesPaths();
-      if (isShowUnversioned()) {
-        myUnversioned.addAll(unversioned);
-      }
-      if (!isShowUnversioned() && !unversioned.isEmpty()) {
-        myHasHiddenUnversioned = true;
-      }
+      myUnversioned.addAll(unversioned);
     }
 
     myViewer.rebuildTree();
@@ -277,15 +258,8 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     builder.setChanges(myChanges, decorator);
     builder.setUnversioned(myUnversioned);
 
-    if (myHasHiddenUnversioned) {
-      myViewer.getEmptyText()
-        .setText(VcsBundle.message("status.text.unversioned.files.available"))
-        .appendText(VcsBundle.message("plugins.configurable.show"), SimpleTextAttributes.LINK_ATTRIBUTES, e -> setShowUnversioned(true));
-    }
-    else {
-      myViewer.getEmptyText()
-        .setText(DiffBundle.message("diff.count.differences.status.text", 0));
-    }
+    myViewer.getEmptyText()
+      .setText(DiffBundle.message("diff.count.differences.status.text", 0));
 
     return builder.build();
   }
@@ -339,7 +313,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   @NotNull
   @Override
   public List<FilePath> getDisplayedUnversionedFiles() {
-    if (!isShowUnversioned()) return Collections.emptyList();
+    if (!myEnableUnversioned) return Collections.emptyList();
 
     VcsTreeModelData treeModelData = VcsTreeModelData.allUnderTag(myViewer, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
     if (containsCollapsedUnversionedNode(treeModelData)) {
@@ -352,7 +326,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   @NotNull
   @Override
   public List<FilePath> getSelectedUnversionedFiles() {
-    if (!isShowUnversioned()) return Collections.emptyList();
+    if (!myEnableUnversioned) return Collections.emptyList();
 
     VcsTreeModelData treeModelData = VcsTreeModelData.selectedUnderTag(myViewer, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
     if (containsCollapsedUnversionedNode(treeModelData)) {
@@ -365,7 +339,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   @NotNull
   @Override
   public List<FilePath> getIncludedUnversionedFiles() {
-    if (!isShowUnversioned()) return Collections.emptyList();
+    if (!myEnableUnversioned) return Collections.emptyList();
 
     VcsTreeModelData treeModelData = VcsTreeModelData.includedUnderTag(myViewer, ChangesBrowserNode.UNVERSIONED_FILES_TAG);
     if (containsCollapsedUnversionedNode(treeModelData)) {
@@ -444,26 +418,14 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   }
 
 
-  private final class ShowHideUnversionedFilesAction extends ToggleAction implements DumbAware {
-    private ShowHideUnversionedFilesAction() {
-      super(VcsBundle.messagePointer("action.ToggleAction.text.show.unversioned.files"), Presentation.NULL_STRING,
-            AllIcons.Vcs.ShowUnversionedFiles);
-    }
-
-    @Override
-    public boolean isSelected(@NotNull AnActionEvent e) {
-      return isShowUnversioned();
-    }
-
-    @Override
-    public void setSelected(@NotNull AnActionEvent e, boolean state) {
-      setShowUnversioned(state);
-    }
-  }
-
   private class ToggleChangeDiffAction extends ThreeStateCheckboxAction implements CustomComponentAction, DumbAware {
     ToggleChangeDiffAction() {
       super(VcsBundle.messagePointer("commit.dialog.include.action.name"));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @NotNull

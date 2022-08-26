@@ -93,13 +93,14 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
       val result = loadedEntities.map { moduleEntity ->
         async {
           try {
-            val module = createModuleInstance(moduleEntity = moduleEntity,
-                                              versionedStorage = entityStore,
-                                              diff = null,
-                                              isNew = false,
-                                              precomputedExtensionModel = precomputedExtensionModel,
-                                              plugins = plugins,
-                                              corePlugin = corePlugin)
+            val module = createModuleInstanceWithoutCreatingComponents(moduleEntity = moduleEntity,
+                                                                       versionedStorage = entityStore,
+                                                                       diff = null,
+                                                                       isNew = false,
+                                                                       precomputedExtensionModel = precomputedExtensionModel,
+                                                                       plugins = plugins,
+                                                                       corePlugin = corePlugin)
+            module.callCreateComponentsNonBlocking()
             moduleEntity to module
           }
           catch (e: CancellationException) {
@@ -337,7 +338,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
     return entitySource.directory
   }
 
-  fun createModuleInstance(
+  private fun createModuleInstanceWithoutCreatingComponents(
     moduleEntity: ModuleEntity,
     versionedStorage: VersionedEntityStorage,
     diff: MutableEntityStorage?,
@@ -371,7 +372,25 @@ abstract class ModuleManagerBridgeImpl(private val project: Project) : ModuleMan
       val moduleStore = module.getService(IComponentStore::class.java) as ModuleStore
       moduleStore.setPath(moduleFileUrl.toPath(), null, isNew)
     }
+    return module
+  }
 
+  fun createModuleInstance(
+    moduleEntity: ModuleEntity,
+    versionedStorage: VersionedEntityStorage,
+    diff: MutableEntityStorage?,
+    isNew: Boolean,
+    precomputedExtensionModel: PrecomputedExtensionModel?,
+    plugins: List<IdeaPluginDescriptorImpl>,
+    corePlugin: IdeaPluginDescriptorImpl?,
+  ): ModuleBridge {
+    val module = createModuleInstanceWithoutCreatingComponents(moduleEntity = moduleEntity,
+                                                               versionedStorage = versionedStorage,
+                                                               diff = diff,
+                                                               isNew = isNew,
+                                                               precomputedExtensionModel = precomputedExtensionModel,
+                                                               plugins = plugins,
+                                                               corePlugin = corePlugin)
     module.callCreateComponents()
     return module
   }

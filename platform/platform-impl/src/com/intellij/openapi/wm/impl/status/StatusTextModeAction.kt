@@ -23,7 +23,8 @@ class StatusTextModeAction : ToggleAction(), DumbAware {
 
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.isEnabledAndVisible = ExperimentalUI.isNewUI()
+    e.presentation.isVisible = ExperimentalUI.isNewUI()
+    e.presentation.isEnabled = UISettings.getInstance().navBarLocation == NavBarLocation.BOTTOM
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {

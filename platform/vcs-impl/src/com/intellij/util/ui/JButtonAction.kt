@@ -18,6 +18,7 @@ abstract class JButtonAction(text: @ActionText String?, @ActionDescription descr
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     val button = createButton()
+    button.isOpaque = false
     button.addActionListener {
       performAction(button, place, presentation)
     }

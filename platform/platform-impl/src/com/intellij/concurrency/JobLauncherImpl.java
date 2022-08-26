@@ -224,34 +224,41 @@ public final class JobLauncherImpl extends JobLauncher {
 
     // waits for the job to finish execution (when called on a canceled job in the middle of the execution, wait for finish)
     @Override
-    public void waitForCompletion(int millis) throws InterruptedException, TimeoutException {
-      long timeout = System.currentTimeMillis() + millis;
+    public boolean waitForCompletion(int millis) throws InterruptedException {
+      if (millis <= 0) {
+        return isDone();
+      }
+      long deadline = System.currentTimeMillis() + millis;
       while (!isDone()) {
-        long toWait = timeout - System.currentTimeMillis();
+        long toWait = deadline - System.currentTimeMillis();
         if (toWait < 0) {
-          throw new TimeoutException();
+          return false;
         }
-        try {
-          myForkJoinTask.get(toWait, TimeUnit.MILLISECONDS);
-        }
-        catch (CancellationException e) {
-          // was canceled in the middle of execution
-        }
-        catch (ExecutionException e) {
-          ExceptionUtil.rethrow(e.getCause());
-        }
-        // can't do anything but wait. help other tasks in the meantime
+        // wait while helping other tasks in the meantime, but not for too long
         if (!isDone()) {
-          ForkJoinPool.commonPool().awaitQuiescence(toWait, TimeUnit.MILLISECONDS);
+          ForkJoinPool.commonPool().awaitQuiescence(Math.min(toWait, 10), TimeUnit.MILLISECONDS);
+        }
+        // we are avoiding calling timed myForkJoinTask.get() because it's very expensive when timed out (bc of TimeoutException)
+        if (myForkJoinTask.isDone()) {
+          try {
+            myForkJoinTask.get();
+          }
+          catch (CancellationException e) {
+            // was canceled in the middle of execution
+          }
+          catch (ExecutionException e) {
+            ExceptionUtil.rethrow(e.getCause());
+          }
         }
       }
+      return true;
     }
   }
 
   /**
-   * Process all elements from the {@code failedToProcess} and then {@code things} concurrently in the system ForkJoinPool and the current thread.
-   * Processing happens from the queue head to the queue tail, maintaining {@link JobSchedulerImpl#getJobPoolParallelism} parallelism.
-   * So the elements in the queue head have higher priority than the tail.
+   * Process all elements from the {@code failedToProcess} and then {@code things} concurrently in the system's ForkJoinPool and the current thread.
+   * Processing happens in the queue-head to the queue-tail order, but in parallel maintaining {@link JobSchedulerImpl#getJobPoolParallelism} parallelism,
+   * so the elements in the queue-head have higher priority than the tail.
    * Stop when {@code tombStone} element is occurred.
    * If was unable to process some element (an exception occurred during {@code thingProcessor.process()} call), add it back to the {@code failedToProcess} queue.
    * @return true if all elements processed successfully, false if at least one processor returned false or exception occurred
@@ -285,7 +292,7 @@ public final class JobLauncherImpl extends JobLauncher {
 
               if (element == tombStone) {
                 things.put(tombStone); // return just popped tombStone to the 'things' queue for everybody else to see it
-                // since the queue is drained up to the tombStone, there surely should be a place for one element
+                // since the queue is drained up to the tombStone, there surely should be a place for one element, so "put" will not block
                 result[0] = true;
                 break;
               }

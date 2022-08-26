@@ -107,7 +107,7 @@ public class PyExecuteSelectionAction extends DumbAwareAction {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.OLD_EDT;
+    return ActionUpdateThread.EDT;
   }
 
   @Override

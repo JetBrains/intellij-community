@@ -61,7 +61,6 @@ public class JBColor extends Color {
 
   /**
    * @deprecated Use {@link #lazy(Supplier)}
-   * @param function
    */
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   @Deprecated

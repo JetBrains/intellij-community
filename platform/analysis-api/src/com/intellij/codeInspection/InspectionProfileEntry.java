@@ -46,7 +46,7 @@ import java.util.*;
 public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   private static final Logger LOG = Logger.getInstance(InspectionProfileEntry.class);
 
-  private static Set<String> ourBlackList;
+  private volatile static Set<String> ourBlackList;
   private static final Object BLACK_LIST_LOCK = new Object();
   private Boolean myUseNewSerializer;
 
@@ -64,23 +64,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     return !suppressors.isEmpty() && isSuppressedFor(element, suppressors);
   }
 
-  public static boolean isSuppressedBySuppressors(@NotNull PsiElement element, @NotNull String toolId) {
-    Set<InspectionSuppressor> suppressors = getSuppressors(element);
-    return !suppressors.isEmpty() && isSuppressedFor(element, toolId, suppressors);
-  }
-
-  private static boolean isSuppressedFor(@NotNull PsiElement element, @NotNull String toolId, Set<? extends InspectionSuppressor> suppressors) {
-    for (InspectionSuppressor suppressor : suppressors) {
-      if (suppressor.isSuppressedFor(element, toolId)) {
-        return true;
-      }
-    }
-
-    InspectionElementsMerger merger = InspectionElementsMerger.getMerger(toolId);
-    return merger != null && isSuppressedForMerger(element, suppressors, merger);
-  }
-
-  private boolean isSuppressedFor(@NotNull PsiElement element, Set<? extends InspectionSuppressor> suppressors) {
+  private boolean isSuppressedFor(@NotNull PsiElement element, @NotNull Set<? extends InspectionSuppressor> suppressors) {
     String toolId = getSuppressId();
     for (InspectionSuppressor suppressor : suppressors) {
       if (isSuppressed(toolId, suppressor, element)) {
@@ -92,7 +76,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     return merger != null && isSuppressedForMerger(element, suppressors, merger);
   }
 
-  private static boolean isSuppressedForMerger(PsiElement element, Set<? extends InspectionSuppressor> suppressors, InspectionElementsMerger merger) {
+  private static boolean isSuppressedForMerger(@NotNull PsiElement element, @NotNull Set<? extends InspectionSuppressor> suppressors, @NotNull InspectionElementsMerger merger) {
     String[] suppressIds = merger.getSuppressIds();
     String[] sourceToolIds = suppressIds.length != 0 ? suppressIds : merger.getSourceToolNames();
     for (String sourceToolId : sourceToolIds) {
@@ -150,7 +134,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     });
 
     Set<InspectionSuppressor> suppressors = getSuppressors(element);
-    final PsiLanguageInjectionHost injectionHost = InjectedLanguageManager.getInstance(element.getProject()).getInjectionHost(element);
+    PsiLanguageInjectionHost injectionHost = InjectedLanguageManager.getInstance(element.getProject()).getInjectionHost(element);
     if (injectionHost != null) {
       Set<InspectionSuppressor> injectionHostSuppressors = getSuppressors(injectionHost);
       for (InspectionSuppressor suppressor : injectionHostSuppressors) {
@@ -169,7 +153,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
                                             @NotNull InspectionSuppressor suppressor,
                                             @NotNull ThreeState appliedToInjectionHost,
                                             @NotNull String toolId) {
-    final SuppressQuickFix[] actions = suppressor.getSuppressActions(element, toolId);
+    SuppressQuickFix[] actions = suppressor.getSuppressActions(element, toolId);
     for (SuppressQuickFix action : actions) {
       if (action instanceof InjectionAwareSuppressQuickFix) {
         ((InjectionAwareSuppressQuickFix)action).setShouldBeAppliedToInjectionHost(appliedToInjectionHost);
@@ -184,42 +168,45 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     if (suppressor.isSuppressedFor(element, toolId)) {
       return true;
     }
-    final String alternativeId = getAlternativeID();
+    String alternativeId = getAlternativeID();
     return alternativeId != null && !alternativeId.equals(toolId) && suppressor.isSuppressedFor(element, alternativeId);
   }
 
   public static @NotNull Set<InspectionSuppressor> getSuppressors(@NotNull PsiElement element) {
-    PsiUtilCore.ensureValid(element);
     PsiFile file = element.getContainingFile();
     if (file == null) {
+      PsiUtilCore.ensureValid(element);
       return Collections.emptySet();
     }
+    PsiUtilCore.ensureValid(file);
     FileViewProvider viewProvider = file.getViewProvider();
-    final List<InspectionSuppressor> elementLanguageSuppressor = LanguageInspectionSuppressors.INSTANCE.allForLanguage(element.getLanguage());
+    Language elementLanguage = element.getLanguage();
+    List<InspectionSuppressor> elementLanguageSuppressors = LanguageInspectionSuppressors.INSTANCE.allForLanguage(elementLanguage);
+    Language baseLanguage = viewProvider.getBaseLanguage();
     if (viewProvider instanceof TemplateLanguageFileViewProvider) {
       Set<InspectionSuppressor> suppressors = new LinkedHashSet<>();
-      ContainerUtil.addAllNotNull(suppressors, LanguageInspectionSuppressors.INSTANCE.allForLanguage(viewProvider.getBaseLanguage()));
+      suppressors.addAll(LanguageInspectionSuppressors.INSTANCE.allForLanguage(baseLanguage));
       for (Language language : viewProvider.getLanguages()) {
-        ContainerUtil.addAllNotNull(suppressors, LanguageInspectionSuppressors.INSTANCE.allForLanguage(language));
+        suppressors.addAll(LanguageInspectionSuppressors.INSTANCE.allForLanguage(language));
       }
-      ContainerUtil.addAllNotNull(suppressors, elementLanguageSuppressor);
+      suppressors.addAll(elementLanguageSuppressors);
       return suppressors;
     }
-    if (!element.getLanguage().isKindOf(viewProvider.getBaseLanguage())) {
-      // handling embedding elements {@link EmbeddingElementType
+    if (!elementLanguage.isKindOf(baseLanguage)) {
+      // handling embedding elements {@link EmbeddingElementType}
       Set<InspectionSuppressor> suppressors = new LinkedHashSet<>();
-      ContainerUtil.addAllNotNull(suppressors, LanguageInspectionSuppressors.INSTANCE.allForLanguage(viewProvider.getBaseLanguage()));
-      ContainerUtil.addAllNotNull(suppressors, elementLanguageSuppressor);
+      suppressors.addAll(LanguageInspectionSuppressors.INSTANCE.allForLanguage(baseLanguage));
+      suppressors.addAll(elementLanguageSuppressors);
       return suppressors;
     }
-    int size = elementLanguageSuppressor.size();
+    int size = elementLanguageSuppressors.size();
     switch (size) {
       case 0:
         return Collections.emptySet();
       case 1:
-        return Collections.singleton(elementLanguageSuppressor.get(0));
+        return Collections.singleton(elementLanguageSuppressors.get(0));
       default:
-        return new HashSet<>(elementLanguageSuppressor);
+        return new HashSet<>(elementLanguageSuppressors);
     }
   }
 
@@ -260,7 +247,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    */
   public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getGroupDisplayName() {
     if (myNameProvider != null) {
-      final String name = myNameProvider.getDefaultGroupDisplayName();
+      String name = myNameProvider.getDefaultGroupDisplayName();
       if (name != null) {
         return name;
       }
@@ -298,7 +285,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
    */
   public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getDisplayName() {
     if (myNameProvider != null) {
-      final String name = myNameProvider.getDefaultDisplayName();
+      String name = myNameProvider.getDefaultDisplayName();
       if (name != null) {
         return name;
       }
@@ -317,7 +304,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   @NonNls
   public @NotNull String getShortName() {
     if (myNameProvider != null) {
-      final String name = myNameProvider.getDefaultShortName();
+      String name = myNameProvider.getDefaultShortName();
       if (name != null) {
         return name;
       }
@@ -413,13 +400,14 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     return myUseNewSerializer;
   }
 
-  private static void loadBlackList() {
-    ourBlackList = new HashSet<>();
+  @NotNull
+  private static Set<String> loadBlackList() {
+    Set<String> blackList = new HashSet<>();
 
     URL url = InspectionProfileEntry.class.getResource("inspection-black-list.txt");
     if (url == null) {
       LOG.error("Resource not found");
-      return;
+      return blackList;
     }
 
     try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
@@ -427,22 +415,27 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
       while ((line = reader.readLine()) != null) {
         line = line.trim();
         if (!line.isEmpty()) {
-          ourBlackList.add(line);
+          blackList.add(line);
         }
       }
     }
     catch (IOException e) {
       LOG.error("Unable to load resource: " + url, e);
     }
+    return Collections.unmodifiableSet(blackList);
   }
 
-  public static @NotNull Collection<String> getBlackList() {
-    synchronized (BLACK_LIST_LOCK) {
-      if (ourBlackList == null) {
-        loadBlackList();
+  static @NotNull Collection<String> getBlackList() {
+    Set<String> blackList = ourBlackList;
+    if (blackList == null) {
+      synchronized (BLACK_LIST_LOCK) {
+        blackList = ourBlackList;
+        if (blackList == null) {
+          ourBlackList = blackList = loadBlackList();
+        }
       }
-      return ourBlackList;
     }
+    return blackList;
   }
 
   /**
@@ -487,12 +480,12 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   }
 
   public @Nullable @Nls String loadDescription() {
-    final String description = getStaticDescription();
+    String description = getStaticDescription();
     if (description != null) return description;
 
     try {
       InputStream descriptionStream = null;
-      final String fileName = getDescriptionFileName();
+      String fileName = getDescriptionFileName();
       if (fileName != null) {
         descriptionStream =
           ResourceUtil.getResourceAsStream(getDescriptionContextClass().getClassLoader(), "inspectionDescriptions", fileName);

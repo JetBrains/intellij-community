@@ -13,6 +13,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToAbstractManyChildren
@@ -95,6 +96,9 @@ open class ArchivePackagingElementEntityImpl : ArchivePackagingElementEntity, Wo
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       // Check initialization for list with ref type
       if (_diff != null) {
         if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(CHILDREN_CONNECTION_ID, this) == null) {
@@ -109,15 +113,32 @@ open class ArchivePackagingElementEntityImpl : ArchivePackagingElementEntity, Wo
       if (!getEntityData().isFileNameInitialized()) {
         error("Field ArchivePackagingElementEntity#fileName should be initialized")
       }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ArchivePackagingElementEntity#entitySource should be initialized")
-      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as ArchivePackagingElementEntity
+      this.entitySource = dataSource.entitySource
+      this.fileName = dataSource.fileName
+      if (parents != null) {
+        this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
+        this.artifact = parents.filterIsInstance<ArtifactEntity>().singleOrNull()
+      }
+    }
+
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var parentEntity: CompositePackagingElementEntity?
       get() {
@@ -238,15 +259,6 @@ open class ArchivePackagingElementEntityImpl : ArchivePackagingElementEntity, Wo
         changedProperty.add("fileName")
       }
 
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
-      }
-
     override fun getEntityData(): ArchivePackagingElementEntityData = result ?: super.getEntityData() as ArchivePackagingElementEntityData
     override fun getEntityClass(): Class<ArchivePackagingElementEntity> = ArchivePackagingElementEntity::class.java
   }
@@ -288,14 +300,26 @@ class ArchivePackagingElementEntityData : WorkspaceEntityData<ArchivePackagingEl
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ArchivePackagingElementEntity(fileName, entitySource) {
+      this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
+      this.artifact = parents.filterIsInstance<ArtifactEntity>().singleOrNull()
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
 
     other as ArchivePackagingElementEntityData
 
-    if (this.fileName != other.fileName) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.fileName != other.fileName) return false
     return true
   }
 
@@ -313,5 +337,15 @@ class ArchivePackagingElementEntityData : WorkspaceEntityData<ArchivePackagingEl
     var result = entitySource.hashCode()
     result = 31 * result + fileName.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + fileName.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.sameForAllEntities = true
   }
 }

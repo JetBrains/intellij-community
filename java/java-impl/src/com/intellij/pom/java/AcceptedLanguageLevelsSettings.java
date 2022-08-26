@@ -206,21 +206,30 @@ public final class AcceptedLanguageLevelsSettings implements PersistentStateComp
 
   private static void decreaseLanguageLevel(Project project) {
     WriteAction.run(() -> {
-      LanguageLevel highestAcceptedLevel = getHighestAcceptedLevel();
       JavaProjectModelModificationService service = JavaProjectModelModificationService.getInstance(project);
       for (Module module : ModuleManager.getInstance(project).getModules()) {
         LanguageLevel languageLevel = LanguageLevelUtil.getCustomLanguageLevel(module);
         if (languageLevel != null && !isLanguageLevelAccepted(languageLevel)) {
-          LanguageLevel newLanguageLevel = highestAcceptedLevel.isAtLeast(languageLevel) ? LanguageLevel.HIGHEST : highestAcceptedLevel;
+          LanguageLevel newLanguageLevel = adjustLanguageLevel(languageLevel);
           service.changeLanguageLevel(module, newLanguageLevel);
         }
       }
 
       LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(project);
       if (!isLanguageLevelAccepted(projectExtension.getLanguageLevel())) {
-        projectExtension.setLanguageLevel(highestAcceptedLevel);
+        projectExtension.setLanguageLevel(getHighestAcceptedLevel());
       }
     });
+  }
+
+  /**
+   * @param languageLevel language level to adjust
+   * @return the best accepted language level based on the supplied one
+   */
+  private static @NotNull LanguageLevel adjustLanguageLevel(@NotNull LanguageLevel languageLevel) {
+    if (isLanguageLevelAccepted(languageLevel)) return languageLevel;
+    LanguageLevel highestAcceptedLevel = getHighestAcceptedLevel();
+    return highestAcceptedLevel.isAtLeast(languageLevel) ? LanguageLevel.HIGHEST : highestAcceptedLevel;
   }
 
   @TestOnly

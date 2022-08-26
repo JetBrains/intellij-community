@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction.CannotReadException
 import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.ex.ApplicationEx
+import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.blockingContext
 import kotlinx.coroutines.*
 import kotlin.coroutines.coroutineContext
@@ -18,20 +19,11 @@ internal class InternalReadAction<T>(
 
   private val application: ApplicationEx = ApplicationManager.getApplication() as ApplicationEx
 
-  suspend fun runReadAction(): T {
-    check(!application.isDispatchThread) {
-      "Must not call from EDT"
+  suspend fun runReadAction(): T = withContext(Dispatchers.Default) {
+    check(!application.isReadAccessAllowed) {
+      "This thread unexpectedly holds the read lock"
     }
-    if (application.isReadAccessAllowed) {
-      val unsatisfiedConstraint = findUnsatisfiedConstraint()
-      check(unsatisfiedConstraint == null) {
-        "Cannot suspend until constraints are satisfied while holding the read lock: $unsatisfiedConstraint"
-      }
-      return blockingContext(action)
-    }
-    return coroutineScope {
-      readLoop()
-    }
+    readLoop()
   }
 
   private fun findUnsatisfiedConstraint(): ReadConstraint? {
@@ -82,7 +74,8 @@ internal class InternalReadAction<T>(
     }
   }
   catch (e: CancellationException) {
-    if (e.cause is CannotReadException) {
+    val cause = Cancellation.getCause(e)
+    if (cause is CannotReadException) {
       ReadResult.WritePending
     }
     else {

@@ -44,6 +44,11 @@ public class GitToggleAnnotationOptionsActionProvider implements AnnotationGutte
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
+    @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       if (myAnnotation instanceof GitFileAnnotation) {
         return new AnAction[]{

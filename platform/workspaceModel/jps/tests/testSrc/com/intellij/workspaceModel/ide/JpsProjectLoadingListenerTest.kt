@@ -29,7 +29,7 @@ import java.io.File
 class JpsProjectLoadingListenerTest {
   @Rule
   @JvmField
-  val projectModel = ProjectModelRule(true)
+  val projectModel = ProjectModelRule()
 
   @Rule
   @JvmField

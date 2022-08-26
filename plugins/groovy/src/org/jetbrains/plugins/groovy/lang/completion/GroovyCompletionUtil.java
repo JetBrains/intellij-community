@@ -91,8 +91,6 @@ public final class GroovyCompletionUtil {
   /**
    * Return true if last element of current statement is expression
    *
-   * @param statement
-   * @return
    */
   public static boolean endsWithExpression(PsiElement statement) {
     while (statement != null &&
@@ -143,9 +141,7 @@ public final class GroovyCompletionUtil {
   /**
    * Shows whether keyword may be placed as a new statement beginning
    *
-   * @param element
    * @param canBeAfterBrace May be after '{' symbol or not
-   * @return
    */
   public static boolean isNewStatement(PsiElement element, boolean canBeAfterBrace) {
     PsiElement previousLeaf = getLeafByOffset(element.getTextRange().getStartOffset() - 1, element);
@@ -354,6 +350,9 @@ public final class GroovyCompletionUtil {
                                                  @Nullable PsiElement position) {
     builder = builder.withIcon(element.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS))
       .withInsertHandler(GroovyInsertHandler.INSTANCE);
+    if (element instanceof PsiModifierListOwner && ((PsiModifierListOwner)element).hasAnnotation(CommonClassNames.JAVA_LANG_DEPRECATED)) {
+      builder = builder.strikeout();
+    }
     builder = setTailText(element, builder, substitutor);
     builder = setTypeText(element, builder, substitutor, position);
     return builder;

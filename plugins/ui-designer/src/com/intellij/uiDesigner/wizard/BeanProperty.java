@@ -5,10 +5,6 @@ import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 final class BeanProperty implements Comparable<BeanProperty>{
   /**
    * Property name.

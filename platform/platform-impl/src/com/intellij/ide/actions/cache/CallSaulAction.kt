@@ -68,6 +68,10 @@ internal class CacheRecoveryActionGroup: ComputableActionGroup() {
         val scope = RecoveryScope.createInstance(e)
         e.presentation.isEnabledAndVisible = recoveryAction.canBeApplied(scope) && ApplicationManager.getApplication().isInternal
       }
+
+      override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.BGT
+      }
     }
   }
 }

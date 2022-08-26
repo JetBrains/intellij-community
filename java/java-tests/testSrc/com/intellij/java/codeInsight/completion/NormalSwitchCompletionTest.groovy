@@ -33,9 +33,9 @@ class NormalSwitchCompletionTest extends NormalCompletionTestCase {
   void testCompleteReturnInSwitch() { doTest() }
 
   @NeedsIndex.Full
-  void testCompleteConstantInSwitchExpr() { doTest() }
+  void testCompleteConstantInSwitchExpr() { doTest('\n') }
   @NeedsIndex.Full
-  void testCompleteConstantInSwitchStmt() { doTest() }
+  void testCompleteConstantInSwitchStmt() { doTest('\n') }
 
   void testCompleteNullInSwitchStmt() { doTest() }
   void testCompleteNullInSwitchExpr() { doTest() }

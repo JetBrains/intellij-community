@@ -45,5 +45,6 @@
     <orderEntry type="module" module-name="intellij.python.grazie" />
     <orderEntry type="library" scope="TEST" name="Velocity" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ml" scope="TEST" />
   </component>
 </module>

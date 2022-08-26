@@ -203,6 +203,11 @@ public abstract class AutoScrollToSourceHandler {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       setAutoScrollMode(flag);
     }

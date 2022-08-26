@@ -38,7 +38,6 @@ public final class RpcBinaryRequestHandler extends BinaryRequestHandler implemen
 
   /**
    * For dynamic domain registration
-   * @return
    */
   public static JsonRpcServer getRpcServerInstance() {
     return BinaryRequestHandler.EP_NAME.findExtension(RpcBinaryRequestHandler.class).getServer();

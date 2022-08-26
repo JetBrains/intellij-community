@@ -96,15 +96,6 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
       super.removeNotify()
     }
 
-/*    override fun getPreferredSize(): Dimension {
-      val d = super.getPreferredSize()
-      return baseWidth()?.let {
-        val w = it + insets.left + insets.right
-        println("getPreferredSize: $it ${w}")
-        return Dimension(w, d.height)
-      } ?: d
-
-    }*/
   }.apply {
     border = JBUI.Borders.empty(3, 0, 0, 3)
     background = JBColor.namedColor("Panel.background", Gray.xCD)
@@ -125,7 +116,7 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
 
       add(JLabel(AllIcons.Toolbar.AddSlot).apply {
         val d = preferredSize
-        d.width = FixWidthSegmentedActionToolbarComponent.ARROW_WIDTH
+        d.width = RunWidgetWidthHelper.getInstance(project).arrow
         preferredSize = d
 
         addMouseListener(object : MouseAdapter() {
@@ -227,7 +218,7 @@ class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): 
 
     val component = SlotComponent(bar, JLabel(AllIcons.Toolbar.RemoveSlot).apply {
       val d = preferredSize
-      d.width = FixWidthSegmentedActionToolbarComponent.ARROW_WIDTH
+      d.width = RunWidgetWidthHelper.getInstance(project).arrow
       preferredSize = d
      })
 

@@ -672,6 +672,11 @@ public final class ScopeEditorPanel implements Disposable {
       e.getPresentation().setText(provider.getDisplayName());
       e.getPresentation().setIcon(provider.getIcon());
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
   }
 
   private final class FilterLegalsAction extends ToggleAction {
@@ -686,6 +691,11 @@ public final class ScopeEditorPanel implements Disposable {
     @Override
     public boolean isSelected(@NotNull AnActionEvent event) {
       return DependencyUISettings.getInstance().UI_FILTER_LEGALS;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override
@@ -732,6 +742,11 @@ public final class ScopeEditorPanel implements Disposable {
       @Override
       public void update(@NotNull AnActionEvent event) {
         event.getPresentation().setEnabled(action.isEnabled());
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
 
       @Override

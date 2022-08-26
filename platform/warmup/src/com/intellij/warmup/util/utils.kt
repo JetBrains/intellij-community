@@ -1,13 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.warmup.util
 
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.util.ui.EDT
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import kotlin.coroutines.resume
 
 fun <Y : Any> runAndCatchNotNull(errorMessage: String, action: () -> Y?): Y {
@@ -30,17 +33,16 @@ suspend fun yieldThroughInvokeLater() {
   assertInnocentThreadToWait()
 
   runTaskAndLogTime("Later Invocations in EDT") {
-    check(!EDT.isCurrentThreadEdt()) { "Must not call from EDT" }
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      // just wait
+      yield()
     }
   }
 }
 
-suspend fun completeJustSubmittedDumbServiceTasks(project: Project) {
+private suspend fun completeJustSubmittedDumbServiceTasks(project: Project) {
   assertInnocentThreadToWait()
   runTaskAndLogTime("Completing just submitted DumbService tasks") {
-    invokeAndWaitIfNeeded {
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       DumbService.getInstance(project).completeJustSubmittedTasks()
     }
   }
@@ -51,7 +53,7 @@ suspend fun yieldAndWaitForDumbModeEnd(project: Project) {
   completeJustSubmittedDumbServiceTasks(project)
 
   runTaskAndLogTime("Awaiting smart mode") {
-    suspendCancellableCoroutine<Unit> { cont ->
+    suspendCancellableCoroutine { cont ->
       DumbService.getInstance(project).runWhenSmart {
         cont.resume(Unit)
       }

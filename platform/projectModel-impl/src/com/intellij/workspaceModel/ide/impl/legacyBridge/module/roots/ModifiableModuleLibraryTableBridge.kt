@@ -19,7 +19,10 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryT
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
 import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addLibraryPropertiesEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleDependencyItem
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: ModifiableRootModelBridgeImpl)
@@ -65,7 +68,7 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
     val tableId = getTableId()
 
     val libraryEntityName = LibraryNameGenerator.generateLibraryEntityName(name) { existsName ->
-      modifiableModel.diff.resolve(LibraryId(existsName, tableId)) != null
+      LibraryId(existsName, tableId) in modifiableModel.diff
     }
 
     val libraryEntity = modifiableModel.diff.addLibraryEntity(
@@ -113,7 +116,7 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
                               scope: ModuleDependencyItem.DependencyScope): LibraryBridgeImpl {
     val tableId = getTableId()
     val libraryEntityName = LibraryNameGenerator.generateLibraryEntityName(original.name) { existsName ->
-      modifiableModel.diff.resolve(LibraryId(existsName, tableId)) != null
+      LibraryId(existsName, tableId) in modifiableModel.diff
     }
     val originalEntity = original.librarySnapshot.libraryEntity
     val libraryEntity = modifiableModel.diff.addLibraryEntity(

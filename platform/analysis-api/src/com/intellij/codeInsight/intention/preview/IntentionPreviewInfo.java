@@ -21,6 +21,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.ui.DeferredIcon;
 import com.intellij.util.IconUtil;
+import com.intellij.util.MathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -253,7 +256,11 @@ public interface IntentionPreviewInfo {
     return new Html(builder.wrapWith("p"));
   }
 
-  static IntentionPreviewInfo navigate(@NotNull NavigatablePsiElement target) {
+  /**
+   * @param target target element to navigate to
+   * @return a presentation describing that the action will navigate to the specified target element
+   */
+  static @NotNull IntentionPreviewInfo navigate(@NotNull NavigatablePsiElement target) {
     PsiFile file = target.getContainingFile();
     Icon icon = file.getIcon(0);
     int offset = target.getTextOffset();
@@ -268,5 +275,27 @@ public interface IntentionPreviewInfo {
         .append(String.valueOf(lineNumber+1));
     }
     return new Html(builder.wrapWith("p"));
+  }
+
+  /**
+   * @param updatedList list after updating (containing new option)
+   * @param addedOption an option added to the list
+   * @param title a title text for the list
+   * @return a presentation describing that the action will add the specified option to the options list
+   */
+  static IntentionPreviewInfo addListOption(@NotNull List<@NlsSafe String> updatedList,
+                                            @NotNull String addedOption,
+                                            @NotNull @Nls String title) {
+    int maxToList = Math.min(7, updatedList.size() + 2);
+    HtmlChunk select = HtmlChunk.tag("select").attr("size", maxToList)
+      .children(ContainerUtil.map2Array(updatedList, HtmlChunk.class, pref -> {
+        HtmlChunk.Element chunk = HtmlChunk.tag("option").addText(pref);
+        return pref.equals(addedOption) ? chunk.attr("selected", "selected") : chunk;
+      }));
+    HtmlChunk content = new HtmlBuilder().append(title)
+      .br().br()
+      .append(select)
+      .toFragment();
+    return new Html(content);
   }
 }

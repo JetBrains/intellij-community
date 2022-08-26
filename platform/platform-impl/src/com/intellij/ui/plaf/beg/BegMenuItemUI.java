@@ -10,21 +10,19 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.event.MenuDragMouseEvent;
 import javax.swing.event.MenuDragMouseListener;
 import javax.swing.event.MouseInputListener;
@@ -41,7 +39,6 @@ import java.util.function.Consumer;
 
 /**
  * @author Eugene Belyaev
- * @author Vladimir Kondratyev
  */
 public final class BegMenuItemUI extends BasicMenuItemUI {
   private static final String KEEP_MENU_OPEN_PROP = "BegMenuItemUI.keep-menu-open";
@@ -51,10 +48,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
   private static final Rectangle d = new Rectangle();
   private int myMaxGutterIconWidth;
   private int myMaxGutterIconWidth2;
-  private int a;
-  private static Rectangle i = new Rectangle();
   private int k;
-  private int e;
   private static final Rectangle c = new Rectangle();
   private static final Rectangle h = new Rectangle();
   private static final Rectangle l = new Rectangle();
@@ -63,8 +57,6 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
   @NonNls public static final String AQUA_LOOK_AND_FEEL_CLASS_NAME = "apple.laf.AquaLookAndFeel";
   @NonNls public static final String GET_KEY_MODIFIERS_TEXT = "getKeyModifiersText";
 
-  private Border myAquaSelectedBackgroundPainter;
-
   /** invoked by reflection */
   public static ComponentUI createUI(JComponent component) {
     return new BegMenuItemUI();
@@ -72,10 +64,6 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
 
   public BegMenuItemUI() {
     myMaxGutterIconWidth2 = myMaxGutterIconWidth = 18;
-
-    if (UIUtil.isUnderAquaBasedLookAndFeel() && myAquaSelectedBackgroundPainter == null) {
-      myAquaSelectedBackgroundPainter = (Border) UIManager.get("MenuItem.selectedBackgroundPainter");
-    }
   }
 
   @Override
@@ -122,10 +110,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     Insets insets = comp.getInsets();
     initBounds();
     f.setBounds(0, 0, j1, k1);
-    f.x += insets.left;
-    f.y += insets.top;
-    f.width -= insets.right + f.x;
-    f.height -= insets.bottom + f.y;
+    JBInsets.removeFrom(f, insets);
     Font font = g.getFont();
     Font font1 = comp.getFont();
     g.setFont(font1);
@@ -134,7 +119,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     String keyStrokeText = getKeyStrokeText(jmenuitem);
     String s1 = layoutMenuItem(fontmetrics, jmenuitem.getText(), fontmetrics1, keyStrokeText, icon1, icon2, arrowIcon, jmenuitem.getVerticalAlignment(), jmenuitem.getHorizontalAlignment(), jmenuitem.getVerticalTextPosition(), jmenuitem.getHorizontalTextPosition(), f, l, j, c, h, d, jmenuitem.getText() != null ? defaultTextIconGap : 0, defaultTextIconGap);
     Color color2 = g.getColor();
-    if (comp.isOpaque() || (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())){
+    if (comp.isOpaque() || StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
       g.setColor(jmenuitem.getBackground());
       g.fillRect(0, 0, j1, k1);
       if (isSelected(jmenuitem)) {
@@ -142,11 +127,8 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
         if (icon2 != null && !(StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
           g.fillRect(k, 0, j1 - k, k1);
         }
-        else if (IdeaPopupMenuUI.isRoundSelectionEnabled(comp)) {
-          GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
-          int radius = JBUI.getInt("MenuItem.Selection.arc", 8);
-          g.fillRoundRect(4, 1, j1 - 8, k1 - 2, radius, radius);
-          config.restore();
+        else if (ExperimentalUI.isNewUI() || IdeaPopupMenuUI.isRoundBorder()) {
+          IdeaMenuUI.paintRoundSelection(g, comp, j1, k1);
         }
         else {
           g.fillRect(0, 0, j1, k1);
@@ -378,19 +360,17 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
 
     // Position the Accelerator text rect
 
-    acceleratorRect.x += viewRect.width - arrowIconRect.width - (arrowIconRect.width > 0 ? menuItemGap : 0) - acceleratorRect.width;
+    acceleratorRect.x = viewRect.x + viewRect.width - arrowIconRect.width - (arrowIconRect.width > 0 ? menuItemGap : 0) - acceleratorRect.width;
     acceleratorRect.y = (viewRect.y + viewRect.height / 2) - acceleratorRect.height / 2;
 
     // Position the Check and Arrow Icons
 
     if (useCheckAndArrow()){
-      arrowIconRect.x += viewRect.width - arrowIconRect.width;
-      arrowIconRect.y = (viewRect.y + labelRect.height / 2) - arrowIconRect.height / 2;
+      arrowIconRect.x = viewRect.x + viewRect.width - arrowIconRect.width;
+      arrowIconRect.y = (labelRect.y + labelRect.height / 2) - arrowIconRect.height / 2;
       if (checkIcon != null){
-        checkIconRect.y = (viewRect.y + labelRect.height / 2) - checkIconRect.height / 2;
+        checkIconRect.y = (labelRect.y + labelRect.height / 2) - checkIconRect.height / 2;
         checkIconRect.x += (viewRect.x + myMaxGutterIconWidth / 2) - checkIcon.getIconWidth() / 2;
-        a = viewRect.x;
-        e = (viewRect.y + labelRect.height / 2) - myMaxGutterIconWidth / 2;
         k = viewRect.x + myMaxGutterIconWidth + 2;
       }
       else{
@@ -422,8 +402,9 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     FontMetrics fontmetrics1 = comp.getFontMetrics(acceleratorFont);
     initBounds();
     layoutMenuItem(fontmetrics, text, fontmetrics1, keyStrokeText, icon1, icon2, arrowIcon, jmenuitem.getVerticalAlignment(), jmenuitem.getHorizontalAlignment(), jmenuitem.getVerticalTextPosition(), jmenuitem.getHorizontalTextPosition(), f, l, j, c, h, d, text != null ? defaultTextIconGap : 0, defaultTextIconGap);
+    Rectangle i = new Rectangle();
     i.setBounds(j);
-    i = SwingUtilities.computeUnion(l.x, l.y, l.width, l.height, i);
+    SwingUtilities.computeUnion(l.x, l.y, l.width, l.height, i);
     if (!(keyStrokeText == null || keyStrokeText.isEmpty())){
       i.width += c.width;
       i.width += 7 * defaultTextIconGap;
@@ -446,7 +427,8 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     if (i.height % 2 == 0){
       i.height++;
     }
-    return i.getSize();
+
+    return IdeaMenuUI.patchPreferredSize(comp, i.getSize());
   }
 
   private void drawIconBorder(Graphics g) {
@@ -464,14 +446,13 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
 */
   }
 
-  private void initBounds() {
+  private static void initBounds() {
     l.setBounds(b);
     j.setBounds(b);
     c.setBounds(b);
     h.setBounds(b);
     d.setBounds(b);
     f.setBounds(0, 0, 32767, 32767);
-    i.setBounds(b);
   }
 
   private Icon getAllowedIcon() {
@@ -493,7 +474,6 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
   }
 
   /** Copied from BasicMenuItemUI */
-  @SuppressWarnings({"HardCodedStringLiteral"})
   private boolean isInternalFrameSystemMenu(){
     String actionCommand=menuItem.getActionCommand();
     if(

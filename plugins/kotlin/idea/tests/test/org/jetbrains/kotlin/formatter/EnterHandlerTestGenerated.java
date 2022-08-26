@@ -6,7 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -219,14 +219,49 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
                 runTest("testData/editor/enterHandler/beforeDot/CallWithLambdaInNonFirstPositionOnNonFirstLine.after.kt");
             }
 
+            @TestMetadata("CharLiteralInFirstPosition.after.kt")
+            public void testCharLiteralInFirstPosition() throws Exception {
+                runTest("testData/editor/enterHandler/beforeDot/CharLiteralInFirstPosition.after.kt");
+            }
+
+            @TestMetadata("CharLiteralInFirstPosition2.after.kt")
+            public void testCharLiteralInFirstPosition2() throws Exception {
+                runTest("testData/editor/enterHandler/beforeDot/CharLiteralInFirstPosition2.after.kt");
+            }
+
             @TestMetadata("FirstPositionOnNewLineInsideCall.after.kt")
             public void testFirstPositionOnNewLineInsideCall() throws Exception {
                 runTest("testData/editor/enterHandler/beforeDot/FirstPositionOnNewLineInsideCall.after.kt");
             }
 
+            @TestMetadata("FloatLiteralInFirstPosition.after.kt")
+            public void testFloatLiteralInFirstPosition() throws Exception {
+                runTest("testData/editor/enterHandler/beforeDot/FloatLiteralInFirstPosition.after.kt");
+            }
+
+            @TestMetadata("FloatLiteralInFirstPosition2.after.kt")
+            public void testFloatLiteralInFirstPosition2() throws Exception {
+                runTest("testData/editor/enterHandler/beforeDot/FloatLiteralInFirstPosition2.after.kt");
+            }
+
+            @TestMetadata("FloatLiteralInFirstPositionAfterParenthesis.after.kt")
+            public void testFloatLiteralInFirstPositionAfterParenthesis() throws Exception {
+                runTest("testData/editor/enterHandler/beforeDot/FloatLiteralInFirstPositionAfterParenthesis.after.kt");
+            }
+
             @TestMetadata("InsideCall.after.kt")
             public void testInsideCall() throws Exception {
                 runTest("testData/editor/enterHandler/beforeDot/InsideCall.after.kt");
+            }
+
+            @TestMetadata("IntegerLiteralInFirstPosition.after.kt")
+            public void testIntegerLiteralInFirstPosition() throws Exception {
+                runTest("testData/editor/enterHandler/beforeDot/IntegerLiteralInFirstPosition.after.kt");
+            }
+
+            @TestMetadata("IntegerLiteralInFirstPosition2.after.kt")
+            public void testIntegerLiteralInFirstPosition2() throws Exception {
+                runTest("testData/editor/enterHandler/beforeDot/IntegerLiteralInFirstPosition2.after.kt");
             }
 
             @TestMetadata("MultilineCallWithLambdaInFirstPosition.after.kt")
@@ -287,6 +322,21 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
             @TestMetadata("ReferenceInNonFirstPositionOnNonFirstLineAfterProperty.after.kt")
             public void testReferenceInNonFirstPositionOnNonFirstLineAfterProperty() throws Exception {
                 runTest("testData/editor/enterHandler/beforeDot/ReferenceInNonFirstPositionOnNonFirstLineAfterProperty.after.kt");
+            }
+
+            @TestMetadata("StringLiteralInFirstPosition.after.kt")
+            public void testStringLiteralInFirstPosition() throws Exception {
+                runTest("testData/editor/enterHandler/beforeDot/StringLiteralInFirstPosition.after.kt");
+            }
+
+            @TestMetadata("StringLiteralInFirstPosition2.after.kt")
+            public void testStringLiteralInFirstPosition2() throws Exception {
+                runTest("testData/editor/enterHandler/beforeDot/StringLiteralInFirstPosition2.after.kt");
+            }
+
+            @TestMetadata("StringLiteralInFirstPositionAfterOpenParenthesis.after.kt")
+            public void testStringLiteralInFirstPositionAfterOpenParenthesis() throws Exception {
+                runTest("testData/editor/enterHandler/beforeDot/StringLiteralInFirstPositionAfterOpenParenthesis.after.kt");
             }
         }
 
@@ -2191,9 +2241,44 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
                 runTest("testData/editor/enterHandler/beforeDot/CallWithLambdaInNonFirstPositionOnNonFirstLine.after.inv.kt");
             }
 
+            @TestMetadata("CharLiteralInFirstPosition.after.inv.kt")
+            public void testCharLiteralInFirstPosition() throws Exception {
+                runTest("testData/editor/enterHandler/beforeDot/CharLiteralInFirstPosition.after.inv.kt");
+            }
+
+            @TestMetadata("CharLiteralInFirstPosition2.after.inv.kt")
+            public void testCharLiteralInFirstPosition2() throws Exception {
+                runTest("testData/editor/enterHandler/beforeDot/CharLiteralInFirstPosition2.after.inv.kt");
+            }
+
             @TestMetadata("FirstPositionOnNewLineInsideCall.after.inv.kt")
             public void testFirstPositionOnNewLineInsideCall() throws Exception {
                 runTest("testData/editor/enterHandler/beforeDot/FirstPositionOnNewLineInsideCall.after.inv.kt");
+            }
+
+            @TestMetadata("FloatLiteralInFirstPosition.after.inv.kt")
+            public void testFloatLiteralInFirstPosition() throws Exception {
+                runTest("testData/editor/enterHandler/beforeDot/FloatLiteralInFirstPosition.after.inv.kt");
+            }
+
+            @TestMetadata("FloatLiteralInFirstPosition2.after.inv.kt")
+            public void testFloatLiteralInFirstPosition2() throws Exception {
+                runTest("testData/editor/enterHandler/beforeDot/FloatLiteralInFirstPosition2.after.inv.kt");
+            }
+
+            @TestMetadata("FloatLiteralInFirstPositionAfterParenthesis.after.inv.kt")
+            public void testFloatLiteralInFirstPositionAfterParenthesis() throws Exception {
+                runTest("testData/editor/enterHandler/beforeDot/FloatLiteralInFirstPositionAfterParenthesis.after.inv.kt");
+            }
+
+            @TestMetadata("IntegerLiteralInFirstPosition.after.inv.kt")
+            public void testIntegerLiteralInFirstPosition() throws Exception {
+                runTest("testData/editor/enterHandler/beforeDot/IntegerLiteralInFirstPosition.after.inv.kt");
+            }
+
+            @TestMetadata("IntegerLiteralInFirstPosition2.after.inv.kt")
+            public void testIntegerLiteralInFirstPosition2() throws Exception {
+                runTest("testData/editor/enterHandler/beforeDot/IntegerLiteralInFirstPosition2.after.inv.kt");
             }
 
             @TestMetadata("MultilineCallWithLambdaInFirstPosition.after.inv.kt")
@@ -2254,6 +2339,21 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
             @TestMetadata("ReferenceInNonFirstPositionOnNonFirstLineAfterProperty.after.inv.kt")
             public void testReferenceInNonFirstPositionOnNonFirstLineAfterProperty() throws Exception {
                 runTest("testData/editor/enterHandler/beforeDot/ReferenceInNonFirstPositionOnNonFirstLineAfterProperty.after.inv.kt");
+            }
+
+            @TestMetadata("StringLiteralInFirstPosition.after.inv.kt")
+            public void testStringLiteralInFirstPosition() throws Exception {
+                runTest("testData/editor/enterHandler/beforeDot/StringLiteralInFirstPosition.after.inv.kt");
+            }
+
+            @TestMetadata("StringLiteralInFirstPosition2.after.inv.kt")
+            public void testStringLiteralInFirstPosition2() throws Exception {
+                runTest("testData/editor/enterHandler/beforeDot/StringLiteralInFirstPosition2.after.inv.kt");
+            }
+
+            @TestMetadata("StringLiteralInFirstPositionAfterOpenParenthesis.after.inv.kt")
+            public void testStringLiteralInFirstPositionAfterOpenParenthesis() throws Exception {
+                runTest("testData/editor/enterHandler/beforeDot/StringLiteralInFirstPositionAfterOpenParenthesis.after.inv.kt");
             }
         }
 

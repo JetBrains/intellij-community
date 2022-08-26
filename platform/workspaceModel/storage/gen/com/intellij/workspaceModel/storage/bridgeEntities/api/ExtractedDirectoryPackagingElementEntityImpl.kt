@@ -13,6 +13,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToAbstractManyParent
@@ -81,14 +82,14 @@ open class ExtractedDirectoryPackagingElementEntityImpl : ExtractedDirectoryPack
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isFilePathInitialized()) {
         error("Field FileOrDirectoryPackagingElementEntity#filePath should be initialized")
       }
       if (!getEntityData().isPathInArchiveInitialized()) {
         error("Field ExtractedDirectoryPackagingElementEntity#pathInArchive should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ExtractedDirectoryPackagingElementEntity#entitySource should be initialized")
       }
     }
 
@@ -96,6 +97,26 @@ open class ExtractedDirectoryPackagingElementEntityImpl : ExtractedDirectoryPack
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as ExtractedDirectoryPackagingElementEntity
+      this.entitySource = dataSource.entitySource
+      this.filePath = dataSource.filePath
+      this.pathInArchive = dataSource.pathInArchive
+      if (parents != null) {
+        this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
+      }
+    }
+
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var parentEntity: CompositePackagingElementEntity?
       get() {
@@ -154,15 +175,6 @@ open class ExtractedDirectoryPackagingElementEntityImpl : ExtractedDirectoryPack
         changedProperty.add("pathInArchive")
       }
 
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
-      }
-
     override fun getEntityData(): ExtractedDirectoryPackagingElementEntityData = result
                                                                                  ?: super.getEntityData() as ExtractedDirectoryPackagingElementEntityData
 
@@ -209,15 +221,26 @@ class ExtractedDirectoryPackagingElementEntityData : WorkspaceEntityData<Extract
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ExtractedDirectoryPackagingElementEntity(filePath, pathInArchive, entitySource) {
+      this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
 
     other as ExtractedDirectoryPackagingElementEntityData
 
+    if (this.entitySource != other.entitySource) return false
     if (this.filePath != other.filePath) return false
     if (this.pathInArchive != other.pathInArchive) return false
-    if (this.entitySource != other.entitySource) return false
     return true
   }
 
@@ -237,5 +260,17 @@ class ExtractedDirectoryPackagingElementEntityData : WorkspaceEntityData<Extract
     result = 31 * result + filePath.hashCode()
     result = 31 * result + pathInArchive.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + filePath.hashCode()
+    result = 31 * result + pathInArchive.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    this.filePath?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = false
   }
 }

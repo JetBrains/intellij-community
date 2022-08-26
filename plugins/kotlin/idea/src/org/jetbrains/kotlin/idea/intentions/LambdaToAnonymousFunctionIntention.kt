@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
+import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunctionDescriptor
 import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
@@ -79,6 +80,7 @@ class LambdaToAnonymousFunctionIntention : SelfTargetingIntention<KtLambdaExpres
         fun convertLambdaToFunction(
             lambda: KtLambdaExpression,
             functionDescriptor: FunctionDescriptor,
+            typeSourceCode: DescriptorRenderer = IdeDescriptorRenderers.SOURCE_CODE_TYPES,
             functionName: String = "",
             functionParameterName: (ValueParameterDescriptor, Int) -> String = { parameter, _ ->
                 val parameterName = parameter.name
@@ -87,7 +89,6 @@ class LambdaToAnonymousFunctionIntention : SelfTargetingIntention<KtLambdaExpres
             typeParameters: Map<TypeConstructor, KotlinType> = emptyMap(),
             replaceElement: (KtNamedFunction) -> KtExpression = { lambda.replaced(it) }
         ): KtExpression? {
-            val typeSourceCode = IdeDescriptorRenderers.SOURCE_CODE_TYPES
             val functionLiteral = lambda.functionLiteral
             val bodyExpression = functionLiteral.bodyExpression ?: return null
 

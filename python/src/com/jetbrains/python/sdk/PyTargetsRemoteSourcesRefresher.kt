@@ -29,6 +29,8 @@ import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.*
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
+import com.jetbrains.python.target.PyTargetAwareAdditionalData.Companion.pathsAddedByUser
+import com.jetbrains.python.target.PyTargetAwareAdditionalData.Companion.pathsRemovedByUser
 import java.nio.file.Files
 import java.nio.file.attribute.FileTime
 import java.time.Instant
@@ -59,7 +61,7 @@ class PyTargetsRemoteSourcesRefresher(val sdk: Sdk, private val project: Project
     val downloadVolume = TargetEnvironment.DownloadRoot(localRootPath = localRemoteSourcesRoot, targetRootPath = TargetPath.Temporary())
     targetEnvRequest.downloadVolumes += downloadVolume
 
-    pyRequest.targetEnvironmentRequest.ensureProjectSdkAndModuleDirsAreOnTarget(project, sdk)
+    pyRequest.targetEnvironmentRequest.ensureProjectSdkAndModuleDirsAreOnTarget(project)
     val execution = prepareHelperScriptExecution(helperPackage = PythonHelper.REMOTE_SYNC, helpersAwareTargetRequest = pyRequest)
 
     val stateFilePath = localRemoteSourcesRoot / STATE_FILE

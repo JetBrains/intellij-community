@@ -17,6 +17,7 @@ fun fqn3(function: KFunction4<EntityStorage, ConnectionId, WorkspaceEntity, Work
 fun fqn4(function: KFunction4<EntityStorage, ConnectionId, WorkspaceEntity, List<WorkspaceEntity>, Unit>): QualifiedName = function.fqn
 fun fqn5(function: KFunction4<EntityStorage, ConnectionId, WorkspaceEntity, Sequence<WorkspaceEntity>, Unit>): QualifiedName = function.fqn
 fun fqn6(function: KFunction2<ModifiableWorkspaceEntityBase<*>, MutableEntityStorage, Unit>): QualifiedName = function.fqn
+fun fqn7(function: KFunction1<Collection<*>, Collection<*>>): QualifiedName = function.fqn
 
 private val KProperty<*>.fqn: QualifiedName
   get() {
@@ -29,16 +30,6 @@ private val KFunction<*>.fqn: QualifiedName
     val declaringClass = this.javaMethod?.declaringClass ?: return "".toQualifiedName()
     return fqn(declaringClass.packageName, this.name)
   }
-
-fun wsFqn(name: QualifiedName): QualifiedName {
-  val packageName = when (name.decoded) {
-    "VirtualFileUrl" -> "com.intellij.workspaceModel.storage.url"
-    "EntitySource", "referrersx", "referrersy"-> "com.intellij.workspaceModel.storage"
-    else -> return name
-  }
-
-  return fqn(packageName, name.decoded)
-}
 
 @JvmInline
 value class QualifiedName(val encodedString: String) {
@@ -58,10 +49,14 @@ value class QualifiedName(val encodedString: String) {
 fun fqn(packageName: String?, name: String): QualifiedName {
   if (packageName.isNullOrEmpty()) return QualifiedName(name)
 
-  return QualifiedName("$fqnEscape$packageName@@$name#$name")
+  val outerClassName = name.substringBefore(".")
+  return QualifiedName("$fqnEscape$packageName@@$outerClassName#$name")
 }
 
-fun String.toQualifiedName(): QualifiedName = fqn(substringBeforeLast('.', ""), substringAfterLast('.'))
+fun String.toQualifiedName(): QualifiedName {
+  val classNameMatch = Regex("\\.[A-Z]").find(this) ?: return QualifiedName(this)
+  return fqn(substring(0, classNameMatch.range.first), substring(classNameMatch.range.last))
+}
 
 val KClass<*>.fqn: QualifiedName
   get() = java.fqn

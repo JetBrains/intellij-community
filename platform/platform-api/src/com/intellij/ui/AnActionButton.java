@@ -218,6 +218,11 @@ public abstract class AnActionButton extends AnAction implements ShortcutProvide
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return myAction.getActionUpdateThread();
+    }
+
+    @Override
     public boolean isDumbAware() {
       return myAction.isDumbAware();
     }

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.bridgeEntities.api
 
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntityInformation
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -12,8 +13,11 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -75,6 +79,9 @@ open class SourceRootOrderEntityImpl : SourceRootOrderEntity, WorkspaceEntityBas
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToOneParent<WorkspaceEntityBase>(CONTENTROOTENTITY_CONNECTION_ID, this) == null) {
           error("Field SourceRootOrderEntity#contentRootEntity should be initialized")
@@ -85,9 +92,6 @@ open class SourceRootOrderEntityImpl : SourceRootOrderEntity, WorkspaceEntityBas
           error("Field SourceRootOrderEntity#contentRootEntity should be initialized")
         }
       }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field SourceRootOrderEntity#entitySource should be initialized")
-      }
       if (!getEntityData().isOrderOfSourceRootsInitialized()) {
         error("Field SourceRootOrderEntity#orderOfSourceRoots should be initialized")
       }
@@ -97,6 +101,25 @@ open class SourceRootOrderEntityImpl : SourceRootOrderEntity, WorkspaceEntityBas
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as SourceRootOrderEntity
+      this.entitySource = dataSource.entitySource
+      this.orderOfSourceRoots = dataSource.orderOfSourceRoots.toMutableList()
+      if (parents != null) {
+        this.contentRootEntity = parents.filterIsInstance<ContentRootEntity>().single()
+      }
+    }
+
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var contentRootEntity: ContentRootEntity
       get() {
@@ -133,23 +156,22 @@ open class SourceRootOrderEntityImpl : SourceRootOrderEntity, WorkspaceEntityBas
         changedProperty.add("contentRootEntity")
       }
 
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
+    private val orderOfSourceRootsUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
+      val _diff = diff
+      if (_diff != null) index(this, "orderOfSourceRoots", value.toHashSet())
+      changedProperty.add("orderOfSourceRoots")
+    }
+    override var orderOfSourceRoots: MutableList<VirtualFileUrl>
+      get() {
+        val collection_orderOfSourceRoots = getEntityData().orderOfSourceRoots
+        if (collection_orderOfSourceRoots !is MutableWorkspaceList) return collection_orderOfSourceRoots
+        collection_orderOfSourceRoots.setModificationUpdateAction(orderOfSourceRootsUpdater)
+        return collection_orderOfSourceRoots
       }
-
-    override var orderOfSourceRoots: List<VirtualFileUrl>
-      get() = getEntityData().orderOfSourceRoots
       set(value) {
         checkModificationAllowed()
         getEntityData().orderOfSourceRoots = value
-        val _diff = diff
-        if (_diff != null) index(this, "orderOfSourceRoots", value.toHashSet())
-        changedProperty.add("orderOfSourceRoots")
+        orderOfSourceRootsUpdater.invoke(value)
       }
 
     override fun getEntityData(): SourceRootOrderEntityData = result ?: super.getEntityData() as SourceRootOrderEntityData
@@ -158,7 +180,7 @@ open class SourceRootOrderEntityImpl : SourceRootOrderEntity, WorkspaceEntityBas
 }
 
 class SourceRootOrderEntityData : WorkspaceEntityData<SourceRootOrderEntity>() {
-  lateinit var orderOfSourceRoots: List<VirtualFileUrl>
+  lateinit var orderOfSourceRoots: MutableList<VirtualFileUrl>
 
   fun isOrderOfSourceRootsInitialized(): Boolean = ::orderOfSourceRoots.isInitialized
 
@@ -176,11 +198,18 @@ class SourceRootOrderEntityData : WorkspaceEntityData<SourceRootOrderEntity>() {
 
   override fun createEntity(snapshot: EntityStorage): SourceRootOrderEntity {
     val entity = SourceRootOrderEntityImpl()
-    entity._orderOfSourceRoots = orderOfSourceRoots
+    entity._orderOfSourceRoots = orderOfSourceRoots.toList()
     entity.entitySource = entitySource
     entity.snapshot = snapshot
     entity.id = createEntityId()
     return entity
+  }
+
+  override fun clone(): SourceRootOrderEntityData {
+    val clonedEntity = super.clone()
+    clonedEntity as SourceRootOrderEntityData
+    clonedEntity.orderOfSourceRoots = clonedEntity.orderOfSourceRoots.toMutableWorkspaceList()
+    return clonedEntity
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -191,6 +220,18 @@ class SourceRootOrderEntityData : WorkspaceEntityData<SourceRootOrderEntity>() {
   }
 
   override fun deserialize(de: EntityInformation.Deserializer) {
+  }
+
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return SourceRootOrderEntity(orderOfSourceRoots, entitySource) {
+      this.contentRootEntity = parents.filterIsInstance<ContentRootEntity>().single()
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(ContentRootEntity::class.java)
+    return res
   }
 
   override fun equals(other: Any?): Boolean {
@@ -218,5 +259,16 @@ class SourceRootOrderEntityData : WorkspaceEntityData<SourceRootOrderEntity>() {
     var result = entitySource.hashCode()
     result = 31 * result + orderOfSourceRoots.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + orderOfSourceRoots.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    this.orderOfSourceRoots?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = false
   }
 }

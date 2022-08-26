@@ -18,15 +18,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 internal suspend fun restoreOpenedFiles(fileEditorManager: FileEditorManagerImpl, editorSplitters: EditorsSplitters, project: Project) {
-  val panel = editorSplitters.restoreEditors()
-  val hasOpenFiles = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-    if (panel != null) {
-      editorSplitters.doOpenFiles(panel)
-    }
-    fileEditorManager.initDockableContentFactory()
+  val hasOpenFiles = withContext(ModalityState.any().asContextElement()) {
+    editorSplitters.restoreEditors()
 
+    withContext(Dispatchers.EDT) {
+      fileEditorManager.initDockableContentFactory()
+      fileEditorManager.hasOpenFiles()
+    }
+  }
+
+  if (!hasOpenFiles) {
     EditorsSplitters.stopOpenFilesActivity(project)
-    fileEditorManager.hasOpenFiles()
   }
 
   if (!hasOpenFiles && !isNotificationSilentMode(project)) {

@@ -84,7 +84,6 @@ public interface LanguageCompilerRefAdapter {
   /**
    * @param element PSI element written in corresponding language
    * @param names enumerator to encode string names
-   * @return
    */
   @Nullable
   CompilerRef asCompilerRef(@NotNull PsiElement element, @NotNull NameEnumerator names) throws IOException;
@@ -92,7 +91,6 @@ public interface LanguageCompilerRefAdapter {
   /**
    * @param element PSI element written in corresponding language
    * @param names enumerator to encode string names
-   * @return
    */
   default @Nullable List<@NotNull CompilerRef> asCompilerRefs(@NotNull PsiElement element, @NotNull NameEnumerator names)
     throws IOException {

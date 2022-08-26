@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.tools.projectWizard.cli
 
@@ -64,14 +64,14 @@ enum class BuildSystem(
 ) {
     GRADLE_KOTLIN_DSL(
         buildFileName = "build.gradle.kts",
-        additionalFileNames = listOf("settings.gradle.kts", "gradle-wrapper.properties"),
+        additionalFileNames = listOf("settings.gradle.kts", "gradle-wrapper.properties", "gradle.properties"),
         yaml = """buildSystem:
                             type: GradleKotlinDsl
                             """.trimIndent()
     ),
     GRADLE_GROOVY_DSL(
         buildFileName = "build.gradle",
-        additionalFileNames = listOf("settings.gradle", "gradle-wrapper.properties"),
+        additionalFileNames = listOf("settings.gradle", "gradle-wrapper.properties", "gradle.properties"),
         yaml = """buildSystem:
                             type: GradleGroovyDsl
                             """.trimIndent()

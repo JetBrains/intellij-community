@@ -26,14 +26,14 @@ fun textFieldWithBrowseTargetButton(row: Row,
                                     project: Project,
                                     @NlsContexts.DialogTitle title: String,
                                     property: PropertyBinding<String>,
-                                    noLocalFs: Boolean = false): CellBuilder<TextFieldWithBrowseButton> {
+                                    targetBrowserHints: TargetBrowserHints): CellBuilder<TextFieldWithBrowseButton> {
   val textFieldWithBrowseButton = TextFieldWithBrowseButton()
   val browser = targetType.createBrowser(project,
                                          title,
                                          TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
                                          textFieldWithBrowseButton.textField,
                                          targetSupplier,
-                                         noLocalFs)
+                                         targetBrowserHints)
   textFieldWithBrowseButton.addActionListener(browser)
   textFieldWithBrowseButton.text = property.get()
   return row.component(textFieldWithBrowseButton).withBinding(TextFieldWithBrowseButton::getText,
@@ -55,7 +55,7 @@ fun com.intellij.ui.dsl.builder.Row.textFieldWithBrowseTargetButton(targetType: 
                                          TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
                                          textFieldWithBrowseButton.textField,
                                          targetSupplier,
-                                         false)
+                                         TargetBrowserHints(true))
   textFieldWithBrowseButton.addActionListener(browser)
   return cell(textFieldWithBrowseButton)
     .bind(TextFieldWithBrowseButton::getText, TextFieldWithBrowseButton::setText, property)

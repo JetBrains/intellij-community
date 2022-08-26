@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -23,6 +23,8 @@ import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryTableId
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class ProjectLibraryTableBridgeImpl(
   private val parentProject: Project
@@ -118,7 +120,7 @@ class ProjectLibraryTableBridgeImpl(
     })
   }
 
-  fun loadLibraries() {
+  suspend fun loadLibraries() {
     val storage = entityStorage.current
     val libraries = storage
       .entities(LibraryEntity::class.java)
@@ -135,17 +137,19 @@ class ProjectLibraryTableBridgeImpl(
       }
       .toList()
     LOG.debug("Initial load of project-level libraries")
-    if (libraries.isNotEmpty()) {
-      WorkspaceModel.getInstance(project).updateProjectModelSilent {
-        libraries.forEach { (entity, library) ->
-          it.mutableLibraryMap.addIfAbsent(entity, library)
-        }
+    if (libraries.isEmpty()) {
+      return
+    }
+
+    WorkspaceModel.getInstance(project).updateProjectModelSilent {
+      for ((entity, library) in libraries) {
+        it.mutableLibraryMap.addIfAbsent(entity, library)
       }
-      runInEdt {
-        runWriteAction {
-          libraries.forEach { (_, library) ->
-            dispatcher.multicaster.afterLibraryAdded(library)
-          }
+    }
+    withContext(Dispatchers.EDT) {
+      ApplicationManager.getApplication().runWriteAction {
+        for ((_, library) in libraries) {
+          dispatcher.multicaster.afterLibraryAdded(library)
         }
       }
     }

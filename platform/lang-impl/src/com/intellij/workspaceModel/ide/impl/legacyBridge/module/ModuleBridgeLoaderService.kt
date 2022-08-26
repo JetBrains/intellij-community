@@ -2,15 +2,16 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.diagnostic.Activity
-import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.runActivity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectServiceContainerInitializedListener
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES
@@ -32,29 +33,30 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
 
   private suspend fun loadModules(project: Project, activity: Activity?) {
     val childActivity = activity?.startChild("modules instantiation")
-    val moduleManager = ModuleManager.getInstance(project) as ModuleManagerComponentBridge
+    val componentManagerEx = project as ComponentManagerEx
+    val moduleManager = componentManagerEx.getServiceAsync(ModuleManager::class.java).await() as ModuleManagerComponentBridge
     val entities = moduleManager.entityStore.current.entities(ModuleEntity::class.java)
     moduleManager.loadModules(entities)
     childActivity?.setDescription("modules count: ${moduleManager.modules.size}")
     childActivity?.end()
-    val librariesActivity = StartUpMeasurer.startActivity("libraries instantiation", ActivityCategory.DEFAULT)
+    val librariesActivity = StartUpMeasurer.startActivity("libraries instantiation")
     (LibraryTablesRegistrar.getInstance().getLibraryTable(project) as ProjectLibraryTableBridgeImpl).loadLibraries()
     librariesActivity.end()
     activity?.end()
   }
 
-  override suspend fun serviceCreated(project: Project) {
+  override suspend fun containerConfigured(project: Project) {
     val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project)
-    val workspaceModel = WorkspaceModel.getInstance(project) as WorkspaceModelImpl
+    val componentManagerEx = project as ComponentManagerEx
+    val workspaceModel = componentManagerEx.getServiceAsync(WorkspaceModel::class.java).await() as WorkspaceModelImpl
     if (workspaceModel.loadedFromCache) {
-      if (JpsProjectModelSynchronizer.getInstance(project).hasNoSerializedJpsModules()) {
+      val activity = StartUpMeasurer.startActivity("modules loading with cache")
+      if (projectModelSynchronizer.hasNoSerializedJpsModules()) {
         LOG.warn("Loaded from cache, but no serialized modules found. " +
                  "Workspace model cache will be ignored, project structure will be recreated.")
         workspaceModel.ignoreCache() // sets `WorkspaceModelImpl#loadedFromCache` to `false`
         project.putUserData(PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES, true)
       }
-
-      val activity = StartUpMeasurer.startActivity("modules loading with cache")
       loadModules(project, activity)
     }
     else {
@@ -68,7 +70,10 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
     }
 
     runActivity("tracked libraries setup") {
-      val projectRootManager = ProjectRootManager.getInstance(project) as ProjectRootManagerBridge
+      // required for setupTrackedLibrariesAndJdks - make sure that it is created to avoid blocking of EDT
+      val jdkTableDeferred = (ApplicationManager.getApplication() as ComponentManagerEx).getServiceAsync(ProjectJdkTable::class.java)
+      val projectRootManager = componentManagerEx.getServiceAsync(ProjectRootManager::class.java).await() as ProjectRootManagerBridge
+      jdkTableDeferred.join()
       withContext(Dispatchers.EDT) {
         ApplicationManager.getApplication().runWriteAction {
           projectRootManager.setupTrackedLibrariesAndJdks()

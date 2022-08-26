@@ -47,7 +47,7 @@ public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInsp
 
     return new XmlElementVisitor() {
       @Override
-      public void visitXmlAttribute(XmlAttribute attribute) {
+      public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
         super.visitXmlAttribute(attribute);
         if (FxmlConstants.FX_ID.equals(attribute.getName())) {
           final XmlAttributeValue valueElement = attribute.getValueElement();

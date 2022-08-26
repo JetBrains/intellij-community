@@ -108,6 +108,12 @@ class OverrideFileTypeAction extends DumbAwareAction {
       boolean enabled = ContainerUtil.exists(myFiles, file -> isOverridableFile(file));
       e.getPresentation().setEnabled(enabled);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+
     private static boolean isOverridableFile(@NotNull VirtualFile file) {
       return file.isValid()
              && !file.isDirectory()

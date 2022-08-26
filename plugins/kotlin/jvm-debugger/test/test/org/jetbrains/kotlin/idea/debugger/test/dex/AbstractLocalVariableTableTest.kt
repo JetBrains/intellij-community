@@ -7,8 +7,8 @@ import com.sun.jdi.Location
 import com.sun.jdi.Method
 import com.sun.jdi.StackFrame
 import junit.framework.TestCase
-import org.jetbrains.kotlin.idea.debugger.sortedVariablesWithLocation
-import org.jetbrains.kotlin.idea.debugger.stackFrame.computeKotlinStackFrameInfos
+import org.jetbrains.kotlin.idea.debugger.core.sortedVariablesWithLocation
+import org.jetbrains.kotlin.idea.debugger.core.stackFrame.computeKotlinStackFrameInfos
 import org.jetbrains.kotlin.idea.debugger.test.mock.MockMethodInfo
 import org.jetbrains.kotlin.idea.debugger.test.mock.MockStackFrame
 import org.jetbrains.kotlin.idea.debugger.test.mock.MockVirtualMachine

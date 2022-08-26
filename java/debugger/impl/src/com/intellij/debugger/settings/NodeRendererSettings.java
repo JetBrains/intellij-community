@@ -125,7 +125,6 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   }
 
   @Override
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public Element getState()  {
     final Element element = new Element("state");
     if (myHexRenderer.isEnabled()) {

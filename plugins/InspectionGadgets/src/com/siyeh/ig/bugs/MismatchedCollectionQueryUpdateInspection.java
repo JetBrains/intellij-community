@@ -39,6 +39,7 @@ import com.siyeh.ig.ui.ExternalizableStringSet;
 import com.siyeh.ig.ui.UiUtils;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.Pattern;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +49,6 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static com.siyeh.ig.psiutils.ClassUtils.isImmutable;
 
@@ -501,7 +501,7 @@ public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
       if (written) {
         PsiExpression initializer = variable.getInitializer();
         if (initializer != null) {
-          List<PsiExpression> expressions = ExpressionUtils.nonStructuralChildren(initializer).collect(Collectors.toList());
+          List<PsiExpression> expressions = ExpressionUtils.nonStructuralChildren(initializer).toList();
           if (!ContainerUtil.and(expressions, MismatchedCollectionQueryUpdateInspection::isCollectionInitializer)) {
             expressions.stream().filter(MismatchedCollectionQueryUpdateInspection::isCollectionInitializer)
               .forEach(emptyCollection -> registerError(emptyCollection, Boolean.TRUE));
@@ -616,7 +616,9 @@ public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
    * @return {@code true} if it's known that the result of {@code collectCall} is never updated;
    * {@code false} if updated or not known
    */
-  public static boolean isUnmodified(PsiMethodCallExpression collectCall) {
+  @Contract("null -> false")
+  public static boolean isUnmodified(@Nullable PsiMethodCallExpression collectCall) {
+    if (collectCall == null) return false;
     final PsiExpression effectiveReference =  findEffectiveReference(collectCall);
     QueryUpdateInfo info = new QueryUpdateInfo();
     new Visitor(null, defaultQueryNames, defaultUpdateNames, info).process(effectiveReference);

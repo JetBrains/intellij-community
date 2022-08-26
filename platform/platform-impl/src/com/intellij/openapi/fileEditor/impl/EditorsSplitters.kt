@@ -117,6 +117,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
       return getSplittersToFocus(project)?.currentWindow?.selectedComposite?.preferredFocusedComponent
     }
 
+    @JvmStatic
     fun focusDefaultComponentInSplittersIfPresent(project: Project): Boolean {
       findDefaultComponentInSplitters(project)?.let {
         // not requestFocusInWindow because if floating or windowed tool window is deactivated (or, ESC pressed to focus editor),
@@ -249,15 +250,24 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
     return fileElement
   }
 
-  suspend fun restoreEditors(): JPanel? {
-    val element = splittersElement ?: return null
+  suspend fun restoreEditors() {
+    val element = splittersElement ?: return
+    splittersElement = null
     manager.project.putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_PAINT))
     runActivity(StartUpMeasurer.Activities.EDITOR_RESTORING) {
-      val component = UIBuilder(this).process(element, topPanel)
-      if (component != null) {
+      val component = UIBuilder(this).process(element, topPanel) ?: return
+      withContext(Dispatchers.EDT) {
         component.isFocusable = false
+
+        removeAll()
+        add(component, BorderLayout.CENTER)
+        // clear empty splitters
+        for (window in getWindows()) {
+          if (window.tabCount == 0) {
+            window.removeFromSplitter()
+          }
+        }
       }
-      return component
     }
   }
 
@@ -288,23 +298,7 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
   }
 
   fun openFiles() {
-    val componentRef = runUnderModalProgressIfIsEdt { restoreEditors() } ?: return
-    ApplicationManager.getApplication().invokeAndWait({ doOpenFiles(componentRef) }, ModalityState.any())
-  }
-
-  fun doOpenFiles(component: JPanel?) {
-    if (component != null) {
-      removeAll()
-      add(component, BorderLayout.CENTER)
-      splittersElement = null
-    }
-
-    // clear empty splitters
-    for (window in getWindows()) {
-      if (window.tabCount == 0) {
-        window.removeFromSplitter()
-      }
-    }
+    runUnderModalProgressIfIsEdt { restoreEditors() }
   }
 
   fun readExternal(element: Element) {
@@ -686,8 +680,8 @@ open class EditorsSplitters internal constructor(val manager: FileEditorManagerI
   private fun findWindows(file: VirtualFile): List<EditorWindow> = windows.filter { it.getComposite(file) != null }
 
   fun getWindows(): Array<EditorWindow> = windows.toTypedArray()
-  // Collector for windows in tree ordering:
 
+  // Collector for windows in tree ordering:
   // get root component and traverse splitters tree:
   fun getOrderedWindows(): List<EditorWindow> {
     val result = ArrayList<EditorWindow>()
@@ -800,9 +794,40 @@ private class MyTransferHandler(private val splitters: EditorsSplitters) : Trans
   override fun canImport(comp: JComponent, transferFlavors: Array<DataFlavor>) = fileDropHandler.canHandleDrop(transferFlavors)
 }
 
-private class UIBuilder(private val splitters: EditorsSplitters) : ConfigTreeReader<JPanel> {
-  override suspend fun processFiles(fileElements: List<Element>, tabSizeLimit: Int, context: JPanel?): JPanel {
-    val window = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+private class UIBuilder(private val splitters: EditorsSplitters) {
+  suspend fun process(element: Element, context: JPanel?): JPanel? {
+    element.getChild("splitter")?.let { splitterElement ->
+      val first = splitterElement.getChild("split-first")
+      val second = splitterElement.getChild("split-second")
+      return processSplitter(splitterElement, first, second, context)
+    }
+
+    val leaf = element.getChild("leaf") ?: return null
+    val fileElements = leaf.getChildren("file")
+    val children: List<Element>
+    if (fileElements.isEmpty()) {
+      children = emptyList()
+    }
+    else {
+      children = ArrayList(fileElements.size)
+      // trim to EDITOR_TAB_LIMIT, ignoring CLOSE_NON_MODIFIED_FILES_FIRST policy
+      var toRemove = fileElements.size - EditorWindow.getTabLimit()
+      for (fileElement in fileElements) {
+        if (toRemove <= 0 || fileElement.getAttributeValue(PINNED).toBoolean()) {
+          children.add(fileElement)
+        }
+        else {
+          toRemove--
+        }
+      }
+    }
+    return processFiles(fileElements = children,
+                        tabSizeLimit = leaf.getAttributeValue(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString())?.toIntOrNull() ?: -1,
+                        context = context)
+  }
+
+  suspend fun processFiles(fileElements: List<Element>, tabSizeLimit: Int, context: JPanel?): JPanel {
+    val window = withContext(Dispatchers.EDT) {
       val editorWindow = context?.let { splitters.findWindowWith(it) } ?: splitters.createEditorWindow()
       splitters.setCurrentWindow(window = editorWindow, requestFocus = false)
       if (tabSizeLimit != 1) {
@@ -872,7 +897,7 @@ private class UIBuilder(private val splitters: EditorsSplitters) : ConfigTreeRea
     }
     else {
       fileEditorManager.addSelectionRecord(focusedFile, window)
-      fileEditorManager.project.coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      fileEditorManager.project.coroutineScope.launch(Dispatchers.EDT) {
         window.getComposite(focusedFile)?.let {
           window.setComposite(it, true)
         }
@@ -881,13 +906,13 @@ private class UIBuilder(private val splitters: EditorsSplitters) : ConfigTreeRea
     return window.panel
   }
 
-  override suspend fun processSplitter(element: Element, firstChild: Element?, secondChild: Element?, context: JPanel?): JPanel {
+  suspend fun processSplitter(element: Element, firstChild: Element?, secondChild: Element?, context: JPanel?): JPanel {
     if (context == null) {
       val orientation = "vertical" == element.getAttributeValue("split-orientation")
       val proportion = element.getAttributeValue("split-proportion").toFloat()
       val firstComponent = process(firstChild!!, null)!!
       val secondComponent = process(secondChild!!, null)!!
-      return withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      return withContext(Dispatchers.EDT) {
         val panel = JPanel(BorderLayout())
         panel.isOpaque = false
         val splitter = EditorsSplitters.createSplitter(orientation = orientation, proportion = proportion, minProp = 0.1f, maxProp = 0.9f)
@@ -901,7 +926,7 @@ private class UIBuilder(private val splitters: EditorsSplitters) : ConfigTreeRea
 
     var firstComponent: JPanel
     var secondComponent: JPanel
-    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+    withContext(Dispatchers.EDT) {
       val component = context.getComponent(0)
       if (component is Splitter) {
         firstComponent = component.firstComponent as JPanel
@@ -916,43 +941,6 @@ private class UIBuilder(private val splitters: EditorsSplitters) : ConfigTreeRea
     process(element = secondChild!!, context = secondComponent)
     return context
   }
-}
-
-private interface ConfigTreeReader<T> {
-  suspend fun process(element: Element, context: T?): T? {
-    element.getChild("splitter")?.let { splitterElement ->
-      val first = splitterElement.getChild("split-first")
-      val second = splitterElement.getChild("split-second")
-      return processSplitter(splitterElement, first, second, context)
-    }
-
-    val leaf = element.getChild("leaf") ?: return null
-    val fileElements = leaf.getChildren("file")
-    val children: List<Element>
-    if (fileElements.isEmpty()) {
-      children = emptyList()
-    }
-    else {
-      children = ArrayList(fileElements.size)
-      // trim to EDITOR_TAB_LIMIT, ignoring CLOSE_NON_MODIFIED_FILES_FIRST policy
-      var toRemove = fileElements.size - EditorWindow.getTabLimit()
-      for (fileElement in fileElements) {
-        if (toRemove <= 0 || fileElement.getAttributeValue(PINNED).toBoolean()) {
-          children.add(fileElement)
-        }
-        else {
-          toRemove--
-        }
-      }
-    }
-    return processFiles(fileElements = children,
-                        tabSizeLimit = leaf.getAttributeValue(JBTabsImpl.SIDE_TABS_SIZE_LIMIT_KEY.toString())?.toIntOrNull() ?: -1,
-                        context = context)
-  }
-
-  suspend fun processFiles(fileElements: List<Element>, tabSizeLimit: Int, context: T?): T
-
-  suspend fun processSplitter(element: Element, firstChild: Element?, secondChild: Element?, context: T?): T
 }
 
 private fun getSplitCount(component: JComponent): Int {

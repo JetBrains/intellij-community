@@ -4,7 +4,7 @@
       <option name="executionName" />
       <option name="externalProjectPath" value="$PROJECT_DIR$/.." />
       <option name="externalSystemIdString" value="GRADLE" />
-      <option name="scriptParameters" value="publishIdeArtifacts :prepare:ide-plugin-dependencies:kotlin-dist-for-ide:publish -Ppublish.ide.plugin.dependencies=true -PdeployVersion=1.7.255 -Pbuild.number=1.7.255" />
+      <option name="scriptParameters" value="publishIdeArtifacts :prepare:ide-plugin-dependencies:kotlin-dist-for-ide:publish -Ppublish.ide.plugin.dependencies=true -PdeployVersion=1.8.255 -Pbuild.number=1.8.255" />
       <option name="taskDescriptions">
         <list />
       </option>

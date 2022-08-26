@@ -17,6 +17,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiEditorUtil;
@@ -114,7 +115,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
                                                    long range,
                                                    @Nullable List<? extends HighlightInfo> infos,
                                                    @NotNull HighlightingSession highlightingSession) {
-    DaemonCodeAnalyzerEx.processHighlights(document, project, null, TextRange.startOffset(range), TextRange.endOffset(range), existing -> {
+    DaemonCodeAnalyzerEx.processHighlights(document, project, null, TextRangeScalarUtil.startOffset(range), TextRangeScalarUtil.endOffset(range), existing -> {
       if (existing.getGroup() == Pass.UPDATE_ALL && range == existing.getVisitingTextRange()) {
         if (infos != null) {
           for (HighlightInfo created : infos) {

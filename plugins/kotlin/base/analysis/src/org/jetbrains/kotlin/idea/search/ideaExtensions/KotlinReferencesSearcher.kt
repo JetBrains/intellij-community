@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.search.ideaExtensions
 
@@ -136,8 +136,7 @@ class KotlinAliasedImportedElementSearcher : QueryExecutorBase<PsiReference, Ref
                 )
             }
             function
-        }).inSmartMode(parameters.project)
-            .executeSynchronously()
+        }).executeSynchronously()
         queryFunction?.invoke()
     }
 
@@ -207,8 +206,7 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
                 classNameForCompanionObject = elementToSearch.getClassNameForCompanionObject()
 
                 SmartPointerManager.createPointer(elementToSearch) to effectiveSearchScope
-            }).inSmartMode(queryParameters.project)
-                .executeSynchronously() ?: return
+            }).executeSynchronously() ?: return
 
             runReadAction { element?.element } ?: return
 

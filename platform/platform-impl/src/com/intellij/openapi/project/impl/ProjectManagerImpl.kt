@@ -18,6 +18,7 @@ import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.lightEdit.LightEditUtil
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
@@ -29,6 +30,8 @@ import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
@@ -67,6 +70,7 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
+import java.io.File
 import java.io.IOException
 import java.nio.file.*
 import java.util.concurrent.CancellationException
@@ -77,10 +81,85 @@ import kotlin.coroutines.coroutineContext
 @Internal
 open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   companion object {
+
     @TestOnly
     @JvmStatic
     fun isLight(project: Project): Boolean {
       return project is ProjectEx && project.isLight
+    }
+
+    private fun openProjectInstanceCommand(
+      projectStoreBaseDir: Path,
+      isChildProcess: Boolean,
+    ): List<String> {
+      val customProperties = mapOf(
+        PathManager.PROPERTY_SYSTEM_PATH to PathManager.getSystemDir(),
+        PathManager.PROPERTY_CONFIG_PATH to PathManager.getConfigDir(),
+        PathManager.PROPERTY_LOG_PATH to PathManager.getLogDir(),
+        PathManager.PROPERTY_PLUGINS_PATH to PathManager.getPluginsDir(),
+      ).mapValuesTo(mutableMapOf()) { (key, value) ->
+        val pathResolver: (String) -> Path = if (isChildProcess) value::resolveSibling else value::resolve
+        "-D$key=${pathResolver("perProject_${projectStoreBaseDir.fileName}")}"
+      }
+
+      val command = ArrayList<String>()
+      command += """${System.getProperty("java.home")}${File.separatorChar}bin${File.separatorChar}java"""
+      command += "-cp"
+      command += System.getProperty("java.class.path")
+
+      for (vmOption in VMOptions.readOptions("", true)) {
+        command += vmOption.asPatchedAgentLibOption()
+                   ?: vmOption.asPatchedVMOption("splash", "false")
+                   ?: vmOption.asPatchedVMOption("nosplash", "true")
+                   ?: vmOption.asPatchedVMOption(ConfigImportHelper.SHOW_IMPORT_CONFIG_DIALOG_PROPERTY, "default-production")
+                   ?: customProperties.keys.firstOrNull { vmOption.isVMOption(it) }?.let { customProperties.remove(it) }
+                   ?: vmOption
+      }
+
+      command += customProperties.values
+      command += System.getProperty("idea.main.class.name", "com.intellij.idea.Main")
+      command += projectStoreBaseDir.toString()
+      return command
+    }
+
+    private fun String.isVMOption(key: String) = startsWith("-D$key=")
+
+    private fun String.asPatchedVMOption(key: String, value: String): String? {
+      return if (isVMOption(key)) replaceAfter('=', value) else null
+    }
+
+    private fun String.asPatchedAgentLibOption(): String? {
+      return if (startsWith("-agentlib:jdwp=")) {
+        splitToSequence(",").joinToString(",") { option ->
+          val (key, value) = option.split('=', limit = 2)
+          val newValue = when (key) {
+            "address" -> patchedDebugPort(value)
+            "server" -> "y"
+            "suspend" -> "n"
+            else -> value
+          }
+          "$key=$newValue"
+        }
+      }
+      else {
+        null
+      }
+    }
+
+    private fun patchedDebugPort(address: String): String? {
+      return try {
+        val beginIndex = address.indexOf(':') + 1
+        val port = Integer.parseInt(
+          address,
+          beginIndex,
+          address.length,
+          10,
+        ) + 1
+        address.substring(0, beginIndex) + port
+      }
+      catch (e: NumberFormatException) {
+        null
+      }
     }
   }
 
@@ -481,15 +560,49 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   final override suspend fun openProjectAsync(projectStoreBaseDir: Path, options: OpenProjectTask): Project? {
-    if (LOG.isDebugEnabled && !ApplicationManager.getApplication().isUnitTestMode) {
+    val applicationEx = ApplicationManagerEx.getApplicationEx()
+    if (LOG.isDebugEnabled && !applicationEx.isUnitTestMode) {
       LOG.debug("open project: $options", Exception())
     }
 
     if (options.project != null && isProjectOpened(options.project as Project)) {
+      LOG.info("Project is already opened -> return null")
       return null
     }
 
     if (!checkTrustedState(projectStoreBaseDir)) {
+      LOG.info("Project is not trusted -> return null")
+      return null
+    }
+
+    val isChildProcess = isChildProcessPath(PathManager.getSystemDir())
+    val shouldOpenInChildProcess = !isChildProcess && IS_PER_PROJECT_INSTANCE_ENABLED
+                                   || isChildProcess && openProjects.isNotEmpty()
+    if (shouldOpenInChildProcess) {
+      try {
+        withContext(Dispatchers.IO) {
+          ProcessBuilder(openProjectInstanceCommand(projectStoreBaseDir, isChildProcess))
+            .redirectErrorStream(true)
+            .redirectOutput(ProcessBuilder.Redirect.appendTo(PathManager.getLogDir().resolve("idea.log").toFile()))
+            .start()
+            .also {
+              LOG.info("Child process started, PID: ${it.pid()}")
+            }
+        }
+
+        withContext(Dispatchers.EDT) {
+          if (!isChildProcess) {
+            applicationEx.exit(true, true)
+          }
+        }
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Exception) {
+        LOG.error(e)
+      }
+
       return null
     }
 
@@ -508,6 +621,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         }
 
         if (checkExistingProjectOnOpen(projectToClose, options, projectStoreBaseDir)) {
+          LOG.info("Project check is not succeeded -> return null")
           return null
         }
       }
@@ -516,9 +630,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     return doOpenAsync(options, projectStoreBaseDir, activity)
   }
 
-  private suspend fun doOpenAsync(options: OpenProjectTask,
-                                  projectStoreBaseDir: Path,
-                                  activity: Activity): Project? {
+  private suspend fun doOpenAsync(options: OpenProjectTask, projectStoreBaseDir: Path, activity: Activity): Project? {
     val frameAllocator = if (ApplicationManager.getApplication().isHeadlessEnvironment) {
       ProjectFrameAllocator(options)
     }
@@ -555,6 +667,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         }
 
         reopeningEditorJob = async {
+          service<StartUpPerformanceService>().addActivityListener(project)
           frameAllocator.projectLoaded(project)
         }
 
@@ -923,7 +1036,11 @@ private fun fireProjectClosing(project: Project) {
   if (LOG.isDebugEnabled) {
     LOG.debug("enter: fireProjectClosing()")
   }
-  publisher.projectClosing(project)
+  try {
+    publisher.projectClosing(project)
+  } catch (e: Throwable) {
+    LOG.warn("Failed to publish projectClosing(project) event", e)
+  }
 }
 
 private fun fireProjectClosed(project: Project) {
@@ -1099,9 +1216,7 @@ private suspend fun initProject(file: Path,
 
       preloadServicesAndCreateComponents(project, preloadServices)
       projectInitListeners {
-        launchAndMeasure(it.javaClass.simpleName) {
-          it.serviceCreated(project)
-        }
+        it.containerConfigured(project)
       }
 
       if (!isTrusted.await()) {
@@ -1191,4 +1306,39 @@ internal suspend inline fun projectInitListeners(crossinline executor: suspend (
       LOG.error(e)
     }
   }
+}
+
+internal fun isCorePlugin(descriptor: PluginDescriptor): Boolean {
+  val id = descriptor.pluginId
+  return id == PluginManagerCore.CORE_ID ||
+         // K/N Platform Deps is a repackaged Java plugin
+         id.idString == "com.intellij.kotlinNative.platformDeps"
+}
+
+/**
+ * Usage requires IJ Platform team approval (including plugin into white-list).
+ */
+@Internal
+interface ProjectServiceContainerInitializedListener {
+  /**
+   * Invoked after container configured.
+   */
+  suspend fun containerConfigured(project: Project)
+}
+
+@TestOnly
+interface ProjectServiceContainerCustomizer {
+  companion object {
+    @TestOnly
+    fun getEp(): ExtensionPointImpl<ProjectServiceContainerCustomizer> {
+      return (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
+        .getExtensionPoint("com.intellij.projectServiceContainerCustomizer")
+    }
+  }
+
+  /**
+   * Invoked after implementation classes for project's components were determined (and loaded),
+   * but before components are instantiated.
+   */
+  fun serviceRegistered(project: Project)
 }

@@ -172,8 +172,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     UISettings uiSettings = UISettings.getInstance();
     Font result;
     if (useInterFont()) {
-      float userScaleFactor = getDefaultUserScaleFactor();
-      result = StartupUiUtil.getFontWithFallback(INTER_NAME, Font.PLAIN, (int)(INTER_SIZE * userScaleFactor));
+      result = getDefaultInterFont();
     }
     else if (uiSettings.getOverrideLafFonts()) {
       result = getStoredLafFont();
@@ -564,15 +563,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         return laf;
       }
       LOG.error("Could not find OS X L&F: " + className);
-    }
-
-    String appLafName = WelcomeWizardUtil.getDefaultLAF();
-    if (appLafName != null) {
-      UIManager.LookAndFeelInfo laf = findLaf(appLafName);
-      if (laf != null) {
-        return laf;
-      }
-      LOG.error("Could not find app L&F: " + appLafName);
     }
 
     // Use HighContrast theme for IDE in Windows if HighContrast desktop mode is set.
@@ -1061,9 +1051,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
     else if (useInterFont()) {
       storeOriginalFontDefaults(uiDefaults);
-      float userScaleFactor = getDefaultUserScaleFactor();
-      StartupUiUtil.initFontDefaults(uiDefaults, StartupUiUtil.getFontWithFallback(INTER_NAME, Font.PLAIN, (int)(INTER_SIZE * userScaleFactor)));
-      JBUIScale.setUserScaleFactor(userScaleFactor);
+      StartupUiUtil.initFontDefaults(uiDefaults, getDefaultInterFont());
+      if (!uiSettings.getPresentationMode()) {
+        JBUIScale.setUserScaleFactor(getDefaultUserScaleFactor());
+      }
     }
     else {
       restoreOriginalFontDefaults(uiDefaults);
@@ -1080,6 +1071,11 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       font = JBFont.label();
     }
     return JBUIScale.getFontScale(font.getSize());
+  }
+
+  private @NotNull FontUIResource getDefaultInterFont() {
+    float userScaleFactor = getDefaultUserScaleFactor();
+    return StartupUiUtil.getFontWithFallback(INTER_NAME, Font.PLAIN, JBUIScale.scaleFontSize(INTER_SIZE, userScaleFactor));
   }
 
   @Nullable
@@ -1226,6 +1222,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         if (IdeaPopupMenuUI.isUnderPopup(contents) && IdeaPopupMenuUI.isRoundBorder()) {
           if (SystemInfoRt.isMac) {
             rootPane.putClientProperty("apple.awt.windowCornerRadius", Float.valueOf(IdeaPopupMenuUI.CORNER_RADIUS.getFloat()));
+
+            JComponent contentPane = (JComponent)((RootPaneContainer)window).getContentPane();
+            contentPane.setOpaque(true);
+            contentPane.setBackground(contents.getBackground());
           }
         }
       }
@@ -1498,6 +1498,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
     @Override
     public boolean isDumbAware() {
       return true;

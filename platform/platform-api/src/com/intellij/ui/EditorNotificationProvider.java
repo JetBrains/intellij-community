@@ -22,13 +22,16 @@ import java.util.function.Function;
  * </p>
  */
 public interface EditorNotificationProvider {
-
   ProjectExtensionPointName<EditorNotificationProvider> EP_NAME =
     new ProjectExtensionPointName<>("com.intellij.editorNotificationProvider");
 
+  /**
+   * @deprecated Use {@code null}.
+   */
+  @Deprecated
   Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> CONST_NULL = __ -> null;
 
   @RequiresReadLock
-  @NotNull Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
-                                                                                                         @NotNull VirtualFile file);
+  @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
+                                                                                                          @NotNull VirtualFile file);
 }

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightingSettingP
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil
 import com.intellij.codeInsight.documentation.render.DocRenderManager
+import com.intellij.formatting.visualLayer.VisualFormattingLayerService
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
@@ -71,5 +72,18 @@ class DocsRenderingReaderModeProvider : ReaderModeProvider {
     } else {
       EditorSettingsExternalizable.getInstance().isDocCommentRenderingEnabled
     })
+  }
+}
+
+class VisualFormattingLayerReaderModeProvider : ReaderModeProvider {
+  override fun applyModeChanged(project: Project, editor: Editor, readerMode: Boolean, fileIsOpenAlready: Boolean) {
+    val readerModeSettings = ReaderModeSettings.getInstance(project)
+    val service = VisualFormattingLayerService.getInstance()
+    if (readerMode && readerModeSettings.useVisualFormattingLayer) {
+      service.enableForEditor(editor, readerModeSettings.getVisualFormattingLayerCodeStyleSettings(project))
+    }
+    else {
+      service.disableForEditor(editor)
+    }
   }
 }

@@ -6,7 +6,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElementVisitor;
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes;
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor;
-import org.intellij.plugins.markdown.util.MarkdownPsiUtil;
+import org.intellij.plugins.markdown.util.MarkdownPsiStructureUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,7 +63,7 @@ public class MarkdownList extends MarkdownCompositePsiElementBase {
 
       @Override
       public Icon getIcon(final boolean open) {
-        return MarkdownPsiUtil.isSimpleNestedList(getParent().getChildren())
+        return MarkdownPsiStructureUtil.isSimpleNestedList(getParent().getChildren())
                ? null
                : AllIcons.Actions.ListFiles;
       }
@@ -72,7 +72,7 @@ public class MarkdownList extends MarkdownCompositePsiElementBase {
 
   private static @Nullable ItemPresentation getSimpleNestedPresentation(@NotNull MarkdownList element) {
     final var parent = element.getParent();
-    if (MarkdownPsiUtil.isSimpleNestedList(parent.getChildren()) && parent instanceof MarkdownListItem) {
+    if (MarkdownPsiStructureUtil.isSimpleNestedList(parent.getChildren()) && parent instanceof MarkdownListItem) {
       return ((MarkdownListItem)parent).getPresentation();
     }
     return null;

@@ -26,7 +26,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -71,7 +70,6 @@ public final class ExternalDiffTool {
     if (contentType != null) return contentType;
 
     String filePath = producer.getName();
-    if (FileUtilRt.getExtension(filePath).equals("tmp")) return UnknownFileType.INSTANCE;
     return FileTypeManager.getInstance().getFileTypeByFileName(filePath);
   }
 

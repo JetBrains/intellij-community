@@ -179,19 +179,21 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    ParameterInfoImpl[] parameterInfos = getNewParametersInfo(myExpressions, myTargetMethod, mySubstitutor);
+    HashSet<ParameterInfoImpl> newParams = new HashSet<>();
+    HashSet<ParameterInfoImpl> removedParams = new HashSet<>();
+    HashSet<ParameterInfoImpl> changedParams = new HashSet<>();
+    ParameterInfoImpl[] parameterInfos =
+      getNewParametersInfo(myExpressions, myTargetMethod, mySubstitutor, new StringBuilder(), newParams, removedParams, changedParams);
     PsiParameterList parameterList = myTargetMethod.getParameterList();
     PsiParameter[] oldParameters = parameterList.getParameters();
     if (parameterInfos == null) return IntentionPreviewInfo.EMPTY;
     String params = "(" + StringUtil.join(parameterInfos, p -> {
-      String modifiers = "";
-      if (p.oldParameterIndex != ParameterInfo.NEW_PARAMETER) {
-        PsiModifierList modifierList = oldParameters[p.oldParameterIndex].getModifierList();
-        if (modifierList != null) {
-          modifiers = modifierList.getText();
-        }
+      if (p.oldParameterIndex != ParameterInfo.NEW_PARAMETER && !changedParams.contains(p)) {
+        PsiParameter parameter = oldParameters[p.oldParameterIndex];
+        PsiRecordComponent component = JavaPsiRecordUtil.getComponentForCanonicalConstructorParameter(parameter);
+        return Objects.requireNonNullElse(component, parameter).getText();
       }
-      return (modifiers.isEmpty() ? "" : modifiers + " ") + p.getTypeText() + " " + p.getName();
+      return p.getTypeText() + " " + p.getName();
     }, ", ") + ")";
     TextRange range;
     String methodText;
@@ -380,7 +382,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
         PsiType paramType = substitutor.substitute(getValidParameterType(parameter, targetMethod));
         ParameterInfoImpl parameterInfo = result.get(i);
         String typeText = parameterInfo.getTypeText();
-        if (!paramType.equalsToText(typeText) && !paramType.getPresentableText().equals(typeText)) {
+        if (!paramType.getPresentableText(true).equals(typeText)) {
           isSilly = false;
           break;
         }

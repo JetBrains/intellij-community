@@ -18,7 +18,7 @@ import java.util.Collections;
  * @author Eugene Zhuravlev
  */
 public class ChangeFormComponentTypeFix implements IntentionAction {
-  private final PsiPlainTextFile myFormFile;
+  @SafeFieldForPreview private final PsiPlainTextFile myFormFile;
   private final String myFieldName;
   private final String myComponentTypeToSet;
 

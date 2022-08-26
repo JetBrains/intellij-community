@@ -11,6 +11,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToManyChildren
@@ -72,11 +73,11 @@ open class MainEntityParentListImpl : MainEntityParentList, WorkspaceEntityBase(
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isXInitialized()) {
         error("Field MainEntityParentList#x should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field MainEntityParentList#entitySource should be initialized")
       }
       // Check initialization for list with ref type
       if (_diff != null) {
@@ -95,14 +96,15 @@ open class MainEntityParentListImpl : MainEntityParentList, WorkspaceEntityBase(
       return connections
     }
 
-
-    override var x: String
-      get() = getEntityData().x
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().x = value
-        changedProperty.add("x")
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as MainEntityParentList
+      this.entitySource = dataSource.entitySource
+      this.x = dataSource.x
+      if (parents != null) {
       }
+    }
+
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -111,6 +113,14 @@ open class MainEntityParentListImpl : MainEntityParentList, WorkspaceEntityBase(
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var x: String
+      get() = getEntityData().x
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().x = value
+        changedProperty.add("x")
       }
 
     // List of non-abstract referenced types
@@ -193,14 +203,24 @@ class MainEntityParentListData : WorkspaceEntityData<MainEntityParentList>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return MainEntityParentList(x, entitySource) {
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
 
     other as MainEntityParentListData
 
-    if (this.x != other.x) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.x != other.x) return false
     return true
   }
 
@@ -218,5 +238,15 @@ class MainEntityParentListData : WorkspaceEntityData<MainEntityParentList>() {
     var result = entitySource.hashCode()
     result = 31 * result + x.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + x.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.sameForAllEntities = true
   }
 }

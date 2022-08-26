@@ -12,6 +12,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToManyParent
@@ -73,6 +74,9 @@ open class XChildChildEntityImpl : XChildChildEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToManyParent<WorkspaceEntityBase>(PARENT1_CONNECTION_ID, this) == null) {
           error("Field XChildChildEntity#parent1 should be initialized")
@@ -82,9 +86,6 @@ open class XChildChildEntityImpl : XChildChildEntity, WorkspaceEntityBase() {
         if (this.entityLinks[EntityLink(false, PARENT1_CONNECTION_ID)] == null) {
           error("Field XChildChildEntity#parent1 should be initialized")
         }
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field XChildChildEntity#entitySource should be initialized")
       }
       if (_diff != null) {
         if (_diff.extractOneToManyParent<WorkspaceEntityBase>(PARENT2_CONNECTION_ID, this) == null) {
@@ -102,6 +103,25 @@ open class XChildChildEntityImpl : XChildChildEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as XChildChildEntity
+      this.entitySource = dataSource.entitySource
+      if (parents != null) {
+        this.parent1 = parents.filterIsInstance<XParentEntity>().single()
+        this.parent2 = parents.filterIsInstance<XChildEntity>().single()
+      }
+    }
+
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var parent1: XParentEntity
       get() {
@@ -140,15 +160,6 @@ open class XChildChildEntityImpl : XChildChildEntity, WorkspaceEntityBase() {
           this.entityLinks[EntityLink(false, PARENT1_CONNECTION_ID)] = value
         }
         changedProperty.add("parent1")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override var parent2: XChildEntity
@@ -228,6 +239,20 @@ class XChildChildEntityData : WorkspaceEntityData<XChildChildEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return XChildChildEntity(entitySource) {
+      this.parent1 = parents.filterIsInstance<XParentEntity>().single()
+      this.parent2 = parents.filterIsInstance<XChildEntity>().single()
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(XParentEntity::class.java)
+    res.add(XChildEntity::class.java)
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
@@ -250,5 +275,14 @@ class XChildChildEntityData : WorkspaceEntityData<XChildChildEntity>() {
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.sameForAllEntities = true
   }
 }

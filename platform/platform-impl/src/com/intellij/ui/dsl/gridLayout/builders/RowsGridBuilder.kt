@@ -42,7 +42,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
   }
 
   /**
-   * Starts new row. Can be omitted for the first and last rows
+   * Starts new row. Can be omitted for the first and after last rows
    */
   fun row(rowGaps: VerticalGaps = VerticalGaps.EMPTY, resizable: Boolean = false): RowsGridBuilder {
     x = 0

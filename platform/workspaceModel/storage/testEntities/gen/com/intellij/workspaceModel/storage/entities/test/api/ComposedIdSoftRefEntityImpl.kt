@@ -13,8 +13,10 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
@@ -72,11 +74,11 @@ open class ComposedIdSoftRefEntityImpl : ComposedIdSoftRefEntity, WorkspaceEntit
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isMyNameInitialized()) {
         error("Field ComposedIdSoftRefEntity#myName should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ComposedIdSoftRefEntity#entitySource should be initialized")
       }
       if (!getEntityData().isLinkInitialized()) {
         error("Field ComposedIdSoftRefEntity#link should be initialized")
@@ -87,14 +89,16 @@ open class ComposedIdSoftRefEntityImpl : ComposedIdSoftRefEntity, WorkspaceEntit
       return connections
     }
 
-
-    override var myName: String
-      get() = getEntityData().myName
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().myName = value
-        changedProperty.add("myName")
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as ComposedIdSoftRefEntity
+      this.entitySource = dataSource.entitySource
+      this.myName = dataSource.myName
+      this.link = dataSource.link
+      if (parents != null) {
       }
+    }
+
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -103,6 +107,14 @@ open class ComposedIdSoftRefEntityImpl : ComposedIdSoftRefEntity, WorkspaceEntit
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var myName: String
+      get() = getEntityData().myName
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().myName = value
+        changedProperty.add("myName")
       }
 
     override var link: NameId
@@ -199,14 +211,24 @@ class ComposedIdSoftRefEntityData : WorkspaceEntityData.WithCalculablePersistent
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ComposedIdSoftRefEntity(myName, link, entitySource) {
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
 
     other as ComposedIdSoftRefEntityData
 
-    if (this.myName != other.myName) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.myName != other.myName) return false
     if (this.link != other.link) return false
     return true
   }
@@ -227,5 +249,17 @@ class ComposedIdSoftRefEntityData : WorkspaceEntityData.WithCalculablePersistent
     result = 31 * result + myName.hashCode()
     result = 31 * result + link.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + myName.hashCode()
+    result = 31 * result + link.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.add(NameId::class.java)
+    collector.sameForAllEntities = true
   }
 }

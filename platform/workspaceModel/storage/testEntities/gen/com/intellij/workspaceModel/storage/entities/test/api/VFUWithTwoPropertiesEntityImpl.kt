@@ -11,8 +11,11 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.deft.ObjBuilder
@@ -77,11 +80,11 @@ open class VFUWithTwoPropertiesEntityImpl : VFUWithTwoPropertiesEntity, Workspac
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isDataInitialized()) {
         error("Field VFUWithTwoPropertiesEntity#data should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field VFUWithTwoPropertiesEntity#entitySource should be initialized")
       }
       if (!getEntityData().isFilePropertyInitialized()) {
         error("Field VFUWithTwoPropertiesEntity#fileProperty should be initialized")
@@ -95,14 +98,17 @@ open class VFUWithTwoPropertiesEntityImpl : VFUWithTwoPropertiesEntity, Workspac
       return connections
     }
 
-
-    override var data: String
-      get() = getEntityData().data
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().data = value
-        changedProperty.add("data")
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as VFUWithTwoPropertiesEntity
+      this.entitySource = dataSource.entitySource
+      this.data = dataSource.data
+      this.fileProperty = dataSource.fileProperty
+      this.secondFileProperty = dataSource.secondFileProperty
+      if (parents != null) {
       }
+    }
+
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -111,6 +117,14 @@ open class VFUWithTwoPropertiesEntityImpl : VFUWithTwoPropertiesEntity, Workspac
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var data: String
+      get() = getEntityData().data
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().data = value
+        changedProperty.add("data")
       }
 
     override var fileProperty: VirtualFileUrl
@@ -180,14 +194,24 @@ class VFUWithTwoPropertiesEntityData : WorkspaceEntityData<VFUWithTwoPropertiesE
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return VFUWithTwoPropertiesEntity(data, fileProperty, secondFileProperty, entitySource) {
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
 
     other as VFUWithTwoPropertiesEntityData
 
-    if (this.data != other.data) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.data != other.data) return false
     if (this.fileProperty != other.fileProperty) return false
     if (this.secondFileProperty != other.secondFileProperty) return false
     return true
@@ -211,5 +235,19 @@ class VFUWithTwoPropertiesEntityData : WorkspaceEntityData<VFUWithTwoPropertiesE
     result = 31 * result + fileProperty.hashCode()
     result = 31 * result + secondFileProperty.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + data.hashCode()
+    result = 31 * result + fileProperty.hashCode()
+    result = 31 * result + secondFileProperty.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    this.fileProperty?.let { collector.add(it::class.java) }
+    this.secondFileProperty?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = false
   }
 }

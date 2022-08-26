@@ -633,3 +633,13 @@ internal data class ParentEntityId(val id: EntityId) {
 
 internal fun EntityId.asChild(): ChildEntityId = ChildEntityId(this)
 internal fun EntityId.asParent(): ParentEntityId = ParentEntityId(this)
+
+internal fun sameClass(fromConnectionId: Int, myClazz: Int, type: ConnectionType): Boolean {
+  return when (type) {
+    ConnectionType.ONE_TO_ONE, ConnectionType.ONE_TO_MANY -> fromConnectionId == myClazz
+    ConnectionType.ONE_TO_ABSTRACT_MANY, ConnectionType.ABSTRACT_ONE_TO_ONE -> {
+      fromConnectionId.findWorkspaceEntity().isAssignableFrom(myClazz.findWorkspaceEntity())
+    }
+  }
+}
+

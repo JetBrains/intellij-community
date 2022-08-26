@@ -35,6 +35,7 @@ public final class HistoryEntry {
   @NonNls private static final String EDITOR_TYPE_ID_ATTR = "editor-type-id";
   @NonNls private static final String SELECTED_ATTR_VALUE = "selected";
   @NonNls private static final String STATE_ELEMENT = "state";
+  @NonNls private static final String PREVIEW_ATTR = "preview";
 
   @NotNull private final VirtualFilePointer myFilePointer;
 
@@ -44,14 +45,17 @@ public final class HistoryEntry {
    */
   @Nullable private FileEditorProvider mySelectedProvider;
   @NotNull private final Map<FileEditorProvider, FileEditorState> myProviderToState = CollectionFactory.createSmallMemoryFootprintMap();
+  private boolean myPreview;
 
   @Nullable private final Disposable myDisposable;
 
   private HistoryEntry(@NotNull VirtualFilePointer filePointer,
                        @Nullable FileEditorProvider selectedProvider,
+                       boolean preview,
                        @Nullable Disposable disposable) {
     myFilePointer = filePointer;
     mySelectedProvider = selectedProvider;
+    myPreview = preview;
     myDisposable = disposable;
   }
 
@@ -59,9 +63,10 @@ public final class HistoryEntry {
   static HistoryEntry createLight(@NotNull VirtualFile file,
                                   FileEditorProvider @NotNull [] providers,
                                   FileEditorState @NotNull [] states,
-                                  @NotNull FileEditorProvider selectedProvider) {
+                                  @NotNull FileEditorProvider selectedProvider,
+                                  boolean preview) {
     VirtualFilePointer pointer = new LightFilePointer(file);
-    HistoryEntry entry = new HistoryEntry(pointer, selectedProvider, null);
+    HistoryEntry entry = new HistoryEntry(pointer, selectedProvider, preview, null);
     for (int i = 0; i < providers.length; i++) {
       entry.putState(providers[i], states[i]);
     }
@@ -73,7 +78,7 @@ public final class HistoryEntry {
     EntryData entryData = parseEntry(project, e);
 
     VirtualFilePointer pointer = new LightFilePointer(entryData.url);
-    HistoryEntry entry = new HistoryEntry(pointer, entryData.selectedProvider, null);
+    HistoryEntry entry = new HistoryEntry(pointer, entryData.selectedProvider, entryData.preview, null);
     for (Pair<FileEditorProvider, FileEditorState> state : entryData.providerStates) {
       entry.putState(state.first, state.second);
     }
@@ -85,13 +90,14 @@ public final class HistoryEntry {
                                   @NotNull VirtualFile file,
                                   FileEditorProvider @NotNull [] providers,
                                   FileEditorState @NotNull [] states,
-                                  @NotNull FileEditorProvider selectedProvider) {
-    if (project.isDisposed()) return createLight(file, providers, states, selectedProvider);
+                                  @NotNull FileEditorProvider selectedProvider,
+                                  boolean preview) {
+    if (project.isDisposed()) return createLight(file, providers, states, selectedProvider, preview);
 
     Disposable disposable = Disposer.newDisposable();
     VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(file, disposable, null);
 
-    HistoryEntry entry = new HistoryEntry(pointer, selectedProvider, disposable);
+    HistoryEntry entry = new HistoryEntry(pointer, selectedProvider, preview, disposable);
     for (int i = 0; i < providers.length; i++) {
       FileEditorProvider provider = providers[i];
       FileEditorState state = states[i];
@@ -111,7 +117,7 @@ public final class HistoryEntry {
     Disposable disposable = Disposer.newDisposable();
     VirtualFilePointer pointer = VirtualFilePointerManager.getInstance().create(entryData.url, disposable, null);
 
-    HistoryEntry entry = new HistoryEntry(pointer, entryData.selectedProvider, disposable);
+    HistoryEntry entry = new HistoryEntry(pointer, entryData.selectedProvider, entryData.preview, disposable);
     for (Pair<FileEditorProvider, FileEditorState> state : entryData.providerStates) {
       entry.putState(state.first, state.second);
     }
@@ -145,6 +151,14 @@ public final class HistoryEntry {
     mySelectedProvider = value;
   }
 
+  public boolean isPreview() {
+    return myPreview;
+  }
+
+  public void setPreview(boolean preview) {
+    myPreview = preview;
+  }
+
   public void destroy() {
     if (myDisposable != null) Disposer.dispose(myDisposable);
   }
@@ -174,6 +188,10 @@ public final class HistoryEntry {
       }
 
       e.addContent(providerElement);
+    }
+
+    if (myPreview) {
+      e.setAttribute(PREVIEW_ATTR, Boolean.TRUE.toString());
     }
 
     return e;
@@ -208,7 +226,8 @@ public final class HistoryEntry {
       }
     }
 
-    return new EntryData(url, providerStates, selectedProvider);
+    boolean preview = e.getAttributeValue(PREVIEW_ATTR) != null;
+    return new EntryData(url, providerStates, selectedProvider, preview);
   }
 
   void onProviderRemoval(@NotNull FileEditorProvider provider) {
@@ -222,13 +241,16 @@ public final class HistoryEntry {
     @NotNull private final String url;
     @NotNull private final List<Pair<FileEditorProvider, FileEditorState>> providerStates;
     @Nullable private final FileEditorProvider selectedProvider;
+    private final boolean preview;
 
     EntryData(@NotNull String url,
               @NotNull List<Pair<FileEditorProvider, FileEditorState>> providerStates,
-              @Nullable FileEditorProvider selectedProvider) {
+              @Nullable FileEditorProvider selectedProvider,
+              boolean preview) {
       this.url = url;
       this.providerStates = providerStates;
       this.selectedProvider = selectedProvider;
+      this.preview = preview;
     }
   }
 }

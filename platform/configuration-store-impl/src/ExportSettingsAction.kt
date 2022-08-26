@@ -82,8 +82,15 @@ open class ExportSettingsAction : AnAction(), DumbAware {
       }
 
       exportSettings(saveFile, markedComponents)
-      RevealFileAction.showDialog(getEventProject(e), ConfigurationStoreBundle.message("message.settings.exported.successfully"),
-                                  ConfigurationStoreBundle.message("title.export.successful"), saveFile.toFile(), null)
+      if (showOkCancelDialog(
+          title = ConfigurationStoreBundle.message("title.export.successful"),
+          message = ConfigurationStoreBundle.message("message.settings.exported.successfully"),
+          okText = RevealFileAction.getActionName(null),
+          cancelText = IdeBundle.message("action.close"),
+          icon = Messages.getInformationIcon(),
+          project = getEventProject(e)) == Messages.OK) {
+        RevealFileAction.openFile(saveFile.toFile())
+      }
     }
     catch (e: IOException) {
       Messages.showErrorDialog(ConfigurationStoreBundle.message("error.writing.settings", e.toString()),
@@ -166,7 +173,8 @@ fun exportInstalledPlugins(zip: Compressor) {
 
 fun getExportableComponentsMap(isComputePresentableNames: Boolean,
                                storageManager: StateStorageManager = getAppStorageManager(),
-                               withDeprecated: Boolean = false): Map<FileSpec, List<ExportableItem>> {
+                               withDeprecated: Boolean = false,
+                               withExportable: Boolean = true): Map<FileSpec, List<ExportableItem>> {
   val result = LinkedHashMap<FileSpec, MutableList<ExportableItem>>()
 
   @Suppress("DEPRECATION")
@@ -183,8 +191,10 @@ fun getExportableComponentsMap(isComputePresentableNames: Boolean,
 
   val app = ApplicationManager.getApplication() as ComponentManagerImpl
 
-  @Suppress("DEPRECATION")
-  ServiceBean.loadServicesFromBeans(ExportableComponent.EXTENSION_POINT, ExportableComponent::class.java).forEach(processor)
+  if (withExportable) {
+    @Suppress("DEPRECATION")
+    ServiceBean.loadServicesFromBeans(ExportableComponent.EXTENSION_POINT, ExportableComponent::class.java).forEach(processor)
+  }
 
   app.processAllImplementationClasses { aClass, pluginDescriptor ->
     val stateAnnotation = getStateSpec(aClass)
@@ -204,7 +214,9 @@ fun getExportableComponentsMap(isComputePresentableNames: Boolean,
     var thereIsExportableStorage = false
     for (storage in storages) {
       val isRoamable = getEffectiveRoamingType(storage.roamingType, storage.path) != RoamingType.DISABLED
-      if (isStorageExportable(storage, isRoamable)) {
+      val exportable = isStorageExportable(storage, isRoamable, withExportable)
+      LOG.debug("Storage for class ${aClass.simpleName} is ${stringify(isRoamable, "roamable")}, ${stringify(exportable, "exportable")}: $storage")
+      if (exportable) {
         thereIsExportableStorage = true
         val paths = getRelativePaths(storage, storageManager, withDeprecated)
         for (path in paths) {
@@ -234,6 +246,8 @@ fun getExportableComponentsMap(isComputePresentableNames: Boolean,
   }
   return result
 }
+
+private fun stringify(value: Boolean, name: String): String = if (value) name else "not $name"
 
 fun looksLikeDirectory(storage: Storage): Boolean {
   return storage.stateSplitter.java != StateSplitterEx::class.java
@@ -272,8 +286,9 @@ private fun getAdditionalExportFile(stateAnnotation: State) = stateAnnotation.ad
 
 private fun getAppStorageManager() = ApplicationManager.getApplication().stateStore.storageManager as StateStorageManagerImpl
 
-private fun isStorageExportable(storage: Storage, isRoamable: Boolean): Boolean =
-  storage.exportable || isRoamable && storage.storageClass == StateStorage::class && storage.path.isNotEmpty()
+private fun isStorageExportable(storage: Storage, isRoamable: Boolean, withExportable: Boolean): Boolean =
+  storage.exportable && withExportable ||
+  isRoamable && storage.storageClass == StateStorage::class && storage.path.isNotEmpty()
 
 private fun getComponentPresentableName(state: State, aClass: Class<*>, pluginDescriptor: PluginDescriptor?): String {
   val presentableName = state.presentableName.java

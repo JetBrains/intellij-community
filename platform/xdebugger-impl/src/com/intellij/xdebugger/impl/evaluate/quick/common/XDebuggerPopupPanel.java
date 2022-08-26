@@ -189,7 +189,6 @@ public abstract class XDebuggerPopupPanel {
     ActionLinkButton(@NotNull AnAction action,
                      @NotNull Presentation presentation,
                      @Nullable DataProvider contextComponent) {
-      //noinspection ConstantConditions
       super(StringUtil.capitalize(presentation.getText().toLowerCase(Locale.ROOT)), action);
       setDataProvider(contextComponent);
       setFont(UIUtil.getToolTipFont());
@@ -230,6 +229,11 @@ public abstract class XDebuggerPopupPanel {
       Presentation presentation = e.getPresentation();
       presentation.setEnabled(presentation.isEnabled() && shouldBeVisible(myDelegate));
       presentation.setVisible(presentation.isVisible() && shouldBeVisible(myDelegate));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return myDelegate.getActionUpdateThread();
     }
 
     @Override

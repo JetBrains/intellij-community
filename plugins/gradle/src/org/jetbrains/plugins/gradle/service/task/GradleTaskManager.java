@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.task;
 
 import com.google.gson.GsonBuilder;
@@ -225,7 +225,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
                                               @NotNull GradleExecutionSettings effectiveSettings,
                                               @Nullable String gradleVersion) {
     final List<String> initScripts = new ArrayList<>();
-    List<GradleProjectResolverExtension> extensions = GradleProjectResolverUtil.createProjectResolvers(null).collect(Collectors.toList());
+    List<GradleProjectResolverExtension> extensions = GradleProjectResolverUtil.createProjectResolvers(null).toList();
     for (GradleProjectResolverExtension resolverExtension : extensions) {
       final String resolverClassName = resolverExtension.getClass().getName();
       Consumer<String> initScriptConsumer = script -> {
@@ -389,7 +389,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
                                    @NotNull Set<Class<?>> toolingExtensionClasses) {
     String taskName = taskClass.getSimpleName();
     Set<Class<?>> tools = new HashSet<>(toolingExtensionClasses);
-    tools.addAll(set(taskClass, GsonBuilder.class, THash.class, ExternalSystemException.class));
+    tools.addAll(set(taskClass, GsonBuilder.class, ExternalSystemException.class));
     String paths = GradleExecutionHelper.getToolingExtensionsJarPaths(tools);
     String initScript = "initscript {\n" +
                         "  dependencies {\n" +

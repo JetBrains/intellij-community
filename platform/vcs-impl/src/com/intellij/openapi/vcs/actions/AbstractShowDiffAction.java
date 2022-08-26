@@ -19,9 +19,9 @@ import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.util.Predicates.nonNull;
 import static java.util.Objects.requireNonNull;
 
 public abstract class AbstractShowDiffAction extends DumbAwareAction {
@@ -51,7 +51,7 @@ public abstract class AbstractShowDiffAction extends DumbAwareAction {
   private static boolean hasDiffProviders(@NotNull Project project) {
     return Stream.of(ProjectLevelVcsManager.getInstance(project).getAllActiveVcss())
       .map(AbstractVcs::getDiffProvider)
-      .anyMatch(Objects::nonNull);
+      .anyMatch(nonNull());
   }
 
   @CalledInAny

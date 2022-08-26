@@ -12,12 +12,16 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.extractOneToManyChildren
 import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import java.util.*
+import java.util.UUID
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -101,7 +105,7 @@ open class SampleEntityImpl : SampleEntity, WorkspaceEntityBase() {
     fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field SampleEntity#entitySource should be initialized")
+        error("Field WorkspaceEntity#entitySource should be initialized")
       }
       if (!getEntityData().isStringPropertyInitialized()) {
         error("Field SampleEntity#stringProperty should be initialized")
@@ -132,14 +136,21 @@ open class SampleEntityImpl : SampleEntity, WorkspaceEntityBase() {
       return connections
     }
 
-
-    override var booleanProperty: Boolean
-      get() = getEntityData().booleanProperty
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().booleanProperty = value
-        changedProperty.add("booleanProperty")
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as SampleEntity
+      this.entitySource = dataSource.entitySource
+      this.booleanProperty = dataSource.booleanProperty
+      this.stringProperty = dataSource.stringProperty
+      this.stringListProperty = dataSource.stringListProperty.toMutableList()
+      this.stringMapProperty = dataSource.stringMapProperty.toMutableMap()
+      this.fileProperty = dataSource.fileProperty
+      this.nullableData = dataSource.nullableData
+      this.randomUUID = dataSource.randomUUID
+      if (parents != null) {
       }
+    }
+
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -150,6 +161,14 @@ open class SampleEntityImpl : SampleEntity, WorkspaceEntityBase() {
 
       }
 
+    override var booleanProperty: Boolean
+      get() = getEntityData().booleanProperty
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().booleanProperty = value
+        changedProperty.add("booleanProperty")
+      }
+
     override var stringProperty: String
       get() = getEntityData().stringProperty
       set(value) {
@@ -158,13 +177,21 @@ open class SampleEntityImpl : SampleEntity, WorkspaceEntityBase() {
         changedProperty.add("stringProperty")
       }
 
-    override var stringListProperty: List<String>
-      get() = getEntityData().stringListProperty
+    private val stringListPropertyUpdater: (value: List<String>) -> Unit = { value ->
+
+      changedProperty.add("stringListProperty")
+    }
+    override var stringListProperty: MutableList<String>
+      get() {
+        val collection_stringListProperty = getEntityData().stringListProperty
+        if (collection_stringListProperty !is MutableWorkspaceList) return collection_stringListProperty
+        collection_stringListProperty.setModificationUpdateAction(stringListPropertyUpdater)
+        return collection_stringListProperty
+      }
       set(value) {
         checkModificationAllowed()
         getEntityData().stringListProperty = value
-
-        changedProperty.add("stringListProperty")
+        stringListPropertyUpdater.invoke(value)
       }
 
     override var stringMapProperty: Map<String, String>
@@ -250,7 +277,7 @@ open class SampleEntityImpl : SampleEntity, WorkspaceEntityBase() {
 class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
   var booleanProperty: Boolean = false
   lateinit var stringProperty: String
-  lateinit var stringListProperty: List<String>
+  lateinit var stringListProperty: MutableList<String>
   lateinit var stringMapProperty: Map<String, String>
   lateinit var fileProperty: VirtualFileUrl
   var nullableData: String? = null
@@ -278,7 +305,7 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
     val entity = SampleEntityImpl()
     entity.booleanProperty = booleanProperty
     entity._stringProperty = stringProperty
-    entity._stringListProperty = stringListProperty
+    entity._stringListProperty = stringListProperty.toList()
     entity._stringMapProperty = stringMapProperty
     entity._fileProperty = fileProperty
     entity._nullableData = nullableData
@@ -287,6 +314,13 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
     entity.snapshot = snapshot
     entity.id = createEntityId()
     return entity
+  }
+
+  override fun clone(): SampleEntityData {
+    val clonedEntity = super.clone()
+    clonedEntity as SampleEntityData
+    clonedEntity.stringListProperty = clonedEntity.stringListProperty.toMutableWorkspaceList()
+    return clonedEntity
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -299,14 +333,26 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return SampleEntity(booleanProperty, stringProperty, stringListProperty, stringMapProperty, fileProperty, entitySource) {
+      this.nullableData = this@SampleEntityData.nullableData
+      this.randomUUID = this@SampleEntityData.randomUUID
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
 
     other as SampleEntityData
 
-    if (this.booleanProperty != other.booleanProperty) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.booleanProperty != other.booleanProperty) return false
     if (this.stringProperty != other.stringProperty) return false
     if (this.stringListProperty != other.stringListProperty) return false
     if (this.stringMapProperty != other.stringMapProperty) return false
@@ -342,5 +388,25 @@ class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
     result = 31 * result + nullableData.hashCode()
     result = 31 * result + randomUUID.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + booleanProperty.hashCode()
+    result = 31 * result + stringProperty.hashCode()
+    result = 31 * result + stringListProperty.hashCode()
+    result = 31 * result + stringMapProperty.hashCode()
+    result = 31 * result + fileProperty.hashCode()
+    result = 31 * result + nullableData.hashCode()
+    result = 31 * result + randomUUID.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    this.stringMapProperty?.let { collector.add(it::class.java) }
+    this.stringListProperty?.let { collector.add(it::class.java) }
+    this.randomUUID?.let { collector.addDataToInspect(it) }
+    this.fileProperty?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = false
   }
 }

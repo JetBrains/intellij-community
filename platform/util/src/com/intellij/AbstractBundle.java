@@ -62,7 +62,7 @@ public class AbstractBundle {
 
   /**
    * Performs partial application of the pattern message from the bundle leaving some parameters unassigned.
-   * It's expected that the message contains params.length+unassignedParams placeholders. Parameters
+   * It's expected that the message contains {@code params.length + unassignedParams} placeholders. Parameters
    * {@code {0}..{params.length-1}} will be substituted using passed params array. The remaining parameters
    * will be renumbered: {@code {params.length}} will become {@code {0}} and so on, so the resulting template
    * could be applied once more.

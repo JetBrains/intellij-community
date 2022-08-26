@@ -7,7 +7,7 @@ import com.intellij.execution.process.UnixProcessManager
 import com.intellij.ide.actions.EditCustomVmOptionsAction
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.idea.shellEnvLoadFuture
+import com.intellij.idea.shellEnvDeferred
 import com.intellij.jna.JnaLoader
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
@@ -240,9 +240,9 @@ private suspend fun checkEnvironment() {
   }
 
   try {
-    if (shellEnvLoadFuture!!.await() == false) {
+    if (shellEnvDeferred!!.await() == false) {
       val action = NotificationAction.createSimpleExpiring(IdeBundle.message("shell.env.loading.learn.more")) {
-        BrowserUtil.browse("https://jb.gg/shell-env")
+        BrowserUtil.browse("https://intellij.com/shell-env")
       }
       val appName = ApplicationNamesInfo.getInstance().fullProductName
       val shell = System.getenv("SHELL")

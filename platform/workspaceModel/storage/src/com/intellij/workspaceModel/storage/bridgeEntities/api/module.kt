@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.storage.bridgeEntities.api
 
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
@@ -33,10 +34,10 @@ interface ModuleEntity : WorkspaceEntityWithPersistentId {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ModuleEntity, ModifiableWorkspaceEntity<ModuleEntity>, ObjBuilder<ModuleEntity> {
-    override var name: String
     override var entitySource: EntitySource
+    override var name: String
     override var type: String?
-    override var dependencies: List<ModuleDependencyItem>
+    override var dependencies: MutableList<ModuleDependencyItem>
     override var contentRoots: List<ContentRootEntity>
     override var customImlData: ModuleCustomImlDataEntity?
     override var groupPath: ModuleGroupPathEntity?
@@ -52,8 +53,8 @@ interface ModuleEntity : WorkspaceEntityWithPersistentId {
                         init: (Builder.() -> Unit)? = null): ModuleEntity {
       val builder = builder()
       builder.name = name
+      builder.dependencies = dependencies.toMutableWorkspaceList()
       builder.entitySource = entitySource
-      builder.dependencies = dependencies
       init?.invoke(builder)
       return builder
     }
@@ -79,8 +80,8 @@ interface ModuleCustomImlDataEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ModuleCustomImlDataEntity, ModifiableWorkspaceEntity<ModuleCustomImlDataEntity>, ObjBuilder<ModuleCustomImlDataEntity> {
-    override var module: ModuleEntity
     override var entitySource: EntitySource
+    override var module: ModuleEntity
     override var rootManagerTagCustomData: String?
     override var customModuleOptions: Map<String, String>
   }
@@ -90,8 +91,8 @@ interface ModuleCustomImlDataEntity : WorkspaceEntity {
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): ModuleCustomImlDataEntity {
       val builder = builder()
-      builder.entitySource = entitySource
       builder.customModuleOptions = customModuleOptions
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }
@@ -114,16 +115,16 @@ interface ModuleGroupPathEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ModuleGroupPathEntity, ModifiableWorkspaceEntity<ModuleGroupPathEntity>, ObjBuilder<ModuleGroupPathEntity> {
-    override var module: ModuleEntity
     override var entitySource: EntitySource
-    override var path: List<String>
+    override var module: ModuleEntity
+    override var path: MutableList<String>
   }
 
   companion object : Type<ModuleGroupPathEntity, Builder>() {
     operator fun invoke(path: List<String>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ModuleGroupPathEntity {
       val builder = builder()
+      builder.path = path.toMutableWorkspaceList()
       builder.entitySource = entitySource
-      builder.path = path
       init?.invoke(builder)
       return builder
     }
@@ -149,8 +150,8 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : JavaModuleSettingsEntity, ModifiableWorkspaceEntity<JavaModuleSettingsEntity>, ObjBuilder<JavaModuleSettingsEntity> {
-    override var module: ModuleEntity
     override var entitySource: EntitySource
+    override var module: ModuleEntity
     override var inheritedCompilerOutput: Boolean
     override var excludeOutput: Boolean
     override var compilerOutput: VirtualFileUrl?
@@ -164,9 +165,9 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): JavaModuleSettingsEntity {
       val builder = builder()
-      builder.entitySource = entitySource
       builder.inheritedCompilerOutput = inheritedCompilerOutput
       builder.excludeOutput = excludeOutput
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }
@@ -195,8 +196,8 @@ interface ExternalSystemModuleOptionsEntity: WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ExternalSystemModuleOptionsEntity, ModifiableWorkspaceEntity<ExternalSystemModuleOptionsEntity>, ObjBuilder<ExternalSystemModuleOptionsEntity> {
-    override var module: ModuleEntity
     override var entitySource: EntitySource
+    override var module: ModuleEntity
     override var externalSystem: String?
     override var externalSystemModuleVersion: String?
     override var linkedProjectPath: String?

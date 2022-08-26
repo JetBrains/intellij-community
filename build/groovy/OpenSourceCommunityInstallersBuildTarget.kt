@@ -19,7 +19,7 @@ object OpenSourceCommunityInstallersBuildTarget {
     }
 
     val context = createCommunityBuildContext(IdeaProjectLoaderUtil.guessCommunityHome(javaClass), options)
-    BuildTasks.create(context).compileProjectAndTests(listOf("intellij.platform.jps.build"))
+    BuildTasks.create(context).compileProjectAndTests(listOf("intellij.platform.jps.build.tests"))
     buildDistributions(context)
     spanBuilder("Build standalone JPS").useWithScope {
       val jpsArtifactDir = context.paths.artifactDir.resolve("jps")

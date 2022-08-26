@@ -15,7 +15,7 @@ public interface GroovyProjectDescriptors {
   TestLibrary LIB_GROOVY_2_2 = new RepositoryTestLibrary("org.codehaus.groovy:groovy:2.2.0");
   TestLibrary LIB_GROOVY_2_3 = new RepositoryTestLibrary("org.codehaus.groovy:groovy:2.3.0");
   TestLibrary LIB_GROOVY_2_4 = new RepositoryTestLibrary("org.codehaus.groovy:groovy-all:2.4.17");
-  TestLibrary LIB_GROOVY_2_5 = new RepositoryTestLibrary("org.codehaus.groovy:groovy:2.5.11");
+  TestLibrary LIB_GROOVY_2_5 = new RepositoryTestLibrary("org.codehaus.groovy:groovy:2.5.17");
   TestLibrary LIB_GROOVY_3_0 = new RepositoryTestLibrary("org.codehaus.groovy:groovy:3.0.7");
   TestLibrary LIB_GROOVY_4_0 = new RepositoryTestLibrary("org.apache.groovy:groovy:4.0.0");
 

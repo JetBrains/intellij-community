@@ -110,6 +110,7 @@ class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
     # Since IPython 5 the terminal interface is not compatible with Emacs `inferior-shell` and
     # the `simple_prompt` flag is needed
     simple_prompt = CBool(True)
+    pydev_curr_exec_line = 0
     
     if INLINE_OUTPUT_SUPPORTED:
         displayhook_class = Type(PyDevDisplayHook)
@@ -360,6 +361,7 @@ class _PyDevIPythonFrontEnd:
 
             if self.is_complete(buf):
                 self._curr_exec_line += 1
+                self.ipython.pydev_curr_exec_line = self._curr_exec_line
                 res = self.ipython.run_cell(buf)
                 del self._curr_exec_lines[:]
                 if res.error_in_exec is not None:
@@ -376,16 +378,12 @@ class _PyDevIPythonFrontEnd:
                 return True, False #needs more
             else:
                 self._curr_exec_line += 1
+                self.ipython.pydev_curr_exec_line = self._curr_exec_line
                 res = self.ipython.run_cell(line, store_history=True)
                 if res.error_in_exec is not None:
                     return False, True
                 else:
                     return False, False #execute complete (no more)
-                #hist = self.ipython.history_manager.output_hist_reprs
-                #rep = hist.get(self._curr_exec_line, None)
-                #if rep is not None:
-                #    print(rep)
-                return False #execute complete (no more)
 
     def is_automagic(self):
         return self.ipython.automagic

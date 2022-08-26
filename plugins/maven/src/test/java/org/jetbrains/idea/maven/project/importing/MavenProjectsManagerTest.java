@@ -12,10 +12,7 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrack
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleTypeId;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -23,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.util.FileContentUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.*;
@@ -972,6 +970,8 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
   @Test 
   public void testForceReimport() {
+    createProjectSubDir("src/main/java");
+
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -986,10 +986,15 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     importProject();
     assertModules("project");
 
-    createProjectSubDir("src/main/java");
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       ModifiableRootModel model = ModuleRootManager.getInstance(getModule("project")).getModifiableModel();
+
+      ContentEntry contentRoot = model.getContentEntries()[0];
+      for (SourceFolder eachSourceFolders : contentRoot.getSourceFolders()) {
+        contentRoot.removeSourceFolder(eachSourceFolders);
+      }
+
       for (OrderEntry each : model.getOrderEntries()) {
         if (each instanceof LibraryOrderEntry && MavenRootModelAdapter.isMavenLibrary(((LibraryOrderEntry)each).getLibrary())) {
           model.removeOrderEntry(each);
@@ -1123,7 +1128,76 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     assertTrue(myProjectsManager.isIgnored(myProjectsManager.findProject(m)));
   }
 
-  @Test 
+  @Test
+  public void testDoNotIgnoreProjectWhenModuleDeletedDuringImport() {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
+
+                     "<modules>" +
+                     "  <module>m</module>" +
+                     "</modules>");
+
+    VirtualFile m = createModulePom("m",
+                                    "<groupId>test</groupId>" +
+                                    "<artifactId>m</artifactId>" +
+                                    "<version>1</version>");
+    importProject();
+
+    assertModules("project", "m");
+    assertSize(1, myProjectsManager.getRootProjects());
+    assertEmpty(myProjectsManager.getIgnoredFilesPaths());
+
+    configConfirmationForYesAnswer();
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<packaging>pom</packaging>");
+
+    assertModules("project");
+    assertSize(1, myProjectsManager.getRootProjects());
+    assertEmpty(myProjectsManager.getIgnoredFilesPaths());
+  }
+
+  @Test
+  public void testDoNotIgnoreProjectWhenSeparateMainAndTestModulesDeletedDuringImport() {
+    Assume.assumeTrue(MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject));
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<properties>" +
+                  "  <maven.compiler.release>8</maven.compiler.release>" +
+                  "  <maven.compiler.testRelease>11</maven.compiler.testRelease>" +
+                  "</properties>" +
+                  "" +
+                  " <build>\n" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <artifactId>maven-compiler-plugin</artifactId>" +
+                  "      <version>3.10.0</version>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>"
+    );
+
+    assertModules("project", "project.main", "project.test");
+    assertSize(1, myProjectsManager.getRootProjects());
+    assertEmpty(myProjectsManager.getIgnoredFilesPaths());
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertModules("project");
+    assertSize(1, myProjectsManager.getRootProjects());
+    assertEmpty(myProjectsManager.getIgnoredFilesPaths());
+  }
+
+  @Test
   public void testDoNotRemoveMavenProjectsOnReparse() {
     // this pom file doesn't belong to any of the modules, this is won't be processed
     // by MavenProjectProjectsManager and won't occur in its projects list.

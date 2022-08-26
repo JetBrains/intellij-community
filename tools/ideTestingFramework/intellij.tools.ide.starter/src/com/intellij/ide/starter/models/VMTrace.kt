@@ -28,7 +28,8 @@ object VMTrace {
       val vmTraceBytes = VMOptions::class.java.getResourceAsStream(resourceName)!!
         .use { it.readAllBytes() }
       Files.write(vmTraceFile, vmTraceBytes)
-    } else {
+    }
+    else {
       vmTraceFile = Path.of("unsupported-platform-libvmtrace")
     }
   }

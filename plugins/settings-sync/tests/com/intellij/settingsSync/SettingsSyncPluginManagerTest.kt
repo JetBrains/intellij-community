@@ -80,6 +80,9 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
     try {
       SettingsSyncPluginManager.getInstance().clearState()
     }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
     finally {
       super.tearDown()
     }

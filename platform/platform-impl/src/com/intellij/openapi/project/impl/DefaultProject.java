@@ -15,7 +15,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -29,9 +28,6 @@ import org.picocontainer.PicoContainer;
 
 import java.util.Map;
 
-/**
- * @author peter
- */
 final class DefaultProject extends UserDataHolderBase implements Project {
   private static final Logger LOG = Logger.getInstance(DefaultProject.class);
 
@@ -53,6 +49,11 @@ final class DefaultProject extends UserDataHolderBase implements Project {
       ((DefaultProjectImpl)project).init();
     }
   };
+
+  @Override
+  public ComponentManager getActualComponentManager() {
+    return getDelegate();
+  }
 
   @Override
   public <T> T instantiateClass(@NotNull Class<T> aClass, @NotNull PluginId pluginId) {
@@ -205,7 +206,7 @@ final class DefaultProject extends UserDataHolderBase implements Project {
 
   @Override
   public CoroutineScope getCoroutineScope() {
-    throw new IllegalStateException("Default project doesn't have coroutineScope");
+    return ApplicationManager.getApplication().getCoroutineScope();
   }
 
   @Override
@@ -236,7 +237,7 @@ final class DefaultProject extends UserDataHolderBase implements Project {
 
   @Override
   public @NotNull PicoContainer getPicoContainer() {
-    return getDelegate().getPicoContainer();
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -283,10 +284,6 @@ final class DefaultProjectImpl extends ComponentManagerImpl implements Project {
   @Override
   public boolean isParentLazyListenersIgnored() {
     return true;
-  }
-
-  @Override
-  protected void setProgressDuringInit(@NotNull ProgressIndicator indicator) {
   }
 
   @Override

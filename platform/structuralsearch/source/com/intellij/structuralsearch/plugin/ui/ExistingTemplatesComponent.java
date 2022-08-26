@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.CommonBundle;
@@ -115,6 +115,11 @@ public final class ExistingTemplatesComponent {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         removeTemplate(project);
       }
@@ -126,6 +131,11 @@ public final class ExistingTemplatesComponent {
         if (mySearchEditorProducer != null) {
           e.getPresentation().setEnabled(!StringUtil.isEmptyOrSpaces(mySearchEditorProducer.get().getText()));
         }
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
 
       @Override
@@ -317,8 +327,10 @@ public final class ExistingTemplatesComponent {
 
     final TreeSpeedSearch speedSearch = new TreeSpeedSearch(
       tree,
-      object -> {
-        final Object userObject = ((DefaultMutableTreeNode)object.getLastPathComponent()).getUserObject();
+      treePath -> {
+        final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)treePath.getLastPathComponent();
+        if (treeNode instanceof DraftTemplateNode) return SSRBundle.message("draft.template.node");
+        final Object userObject = treeNode.getUserObject();
         return (userObject instanceof Configuration) ? ((Configuration)userObject).getName() : userObject.toString();
       }
     );

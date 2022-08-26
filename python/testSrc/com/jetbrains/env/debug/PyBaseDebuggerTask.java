@@ -475,7 +475,6 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
    * Waits until the given string appears in the output the given number of times.
    * @param string The string to match output with.
    * @param times The number of times we expect to see the string.
-   * @throws InterruptedException
    */
   public void waitForOutput(String string, int times) throws InterruptedException {
     long started = System.currentTimeMillis();

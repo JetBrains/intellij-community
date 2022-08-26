@@ -10,10 +10,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class IntroIntProperty extends IntrospectedProperty<Integer> {
   private PropertyRenderer<Integer> myRenderer;
   private PropertyEditor<Integer> myEditor;

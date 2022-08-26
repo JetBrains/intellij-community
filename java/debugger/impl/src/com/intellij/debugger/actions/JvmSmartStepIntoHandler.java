@@ -41,7 +41,6 @@ public abstract class JvmSmartStepIntoHandler {
   /**
    * Override in case if your JVMNames slightly different then it can be provided by getJvmSignature method.
    *
-   * @param stepTarget
    * @return SmartStepFilter
    */
   @Nullable

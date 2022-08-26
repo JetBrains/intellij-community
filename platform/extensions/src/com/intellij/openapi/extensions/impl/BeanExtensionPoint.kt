@@ -12,8 +12,7 @@ internal class BeanExtensionPoint<T : Any>(
   pluginDescriptor: PluginDescriptor,
   componentManager: ComponentManager,
   dynamic: Boolean,
-) : ExtensionPointImpl<T>(name, className, pluginDescriptor, componentManager, null, dynamic),
-    ImplementationClassResolver {
+) : ExtensionPointImpl<T>(name, className, pluginDescriptor, componentManager, null, dynamic), ImplementationClassResolver {
 
   override fun resolveImplementationClass(componentManager: ComponentManager, adapter: ExtensionComponentAdapter) = extensionClass
 
@@ -30,8 +29,8 @@ internal class BeanExtensionPoint<T : Any>(
 
   override fun unregisterExtensions(componentManager: ComponentManager,
                                     pluginDescriptor: PluginDescriptor,
-                                    priorityListenerCallbacks: MutableList<in Runnable>,
-                                    listenerCallbacks: MutableList<in Runnable>) {
+                                    priorityListenerCallbacks: List<Runnable>,
+                                    listenerCallbacks: List<Runnable>) {
     unregisterExtensions(false, priorityListenerCallbacks, listenerCallbacks) { it.pluginDescriptor !== pluginDescriptor }
   }
 }

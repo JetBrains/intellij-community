@@ -98,7 +98,7 @@ public class JSpecifyAnnotationTest extends LightJavaCodeInsightFixtureTestCase 
     boolean dirMode = Files.isDirectory(path);
     List<Path> files = Files.walk(path)
       .filter(p -> Files.isRegularFile(p)).filter(p -> p.getFileName().toString().endsWith(".java"))
-      .collect(Collectors.toList());
+      .toList();
     if (files.isEmpty()) {
       throw new IllegalStateException("No Java files");
     }

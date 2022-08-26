@@ -5,7 +5,6 @@ import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -40,10 +39,10 @@ internal class StatisticsStateCollectorsScheduler : ApplicationInitializedListen
 
       delay(LOG_APPLICATION_STATES_INITIAL_DELAY)
       allowExecution.set(false)
-      FUStateUsagesLogger.create().logApplicationStates()
+      FUStateUsagesLogger.getInstance().logApplicationStates()
       while (true) {
         delay(LOG_APPLICATION_STATES_DELAY)
-        FUStateUsagesLogger.create().logApplicationStates()
+        FUStateUsagesLogger.getInstance().logApplicationStates()
       }
     }
   }
@@ -62,11 +61,11 @@ internal class StatisticsStateCollectorsScheduler : ApplicationInitializedListen
           if (!reduceInitialDelay) {
             delay(LOG_PROJECTS_STATES_INITIAL_DELAY)
           }
-          FUStateUsagesLogger.create().logProjectStates(project, EmptyProgressIndicator())
+          FUStateUsagesLogger.getInstance().logProjectStates(project)
 
           while (true) {
             delay(LOG_PROJECTS_STATES_DELAY)
-            FUStateUsagesLogger.create().logProjectStates(project, EmptyProgressIndicator())
+            FUStateUsagesLogger.getInstance().logProjectStates(project)
           }
         }
       }
@@ -86,7 +85,7 @@ internal class StatisticsStateCollectorsScheduler : ApplicationInitializedListen
       if (allowExecution.getAndSet(false)) {
         project.coroutineScope.launch {
           delay(LOG_APPLICATION_STATE_SMART_MODE_DELAY)
-          FUStateUsagesLogger.create().logApplicationStatesOnStartup()
+          FUStateUsagesLogger.getInstance().logApplicationStatesOnStartup()
         }
       }
     }

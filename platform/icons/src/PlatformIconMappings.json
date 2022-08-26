@@ -1,5 +1,11 @@
 {
   "expui": {
+    "actions": {
+      "playFirst.svg": "actions/play_first.svg",
+      "playBack.svg": "actions/play_back.svg",
+      "playForward.svg": "actions/play_forward.svg",
+      "playLast.svg": "actions/play_last.svg"
+    },
     "bookmarks": {
       "addBookmarksList.svg": "actions/addList.svg",
       "bookmark.svg": "nodes/bookmark.svg",
@@ -153,6 +159,7 @@
         "actions/AddMulticaret.svg"
       ],
       "addAccount.svg": "codeWithMe/cwmAccess.svg",
+      "user.svg": "general/user.svg",
       "chevronDown.svg": [
         "actions/findAndShowNextMatches.svg",
         "actions/findAndShowNextMatchesSmall.svg",
@@ -248,6 +255,7 @@
       "previewOnly.svg": "general/layoutPreviewOnly.svg",
       "previewVertically.svg": "actions/previewDetails.svg",
       "refresh.svg": "actions/refresh.svg",
+      "reset.svg": "general/reset.svg",
       "remove.svg": [
         "general/remove.svg",
         "actions/RemoveMulticaret.svg"
@@ -298,7 +306,6 @@
     },
     "image": {
       "colorPicker_dark.svg": "ide/pipette.svg",
-      "chessboard.svg": "org/intellij/images/icons/ToggleTransparencyChessboard.svg",
       "actualZoom.svg": "graph/actualZoom.svg",
       "colorPicker.svg": "ide/pipette.svg",
       "grid.svg": "graph/grid.svg",
@@ -378,6 +385,7 @@
       "classAnonymous.svg": "nodes/anonymousClass.svg",
       "classInitializer.svg": "nodes/classInitializer.svg",
       "constant.svg": "nodes/constant.svg",
+      "dataSchema.svg": "nodes/dataSchema.svg",
       "editFolder.svg": "modules/editFolder.svg",
       "enum.svg": "nodes/enum.svg",
       "errorIntroduction.svg": "nodes/errorIntroduction.svg",
@@ -493,6 +501,17 @@
       "stepOutCodeBlock.svg": "actions/stepOutCodeBlock.svg",
       "stepOver.svg": "actions/traceOver.svg",
       "stop.svg": "actions/suspend.svg",
+      "testCustom.svg": "runConfigurations/testCustom.svg",
+      "testError.svg": "runConfigurations/testError.svg",
+      "testFailed.svg": "runConfigurations/testFailed.svg",
+      "testIgnored.svg": "runConfigurations/testIgnored.svg",
+      "testNotRunYet.svg": "runConfigurations/testNotRan.svg",
+      "testPassed.svg": "runConfigurations/testPassed.svg",
+      "testPassedIgnored.svg": "runConfigurations/testPassedIgnored.svg",
+      "testPaused.svg": "runConfigurations/testPaused.svg",
+      "testSkipped.svg": "runConfigurations/testSkipped.svg",
+      "testTerminated.svg": "runConfigurations/testTerminated.svg",
+      "testUnknown.svg": "runConfigurations/testUnknown.svg",
       "viewBreakpoints.svg": "debugger/viewBreakpoints.svg"
     },
     "runConfigurations":{

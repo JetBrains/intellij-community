@@ -13,7 +13,6 @@ import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.div
 import kotlin.io.path.exists
-import kotlin.streams.toList
 
 class IDEDataPaths(
   private val testHome: Path,
@@ -46,6 +45,7 @@ class IDEDataPaths(
   val configDir = ((inMemoryRoot ?: testHome) / "config").createDirectories()
   val systemDir = ((inMemoryRoot ?: testHome) / "system").createDirectories()
   val pluginsDir = (testHome / "plugins").createDirectories()
+  val jbrDiagnostic = (testHome / "jbrDiagnostic").createDirectories()
 
   override fun close() {
     if (inMemoryRoot != null) {

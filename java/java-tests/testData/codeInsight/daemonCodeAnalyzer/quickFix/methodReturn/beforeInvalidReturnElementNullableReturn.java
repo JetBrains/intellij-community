@@ -1,4 +1,4 @@
-// "Make 'm' return 'java.lang.Integer' or predecessor" "true"
+// "Make 'm()' return 'java.lang.Integer' or predecessor" "true-preview"
 
 class Test {
 

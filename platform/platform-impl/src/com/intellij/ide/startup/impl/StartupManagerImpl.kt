@@ -68,28 +68,28 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
   companion object {
     @VisibleForTesting
     fun addActivityEpListener(project: Project) {
-      StartupActivity.POST_STARTUP_ACTIVITY.addExtensionPointListener(object : ExtensionPointListener<StartupActivity?> {
-        override fun extensionAdded(activity: StartupActivity, descriptor: PluginDescriptor) {
-          if (project is LightEditCompatible && activity !is LightEditCompatible) {
+      StartupActivity.POST_STARTUP_ACTIVITY.addExtensionPointListener(object : ExtensionPointListener<StartupActivity> {
+        override fun extensionAdded(extension: StartupActivity, pluginDescriptor: PluginDescriptor) {
+          if (project is LightEditCompatible && extension !is LightEditCompatible) {
             return
           }
 
           val startupManager = getInstance(project) as StartupManagerImpl
-          val pluginId = descriptor.pluginId
+          val pluginId = pluginDescriptor.pluginId
           @Suppress("SSBasedInspection")
-          if (activity is DumbAware) {
+          if (extension is DumbAware) {
             project.coroutineScope.launch {
-              if (activity is ProjectPostStartupActivity) {
-                activity.execute(project)
+              if (extension is ProjectPostStartupActivity) {
+                extension.execute(project)
               }
               else {
-                startupManager.runActivityAndMeasureDuration(activity, pluginId)
+                startupManager.runActivityAndMeasureDuration(extension, pluginId)
               }
             }
           }
           else {
             DumbService.getInstance(project).unsafeRunWhenSmart {
-              startupManager.runActivityAndMeasureDuration(activity, pluginId)
+              startupManager.runActivityAndMeasureDuration(extension, pluginId)
             }
           }
         }
@@ -199,7 +199,11 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
       coroutineContext.ensureActive()
 
       val pluginId = adapter.pluginDescriptor.pluginId
-      if (!isCorePlugin(adapter.pluginDescriptor) && pluginId.idString != "com.jetbrains.performancePlugin") {
+      if (!isCorePlugin(adapter.pluginDescriptor) && pluginId.idString != "com.jetbrains.performancePlugin"
+                                                  && pluginId.idString != "com.intellij.clion-makefile"
+                                                  && pluginId.idString != "com.intellij.clion-swift"
+                                                  && pluginId.idString != "com.intellij.appcode"
+                                                  && pluginId.idString != "com.intellij.clion-compdb") {
         LOG.error("Only bundled plugin can define ${extensionPoint.name}: ${adapter.pluginDescriptor}")
         continue
       }

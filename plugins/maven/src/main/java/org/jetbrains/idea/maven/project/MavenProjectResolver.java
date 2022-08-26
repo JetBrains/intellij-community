@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.ide.plugins.advertiser.PluginFeatureEnabler;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -152,14 +153,20 @@ public class MavenProjectResolver {
 
       if (mavenProjectCandidate == null) continue;
 
-      MavenProjectChanges changes = mavenProjectCandidate
+      MavenProject.Snapshot snapshot = mavenProjectCandidate.getSnapshot();
+      mavenProjectCandidate
         .set(result, generalSettings, false, MavenProjectReaderResult.shouldResetDependenciesAndFolders(result), false);
-      mavenProjectCandidate.getProblems(); // need for fill problem cache
       if (result.nativeMavenProject != null) {
+        PluginFeatureEnabler.enableSuggested(myProject);
+
         for (MavenImporter eachImporter : MavenImporter.getSuitableImporters(mavenProjectCandidate)) {
           eachImporter.resolve(project, mavenProjectCandidate, result.nativeMavenProject, embedder, context);
         }
       }
+      // project may be modified by MavenImporters, so we need to collect the changes after them:
+      MavenProjectChanges changes = mavenProjectCandidate.getChangesSinceSnapshot(snapshot);
+
+      mavenProjectCandidate.getProblems(); // need for fill problem cache
       myTree.fireProjectResolved(Pair.create(mavenProjectCandidate, changes), result.nativeMavenProject);
     }
   }

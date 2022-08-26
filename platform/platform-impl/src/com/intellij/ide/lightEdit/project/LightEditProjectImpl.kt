@@ -5,7 +5,6 @@ import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbService
@@ -37,7 +36,7 @@ internal class LightEditProjectImpl private constructor(projectPath: Path) : Pro
       coroutineScope {
         preloadServicesAndCreateComponents(project = this@LightEditProjectImpl, preloadServices = true)
         projectInitListeners {
-          it.serviceCreated(this@LightEditProjectImpl)
+          it.containerConfigured(this@LightEditProjectImpl)
         }
       }
     }
@@ -53,23 +52,19 @@ internal class LightEditProjectImpl private constructor(projectPath: Path) : Pro
     registerService(serviceInterface = DirectoryIndex::class.java,
                     implementation = LightEditDirectoryIndex::class.java,
                     pluginDescriptor = pluginDescriptor,
-                    override = true,
-                    preloadMode = ServiceDescriptor.PreloadMode.FALSE)
+                    override = true)
     registerService(serviceInterface = ProjectFileIndex::class.java,
                     implementation = LightEditProjectFileIndex::class.java,
                     pluginDescriptor = pluginDescriptor,
-                    override = true,
-                    preloadMode = ServiceDescriptor.PreloadMode.FALSE)
+                    override = true)
     registerService(serviceInterface = FileIndexFacade::class.java,
                     implementation = LightEditFileIndexFacade::class.java,
                     pluginDescriptor = pluginDescriptor,
-                    override = true,
-                    preloadMode = ServiceDescriptor.PreloadMode.FALSE)
+                    override = true)
     registerService(serviceInterface = DumbService::class.java,
                     implementation = LightEditDumbService::class.java,
                     pluginDescriptor = pluginDescriptor,
-                    override = true,
-                    preloadMode = ServiceDescriptor.PreloadMode.FALSE)
+                    override = true)
     registerComponent(key = FileEditorManager::class.java,
                       implementation = LightEditFileEditorManagerImpl::class.java,
                       pluginDescriptor = pluginDescriptor,

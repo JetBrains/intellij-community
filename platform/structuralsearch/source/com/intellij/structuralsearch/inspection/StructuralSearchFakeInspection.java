@@ -68,7 +68,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
   @NotNull
   @Override
   public String getShortName() {
-    return myMainConfiguration.getShortName();
+    return myMainConfiguration.getUuid();
   }
 
   @Override
@@ -209,7 +209,6 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
   private void performAdd(@NotNull JList<Configuration> list, @NotNull AnActionButton b) {
     final AnAction[] children = new AnAction[]{new AddTemplateAction(list, false), new AddTemplateAction(list, true)};
     final RelativePoint point = b.getPreferredPopupPoint();
-    if (point == null) return;
     JBPopupFactory.getInstance().createActionGroupPopup(null, new DefaultActionGroup(children),
                                                         DataManager.getInstance().getDataContext(b.getContextComponent()),
                                                         JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true).show(point);
@@ -247,6 +246,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(list));
     if (project == null) return;
     final int index = list.getSelectedIndex();
+    if (index < 0) return;
     final Configuration configuration = myConfigurations.get(index);
     if (configuration == null) return;
     final SearchContext searchContext = new SearchContext(project);

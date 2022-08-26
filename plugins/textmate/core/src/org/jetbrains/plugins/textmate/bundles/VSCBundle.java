@@ -77,7 +77,7 @@ public class VSCBundle extends Bundle {
                   if (extensions instanceof ArrayList) {
                     //noinspection unchecked
                     Stream<String> stream = ((ArrayList)extensions).stream().map(ext -> Strings.trimStart((String)ext, "."));
-                    idToExtension.computeIfAbsent((String)id, (key) -> new HashSet<>()).addAll(stream.collect(Collectors.toList()));
+                    idToExtension.computeIfAbsent((String)id, (key) -> new HashSet<>()).addAll(stream.toList());
                   }
                   Object filenames = ((Map<?, ?>)language).get("filenames");
                   if (filenames instanceof ArrayList) {

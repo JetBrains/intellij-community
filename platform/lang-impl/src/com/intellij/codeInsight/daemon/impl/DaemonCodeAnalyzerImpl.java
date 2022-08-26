@@ -376,6 +376,20 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       fileStatusMap.markFileUpToDate(document, ignoreId);
     }
 
+    try {
+      doRunPasses(textEditors, passesToIgnore, canChangeDocument, callbackWhileWaiting);
+    }
+    finally {
+      DaemonProgressIndicator.setDebug(false);
+      fileStatusMap.allowDirt(true);
+    }
+  }
+
+  @TestOnly
+  private void doRunPasses(@NotNull List<? extends TextEditor> textEditors,
+                           int @NotNull [] passesToIgnore,
+                           boolean canChangeDocument,
+                           @Nullable Runnable callbackWhileWaiting) {
     ((CoreProgressManager)ProgressManager.getInstance()).suppressAllDeprioritizationsDuringLongTestsExecutionIn(() -> {
       HighlightingSession session = queuePassesCreation(textEditors, passesToIgnore);
 
@@ -429,8 +443,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
         ExceptionUtil.rethrow(unwrapped);
       }
       finally {
-        DaemonProgressIndicator.setDebug(false);
-        fileStatusMap.allowDirt(true);
         progress.cancel();
         waitForTermination();
       }
@@ -723,10 +735,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
    * @param minSeverity the minimum HighlightSeverity starting from which infos are considered for collection
    */
   public @Nullable HighlightInfo findHighlightsByOffset(@NotNull Document document,
-                                              int offset,
-                                              boolean includeFixRange,
-                                              boolean highestPriorityOnly,
-                                              @NotNull HighlightSeverity minSeverity) {
+                                                        int offset,
+                                                        boolean includeFixRange,
+                                                        boolean highestPriorityOnly,
+                                                        @NotNull HighlightSeverity minSeverity) {
     HighlightByOffsetProcessor processor = new HighlightByOffsetProcessor(highestPriorityOnly);
     processHighlightsNearOffset(document, myProject, minSeverity, offset, includeFixRange, processor);
     return processor.getResult();

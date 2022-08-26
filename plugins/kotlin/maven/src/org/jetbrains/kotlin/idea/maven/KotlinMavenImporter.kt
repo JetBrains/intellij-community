@@ -99,9 +99,6 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
             contributeSourceDirectories(mavenProject, module, rootModel)
         }
 
-        if (!KotlinJpsPluginSettings.isUnbundledJpsExperimentalFeatureEnabled(module.project)) {
-            return
-        }
         val mavenPlugin = mavenProject.findKotlinMavenPlugin() ?: return
         val currentVersion = mavenPlugin.compilerVersion
         val accumulatorVersion = module.project.getUserData(KOTLIN_JPS_VERSION_ACCUMULATOR)

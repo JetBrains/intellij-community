@@ -13,8 +13,10 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -105,6 +107,9 @@ open class ExternalSystemModuleOptionsEntityImpl : ExternalSystemModuleOptionsEn
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToOneParent<WorkspaceEntityBase>(MODULE_CONNECTION_ID, this) == null) {
           error("Field ExternalSystemModuleOptionsEntity#module should be initialized")
@@ -115,15 +120,37 @@ open class ExternalSystemModuleOptionsEntityImpl : ExternalSystemModuleOptionsEn
           error("Field ExternalSystemModuleOptionsEntity#module should be initialized")
         }
       }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ExternalSystemModuleOptionsEntity#entitySource should be initialized")
-      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as ExternalSystemModuleOptionsEntity
+      this.entitySource = dataSource.entitySource
+      this.externalSystem = dataSource.externalSystem
+      this.externalSystemModuleVersion = dataSource.externalSystemModuleVersion
+      this.linkedProjectPath = dataSource.linkedProjectPath
+      this.linkedProjectId = dataSource.linkedProjectId
+      this.rootProjectPath = dataSource.rootProjectPath
+      this.externalSystemModuleGroup = dataSource.externalSystemModuleGroup
+      this.externalSystemModuleType = dataSource.externalSystemModuleType
+      if (parents != null) {
+        this.module = parents.filterIsInstance<ModuleEntity>().single()
+      }
+    }
+
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var module: ModuleEntity
       get() {
@@ -158,15 +185,6 @@ open class ExternalSystemModuleOptionsEntityImpl : ExternalSystemModuleOptionsEn
           this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
         }
         changedProperty.add("module")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override var externalSystem: String?
@@ -279,6 +297,25 @@ class ExternalSystemModuleOptionsEntityData : WorkspaceEntityData<ExternalSystem
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ExternalSystemModuleOptionsEntity(entitySource) {
+      this.externalSystem = this@ExternalSystemModuleOptionsEntityData.externalSystem
+      this.externalSystemModuleVersion = this@ExternalSystemModuleOptionsEntityData.externalSystemModuleVersion
+      this.linkedProjectPath = this@ExternalSystemModuleOptionsEntityData.linkedProjectPath
+      this.linkedProjectId = this@ExternalSystemModuleOptionsEntityData.linkedProjectId
+      this.rootProjectPath = this@ExternalSystemModuleOptionsEntityData.rootProjectPath
+      this.externalSystemModuleGroup = this@ExternalSystemModuleOptionsEntityData.externalSystemModuleGroup
+      this.externalSystemModuleType = this@ExternalSystemModuleOptionsEntityData.externalSystemModuleType
+      this.module = parents.filterIsInstance<ModuleEntity>().single()
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(ModuleEntity::class.java)
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
@@ -322,5 +359,21 @@ class ExternalSystemModuleOptionsEntityData : WorkspaceEntityData<ExternalSystem
     result = 31 * result + externalSystemModuleGroup.hashCode()
     result = 31 * result + externalSystemModuleType.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + externalSystem.hashCode()
+    result = 31 * result + externalSystemModuleVersion.hashCode()
+    result = 31 * result + linkedProjectPath.hashCode()
+    result = 31 * result + linkedProjectId.hashCode()
+    result = 31 * result + rootProjectPath.hashCode()
+    result = 31 * result + externalSystemModuleGroup.hashCode()
+    result = 31 * result + externalSystemModuleType.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.sameForAllEntities = true
   }
 }

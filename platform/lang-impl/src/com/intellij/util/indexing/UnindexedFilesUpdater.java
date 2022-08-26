@@ -117,6 +117,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     myPusher = PushedFilePropertiesUpdater.getInstance(myProject);
     myProvidedStatusMark = predefinedIndexableFilesIterators == null ? null : mark;
     myPredefinedIndexableFilesIterators = predefinedIndexableFilesIterators;
+    LOG.assertTrue(myPredefinedIndexableFilesIterators == null || !myPredefinedIndexableFilesIterators.isEmpty());
 
     if (isFullIndexUpdate()) {
       myProject.putUserData(CONTENT_SCANNED, null);

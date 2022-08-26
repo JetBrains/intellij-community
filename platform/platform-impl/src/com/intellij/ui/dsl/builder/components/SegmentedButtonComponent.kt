@@ -3,10 +3,7 @@ package com.intellij.ui.dsl.builder.components
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.actionSystem.ToggleAction
-import com.intellij.openapi.actionSystem.Toggleable
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
@@ -252,6 +249,10 @@ private class SegmentedButtonAction<T>(val parent: SegmentedButtonComponent<T>, 
 
   override fun isSelected(e: AnActionEvent): Boolean {
     return parent.selectedItem == item
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {

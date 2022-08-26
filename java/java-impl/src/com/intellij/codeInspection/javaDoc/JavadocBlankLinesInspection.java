@@ -116,7 +116,7 @@ public class JavadocBlankLinesInspection extends LocalInspectionTool {
                        @Nullable Editor editor,
                        @NotNull PsiElement startElement,
                        @NotNull PsiElement endElement) {
-      Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+      Document document = file.getViewProvider().getDocument();
       if (document == null) return;
       TextRange range = startElement.getTextRange();
       document.replaceString(range.getStartOffset(), range.getEndOffset(), "* <p>");

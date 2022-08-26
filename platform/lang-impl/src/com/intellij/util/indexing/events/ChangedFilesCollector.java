@@ -241,7 +241,7 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   }
 
   private void processFilesInReadAction(@NotNull VfsEventsMerger.VfsEventProcessor processor) {
-    assert ApplicationManager.getApplication().isReadAccessAllowed(); // no vfs events -> event processing code can finish
+    ApplicationManager.getApplication().assertReadAccessAllowed();
 
     int publishedEventIndex = getEventMerger().getPublishedEventIndex();
     int processedEventIndex = myProcessedEventIndex.get();

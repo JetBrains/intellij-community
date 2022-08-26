@@ -79,10 +79,12 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
                             // set aside the use-case for lazy developers who just don't care to retrieve the correct project for the file
                             // and use DefaultProjectFactory.getDefaultProject() because why bother
                             || myProject.isDefault();
-      LOG.assertTrue(isMyProject, "Trying to get PSI for an alien project. VirtualFile=" +
-                                  virtualFile + ";" +
-                                  " project=" + myProject +" ("+myProject.getBasePath()+")"
-                                  + "; but the file actually belongs to " + StringUtil.join(projects, p->p+" ("+p.getBasePath()+")",","));
+      if (!isMyProject) {
+        LOG.error("Trying to get PSI for an alien project. VirtualFile=" +
+                  virtualFile + ";" +
+                  " project=" + myProject + " (" + myProject.getBasePath() + ")"
+                  + "; but the file actually belongs to " + StringUtil.join(projects, p -> p + " (" + p.getBasePath() + ")", ","));
+      }
     }
   }
 

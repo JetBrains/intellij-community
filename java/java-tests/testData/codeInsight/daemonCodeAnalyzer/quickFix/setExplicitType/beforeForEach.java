@@ -1,4 +1,4 @@
-// "Set variable type to 'String'" "true"
+// "Set variable type to 'String'" "true-preview"
 import java.util.List;
 
 class Demo {

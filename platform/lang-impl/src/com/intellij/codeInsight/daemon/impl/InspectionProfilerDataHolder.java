@@ -131,7 +131,7 @@ final class InspectionProfilerDataHolder {
   /**
    * after inspections completed, save their latencies (from corresponding {@link InspectionRunner.InspectionContext#holder}) to use later in {@link #sort(PsiFile, List)}
    */
-  public void saveStats(@NotNull PsiFile file, @NotNull List<? extends InspectionRunner.InspectionContext> contexts, long totalHighlightingNanos) {
+  void saveStats(@NotNull PsiFile file, @NotNull List<? extends InspectionRunner.InspectionContext> contexts, long totalHighlightingNanos) {
     Latencies[] latencies = new Latencies[3]; // ERROR,WARNING,OTHER
     Map<String, PsiElement> favoriteElement = new HashMap<>();
     Arrays.setAll(latencies, __ -> new Latencies());

@@ -58,7 +58,7 @@ internal class ModuleBridgeImpl(
             val currentStore = entityStorage.current
             val storage = if (currentStore is MutableEntityStorage) currentStore.toSnapshot() else currentStore
             entityStorage = VersionedEntityStorageOnStorage(storage)
-            assert(entityStorage.current.resolve(moduleEntityId) != null) {
+            assert(moduleEntityId in entityStorage.current) {
               // If we ever get this assertion, replace use `event.storeBefore` instead of current
               // As it made in ArtifactBridge
               "Cannot resolve module $moduleEntityId. Current store: $currentStore"
@@ -90,12 +90,17 @@ internal class ModuleBridgeImpl(
   override fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,
                                   app: Application?,
                                   precomputedExtensionModel: PrecomputedExtensionModel?,
-                                  listenerCallbacks: MutableList<in Runnable>?) {
+                                  listenerCallbacks: MutableList<Runnable>?) {
     registerComponents(modules.find { it.pluginId == PluginManagerCore.CORE_ID }, modules, precomputedExtensionModel, app, listenerCallbacks)
   }
 
   override fun callCreateComponents() {
+    @Suppress("DEPRECATION")
     createComponents()
+  }
+
+  override suspend fun callCreateComponentsNonBlocking() {
+    createComponentsNonBlocking()
   }
 
   override fun initFacets() {
@@ -106,7 +111,7 @@ internal class ModuleBridgeImpl(
                                   modules: List<IdeaPluginDescriptorImpl>,
                                   precomputedExtensionModel: PrecomputedExtensionModel?,
                                   app: Application?,
-                                  listenerCallbacks: MutableList<in Runnable>?) {
+                                  listenerCallbacks: MutableList<Runnable>?) {
     super.registerComponents(modules, app, precomputedExtensionModel, listenerCallbacks)
     if (corePlugin == null) {
       return

@@ -565,6 +565,11 @@ public final class CustomizationUtil {
         public void update(@NotNull AnActionEvent e) {
           e.getPresentation().setEnabled(mySelectedSchema.isModified(CustomActionsSchema.getInstance()));
         }
+
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
+        }
       }, new DumbAwareAction(IdeBundle.messagePointer("button.restore.defaults")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
@@ -576,6 +581,10 @@ public final class CustomizationUtil {
           CustomActionsSchema cleanScheme = new CustomActionsSchema();
           updateLocalSchema(cleanScheme);
           e.getPresentation().setEnabled(mySelectedSchema.isModified(cleanScheme));
+        }
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
         }
       }) {
         {
@@ -590,6 +599,11 @@ public final class CustomizationUtil {
           updateLocalSchema(cleanScheme);
           e.getPresentation().setEnabled(mySelectedSchema.isModified(CustomActionsSchema.getInstance()) ||
                                          mySelectedSchema.isModified(cleanScheme));
+        }
+
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
         }
       };
     }

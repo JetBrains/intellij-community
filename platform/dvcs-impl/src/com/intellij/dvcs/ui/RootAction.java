@@ -43,6 +43,11 @@ public class RootAction<T extends Repository> extends ActionGroup implements Pop
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     return myGroup.getChildren(e);
   }

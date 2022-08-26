@@ -12,6 +12,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToAbstractManyParent
@@ -73,11 +74,11 @@ open class MiddleEntityImpl : MiddleEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isPropertyInitialized()) {
         error("Field MiddleEntity#property should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field MiddleEntity#entitySource should be initialized")
       }
     }
 
@@ -85,6 +86,25 @@ open class MiddleEntityImpl : MiddleEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as MiddleEntity
+      this.entitySource = dataSource.entitySource
+      this.property = dataSource.property
+      if (parents != null) {
+        this.parentEntity = parents.filterIsInstance<CompositeBaseEntity>().singleOrNull()
+      }
+    }
+
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var parentEntity: CompositeBaseEntity?
       get() {
@@ -133,15 +153,6 @@ open class MiddleEntityImpl : MiddleEntity, WorkspaceEntityBase() {
         changedProperty.add("property")
       }
 
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
-      }
-
     override fun getEntityData(): MiddleEntityData = result ?: super.getEntityData() as MiddleEntityData
     override fun getEntityClass(): Class<MiddleEntity> = MiddleEntity::class.java
   }
@@ -183,14 +194,25 @@ class MiddleEntityData : WorkspaceEntityData<MiddleEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return MiddleEntity(property, entitySource) {
+      this.parentEntity = parents.filterIsInstance<CompositeBaseEntity>().singleOrNull()
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
 
     other as MiddleEntityData
 
-    if (this.property != other.property) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.property != other.property) return false
     return true
   }
 
@@ -208,5 +230,15 @@ class MiddleEntityData : WorkspaceEntityData<MiddleEntity>() {
     var result = entitySource.hashCode()
     result = 31 * result + property.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + property.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.sameForAllEntities = true
   }
 }

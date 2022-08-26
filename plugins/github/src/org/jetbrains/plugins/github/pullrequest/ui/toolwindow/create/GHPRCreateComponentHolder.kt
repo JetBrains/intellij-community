@@ -53,7 +53,7 @@ import org.jetbrains.plugins.github.ui.util.DisableableDocument
 import org.jetbrains.plugins.github.util.ChangeDiffRequestProducerFactory
 import org.jetbrains.plugins.github.util.DiffRequestChainProducer
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
-import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
+import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -64,7 +64,7 @@ import javax.swing.text.PlainDocument
 internal class GHPRCreateComponentHolder(private val actionManager: ActionManager,
                                          private val project: Project,
                                          private val settings: GithubPullRequestsProjectUISettings,
-                                         private val repositoriesManager: GHProjectRepositoriesManager,
+                                         private val repositoriesManager: GHHostedRepositoriesManager,
                                          private val dataContext: GHPRDataContext,
                                          private val viewController: GHPRToolWindowTabComponentController,
                                          disposable: Disposable) {

@@ -442,7 +442,7 @@ public class JavaAttachDebuggerProvider implements XAttachDebuggerProvider {
   }
 
   private static final class ProcessAttachDebugExecutor extends DefaultDebugExecutor {
-    static ProcessAttachDebugExecutor INSTANCE = new ProcessAttachDebugExecutor();
+    static final ProcessAttachDebugExecutor INSTANCE = new ProcessAttachDebugExecutor();
 
     private ProcessAttachDebugExecutor() {
     }

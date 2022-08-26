@@ -111,6 +111,7 @@ internal fun toggleAction(property: ObservableMutableProperty<Boolean>): ToggleA
   object : ToggleAction(), DumbAware {
     override fun isSelected(e: AnActionEvent) = property.get()
     override fun setSelected(e: AnActionEvent, state: Boolean) = property.set(state)
+    override fun getActionUpdateThread() = ActionUpdateThread.EDT
   }
 
 internal fun action(action: (AnActionEvent) -> Unit): AnAction =

@@ -6,18 +6,14 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.concurrent.Future
-import kotlin.time.Duration
 
 @Internal
 @Experimental
 abstract class ModernApplicationStarter : ApplicationStarter {
-  open val timeout: Duration?
-    get() = null
-
   final override val requiredModality: Int
     get() = ApplicationStarter.NOT_IN_EDT
 
+  @Suppress("DeprecatedCallableAddReplaceWith")
   @Deprecated(message = "use start", level = DeprecationLevel.ERROR)
   final override fun main(args: List<String>) {
     throw UnsupportedOperationException("Use start(args)")
@@ -58,9 +54,8 @@ interface ApplicationStarter {
   /**
    * Command-line switch to start with this runner.
    * For example, return `"inspect"` if you'd like to start an app with `"idea.exe inspect ..."` command.
-   *
-   * @return command-line selector.
    */
+  @Deprecated("Specify it as `id` for extension definition in a plugin descriptor")
   val commandName: String?
 
   /**
@@ -102,7 +97,7 @@ interface ApplicationStarter {
   /** @see .canProcessExternalCommandLine
    */
   @JvmDefault
-  fun processExternalCommandLineAsync(args: List<String>, currentDirectory: String?): Future<CliResult> {
+  suspend fun processExternalCommandLine(args: List<String>, currentDirectory: String?): CliResult {
     throw UnsupportedOperationException("Class " + javaClass.name + " must implement `processExternalCommandLineAsync()`")
   }
 }

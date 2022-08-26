@@ -1,0 +1,267 @@
+{
+  "path": "example.java",
+  "checksum": "59052a35eb0d95d50373552a9901e5908a7fa5820ee2551fcc2e48f750ced52f",
+  "sessionsCount": 13,
+  "actions": [
+    {
+      "begin": 0,
+      "end": 6,
+      "completable": false,
+      "type": "DELETE_RANGE"
+    },
+    {
+      "offset": 0,
+      "type": "MOVE_CARET"
+    },
+    {
+      "expectedText": "public",
+      "nodeProperties": {
+        "tokenType": "LINE",
+        "location": "UNKNOWN",
+        "features": [],
+        "additional": {}
+      },
+      "type": "CODE_GOLF"
+    },
+    {
+      "begin": 7,
+      "end": 12,
+      "completable": false,
+      "type": "DELETE_RANGE"
+    },
+    {
+      "offset": 7,
+      "type": "MOVE_CARET"
+    },
+    {
+      "expectedText": "class",
+      "nodeProperties": {
+        "tokenType": "LINE",
+        "location": "UNKNOWN",
+        "features": [],
+        "additional": {}
+      },
+      "type": "CODE_GOLF"
+    },
+    {
+      "begin": 27,
+      "end": 33,
+      "completable": false,
+      "type": "DELETE_RANGE"
+    },
+    {
+      "offset": 27,
+      "type": "MOVE_CARET"
+    },
+    {
+      "expectedText": "public",
+      "nodeProperties": {
+        "tokenType": "LINE",
+        "location": "UNKNOWN",
+        "features": [],
+        "additional": {}
+      },
+      "type": "CODE_GOLF"
+    },
+    {
+      "begin": 34,
+      "end": 40,
+      "completable": false,
+      "type": "DELETE_RANGE"
+    },
+    {
+      "offset": 34,
+      "type": "MOVE_CARET"
+    },
+    {
+      "expectedText": "static",
+      "nodeProperties": {
+        "tokenType": "LINE",
+        "location": "UNKNOWN",
+        "features": [],
+        "additional": {}
+      },
+      "type": "CODE_GOLF"
+    },
+    {
+      "begin": 41,
+      "end": 45,
+      "completable": false,
+      "type": "DELETE_RANGE"
+    },
+    {
+      "offset": 41,
+      "type": "MOVE_CARET"
+    },
+    {
+      "expectedText": "void",
+      "nodeProperties": {
+        "tokenType": "LINE",
+        "location": "UNKNOWN",
+        "features": [],
+        "additional": {}
+      },
+      "type": "CODE_GOLF"
+    },
+    {
+      "begin": 51,
+      "end": 57,
+      "completable": false,
+      "type": "DELETE_RANGE"
+    },
+    {
+      "offset": 51,
+      "type": "MOVE_CARET"
+    },
+    {
+      "expectedText": "String",
+      "nodeProperties": {
+        "tokenType": "LINE",
+        "location": "UNKNOWN",
+        "features": [],
+        "additional": {}
+      },
+      "type": "CODE_GOLF"
+    },
+    {
+      "begin": 76,
+      "end": 80,
+      "completable": false,
+      "type": "DELETE_RANGE"
+    },
+    {
+      "offset": 76,
+      "type": "MOVE_CARET"
+    },
+    {
+      "expectedText": "test",
+      "nodeProperties": {
+        "tokenType": "LINE",
+        "location": "UNKNOWN",
+        "features": [],
+        "additional": {}
+      },
+      "type": "CODE_GOLF"
+    },
+    {
+      "begin": 81,
+      "end": 85,
+      "completable": false,
+      "type": "DELETE_RANGE"
+    },
+    {
+      "offset": 81,
+      "type": "MOVE_CARET"
+    },
+    {
+      "expectedText": "args",
+      "nodeProperties": {
+        "tokenType": "LINE",
+        "location": "UNKNOWN",
+        "features": [],
+        "additional": {}
+      },
+      "type": "CODE_GOLF"
+    },
+    {
+      "begin": 86,
+      "end": 92,
+      "completable": false,
+      "type": "DELETE_RANGE"
+    },
+    {
+      "offset": 86,
+      "type": "MOVE_CARET"
+    },
+    {
+      "expectedText": "length",
+      "nodeProperties": {
+        "tokenType": "LINE",
+        "location": "UNKNOWN",
+        "features": [],
+        "additional": {}
+      },
+      "type": "CODE_GOLF"
+    },
+    {
+      "begin": 105,
+      "end": 112,
+      "completable": false,
+      "type": "DELETE_RANGE"
+    },
+    {
+      "offset": 105,
+      "type": "MOVE_CARET"
+    },
+    {
+      "expectedText": "private",
+      "nodeProperties": {
+        "tokenType": "LINE",
+        "location": "UNKNOWN",
+        "features": [],
+        "additional": {}
+      },
+      "type": "CODE_GOLF"
+    },
+    {
+      "begin": 113,
+      "end": 119,
+      "completable": false,
+      "type": "DELETE_RANGE"
+    },
+    {
+      "offset": 113,
+      "type": "MOVE_CARET"
+    },
+    {
+      "expectedText": "static",
+      "nodeProperties": {
+        "tokenType": "LINE",
+        "location": "UNKNOWN",
+        "features": [],
+        "additional": {}
+      },
+      "type": "CODE_GOLF"
+    },
+    {
+      "begin": 120,
+      "end": 124,
+      "completable": false,
+      "type": "DELETE_RANGE"
+    },
+    {
+      "offset": 120,
+      "type": "MOVE_CARET"
+    },
+    {
+      "expectedText": "void",
+      "nodeProperties": {
+        "tokenType": "LINE",
+        "location": "UNKNOWN",
+        "features": [],
+        "additional": {}
+      },
+      "type": "CODE_GOLF"
+    },
+    {
+      "begin": 130,
+      "end": 136,
+      "completable": false,
+      "type": "DELETE_RANGE"
+    },
+    {
+      "offset": 130,
+      "type": "MOVE_CARET"
+    },
+    {
+      "expectedText": "Object",
+      "nodeProperties": {
+        "tokenType": "LINE",
+        "location": "UNKNOWN",
+        "features": [],
+        "additional": {}
+      },
+      "type": "CODE_GOLF"
+    }
+  ]
+}

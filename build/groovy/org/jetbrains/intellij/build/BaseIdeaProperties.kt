@@ -26,7 +26,7 @@ private val JAVA_IDE_IMPLEMENTATION_MODULES: List<String> = java.util.List.of(
 )
 
 private val BASE_CLASS_VERSIONS = persistentHashMapOf(
-  "" to "11",
+  "" to "17",
   "lib/idea_rt.jar" to "1.7",
   "lib/forms_rt.jar" to "1.7",
   "lib/annotations.jar" to "1.7",
@@ -35,17 +35,15 @@ private val BASE_CLASS_VERSIONS = persistentHashMapOf(
   "lib/util_rt.jar" to "1.7",
   "lib/external-system-rt.jar" to "1.7",
   "plugins/coverage/lib/coverage_rt.jar" to "1.7",
-  "plugins/javaFX/lib/rt/sceneBuilderBridge.jar" to "11",
   "plugins/junit/lib/junit-rt.jar" to "1.7",
   "plugins/junit/lib/junit5-rt.jar" to "1.8",
   "plugins/gradle/lib/gradle-tooling-extension-api.jar" to "1.7",
   "plugins/gradle/lib/gradle-tooling-extension-impl.jar" to "1.7",
-  "plugins/maven/lib/maven-server-api.jar" to "1.8",
-  "plugins/maven/lib/maven2-server.jar" to "1.8",
+  "plugins/maven-server-api/lib/maven-server-api.jar" to "1.8",
+  "plugins/maven-model/lib/maven-model.jar" to "1.8",
   "plugins/maven/lib/maven3-server-common.jar" to "1.8",
   "plugins/maven/lib/maven30-server.jar" to "1.8",
   "plugins/maven/lib/maven3-server.jar" to "1.8",
-  "plugins/maven/lib/artifact-resolver-m2.jar" to "1.7",
   "plugins/maven/lib/artifact-resolver-m3.jar" to "1.7",
   "plugins/maven/lib/artifact-resolver-m31.jar" to "1.7",
   "plugins/xpath/lib/rt/xslt-rt.jar" to "1.7",
@@ -75,8 +73,9 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
       "intellij.yaml",
       "intellij.tasks.core",
       "intellij.repository.search",
-      "intellij.maven.model",
       "intellij.maven",
+      "intellij.maven.model",
+      "intellij.maven.server",
       "intellij.packageSearch",
       "intellij.gradle",
       "intellij.gradle.dependencyUpdater",
@@ -185,7 +184,7 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
       "intellij.java.plugin",
     )
     additionalModulesToCompile = java.util.List.of("intellij.tools.jps.build.standalone")
-    modulesToCompileTests = java.util.List.of("intellij.platform.jps.build")
+    modulesToCompileTests = java.util.List.of("intellij.platform.jps.build.tests")
 
     isAntRequired = true
   }

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.bridgeEntities.api
 
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntityInformation
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -12,8 +13,11 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.extractOneToManyChildren
 import com.intellij.workspaceModel.storage.impl.extractOneToManyParent
 import com.intellij.workspaceModel.storage.impl.extractOneToOneChild
@@ -102,6 +106,9 @@ open class ContentRootEntityImpl : ContentRootEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToManyParent<WorkspaceEntityBase>(MODULE_CONNECTION_ID, this) == null) {
           error("Field ContentRootEntity#module should be initialized")
@@ -111,9 +118,6 @@ open class ContentRootEntityImpl : ContentRootEntity, WorkspaceEntityBase() {
         if (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] == null) {
           error("Field ContentRootEntity#module should be initialized")
         }
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ContentRootEntity#entitySource should be initialized")
       }
       if (!getEntityData().isUrlInitialized()) {
         error("Field ContentRootEntity#url should be initialized")
@@ -141,6 +145,27 @@ open class ContentRootEntityImpl : ContentRootEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as ContentRootEntity
+      this.entitySource = dataSource.entitySource
+      this.url = dataSource.url
+      this.excludedUrls = dataSource.excludedUrls.toMutableList()
+      this.excludedPatterns = dataSource.excludedPatterns.toMutableList()
+      if (parents != null) {
+        this.module = parents.filterIsInstance<ModuleEntity>().single()
+      }
+    }
+
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var module: ModuleEntity
       get() {
@@ -181,15 +206,6 @@ open class ContentRootEntityImpl : ContentRootEntity, WorkspaceEntityBase() {
         changedProperty.add("module")
       }
 
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
-      }
-
     override var url: VirtualFileUrl
       get() = getEntityData().url
       set(value) {
@@ -200,23 +216,39 @@ open class ContentRootEntityImpl : ContentRootEntity, WorkspaceEntityBase() {
         if (_diff != null) index(this, "url", value)
       }
 
-    override var excludedUrls: List<VirtualFileUrl>
-      get() = getEntityData().excludedUrls
+    private val excludedUrlsUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
+      val _diff = diff
+      if (_diff != null) index(this, "excludedUrls", value.toHashSet())
+      changedProperty.add("excludedUrls")
+    }
+    override var excludedUrls: MutableList<VirtualFileUrl>
+      get() {
+        val collection_excludedUrls = getEntityData().excludedUrls
+        if (collection_excludedUrls !is MutableWorkspaceList) return collection_excludedUrls
+        collection_excludedUrls.setModificationUpdateAction(excludedUrlsUpdater)
+        return collection_excludedUrls
+      }
       set(value) {
         checkModificationAllowed()
         getEntityData().excludedUrls = value
-        val _diff = diff
-        if (_diff != null) index(this, "excludedUrls", value.toHashSet())
-        changedProperty.add("excludedUrls")
+        excludedUrlsUpdater.invoke(value)
       }
 
-    override var excludedPatterns: List<String>
-      get() = getEntityData().excludedPatterns
+    private val excludedPatternsUpdater: (value: List<String>) -> Unit = { value ->
+
+      changedProperty.add("excludedPatterns")
+    }
+    override var excludedPatterns: MutableList<String>
+      get() {
+        val collection_excludedPatterns = getEntityData().excludedPatterns
+        if (collection_excludedPatterns !is MutableWorkspaceList) return collection_excludedPatterns
+        collection_excludedPatterns.setModificationUpdateAction(excludedPatternsUpdater)
+        return collection_excludedPatterns
+      }
       set(value) {
         checkModificationAllowed()
         getEntityData().excludedPatterns = value
-
-        changedProperty.add("excludedPatterns")
+        excludedPatternsUpdater.invoke(value)
       }
 
     // List of non-abstract referenced types
@@ -301,8 +333,8 @@ open class ContentRootEntityImpl : ContentRootEntity, WorkspaceEntityBase() {
 
 class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() {
   lateinit var url: VirtualFileUrl
-  lateinit var excludedUrls: List<VirtualFileUrl>
-  lateinit var excludedPatterns: List<String>
+  lateinit var excludedUrls: MutableList<VirtualFileUrl>
+  lateinit var excludedPatterns: MutableList<String>
 
   fun isUrlInitialized(): Boolean = ::url.isInitialized
   fun isExcludedUrlsInitialized(): Boolean = ::excludedUrls.isInitialized
@@ -323,12 +355,20 @@ class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() {
   override fun createEntity(snapshot: EntityStorage): ContentRootEntity {
     val entity = ContentRootEntityImpl()
     entity._url = url
-    entity._excludedUrls = excludedUrls
-    entity._excludedPatterns = excludedPatterns
+    entity._excludedUrls = excludedUrls.toList()
+    entity._excludedPatterns = excludedPatterns.toList()
     entity.entitySource = entitySource
     entity.snapshot = snapshot
     entity.id = createEntityId()
     return entity
+  }
+
+  override fun clone(): ContentRootEntityData {
+    val clonedEntity = super.clone()
+    clonedEntity as ContentRootEntityData
+    clonedEntity.excludedUrls = clonedEntity.excludedUrls.toMutableWorkspaceList()
+    clonedEntity.excludedPatterns = clonedEntity.excludedPatterns.toMutableWorkspaceList()
+    return clonedEntity
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -339,6 +379,18 @@ class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() {
   }
 
   override fun deserialize(de: EntityInformation.Deserializer) {
+  }
+
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ContentRootEntity(url, excludedUrls, excludedPatterns, entitySource) {
+      this.module = parents.filterIsInstance<ModuleEntity>().single()
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(ModuleEntity::class.java)
+    return res
   }
 
   override fun equals(other: Any?): Boolean {
@@ -372,5 +424,36 @@ class ContentRootEntityData : WorkspaceEntityData<ContentRootEntity>() {
     result = 31 * result + excludedUrls.hashCode()
     result = 31 * result + excludedPatterns.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + url.hashCode()
+    result = 31 * result + excludedUrls.hashCode()
+    result = 31 * result + excludedPatterns.hashCode()
+    return result
+  }
+
+  override fun equalsByKey(other: Any?): Boolean {
+    if (other == null) return false
+    if (this::class != other::class) return false
+
+    other as ContentRootEntityData
+
+    if (this.url != other.url) return false
+    return true
+  }
+
+  override fun hashCodeByKey(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + url.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    this.excludedUrls?.let { collector.add(it::class.java) }
+    this.url?.let { collector.add(it::class.java) }
+    this.excludedPatterns?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = false
   }
 }

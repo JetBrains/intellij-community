@@ -2,11 +2,7 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.PsiModifierListOwner;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.DelegatingFix;
@@ -35,17 +31,12 @@ public final class AddToIgnoreIfAnnotatedByListQuickFix {
       fixes.add(new DelegatingFix(SpecialAnnotationsUtilBase.createAddToSpecialAnnotationsListQuickFix(
         InspectionGadgetsBundle.message("add.0.to.ignore.if.annotated.by.list.quickfix", qualifiedName),
         QuickFixBundle.message("fix.add.special.annotation.family"),
-        configurationList, qualifiedName, modifierListOwner)) {
+        InspectionGadgetsBundle.message("ignore.if.annotated.by"), configurationList, qualifiedName
+      )) {
         @NotNull
         @Override
         public Priority getPriority() {
           return Priority.LOW;
-        }
-
-        @Override
-        public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-          return new IntentionPreviewInfo.Html(HtmlChunk.text(
-            InspectionGadgetsBundle.message("add.to.ignore.annotation.preview")));
         }
       });
       return true;

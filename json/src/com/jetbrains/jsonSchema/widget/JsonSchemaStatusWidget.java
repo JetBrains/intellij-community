@@ -540,7 +540,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       .map(file -> jsonSchemaService.getSchemaProvider(file))
       .filter(Objects::nonNull)
       .map(provider -> Pair.create(SchemaType.userSchema.equals(provider.getSchemaType()), provider.getName()))
-      .collect(Collectors.toList());
+      .toList();
 
     final long numOfSystemSchemas = pairList.stream().filter(pair -> !pair.getFirst()).count();
     // do not report anything if there is only one system schema and one user schema (user overrides schema that we provide)

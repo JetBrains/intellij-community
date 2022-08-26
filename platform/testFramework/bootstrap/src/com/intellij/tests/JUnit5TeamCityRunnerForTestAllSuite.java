@@ -218,7 +218,7 @@ public class JUnit5TeamCityRunnerForTestAllSuite {
     }
   
     private void testStarted(TestIdentifier testIdentifier) {
-      myPrintStream.println("##teamcity[testStarted" + idAndName(testIdentifier) + "]");
+      myPrintStream.println("##teamcity[testStarted" + idAndName(testIdentifier) + " captureStandardOutput='true']");
     }
     
     private void testFinished(TestIdentifier testIdentifier, long duration) {

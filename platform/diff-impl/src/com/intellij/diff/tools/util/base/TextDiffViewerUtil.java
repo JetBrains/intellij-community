@@ -52,7 +52,7 @@ public final class TextDiffViewerUtil {
     result.add(ActionManager.getInstance().getAction("CompareClipboardWithSelection"));
 
     result.add(Separator.getInstance());
-    ContainerUtil.addAll(result, ((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_POPUP)).getChildren(null));
+    ContainerUtil.addAll(result, ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_POPUP));
 
     return result;
   }
@@ -168,17 +168,6 @@ public final class TextDiffViewerUtil {
 
     if (properties.size() < 2) return true;
     return new HashSet<>(properties).size() == 1;
-  }
-
-  public static void recursiveRegisterShortcutSet(@NotNull ActionGroup group,
-                                                  @NotNull JComponent component,
-                                                  @Nullable Disposable parentDisposable) {
-    for (AnAction action : group.getChildren(null)) {
-      if (action instanceof ActionGroup) {
-        recursiveRegisterShortcutSet((ActionGroup)action, component, parentDisposable);
-      }
-      action.registerCustomShortcutSet(component, parentDisposable);
-    }
   }
 
   public static void applyModification(@NotNull Document document1,
@@ -585,7 +574,7 @@ public final class TextDiffViewerUtil {
     }
 
     public void install(@NotNull List<? extends EditorEx> editors, @NotNull JComponent component) {
-      recursiveRegisterShortcutSet(new DefaultActionGroup(myEditorPopupActions), component, null);
+      DiffUtil.recursiveRegisterShortcutSet(new DefaultActionGroup(myEditorPopupActions), component, null);
 
       EditorPopupHandler handler = new ContextMenuPopupHandler.Simple(
         myEditorPopupActions.isEmpty() ? null : new DefaultActionGroup(myEditorPopupActions)
@@ -594,5 +583,15 @@ public final class TextDiffViewerUtil {
         editor.installPopupHandler(handler);
       }
     }
+  }
+
+  /**
+   * @deprecated Use {@link DiffUtil#recursiveRegisterShortcutSet}
+   */
+  @Deprecated
+  public static void recursiveRegisterShortcutSet(@NotNull ActionGroup group,
+                                                  @NotNull JComponent component,
+                                                  @Nullable Disposable parentDisposable) {
+    DiffUtil.recursiveRegisterShortcutSet(group, component, parentDisposable);
   }
 }

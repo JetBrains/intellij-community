@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.roots.ui.configuration.actions;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.ProjectBundle;
@@ -55,6 +56,11 @@ public class ToggleSourcesStateAction<P extends JpsElement> extends ContentEntry
 
     final ContentEntryEditor editor = myEntryTreeEditor.getContentEntryEditor();
     return myEditHandler.getRootType().equals(editor.getRootType(selectedFiles[0]));
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

@@ -42,6 +42,8 @@ interface OwnProperty<T : Obj, V> : ObjProperty<T, V> {
   val constructorParameter: Boolean
 
   val classLocalId: Int
+
+  val isKey: Boolean
 }
 
 /**

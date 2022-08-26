@@ -13,6 +13,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToManyParent
@@ -81,6 +82,9 @@ open class ArtifactPropertiesEntityImpl : ArtifactPropertiesEntity, WorkspaceEnt
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToManyParent<WorkspaceEntityBase>(ARTIFACT_CONNECTION_ID, this) == null) {
           error("Field ArtifactPropertiesEntity#artifact should be initialized")
@@ -91,9 +95,6 @@ open class ArtifactPropertiesEntityImpl : ArtifactPropertiesEntity, WorkspaceEnt
           error("Field ArtifactPropertiesEntity#artifact should be initialized")
         }
       }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ArtifactPropertiesEntity#entitySource should be initialized")
-      }
       if (!getEntityData().isProviderTypeInitialized()) {
         error("Field ArtifactPropertiesEntity#providerType should be initialized")
       }
@@ -103,6 +104,26 @@ open class ArtifactPropertiesEntityImpl : ArtifactPropertiesEntity, WorkspaceEnt
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as ArtifactPropertiesEntity
+      this.entitySource = dataSource.entitySource
+      this.providerType = dataSource.providerType
+      this.propertiesXmlTag = dataSource.propertiesXmlTag
+      if (parents != null) {
+        this.artifact = parents.filterIsInstance<ArtifactEntity>().single()
+      }
+    }
+
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var artifact: ArtifactEntity
       get() {
@@ -141,15 +162,6 @@ open class ArtifactPropertiesEntityImpl : ArtifactPropertiesEntity, WorkspaceEnt
           this.entityLinks[EntityLink(false, ARTIFACT_CONNECTION_ID)] = value
         }
         changedProperty.add("artifact")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override var providerType: String
@@ -211,6 +223,19 @@ class ArtifactPropertiesEntityData : WorkspaceEntityData<ArtifactPropertiesEntit
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ArtifactPropertiesEntity(providerType, entitySource) {
+      this.propertiesXmlTag = this@ArtifactPropertiesEntityData.propertiesXmlTag
+      this.artifact = parents.filterIsInstance<ArtifactEntity>().single()
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(ArtifactEntity::class.java)
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
@@ -239,5 +264,16 @@ class ArtifactPropertiesEntityData : WorkspaceEntityData<ArtifactPropertiesEntit
     result = 31 * result + providerType.hashCode()
     result = 31 * result + propertiesXmlTag.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + providerType.hashCode()
+    result = 31 * result + propertiesXmlTag.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.sameForAllEntities = true
   }
 }

@@ -2,6 +2,7 @@
 package com.jetbrains.python.configuration;
 
 import com.intellij.execution.target.BrowsableTargetEnvironmentType;
+import com.intellij.execution.target.TargetBrowserHints;
 import com.intellij.execution.target.TargetBasedSdkAdditionalData;
 import com.intellij.execution.target.TargetEnvironmentConfigurationKt;
 import com.intellij.openapi.project.Project;
@@ -115,7 +116,7 @@ public class EditSdkDialog extends DialogWrapper {
       var type = TargetEnvironmentConfigurationKt.getTargetType(configuration);
       if (type instanceof BrowsableTargetEnvironmentType) {
         return ((BrowsableTargetEnvironmentType)type).createBrowser(project, label, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
-                                                                    myInterpreterPathTextField.getTextField(), () -> configuration, true);
+                                                                    myInterpreterPathTextField.getTextField(), () -> configuration, new TargetBrowserHints(true));
       }
     }
     return null;

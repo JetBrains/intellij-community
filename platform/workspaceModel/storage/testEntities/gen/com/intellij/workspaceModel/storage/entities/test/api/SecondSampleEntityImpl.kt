@@ -11,10 +11,13 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import java.util.*
+import java.util.UUID
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -64,7 +67,7 @@ open class SecondSampleEntityImpl : SecondSampleEntity, WorkspaceEntityBase() {
     fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field SecondSampleEntity#entitySource should be initialized")
+        error("Field WorkspaceEntity#entitySource should be initialized")
       }
     }
 
@@ -72,14 +75,15 @@ open class SecondSampleEntityImpl : SecondSampleEntity, WorkspaceEntityBase() {
       return connections
     }
 
-
-    override var intProperty: Int
-      get() = getEntityData().intProperty
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().intProperty = value
-        changedProperty.add("intProperty")
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as SecondSampleEntity
+      this.entitySource = dataSource.entitySource
+      this.intProperty = dataSource.intProperty
+      if (parents != null) {
       }
+    }
+
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -88,6 +92,14 @@ open class SecondSampleEntityImpl : SecondSampleEntity, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var intProperty: Int
+      get() = getEntityData().intProperty
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().intProperty = value
+        changedProperty.add("intProperty")
       }
 
     override fun getEntityData(): SecondSampleEntityData = result ?: super.getEntityData() as SecondSampleEntityData
@@ -130,14 +142,24 @@ class SecondSampleEntityData : WorkspaceEntityData<SecondSampleEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return SecondSampleEntity(intProperty, entitySource) {
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
 
     other as SecondSampleEntityData
 
-    if (this.intProperty != other.intProperty) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.intProperty != other.intProperty) return false
     return true
   }
 
@@ -155,5 +177,15 @@ class SecondSampleEntityData : WorkspaceEntityData<SecondSampleEntity>() {
     var result = entitySource.hashCode()
     result = 31 * result + intProperty.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + intProperty.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.sameForAllEntities = true
   }
 }

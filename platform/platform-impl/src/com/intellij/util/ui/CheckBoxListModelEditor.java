@@ -16,6 +16,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -88,6 +89,10 @@ public class CheckBoxListModelEditor<T> {
             consumer.consume(item);
           }
         }
+      }
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
     });
     return this;

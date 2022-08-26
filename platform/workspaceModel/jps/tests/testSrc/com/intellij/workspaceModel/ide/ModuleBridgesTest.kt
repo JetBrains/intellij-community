@@ -460,7 +460,7 @@ class ModuleBridgesTest {
     builder.modifyEntity(moduleEntity) {
       dependencies = listOf(
         ModuleDependencyItem.Exportable.LibraryDependency(moduleLibraryEntity.persistentId, false, ModuleDependencyItem.DependencyScope.COMPILE)
-      )
+      ).toMutableList()
     }
 
     WorkspaceModelInitialTestContent.withInitialContent(builder.toSnapshot()) {
@@ -476,7 +476,7 @@ class ModuleBridgesTest {
       assertTrue(libraryOrderEntry.isModuleLevel)
       assertSame(libraryOrderEntry.library, libraries[0])
       assertEquals(JpsLibraryTableSerializer.MODULE_LEVEL, libraryOrderEntry.libraryLevel)
-      assertSameElements(libraryOrderEntry.getUrls(OrderRootType.CLASSES), tempDir.toVirtualFileUrl(virtualFileManager).url)
+      assertSameElements(libraryOrderEntry.getRootUrls(OrderRootType.CLASSES), tempDir.toVirtualFileUrl(virtualFileManager).url)
     }
   }
 

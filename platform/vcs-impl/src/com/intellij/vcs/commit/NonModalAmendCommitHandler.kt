@@ -4,11 +4,9 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
-import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.openapi.vcs.changes.CommitContext
-import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.util.VcsUserUtil.isSamePerson
@@ -34,7 +32,7 @@ class NonModalAmendCommitHandler(private val workflowHandler: NonModalCommitWork
   }
 
   init {
-    workflowHandler.workflow.addCommitListener(EditedCommitCleaner(), workflowHandler)
+    workflowHandler.workflow.addVcsCommitListener(EditedCommitCleaner(), workflowHandler)
 
     amendRoot = getSingleRoot()
     project.messageBus.connect(workflowHandler).subscribe(VCS_CONFIGURATION_CHANGED, VcsListener {
@@ -52,6 +50,7 @@ class NonModalAmendCommitHandler(private val workflowHandler: NonModalCommitWork
 
     fireAmendCommitModeToggled()
     workflowHandler.updateDefaultCommitActionName()
+    workflowHandler.hideCommitChecksFailureNotification()
     updateAmendCommitState()
     if (isAmendCommitMode) loadAmendDetails(amendAware, root) else restoreAmendDetails()
   }
@@ -110,9 +109,9 @@ class NonModalAmendCommitHandler(private val workflowHandler: NonModalCommitWork
     workflowHandler.ui.commitAuthor = amendAuthorData.beforeAmendAuthor
   }
 
-  private inner class EditedCommitCleaner : CommitResultHandler {
-    override fun onSuccess(commitMessage: String) = setEditedCommit(null)
+  private inner class EditedCommitCleaner : CommitterResultHandler {
+    override fun onSuccess() = setEditedCommit(null)
     override fun onCancel() = Unit
-    override fun onFailure(errors: MutableList<VcsException>) = setEditedCommit(null)
+    override fun onFailure() = setEditedCommit(null)
   }
 }

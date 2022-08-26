@@ -4,6 +4,7 @@ package com.intellij.structuralsearch.plugin.ui;
 import com.intellij.find.FindBundle;
 import com.intellij.find.impl.FindPopupPanel;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -161,6 +162,11 @@ public class DirectoryComboBoxWithButtons extends JPanel {
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return myRecursive;
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     @Override

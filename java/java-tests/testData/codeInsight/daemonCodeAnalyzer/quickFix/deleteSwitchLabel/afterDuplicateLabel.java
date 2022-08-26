@@ -1,4 +1,4 @@
-// "Remove switch label '2'" "true"
+// "Remove switch label '2'" "true-preview"
 class Main {
     void test(Integer i) {
         switch (i) {

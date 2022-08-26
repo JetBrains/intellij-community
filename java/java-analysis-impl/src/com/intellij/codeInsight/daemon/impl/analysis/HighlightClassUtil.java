@@ -239,7 +239,7 @@ public final class HighlightClassUtil {
     if (!(parent instanceof PsiDeclarationStatement)) {
       parent = aClass;
     }
-    PsiElement element = null;
+    PsiElement element;
     while (parent != null) {
       if (parent instanceof PsiFile) break;
       element = checkSiblings ? parent.getPrevSibling() : null;
@@ -611,7 +611,7 @@ public final class HighlightClassUtil {
         return (parameters.length == 0 || parameters.length == 1 && parameters[0].isVarArgs()) &&
                resolveHelper.isAccessible(constructor, aClass, null);
       })
-      .limit(2).collect(Collectors.toList());
+      .limit(2).toList();
 
     if (constructorCandidates.size() >= 2) {// two ambiguous var-args-only constructors
       String m1 = PsiFormatUtil.formatMethod(constructorCandidates.get(0), PsiSubstitutor.EMPTY,
@@ -714,7 +714,7 @@ public final class HighlightClassUtil {
       String description = JavaErrorBundle.message("duplicate.class", name);
       HighlightInfo info =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
-      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createUnimplementInterfaceAction(name, true));
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createRemoveDuplicateExtendsAction(name));
       return info;
     }
     return null;
@@ -1126,9 +1126,11 @@ public final class HighlightClassUtil {
     if (aClass != null) {
       PsiClass superClass = aClass.getBaseClassType().resolve();
       if (superClass != null && superClass.hasModifierProperty(PsiModifier.SEALED)) {
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
           .range(aClass.getBaseClassReference())
           .descriptionAndTooltip(JavaErrorBundle.message("anonymous.classes.must.not.extend.sealed.classes")).create();
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createConvertAnonymousToInnerAction(aClass));
+        return info;
       }
     }
     return null;
@@ -1246,12 +1248,12 @@ public final class HighlightClassUtil {
       }
       PsiFile parentFile = psiClass.getContainingFile();
       PsiManager manager = parentFile.getManager();
-      boolean hasOutsideClasses = inheritors.stream()
-        .anyMatch(inheritor -> !manager.areElementsEquivalent(inheritor.getNavigationElement().getContainingFile(), parentFile));
+      boolean hasOutsideClasses = ContainerUtil.exists(inheritors, inheritor -> !manager.areElementsEquivalent(
+        inheritor.getNavigationElement().getContainingFile(), parentFile));
       if (hasOutsideClasses) {
         Map<PsiJavaCodeReferenceElement, PsiClass> permittedClassesRefs = getPermittedClassesRefs(psiClass);
         Collection<PsiClass> permittedClasses = permittedClassesRefs.values();
-        boolean hasMissingInheritors = inheritors.stream().anyMatch(inheritor -> !permittedClasses.contains(inheritor));
+        boolean hasMissingInheritors = ContainerUtil.exists(inheritors, inheritor -> !permittedClasses.contains(inheritor));
         if (hasMissingInheritors) {
           HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
             .range(nameIdentifier)

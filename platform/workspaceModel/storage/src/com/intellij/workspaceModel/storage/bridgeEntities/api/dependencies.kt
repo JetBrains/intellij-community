@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.storage.bridgeEntities.api
 
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
@@ -30,11 +31,11 @@ interface LibraryEntity : WorkspaceEntityWithPersistentId {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : LibraryEntity, ModifiableWorkspaceEntity<LibraryEntity>, ObjBuilder<LibraryEntity> {
-    override var name: String
     override var entitySource: EntitySource
+    override var name: String
     override var tableId: LibraryTableId
-    override var roots: List<LibraryRoot>
-    override var excludedRoots: List<VirtualFileUrl>
+    override var roots: MutableList<LibraryRoot>
+    override var excludedRoots: MutableList<VirtualFileUrl>
     override var sdk: SdkEntity?
     override var libraryProperties: LibraryPropertiesEntity?
     override var libraryFilesPackagingElement: LibraryFilesPackagingElementEntity?
@@ -49,10 +50,10 @@ interface LibraryEntity : WorkspaceEntityWithPersistentId {
                         init: (Builder.() -> Unit)? = null): LibraryEntity {
       val builder = builder()
       builder.name = name
-      builder.entitySource = entitySource
       builder.tableId = tableId
-      builder.roots = roots
-      builder.excludedRoots = excludedRoots
+      builder.roots = roots.toMutableWorkspaceList()
+      builder.excludedRoots = excludedRoots.toMutableWorkspaceList()
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }
@@ -78,8 +79,8 @@ interface LibraryPropertiesEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : LibraryPropertiesEntity, ModifiableWorkspaceEntity<LibraryPropertiesEntity>, ObjBuilder<LibraryPropertiesEntity> {
-    override var library: LibraryEntity
     override var entitySource: EntitySource
+    override var library: LibraryEntity
     override var libraryType: String
     override var propertiesXmlTag: String?
   }
@@ -87,8 +88,8 @@ interface LibraryPropertiesEntity : WorkspaceEntity {
   companion object : Type<LibraryPropertiesEntity, Builder>() {
     operator fun invoke(libraryType: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): LibraryPropertiesEntity {
       val builder = builder()
-      builder.entitySource = entitySource
       builder.libraryType = libraryType
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }
@@ -111,16 +112,16 @@ interface SdkEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : SdkEntity, ModifiableWorkspaceEntity<SdkEntity>, ObjBuilder<SdkEntity> {
-    override var library: LibraryEntity
     override var entitySource: EntitySource
+    override var library: LibraryEntity
     override var homeUrl: VirtualFileUrl
   }
 
   companion object : Type<SdkEntity, Builder>() {
     operator fun invoke(homeUrl: VirtualFileUrl, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SdkEntity {
       val builder = builder()
-      builder.entitySource = entitySource
       builder.homeUrl = homeUrl
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }

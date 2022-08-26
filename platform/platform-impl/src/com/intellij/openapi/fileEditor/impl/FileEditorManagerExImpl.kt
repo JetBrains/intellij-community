@@ -3,6 +3,8 @@ package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.TransactionGuardImpl
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.AsyncFileEditorProvider
@@ -18,7 +20,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CancellationException
 
 @ApiStatus.Internal
-interface AsyncFileEditorOpener {
+internal interface AsyncFileEditorOpener {
   suspend fun openFileImpl5(window: EditorWindow,
                             virtualFile: VirtualFile,
                             entry: HistoryEntry?,
@@ -40,6 +42,7 @@ open class FileEditorManagerExImpl(project: Project) : FileEditorManagerImpl(pro
       val result = clientManager.openFile(file = virtualFile, forceCreate = false)
       return Pair(result.map { it.fileEditor }, result.map { it.provider })
     }
+
     val file = getOriginalFile(virtualFile)
     var composite: EditorComposite? = if (options.isReopeningOnStartup) {
       null
@@ -49,7 +52,8 @@ open class FileEditorManagerExImpl(project: Project) : FileEditorManagerImpl(pro
         window.getComposite(file)
       }
     }
-    val newProviders: Array<FileEditorProvider?>?
+
+    val newProviders: List<FileEditorProvider>?
     val builders: Array<AsyncFileEditorProvider.Builder?>?
     if (composite == null) {
       if (!canOpenFile(file)) {
@@ -58,18 +62,17 @@ open class FileEditorManagerExImpl(project: Project) : FileEditorManagerImpl(pro
       }
 
       // File is not opened yet. In this case we have to create editors and select the created EditorComposite.
-      newProviders = FileEditorProviderManager.getInstance().getProviders(project, file)
+      newProviders = FileEditorProviderManager.getInstance().getProvidersAsync(project, file)
       builders = arrayOfNulls(newProviders.size)
       for (i in newProviders.indices) {
         try {
           val provider = newProviders[i]
-          LOG.assertTrue(provider != null, "Provider for file $file is null. All providers: ${newProviders.joinToString()}")
           builders[i] = readAction {
-            if (project.isDisposed || !file.isValid) {
+            if (!file.isValid) {
               return@readAction null
             }
 
-            LOG.assertTrue(provider!!.accept(project, file), "Provider $provider doesn't accept file $file")
+            LOG.assertTrue(provider.accept(project, file), "Provider $provider doesn't accept file $file")
             if (provider is AsyncFileEditorProvider) provider.createEditorAsync(project, file) else null
           }
         }
@@ -93,12 +96,16 @@ open class FileEditorManagerExImpl(project: Project) : FileEditorManagerImpl(pro
     }
 
     withContext(Dispatchers.EDT) {
-      if (project.isDisposed || !file.isValid) {
+      if (!file.isValid) {
         return@withContext
       }
 
-      runBulkTabChange(window.owner) {
-        composite = openFileImpl4Edt(window, file, entry, options, newProviders, builders)
+      // execute as part of project open process - maybe under modal progress, maybe not,
+      // so, we cannot use NON_MODAL to get write-safe context, because it will lead to a deadlock
+      (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
+        runBulkTabChange(window.owner) {
+          composite = openFileImpl4Edt(window, file, entry, options, newProviders, builders)
+        }
       }
     }
 

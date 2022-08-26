@@ -1,6 +1,15 @@
 UFile (package = ) [import java.util.stream.Stream...]
     UImportStatement (isOnDemand = false) [import java.util.stream.Stream]
     UClass (name = LambdasKt) [public final class LambdasKt {...}]
+        UField (name = lambdaVarWithType) [@org.jetbrains.annotations.NotNull private static var lambdaVarWithType: kotlin.jvm.functions.Function1<? super java.lang.String,java.lang.Integer> = { var it: java.lang.String ->...}]
+            UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+            ULambdaExpression [{ var it: java.lang.String ->...}] : PsiType:Function1<? super String, ? extends Integer>
+                UParameter (name = it) [var it: java.lang.String]
+                UBlockExpression [{...}]
+                    UReturnExpression [return it.length]
+                        UQualifiedReferenceExpression [it.length] : PsiType:int
+                            USimpleNameReferenceExpression (identifier = it) [it] : PsiType:String
+                            USimpleNameReferenceExpression (identifier = length) [length] : PsiType:int
         UMethod (name = foo) [public static final fun foo() : void {...}]
             UBlockExpression [{...}] : PsiType:Stream<String>
                 UQualifiedReferenceExpression [Stream.empty().filter({ var it: java.lang.String ->...})] : PsiType:Stream<String>
@@ -45,3 +54,7 @@ UFile (package = ) [import java.util.stream.Stream...]
                         UIdentifier (Identifier ({)) [UIdentifier (Identifier ({))]
                         USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] : PsiType:boolean
                     UBlockExpression [{...}] : PsiType:Unit
+        UMethod (name = getLambdaVarWithType) [public static final fun getLambdaVarWithType() : kotlin.jvm.functions.Function1<java.lang.String,java.lang.Integer> = UastEmptyExpression]
+        UMethod (name = setLambdaVarWithType) [public static final fun setLambdaVarWithType(@org.jetbrains.annotations.NotNull <set-?>: kotlin.jvm.functions.Function1<? super java.lang.String,java.lang.Integer>) : void = UastEmptyExpression]
+            UParameter (name = <set-?>) [@org.jetbrains.annotations.NotNull var <set-?>: kotlin.jvm.functions.Function1<? super java.lang.String,java.lang.Integer>]
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]

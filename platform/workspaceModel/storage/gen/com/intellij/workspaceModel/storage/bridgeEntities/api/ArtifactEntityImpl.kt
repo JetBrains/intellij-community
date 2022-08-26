@@ -14,6 +14,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToAbstractOneChild
@@ -68,8 +69,8 @@ open class ArtifactEntityImpl : ArtifactEntity, WorkspaceEntityBase() {
   override val outputUrl: VirtualFileUrl?
     get() = _outputUrl
 
-  override val rootElement: CompositePackagingElementEntity
-    get() = snapshot.extractOneToAbstractOneChild(ROOTELEMENT_CONNECTION_ID, this)!!
+  override val rootElement: CompositePackagingElementEntity?
+    get() = snapshot.extractOneToAbstractOneChild(ROOTELEMENT_CONNECTION_ID, this)
 
   override val customProperties: List<ArtifactPropertiesEntity>
     get() = snapshot.extractOneToManyChildren<ArtifactPropertiesEntity>(CUSTOMPROPERTIES_CONNECTION_ID, this)!!.toList()
@@ -108,24 +109,14 @@ open class ArtifactEntityImpl : ArtifactEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isNameInitialized()) {
         error("Field ArtifactEntity#name should be initialized")
       }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ArtifactEntity#entitySource should be initialized")
-      }
       if (!getEntityData().isArtifactTypeInitialized()) {
         error("Field ArtifactEntity#artifactType should be initialized")
-      }
-      if (_diff != null) {
-        if (_diff.extractOneToAbstractOneChild<WorkspaceEntityBase>(ROOTELEMENT_CONNECTION_ID, this) == null) {
-          error("Field ArtifactEntity#rootElement should be initialized")
-        }
-      }
-      else {
-        if (this.entityLinks[EntityLink(true, ROOTELEMENT_CONNECTION_ID)] == null) {
-          error("Field ArtifactEntity#rootElement should be initialized")
-        }
       }
       // Check initialization for list with ref type
       if (_diff != null) {
@@ -144,14 +135,18 @@ open class ArtifactEntityImpl : ArtifactEntity, WorkspaceEntityBase() {
       return connections
     }
 
-
-    override var name: String
-      get() = getEntityData().name
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().name = value
-        changedProperty.add("name")
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as ArtifactEntity
+      this.entitySource = dataSource.entitySource
+      this.name = dataSource.name
+      this.artifactType = dataSource.artifactType
+      this.includeInProjectBuild = dataSource.includeInProjectBuild
+      this.outputUrl = dataSource.outputUrl
+      if (parents != null) {
       }
+    }
+
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -160,6 +155,14 @@ open class ArtifactEntityImpl : ArtifactEntity, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var name: String
+      get() = getEntityData().name
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().name = value
+        changedProperty.add("name")
       }
 
     override var artifactType: String
@@ -188,15 +191,15 @@ open class ArtifactEntityImpl : ArtifactEntity, WorkspaceEntityBase() {
         if (_diff != null) index(this, "outputUrl", value)
       }
 
-    override var rootElement: CompositePackagingElementEntity
+    override var rootElement: CompositePackagingElementEntity?
       get() {
         val _diff = diff
         return if (_diff != null) {
           _diff.extractOneToAbstractOneChild(ROOTELEMENT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
-                                                                                                             ROOTELEMENT_CONNECTION_ID)]!! as CompositePackagingElementEntity
+                                                                                                             ROOTELEMENT_CONNECTION_ID)] as? CompositePackagingElementEntity
         }
         else {
-          this.entityLinks[EntityLink(true, ROOTELEMENT_CONNECTION_ID)]!! as CompositePackagingElementEntity
+          this.entityLinks[EntityLink(true, ROOTELEMENT_CONNECTION_ID)] as? CompositePackagingElementEntity
         }
       }
       set(value) {
@@ -352,14 +355,25 @@ class ArtifactEntityData : WorkspaceEntityData.WithCalculablePersistentId<Artifa
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ArtifactEntity(name, artifactType, includeInProjectBuild, entitySource) {
+      this.outputUrl = this@ArtifactEntityData.outputUrl
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
 
     other as ArtifactEntityData
 
-    if (this.name != other.name) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.name != other.name) return false
     if (this.artifactType != other.artifactType) return false
     if (this.includeInProjectBuild != other.includeInProjectBuild) return false
     if (this.outputUrl != other.outputUrl) return false
@@ -386,5 +400,19 @@ class ArtifactEntityData : WorkspaceEntityData.WithCalculablePersistentId<Artifa
     result = 31 * result + includeInProjectBuild.hashCode()
     result = 31 * result + outputUrl.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + name.hashCode()
+    result = 31 * result + artifactType.hashCode()
+    result = 31 * result + includeInProjectBuild.hashCode()
+    result = 31 * result + outputUrl.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    this.outputUrl?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = false
   }
 }

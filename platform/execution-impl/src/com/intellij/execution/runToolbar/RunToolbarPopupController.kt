@@ -211,16 +211,8 @@ class RunToolbarPopupController(val project: Project,
     getPopupControllers().forEach { it.removeListener(this) }
   }
 
-  private var firstShow = true
   override fun actionPerformedHandler() {
     show()
-    if(firstShow) {
-      cancel()
-      SwingUtilities.invokeLater {
-        show()
-        firstShow = false
-      }
-    }
   }
 }
 

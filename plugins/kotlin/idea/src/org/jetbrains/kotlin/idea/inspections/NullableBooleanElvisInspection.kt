@@ -1,16 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING
 import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -18,8 +18,6 @@ import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.typeUtil.isBooleanOrNullableBoolean
-
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class NullableBooleanElvisInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession) =
@@ -43,7 +41,7 @@ class NullableBooleanElvisInspection : AbstractKotlinInspection(), CleanupLocalI
 
                 holder.registerProblemWithoutOfflineInformation(
                     expression,
-                    KotlinBundle.message("equality.cehck.0.be.used.instead.of.elvis.for.nullable.boolean.check", verb),
+                    KotlinBundle.message("equality.check.0.be.used.instead.of.elvis.for.nullable.boolean.check", verb),
                     isOnTheFly,
                     highlightType,
                     ReplaceWithEqualityCheckFix()
@@ -57,7 +55,6 @@ class NullableBooleanElvisInspection : AbstractKotlinInspection(), CleanupLocalI
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val element = descriptor.psiElement as? KtBinaryExpression ?: return
-            if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return
             if (element.operationToken != KtTokens.ELVIS) return
             val constPart = element.right as? KtConstantExpression ?: return
             val exprPart = element.left ?: return

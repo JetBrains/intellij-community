@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.inspections.jdk2k
 
@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.types.typeUtil.isChar
 class ReplaceJavaStaticMethodWithKotlinAnalogInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = callExpressionVisitor(fun(call) {
         val callee = call.calleeExpression ?: return
-        val replacements = REPLACEMENTS[callee.text]
+        val replacements = Holder.REPLACEMENTS[callee.text]
             ?.filter { it.filter(call) && it.transformation.isApplicable(call) }
             ?.takeIf { it.isNotEmpty() }
             ?.let { list ->
@@ -62,7 +62,7 @@ class ReplaceJavaStaticMethodWithKotlinAnalogInspection : AbstractKotlinInspecti
         }
     }
 
-    companion object {
+    private object Holder {
         private val JAVA_PRIMITIVES = listOf(
             "Integer" to "Int",
             "Long" to "Long",
@@ -181,7 +181,7 @@ class ReplaceJavaStaticMethodWithKotlinAnalogInspection : AbstractKotlinInspecti
             Replacement("java.util.List.of", "kotlin.collections.mutableListOf")
         )
 
-        private val REPLACEMENTS = (JAVA_MATH + JAVA_SYSTEM + JAVA_IO + JAVA_PRIMITIVES + JAVA_COLLECTIONS)
+        val REPLACEMENTS = (JAVA_MATH + JAVA_SYSTEM + JAVA_IO + JAVA_PRIMITIVES + JAVA_COLLECTIONS)
             .groupBy { it.javaMethodShortName }
     }
 }

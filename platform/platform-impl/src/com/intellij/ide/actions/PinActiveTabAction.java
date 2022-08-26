@@ -151,8 +151,7 @@ public class PinActiveTabAction extends DumbAwareAction {
 
   @Nullable
   private static VirtualFile getFileInWindow(@NotNull AnActionEvent e, @NotNull EditorWindow window) {
-    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    if (file == null) file = window.getSelectedFile();
+    VirtualFile file = window.getSelectedFile();
     if (file != null && window.isFileOpen(file)) return file;
     return null;
   }

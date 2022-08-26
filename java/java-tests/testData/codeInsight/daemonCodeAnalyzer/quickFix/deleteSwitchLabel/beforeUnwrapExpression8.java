@@ -1,4 +1,4 @@
-// "Remove unreachable branches" "true"
+// "Remove unreachable branches" "true-preview"
 class Main {
   void foo(int x) {
     if (x == 42) {

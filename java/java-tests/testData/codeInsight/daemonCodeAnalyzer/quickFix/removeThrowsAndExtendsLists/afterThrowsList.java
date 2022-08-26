@@ -1,4 +1,4 @@
-// "Remove throws list" "true"
+// "Remove throws list" "true-preview"
 @interface Foo {
   int bar();
 }

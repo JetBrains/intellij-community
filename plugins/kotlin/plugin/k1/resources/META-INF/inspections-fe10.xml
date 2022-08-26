@@ -1,960 +1,1134 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ImportMemberIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ImportAllMembersIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyInDestructuringAssignmentIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.RemoveExplicitTypeIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertToBlockBodyIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.conventionNameCalls.ReplaceContainsIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.conventionNameCalls.ReplaceInvokeIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.conventionNameCalls.ReplaceCallWithUnaryOperatorIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.FoldIfToReturnAsymmetricallyIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.UnfoldAssignmentToIfIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.UnfoldPropertyToIfIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.UnfoldAssignmentToWhenIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.UnfoldPropertyToWhenIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.UnfoldReturnToIfIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.UnfoldReturnToWhenIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.DoubleBangToIfThenIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.ElvisToIfThenIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.SafeAccessToIfThenIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.IfToWhenIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.WhenToIfIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.FlattenWhenIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.EliminateWhenSubjectIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.RemoveUnnecessaryParenthesesIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.InsertCurlyBracesToTemplateIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.MoveLambdaInsideParenthesesIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.InsertExplicitTypeArgumentsIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.declarations.SplitPropertyDeclarationIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.declarations.ConvertMemberToExtensionIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ReconstructTypeInCastOrIsIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.InfixCallToOrdinaryIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ToInfixCallIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ReplaceExplicitFunctionLiteralParamWithItIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ReplaceItWithExplicitFunctionLiteralParamIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertBinaryExpressionWithDemorgansLawIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.AddForLoopIndicesIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.SwapBinaryExpressionIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.SwapStringEqualsIgnoreCaseIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.SplitIfIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ReplaceWithOrdinaryAssignmentIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.SpecifyExplicitLambdaSignatureIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.RemoveExplicitLambdaParameterTypesIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertForEachToForLoopIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertToForEachFunctionCallIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertToRawStringTemplateIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.OperatorToFunctionIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertToConcatenatedStringIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertFunctionToPropertyIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertPropertyToFunctionIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertReceiverToParameterIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertParameterToReceiverIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertPropertyInitializerToGetterIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.InvertIfConditionIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.refactoring.move.changePackage.ChangePackageIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.ExtractDeclarationFromCurrentFileIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ChangeVisibilityModifierIntention$Public</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ChangeVisibilityModifierIntention$Private</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ChangeVisibilityModifierIntention$Protected</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ChangeVisibilityModifierIntention$Internal</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.AddNameToArgumentIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.AddNamesToFollowingArgumentsIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ReplaceUnderscoreWithParameterNameIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.AddJvmOverloadsIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.AddJvmStaticIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.AddJvmInlineIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.RemoveArgumentNameIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.RemoveAllArgumentNamesIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.IterateExpressionIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.quickfix.AddConstModifierIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.IntroduceBackingPropertyIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.testIntegration.KotlinCreateTestIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.AnonymousFunctionToLambdaIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ImplementAbstractMemberIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ImplementAbstractMemberAsConstructorParameterIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.AddValVarToConstructorParameterAction$Intention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.MoveMemberToCompanionObjectIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.MoveMemberOutOfCompanionObjectIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.CreateKotlinSubClassIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ToRawStringLiteralIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.TrailingCommaIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ToOrdinaryStringLiteralIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.IntroduceVariableIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.IntroduceImportAliasIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ReplaceUntilWithRangeToIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertCamelCaseTestFunctionToSpacedIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertSnakeCaseTestFunctionToSpacedIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.copyConcatenatedStringToClipboard.CopyConcatenatedStringToClipboardIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.RemoveConstructorKeywordIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertPrimaryConstructorToSecondaryIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertEnumToSealedClassIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertSealedClassToEnumIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.AddNamesToCallArgumentsIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertFunctionTypeParameterToReceiverIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertFunctionTypeReceiverToParameterIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertRangeCheckToTwoComparisonsIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.RenameFileToMatchClassIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertObjectLiteralToClassIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertVariableAssignmentToExpressionIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.MergeIfsIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.MergeElseIfIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.AddMissingDestructuringIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertToApplyIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertToAlsoIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertToWithIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertToRunIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.MovePropertyToClassBodyIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.MovePropertyToConstructorIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.AddOpenModifierIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ValToObjectIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ChopParameterListIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ChopArgumentListIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.NullableBooleanEqualityCheckToElvisIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ReplaceAddWithPlusAssignIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.AddPropertyAccessorsIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.AddPropertyGetterIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.AddPropertySetterIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.MoveMemberToTopLevelIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertUnsafeCastCallToUnsafeCastIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertUnsafeCastToUnsafeCastCallIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.RemoveLabeledReturnInLambdaIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.AddLabeledReturnInLambdaIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.AddAnnotationUseSiteTargetIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.AddFullQualifierIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.JoinParameterListIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.JoinArgumentListIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertLineCommentToBlockCommentIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertBlockCommentToLineCommentIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.IndentRawStringIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertVarargParameterToArrayIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertArrayParameterToVarargIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.LambdaToAnonymousFunctionIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.AddWhenRemainingBranchesIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.intentions.ConvertTrimMarginToTrimIndentIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.intentions.ConvertTrimIndentToTrimMarginIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertPropertyGetterToInitializerIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.SamConversionToAnonymousObjectIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.AddThrowsAnnotationIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertNullablePropertyToLateinitIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertLateinitPropertyToNullableIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.AddUnderscoresToNumericLiteralIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ReplaceMapGetOrDefaultIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.RemoveUnderscoresFromNumericLiteralIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.RenameClassToContainingFileNameIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertCollectionConstructorToFunction</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertOrdinaryPropertyToLazyIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertLazyPropertyToOrdinaryIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertLambdaToMultiLineIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertLambdaToSingleLineIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.AddMissingClassKeywordIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ExpandBooleanExpressionIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertStringTemplateToBuildStringIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertConcatenationToBuildStringIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertToIndexedFunctionCallIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.EvaluateCompileTimeExpressionIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertCallToOppositeIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertAnyToAllAndViceVersaIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertAnyToNoneAndViceVersaIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertArgumentToSetIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.FoldIfToFunctionCallIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.UnfoldFunctionCallToIfIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArgumentsIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.codeInsight.hints.KotlinInlayHintToggleAction</className>
     </intentionAction>
 
@@ -1015,6 +1189,15 @@
                      level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.replace.manual.range.with.indices.calls.display.name" bundle="messages.KotlinBundle"/>
+
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.ReplaceUntilWithRangeUntilInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     key="inspection.replace.until.with.rangeUntil.operator.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.branchedTransformations.IfThenToElvisInspection"
                      groupPath="Kotlin"
@@ -1199,6 +1382,7 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
                      level="INFORMATION"
+                     language="kotlin"
                      key="inspection.loop.to.call.chain.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.intentions.loopToCallChain.UseWithIndexInspection"
@@ -1206,6 +1390,7 @@
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
                      level="WEAK WARNING"
+                     language="kotlin"
                      key="inspection.use.with.index.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.ConflictingExtensionPropertyInspection"
@@ -1488,15 +1673,6 @@
                      language="kotlin"
                      key="inspection.replace.size.zero.check.with.is.empty.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.intentions.RemoveEmptyClassBodyInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
-                     enabledByDefault="true"
-                     cleanupTool="true"
-                     level="WEAK WARNING"
-                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
-                     key="inspection.remove.empty.class.body.display.name" bundle="messages.KotlinBundle"/>
-
     <localInspection implementationClass="org.jetbrains.kotlin.idea.intentions.RemoveRedundantCallsOfConversionMethodsInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
@@ -1513,15 +1689,6 @@
                      level="WEAK WARNING"
                      language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.remove.empty.primary.constructor.display.name" bundle="messages.KotlinBundle"/>
-
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.intentions.RemoveEmptySecondaryConstructorBodyInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
-                     enabledByDefault="true"
-                     cleanupTool="true"
-                     level="WEAK WARNING"
-                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
-                     key="inspection.remove.empty.secondary.constructor.body.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.intentions.JoinDeclarationAndAssignmentInspection"
                      groupPath="Kotlin"
@@ -1570,14 +1737,6 @@
                      level="WARNING"
                      language="kotlin"
                      key="inspection.replace.with.enum.map.display.name" bundle="messages.KotlinBundle"/>
-
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.DataClassPrivateConstructorInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     language="kotlin"
-                     key="inspection.data.class.private.constructor.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.DestructuringWrongNameInspection"
                      groupPath="Kotlin"
@@ -1650,6 +1809,14 @@
                      level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.replace.range.to.with.until.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.ReplaceRangeToWithRangeUntilInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     key="inspection.replace.range.to.with.rangeUntil.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.MemberVisibilityCanBePrivateInspection"
                      groupPath="Kotlin"
@@ -1904,14 +2071,6 @@
                      language="kotlin"
                      key="inspection.suspicious.equals.combination.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.RedundantGetterInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
-                     enabledByDefault="true"
-                     cleanupTool="true"
-                     level="WEAK WARNING"
-                     language="kotlin" key="inspection.redundant.getter.display.name" bundle="messages.KotlinBundle"/>
-
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.RemoveRedundantQualifierNameInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
@@ -1919,15 +2078,6 @@
                      level="WARNING"
                      cleanupTool="true" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      language="kotlin" key="inspection.remove.redundant.qualifier.name.display.name" bundle="messages.KotlinBundle"/>
-
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.RedundantSetterInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
-                     enabledByDefault="true"
-                     cleanupTool="true"
-                     level="WEAK WARNING"
-                     language="kotlin"
-                     key="inspection.redundant.setter.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.MigrateDiagnosticSuppressionInspection"
                      groupPath="Kotlin"
@@ -2036,15 +2186,6 @@
                      level="WARNING"
                      language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.redundant.suspend.modifier.display.name" bundle="messages.KotlinBundle"/>
-
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.SortModifiersInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
-                     enabledByDefault="true"
-                     level="WEAK WARNING"
-                     language="kotlin"
-                     cleanupTool="true"
-                     key="inspection.sort.modifiers.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.MayBeConstantInspection"
                      groupPath="Kotlin"
@@ -2157,14 +2298,6 @@
                      level="WARNING"
                      language="kotlin"
                      key="inspection.main.function.return.unit.display.name" bundle="messages.KotlinBundle"/>
-
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.coroutines.RedundantAsyncInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
-                     enabledByDefault="true"
-                     level="WEAK WARNING"
-                     language="kotlin"
-                     key="inspection.redundant.async.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.coroutines.DeferredResultUnusedInspection"
                      groupPath="Kotlin"
@@ -2389,22 +2522,6 @@
                      language="kotlin"
                      key="inspection.replace.assert.boolean.with.assert.equality.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.RedundantReturnLabelInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
-                     enabledByDefault="true"
-                     level="WEAK WARNING"
-                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
-                     key="inspection.redundant.return.label.display.name" bundle="messages.KotlinBundle"/>
-
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.coroutines.DirectUseOfResultTypeInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
-                     enabledByDefault="false"
-                     level="WEAK WARNING"
-                     language="kotlin"
-                     key="inspection.direct.use.of.result.type.display.name" bundle="messages.KotlinBundle"/>
-
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.coroutines.RedundantRunCatchingInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
@@ -2492,14 +2609,6 @@
                      level="INFORMATION"
                      language="kotlin"
                      key="inspection.map.get.with.not.null.assertion.operator.display.name" bundle="messages.KotlinBundle"/>
-
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.coroutines.DeferredIsResultInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
-                     enabledByDefault="true"
-                     level="WEAK WARNING"
-                     language="kotlin"
-                     key="inspection.deferred.is.result.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.RedundantElseInIfInspection"
                      groupPath="Kotlin"
@@ -2656,14 +2765,6 @@
                      language="kotlin"
                      key="inspection.add.operator.modifier.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.RedundantEmptyInitializerBlockInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
-                     enabledByDefault="true"
-                     level="WEAK WARNING"
-                     language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
-                     key="inspection.redundant.empty.initializer.block.display.name" bundle="messages.KotlinBundle"/>
-
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.KotlinEqualsBetweenInconvertibleTypesInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
@@ -2785,14 +2886,6 @@
                      level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.replace.isempty.with.ifempty.display.name" bundle="messages.KotlinBundle"/>
-
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.UnclearPrecedenceOfBinaryExpressionInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     language="kotlin"
-                     key="unclear.precedence.of.binary.expression.inspection.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.dfa.KotlinConstantConditionsInspection"
                      groupPath="Kotlin"

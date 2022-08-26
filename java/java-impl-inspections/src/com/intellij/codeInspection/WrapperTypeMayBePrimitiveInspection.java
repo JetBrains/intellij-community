@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.Nullability;
@@ -394,7 +394,7 @@ public class WrapperTypeMayBePrimitiveInspection extends AbstractBaseJavaLocalIn
       PsiExpression argument = arguments[0];
       if (containingClass == null) return;
       String containingClassName = containingClass.getQualifiedName();
-      String replacementMethodCall = JavaPsiBoxingUtils.getParseMethod(containingClassName);
+      String replacementMethodCall = JavaPsiBoxingUtils.getParseMethod(callExpression.getType());
       if (replacementMethodCall == null) return;
       CommentTracker tracker = new CommentTracker();
       String argumentText = tracker.text(argument);

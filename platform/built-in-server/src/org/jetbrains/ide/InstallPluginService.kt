@@ -147,7 +147,7 @@ internal class InstallPluginService : RestService() {
   override fun isHostTrusted(request: FullHttpRequest, urlDecoder: QueryStringDecoder): Boolean {
     val origin = request.origin
     val originHost = try {
-      if (origin == null) null else URI(origin).host.nullize()
+      if (origin == null) null else URI(origin).takeIf { it.scheme == "https" }?.host.nullize()
     }
     catch (ignored: URISyntaxException) {
       return false

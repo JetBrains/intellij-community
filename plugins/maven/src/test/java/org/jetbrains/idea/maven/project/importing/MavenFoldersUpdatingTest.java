@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
@@ -158,7 +159,7 @@ public class MavenFoldersUpdatingTest extends MavenMultiVersionImportingTestCase
       assertSources("project", "target/src");
     }
     else {
-      assertSources("project");
+      assertSources("project", "src/main/java");
     }
     assertExcludes("project", "target");
   }
@@ -213,7 +214,7 @@ public class MavenFoldersUpdatingTest extends MavenMultiVersionImportingTestCase
     });
 
     updateTargetFolders();
-    assertEquals(supportsZeroEventsOnNoProjectChange() ? 0 : 1, count[0]);
+    assertEquals(0, count[0]);
   }
 
   @Test 
@@ -268,11 +269,13 @@ public class MavenFoldersUpdatingTest extends MavenMultiVersionImportingTestCase
     assertGeneratedSources("project", "target/generated-sources/xxx");
 
     ModuleRootModificationUtil.updateModel(getModule("project"), model -> {
-      for (SourceFolder folder : model.getContentEntries()[0].getSourceFolders()) {
-        JavaSourceRootProperties properties = folder.getJpsElement().getProperties(JavaModuleSourceRootTypes.SOURCES);
-        assertNotNull(properties);
-        properties.setForGeneratedSources(false);
-      }
+      SourceFolder[] folders = model.getContentEntries()[0].getSourceFolders();
+      SourceFolder generated = ContainerUtil.find(folders, it -> it.getUrl().endsWith("target/generated-sources/xxx"));
+      assertNotNull("Generated folder not found", generated);
+
+      JavaSourceRootProperties properties = generated.getJpsElement().getProperties(JavaModuleSourceRootTypes.SOURCES);
+      assertNotNull(properties);
+      properties.setForGeneratedSources(false);
     });
     assertGeneratedSources("project");
 

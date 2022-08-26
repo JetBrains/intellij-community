@@ -24,3 +24,9 @@ fun E() = object : E {}
 
 typealias F = () -> String
 fun F(): F = { "" }
+
+class Generic<ID>(val id: ID)
+fun Generic(): Generic<Int> = Generic(0)
+
+class Generic2<ID>(val id: ID)
+fun Generic2() = Generic2(0)

@@ -26,6 +26,8 @@ public class SeparatorWithText extends JComponent implements Accessible {
   protected int myAlignment;
   protected Color myTextForeground;
 
+  public static final int DEFAULT_H_GAP = 3;
+
   public SeparatorWithText() {
     setBorder(BorderFactory.createEmptyBorder(getVgap(), 0, getVgap(), 0));
     setFont(StartupUiUtil.getLabelFont());
@@ -47,7 +49,7 @@ public class SeparatorWithText extends JComponent implements Accessible {
   }
 
   protected static int getHgap() {
-    return 3;
+    return DEFAULT_H_GAP;
   }
 
   public void setCaptionCentered(boolean captionCentered) {

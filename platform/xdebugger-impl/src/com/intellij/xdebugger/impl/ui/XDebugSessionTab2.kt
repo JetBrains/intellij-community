@@ -308,6 +308,10 @@ class XDebugSessionTab2(
 
           setSelected(e, threadsIsVisible)
         }
+
+        override fun getActionUpdateThread(): ActionUpdateThread {
+          return ActionUpdateThread.BGT
+        }
       }, constraints)
 
       add(ActionManager.getInstance().getAction(XDebuggerActions.FRAMES_TOP_TOOLBAR_GROUP), constraints)

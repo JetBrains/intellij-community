@@ -12,10 +12,6 @@ repositories {
 kotlin {
     jvm {}
     js {
-        browser {
-            commonWebpackConfig {
-                cssSupport.enabled = true
-            }
-        }
+        browser()
     }
 }

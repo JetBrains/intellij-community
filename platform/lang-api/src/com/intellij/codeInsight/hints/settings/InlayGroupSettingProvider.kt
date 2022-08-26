@@ -32,8 +32,8 @@ interface InlayGroupSettingProvider {
   fun reset()
 
   object EP {
-    val EXTENSION_POINT_NAME =
-      ExtensionPointName.create<InlayGroupSettingProvider>("com.intellij.config.inlayGroupSettingProvider")
+    val EXTENSION_POINT_NAME: ExtensionPointName<InlayGroupSettingProvider> =
+      ExtensionPointName.create("com.intellij.config.inlayGroupSettingProvider")
 
     fun findForGroup(group: InlayGroup) = EXTENSION_POINT_NAME.extensions.singleOrNull { it.group == group }
   }

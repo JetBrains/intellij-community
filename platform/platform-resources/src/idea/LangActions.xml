@@ -652,10 +652,7 @@
 
     <!-- Tools -->
     <group id="ToolsBasicGroup">
-
       <add-to-group group-id="ToolsMenu" anchor="first"/>
-
-      <action id="IdeScriptingConsole" class="com.intellij.ide.script.RunIdeConsoleAction"/>
     </group>
     <action id="NewScratchFile" class="com.intellij.ide.scratch.ScratchFileActions$NewFileAction"/>
     <action id="NewScratchBuffer" class="com.intellij.ide.scratch.ScratchFileActions$NewBufferAction"/>
@@ -1145,7 +1142,6 @@
       <separator/>
       <reference ref="StepOver"/>
       <reference ref="StepInto"/>
-      <reference ref="ForceStepInto"/>
       <reference ref="StepOut"/>
       <reference ref="RunToCursor"/>
       <separator/>
@@ -1583,6 +1579,10 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
+    <action id="IdeScriptingConsole" class="com.intellij.ide.script.RunIdeConsoleAction">
+      <add-to-group group-id="MaintenanceGroup"/>
+    </action>
+
     <action id="TypingLatencyReport" class="com.intellij.internal.performance.TypingLatencyReportAction" internal="true">
       <add-to-group group-id="Internal.Performance" anchor="last"/>
     </action>
@@ -1647,6 +1647,7 @@
       <action id="ScanSourceCommentsAction" internal="true" class="com.intellij.tools.ScanSourceCommentsAction"/>
       <action id="DumpScreenConfiguration" class="com.intellij.internal.DumpScreenConfigurationAction"/>
       <action id="DumpInvalidTipsOfTheDay" internal="true" class="com.intellij.ide.util.DumpInvalidTipsAction"/>
+      <action id="SelectAndDumpInvalidTipsOfTheDay" internal="true" class="com.intellij.ide.util.SelectAndDumpInvalidTipsAction"/>
       <action id="DumpIElementTypesAction" internal="true" class="com.intellij.internal.DumpIElementTypesAction"/>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>

@@ -175,6 +175,7 @@ public abstract class ActionPlaces {
   public static final String VCS_HISTORY_PLACE = "Vcs.FileHistory.ContextMenu";
   public static final String VCS_HISTORY_TOOLBAR_PLACE = "Vcs.FileHistory.Toolbar";
   public static final String VCS_LOG_TOOLBAR_POPUP_PLACE = "Vcs.Log.Toolbar.Popup";
+  public static final String VCS_LOG_BRANCHES_PLACE = "Vcs.Log.Branches.Tree";
 
   public static final String VCS_TOOLBAR_WIDGET = "Vcs.Toolbar.Widget";
 
@@ -197,6 +198,10 @@ public abstract class ActionPlaces {
 
   public static boolean isShortcutPlace(String place) {
     return KEYBOARD_SHORTCUT.equals(place) || MOUSE_SHORTCUT.equals(place) || FORCE_TOUCH.equals(place);
+  }
+
+  public static boolean isMainToolbar(String place) {
+    return MAIN_TOOLBAR.equals(place);
   }
 
   private static final Set<String> ourCommonPlaces = ContainerUtil.newHashSet(
@@ -231,7 +236,7 @@ public abstract class ActionPlaces {
     V8_CPU_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP, RUN_DASHBOARD_POPUP, SERVICES_POPUP, EDITOR_GUTTER_POPUP,
     EDITOR_ANNOTATIONS_AREA_POPUP,
     RUN_ANYTHING_POPUP, RUN_TOOLBAR_LEFT_SIDE,
-    VCS_LOG_TABLE_PLACE, VCS_HISTORY_PLACE, VCS_LOG_TOOLBAR_POPUP_PLACE, VCS_TOOLBAR_WIDGET,
+    VCS_LOG_TABLE_PLACE, VCS_HISTORY_PLACE, VCS_LOG_TOOLBAR_POPUP_PLACE, VCS_LOG_BRANCHES_PLACE, VCS_TOOLBAR_WIDGET,
     MAIN_MENU_IN_POPUP, PROJECT_WIDGET_POPUP
   );
 

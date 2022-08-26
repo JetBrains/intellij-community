@@ -59,10 +59,7 @@ import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.commit.ChangeListCommitState;
-import com.intellij.vcs.commit.CommitModeManager;
-import com.intellij.vcs.commit.ShowNotificationCommitResultHandler;
-import com.intellij.vcs.commit.SingleChangeListCommitter;
+import com.intellij.vcs.commit.*;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import kotlin.text.StringsKt;
@@ -1253,8 +1250,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
     String commitMessage = StringUtil.isEmpty(changeList.getComment()) ? changeList.getName() : changeList.getComment();
     ChangeListCommitState commitState = new ChangeListCommitState(changeList, changes, commitMessage);
-    SingleChangeListCommitter committer =
-      new SingleChangeListCommitter(myProject, commitState, new CommitContext(), changeList.getName(), false);
+    LocalChangesCommitter committer = SingleChangeListCommitter.create(myProject, commitState, new CommitContext(), changeList.getName());
 
     committer.addResultHandler(new ShowNotificationCommitResultHandler(committer));
     committer.runCommit(changeList.getName(), synchronously);

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.codeInsight.completion.*;
@@ -10,10 +10,9 @@ import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.patterns.PsiMethodPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.IconManager;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
-import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -145,7 +144,7 @@ public class JavaMethodHandleCompletionContributor extends CompletionContributor
     final String presentableText = PsiNameHelper.getShortClassName(JAVA_LANG_INVOKE_METHOD_TYPE) + "." + METHOD_TYPE + shortTypes;
     final String lookupText = METHOD_TYPE + signature.getText(true, PsiNameHelper::getShortClassName);
 
-    return lookupExpression(expression, PlatformIcons.METHOD_ICON, presentableText, lookupText);
+    return lookupExpression(expression, IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method), presentableText, lookupText);
   }
 
   private static void addFieldHandleVariants(@NotNull PsiElement position, @NotNull Consumer<? super LookupElement> result) {
@@ -178,7 +177,7 @@ public class JavaMethodHandleCompletionContributor extends CompletionContributor
       final PsiExpression expression = factory.createExpressionFromText(typeText + ".class", context);
 
       final String shortType = PsiNameHelper.getShortClassName(typeText);
-      result.consume(lookupExpression(expression, PlatformIcons.CLASS_ICON, shortType + ".class", shortType));
+      result.consume(lookupExpression(expression, IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class), shortType + ".class", shortType));
     }
   }
 

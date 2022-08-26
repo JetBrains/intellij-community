@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -38,7 +36,7 @@ public abstract class JSR45PositionManager<Scope> implements PositionManager {
   private final String myStratumId;
   protected final SourcesFinder<Scope> mySourcesFinder;
   protected final String GENERATED_CLASS_PATTERN;
-  protected Matcher myGeneratedClassPatternMatcher;
+  protected final Matcher myGeneratedClassPatternMatcher;
   private final Set<LanguageFileType> myFileTypes;
 
   public JSR45PositionManager(DebugProcess debugProcess, Scope scope, final String stratumId, final LanguageFileType[] acceptedFileTypes,

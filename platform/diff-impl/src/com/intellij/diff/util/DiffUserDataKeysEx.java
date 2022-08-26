@@ -119,7 +119,7 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   //
 
   /**
-   * @return false if merge window should be prevented from closing and canceling resolve.
+   * False if merge window should be prevented from closing and canceling resolve.
    */
   Key<Condition<MergeTool.MergeViewer>> MERGE_CANCEL_HANDLER = Key.create("Diff.MergeCancelHandler");
   /**

@@ -5,9 +5,12 @@ package com.intellij.ide.bookmark.actions
 import com.intellij.ide.bookmark.BookmarkBundle.message
 import com.intellij.ide.bookmark.BookmarkType
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor.namedColor
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.panels.RowGridLayout
+import com.intellij.ui.dsl.builder.BottomGap
+import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.ui.JBUI
@@ -22,31 +25,40 @@ import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
 import javax.swing.*
 
-private val ASSIGNED_FOREGROUND = namedColor("BookmarkMnemonicAssigned.buttonForeground", 0x000000, 0xBBBBBB)
-private val ASSIGNED_BACKGROUND = namedColor("BookmarkMnemonicAssigned.buttonBackground", 0xF7C777, 0x665632)
-private val ASSIGNED_BORDER = namedColor("BookmarkMnemonicAssigned.borderColor", ASSIGNED_BACKGROUND)
+private val ASSIGNED_FOREGROUND = namedColor("Bookmark.MnemonicAssigned.foreground", 0x000000, 0xBBBBBB)
+private val ASSIGNED_BACKGROUND = namedColor("Bookmark.MnemonicAssigned.background", 0xF7C777, 0x665632)
 
-private val CURRENT_FOREGROUND = namedColor("BookmarkMnemonicCurrent.buttonForeground", 0xFFFFFF, 0xFEFEFE)
-private val CURRENT_BACKGROUND = namedColor("BookmarkMnemonicCurrent.buttonBackground", 0x389FD6, 0x345F85)
-private val CURRENT_BORDER = namedColor("BookmarkMnemonicCurrent.borderColor", CURRENT_BACKGROUND)
+private val CURRENT_FOREGROUND = namedColor("Bookmark.MnemonicCurrent.foreground", 0xFFFFFF, 0xFEFEFE)
+private val CURRENT_BACKGROUND = namedColor("Bookmark.MnemonicCurrent.background", 0x389FD6, 0x345F85)
 
 private val SHARED_CURSOR by lazy { Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) }
 private val SHARED_LAYOUT by lazy {
   object : RowGridLayout(0, 4, 2, SwingConstants.CENTER) {
-    override fun getCellSize(sizes: List<Dimension>) = Dimension(JBUI.scale(24), JBUI.scale(28))
+    override fun getCellSize(sizes: List<Dimension>) = when {
+      ExperimentalUI.isNewUI() -> Dimension(JBUI.scale(30), JBUI.scale(34))
+      else -> Dimension(JBUI.scale(24), JBUI.scale(28))
+    }
   }
+}
+
+private object MySpacingConfiguration: IntelliJSpacingConfiguration() {
+  override val verticalComponentGap: Int
+    get() = 0
+
+  override val verticalSmallGap: Int
+    get() = JBUI.scale(if (ExperimentalUI.isNewUI()) 16 else 8)
 }
 
 internal class BookmarkTypeChooser(
   private var current: BookmarkType?,
-  private val assigned: Set<BookmarkType>,
+  assigned: Set<BookmarkType>,
   private var description: String?,
   private val onChosen: (BookmarkType, String) -> Unit
-): JPanel() {
+): JPanel(FlowLayout(FlowLayout.CENTER, 0, 0)) {
   private val bookmarkLayoutGrid = BookmarkLayoutGrid(
     current,
     assigned,
-    { current = it },
+    { if (current == it) save() else current = it },
     { save() }
   )
   private lateinit var descriptionField: JBTextField
@@ -55,40 +67,50 @@ internal class BookmarkTypeChooser(
 
   init {
     add(panel {
-      row {
-        comment(message("mnemonic.chooser.comment"), 55)
-      }
-
-      row {
-        cell(bookmarkLayoutGrid)
-          .horizontalAlign(HorizontalAlign.CENTER)
-      }
-
-      row {
-        descriptionField = textField()
-          .horizontalAlign(HorizontalAlign.FILL)
-          .applyToComponent {
-            text = description ?: ""
-            emptyText.text = message("mnemonic.chooser.description")
-            addKeyListener(object: KeyListener {
-              override fun keyTyped(e: KeyEvent?) = Unit
-              override fun keyReleased(e: KeyEvent?) = Unit
-              override fun keyPressed(e: KeyEvent?) {
-                if (e != null && e.modifiersEx == 0 && e.keyCode == KeyEvent.VK_ENTER) {
-                  save()
-                }
-              }
-            })
+      customizeSpacingConfiguration(MySpacingConfiguration) {
+        row {
+          val lineLength = if (ExperimentalUI.isNewUI()) 63 else 55
+          comment(message("mnemonic.chooser.comment"), lineLength).apply {
+            if (ExperimentalUI.isNewUI()) border = JBUI.Borders.empty(2, 4, 0, 4)
           }
-          .component
-      }
+        }.bottomGap(BottomGap.SMALL)
 
-      row {
-        cell(createLegend(ASSIGNED_BACKGROUND, message("mnemonic.chooser.legend.assigned.bookmark")))
-        cell(createLegend(CURRENT_BACKGROUND, message("mnemonic.chooser.legend.current.bookmark")))
+        row {
+          cell(bookmarkLayoutGrid)
+            .horizontalAlign(HorizontalAlign.CENTER)
+        }.bottomGap(BottomGap.SMALL)
+
+        row {
+          descriptionField = textField()
+            .horizontalAlign(HorizontalAlign.FILL)
+            .applyToComponent {
+              text = description ?: ""
+              emptyText.text = message("mnemonic.chooser.description")
+              isOpaque = false
+              addKeyListener(object : KeyListener {
+                override fun keyTyped(e: KeyEvent?) = Unit
+                override fun keyReleased(e: KeyEvent?) = Unit
+                override fun keyPressed(e: KeyEvent?) {
+                  if (e != null && e.modifiersEx == 0 && e.keyCode == KeyEvent.VK_ENTER) {
+                    save()
+                  }
+                }
+              })
+            }
+            .component
+        }.bottomGap(BottomGap.SMALL)
+
+        row {
+          cell(createLegend(ASSIGNED_BACKGROUND, message("mnemonic.chooser.legend.assigned.bookmark")))
+          cell(createLegend(CURRENT_BACKGROUND, message("mnemonic.chooser.legend.current.bookmark")))
+        }
       }
     }.apply {
-      border = JBUI.Borders.empty(2, 6)
+      border = when {
+        ExperimentalUI.isNewUI() -> JBUI.Borders.empty(0, 20, 14, 20)
+        else -> JBUI.Borders.empty(12, 11)
+      }
+      isOpaque = false
       isFocusCycleRoot = true
       focusTraversalPolicy = object: LayoutFocusTraversalPolicy() {
         override fun accept(aComponent: Component?): Boolean {
@@ -96,6 +118,9 @@ internal class BookmarkTypeChooser(
         }
       }
     })
+
+    border = JBUI.Borders.empty()
+    background = namedColor("Popup.background")
   }
 
   private fun createLegend(color: Color, @Nls text: String) = JLabel(text).apply {
@@ -126,17 +151,26 @@ private class BookmarkLayoutGrid(
 
   init {
     addToLeft(JPanel(SHARED_LAYOUT).apply {
-      border = JBUI.Borders.empty(5)
+      border = when {
+        ExperimentalUI.isNewUI() -> JBUI.Borders.emptyRight(14)
+        else -> JBUI.Borders.empty(5)
+      }
+      isOpaque = false
       BookmarkType.values()
         .filter { it.mnemonic.isDigit() }
         .forEach { add(createButton(it)) }
     })
     addToRight(JPanel(SHARED_LAYOUT).apply {
-      border = JBUI.Borders.empty(5)
+      border = when {
+        ExperimentalUI.isNewUI() -> JBUI.Borders.empty()
+        else -> JBUI.Borders.empty(5)
+      }
+      isOpaque = false
       BookmarkType.values()
         .filter { it.mnemonic.isLetter() }
         .forEach { add(createButton(it)) }
     })
+    isOpaque = false
     updateButtons(current)
   }
 
@@ -144,6 +178,7 @@ private class BookmarkLayoutGrid(
 
   fun createButton(type: BookmarkType) = JButton(type.mnemonic.toString()).apply {
     setMnemonic(type.mnemonic)
+    isOpaque = false
     putClientProperty("ActionToolbar.smallVariant", true)
     putClientProperty(TYPE_KEY, type)
     addPropertyChangeListener { repaint() }
@@ -154,8 +189,8 @@ private class BookmarkLayoutGrid(
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, true), "released")
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false), "pressed")
     cursor = SHARED_CURSOR
-  }.also {
-    it.addKeyListener(this)
+
+    addKeyListener(this@BookmarkLayoutGrid)
   }
 
   fun updateButtons(current: BookmarkType?) {
@@ -165,17 +200,17 @@ private class BookmarkLayoutGrid(
         type == current -> {
           it.putClientProperty("JButton.textColor", CURRENT_FOREGROUND)
           it.putClientProperty("JButton.backgroundColor", CURRENT_BACKGROUND)
-          it.putClientProperty("JButton.borderColor", CURRENT_BORDER)
+          it.putClientProperty("JButton.borderColor", CURRENT_BACKGROUND)
         }
         assigned.contains(type) -> {
           it.putClientProperty("JButton.textColor", ASSIGNED_FOREGROUND)
           it.putClientProperty("JButton.backgroundColor", ASSIGNED_BACKGROUND)
-          it.putClientProperty("JButton.borderColor", ASSIGNED_BORDER)
+          it.putClientProperty("JButton.borderColor", ASSIGNED_BACKGROUND)
         }
         else -> {
-          it.putClientProperty("JButton.textColor", UIManager.getColor("BookmarkMnemonicAvailable.buttonForeground"))
-          it.putClientProperty("JButton.backgroundColor", UIManager.getColor("BookmarkMnemonicAvailable.buttonBackground"))
-          it.putClientProperty("JButton.borderColor", UIManager.getColor("BookmarkMnemonicAvailable.borderColor"))
+          it.putClientProperty("JButton.textColor", UIManager.getColor("Bookmark.MnemonicAvailable.foreground"))
+          it.putClientProperty("JButton.backgroundColor", UIManager.getColor("Popup.background"))
+          it.putClientProperty("JButton.borderColor", UIManager.getColor("Bookmark.MnemonicAvailable.borderColor"))
         }
       }
     }

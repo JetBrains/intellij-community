@@ -476,6 +476,11 @@ public class CustomizableActionsPanel {
       }
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
     protected final boolean isSingleSelection() {
       final TreePath[] selectionPaths = myActionsTree.getSelectionPaths();
       return selectionPaths != null && selectionPaths.length == 1;
@@ -839,6 +844,11 @@ public class CustomizableActionsPanel {
         e.getPresentation().setText(IdeBundle.messagePointer("button.restore.selection", selection.first.iterator().next()));
       }
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private final class RestoreAllAction extends DumbAwareAction {
@@ -855,6 +865,11 @@ public class CustomizableActionsPanel {
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(mySelectedSchema.isModified(new CustomActionsSchema()));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 }

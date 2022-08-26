@@ -4,11 +4,23 @@ fun simpleRange(x: Int) = when {
     <warning descr="Condition 'x > 15' is always false">x > 15</warning> -> 15
     else -> 0
 }
+@OptIn(ExperimentalStdlibApi::class)
 fun inRange(obj : Int) {
+    when (obj) {
+        in 0..<10 -> {}
+        10 -> {}
+        <warning descr="'when' branch is never reachable">9</warning> -> {}
+    }
     when (obj) {
         in 0 until 10 -> {}
         10 -> {}
         <warning descr="'when' branch is never reachable">9</warning> -> {}
+    }
+    when (obj) {
+        in 0..<10 -> {}
+        !in 0..9 -> {}
+        <warning descr="'when' branch is never reachable">20</warning> -> {}
+        else -> {}
     }
     when (obj) {
         in 0 until 10 -> {}

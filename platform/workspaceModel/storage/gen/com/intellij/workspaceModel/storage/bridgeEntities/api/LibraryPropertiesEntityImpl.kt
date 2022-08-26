@@ -13,8 +13,10 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -80,6 +82,9 @@ open class LibraryPropertiesEntityImpl : LibraryPropertiesEntity, WorkspaceEntit
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToOneParent<WorkspaceEntityBase>(LIBRARY_CONNECTION_ID, this) == null) {
           error("Field LibraryPropertiesEntity#library should be initialized")
@@ -90,9 +95,6 @@ open class LibraryPropertiesEntityImpl : LibraryPropertiesEntity, WorkspaceEntit
           error("Field LibraryPropertiesEntity#library should be initialized")
         }
       }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field LibraryPropertiesEntity#entitySource should be initialized")
-      }
       if (!getEntityData().isLibraryTypeInitialized()) {
         error("Field LibraryPropertiesEntity#libraryType should be initialized")
       }
@@ -102,6 +104,26 @@ open class LibraryPropertiesEntityImpl : LibraryPropertiesEntity, WorkspaceEntit
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as LibraryPropertiesEntity
+      this.entitySource = dataSource.entitySource
+      this.libraryType = dataSource.libraryType
+      this.propertiesXmlTag = dataSource.propertiesXmlTag
+      if (parents != null) {
+        this.library = parents.filterIsInstance<LibraryEntity>().single()
+      }
+    }
+
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var library: LibraryEntity
       get() {
@@ -136,15 +158,6 @@ open class LibraryPropertiesEntityImpl : LibraryPropertiesEntity, WorkspaceEntit
           this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)] = value
         }
         changedProperty.add("library")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override var libraryType: String
@@ -206,6 +219,19 @@ class LibraryPropertiesEntityData : WorkspaceEntityData<LibraryPropertiesEntity>
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return LibraryPropertiesEntity(libraryType, entitySource) {
+      this.propertiesXmlTag = this@LibraryPropertiesEntityData.propertiesXmlTag
+      this.library = parents.filterIsInstance<LibraryEntity>().single()
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(LibraryEntity::class.java)
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
@@ -234,5 +260,16 @@ class LibraryPropertiesEntityData : WorkspaceEntityData<LibraryPropertiesEntity>
     result = 31 * result + libraryType.hashCode()
     result = 31 * result + propertiesXmlTag.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + libraryType.hashCode()
+    result = 31 * result + propertiesXmlTag.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.sameForAllEntities = true
   }
 }

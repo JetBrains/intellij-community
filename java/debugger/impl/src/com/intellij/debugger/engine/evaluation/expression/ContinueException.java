@@ -18,9 +18,6 @@ package com.intellij.debugger.engine.evaluation.expression;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 
-/**
- * @authorlex
- */
 public class ContinueException extends EvaluateException{
   private final String myLabelName;
 

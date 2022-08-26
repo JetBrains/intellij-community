@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.NonProportionalOnePixelSplitter
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ListSpeedSearch
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
@@ -21,6 +20,9 @@ import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
+import com.intellij.xdebugger.impl.util.SequentialDisposables
+import com.intellij.xdebugger.impl.util.isNotAlive
+import com.intellij.xdebugger.impl.util.onTermination
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Dimension
@@ -61,12 +63,6 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
   companion object {
     private const val splitterProportionKey = "XThreadsFramesViewSplitterKey"
     private const val splitterProportionDefaultValue = 0.5f
-
-    private val Disposable.isAlive get() = !Disposer.isDisposed(this)
-    private val Disposable.isNotAlive get() = !isAlive
-
-    private fun Disposable.onTermination(disposable: Disposable) = Disposer.register(this, disposable)
-    private fun Disposable.onTermination(action: () -> Unit) = Disposer.register(this, Disposable { action() })
 
     private fun Component.toScrollPane(): JScrollPane {
       return ScrollPaneFactory.createScrollPane(this)
@@ -502,35 +498,5 @@ class XThreadsFramesView(val project: Project) : XDebugView() {
         action()
       }
     }
-  }
-
-  private class SequentialDisposables(parent: Disposable? = null) : Disposable {
-    private var myCurrentDisposable: Disposable? = null
-
-    init {
-      parent?.onTermination(this)
-    }
-
-    fun next(): Disposable {
-      val newDisposable = Disposer.newDisposable()
-      Disposer.register(this, newDisposable)
-
-      myCurrentDisposable?.disposeIfNeeded()
-      myCurrentDisposable = newDisposable
-
-      return newDisposable
-    }
-
-    fun terminateCurrent() {
-      myCurrentDisposable?.disposeIfNeeded()
-      myCurrentDisposable = null
-    }
-
-    private fun Disposable.disposeIfNeeded() {
-      if (this.isAlive)
-        Disposer.dispose(this)
-    }
-
-    override fun dispose() = terminateCurrent()
   }
 }

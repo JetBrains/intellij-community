@@ -1,8 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.impl;
 
+import com.intellij.application.options.RegistryManager;
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.impl.DataValidators;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
@@ -17,6 +19,7 @@ import com.intellij.openapi.command.CommandProcessorEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.DialogWrapperPeer;
@@ -259,8 +262,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   }
 
   @Override
-  @Nullable
-  public Container getContentPane() {
+  public @Nullable Container getContentPane() {
     return getRootPane() != null ? myDialog.getContentPane() : null;
   }
 
@@ -363,9 +365,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     myDialog.setResizable(resizable);
   }
 
-  @NotNull
   @Override
-  public Point getLocation() {
+  public @NotNull Point getLocation() {
     return myDialog.getLocation();
   }
 
@@ -424,7 +425,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
                                   && !isProgressDialog(); // ProgressWindow starts a modality state itself
     Project project = myProject;
 
-    boolean perProjectModality = Registry.is("ide.perProjectModality", false);
+    boolean perProjectModality = isPerProjectModality();
     if (changeModalityState) {
       commandProcessor.enterModal();
       if (perProjectModality && project != null) {
@@ -439,7 +440,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       hidePopupsIfNeeded();
     }
 
-    myDialog.getWindow().setAutoRequestFocus((getOwner()!=null && getOwner().isActive()) || !ComponentUtil.isDisableAutoRequestFocus());
+    myDialog.getWindow().setAutoRequestFocus((getOwner() != null && getOwner().isActive()) || !isDisableAutoRequestFocus());
 
     if (SystemInfo.isMac) {
       final Disposable tb = TouchbarSupport.showWindowActions(myDialog.getContentPane());
@@ -499,6 +500,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
     private boolean hasNoEditingTreesOrTablesUpward(Component comp) {
       while (comp != null) {
         if (isEditingTreeOrTable(comp)) return false;
@@ -552,8 +557,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {
         @Override
         public boolean accept(Component aComponent) {
-          if (UIUtil.isFocusProxy(aComponent)) return false;
-          return super.accept(aComponent);
+          return !ComponentUtil.isFocusProxy(aComponent) && super.accept(aComponent);
         }
       });
 
@@ -562,7 +566,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
       myWindowListener = new MyWindowListener();
       addWindowListener(myWindowListener);
-      UIUtil.setAutoRequestFocus(this, (owner!=null && owner.isActive()) || !ComponentUtil.isDisableAutoRequestFocus());
+      UIUtil.setAutoRequestFocus(this, (owner != null && owner.isActive()) || !isDisableAutoRequestFocus());
     }
 
     @Override
@@ -587,9 +591,16 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     @Override
     public Object getData(@NotNull String dataId) {
+      if (CommonDataKeys.PROJECT.is(dataId)) {
+        Project project = getProject();
+        if (project != null && project.isInitialized()) {
+          return project;
+        }
+      }
       DialogWrapper wrapper = myDialogWrapper.get();
-      if (wrapper instanceof DataProvider) {
-        return ((DataProvider)wrapper).getData(dataId);
+      Object wrapperData = wrapper instanceof DataProvider ? ((DataProvider)wrapper).getData(dataId) : null;
+      if (wrapperData != null) {
+        return DataValidators.validOrNull(wrapperData, dataId, wrapper);
       }
       return null;
     }
@@ -629,9 +640,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       super.setBounds(r);
     }
 
-    @NotNull
     @Override
-    protected JRootPane createRootPane() {
+    protected @NotNull JRootPane createRootPane() {
       return new DialogRootPane();
     }
 
@@ -741,14 +751,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       return size;
     }
 
-    @Nullable
-    private Project getProject() {
+    private @Nullable Project getProject() {
       return SoftReference.dereference(myProject);
     }
 
-    @NotNull
     @Override
-    public IdeFocusManager getFocusManager() {
+    public @NotNull IdeFocusManager getFocusManager() {
       Project project = getProject();
       if (project != null && !project.isDisposed()) {
         return IdeFocusManager.getInstance(project);
@@ -930,9 +938,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         setBorder(UIManager.getBorder("Window.border"));
       }
 
-      @NotNull
       @Override
-      protected JLayeredPane createLayeredPane() {
+      protected @NotNull JLayeredPane createLayeredPane() {
         JLayeredPane p = new JBLayeredPane();
         p.setName(this.getName()+".layeredPane");
         return p;
@@ -999,8 +1006,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
     }
 
-    @NotNull
-    private static WindowStateService getWindowStateService(@Nullable Project project) {
+    private static @NotNull WindowStateService getWindowStateService(@Nullable Project project) {
       return project == null ? WindowStateService.getInstance() : WindowStateService.getInstance(project);
     }
   }
@@ -1037,5 +1043,25 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
   public void setAutoRequestFocus(boolean b) {
     UIUtil.setAutoRequestFocus((JDialog)myDialog, b);
+  }
+
+  private static boolean isPerProjectModality() {
+    if (ProjectManagerEx.IS_PER_PROJECT_INSTANCE_ENABLED) {
+      return false;
+    }
+
+    RegistryManager registryManager = getRegistryManager();
+    return registryManager != null && registryManager.is("ide.perProjectModality");
+  }
+
+  public static boolean isDisableAutoRequestFocus() {
+    RegistryManager registryManager = getRegistryManager();
+    return (registryManager == null || registryManager.is("suppress.focus.stealing.disable.auto.request.focus"))
+           && !(SystemInfo.isXfce || SystemInfo.isI3);
+  }
+
+  private static @Nullable RegistryManager getRegistryManager() {
+    Application application = ApplicationManager.getApplication();
+    return application != null ? application.getServiceIfCreated(RegistryManager.class) : null;
   }
 }

@@ -1,11 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
+import com.intellij.collaboration.async.DisposingMainScope
 import com.intellij.collaboration.auth.AccountsListener
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Disposer
@@ -14,6 +14,11 @@ import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.content.Content
 import com.intellij.util.IJSwingUtilities
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
@@ -32,14 +37,14 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create.GHPRCreateComponentHolder
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
-import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
+import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import kotlin.properties.Delegates
 
 internal class GHPRToolWindowTabControllerImpl(private val project: Project,
                                                private val authManager: GithubAuthenticationManager,
-                                               private val repositoryManager: GHProjectRepositoriesManager,
+                                               private val repositoryManager: GHHostedRepositoriesManager,
                                                private val dataContextRepository: GHPRDataContextRepository,
                                                private val projectSettings: GithubPullRequestsProjectUISettings,
                                                private val tab: Content) : GHPRToolWindowTabController {
@@ -54,6 +59,12 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
   private val tabDisposable = Disposer.newCheckedDisposable().also {
     Disposer.register(tab.disposer!!, it)
   }
+  private val scope = DisposingMainScope(tabDisposable)
+
+  private val resetRequestFlow = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST).apply {
+    tryEmit(Unit)
+  }
+
   private var contentDisposable by Delegates.observable<Disposable?>(null) { _, oldValue, newValue ->
     if (oldValue != null) Disposer.dispose(oldValue)
     if (newValue != null) Disposer.register(tabDisposable, newValue)
@@ -71,22 +82,29 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
     }
 
   init {
+    val accountsFlow = MutableSharedFlow<Set<GithubAccount>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     authManager.addListener(tabDisposable, object : AccountsListener<GithubAccount> {
-      override fun onAccountListChanged(old: Collection<GithubAccount>, new: Collection<GithubAccount>) = scheduleUpdate()
-      override fun onAccountCredentialsChanged(account: GithubAccount) = scheduleUpdate()
+      override fun onAccountListChanged(old: Collection<GithubAccount>, new: Collection<GithubAccount>) {
+        accountsFlow.tryEmit(new.toSet())
+      }
 
-      private fun scheduleUpdate() = ApplicationManager.getApplication()
-        .invokeLater(Runnable { Updater().update() }) { tabDisposable.isDisposed }
+      override fun onAccountCredentialsChanged(account: GithubAccount) {
+        accountsFlow.tryEmit(authManager.getAccounts())
+      }
     })
-    repositoryManager.addRepositoryListChangedListener(tabDisposable) {
-      Updater().update()
+    accountsFlow.tryEmit(authManager.getAccounts())
+
+    scope.launch {
+      combine(repositoryManager.knownRepositoriesState, accountsFlow, resetRequestFlow) { repos, accounts, _ ->
+        Updater(repos, accounts)
+      }.collectLatest {
+        it.update()
+      }
     }
-    Updater().update()
   }
 
-  private inner class Updater {
-    private val repos = repositoryManager.knownRepositories
-    private val accounts = authManager.getAccounts()
+  private inner class Updater(private val repos: Set<GHGitRepositoryMapping>,
+                              private val accounts: Set<GithubAccount>) {
 
     fun update() {
       val wasReset = resetIfMissing()
@@ -230,7 +248,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
     currentRepository = null
     currentAccount = null
     projectSettings.selectedRepoAndAccount = null
-    Updater().update()
+    resetRequestFlow.tryEmit(Unit)
   }
 
   private inner class ComponentController(private val dataContext: GHPRDataContext,

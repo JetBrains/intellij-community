@@ -883,13 +883,15 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     return myPhysicalDocumentChangeTracker;
   }
 
-
   @ApiStatus.Internal
   static final class MyPersistentFsConnectionListener implements PersistentFsConnectionListener {
     @Override
     public void connectionOpen() {
-      FileDocumentManagerImpl fileDocumentManager = (FileDocumentManagerImpl)FileDocumentManager.getInstance();
-      fileDocumentManager.clearDocumentCache();
+      FileDocumentManagerImpl fileDocumentManager =
+        (FileDocumentManagerImpl)ApplicationManager.getApplication().getServiceIfCreated(FileDocumentManager.class);
+      if (fileDocumentManager != null) {
+        fileDocumentManager.clearDocumentCache();
+      }
     }
   }
 }

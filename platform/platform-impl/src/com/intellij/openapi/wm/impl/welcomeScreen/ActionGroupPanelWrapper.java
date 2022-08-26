@@ -184,6 +184,11 @@ public class ActionGroupPanelWrapper {
         }
 
         @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
+        }
+
+        @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           backAction.run();
         }
@@ -310,6 +315,10 @@ public class ActionGroupPanelWrapper {
         @Override
         public void update(@NotNull AnActionEvent e) {
           action.update(e);
+        }
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return action.getActionUpdateThread();
         }
       };
     }

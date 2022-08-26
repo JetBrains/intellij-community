@@ -104,7 +104,7 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
           // do not remove recently created library w/o name
           if (entry instanceof LibraryOrderEntry &&
               ((LibraryOrderEntry)entry).getLibraryName() == null &&
-              entry.getUrls(OrderRootType.CLASSES).length == 0) {
+              ((LibraryOrderEntry)entry).getRootUrls(OrderRootType.CLASSES).length == 0) {
             continue;
           }
           if (getOrderEntryType().isInstance(entry)) {

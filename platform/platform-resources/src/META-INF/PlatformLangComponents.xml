@@ -112,8 +112,6 @@
       serviceInterface="com.intellij.formatting.visualLayer.VisualFormattingLayerService"
       serviceImplementation="com.intellij.formatting.visualLayer.VisualFormattingLayerServiceImpl"/>
 
-    <postStartupActivity implementation="com.intellij.formatting.visualLayer.VisualFormattingLayerStartup" />
-
     <!-- as last - to preload after all others preloaded services -->
     <applicationService serviceImplementation="com.intellij.ide.IdeTooltipManager" preload="notHeadless"/>
 
@@ -149,6 +147,7 @@
               activeInHeadlessMode="false"/>
     <listener class="com.intellij.ide.RecentProjectsManagerBase$MyProjectListener"
               topic="com.intellij.openapi.project.ProjectManagerListener" activeInHeadlessMode="false"/>
+    <listener class="com.intellij.ide.RecentProjectsManagerBase$MyFrameStateListener" topic="com.intellij.ide.FrameStateListener"/>
     <listener class="com.intellij.openapi.wm.impl.WindowDressing" topic="com.intellij.openapi.project.ProjectManagerListener"
               activeInHeadlessMode="false"/>
     <listener class="com.intellij.openapi.wm.impl.WindowDressing" topic="com.intellij.ide.lightEdit.LightEditServiceListener"
@@ -214,10 +213,6 @@
     <listener class="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageService$MyBeforeFileEditorManagerListener"
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"/>
     <listener class="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageService$MyFileEditorManagerListener"
-              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
-    <listener class="com.intellij.internal.statistic.local.FileTypeSummaryListener"
-              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
-    <listener class="com.intellij.internal.statistic.local.LanguageUsageUpdaterListener"
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
 
     <!-- another one for project level -->

@@ -96,6 +96,8 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
       copiedFileSpecs.add(fileSpec)
     }
 
+    LOG.debug("Copied files for the following fileSpecs: $copiedFileSpecs")
+
     if (copiedFileSpecs.isNotEmpty()) {
       val addCommand = git.add()
       for (fileSpec in copiedFileSpecs) {
@@ -135,35 +137,34 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     git.commit().setMessage("Initial").call()
   }
 
-  override fun applyIdeState(snapshot: SettingsSnapshot) {
-    applyState(IDE_REF_NAME, snapshot)
+  override fun applyIdeState(snapshot: SettingsSnapshot, message: String) {
+    applyState(IDE_REF_NAME, snapshot, message)
   }
 
-  override fun applyCloudState(snapshot: SettingsSnapshot) {
-    applyState(CLOUD_REF_NAME, snapshot)
+  override fun applyCloudState(snapshot: SettingsSnapshot, message: String) {
+    applyState(CLOUD_REF_NAME, snapshot, message)
   }
 
-  override fun forceWriteToMaster(snapshot: SettingsSnapshot): SettingsLog.Position {
-    applyState(MASTER_REF_NAME, snapshot)
+  override fun forceWriteToMaster(snapshot: SettingsSnapshot, message: String): SettingsLog.Position {
+    applyState(MASTER_REF_NAME, snapshot, message)
     return getMasterPosition()
   }
 
-  private fun applyState(refName: String, snapshot: SettingsSnapshot) {
+  private fun applyState(refName: String, snapshot: SettingsSnapshot, message: String) {
     if (snapshot.isEmpty()) {
       LOG.error("Empty snapshot")
       return
     }
 
     git.checkout().setName(refName).call()
-    applySnapshotAndCommit(refName, snapshot)
+    applySnapshotAndCommit(refName, snapshot, message)
   }
 
-  private fun applySnapshotAndCommit(refName: String, snapshot: SettingsSnapshot) {
+  private fun applySnapshotAndCommit(refName: String, snapshot: SettingsSnapshot, message: String) {
     // todo check repository consistency before each operation: that we're on master, that rb is deleted, that there're no uncommitted changes
 
     LOG.info("Applying settings changes to branch $refName: " + snapshot.fileStates.joinToString(limit = 5) { it.file })
     val addCommand = git.add()
-    val message = "Apply changes received from $refName"
     for (fileState in snapshot.fileStates) {
       val file = settingsSyncStorage.resolve(fileState.file)
       when (fileState) {

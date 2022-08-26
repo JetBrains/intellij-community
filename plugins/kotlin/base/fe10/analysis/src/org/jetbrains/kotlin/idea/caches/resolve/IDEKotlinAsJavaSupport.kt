@@ -42,7 +42,7 @@ import org.jetbrains.kotlin.psi.KtScript
 import org.jetbrains.kotlin.psi.analysisContext
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 
-open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSupport() {
+class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSupport() {
     override fun getFacadeNames(packageFqName: FqName, scope: GlobalSearchScope): Collection<String> {
         val facadeFilesInPackage = project.runReadActionInSmartMode {
             KotlinFileFacadeClassByPackageIndex.get(packageFqName.asString(), project, scope)

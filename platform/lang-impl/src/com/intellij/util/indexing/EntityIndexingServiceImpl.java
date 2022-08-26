@@ -22,7 +22,6 @@ import com.intellij.workspaceModel.storage.EntityChange;
 import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId;
-import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleId;
 import kotlin.Pair;
 import org.jetbrains.annotations.NonNls;
@@ -81,7 +80,9 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
 
     EntityStorage entityStorage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
     for (RootsChangeRescanningInfo change : changes) {
-      if (change == RootsChangeRescanningInfo.NO_RESCAN_NEEDED) continue;
+      if (change == RootsChangeRescanningInfo.NO_RESCAN_NEEDED || change == RootsChangeRescanningInfo.RESCAN_DEPENDENCIES_IF_NEEDED) {
+        continue;
+      }
       if (change instanceof ProjectRootsChangeListener.WorkspaceEventRescanningInfo) {
         builders.addAll(getBuildersOnWorkspaceChange(project,
                                                      ((ProjectRootsChangeListener.WorkspaceEventRescanningInfo)change).getEvents()));
@@ -100,18 +101,20 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
       List<IndexableFilesIterator> mergedIterators =
         IndexableIteratorBuilders.INSTANCE.instantiateBuilders(builders, project, entityStorage);
 
-      List<String> debugNames = ContainerUtil.map(mergedIterators, it -> it.getDebugName());
-      LOG.debug("Accumulated iterators: " + debugNames);
-      int maxNamesToLog = 10;
-      String reasonMessage = "changes in: " + debugNames
-        .stream()
-        .limit(maxNamesToLog)
-        .map(n -> StringUtil.wrapWithDoubleQuote(n)).collect(Collectors.joining(", "));
-      if (debugNames.size() > maxNamesToLog) {
-        reasonMessage += " and " + (debugNames.size() - maxNamesToLog) + " iterators more";
+      if (!mergedIterators.isEmpty()) {
+        List<String> debugNames = ContainerUtil.map(mergedIterators, IndexableFilesIterator::getDebugName);
+        LOG.debug("Accumulated iterators: " + debugNames);
+        int maxNamesToLog = 10;
+        String reasonMessage = "changes in: " + debugNames
+          .stream()
+          .limit(maxNamesToLog)
+          .map(StringUtil::wrapWithDoubleQuote).collect(Collectors.joining(", "));
+        if (debugNames.size() > maxNamesToLog) {
+          reasonMessage += " and " + (debugNames.size() - maxNamesToLog) + " iterators more";
+        }
+        logRootChanges(project, false);
+        new UnindexedFilesUpdater(project, mergedIterators, dependenciesStatusMark, reasonMessage).queue(project);
       }
-      logRootChanges(project, false);
-      new UnindexedFilesUpdater(project, mergedIterators, dependenciesStatusMark, reasonMessage).queue(project);
     }
   }
 
@@ -192,15 +195,11 @@ class EntityIndexingServiceImpl implements EntityIndexingService {
         builders.addAll(
           ((IndexableEntityProvider<E>)provider).getReplacedEntityIteratorBuilders(oldEntity, newEntity));
       }
-    }
-    if (oldEntity instanceof ModuleEntity) {
-      ModuleEntity oldModule = (ModuleEntity)oldEntity;
-      ModuleEntity newModule = (ModuleEntity)newEntity;
-      for (IndexableEntityProvider<?> provider : IndexableEntityProvider.EP_NAME.getExtensionList()) {
-        if (provider instanceof IndexableEntityProvider.ModuleEntityDependent) {
-          builders.addAll(((IndexableEntityProvider.ModuleEntityDependent<?>)provider).
-                            getReplacedModuleEntityIteratorBuilder(oldModule, newModule, project));
-        }
+      if (provider instanceof IndexableEntityProvider.ParentEntityDependent &&
+          entityClass == ((IndexableEntityProvider.ParentEntityDependent<?, ?>)provider).getParentEntityClass()) {
+        //noinspection unchecked
+        builders.addAll(((IndexableEntityProvider.ParentEntityDependent<?, E>)provider).
+                          getReplacedParentEntityIteratorBuilder(oldEntity, newEntity, project));
       }
     }
   }

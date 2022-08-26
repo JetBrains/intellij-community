@@ -390,10 +390,10 @@ public class JBTabsImpl extends JComponent
         gp.addMouseMotionPreprocessor(myTabActionsAutoHideListener, myTabActionsAutoHideListenerDisposable);
         myGlassPane = gp;
 
-        UIUtil.addAwtListener(__ -> {
-          if (!JBPopupFactory.getInstance().getChildPopups(JBTabsImpl.this).isEmpty()) return;
-          processFocusChange();
-        }, AWTEvent.FOCUS_EVENT_MASK, parentDisposable);
+        StartupUiUtil.addAwtListener(__ -> {
+              if (!JBPopupFactory.getInstance().getChildPopups(JBTabsImpl.this).isEmpty()) return;
+              processFocusChange();
+            }, AWTEvent.FOCUS_EVENT_MASK, parentDisposable);
 
         myDragHelper = createDragHelper(child, parentDisposable);
         myDragHelper.start();
@@ -437,17 +437,22 @@ public class JBTabsImpl extends JComponent
   }
 
   private boolean isInsideTabsArea(int x, int y) {
-    if (myHeaderFitSize == null) return false;
+    Dimension area = myHeaderFitSize;
+    if (myTableLayout.myLastTableLayout != null) {
+      area = myTableLayout.myLastTableLayout.tabRectangle.getSize();
+    }
+
+    if (area == null) return false;
 
     switch (getTabsPosition()) {
       case top:
-        return y <= myHeaderFitSize.height;
+        return y <= area.height;
       case left:
-        return x <= myHeaderFitSize.width;
+        return x <= area.width;
       case bottom:
-        return y >= getHeight() - myHeaderFitSize.height;
+        return y >= getHeight() - area.height;
       case right:
-        return x >= getWidth() - myHeaderFitSize.width;
+        return x >= getWidth() - area.width;
     }
 
     return false;
@@ -528,7 +533,7 @@ public class JBTabsImpl extends JComponent
       Color tabBg = myTabPainter.getBackgroundColor();
       Color transparent = ColorUtil.withAlpha(tabBg, 0);
       if (showLeftFadeout) {
-        Rectangle leftSide = new Rectangle(0, more.getY() - 1, width, more.getHeight() - 1);
+        Rectangle leftSide = new Rectangle(0, moreY, width, moreHeight - 1);
         ((Graphics2D)g).setPaint(
           new GradientPaint(leftSide.x, leftSide.y, tabBg, leftSide.x + leftSide.width,
                             leftSide.y, transparent));
@@ -592,6 +597,7 @@ public class JBTabsImpl extends JComponent
       mySingleRow = true;
     }
     setupScrollBar();
+    myTableLayout.setWithScrollBar(isWithScrollBar());
     boolean useTableLayout = !isSingleRow();
      useTableLayout |= getTabsPosition() == JBTabsPosition.top
                 && supportsTableLayoutAsSingleRow()
@@ -1235,7 +1241,7 @@ public class JBTabsImpl extends JComponent
         LOG.debug("preferred focusable component: " + toFocus);
       }
 
-      if (toFocus == null) {
+      if (toFocus == null || !toFocus.isShowing()) {
         return null;
       }
       final JComponent policyToFocus = myFocusManager.getFocusTargetFor(toFocus);
@@ -1440,15 +1446,12 @@ public class JBTabsImpl extends JComponent
     }
 
     if (myRequestFocusOnLastFocusedComponent && mySelectedInfo != null && isMyChildIsFocusedNow()) {
-      mySelectedInfo.setLastFocusOwner(getFocusOwner());
+      mySelectedInfo.setLastFocusOwner(getFocusOwnerToStore());
     }
 
     TabInfo oldInfo = mySelectedInfo;
     mySelectedInfo = info;
     TabInfo newInfo = getSelectedInfo();
-    if (myRequestFocusOnLastFocusedComponent && newInfo != null) {
-      newInfo.setLastFocusOwner(null);
-    }
 
     TabLabel label = myInfo2Label.get(info);
     if (label != null) {
@@ -1499,6 +1502,15 @@ public class JBTabsImpl extends JComponent
     }
   }
 
+  @Nullable
+  protected JComponent getFocusOwnerToStore() {
+    JComponent owner = getFocusOwner();
+    if (owner == null) return null;
+    JBTabsImpl tabs = ComponentUtil.getParentOfType(JBTabsImpl.class, owner.getParent());
+    if (tabs != this) return null;
+    return owner;
+  }
+
   private void fireBeforeSelectionChanged(@Nullable TabInfo oldInfo, TabInfo newInfo) {
     if (oldInfo != newInfo) {
       myOldSelection = oldInfo;
@@ -1545,15 +1557,17 @@ public class JBTabsImpl extends JComponent
     if (toFocus == null) return ActionCallback.DONE;
 
     if (isShowing()) {
+      ActionCallback res = new ActionCallback();
       ApplicationManager.getApplication().invokeLater(() -> {
         if (inWindow) {
           toFocus.requestFocusInWindow();
+          res.setDone();
         }
         else {
-          myFocusManager.requestFocusInProject(toFocus, myProject);
+          myFocusManager.requestFocusInProject(toFocus, myProject).notifyWhenDone(res);
         }
-      }, ModalityState.NON_MODAL);
-      return ActionCallback.DONE;
+      });
+      return res;
     }
     return ActionCallback.REJECTED;
   }
@@ -1968,6 +1982,7 @@ public class JBTabsImpl extends JComponent
   private void updateScrollBarModel() {
     if (myScrollBarModel.getValueIsAdjusting()) return;
 
+    boolean pinnedTabsSeparately = myTableLayout.myLastTableLayout != null && TabLayout.showPinnedTabsSeparately();
     int maximum = 0;
     int value = 0;
     int extent = 0;
@@ -1976,7 +1991,8 @@ public class JBTabsImpl extends JComponent
       extent = getTabsAreaWidth();
 
       int theMostLeftX = 0;
-      for (Component tab : myInfo2Label.values()) {
+      for (TabLabel tab : myInfo2Label.values()) {
+        if (tab.isPinned() && pinnedTabsSeparately) continue;
         maximum += tab.getPreferredSize().width;
         theMostLeftX = Math.min(theMostLeftX, tab.getX());
       }
@@ -1989,7 +2005,8 @@ public class JBTabsImpl extends JComponent
       }
 
       int theMostTopX = 0;
-      for (Component tab : myInfo2Label.values()) {
+      for (TabLabel tab : myInfo2Label.values()) {
+        if (tab.isPinned() && pinnedTabsSeparately) continue;
         maximum += tab.getPreferredSize().height;
         theMostTopX = Math.min(theMostTopX, tab.getY());
       }
@@ -2122,7 +2139,7 @@ public class JBTabsImpl extends JComponent
   private int getTabsAreaWidth() {
     if (myMoreToolbar.getComponent().isVisible()) {
       return myMoreToolbar.getComponent().getX();
-    } else if (myEntryPointToolbar != null && myEntryPointToolbar.getComponent().isVisible()) {
+    } else if (myEntryPointToolbar != null && myEntryPointToolbar.getComponent().isVisible() && myTableLayout.myLastTableLayout == null) {
       return myEntryPointToolbar.getComponent().getX();
     }
     return getBounds().width;
@@ -2986,6 +3003,10 @@ public class JBTabsImpl extends JComponent
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+    @Override
     protected boolean borderIndex(List<TabInfo> infos, int index) {
       return index == infos.size() - 1;
     }
@@ -3052,6 +3073,10 @@ public class JBTabsImpl extends JComponent
       super(IdeActions.ACTION_PREVIOUS_TAB, tabs, parentDisposable);
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
     @Override
     protected void _update(final AnActionEvent e, final JBTabsImpl tabs, int selectedIndex) {
       e.getPresentation().setEnabled(tabs.findEnabledBackward(selectedIndex, true) != null);
@@ -4005,6 +4030,11 @@ public class JBTabsImpl extends JComponent
       myLabel.setIcon(pair.first);
       //noinspection HardCodedStringLiteral
       myLabel.setText(pair.second);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 
     @Override

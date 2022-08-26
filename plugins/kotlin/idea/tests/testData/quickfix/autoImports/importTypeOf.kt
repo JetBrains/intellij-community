@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import function 'typeOf'" "true"
 // WITH_STDLIB
 
 fun test() {

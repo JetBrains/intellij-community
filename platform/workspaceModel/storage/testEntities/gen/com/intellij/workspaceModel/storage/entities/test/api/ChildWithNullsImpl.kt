@@ -11,6 +11,7 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import org.jetbrains.deft.ObjBuilder
@@ -64,11 +65,11 @@ open class ChildWithNullsImpl : ChildWithNulls, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isChildDataInitialized()) {
         error("Field ChildWithNulls#childData should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ChildWithNulls#entitySource should be initialized")
       }
     }
 
@@ -76,14 +77,15 @@ open class ChildWithNullsImpl : ChildWithNulls, WorkspaceEntityBase() {
       return connections
     }
 
-
-    override var childData: String
-      get() = getEntityData().childData
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().childData = value
-        changedProperty.add("childData")
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as ChildWithNulls
+      this.entitySource = dataSource.entitySource
+      this.childData = dataSource.childData
+      if (parents != null) {
       }
+    }
+
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -92,6 +94,14 @@ open class ChildWithNullsImpl : ChildWithNulls, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var childData: String
+      get() = getEntityData().childData
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().childData = value
+        changedProperty.add("childData")
       }
 
     override fun getEntityData(): ChildWithNullsData = result ?: super.getEntityData() as ChildWithNullsData
@@ -135,14 +145,24 @@ class ChildWithNullsData : WorkspaceEntityData<ChildWithNulls>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ChildWithNulls(childData, entitySource) {
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
 
     other as ChildWithNullsData
 
-    if (this.childData != other.childData) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.childData != other.childData) return false
     return true
   }
 
@@ -160,5 +180,15 @@ class ChildWithNullsData : WorkspaceEntityData<ChildWithNulls>() {
     var result = entitySource.hashCode()
     result = 31 * result + childData.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + childData.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.sameForAllEntities = true
   }
 }

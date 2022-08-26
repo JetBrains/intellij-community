@@ -57,6 +57,7 @@ data class SdkInfo(override val project: Project, val sdk: Sdk) : IdeaModuleInfo
 }
 
 fun Project.allSdks(modules: Array<out Module>? = null): Set<Sdk> = runReadAction {
+    if (isDisposed) return@runReadAction emptySet()
     val sdks = ProjectJdkTable.getInstance().allJdks.toHashSet()
     val modulesArray = modules ?: ideaModules()
     ProgressManager.checkCanceled()
@@ -65,9 +66,13 @@ fun Project.allSdks(modules: Array<out Module>? = null): Set<Sdk> = runReadActio
 }
 
 fun moduleSdks(module: Module): List<Sdk> =
-    ModuleRootManager.getInstance(module).orderEntries.mapNotNull { orderEntry ->
-        ProgressManager.checkCanceled()
-        orderEntry.safeAs<JdkOrderEntry>()?.jdk
+    if (module.isDisposed) {
+        emptyList()
+    } else {
+        ModuleRootManager.getInstance(module).orderEntries.mapNotNull { orderEntry ->
+            ProgressManager.checkCanceled()
+            orderEntry.safeAs<JdkOrderEntry>()?.jdk
+        }
     }
 
 //TODO: (module refactoring) android sdk has modified scope

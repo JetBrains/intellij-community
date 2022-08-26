@@ -2,6 +2,7 @@
 package com.intellij.ui.navigation;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,6 +17,11 @@ public class ForwardAction extends NavigationAction {
   @Override
   protected void doUpdate(final AnActionEvent e) {
     e.getPresentation().setEnabled(getHistory(e).canGoForward());
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
   }
 
   @Override

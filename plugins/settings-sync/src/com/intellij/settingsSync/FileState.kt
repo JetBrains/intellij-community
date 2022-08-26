@@ -2,13 +2,15 @@ package com.intellij.settingsSync
 
 import com.intellij.util.io.readBytes
 import com.intellij.util.io.systemIndependentPath
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.SystemIndependent
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import kotlin.io.path.relativeTo
 
-internal sealed class FileState(open val file: @SystemIndependent String) {
+@ApiStatus.Internal
+sealed class FileState(open val file: @SystemIndependent String) {
 
   class Modified(override val file:  @SystemIndependent String, val content: ByteArray, val size: Int) : FileState(file) {
     override fun toString(): String = "file='$file', content:\n${String(content, StandardCharsets.UTF_8)}"

@@ -2,12 +2,10 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.ErrorBorderCapable;
-import com.intellij.openapi.util.ColoredItem;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.render.RenderingUtil;
@@ -720,6 +718,20 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
           popupMenu.setOpaque(true);
           LookAndFeel.installColorsAndFont(popupMenu, "PopupMenu.background", "PopupMenu.foreground", "PopupMenu.font");
+        }
+
+        @Override
+        public Popup getPopup(JPopupMenu popup, int x, int y) {
+          Popup p = super.getPopup(popup, x, y);
+          if (SystemInfoRt.isMac && ExperimentalUI.isNewUI()) {
+            Window window = ComponentUtil.getWindow(popup);
+            if (window != null) {
+              JRootPane rootPane = ((RootPaneContainer)window).getRootPane();
+              rootPane.putClientProperty("apple.awt.windowCornerRadius", Float.valueOf(IdeaPopupMenuUI.CORNER_RADIUS.getFloat()));
+              popup.setBorder(null);
+            }
+          }
+          return p;
         }
       });
     }

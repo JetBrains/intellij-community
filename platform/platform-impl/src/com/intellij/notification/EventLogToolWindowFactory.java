@@ -133,6 +133,11 @@ public final class EventLogToolWindowFactory implements ToolWindowFactory, DumbA
     protected Editor getEditor(@NotNull AnActionEvent e) {
       return myEditor;
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
   }
 
   private static final class LogShownTracker extends AncestorListenerAdapter {

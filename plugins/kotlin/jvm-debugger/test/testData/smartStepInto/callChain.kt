@@ -11,3 +11,4 @@ class B {
 }
 
 // EXISTS: getB(), f1()
+// IGNORE_K2

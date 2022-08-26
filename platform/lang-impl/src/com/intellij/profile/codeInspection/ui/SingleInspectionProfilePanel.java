@@ -472,6 +472,10 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         myProfile.resetToEmpty(getProject());
         loadDescriptorsConfigs(false);
@@ -956,6 +960,11 @@ public class SingleInspectionProfilePanel extends JPanel {
                 tableSettings.onScopesOrderChanged();
               }
             }
+
+            @Override
+            public @NotNull ActionUpdateThread getActionUpdateThread() {
+              return ActionUpdateThread.EDT;
+            }
           });
         severityPanel = wrappedTable.createPanel();
         final Dimension panelSize = new Dimension(getMinimumSize().width, 81);
@@ -1080,7 +1089,7 @@ public class SingleInspectionProfilePanel extends JPanel {
             if (context != null) {
               Settings settings = Settings.KEY.getData(context);
               SearchTextField searchTextField = SearchTextField.KEY.getData(context);
-              String configId = url.getHost();
+              String configId = url.getAuthority(); //using `getAuthority` instead of `getHost` to support white spaces in configId
               String search = url.getQuery();
               if (settings != null) {
                 Configurable configurable = settings.find(configId);

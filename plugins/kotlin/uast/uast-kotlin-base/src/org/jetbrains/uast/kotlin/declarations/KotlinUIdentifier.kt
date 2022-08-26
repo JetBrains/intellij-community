@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.uast.kotlin
 
@@ -9,6 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.toUElement
@@ -57,7 +58,9 @@ class KotlinUIdentifier(
             return parentParent.toUElement()
         }
         (generateSequence(parent) { it.parent }.take(3).find { it is KtTypeReference && it.parent is KtConstructorCalleeExpression })?.let {
-            return it.parent.parent.toUElement()
+            val parent2 = it.parent.parent
+            return parent2.parent.parent.parent.safeAs<KtObjectLiteralExpression>()?.toUElement()
+                .safeAs<KotlinUObjectLiteralExpression>()?.constructorCall ?: parent2.toUElement()
         }
         return null
     }

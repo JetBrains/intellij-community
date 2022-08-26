@@ -55,6 +55,7 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSyn
 import com.intellij.workspaceModel.storage.MutableEntityStorage.Companion.from
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ExternalSystemModuleOptionsEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
@@ -114,7 +115,7 @@ class ExternalSystemStorageTest {
   fun `applying external system options twice`() {
     createProjectAndUseInLoadComponentStateMode(tempDirManager, directoryBased = true, useDefaultProjectSettings = false) { project ->
       runBlocking {
-        withContext(AppUIExecutor.onWriteThread().coroutineDispatchingContext()) {
+        withContext(Dispatchers.EDT) {
           runWriteAction {
             val projectDir = project.stateStore.directoryStorePath!!.parent
             val module = ModuleManager.getInstance(project).newModule(projectDir.resolve("test.iml").systemIndependentPath,
@@ -565,9 +566,9 @@ class ExternalSystemStorageTest {
       """.trimIndent())
       WriteAction.runAndWait<RuntimeException> {
         VfsUtil.markDirtyAndRefresh(false, false, false, miscFile)
-        StoreReloadManager.getInstance().flushChangedProjectFileAlarm()
       }
-      ApplicationManager.getApplication().invokeAndWait{
+      runBlocking { StoreReloadManager.getInstance().reloadChangedStorageFiles() }
+      ApplicationManager.getApplication().invokeAndWait {
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
       }
     }
@@ -586,8 +587,8 @@ class ExternalSystemStorageTest {
       """.trimIndent())
       WriteAction.runAndWait<RuntimeException> {
         VfsUtil.markDirtyAndRefresh(false, false, false, miscFile)
-        StoreReloadManager.getInstance().flushChangedProjectFileAlarm()
       }
+      runBlocking { StoreReloadManager.getInstance().reloadChangedStorageFiles() }
       ApplicationManager.getApplication().invokeAndWait{
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
       }
@@ -792,8 +793,8 @@ class ExternalSystemStorageTest {
         cacheDir.delete()
 
         runBlocking {
-          withContext(AppUIExecutor.onWriteThread().coroutineDispatchingContext()) {
-            runWriteAction {
+          withContext(Dispatchers.EDT) {
+            ApplicationManager.getApplication().runWriteAction {
               //we need to set language level explicitly because otherwise if some tests modifies language level in the default project, we'll
               // get different content in misc.xml
               LanguageLevelProjectExtension.getInstance(project)!!.languageLevel = LanguageLevel.JDK_1_8

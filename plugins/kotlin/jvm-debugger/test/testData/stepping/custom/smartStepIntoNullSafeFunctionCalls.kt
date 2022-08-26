@@ -51,3 +51,5 @@ fun main() {
     // SMART_STEP_INTO_BY_INDEX: 3
     returnsNull()?.foo()?.foo()
 }
+
+// IGNORE_K2

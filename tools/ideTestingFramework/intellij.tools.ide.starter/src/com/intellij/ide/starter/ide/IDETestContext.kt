@@ -5,7 +5,10 @@ import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.ide.command.CommandChain
 import com.intellij.ide.starter.ide.command.MarshallableCommand
-import com.intellij.ide.starter.models.*
+import com.intellij.ide.starter.models.IDEStartResult
+import com.intellij.ide.starter.models.TestCase
+import com.intellij.ide.starter.models.VMOptions
+import com.intellij.ide.starter.models.andThen
 import com.intellij.ide.starter.path.IDEDataPaths
 import com.intellij.ide.starter.plugins.PluginConfigurator
 import com.intellij.ide.starter.profiler.ProfilerType
@@ -175,8 +178,8 @@ data class IDETestContext(
       .addSystemProperty("shared.indexes.download.auto.consent", enable)
   }
 
-  fun skipIndicesInitialization() = addVMOptionsPatch {
-    addSystemProperty("idea.skip.indices.initialization", true)
+  fun skipIndicesInitialization(value: Boolean = true) = addVMOptionsPatch {
+    addSystemProperty("idea.skip.indices.initialization", value)
   }
 
   fun collectImportProjectPerfMetrics() = addVMOptionsPatch {
@@ -345,18 +348,19 @@ data class IDETestContext(
   ): IDEStartResult {
     val updatedContext = this.copy(testName = "${this.testName}/warmup")
     val result = updatedContext.runIDE(
-        patchVMOptions = {
-          this.run {
-            if (storeClassReport) {
-              this.enableClassLoadingReport(paths.reportsDir / "class-report.txt")
-            } else {
-              this
-            }
-          }.patchVMOptions()
-        },
-        commands = testCase.commands.plus(commands),
-        runTimeout = runTimeout
-      )
+      patchVMOptions = {
+        this.run {
+          if (storeClassReport) {
+            this.enableClassLoadingReport(paths.reportsDir / "class-report.txt")
+          }
+          else {
+            this
+          }
+        }.patchVMOptions()
+      },
+      commands = testCase.commands.plus(commands),
+      runTimeout = runTimeout
+    )
     updatedContext.publishArtifact(this.paths.reportsDir)
     return result
   }

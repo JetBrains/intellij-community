@@ -1,8 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.java
 
 import com.intellij.psi.*
+import com.intellij.psi.impl.light.LightMethodBuilder
+import com.intellij.psi.javadoc.PsiDocComment
+import com.intellij.util.SmartList
+import com.intellij.util.castSafelyTo
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
@@ -31,10 +35,17 @@ abstract class AbstractJavaUClass(
       JavaPsiFacade.getElementFactory(referenceElement.project).createType(referenceElement)
     }
 
-  override val uastSuperTypes: List<UTypeReferenceExpression> by lazy {
-    javaPsi.extendsList?.referenceElements?.map { createJavaUTypeReferenceExpression(it) }.orEmpty() +
-    javaPsi.implementsList?.referenceElements?.map { createJavaUTypeReferenceExpression(it) }.orEmpty()
-  }
+  internal var cachedSuperTypes: List<UTypeReferenceExpression>? = null
+  override val uastSuperTypes: List<UTypeReferenceExpression>
+    get() {
+      var types = cachedSuperTypes
+      if (types == null) {
+        types = javaPsi.extendsList?.referenceElements?.map { createJavaUTypeReferenceExpression(it) }.orEmpty() +
+                javaPsi.implementsList?.referenceElements?.map { createJavaUTypeReferenceExpression(it) }.orEmpty()
+        cachedSuperTypes = types
+      }
+      return types
+    }
 
   override val uastAnchor: UIdentifier?
     get() = UIdentifier(javaPsi.nameIdentifier, this)
@@ -49,7 +60,7 @@ abstract class AbstractJavaUClass(
 @ApiStatus.Internal
 class JavaUClass(
   override val sourcePsi: PsiClass,
-  val givenParent: UElement?
+  givenParent: UElement?
 ) : AbstractJavaUClass(givenParent), UAnchorOwner, PsiClass by sourcePsi {
 
   override val javaPsi: PsiClass = unwrap<UClass, PsiClass>(sourcePsi)
@@ -82,9 +93,19 @@ class JavaUAnonymousClass(
 
   override val javaPsi: PsiAnonymousClass = sourcePsi
 
-  override val uastSuperTypes: List<UTypeReferenceExpression> by lazy {
-    listOf(createJavaUTypeReferenceExpression(sourcePsi.baseClassReference)) + super.uastSuperTypes
-  }
+  override val uastSuperTypes: List<UTypeReferenceExpression>
+    get() {
+      var types = cachedSuperTypes
+      if (types == null) {
+        types = listOf(createJavaUTypeReferenceExpression(sourcePsi.baseClassReference)) +
+                javaPsi.extendsList?.referenceElements?.map { createJavaUTypeReferenceExpression(it) }.orEmpty() +
+                javaPsi.implementsList?.referenceElements?.map { createJavaUTypeReferenceExpression(it) }.orEmpty()
+        cachedSuperTypes = types
+      }
+      return types
+    }
+
+  override fun convertParent(): UElement? = sourcePsi.parent.toUElementOfType<UObjectLiteralExpression>() ?: super.convertParent()
 
   override val uastAnchor: UIdentifier? by lazy {
     when (javaPsi) {
@@ -97,7 +118,36 @@ class JavaUAnonymousClass(
   override fun getSuperClass(): UClass? = super<AbstractJavaUClass>.getSuperClass()
   override fun getFields(): Array<UField> = super<AbstractJavaUClass>.getFields()
   override fun getInitializers(): Array<UClassInitializer> = super<AbstractJavaUClass>.getInitializers()
-  override fun getMethods(): Array<UMethod> = super<AbstractJavaUClass>.getMethods()
+
+  private val fakeConstructor: JavaUMethod? by lz {
+    val psiClass = this.javaPsi
+    val physicalNewExpression = psiClass.parent.castSafelyTo<PsiNewExpression>() ?: return@lz null
+    val superConstructor = physicalNewExpression.resolveMethod()
+    val lightMethodBuilder = object : LightMethodBuilder(psiClass.manager, psiClass.language, "<anon-init>") {
+      init {
+        containingClass = psiClass
+        isConstructor = true
+      }
+
+      override fun getNavigationElement(): PsiElement = 
+        superConstructor?.navigationElement ?: psiClass.superClass?.navigationElement ?: super.getNavigationElement()
+      override fun getParent(): PsiElement = psiClass
+      override fun getModifierList(): PsiModifierList = superConstructor?.modifierList ?: super.getModifierList()
+      override fun getParameterList(): PsiParameterList = superConstructor?.parameterList ?: super.getParameterList()
+      override fun getDocComment(): PsiDocComment? = superConstructor?.docComment ?: super.getDocComment()
+    }
+
+    JavaUMethod(lightMethodBuilder, this@JavaUAnonymousClass)
+  }
+
+  override fun getMethods(): Array<UMethod> {
+    val constructor = fakeConstructor ?: return super<AbstractJavaUClass>.getMethods()
+    val uMethods = SmartList<UMethod>()
+    uMethods.add(constructor)
+    uMethods.addAll(super<AbstractJavaUClass>.getMethods())
+    return uMethods.toTypedArray()
+  }
+
   override fun getInnerClasses(): Array<UClass> = super<AbstractJavaUClass>.getInnerClasses()
   override fun getOriginalElement(): PsiElement? = sourcePsi.originalElement
 }

@@ -1,4 +1,4 @@
-// "Merge nested 'if' statements" "true"
+// "Merge nested 'if' statements" "true-preview"
 
 class Test {
   // IDEA-179557

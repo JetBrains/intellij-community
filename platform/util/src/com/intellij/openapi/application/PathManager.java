@@ -327,6 +327,10 @@ public final class PathManager {
     return Paths.get(getOptionsPath(), fileName + DEFAULT_EXT).toFile();
   }
 
+  public static @NotNull Path getPluginsDir() {
+    return Paths.get(getPluginsPath());
+  }
+
   public static @NotNull String getPluginsPath() {
     if (ourPluginsPath != null) return ourPluginsPath;
 
@@ -345,7 +349,8 @@ public final class PathManager {
   }
 
   public static @NotNull String getDefaultPluginPathFor(@NotNull String selector) {
-    return platformPath(selector, "Application Support", PLUGINS_DIRECTORY, "APPDATA", PLUGINS_DIRECTORY, "XDG_DATA_HOME", ".local/share", "");
+    return platformPath(selector, "Application Support", PLUGINS_DIRECTORY, "APPDATA", PLUGINS_DIRECTORY, "XDG_DATA_HOME", ".local/share",
+                        "");
   }
 
   public static @Nullable String getCustomOptionsDirectory() {
@@ -354,6 +359,10 @@ public final class PathManager {
   }
 
   // runtime paths
+
+  public static @NotNull Path getSystemDir() {
+    return Paths.get(getSystemPath());
+  }
 
   public static @NotNull String getSystemPath() {
     if (ourSystemPath != null) return ourSystemPath;
@@ -390,6 +399,10 @@ public final class PathManager {
       indexRootPath = getSystemPath() + "/index";
     }
     return Paths.get(indexRootPath);
+  }
+
+  public static @NotNull Path getLogDir() {
+    return Paths.get(getLogPath());
   }
 
   public static @NotNull String getLogPath() {
@@ -435,7 +448,7 @@ public final class PathManager {
    */
   public static @Nullable String getResourceRoot(@NotNull ClassLoader classLoader, @NotNull String resourcePath) {
     URL url = classLoader.getResource(resourcePath);
-    return url == null ? null : extractRoot(url, "/"+resourcePath);
+    return url == null ? null : extractRoot(url, "/" + resourcePath);
   }
 
   /**

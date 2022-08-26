@@ -7,47 +7,44 @@ import com.intellij.featureStatistics.FeatureDescriptor;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.ide.ui.text.paragraph.TextParagraph;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.keymap.Keymap;
-import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.keymap.impl.DefaultKeymap;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.TextAccessor;
-import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.ui.*;
+import kotlin.Unit;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
+import javax.swing.text.StyleConstants;
 import javax.swing.text.View;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.ImageView;
 import java.awt.*;
+import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.MalformedURLException;
@@ -55,10 +52,9 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static com.intellij.DynamicBundle.findLanguageBundle;
+import static com.intellij.util.ImageLoader.*;
 import static com.intellij.util.ui.UIUtil.drawImage;
 
 /**
@@ -66,7 +62,6 @@ import static com.intellij.util.ui.UIUtil.drawImage;
  */
 public final class TipUIUtil {
   private static final Logger LOG = Logger.getInstance(TipUIUtil.class);
-  private static final Pattern SHORTCUT_PATTERN = Pattern.compile("&shortcut:([\\w.$]+?);");
   private static final List<TipEntity> ENTITIES;
 
   static {
@@ -82,14 +77,6 @@ public final class TipUIUtil {
   }
 
   private TipUIUtil() {
-  }
-
-  public static @NlsSafe @NotNull String getPoweredByText(@NotNull TipAndTrickBean tip) {
-    PluginDescriptor descriptor = tip.getPluginDescriptor();
-    return descriptor == null ||
-           PluginManagerCore.CORE_ID.equals(descriptor.getPluginId()) ?
-           "" :
-           descriptor.getName();
   }
 
   public static @Nullable TipAndTrickBean getTip(@Nullable FeatureDescriptor feature) {
@@ -113,18 +100,51 @@ public final class TipUIUtil {
     return tip;
   }
 
-  public static @NlsSafe String getTipText(@Nullable TipAndTrickBean tip, Component component) {
-    if (tip == null) return IdeBundle.message("no.tip.of.the.day");
-    final String cssFile = StartupUiUtil.isUnderDarcula()
-                           ? "css/tips_darcula.css" : "css/tips.css";
+  public static List<TextParagraph> loadAndParseTip(@Nullable TipAndTrickBean tip) {
+    return loadAndParseTip(tip, false);
+  }
+
+  /**
+   * Throws exception on any issue occurred during tip loading and parsing
+   */
+  @TestOnly
+  public static List<TextParagraph> loadAndParseTipStrict(@Nullable TipAndTrickBean tip) {
+    return loadAndParseTip(tip, true);
+  }
+
+  private static List<TextParagraph> loadAndParseTip(@Nullable TipAndTrickBean tip, boolean isStrict) {
+    Trinity<@NotNull String, @Nullable ClassLoader, @Nullable String> result = loadTip(tip, isStrict);
+    String text = result.first;
+    @Nullable ClassLoader loader = result.second;
+    @Nullable String tipsPath = result.third;
+
+    Document tipHtml = Jsoup.parse(text);
+    Element tipContent = tipHtml.body();
+
+    Map<String, Icon> icons = loadImages(tipContent, loader, tipsPath, isStrict);
+    inlineProductInfo(tipContent);
+
+    List<TextParagraph> paragraphs = new TipContentConverter(tipContent, icons, isStrict).convert();
+    if (paragraphs.size() > 0) {
+      paragraphs.get(0).editAttributes(attr -> {
+        StyleConstants.setSpaceAbove(attr, TextParagraph.NO_INDENT);
+        return Unit.INSTANCE;
+      });
+    }
+    else {
+      handleWarning("Parsed paragraphs is empty for tip: " + tip, isStrict);
+    }
+    return paragraphs;
+  }
+
+  private static Trinity<@NotNull String, @Nullable ClassLoader, @Nullable String> loadTip(@Nullable TipAndTrickBean tip,
+                                                                                           boolean isStrict) {
+    if (tip == null) return Trinity.create(IdeBundle.message("no.tip.of.the.day"), null, null);
     try {
-      StringBuilder text = new StringBuilder();
-      String cssText = null;
       File tipFile = new File(tip.fileName);
       if (tipFile.isAbsolute() && tipFile.exists()) {
-        text.append(FileUtil.loadFile(tipFile, StandardCharsets.UTF_8));
-        updateImagesAndEntities(text, null, tipFile.getParentFile().getAbsolutePath(), component);
-        cssText = FileUtil.loadFile(new File(tipFile.getParentFile(), cssFile));
+        String content = FileUtil.loadFile(tipFile, StandardCharsets.UTF_8);
+        return Trinity.create(content, null, tipFile.getParentFile().getAbsolutePath());
       }
       else {
         final ClassLoader fallbackLoader = TipUIUtil.class.getClassLoader();
@@ -156,42 +176,103 @@ public final class TipUIUtil {
         retrievers.add(new TipRetriever(tipLoader, "tips", ""));
         retrievers.add(new TipRetriever(fallbackLoader, "tips", ""));
 
-        String tipContent = null;
-
         for (final TipRetriever retriever : retrievers) {
-          tipContent = retriever.getTipContent(tip.fileName);
+          String tipContent = retriever.getTipContent(tip.fileName);
           if (tipContent != null) {
-            //So one of retrievers finds a tip. Since they're processed in order from first to last,
-            //it will look in i18n first, then fallback to english version
-            text.append(tipContent);
-
             final String tipImagesLocation =
               String.format("/%s/%s", retriever.myPath, retriever.mySubPath.length() > 0 ? retriever.mySubPath + "/" : "");
-
-            //Here and onwards we'll use path properties from successful tip retriever to get images and css
-            //This new method updates all: images, entities and shortcuts
-            updateImagesAndEntities(text, retriever.myLoader, tipImagesLocation, component);
-            final InputStream cssResourceStream = ResourceUtil.getResourceAsStream(retriever.myLoader, retriever.myPath, cssFile);
-            cssText = cssResourceStream != null ? ResourceUtil.loadText(cssResourceStream) : "";
-            break;
+            return Trinity.create(tipContent, retriever.myLoader, tipImagesLocation);
           }
         }
-        //All retrievers have failed, return error.
-        if (tipContent == null) return getCantReadText(tip);
       }
-      String replaced = text.toString();
-
-      final String inlinedCSS =
-        cssText + "\nbody {background-color:#" + ColorUtil.toHex(UIUtil.getTextFieldBackground()) + ";overflow:hidden;}";
-      return replaced.replaceFirst("<link.*\\.css\">", "<style type=\"text/css\">\n" + inlinedCSS + "\n</style>");
     }
     catch (IOException e) {
-      return getCantReadText(tip);
+      handleError(e, isStrict);
+    }
+    //All retrievers have failed or error occurred, return error.
+    return Trinity.create(getCantReadText(tip), null, null);
+  }
+
+  private static Map<String, Icon> loadImages(@NotNull Element tipContent,
+                                              @Nullable ClassLoader loader,
+                                              @Nullable String tipsPath,
+                                              boolean isStrict) {
+    if (tipsPath == null) return Collections.emptyMap();
+    Map<String, Icon> icons = new HashMap<>();
+    tipContent.getElementsByTag("img").forEach(imgElement -> {
+      if (!imgElement.hasAttr("src")) {
+        handleWarning("Not found src attribute in img element:\n" + imgElement, isStrict);
+        return;
+      }
+      String path = imgElement.attr("src");
+
+      Image image = null;
+      if (loader == null) {
+        // This case is required only for testing by opening tip from the file (see TipDialog.OpenTipsAction)
+        try {
+          URL imageUrl = new File(tipsPath, path).toURI().toURL();
+          image = loadFromUrl(imageUrl);
+        }
+        catch (MalformedURLException e) {
+          handleError(e, isStrict);
+        }
+        // This case is required only for Startdust Tips of the Day preview
+        if (image == null) {
+          try {
+            URL imageUrl = new URL(null, path);
+            image = loadFromUrl(imageUrl);
+          }
+          catch (MalformedURLException e) {
+            handleError(e, isStrict);
+          }
+        }
+      }
+      else {
+        int flags = USE_SVG | ALLOW_FLOAT_SCALING | USE_CACHE;
+        if (StartupUiUtil.isUnderDarcula()) {
+          flags |= USE_DARK;
+        }
+        image = loadImage(tipsPath + path, Collections.emptyList(), null, loader, flags, ScaleContext.create(), !path.endsWith(".svg"));
+      }
+
+      if (image != null) {
+        Icon icon = new JBImageIcon(image);
+        icons.put(path, icon);
+      }
+      else {
+        handleWarning("Not found icon for path: " + path, isStrict);
+      }
+    });
+    return icons;
+  }
+
+  private static void inlineProductInfo(@NotNull Element tipContent) {
+    // Inline all custom entities like productName
+    for (Element element : tipContent.getElementsContainingOwnText("&")) {
+      String text = element.text();
+      for (TipEntity entity : ENTITIES) {
+        text = entity.inline(text);
+      }
+      element.text(text);
     }
   }
 
-  public static void openTipInBrowser(@Nullable TipAndTrickBean tip, TipUIUtil.Browser browser) {
-    browser.setText(getTipText(tip, browser.getComponent()));
+  private static void handleWarning(@NotNull String message, boolean isStrict) {
+    if (isStrict) {
+      throw new RuntimeException("Warning: " + message);
+    }
+    else {
+      LOG.warn(message);
+    }
+  }
+
+  private static void handleError(@NotNull Throwable t, boolean isStrict) {
+    if (isStrict) {
+      throw new RuntimeException(t);
+    }
+    else {
+      LOG.warn(t);
+    }
   }
 
   private static @NotNull String getCantReadText(@NotNull TipAndTrickBean bean) {
@@ -203,172 +284,12 @@ public final class TipUIUtil {
     return IdeBundle.message("error.unable.to.read.tip.of.the.day", bean.fileName, product);
   }
 
-  private static void updateImagesAndEntities(StringBuilder text, ClassLoader tipLoader, String tipPath, Component component) {
-    final boolean dark = StartupUiUtil.isUnderDarcula();
-    final boolean hidpi = JBUI.isPixHiDPI(component);
-
-    //Let's use JSOUP because normalizing HTML manually is less reliable
-    final Document tipHtml = Jsoup.parse(text.toString());
-    tipHtml.outputSettings().prettyPrint(false);
-
-    // First, inline all custom entities like productName
-    for (Element element : tipHtml.getElementsContainingOwnText("&")) {
-      // It's just cleaner expression here that we can configure entities elsewhere and just replace them here in one loop.
-      String textNodeText = element.text();
-      for (TipEntity entity : ENTITIES) {
-        textNodeText = entity.inline(textNodeText);
-      }
-      element.text(textNodeText);
-    }
-
-    // Here comes shortcut processing
-    for (Element shortcut : tipHtml.getElementsMatchingOwnText(SHORTCUT_PATTERN)) {
-      shortcut.text(SHORTCUT_PATTERN.matcher(shortcut.text()).replaceAll(result -> {
-        String shortcutText = null;
-        final String actionId = result.group(1);
-        if (actionId != null) {
-          shortcutText = getShortcutText(actionId, KeymapManager.getInstance().getActiveKeymap());
-          if (shortcutText == null) {
-            Keymap defKeymap = KeymapManager.getInstance().getKeymap(DefaultKeymap.Companion.getInstance().getDefaultKeymapName());
-            if (defKeymap != null) {
-              shortcutText = getShortcutText(actionId, defKeymap);
-              if (shortcutText != null) {
-                shortcutText += IdeBundle.message("tips.of.the.day.shortcut.default.keymap");
-              }
-            }
-          }
-        }
-        if (shortcutText == null) {
-          shortcutText = "\"" + actionId + "\" " + IdeBundle.message("tips.of.the.day.shortcut.must.define");
-        }
-        return Matcher.quoteReplacement(shortcutText);
-      }));
-    }
-
-    //And finally images
-    tipHtml.getElementsByTag("img")
-      .forEach(img -> {
-
-        final String src = img.attributes().getIgnoreCase("src");
-        final TodImage originalImage = TodImage.of(src);
-        final TodImage baseImage = originalImage.base();
-        //Here we're preparing the list of images in the order of their preference.
-        //We need to be thorough and account for all possible combinations
-        final ArrayList<TodImage> imagesToTryLight = new ArrayList<>();
-        final ArrayList<TodImage> imagesToTryDark = new ArrayList<>();
-
-        imagesToTryLight.add(baseImage);
-        imagesToTryLight.add(baseImage.retina());
-
-        imagesToTryDark.add(baseImage.dark());
-        imagesToTryDark.add(baseImage.dark().retina());
-
-        if (hidpi) {
-
-
-          Collections.reverse(imagesToTryLight);
-          Collections.reverse(imagesToTryDark);
-        }
-        final ArrayList<TodImage> imagesToTry = new ArrayList<>();
-        if (dark) {
-          imagesToTry.addAll(imagesToTryDark);
-          imagesToTry.addAll(imagesToTryLight);
-        }
-        else {
-          imagesToTry.addAll(imagesToTryLight);
-          imagesToTry.addAll(imagesToTryDark);
-        }
-        //By this point we have all the possible images to try out;
-        // that's our fallback in case someone did some weird combination of src attribute/actual images in bundle
-        try {
-          BufferedImage image = null;
-          boolean fallbackUpscale = false;
-          boolean fallbackDownscale = false;
-          URL actualURL = null;
-
-          for (final TodImage i : imagesToTry) {
-            try {
-              actualURL = new URL(getImageCanonicalPath(i.toString(), tipLoader, tipPath));
-              image = read(actualURL);
-            }
-            catch (IOException ignored) {
-            }
-            //Found something, look no further
-            if (image != null) {
-              if (hidpi) {
-                fallbackUpscale = originalImage.isRetina() && !i.isRetina();
-              }
-              else {
-                fallbackDownscale = !originalImage.isRetina() && i.isRetina();
-              }
-              break;
-            }
-          }
-          //Let's not ignore author specified values here
-          int w = intValueOf(img.attributes().getIgnoreCase("width"), image.getWidth());
-          if (hidpi) {
-            // the expected (user space) size is @2x / 2 in either JRE-HiDPI or IDE-HiDPI mode
-            float k = 2f;
-            if (StartupUiUtil.isJreHiDPI(component)) {
-              // in JRE-HiDPI mode we want the image to be drawn in its original size w/h, for better quality
-              k = JBUIScale.sysScale(component);
-            }
-            w /= k;
-          }
-          // round the user scale for better quality
-          int userScale = RoundingMode.ROUND_FLOOR_BIAS.round(JBUIScale.scale(1f));
-          w = userScale * w;
-          if (fallbackUpscale) {
-            w *= 2;
-          }
-          else if (fallbackDownscale) {
-            w /= 2;
-          }
-          //Actually we don't need height, let the browser take care of that
-          img.attr("src", actualURL.toExternalForm());
-          img.attr("width", String.valueOf(w));
-        }
-        catch (Exception e) {
-          LOG.warn("ToD: cannot load image [" + src + "]", e);
-        }
-      });
-    text.replace(0, text.length(), tipHtml.outerHtml());
-  }
-
-  private static int intValueOf(final String raw, int substitute) {
-    try {
-      return Integer.parseInt(raw);
-    }
-    catch (NumberFormatException ignore) {
-    }
-    return substitute;
-  }
-
-  private static @NotNull String getImageCanonicalPath(@NotNull String path, @Nullable ClassLoader tipLoader, @NotNull String tipPath) {
-    try {
-      URL url = tipLoader == null ? new File(tipPath, path).toURI().toURL() : ResourceUtil.getResource(tipLoader, tipPath, path);
-      return url == null ? path : url.toExternalForm();
-    }
-    catch (MalformedURLException e) {
-      return path;
-    }
-  }
-
-  private static BufferedImage read(@NotNull URL url) throws IOException {
-    try (InputStream stream = url.openStream()) {
-      BufferedImage image = ImageIO.read(stream);
-      if (image == null) throw new IOException("Cannot read image with ImageIO: " + url.toExternalForm());
-      return image;
-    }
-  }
-
-  private static @Nullable String getShortcutText(String actionId, Keymap keymap) {
-    for (final Shortcut shortcut : keymap.getShortcuts(actionId)) {
-      if (shortcut instanceof KeyboardShortcut) {
-        return KeymapUtil.getShortcutText(shortcut);
-      }
-    }
-    return null;
+  private static @NlsSafe @NotNull String getPoweredByText(@NotNull TipAndTrickBean tip) {
+    PluginDescriptor descriptor = tip.getPluginDescriptor();
+    return descriptor == null ||
+           PluginManagerCore.CORE_ID.equals(descriptor.getPluginId()) ?
+           "" :
+           descriptor.getName();
   }
 
   public static Browser createBrowser() {
@@ -596,119 +517,39 @@ public final class TipUIUtil {
     }
   }
 
-  static final class TodImage {
-    static final String RETINA_SUFFIX = "@2x";
-    static final String DARK_SUFFIX = "_dark";
+  static class IconWithRoundedBorder implements Icon {
+    private final @NotNull Icon delegate;
 
-    private final String name;
-    private final String extension;
-    private final String defaultExtension;
-    private final boolean dark;
-    private final boolean retina;
-
-    private TodImage(final @NotNull String name) {
-
-      final CharSequence tempExtension = FileUtilRt.getExtension(name, "");
-
-      extension = tempExtension.toString();
-      defaultExtension = tempExtension.toString();
-
-      String tempName = FileUtil.getNameWithoutExtension(name);
-
-      if (tempName.endsWith(DARK_SUFFIX)) {
-        dark = true;
-        tempName = StringUtil.substringBeforeLast(name, DARK_SUFFIX);
-      }
-      else {
-        dark = false;
-      }
-
-      if (tempName.endsWith(RETINA_SUFFIX)) {
-        retina = true;
-        tempName = StringUtil.substringBeforeLast(name, RETINA_SUFFIX);
-      }
-      else {
-        retina = false;
-      }
-
-      this.name = tempName;
-    }
-
-    private TodImage(String name,
-                     String extension,
-                     boolean dark,
-                     boolean retina) {
-      this(name, extension, dark, retina, extension);
-    }
-
-    private TodImage(String name,
-                     String extension,
-                     boolean dark,
-                     boolean retina,
-                     String defaultExtension) {
-
-      this.name = name;
-      this.extension = extension;
-      this.defaultExtension = defaultExtension;
-      this.dark = dark;
-      this.retina = retina;
-    }
-
-    public @NotNull String getName() {
-      return name;
-    }
-
-    public @NotNull String getExtension() {
-      return extension;
-    }
-
-    public boolean isDark() {
-      return dark;
-    }
-
-    public boolean isRetina() {
-      return retina;
-    }
-
-    public @NotNull TipUIUtil.TodImage dark() {
-      return new TodImage(name, extension, true, retina);
-    }
-
-    public @NotNull TipUIUtil.TodImage nonDark() {
-      return new TodImage(name, extension, false, retina);
-    }
-
-    public @NotNull TipUIUtil.TodImage retina() {
-      return new TodImage(name, extension, dark, true);
-    }
-
-    public @NotNull TipUIUtil.TodImage nonRetina() {
-      return new TodImage(name, extension, dark, false);
-    }
-
-    public @NotNull TipUIUtil.TodImage withExtension(final @NotNull String extension) {
-      return new TodImage(name, extension, dark, retina);
-    }
-
-    public @NotNull TipUIUtil.TodImage withName(final @NotNull String name) {
-      return new TodImage(name, extension, dark, retina);
-    }
-
-    public @NotNull TipUIUtil.TodImage base() {
-      return new TodImage(name, defaultExtension, false, false);
+    IconWithRoundedBorder(@NotNull Icon delegate) {
+      this.delegate = delegate;
     }
 
     @Override
-    public String toString() {
-      return name +
-             (retina ? RETINA_SUFFIX : "") +
-             (dark ? DARK_SUFFIX : "") +
-             "." +
-             extension;
+    public int getIconWidth() {
+      return delegate.getIconWidth();
     }
 
-    public static @NotNull TipUIUtil.TodImage of(final @NotNull String src) {
-      return new TodImage(src);
+    @Override
+    public int getIconHeight() {
+      return delegate.getIconHeight();
+    }
+
+    @Override
+    public void paintIcon(Component c, Graphics g, int x, int y) {
+      Graphics2D g2d = (Graphics2D)g.create();
+      g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      float arcSize = JBUIScale.scale(16);
+      var clipBounds = new RoundRectangle2D.Float(x, y, getIconWidth(), getIconHeight(), arcSize, arcSize);
+      g2d.clip(clipBounds);
+
+      delegate.paintIcon(c, g2d, x, y);
+
+      Color color = JBColor.namedColor("TipOfTheDay.Image.borderColor", JBColor.border());
+      g2d.setPaint(color);
+      g2d.setStroke(new BasicStroke(2f));
+      g2d.draw(clipBounds);
+
+      g2d.dispose();
     }
   }
 }

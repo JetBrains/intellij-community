@@ -24,7 +24,7 @@ interface ModuleBridge : ModuleEx {
 
   /**
    * Specifies a diff where module related changes should be written (like root changes).
-   * If it's null related changes should written directly with updateProjectModel.
+   * If it's null related changes should be written directly with updateProjectModel.
    * It may change on module transition from modifiable module model to regular module in ModuleManager.
    */
   var diff: MutableEntityStorage?
@@ -37,9 +37,11 @@ interface ModuleBridge : ModuleEx {
                          modules: List<IdeaPluginDescriptorImpl>,
                          precomputedExtensionModel: PrecomputedExtensionModel?,
                          app: Application?,
-                         listenerCallbacks: MutableList<in Runnable>?)
+                         listenerCallbacks: MutableList<Runnable>?)
 
   fun callCreateComponents()
+
+  suspend fun callCreateComponentsNonBlocking()
 
   fun initFacets()
 }

@@ -1,4 +1,4 @@
-// "Annotate parameter 'obj' as @NonNls" "true"
+// "Annotate parameter 'obj' as '@NonNls'" "true-preview"
 import org.jetbrains.annotations.NonNls;
 
 import java.util.Optional;

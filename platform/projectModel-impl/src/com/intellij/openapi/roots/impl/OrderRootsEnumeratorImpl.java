@@ -21,7 +21,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
   private final OrderRootType myRootType;
   private final NotNullFunction<? super OrderEntry, ? extends OrderRootType> myRootTypeProvider;
   private boolean myUsingCache;
-  private NotNullFunction<? super OrderEntry, VirtualFile[]> myCustomRootProvider;
+  private NotNullFunction<? super JdkOrderEntry, VirtualFile[]> myCustomSdkRootProvider;
   private boolean myWithoutSelfModuleOutput;
 
   OrderRootsEnumeratorImpl(@NotNull OrderEnumeratorBase orderEnumerator, @NotNull OrderRootType rootType) {
@@ -62,7 +62,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
 
   private void checkCanUseCache() {
     LOG.assertTrue(myRootTypeProvider == null, "Caching not supported for OrderRootsEnumerator with root type provider");
-    LOG.assertTrue(myCustomRootProvider == null, "Caching not supported for OrderRootsEnumerator with 'usingCustomRootProvider' option");
+    LOG.assertTrue(myCustomSdkRootProvider == null, "Caching not supported for OrderRootsEnumerator with 'usingCustomRootProvider' option");
     LOG.assertTrue(!myWithoutSelfModuleOutput, "Caching not supported for OrderRootsEnumerator with 'withoutSelfModuleOutput' option");
   }
 
@@ -88,15 +88,18 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
           collectModuleRoots(type, rootModel, result, !productionOnTests, includeTests, customHandlers);
         }
       }
+      else if (orderEntry instanceof LibraryOrSdkOrderEntry) {
+        if (myCustomSdkRootProvider != null && orderEntry instanceof JdkOrderEntry) {
+          Collections.addAll(result, myCustomSdkRootProvider.fun((JdkOrderEntry)orderEntry));
+          return true;
+        }
+        if (OrderEnumeratorBase.addCustomRootsForLibraryOrSdk((LibraryOrSdkOrderEntry)orderEntry, type, result, customHandlers)) {
+          return true;
+        }
+        Collections.addAll(result, ((LibraryOrSdkOrderEntry)orderEntry).getRootFiles(type));
+      }
       else {
-        if (myCustomRootProvider != null) {
-          Collections.addAll(result, myCustomRootProvider.fun(orderEntry));
-          return true;
-        }
-        if (OrderEnumeratorBase.addCustomRootsForLibrary(orderEntry, type, result, customHandlers)) {
-          return true;
-        }
-        Collections.addAll(result, orderEntry.getFiles(type));
+        LOG.error("Unexpected implementation of OrderEntry: " + orderEntry.getClass().getName());
       }
       return true;
     });
@@ -111,7 +114,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
 
       if (orderEntry instanceof ModuleSourceOrderEntry) {
         boolean includeTests = !myOrderEnumerator.isProductionOnly();
-        collectModuleRootsUrls(type, ((ModuleSourceOrderEntry)orderEntry).getRootModel(), result, true, includeTests);
+        collectModuleRootsUrls(type, ((ModuleSourceOrderEntry)orderEntry).getRootModel(), result, true, includeTests, customHandlers);
       }
       else if (orderEntry instanceof ModuleOrderEntry) {
         ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)orderEntry;
@@ -121,14 +124,17 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
           boolean productionOnTests = ((ModuleOrderEntry)orderEntry).isProductionOnTestDependency();
           boolean includeTests = !myOrderEnumerator.isProductionOnly() && OrderEnumeratorBase.shouldIncludeTestsFromDependentModulesToTestClasspath(customHandlers)
                                  || productionOnTests;
-          collectModuleRootsUrls(type, rootModel, result, !productionOnTests, includeTests);
+          collectModuleRootsUrls(type, rootModel, result, !productionOnTests, includeTests, customHandlers);
         }
       }
-      else {
-        if (OrderEnumeratorBase.addCustomRootUrlsForLibrary(orderEntry, type, result, customHandlers)) {
+      else if (orderEntry instanceof LibraryOrSdkOrderEntry) {
+        if (OrderEnumeratorBase.addCustomRootUrlsForLibraryOrSdk((LibraryOrSdkOrderEntry)orderEntry, type, result, customHandlers)) {
           return true;
         }
-        Collections.addAll(result, orderEntry.getUrls(type));
+        Collections.addAll(result, ((LibraryOrSdkOrderEntry)orderEntry).getRootUrls(type));
+      }
+      else {
+        LOG.error("Unexpected implementation of OrderEntry: " + orderEntry.getClass().getName());
       }
       return true;
     });
@@ -165,7 +171,12 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
   @NotNull
   @Override
   public OrderRootsEnumerator usingCustomRootProvider(@NotNull NotNullFunction<? super OrderEntry, VirtualFile[]> provider) {
-    myCustomRootProvider = provider;
+    return usingCustomSdkRootProvider(provider);
+  }
+
+  @Override
+  public @NotNull OrderRootsEnumerator usingCustomSdkRootProvider(@NotNull NotNullFunction<? super JdkOrderEntry, VirtualFile[]> provider) {
+    myCustomSdkRootProvider = provider;
     return this;
   }
 
@@ -206,8 +217,9 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
 
   private void collectModuleRootsUrls(@NotNull OrderRootType type,
                                       @NotNull ModuleRootModel rootModel,
-                                      @NotNull Collection<? super String> result,
-                                      boolean includeProduction, boolean includeTests) {
+                                      @NotNull Collection<String> result,
+                                      boolean includeProduction, boolean includeTests,
+                                      @NotNull List<? extends OrderEnumerationHandler> customHandlers) {
     if (type.equals(OrderRootType.SOURCES)) {
       if (includeProduction) {
         Collections.addAll(result, rootModel.getSourceRootUrls(includeTests));
@@ -252,6 +264,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
         }
       }
     }
+    OrderEnumeratorBase.addCustomRootsUrlsForModule(type, rootModel, result, includeProduction, includeTests, customHandlers);
   }
 
   @NotNull

@@ -13,6 +13,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToAbstractManyChildren
@@ -100,6 +101,9 @@ open class CustomPackagingElementEntityImpl : CustomPackagingElementEntity, Work
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       // Check initialization for list with ref type
       if (_diff != null) {
         if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(CHILDREN_CONNECTION_ID, this) == null) {
@@ -114,9 +118,6 @@ open class CustomPackagingElementEntityImpl : CustomPackagingElementEntity, Work
       if (!getEntityData().isTypeIdInitialized()) {
         error("Field CustomPackagingElementEntity#typeId should be initialized")
       }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field CustomPackagingElementEntity#entitySource should be initialized")
-      }
       if (!getEntityData().isPropertiesXmlTagInitialized()) {
         error("Field CustomPackagingElementEntity#propertiesXmlTag should be initialized")
       }
@@ -126,6 +127,27 @@ open class CustomPackagingElementEntityImpl : CustomPackagingElementEntity, Work
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as CustomPackagingElementEntity
+      this.entitySource = dataSource.entitySource
+      this.typeId = dataSource.typeId
+      this.propertiesXmlTag = dataSource.propertiesXmlTag
+      if (parents != null) {
+        this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
+        this.artifact = parents.filterIsInstance<ArtifactEntity>().singleOrNull()
+      }
+    }
+
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var parentEntity: CompositePackagingElementEntity?
       get() {
@@ -246,15 +268,6 @@ open class CustomPackagingElementEntityImpl : CustomPackagingElementEntity, Work
         changedProperty.add("typeId")
       }
 
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
-      }
-
     override var propertiesXmlTag: String
       get() = getEntityData().propertiesXmlTag
       set(value) {
@@ -307,14 +320,26 @@ class CustomPackagingElementEntityData : WorkspaceEntityData<CustomPackagingElem
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return CustomPackagingElementEntity(typeId, propertiesXmlTag, entitySource) {
+      this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
+      this.artifact = parents.filterIsInstance<ArtifactEntity>().singleOrNull()
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
 
     other as CustomPackagingElementEntityData
 
-    if (this.typeId != other.typeId) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.typeId != other.typeId) return false
     if (this.propertiesXmlTag != other.propertiesXmlTag) return false
     return true
   }
@@ -335,5 +360,16 @@ class CustomPackagingElementEntityData : WorkspaceEntityData<CustomPackagingElem
     result = 31 * result + typeId.hashCode()
     result = 31 * result + propertiesXmlTag.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + typeId.hashCode()
+    result = 31 * result + propertiesXmlTag.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.sameForAllEntities = true
   }
 }

@@ -444,7 +444,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
             selectedConfigurationId = newId
           }
 
-          listManager.updateConfigurationId(it, newId)
+ //         listManager.updateConfigurationId(it, newId)
         }
       }
 

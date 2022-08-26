@@ -1,4 +1,4 @@
-// "Replace with sum()" "true"
+// "Replace with sum()" "true-preview"
 
 public class Main {
   public double test(String[][] array) {

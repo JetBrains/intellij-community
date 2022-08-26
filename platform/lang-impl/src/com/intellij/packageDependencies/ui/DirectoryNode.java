@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.packageDependencies.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.openapi.project.Project;
@@ -228,7 +229,7 @@ public class DirectoryNode extends PackageDependenciesNode {
       final VirtualFile jarRoot = JarFileSystem.getInstance().getRootByEntry(myVDirectory);
       return myVDirectory.equals(jarRoot) ? PlatformIcons.JAR_ICON : SourceRootIconProvider.getDirectoryIcon(myVDirectory, myProject);
     }
-    return PlatformIcons.PACKAGE_ICON;
+    return AllIcons.Nodes.Package;
   }
 
   public void setCompactedDirNode(final DirectoryNode compactedDirNode) {

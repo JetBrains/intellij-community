@@ -742,9 +742,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
                   }
                 });
 
-                installAndEnable(project, Sets.newHashSet(pluginId), () -> {
-                  notification.expire();
-                });
+                installAndEnable(project, Sets.newHashSet(pluginId), notification::expire);
               }
             });
           }

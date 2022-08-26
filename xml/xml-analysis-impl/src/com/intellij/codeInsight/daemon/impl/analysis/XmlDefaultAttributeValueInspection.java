@@ -39,7 +39,7 @@ public class XmlDefaultAttributeValueInspection extends XmlSuppressableInspectio
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new XmlElementVisitor() {
       @Override
-      public void visitXmlAttributeValue(XmlAttributeValue value) {
+      public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
         PsiElement parent = value.getParent();
         if (!(parent instanceof XmlAttribute)) {
           return;

@@ -1,18 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.hover;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.ui.ClientProperty;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.Component;
+import javax.swing.*;
+import java.awt.*;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-import javax.swing.JComponent;
 
 @ApiStatus.Experimental
 public abstract class HoverListener {
@@ -24,27 +24,29 @@ public abstract class HoverListener {
 
   public abstract void mouseExited(@NotNull Component component);
 
-
   public final void addTo(@NotNull JComponent component, @NotNull Disposable parent) {
     addTo(component);
     Disposer.register(parent, () -> removeFrom(component));
   }
 
   public final void addTo(@NotNull JComponent component) {
-    List<HoverListener> list = UIUtil.getClientProperty(component, HOVER_LISTENER_LIST_KEY);
-    if (list == null) component.putClientProperty(HOVER_LISTENER_LIST_KEY, list = new CopyOnWriteArrayList<>());
+    List<HoverListener> list = ClientProperty.get(component, HOVER_LISTENER_LIST_KEY);
+    if (list == null) {
+      component.putClientProperty(HOVER_LISTENER_LIST_KEY, list = ContainerUtil.createLockFreeCopyOnWriteList());
+    }
     list.add(0, this);
   }
 
   public final void removeFrom(@NotNull JComponent component) {
-    List<HoverListener> list = UIUtil.getClientProperty(component, HOVER_LISTENER_LIST_KEY);
-    if (list != null) list.remove(this);
+    List<HoverListener> list = ClientProperty.get(component, HOVER_LISTENER_LIST_KEY);
+    if (list != null) {
+      list.remove(this);
+    }
   }
-
 
   @ApiStatus.Internal
   public static @NotNull List<HoverListener> getAll(@NotNull Component component) {
-    List<HoverListener> list = UIUtil.getClientProperty(component, HOVER_LISTENER_LIST_KEY);
-    return list != null ? list : Collections.emptyList();
+    List<HoverListener> list = ClientProperty.get(component, HOVER_LISTENER_LIST_KEY);
+    return list == null ? Collections.emptyList() : list;
   }
 }

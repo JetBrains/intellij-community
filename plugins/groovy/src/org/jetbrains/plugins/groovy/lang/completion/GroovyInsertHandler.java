@@ -1,14 +1,14 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.lookup.EqTailType;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.util.CompletionStyleUtil;
 import com.intellij.codeInsight.completion.util.MethodParenthesesHandler;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
+import com.intellij.codeInsight.lookup.EqTailType;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.CaretModel;
@@ -31,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.lang.sam.SamConversionKt;
 
 /**
  * @author ven
@@ -85,8 +86,10 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
       if (PsiTreeUtil.getParentOfType(elementAt, GrImportStatement.class) != null) return;
 
       if (parameters.length == 1) {
+        PsiType type = parameters[0].getType();
+        PsiClass clazz = type instanceof PsiClassType ? ((PsiClassType)type).resolve() : null;
         if ((context.getCompletionChar() != '(' && context.getCompletionChar() != ' ') &&
-            TypesUtil.isClassType(parameters[0].getType(), GroovyCommonClassNames.GROOVY_LANG_CLOSURE)) {
+            (TypesUtil.isClassType(parameters[0].getType(), GroovyCommonClassNames.GROOVY_LANG_CLOSURE) || (clazz != null && SamConversionKt.findSingleAbstractSignature(clazz) != null))) {
           int afterBrace;
           final int nonWs = CharArrayUtil.shiftForward(charsSequence, offset, " \t");
           if (nonWs < document.getTextLength() && charsSequence.charAt(nonWs) == '{') {

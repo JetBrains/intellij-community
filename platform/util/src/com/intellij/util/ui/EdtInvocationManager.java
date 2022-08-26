@@ -2,7 +2,6 @@
 package com.intellij.util.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +39,7 @@ public abstract class EdtInvocationManager {
   }
 
   /**
-   * Use {@link EDT#isCurrentThreadEdt()}
+   * @deprecated Use {@link EDT#isCurrentThreadEdt()}
    */
   @Deprecated
   public abstract boolean isEventDispatchThread();
@@ -63,11 +62,6 @@ public abstract class EdtInvocationManager {
 
   public static @Nullable EdtInvocationManager setEdtInvocationManager(@NotNull EdtInvocationManager edtInvocationManager) {
     return ourInstance.getAndSet(edtInvocationManager);
-  }
-
-  @ApiStatus.Internal
-  public static void restoreEdtInvocationManager(@NotNull EdtInvocationManager current, @Nullable EdtInvocationManager old) {
-    ourInstance.compareAndSet(current, old);
   }
 
   /**

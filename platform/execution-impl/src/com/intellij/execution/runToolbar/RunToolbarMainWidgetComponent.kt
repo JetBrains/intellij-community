@@ -8,10 +8,8 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.wm.IdeFrame
 import java.awt.event.ContainerEvent
 import java.awt.event.ContainerListener
-import javax.swing.SwingUtilities
 
 class RunToolbarMainWidgetComponent(val presentation: Presentation, place: String, group: ActionGroup) :
   FixWidthSegmentedActionToolbarComponent(place, group) {
@@ -83,7 +81,7 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
   }
 
   override fun traceState(lastIds: List<String>, filteredIds: List<String>, ides: List<String>) {
-    if(logNeeded()) LOG.info("MAIN SLOT state: ${state} new filtered: ${filteredIds}} visible: $ides RunToolbar")
+    if(logNeeded() && filteredIds != lastIds ) LOG.info("MAIN SLOT state: ${state} new filtered: ${filteredIds}} visible: $ides RunToolbar")
   }
 
   internal var isOpened = false
@@ -104,24 +102,23 @@ class RunToolbarMainWidgetComponent(val presentation: Presentation, place: Strin
       if(action is RTBarAction) {
         action.checkMainSlotVisibility(it)
       } else true
-    } ?: false
+    } ?: true
   }
 
   override fun addNotify() {
     super.addNotify()
 
-    (SwingUtilities.getWindowAncestor(this) as? IdeFrame)?.project?.let {
+    CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this))?.let {
       project = it
 
-      RUN_CONFIG_WIDTH = RunToolbarSettings.getInstance(it).getRunConfigWidth()
-
+      RunWidgetWidthHelper.getInstance(it).runConfig = RunToolbarSettings.getInstance(it).getRunConfigWidth()
     }
   }
 
   override fun updateWidthHandler() {
     super.updateWidthHandler()
     project?.let {
-      RunToolbarSettings.getInstance(it).setRunConfigWidth(RUN_CONFIG_WIDTH)
+      RunToolbarSettings.getInstance(it).setRunConfigWidth(RunWidgetWidthHelper.getInstance(it).runConfig)
     }
   }
 

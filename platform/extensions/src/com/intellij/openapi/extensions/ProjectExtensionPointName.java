@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.Disposable;
@@ -16,20 +16,20 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 /**
+ * Do not use.
+ * <p>
  * Provides access to a project-level or module-level extension point. Since extensions are supposed to be stateless, storing different
  * instances of an extension for each project or module just waste the memory and complicates code, so <strong>it's strongly recommended not
  * to introduce new project-level and module-level extension points</strong>. If you need to have {@link com.intellij.openapi.project.Project Project}
  * or {@link com.intellij.openapi.module.Module Module} instance in some extension's method, just pass it as a parameter and use the default
  * application-level extension point.
- *
- * <p>Instances of this class can be safely stored in static final fields.</p>
  */
 public final class ProjectExtensionPointName<T> extends BaseExtensionPointName<T> {
   public ProjectExtensionPointName(@NotNull @NonNls String name) {
     super(name);
   }
 
-  public @NotNull ExtensionPoint<T> getPoint(@NotNull AreaInstance areaInstance) {
+  public @NotNull ExtensionPoint<@NotNull T> getPoint(@NotNull AreaInstance areaInstance) {
     return getPointImpl(areaInstance);
   }
 
@@ -37,8 +37,12 @@ public final class ProjectExtensionPointName<T> extends BaseExtensionPointName<T
     return getPointImpl(areaInstance).getExtensionList();
   }
 
+  /**
+   * @deprecated Use {@link #getExtensions(AreaInstance)}
+   */
+  @Deprecated
   public @NotNull Stream<T> extensions(@NotNull AreaInstance areaInstance) {
-    return getPointImpl(areaInstance).extensions();
+    return getPointImpl(areaInstance).getExtensionList().stream();
   }
 
   public @Nullable <V extends T> V findExtension(@NotNull Class<V> instanceOf, @NotNull AreaInstance areaInstance) {

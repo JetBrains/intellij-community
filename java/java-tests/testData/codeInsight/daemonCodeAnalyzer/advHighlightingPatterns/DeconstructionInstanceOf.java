@@ -1,6 +1,7 @@
 record Top(Child c1, Child c2) {}
 record Child(I x, I y){}
 record Wrong(int x) {}
+record TypedRecord<T>(T t) {}
 
 sealed interface I permits A, B {}
 final class A implements I {}
@@ -16,5 +17,46 @@ public class Test {
       if (o instanceof Top(Child a, <error descr="Incompatible types. Found: 'Wrong', required: 'Child'">Wrong(int x)</error>)){ }
       if (<error descr="Inconvertible types; cannot cast 'java.lang.Integer' to 'Wrong'">i instanceof Wrong(int x)</error>) { }
     }
+  }
+
+  <T> void testRawDeconstruction(TypedRecord<T> r) {
+    if (r instanceof TypedRecord<T>(I t)){ }
+    if (r instanceof TypedRecord<T>(T t)){ }
+    if (r instanceof <error descr="Raw deconstruction patterns are not allowed">TypedRecord</error>(I t)){ }
+    if (r instanceof <error descr="Raw deconstruction patterns are not allowed">TypedRecord</error>(T t)){ }
+  }
+
+  void resolveHighlighting1(Object o){
+    if (o instanceof Child(A a, B b) c){
+      System.out.println(a);
+      System.out.println(c);
+    }
+    else {
+      System.out.println(<error descr="Cannot resolve symbol 'a'">a</error>);
+      System.out.println(<error descr="Cannot resolve symbol 'c'">c</error>);
+    }
+  }
+
+  void resolveHighlighting2(Object o){
+    if (!(o instanceof Child(A a, B b) c)){
+      System.out.println(<error descr="Cannot resolve symbol 'a'">a</error>);
+      System.out.println(<error descr="Cannot resolve symbol 'c'">c</error>);
+    }
+    else {
+      System.out.println(a);
+      System.out.println(c);
+    }
+  }
+
+  void resolveHighlighting3(Object o){
+    if (!(o instanceof Child(A a, B b) c)) return;
+    System.out.println(a);
+    System.out.println(c);
+  }
+
+  void resolveHighlighting4(Object o){
+    if (o instanceof Child(A a, B b) c) return;
+    System.out.println(<error descr="Cannot resolve symbol 'a'">a</error>);
+    System.out.println(<error descr="Cannot resolve symbol 'c'">c</error>);
   }
 }

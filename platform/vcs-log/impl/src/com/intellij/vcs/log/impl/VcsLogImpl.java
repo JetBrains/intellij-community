@@ -74,7 +74,7 @@ public class VcsLogImpl implements VcsLog {
     SettableFuture<Boolean> future = SettableFuture.create();
     VcsLogRefs refs = myUi.getDataPack().getRefs();
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      List<VcsRef> matchingRefs = refs.stream().filter(ref -> ref.getName().startsWith(reference)).collect(Collectors.toList());
+      List<VcsRef> matchingRefs = refs.stream().filter(ref -> ref.getName().startsWith(reference)).toList();
       ApplicationManager.getApplication().invokeLater(() -> {
         if (matchingRefs.isEmpty()) {
           future.setFuture(jumpToHash(reference, focus));

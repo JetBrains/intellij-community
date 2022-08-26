@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.gradle
 
 import org.jetbrains.kotlin.cli.common.arguments.*
@@ -177,7 +177,6 @@ class CompilerArgumentsCachingTest {
         noInline = Random.nextBoolean()
         skipMetadataVersionCheck = Random.nextBoolean()
         skipPrereleaseCheck = Random.nextBoolean()
-        newInference = Random.nextBoolean()
         allowKotlinPackage = Random.nextBoolean()
         reportOutputFiles = Random.nextBoolean()
         multiPlatform = Random.nextBoolean()
@@ -446,7 +445,6 @@ class CompilerArgumentsCachingTest {
             "noInline",
             "skipMetadataVersionCheck",
             "skipPrereleaseCheck",
-            "newInference",
             "allowKotlinPackage",
             "reportOutputFiles",
             "multiPlatform",

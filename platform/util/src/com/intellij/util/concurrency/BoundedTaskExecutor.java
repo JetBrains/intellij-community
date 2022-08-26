@@ -143,7 +143,7 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
   }
 
   @Override
-  public void execute(@NotNull Runnable command) {
+  public void execute(@NotNull @Async.Schedule Runnable command) {
     if (isShutdown() && !(command instanceof LastTask)) {
       throw new RejectedExecutionException(this+" is already shutdown, trying to execute "+command+" ("+command.getClass()+")");
     }

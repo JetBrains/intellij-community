@@ -7,7 +7,7 @@ package org.jetbrains.kotlin.idea.fir.uast
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.kotlin.idea.fir.uast.env.kotlin.AbstractFirUastTest
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
-import org.jetbrains.kotlin.test.KotlinRoot
+import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.test.common.kotlin.UastApiTestBase
@@ -17,7 +17,7 @@ import org.junit.runner.RunWith
 open class FirUastApiTest : AbstractFirUastTest() {
     override val isFirUastPlugin: Boolean = true
 
-    override val basePath = KotlinRoot.DIR_PATH.resolve("uast")
+    override val basePath = KotlinRoot.PATH.resolve("uast")
 
     override fun check(filePath: String, file: UFile) {
         // Bogus
@@ -28,8 +28,6 @@ open class FirUastApiTest : AbstractFirUastTest() {
         "uast-kotlin/tests/testData/Resolve.kt",
         // TODO: return type of inline functions
         "uast-kotlin/tests/testData/ReifiedReturnType.kt",
-        // TODO: PsiMethod -> getFunctionalInterfaceMethod
-        "uast-kotlin/tests/testData/LambdaParameters.kt",
     )
 
     override fun isExpectedToFail(filePath: String, fileContent: String): Boolean {

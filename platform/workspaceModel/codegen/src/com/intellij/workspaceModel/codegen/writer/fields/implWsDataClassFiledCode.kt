@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.codegen.isRefType
 import com.intellij.workspaceModel.codegen.writer.hasSetter
 import com.intellij.workspaceModel.codegen.writer.isOverride
 import com.intellij.workspaceModel.codegen.writer.javaName
-import com.intellij.workspaceModel.codegen.writer.type
 
 val ObjProperty<*, *>.implWsDataFieldCode: String
   get() = buildString {
@@ -21,14 +20,14 @@ val ObjProperty<*, *>.implWsDataFieldCode: String
         else -> error(kind)
       }
       if (expression.startsWith("=")) {
-        append("var $javaName: ${type.javaType} $expression")
+        append("var $javaName: ${valueType.javaType} $expression")
       } else {
-        append("var $javaName: ${type.javaType} = $expression")
+        append("var $javaName: ${valueType.javaType} = $expression")
       }
     }
   }
 private val ObjProperty<*, *>.implWsDataBlockingCode: String
-  get() = implWsDataBlockCode(type, name)
+  get() = implWsDataBlockCode(valueType, name)
 
 private fun ObjProperty<*, *>.implWsDataBlockCode(fieldType: ValueType<*>, name: String, isOptional: Boolean = false): String {
   return when (fieldType) {
@@ -36,8 +35,16 @@ private fun ObjProperty<*, *>.implWsDataBlockCode(fieldType: ValueType<*>, name:
     ValueType.Boolean -> "var $javaName: ${fieldType.javaType} = false"
     ValueType.String -> "lateinit var $javaName: String"
     is ValueType.ObjRef<*> -> error("Reference type at EntityData not supported")
-    is ValueType.Collection<*, *>, is ValueType.Map<*, *> -> {
+    is ValueType.Collection<*, *> -> {
       if (fieldType.isRefType()) error("Reference type at EntityData not supported")
+      if (!isOptional) {
+        "lateinit var $javaName: ${fieldType.javaMutableType}"
+      }
+      else {
+        "var $javaName: ${fieldType.javaMutableType}? = null"
+      }
+    }
+    is ValueType.Map<*, *> -> {
       if (!isOptional) {
         "lateinit var $javaName: ${fieldType.javaType}"
       }
@@ -62,7 +69,7 @@ private fun ObjProperty<*, *>.implWsDataBlockCode(fieldType: ValueType<*>, name:
 }
 
 val ObjProperty<*, *>.implWsDataFieldInitializedCode: String
-  get() = when (type) {
+  get() = when (valueType) {
     is ValueType.Int, is ValueType.Boolean -> ""
     is ValueType.String, is ValueType.JvmClass, is ValueType.Collection<*, *>, is ValueType.Map<*, *> -> {
       val capitalizedFieldName = javaName.replaceFirstChar { it.titlecaseChar() }

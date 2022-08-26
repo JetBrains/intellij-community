@@ -19,9 +19,6 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
 internal class BundledPluginsLister : ModernApplicationStarter() {
-  override val timeout: Duration
-    get() = 1.minutes
-
   override val commandName: String
     get() = "listBundledPlugins"
 

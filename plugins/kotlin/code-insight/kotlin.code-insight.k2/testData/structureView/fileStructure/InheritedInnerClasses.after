@@ -1,0 +1,6 @@
+-InheritedInnerClasses.kt
+ -class B : A
+  fun equals(other: Any?): Boolean location=→Any
+  fun foo(): Unit location=→A
+  fun hashCode(): Int location=→Any
+  fun toString(): String location=→Any

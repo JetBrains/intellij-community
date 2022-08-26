@@ -13,8 +13,11 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
@@ -74,6 +77,9 @@ open class ModuleGroupPathEntityImpl : ModuleGroupPathEntity, WorkspaceEntityBas
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToOneParent<WorkspaceEntityBase>(MODULE_CONNECTION_ID, this) == null) {
           error("Field ModuleGroupPathEntity#module should be initialized")
@@ -84,9 +90,6 @@ open class ModuleGroupPathEntityImpl : ModuleGroupPathEntity, WorkspaceEntityBas
           error("Field ModuleGroupPathEntity#module should be initialized")
         }
       }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ModuleGroupPathEntity#entitySource should be initialized")
-      }
       if (!getEntityData().isPathInitialized()) {
         error("Field ModuleGroupPathEntity#path should be initialized")
       }
@@ -96,6 +99,25 @@ open class ModuleGroupPathEntityImpl : ModuleGroupPathEntity, WorkspaceEntityBas
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as ModuleGroupPathEntity
+      this.entitySource = dataSource.entitySource
+      this.path = dataSource.path.toMutableList()
+      if (parents != null) {
+        this.module = parents.filterIsInstance<ModuleEntity>().single()
+      }
+    }
+
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var module: ModuleEntity
       get() {
@@ -132,22 +154,21 @@ open class ModuleGroupPathEntityImpl : ModuleGroupPathEntity, WorkspaceEntityBas
         changedProperty.add("module")
       }
 
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
+    private val pathUpdater: (value: List<String>) -> Unit = { value ->
 
+      changedProperty.add("path")
+    }
+    override var path: MutableList<String>
+      get() {
+        val collection_path = getEntityData().path
+        if (collection_path !is MutableWorkspaceList) return collection_path
+        collection_path.setModificationUpdateAction(pathUpdater)
+        return collection_path
       }
-
-    override var path: List<String>
-      get() = getEntityData().path
       set(value) {
         checkModificationAllowed()
         getEntityData().path = value
-
-        changedProperty.add("path")
+        pathUpdater.invoke(value)
       }
 
     override fun getEntityData(): ModuleGroupPathEntityData = result ?: super.getEntityData() as ModuleGroupPathEntityData
@@ -156,7 +177,7 @@ open class ModuleGroupPathEntityImpl : ModuleGroupPathEntity, WorkspaceEntityBas
 }
 
 class ModuleGroupPathEntityData : WorkspaceEntityData<ModuleGroupPathEntity>() {
-  lateinit var path: List<String>
+  lateinit var path: MutableList<String>
 
   fun isPathInitialized(): Boolean = ::path.isInitialized
 
@@ -174,11 +195,18 @@ class ModuleGroupPathEntityData : WorkspaceEntityData<ModuleGroupPathEntity>() {
 
   override fun createEntity(snapshot: EntityStorage): ModuleGroupPathEntity {
     val entity = ModuleGroupPathEntityImpl()
-    entity._path = path
+    entity._path = path.toList()
     entity.entitySource = entitySource
     entity.snapshot = snapshot
     entity.id = createEntityId()
     return entity
+  }
+
+  override fun clone(): ModuleGroupPathEntityData {
+    val clonedEntity = super.clone()
+    clonedEntity as ModuleGroupPathEntityData
+    clonedEntity.path = clonedEntity.path.toMutableWorkspaceList()
+    return clonedEntity
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -189,6 +217,18 @@ class ModuleGroupPathEntityData : WorkspaceEntityData<ModuleGroupPathEntity>() {
   }
 
   override fun deserialize(de: EntityInformation.Deserializer) {
+  }
+
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ModuleGroupPathEntity(path, entitySource) {
+      this.module = parents.filterIsInstance<ModuleEntity>().single()
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(ModuleEntity::class.java)
+    return res
   }
 
   override fun equals(other: Any?): Boolean {
@@ -216,5 +256,16 @@ class ModuleGroupPathEntityData : WorkspaceEntityData<ModuleGroupPathEntity>() {
     var result = entitySource.hashCode()
     result = 31 * result + path.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + path.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    this.path?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = false
   }
 }

@@ -23,6 +23,7 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.Nls;
@@ -170,7 +171,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   }
 
   private void registerToolbarListeners(JComponent actualComponent, LayoutActionsFloatingToolbar toolbar) {
-    UIUtil.addAwtListener(new MyMouseListener(toolbar), AWTEvent.MOUSE_MOTION_EVENT_MASK, toolbar);
+    StartupUiUtil.addAwtListener(new MyMouseListener(toolbar), AWTEvent.MOUSE_MOTION_EVENT_MASK, toolbar);
     final var actualEditor = UIUtil.findComponentOfType(actualComponent, EditorComponentImpl.class);
     if (actualEditor != null) {
       final var editorKeyListener = new KeyAdapter() {
@@ -519,6 +520,10 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
       return myLayout == myActionLayout;
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       if (state) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.util.InvalidDataException;
@@ -138,7 +138,7 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
     for (int i = 0, length = regexp.length(); i < length; i++) {
       final int c = regexp.codePointAt(i);
       if (c == '.') {
-        if (i == length - 1 || !StructuralSearchUtil.isRegExpMetaChar(regexp.codePointAt(i + 1))) {
+        if (i == length - 1 || !MatchUtil.isRegExpMetaChar(regexp.codePointAt(i + 1))) {
           result.append('.'); // consider dot not followed by other meta char a mistake
         }
         else {
@@ -163,7 +163,7 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
       else if (c == '(' || c == ')') {
         // do nothing
       }
-      else if (StructuralSearchUtil.isRegExpMetaChar(c)) {
+      else if (MatchUtil.isRegExpMetaChar(c)) {
         return ""; // can't convert
       }
       else {
@@ -180,7 +180,7 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
       if (result.length() > 0) {
         result.append('|');
       }
-      StructuralSearchUtil.shieldRegExpMetaChars(type.trim(), result);
+      MatchUtil.shieldRegExpMetaChars(type.trim(), result);
     }
     return result.toString();
   }

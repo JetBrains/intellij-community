@@ -1,12 +1,12 @@
-// "Make 'a.f' return 'int'" "true"
+// "Make 'a.f()' return 'int'" "true-preview"
 class a {
  int f() {
-   return ;
+     return <selection><caret>0</selection>;
  }
 }
 
 class b extends a {
-  <caret>int f() {
+  int f() {
     return 0;
   }
 }

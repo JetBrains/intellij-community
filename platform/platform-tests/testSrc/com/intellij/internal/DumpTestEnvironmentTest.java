@@ -4,6 +4,7 @@ package com.intellij.internal;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -17,16 +18,13 @@ public class DumpTestEnvironmentTest {
   @Test
   public void dumpEnvironment() throws Exception {
     Properties properties = System.getProperties();
-    for (String propertyName : properties.keySet().stream().map(String.class::cast).sorted().collect(Collectors.toList())) {
-      System.out.println("PROPERTY " + propertyName + " = " +
-                         (isSecretParameter(propertyName) ? "[REDACTED]" : properties.getProperty(propertyName)));
+    StreamEx.ofKeys(properties).map(String.class::cast).sorted()
+      .map(propertyName -> "PROPERTY " + propertyName + " = " + (isSecretParameter(propertyName) ? "[REDACTED]" : properties.getProperty(propertyName)))
+      .forEach(System.out::println);
 
-    }
-
-    for (String key : System.getenv().keySet().stream().sorted().collect(Collectors.toList())) {
-      System.out.println("ENV " + key + " = " +
-                         (isSecretParameter(key) ? "[REDACTED]" : System.getenv(key)));
-    }
+    StreamEx.ofKeys(System.getenv()).sorted()
+      .map(key -> "ENV " + key + " = " + (isSecretParameter(key) ? "[REDACTED]" : System.getenv(key)))
+      .forEach(System.out::println);
 
     System.out.println("*** Classloaders NOT SORTED CLASSPATH ***");
     dumpClassloader(getClass().getClassLoader(), false, 0);

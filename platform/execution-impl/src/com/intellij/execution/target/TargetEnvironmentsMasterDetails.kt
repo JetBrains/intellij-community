@@ -4,12 +4,10 @@ package com.intellij.execution.target
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.RuntimeConfigurationException
+import com.intellij.execution.ui.InvalidRunConfigurationIcon
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonShortcuts
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
@@ -289,6 +287,8 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
       e.presentation.isEnabled = getSelectedTarget() != null
     }
 
+    override fun getActionUpdateThread() = ActionUpdateThread.EDT
+
     override fun actionPerformed(e: AnActionEvent) {
       duplicateSelected()?.let { copy ->
         targetManager.addTarget(copy)
@@ -324,7 +324,7 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
       catch (e: RuntimeConfigurationException) {
         false
       }
-      return if (valid) rawIcon else LayeredIcon.create(rawIcon, AllIcons.RunConfigurations.InvalidConfigurationLayer)
+      return if (valid) rawIcon else InvalidRunConfigurationIcon(rawIcon)
     }
   }
 

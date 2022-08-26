@@ -1,4 +1,4 @@
-// "Remove switch label 'default'" "true"
+// "Remove switch label 'default'" "true-preview"
 enum Day {
     MONDAY, TUESDAY, WEDNESDAY
 }

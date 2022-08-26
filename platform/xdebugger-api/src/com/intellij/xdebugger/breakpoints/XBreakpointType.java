@@ -199,8 +199,6 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
 
   /**
    * This method is called then "Add" button is pressed in the "Breakpoints" dialog 
-   * @param project
-   * @param parentComponent
    * @return the created breakpoint or {@code null} if breakpoint wasn't created
    */
   @Nullable

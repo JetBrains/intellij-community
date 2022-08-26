@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.ui.configuration.SdkLookupUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ReflectionUtil;
@@ -89,6 +90,8 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
 
   @NotNull @NonNls private static final String UNRESOLVED_DEPENDENCY_PREFIX = "unresolved dependency - ";
 
+  public static final String GRADLE_VERSION_CATALOGS_DYNAMIC_SUPPORT = "gradle.version.catalogs.dynamic.support";
+
   @Override
   public void populateProjectExtraModels(@NotNull IdeaProject gradleProject, @NotNull DataNode<ProjectData> ideProject) {
     final ExternalProject externalProject = resolverCtx.getExtraProject(ExternalProject.class);
@@ -104,7 +107,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
     }
 
     final DependencyAccessorsModel dependencyAccessorsModel = resolverCtx.getExtraProject(DependencyAccessorsModel.class);
-    if (dependencyAccessorsModel != null) {
+    if (dependencyAccessorsModel != null && Registry.is(GRADLE_VERSION_CATALOGS_DYNAMIC_SUPPORT, false)) {
       ideProject.createChild(BuildScriptClasspathData.ACCESSORS, dependencyAccessorsModel);
     }
 
@@ -657,20 +660,23 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
   @Nullable
   private static File getGradleOutputDir(@Nullable ExternalSourceDirectorySet sourceDirectorySet) {
     if (sourceDirectorySet == null) return null;
-    String firstExistingLang = sourceDirectorySet.getSrcDirs().stream()
+    Set<File> srcDirs = sourceDirectorySet.getSrcDirs();
+    Collection<File> outputDirectories = sourceDirectorySet.getGradleOutputDirs();
+    String firstExistingLang = srcDirs.stream()
+      .sorted()
       .filter(File::exists)
       .findFirst()
       .map(File::getName)
       .orElse(null);
 
     if (firstExistingLang == null) {
-      return ContainerUtil.getFirstItem(sourceDirectorySet.getGradleOutputDirs());
+      return ContainerUtil.getFirstItem(outputDirectories);
     }
 
-    return sourceDirectorySet.getGradleOutputDirs().stream()
+    return outputDirectories.stream()
       .filter(f -> f.getPath().contains(firstExistingLang))
       .findFirst()
-      .orElse(ContainerUtil.getFirstItem(sourceDirectorySet.getGradleOutputDirs()));
+      .orElse(ContainerUtil.getFirstItem(outputDirectories));
   }
 
   private static void excludeOutDir(@NotNull DataNode<ModuleData> ideModule, File ideaOutDir) {

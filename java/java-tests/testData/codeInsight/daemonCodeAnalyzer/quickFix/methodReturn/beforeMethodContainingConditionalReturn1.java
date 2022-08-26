@@ -1,4 +1,4 @@
-// "Make 'condition' return 'Test.Base' or predecessor" "true"
+// "Make 'condition()' return 'Test.Base' or predecessor" "true-preview"
 abstract class Test {
   private void condition(boolean flag) {
     return flag ? foo()<caret> : bar();

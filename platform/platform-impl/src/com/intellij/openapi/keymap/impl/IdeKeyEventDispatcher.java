@@ -71,9 +71,6 @@ import java.util.function.Function;
 
 /**
  * This class is automaton with finite number of state.
- *
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 public final class IdeKeyEventDispatcher {
   private static final Logger LOG = Logger.getInstance(IdeKeyEventDispatcher.class);
@@ -261,7 +258,21 @@ public final class IdeKeyEventDispatcher {
    * @throws IllegalArgumentException if {@code component} is {@code null}.
    */
   public static boolean isModalContext(@NotNull Component component) {
+    Boolean valueOrNull = isModalContextOrNull(component);
+    return valueOrNull != null ? valueOrNull : true;
+  }
+
+  /**
+   * Check whether the {@code component} represents a modal context.
+   * @return {@code null} if it's impossible to deduce.
+   */
+  @Nullable
+  @ApiStatus.Internal
+  public static Boolean isModalContextOrNull(@NotNull Component component) {
     Window window = ComponentUtil.getWindow(component);
+    if (window == null) {
+      return null;
+    }
 
     if (window instanceof IdeFrameImpl) {
       Component pane = ((JFrame)window).getGlassPane();

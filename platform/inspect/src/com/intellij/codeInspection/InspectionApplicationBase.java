@@ -270,7 +270,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
   @Nullable
   @VisibleForTesting
-  public AnalysisScope getAnalysisScope(@NotNull Project project) throws ExecutionException, InterruptedException {
+  public final AnalysisScope getAnalysisScope(@NotNull Project project) throws ExecutionException, InterruptedException {
     SearchScope scope = getSearchScope(project);
     if (scope == null) return null;
     return new AnalysisScope(scope, project);
@@ -278,42 +278,42 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
 
   @Nullable
   protected SearchScope getSearchScope(@NotNull Project project) throws ExecutionException, InterruptedException {
-    SearchScope scope;
 
     if (myAnalyzeChanges) {
       List<VirtualFile> files = getChangedFiles(project);
-      scope = GlobalSearchScope.filesWithoutLibrariesScope(project, files);
+      return GlobalSearchScope.filesWithoutLibrariesScope(project, files);
     }
-    else {
-      if (myScopePattern != null) {
-        try {
-          PackageSet packageSet = PackageSetFactory.getInstance().compile(myScopePattern);
-          NamedScope namedScope = new NamedScope("commandLineScope", AllIcons.Ide.LocalScope, packageSet);
-          scope = GlobalSearchScopesCore.filterScope(project, namedScope);
-        }
-        catch (ParsingException e) {
-          LOG.error("Error of scope parsing", e);
-          gracefulExit();
-          return null;
-        }
-      }
-      else if (mySourceDirectory == null) {
-        String scopeName = System.getProperty("idea.analyze.scope");
-        NamedScope namedScope = scopeName != null ? NamedScopesHolder.getScope(project, scopeName) : null;
-        scope = namedScope != null ? GlobalSearchScopesCore.filterScope(project, namedScope) : GlobalSearchScope.projectScope(project);
-      }
-      else {
-        mySourceDirectory = mySourceDirectory.replace(File.separatorChar, '/');
 
-        VirtualFile vfsDir = LocalFileSystem.getInstance().findFileByPath(mySourceDirectory);
-        if (vfsDir == null) {
-          reportError(InspectionsBundle.message("inspection.application.directory.cannot.be.found", mySourceDirectory));
-          printHelpAndExit();
-        }
-        scope = GlobalSearchScopesCore.directoriesScope(project, true, Objects.requireNonNull(vfsDir));
+    if (myScopePattern != null) {
+      try {
+        PackageSet packageSet = PackageSetFactory.getInstance().compile(myScopePattern);
+        NamedScope namedScope = new NamedScope("commandLineScope", AllIcons.Ide.LocalScope, packageSet);
+        return GlobalSearchScopesCore.filterScope(project, namedScope);
+      }
+      catch (ParsingException e) {
+        LOG.error("Error of scope parsing", e);
+        gracefulExit();
+        throw new IllegalStateException("unreachable");
       }
     }
-    return scope;
+
+    if (mySourceDirectory != null) {
+      if (!new File(mySourceDirectory).isAbsolute()) {
+        mySourceDirectory = new File(myProjectPath, mySourceDirectory).getPath();
+      }
+      mySourceDirectory = mySourceDirectory.replace(File.separatorChar, '/');
+
+      VirtualFile vfsDir = LocalFileSystem.getInstance().findFileByPath(mySourceDirectory);
+      if (vfsDir == null) {
+        reportError(InspectionsBundle.message("inspection.application.directory.cannot.be.found", mySourceDirectory));
+        printHelpAndExit();
+      }
+      return GlobalSearchScopesCore.directoriesScope(project, true, Objects.requireNonNull(vfsDir));
+    }
+
+    String scopeName = System.getProperty("idea.analyze.scope");
+    NamedScope namedScope = scopeName != null ? NamedScopesHolder.getScope(project, scopeName) : null;
+    return namedScope != null ? GlobalSearchScopesCore.filterScope(project, namedScope) : GlobalSearchScope.projectScope(project);
   }
 
   private static void addRootChangesListener(Disposable parentDisposable, InspectionsReportConverter reportConverter) {
@@ -708,7 +708,7 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     });
   }
 
-  public @NotNull InspectionProfileImpl loadInspectionProfile(@NotNull Project project) throws IOException, JDOMException {
+  private @NotNull InspectionProfileImpl loadInspectionProfile(@NotNull Project project) throws IOException, JDOMException {
     InspectionProfileImpl profile = loadInspectionProfile(project, myProfileName, myProfilePath, "command line");
     if (profile != null) return profile;
 

@@ -141,7 +141,7 @@ public final class CreateDesktopEntryAction extends DumbAwareAction {
     Map<String, String> vars = Map.of("$NAME$", name, "$SCRIPT$", execPath, "$ICON$", iconPath, "$COMMENT$", comment, "$WM_CLASS$", wmClass);
     String content = ExecUtil.loadTemplate(CreateDesktopEntryAction.class.getClassLoader(), "entry.desktop", vars);
     Path entryFile = Paths.get(PathManager.getTempPath(), wmClass + ".desktop");
-    Files.write(entryFile, content.getBytes(StandardCharsets.UTF_8));
+    Files.writeString(entryFile, content);
     return entryFile;
   }
 

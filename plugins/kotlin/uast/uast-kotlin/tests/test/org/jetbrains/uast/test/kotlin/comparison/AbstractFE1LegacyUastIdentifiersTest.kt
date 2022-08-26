@@ -2,7 +2,7 @@
 
 package org.jetbrains.uast.test.kotlin.comparison
 
-import org.jetbrains.kotlin.test.KotlinRoot
+import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.uast.test.common.kotlin.LegacyUastIdentifiersTestBase
 
 abstract class AbstractFE1LegacyUastIdentifiersTest : AbstractFE1UastIdentifiersTest(), LegacyUastIdentifiersTestBase {
@@ -10,8 +10,7 @@ abstract class AbstractFE1LegacyUastIdentifiersTest : AbstractFE1UastIdentifiers
     private val whitelist : Set<String> = setOf(
         "uast/uast-kotlin/tests/testData/DestructuringDeclaration.kt",
         "uast/uast-kotlin/tests/testData/LambdaReturn.kt",
-        "uast/uast-kotlin/tests/testData/WhenAndDestructing.kt",
-        "uast/uast-kotlin/tests/testData/ManyAlternatives.kt"
+        "uast/uast-kotlin/tests/testData/WhenAndDestructing.kt"
     ).mapTo(mutableSetOf()) { KotlinRoot.DIR.resolve(it).absolutePath }
 
     override fun isExpectedToFail(filePath: String): Boolean {

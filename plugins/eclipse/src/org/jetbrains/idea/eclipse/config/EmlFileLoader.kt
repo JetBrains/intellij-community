@@ -57,7 +57,8 @@ internal class EmlFileLoader(
       { it.getScope() }
     )
     builder.modifyEntity(module) {
-      dependencies = dependencies.map { dep ->
+      val result = mutableListOf<ModuleDependencyItem>()
+      dependencies.mapTo(result) { dep ->
         when (dep) {
           is ModuleDependencyItem.Exportable.LibraryDependency ->
             libraryScopes[dep.library.name]?.let { dep.copy(scope = it) } ?: dep
@@ -66,6 +67,7 @@ internal class EmlFileLoader(
           else -> dep
         }
       }
+      dependencies = result
     }
   }
 
@@ -116,7 +118,8 @@ internal class EmlFileLoader(
     updateRoots(IdeaSpecificSettings.RELATIVE_MODULE_JAVADOC, "JAVADOC")
     if (rootsToAdd.isNotEmpty() || rootsToRemove.isNotEmpty()) {
       builder.modifyEntity(library) {
-        roots = roots - rootsToRemove + rootsToAdd
+        roots.removeAll(rootsToRemove)
+        roots.addAll(rootsToAdd)
       }
     }
   }
@@ -138,8 +141,12 @@ internal class EmlFileLoader(
             ModuleDependencyItem.InheritedSdkDependency -> sdkItem
             else -> it
           }
+        } as MutableList<ModuleDependencyItem>
+        dependencies = if (newDependencies.size < dependencies.size) {
+          val result = mutableListOf<ModuleDependencyItem>(ModuleDependencyItem.InheritedSdkDependency)
+          result.addAll(newDependencies)
+          result
         }
-        dependencies = if (newDependencies.size < dependencies.size) listOf(ModuleDependencyItem.InheritedSdkDependency) + newDependencies
         else newDependencies
       }
     }
@@ -217,7 +224,7 @@ internal class EmlFileLoader(
       .map { virtualFileManager.fromUrl(it) }
     if (excludedUrls.isNotEmpty()) {
       builder.modifyEntity(entity) {
-        this.excludedUrls = this.excludedUrls + excludedUrls
+        this.excludedUrls.addAll(excludedUrls)
       }
     }
   }

@@ -6,7 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -123,16 +123,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/coroutines/asyncResultUnused/inspectionData/inspections.test");
         }
 
-        @TestMetadata("coroutines/directUseOfResultType/inspectionData/inspections.test")
-        public void testCoroutines_directUseOfResultType_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/coroutines/directUseOfResultType/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("dataClassPrivateConstructor/inspectionData/inspections.test")
-        public void testDataClassPrivateConstructor_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/dataClassPrivateConstructor/inspectionData/inspections.test");
-        }
-
         @TestMetadata("destructuringWrongName/inspectionData/inspections.test")
         public void testDestructuringWrongName_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/destructuringWrongName/inspectionData/inspections.test");
@@ -206,6 +196,11 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         @TestMetadata("naming/function/inspectionData/inspections.test")
         public void testNaming_function_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/naming/function/inspectionData/inspections.test");
+        }
+
+        @TestMetadata("naming/localVariable/inspectionData/inspections.test")
+        public void testNaming_localVariable_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/naming/localVariable/inspectionData/inspections.test");
         }
 
         @TestMetadata("naming/objectProperty/inspectionData/inspections.test")

@@ -103,6 +103,10 @@ internal class MutableEntitiesBarrel private constructor(
 internal sealed class EntitiesBarrel {
   internal abstract val entityFamilies: List<EntityFamily<out WorkspaceEntity>?>
 
+  fun exists(entityId: EntityId): Boolean {
+    return get(entityId.clazz)?.exists(entityId.arrayId) ?: false
+  }
+
   open operator fun get(clazz: Int): EntityFamily<out WorkspaceEntity>? = entityFamilies.getOrNull(clazz)
 
   fun size() = entityFamilies.size

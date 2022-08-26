@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
 import com.intellij.openapi.components.*
@@ -71,8 +71,8 @@ class NotRoamableUiOptions : BaseState() {
 
   init {
     val fontData = JBUIScale.getSystemFontData(null)
-    fontFace = fontData.key
-    fontSize = fontData.value.toFloat()
+    fontFace = fontData.first
+    fontSize = fontData.second.toFloat()
     fontScale = UISettings.defFontScale
   }
 }
@@ -82,10 +82,10 @@ private class FontFilter : SerializationFilter {
     val settings = bean as NotRoamableUiOptions
     val fontData = JBUIScale.getSystemFontData(null)
     if ("fontFace" == accessor.name) {
-      return fontData.key != settings.fontFace
+      return fontData.first != settings.fontFace
     }
     // fontSize/fontScale should either be stored in pair or not stored at all
     // otherwise the fontSize restore logic gets broken (see loadState)
-    return !(fontData.value.toFloat() == settings.fontSize && 1f == settings.fontScale)
+    return !(fontData.second.toFloat() == settings.fontSize && 1f == settings.fontScale)
   }
 }

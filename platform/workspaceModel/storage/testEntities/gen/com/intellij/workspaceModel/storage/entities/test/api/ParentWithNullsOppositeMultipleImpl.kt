@@ -11,6 +11,7 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import org.jetbrains.deft.ObjBuilder
@@ -64,11 +65,11 @@ open class ParentWithNullsOppositeMultipleImpl : ParentWithNullsOppositeMultiple
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isParentDataInitialized()) {
         error("Field ParentWithNullsOppositeMultiple#parentData should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ParentWithNullsOppositeMultiple#entitySource should be initialized")
       }
     }
 
@@ -76,14 +77,15 @@ open class ParentWithNullsOppositeMultipleImpl : ParentWithNullsOppositeMultiple
       return connections
     }
 
-
-    override var parentData: String
-      get() = getEntityData().parentData
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().parentData = value
-        changedProperty.add("parentData")
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as ParentWithNullsOppositeMultiple
+      this.entitySource = dataSource.entitySource
+      this.parentData = dataSource.parentData
+      if (parents != null) {
       }
+    }
+
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -92,6 +94,14 @@ open class ParentWithNullsOppositeMultipleImpl : ParentWithNullsOppositeMultiple
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var parentData: String
+      get() = getEntityData().parentData
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().parentData = value
+        changedProperty.add("parentData")
       }
 
     override fun getEntityData(): ParentWithNullsOppositeMultipleData = result
@@ -137,14 +147,24 @@ class ParentWithNullsOppositeMultipleData : WorkspaceEntityData<ParentWithNullsO
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ParentWithNullsOppositeMultiple(parentData, entitySource) {
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
 
     other as ParentWithNullsOppositeMultipleData
 
-    if (this.parentData != other.parentData) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.parentData != other.parentData) return false
     return true
   }
 
@@ -162,5 +182,15 @@ class ParentWithNullsOppositeMultipleData : WorkspaceEntityData<ParentWithNullsO
     var result = entitySource.hashCode()
     result = 31 * result + parentData.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + parentData.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.sameForAllEntities = true
   }
 }

@@ -10,6 +10,9 @@ import kotlin.reflect.KClass
 
 
 /**
+ *
+ * THIS INFORMATION IS COMPLETELY OUTDATED. Please, CONTACT #ij-workspace-model IF YOU NEED TO CREATE A NEW ENTITY.
+ *
  * For creating a new entity, you should perform the following steps:
  *
  * - Choose the name of the entity, e.g. MyModuleEntity
@@ -496,6 +499,15 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity> : WorkspaceEnt
     (builder.getMutableVirtualFileUrlIndex() as VirtualFileIndex.MutableVirtualFileIndex).indexJarDirectories(
       (entity as WorkspaceEntityBase).id, virtualFileUrls)
   }
+
+  /**
+   * For generated entities
+   * Pull information from [dataSource] and puts into the current builder.
+   * Only non-reference fields are moved from [dataSource]
+   */
+  open fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+    throw NotImplementedError()
+  }
 }
 
 interface SoftLinkable {
@@ -542,8 +554,25 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, Serializabl
       .all { it.get(this) == it.get(other) }
   }
 
+  open fun equalsByKey(other: Any?): Boolean {
+    return equalsIgnoringEntitySource(other)
+  }
+
+  open fun hashCodeByKey(): Int {
+    return hashCodeIgnoringEntitySource()
+  }
+
   override fun hashCode(): Int {
     return ReflectionUtil.collectFields(this.javaClass).filterNot { it.name == WorkspaceEntityData<*>::id.name }
+      .onEach { it.isAccessible = true }
+      .mapNotNull { it.get(this)?.hashCode() }
+      .fold(31) { acc, i -> acc * 17 + i }
+  }
+
+  open fun hashCodeIgnoringEntitySource(): Int {
+    return ReflectionUtil.collectFields(this.javaClass)
+      .filterNot { it.name == WorkspaceEntityData<*>::id.name }
+      .filterNot { it.name == WorkspaceEntityData<*>::entitySource.name }
       .onEach { it.isAccessible = true }
       .mapNotNull { it.get(this)?.hashCode() }
       .fold(31) { acc, i -> acc * 17 + i }
@@ -553,6 +582,18 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable, Serializabl
     val fields = ReflectionUtil.collectFields(this.javaClass).toList().onEach { it.isAccessible = true }
       .joinToString(separator = ", ") { f -> "${f.name}=${f.get(this)}" }
     return "${this::class.simpleName}($fields, id=${this.id})"
+  }
+
+  open fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    throw NotImplementedError()
+  }
+
+  open fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    throw NotImplementedError()
+  }
+
+  open fun collectClassUsagesData(collector: UsedClassesCollector) {
+    throw NotGeneratedMethodRuntimeException("collectClassUsagesData")
   }
 
   /**
@@ -582,4 +623,23 @@ fun WorkspaceEntityData<*>.persistentId(): PersistentEntityId<*>? = when (this) 
  */
 interface WithAssertableConsistency {
   fun assertConsistency(storage: EntityStorage)
+}
+
+class UsedClassesCollector(
+  var sameForAllEntities: Boolean = false,
+  var collection: MutableSet<Class<out Any>> = HashSet(),
+  var collectionObjects: MutableSet<Class<out Any>> = HashSet(),
+  var collectionToInspection: MutableSet<Any> = HashSet(),
+) {
+  fun add(clazz: Class<out Any>) {
+    collection.add(clazz)
+  }
+
+  fun addObject(clazz: Class<out Any>) {
+    collectionObjects.add(clazz)
+  }
+
+  fun addDataToInspect(data: Any) {
+    collectionToInspection.add(data)
+  }
 }

@@ -8,6 +8,7 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -30,8 +31,9 @@ public final class InternalMavenModuleBuilder extends AbstractMavenModuleBuilder
   @Override
   protected void setupModule(Module module) throws ConfigurationException {
     super.setupModule(module);
-    if (MavenProjectImporter.isImportToWorkspaceModelEnabled()
-        || MavenProjectImporter.isLegacyImportToTreeStructureEnabled(module.getProject())) {
+    Project project = module.getProject();
+    if (MavenProjectImporter.isImportToWorkspaceModelEnabled(project)
+        || MavenProjectImporter.isLegacyImportToTreeStructureEnabled(project)) {
       //this is needed to ensure that dummy module created here will be correctly replaced by real ModuleEntity when import finishes
       ExternalSystemModulePropertyManager.getInstance(module).setMavenized(true);
     }

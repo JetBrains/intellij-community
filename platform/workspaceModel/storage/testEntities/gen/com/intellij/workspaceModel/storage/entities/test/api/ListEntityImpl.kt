@@ -11,8 +11,11 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
@@ -63,11 +66,11 @@ open class ListEntityImpl : ListEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isDataInitialized()) {
         error("Field ListEntity#data should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ListEntity#entitySource should be initialized")
       }
     }
 
@@ -75,15 +78,15 @@ open class ListEntityImpl : ListEntity, WorkspaceEntityBase() {
       return connections
     }
 
-
-    override var data: List<String>
-      get() = getEntityData().data
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().data = value
-
-        changedProperty.add("data")
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as ListEntity
+      this.entitySource = dataSource.entitySource
+      this.data = dataSource.data.toMutableList()
+      if (parents != null) {
       }
+    }
+
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -94,13 +97,30 @@ open class ListEntityImpl : ListEntity, WorkspaceEntityBase() {
 
       }
 
+    private val dataUpdater: (value: List<String>) -> Unit = { value ->
+
+      changedProperty.add("data")
+    }
+    override var data: MutableList<String>
+      get() {
+        val collection_data = getEntityData().data
+        if (collection_data !is MutableWorkspaceList) return collection_data
+        collection_data.setModificationUpdateAction(dataUpdater)
+        return collection_data
+      }
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().data = value
+        dataUpdater.invoke(value)
+      }
+
     override fun getEntityData(): ListEntityData = result ?: super.getEntityData() as ListEntityData
     override fun getEntityClass(): Class<ListEntity> = ListEntity::class.java
   }
 }
 
 class ListEntityData : WorkspaceEntityData<ListEntity>() {
-  lateinit var data: List<String>
+  lateinit var data: MutableList<String>
 
   fun isDataInitialized(): Boolean = ::data.isInitialized
 
@@ -118,11 +138,18 @@ class ListEntityData : WorkspaceEntityData<ListEntity>() {
 
   override fun createEntity(snapshot: EntityStorage): ListEntity {
     val entity = ListEntityImpl()
-    entity._data = data
+    entity._data = data.toList()
     entity.entitySource = entitySource
     entity.snapshot = snapshot
     entity.id = createEntityId()
     return entity
+  }
+
+  override fun clone(): ListEntityData {
+    val clonedEntity = super.clone()
+    clonedEntity as ListEntityData
+    clonedEntity.data = clonedEntity.data.toMutableWorkspaceList()
+    return clonedEntity
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -135,14 +162,24 @@ class ListEntityData : WorkspaceEntityData<ListEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ListEntity(data, entitySource) {
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
 
     other as ListEntityData
 
-    if (this.data != other.data) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.data != other.data) return false
     return true
   }
 
@@ -160,5 +197,16 @@ class ListEntityData : WorkspaceEntityData<ListEntity>() {
     var result = entitySource.hashCode()
     result = 31 * result + data.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + data.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    this.data?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = false
   }
 }

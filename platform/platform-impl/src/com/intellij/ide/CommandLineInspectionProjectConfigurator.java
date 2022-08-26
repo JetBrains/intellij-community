@@ -77,7 +77,7 @@ public interface CommandLineInspectionProjectConfigurator {
   String getDescription();
 
   /**
-   * @returns true if any additional configuration is required to inspect the project at the given path.
+   * @return true if any additional configuration is required to inspect the project at the given path.
    */
   default boolean isApplicable(@NotNull ConfiguratorContext context) {
     return true;

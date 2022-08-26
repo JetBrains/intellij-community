@@ -14,17 +14,14 @@ class TextCompletionComboBoxWithSpinner<T>(project: Project?, converter: TextCom
 
   var spinning: Boolean = false
     set(value) {
-      if (value == field) return
       if (value) {
         addExtension(myExtension)
-        revalidate()
-        repaint()
       }
       else {
         removeExtension(myExtension)
       }
-      field = value
     }
+    get() = field
 
   init {
     this.putClientProperty(AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true)

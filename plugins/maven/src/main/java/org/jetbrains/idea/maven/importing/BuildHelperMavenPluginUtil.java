@@ -2,24 +2,35 @@
 package org.jetbrains.idea.maven.importing;
 
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.util.function.Consumer;
 
 public class BuildHelperMavenPluginUtil {
-  public static void addBuilderHelperPaths(MavenProject mavenProject, String goal, Consumer<String> addFolder) {
-    final MavenPlugin plugin = mavenProject.findPlugin("org.codehaus.mojo", "build-helper-maven-plugin");
+  @Nullable
+  public static MavenPlugin findPlugin(@NotNull MavenProject mavenProject) {
+    return mavenProject.findPlugin("org.codehaus.mojo", "build-helper-maven-plugin");
+  }
+
+  public static void addBuilderHelperPaths(@NotNull MavenProject mavenProject, @NotNull String goal, @NotNull Consumer<String> addFolder) {
+    final MavenPlugin plugin = findPlugin(mavenProject);
     if (plugin != null) {
-      for (MavenPlugin.Execution execution : plugin.getExecutions()) {
-        if (execution.getGoals().contains(goal)) {
-          final Element configurationElement = execution.getConfigurationElement();
-          if (configurationElement != null) {
-            final Element sourcesElement = configurationElement.getChild("sources");
-            if (sourcesElement != null) {
-              for (Element element : sourcesElement.getChildren()) {
-                addFolder.accept(element.getTextTrim());
-              }
+      addBuilderHelperPaths(plugin, goal, addFolder);
+    }
+  }
+
+  public static void addBuilderHelperPaths(@NotNull MavenPlugin plugin, @NotNull String goal, @NotNull Consumer<String> addFolder) {
+    for (MavenPlugin.Execution execution : plugin.getExecutions()) {
+      if (execution.getGoals().contains(goal)) {
+        final Element configurationElement = execution.getConfigurationElement();
+        if (configurationElement != null) {
+          final Element sourcesElement = configurationElement.getChild("sources");
+          if (sourcesElement != null) {
+            for (Element element : sourcesElement.getChildren()) {
+              addFolder.accept(element.getTextTrim());
             }
           }
         }
@@ -27,19 +38,27 @@ public class BuildHelperMavenPluginUtil {
     }
   }
 
-  public static void addBuilderHelperResourcesPaths(MavenProject mavenProject, String goal, Consumer<String> addFolder) {
-    final MavenPlugin plugin = mavenProject.findPlugin("org.codehaus.mojo", "build-helper-maven-plugin");
+  public static void addBuilderHelperResourcesPaths(@NotNull MavenProject mavenProject,
+                                                    @NotNull String goal,
+                                                    @NotNull Consumer<String> addFolder) {
+    final MavenPlugin plugin = findPlugin(mavenProject);
     if (plugin != null) {
-      for (MavenPlugin.Execution execution : plugin.getExecutions()) {
-        if (execution.getGoals().contains(goal)) {
-          final Element configurationElement = execution.getConfigurationElement();
-          if (configurationElement != null) {
-            final Element sourcesElement = configurationElement.getChild("resources");
-            if (sourcesElement != null) {
-              for (Element element : sourcesElement.getChildren()) {
-                Element directory = element.getChild("directory");
-                if (directory != null) addFolder.accept(directory.getTextTrim());
-              }
+      addBuilderHelperResourcesPaths(plugin, goal, addFolder);
+    }
+  }
+
+  public static void addBuilderHelperResourcesPaths(@NotNull MavenPlugin plugin,
+                                                    @NotNull String goal,
+                                                    @NotNull Consumer<String> addFolder) {
+    for (MavenPlugin.Execution execution : plugin.getExecutions()) {
+      if (execution.getGoals().contains(goal)) {
+        final Element configurationElement = execution.getConfigurationElement();
+        if (configurationElement != null) {
+          final Element sourcesElement = configurationElement.getChild("resources");
+          if (sourcesElement != null) {
+            for (Element element : sourcesElement.getChildren()) {
+              Element directory = element.getChild("directory");
+              if (directory != null) addFolder.accept(directory.getTextTrim());
             }
           }
         }

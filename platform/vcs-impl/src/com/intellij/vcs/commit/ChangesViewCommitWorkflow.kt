@@ -5,8 +5,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.changes.*
-import com.intellij.openapi.vcs.impl.PartialChangesUtil
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangeListManagerEx
+import com.intellij.openapi.vcs.changes.LocalChangeList
 
 private val LOG = logger<ChangesViewCommitWorkflow>()
 
@@ -25,47 +26,33 @@ class ChangesViewCommitWorkflow(project: Project) : NonModalCommitWorkflow(proje
   internal fun getAffectedChangeList(changes: Collection<Change>): LocalChangeList =
     changes.firstOrNull()?.let { changeListManager.getChangeList(it) } ?: changeListManager.defaultChangeList
 
-  override fun processExecuteDefaultChecksResult(result: CommitChecksResult) {
-    if (result.shouldCommit) doCommit()
+  override fun performCommit(sessionInfo: CommitSessionInfo) {
+    if (sessionInfo.isVcsCommit) {
+      doCommit(sessionInfo)
+    }
+    else {
+      doCommitCustom(sessionInfo)
+    }
   }
 
-  override fun executeCustom(executor: CommitExecutor, session: CommitSession): Boolean =
-    executeCustom(executor, session, commitState.changes, commitState.commitMessage)
+  override fun getBeforeCommitChecksChangelist(): LocalChangeList = commitState.changeList
 
-  override fun processExecuteCustomChecksResult(executor: CommitExecutor, session: CommitSession, result: CommitChecksResult) {
-    if (result.shouldCommit) doCommitCustom(executor, session)
-  }
-
-  override fun doRunBeforeCommitChecks(checks: Runnable) =
-    PartialChangesUtil.runUnderChangeList(project, commitState.changeList, checks)
-
-  private fun doCommit() {
+  private fun doCommit(sessionInfo: CommitSessionInfo) {
     LOG.debug("Do actual commit")
 
-    with(object : LocalChangesCommitter(project, commitState.changes, commitState.commitMessage, commitContext) {
-      override fun afterRefreshChanges() = endExecution {
-        if (isSuccess) clearChangeListData()
-        super.afterRefreshChanges()
-      }
-    }) {
-      addResultHandler(CommitHandlersNotifier(commitHandlers))
-      addResultHandler(getCommitEventDispatcher())
-      addResultHandler(ShowNotificationCommitResultHandler(this))
+    val committer = LocalChangesCommitter(project, commitState, commitContext)
+    addCommonResultHandlers(sessionInfo, committer)
+    committer.addResultHandler(ShowNotificationCommitResultHandler(committer))
 
-      runCommit(VcsBundle.message("commit.changes"), false)
-    }
+    committer.runCommit(VcsBundle.message("commit.changes"), false)
   }
 
-  private fun doCommitCustom(executor: CommitExecutor, session: CommitSession) =
-    with(CustomCommitter(project, session, commitState.changes, commitState.commitMessage)) {
-      addResultHandler(CommitHandlersNotifier(commitHandlers))
-      addResultHandler(getCommitCustomEventDispatcher())
-      addResultHandler(getEndExecutionHandler())
+  private fun doCommitCustom(sessionInfo: CommitSessionInfo) {
+    sessionInfo as CommitSessionInfo.Custom
 
-      runCommit(executor.actionText)
-    }
+    val committer = CustomCommitter(project, sessionInfo.session, commitState.changes, commitState.commitMessage)
+    addCommonResultHandlers(sessionInfo, committer)
 
-  private fun clearChangeListData() {
-    changeListManager.editChangeListData(commitState.changeList.name, null)
+    committer.runCommit(sessionInfo.executor.actionText)
   }
 }

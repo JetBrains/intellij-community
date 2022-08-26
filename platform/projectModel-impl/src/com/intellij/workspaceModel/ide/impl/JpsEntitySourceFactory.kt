@@ -12,17 +12,32 @@ object JpsEntitySourceFactory {
   fun createEntitySourceForModule(project: Project,
                                   baseModuleDir: VirtualFileUrl,
                                   externalSource: ProjectModelExternalSource?): EntitySource {
-    val location = getJpsProjectConfigLocation(project) ?: return NonPersistentEntitySource
-    val internalFile = JpsFileEntitySource.FileInDirectory(baseModuleDir, location)
+    val internalSource = createInternalEntitySourceForModule(project, baseModuleDir)
+    return createImportedEntitySource(project, externalSource, internalSource)
+  }
+
+  fun createImportedEntitySource(project: Project,
+                                 externalSource: ProjectModelExternalSource?,
+                                 internalSource: JpsFileEntitySource?): EntitySource {
+    val internalFile = internalSource ?: return NonPersistentEntitySource
     if (externalSource == null) return internalFile
     return JpsImportedEntitySource(internalFile, externalSource.id, project.isExternalStorageEnabled)
   }
 
+  fun createInternalEntitySourceForModule(project: Project,
+                                          baseModuleDir: VirtualFileUrl): JpsFileEntitySource? {
+    val location = getJpsProjectConfigLocation(project) ?: return null
+    return JpsFileEntitySource.FileInDirectory(baseModuleDir, location)
+  }
+
   fun createEntitySourceForProjectLibrary(project: Project, externalSource: ProjectModelExternalSource?): EntitySource {
-    val location = getJpsProjectConfigLocation(project) ?: return NonPersistentEntitySource
-    val internalFile = createJpsEntitySourceForProjectLibrary(location)
-    if (externalSource == null) return internalFile
-    return JpsImportedEntitySource(internalFile, externalSource.id, project.isExternalStorageEnabled)
+    val internalEntitySource = createInternalEntitySourceForProjectLibrary(project)
+    return createImportedEntitySource(project, externalSource, internalEntitySource)
+  }
+
+  fun createInternalEntitySourceForProjectLibrary(project: Project): JpsFileEntitySource? {
+    val location = getJpsProjectConfigLocation(project) ?: return null
+    return createJpsEntitySourceForProjectLibrary(location)
   }
 
   fun createEntitySourceForArtifact(project: Project, externalSource: ProjectModelExternalSource?): EntitySource {

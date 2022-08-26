@@ -7,6 +7,7 @@ import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.jvm.problems.JvmDfaProblem;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.JavaPsiPatternUtil;
@@ -350,8 +351,11 @@ public final class NullabilityProblemKind<T extends PsiElement> {
           if (labelElementList == null) continue;
           for (PsiCaseLabelElement element : labelElementList.getElements()) {
             if (element instanceof PsiExpression && TypeConversionUtil.isNullType(((PsiExpression)element).getType())) return null;
-            if (element instanceof PsiPattern && expressionType != null &&
-                JavaPsiPatternUtil.isTotalForType(element, expressionType)) return null;
+            if (PsiUtil.getLanguageLevel(element).isLessThan(LanguageLevel.JDK_19_PREVIEW) &&
+                element instanceof PsiPattern && expressionType != null &&
+                JavaPsiPatternUtil.isTotalForType(element, expressionType)) {
+              return null;
+            }
           }
         }
       }

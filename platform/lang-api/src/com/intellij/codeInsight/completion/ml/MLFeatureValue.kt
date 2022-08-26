@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion.ml
 
+import com.intellij.internal.ml.MLFeatureValueBase
 import org.jetbrains.annotations.ApiStatus
 
 /*
@@ -29,7 +30,7 @@ import org.jetbrains.annotations.ApiStatus
  * values to the clipboard.
  */
 @ApiStatus.Internal
-sealed class MLFeatureValue {
+sealed class MLFeatureValue : MLFeatureValueBase {
   companion object {
     private val TRUE = BinaryValue(true)
     private val FALSE = BinaryValue(false)
@@ -60,8 +61,6 @@ sealed class MLFeatureValue {
     @JvmStatic
     fun version(value: String): MLFeatureValue = VersionValue(value)
   }
-
-  abstract val value: Any
 
   data class BinaryValue internal constructor(override val value: Boolean) : MLFeatureValue()
   data class FloatValue internal constructor(override val value: Double) : MLFeatureValue()

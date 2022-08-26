@@ -131,7 +131,6 @@ public abstract class TaskRepository {
    * @param max   maximum issues number to return
    * @param since last updated timestamp. If 0, all issues should be returned.
    * @return found issues
-   * @throws Exception
    * @deprecated To be removed in IDEA 14. Use {@link #getIssues(String, int, int, boolean)} instead.
    */
   @Deprecated(forRemoval = true)
@@ -150,7 +149,6 @@ public abstract class TaskRepository {
    * @param limit      maximum number of issues returned by server in this request (or number of issues per page in some interpretations)
    * @param withClosed whether to include closed (e.g. fixed/resolved) issues to response
    * @return found tasks
-   * @throws Exception
    */
   public Task[] getIssues(@Nullable String query, int offset, int limit, boolean withClosed) throws Exception {
     return getIssues(query, offset + limit, 0);
@@ -198,7 +196,6 @@ public abstract class TaskRepository {
    * @param id task ID. Don't forget to define {@link #extractId(String)}, if your server uses not <tt>PROJECT-123</tt> format for task IDs.
    * @return found task or {@code null} otherwise. Basically you should return {@code null} on e.g. 404 error and throw exception with
    * information about failure in other cases.
-   * @throws Exception
    */
   @Nullable
   public abstract Task findTask(@NotNull String id) throws Exception;

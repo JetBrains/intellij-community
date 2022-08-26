@@ -10,6 +10,7 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInspection.LocalInspectionEP
 import com.intellij.codeInspection.xml.DeprecatedClassUsageInspection
 import com.intellij.diagnostic.ITNReporter
+import com.intellij.icons.AllIcons
 import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.notification.impl.NotificationGroupEP
@@ -108,6 +109,8 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     moduleBuilder.addLibrary("ide-core", ideCore)
     String ideCoreImpl = PathUtil.getJarPathForClass(NotificationGroupEP.class)
     moduleBuilder.addLibrary("ide-core-impl", ideCoreImpl);
+
+    moduleBuilder.addLibrary("util-ui", PathUtil.getJarPathForClass(AllIcons.class));
   }
 
   // Gradle-like setup, but JBList not in Library

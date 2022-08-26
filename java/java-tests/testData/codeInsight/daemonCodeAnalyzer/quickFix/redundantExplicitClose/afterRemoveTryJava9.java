@@ -1,4 +1,4 @@
-// "Remove redundant 'close()'" "true"
+// "Remove redundant 'close()'" "true-preview"
 
 class MyAutoCloseable implements AutoCloseable {
   @Override

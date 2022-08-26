@@ -6,10 +6,10 @@ import com.intellij.cce.workspace.ConfigFactory
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.EventDispatcher
-import javax.swing.BoxLayout
 import javax.swing.JComponent
-import javax.swing.JPanel
 
 class EvaluateHereSettingsDialog(
   private val project: Project,
@@ -37,8 +37,7 @@ class EvaluateHereSettingsDialog(
   }
 
   override fun createCenterPanel(): JComponent {
-    return JPanel().apply {
-      layout = BoxLayout(this, BoxLayout.Y_AXIS)
+    return panel {
       val value = properties.getValue(configStateKey)
       val previousState = try {
         if (value == null) ConfigFactory.defaultConfig(project.basePath!!)
@@ -47,7 +46,9 @@ class EvaluateHereSettingsDialog(
       catch (e: Throwable) {
         ConfigFactory.defaultConfig(project.basePath!!)
       }
-      configurators.forEach { add(it.createPanel(previousState)) }
+      configurators.forEach {
+        row { cell(it.createPanel(previousState)).horizontalAlign(HorizontalAlign.FILL) }
+      }
     }
   }
 

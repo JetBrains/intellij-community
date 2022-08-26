@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinArgumentsHintsP
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinLambdasHintsProvider
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinRangesHintsProviderTest
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinReferenceTypeHintsProviderTest
+import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.AbstractSharedK1InspectionTest
 import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.AbstractSharedK1IntentionTest
 import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.AbstractSharedK1LocalInspectionTest
 import org.jetbrains.kotlin.idea.codeInsight.moveUpDown.AbstractMoveLeftRightTest
@@ -161,10 +162,10 @@ import org.jetbrains.kotlin.tools.projectWizard.wizard.AbstractYamlNewWizardProj
 import org.jetbrains.uast.test.kotlin.comparison.*
 
 fun main(@Suppress("UNUSED_PARAMETER") args: Array<String>) {
-    generateTests()
+    generateK1Tests()
 }
 
-internal fun generateTests(isUpToDateCheck: Boolean = false) {
+fun generateK1Tests(isUpToDateCheck: Boolean = false) {
     System.setProperty("java.awt.headless", "true")
     TestGenerator.write(assembleWorkspace(), isUpToDateCheck)
 }
@@ -1070,7 +1071,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("completion/tests") {
+    testGroup("completion/tests-k1", testDataPath = "../testData") {
         testClass<AbstractCompiledKotlinInJavaCompletionTest> {
             model("injava", pattern = JAVA, isRecursive = false)
         }
@@ -1186,8 +1187,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    //TODO: move these tests into idea-completion module
-    testGroup("idea/tests", testDataPath = "../../completion/tests/testData") {
+    testGroup("idea/tests", testDataPath = "../../completion/testData") {
         testClass<AbstractCodeFragmentCompletionHandlerTest> {
             model("handlers/runtimeCast")
         }
@@ -1318,7 +1318,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("performance-tests", testDataPath = "../completion/tests/testData") {
+    testGroup("performance-tests", testDataPath = "../completion/testData") {
         testClass<AbstractPerformanceCompletionIncrementalResolveTest> {
             model("incrementalResolve", testMethodName = "doPerfTest")
         }
@@ -1354,6 +1354,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractSharedK1LocalInspectionTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
             model("inspectionsLocal", pattern = pattern)
+        }
+
+        testClass<AbstractSharedK1InspectionTest> {
+            val pattern = Patterns.forRegex("^(inspections\\.test)$")
+            model("inspections", pattern = pattern)
         }
     }
 }

@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.test.common.kotlin
 
 import com.intellij.psi.PsiClass
@@ -81,12 +78,12 @@ interface UastResolveEverythingTestBase : UastPluginSelection, UastFileCompariso
 
         // NB: Except for class, all other kinds' name is redundant, hence captured by regex and removed.
         private val REGEXES: Map<Regex, String> = mapOf(
-            Regex("^FirLight.*Class.*Symbol:") to "$TAG_CLASS:",
+            Regex("^SymbolLight.*Class:") to "$TAG_CLASS:",
 
             Regex("^PsiClass:.+$") to TAG_CLASS_DECOMPILED,
 
-            Regex("^FirLightConstructorForSymbol:.+$") to TAG_METHOD,
-            Regex("^FirLight.*Method.*Symbol:.+$") to TAG_METHOD,
+            Regex("^SymbolLightConstructor:.+$") to TAG_METHOD,
+            Regex("^SymbolLight.*Method:.+$") to TAG_METHOD,
 
             Regex("^KtUltraLightMethodForSourceDeclaration:.+$") to TAG_METHOD,
             Regex("^LightMethodBuilder:.+$") to TAG_METHOD,
@@ -102,10 +99,10 @@ interface UastResolveEverythingTestBase : UastPluginSelection, UastFileCompariso
             Regex("^KtLightEnumEntryForDecompiledDeclaration.+:.+$") to TAG_VARIABLE_DECOMPILED,
             Regex("^PsiField:.+$") to TAG_VARIABLE_DECOMPILED,
 
-            Regex("^Fir Light Parameter .+$") to TAG_VALUE_PARAMETER,
-
-            Regex("^FirLightTypeParameter:.+$") to TAG_TYPE_PARAMETER,
+            Regex("^SymbolLightTypeParameter:.+$") to TAG_TYPE_PARAMETER,
             Regex("^Light PSI class: .+$") to TAG_TYPE_PARAMETER,
+
+            Regex("^SymbolLight.*Parameter:.+$") to TAG_VALUE_PARAMETER,
 
             // NB: tags are recursively built, e.g., KtLightMethodForDecompiled... of KtLightClassForDecompiled... of ...
             // Therefore, we should try regex patterns for member names before class names.

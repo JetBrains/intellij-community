@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.codeInsight.template.XmlContextType;
 import com.intellij.dupLocator.iterators.NodeIterator;
-import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.Language;
@@ -60,10 +59,9 @@ public class XmlStructuralSearchProfile extends StructuralSearchProfile {
     return element instanceof XmlText ? element.getText().trim() : super.getTypedVarString(element);
   }
 
-  @NotNull
   @Override
-  public NodeFilter getLexicalNodesFilter() {
-    return element -> XmlMatchUtil.isWhiteSpace(element) || element instanceof PsiErrorElement;
+  public boolean isMatchNode(PsiElement element) {
+    return !XmlMatchUtil.isWhiteSpace(element) && !(element instanceof PsiErrorElement);
   }
 
   @Override

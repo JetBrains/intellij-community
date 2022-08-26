@@ -13,8 +13,11 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
 import org.jetbrains.deft.ObjBuilder
@@ -73,11 +76,11 @@ open class FacetsOrderEntityImpl : FacetsOrderEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isOrderOfFacetsInitialized()) {
         error("Field FacetsOrderEntity#orderOfFacets should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field FacetsOrderEntity#entitySource should be initialized")
       }
       if (_diff != null) {
         if (_diff.extractOneToOneParent<WorkspaceEntityBase>(MODULEENTITY_CONNECTION_ID, this) == null) {
@@ -95,15 +98,16 @@ open class FacetsOrderEntityImpl : FacetsOrderEntity, WorkspaceEntityBase() {
       return connections
     }
 
-
-    override var orderOfFacets: List<String>
-      get() = getEntityData().orderOfFacets
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().orderOfFacets = value
-
-        changedProperty.add("orderOfFacets")
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as FacetsOrderEntity
+      this.entitySource = dataSource.entitySource
+      this.orderOfFacets = dataSource.orderOfFacets.toMutableList()
+      if (parents != null) {
+        this.moduleEntity = parents.filterIsInstance<ModuleEntity>().single()
       }
+    }
+
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -112,6 +116,23 @@ open class FacetsOrderEntityImpl : FacetsOrderEntity, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    private val orderOfFacetsUpdater: (value: List<String>) -> Unit = { value ->
+
+      changedProperty.add("orderOfFacets")
+    }
+    override var orderOfFacets: MutableList<String>
+      get() {
+        val collection_orderOfFacets = getEntityData().orderOfFacets
+        if (collection_orderOfFacets !is MutableWorkspaceList) return collection_orderOfFacets
+        collection_orderOfFacets.setModificationUpdateAction(orderOfFacetsUpdater)
+        return collection_orderOfFacets
+      }
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().orderOfFacets = value
+        orderOfFacetsUpdater.invoke(value)
       }
 
     override var moduleEntity: ModuleEntity
@@ -155,7 +176,7 @@ open class FacetsOrderEntityImpl : FacetsOrderEntity, WorkspaceEntityBase() {
 }
 
 class FacetsOrderEntityData : WorkspaceEntityData<FacetsOrderEntity>() {
-  lateinit var orderOfFacets: List<String>
+  lateinit var orderOfFacets: MutableList<String>
 
   fun isOrderOfFacetsInitialized(): Boolean = ::orderOfFacets.isInitialized
 
@@ -173,11 +194,18 @@ class FacetsOrderEntityData : WorkspaceEntityData<FacetsOrderEntity>() {
 
   override fun createEntity(snapshot: EntityStorage): FacetsOrderEntity {
     val entity = FacetsOrderEntityImpl()
-    entity._orderOfFacets = orderOfFacets
+    entity._orderOfFacets = orderOfFacets.toList()
     entity.entitySource = entitySource
     entity.snapshot = snapshot
     entity.id = createEntityId()
     return entity
+  }
+
+  override fun clone(): FacetsOrderEntityData {
+    val clonedEntity = super.clone()
+    clonedEntity as FacetsOrderEntityData
+    clonedEntity.orderOfFacets = clonedEntity.orderOfFacets.toMutableWorkspaceList()
+    return clonedEntity
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
@@ -190,14 +218,26 @@ class FacetsOrderEntityData : WorkspaceEntityData<FacetsOrderEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return FacetsOrderEntity(orderOfFacets, entitySource) {
+      this.moduleEntity = parents.filterIsInstance<ModuleEntity>().single()
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(ModuleEntity::class.java)
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
 
     other as FacetsOrderEntityData
 
-    if (this.orderOfFacets != other.orderOfFacets) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.orderOfFacets != other.orderOfFacets) return false
     return true
   }
 
@@ -215,5 +255,16 @@ class FacetsOrderEntityData : WorkspaceEntityData<FacetsOrderEntity>() {
     var result = entitySource.hashCode()
     result = 31 * result + orderOfFacets.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + orderOfFacets.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    this.orderOfFacets?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = false
   }
 }

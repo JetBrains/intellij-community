@@ -3,7 +3,6 @@ package com.intellij.vcs.commit
 
 import com.intellij.CommonBundle.getCancelButtonText
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -15,18 +14,16 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle.message
-import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
-import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction.addUnversionedFilesToVcs
-import com.intellij.openapi.vcs.changes.ui.SessionDialog
 import com.intellij.openapi.vcs.checkin.BaseCheckinHandlerFactory
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
 import com.intellij.openapi.vcs.impl.CheckinHandlersManager
+import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vcs.impl.PartialChangesUtil.getPartialTracker
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil.newUnmodifiableList
 import com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptySet
 import com.intellij.util.containers.forEachLoggingErrors
@@ -54,19 +51,19 @@ private val IS_CLEANUP_COMMIT_MESSAGE_KEY = Key.create<Boolean>("Vcs.Commit.IsCl
 var CommitContext.isCleanupCommitMessage: Boolean by commitProperty(IS_CLEANUP_COMMIT_MESSAGE_KEY)
 
 interface CommitWorkflowListener : EventListener {
-  fun vcsesChanged()
+  fun vcsesChanged() = Unit
 
-  fun executionStarted()
-  fun executionEnded()
+  fun executionStarted() = Unit
+  fun executionEnded() = Unit
 
-  fun beforeCommitChecksStarted()
-  fun beforeCommitChecksEnded(isDefaultCommit: Boolean, result: CommitChecksResult)
+  fun beforeCommitChecksStarted(sessionInfo: CommitSessionInfo) = Unit
+  fun beforeCommitChecksEnded(sessionInfo: CommitSessionInfo, result: CommitChecksResult) = Unit
 }
 
 abstract class AbstractCommitWorkflow(val project: Project) {
   private val eventDispatcher = EventDispatcher.create(CommitWorkflowListener::class.java)
-  private val commitEventDispatcher = EventDispatcher.create(CommitResultHandler::class.java)
-  private val commitCustomEventDispatcher = EventDispatcher.create(CommitResultHandler::class.java)
+  private val commitEventDispatcher = EventDispatcher.create(CommitterResultHandler::class.java)
+  private val commitCustomEventDispatcher = EventDispatcher.create(CommitterResultHandler::class.java)
 
   var isExecuting = false
     private set
@@ -121,6 +118,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     commitContext = CommitContext()
   }
 
+  @RequiresEdt
   internal fun startExecution(block: () -> Boolean) {
     check(!isExecuting)
 
@@ -140,12 +138,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       .getOrThrow()
   }
 
-  internal fun endExecution(block: () -> Unit) =
-    continueExecution {
-      block()
-      false
-    }
-
+  @RequiresEdt
   internal fun endExecution() {
     check(isExecuting)
 
@@ -153,59 +146,60 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     eventDispatcher.multicaster.executionEnded()
   }
 
-  protected fun getEndExecutionHandler(): CommitResultHandler = EndExecutionCommitResultHandler(this)
+  fun addListener(listener: CommitWorkflowListener, parent: Disposable) =
+    eventDispatcher.addListener(listener, parent)
 
-  fun addListener(listener: CommitWorkflowListener, parent: Disposable) = eventDispatcher.addListener(listener, parent)
-  fun addCommitListener(listener: CommitResultHandler, parent: Disposable) = commitEventDispatcher.addListener(listener, parent)
-  fun addCommitCustomListener(listener: CommitResultHandler, parent: Disposable) = commitCustomEventDispatcher.addListener(listener, parent)
+  fun addVcsCommitListener(listener: CommitterResultHandler, parent: Disposable) =
+    commitEventDispatcher.addListener(listener, parent)
 
-  protected fun getCommitEventDispatcher(): CommitResultHandler = EdtCommitResultHandler(commitEventDispatcher.multicaster)
-  protected fun getCommitCustomEventDispatcher(): CommitResultHandler = commitCustomEventDispatcher.multicaster
+  fun addCommitCustomListener(listener: CommitterResultHandler, parent: Disposable) =
+    commitCustomEventDispatcher.addListener(listener, parent)
 
-  fun addUnversionedFiles(changeList: LocalChangeList, unversionedFiles: List<VirtualFile>, callback: (List<Change>) -> Unit): Boolean {
-    if (unversionedFiles.isEmpty()) return true
+  fun executeSession(sessionInfo: CommitSessionInfo): Boolean {
+    fireBeforeCommitChecksStarted(sessionInfo)
+    val result = runBeforeCommitChecks(sessionInfo)
+    fireBeforeCommitChecksEnded(sessionInfo, result)
 
-    FileDocumentManager.getInstance().saveAllDocuments()
-    return addUnversionedFilesToVcs(project, changeList, unversionedFiles, callback, null)
+    if (!result.shouldCommit) return false
+
+    performCommit(sessionInfo)
+    return true
   }
 
-  fun executeDefault(executor: CommitExecutor?): Boolean {
-    val beforeCommitChecksResult = runBeforeCommitChecksWithEvents(true, executor)
-    processExecuteDefaultChecksResult(beforeCommitChecksResult)
-    return beforeCommitChecksResult.shouldCommit
+  protected abstract fun performCommit(sessionInfo: CommitSessionInfo)
+
+  protected open fun addCommonResultHandlers(sessionInfo: CommitSessionInfo, committer: Committer) {
+    committer.addResultHandler(CheckinHandlersNotifier(committer, commitHandlers))
+    if (sessionInfo.isVcsCommit) {
+      committer.addResultHandler(commitEventDispatcher.multicaster)
+    }
+    else {
+      committer.addResultHandler(commitCustomEventDispatcher.multicaster)
+    }
+    committer.addResultHandler(EndExecutionCommitResultHandler(this))
   }
 
-  protected open fun processExecuteDefaultChecksResult(result: CommitChecksResult) = Unit
+  protected fun fireBeforeCommitChecksStarted(sessionInfo: CommitSessionInfo) =
+    eventDispatcher.multicaster.beforeCommitChecksStarted(sessionInfo)
 
-  protected fun runBeforeCommitChecksWithEvents(isDefaultCommit: Boolean, executor: CommitExecutor?): CommitChecksResult {
-    fireBeforeCommitChecksStarted()
-    val result = runBeforeCommitChecks(executor)
-    fireBeforeCommitChecksEnded(isDefaultCommit, result)
+  protected fun fireBeforeCommitChecksEnded(sessionInfo: CommitSessionInfo, result: CommitChecksResult) =
+    eventDispatcher.multicaster.beforeCommitChecksEnded(sessionInfo, result)
 
-    return result
-  }
-
-  protected fun fireBeforeCommitChecksStarted() = eventDispatcher.multicaster.beforeCommitChecksStarted()
-
-  protected fun fireBeforeCommitChecksEnded(isDefaultCommit: Boolean, result: CommitChecksResult) =
-    eventDispatcher.multicaster.beforeCommitChecksEnded(isDefaultCommit, result)
-
-  private fun runBeforeCommitChecks(executor: CommitExecutor?): CommitChecksResult {
+  private fun runBeforeCommitChecks(sessionInfo: CommitSessionInfo): CommitChecksResult {
     var result: CommitChecksResult? = null
 
-    var checks = Runnable {
+    val backgroundChecks = Runnable {
       ProgressManager.checkCanceled()
       FileDocumentManager.getInstance().saveAllDocuments()
-      result = runBeforeCommitHandlersChecks(executor, commitHandlers)
+      result = runBeforeCommitHandlersChecks(sessionInfo, commitHandlers)
     }
 
-    commitHandlers.filterIsInstance<CheckinMetaHandler>().forEach { metaHandler ->
-      checks = wrapWithCommitMetaHandler(metaHandler, checks)
-    }
+    val metaHandlers = commitHandlers.filterIsInstance<CheckinMetaHandler>()
+    val checksWithMetaHandlers = runMetaHandlers(metaHandlers, backgroundChecks)
 
     val task = Runnable {
       try {
-        checks.run()
+        checksWithMetaHandlers.run()
         if (result == null) LOG.warn("No commit handlers result. Seems CheckinMetaHandler returned before invoking its callback.")
       }
       catch (ignore: ProcessCanceledException) {
@@ -214,12 +208,20 @@ abstract class AbstractCommitWorkflow(val project: Project) {
         LOG.error(e)
       }
     }
-    doRunBeforeCommitChecks(task)
+    PartialChangesUtil.runUnderChangeList(project, getBeforeCommitChecksChangelist(), task)
 
     return result ?: CommitChecksResult.ExecutionError.also { LOG.debug("No commit handlers result. Cancelling commit.") }
   }
 
-  protected open fun doRunBeforeCommitChecks(checks: Runnable) = checks.run()
+  open fun getBeforeCommitChecksChangelist(): LocalChangeList? = null
+
+  private fun runMetaHandlers(metaHandlers: List<CheckinMetaHandler>, backgroundChecks: Runnable): Runnable {
+    var task = backgroundChecks
+    metaHandlers.forEach { metaHandler ->
+      task = wrapWithCommitMetaHandler(metaHandler, task)
+    }
+    return task
+  }
 
   protected fun wrapWithCommitMetaHandler(metaHandler: CheckinMetaHandler, task: Runnable): Runnable =
     Runnable {
@@ -237,12 +239,16 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       }
     }
 
-  fun runBeforeCommitHandlersChecks(executor: CommitExecutor?, handlers: List<CheckinHandler>): CommitChecksResult {
+  fun runBeforeCommitHandlersChecks(sessionInfo: CommitSessionInfo, handlers: List<CheckinHandler>): CommitChecksResult {
     handlers.forEachLoggingErrors(LOG) { handler ->
       try {
-        val result = runBeforeCommitHandler(handler, executor)
+        val executor = sessionInfo.executor
+        if (!handler.acceptExecutor(executor)) return@forEachLoggingErrors // continue
+        LOG.debug("CheckinHandler.beforeCheckin: $handler")
+
+        val result = handler.beforeCheckin(executor, commitContext.additionalDataConsumer)
         when (result) {
-          CheckinHandler.ReturnResult.COMMIT -> Unit // continue
+          null, CheckinHandler.ReturnResult.COMMIT -> Unit // continue
           CheckinHandler.ReturnResult.CANCEL -> return CommitChecksResult.Failed()
           CheckinHandler.ReturnResult.CLOSE_WINDOW -> return CommitChecksResult.Failed(toCloseWindow = true)
         }
@@ -253,18 +259,12 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       }
     }
 
-    return CommitChecksResult.Passed(toCommit = true)
+    return CommitChecksResult.Passed
   }
 
-  protected open fun runBeforeCommitHandler(handler: CheckinHandler, executor: CommitExecutor?): CheckinHandler.ReturnResult {
-    if (!handler.acceptExecutor(executor)) return CheckinHandler.ReturnResult.COMMIT
-    LOG.debug("CheckinHandler.beforeCheckin: $handler")
-
-    return handler.beforeCheckin(executor, commitContext.additionalDataConsumer)
-  }
-
-  open fun canExecute(executor: CommitExecutor, changes: Collection<Change>): Boolean {
-    if (!executor.supportsPartialCommit()) {
+  open fun canExecute(sessionInfo: CommitSessionInfo, changes: Collection<Change>): Boolean {
+    val executor = sessionInfo.executor
+    if (executor != null && !executor.supportsPartialCommit()) {
       val hasPartialChanges = changes.any { getPartialTracker(project, it)?.hasPartialChangesToCommit() ?: false }
       if (hasPartialChanges) {
         return YES == showYesNoDialog(
@@ -275,34 +275,6 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     }
     return true
   }
-
-  abstract fun executeCustom(executor: CommitExecutor, session: CommitSession): Boolean
-
-  protected fun executeCustom(executor: CommitExecutor, session: CommitSession, changes: List<Change>, commitMessage: String): Boolean =
-    configureCommitSession(executor, session, changes, commitMessage) &&
-    run {
-      val beforeCommitChecksResult = runBeforeCommitChecksWithEvents(false, executor)
-      processExecuteCustomChecksResult(executor, session, beforeCommitChecksResult)
-      beforeCommitChecksResult.shouldCommit
-    }
-
-  private fun configureCommitSession(executor: CommitExecutor,
-                                     session: CommitSession,
-                                     changes: List<Change>,
-                                     commitMessage: String): Boolean {
-    val sessionConfigurationUi = session.getAdditionalConfigurationUI(changes, commitMessage) ?: return true
-    val sessionDialog = SessionDialog(executor.getPresentableText(), project, session, changes, commitMessage, sessionConfigurationUi)
-
-    if (sessionDialog.showAndGet()) return true
-    else {
-      session.executionCanceled()
-      return false
-    }
-  }
-
-  protected open fun processExecuteCustomChecksResult(executor: CommitExecutor,
-                                                      session: CommitSession,
-                                                      result: CommitChecksResult) = Unit
 
   companion object {
     @JvmStatic
@@ -323,20 +295,31 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     fun getCommitExecutors(project: Project, changes: Collection<Change>): List<CommitExecutor> =
       getCommitExecutors(project, getAffectedVcses(changes, project))
 
-    internal fun getCommitExecutors(project: Project, vcses: Collection<AbstractVcs>): List<CommitExecutor> =
-      vcses.flatMap { it.commitExecutors } + ChangeListManager.getInstance(project).registeredExecutors +
-      LocalCommitExecutor.LOCAL_COMMIT_EXECUTOR.getExtensions(project)
+    internal fun getCommitExecutors(project: Project, vcses: Collection<AbstractVcs>): List<CommitExecutor> {
+      return vcses.flatMap { it.commitExecutors } +
+             ChangeListManager.getInstance(project).registeredExecutors +
+             LocalCommitExecutor.LOCAL_COMMIT_EXECUTOR.getExtensions(project)
+    }
   }
 }
 
-class EdtCommitResultHandler(private val handler: CommitResultHandler) : CommitResultHandler {
-  override fun onSuccess(commitMessage: String) = runInEdt { handler.onSuccess(commitMessage) }
-  override fun onCancel() = runInEdt { handler.onCancel() }
-  override fun onFailure(errors: List<VcsException>) = runInEdt { handler.onFailure(errors) }
+private class EndExecutionCommitResultHandler(private val workflow: AbstractCommitWorkflow) : CommitterResultHandler {
+  override fun onAfterRefresh() {
+    workflow.endExecution()
+  }
 }
 
-private class EndExecutionCommitResultHandler(private val workflow: AbstractCommitWorkflow) : CommitResultHandler {
-  override fun onSuccess(commitMessage: String) = workflow.endExecution()
-  override fun onCancel() = workflow.endExecution()
-  override fun onFailure(errors: List<VcsException>) = workflow.endExecution()
+sealed class CommitSessionInfo {
+  val isVcsCommit: Boolean get() = session === CommitSession.VCS_COMMIT
+
+  abstract val executor: CommitExecutor?
+  abstract val session: CommitSession
+
+  object Default : CommitSessionInfo() {
+    override val executor: CommitExecutor? get() = null
+    override val session: CommitSession get() = CommitSession.VCS_COMMIT
+  }
+
+  class Custom(override val executor: CommitExecutor,
+               override val session: CommitSession) : CommitSessionInfo()
 }

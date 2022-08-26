@@ -133,7 +133,7 @@ internal sealed class PackagesTableItem<T : PackageModel> : DataProvider, CopyPr
     ) : PackagesTableItem<PackageModel.SearchResult>() {
 
         init {
-            require(allScopes.isNotEmpty()) { "A package must have at least one available scope" }
+            require(allScopes.isNotEmpty()) { "An installable package must have at least one available scope" }
         }
 
         override fun additionalCopyText() = ""

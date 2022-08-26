@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.codegen.coroutines.INVOKE_SUSPEND_METHOD_NAME
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
+import org.jetbrains.kotlin.codegen.inline.isFakeLocalVariableForInline
 import org.jetbrains.kotlin.codegen.topLevelClassAsmType
 import org.jetbrains.kotlin.idea.base.psi.getLineEndOffset
 import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_EXTENSIONS
 import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.core.AnalysisApiBasedInlineUtil.getResolvedFunctionCall
+import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.getBorders
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.Name
@@ -257,6 +259,25 @@ fun isKotlinFakeLineNumber(location: Location): Boolean {
     } catch (ignored: AbsentInformationException) {
     }
     return false
+}
+
+fun Method.getInlineFunctionAndArgumentVariablesToBordersMap(): Map<LocalVariable, ClosedRange<Location>> {
+    return getInlineFunctionOrArgumentVariables()
+        .mapNotNull {
+            val borders = it.getBorders()
+            if (borders == null)
+                null
+            else
+                it to borders
+        }
+        .toMap()
+}
+
+fun Method.getInlineFunctionOrArgumentVariables(): Sequence<LocalVariable> {
+    val localVariables = safeVariables() ?: return emptySequence()
+    return localVariables
+        .asSequence()
+        .filter { isFakeLocalVariableForInline(it.name()) }
 }
 
 val DebugProcessImpl.canRunEvaluation: Boolean

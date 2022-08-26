@@ -31,12 +31,15 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @SuppressWarnings({"SSBasedInspection", "UnstableApiUsage"})
 @ApiStatus.Internal
 final public class BuildDependenciesDownloader {
+  private static final Logger LOG = Logger.getLogger(BuildDependenciesDownloader.class.getName());
+
   private static final String HTTP_HEADER_CONTENT_LENGTH = "Content-Length";
   private static final HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL)
     .version(HttpClient.Version.HTTP_1_1).build();
@@ -57,24 +60,13 @@ final public class BuildDependenciesDownloader {
   @NotNull
   public static BuildDependenciesTracer TRACER = BuildDependenciesNoopTracer.INSTANCE;
 
-  public static void debug(String message) {
-    //noinspection UseOfSystemOutOrSystemErr
-    System.out.println(message);
-  }
-
-  public static void info(String message) {
-    //noinspection UseOfSystemOutOrSystemErr
-    System.out.println(message);
-  }
-
-  public static void warn(String message) {
-    //noinspection UseOfSystemOutOrSystemErr
-    System.out.println("WARNING: " + message);
-  }
-
-  public static Map<String, String> getDependenciesProperties(BuildDependenciesCommunityRoot communityRoot) {
-    Path propertiesFile = communityRoot.getCommunityRoot().resolve("build").resolve("dependencies").resolve("dependencies.properties");
-    return BuildDependenciesUtil.loadPropertiesFile(propertiesFile);
+  public static DependenciesProperties getDependenciesProperties(BuildDependenciesCommunityRoot communityRoot) {
+    try {
+      return new DependenciesProperties(communityRoot);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public static URI getUriForMavenArtifact(String mavenRepository, String groupId, String artifactId, String version, String packaging) {
@@ -203,7 +195,7 @@ final public class BuildDependenciesDownloader {
                                                       BuildDependenciesExtractOptions[] options)
     throws Exception {
     if (checkFlagFile(archiveFile, flagFile, targetDirectory, options)) {
-      debug("Skipping extract to " + targetDirectory + " since flag file " + flagFile + " is correct");
+      LOG.fine("Skipping extract to " + targetDirectory + " since flag file " + flagFile + " is correct");
 
       // Update file modification time to maintain FIFO caches i.e.
       // in persistent cache folder on TeamCity agent
@@ -222,7 +214,7 @@ final public class BuildDependenciesDownloader {
       BuildDependenciesUtil.cleanDirectory(targetDirectory);
     }
 
-    info(" * Extracting " + archiveFile + " to " + targetDirectory);
+    LOG.info(" * Extracting " + archiveFile + " to " + targetDirectory);
     extractCount.incrementAndGet();
 
     Files.createDirectories(targetDirectory);
@@ -345,7 +337,7 @@ final public class BuildDependenciesDownloader {
             .setHeader("User-Agent", "Build Script Downloader")
             .build();
 
-          info(" * Downloading " + uri + " -> " + target);
+          LOG.info(" * Downloading " + uri + " -> " + target);
 
           HttpResponse<Path> response = httpClient.send(request, HttpResponse.BodyHandlers.ofFile(tempFile));
           if (response.statusCode() != 200) {
@@ -353,11 +345,9 @@ final public class BuildDependenciesDownloader {
               new StringBuilder("Error downloading " + uri + ": non-200 http status code " + response.statusCode() + "\n");
 
             Map<String, List<String>> headers = response.headers().map();
-            for (String headerName : headers.keySet().stream().sorted().collect(Collectors.toList())) {
-              for (String value : headers.get(headerName)) {
-                builder.append("Header: ").append(headerName).append(": ").append(value).append("\n");
-              }
-            }
+            headers.keySet().stream().sorted()
+              .flatMap(headerName -> headers.get(headerName).stream().map(value -> "Header: " + headerName + ": " + value + "\n"))
+              .forEach(builder::append);
 
             builder.append("\n");
             if (Files.exists(tempFile)) {
@@ -425,7 +415,7 @@ final public class BuildDependenciesDownloader {
       StringWriter writer = new StringWriter();
       t.printStackTrace(new PrintWriter(writer));
 
-      warn("Cleaning up failed for the directory '" + cachesDir + "'\n" + writer);
+      LOG.warning("Cleaning up failed for the directory '" + cachesDir + "'\n" + writer);
     }
   }
 

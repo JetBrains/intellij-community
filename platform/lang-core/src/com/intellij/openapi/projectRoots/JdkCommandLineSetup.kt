@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots
 
 import com.intellij.execution.CantRunException
@@ -28,7 +28,6 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtilRt
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.encoding.EncodingManager
 import com.intellij.util.PathUtil
 import com.intellij.util.PathsList
@@ -37,6 +36,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.isDirectory
+import com.intellij.util.lang.JavaVersion
 import com.intellij.util.lang.UrlClassLoader
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.concurrency.AsyncPromise
@@ -633,6 +633,19 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       }
       catch (ignore: IllegalCharsetNameException) {
       }
+    }
+
+    if (!parametersList.hasProperty("sun.stdout.encoding") &&
+        !parametersList.hasProperty("sun.stderr.encoding")) {
+      try {
+        val versionString = javaParameters.jdk?.versionString
+        if (versionString != null && JavaVersion.parse(versionString).isAtLeast(18)) {
+          val charset = javaParameters.charset ?: EncodingManager.getInstance().defaultCharset
+          commandLine.addParameter("-Dsun.stdout.encoding=" + charset.name())
+          commandLine.addParameter("-Dsun.stderr.encoding=" + charset.name())
+        }
+      }
+      catch (_: IllegalArgumentException) { }
     }
   }
 

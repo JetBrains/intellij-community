@@ -35,6 +35,9 @@ internal class MarkdownTableReformatAfterActionHook(private val baseHandler: Edi
     }
     val documentManager = PsiDocumentManager.getInstance(project)
     val file = documentManager.getPsiFile(document) ?: return
+    if (!TableUtils.isFormattingEnabledForTables(file)) {
+      return
+    }
     PsiDocumentManager.getInstance(project).commitDocument(document)
     val cell = TableUtils.findCell(file, caretOffset)
     val table = cell?.parentTable

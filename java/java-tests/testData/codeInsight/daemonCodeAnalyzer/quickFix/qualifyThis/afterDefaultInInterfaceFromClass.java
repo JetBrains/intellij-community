@@ -1,4 +1,4 @@
-// "Qualify super expression with 'Super'" "true"
+// "Qualify super expression with 'Super'" "true-preview"
 interface Super
 {
     default void method()

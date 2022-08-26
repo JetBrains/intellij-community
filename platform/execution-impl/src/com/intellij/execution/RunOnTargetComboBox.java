@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.target.*;
 import com.intellij.execution.target.local.LocalTargetType;
+import com.intellij.execution.ui.InvalidRunConfigurationIcon;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -11,7 +12,6 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
@@ -193,8 +193,7 @@ public class RunOnTargetComboBox extends ComboBox<RunOnTargetComboBox.Item> {
     @Override
     public Icon getIcon() {
       Icon rawIcon = super.getIcon();
-      return rawIcon != null && hasErrors() ?
-             LayeredIcon.create(rawIcon, AllIcons.RunConfigurations.InvalidConfigurationLayer) : rawIcon;
+      return rawIcon != null && hasErrors() ? new InvalidRunConfigurationIcon(rawIcon) : rawIcon;
     }
   }
 

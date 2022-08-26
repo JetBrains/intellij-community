@@ -10,7 +10,6 @@ import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.PathUtil
 import com.intellij.util.messages.Topic
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
@@ -19,6 +18,7 @@ import org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider
 import org.jetbrains.kotlin.idea.base.platforms.isKlibLibraryRootForPlatform
 import org.jetbrains.kotlin.idea.base.platforms.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.idea.base.util.caching.findLibraryByEntityWithHack
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.idePlatformKind
@@ -85,7 +85,8 @@ class LibraryInfoCache(project: Project): SynchronizedFineGrainedEntityCache<Lib
         override val entityClass: Class<LibraryEntity>
             get() = LibraryEntity::class.java
 
-        override fun map(storage: EntityStorage, entity: LibraryEntity): Library? = entity.findLibraryBridge(storage)
+        override fun map(storage: EntityStorage, entity: LibraryEntity): Library? =
+            storage.findLibraryByEntityWithHack(entity, project)
 
         override fun entitiesChanged(outdated: List<Library>) {
             val libraryInfoCache = getInstance(project)

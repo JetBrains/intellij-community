@@ -1,4 +1,4 @@
-// "Move up into 'if' statement branches" "true"
+// "Move up into 'if' statement branches" "true-preview"
 class X {
   void test(int x) {
     if (x > 0) {

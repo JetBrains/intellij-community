@@ -422,7 +422,7 @@ final class PassExecutorService implements Disposable {
       log(myUpdateProgress, myPass, "Finished. ");
 
       if (!myUpdateProgress.isCanceled()) {
-        applyInformationToEditorsLater(myFileEditor, myPass, myUpdateProgress, myThreadsToStartCountdown, ()->{
+        applyInformationToEditorsLater(myFileEditor, myPass, myUpdateProgress, myThreadsToStartCountdown, ()-> {
           for (ScheduledPass successor : mySuccessorsOnCompletion) {
             int predecessorsToRun = successor.myRunningPredecessorsCount.decrementAndGet();
             if (predecessorsToRun == 0) {
@@ -563,15 +563,15 @@ final class PassExecutorService implements Disposable {
   }
 
   // return true if terminated
-  boolean waitFor(int millis) throws Throwable {
+  boolean waitFor(int millis) {
+    long deadline = System.currentTimeMillis() + millis;
     try {
       for (Job<Void> job : mySubmittedPasses.values()) {
-        job.waitForCompletion(millis);
+        if (!job.waitForCompletion((int)(System.currentTimeMillis() - deadline))) {
+          return false;
+        }
       }
       return true;
-    }
-    catch (TimeoutException ignored) {
-      return false;
     }
     catch (InterruptedException e) {
       return true;

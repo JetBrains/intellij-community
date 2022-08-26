@@ -40,15 +40,15 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
         case LeftTop:
           return left + " " + top;
         case BottomLeft:
-          return left + " " + bottom;
+          return ExperimentalUI.isNewUI() ? left + " " + bottom : bottom + " " + left;
         case BottomRight:
-          return right + " " + bottom;
+          return ExperimentalUI.isNewUI() ? right + " " + bottom : bottom + " " + right;
         case RightTop:
           return right + " " + top;
         case LeftBottom:
-          return bottom + " " + left;
+          return ExperimentalUI.isNewUI() ? bottom + " " + left : left + " " + bottom;
         case RightBottom:
-          return bottom + " " + right;
+          return ExperimentalUI.isNewUI() ? bottom + " " + right : right + " " + bottom;
         case TopRight:
           return top + " " + right;
         case TopLeft:

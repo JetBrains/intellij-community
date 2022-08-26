@@ -105,6 +105,25 @@ class FooSpec extends spock.lang.Specification {
   }
 
   @Test
+  void 'indirect extending'() {
+    fixture.enableInspections(GrUnresolvedAccessInspection)
+    highlightingTest '''\
+class A extends spock.lang.Specification {}
+
+class FooSpec extends A {
+  def foo() {
+    when:
+    def concat = a + b
+    
+    where:
+    a     | b
+    "foo" | "bar"
+  }    
+}
+'''
+  }
+
+  @Test
   void 'Use annotation'() {
     fixture.enableInspections(GrUnresolvedAccessInspection)
     highlightingTest '''\

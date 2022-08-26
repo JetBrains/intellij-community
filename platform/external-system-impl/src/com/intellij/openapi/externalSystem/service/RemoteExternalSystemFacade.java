@@ -110,7 +110,6 @@ public interface RemoteExternalSystemFacade<S extends ExternalSystemExecutionSet
 
   /**
    * Same as {@link #getResolver()}, but operating on raw result
-   * @return
    */
   @NotNull
   RawExternalSystemProjectResolver<S> getRawProjectResolver() throws RemoteException;

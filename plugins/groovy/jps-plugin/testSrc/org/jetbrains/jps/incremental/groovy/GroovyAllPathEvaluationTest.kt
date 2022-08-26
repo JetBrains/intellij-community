@@ -49,9 +49,9 @@ class GroovyAllPathEvaluationTest {
 
   @Test
   fun `groovy jar is OK since 2_5 because it does not need jars from other artifacts to compile`() {
-    assertEquals("/lib/groovy-2.5.11.jar", evalPathForParentClassloader(
-      "/lib/groovy-2.5.11.jar",
-      "/lib/groovy-test-2.5.11.jar"
+    assertEquals("/lib/groovy-2.5.17.jar", evalPathForParentClassloader(
+      "/lib/groovy-2.5.17.jar",
+      "/lib/groovy-test-2.5.17.jar"
     ))
   }
 

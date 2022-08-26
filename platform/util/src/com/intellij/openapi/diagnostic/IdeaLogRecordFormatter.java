@@ -11,8 +11,8 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
 public class IdeaLogRecordFormatter extends Formatter {
-  private static final String FORMAT_WITH_DATE_TIME = "%1$tF %1$tT,%1$tL [%2$7d] %3$6s - %4$s - %5$s%6$s";
-  private static final String FORMAT_WITHOUT_DATE_TIME = "[%2$7d] %3$6s - %4$s - %5$s%6$s";
+  private static final String FORMAT_WITH_DATE_TIME = "%1$tF %1$tT,%1$tL [%2$7s] %3$6s - %4$s - %5$s%6$s";
+  private static final String FORMAT_WITHOUT_DATE_TIME = "[%2$7s] %3$6s - %4$s - %5$s%6$s";
   private static final String LINE_SEPARATOR = System.lineSeparator();
 
   private final long myLogCreation;
@@ -43,7 +43,7 @@ public class IdeaLogRecordFormatter extends Formatter {
     }
     String level = record.getLevel() == Level.WARNING ? "WARN" : record.getLevel().toString();
     long startedMillis = getStartedMillis();
-    long relativeToStartedMillis = (startedMillis == 0) ? 0 : (record.getMillis() - startedMillis);
+    String relativeToStartedMillis = (startedMillis == 0) ? "-------" : String.valueOf(record.getMillis() - startedMillis);
     String result = String.format(
       myWithDateTime ? FORMAT_WITH_DATE_TIME : FORMAT_WITHOUT_DATE_TIME,
       record.getMillis(),

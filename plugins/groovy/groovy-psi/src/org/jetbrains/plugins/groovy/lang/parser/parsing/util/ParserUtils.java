@@ -23,7 +23,6 @@ public abstract class ParserUtils {
    * @param builder  current builder
    * @param elem     given element
    * @param errorMsg Message, that displays if element was not found; if errorMsg == null nothing displays
-   * @return true if element parsed
    */
   public static void getToken(PsiBuilder builder, IElementType elem, @ParsingError String errorMsg) {
     if (elem.equals(builder.getTokenType())) {

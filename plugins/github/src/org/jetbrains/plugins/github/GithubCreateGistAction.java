@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ReadAction;
@@ -57,6 +58,11 @@ public class GithubCreateGistAction extends DumbAwareAction {
     super(GithubBundle.messagePointer("create.gist.action.title"),
           GithubBundle.messagePointer("create.gist.action.description"),
           AllIcons.Vcs.Vendors.Github);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

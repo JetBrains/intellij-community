@@ -43,8 +43,10 @@ interface ProjectModuleOperationProvider {
 
     companion object {
 
+        private val EP_NAME = "com.intellij.packagesearch.projectModuleOperationProvider"
+
         private val extensionPointName
-            get() = ExtensionPointName.create<ProjectModuleOperationProvider>("com.intellij.packagesearch.projectModuleOperationProvider")
+            get() = ExtensionPointName.create<ProjectModuleOperationProvider>(EP_NAME)
 
         internal val extensions
             get() = extensionPointName.extensions.map { it.asCoroutine() }

@@ -339,11 +339,21 @@ public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
 
     createNewModule(new MavenId("org.foo", "module", "1.0"));
 
-    assertContentRoots("project",
-                       getProjectPath() + "/src/main/java",
-                       getProjectPath() + "/src/main/resources",
-                       getProjectPath() + "/src/test/java"
-    );
+    if (supportsImportOfNonExistingFolders()) {
+      assertContentRoots("project",
+                         getProjectPath() + "/src/main/java",
+                         getProjectPath() + "/src/main/resources",
+                         getProjectPath() + "/src/test/java",
+                         getProjectPath() + "/src/test/resources"
+      );
+    }
+    else {
+      assertContentRoots("project",
+                         getProjectPath() + "/src/main/java",
+                         getProjectPath() + "/src/main/resources",
+                         getProjectPath() + "/src/test/java"
+      );
+    }
     assertContentRoots("module",
                        getProjectPath());
 

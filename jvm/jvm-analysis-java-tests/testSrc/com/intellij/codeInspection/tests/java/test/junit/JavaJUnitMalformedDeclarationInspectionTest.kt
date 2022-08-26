@@ -388,7 +388,7 @@ class JavaJUnitMalformedDeclarationInspectionTest : JUnitMalformedDeclarationIns
         @ParameterizedTest
         void foo(String param) { }
       }
-    """.trimIndent(), "Annotate class 'Test' as @TestInstance")
+    """.trimIndent(), "Annotate class 'Test' as '@TestInstance'")
   }
   fun `test malformed parameterized introduce method source quickfix`() {
     myFixture.testQuickFix(ULanguage.JAVA, """

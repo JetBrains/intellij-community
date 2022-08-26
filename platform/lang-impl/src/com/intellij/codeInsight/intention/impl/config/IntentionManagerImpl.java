@@ -70,8 +70,7 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
     String descriptionDirectoryName = action instanceof IntentionActionWrapper
                                       ? ((IntentionActionWrapper)action).getDescriptionDirectoryName()
                                       : IntentionActionWrapper.getDescriptionDirectoryName(action.getClass().getName());
-    IntentionManagerSettings settings = IntentionManagerSettings.getInstance();
-    settings.registerIntentionMetaData(action, category, descriptionDirectoryName);
+    IntentionsMetadataService.getInstance().registerIntentionMetaData(action, category, descriptionDirectoryName);
   }
 
   @Override
@@ -208,6 +207,38 @@ public final class IntentionManagerImpl extends IntentionManager implements Disp
       }
     }
     return list;
+  }
+
+  @Override
+  public @NotNull List<IntentionAction> getAvailableIntentions(Collection<String> languageIds) {
+    if (myIntentionsDisabled) {
+      return Collections.emptyList();
+    }
+
+    checkForDuplicates();
+
+    List<IntentionAction> list = new ArrayList<>();
+    IntentionManagerSettings settings = IntentionManagerSettings.getInstance();
+    for (IntentionAction action : myActions) {
+      if (isLanguageSupported(languageIds, action) && settings.isEnabled(action)) {
+        list.add(action);
+      }
+    }
+    return list;
+  }
+
+  private static boolean isLanguageSupported(Collection<String> fileLanguageIds, IntentionAction action) {
+    if (action instanceof IntentionActionWrapper) {
+      Set<String> languages = ((IntentionActionWrapper)action).getLanguages();
+      if (!languages.isEmpty()) {
+        for (String fileLanguage : fileLanguageIds) {
+          if (languages.contains(fileLanguage)) return true;
+        }
+        return false;
+      }
+    }
+
+    return true;
   }
 
   private boolean checkedForDuplicates; // benign data race

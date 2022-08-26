@@ -13,8 +13,8 @@ import java.util.function.Consumer
 
 // todo rewrite PlatformTestUtil to kotlin
 internal fun saveProject(project: Project, forceSavingAllSettings: Boolean = false) {
-  StoreReloadManager.getInstance().flushChangedProjectFileAlarm()
   runUnderModalProgressIfIsEdt {
+    StoreReloadManager.getInstance().reloadChangedStorageFiles()
     project.stateStore.save(forceSavingAllSettings = forceSavingAllSettings)
   }
 }

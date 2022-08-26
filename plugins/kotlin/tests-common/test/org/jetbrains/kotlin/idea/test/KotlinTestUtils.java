@@ -52,7 +52,7 @@ import org.jetbrains.kotlin.lexer.KtTokens;
 import org.jetbrains.kotlin.name.Name;
 import org.jetbrains.kotlin.psi.KtFile;
 import org.jetbrains.kotlin.storage.LockBasedStorageManager;
-import org.jetbrains.kotlin.test.KotlinRoot;
+import org.jetbrains.kotlin.idea.base.test.KotlinRoot;
 import org.jetbrains.kotlin.test.TargetBackend;
 import org.jetbrains.kotlin.test.TestJdkKind;
 import org.jetbrains.kotlin.test.TestMetadata;
@@ -237,16 +237,6 @@ public class KotlinTestUtils {
     public static CompilerConfiguration newConfiguration() {
         CompilerConfiguration configuration = new CompilerConfiguration();
         configuration.put(CommonConfigurationKeys.MODULE_NAME, TEST_MODULE_NAME);
-
-        if ("true".equals(System.getProperty("kotlin.ni"))) {
-            // Enable new inference for tests which do not declare their own language version settings
-            CommonConfigurationKeysKt.setLanguageVersionSettings(configuration, new CompilerTestLanguageVersionSettings(
-                    Collections.emptyMap(),
-                    LanguageVersionSettingsImpl.DEFAULT.getApiVersion(),
-                    LanguageVersionSettingsImpl.DEFAULT.getLanguageVersion(),
-                    Collections.emptyMap()
-            ));
-        }
 
         configuration.put(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, new MessageCollector() {
             @Override

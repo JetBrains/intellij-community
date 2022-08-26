@@ -12,13 +12,16 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToAbstractManyChildren
 import com.intellij.workspaceModel.storage.impl.extractOneToAbstractManyParent
+import com.intellij.workspaceModel.storage.impl.extractOneToAbstractOneParent
 import com.intellij.workspaceModel.storage.impl.extractOneToManyChildren
 import com.intellij.workspaceModel.storage.impl.updateOneToAbstractManyChildrenOfParent
 import com.intellij.workspaceModel.storage.impl.updateOneToAbstractManyParentOfChild
+import com.intellij.workspaceModel.storage.impl.updateOneToAbstractOneParentOfChild
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Abstract
@@ -33,10 +36,14 @@ open class LeftEntityImpl : LeftEntity, WorkspaceEntityBase() {
                                                                                 ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
     internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositeBaseEntity::class.java, BaseEntity::class.java,
                                                                             ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
+    internal val PARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(HeadAbstractionEntity::class.java,
+                                                                          CompositeBaseEntity::class.java,
+                                                                          ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, true)
 
     val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
       CHILDREN_CONNECTION_ID,
+      PARENT_CONNECTION_ID,
     )
 
   }
@@ -46,6 +53,9 @@ open class LeftEntityImpl : LeftEntity, WorkspaceEntityBase() {
 
   override val children: List<BaseEntity>
     get() = snapshot.extractOneToAbstractManyChildren<BaseEntity>(CHILDREN_CONNECTION_ID, this)!!.toList()
+
+  override val parent: HeadAbstractionEntity?
+    get() = snapshot.extractOneToAbstractOneParent(PARENT_CONNECTION_ID, this)
 
   override fun connectionIdList(): List<ConnectionId> {
     return connections
@@ -77,6 +87,9 @@ open class LeftEntityImpl : LeftEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       // Check initialization for list with ref type
       if (_diff != null) {
         if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(CHILDREN_CONNECTION_ID, this) == null) {
@@ -88,15 +101,31 @@ open class LeftEntityImpl : LeftEntity, WorkspaceEntityBase() {
           error("Field CompositeBaseEntity#children should be initialized")
         }
       }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field CompositeBaseEntity#entitySource should be initialized")
-      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as LeftEntity
+      this.entitySource = dataSource.entitySource
+      if (parents != null) {
+        this.parentEntity = parents.filterIsInstance<CompositeBaseEntity>().singleOrNull()
+        this.parent = parents.filterIsInstance<HeadAbstractionEntity>().singleOrNull()
+      }
+    }
+
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var parentEntity: CompositeBaseEntity?
       get() {
@@ -173,13 +202,39 @@ open class LeftEntityImpl : LeftEntity, WorkspaceEntityBase() {
         changedProperty.add("children")
       }
 
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
+    override var parent: HeadAbstractionEntity?
+      get() {
+        val _diff = diff
+        return if (_diff != null) {
+          _diff.extractOneToAbstractOneParent(PARENT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
+                                                                                                         PARENT_CONNECTION_ID)] as? HeadAbstractionEntity
+        }
+        else {
+          this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)] as? HeadAbstractionEntity
+        }
+      }
       set(value) {
         checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
+        val _diff = diff
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*> && value.diff == null) {
+          if (value is ModifiableWorkspaceEntityBase<*>) {
+            value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] = this
+          }
+          // else you're attaching a new entity to an existing entity that is not modifiable
+          _diff.addEntity(value)
+        }
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*> || value.diff != null)) {
+          _diff.updateOneToAbstractOneParentOfChild(PARENT_CONNECTION_ID, this, value)
+        }
+        else {
+          if (value is ModifiableWorkspaceEntityBase<*>) {
+            value.entityLinks[EntityLink(true, PARENT_CONNECTION_ID)] = this
+          }
+          // else you're attaching a new entity to an existing entity that is not modifiable
 
+          this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)] = value
+        }
+        changedProperty.add("parent")
       }
 
     override fun getEntityData(): LeftEntityData = result ?: super.getEntityData() as LeftEntityData
@@ -220,6 +275,18 @@ class LeftEntityData : WorkspaceEntityData<LeftEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return LeftEntity(entitySource) {
+      this.parentEntity = parents.filterIsInstance<CompositeBaseEntity>().singleOrNull()
+      this.parent = parents.filterIsInstance<HeadAbstractionEntity>().singleOrNull()
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
@@ -242,5 +309,14 @@ class LeftEntityData : WorkspaceEntityData<LeftEntity>() {
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.sameForAllEntities = true
   }
 }

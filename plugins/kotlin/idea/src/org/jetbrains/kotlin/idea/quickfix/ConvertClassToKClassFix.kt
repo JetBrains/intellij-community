@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -56,12 +56,12 @@ class ConvertClassToKClassFix(element: KtDotQualifiedExpression, type: KotlinTyp
 
     companion object Factory : KotlinIntentionActionsFactory() {
         override fun doCreateActions(diagnostic: Diagnostic): List<IntentionAction> {
-            val casted = Errors.TYPE_INFERENCE_EXPECTED_TYPE_MISMATCH.cast(diagnostic)
+            val casted = Errors.TYPE_MISMATCH.cast(diagnostic)
 
             val expectedClassDescriptor = casted.a.constructor.declarationDescriptor as? ClassDescriptor ?: return emptyList()
             if (!KotlinBuiltIns.isKClass(expectedClassDescriptor)) return emptyList()
 
-            val element = casted.psiElement.parent as? KtDotQualifiedExpression ?: return emptyList()
+            val element = casted.psiElement as? KtDotQualifiedExpression ?: return emptyList()
             return listOf(ConvertClassToKClassFix(element, casted.a))
         }
     }

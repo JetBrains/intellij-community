@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
@@ -45,7 +45,7 @@ class IdePackageOracleFactory(val project: Project) : PackageOracleFactory {
         private val sourceModules = moduleInfo.projectSourceModules()
 
         override fun packageExists(fqName: FqName): Boolean {
-            return sourceModules?.any { cacheService.packageExists(fqName, it) } ?: false
+            return sourceModules.any { cacheService.packageExists(fqName, it) }
         }
     }
 

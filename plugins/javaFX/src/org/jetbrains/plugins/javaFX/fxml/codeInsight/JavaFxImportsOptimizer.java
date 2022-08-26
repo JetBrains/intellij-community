@@ -114,13 +114,13 @@ public class JavaFxImportsOptimizer implements ImportOptimizer {
 
   public static abstract class JavaFxUsedClassesVisitor extends XmlRecursiveElementVisitor {
     @Override
-    public void visitXmlProlog(XmlProlog prolog) {}
+    public void visitXmlProlog(@NotNull XmlProlog prolog) {}
 
     @Override
-    public void visitXmlProcessingInstruction(XmlProcessingInstruction processingInstruction) {}
+    public void visitXmlProcessingInstruction(@NotNull XmlProcessingInstruction processingInstruction) {}
 
     @Override
-    public void visitXmlAttribute(XmlAttribute attribute) {
+    public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
       final XmlAttributeDescriptor descriptor = attribute.getDescriptor();
       if (descriptor instanceof JavaFxStaticSetterAttributeDescriptor) {
         final PsiElement declaration = descriptor.getDeclaration();
@@ -134,7 +134,7 @@ public class JavaFxImportsOptimizer implements ImportOptimizer {
     }
 
     @Override
-    public void visitXmlTag(XmlTag tag) {
+    public void visitXmlTag(@NotNull XmlTag tag) {
       super.visitXmlTag(tag);
       final XmlElementDescriptor descriptor = tag.getDescriptor();
       if (descriptor instanceof JavaFxClassTagDescriptorBase) {

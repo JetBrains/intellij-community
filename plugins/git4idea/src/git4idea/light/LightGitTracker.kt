@@ -1,11 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.light
 
-import com.intellij.ide.FrameStateListener
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.lightEdit.LightEditorInfo
 import com.intellij.ide.lightEdit.LightEditorListener
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.wm.IdeFrame
 import com.intellij.util.EventDispatcher
 import com.intellij.vcs.log.BaseSingleTaskController
 import com.intellij.vcs.log.runInEdt
@@ -57,7 +58,7 @@ class LightGitTracker : Disposable {
 
   init {
     lightEditorManager.addListener(listener, this)
-    ApplicationManager.getApplication().messageBus.connect(this).subscribe(FrameStateListener.TOPIC,
+    ApplicationManager.getApplication().messageBus.connect(this).subscribe(ApplicationActivationListener.TOPIC,
                                                                            MyFrameStateListener())
     ApplicationManager.getApplication().messageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES,
                                                                            MyBulkFileListener())
@@ -149,8 +150,8 @@ class LightGitTracker : Disposable {
     }
   }
 
-  private inner class MyFrameStateListener : FrameStateListener {
-    override fun onFrameActivated() {
+  private inner class MyFrameStateListener : ApplicationActivationListener {
+    override fun applicationActivated(ideFrame: IdeFrame) {
       singleTaskController.sendRequests(Request.CheckGit,
                                         locationRequest(lightEditService.selectedFile),
                                         statusRequest(lightEditorManager.openFiles))

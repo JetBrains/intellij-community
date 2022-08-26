@@ -230,6 +230,11 @@ public class AutomaticRenamingDialog extends DialogWrapper {
       protected boolean isValidName(String inputString, int selectedRow) {
         return RenameUtil.isValidName(myProject, myRenames[selectedRow], inputString);
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     };
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.nj2k.printing
 
@@ -8,6 +8,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.nj2k.JKImportStorage
+import org.jetbrains.kotlin.nj2k.conversions.TOP_LEVEL_FUNCTIONS_THAT_MAY_BE_SHADOWED_BY_EXISTING_METHODS
 import org.jetbrains.kotlin.nj2k.escaped
 import org.jetbrains.kotlin.nj2k.symbols.*
 import org.jetbrains.kotlin.nj2k.tree.JKClassAccessExpression
@@ -20,7 +21,8 @@ internal class JKSymbolRenderer(private val importStorage: JKImportStorage, proj
 
     private fun JKSymbol.isFqNameExpected(owner: JKTreeElement?): Boolean {
         if (owner?.isSelectorOfQualifiedExpression() == true) return false
-        return this is JKClassSymbol || isStaticMember || isEnumConstant
+        return fqName in TOP_LEVEL_FUNCTIONS_THAT_MAY_BE_SHADOWED_BY_EXISTING_METHODS ||
+                this is JKClassSymbol || isStaticMember || isEnumConstant
     }
 
     private fun JKSymbol.isFromJavaLangPackage() =

@@ -8,19 +8,23 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
+import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 
 /**
  * Handles events about settings change both from the current IDE, and from the server, merges the settings, logs them,
  * and provides the combined data to clients: both to the IDE and to the server.
  */
-internal class SettingsSyncBridge(parentDisposable: Disposable,
-                                  private val settingsLog: SettingsLog,
-                                  private val ideMediator: SettingsSyncIdeMediator,
-                                  private val remoteCommunicator: SettingsSyncRemoteCommunicator,
-                                  private val updateChecker: SettingsSyncUpdateChecker) {
+@ApiStatus.Internal
+class SettingsSyncBridge(parentDisposable: Disposable,
+                         private val appConfigPath: Path,
+                         private val settingsLog: SettingsLog,
+                         private val ideMediator: SettingsSyncIdeMediator,
+                         private val remoteCommunicator: SettingsSyncRemoteCommunicator,
+                         private val updateChecker: SettingsSyncUpdateChecker) {
 
   private val pendingEvents = ContainerUtil.createConcurrentList<SyncSettingsEvent>()
 
@@ -37,11 +41,12 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
   }
 
   @RequiresBackgroundThread
-  fun initialize(initMode: InitMode) {
+  internal fun initialize(initMode: InitMode) {
     settingsLog.initialize()
 
     // the queue is not activated initially => events will be collected but not processed until we perform all initialization tasks
     SettingsSyncEvents.getInstance().addSettingsChangedListener { event ->
+      LOG.debug("Adding settings changed event $event to the queue")
       pendingEvents.add(event)
       queue.queue(updateObject)
     }
@@ -59,26 +64,77 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
     settingsLog.logExistingSettings()
 
     when (initMode) {
-      is InitMode.TakeFromServer -> applySnapshotFromServer(initMode.cloudEvent.snapshot)
+      is InitMode.TakeFromServer -> applySnapshotFromServer(initMode.cloudEvent)
       InitMode.PushToServer -> mergeAndPush(previousIdePosition, previousCloudPosition, FORCE_PUSH)
       InitMode.JustInit -> mergeAndPush(previousIdePosition, previousCloudPosition, PUSH_IF_NEEDED)
+      is InitMode.MigrateFromOldStorage -> migrateFromOldStorage(initMode.migration)
     }
   }
 
-  private fun applySnapshotFromServer(settingsSnapshot: SettingsSnapshot) {
+  private fun applySnapshotFromServer(cloudEvent: SyncSettingsEvent.CloudChange) {
     settingsLog.advanceMaster() // merge (preserve) 'ide' changes made by logging existing settings
 
-    val masterPosition = settingsLog.forceWriteToMaster(settingsSnapshot)
+    val masterPosition = settingsLog.forceWriteToMaster(cloudEvent.snapshot, "Remote changes to initialize settings by data from cloud")
     pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition)
 
     // normally we set cloud position only after successful push to cloud, but in this case we already take all settings from the cloud,
     // so no push is needed, and we know the cloud settings state.
     settingsLog.setCloudPosition(masterPosition)
+    SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId = cloudEvent.serverVersionId
   }
 
-  sealed class InitMode {
+  private fun migrateFromOldStorage(migration: SettingsSyncMigration) {
+    val migrationSnapshot = migration.getLocalDataIfAvailable(appConfigPath)
+    if (migrationSnapshot != null) {
+      settingsLog.applyIdeState(migrationSnapshot, "Migrate from old settings sync")
+      LOG.info("Migration from old storage applied.")
+      var masterPosition = settingsLog.advanceMaster() // merge (preserve) 'ide' changes made by logging existing settings & by migration
+
+      // if there is already a version on the server, then it should be preferred over migration
+      val updateResult = remoteCommunicator.receiveUpdates()
+      if (updateResult is UpdateResult.Success) {
+        val snapshot = updateResult.settingsSnapshot
+        masterPosition = settingsLog.forceWriteToMaster(snapshot, "Remote changes to overwrite migration data by settings from cloud")
+        SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId = updateResult.serverVersionId
+      }
+      else {
+        // otherwise we place our migrated data to the cloud
+        forcePushToCloud(masterPosition)
+      }
+      pushToIde(settingsLog.collectCurrentSnapshot(), masterPosition)
+      settingsLog.setCloudPosition(masterPosition)
+    }
+    else {
+      LOG.warn("Migration from old storage didn't happen, although it was identified as possible: no data to migrate")
+      settingsLog.advanceMaster() // merge (preserve) 'ide' changes made by logging existing settings
+    }
+  }
+
+  private fun forcePushToCloud(masterPosition: SettingsLog.Position) {
+    val pushResult = pushToCloud(settingsLog.collectCurrentSnapshot(), force = true)
+    LOG.info("Result of pushing settings to the cloud: $pushResult")
+    when (pushResult) {
+      is SettingsSyncPushResult.Success -> {
+        settingsLog.setCloudPosition(masterPosition)
+        SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId = pushResult.serverVersionId
+        SettingsSyncStatusTracker.getInstance().updateOnSuccess()
+      }
+      is SettingsSyncPushResult.Error -> {
+        SettingsSyncStatusTracker.getInstance().updateOnError(
+          SettingsSyncBundle.message("notification.title.push.error") + ": " + pushResult.message)
+      }
+      SettingsSyncPushResult.Rejected -> {
+        LOG.error("Reject shouldn't happen when force push is used")
+        SettingsSyncStatusTracker.getInstance().updateOnError(
+          SettingsSyncBundle.message("notification.title.push.error") + ": " + pushResult)
+      }
+    }
+  }
+
+  internal sealed class InitMode {
     object JustInit : InitMode()
     class TakeFromServer(val cloudEvent: SyncSettingsEvent.CloudChange) : InitMode()
+    class MigrateFromOldStorage(val migration: SettingsSyncMigration) : InitMode()
     object PushToServer : InitMode()
   }
 
@@ -90,11 +146,13 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
     var pushRequestMode: PushRequestMode = PUSH_IF_NEEDED
     while (pendingEvents.isNotEmpty()) {
       val event = pendingEvents.removeAt(0)
+      LOG.debug("Processing event $event")
       if (event is SyncSettingsEvent.IdeChange) {
-        settingsLog.applyIdeState(event.snapshot)
+        settingsLog.applyIdeState(event.snapshot, "Local changes made in the IDE")
       }
       else if (event is SyncSettingsEvent.CloudChange) {
-        settingsLog.applyCloudState(event.snapshot)
+        settingsLog.applyCloudState(event.snapshot, "Remote changes")
+        SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId = event.serverVersionId
       }
       else if (event is SyncSettingsEvent.LogCurrentSettings) {
         settingsLog.logExistingSettings()
@@ -130,8 +188,9 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
       val pushResult: SettingsSyncPushResult = pushToCloud(settingsLog.collectCurrentSnapshot(), pushRequestMode == FORCE_PUSH)
       LOG.info("Result of pushing settings to the cloud: $pushResult")
       when (pushResult) {
-        SettingsSyncPushResult.Success -> {
+        is SettingsSyncPushResult.Success -> {
           settingsLog.setCloudPosition(masterPosition)
+          SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId = pushResult.serverVersionId
           SettingsSyncStatusTracker.getInstance().updateOnSuccess()
         }
         is SettingsSyncPushResult.Error -> {
@@ -163,14 +222,15 @@ internal class SettingsSyncBridge(parentDisposable: Disposable,
   }
 
   private fun pushToCloud(settingsSnapshot: SettingsSnapshot, force: Boolean): SettingsSyncPushResult {
+    val versionId = SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId
     if (force) {
-      return remoteCommunicator.push(settingsSnapshot, force = true)
+      return remoteCommunicator.push(settingsSnapshot, force = true, versionId)
     }
     else if (remoteCommunicator.checkServerState() is ServerState.UpdateNeeded) {
       return SettingsSyncPushResult.Rejected
     }
     else {
-      return remoteCommunicator.push(settingsSnapshot, force = false)
+      return remoteCommunicator.push(settingsSnapshot, force = false, versionId)
     }
   }
 

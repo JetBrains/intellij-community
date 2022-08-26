@@ -6,7 +6,6 @@ import com.intellij.workspaceModel.codegen.isRefType
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.utils.*
-import com.intellij.workspaceModel.codegen.writer.owner
 
 data class RefMethods(val getter: QualifiedName, val setter: QualifiedName)
 
@@ -40,7 +39,7 @@ private fun ObjProperty<*, *>.constructCode(type: ValueType<*>): RefMethods {
     }
     when (valueType) {
       is ValueType.List<*> -> {
-        if (owner.openness.extendable) {
+        if (receiver.openness.extendable) {
           fqn1(EntityStorage::extractOneToAbstractManyParent) getterWithSetter fqn3(EntityStorage::updateOneToAbstractManyParentOfChild)
         }
         else {
@@ -48,7 +47,7 @@ private fun ObjProperty<*, *>.constructCode(type: ValueType<*>): RefMethods {
         }
       }
       is ValueType.ObjRef<*> -> {
-        if (owner.openness.extendable) {
+        if (receiver.openness.extendable) {
           fqn1(EntityStorage::extractOneToAbstractOneParent) getterWithSetter fqn3(EntityStorage::updateOneToAbstractOneParentOfChild)
         }
         else {

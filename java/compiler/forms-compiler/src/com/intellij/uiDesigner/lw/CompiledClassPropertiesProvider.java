@@ -12,10 +12,6 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class CompiledClassPropertiesProvider implements PropertiesProvider {
   private final ClassLoader myLoader;
   private final HashMap<String, Map<String, LwIntrospectedProperty>> myCache;

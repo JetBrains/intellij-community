@@ -1,4 +1,4 @@
-// "Make 'victim' return 'boolean'" "true"
+// "Make 'victim()' return 'boolean'" "true-preview"
 import java.util.*;
 
 public class External {

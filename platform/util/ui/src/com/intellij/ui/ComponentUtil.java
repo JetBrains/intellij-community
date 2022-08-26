@@ -2,9 +2,8 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,21 +14,22 @@ import java.util.List;
 import java.util.function.Predicate;
 
 public final class ComponentUtil {
-  /** @deprecated use {@link ClientProperty#get(Component, Key)} instead */
+  private static final @NonNls String FOCUS_PROXY_KEY = "isFocusProxy";
+
+  /**
+   * @deprecated use {@link ClientProperty#get(Component, Key)} instead
+   */
   @Deprecated
   public static <T> T getClientProperty(@NotNull JComponent component, @NotNull Key<T> key) {
     return ClientProperty.get(component, key);
   }
 
-  /** @deprecated use {@link JComponent#putClientProperty(Object, Object)} or {@link ClientProperty#put(JComponent, Key, Object)} instead */
+  /**
+   * @deprecated use {@link JComponent#putClientProperty(Object, Object)} or {@link ClientProperty#put(JComponent, Key, Object)} instead
+   */
   @Deprecated
   public static <T> void putClientProperty(@NotNull JComponent component, @NotNull Key<T> key, T value) {
     component.putClientProperty(key, value);
-  }
-
-  public static boolean isDisableAutoRequestFocus() {
-    return Registry.is("suppress.focus.stealing.disable.auto.request.focus", true)
-           && !(SystemInfo.isXfce || SystemInfo.isI3);
   }
 
   public static boolean isMinimized(@Nullable Window window) {
@@ -160,5 +160,16 @@ public final class ComponentUtil {
         findComponentsOfType((JComponent)c, cls, result);
       }
     }
+  }
+
+  public static boolean isFocusProxy(@Nullable Component c) {
+    return c instanceof JComponent && Boolean.TRUE.equals(((JComponent)c).getClientProperty(FOCUS_PROXY_KEY));
+  }
+
+  public static boolean isMeaninglessFocusOwner(@Nullable Component c) {
+    if (c == null || !c.isShowing()) {
+      return true;
+    }
+    return c instanceof JFrame || c instanceof JDialog || c instanceof JWindow || c instanceof JRootPane || isFocusProxy(c);
   }
 }

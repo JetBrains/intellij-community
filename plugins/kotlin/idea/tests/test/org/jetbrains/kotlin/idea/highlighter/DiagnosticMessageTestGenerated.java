@@ -6,7 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -98,19 +98,9 @@ public class DiagnosticMessageTestGenerated extends AbstractDiagnosticMessageTes
         runTest("testData/diagnosticMessage/differentNamesForSameParameter.kt");
     }
 
-    @TestMetadata("expectedNothingDueToProjections.kt")
-    public void testExpectedNothingDueToProjections() throws Exception {
-        runTest("testData/diagnosticMessage/expectedNothingDueToProjections.kt");
-    }
-
     @TestMetadata("extensionInClassReference.kt")
     public void testExtensionInClassReference() throws Exception {
         runTest("testData/diagnosticMessage/extensionInClassReference.kt");
-    }
-
-    @TestMetadata("functionPlaceholder.kt")
-    public void testFunctionPlaceholder() throws Exception {
-        runTest("testData/diagnosticMessage/functionPlaceholder.kt");
     }
 
     @TestMetadata("illegalSuspendCall.kt")
@@ -153,11 +143,6 @@ public class DiagnosticMessageTestGenerated extends AbstractDiagnosticMessageTes
         runTest("testData/diagnosticMessage/noneApplicable.kt");
     }
 
-    @TestMetadata("noneApplicableCallableReference.kt")
-    public void testNoneApplicableCallableReference() throws Exception {
-        runTest("testData/diagnosticMessage/noneApplicableCallableReference.kt");
-    }
-
     @TestMetadata("noneApplicableConstructor.kt")
     public void testNoneApplicableConstructor() throws Exception {
         runTest("testData/diagnosticMessage/noneApplicableConstructor.kt");
@@ -178,11 +163,6 @@ public class DiagnosticMessageTestGenerated extends AbstractDiagnosticMessageTes
         runTest("testData/diagnosticMessage/noneApplicableTxt.kt");
     }
 
-    @TestMetadata("numberValueTypes.kt")
-    public void testNumberValueTypes() throws Exception {
-        runTest("testData/diagnosticMessage/numberValueTypes.kt");
-    }
-
     @TestMetadata("overloadResolutionAmbiguityHtml.kt")
     public void testOverloadResolutionAmbiguityHtml() throws Exception {
         runTest("testData/diagnosticMessage/overloadResolutionAmbiguityHtml.kt");
@@ -201,11 +181,6 @@ public class DiagnosticMessageTestGenerated extends AbstractDiagnosticMessageTes
     @TestMetadata("returnTypeMismatchOnOverride.kt")
     public void testReturnTypeMismatchOnOverride() throws Exception {
         runTest("testData/diagnosticMessage/returnTypeMismatchOnOverride.kt");
-    }
-
-    @TestMetadata("typeInferenceCannotCaptureTypes.kt")
-    public void testTypeInferenceCannotCaptureTypes() throws Exception {
-        runTest("testData/diagnosticMessage/typeInferenceCannotCaptureTypes.kt");
     }
 
     @TestMetadata("typeInferenceExpectedTypeMismatch.kt")
@@ -271,15 +246,5 @@ public class DiagnosticMessageTestGenerated extends AbstractDiagnosticMessageTes
     @TestMetadata("unusedVariable.kt")
     public void testUnusedVariable() throws Exception {
         runTest("testData/diagnosticMessage/unusedVariable.kt");
-    }
-
-    @TestMetadata("upperBoundViolated.kt")
-    public void testUpperBoundViolated() throws Exception {
-        runTest("testData/diagnosticMessage/upperBoundViolated.kt");
-    }
-
-    @TestMetadata("upperBoundViolatedInTypeAliasConstructorCall.kt")
-    public void testUpperBoundViolatedInTypeAliasConstructorCall() throws Exception {
-        runTest("testData/diagnosticMessage/upperBoundViolatedInTypeAliasConstructorCall.kt");
     }
 }

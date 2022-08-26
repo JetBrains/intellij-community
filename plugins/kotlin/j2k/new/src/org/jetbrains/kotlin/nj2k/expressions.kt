@@ -4,14 +4,17 @@ package org.jetbrains.kotlin.nj2k
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.TokenSet
+import org.jetbrains.kotlin.config.AnalysisFlags
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.conversions.RecursiveApplicableConversionBase
 import org.jetbrains.kotlin.nj2k.symbols.JKMethodSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKSymbol
 import org.jetbrains.kotlin.nj2k.symbols.JKUnresolvedMethod
 import org.jetbrains.kotlin.nj2k.tree.*
-
-
 import org.jetbrains.kotlin.nj2k.types.JKNoType
 import org.jetbrains.kotlin.nj2k.types.JKType
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
@@ -40,7 +43,7 @@ fun untilToExpression(
     rangeExpression(
         from,
         to,
-        "until",
+        if (conversionContext.converter.targetModule?.languageVersionSettings?.isPossibleToUseRangeUntil() == true) "..<" else "until",
         conversionContext
     )
 
@@ -57,7 +60,7 @@ fun downToExpression(
     )
 
 fun JKExpression.parenthesizeIfCompoundExpression() = when (this) {
-    is JKIfElseExpression, is JKBinaryExpression -> JKParenthesizedExpression(this)
+    is JKIfElseExpression, is JKBinaryExpression, is JKTypeCastExpression -> JKParenthesizedExpression(this)
     else -> this
 }
 
@@ -365,3 +368,9 @@ val JKTreeElement.identifier: JKSymbol?
 
 val JKClass.isObjectOrCompanionObject
     get() = classKind == JKClass.ClassKind.OBJECT || classKind == JKClass.ClassKind.COMPANION
+
+const val EXPERIMENTAL_STDLIB_API_ANNOTATION = "kotlin.ExperimentalStdlibApi"
+
+fun LanguageVersionSettings.isPossibleToUseRangeUntil(): Boolean =
+    supportsFeature(LanguageFeature.RangeUntilOperator) &&
+            FqName(EXPERIMENTAL_STDLIB_API_ANNOTATION).asString() in getFlag(AnalysisFlags.optIn)

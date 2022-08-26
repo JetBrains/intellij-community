@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.sh.completion;
 
 import com.intellij.codeInsight.completion.*;
@@ -17,7 +17,7 @@ import com.intellij.sh.ShLanguage;
 import com.intellij.sh.lexer.ShTokenTypes;
 import com.intellij.sh.psi.ShCommandsList;
 import com.intellij.sh.psi.ShFile;
-import com.intellij.util.PlatformIcons;
+import com.intellij.ui.IconManager;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -50,7 +50,8 @@ public class ShCommandCompletionContributor extends CompletionContributor implem
           result.addAllElements(ContainerUtil.map(BUILTIN,
                                                   s -> PrioritizedLookupElement.withPriority(LookupElementBuilder
                                                                                                .create(s)
-                                                                                               .withIcon(PlatformIcons.FUNCTION_ICON)
+                                                                                               .withIcon(
+                                                                                                 IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Function))
                                                                                                .withInsertHandler(
                                                                                                  AddSpaceInsertHandler.INSTANCE),
                                                                                              BUILTIN_PRIORITY)));

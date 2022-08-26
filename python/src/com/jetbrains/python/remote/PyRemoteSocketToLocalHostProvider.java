@@ -18,7 +18,6 @@ public interface PyRemoteSocketToLocalHostProvider extends Closeable {
    *
    * @param localPort port on the local host to which the remote host needs to establish connection
    * @return {@code &lt;host, port&gt;} with which socket on the remote host should be created
-   * @throws RemoteSdkException
    */
   @NotNull
   Pair<String, Integer> getRemoteSocket(int localPort) throws RemoteSdkException;

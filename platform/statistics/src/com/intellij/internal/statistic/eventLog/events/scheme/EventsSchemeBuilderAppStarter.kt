@@ -37,7 +37,7 @@ internal class EventsSchemeBuilderAppStarter : ApplicationStarter {
       }
     }
 
-    val groups = EventsSchemeBuilder.buildEventsScheme(null, pluginId)
+    val groups = EventsSchemeBuilder.buildEventsScheme(null, pluginId, getPluginsToSkipSchemeGeneration())
     val errors = EventSchemeValidator.validateEventScheme(groups)
     if (errors.isNotEmpty()) {
       throw IllegalStateException(errors.joinToString("\n"))
@@ -75,6 +75,12 @@ internal class EventsSchemeBuilderAppStarter : ApplicationStarter {
       println("Enabled plugins:")
       println(text)
     }
+  }
+
+  private fun getPluginsToSkipSchemeGeneration(): Set<String> {
+    val skipGenerationOfBrokenPlugins = System.getenv("SKIP_GENERATION_OF_BROKEN_PLUGINS")
+    if (skipGenerationOfBrokenPlugins == null) return emptySet()
+    return skipGenerationOfBrokenPlugins.split(",").toSet()
   }
 
   object FieldDataTypeSerializer : JsonSerializer<FieldDataType> {

@@ -23,6 +23,7 @@ import com.intellij.util.indexing.impl.KeyValueUpdateProcessor;
 import com.intellij.util.indexing.impl.RemovedKeyProcessor;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.MeasurableIndexStore;
 import com.intellij.util.io.VoidDataExternalizer;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntLinkedOpenHashSet;
@@ -39,6 +40,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.function.IntPredicate;
 import java.util.function.Predicate;
+
+import static com.intellij.util.indexing.diagnostic.IndexOperationFUS.IndexOperationFusCollector.TRACE_OF_STUB_ENTRIES_LOOKUP;
+import static com.intellij.util.indexing.diagnostic.IndexOperationFUS.IndexOperationFusCollector.lookupStubEntriesStarted;
 
 @ApiStatus.Internal
 public abstract class StubIndexEx extends StubIndex {
@@ -72,9 +76,9 @@ public abstract class StubIndexEx extends StubIndex {
       try {
         if (FileBasedIndexEx.DO_TRACE_STUB_INDEX_UPDATE) {
           getLogger().info("stub index '" + stubIndexKey + "' update: " + fileId +
-                   " old = " + Arrays.toString(oldKeys.toArray()) +
-                   " new  = " + Arrays.toString(newKeys.toArray()) +
-                   " updated_id = " + System.identityHashCode(newKeys));
+                           " old = " + Arrays.toString(oldKeys.toArray()) +
+                           " new  = " + Arrays.toString(newKeys.toArray()) +
+                           " updated_id = " + System.identityHashCode(newKeys));
         }
         final UpdatableIndex<K, Void, FileContent, ?> index = getIndex(stubIndexKey);
         if (index == null) return;
@@ -127,80 +131,108 @@ public abstract class StubIndexEx extends StubIndex {
                                                                @Nullable IdFilter idFilter,
                                                                @NotNull Class<Psi> requiredClass,
                                                                @NotNull Processor<? super Psi> processor) {
-    boolean dumb = DumbService.isDumb(project);
-    if (dumb) {
-      if (project instanceof LightEditCompatible) return false;
-      DumbModeAccessType accessType = FileBasedIndex.getInstance().getCurrentDumbModeAccessType();
-      if (accessType == DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE) {
-        throw new AssertionError("raw index data access is not available for StubIndex");
-      }
-    }
-    Predicate<? super Psi> keyFilter = StubIndexKeyDescriptorCache.INSTANCE.getKeyPsiMatcher(indexKey, key);
-    PairProcessor<VirtualFile, StubIdList> stubProcessor = (file, list) -> myStubProcessingHelper.processStubsInFile(
-      project, file, list, keyFilter == null ? processor : o -> !keyFilter.test(o) || processor.process(o), scope, requiredClass);
-
-    if (!ModelBranchImpl.processModifiedFilesInScope(scope != null ? scope : GlobalSearchScope.everythingScope(project),
-                                                     file -> processInMemoryStubs(indexKey, key, project, stubProcessor, file))) {
-      return false;
-    }
-
-    Iterator<VirtualFile> singleFileInScope = FileBasedIndexEx.extractSingleFileOrEmpty(scope);
-    Iterator<VirtualFile> fileStream;
-    boolean shouldHaveKeys;
-
-    if (singleFileInScope != null) {
-      if (!(singleFileInScope.hasNext())) return true;
-      FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, scope);
-      fileStream = singleFileInScope;
-      shouldHaveKeys = false;
-    }
-    else {
-      IntSet ids = getContainingIds(indexKey, key, project, idFilter, scope);
-      if (ids == null) return true;
-      IntPredicate accessibleFileFilter = ((FileBasedIndexEx)FileBasedIndex.getInstance()).getAccessibleFileIdFilter(project);
-      // already ensured up-to-date in getContainingIds() method
-      IntIterator idIterator = ids.iterator();
-      fileStream = StubIndexImplUtil.mapIdIterator(idIterator, accessibleFileFilter);
-      shouldHaveKeys = true;
-    }
+    var trace = lookupStubEntriesStarted(indexKey)
+      .withProject(project);
 
     try {
-      while (fileStream.hasNext()) {
-        VirtualFile file = fileStream.next();
-        assert file != null;
-
-        List<VirtualFile> filesInScope = scope != null ? FileBasedIndexEx.filesInScopeWithBranches(scope, file) : Collections.singletonList(file);
-        if (filesInScope.isEmpty()) {
-          continue;
+      boolean dumb = DumbService.isDumb(project);
+      if (dumb) {
+        if (project instanceof LightEditCompatible) return false;
+        DumbModeAccessType accessType = FileBasedIndex.getInstance().getCurrentDumbModeAccessType();
+        if (accessType == DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE) {
+          throw new AssertionError("raw index data access is not available for StubIndex");
         }
+      }
+      Predicate<? super Psi> keyFilter = StubIndexKeyDescriptorCache.INSTANCE.getKeyPsiMatcher(indexKey, key);
+      PairProcessor<VirtualFile, StubIdList> stubProcessor = (file, list) -> myStubProcessingHelper.processStubsInFile(
+        project, file, list, keyFilter == null ? processor : o -> !keyFilter.test(o) || processor.process(o), scope, requiredClass);
 
-        int id = ((VirtualFileWithId)file).getId();
-        StubIdList list = myCachedStubIds.get(indexKey).getValue().computeIfAbsent(new KeyAndFileId<>(key, id), __ ->
-          myStubProcessingHelper.retrieveStubIdList(indexKey, key, file, project, shouldHaveKeys)
-        );
-        if (list == null) {
-          // stub index inconsistency
-          continue;
+      if (!ModelBranchImpl.processModifiedFilesInScope(scope != null ? scope : GlobalSearchScope.everythingScope(project),
+                                                       file -> processInMemoryStubs(indexKey, key, project, stubProcessor, file))) {
+        return false;
+      }
+
+      Iterator<VirtualFile> singleFileInScope = FileBasedIndexEx.extractSingleFileOrEmpty(scope);
+      Iterator<VirtualFile> fileStream;
+      boolean shouldHaveKeys;
+
+      if (singleFileInScope != null) {
+        if (!(singleFileInScope.hasNext())) return true;
+        FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, scope);
+        fileStream = singleFileInScope;
+        trace.lookupResultSize(1);
+        shouldHaveKeys = false;
+      }
+      else {
+        IntSet fileIds = getContainingIds(indexKey, key, project, idFilter, scope);
+        if (fileIds == null) {
+          trace.lookupResultSize(0);
+          return true;
         }
-        for (VirtualFile eachFile : filesInScope) {
-          if (!stubProcessor.process(eachFile, list)) {
-            return false;
+        else {
+          trace.lookupResultSize(fileIds.size());
+        }
+        IntPredicate accessibleFileFilter = ((FileBasedIndexEx)FileBasedIndex.getInstance()).getAccessibleFileIdFilter(project);
+
+        // already ensured up-to-date in getContainingIds() method
+        IntIterator idIterator = fileIds.iterator();
+        fileStream = StubIndexImplUtil.mapIdIterator(idIterator, accessibleFileFilter);
+        shouldHaveKeys = true;
+      }
+
+      trace.stubTreesDeserializingStarted();
+
+      try {
+        while (fileStream.hasNext()) {
+          VirtualFile file = fileStream.next();
+          assert file != null;
+
+          List<VirtualFile> filesInScope =
+            scope != null ? FileBasedIndexEx.filesInScopeWithBranches(scope, file) : Collections.singletonList(file);
+          if (filesInScope.isEmpty()) {
+            continue;
+          }
+
+          int id = ((VirtualFileWithId)file).getId();
+          StubIdList list = myCachedStubIds.get(indexKey).getValue().computeIfAbsent(new KeyAndFileId<>(key, id), __ ->
+            myStubProcessingHelper.retrieveStubIdList(indexKey, key, file, project, shouldHaveKeys)
+          );
+          if (list == null) {
+            // stub index inconsistency
+            continue;
+          }
+          for (VirtualFile eachFile : filesInScope) {
+            if (!stubProcessor.process(eachFile, list)) {
+              return false;
+            }
           }
         }
       }
-    }
-    catch (RuntimeException e) {
-      final Throwable cause = FileBasedIndexEx.getCauseToRebuildIndex(e);
-      if (cause != null) {
-        forceRebuild(cause);
+      catch (RuntimeException e) {
+        trace.lookupFailed();
+        final Throwable cause = FileBasedIndexEx.getCauseToRebuildIndex(e);
+        if (cause != null) {
+          forceRebuild(cause);
+        }
+        else {
+          throw e;
+        }
       }
-      else {
-        throw e;
+      finally {
+        wipeProblematicFileIdsForParticularKeyAndStubIndex(indexKey, key);
       }
-    } finally {
-      wipeProblematicFileIdsForParticularKeyAndStubIndex(indexKey, key);
+      return true;
     }
-    return true;
+    catch (Throwable t) {
+      trace.lookupFailed();
+      throw t;
+    }
+    finally {
+      //Not using try-with-resources because in case of exceptions are thrown, .close() needs to be called _after_ catch,
+      //  so .lookupFailed() is invoked on a not-yet-closed trace -- but TWR does the opposite: first close resources, then
+      //  do all catch/finally blocks
+      trace.close();
+    }
   }
 
   private static <Key, Psi extends PsiElement> boolean processInMemoryStubs(StubIndexKey<Key, Psi> indexKey,
@@ -255,7 +287,8 @@ public abstract class StubIndexEx extends StubIndex {
   }
 
   @Override
-  public @NotNull <K> Collection<K> getAllKeys(@SuppressWarnings("BoundedWildcard") @NotNull StubIndexKey<K, ?> indexKey, @NotNull Project project) {
+  public @NotNull <K> Collection<K> getAllKeys(@SuppressWarnings("BoundedWildcard") @NotNull StubIndexKey<K, ?> indexKey,
+                                               @NotNull Project project) {
     Set<K> allKeys = new HashSet<>();
     processAllKeys(indexKey, project, Processors.cancelableCollectProcessor(allKeys));
     return allKeys;
@@ -279,8 +312,10 @@ public abstract class StubIndexEx extends StubIndex {
 
     try {
       @Nullable IdFilter finalIdFilter = idFilter;
-      return myAccessValidator.validate(StubUpdatingIndex.INDEX_ID, ()->FileBasedIndexEx.disableUpToDateCheckIn(()->
-        index.processAllKeys(processor, scope, finalIdFilter)));
+      return myAccessValidator.validate(StubUpdatingIndex.INDEX_ID, () -> FileBasedIndexEx.disableUpToDateCheckIn(() ->
+                                                                                                                    index.processAllKeys(
+                                                                                                                      processor, scope,
+                                                                                                                      finalIdFilter)));
     }
     catch (StorageException e) {
       forceRebuild(e);
@@ -340,15 +375,21 @@ public abstract class StubIndexEx extends StubIndex {
     return result == null ? 0 : result.size();
   }
 
+  /**
+   * @return set of fileId of files containing lookup key (dataKey)
+   */
   private @Nullable <Key> IntSet getContainingIds(@NotNull StubIndexKey<Key, ?> indexKey,
                                                   @NotNull Key dataKey,
                                                   final @NotNull Project project,
                                                   @Nullable IdFilter idFilter,
                                                   final @Nullable GlobalSearchScope scope) {
+    var trace = TRACE_OF_STUB_ENTRIES_LOOKUP.get();
     final FileBasedIndexEx fileBasedIndex = (FileBasedIndexEx)FileBasedIndex.getInstance();
     ID<Integer, SerializedStubTree> stubUpdatingIndexId = StubUpdatingIndex.INDEX_ID;
     final UpdatableIndex<Key, Void, FileContent, ?> index = getIndex(indexKey);   // wait for initialization to finish
     if (index == null || !fileBasedIndex.ensureUpToDate(stubUpdatingIndexId, project, scope, null)) return null;
+
+    trace.indexValidationFinished();
 
     IdFilter finalIdFilter = idFilter != null
                              ? idFilter
@@ -372,7 +413,8 @@ public abstract class StubIndexEx extends StubIndex {
           return true;
         }
       };
-      myAccessValidator.validate(stubUpdatingIndexId, ()-> {
+      myAccessValidator.validate(stubUpdatingIndexId, () -> {
+        trace.totalKeysIndexed(MeasurableIndexStore.keysCountApproximatelyIfPossible(index));
         // disable up-to-date check to avoid locks on attempt to acquire index write lock while holding at the same time the readLock for this index
         return FileBasedIndexEx.disableUpToDateCheckIn(() -> ConcurrencyUtil.withLock(
           stubUpdatingIndex.getLock().readLock(), () -> index.getData(dataKey).forEach(action)));
@@ -380,9 +422,11 @@ public abstract class StubIndexEx extends StubIndex {
       return action.result == null ? IntSets.EMPTY_SET : action.result;
     }
     catch (StorageException e) {
+      trace.lookupFailed();
       forceRebuild(e);
     }
     catch (RuntimeException e) {
+      trace.lookupFailed();
       final Throwable cause = FileBasedIndexEx.getCauseToRebuildIndex(e);
       if (cause != null) {
         forceRebuild(cause);

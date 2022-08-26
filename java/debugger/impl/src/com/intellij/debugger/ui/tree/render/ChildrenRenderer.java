@@ -24,7 +24,6 @@ public interface ChildrenRenderer extends Renderer {
    * @param node a child node
    * @return expression that evaluates the child node.
    *         Use 'this' to refer the expression that evaluates this (parent) node
-   * @param context
    */
   PsiElement getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException;
 

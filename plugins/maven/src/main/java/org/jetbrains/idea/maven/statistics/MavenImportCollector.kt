@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 
 class MavenImportCollector : CounterUsagesCollector() {
   companion object {
-    val GROUP = EventLogGroup("maven.import", 3)
+    val GROUP = EventLogGroup("maven.import", 5)
 
     @JvmField
     val HAS_USER_ADDED_LIBRARY_DEP = GROUP.registerEvent("hasUserAddedLibraryDependency")
@@ -21,11 +21,48 @@ class MavenImportCollector : CounterUsagesCollector() {
     @JvmField
     val NUMBER_OF_MODULES = EventFields.RoundedInt("number_of_modules")
 
+    // >>> Legacy import phases
+    @JvmField
+    val LEGACY_IMPORT = GROUP.registerIdeActivity("legacy_import",
+                                                  finishEventAdditionalFields = arrayOf(NUMBER_OF_MODULES))
+
+    @JvmField
+    val LEGACY_CREATE_MODULES_PHASE = GROUP.registerIdeActivity("create_modules", parentActivity = LEGACY_IMPORT)
+
+    @JvmField
+    val LEGACY_DELETE_OBSOLETE_PHASE = GROUP.registerIdeActivity("delete_obsolete", parentActivity = LEGACY_IMPORT)
+
+    @JvmField
+    val LEGACY_IMPORTERS_PHASE = GROUP.registerIdeActivity("importers", parentActivity = LEGACY_IMPORT)
+    // <<< Legacy import phases
+
+    // >>> Workspace import phases
+    @JvmField
+    val WORKSPACE_IMPORT = GROUP.registerIdeActivity("workspace_import",
+                                                     finishEventAdditionalFields = arrayOf(NUMBER_OF_MODULES))
+
+    @JvmField
+    val WORKSPACE_FOLDERS_UPDATE = GROUP.registerIdeActivity("workspace_folders_update",
+                                                             finishEventAdditionalFields = arrayOf(NUMBER_OF_MODULES))
+
+    @JvmField
+    val WORKSPACE_POPULATE_PHASE = GROUP.registerIdeActivity("populate", parentActivity = WORKSPACE_IMPORT)
+
+    @JvmField
+    val WORKSPACE_COMMIT_PHASE = GROUP.registerIdeActivity("commit", parentActivity = WORKSPACE_IMPORT)
+
+    @JvmField
+    val WORKSPACE_LEGACY_IMPORTERS_PHASE = GROUP.registerIdeActivity("legacy_importers", parentActivity = WORKSPACE_IMPORT)
+    // <<< Workspace import phases
+
     @JvmField
     val TOTAL_DURATION_MS = EventFields.Long("total_duration_ms")
 
     @JvmField
-    val CONFIG_MODULES_DURATION_MS = EventFields.Long("config_duration_ms")
+    val COLLECT_FOLDERS_DURATION_MS = EventFields.Long("collect_folders_duration_ms")
+
+    @JvmField
+    val CONFIG_MODULES_DURATION_MS = EventFields.Long("config_modules_duration_ms")
 
     @JvmField
     val BEFORE_APPLY_DURATION_MS = EventFields.Long("before_apply_duration_ms")
@@ -43,10 +80,11 @@ class MavenImportCollector : CounterUsagesCollector() {
     val CONFIGURATOR_CLASS = EventFields.Class("configurator_class")
 
     @JvmField
-    val CONFIGURATOR_RUN = GROUP.registerVarargEvent("configurator_run",
+    val CONFIGURATOR_RUN = GROUP.registerVarargEvent("workspace_import.configurator_run",
                                                      CONFIGURATOR_CLASS,
                                                      NUMBER_OF_MODULES,
                                                      TOTAL_DURATION_MS,
+                                                     COLLECT_FOLDERS_DURATION_MS,
                                                      CONFIG_MODULES_DURATION_MS,
                                                      BEFORE_APPLY_DURATION_MS,
                                                      AFTER_APPLY_DURATION_MS)

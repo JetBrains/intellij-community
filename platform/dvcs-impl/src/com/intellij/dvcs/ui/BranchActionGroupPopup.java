@@ -101,12 +101,17 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       }
     };
     AnAction restoreSizeButton =
-      new AnAction(DvcsBundle.messagePointer("action.BranchActionGroupPopup.Anonymous.text.restore.size"), FitContent) {
+      new DumbAwareAction(DvcsBundle.messagePointer("action.BranchActionGroupPopup.Anonymous.text.restore.size"), FitContent) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           WindowStateService.getInstance(myProject).putSizeFor(myProject, dimensionKey, null);
           myInternalSizeChanged = true;
           pack(true, true);
+        }
+
+        @Override
+        public @NotNull ActionUpdateThread getActionUpdateThread() {
+          return ActionUpdateThread.EDT;
         }
 
         @Override

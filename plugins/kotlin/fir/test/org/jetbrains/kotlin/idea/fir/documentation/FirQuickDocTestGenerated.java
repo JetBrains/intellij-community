@@ -6,7 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -131,6 +131,11 @@ public class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
     @TestMetadata("KotlinClassUsedFromJava.java")
     public void testKotlinClassUsedFromJava() throws Exception {
         runTest("testData/quickDoc/KotlinClassUsedFromJava.java");
+    }
+
+    @TestMetadata("Lateinit.kt")
+    public void testLateinit() throws Exception {
+        runTest("testData/quickDoc/Lateinit.kt");
     }
 
     @TestMetadata("LateinitName.kt")
@@ -291,6 +296,11 @@ public class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
     @TestMetadata("Samples.kt")
     public void testSamples() throws Exception {
         runTest("testData/quickDoc/Samples.kt");
+    }
+
+    @TestMetadata("Tailrec.kt")
+    public void testTailrec() throws Exception {
+        runTest("testData/quickDoc/Tailrec.kt");
     }
 
     @TestMetadata("TailrecName.kt")

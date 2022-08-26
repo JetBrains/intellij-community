@@ -19,8 +19,6 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  * @see TextEditor
  */
 public interface FileEditor extends UserDataHolder, Disposable {

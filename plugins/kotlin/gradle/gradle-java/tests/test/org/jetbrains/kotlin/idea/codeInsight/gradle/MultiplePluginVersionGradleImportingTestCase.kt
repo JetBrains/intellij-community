@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /**
  * This TestCase implements possibility to test import with different versions of gradle and different
@@ -108,8 +108,8 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
 
     val androidProperties: Map<String, String>
         get() = mapOf(
-            "android_gradle_plugin_version" to "7.0.4",
-            "compile_sdk_version" to "30",
+            "android_gradle_plugin_version" to "7.2.2",
+            "compile_sdk_version" to "31",
             "build_tools_version" to "28.0.3",
         )
 

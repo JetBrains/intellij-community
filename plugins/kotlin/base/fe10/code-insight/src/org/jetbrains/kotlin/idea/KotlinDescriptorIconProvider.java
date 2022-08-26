@@ -2,9 +2,11 @@
 
 package org.jetbrains.kotlin.idea;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
@@ -47,15 +49,15 @@ public final class KotlinDescriptorIconProvider {
             }
 
             if (visibility == DescriptorVisibilities.PROTECTED) {
-                return PlatformIcons.PROTECTED_ICON;
+                return IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Protected);
             }
 
             if (DescriptorVisibilities.isPrivate(visibility)) {
-                return PlatformIcons.PRIVATE_ICON;
+                return IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Private);
             }
 
             if (visibility == DescriptorVisibilities.INTERNAL) {
-                return PlatformIcons.PACKAGE_LOCAL_ICON;
+                return IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Local);
             }
         }
 
@@ -73,7 +75,7 @@ public final class KotlinDescriptorIconProvider {
 
     private static Icon getBaseIcon(@NotNull DeclarationDescriptor descriptor) {
         if (descriptor instanceof PackageFragmentDescriptor || descriptor instanceof PackageViewDescriptor) {
-            return PlatformIcons.PACKAGE_ICON;
+            return AllIcons.Nodes.Package;
         }
         if (descriptor instanceof FunctionDescriptor) {
             FunctionDescriptor functionDescriptor = (FunctionDescriptor) descriptor;
@@ -86,7 +88,7 @@ public final class KotlinDescriptorIconProvider {
             if (descriptor.getContainingDeclaration() instanceof ClassDescriptor) {
                 return Modality.ABSTRACT == getModalitySafe(functionDescriptor)
                        ? PlatformIcons.ABSTRACT_METHOD_ICON
-                       : PlatformIcons.METHOD_ICON;
+                       : IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Method);
             }
             else {
                 return KotlinIcons.FUNCTION;
@@ -127,7 +129,7 @@ public final class KotlinDescriptorIconProvider {
         }
 
         if (descriptor instanceof TypeParameterDescriptor) {
-            return PlatformIcons.CLASS_ICON;
+            return IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class);
         }
 
         if (descriptor instanceof TypeAliasDescriptor) {

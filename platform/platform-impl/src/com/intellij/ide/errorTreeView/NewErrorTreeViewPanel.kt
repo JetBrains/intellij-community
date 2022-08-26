@@ -598,6 +598,10 @@ open class NewErrorTreeViewPanel @JvmOverloads constructor(
       val presentation = event.presentation
       presentation.isEnabled = canControlProcess() && isProcessStopped
     }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.BGT
+    }
   }
 
   private inner class StopAction : DumbAwareAction(IdeBundle.messagePointer("action.stop"), AllIcons.Actions.Suspend) {
@@ -612,6 +616,10 @@ open class NewErrorTreeViewPanel @JvmOverloads constructor(
       val presentation = event.presentation
       presentation.isEnabled = canControlProcess() && !isProcessStopped
       presentation.isVisible = canControlProcess()
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.BGT
     }
   }
 
@@ -628,6 +636,10 @@ open class NewErrorTreeViewPanel @JvmOverloads constructor(
         structureModel.invalidateAsync()
       }
     }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.BGT
+    }
   }
 
   private inner class ShowInfosAction : ToggleAction(IdeBundle.messagePointer("action.show.infos"),
@@ -640,6 +652,10 @@ open class NewErrorTreeViewPanel @JvmOverloads constructor(
         configuration.isHideInfoMessages = hideInfos
         structureModel.invalidateAsync()
       }
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+      return ActionUpdateThread.BGT
     }
   }
 

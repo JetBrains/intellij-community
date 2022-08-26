@@ -21,9 +21,6 @@ import javax.swing.*;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 
-/**
- * @author Vladimir Kondratyev
- */
 public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent implements TreeCellRenderer {
   private static final Logger LOG = Logger.getInstance(ColoredTreeCellRenderer.class);
 

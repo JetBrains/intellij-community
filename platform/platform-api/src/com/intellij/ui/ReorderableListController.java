@@ -57,6 +57,11 @@ public abstract class ReorderableListController <T> {
       public void update(@NotNull final AnActionEvent e) {
         e.getPresentation().setEnabled(ListUtil.canMoveSelectedItemsUp(myList));
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
     });
   }
 
@@ -70,6 +75,11 @@ public abstract class ReorderableListController <T> {
       @Override
       public void update(@NotNull final AnActionEvent e) {
         e.getPresentation().setEnabled(ListUtil.canMoveSelectedItemsDown(myList));
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
     });
   }
@@ -159,6 +169,11 @@ public abstract class ReorderableListController <T> {
       @Override
       public void update(@NotNull final AnActionEvent e) {
         myBehaviour.updateAction(e);
+      }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
       }
     }
 

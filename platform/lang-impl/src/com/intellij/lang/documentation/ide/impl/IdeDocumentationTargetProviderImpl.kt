@@ -12,8 +12,6 @@ import com.intellij.model.Pointer
 import com.intellij.model.Symbol
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.component1
-import com.intellij.openapi.util.component2
 import com.intellij.psi.PsiFile
 import com.intellij.util.castSafelyTo
 
@@ -34,13 +32,6 @@ open class IdeDocumentationTargetProviderImpl(private val project: Project) : Id
   }
 
   override fun documentationTargets(editor: Editor, file: PsiFile, offset: Int): List<DocumentationTarget> {
-    val symbolTargets = symbolDocumentationTargets(file, offset)
-    if (symbolTargets.isNotEmpty()) {
-      return symbolTargets
-    }
-    val documentationManager = DocumentationManager.getInstance(project)
-    val (targetElement, sourceElement) = documentationManager.findTargetElementAndContext(editor, offset, file)
-                                         ?: return emptyList()
-    return listOf(psiDocumentationTarget(targetElement, sourceElement))
+    return com.intellij.lang.documentation.impl.documentationTargets(file, offset)
   }
 }

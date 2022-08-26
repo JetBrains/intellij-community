@@ -2,11 +2,11 @@ package com.intellij.cce.filter
 
 import com.intellij.cce.dialog.configurable.FilterUIConfigurableFactory
 import com.intellij.cce.workspace.ConfigFactory
-import com.intellij.ui.layout.*
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
+import com.intellij.ui.dsl.builder.panel
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 class FilterUIConfigurableFactoryTest {
   companion object {

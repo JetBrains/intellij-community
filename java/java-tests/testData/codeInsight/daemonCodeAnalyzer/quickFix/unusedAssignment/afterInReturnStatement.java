@@ -1,4 +1,4 @@
-// "Remove redundant assignment" "true"
+// "Remove redundant assignment" "true-preview"
 class A {
   int v() {
         int x;

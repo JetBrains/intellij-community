@@ -2,7 +2,6 @@
 package com.intellij.vcs.commit
 
 import com.intellij.history.LocalHistory
-import com.intellij.history.LocalHistoryAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -13,7 +12,6 @@ import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.ChangesUtil.processChangesByVcs
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously
-import com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress
 import org.jetbrains.annotations.Nls
 
 private val COMMIT_WITHOUT_CHANGES_ROOTS_KEY = Key.create<Collection<VcsRoot>>("Vcs.Commit.CommitWithoutChangesRoots")
@@ -21,84 +19,93 @@ var CommitContext.commitWithoutChangesRoots: Collection<VcsRoot> by commitProper
 
 open class LocalChangesCommitter(
   project: Project,
-  changes: List<Change>,
-  commitMessage: String,
+  val commitState: ChangeListCommitState,
   commitContext: CommitContext,
   private val localHistoryActionName: @Nls String = message("commit.changes")
-) : AbstractCommitter(project, changes, commitMessage, commitContext) {
+) : VcsCommitter(project, commitState.changes, commitState.commitMessage, commitContext, true) {
 
-  private var myAction = LocalHistoryAction.NULL
+  init {
+    addResultHandler(CommittedChangesCacheListener(project))
+    addResultHandler(ChangeListDataCleaner(this))
+  }
 
-  protected var isSuccess = false
+  var isSuccess = false
+    private set
 
   override fun commit() {
-    val committedVcses = commitChanges()
-    commitWithoutChanges(committedVcses)
+    try {
+      vetoDocumentSaving(project, changes) {
+        val committedVcses = commitChanges()
+        commitWithoutChanges(committedVcses)
+      }
+
+      isSuccess = commitErrors.isEmpty()
+    }
+    finally {
+      refreshChanges()
+    }
   }
 
   private fun commitChanges(): Set<AbstractVcs> {
     val committedVcses = mutableSetOf<AbstractVcs>()
     processChangesByVcs(project, changes) { vcs, vcsChanges ->
       committedVcses += vcs
-      commit(vcs, vcsChanges)
+      vcsCommit(vcs, vcsChanges)
     }
     return committedVcses
   }
 
   private fun commitWithoutChanges(committedVcses: Set<AbstractVcs>) {
     val commitWithoutChangesVcses = commitContext.commitWithoutChangesRoots.mapNotNullTo(mutableSetOf()) { it.vcs }
-    (commitWithoutChangesVcses - committedVcses).forEach { commit(it, emptyList()) }
-  }
-
-  override fun afterCommit() {
-    if (pathsToRefresh.isNotEmpty()) {
-      ChangeListManagerImpl.getInstanceImpl(project).showLocalChangesInvalidated()
-    }
-
-    myAction = runReadAction { LocalHistory.getInstance().startAction(localHistoryActionName) }
-  }
-
-  override fun onSuccess() {
-    isSuccess = true
-  }
-
-  override fun onFailure() = Unit
-
-  override fun onFinish() {
-    refreshChanges()
-    runOrInvokeLaterAboveProgress({ doPostRefresh() }, null, project)
+    (commitWithoutChangesVcses - committedVcses).forEach { vcsCommit(it, emptyList()) }
   }
 
   private fun refreshChanges() {
-    val toRefresh = mutableListOf<Change>()
-    processChangesByVcs(project, changes) { vcs, changes ->
-      val environment = vcs.checkinEnvironment
-      if (environment != null && environment.isRefreshAfterCommitNeeded) {
-        toRefresh.addAll(changes)
+    try {
+      val refreshAction = runReadAction { LocalHistory.getInstance().startAction(localHistoryActionName) }
+
+      if (pathsToRefresh.isNotEmpty()) {
+        ChangeListManagerImpl.getInstanceImpl(project).showLocalChangesInvalidated()
       }
-    }
 
-    if (toRefresh.isNotEmpty()) {
-      progress(message("commit.dialog.refresh.files"))
-      RefreshVFsSynchronously.updateChanges(toRefresh)
-    }
-  }
+      val toRefresh = mutableListOf<Change>()
+      processChangesByVcs(project, changes) { vcs, changes ->
+        val environment = vcs.checkinEnvironment
+        if (environment != null && environment.isRefreshAfterCommitNeeded) {
+          toRefresh.addAll(changes)
+        }
+      }
 
-  private fun doPostRefresh() {
-    myAction.finish()
-    if (!project.isDisposed) {
-      // after vcs refresh is completed, outdated notifiers should be removed if some exists...
+      if (toRefresh.isNotEmpty()) {
+        progress(message("commit.dialog.refresh.files"))
+        RefreshVFsSynchronously.updateChanges(toRefresh)
+      }
+
+      refreshAction.finish()
+
       VcsDirtyScopeManager.getInstance(project).filePathsDirty(pathsToRefresh, null)
-      ChangeListManager.getInstance(project).invokeAfterUpdate(true) { afterRefreshChanges() }
 
       LocalHistory.getInstance().putSystemLabel(project, "$localHistoryActionName: $commitMessage")
     }
+    finally {
+      ChangeListManager.getInstance(project).invokeAfterUpdate(true) { fireAfterRefresh() }
+    }
   }
+}
 
-  protected open fun afterRefreshChanges() {
+private class CommittedChangesCacheListener(val project: Project) : CommitterResultHandler {
+  override fun onAfterRefresh() {
     val cache = CommittedChangesCache.getInstance(project)
     // in background since commit must have authorized
     cache.refreshAllCachesAsync(false, true)
     cache.refreshIncomingChangesAsync()
+  }
+}
+
+private class ChangeListDataCleaner(val committer: LocalChangesCommitter) : CommitterResultHandler {
+  override fun onAfterRefresh() {
+    if (committer.isSuccess) {
+      ChangeListManagerEx.getInstanceEx(committer.project).editChangeListData(committer.commitState.changeList.name, null)
+    }
   }
 }

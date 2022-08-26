@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
-import com.intellij.diagnostic.Activity;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.execution.process.WinProcessManager;
 import com.intellij.openapi.application.PathManager;
@@ -96,7 +95,7 @@ public final class EnvironmentUtil {
   }
 
   @ApiStatus.Internal
-  public static @Nullable Boolean loadEnvironment(@NotNull Activity activity) {
+  public static @Nullable Boolean loadEnvironment() {
     if (!shouldLoadShellEnv()) {
       ourEnvGetter.set(CompletableFuture.completedFuture(getSystemEnv()));
       return null;
@@ -119,11 +118,8 @@ public final class EnvironmentUtil {
         }
       }
     }
-    finally {
-      activity.end();
-    }
 
-    // execution time of 'envFuture' handlers should not be included into load env activity
+    // execution time of 'envFuture' handlers should not be included in the "load environment" activity
     if (result == Boolean.FALSE) {
       envFuture.complete(getSystemEnv());
     }
@@ -331,17 +327,16 @@ public final class EnvironmentUtil {
       builder.environment().put(DISABLE_OMZ_AUTO_UPDATE, "true");
       builder.environment().put(INTELLIJ_ENVIRONMENT_READER, "true");
 
-      Path logFile = null;
+      Path logFile = Files.createTempFile("ij-shell-env-log.", ".tmp");
       try {
-        logFile = Files.createTempFile("ij-shell-env-log.", ".tmp");
-        final Process process = builder
+        Process process = builder
           .redirectErrorStream(true)
           .redirectOutput(ProcessBuilder.Redirect.to(logFile.toFile()))
           .start();
-        final int exitCode = waitAndTerminateAfter(process, myTimeoutMillis);
+        int exitCode = waitAndTerminateAfter(process, myTimeoutMillis);
 
-        final String envData = new String(Files.readAllBytes(envDataFile), Charset.defaultCharset());
-        final String log = new String(Files.readAllBytes(logFile), Charset.defaultCharset());
+        String envData = Files.exists(envDataFile) ? new String(Files.readAllBytes(envDataFile), Charset.defaultCharset()) : "";
+        String log = Files.exists(logFile) ? new String(Files.readAllBytes(logFile), Charset.defaultCharset()) : "(no log file)";
         if (exitCode != 0 || envData.isEmpty()) {
           if (!log.isEmpty()) {
             LOG.info("stdout/stderr: " + log);

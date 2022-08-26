@@ -66,6 +66,7 @@ class RecentProjectManagerState : BaseState() {
       return
     }
 
+    // might be freezing for many projects that were stored as "opened"
     while (additionalInfo.size > limit) {
       val iterator = additionalInfo.keys.iterator()
       while (iterator.hasNext()) {

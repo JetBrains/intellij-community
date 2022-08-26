@@ -35,7 +35,7 @@ class ActionsGenerationStep(
   private fun generateActions(workspace: EvaluationWorkspace, languageName: String, files: Collection<VirtualFile>,
                               strategy: CompletionStrategy, evaluationRootInfo: EvaluationRootInfo, indicator: Progress) {
     val actionsGenerator = ActionsGenerator(strategy, Language.resolve(languageName))
-    val codeFragmentBuilder = CodeFragmentBuilder.create(project, languageName)
+    val codeFragmentBuilder = CodeFragmentBuilder.create(project, languageName, strategy.completionGolf)
 
     val errors = mutableListOf<FileErrorInfo>()
     var totalSessions = 0

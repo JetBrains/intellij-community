@@ -85,7 +85,7 @@ package com.intellij.util;
     Set<Thread> used = ContainerUtil.newConcurrentSet();
     AtomicInteger executed = new AtomicInteger();
     int N = 100000;
-    List<Alarm> alarms = Stream.generate(() -> new Alarm(getTestRootDisposable())).limit(N).collect(Collectors.toList());
+    List<Alarm> alarms = Stream.generate(() -> new Alarm(getTestRootDisposable())).limit(N).toList();
     alarms.forEach(alarm -> alarm.addRequest(() -> {
       executed.incrementAndGet();
       used.add(Thread.currentThread());

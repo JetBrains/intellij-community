@@ -708,9 +708,17 @@ public final class ActionsTreeUtil {
 
   private static AnAction @NotNull [] getActions(@NotNull ActionGroup group, @NotNull ActionManager actionManager) {
     // ActionManagerImpl#preloadActions does not preload action groups, e.g. File | New, so unstub it
-    ActionGroup adjusted = group instanceof ActionGroupStub
-                           ? (ActionGroup)actionManager.getAction(((ActionGroupStub)group).getId())
-                           : group;
+    ActionGroup adjusted = group;
+    if (group instanceof ActionGroupStub) {
+      String id = ((ActionGroupStub)group).getId();
+      AnAction action = actionManager.getAction(id);
+      if (action instanceof ActionGroup) {
+        adjusted = (ActionGroup)action;
+      }
+      else {
+        LOG.error("not an ActionGroup: " + action + " id=" + id);
+      }
+    }
     return adjusted instanceof DefaultActionGroup
            ? ((DefaultActionGroup)adjusted).getChildActionsOrStubs()
            : adjusted.getChildren(null);

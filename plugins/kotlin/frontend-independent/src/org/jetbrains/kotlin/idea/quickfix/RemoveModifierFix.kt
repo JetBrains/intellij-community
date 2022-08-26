@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
@@ -15,11 +15,13 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.coMap
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.quickFixesPsiBasedFactory
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.types.Variance
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 open class RemoveModifierFixBase(
     element: KtModifierListOwner,
@@ -34,8 +36,10 @@ open class RemoveModifierFixBase(
         when {
             isRedundant ->
                 KotlinBundle.message("remove.redundant.0.modifier", modifierText)
+
             modifier === KtTokens.ABSTRACT_KEYWORD || modifier === KtTokens.OPEN_KEYWORD ->
                 KotlinBundle.message("make.0.not.1", getElementName(element), modifierText)
+
             else ->
                 KotlinBundle.message("remove.0.modifier", modifierText, modifier)
         }
@@ -143,6 +147,11 @@ open class RemoveModifierFixBase(
                 listOf(RemoveModifierFixBase(funInterface, KtTokens.FUN_KEYWORD, isRedundant = false))
             }
         }
+
+        fun createRemovePrivateModifierFromSealedConstructor(): QuickFixesPsiBasedFactory<PsiElement> =
+            createRemoveModifierFromListOwnerFactoryByModifierListOwner(KtTokens.PRIVATE_KEYWORD).coMap {
+                it.safeAs<KtConstructorCalleeExpression>()?.constructorReferenceExpression?.mainReference?.resolve() as? KtModifierListOwner
+            }
 
         fun getElementName(modifierListOwner: KtModifierListOwner): String {
             var name: String? = null

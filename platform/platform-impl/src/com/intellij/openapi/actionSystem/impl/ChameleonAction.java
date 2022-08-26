@@ -16,6 +16,7 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.ActionStub;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
@@ -66,6 +67,13 @@ public class ChameleonAction extends AnAction {
     if (visible) {
       action.update(e);
     }
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    AnAction action = myActions.get(null);
+    if (action == null) action = myActions.values().iterator().next();
+    return action == null ? ActionUpdateThread.BGT : action.getActionUpdateThread();
   }
 
   private @Nullable AnAction getAction(@NotNull AnActionEvent e) {

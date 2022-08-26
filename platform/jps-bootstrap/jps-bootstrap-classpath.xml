@@ -6,7 +6,7 @@
   <property name="classes.dir" value="${build.dir}/jps-bootstrap.classes" />
   <property name="uber.dir" value="${build.dir}/jps-bootstrap.out.lib" />
   <property environment="env"/>
-  <property prefix="dependencies" file="${community.home}/build/dependencies/gradle.properties" />
+  <property prefix="dependencies" file="${community.home}/build/dependencies/dependencies.properties" />
 
   <mkdir dir="${build.dir}" />
 

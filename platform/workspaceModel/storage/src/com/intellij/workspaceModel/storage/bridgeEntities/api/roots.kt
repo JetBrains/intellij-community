@@ -1,15 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.bridgeEntities.api
 
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntitySource
+import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.annotations.Child
 import org.jetbrains.deft.Type
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.MutableEntityStorage
+import org.jetbrains.deft.annotations.Child
 
 
 
@@ -18,6 +19,7 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 interface ContentRootEntity : WorkspaceEntity {
     val module: ModuleEntity
 
+    @EqualsBy
     val url: VirtualFileUrl
     val excludedUrls: List<VirtualFileUrl>
     val excludedPatterns: List<String>
@@ -27,11 +29,11 @@ interface ContentRootEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ContentRootEntity, ModifiableWorkspaceEntity<ContentRootEntity>, ObjBuilder<ContentRootEntity> {
-    override var module: ModuleEntity
     override var entitySource: EntitySource
+    override var module: ModuleEntity
     override var url: VirtualFileUrl
-    override var excludedUrls: List<VirtualFileUrl>
-    override var excludedPatterns: List<String>
+    override var excludedUrls: MutableList<VirtualFileUrl>
+    override var excludedPatterns: MutableList<String>
     override var sourceRoots: List<SourceRootEntity>
     override var sourceRootOrder: SourceRootOrderEntity?
   }
@@ -43,10 +45,10 @@ interface ContentRootEntity : WorkspaceEntity {
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): ContentRootEntity {
       val builder = builder()
-      builder.entitySource = entitySource
       builder.url = url
-      builder.excludedUrls = excludedUrls
-      builder.excludedPatterns = excludedPatterns
+      builder.excludedUrls = excludedUrls.toMutableWorkspaceList()
+      builder.excludedPatterns = excludedPatterns.toMutableWorkspaceList()
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }
@@ -73,8 +75,8 @@ interface SourceRootEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : SourceRootEntity, ModifiableWorkspaceEntity<SourceRootEntity>, ObjBuilder<SourceRootEntity> {
-    override var contentRoot: ContentRootEntity
     override var entitySource: EntitySource
+    override var contentRoot: ContentRootEntity
     override var url: VirtualFileUrl
     override var rootType: String
     override var customSourceRootProperties: CustomSourceRootPropertiesEntity?
@@ -88,9 +90,9 @@ interface SourceRootEntity : WorkspaceEntity {
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): SourceRootEntity {
       val builder = builder()
-      builder.entitySource = entitySource
       builder.url = url
       builder.rootType = rootType
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }
@@ -112,9 +114,9 @@ interface SourceRootOrderEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : SourceRootOrderEntity, ModifiableWorkspaceEntity<SourceRootOrderEntity>, ObjBuilder<SourceRootOrderEntity> {
-    override var contentRootEntity: ContentRootEntity
     override var entitySource: EntitySource
-    override var orderOfSourceRoots: List<VirtualFileUrl>
+    override var contentRootEntity: ContentRootEntity
+    override var orderOfSourceRoots: MutableList<VirtualFileUrl>
   }
 
   companion object : Type<SourceRootOrderEntity, Builder>() {
@@ -122,8 +124,8 @@ interface SourceRootOrderEntity : WorkspaceEntity {
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): SourceRootOrderEntity {
       val builder = builder()
+      builder.orderOfSourceRoots = orderOfSourceRoots.toMutableWorkspaceList()
       builder.entitySource = entitySource
-      builder.orderOfSourceRoots = orderOfSourceRoots
       init?.invoke(builder)
       return builder
     }
@@ -145,8 +147,8 @@ interface CustomSourceRootPropertiesEntity: WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : CustomSourceRootPropertiesEntity, ModifiableWorkspaceEntity<CustomSourceRootPropertiesEntity>, ObjBuilder<CustomSourceRootPropertiesEntity> {
-    override var sourceRoot: SourceRootEntity
     override var entitySource: EntitySource
+    override var sourceRoot: SourceRootEntity
     override var propertiesXmlTag: String
   }
 
@@ -155,8 +157,8 @@ interface CustomSourceRootPropertiesEntity: WorkspaceEntity {
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): CustomSourceRootPropertiesEntity {
       val builder = builder()
-      builder.entitySource = entitySource
       builder.propertiesXmlTag = propertiesXmlTag
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }
@@ -180,8 +182,8 @@ interface JavaSourceRootEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : JavaSourceRootEntity, ModifiableWorkspaceEntity<JavaSourceRootEntity>, ObjBuilder<JavaSourceRootEntity> {
-    override var sourceRoot: SourceRootEntity
     override var entitySource: EntitySource
+    override var sourceRoot: SourceRootEntity
     override var generated: Boolean
     override var packagePrefix: String
   }
@@ -192,9 +194,9 @@ interface JavaSourceRootEntity : WorkspaceEntity {
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): JavaSourceRootEntity {
       val builder = builder()
-      builder.entitySource = entitySource
       builder.generated = generated
       builder.packagePrefix = packagePrefix
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }
@@ -217,8 +219,8 @@ interface JavaResourceRootEntity: WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : JavaResourceRootEntity, ModifiableWorkspaceEntity<JavaResourceRootEntity>, ObjBuilder<JavaResourceRootEntity> {
-    override var sourceRoot: SourceRootEntity
     override var entitySource: EntitySource
+    override var sourceRoot: SourceRootEntity
     override var generated: Boolean
     override var relativeOutputPath: String
   }
@@ -229,9 +231,9 @@ interface JavaResourceRootEntity: WorkspaceEntity {
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): JavaResourceRootEntity {
       val builder = builder()
-      builder.entitySource = entitySource
       builder.generated = generated
       builder.relativeOutputPath = relativeOutputPath
+      builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
     }

@@ -44,7 +44,7 @@ object ExternalCompilerVersionProvider {
         }
 
         if (hasJpsModules) {
-            val projectGlobalVersion = KotlinJpsPluginSettings.jpsVersion(project)?.let(IdeKotlinVersion::opt)
+            val projectGlobalVersion = IdeKotlinVersion.opt(KotlinJpsPluginSettings.jpsVersion(project))
             if (projectGlobalVersion != null) {
                 result.add(projectGlobalVersion)
             }

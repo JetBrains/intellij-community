@@ -132,6 +132,10 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     return myItems;
   }
 
+  public List<PopupFactoryImpl.InlineActionItem> getInlineActions(PopupFactoryImpl.ActionItem value) {
+    return value.getInlineActions();
+  }
+
   @Override
   public boolean isSelectable(final PopupFactoryImpl.ActionItem value) {
     return value.isEnabled();
@@ -243,6 +247,10 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
         for (PopupFactoryImpl.ActionItem actionItem : values) {
           Presentation presentation = presentationFactory.getPresentation(actionItem.getAction());
           actionItem.updateFromPresentation(presentation, myActionPlace);
+          for (PopupFactoryImpl.InlineActionItem inlineActionItem : actionItem.getInlineActions()) {
+            presentation = presentationFactory.getPresentation(inlineActionItem.getAction());
+            inlineActionItem.updateFromPresentation(presentation, myActionPlace);
+          }
         }
       }
     );

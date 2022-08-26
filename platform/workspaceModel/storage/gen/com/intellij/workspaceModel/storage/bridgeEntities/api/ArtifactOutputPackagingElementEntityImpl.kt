@@ -15,6 +15,7 @@ import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.SoftLinkable
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToAbstractManyParent
@@ -80,7 +81,7 @@ open class ArtifactOutputPackagingElementEntityImpl : ArtifactOutputPackagingEle
     fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ArtifactOutputPackagingElementEntity#entitySource should be initialized")
+        error("Field WorkspaceEntity#entitySource should be initialized")
       }
     }
 
@@ -88,6 +89,25 @@ open class ArtifactOutputPackagingElementEntityImpl : ArtifactOutputPackagingEle
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as ArtifactOutputPackagingElementEntity
+      this.entitySource = dataSource.entitySource
+      this.artifact = dataSource.artifact
+      if (parents != null) {
+        this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
+      }
+    }
+
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var parentEntity: CompositePackagingElementEntity?
       get() {
@@ -134,15 +154,6 @@ open class ArtifactOutputPackagingElementEntityImpl : ArtifactOutputPackagingEle
         checkModificationAllowed()
         getEntityData().artifact = value
         changedProperty.add("artifact")
-
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
 
       }
 
@@ -240,14 +251,26 @@ class ArtifactOutputPackagingElementEntityData : WorkspaceEntityData<ArtifactOut
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ArtifactOutputPackagingElementEntity(entitySource) {
+      this.artifact = this@ArtifactOutputPackagingElementEntityData.artifact
+      this.parentEntity = parents.filterIsInstance<CompositePackagingElementEntity>().singleOrNull()
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
 
     other as ArtifactOutputPackagingElementEntityData
 
-    if (this.artifact != other.artifact) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.artifact != other.artifact) return false
     return true
   }
 
@@ -265,5 +288,16 @@ class ArtifactOutputPackagingElementEntityData : WorkspaceEntityData<ArtifactOut
     var result = entitySource.hashCode()
     result = 31 * result + artifact.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + artifact.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.add(ArtifactId::class.java)
+    collector.sameForAllEntities = true
   }
 }

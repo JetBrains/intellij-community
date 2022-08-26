@@ -19,7 +19,6 @@ import javax.swing.text.html.StyleSheet
 @Internal
 object GlobalStyleSheetHolder {
   private val globalStyleSheet = StyleSheet()
-  private var swingStyleSheetHandled = false
   private var currentLafStyleSheet: StyleSheet? = null
 
   /**
@@ -32,22 +31,21 @@ object GlobalStyleSheetHolder {
     return result
   }
 
+  internal fun updateGlobalSwingStyleSheet() {
+    // get the default JRE CSS and ...
+    val kit = HTMLEditorKit()
+    val defaultSheet = kit.styleSheet
+    globalStyleSheet.addStyleSheet(defaultSheet)
+
+    // ... set a new default sheet
+    kit.styleSheet = getGlobalStyleSheet()
+  }
+
   /**
    * Populate global stylesheet with LAF-based overrides
    */
   internal fun updateGlobalStyleSheet() {
     runActivity("global styleSheet updating") {
-      if (!swingStyleSheetHandled) {
-        // get the default JRE CSS and ...
-        val kit = HTMLEditorKit()
-        val defaultSheet = kit.styleSheet
-        globalStyleSheet.addStyleSheet(defaultSheet)
-
-        // ... set a new default sheet
-        kit.styleSheet = getGlobalStyleSheet()
-        swingStyleSheetHandled = true
-      }
-
       val currentSheet = currentLafStyleSheet
       if (currentSheet != null) {
         globalStyleSheet.removeStyleSheet(currentSheet)

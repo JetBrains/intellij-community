@@ -253,7 +253,6 @@ public final class DvcsUtil {
     }
   }
 
-  @RequiresEdt
   public static void addMappingIfSubRoot(@NotNull Project project,
                                          @NotNull @NonNls String newRepositoryPath,
                                          @NotNull @NonNls String vcsName) {

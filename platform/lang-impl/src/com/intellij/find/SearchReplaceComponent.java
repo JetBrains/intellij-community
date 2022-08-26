@@ -917,6 +917,10 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       myEventDispatcher.getMulticaster().toggleSearchReplaceMode();
     }

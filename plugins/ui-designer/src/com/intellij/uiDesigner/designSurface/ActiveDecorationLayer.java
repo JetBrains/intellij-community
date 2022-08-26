@@ -19,9 +19,6 @@ import java.util.Map;
  * Decoration layer is over COMPONENT_LAYER (layer where all components are located).
  * It contains all necessary decorators. Decorators are:
  * - special mini-buttons to perform editing of grids (add/remove of columns)
- *
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 final class ActiveDecorationLayer extends JComponent implements FeedbackLayer {
   private static final Logger LOG = Logger.getInstance(ActiveDecorationLayer.class);

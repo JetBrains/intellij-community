@@ -23,7 +23,6 @@ import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.*
 import com.intellij.ui.hover.TreeHoverListener
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.util.EditSourceOnDoubleClickHandler.isToggleEvent
@@ -42,6 +41,7 @@ import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchPopupActions.LocalBranchActions.constructIncomingOutgoingTooltip
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.BranchesTreeActionGroup
 import icons.DvcsImplIcons
+import org.jetbrains.annotations.NonNls
 import java.awt.Graphics
 import java.awt.GraphicsEnvironment
 import java.awt.datatransfer.Transferable
@@ -136,7 +136,7 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
     override fun paint(g: Graphics) {
       super.paint(g)
       incomingOutgoingIcon?.let { (icon, locationX) ->
-        icon.paintIcon(this@BranchTreeCellRenderer, g, locationX, JBUIScale.scale(2))
+        icon.paintIcon(this@BranchTreeCellRenderer, g, locationX, (size.height - icon.iconHeight) / 2)
       }
     }
   }
@@ -235,6 +235,7 @@ internal class FilteringBranchesTree(
   val component: BranchesTreeComponent,
   private val uiController: BranchesDashboardController,
   rootNode: BranchTreeNode = BranchTreeNode(BranchNodeDescriptor(NodeType.ROOT)),
+  place: @NonNls String,
   disposable: Disposable
 ) : FilteringTree<BranchTreeNode, BranchNodeDescriptor>(component, rootNode) {
 
@@ -271,7 +272,7 @@ internal class FilteringBranchesTree(
 
   init {
     runInEdt {
-      PopupHandler.installPopupMenu(component, BranchesTreeActionGroup(project, this), "BranchesTreePopup")
+      PopupHandler.installPopupMenu(component, BranchesTreeActionGroup(project, this), place)
       setupTreeListeners()
     }
   }

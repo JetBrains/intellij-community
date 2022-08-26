@@ -1,4 +1,4 @@
-// "Import" "true"
+// "Import extension function 'String.genericExt'" "true"
 package p
 
 import p.Obj.genericExt

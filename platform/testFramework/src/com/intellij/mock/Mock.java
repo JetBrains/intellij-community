@@ -181,6 +181,11 @@ public class Mock {
       throw new UnsupportedOperationException();
     }
 
+    @Override
+    public @Nullable EditorComposite getComposite(@NotNull VirtualFile file) {
+      throw new UnsupportedOperationException();
+    }
+
     public FileEditorProvider getProvider(FileEditor editor) {
       return null;
     }

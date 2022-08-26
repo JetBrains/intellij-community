@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.inspections.dfa
 
 import com.intellij.codeInsight.Nullability
@@ -41,6 +41,8 @@ import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
+import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType.*
+import org.jetbrains.kotlin.idea.codeInsight.hints.getRangeBinaryExpressionType
 import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.*
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinProblem.*
@@ -956,13 +958,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                     }
                 }
                 is KtBinaryExpression -> {
-                    val ref = range.operationReference.text
-                    val (leftRelation, rightRelation) = when (ref) {
-                        ".." -> RelationType.GE to RelationType.LE
-                        "until" -> RelationType.GE to RelationType.LT
-                        "downTo" -> RelationType.LE to RelationType.GE
-                        else -> null to null
-                    }
+                    val (leftRelation, rightRelation) =
+                        range.getRangeBinaryExpressionType()?.getRelationType() ?: (null to null)
                     if (leftRelation != null && rightRelation != null) {
                         val left = range.left
                         val right = range.right
@@ -1279,10 +1276,13 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private fun processInCheck(kotlinType: KotlinType?, range: KtExpression?, anchor: KotlinAnchor, negated: Boolean) {
         if (kotlinType != null && (kotlinType.isInt() || kotlinType.isLong())) {
             if (range is KtBinaryExpression) {
-                val ref = range.operationReference.text
-                if (ref == ".." || ref == "until") {
-                    val left = range.left
-                    val right = range.right
+                val type = range.getRangeBinaryExpressionType()
+                val pair = when (type) {
+                    RANGE_TO, UNTIL, RANGE_UNTIL -> range.left to range.right
+                    null, DOWN_TO -> null
+                }
+                if (type != null && pair != null) {
+                    val (left, right) = pair
                     val leftType = left?.getKotlinType()
                     val rightType = right?.getKotlinType()
                     if (leftType.toDfType() is DfIntegralType && rightType.toDfType() is DfIntegralType) {
@@ -1294,7 +1294,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                         addInstruction(BooleanBinaryInstruction(RelationType.GE, false, null))
                         val offset = DeferredOffset()
                         addInstruction(ConditionalGotoInstruction(offset, DfTypes.FALSE))
-                        var relationType = if (ref == "until") RelationType.LT else RelationType.LE
+                        var relationType = type.getRelationType().second
                         if (negated) {
                             relationType = relationType.negated
                         }
@@ -1375,6 +1375,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val right = expr.right
         val endOffset = DeferredOffset()
         processExpression(left)
+        val targetType = expr.getKotlinType() // Boolean
+        addImplicitConversion(left, targetType)
         val nextOffset = DeferredOffset()
         addInstruction(ConditionalGotoInstruction(nextOffset, DfTypes.booleanValue(and), left))
         val anchor = KotlinExpressionAnchor(expr)
@@ -1383,6 +1385,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         setOffset(nextOffset)
         addInstruction(FinishElementInstruction(null))
         processExpression(right)
+        addImplicitConversion(right, targetType)
         setOffset(endOffset)
         addInstruction(ResultOfInstruction(anchor))
     }

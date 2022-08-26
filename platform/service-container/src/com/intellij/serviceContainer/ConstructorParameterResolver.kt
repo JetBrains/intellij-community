@@ -53,7 +53,7 @@ internal class ConstructorParameterResolver {
         // project level service Foo wants application level service Bar - adapter component manager should be used instead of current
         adapter.getInstance(adapter.componentManager, null)
       }
-      componentManager.parent == null -> adapter.getComponentInstance(componentManager)
+      componentManager.parent == null -> adapter.componentInstance
       else -> componentManager.getComponentInstance(adapter.componentKey)
     }
   }

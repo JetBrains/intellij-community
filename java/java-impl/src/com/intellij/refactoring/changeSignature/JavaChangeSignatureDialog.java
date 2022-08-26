@@ -28,6 +28,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
@@ -71,6 +72,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -78,9 +80,9 @@ import java.util.Set;
  * @author Konstantin Bulenkov
  */
 public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<ParameterInfoImpl, PsiMethod, String, JavaMethodDescriptor, ParameterTableModelItemBase<ParameterInfoImpl>, JavaParameterTableModel> {
-  private ExceptionsTableModel myExceptionsModel;
+  private @Nullable ExceptionsTableModel myExceptionsModel;
   protected Set<PsiMethod> myMethodsToPropagateExceptions;
-  private AnActionButton myPropExceptionsButton;
+  private @Nullable AnActionButton myPropExceptionsButton;
   private Tree myExceptionPropagationTree;
 
   public JavaChangeSignatureDialog(@NotNull Project project, @NotNull PsiMethod method, boolean allowDelegation, PsiElement context) {
@@ -159,10 +161,15 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   @Override
   protected void updatePropagateButtons() {
     super.updatePropagateButtons();
-    myPropExceptionsButton.setEnabled(!isGenerateDelegate() && mayPropagateExceptions());
+    if (myPropExceptionsButton != null) {
+      myPropExceptionsButton.setEnabled(!isGenerateDelegate() && mayPropagateExceptions());
+    }
   }
 
   protected boolean mayPropagateExceptions() {
+    if (myExceptionsModel == null) {
+      return false;
+    }
     final ThrownExceptionInfo[] exceptions = myExceptionsModel.getThrownExceptions();
     final PsiClassType[] types = getMethod().getThrowsList().getReferencedTypes();
 
@@ -182,6 +189,9 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   @Override
   protected @NotNull List<Pair<@NlsContexts.TabTitle String, JPanel>> createAdditionalPanels() {
     // this method is invoked before constructor body
+    if (JavaPsiRecordUtil.isCompactConstructor(getMethod())) {
+      return Collections.emptyList();
+    }
     myExceptionsModel = new ExceptionsTableModel(getMethod().getThrowsList());
     myExceptionsModel.setTypeInfos(getMethod());
 
@@ -557,7 +567,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   }
 
   protected ThrownExceptionInfo[] getExceptions() {
-    return myExceptionsModel.getThrownExceptions();
+    return myExceptionsModel != null ? myExceptionsModel.getThrownExceptions() : new ThrownExceptionInfo[0];
   }
 
   @Override
@@ -644,8 +654,16 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
         }
       }
 
-      ThrownExceptionInfo[] exceptionInfos = myExceptionsModel.getThrownExceptions();
-      PsiTypeCodeFragment[] typeCodeFragments = myExceptionsModel.getTypeCodeFragments();
+      ThrownExceptionInfo[] exceptionInfos;
+      PsiTypeCodeFragment[] typeCodeFragments;
+      if (myExceptionsModel != null) {
+        exceptionInfos = myExceptionsModel.getThrownExceptions();
+        typeCodeFragments = myExceptionsModel.getTypeCodeFragments();
+      }
+      else {
+        exceptionInfos = new ThrownExceptionInfo[0];
+        typeCodeFragments = new PsiTypeCodeFragment[0];
+      }
       for (int i = 0; i < exceptionInfos.length; i++) {
         ThrownExceptionInfo exceptionInfo = exceptionInfos[i];
         PsiTypeCodeFragment typeCodeFragment = typeCodeFragments[i];
@@ -729,9 +747,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
 
   static String getModifiersText(PsiModifierList list, String newVisibility) {
     final String oldVisibility = VisibilityUtil.getVisibilityModifier(list);
-    List<String> modifierKeywords = StreamEx.of(PsiTreeUtil.findChildrenOfType(list, PsiKeyword.class))
-                                            .map(PsiElement::getText)
-                                            .toList();
+    List<String> modifierKeywords = ContainerUtil.map(PsiTreeUtil.findChildrenOfType(list, PsiKeyword.class), PsiElement::getText);
     if (!oldVisibility.equals(newVisibility)) {
       if (oldVisibility.equals(PsiModifier.PACKAGE_LOCAL)) {
         modifierKeywords.add(0, PsiModifier.PACKAGE_LOCAL);
@@ -810,7 +826,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     //  buffer.append("\n");
     //}
     buffer.append(")");
-    PsiTypeCodeFragment[] thrownExceptionsFragments = myExceptionsModel.getTypeCodeFragments();
+    PsiTypeCodeFragment[] thrownExceptionsFragments = myExceptionsModel != null ? myExceptionsModel.getTypeCodeFragments() : new PsiTypeCodeFragment[0];
     if (thrownExceptionsFragments.length > 0) {
       //buffer.append("\n");
       buffer.append(" throws ");

@@ -142,10 +142,7 @@ public final class RepositoryHelper {
       addMarketplacePluginDependencyIfRequired(node, isPaidPluginsRequireMarketplacePlugin);
     }
 
-    return result
-      .values()
-      .stream()
-      .collect(Collectors.toUnmodifiableList());
+    return List.copyOf(result.values());
   }
 
   /**

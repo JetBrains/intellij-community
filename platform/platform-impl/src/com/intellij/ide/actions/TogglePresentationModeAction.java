@@ -8,6 +8,8 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -40,6 +42,7 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
   private static final Map<Object, Object> ourSavedValues = new LinkedHashMap<>();
   private static float ourSavedScaleFactor = JBUIScale.scale(1f);
   private static float ourSavedConsoleFontSize;
+  private static final Logger LOG = Logger.getInstance(TogglePresentationModeAction.class);
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -68,6 +71,8 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
     boolean layoutStored = project != null && storeToolWindows(project);
 
     tweakUIDefaults(settings, inPresentation);
+
+    log(String.format("Will tweak full screen mode for presentation=%b", inPresentation));
 
     CompletableFuture<?> callback = project == null ? CompletableFuture.completedFuture(null) : tweakFrameFullScreen(project, inPresentation);
     callback.whenComplete((o, throwable) -> {
@@ -107,6 +112,9 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
     else {
       globalScheme.setConsoleFontSize(ourSavedConsoleFontSize);
     }
+
+    log(String.format("Will set editor font size %.1f for presentation=%b", fontSize, inPresentation));
+
     for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
       if (editor instanceof EditorEx) {
         ((EditorEx)editor).setFontSize(fontSize);
@@ -184,10 +192,17 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
   }
 
   static void restoreToolWindows(@NotNull Project project, boolean inPresentation) {
+    log(String.format("Will restore tool windows for presentation=%b", inPresentation));
+
     ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(project);
     DesktopLayout restoreLayout = manager.getLayoutToRestoreLater();
     if (!inPresentation && restoreLayout != null) {
       manager.setLayout(restoreLayout);
     }
+  }
+
+  private static void log(String message) {
+    if (ApplicationManager.getApplication().isEAP()) LOG.info(message);
+    else LOG.debug(message);
   }
 }

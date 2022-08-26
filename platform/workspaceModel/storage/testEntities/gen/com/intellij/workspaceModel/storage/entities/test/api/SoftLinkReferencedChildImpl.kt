@@ -12,8 +12,10 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.extractOneToManyParent
 import com.intellij.workspaceModel.storage.impl.updateOneToManyParentOfChild
 import org.jetbrains.deft.ObjBuilder
@@ -69,6 +71,9 @@ open class SoftLinkReferencedChildImpl : SoftLinkReferencedChild, WorkspaceEntit
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToManyParent<WorkspaceEntityBase>(PARENTENTITY_CONNECTION_ID, this) == null) {
           error("Field SoftLinkReferencedChild#parentEntity should be initialized")
@@ -79,15 +84,30 @@ open class SoftLinkReferencedChildImpl : SoftLinkReferencedChild, WorkspaceEntit
           error("Field SoftLinkReferencedChild#parentEntity should be initialized")
         }
       }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field SoftLinkReferencedChild#entitySource should be initialized")
-      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as SoftLinkReferencedChild
+      this.entitySource = dataSource.entitySource
+      if (parents != null) {
+        this.parentEntity = parents.filterIsInstance<EntityWithSoftLinks>().single()
+      }
+    }
+
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var parentEntity: EntityWithSoftLinks
       get() {
@@ -128,15 +148,6 @@ open class SoftLinkReferencedChildImpl : SoftLinkReferencedChild, WorkspaceEntit
         changedProperty.add("parentEntity")
       }
 
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
-      }
-
     override fun getEntityData(): SoftLinkReferencedChildData = result ?: super.getEntityData() as SoftLinkReferencedChildData
     override fun getEntityClass(): Class<SoftLinkReferencedChild> = SoftLinkReferencedChild::class.java
   }
@@ -175,6 +186,18 @@ class SoftLinkReferencedChildData : WorkspaceEntityData<SoftLinkReferencedChild>
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return SoftLinkReferencedChild(entitySource) {
+      this.parentEntity = parents.filterIsInstance<EntityWithSoftLinks>().single()
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(EntityWithSoftLinks::class.java)
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
@@ -197,5 +220,14 @@ class SoftLinkReferencedChildData : WorkspaceEntityData<SoftLinkReferencedChild>
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.sameForAllEntities = true
   }
 }

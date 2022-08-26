@@ -24,6 +24,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.Language;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.*;
 import sun.font.FontUtilities;
 
@@ -42,6 +43,7 @@ import javax.swing.plaf.ComboBoxUI;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicComboBoxUI;
+import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.*;
@@ -74,7 +76,7 @@ import java.util.regex.Pattern;
 @SuppressWarnings("StaticMethodOnlyUsedInOneClass")
 public final class UIUtil {
   static {
-    LoadingState.BASE_LAF_INITIALIZED.checkOccurred();
+    LoadingState.COMPONENTS_REGISTERED.checkOccurred();
   }
 
   public static final @NlsSafe String BORDER_LINE = "<hr size=1 noshade>";
@@ -144,6 +146,23 @@ public final class UIUtil {
       return (Integer)property;
     }
     return 500;
+  }
+
+  /**
+   * A public method from BasicHTML
+   *
+   * @see BasicHTML#getBaseline(JComponent, int, int, int, int)
+   */
+  public static int getBaseline(@NotNull JComponent c, int y, int ascent, int w, int h) {
+    View view = (View)c.getClientProperty(BasicHTML.propertyKey);
+    if (view != null) {
+      int baseline = BasicHTML.getHTMLBaseline(view, w, h);
+      if (baseline < 0) {
+        return baseline;
+      }
+      return y + baseline;
+    }
+    return y + ascent;
   }
 
   private static final NotNullLazyValue<Boolean> X_RENDER_ACTIVE = NotNullLazyValue.atomicLazy(() -> {
@@ -340,8 +359,6 @@ public final class UIUtil {
   public static final @NonNls String CENTER_TOOLTIP_STRICT = "ToCenterTooltip.default";
 
   private static final Pattern CLOSE_TAG_PATTERN = Pattern.compile("<\\s*([^<>/ ]+)([^<>]*)/\\s*>", Pattern.CASE_INSENSITIVE);
-
-  private static final @NonNls String FOCUS_PROXY_KEY = "isFocusProxy";
 
   public static final Key<Integer> KEEP_BORDER_SIDES = Key.create("keepBorderSides");
   private static final Key<UndoManager> UNDO_MANAGER = Key.create("undoManager");
@@ -982,7 +999,7 @@ public final class UIUtil {
   }
 
   public static Color getLabelTextForeground() {
-    return UIManager.getColor("Label.textForeground");
+    return UIManager.getColor("Label.foreground");
   }
 
   public static Color getControlColor() {
@@ -1606,9 +1623,8 @@ public final class UIUtil {
     EDT.dispatchAllInvocationEvents();
   }
 
-  public static void addAwtListener(final @NotNull AWTEventListener listener, long mask, @NotNull Disposable parent) {
-    Toolkit.getDefaultToolkit().addAWTEventListener(listener, mask);
-    Disposer.register(parent, () -> Toolkit.getDefaultToolkit().removeAWTEventListener(listener));
+  public static void addAwtListener(@NotNull AWTEventListener listener, long mask, @NotNull Disposable parent) {
+    StartupUiUtil.addAwtListener(listener, mask, parent);
   }
 
   public static void addParentChangeListener(@NotNull Component component, @NotNull PropertyChangeListener listener) {
@@ -1765,6 +1781,14 @@ public final class UIUtil {
   public static boolean isActionClick(@NotNull MouseEvent e, int effectiveType, boolean allowShift) {
     if (!allowShift && isCloseClick(e) || e.isPopupTrigger() || e.getID() != effectiveType) return false;
     return e.getButton() == MouseEvent.BUTTON1;
+  }
+
+  /**
+   * Provides all input event modifiers including deprecated, since they are still used in IntelliJ platform
+   */
+  @MagicConstant(flagsFromClass = InputEvent.class)
+  public static int getAllModifiers(@NotNull InputEvent event) {
+    return event.getModifiers() | event.getModifiersEx();
   }
 
   public static @NotNull Color getBgFillColor(@NotNull Component c) {
@@ -2163,10 +2187,6 @@ public final class UIUtil {
     }
   }
 
-  public static boolean isFocusProxy(@Nullable Component c) {
-    return c instanceof JComponent && Boolean.TRUE.equals(((JComponent)c).getClientProperty(FOCUS_PROXY_KEY));
-  }
-
   public static void maybeInstall(@NotNull InputMap map, String action, KeyStroke stroke) {
     if (map.get(stroke) == null) {
       map.put(stroke, action);
@@ -2484,12 +2504,6 @@ public final class UIUtil {
 
   public static void setFutureRootPane(@NotNull JComponent c, @NotNull JRootPane pane) {
     c.putClientProperty(ROOT_PANE, new WeakReference<>(pane));
-  }
-
-  public static boolean isMeaninglessFocusOwner(@Nullable Component c) {
-    if (c == null || !c.isShowing()) return true;
-
-    return c instanceof JFrame || c instanceof JDialog || c instanceof JWindow || c instanceof JRootPane || isFocusProxy(c);
   }
 
   public static boolean isDialogRootPane(JRootPane rootPane) {
@@ -3348,7 +3362,19 @@ public final class UIUtil {
    */
   @ApiStatus.Experimental
   public static boolean isShowing(@NotNull Component component) {
-    if (Boolean.getBoolean("java.awt.headless") || component.isShowing()) {
+    return isShowing(component, true);
+  }
+
+  /**
+   * An overload of {@link UIUtil#isShowing(Component)} allowing to ignore headless mode.
+   * @param checkHeadless when {@code true}, the {@code component} will always be considered visible in headless mode.
+   */
+  @ApiStatus.Experimental
+  public static boolean isShowing(@NotNull Component component, boolean checkHeadless) {
+    if (checkHeadless && Boolean.getBoolean("java.awt.headless")) {
+      return true;
+    }
+    if (component.isShowing()) {
       return true;
     }
 

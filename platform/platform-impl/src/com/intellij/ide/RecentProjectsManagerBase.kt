@@ -11,6 +11,7 @@ import com.intellij.ide.impl.ProjectUtil.isSameProject
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.ui.UISettings
+import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -45,7 +46,6 @@ import com.intellij.util.io.isDirectory
 import com.intellij.util.io.outputStream
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
-import com.intellij.util.text.nullize
 import com.intellij.util.ui.ImageUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asDeferred
@@ -53,9 +53,6 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.jps.util.JpsPathUtil
-import java.awt.AWTEvent
-import java.awt.Toolkit
-import java.awt.event.WindowEvent
 import java.awt.image.BufferedImage
 import java.io.File
 import java.nio.ByteBuffer
@@ -94,9 +91,6 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
     fun isFileSystemPath(path: String): Boolean {
       return path.indexOf('/') != -1 || path.indexOf('\\') != -1
     }
-
-    @JvmField
-    var dontReopenProjects = false
   }
 
   private val modCounter = AtomicLong()
@@ -196,7 +190,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
       }
     }
     set(value) {
-      val newValue = value.nullize(nullizeSpaces = true)?.let { FileUtilRt.toSystemIndependentName(it) }
+      val newValue = value?.takeIf { it.isNotBlank() }?.let { FileUtilRt.toSystemIndependentName(it) }
       synchronized(stateLock) {
         state.lastProjectLocation = newValue
       }
@@ -275,6 +269,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
   fun addRecentPath(path: String, info: RecentProjectMetaInfo) {
     synchronized(stateLock) {
       state.additionalInfo.put(path, info)
+      modCounter.incrementAndGet()
     }
   }
 
@@ -328,17 +323,9 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
 
   fun getLastOpenedProject() = state.lastOpenedProject
 
-  init {
-    Toolkit.getDefaultToolkit().addAWTEventListener(
-      { e ->
-        if (e.id == WindowEvent.WINDOW_ACTIVATED) {
-          var window = (e as WindowEvent).window ?: return@addAWTEventListener
-          while (window.owner != null) {
-            window = window.owner
-          }
-          (window as? IdeFrame)?.notifyProjectActivation()
-        }
-      }, AWTEvent.WINDOW_EVENT_MASK)
+  @Internal
+  class MyFrameStateListener : FrameStateListener {
+    override fun onFrameActivated(frame: IdeFrame) = frame.notifyProjectActivation()
   }
 
   @VisibleForTesting
@@ -364,7 +351,8 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
 
   internal class MyProjectPostStartupActivity : ProjectPostStartupActivity {
     init {
-      if (ApplicationManager.getApplication().isUnitTestMode) {
+      if (ApplicationManager.getApplication().isUnitTestMode ||
+          ApplicationManager.getApplication().isHeadlessEnvironment /* disabling for Fleet */) {
         throw ExtensionNotApplicableException.create()
       }
     }
@@ -429,7 +417,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
   }
 
   override fun willReopenProjectOnStart(): Boolean {
-    if (!GeneralSettings.getInstance().isReopenLastProject || dontReopenProjects) {
+    if (!GeneralSettings.getInstance().isReopenLastProject || AppMode.isDontReopenProjects()) {
       return false
     }
 
@@ -684,7 +672,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
 
     var file: File? = File(projectPath)
     while (file != null) {
-      val projectMetaInfo = state.additionalInfo.remove(projectPath)
+      val projectMetaInfo = state.additionalInfo.remove(FileUtil.toSystemIndependentName(file.path))
       if (projectMetaInfo != null) break
 
       file = FileUtil.getParentFile(file)

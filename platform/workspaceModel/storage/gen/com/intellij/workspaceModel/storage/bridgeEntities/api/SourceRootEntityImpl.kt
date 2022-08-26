@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.bridgeEntities.api
 
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntityInformation
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -12,8 +13,10 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.impl.extractOneToManyChildren
 import com.intellij.workspaceModel.storage.impl.extractOneToManyParent
 import com.intellij.workspaceModel.storage.impl.extractOneToOneChild
@@ -104,6 +107,9 @@ open class SourceRootEntityImpl : SourceRootEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToManyParent<WorkspaceEntityBase>(CONTENTROOT_CONNECTION_ID, this) == null) {
           error("Field SourceRootEntity#contentRoot should be initialized")
@@ -113,9 +119,6 @@ open class SourceRootEntityImpl : SourceRootEntity, WorkspaceEntityBase() {
         if (this.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)] == null) {
           error("Field SourceRootEntity#contentRoot should be initialized")
         }
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field SourceRootEntity#entitySource should be initialized")
       }
       if (!getEntityData().isUrlInitialized()) {
         error("Field SourceRootEntity#url should be initialized")
@@ -151,6 +154,26 @@ open class SourceRootEntityImpl : SourceRootEntity, WorkspaceEntityBase() {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as SourceRootEntity
+      this.entitySource = dataSource.entitySource
+      this.url = dataSource.url
+      this.rootType = dataSource.rootType
+      if (parents != null) {
+        this.contentRoot = parents.filterIsInstance<ContentRootEntity>().single()
+      }
+    }
+
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var contentRoot: ContentRootEntity
       get() {
@@ -189,15 +212,6 @@ open class SourceRootEntityImpl : SourceRootEntity, WorkspaceEntityBase() {
           this.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)] = value
         }
         changedProperty.add("contentRoot")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override var url: VirtualFileUrl
@@ -379,6 +393,18 @@ class SourceRootEntityData : WorkspaceEntityData<SourceRootEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return SourceRootEntity(url, rootType, entitySource) {
+      this.contentRoot = parents.filterIsInstance<ContentRootEntity>().single()
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(ContentRootEntity::class.java)
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
@@ -407,5 +433,17 @@ class SourceRootEntityData : WorkspaceEntityData<SourceRootEntity>() {
     result = 31 * result + url.hashCode()
     result = 31 * result + rootType.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + url.hashCode()
+    result = 31 * result + rootType.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    this.url?.let { collector.add(it::class.java) }
+    collector.sameForAllEntities = false
   }
 }

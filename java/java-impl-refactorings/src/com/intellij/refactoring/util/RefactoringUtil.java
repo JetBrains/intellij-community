@@ -125,7 +125,6 @@ public final class RefactoringUtil {
 
 
   /**
-   * @param expression
    * @return loop body if expression is part of some loop's condition or for loop's increment part
    * null otherwise
    */
@@ -650,8 +649,6 @@ public final class RefactoringUtil {
    * <p/>
    * Note that {@code graph.getTargets()} is not necessarily a subset of {@code graph.getVertex()}
    *
-   * @param graph
-   * @param initialRelation
    * @return subset of graph.getVertices()
    */
   public static <T> Set<T> transitiveClosure(Graph<T> graph, Condition<? super T> initialRelation) {

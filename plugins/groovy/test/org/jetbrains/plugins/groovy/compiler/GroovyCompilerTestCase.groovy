@@ -42,7 +42,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
-import org.jetbrains.intellij.build.dependencies.Jdk11Downloader
+import org.jetbrains.intellij.build.dependencies.JdkDownloader
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType
@@ -80,7 +80,7 @@ abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestCase imp
       ModuleGroupTestsKt.renameModule(module, "mainModule")
 
       def communityHomePath = Paths.get(PathManager.getHomePathFor(GroovyCompilerTestCase.class),"community")
-      def javaHomePath = Jdk11Downloader.getJdkHome(new BuildDependenciesCommunityRoot(communityHomePath))
+      def javaHomePath = JdkDownloader.getJdkHome(new BuildDependenciesCommunityRoot(communityHomePath))
       def javaHome = javaHomePath.toAbsolutePath().toString()
       javaHome = StringUtil.trimEnd(StringUtil.trimEnd(javaHome, '/'), '/jre')
       VfsRootAccess.allowRootAccess(testRootDisposable, javaHome)

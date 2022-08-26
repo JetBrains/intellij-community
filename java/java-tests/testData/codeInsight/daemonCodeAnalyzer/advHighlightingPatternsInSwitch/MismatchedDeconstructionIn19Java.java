@@ -40,6 +40,11 @@ public class Incompatible {
       case TypedRecord<I>(I x) s-> {}
       default -> {}
     }
+    switch (typedRecord){
+      case <error descr="Raw deconstruction patterns are not allowed">TypedRecord</error>(C x) s-> {}
+      case <error descr="Raw deconstruction patterns are not allowed">TypedRecord</error>(I x) s-> {}
+      default -> {}
+    }
     switch (object){
       case Top(Child c1, Child(I x, <error descr="Incompatible types. Found: 'int', required: 'I'">int y</error>) c3) c -> {  }
       case Top(Child c1, <error descr="Incompatible types. Found: 'Wrong', required: 'Child'">Wrong(int y) c3</error>) c -> {  }

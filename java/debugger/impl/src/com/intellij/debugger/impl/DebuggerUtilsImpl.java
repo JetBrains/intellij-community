@@ -83,7 +83,6 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   }
 
   @Override
-  @SuppressWarnings("HardCodedStringLiteral")
   public Element writeTextWithImports(TextWithImports text) {
     Element element = new Element("TextWithImports");
 
@@ -93,7 +92,6 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
   }
 
   @Override
-  @SuppressWarnings("HardCodedStringLiteral")
   public TextWithImports readTextWithImports(Element element) {
     LOG.assertTrue("TextWithImports".equals(element.getName()));
 

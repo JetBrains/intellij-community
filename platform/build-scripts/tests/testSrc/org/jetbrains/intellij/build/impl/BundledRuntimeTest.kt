@@ -4,7 +4,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.dependencies.Jdk11Downloader
+import org.jetbrains.intellij.build.dependencies.JdkDownloader
 import org.junit.Test
 import java.nio.file.Files
 
@@ -12,7 +12,7 @@ class BundledRuntimeTest {
   @Test
   fun download() {
     withCompilationContext { context ->
-      val bundledRuntime = BundledRuntimeImpl(context)
+      val bundledRuntime = BundledRuntimeImpl(context.options, context.paths, context.dependenciesProperties, context.messages::error, context.messages::info)
       val currentJbr = bundledRuntime.getHomeForCurrentOsAndArch()
       var spottedCurrentJbrInDownloadVariants = false
       for (prefix in JetBrainsRuntimeDistribution.ALL) {
@@ -53,8 +53,9 @@ class BundledRuntimeTest {
   @Test
   fun currentArchDownload() {
     withCompilationContext { context ->
-      val currentJbrHome = BundledRuntimeImpl(context).getHomeForCurrentOsAndArch()
-      val javaExe = Jdk11Downloader.getJavaExecutable(currentJbrHome)
+      val currentJbrHome = BundledRuntimeImpl(context.options, context.paths, context.dependenciesProperties, context.messages::error, context.messages::info)
+        .getHomeForCurrentOsAndArch()
+      val javaExe = JdkDownloader.getJavaExecutable(currentJbrHome)
       val process = ProcessBuilder(javaExe.toString(), "-version")
         .inheritIO()
         .start()

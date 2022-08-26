@@ -104,7 +104,7 @@ class JBEditorTabsBorder(tabs: JBTabsImpl) : JBTabsBorder(tabs) {
     } else {
       val selectedLabel = tabs.selectedLabel ?: return
       val rect = Rectangle(selectedLabel.bounds)
-      if (ExperimentalUI.isNewUI()) {
+      if (ExperimentalUI.isNewUI() && rect.width > 0) {
         rect.width += 2
       }
       tabs.tabPainter.paintUnderline(tabs.position, rect, thickness, g, tabs.isActiveTabs(tabs.selectedInfo))

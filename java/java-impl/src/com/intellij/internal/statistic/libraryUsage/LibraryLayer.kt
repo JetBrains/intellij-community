@@ -13,8 +13,8 @@ class LibraryLayer private constructor(
    * Nested layer
    */
   private val nextLayers: Map<String, LibraryLayer> = emptyMap(),
-) : LibraryDescriptorFinder {
-  override fun findSuitableLibrary(packageQualifier: String): String? = findLibrary(packageQualifier)
+) {
+  fun findSuitableLibrary(packageQualifier: String): String? = findLibrary(packageQualifier)
 
   private fun findLibrary(packageQualifier: String?): String? {
     if (packageQualifier == null) return libraryName

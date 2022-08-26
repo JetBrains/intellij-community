@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -7,55 +7,64 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType
+import org.jetbrains.kotlin.idea.codeInsight.hints.RangeKtExpressionType.*
+import org.jetbrains.kotlin.idea.inspections.collections.isIterable
 import org.jetbrains.kotlin.idea.intentions.getArguments
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.constants.*
+import org.jetbrains.kotlin.resolve.calls.util.getType
 
+/**
+ * Tests:
+ * [org.jetbrains.kotlin.idea.codeInsight.InspectionTestGenerated.Inspections.testEmptyRange_inspectionData_Inspections_test]
+ * [org.jetbrains.kotlin.idea.inspections.LocalInspectionTestGenerated.EmptyRange]
+ */
 class EmptyRangeInspection : AbstractRangeInspection() {
-    override fun visitRangeTo(expression: KtExpression, context: BindingContext, holder: ProblemsHolder) {
-        expression.startAndEndValueSignedOrNull(context)?.let { (startValue, endValue) ->
-            if (startValue > endValue) holder.registerProblem(expression, downTo = true)
-        }
-        expression.startAndEndValueUnSignedOrNull(context)?.let { (startValue, endValue) ->
-            if (startValue > endValue) holder.registerProblem(expression, downTo = true)
-        }
-    }
+    override fun visitRange(range: KtExpression, context: Lazy<BindingContext>, type: RangeKtExpressionType, holder: ProblemsHolder) =
+        visitRangeImpl<Nothing>(range, context, type, holder)
 
-    override fun visitUntil(expression: KtExpression, context: BindingContext, holder: ProblemsHolder) {
-        expression.startAndEndValueSignedOrNull(context)?.let { (startValue, endValue) ->
-            when {
-                startValue > endValue -> holder.registerProblem(expression, downTo = true)
-                startValue == endValue -> holder.registerProblem(expression, downTo = false)
+    private fun <T> visitRangeImpl(
+        range: KtExpression,
+        context: Lazy<BindingContext>,
+        type: RangeKtExpressionType,
+        holder: ProblemsHolder
+    ) where T : Comparable<T> {
+        when (type) {
+            RANGE_TO -> range.getComparableArguments<T>(context)?.let { (startValue, endValue) ->
+                if (startValue > endValue) holder.registerProblem(range, context, downTo = true)
+            }
+
+            UNTIL, RANGE_UNTIL -> range.getComparableArguments<T>(context)?.let { (startValue, endValue) ->
+                when {
+                    startValue > endValue -> holder.registerProblem(range, context, downTo = true)
+                    startValue == endValue -> holder.registerProblem(range, context, downTo = false)
+                }
+            }
+
+            DOWN_TO -> range.getComparableArguments<T>(context)?.let { (startValue, endValue) ->
+                if (startValue < endValue) holder.registerProblem(range, context, downTo = false)
             }
         }
-        expression.startAndEndValueUnSignedOrNull(context)?.let { (startValue, endValue) ->
-            when {
-                startValue > endValue -> holder.registerProblem(expression, downTo = true)
-                startValue == endValue -> holder.registerProblem(expression, downTo = false)
+    }
+
+    private fun ProblemsHolder.registerProblem(expression: KtExpression, context: Lazy<BindingContext>, downTo: Boolean) {
+        val (msg, fixes) =
+            if (!downTo || expression.getType(context.value)?.isIterable(DefaultBuiltIns.Instance) == true) {
+                val (functionName, operator) = if (downTo) "downTo" to "downTo" else "rangeTo" to ".."
+                KotlinBundle.message("this.range.is.empty.did.you.mean.to.use.0", functionName) to arrayOf(ReplaceFix(operator))
+            } else {
+                KotlinBundle.message("this.range.is.empty") to emptyArray<LocalQuickFix>()
             }
-        }
-    }
-
-    override fun visitDownTo(expression: KtExpression, context: BindingContext, holder: ProblemsHolder) {
-        expression.startAndEndValueSignedOrNull(context)?.let { (startValue, endValue) ->
-            if (startValue < endValue) holder.registerProblem(expression, downTo = false)
-        }
-        expression.startAndEndValueUnSignedOrNull(context)?.let { (startValue, endValue) ->
-            if (startValue < endValue) holder.registerProblem(expression, downTo = false)
-        }
-    }
-
-    private fun ProblemsHolder.registerProblem(expression: KtExpression, downTo: Boolean) {
-        val (functionName, operator) = if (downTo) "downTo" to "downTo" else "rangeTo" to ".."
         registerProblem(
             expression,
-            KotlinBundle.message("this.range.is.empty.did.you.mean.to.use.0", functionName),
+            msg,
             ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-            ReplaceFix(operator)
+            *fixes
         )
     }
 
@@ -73,39 +82,16 @@ class EmptyRangeInspection : AbstractRangeInspection() {
         }
     }
 
-    private fun KtExpression.startAndEndValueSignedOrNull(context: BindingContext): Pair<Long, Long>? {
+    private fun <T> KtExpression.getComparableArguments(context: Lazy<BindingContext>): Pair<T, T>? where T : Comparable<T> {
         val (start, end) = getArguments() ?: return null
-        if (start?.isSignedValueConstant(context) == false) return null
-        val startValue = start?.longValueOrNull(context) ?: return null
-        val endValue = end?.longValueOrNull(context) ?: return null
+        @Suppress("UNCHECKED_CAST")
+        fun KtExpression.value() = constantValueOrNull(context.value)?.boxedValue()
+            // Because it's possible to write such things `2L..0`
+            ?.let { if (it is Number && it !is Double && it !is Float) it.toLong() else it } as? T
+
+        val startValue = start?.value() ?: return null
+        val endValue = end?.value() ?: return null
+        if (startValue::class != endValue::class) return null
         return startValue to endValue
-    }
-
-    private fun KtExpression.startAndEndValueUnSignedOrNull(context: BindingContext): Pair<ULong, ULong>? {
-        val (start, end) = getArguments() ?: return null
-        if (start?.isSignedValueConstant(context) == true) return null
-        val startValue = start?.uLongValueOrNull(context) ?: return null
-        val endValue = end?.uLongValueOrNull(context) ?: return null
-        return startValue to endValue
-    }
-
-    private fun KtExpression.isSignedValueConstant(context: BindingContext) = constantValueOrNull(context) is IntegerValueConstant<*>
-
-    private fun KtExpression.longValueOrNull(context: BindingContext): Long? {
-        return when (val constantValue = constantValueOrNull(context)?.value) {
-            is Number -> constantValue.toLong()
-            is Char -> constantValue.code.toLong()
-            else -> null
-        }
-    }
-
-    private fun KtExpression.uLongValueOrNull(context: BindingContext): ULong? {
-        return when (val constantValue = constantValueOrNull(context)) {
-            is UByteValue -> constantValue.value.toUByte().toULong()
-            is UShortValue -> constantValue.value.toUShort().toULong()
-            is UIntValue -> constantValue.value.toUInt().toULong()
-            is ULongValue -> constantValue.value.toULong()
-            else -> null
-        }
     }
 }

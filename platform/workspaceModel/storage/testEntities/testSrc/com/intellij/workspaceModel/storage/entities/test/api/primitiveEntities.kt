@@ -5,6 +5,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.ModifiableWorkspaceEntity
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import com.intellij.workspaceModel.storage.MutableEntityStorage
@@ -17,8 +18,8 @@ interface BooleanEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : BooleanEntity, ModifiableWorkspaceEntity<BooleanEntity>, ObjBuilder<BooleanEntity> {
-    override var data: Boolean
     override var entitySource: EntitySource
+    override var data: Boolean
   }
 
   companion object : Type<BooleanEntity, Builder>() {
@@ -45,8 +46,8 @@ interface IntEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : IntEntity, ModifiableWorkspaceEntity<IntEntity>, ObjBuilder<IntEntity> {
-    override var data: Int
     override var entitySource: EntitySource
+    override var data: Int
   }
 
   companion object : Type<IntEntity, Builder>() {
@@ -73,8 +74,8 @@ interface StringEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : StringEntity, ModifiableWorkspaceEntity<StringEntity>, ObjBuilder<StringEntity> {
-    override var data: String
     override var entitySource: EntitySource
+    override var data: String
   }
 
   companion object : Type<StringEntity, Builder>() {
@@ -101,14 +102,14 @@ interface ListEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ListEntity, ModifiableWorkspaceEntity<ListEntity>, ObjBuilder<ListEntity> {
-    override var data: List<String>
     override var entitySource: EntitySource
+    override var data: MutableList<String>
   }
 
   companion object : Type<ListEntity, Builder>() {
     operator fun invoke(data: List<String>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ListEntity {
       val builder = builder()
-      builder.data = data
+      builder.data = data.toMutableWorkspaceList()
       builder.entitySource = entitySource
       init?.invoke(builder)
       return builder
@@ -130,8 +131,8 @@ interface OptionalIntEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : OptionalIntEntity, ModifiableWorkspaceEntity<OptionalIntEntity>, ObjBuilder<OptionalIntEntity> {
-    override var data: Int?
     override var entitySource: EntitySource
+    override var data: Int?
   }
 
   companion object : Type<OptionalIntEntity, Builder>() {
@@ -158,8 +159,8 @@ interface OptionalStringEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : OptionalStringEntity, ModifiableWorkspaceEntity<OptionalStringEntity>, ObjBuilder<OptionalStringEntity> {
-    override var data: String?
     override var entitySource: EntitySource
+    override var data: String?
   }
 
   companion object : Type<OptionalStringEntity, Builder>() {

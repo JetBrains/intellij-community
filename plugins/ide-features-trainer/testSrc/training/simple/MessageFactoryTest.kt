@@ -1,135 +1,156 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.simple
 
+import com.intellij.ide.ui.text.paragraph.TextParagraph
+import com.intellij.ide.ui.text.parts.*
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import training.FeaturesTrainerIcons
 import training.ui.LearningUiManager
 import training.ui.MessageFactory
-import training.ui.MessagePart
-import training.ui.MessagePart.MessageType.*
 
 class MessageFactoryTest : BasePlatformTestCase() {
   fun testTextWithoutTags() {
-    val parts: List<MessagePart> = convert("Some text. Text, sss!")
+    val parts: List<TextPart> = convertOneParagraph("Some text. Text, sss!")
 
     assertTrue(parts.size == 1)
-    assertTrue(parts[0].match("Some text. Text, sss!", TEXT_REGULAR))
+    assertTrue(matchRegularText(parts[0], "Some text. Text, sss!"))
   }
 
   fun testStrong() {
-    val parts: List<MessagePart> = convert("Some text, aaa <strong>Strong text</strong> some other text.")
+    val parts: List<TextPart> = convertOneParagraph("Some text, aaa <strong>Strong text</strong> some other text.")
 
     assertTrue(parts.size == 3)
-    assertTrue(parts[0].match("Some text, aaa ", TEXT_REGULAR))
-    assertTrue(parts[1].match("Strong text", TEXT_BOLD))
-    assertTrue(parts[2].match(" some other text.", TEXT_REGULAR))
+    assertTrue(matchRegularText(parts[0], "Some text, aaa "))
+    assertTrue(matchRegularText(parts[1], "Strong text", expectedBold = true))
+    assertTrue(matchRegularText(parts[2], " some other text."))
   }
 
   fun testCode() {
-    val parts: List<MessagePart> = convert("Type in the editor: <code>some code to write</code>")
+    val parts: List<TextPart> = convertOneParagraph("Type in the editor: <code>some code to write</code>")
 
     assertTrue(parts.size == 2)
-    assertTrue(parts[0].match("Type in the editor: ", TEXT_REGULAR))
-    assertTrue(parts[1].match("some code to write", CODE))
+    assertTrue(matchRegularText(parts[0], "Type in the editor: "))
+    assertTrue(match<CodeTextPart>(parts[1], "some code to write"))
   }
 
   fun testShortcut() {
-    val parts: List<MessagePart> = convert("Press <shortcut>Ctrl+F</shortcut>.")
+    val parts: List<TextPart> = convertOneParagraph("Press <shortcut>Ctrl+F</shortcut>.")
 
     assertTrue(parts.size == 3)
-    assertTrue(parts[0].match("Press ", TEXT_REGULAR))
-    assertTrue(parts[1].match("Ctrl+F", SHORTCUT))
-    assertTrue(parts[2].match(".", TEXT_REGULAR))
+    assertTrue(matchRegularText(parts[0], "Press "))
+    assertTrue(matchShortcut(parts[1], "Ctrl+F", expectedRaw = true))
+    assertTrue(matchRegularText(parts[2], "."))
   }
 
   fun testRawShortcut() {
-    val parts: List<MessagePart> = convert("Press <raw_shortcut>pressed ENTER</raw_shortcut>")
+    val parts: List<TextPart> = convertOneParagraph("Press <raw_shortcut>pressed ENTER</raw_shortcut>")
 
     assertTrue(parts.size == 2)
-    assertTrue(parts[0].match("Press ", TEXT_REGULAR))
-    assertTrue(parts[1].type == SHORTCUT)
+    assertTrue(matchRegularText(parts[0], "Press "))
+    assertTrue(matchShortcut(parts[1], "pressed ENTER", expectedRaw = true))
   }
 
   fun testAction() {
-    val parts: List<MessagePart> = convert("Try action <action>RecentFiles</action>")
+    val parts: List<TextPart> = convertOneParagraph("Try action <action>RecentFiles</action>")
 
     assertTrue(parts.size == 2)
-    assertTrue(parts[0].match("Try action ", TEXT_REGULAR))
-    assertTrue(parts[1].type == SHORTCUT)
+    assertTrue(matchRegularText(parts[0], "Try action "))
+    assertTrue(matchShortcut(parts[1], "RecentFiles", expectedRaw = false))
   }
 
   fun testIdeName() {
-    val parts: List<MessagePart> = convert("<ide/> is very powerful.")
+    val parts: List<TextPart> = convertOneParagraph("<ide/> is very powerful.")
 
     assertTrue(parts.size == 2)
-    assertTrue(parts[0].match(ApplicationNamesInfo.getInstance().fullProductName, TEXT_REGULAR))
-    assertTrue(parts[1].match(" is very powerful.", TEXT_REGULAR))
+    assertTrue(matchRegularText(parts[0], ApplicationNamesInfo.getInstance().fullProductName))
+    assertTrue(matchRegularText(parts[1], " is very powerful."))
   }
 
   fun testWebLink() {
-    val parts: List<MessagePart> = convert("Go to <a href=\"some link\">this link</a>")
+    val parts: List<TextPart> = convertOneParagraph("Go to <a href=\"some link\">this link</a>")
 
     assertTrue(parts.size == 2)
-    assertTrue(parts[0].match("Go to ", TEXT_REGULAR))
-    assertTrue(parts[1].match("this link", LINK) && parts[1].link == "some link")
+    assertTrue(matchRegularText(parts[0], "Go to "))
+    assertTrue(match<LinkTextPart>(parts[1], "this link"))
   }
 
   fun testCallback() {
     val callbackId = LearningUiManager.addCallback { }
-    val parts: List<MessagePart> = convert("<callback id=\"${callbackId}\">configure</callback> interpreter.")
+    val parts: List<TextPart> = convertOneParagraph("<callback id=\"${callbackId}\">configure</callback> interpreter.")
 
     assertTrue(parts.size == 2)
-    assertTrue(parts[0].match("configure", LINK) && parts[0].runnable != null)
-    assertTrue(parts[1].match(" interpreter.", TEXT_REGULAR))
+    assertTrue(match<LinkTextPart>(parts[0], "configure"))
+    assertTrue(matchRegularText(parts[1], " interpreter."))
   }
 
   fun testIconIdx() {
-    val parts: List<MessagePart> = convert("Press <icon_idx>1</icon_idx>")
+    val icon = FeaturesTrainerIcons.PluginIcon
+    val index = LearningUiManager.getIconIndex(icon)
+    val parts: List<TextPart> = convertOneParagraph("Press <icon_idx>$index</icon_idx>")
 
     assertTrue(parts.size == 2)
-    assertTrue(parts[0].match("Press ", TEXT_REGULAR))
-    assertTrue(parts[1].match("1", ICON_IDX))
+    assertTrue(matchRegularText(parts[0], "Press "))
+    assertTrue(parts[1].let { it is IconTextPart && it.icon == icon })
   }
 
   fun testIllustration() {
-    val parts: List<MessagePart> = convert("<illustration>3</illustration>")
+    val icon = FeaturesTrainerIcons.PluginIcon
+    val index = LearningUiManager.getIconIndex(icon)
+    val parts: List<TextPart> = convertOneParagraph("<illustration>$index</illustration>")
 
     assertTrue(parts.size == 1)
-    assertTrue(parts[0].match("3", ILLUSTRATION))
+    assertTrue(parts[0].let { it is IllustrationTextPart && it.icon == icon })
   }
 
   fun testNonBreakSpaces() {
-    val parts: List<MessagePart> = convert("<action>EditorCopy</action> .")
+    val parts: List<TextPart> = convertOneParagraph("<action>EditorCopy</action> .")
 
     assertTrue(parts.size == 2)
-    assertTrue(parts[0].type == SHORTCUT)
-    assertTrue(parts[1].match("\u00A0" + ".", TEXT_REGULAR))
+    assertTrue(matchShortcut(parts[0], "EditorCopy", expectedRaw = false))
+    assertTrue(matchRegularText(parts[1], "\u00A0" + "."))
   }
 
   fun testTwoParagraphText() {
-    val parts: List<MessagePart> = convert(
-      "For example, press <action>GotoAction</action> to open <strong>Search for Action</strong> popup.\n" +
-      "Now, please type <code>some string</code> and press <raw_shortcut>pressed ENTER</raw_shortcut>.")
+    val paragraphs = convert("For example, press <action>GotoAction</action> to open <strong>Search for Action</strong> popup.\n" +
+                             "Now, please type <code>some string</code> and press <raw_shortcut>pressed ENTER</raw_shortcut>.")
+    assertTrue(paragraphs.size == 2)
 
-    assertTrue(parts.size == 11)
-    assertTrue(parts[0].match("For example, press ", TEXT_REGULAR))
-    assertTrue(parts[1].type == SHORTCUT)
-    assertTrue(parts[2].match(" to open ", TEXT_REGULAR))
-    assertTrue(parts[3].match("Search for Action", TEXT_BOLD))
-    assertTrue(parts[4].match(" popup.", TEXT_REGULAR))
-    assertTrue(parts[5].match("\n", LINE_BREAK))
-    assertTrue(parts[6].match("Now, please type ", TEXT_REGULAR))
-    assertTrue(parts[7].match("some string", CODE))
-    assertTrue(parts[8].match(" and press ", TEXT_REGULAR))
-    assertTrue(parts[9].type == SHORTCUT)
-    assertTrue(parts[10].match(".", TEXT_REGULAR))
+    val firstParts = paragraphs[0].textParts
+    assertTrue(firstParts.size == 5)
+    assertTrue(matchRegularText(firstParts[0], "For example, press "))
+    assertTrue(matchShortcut(firstParts[1], "GotoAction", expectedRaw = false))
+    assertTrue(matchRegularText(firstParts[2], " to open "))
+    assertTrue(matchRegularText(firstParts[3], "Search for Action", expectedBold = true))
+    assertTrue(matchRegularText(firstParts[4], " popup."))
+
+    val secondParts = paragraphs[1].textParts
+    assertTrue(matchRegularText(secondParts[0], "Now, please type "))
+    assertTrue(match<CodeTextPart>(secondParts[1], "some string"))
+    assertTrue(matchRegularText(secondParts[2], " and press "))
+    assertTrue(matchShortcut(secondParts[3], "pressed ENTER", expectedRaw = true))
+    assertTrue(matchRegularText(secondParts[4], "."))
   }
 
-  private fun convert(text: String): List<MessagePart> {
-    return MessageFactory.convert(text).onEach(MessagePart::updateTextAndSplit)
+  private fun convertOneParagraph(text: String): List<TextPart> {
+    val paragraphs: List<TextParagraph> = convert(text)
+    assertTrue(paragraphs.size == 1)
+    return paragraphs.single().textParts
   }
 
-  private fun MessagePart.match(expectedText: String, expectedType: MessagePart.MessageType): Boolean {
-    return text == expectedText && type == expectedType
+  private fun convert(text: String): List<TextParagraph> {
+    return MessageFactory.convert(text)
+  }
+
+  private inline fun <reified T : TextPart> match(textPart: TextPart, expectedText: String): Boolean {
+    return textPart is T && textPart.text == expectedText
+  }
+
+  private fun matchRegularText(textPart: TextPart, expectedText: String, expectedBold: Boolean = false): Boolean {
+    return textPart is RegularTextPart && textPart.text == expectedText && textPart.isBold == expectedBold
+  }
+
+  private fun matchShortcut(textPart: TextPart, expectedText: String, expectedRaw: Boolean): Boolean {
+    return textPart is ShortcutTextPart && textPart.text == expectedText && textPart.isRaw == expectedRaw
   }
 }

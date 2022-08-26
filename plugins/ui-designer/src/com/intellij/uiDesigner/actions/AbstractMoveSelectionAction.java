@@ -17,10 +17,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 abstract class AbstractMoveSelectionAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(MoveSelectionToRightAction.class);
 

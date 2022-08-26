@@ -12,6 +12,7 @@ import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.concurrent.Callable;
@@ -516,4 +517,13 @@ public interface Application extends ComponentManager {
   @ApiStatus.Internal
   @ApiStatus.Experimental
   CoroutineScope getCoroutineScope();
+
+  // in some cases we cannot get service by class
+  /**
+   * @deprecated Internal.
+   */
+  @SuppressWarnings("override")
+  @ApiStatus.Internal
+  @Deprecated
+  <T> @Nullable T getServiceByClassName(@NotNull String serviceClassName);
 }

@@ -5,5 +5,5 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 
-val supervisorScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-val simpleScope = CoroutineScope(Job() + Dispatchers.Default)
+val supervisorScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+val simpleScope = CoroutineScope(Job() + Dispatchers.IO)

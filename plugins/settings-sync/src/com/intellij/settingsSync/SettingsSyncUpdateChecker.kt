@@ -2,8 +2,10 @@ package com.intellij.settingsSync
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import org.jetbrains.annotations.ApiStatus
 
-internal class SettingsSyncUpdateChecker(private val remoteCommunicator: SettingsSyncRemoteCommunicator) {
+@ApiStatus.Internal
+class SettingsSyncUpdateChecker(private val remoteCommunicator: SettingsSyncRemoteCommunicator) {
 
   companion object {
     private val LOG = logger<SettingsSyncUpdateChecker>()
@@ -15,7 +17,7 @@ internal class SettingsSyncUpdateChecker(private val remoteCommunicator: Setting
     when(updateResult) {
       is UpdateResult.Success -> {
         val snapshot = updateResult.settingsSnapshot
-        SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.CloudChange(snapshot))
+        SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.CloudChange(snapshot, updateResult.serverVersionId))
       }
       is UpdateResult.NoFileOnServer -> {
         LOG.info("Settings update requested, but there was no file on the server.")

@@ -49,13 +49,9 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.*;
 import java.util.function.Consumer;
 
-/**
- * @author Vladimir Kondratyev
- */
 public abstract class TodoTreeBuilder implements Disposable {
   private static final Logger LOG = Logger.getInstance(TodoTreeBuilder.class);
   public static final Comparator<NodeDescriptor<?>> NODE_DESCRIPTOR_COMPARATOR =
@@ -536,8 +532,7 @@ public abstract class TodoTreeBuilder implements Disposable {
     return null;
   }
 
-  static PsiFile getFileForNode(DefaultMutableTreeNode node) {
-    Object obj = node.getUserObject();
+  static @Nullable PsiFile getFileForNodeDescriptor(@NotNull NodeDescriptor<?> obj) {
     if (obj instanceof TodoFileNode) {
       return ((TodoFileNode)obj).getValue();
     }

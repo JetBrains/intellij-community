@@ -38,7 +38,6 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 import java.util.regex.Pattern;
 
 /**
@@ -91,13 +90,18 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       final InspectionToolWrapper<?, ?> selectedTool = myPanel.getSelectedTool();
       final String shortName = selectedTool.getShortName();
       myPanel.removeSelectedRow();
       final InspectionProfileModifiableModel profile = myPanel.getProfile();
       final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
-      inspection.removeConfigurationsWithUuid(UUID.fromString(shortName));
+      inspection.removeConfigurationsWithUuid(shortName);
       profile.removeTool(selectedTool);
       profile.setModified(true);
       InspectionProfileUtil.fireProfileChanged(profile);
@@ -125,7 +129,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       final Configuration configuration = dialog.getConfiguration();
       if (!createNewInspection(configuration, context.getProject(), profile)) return;
 
-      myPanel.selectInspectionTool(configuration.getShortName());
+      myPanel.selectInspectionTool(configuration.getUuid());
     }
   }
 
@@ -159,7 +163,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
   private static void addInspectionToProfile(@NotNull Project project,
                                              @NotNull InspectionProfileImpl profile,
                                              @NotNull Configuration configuration) {
-    final String shortName = configuration.getShortName();
+    final String shortName = configuration.getUuid();
     final InspectionToolWrapper<?, ?> toolWrapper = profile.getInspectionTool(shortName, project);
     if (toolWrapper != null) {
       // already added
@@ -240,7 +244,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
         }
         else {
           final HighlightDisplayKey key = HighlightDisplayKey.findById(suppressId);
-          if (key != null && key != HighlightDisplayKey.find(myConfiguration.getShortName())) {
+          if (key != null && key != HighlightDisplayKey.find(myConfiguration.getUuid())) {
             warnings.add(new ValidationInfo(SSRBundle.message("suppress.id.in.use.warning", suppressId), mySuppressIdTextField));
           }
           else {

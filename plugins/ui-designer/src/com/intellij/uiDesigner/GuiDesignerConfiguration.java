@@ -10,10 +10,6 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 @State(name = "uidesigner-configuration", storages = @Storage("uiDesigner.xml"))
 public final class GuiDesignerConfiguration implements PersistentStateComponent<GuiDesignerConfiguration> {
   public static GuiDesignerConfiguration getInstance(final Project project){

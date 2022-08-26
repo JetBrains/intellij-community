@@ -4,20 +4,12 @@ import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrappe
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
-import com.intellij.psi.statistics.StatisticsInfo
 
-internal class SearchEverywhereSymbolStatistician : SearchEverywhereStatistician<Any>(PsiElement::class.java,
+private class SearchEverywhereSymbolStatistician : SearchEverywhereStatistician<Any>(PsiElement::class.java,
                                                                                       PsiItemWithPresentation::class.java) {
   override fun getContext(element: Any): String? {
     val contextName = getContextName(element) ?: return null
     return "$contextPrefix#$contextName"
-  }
-
-  override fun serializeElement(element: Any, location: String): StatisticsInfo? {
-    val context = getContext(element) ?: return null
-    val value = getElementName(element) ?: return null
-
-    return StatisticsInfo(context, value)
   }
 
   private fun getContextName(element: Any): String? {
@@ -30,7 +22,7 @@ internal class SearchEverywhereSymbolStatistician : SearchEverywhereStatistician
     }
   }
 
-  private fun getElementName(element: Any): String? {
+  override fun getValue(element: Any, location: String): String? {
     if (element is PsiItemWithPresentation) return element.presentation.presentableText
     if (element !is PsiNamedElement) return null
 

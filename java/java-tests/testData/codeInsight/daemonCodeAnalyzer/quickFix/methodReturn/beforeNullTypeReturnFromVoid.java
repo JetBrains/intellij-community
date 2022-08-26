@@ -1,4 +1,4 @@
-// "Make 'foo' return 'java.lang.Object'" "true"
+// "Make 'foo()' return 'java.lang.Object'" "true-preview"
 
 class Test {
 

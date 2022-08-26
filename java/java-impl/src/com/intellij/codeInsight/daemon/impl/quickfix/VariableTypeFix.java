@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.light.LightRecordField;
 import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -168,6 +169,9 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     PsiVariable variable = (PsiVariable)getStartElement();
+    if (variable instanceof LightRecordField) {
+      variable = ((LightRecordField)variable).getRecordComponent();
+    }
     PsiFile containingFile = variable.getContainingFile();
     if (containingFile == file.getOriginalFile()) {
       PsiVariable varCopy = PsiTreeUtil.findSameElementInCopy(variable, file);

@@ -109,7 +109,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
     }
 
     @JvmStatic
-    internal fun openSampleFiles(module: Module, filePathsToOpen: List<String>) {
+    fun openSampleFiles(module: Module, filePathsToOpen: List<String>) {
       val contentRoot = module.rootManager.contentRoots.firstOrNull()
       if (contentRoot != null) {
         val fileEditorManager = FileEditorManager.getInstance(module.project)

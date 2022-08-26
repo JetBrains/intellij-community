@@ -21,8 +21,8 @@ interface DefaultValueEntity: WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : DefaultValueEntity, ModifiableWorkspaceEntity<DefaultValueEntity>, ObjBuilder<DefaultValueEntity> {
-    override var name: String
     override var entitySource: EntitySource
+    override var name: String
     override var isGenerated: Boolean
     override var anotherName: String
   }

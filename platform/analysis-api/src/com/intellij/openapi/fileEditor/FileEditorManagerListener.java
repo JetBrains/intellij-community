@@ -49,7 +49,7 @@ public interface FileEditorManagerListener extends EventListener {
    * which means that it may gain the focus way after this method is called.
    * When necessary, use {@link FileEditorManager#runWhenLoaded(Editor, Runnable)}) to ensure the desired ordering.
    * <p>
-   * {@link #fileOpenedSync(FileEditorManager, VirtualFile, List<FileEditorWithProvider>)} is always invoked before this method,
+   * {@link #fileOpenedSync(FileEditorManager, VirtualFile, List)} is always invoked before this method,
    * either in the same or the previous EDT event.
    *
    * @see #fileOpenedSync(FileEditorManager, VirtualFile, List)
@@ -73,18 +73,6 @@ public interface FileEditorManagerListener extends EventListener {
     }
 
     default void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-    }
-
-    /**
-     * @deprecated use {@link Before} directly
-     */
-    @Deprecated(forRemoval = true)
-    class Adapter implements Before {
-      @Override
-      public void beforeFileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) { }
-
-      @Override
-      public void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) { }
     }
   }
 }

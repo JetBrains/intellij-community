@@ -11,7 +11,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.StartPagePromoter;
 import com.intellij.ui.components.AnActionLink;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.JBLabel;
@@ -74,7 +73,6 @@ final class EmptyStateProjectsPanel extends BorderLayoutPanel {
     }
 
     addToCenter(mainPanel);
-    addToBottom(createBottomPanelForEmptyState(parentDisposable));
   }
 
   @NotNull
@@ -126,22 +124,5 @@ final class EmptyStateProjectsPanel extends BorderLayoutPanel {
     commentFirstLabel.setOpaque(false);
     commentFirstLabel.setForeground(UIUtil.getContextHelpForeground());
     return commentFirstLabel;
-  }
-
-  private static JPanel createBottomPanelForEmptyState(@NotNull Disposable parentDisposable) {
-    JPanel vPanel = new NonOpaquePanel();
-    vPanel.setLayout(new BoxLayout(vPanel, BoxLayout.PAGE_AXIS));
-    StartPagePromoter[] extensions = StartPagePromoter.START_PAGE_PROMOTER_EP.getExtensions();
-    boolean hasPromotion = false;
-    for (StartPagePromoter x : extensions) {
-      JPanel promotion = x.getPromotionForInitialState();
-      if (promotion == null) continue;
-      vPanel.add(promotion);
-      hasPromotion = true;
-    }
-    JPanel notification = WelcomeScreenComponentFactory.createNotificationPanel(parentDisposable);
-    if (!hasPromotion) return notification;
-    vPanel.add(notification);
-    return vPanel;
   }
 }

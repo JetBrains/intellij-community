@@ -51,7 +51,7 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
   public void resetEditorFrom(@NotNull Settings settings) {
     super.resetEditorFrom(settings);
     List<FragmentedSettings.Option> options = settings.getSelectedOptions();
-    for (SettingsEditorFragment<Settings, ?> fragment : getAllFragments().collect(Collectors.toList())) {
+    for (SettingsEditorFragment<Settings, ?> fragment : getAllFragments().toList()) {
       FragmentedSettings.Option option = ContainerUtil.find(options, o -> fragment.getId().equals(o.getName()));
       fragment.setSelected(option == null ? fragment.isInitiallyVisible(settings) : option.getVisible());
     }
@@ -60,14 +60,17 @@ public abstract class FragmentedSettingsEditor<Settings extends FragmentedSettin
   @Override
   public void applyEditorTo(@NotNull Settings settings) throws ConfigurationException {
     super.applyEditorTo(settings);
-    List<FragmentedSettings.Option> options = getAllFragments().filter(fragment -> (isDefaultSettings() || fragment.isCanBeHidden()) &&
+    final var fragments = getAllFragments().toList();
+
+    fragments.forEach(f -> f.validate(settings));
+    List<FragmentedSettings.Option> options = fragments.stream().filter(fragment -> (isDefaultSettings() || fragment.isCanBeHidden()) &&
                                                                                    fragment.isSelected() != fragment.isInitiallyVisible(settings))
       .map(fragment -> new FragmentedSettings.Option(fragment.getId(), fragment.isSelected())).collect(Collectors.toList());
     if (!isDefaultSettings()) {
       for (FragmentedSettings.Option option : settings.getSelectedOptions()) {
         if (!ContainerUtil.or(options, o -> o.getName().equals(option.getName()))) {
           SettingsEditorFragment<Settings, ?> fragment =
-            getAllFragments().filter(f -> f.getId().equals(option.getName())).findFirst().orElse(null);
+            ContainerUtil.find(fragments, f -> f.getId().equals(option.getName()));
           if (fragment != null) {
             if (fragment.isSelected() != fragment.isInitiallyVisible(settings)) { // do not keep option in selected otherwise
               FragmentedSettings.Option updatedOption = new FragmentedSettings.Option(fragment.getId(), fragment.isSelected());

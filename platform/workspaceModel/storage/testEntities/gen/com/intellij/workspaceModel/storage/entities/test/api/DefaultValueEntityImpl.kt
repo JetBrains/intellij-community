@@ -12,6 +12,7 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import org.jetbrains.deft.ObjBuilder
@@ -68,11 +69,11 @@ open class DefaultValueEntityImpl : DefaultValueEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isNameInitialized()) {
         error("Field DefaultValueEntity#name should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field DefaultValueEntity#entitySource should be initialized")
       }
     }
 
@@ -80,14 +81,17 @@ open class DefaultValueEntityImpl : DefaultValueEntity, WorkspaceEntityBase() {
       return connections
     }
 
-
-    override var name: String
-      get() = getEntityData().name
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().name = value
-        changedProperty.add("name")
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as DefaultValueEntity
+      this.entitySource = dataSource.entitySource
+      this.name = dataSource.name
+      this.isGenerated = dataSource.isGenerated
+      this.anotherName = dataSource.anotherName
+      if (parents != null) {
       }
+    }
+
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -96,6 +100,14 @@ open class DefaultValueEntityImpl : DefaultValueEntity, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var name: String
+      get() = getEntityData().name
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().name = value
+        changedProperty.add("name")
       }
 
     override var isGenerated: Boolean
@@ -159,14 +171,26 @@ class DefaultValueEntityData : WorkspaceEntityData<DefaultValueEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return DefaultValueEntity(name, entitySource) {
+      this.isGenerated = this@DefaultValueEntityData.isGenerated
+      this.anotherName = this@DefaultValueEntityData.anotherName
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
 
     other as DefaultValueEntityData
 
-    if (this.name != other.name) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.name != other.name) return false
     if (this.isGenerated != other.isGenerated) return false
     if (this.anotherName != other.anotherName) return false
     return true
@@ -190,5 +214,17 @@ class DefaultValueEntityData : WorkspaceEntityData<DefaultValueEntity>() {
     result = 31 * result + isGenerated.hashCode()
     result = 31 * result + anotherName.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + name.hashCode()
+    result = 31 * result + isGenerated.hashCode()
+    result = 31 * result + anotherName.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.sameForAllEntities = true
   }
 }

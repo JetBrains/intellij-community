@@ -1,0 +1,13 @@
+-CheckMemberLocationForJava.kt
+ -class Some : JavaClass.A3
+  fun equals(other: Any?): Boolean location=→Any
+  fun foo123(): Unit location=→A3
+  fun foo12_(): Unit location=→A2
+  fun foo1_3(): Unit location=→A3
+  fun foo1__(): Unit location=→A1
+  fun foo_23(): Unit location=→A3
+  fun foo_2_(): Unit location=→A2
+  fun foo__3(): Unit location=→A3
+  fun foo___(): Unit location=→First
+  fun hashCode(): Int location=→Any
+  fun toString(): String location=→Any

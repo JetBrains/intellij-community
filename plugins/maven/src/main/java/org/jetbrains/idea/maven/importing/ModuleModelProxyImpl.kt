@@ -129,7 +129,7 @@ class ModuleModelProxyImpl(private val diff: MutableEntityStorage,
 
     val moduleEntity = diff.findModuleEntity(module) ?: error("Could not resolve module entity for $module")
     val moduleGroupEntity = moduleEntity.groupPath
-    val groupPathList = groupPath?.toList()
+    val groupPathList = groupPath?.toMutableList()
 
     if (moduleGroupEntity?.path != groupPathList) {
       when {

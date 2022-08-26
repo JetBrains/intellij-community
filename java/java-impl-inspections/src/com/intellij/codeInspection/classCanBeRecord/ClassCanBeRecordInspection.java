@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.classCanBeRecord;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.RecordCandidate;
 import com.intellij.codeInspection.ui.InspectionOptionsPanel;
@@ -9,6 +10,7 @@ import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -21,6 +23,7 @@ import com.intellij.util.ui.JBUI;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +38,7 @@ public class ClassCanBeRecordInspection extends BaseInspection {
 
   public @NotNull ConversionStrategy myConversionStrategy = ConversionStrategy.DO_NOT_SUGGEST;
   public boolean suggestAccessorsRenaming = true;
-  public List<String> myIgnoredAnnotations = new ArrayList<>();
+  public List<@NlsSafe String> myIgnoredAnnotations = new ArrayList<>();
 
   public ClassCanBeRecordInspection() {
     myIgnoredAnnotations.addAll(IGNORED_ANNOTATIONS);
@@ -83,7 +86,7 @@ public class ClassCanBeRecordInspection extends BaseInspection {
           for (PsiAnnotation annotation : annotations) {
             String fqn = annotation.getQualifiedName();
             if (fqn != null) {
-              fixes.add(new AddIgnoredAnnotationFix(fqn, myIgnoredAnnotations));
+              fixes.add(new AddIgnoredAnnotationFix(fqn));
             }
           }
         }
@@ -158,13 +161,11 @@ public class ClassCanBeRecordInspection extends BaseInspection {
     }
   }
 
-  private static class AddIgnoredAnnotationFix extends InspectionGadgetsFix {
-    private final @NotNull String myPackagePrefix;
-    private final @NotNull List<String> myIgnoredPackagePrefixes;
+  private class AddIgnoredAnnotationFix extends InspectionGadgetsFix {
+    @NlsSafe private final @NotNull String myPackagePrefix;
 
-    private AddIgnoredAnnotationFix(@NotNull String packagePrefix, @NotNull List<String> ignoredPackagePrefixes) {
+    private AddIgnoredAnnotationFix(@NotNull String packagePrefix) {
       myPackagePrefix = packagePrefix;
-      myIgnoredPackagePrefixes = ignoredPackagePrefixes;
     }
 
     @Override
@@ -178,8 +179,14 @@ public class ClassCanBeRecordInspection extends BaseInspection {
     }
 
     @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      List<@NlsSafe String> prefixes = StreamEx.of(myIgnoredAnnotations).append(myPackagePrefix).sorted().toList();
+      return IntentionPreviewInfo.addListOption(prefixes, myPackagePrefix, JavaBundle.message("class.can.be.record.suppress.conversion.if.annotated"));
+    }
+
+    @Override
     protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      myIgnoredPackagePrefixes.add(myPackagePrefix);
+      myIgnoredAnnotations.add(myPackagePrefix);
       ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
     }
   }

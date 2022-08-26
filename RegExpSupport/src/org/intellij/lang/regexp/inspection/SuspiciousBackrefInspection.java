@@ -5,8 +5,10 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ObjectUtils;
 import org.intellij.lang.regexp.RegExpBundle;
 import org.intellij.lang.regexp.psi.*;
+import org.intellij.lang.regexp.psi.impl.RegExpGroupImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -53,7 +55,7 @@ public class SuspiciousBackrefInspection extends LocalInspectionTool {
         return;
       }
       final RegExpBranch branch = PsiTreeUtil.getParentOfType(target, RegExpBranch.class);
-      if (!PsiTreeUtil.isAncestor(branch, groupRef, true)) {
+      if (!PsiTreeUtil.isAncestor(branch, groupRef, true) && !isPcreCondition(branch)) {
         final String message =
           RegExpBundle.message("inspection.warning.group.back.reference.are.in.different.branches", groupRef.getGroupName());
         myHolder.registerProblem(groupRef, message);
@@ -62,6 +64,15 @@ public class SuspiciousBackrefInspection extends LocalInspectionTool {
         final String message = RegExpBundle.message("inspection.warning.group.defined.after.back.reference", groupRef.getGroupName());
         myHolder.registerProblem(groupRef, message);
       }
+    }
+
+    private static boolean isPcreCondition(RegExpBranch branch) {
+      if (branch == null) return false;
+      if (branch.getParent() instanceof RegExpConditional) {
+        RegExpGroup groupCondition = ObjectUtils.tryCast(((RegExpConditional)branch.getParent()).getCondition(), RegExpGroup.class);
+        return groupCondition != null && RegExpGroupImpl.isPcreConditionalGroup(groupCondition.getNode());
+      }
+      return false;
     }
   }
 }

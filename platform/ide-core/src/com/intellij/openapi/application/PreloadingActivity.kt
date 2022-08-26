@@ -26,7 +26,7 @@ abstract class PreloadingActivity {
     preload()
   }
 
-  @Deprecated("Use {@link #preload()}", ReplaceWith("preload()"))
+  @Deprecated("Use {@link #execute()}", ReplaceWith("execute()"))
   open fun preload(@Suppress("unused") indicator: ProgressIndicator?) {
     preload()
   }

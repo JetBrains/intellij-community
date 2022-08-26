@@ -123,7 +123,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
     TreeUtil.expandAll(tree);
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-    PlatformTestUtil.assertTreeEqual(tree, "-Inspections Results\n" +
+    PlatformTestUtil.assertTreeEqual(tree, "-Inspection Results\n" +
                                            " -Java\n" +
                                            "  -Declaration redundancy\n" +
                                            "   -Unused declaration\n" +
@@ -166,7 +166,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
     TreeUtil.expandAll(tree);
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-    PlatformTestUtil.assertTreeEqual(tree, "-Inspections Results\n" +
+    PlatformTestUtil.assertTreeEqual(tree, "-Inspection Results\n" +
                                            " -Java\n" +
                                            "  -Declaration redundancy\n" +
                                            "   -Unused declaration\n" +
@@ -204,7 +204,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
     TreeUtil.expandAll(tree);
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-    PlatformTestUtil.assertTreeEqual(tree, "-Inspections Results\n" +
+    PlatformTestUtil.assertTreeEqual(tree, "-Inspection Results\n" +
                                            " -Java\n" +
                                            "  -Declaration redundancy\n" +
                                            "   -Unused declaration\n" +
@@ -236,7 +236,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     tree.getInspectionTreeModel().traverse(root).forEach(node -> assertTrue("node = " + node, node.isExcluded()));
     myView.getGlobalInspectionContext().getUIOptions().FILTER_RESOLVED_ITEMS = false;
     tree = updateTree();
-    PlatformTestUtil.assertTreeEqual(tree, "-Inspections Results\n"
+    PlatformTestUtil.assertTreeEqual(tree, "-Inspection Results\n"
                                            + " -Java\n" +
                                            "  -Declaration redundancy\n" +
                                            "   -Unused declaration\n" +

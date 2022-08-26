@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="json-schema-validator" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.networknt:json-schema-validator:1.0.69" />
+    <properties include-transitive-deps="false" maven-id="com.networknt:json-schema-validator:1.0.72" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/networknt/json-schema-validator/1.0.69/json-schema-validator-1.0.69.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/networknt/json-schema-validator/1.0.72/json-schema-validator-1.0.72.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/networknt/json-schema-validator/1.0.69/json-schema-validator-1.0.69-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/networknt/json-schema-validator/1.0.72/json-schema-validator-1.0.72-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

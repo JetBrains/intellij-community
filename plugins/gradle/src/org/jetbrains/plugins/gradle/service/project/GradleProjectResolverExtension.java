@@ -133,7 +133,6 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
 
   /**
    * add target types to be used in the polymorphic containers
-   * @return
    */
   default Set<Class<?>> getTargetTypes() {
     return Collections.emptySet();

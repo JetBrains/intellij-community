@@ -42,7 +42,7 @@ class DependencySearchService(private val project: Project) : Disposable {
 
   init {
     EP_NAME.addExtensionPointListener(
-      object : ExtensionPointListener<DependencySearchProvidersFactory?> {
+      object : ExtensionPointListener<DependencySearchProvidersFactory> {
         override fun extensionAdded(extension: DependencySearchProvidersFactory, pluginDescriptor: PluginDescriptor) {
           updateProviders()
         }

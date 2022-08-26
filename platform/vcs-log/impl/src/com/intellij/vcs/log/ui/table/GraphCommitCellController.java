@@ -7,7 +7,6 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsLogBundle;
@@ -32,6 +31,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
+import java.util.Collections;
 
 public abstract class GraphCommitCellController implements VcsLogCellController {
   @NotNull private final VcsLogData myLogData;
@@ -143,7 +143,7 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
       details = myTable.getModel().getCommitMetadata(row, true); // preload rows around the commit
     }
     else {
-      details = myLogData.getMiniDetailsGetter().getCommitData(commit, ContainerUtil.immutableSingletonList(commit)); // preload just the commit
+      details = myLogData.getMiniDetailsGetter().getCommitData(commit, Collections.singletonList(commit)); // preload just the commit
     }
 
     if (details instanceof LoadingDetails) {

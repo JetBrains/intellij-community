@@ -11,6 +11,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
 import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToAbstractManyParent
@@ -78,6 +79,9 @@ open class ChildFirstEntityImpl : ChildFirstEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isCommonDataInitialized()) {
         error("Field ChildAbstractBaseEntity#commonData should be initialized")
       }
@@ -94,15 +98,32 @@ open class ChildFirstEntityImpl : ChildFirstEntity, WorkspaceEntityBase() {
       if (!getEntityData().isFirstDataInitialized()) {
         error("Field ChildFirstEntity#firstData should be initialized")
       }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ChildFirstEntity#entitySource should be initialized")
-      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
       return connections
     }
 
+    // Relabeling code, move information from dataSource to this builder
+    override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
+      dataSource as ChildFirstEntity
+      this.entitySource = dataSource.entitySource
+      this.commonData = dataSource.commonData
+      this.firstData = dataSource.firstData
+      if (parents != null) {
+        this.parentEntity = parents.filterIsInstance<ParentAbEntity>().single()
+      }
+    }
+
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var commonData: String
       get() = getEntityData().commonData
@@ -159,15 +180,6 @@ open class ChildFirstEntityImpl : ChildFirstEntity, WorkspaceEntityBase() {
         changedProperty.add("firstData")
       }
 
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
-      }
-
     override fun getEntityData(): ChildFirstEntityData = result ?: super.getEntityData() as ChildFirstEntityData
     override fun getEntityClass(): Class<ChildFirstEntity> = ChildFirstEntity::class.java
   }
@@ -212,15 +224,27 @@ class ChildFirstEntityData : WorkspaceEntityData<ChildFirstEntity>() {
   override fun deserialize(de: EntityInformation.Deserializer) {
   }
 
+  override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
+    return ChildFirstEntity(commonData, firstData, entitySource) {
+      this.parentEntity = parents.filterIsInstance<ParentAbEntity>().single()
+    }
+  }
+
+  override fun getRequiredParents(): List<Class<out WorkspaceEntity>> {
+    val res = mutableListOf<Class<out WorkspaceEntity>>()
+    res.add(ParentAbEntity::class.java)
+    return res
+  }
+
   override fun equals(other: Any?): Boolean {
     if (other == null) return false
     if (this::class != other::class) return false
 
     other as ChildFirstEntityData
 
+    if (this.entitySource != other.entitySource) return false
     if (this.commonData != other.commonData) return false
     if (this.firstData != other.firstData) return false
-    if (this.entitySource != other.entitySource) return false
     return true
   }
 
@@ -240,5 +264,16 @@ class ChildFirstEntityData : WorkspaceEntityData<ChildFirstEntity>() {
     result = 31 * result + commonData.hashCode()
     result = 31 * result + firstData.hashCode()
     return result
+  }
+
+  override fun hashCodeIgnoringEntitySource(): Int {
+    var result = javaClass.hashCode()
+    result = 31 * result + commonData.hashCode()
+    result = 31 * result + firstData.hashCode()
+    return result
+  }
+
+  override fun collectClassUsagesData(collector: UsedClassesCollector) {
+    collector.sameForAllEntities = true
   }
 }

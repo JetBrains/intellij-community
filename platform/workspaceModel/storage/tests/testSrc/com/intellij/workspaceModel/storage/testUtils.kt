@@ -34,7 +34,7 @@ object SerializationRoundTripChecker {
     serializer.serializeCache(stream, storage)
 
     val byteArray = stream.toByteArray()
-    val deserialized = (serializer.deserializeCache(ByteArrayInputStream(byteArray)) as MutableEntityStorageImpl).toSnapshot() as EntityStorageSnapshotImpl
+    val deserialized = (serializer.deserializeCache(ByteArrayInputStream(byteArray)).getOrThrow() as MutableEntityStorageImpl).toSnapshot() as EntityStorageSnapshotImpl
     deserialized.assertConsistency()
 
     assertStorageEquals(storage, deserialized)

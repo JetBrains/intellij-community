@@ -21,7 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils;
 public class DemorgansLawIntention extends MutablyNamedIntention {
 
   @Override
-  protected @IntentionName String getTextForElement(PsiElement element) {
+  protected @IntentionName @NotNull String getTextForElement(@NotNull PsiElement element) {
     final GrBinaryExpression binaryExpression = (GrBinaryExpression)element;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
     if (GroovyTokenTypes.mLAND.equals(tokenType)) {

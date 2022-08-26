@@ -88,6 +88,11 @@ class LookupUi {
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setVisible(!CodeInsightSettings.getInstance().AUTO_POPUP_JAVADOC_INFO);
       }
+
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.BGT;
+      }
     });
     menuAction.add(new DelegatedAction(ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_IMPLEMENTATIONS)));
     menuAction.addSeparator();
@@ -100,7 +105,7 @@ class LookupUi {
     myMenuButton = new ActionButton(menuAction, presentation, ActionPlaces.EDITOR_POPUP, ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
 
     AnAction hintAction = new HintAction();
-    myHintButton = new ActionButton(hintAction, hintAction.getTemplatePresentation(),
+    myHintButton = new ActionButton(hintAction, hintAction.getTemplatePresentation().clone(),
                                     ActionPlaces.EDITOR_POPUP, ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
     myHintButton.setVisible(false);
 
@@ -388,6 +393,11 @@ class LookupUi {
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setIcon(UISettings.getInstance().getSortLookupElementsLexicographically() ? PlatformIcons.CHECK_ICON : null);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 
