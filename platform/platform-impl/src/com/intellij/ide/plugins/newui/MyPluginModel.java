@@ -129,9 +129,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     assertCanApply(pluginIdMap);
 
     PluginEnabler pluginEnabler = PluginEnabler.getInstance();
-    DynamicPluginEnablerState pluginEnablerState = pluginEnabler instanceof DynamicPluginEnabler ?
-                                                   ((DynamicPluginEnabler)pluginEnabler).getState() :
-                                                   null;
     Set<PluginId> uninstallsRequiringRestart = new HashSet<>();
     for (IdeaPluginDescriptorImpl pluginDescriptor : myDynamicPluginsToUninstall) {
       myDiff.remove(pluginDescriptor);
@@ -152,10 +149,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       }
       else {
         getEnabledMap().remove(pluginId);
-      }
-
-      if (pluginEnablerState != null) {
-        pluginEnablerState.stopTracking(List.of(pluginId));
       }
     }
 
@@ -824,13 +817,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
   public @NotNull PluginEnabledState getState(@NotNull IdeaPluginDescriptor descriptor) {
     return getState(descriptor.getPluginId());
-  }
-
-  @NotNull ProjectDependentPluginEnabledState getProjectDependentState(@NotNull IdeaPluginDescriptor descriptor) {
-    PluginId pluginId = descriptor.getPluginId();
-    return new ProjectDependentPluginEnabledState(pluginId,
-                                                  getState(pluginId),
-                                                  getProject());
   }
 
   /**
