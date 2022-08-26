@@ -22,25 +22,24 @@ import java.nio.file.Path
 
 @Deprecated("Use Path for localPath")
 fun getTargetPathForPythonConsoleExecution(targetEnvironmentRequest: TargetEnvironmentRequest,
-                                          project: Project,
-                                          sdk: Sdk?,
-                                          pathMapper: PyRemotePathMapper?,
-                                          localPath: String): TargetEnvironmentFunction<String>
-= getTargetPathForPythonConsoleExecution(targetEnvironmentRequest, project, sdk, pathMapper, Path.of(localPath))
+                                           project: Project,
+                                           sdk: Sdk?,
+                                           pathMapper: PyRemotePathMapper?,
+                                           localPath: String): TargetEnvironmentFunction<String> =
+  getTargetPathForPythonConsoleExecution(project, sdk, pathMapper, Path.of(localPath))
 
-  /**
+/**
  * @param pathMapper corresponds to the path mappings specified in the run configuration
  * @throws IllegalArgumentException if [localPath] cannot be found neither in SDK additional data nor within the registered uploads in the
  *                                  request
  */
-fun getTargetPathForPythonScriptExecution(targetEnvironmentRequest: TargetEnvironmentRequest,
-                                          project: Project,
+fun getTargetPathForPythonScriptExecution(project: Project,
                                           sdk: Sdk?,
                                           pathMapper: PyRemotePathMapper?,
                                           localPath: Path): TargetEnvironmentFunction<String> {
   val initialPathMapper = pathMapper ?: PyRemotePathMapper()
   val targetPath = initialPathMapper.extendPythonSdkPathMapper(project, sdk).convertToRemoteOrNull(localPath)
-  return targetPath?.let { constant(it) } ?: targetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath)
+  return targetPath?.let { constant(it) } ?: getTargetEnvironmentValueForLocalPath(localPath)
 }
 
 private fun PyRemotePathMapper.extendPythonSdkPathMapper(project: Project, sdk: Sdk?): PyRemotePathMapper {
@@ -64,16 +63,6 @@ private fun PyRemotePathMapper.extendPythonSdkPathMapper(project: Project, sdk: 
  * @throws IllegalArgumentException if [localPath] cannot be found neither in SDK additional data nor within the registered uploads in the
  *                                  request
  */
-fun getTargetPathForPythonConsoleExecution(targetEnvironmentRequest: TargetEnvironmentRequest,
-                                           project: Project,
-                                           sdk: Sdk?,
-                                           pathMapper: PyRemotePathMapper?,
-                                           localPath: Path): TargetEnvironmentFunction<String> {
-  val targetPath = pathMapper?.convertToRemoteOrNull(localPath)
-                   ?: getPythonConsolePathMapper(project, sdk)?.convertToRemoteOrNull(localPath)
-  return targetPath?.let { constant(it) } ?: targetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath)
-}
-
 fun getTargetPathForPythonConsoleExecution(project: Project,
                                            sdk: Sdk?,
                                            pathMapper: PyRemotePathMapper?,
