@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.TestSourcesFilter;
@@ -56,7 +43,7 @@ public class PatternPackageSet extends PatternBasedPackageSet {
       if (myPattern == null) {
         return true;
       }
-      String packageName = getPackageName(file, fileIndex);
+      String packageName = getPackageName(file, project);
       if (packageName != null && myPattern.matcher(packageName).matches()) {
         return true;
       }
@@ -85,10 +72,10 @@ public class PatternPackageSet extends PatternBasedPackageSet {
     throw new RuntimeException("Unknown scope: " + myScope);
   }
 
-  private static String getPackageName(VirtualFile file, ProjectFileIndex fileIndex) {
+  private static String getPackageName(VirtualFile file, Project project) {
     VirtualFile dir = file.isDirectory() ? file : file.getParent();
     if (dir == null) return null;
-    return StringUtil.getQualifiedName(fileIndex.getPackageNameByDirectory(dir), file.getNameWithoutExtension());
+    return StringUtil.getQualifiedName(PackageIndex.getInstance(project).getPackageNameByDirectory(dir), file.getNameWithoutExtension());
   }
 
   @NotNull
