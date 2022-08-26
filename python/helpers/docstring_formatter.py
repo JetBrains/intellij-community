@@ -1,3 +1,5 @@
+import argparse
+import json
 import os
 import re
 import sys
@@ -11,6 +13,23 @@ ENCODING = 'utf-8'
 # regexp from sphinxcontrib/napoleon/docstring.py:35 and py2only/docutils/parsers/rst/states.py:1107
 TAGS_START = re.compile(
     r'(\.\. \S+::)|:(?![: ])([^:\\]|\\.|:(?!([ `]|$)))*(?<! ):( +|$)')
+
+
+def format_fragments(fragments_list):
+    formatted_fragments = []
+
+    for element in fragments_list:
+        formatted = format_rest(element['myDescription'])
+        if formatted.startswith('<p>') and formatted.endswith('</p>\n'):
+            formatted = formatted[len('<p>'):][:-len('</p>\n')]
+        formatted_fragments.append({
+            'myName': element['myName'],
+            'myDescription': formatted,
+            'myFragmentType': element['myFragmentType']
+        })
+
+    return formatted_fragments
+
 
 def format_rest(docstring):
     from docutils import nodes
@@ -284,6 +303,16 @@ def format_epytext(docstring):
     return html
 
 
+def format_body(docstring_format, input_body):
+    formatter = {
+        'rest': format_rest,
+        'google': format_google,
+        'numpy': format_numpy,
+        'epytext': format_epytext
+    }.get(docstring_format, format_rest)
+    return formatter(input_body)
+
+
 def main():
     _stdin = os.fdopen(sys.stdin.fileno(), 'rb')
     _stdout = os.fdopen(sys.stdout.fileno(), 'wb')
@@ -302,32 +331,34 @@ def main():
     # conflict with sphinxcontrib.napoleon that we bundle.
     sys.modules.pop('sphinxcontrib', None)
 
-    args = sys.argv[1:]
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--format', default='rest', nargs='?', const='rest')
+    parser.add_argument('--fragments', action="store_true")
+    parser.add_argument('--input', type=argparse.FileType('rb'), default=_stdin, nargs='?', const=_stdin)
+    args = parser.parse_args()
 
-    docstring_format = args[0] if args else 'rest'
-    if len(args) > 1:
+    if args.input:
         try:
-            f = open(args[1], 'rb')
-            text = f.read().decode('utf-8')
+            text = args.input.read().decode(ENCODING)
         finally:
-            f.close()
+            args.input.close()
     else:
         text = read_safe()
 
-    formatter = {
-        'rest': format_rest,
-        'google': format_google,
-        'numpy': format_numpy,
-        'epytext': format_epytext
-    }.get(docstring_format, format_rest)
-
     try:
-        html = formatter(text)
+        if args.fragments:
+            input_json = json.loads(text)
+            formatted_body = format_body(args.format, input_json['body'])
+            formatted_fragments = format_fragments(input_json['fragments'])
+            print_safe(json.dumps({
+                'body': formatted_body,
+                'fragments': formatted_fragments,
+            }, ensure_ascii=False, separators=(',', ':'), sort_keys=True))
+        else:
+            print_safe(format_body(args.format, text))
     except ImportError:
         print_safe('sys.path = %s\n\n' % sys.path, error=True)
         raise
-
-    print_safe(html)
 
 
 if __name__ == '__main__':

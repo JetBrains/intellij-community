@@ -26,6 +26,8 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 import static com.jetbrains.python.psi.PyUtil.as;
 
 public class PythonRuntimeServiceImpl extends PythonRuntimeService {
@@ -77,8 +79,11 @@ public class PythonRuntimeServiceImpl extends PythonRuntimeService {
   }
 
   @Override
-  public String formatDocstring(Module module, DocStringFormat format, String docstring) {
-    return PyRuntimeDocstringFormatter.runExternalTool(module, format, docstring);
+  public String formatDocstring(@NotNull Module module,
+                                @NotNull DocStringFormat format,
+                                @NotNull String input,
+                                @NotNull List<String> formatterFlags) {
+    return PyRuntimeDocstringFormatter.runExternalTool(module, format, input, formatterFlags);
   }
 
   @Override
