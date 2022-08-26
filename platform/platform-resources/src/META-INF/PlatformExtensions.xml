@@ -549,7 +549,7 @@
     <applicationConfigurable groupId="appearance"
                              groupWeight="149"
                              id="reference.settings.ide.settings.new.ui"
-                             provider="com.intellij.ui.ExperimentalUIConfigurableProvider"
+                             instance="com.intellij.ui.ExperimentalUIConfigurableUi"
                              bundle="messages.IdeBundle"
                              key="configurable.new.ui.name"/>
 

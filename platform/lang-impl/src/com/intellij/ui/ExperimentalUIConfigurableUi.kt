@@ -4,19 +4,20 @@ package com.intellij.ui
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.SendFeedbackAction
 import com.intellij.ide.ui.UISettings
-import com.intellij.openapi.options.ConfigurableUi
-import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
-import javax.swing.JComponent
 
 /**
  * @author Konstantin Bulenkov
  */
-class ExperimentalUIConfigurableUi: ConfigurableUi<ExperimentalUI> {
-  private val ui: DialogPanel = panel {
+internal class ExperimentalUIConfigurableUi : BoundSearchableConfigurable(
+  IdeBundle.message("configurable.new.ui.name"),
+  "reference.settings.ide.settings.new.ui") {
+
+  override fun createPanel() = panel {
     row {
       checkBox(IdeBundle.message("checkbox.enable.new.ui"))
         .bindSelected(
@@ -33,16 +34,13 @@ class ExperimentalUIConfigurableUi: ConfigurableUi<ExperimentalUI> {
       group(IdeBundle.message("new.ui.settings.group.name")) {
         row {
           checkBox(IdeBundle.message("checkbox.main.menu.separate.toolbar"))
-            .bindSelected(
-              { UISettings.getInstance().separateMainMenu },
-              { UISettings.getInstance().separateMainMenu = it })
+            .bindSelected(UISettings.getInstance()::separateMainMenu)
         }
       }
     }
   }
 
-  override fun reset(settings: ExperimentalUI) = ui.reset()
-  override fun isModified(settings: ExperimentalUI) = ui.isModified()
-  override fun apply(settings: ExperimentalUI) = ui.apply()
-  override fun getComponent(): JComponent = ui
+  override fun getHelpTopic(): String? {
+    return null
+  }
 }
