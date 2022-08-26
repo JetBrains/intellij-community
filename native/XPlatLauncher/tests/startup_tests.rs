@@ -2,18 +2,6 @@
 mod tests_util;
 
 #[cfg(test)]
-// | What do we need to check | status |
-// |--------------------------|:------:|
-// | launcher exit status     |   V    |
-// | Class path               |   V    |
-// | vm options               |   X    |  TODO: add tests after dehardcode
-// | command line arguments   |   V    |
-// | current Java version     |   V    |
-// | current Java vendor      |   V    |
-// | work dir                 |   V    |
-// | PATH, LD_LIBRARY_PATH... |   X    |  writeEnvironmentVariableInFile(String envVariable)
-// | setup JRE                |   X    |
-
 mod tests {
     use crate::tests_util::{IntellijMainDumpedLaunchParameters, prepare_test_env, run_launcher};
     use std::path::PathBuf;
