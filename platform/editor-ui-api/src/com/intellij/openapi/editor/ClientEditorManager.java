@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
+import com.intellij.codeWithMe.ClientId;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
@@ -24,6 +26,20 @@ public class ClientEditorManager {
   public static @NotNull List<ClientEditorManager> getAllInstances() {
     return ApplicationManager.getApplication().getServices(ClientEditorManager.class, true);
   }
+
+  public static void withEditorClientId(@NotNull Editor editor, @NotNull Runnable runnable) {
+    for (ClientEditorManager manager : getAllInstances()) {
+      if (manager.editors().toList().contains(editor)) {
+        try (AccessToken ignored = ClientId.withClientId(manager.myClientId)) {
+          runnable.run();
+        }
+        return;
+      }
+    }
+    runnable.run();
+  }
+
+  private final ClientId myClientId = ClientId.getCurrent();
 
   private final List<Editor> myEditors = ContainerUtil.createLockFreeCopyOnWriteList();
 
