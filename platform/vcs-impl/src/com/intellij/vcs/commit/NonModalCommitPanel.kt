@@ -63,14 +63,19 @@ abstract class NonModalCommitPanel(
     component.isOpaque = false
   }
 
-
-
   val commitMessage = CommitMessage(project, false, false, true, message("commit.message.placeholder")).apply {
     editorField.addSettingsProvider {
       it.setBorder(emptyLeft(6))
 
-      val jbScrollPane = it.scrollPane as? JBScrollPane
-      jbScrollPane?.statusComponent = createToolbarWithHistoryAction(editorField).component
+      val scrollPane = it.scrollPane as? JBScrollPane ?: return@addSettingsProvider
+
+      val historyActionToolbar = createToolbarWithHistoryAction(editorField)
+
+      scrollPane.statusComponent.apply {
+        add(historyActionToolbar.component)
+        revalidate()
+        repaint()
+      }
     }
   }
 
