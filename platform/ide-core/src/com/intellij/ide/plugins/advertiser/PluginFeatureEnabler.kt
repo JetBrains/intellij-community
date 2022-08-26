@@ -2,7 +2,6 @@
 package com.intellij.ide.plugins.advertiser
 
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
@@ -15,16 +14,11 @@ interface PluginFeatureEnabler {
   @RequiresReadLockAbsence
   suspend fun enableSuggested(): Boolean
 
+  fun enableSuggestedHelper()
+
   companion object {
 
     @JvmStatic
     fun getInstance(project: Project): PluginFeatureEnabler = project.service()
-
-    @JvmStatic
-    fun enableSuggested(project: Project): Boolean {
-      return runBlockingMaybeCancellable {
-        getInstance(project).enableSuggested()
-      }
-    }
   }
 }
