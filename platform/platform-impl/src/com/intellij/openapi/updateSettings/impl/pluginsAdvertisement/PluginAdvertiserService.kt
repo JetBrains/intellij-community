@@ -12,21 +12,21 @@ import com.intellij.ide.ui.PluginBooleanOptionDescriptor
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.notification.SingletonNotificationManager
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.util.NlsContexts.NotificationContent
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.MultiMap
-import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.coroutineContext
 
-open class PluginAdvertiserService(private val project: Project) {
+open class PluginAdvertiserService(private val project: Project) : Disposable {
 
   companion object {
 
@@ -34,14 +34,9 @@ open class PluginAdvertiserService(private val project: Project) {
 
     @JvmStatic
     fun getInstance(project: Project): PluginAdvertiserService = project.service()
-
-    @JvmStatic
-    fun rescanDependencies(project: Project) {
-      project.coroutineScope.launch {
-        getInstance(project).rescanDependencies()
-      }
-    }
   }
+
+  private val coroutineScope = CoroutineScope(Job())
 
   open suspend fun run(
     customPlugins: List<PluginNode>,
@@ -107,7 +102,7 @@ open class PluginAdvertiserService(private val project: Project) {
         org = pluginManagerFilters,
       )
 
-    ApplicationManager.getApplication().invokeLater(
+    coroutineScope.launch(Dispatchers.EDT) {
       notifyUser(
         bundledPlugins = getBundledPluginToInstall(plugins, descriptorsById),
         suggestionPlugins = suggestToInstall,
@@ -117,10 +112,12 @@ open class PluginAdvertiserService(private val project: Project) {
         allUnknownFeatures = unknownFeatures,
         dependencies = dependencies,
         includeIgnored = includeIgnored,
-      ),
-      ModalityState.NON_MODAL,
-      project.disposed,
-    )
+      )
+    }
+  }
+
+  override fun dispose() {
+    coroutineScope.cancel()
   }
 
   private fun fetchPluginSuggestions(
@@ -155,7 +152,7 @@ open class PluginAdvertiserService(private val project: Project) {
     allUnknownFeatures: Collection<UnknownFeature>,
     dependencies: PluginFeatureMap?,
     includeIgnored: Boolean,
-  ) = Runnable {
+  ) {
     val (notificationMessage, notificationActions) = if (suggestionPlugins.isNotEmpty() || disabledDescriptors.isNotEmpty()) {
       val action = if (disabledDescriptors.isEmpty()) {
         NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.configure.plugins")) {
@@ -170,7 +167,7 @@ open class PluginAdvertiserService(private val project: Project) {
           IdeBundle.message("plugins.advertiser.action.enable.plugins")
 
         NotificationAction.createSimpleExpiring(title) {
-          ApplicationManager.getApplication().invokeLater {
+          coroutineScope.launch(Dispatchers.EDT) {
             FUSEventSource.NOTIFICATION.logEnablePlugins(
               disabledDescriptors.map { it.pluginId.idString },
               project,
@@ -209,7 +206,7 @@ open class PluginAdvertiserService(private val project: Project) {
           .setDisplayId("advertiser.no.plugins")
           .notify(project)
       }
-      return@Runnable
+      return
     }
 
     notificationManager.notify("", notificationMessage, project) {
@@ -350,7 +347,16 @@ open class PluginAdvertiserService(private val project: Project) {
     return result
   }
 
-  suspend fun rescanDependencies() {
+  @JvmOverloads
+  fun rescanDependencies(block: suspend CoroutineScope.() -> Unit = {}) {
+    coroutineScope.launch(Dispatchers.IO) {
+      rescanDependencies()
+      block()
+    }
+  }
+
+  @RequiresBackgroundThread
+  private suspend fun rescanDependencies() {
     collectDependencyUnknownFeatures()
 
     val dependencyUnknownFeatures = UnknownFeaturesCollector.getInstance(project).unknownFeatures

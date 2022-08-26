@@ -21,6 +21,6 @@ internal class MavenDependencyCollector : DependencyCollector {
 internal class MavenDependencyUpdater(private val project: Project) : MavenImportListener {
 
   override fun importFinished(importedProjects: Collection<MavenProject>, newModules: List<Module>) {
-    PluginAdvertiserService.rescanDependencies(project)
+    PluginAdvertiserService.getInstance(project).rescanDependencies()
   }
 }

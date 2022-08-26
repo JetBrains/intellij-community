@@ -43,7 +43,7 @@ internal class GradleDependencyUpdater : ExternalSystemTaskNotificationListenerA
     if (id.projectSystemId == GradleConstants.SYSTEM_ID
         && id.type == ExternalSystemTaskType.RESOLVE_PROJECT) {
       id.findProject()?.let {
-        PluginAdvertiserService.rescanDependencies(it)
+        PluginAdvertiserService.getInstance(it).rescanDependencies()
       }
     }
   }
