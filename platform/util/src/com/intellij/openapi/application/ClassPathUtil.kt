@@ -9,7 +9,6 @@ import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.util.lang.UrlClassLoader
 import com.sun.jna.TypeMapper
 import com.sun.jna.platform.FileUtils
-import gnu.trove.THashSet
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import net.jpountz.lz4.LZ4Factory
 import org.apache.log4j.Appender
@@ -52,7 +51,7 @@ object ClassPathUtil {
       Document::class.java,  // jDOM
       Appender::class.java,  // Log4J
       Object2IntMap::class.java,  // fastutil
-      THashSet::class.java,  // Trove,
+      classLoader.loadClass("gnu.trove.THashSet"),  // Trove,
       TypeMapper::class.java,  // JNA
       FileUtils::class.java,  // JNA (jna-platform)
       PatternMatcher::class.java,  // OROMatcher
