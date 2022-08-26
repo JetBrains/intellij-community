@@ -8,6 +8,7 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -109,6 +110,7 @@ class EditorNotificationsImpl(private val project: Project) : EditorNotification
 
   @TestOnly
   fun completeAsyncTasks() {
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     runUnderModalProgressIfIsEdt {
       val parentJob = coroutineScope.coroutineContext[Job]!!
       while (true) {
