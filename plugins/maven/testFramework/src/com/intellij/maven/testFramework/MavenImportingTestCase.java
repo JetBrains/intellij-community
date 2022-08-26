@@ -121,6 +121,11 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     );
   }
 
+  @Override
+  protected boolean useDirectoryBasedProjectFormat() {
+    return true;
+  }
+
   public boolean isWorkspaceImport() {
     return MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject);
   }
