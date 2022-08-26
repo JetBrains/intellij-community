@@ -245,7 +245,7 @@ class IgnoredToExcludeNotificationProvider : EditorNotificationProvider {
 
     return Function { fileEditor ->
       val panel = EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Info)
-      panel.icon(AllIcons.General.Information)
+      panel.icon(AllIcons.General.BalloonInformation)
       panel.text = message("ignore.to.exclude.notification.message")
       panel.createActionLabel(message("ignore.to.exclude.notification.action.view")) { showIgnoredAction(project) }
       panel.createActionLabel(message("ignore.to.exclude.notification.action.mute"), muteAction(project))
