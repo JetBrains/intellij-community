@@ -231,6 +231,7 @@ object PlatformModules {
 
     jar(UTIL_RT_JAR, listOf(
       "intellij.platform.util.rt",
+      "intellij.platform.util.trove",
     ), productLayout, layout)
 
     jar(UTIL_JAR, listOf(
@@ -321,7 +322,6 @@ object PlatformModules {
       layout.withModule(name, BaseLayout.APP_JAR)
     }
 
-    layout.projectLibrariesToUnpack.putValue(UTIL_JAR, "Trove4j")
     layout.projectLibrariesToUnpack.putValue(UTIL_RT_JAR, "ion")
 
     for (item in additionalProjectLevelLibraries) {

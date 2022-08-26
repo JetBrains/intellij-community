@@ -51,7 +51,6 @@ object TestKotlinArtifacts {
     @JvmStatic val kotlinTestJunit: File by lazy { getJar("kotlin-test-junit") }
     @JvmStatic val parcelizeRuntime: File by lazy { getJar("parcelize-compiler-plugin-for-ide") }
 
-    @JvmStatic val trove4j: File by lazy { getLibraryFile("org.jetbrains.intellij.deps", "trove4j", "Trove4j.xml") }
     @JvmStatic val jetbrainsAnnotations: File by lazy { getLibraryFile("org.jetbrains", "annotations", "jetbrains_annotations.xml") }
     @JvmStatic val jsr305: File by lazy { getLibraryFile("com.google.code.findbugs", "jsr305", "jsr305.xml") }
     @JvmStatic val junit3: File by lazy { getLibraryFile("junit", "junit", "JUnit3.xml") }
