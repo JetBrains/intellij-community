@@ -282,7 +282,7 @@ public class PyDocumentationBuilder {
         // not in getter, getter's doc comment may be useful
         final PyStringLiteralExpression getterDocstring = getEffectiveDocStringExpression(getter);
         if (getterDocstring != null) {
-          mySectionsMap.get(PyPsiBundle.message("QDOC.documentation.is.copied.from")).addItem("property getter");
+          mySectionsMap.get(PyPsiBundle.message("QDOC.copied.from")).addItem("property getter");
           docstring = getterDocstring.getStringValue();
         }
       }
@@ -575,7 +575,7 @@ public class PyDocumentationBuilder {
       if (docstringElement != null && !docstringElement.getStringValue().isEmpty()) {
         final String ancestorLink = isFromClass ? getLinkToClass(ancestor, false) : getLinkToFunction(inherited, false);
         if (ancestorLink != null) {
-          mySectionsMap.get(PyPsiBundle.message("QDOC.documentation.is.copied.from")).addWith(TagCode, $(ancestorLink));
+          mySectionsMap.get(PyPsiBundle.message("QDOC.copied.from")).addWith(TagCode, $(ancestorLink));
         }
         return docstringElement;
       }
@@ -600,7 +600,7 @@ public class PyDocumentationBuilder {
         final PyStringLiteralExpression predefinedDocstring = getEffectiveDocStringExpression(predefinedMethod);
         final String predefinedDoc = predefinedDocstring != null ? predefinedDocstring.getStringValue() : null;
         if (predefinedDoc != null && !predefinedDoc.isEmpty()) {
-          mySectionsMap.get(PyPsiBundle.message("QDOC.documentation.is.copied.from")).addItem("built-in description");
+          mySectionsMap.get(PyPsiBundle.message("QDOC.copied.from")).addItem("built-in description");
           myContent.add(safeRunFormatterService(fun, predefinedDoc));
         }
         return predefinedDocstring;
