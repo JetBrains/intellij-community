@@ -29,7 +29,6 @@ import org.apache.commons.compress.archivers.zip.ZipFile
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.io.*
 import org.jetbrains.intellij.build.tracer
-import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.charset.StandardCharsets
@@ -375,7 +374,7 @@ private inline fun executeTask(host: String,
           ssh.connect(host)
           break
         }
-        catch (e: IOException) {
+        catch (e: Exception) {
           span.addEvent("cannot connect to $host", Attributes.of(
             AttributeKey.longKey("attemptNumber"), attempt.toLong(),
             AttributeKey.stringKey("error"), e.toString()
