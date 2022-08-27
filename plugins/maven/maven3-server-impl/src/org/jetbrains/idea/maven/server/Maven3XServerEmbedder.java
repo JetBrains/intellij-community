@@ -807,7 +807,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
     request.setUpdateSnapshots(myAlwaysUpdateSnapshots);
 
-    if (myServerSettings.isEnableTychoSupport()) {
+    if (myServerSettings.isTychoProject()) {
       request.setDegreeOfConcurrency(2);
     }
 
@@ -832,7 +832,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
         List<ProjectBuildingResult> buildingResults = getProjectBuildingResults(request, files);
 
-        if (myServerSettings.isEnableTychoSupport()) {
+        if (myServerSettings.isTychoProject()) {
           Map<MavenProject, List<MavenProject>> rootProjectsMap = new HashMap<MavenProject, List<MavenProject>>();
           List<MavenProject> allProjects = new ArrayList<MavenProject>(buildingResults.size());
 
@@ -1094,12 +1094,10 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       session.setCurrentProject(project);
       try {
         // the method can be removed
-        //session.setAllProjects(Collections.singletonList(project));
         session.setAllProjects(projects);
       }
       catch (NoSuchMethodError ignore) {
       }
-      //session.setProjects(Collections.singletonList(project));
       session.setProjects(projects);
 
       for (AbstractMavenLifecycleParticipant listener : lifecycleParticipants) {

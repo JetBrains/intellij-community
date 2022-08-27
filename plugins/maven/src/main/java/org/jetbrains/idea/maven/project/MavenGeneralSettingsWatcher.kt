@@ -40,13 +40,27 @@ class MavenGeneralSettingsWatcher private constructor(
   }
 
   init {
-    generalSettings.addListener(::fireSettingsChange, parentDisposable)
+    generalSettings.addListener(
+      {
+        updateImportingSettings()
+        fireSettingsChange()
+      }, parentDisposable)
     val filesProvider = ReadAsyncSupplier.Builder(::settingsFiles)
       .coalesceBy(this)
       .build(backgroundExecutor)
     subscribeOnVirtualFilesChanges(false, filesProvider, object : FilesChangesListener {
       override fun apply() = fireSettingsXmlChange()
     }, parentDisposable)
+  }
+
+  private fun updateImportingSettings() {
+    if (generalSettings.isTychoProject) {
+      val importingSettings = manager.importingSettings
+      val dependencyTypes = importingSettings.dependencyTypesAsSet
+      dependencyTypes.add("eclipse-plugin")
+      dependencyTypes.add("eclipse-test-plugin")
+      importingSettings.dependencyTypes = dependencyTypes.joinToString(", ")
+    }
   }
 
   companion object {

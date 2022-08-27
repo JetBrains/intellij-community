@@ -18,7 +18,6 @@ package org.jetbrains.idea.maven.server;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.Serializable;
 import java.util.Properties;
 
@@ -39,7 +38,7 @@ public class MavenServerSettings implements Serializable, Cloneable {
   private boolean isOffline;
   @NotNull private UpdatePolicy myPluginUpdatePolicy = UpdatePolicy.DO_NOT_UPDATE;
   @NotNull private UpdatePolicy mySnapshotUpdatePolicy = UpdatePolicy.ALWAYS_UPDATE;
-  private boolean isEnableTychoSupport;
+  private boolean isTychoProject;
 
   private String projectJdk;
 
@@ -131,12 +130,12 @@ public class MavenServerSettings implements Serializable, Cloneable {
     mySnapshotUpdatePolicy = snapshotUpdatePolicy;
   }
 
-  public boolean isEnableTychoSupport() {
-    return isEnableTychoSupport;
+  public boolean isTychoProject() {
+    return isTychoProject;
   }
 
-  public void setEnableTychoSupport(final boolean isEnableTychoSupport) {
-    this.isEnableTychoSupport = isEnableTychoSupport;
+  public void setIsTychoProject(final boolean isTychoProject) {
+    this.isTychoProject = isTychoProject;
   }
 
   @Override
