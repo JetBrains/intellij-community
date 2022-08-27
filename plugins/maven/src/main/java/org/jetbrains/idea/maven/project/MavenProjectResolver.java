@@ -135,7 +135,14 @@ public class MavenProjectResolver {
       // Let's parse the Maven project's MANIFEST files
       final Map<MavenProject, MavenProjectManifestData> manifestsData =
         StreamEx.of(allMavenProjects)
-          .mapToEntry(MavenProjectResolver::parseManifest)
+          .mapToEntry(mavenProject -> {
+            try {
+              return parseManifest(mavenProject);
+            } catch (final IOException e) {
+              MavenLog.LOG.error("Could not read MANIFEST file of project " + mavenProject, e);
+              return null;
+            }
+          })
           .nonNullValues()
           .toMap();
 
@@ -177,7 +184,7 @@ public class MavenProjectResolver {
   }
 
   @Nullable
-  private static MavenProjectManifestData parseManifest(@NotNull final MavenProject mavenProject) {
+  private static MavenProjectManifestData parseManifest(@NotNull final MavenProject mavenProject) throws IOException {
     final VirtualFile directoryFile = mavenProject.getDirectoryFile();
     final VirtualFile manifestFile = directoryFile.findFileByRelativePath("META-INF/MANIFEST.MF");
 
@@ -189,36 +196,32 @@ public class MavenProjectResolver {
     final Set<String> importedPackages = new HashSet<>(32);
     final Set<String> exportedPackages = new HashSet<>(32);
 
-    try {
-      final Manifest manifest = new Manifest(manifestFile.getInputStream());
-      final Attributes manifestAttributes = manifest.getMainAttributes();
-      final String requiredBundlesStr = manifestAttributes.getValue("Require-Bundle");
+    final Manifest manifest = new Manifest(manifestFile.getInputStream());
+    final Attributes manifestAttributes = manifest.getMainAttributes();
+    final String requiredBundlesStr = manifestAttributes.getValue("Require-Bundle");
 
-      if (requiredBundlesStr != null) {
-        for (final String bundle : requiredBundlesStr.split(",")) {
-          // Simply extract the Bundle name, discarding version requirements.
-          // Tycho will tell us if we have the right version or not
-          requiredBundles.add(bundle.split(";")[0].trim());
-        }
+    if (requiredBundlesStr != null) {
+      for (final String bundle : requiredBundlesStr.split(",")) {
+        // Simply extract the Bundle name, discarding version requirements.
+        // Tycho will tell us if we have the right version or not
+        requiredBundles.add(bundle.split(";")[0].trim());
       }
+    }
 
-      final String importedPackagesStr = manifestAttributes.getValue("Import-Package");
+    final String importedPackagesStr = manifestAttributes.getValue("Import-Package");
 
-      if (importedPackagesStr != null) {
-        for (final String packageName : importedPackagesStr.split(",")) {
-          importedPackages.add(packageName.trim());
-        }
+    if (importedPackagesStr != null) {
+      for (final String packageName : importedPackagesStr.split(",")) {
+        importedPackages.add(packageName.trim());
       }
+    }
 
-      final String exportedPackagesStr = manifestAttributes.getValue("Export-Package");
+    final String exportedPackagesStr = manifestAttributes.getValue("Export-Package");
 
-      if (exportedPackagesStr != null) {
-        for (final String packageName : exportedPackagesStr.split(",")) {
-          exportedPackages.add(packageName.trim());
-        }
+    if (exportedPackagesStr != null) {
+      for (final String packageName : exportedPackagesStr.split(",")) {
+        exportedPackages.add(packageName.trim());
       }
-    } catch (final IOException e) {
-      throw new RuntimeException(e);
     }
 
     return new MavenProjectManifestData(requiredBundles, importedPackages, exportedPackages);
