@@ -172,4 +172,9 @@ public class GenerateHashCodeAndEqualsActionTestGenerated extends AbstractGenera
     public void testSingleVarWithSuperClass() throws Exception {
         runTest("testData/codeInsight/generate/equalsWithHashCode/singleVarWithSuperClass.kt");
     }
+
+    @TestMetadata("valueClass.kt")
+    public void testValueClass() throws Exception {
+        runTest("testData/codeInsight/generate/equalsWithHashCode/valueClass.kt");
+    }
 }
