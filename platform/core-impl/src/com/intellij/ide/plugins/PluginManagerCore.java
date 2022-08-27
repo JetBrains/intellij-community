@@ -6,7 +6,6 @@ import com.intellij.core.CoreBundle;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,8 +18,10 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
+import com.intellij.util.Java11Shim;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.lang.Java11Shim;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.lang.ZipFilePool;
 import kotlinx.coroutines.CoroutineScope;
@@ -543,7 +544,7 @@ public final class PluginManagerCore {
    */
   @ApiStatus.Internal
   public static @NotNull CompletableFuture<List<IdeaPluginDescriptorImpl>> getEnabledPluginRawList() {
-    scheduleDescriptorLoading(GlobalScope.INSTANCE);
+    scheduleDescriptorLoading(GlobalScope.INSTANCE, null);
     return FutureKt.asCompletableFuture(initFuture).thenApply(it -> it.enabledPlugins);
   }
 
@@ -965,7 +966,7 @@ public final class PluginManagerCore {
     String[] buttons =
       {CoreBundle.message("third.party.plugins.privacy.note.accept"), CoreBundle.message("third.party.plugins.privacy.note.disable")};
     int choice = JOptionPane.showOptionDialog(null, text, title, JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE,
-                                              AllIcons.General.WarningDialog, buttons, buttons[0]);
+                                              IconManager.getInstance().getPlatformIcon(PlatformIcons.WarningDialog), buttons, buttons[0]);
     return choice == 0;
   }
 

@@ -9,8 +9,10 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.registerUProblem
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.util.InheritanceUtil
 import com.intellij.uast.UastHintedVisitorAdapter
 import com.intellij.util.castSafelyTo
+import com.siyeh.ig.junit.JUnitCommonClassNames
 import com.siyeh.ig.psiutils.MethodUtils
 import com.siyeh.ig.psiutils.TestUtils
 import org.jetbrains.uast.*
@@ -43,6 +45,7 @@ private class TestCaseWithConstructorVisitor(private val holder: ProblemsHolder)
     val containingClass = method.containingClass ?: return true
     if (!TestFrameworks.getInstance().isTestClass(containingClass)) return true
     if (TestUtils.isParameterizedTest(containingClass)) return true
+    if (InheritanceUtil.isInheritor(containingClass, JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_SUITE)) return true
     if (MethodUtils.isTrivial(node, ::isAssignmentToFinalField)) return true
     val message = JvmAnalysisBundle.message("jvm.inspections.test.case.with.constructor.problem.descriptor")
     holder.registerUProblem(node, message)

@@ -74,6 +74,9 @@ open class XChildChildEntityImpl : XChildChildEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToManyParent<WorkspaceEntityBase>(PARENT1_CONNECTION_ID, this) == null) {
           error("Field XChildChildEntity#parent1 should be initialized")
@@ -83,9 +86,6 @@ open class XChildChildEntityImpl : XChildChildEntity, WorkspaceEntityBase() {
         if (this.entityLinks[EntityLink(false, PARENT1_CONNECTION_ID)] == null) {
           error("Field XChildChildEntity#parent1 should be initialized")
         }
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field XChildChildEntity#entitySource should be initialized")
       }
       if (_diff != null) {
         if (_diff.extractOneToManyParent<WorkspaceEntityBase>(PARENT2_CONNECTION_ID, this) == null) {
@@ -113,6 +113,15 @@ open class XChildChildEntityImpl : XChildChildEntity, WorkspaceEntityBase() {
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var parent1: XParentEntity
       get() {
@@ -151,15 +160,6 @@ open class XChildChildEntityImpl : XChildChildEntity, WorkspaceEntityBase() {
           this.entityLinks[EntityLink(false, PARENT1_CONNECTION_ID)] = value
         }
         changedProperty.add("parent1")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override var parent2: XChildEntity

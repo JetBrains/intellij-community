@@ -66,8 +66,4 @@ class TestProductivityFeatureProvider : ProductivityFeaturesProvider() {
   override fun getGroupDescriptors(): Array<GroupDescriptor> {
     return arrayOf(GroupDescriptor("testFeatureGroup", "test"))
   }
-
-  override fun getApplicabilityFilters(): Array<ApplicabilityFilter?> {
-    return arrayOfNulls(0)
-  }
 }

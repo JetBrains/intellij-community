@@ -2,7 +2,6 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.UIUtilities;
 import org.jetbrains.annotations.NotNull;
 
@@ -81,7 +80,16 @@ class AbstractButtonLayout {
     if (button.getText() == null) {
       return -1;
     }
-    return UIUtil.getBaseline(button, textRect.y, fontMetrics.getAscent(), textRect.width, textRect.height);
+    return getBaseline(textRect.y, textRect.width, textRect.height);
+  }
+
+  private int getBaseline(int y, int w, int h) {
+    View view = (View)button.getClientProperty(BasicHTML.propertyKey);
+    if (view == null) {
+      return y + fontMetrics.getAscent();
+    }
+    int baseline = BasicHTML.getHTMLBaseline(view, w, h);
+    return baseline < 0 ? baseline : y + baseline;
   }
 
   private void drawText(Graphics g, Color disabledTextColor, int mnemonicIndex) {

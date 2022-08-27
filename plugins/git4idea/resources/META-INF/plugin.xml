@@ -444,6 +444,10 @@
       <reference id="git4idea.actions.GitDumpLogIndexDataAction"/>
       <add-to-group group-id="Vcs.Log.Internal"/>
     </group>
+    
+    <action id="main.toolbar.git.Branches" class="git4idea.ui.toolbar.GitToolbarWidgetAction" >
+      <add-to-group group-id="MainToolbarLeft"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -712,8 +716,6 @@
     <vcs.delayedCommitMessageProvider implementation="git4idea.commit.GitDelayedCommitTemplateMessageProvider" order="first"/>
     <vcs.commitMessageProvider implementation="git4idea.commit.GitCommitTemplateMessageProvider" order="first"/>
     <jbProtocolRevisionResolver implementation="git4idea.GitNavigateRevisionResolver"/>
-
-    <projectToolbarWidget implementation="git4idea.ui.toolbar.GitToolbarWidgetFactory"/>
   </extensions>
 
   <extensionPoints>

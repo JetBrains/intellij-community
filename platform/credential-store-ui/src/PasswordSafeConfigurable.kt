@@ -13,6 +13,7 @@ import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.passwordSafe.impl.PasswordSafeImpl
 import com.intellij.ide.passwordSafe.impl.createPersistentCredentialStore
 import com.intellij.ide.passwordSafe.impl.getDefaultKeePassDbFile
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -295,6 +296,8 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabled = getNewDbFile()?.exists() ?: false
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
   }
 
   private inner class ImportKeePassDatabaseAction : DumbAwareAction(CredentialStoreBundle.message("action.text.password.safe.import")) {
@@ -327,6 +330,8 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabled = getNewDbFileAsString() != null
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
   }
 }
 

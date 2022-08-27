@@ -758,6 +758,25 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
   }
 
   @Test
+  @TargetVersions("4.1+")
+  public void testMultipleSourcesConsistencyCompilerOutput() throws Exception {
+    createProjectSubFile("src/main/java/A.java", "class A {}");
+    createProjectSubFile("src/main/kotlin/A.kt", "class A {}");
+    importPerSourceSet(false);
+    importProject(
+      createBuildScriptBuilder()
+        .withMavenCentral()
+        .withKotlinJvmPlugin()
+        .withJavaLibraryPlugin()
+        .generate()
+    );
+    assertModules("project");
+    assertContentEntryExists("project");
+    assertSourceExists("project", "src/main/java", "src/main/kotlin");
+    assertModuleOutput("project", getProjectPath() + "/build/classes/java/main", getProjectPath() + "/build/classes/java/test");
+  }
+
+  @Test
   public void testSharedSourceFolders() throws Exception {
     createProjectSubFile("settings.gradle", "include 'app1', 'app2'");
     createProjectSubFile("shared/resources/resource.txt");

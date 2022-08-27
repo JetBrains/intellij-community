@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.base.platforms
 
 import com.intellij.ProjectTopics
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -11,22 +12,45 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.util.containers.SoftFactoryMap
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
+import com.intellij.workspaceModel.ide.WorkspaceModelTopics
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
+import java.util.concurrent.ConcurrentHashMap
 
 @Service(Service.Level.PROJECT)
-class LibraryEffectiveKindProvider(project: Project) {
-    private val effectiveKindMap = object : SoftFactoryMap<LibraryEx, PersistentLibraryKind<*>?>() {
-        override fun create(key: LibraryEx) = detectLibraryKind(key.getFiles(OrderRootType.CLASSES))
-    }
+class LibraryEffectiveKindProvider(project: Project): Disposable {
+    private val effectiveKindMap = ConcurrentHashMap<LibraryEx, PersistentLibraryKind<*>?>();
 
     init {
-        project.messageBus.connect().subscribe(
-            ProjectTopics.PROJECT_ROOTS,
-            object : ModuleRootListener {
-                override fun rootsChanged(event: ModuleRootEvent) {
+        val connection = project.messageBus.connect(this)
+        WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(connection, object : WorkspaceModelChangeListener {
+            override fun beforeChanged(event: VersionedStorageChange) {
+                event.getChanges(LibraryEntity::class.java).forEach { dropKindMapEntry(it.oldEntity, event.storageBefore) }
+            }
+
+            override fun changed(event: VersionedStorageChange) {
+                event.getChanges(LibraryEntity::class.java).forEach { dropKindMapEntry(it.newEntity, event.storageAfter) }
+            }
+
+            private fun dropKindMapEntry(libraryEntity: LibraryEntity?, storage: EntityStorage) {
+                val lib = libraryEntity?.findLibraryBridge(storage)
+                if (lib != null) {
+                    effectiveKindMap.remove(lib)
+                }
+            }
+        })
+
+        connection.subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
+            override fun rootsChanged(event: ModuleRootEvent) {
+                if (!event.isCausedByWorkspaceModelChangesOnly) {
                     effectiveKindMap.clear()
                 }
             }
-        )
+        })
     }
 
     fun getEffectiveKind(library: LibraryEx): PersistentLibraryKind<*>? {
@@ -36,7 +60,9 @@ class LibraryEffectiveKindProvider(project: Project) {
 
         return when (val kind = library.kind) {
             is KotlinLibraryKind -> kind
-            else -> effectiveKindMap.get(library)
+            else -> effectiveKindMap.computeIfAbsent(library) {
+                detectLibraryKind(it.getFiles(OrderRootType.CLASSES))
+            }
         }
     }
 
@@ -44,4 +70,6 @@ class LibraryEffectiveKindProvider(project: Project) {
         @JvmStatic
         fun getInstance(project: Project): LibraryEffectiveKindProvider = project.service()
     }
+
+    override fun dispose() = Unit
 }

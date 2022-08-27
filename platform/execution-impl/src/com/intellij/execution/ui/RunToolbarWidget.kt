@@ -2,6 +2,7 @@
 package com.intellij.execution.ui
 
 import com.intellij.execution.*
+import com.intellij.execution.actions.RunConfigurationsComboBoxAction
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.executors.ExecutorGroup
@@ -10,7 +11,6 @@ import com.intellij.execution.impl.ExecutionManagerImpl.Companion.isProcessRunni
 import com.intellij.execution.impl.isOfSameType
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ActivityTracker
 import com.intellij.ide.DataManager
@@ -22,10 +22,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.ex.InlineActionsHolder
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
@@ -33,12 +30,12 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.ui.popup.*
-import com.intellij.openapi.util.*
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarProjectWidgetFactory
-import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBPanel
@@ -82,14 +79,6 @@ private const val PROFILER: String = "Profiler"
 private const val LOADING: String = "Loading"
 private const val RESTART: String = "Restart"
 
-internal class RunToolbarWidgetFactory : MainToolbarProjectWidgetFactory {
-  override fun createWidget(project: Project): JComponent =
-    if (Registry.`is`("ide.experimental.ui.redesigned.run.widget")) createRunToolbarWithoutStop(project).component
-    else RunToolbarWidget(project)
-
-  override fun getPosition() = MainToolbarWidgetFactory.Position.Right
-}
-
 internal class RunToolbarWidgetCustomizableActionGroupProvider : CustomizableActionGroupProvider() {
   override fun registerGroups(registrar: CustomizableActionGroupRegistrar?) {
     if (ExperimentalUI.isNewUI()) {
@@ -107,17 +96,17 @@ internal class RunToolbarWidget(val project: Project) : JBPanel<RunToolbarWidget
   }
 
   private fun createRunActionToolbar(): ActionToolbar {
-    val actionGroup = CustomActionsSchema.getInstance().getCorrectedAction(RUN_TOOLBAR_WIDGET_GROUP) as ActionGroup
-    return ActionManager.getInstance().createActionToolbar(
-      ActionPlaces.MAIN_TOOLBAR,
-      actionGroup,
-      true
-    ).apply {
-      targetComponent = null
-      setReservePlaceAutoPopupIcon(false)
-      layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
-    }
+  val actionGroup = CustomActionsSchema.getInstance().getCorrectedAction(RUN_TOOLBAR_WIDGET_GROUP) as ActionGroup
+  return ActionManager.getInstance().createActionToolbar(
+    ActionPlaces.MAIN_TOOLBAR,
+    actionGroup,
+    true
+  ).apply {
+    targetComponent = null
+    setReservePlaceAutoPopupIcon(false)
+    layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
   }
+}
 }
 
 internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), CustomComponentAction, DumbAware {
@@ -139,30 +128,32 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
 
   override fun update(e: AnActionEvent) {
     val project = e.project
-    if (project == null) {
+    val runManager = project?.serviceIfCreated<RunManager>()
+    if (runManager == null) {
       e.presentation.icon = iconFor(LOADING)
       e.presentation.text = ExecutionBundle.message("run.toolbar.widget.loading.text")
       e.presentation.isEnabled = false
       return
     }
-    val conf: RunnerAndConfigurationSettings? = RunManager.getInstance(project).selectedConfiguration
+
+    val selectedConfiguration = runManager.selectedConfiguration
     val history = RunConfigurationStartHistory.getInstance(project)
-    val run = history.firstOrNull(conf) { it.state.isRunningState() } ?: history.firstOrNull(conf)
+    val run = history.firstOrNull(selectedConfiguration) { it.state.isRunningState() } ?: history.firstOrNull(selectedConfiguration)
     val isLoading = run?.state?.isBusyState() == true
     val lastExecutorId = run?.executorId ?: DefaultRunExecutor.EXECUTOR_ID
-    e.presentation.putClientProperty(CONF, conf)
+    e.presentation.putClientProperty(CONF, selectedConfiguration)
     e.presentation.putClientProperty(EXECUTOR_ID, lastExecutorId)
-    if (conf != null) {
+    if (selectedConfiguration != null) {
       val isRunning = run?.state == RunState.STARTED || run?.state == RunState.TERMINATING
-      val canRestart = isRunning && !conf.configuration.isAllowRunningInParallel
+      val canRestart = isRunning && !selectedConfiguration.configuration.isAllowRunningInParallel
       e.presentation.putClientProperty(COLOR, if (isRunning) RunButtonColors.GREEN else RunButtonColors.BLUE)
       e.presentation.icon = iconFor(when {
                                       isLoading -> LOADING
                                       canRestart -> RESTART
                                       else -> lastExecutorId
                                     })
-      e.presentation.text = conf.shortenName()
-      e.presentation.description = RunToolbarWidgetRunAction.reword(getExecutorByIdOrDefault(lastExecutorId), canRestart, conf.shortenName())
+      e.presentation.text = selectedConfiguration.shortenName()
+      e.presentation.description = RunToolbarWidgetRunAction.reword(getExecutorByIdOrDefault(lastExecutorId), canRestart, selectedConfiguration.shortenName())
     } else {
       e.presentation.putClientProperty(COLOR, RunButtonColors.BLUE)
       e.presentation.icon = iconFor(RUN)
@@ -207,7 +198,7 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
           actionPerformed(anActionEvent)
         }
       }
-    }.let { Wrapper(it).apply { border = JBUI.Borders.emptyLeft(6) } }
+    }.let { Wrapper(it).apply { border = JBUI.Borders.empty(7,6) } }
   }
 
   override fun updateCustomComponent(wrapper: JComponent, presentation: Presentation) {
@@ -248,17 +239,7 @@ internal fun createRunConfigurationsActionGroup(project: Project, addHeader: Boo
     inlineActions.add(RunToolbarWidgetRunAction(runExecutor) { conf })
     inlineActions.add(RunToolbarWidgetRunAction(debugExecutor) { conf })
 
-    actions.add(ActionGroupWithInlineActions(conf.shortenName(), true, inlineActions).apply {
-      templatePresentation.icon = conf.configuration.icon
-      if (conf.isRunning(project)) {
-        templatePresentation.icon = ExecutionUtil.getLiveIndicator(templatePresentation.icon)
-      }
-
-      val subgroup = createOtherRunnersSubgroup(conf, project)
-      if (subgroup != null) {
-        addAll(subgroup)
-      }
-    })
+    actions.add(ActionGroupWithInlineActions(inlineActions, conf, project))
   }
   actions.add(Separator.create())
   actions.add(DelegateAction({ ExecutionBundle.message("run.toolbar.widget.all.configurations") },
@@ -302,7 +283,9 @@ private class DelegateAction(val string: Supplier<@Nls String>, delegate: AnActi
   }
 }
 
-private class ActionGroupWithInlineActions(@NlsActions.ActionText name: String, popup: Boolean, private val actions: List<AnAction>) : DefaultActionGroup(name, popup), InlineActionsHolder {
+private class ActionGroupWithInlineActions(
+  private val actions: List<AnAction>, configuration: RunnerAndConfigurationSettings, project: Project
+) : RunConfigurationsComboBoxAction.SelectConfigAction(configuration, project, excludeRunAndDebug), InlineActionsHolder {
   override fun getInlineActions(): List<AnAction> = actions
 }
 
@@ -344,7 +327,7 @@ class StopWithDropDownAction : AnAction(), CustomComponentAction, DumbAware {
       }
       isPaintEnable = false
       isCombined = true
-    }.let { Wrapper(it).apply { border = JBUI.Borders.emptyLeft(6) } }
+    }.let { Wrapper(it).apply { border = JBUI.Borders.empty(7,6) } }
   }
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
@@ -754,9 +737,9 @@ private fun RunnerAndConfigurationSettings.isRunning(project: Project, execId: S
   }
 }
 
+@Service(Service.Level.PROJECT)
 @State(name = "RunConfigurationStartHistory", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
-class RunConfigurationStartHistory(val project: Project) : PersistentStateComponent<RunConfigurationStartHistory.State> {
-
+internal class RunConfigurationStartHistory(private val project: Project) : PersistentStateComponent<RunConfigurationStartHistory.State> {
   class State {
     @XCollection(style = XCollection.Style.v2)
     @OptionTag("element")
@@ -827,9 +810,7 @@ class RunConfigurationStartHistory(val project: Project) : PersistentStateCompon
   }
 
   companion object {
-    fun getInstance(project: Project): RunConfigurationStartHistory {
-      return project.getService(RunConfigurationStartHistory::class.java)
-    }
+    fun getInstance(project: Project): RunConfigurationStartHistory = project.service()
   }
 }
 

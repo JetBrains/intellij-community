@@ -76,6 +76,7 @@ public class ClusteringSearchSession {
     //create new ArrayList from clusters to avoid concurrent modification and do all the needed sorting and filtering in non-blocking way
     return new ArrayList<>(getClusters()).stream()
       .map(cluster -> new UsageCluster(cluster.getOnlySelectedUsages(selectedUsages)))
+      .filter(usageCluster -> !usageCluster.getUsages().isEmpty())
       .sorted((o1, o2) -> {
         indicator.checkCanceled();
         return Integer.compare(o2.getUsages().size(), o1.getUsages().size());

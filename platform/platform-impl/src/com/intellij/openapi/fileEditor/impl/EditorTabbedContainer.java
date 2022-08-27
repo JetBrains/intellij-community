@@ -50,10 +50,7 @@ import com.intellij.ui.tabs.impl.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.concurrency.NonUrgentExecutor;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.TimedDeadzone;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -429,7 +426,17 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     }
   }
 
-  private static void doProcessDoubleClick(@NotNull MouseEvent e) {
+  private void doProcessDoubleClick(@NotNull MouseEvent e) {
+    TabInfo info = myTabs.findInfo(e);
+    if (info != null) {
+      EditorComposite composite = ((EditorWindow.TComp)info.getComponent()).myComposite;
+      if (composite.isPreview()) {
+        composite.setPreview(false);
+        myWindow.getOwner().updateFileColor(composite.getFile());
+        return;
+      }
+    }
+
     if (!AdvancedSettings.getBoolean("editor.maximize.on.double.click") && !AdvancedSettings.getBoolean("editor.maximize.in.splits.on.double.click")) return;
     ActionManager actionManager = ActionManager.getInstance();
     DataContext context = DataManager.getInstance().getDataContext();
@@ -672,7 +679,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
       super(project, parentDisposable);
 
       myWindow = window;
-      UIUtil.addAwtListener(e -> updateActive(), AWTEvent.FOCUS_EVENT_MASK, parentDisposable);
+      StartupUiUtil.addAwtListener(e -> updateActive(), AWTEvent.FOCUS_EVENT_MASK, parentDisposable);
       setUiDecorator(() -> new UiDecorator.UiDecoration(null, JBUI.CurrentTheme.EditorTabs.tabInsets()));
 
       project.getMessageBus().connect(parentDisposable).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {

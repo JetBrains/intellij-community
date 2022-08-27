@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Matcher;
 
 public final class JavaSuppressionUtil {
@@ -88,7 +89,7 @@ public final class JavaSuppressionUtil {
                                     JavaSuppressionUtil::getInspectionIdSuppressedInAnnotationAttribute);
   }
 
-  public static <T extends PsiElement> PsiElement getElementMemberSuppressedIn(@NotNull T owner, @NotNull String inspectionToolID) {
+  static <T extends PsiElement> PsiElement getElementMemberSuppressedIn(@NotNull T owner, @NotNull String inspectionToolID) {
     PsiElement element = null;
     if (owner instanceof PsiJavaDocumentedElement) {
       element = getDocCommentToolSuppressedIn((PsiJavaDocumentedElement)owner, inspectionToolID);
@@ -125,6 +126,7 @@ public final class JavaSuppressionUtil {
     return null;
   }
 
+  private static final Set<String> GENERATED_RELATED_ANNOTATIONS = Set.of(GENERATED_ANNOTATION_NAME, JDK9_GENERATED_ANNOTATION_NAME);
   private static PsiElement getAnnotationMemberSuppressedIn(@NotNull PsiModifierListOwner owner, @NotNull String inspectionToolID) {
     PsiModifierList modifierList = owner.getModifierList();
     Collection<String> suppressedIds = getInspectionIdsSuppressedInAnnotation(modifierList);
@@ -133,7 +135,7 @@ public final class JavaSuppressionUtil {
         return modifierList != null ? AnnotationUtil.findAnnotation(owner, SUPPRESS_INSPECTIONS_ANNOTATION_NAME) : null;
       }
     }
-    return AnnotationUtil.findAnnotation(owner, GENERATED_ANNOTATION_NAME, JDK9_GENERATED_ANNOTATION_NAME);
+    return AnnotationUtil.findAnnotation(owner, GENERATED_RELATED_ANNOTATIONS, false);
   }
 
   private static PsiElement getDocCommentToolSuppressedIn(@NotNull PsiJavaDocumentedElement owner, @NotNull String inspectionToolID) {

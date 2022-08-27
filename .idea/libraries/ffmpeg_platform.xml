@@ -1,0 +1,41 @@
+<component name="libraryTable">
+  <library name="ffmpeg-platform" type="repository">
+    <properties maven-id="org.bytedeco:ffmpeg-platform:5.0-1.5.7" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/ffmpeg-platform/5.0-1.5.7/ffmpeg-platform-5.0-1.5.7.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/javacpp-platform/1.5.7/javacpp-platform-1.5.7.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/javacpp/1.5.7/javacpp-1.5.7.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/javacpp/1.5.7/javacpp-1.5.7-android-arm.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/javacpp/1.5.7/javacpp-1.5.7-android-arm64.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/javacpp/1.5.7/javacpp-1.5.7-android-x86.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/javacpp/1.5.7/javacpp-1.5.7-android-x86_64.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/javacpp/1.5.7/javacpp-1.5.7-ios-arm64.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/javacpp/1.5.7/javacpp-1.5.7-ios-x86_64.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/javacpp/1.5.7/javacpp-1.5.7-linux-armhf.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/javacpp/1.5.7/javacpp-1.5.7-linux-arm64.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/javacpp/1.5.7/javacpp-1.5.7-linux-ppc64le.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/javacpp/1.5.7/javacpp-1.5.7-linux-x86.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/javacpp/1.5.7/javacpp-1.5.7-linux-x86_64.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/javacpp/1.5.7/javacpp-1.5.7-macosx-arm64.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/javacpp/1.5.7/javacpp-1.5.7-macosx-x86_64.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/javacpp/1.5.7/javacpp-1.5.7-windows-x86.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/javacpp/1.5.7/javacpp-1.5.7-windows-x86_64.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/ffmpeg/5.0-1.5.7/ffmpeg-5.0-1.5.7.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/ffmpeg/5.0-1.5.7/ffmpeg-5.0-1.5.7-android-arm.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/ffmpeg/5.0-1.5.7/ffmpeg-5.0-1.5.7-android-arm64.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/ffmpeg/5.0-1.5.7/ffmpeg-5.0-1.5.7-android-x86.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/ffmpeg/5.0-1.5.7/ffmpeg-5.0-1.5.7-android-x86_64.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/ffmpeg/5.0-1.5.7/ffmpeg-5.0-1.5.7-linux-x86.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/ffmpeg/5.0-1.5.7/ffmpeg-5.0-1.5.7-linux-x86_64.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/ffmpeg/5.0-1.5.7/ffmpeg-5.0-1.5.7-linux-armhf.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/ffmpeg/5.0-1.5.7/ffmpeg-5.0-1.5.7-linux-arm64.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/ffmpeg/5.0-1.5.7/ffmpeg-5.0-1.5.7-linux-ppc64le.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/ffmpeg/5.0-1.5.7/ffmpeg-5.0-1.5.7-macosx-arm64.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/ffmpeg/5.0-1.5.7/ffmpeg-5.0-1.5.7-macosx-x86_64.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/ffmpeg/5.0-1.5.7/ffmpeg-5.0-1.5.7-windows-x86.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/bytedeco/ffmpeg/5.0-1.5.7/ffmpeg-5.0-1.5.7-windows-x86_64.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

@@ -20,8 +20,8 @@ interface TreeEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : TreeEntity, ModifiableWorkspaceEntity<TreeEntity>, ObjBuilder<TreeEntity> {
-    override var data: String
     override var entitySource: EntitySource
+    override var data: String
     override var children: List<TreeEntity>
     override var parentEntity: TreeEntity
   }

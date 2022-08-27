@@ -47,7 +47,7 @@ class IntentionManagerSettings : PersistentStateComponent<Element> {
   }
 
   fun getMetaData(): List<IntentionActionMetaData> {
-    return IntentionsMetadataService.getInstance().getMetaData()
+    return IntentionsMetadataService.getInstance().getUniqueMetadata()
   }
 
   fun isEnabled(metaData: IntentionActionMetaData) = !ignoredActions.contains(getFamilyName(metaData))

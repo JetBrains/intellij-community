@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
-import com.intellij.ui.EditorNotificationProvider.CONST_NULL
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils.findFilesWithExactPackage
@@ -35,33 +34,33 @@ import javax.swing.JComponent
 
 class KotlinAlternativeSourceNotificationProvider : EditorNotificationProvider {
 
-    override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?> {
+    override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
         if (!DebuggerSettings.getInstance().SHOW_ALTERNATIVE_SOURCE) {
-            return CONST_NULL
+            return null
         }
 
         val javaSession = DebuggerManagerEx.getInstanceEx(project).context.debuggerSession
         val session = javaSession?.xDebugSession
         if (session == null) {
             AlternativeSourceNotificationProvider.setFileProcessed(file, false)
-            return CONST_NULL
+            return null
         }
 
         val position = session.currentPosition
         if (file != position?.file) {
             AlternativeSourceNotificationProvider.setFileProcessed(file, false)
-            return CONST_NULL
+            return null
         }
 
-        if (DumbService.getInstance(project).isDumb) return CONST_NULL
+        if (DumbService.getInstance(project).isDumb) return null
 
-        val ktFile = PsiManager.getInstance(project).findFile(file) as? KtFile ?: return CONST_NULL
+        val ktFile = PsiManager.getInstance(project).findFile(file) as? KtFile ?: return null
         val alternativeKtFiles = findAlternativeKtFiles(ktFile, project, javaSession)
 
         AlternativeSourceNotificationProvider.setFileProcessed(file, true)
 
         if (alternativeKtFiles.size <= 1) {
-            return CONST_NULL
+            return null
         }
 
         val currentFirstAlternatives: Collection<KtFile> = listOf(ktFile) + alternativeKtFiles.filter { it != ktFile }

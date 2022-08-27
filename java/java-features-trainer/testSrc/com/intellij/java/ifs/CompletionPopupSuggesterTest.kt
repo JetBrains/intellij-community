@@ -1,6 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.ifs
 
+import com.intellij.testFramework.NeedsIndex
+import com.intellij.testFramework.TestIndexingModeSupporter
+import com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode
 import training.featuresSuggester.FeatureSuggesterTest
 import training.featuresSuggester.FeatureSuggesterTestUtils.chooseCompletionItem
 import training.featuresSuggester.FeatureSuggesterTestUtils.deleteSymbolAtCaret
@@ -9,11 +12,30 @@ import training.featuresSuggester.FeatureSuggesterTestUtils.moveCaretToLogicalPo
 import training.featuresSuggester.FeatureSuggesterTestUtils.testInvokeLater
 import training.featuresSuggester.FeatureSuggesterTestUtils.typeAndCommit
 
-class CompletionPopupSuggesterTest : FeatureSuggesterTest() {
+@NeedsIndex.SmartMode(reason = "BeforeCompletionChooseItemAction is not DumbAware")
+class CompletionPopupSuggesterTest : FeatureSuggesterTest(), TestIndexingModeSupporter {
   override val testingCodeFileName = "JavaCodeExample.java"
   override val testingSuggesterId = "Completion"
+  private var indexingSupporterMode: IndexingMode = IndexingMode.SMART
 
   override fun getTestDataPath() = JavaSuggestersTestUtils.testDataPath
+
+  override fun setUp() {
+    super.setUp()
+    indexingSupporterMode.setUpTest(myFixture.project, myFixture.testRootDisposable)
+  }
+
+  override fun tearDown() {
+    try {
+      indexingSupporterMode.tearDownTest(myFixture.project)
+    }
+    catch (e: Throwable) {
+      addSuppressedException(e)
+    }
+    finally {
+      super.tearDown()
+    }
+  }
 
   fun `testDelete and type dot, complete method call and get suggestion`() {
     with(myFixture) {
@@ -58,4 +80,10 @@ class CompletionPopupSuggesterTest : FeatureSuggesterTest() {
       assertSuggestedCorrectly()
     }
   }
+
+  override fun setIndexingMode(mode: IndexingMode) {
+    indexingSupporterMode = mode
+  }
+
+  override fun getIndexingMode(): IndexingMode = indexingSupporterMode
 }

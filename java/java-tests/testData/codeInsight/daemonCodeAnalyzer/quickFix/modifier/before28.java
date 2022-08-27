@@ -1,4 +1,4 @@
-// "Make 'MyInterface.myMethod' static" "false"
+// "Make 'MyInterface.myMethod()' static" "false"
 import java.io.*;
 
 interface MyInterface

@@ -17,6 +17,7 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToOneChild
 import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
+import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
@@ -72,7 +73,7 @@ open class ReferredEntityImpl : ReferredEntity, WorkspaceEntityBase() {
     fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ReferredEntity#entitySource should be initialized")
+        error("Field WorkspaceEntity#entitySource should be initialized")
       }
       if (!getEntityData().isNameInitialized()) {
         error("Field ReferredEntity#name should be initialized")
@@ -86,21 +87,13 @@ open class ReferredEntityImpl : ReferredEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ReferredEntity
-      this.version = dataSource.version
       this.entitySource = dataSource.entitySource
+      this.version = dataSource.version
       this.name = dataSource.name
       if (parents != null) {
       }
     }
 
-
-    override var version: Int
-      get() = getEntityData().version
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().version = value
-        changedProperty.add("version")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -109,6 +102,14 @@ open class ReferredEntityImpl : ReferredEntity, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var version: Int
+      get() = getEntityData().version
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().version = value
+        changedProperty.add("version")
       }
 
     override var name: String
@@ -214,8 +215,8 @@ class ReferredEntityData : WorkspaceEntityData<ReferredEntity>() {
 
     other as ReferredEntityData
 
-    if (this.version != other.version) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.version != other.version) return false
     if (this.name != other.name) return false
     return true
   }

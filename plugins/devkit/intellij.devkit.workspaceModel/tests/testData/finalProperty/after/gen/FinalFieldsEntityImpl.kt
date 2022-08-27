@@ -64,11 +64,11 @@ open class FinalFieldsEntityImpl : FinalFieldsEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isDescriptorInitialized()) {
         error("Field FinalFieldsEntity#descriptor should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field FinalFieldsEntity#entitySource should be initialized")
       }
     }
 
@@ -79,21 +79,12 @@ open class FinalFieldsEntityImpl : FinalFieldsEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as FinalFieldsEntity
-      this.descriptor = dataSource.descriptor
       this.entitySource = dataSource.entitySource
+      this.descriptor = dataSource.descriptor
       if (parents != null) {
       }
     }
 
-
-    override var descriptor: AnotherDataClass
-      get() = getEntityData().descriptor
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().descriptor = value
-        changedProperty.add("descriptor")
-
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -101,6 +92,15 @@ open class FinalFieldsEntityImpl : FinalFieldsEntity, WorkspaceEntityBase() {
         checkModificationAllowed()
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
+
+      }
+
+    override var descriptor: AnotherDataClass
+      get() = getEntityData().descriptor
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().descriptor = value
+        changedProperty.add("descriptor")
 
       }
 
@@ -161,8 +161,8 @@ class FinalFieldsEntityData : WorkspaceEntityData<FinalFieldsEntity>() {
 
     other as FinalFieldsEntityData
 
-    if (this.descriptor != other.descriptor) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.descriptor != other.descriptor) return false
     return true
   }
 

@@ -17,10 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class RadScrollPane extends RadContainer {
   public static final Class COMPONENT_CLASS = JScrollPane.class;
   private static final Logger LOG = Logger.getInstance(RadScrollPane.class);

@@ -66,7 +66,8 @@ import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.JVM_TARGET_DIRECTIV
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.LANGUAGE_VERSION_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.util.slashedPath
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.KotlinRoot
+import org.jetbrains.kotlin.idea.base.test.KotlinRoot
+import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.PROJECT_LANGUAGE_VERSION_DIRECTIVE
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.rethrow
 import java.io.File
@@ -305,11 +306,17 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
 
 object CompilerTestDirectives {
     const val LANGUAGE_VERSION_DIRECTIVE = "LANGUAGE_VERSION:"
+    const val PROJECT_LANGUAGE_VERSION_DIRECTIVE = "PROJECT_LANGUAGE_VERSION:"
     const val API_VERSION_DIRECTIVE = "API_VERSION:"
     const val JVM_TARGET_DIRECTIVE = "JVM_TARGET:"
     const val COMPILER_ARGUMENTS_DIRECTIVE = "COMPILER_ARGUMENTS:"
 
-    val ALL_COMPILER_TEST_DIRECTIVES = listOf(LANGUAGE_VERSION_DIRECTIVE, JVM_TARGET_DIRECTIVE, COMPILER_ARGUMENTS_DIRECTIVE)
+    val ALL_COMPILER_TEST_DIRECTIVES = listOf(
+        LANGUAGE_VERSION_DIRECTIVE,
+        PROJECT_LANGUAGE_VERSION_DIRECTIVE,
+        JVM_TARGET_DIRECTIVE,
+        COMPILER_ARGUMENTS_DIRECTIVE,
+    )
 }
 
 fun <T> withCustomCompilerOptions(fileText: String, project: Project, module: Module, body: () -> T): T {
@@ -326,6 +333,7 @@ fun <T> withCustomCompilerOptions(fileText: String, project: Project, module: Mo
 
 private fun configureCompilerOptions(fileText: String, project: Project, module: Module): Boolean {
     val rawLanguageVersion = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $LANGUAGE_VERSION_DIRECTIVE ")
+    val rawProjectLanguageVersion = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $PROJECT_LANGUAGE_VERSION_DIRECTIVE ")
     val rawApiVersion = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $API_VERSION_DIRECTIVE ")
     val jvmTarget = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $JVM_TARGET_DIRECTIVE ")
     // We can have several such directives in quickFixMultiFile tests
@@ -333,12 +341,14 @@ private fun configureCompilerOptions(fileText: String, project: Project, module:
     val options = InTextDirectivesUtils.findListWithPrefixes(fileText, "// $COMPILER_ARGUMENTS_DIRECTIVE ").firstOrNull()
 
     val languageVersion = rawLanguageVersion?.let { LanguageVersion.fromVersionString(rawLanguageVersion) }
+    val projectLanguageVersion = rawProjectLanguageVersion?.let { LanguageVersion.fromVersionString(rawProjectLanguageVersion) }
     val apiVersion = rawApiVersion?.let { ApiVersion.parse(rawApiVersion) }
 
-    if (languageVersion != null || apiVersion != null || jvmTarget != null || options != null) {
+    if (languageVersion != null || apiVersion != null || jvmTarget != null || options != null || projectLanguageVersion != null) {
         configureLanguageAndApiVersion(
             project, module,
             languageVersion ?: KotlinPluginLayout.standaloneCompilerVersion.languageVersion,
+            projectLanguageVersion,
             apiVersion
         )
 
@@ -435,6 +445,7 @@ private fun rollbackCompilerOptions(project: Project, module: Module, removeFace
         project,
         module,
         bundledKotlinVersion.languageVersion,
+        projectLanguageVersion = null,
         bundledKotlinVersion.apiVersion
     )
 
@@ -456,7 +467,7 @@ fun withCustomLanguageAndApiVersion(
     body: () -> Unit
 ) {
     val removeFacet = !module.hasKotlinFacet()
-    configureLanguageAndApiVersion(project, module, languageVersion, apiVersion)
+    configureLanguageAndApiVersion(project, module, languageVersion, projectLanguageVersion = null, apiVersion)
     try {
         body()
     } finally {
@@ -471,6 +482,7 @@ fun withCustomLanguageAndApiVersion(
                 project,
                 module,
                 bundledCompilerVersion.languageVersion,
+                projectLanguageVersion = null,
                 bundledCompilerVersion.apiVersion
             )
         }
@@ -481,6 +493,7 @@ private fun configureLanguageAndApiVersion(
     project: Project,
     module: Module,
     languageVersion: LanguageVersion,
+    projectLanguageVersion: LanguageVersion?,
     apiVersion: ApiVersion?
 ) {
     WriteAction.run<Throwable> {
@@ -495,7 +508,9 @@ private fun configureLanguageAndApiVersion(
         if (apiVersion != null) {
             facet.configuration.settings.apiLevel = LanguageVersion.fromVersionString(apiVersion.versionString)
         }
-        KotlinCommonCompilerArgumentsHolder.getInstance(project).update { this.languageVersion = languageVersion.versionString }
+        KotlinCommonCompilerArgumentsHolder.getInstance(project).update {
+            this.languageVersion = (projectLanguageVersion ?: languageVersion).versionString
+        }
         modelsProvider.commit()
     }
 }

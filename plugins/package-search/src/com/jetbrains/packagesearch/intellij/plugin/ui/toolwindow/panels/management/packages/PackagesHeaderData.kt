@@ -25,10 +25,4 @@ internal data class PackagesHeaderData(
     val count: Int,
     val availableUpdatesCount: Int,
     val updateOperations: Deferred<List<PackageSearchOperation<*>>>
-) {
-
-//    companion object {
-//
-//        val EMPTY = PackagesHeaderData("", 0, 0, Deferred(emptyList()))
-//    }
-}
+)

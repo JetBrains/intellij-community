@@ -1,3 +1,6 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 // FIR_IDENTICAL
 // FIR_COMPARISON
 interface T1 {
@@ -21,12 +24,12 @@ fun foo(o: T1?) {
     }
 }
 
-// EXIST: { lookupString: "inT1", attributes: "bold", icon: "nodes/method.svg"}
-// EXIST: { lookupString: "inT2", attributes: "bold", icon: "nodes/method.svg"}
-// EXIST: { lookupString: "hashCode", attributes: "", icon: "nodes/method.svg"}
-// EXIST: { lookupString: "forT1", attributes: "bold", icon: "nodes/function.svg"}
-// EXIST: { lookupString: "forT2", attributes: "bold", icon: "nodes/function.svg"}
-// EXIST: { lookupString: "forNullableT1", attributes: "", icon: "nodes/function.svg"}
-// EXIST: { lookupString: "forNullableT2", attributes: "", icon: "nodes/function.svg"}
-// EXIST: { lookupString: "forAny", attributes: "", icon: "nodes/function.svg"}
-// EXIST: { lookupString: "forNullableAny", attributes: "", icon: "nodes/function.svg"}
+// EXIST: { lookupString: "inT1", attributes: "bold", icon: "Method"}
+// EXIST: { lookupString: "inT2", attributes: "bold", icon: "Method"}
+// EXIST: { lookupString: "hashCode", attributes: "", icon: "Method"}
+// EXIST: { lookupString: "forT1", attributes: "bold", icon: "Function"}
+// EXIST: { lookupString: "forT2", attributes: "bold", icon: "Function"}
+// EXIST: { lookupString: "forNullableT1", attributes: "", icon: "Function"}
+// EXIST: { lookupString: "forNullableT2", attributes: "", icon: "Function"}
+// EXIST: { lookupString: "forAny", attributes: "", icon: "Function"}
+// EXIST: { lookupString: "forNullableAny", attributes: "", icon: "Function"}

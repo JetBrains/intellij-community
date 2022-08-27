@@ -70,7 +70,7 @@ public class ResolvePerformanceTest extends JavaResolveTestCase {
     fileText = StringUtil.convertLineSeparators(fileText);
     myFile = createFile(vFile.getName(), fileText);
     myFile.accept(new XmlRecursiveElementVisitor(){
-      @Override public void visitXmlAttributeValue(XmlAttributeValue value) {
+      @Override public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
         ContainerUtil.addAll(references, value.getReferences());
         super.visitXmlAttributeValue(value);
       }

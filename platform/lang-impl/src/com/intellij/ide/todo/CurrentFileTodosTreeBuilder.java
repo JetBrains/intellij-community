@@ -24,9 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author Vladimir Kondratyev
- */
 public class CurrentFileTodosTreeBuilder extends TodoTreeBuilder {
   public CurrentFileTodosTreeBuilder(JTree tree, Project project){
     super(tree, project);

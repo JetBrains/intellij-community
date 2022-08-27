@@ -18,9 +18,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class KotlinStructureViewFactory implements PsiStructureViewFactory {
-    private static final List<NodeProvider> NODE_PROVIDERS =
-            Collections.singletonList(new KotlinInheritedMembersNodeProvider());
+public final class KotlinStructureViewFactory implements PsiStructureViewFactory {
+    private static final List<NodeProvider<?>> NODE_PROVIDERS = Collections.singletonList(new KotlinInheritedMembersNodeProvider());
     @Override
     public StructureViewBuilder getStructureViewBuilder(@NotNull PsiFile psiFile) {
         if (!(psiFile instanceof KtFile)) {
@@ -29,12 +28,11 @@ public class KotlinStructureViewFactory implements PsiStructureViewFactory {
 
         KtFile file = (KtFile) psiFile;
         return new TreeBasedStructureViewBuilder() {
-            @NotNull
             @Override
-            public StructureViewModel createStructureViewModel(@Nullable Editor editor) {
+            public @NotNull StructureViewModel createStructureViewModel(@Nullable Editor editor) {
                 return new KotlinStructureViewModel(file, editor, new KotlinStructureViewElement(file, false)) {
                     @Override
-                    public Collection<NodeProvider> getNodeProviders() {
+                    public @NotNull Collection<NodeProvider<?>> getNodeProviders() {
                         return NODE_PROVIDERS;
                     }
                 };

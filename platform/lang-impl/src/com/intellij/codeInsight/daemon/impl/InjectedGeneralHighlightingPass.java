@@ -389,7 +389,7 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
       }
       TextRange shiftedRange = range.shiftRight(injectionHostTextRangeStart);
 
-      holder.addAll(overrideDefaultHighlights(myGlobalScheme, shiftedRange, token.textAttributesKeys));
+      overrideDefaultHighlights(myGlobalScheme, shiftedRange, token.textAttributesKeys, holder);
     }
   }
 
@@ -397,34 +397,29 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
   protected void applyInformationWithProgress() {
   }
 
-  @NotNull
-  static List<HighlightInfo> overrideDefaultHighlights(@NotNull EditorColorsScheme scheme,
-                                                       @NotNull TextRange range,
-                                                       TextAttributesKey @NotNull [] keys) {
-    List<HighlightInfo> result = new ArrayList<>();
-
+  static void overrideDefaultHighlights(@NotNull EditorColorsScheme scheme,
+                                        @NotNull TextRange range,
+                                        TextAttributesKey @NotNull [] keys, @NotNull HighlightInfoHolder holder) {
     if (range.isEmpty()) {
-      return result;
+      return;
     }
     // erase marker to override hosts colors
     HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT)
       .range(range)
       .textAttributes(TextAttributes.ERASE_MARKER)
       .createUnconditionally();
-    result.add(info);
+    holder.add(info);
 
     LayeredTextAttributes injectedAttributes = LayeredTextAttributes.create(scheme, keys);
     if (injectedAttributes.isEmpty() || keys.length == 1 && keys[0] == HighlighterColors.TEXT) {
       // nothing to add
-      return result;
+      return;
     }
 
     HighlightInfo injectedInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT)
       .range(range)
       .textAttributes(injectedAttributes)
       .createUnconditionally();
-    result.add(injectedInfo);
-
-    return result;
+    holder.add(injectedInfo);
   }
 }

@@ -12,7 +12,6 @@ import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
-import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
@@ -43,10 +42,8 @@ internal class GradleDependencyUpdater : ExternalSystemTaskNotificationListenerA
   override fun onEnd(id: ExternalSystemTaskId) {
     if (id.projectSystemId == GradleConstants.SYSTEM_ID
         && id.type == ExternalSystemTaskType.RESOLVE_PROJECT) {
-      id.findProject()?.let { project ->
-        project.coroutineScope.launch {
-          PluginAdvertiserService.getInstance().rescanDependencies(project)
-        }
+      id.findProject()?.let {
+        PluginAdvertiserService.getInstance(it).rescanDependencies()
       }
     }
   }

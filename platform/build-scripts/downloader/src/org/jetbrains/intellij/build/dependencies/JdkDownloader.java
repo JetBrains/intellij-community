@@ -86,7 +86,7 @@ public final class JdkDownloader {
         throw new IllegalStateException("Unsupported arch: " + arch);
     }
 
-    var dependenciesProperties = BuildDependenciesDownloader.getCommunityDependenciesProperties(communityRoot);
+    var dependenciesProperties = BuildDependenciesDownloader.getDependenciesProperties(communityRoot);
     var jdkBuild = dependenciesProperties.property("jdkBuild");
     var jdkBuildSplit = jdkBuild.split("b");
     if (jdkBuildSplit.length != 2) {

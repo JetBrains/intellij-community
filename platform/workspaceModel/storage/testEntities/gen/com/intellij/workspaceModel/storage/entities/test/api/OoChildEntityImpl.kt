@@ -73,11 +73,11 @@ open class OoChildEntityImpl : OoChildEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isChildPropertyInitialized()) {
         error("Field OoChildEntity#childProperty should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field OoChildEntity#entitySource should be initialized")
       }
       if (_diff != null) {
         if (_diff.extractOneToOneParent<WorkspaceEntityBase>(PARENTENTITY_CONNECTION_ID, this) == null) {
@@ -98,21 +98,13 @@ open class OoChildEntityImpl : OoChildEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as OoChildEntity
-      this.childProperty = dataSource.childProperty
       this.entitySource = dataSource.entitySource
+      this.childProperty = dataSource.childProperty
       if (parents != null) {
         this.parentEntity = parents.filterIsInstance<OoParentEntity>().single()
       }
     }
 
-
-    override var childProperty: String
-      get() = getEntityData().childProperty
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().childProperty = value
-        changedProperty.add("childProperty")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -121,6 +113,14 @@ open class OoChildEntityImpl : OoChildEntity, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var childProperty: String
+      get() = getEntityData().childProperty
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().childProperty = value
+        changedProperty.add("childProperty")
       }
 
     override var parentEntity: OoParentEntity
@@ -217,8 +217,8 @@ class OoChildEntityData : WorkspaceEntityData<OoChildEntity>() {
 
     other as OoChildEntityData
 
-    if (this.childProperty != other.childProperty) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.childProperty != other.childProperty) return false
     return true
   }
 

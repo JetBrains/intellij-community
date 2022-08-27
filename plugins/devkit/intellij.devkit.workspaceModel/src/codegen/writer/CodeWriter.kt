@@ -1,12 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.codegen.writer
 
+import com.intellij.devkit.workspaceModel.DevKitWorkspaceModelBundle
+import com.intellij.devkit.workspaceModel.metaModel.WorkspaceMetaModelProvider
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VfsUtil
@@ -22,11 +23,11 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.FactoryMap
 import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.codegen.SKIPPED_TYPES
-import com.intellij.workspaceModel.codegen.deft.model.KtObjModule
+import com.intellij.workspaceModel.codegen.deft.meta.CompiledObjModule
 import com.intellij.workspaceModel.codegen.engine.GeneratedCode
+import com.intellij.workspaceModel.codegen.engine.GenerationProblem
 import com.intellij.workspaceModel.codegen.engine.impl.CodeGeneratorImpl
 import com.intellij.workspaceModel.codegen.javaFullName
-import com.intellij.workspaceModel.codegen.model.convertToObjModules
 import com.intellij.workspaceModel.codegen.utils.Imports
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -37,16 +38,13 @@ private val LOG = logger<CodeWriter>()
 
 object CodeWriter {
   @RequiresWriteLock
-  fun generate(project: Project, sourceFolder: VirtualFile,  keepUnknownFields: Boolean, targetFolderGenerator: () -> VirtualFile?) {
-    val documentManager = FileDocumentManager.getInstance()
-    val ktSrcs = mutableListOf<Pair<VirtualFile, Document>>()
-    val fileMapping = mutableMapOf<String, VirtualFile>()
+  fun generate(project: Project,
+               module: Module,
+               sourceFolder: VirtualFile,
+               targetFolderGenerator: () -> VirtualFile?) {
     val ktClasses = HashMap<String, KtClass>()
     VfsUtilCore.processFilesRecursively(sourceFolder) {
       if (it.extension == "kt") {
-        val document = documentManager.getDocument(it) ?: return@processFilesRecursively true
-        ktSrcs.add(it to document)
-        fileMapping[it.name] = it
         val ktFile = PsiManager.getInstance(project).findFile(it) as? KtFile?
         ktFile?.declarations?.filterIsInstance<KtClass>()?.filter { clazz -> clazz.name != null }?.associateByTo(ktClasses) { clazz ->
           clazz.fqName!!.asString()
@@ -54,16 +52,17 @@ object CodeWriter {
       }
       return@processFilesRecursively true
     }
+    if (ktClasses.isEmpty()) return
 
-    val module = KtObjModule(project, keepUnknownFields = keepUnknownFields)
-    ktSrcs.forEach { (vfu, document) ->
-      module.addPsiFile(vfu.name, vfu) { document.text }
-    }
-    val result = module.build()
-    val objModules = convertToObjModules(result.typeDefs, result.simpleTypes, result.extFields)
+    val objModules = loadObjModules(ktClasses, module)
+    
     val codeGenerator = CodeGeneratorImpl()
-    val generated = objModules.flatMap { codeGenerator.generate(it) }
-    if (generated.isNotEmpty()) {
+    val results = objModules.map { codeGenerator.generate(it) }
+    val generatedCode = results.flatMap { it.generatedCode }
+    val problems = results.flatMap { it.problems }
+    WorkspaceCodegenProblemsProvider.getInstance(project).reportProblems(problems)
+    
+    if (generatedCode.isNotEmpty() && problems.none { it.level == GenerationProblem.Level.ERROR }) {
       val genFolder = targetFolderGenerator.invoke()
       if (genFolder == null) {
         LOG.info("Generated source folder doesn't exist. Skip processing source folder with path: ${sourceFolder}")
@@ -71,8 +70,9 @@ object CodeWriter {
       }
 
       CommandProcessor.getInstance().executeCommand(project, Runnable {
-        ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread("Generating Code", project, null) { indicator ->
-          indicator.text = "Removing old code"
+        val title = DevKitWorkspaceModelBundle.message("progress.title.generating.code")
+        ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread(title, project, null) { indicator ->
+          indicator.text = DevKitWorkspaceModelBundle.message("progress.text.removing.old.code")
           val psiFactory = KtPsiFactory(project)
           ktClasses.values.flatMapTo(HashSet()) { listOfNotNull(it.containingFile.node, it.body?.node) }.forEach {
             removeChildrenInGeneratedRegions(it)
@@ -80,12 +80,14 @@ object CodeWriter {
           val topLevelDeclarations = MultiMap.create<KtFile, Pair<KtClass, List<KtDeclaration>>>()
           val importsByFile = FactoryMap.create<KtFile, Imports> { Imports(it.packageFqName.asString()) }
           val generatedFiles = ArrayList<KtFile>()
-          indicator.text = "Writing code"
-          generated.forEachIndexed { i, code ->
-            indicator.fraction = 0.2 * i / generated.size
+          indicator.text = DevKitWorkspaceModelBundle.message("progress.text.writing.code")
+          indicator.isIndeterminate = false
+          generatedCode.forEachIndexed { i, code ->
+            indicator.fraction = 0.2 * i / generatedCode.size
             if (code.target.name in SKIPPED_TYPES) return@forEachIndexed
-            
-            val apiClass = ktClasses[code.target.javaFullName.decoded]!!
+
+            val apiInterfaceName = code.target.javaFullName.decoded
+            val apiClass = ktClasses[apiInterfaceName] ?: error("Cannot find API class by $apiInterfaceName")
             val apiFile = apiClass.containingKtFile
             val apiImports = importsByFile.getValue(apiFile)
             addInnerDeclarations(apiClass, code, apiImports)
@@ -113,7 +115,7 @@ object CodeWriter {
             }
           }
 
-          indicator.text = "Formatting generated code"
+          indicator.text = DevKitWorkspaceModelBundle.message("progress.text.formatting.generated.code")
           importsByFile.forEach { (file, imports) ->
             addImports(file, imports.set)
           }
@@ -144,10 +146,16 @@ object CodeWriter {
           }
 
         }
-      }, "Generate Code for Workspace Entities in '${sourceFolder.name}'", null)
+      }, DevKitWorkspaceModelBundle.message("command.name.generate.code.for.workspace.entities.in", sourceFolder.name), null)
     } else {
       LOG.info("Not found types for generation")
     }
+  }
+
+  private fun loadObjModules(ktClasses: HashMap<String, KtClass>, module: Module): List<CompiledObjModule> {
+    val packages = ktClasses.values.mapTo(LinkedHashSet()) { it.containingKtFile.packageFqName.asString() }
+    val metaModelProvider = WorkspaceMetaModelProvider.getInstance(module.project)
+    return packages.map { metaModelProvider.getObjModule(it, module) }
   }
 
   private fun copyHeaderComment(apiFile: KtFile, implFile: KtFile) {
@@ -211,7 +219,6 @@ object CodeWriter {
   private fun reformatCodeInGeneratedRegions(file: PsiFile, nodes: List<ASTNode>) {
     val generatedRegions = nodes.flatMap { findGeneratedRegions(it) }
     val regions = generatedRegions.map { TextRange.create(it.first.startOffset, it.second.startOffset + it.second.textLength) }
-    //CodeStyleManager.getInstance(file.project).reformat(file)
     CodeStyleManager.getInstance(file.project).reformatText(file, joinAdjacentRegions(regions))
   }
 

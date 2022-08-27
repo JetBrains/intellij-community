@@ -17,6 +17,7 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import java.util.*
+import java.util.UUID
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -66,7 +67,7 @@ open class SecondSampleEntityImpl : SecondSampleEntity, WorkspaceEntityBase() {
     fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field SecondSampleEntity#entitySource should be initialized")
+        error("Field WorkspaceEntity#entitySource should be initialized")
       }
     }
 
@@ -77,20 +78,12 @@ open class SecondSampleEntityImpl : SecondSampleEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SecondSampleEntity
-      this.intProperty = dataSource.intProperty
       this.entitySource = dataSource.entitySource
+      this.intProperty = dataSource.intProperty
       if (parents != null) {
       }
     }
 
-
-    override var intProperty: Int
-      get() = getEntityData().intProperty
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().intProperty = value
-        changedProperty.add("intProperty")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -99,6 +92,14 @@ open class SecondSampleEntityImpl : SecondSampleEntity, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var intProperty: Int
+      get() = getEntityData().intProperty
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().intProperty = value
+        changedProperty.add("intProperty")
       }
 
     override fun getEntityData(): SecondSampleEntityData = result ?: super.getEntityData() as SecondSampleEntityData
@@ -157,8 +158,8 @@ class SecondSampleEntityData : WorkspaceEntityData<SecondSampleEntity>() {
 
     other as SecondSampleEntityData
 
-    if (this.intProperty != other.intProperty) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.intProperty != other.intProperty) return false
     return true
   }
 

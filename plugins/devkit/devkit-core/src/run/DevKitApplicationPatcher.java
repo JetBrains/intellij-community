@@ -20,7 +20,9 @@ public class DevKitApplicationPatcher extends RunConfigurationExtension {
                                                                        RunnerSettings runnerSettings) {
     ParametersList vmParametersList = javaParameters.getVMParametersList();
     Project project = configuration.getProject();
-    if (PsiUtil.isIdeaProject(project) && !vmParametersList.getList().contains("--add-modules")) {
+    if (PsiUtil.isIdeaProject(project) && 
+        !vmParametersList.getList().contains("--add-modules") && 
+        "com.intellij.idea.Main".equals(((ApplicationConfiguration)configuration).getMainClassName())) {
       Module module = ((ApplicationConfiguration)configuration).getConfigurationModule().getModule();
 
       Sdk jdk = JavaParameters.getJdkToRunModule(module, true);

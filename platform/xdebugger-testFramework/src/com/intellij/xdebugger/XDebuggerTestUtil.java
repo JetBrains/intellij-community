@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger;
 
 import com.intellij.execution.impl.ConsoleViewImpl;
@@ -23,6 +23,8 @@ import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx;
+import com.intellij.xdebugger.impl.frame.XValueMarkers;
+import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +35,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
+import static com.intellij.openapi.util.Predicates.nonNull;
 import static org.junit.Assert.assertNotNull;
 
 @TestOnly
@@ -82,8 +85,9 @@ public class XDebuggerTestUtil {
     XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     WriteAction.runAndWait(() -> {
       XLineBreakpoint<?> breakpoint = Arrays.stream(XDebuggerUtil.getInstance().getLineBreakpointTypes())
-                                            .map(t -> breakpointManager.findBreakpointAtLine(t, file, line)).filter(Objects::nonNull)
-                                            .findFirst().orElse(null);
+        .map(t -> breakpointManager.findBreakpointAtLine(t, file, line))
+        .filter(nonNull())
+        .findFirst().orElse(null);
       assertNotNull(breakpoint);
       breakpointManager.removeBreakpoint(breakpoint);
     });
@@ -265,6 +269,15 @@ public class XDebuggerTestUtil {
       }
     }
     return null;
+  }
+
+  public static void markValue(XValueMarkers<?, ?> markers, @NotNull XValue value, @NotNull ValueMarkup markup) {
+    try {
+      markers.markValue(value, markup).blockingGet(TIMEOUT_MS);
+    }
+    catch (TimeoutException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   // Rider needs this in order to be able to receive messages from the backend when waiting on the EDT.

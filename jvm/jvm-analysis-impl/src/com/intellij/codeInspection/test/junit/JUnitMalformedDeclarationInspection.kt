@@ -37,7 +37,6 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 import javax.swing.JComponent
 import kotlin.streams.asSequence
-import kotlin.streams.toList
 
 class JUnitMalformedDeclarationInspection : AbstractBaseUastLocalInspectionTool() {
   @JvmField
@@ -204,7 +203,7 @@ private class JUnitMalformedSignatureVisitor(
     val sourcePsi = this.sourcePsi ?: return false
     val alternatives = UastFacade.convertToAlternatives(sourcePsi, arrayOf(UMethod::class.java))
     val extension = alternatives.mapNotNull { it.javaPsi.containingClass }.flatMap {
-      MetaAnnotationUtil.findMetaAnnotations(it, listOf(ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH)).asSequence()
+      MetaAnnotationUtil.findMetaAnnotationsInHierarchy(it, listOf(ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH)).asSequence()
     }.firstOrNull()?.findAttributeValue("value")?.toUElement() ?: return false
     if (extension is UClassLiteralExpression) return InheritanceUtil.isInheritor(extension.type,
                                                                                  ORG_JUNIT_JUPITER_API_EXTENSION_PARAMETER_RESOLVER)

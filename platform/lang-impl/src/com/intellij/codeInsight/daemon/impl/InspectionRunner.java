@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -111,10 +112,11 @@ class InspectionRunner {
 
     List<InspectionContext> init = new ArrayList<>(filteredWrappers.size());
     List<InspectionContext> redundantContexts = new ArrayList<>();
-    InspectionEngine.withSession(myPsiFile, myRestrictRange, TextRange.create(finalPriorityRange), myIsOnTheFly, session -> {
+    InspectionEngine.withSession(myPsiFile, myRestrictRange, TextRangeScalarUtil.create(finalPriorityRange), myIsOnTheFly, session -> {
       long start = System.nanoTime();
-      filteredWrappers.forEach(wrapper -> ContainerUtil.addIfNotNull(init, createContext(wrapper, session,
-                                                                                         applyIncrementallyCallback)));
+      for (LocalInspectionToolWrapper wrapper : filteredWrappers) {
+        ContainerUtil.addIfNotNull(init, createContext(wrapper, session, applyIncrementallyCallback));
+      }
       //sort init according to the priorities saved earlier to run in order
       InspectionProfilerDataHolder profileData = InspectionProfilerDataHolder.getInstance(myPsiFile.getProject());
       profileData.sort(myPsiFile, init);
@@ -134,7 +136,7 @@ class InspectionRunner {
       };
       visitElements(init, outside, false, finalPriorityRange, TOMB_STONE, afterOutside, foundInjected, injectedContexts,
                     toolWrappers, empty(), enabledToolsPredicate);
-      boolean isWholeFileInspectionsPass = !toolWrappers.isEmpty() && toolWrappers.get(0).getTool().runForWholeFile();
+      boolean isWholeFileInspectionsPass = !init.isEmpty() && init.get(0).tool.runForWholeFile();
       if (myIsOnTheFly && !isWholeFileInspectionsPass) {
         // do not save stats for batch process, there could be too many files
         InspectionProfilerDataHolder.getInstance(myPsiFile.getProject()).saveStats(myPsiFile, init, System.nanoTime() - start);
@@ -148,10 +150,10 @@ class InspectionRunner {
   }
 
   private static long finalPriorityRange(@NotNull TextRange priorityRange, @NotNull List<? extends Divider.DividedElements> allDivided) {
-    long finalPriorityRange = allDivided.isEmpty() ? priorityRange.toScalarRange() : allDivided.get(0).priorityRange;
+    long finalPriorityRange = allDivided.isEmpty() ? TextRangeScalarUtil.toScalarRange(priorityRange) : allDivided.get(0).priorityRange;
     for (int i = 1; i < allDivided.size(); i++) {
       Divider.DividedElements dividedElements = allDivided.get(i);
-      finalPriorityRange = TextRange.union(finalPriorityRange, dividedElements.priorityRange);
+      finalPriorityRange = TextRangeScalarUtil.union(finalPriorityRange, dividedElements.priorityRange);
     }
     return finalPriorityRange;
   }
@@ -303,7 +305,7 @@ class InspectionRunner {
               PsiElement favoriteElement = context.myFavoriteElement;
 
               // accept favoriteElement only if it belongs to the correct inside/outside list
-              if (favoriteElement != null && isInsideVisibleRange == favoriteElement.getTextRange().intersects(priorityRange)) {
+              if (favoriteElement != null && isInsideVisibleRange == TextRangeScalarUtil.intersects(favoriteElement.getTextRange(), priorityRange)) {
                 context.myFavoriteElement = null; // null the element to make sure it will hold the new favorite after this method finished
                 // run first for the element we know resulted in the diagnostics during previous run
                 favoriteElement.accept(context.visitor);

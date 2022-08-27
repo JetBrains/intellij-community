@@ -269,6 +269,7 @@ open class RecentProjectsManagerBase : RecentProjectsManager, PersistentStateCom
   fun addRecentPath(path: String, info: RecentProjectMetaInfo) {
     synchronized(stateLock) {
       state.additionalInfo.put(path, info)
+      modCounter.incrementAndGet()
     }
   }
 

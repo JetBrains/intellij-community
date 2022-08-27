@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.requests;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.classFilter.ClassFilter;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import com.sun.jdi.event.ClassPrepareEvent;
 import com.sun.jdi.request.*;
@@ -393,7 +394,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   public boolean isVerified(Requestor requestor) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     //ClassPrepareRequest is added in any case, so do not count it
-    return findRequests(requestor).stream().anyMatch(r -> !(r instanceof ClassPrepareRequest));
+    return ContainerUtil.exists(findRequests(requestor), r -> !(r instanceof ClassPrepareRequest));
   }
 
   @Override

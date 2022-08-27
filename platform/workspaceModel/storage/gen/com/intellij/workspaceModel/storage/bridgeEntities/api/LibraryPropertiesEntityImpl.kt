@@ -82,6 +82,9 @@ open class LibraryPropertiesEntityImpl : LibraryPropertiesEntity, WorkspaceEntit
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToOneParent<WorkspaceEntityBase>(LIBRARY_CONNECTION_ID, this) == null) {
           error("Field LibraryPropertiesEntity#library should be initialized")
@@ -91,9 +94,6 @@ open class LibraryPropertiesEntityImpl : LibraryPropertiesEntity, WorkspaceEntit
         if (this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)] == null) {
           error("Field LibraryPropertiesEntity#library should be initialized")
         }
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field LibraryPropertiesEntity#entitySource should be initialized")
       }
       if (!getEntityData().isLibraryTypeInitialized()) {
         error("Field LibraryPropertiesEntity#libraryType should be initialized")
@@ -115,6 +115,15 @@ open class LibraryPropertiesEntityImpl : LibraryPropertiesEntity, WorkspaceEntit
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var library: LibraryEntity
       get() {
@@ -149,15 +158,6 @@ open class LibraryPropertiesEntityImpl : LibraryPropertiesEntity, WorkspaceEntit
           this.entityLinks[EntityLink(false, LIBRARY_CONNECTION_ID)] = value
         }
         changedProperty.add("library")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override var libraryType: String

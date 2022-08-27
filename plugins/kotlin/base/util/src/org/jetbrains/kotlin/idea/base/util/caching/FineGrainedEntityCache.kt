@@ -7,6 +7,12 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
+import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import org.jetbrains.kotlin.caches.project.cacheByClassInvalidatingOnRootModifications
 import org.jetbrains.kotlin.utils.addIfNotNull
 import java.util.concurrent.ConcurrentHashMap
@@ -244,6 +250,18 @@ abstract class SynchronizedFineGrainedEntityCache<Key: Any, Value: Any>(project:
 
     abstract fun calculate(key: Key): Value
 }
+
+fun EntityStorage.findModuleByEntityWithHack(entity: ModuleEntity, project: Project) = entity.findModule(this) ?:
+// TODO: workaround to bypass bug with new modules not present in storageAfter
+entity.findModule(WorkspaceModel.getInstance(project).entityStorage.current)
+
+fun EntityStorage.findLibraryByEntityWithHack(entity: LibraryEntity, project: Project) = entity.findLibraryBridge(this) ?:
+// TODO: workaround to bypass bug with new modules not present in storageAfter
+entity.findLibraryBridge(WorkspaceModel.getInstance(project).entityStorage.current)
+
+fun EntityStorage.findModuleWithHack(entity: ModuleEntity, project: Project) = entity.findModule(this) ?:
+// TODO: workaround to bypass bug with new modules not present in storageAfter
+entity.findModule(WorkspaceModel.getInstance(project).entityStorage.current)
 
 abstract class LockFreeFineGrainedEntityCache<Key: Any, Value: Any>(project: Project, cleanOnLowMemory: Boolean): FineGrainedEntityCache<Key, Value>(project, cleanOnLowMemory) {
     override val cache: MutableMap<Key, Value> by StorageProvider(project, javaClass) { ConcurrentHashMap() }

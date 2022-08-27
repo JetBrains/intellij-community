@@ -6,17 +6,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.ui.ImageDataByPathLoader;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.Gray;
-import com.intellij.ui.IconManager;
-import com.intellij.ui.JreHiDpiUtil;
-import com.intellij.ui.RetrievableIcon;
+import com.intellij.ui.*;
 import com.intellij.ui.icons.*;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.*;
-import com.intellij.util.ImageLoader;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.RetinaImage;
-import com.intellij.util.SVGLoader;
+import com.intellij.util.*;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.FixedHashMap;
 import com.intellij.util.ui.*;
@@ -481,13 +475,14 @@ public final class IconLoader {
       }
       else {
         if (ctx == null) ctx = ScaleContext.create();
-        image = GraphicsEnvironment.getLocalGraphicsEnvironment()
-          .getDefaultScreenDevice().getDefaultConfiguration()
-          .createCompatibleImage(PaintUtil.RoundingMode.ROUND.round(ctx.apply(icon.getIconWidth(), DerivedScaleType.DEV_SCALE)),
-                                 PaintUtil.RoundingMode.ROUND.round(ctx.apply(icon.getIconHeight(), DerivedScaleType.DEV_SCALE)),
-                                 Transparency.TRANSLUCENT);
         if (StartupUiUtil.isJreHiDPI(ctx)) {
-          image = (BufferedImage)ImageUtil.ensureHiDPI(image, ctx, icon.getIconWidth(), icon.getIconHeight());
+          image = new JBHiDPIScaledImage(ctx, icon.getIconWidth(), icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB_PRE, PaintUtil.RoundingMode.ROUND);
+        } else {
+          image = GraphicsEnvironment.getLocalGraphicsEnvironment()
+            .getDefaultScreenDevice().getDefaultConfiguration()
+            .createCompatibleImage(PaintUtil.RoundingMode.ROUND.round(ctx.apply(icon.getIconWidth(), DerivedScaleType.DEV_SCALE)),
+                                   PaintUtil.RoundingMode.ROUND.round(ctx.apply(icon.getIconHeight(), DerivedScaleType.DEV_SCALE)),
+                                   Transparency.TRANSLUCENT);
         }
       }
       Graphics2D g = image.createGraphics();
@@ -1183,7 +1178,7 @@ public final class IconLoader {
         }
         catch (Throwable e) {
           LOG.error("Cannot compute icon", e);
-          icon = IconManager.getInstance().getStubIcon();
+          icon = IconManager.getInstance().getPlatformIcon(PlatformIcons.Stub);
         }
 
         myIcon = icon;

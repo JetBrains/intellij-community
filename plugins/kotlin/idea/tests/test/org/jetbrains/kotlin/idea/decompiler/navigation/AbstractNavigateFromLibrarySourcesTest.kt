@@ -14,8 +14,9 @@ abstract class AbstractNavigateFromLibrarySourcesTest : KotlinLightCodeInsightFi
     protected fun navigationElementForReferenceInLibrarySource(filePath: String, referenceText: String): PsiElement {
         val libraryOrderEntry = ModuleRootManager.getInstance(module).orderEntries
             .first { it is LibraryOrderEntry && it.libraryName == MockLibraryFacility.MOCK_LIBRARY_NAME }
+            as LibraryOrderEntry
 
-        val libSourcesRoot = libraryOrderEntry.getUrls(OrderRootType.SOURCES)[0]
+        val libSourcesRoot = libraryOrderEntry.getRootUrls(OrderRootType.SOURCES)[0]
         val libUrl = "$libSourcesRoot/$filePath"
         val virtualFile = VirtualFileManager.getInstance().refreshAndFindFileByUrl(libUrl) ?: error("Can't find library: $libUrl")
         val psiFile = psiManager.findFile(virtualFile) ?: error("Can't find PSI file for $virtualFile")

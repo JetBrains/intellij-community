@@ -52,7 +52,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myIdToEqClassesIndices = new Int2IntOpenHashMap();
   }
 
-  protected DfaMemoryStateImpl(DfaMemoryStateImpl toCopy) {
+  protected DfaMemoryStateImpl(@NotNull DfaMemoryStateImpl toCopy) {
     myFactory = toCopy.myFactory;
     myEphemeral = toCopy.myEphemeral;
 

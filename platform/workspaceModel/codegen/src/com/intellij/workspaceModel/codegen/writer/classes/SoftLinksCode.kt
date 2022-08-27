@@ -8,6 +8,7 @@ import com.intellij.workspaceModel.codegen.isRefType
 import com.intellij.workspaceModel.codegen.utils.LinesBuilder
 import com.intellij.workspaceModel.codegen.utils.fqn
 import com.intellij.workspaceModel.codegen.utils.lines
+import com.intellij.workspaceModel.codegen.utils.toQualifiedName
 import com.intellij.workspaceModel.codegen.writer.allFields
 import com.intellij.workspaceModel.storage.PersistentEntityId
 import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
@@ -74,8 +75,7 @@ internal fun ValueType<*>.hasSoftLinks(): Boolean = when (this) {
 }
 
 val ValueType.JvmClass<*>.isPersistentId: Boolean
-  get() = PersistentEntityId::class.java.simpleName in javaSuperClasses 
-
+  get() = PersistentEntityId::class.java.name in javaSuperClasses        
 
 private fun ObjClass<*>.operate(
   context: LinesBuilder,
@@ -144,7 +144,7 @@ private fun processSealedClass(thisClass: ValueType.SealedClass<*>,
       else if (item is ValueType.DataClass) {
         processDataClassProperties(newVarName, linesBuilder, item.properties, operation)
       }
-      section("is ${item.javaClassName} -> ") {
+      section("is ${item.javaClassName.toQualifiedName()} -> ") {
         result.append(linesBuilder.result)
       }
     }
@@ -181,7 +181,7 @@ private fun ValueType<*>.processType(
           context.lineNoNl("val $name = ")
           context.ifElse("$varName == oldLink", {
             line("changed = true")
-            line("newLink as $javaClassName")
+            line("newLink as ${javaClassName.toQualifiedName()}")
           }) { line("null") }
           name
         }
@@ -271,7 +271,7 @@ private fun processSealedClass(thisClass: ValueType.SealedClass<*>,
   context.lineNoNl("val $resVarName = ")
   context.section("when ($newVarName)") {
     listBuilder(thisClass.subclasses) { item ->
-      section("is ${item.javaClassName} -> ") label@{
+      section("is ${item.javaClassName.toQualifiedName()} -> ") label@{
         var sectionVarName = newVarName
         val properties: List<ValueType.DataClassProperty>
         if (item is ValueType.SealedClass) {

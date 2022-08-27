@@ -566,10 +566,12 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
 
     if (options.project != null && isProjectOpened(options.project as Project)) {
+      LOG.info("Project is already opened -> return null")
       return null
     }
 
     if (!checkTrustedState(projectStoreBaseDir)) {
+      LOG.info("Project is not trusted -> return null")
       return null
     }
 
@@ -619,6 +621,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         }
 
         if (checkExistingProjectOnOpen(projectToClose, options, projectStoreBaseDir)) {
+          LOG.info("Project check is not succeeded -> return null")
           return null
         }
       }
@@ -1033,7 +1036,11 @@ private fun fireProjectClosing(project: Project) {
   if (LOG.isDebugEnabled) {
     LOG.debug("enter: fireProjectClosing()")
   }
-  publisher.projectClosing(project)
+  try {
+    publisher.projectClosing(project)
+  } catch (e: Throwable) {
+    LOG.warn("Failed to publish projectClosing(project) event", e)
+  }
 }
 
 private fun fireProjectClosed(project: Project) {
@@ -1209,9 +1216,7 @@ private suspend fun initProject(file: Path,
 
       preloadServicesAndCreateComponents(project, preloadServices)
       projectInitListeners {
-        launchAndMeasure(it.javaClass.simpleName) {
-          it.containerConfigured(project)
-        }
+        it.containerConfigured(project)
       }
 
       if (!isTrusted.await()) {

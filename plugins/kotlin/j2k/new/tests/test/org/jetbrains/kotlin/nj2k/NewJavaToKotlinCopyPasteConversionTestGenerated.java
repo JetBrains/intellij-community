@@ -6,7 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -106,6 +106,11 @@ public class NewJavaToKotlinCopyPasteConversionTestGenerated extends AbstractNew
     @TestMetadata("FileWithNoPackageStatement.java")
     public void testFileWithNoPackageStatement() throws Exception {
         runTest("testData/copyPaste/FileWithNoPackageStatement.java");
+    }
+
+    @TestMetadata("ForRangeToRangeUntil.java")
+    public void testForRangeToRangeUntil() throws Exception {
+        runTest("testData/copyPaste/ForRangeToRangeUntil.java");
     }
 
     @TestMetadata("GetterWithError.java")
@@ -231,5 +236,10 @@ public class NewJavaToKotlinCopyPasteConversionTestGenerated extends AbstractNew
     @TestMetadata("UnconvertedMethodReference.java")
     public void testUnconvertedMethodReference() throws Exception {
         runTest("testData/copyPaste/UnconvertedMethodReference.java");
+    }
+
+    @TestMetadata("Until.java")
+    public void testUntil() throws Exception {
+        runTest("testData/copyPaste/Until.java");
     }
 }

@@ -9,21 +9,20 @@ import git4idea.index.ui.GitStageCommitPanel
 class GitStageCommitWorkflowHandler(
   override val workflow: GitStageCommitWorkflow,
   override val ui: GitStageCommitPanel
-) : NonModalCommitWorkflowHandler<GitStageCommitWorkflow, NonModalCommitWorkflowUi>(),
-    CommitAuthorTracker by ui {
+) : NonModalCommitWorkflowHandler<GitStageCommitWorkflow, NonModalCommitWorkflowUi>() {
 
   private val commitMessagePolicy = GitStageCommitMessagePolicy(project)
 
   override val commitPanel: CheckinProjectPanel = CommitProjectPanelAdapter(this)
   override val amendCommitHandler: NonModalAmendCommitHandler = NonModalAmendCommitHandler(this)
-
+  override val commitAuthorTracker: CommitAuthorTracker get() = ui
   var state: GitStageTracker.State = GitStageTracker.State.EMPTY
 
   init {
     Disposer.register(ui, this)
 
     workflow.addListener(this, this)
-    workflow.addCommitListener(GitStageCommitStateCleaner(), this)
+    workflow.addVcsCommitListener(GitStageCommitStateCleaner(), this)
 
     ui.addExecutorListener(this, this)
     ui.addDataProvider(createDataProvider())
@@ -34,7 +33,7 @@ class GitStageCommitWorkflowHandler(
     vcsesChanged()
     initCommitMessage(false)
 
-    DelayedCommitMessageProvider.init(project, ui) { commitMessagePolicy.getCommitMessage(false) }
+    DelayedCommitMessageProvider.init(project, ui, getCommitMessage())
   }
 
   override fun isCommitEmpty(): Boolean = ui.rootsToCommit.isEmpty()
@@ -60,11 +59,11 @@ class GitStageCommitWorkflowHandler(
   }
 
   private inner class GitStageCommitStateCleaner : CommitStateCleaner() {
-    override fun onSuccess(commitMessage: String) {
-      commitAuthor = null
+    override fun onSuccess() {
+      ui.commitAuthor = null
       initCommitMessage(true)
 
-      super.onSuccess(commitMessage)
+      super.onSuccess()
     }
   }
 }

@@ -559,7 +559,7 @@ public final class EditorWindow {
   }
 
   public void setComposite(@NotNull EditorComposite composite, boolean focusEditor) {
-    setComposite(composite, new FileEditorOpenOptions().withRequestFocus(focusEditor));
+    setComposite(composite, new FileEditorOpenOptions().withRequestFocus(focusEditor).withUsePreviewTab(composite.isPreview()));
   }
 
   public void setComposite(@NotNull EditorComposite composite, @NotNull FileEditorOpenOptions options) {
@@ -1298,7 +1298,7 @@ public final class EditorWindow {
     }
     boolean wasPinned = composite.isPinned();
     composite.setPinned(pinned);
-    if (composite.isPreview()) {
+    if (composite.isPreview() && pinned) {
       composite.setPreview(false);
       myOwner.updateFileColor(file);
     }
@@ -1324,12 +1324,11 @@ public final class EditorWindow {
       closingOrder.remove(selectedFile);
     }
 
-    // close all preview tabs except one if exists
+    // close all preview tabs
     Set<VirtualFile> previews =
       getAllComposites().stream().filter(EditorComposite::isPreview).map(EditorComposite::getFile).collect(Collectors.toSet());
-    var survivedPreviewFile = previews.contains(fileToIgnore) ? fileToIgnore : previews.stream().findAny().orElse(null);
     for (VirtualFile preview : previews) {
-      if (!Objects.equals(preview, survivedPreviewFile)) defaultCloseFile(preview, transferFocus);
+      if (!Objects.equals(preview, fileToIgnore)) defaultCloseFile(preview, transferFocus);
     }
 
     for (VirtualFile file : closingOrder) {

@@ -423,6 +423,11 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
       super(VcsBundle.messagePointer("commit.dialog.include.action.name"));
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
     @NotNull
     @Override
     public State isSelected(AnActionEvent e) {

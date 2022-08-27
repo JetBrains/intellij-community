@@ -20,6 +20,7 @@ import com.intellij.workspaceModel.storage.impl.extractOneToManyParent
 import com.intellij.workspaceModel.storage.impl.updateOneToManyParentOfChild
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import java.util.*
+import java.util.UUID
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -76,11 +77,11 @@ open class ChildSampleEntityImpl : ChildSampleEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isDataInitialized()) {
         error("Field ChildSampleEntity#data should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ChildSampleEntity#entitySource should be initialized")
       }
     }
 
@@ -91,21 +92,13 @@ open class ChildSampleEntityImpl : ChildSampleEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ChildSampleEntity
-      this.data = dataSource.data
       this.entitySource = dataSource.entitySource
+      this.data = dataSource.data
       if (parents != null) {
         this.parentEntity = parents.filterIsInstance<SampleEntity>().singleOrNull()
       }
     }
 
-
-    override var data: String
-      get() = getEntityData().data
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().data = value
-        changedProperty.add("data")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -114,6 +107,14 @@ open class ChildSampleEntityImpl : ChildSampleEntity, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var data: String
+      get() = getEntityData().data
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().data = value
+        changedProperty.add("data")
       }
 
     override var parentEntity: SampleEntity?
@@ -213,8 +214,8 @@ class ChildSampleEntityData : WorkspaceEntityData<ChildSampleEntity>() {
 
     other as ChildSampleEntityData
 
-    if (this.data != other.data) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.data != other.data) return false
     return true
   }
 

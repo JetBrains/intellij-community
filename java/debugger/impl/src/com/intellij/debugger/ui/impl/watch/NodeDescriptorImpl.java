@@ -2,7 +2,6 @@
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -12,10 +11,11 @@ import com.intellij.debugger.ui.tree.render.OnDemandRenderer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
-import com.sun.jdi.*;
+import com.sun.jdi.InconsistentDebugInfoException;
+import com.sun.jdi.InvalidStackFrameException;
+import com.sun.jdi.ObjectCollectedException;
+import com.sun.jdi.VMDisconnectedException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,8 +32,6 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
   private @NlsContexts.Label String myLabel = UNKNOWN_VALUE_MESSAGE;
 
   private Map<Key, Object> myUserData;
-
-  private static final Key<Map<ObjectReference, ValueMarkup>> MARKUP_MAP_KEY = new Key<>("ValueMarkupMap");
 
   @Override
   public String getName() {
@@ -151,22 +149,5 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
   @Override
   public void setAncestor(NodeDescriptor oldDescriptor) {
     displayAs(oldDescriptor);
-  }
-
-  /**
-   * @deprecated use {@link com.intellij.xdebugger.impl.frame.XValueMarkers}
-   */
-  @Nullable
-  @Deprecated
-  public static Map<ObjectReference, ValueMarkup> getMarkupMap(final DebugProcess process) {
-    if (process == null) {
-      return null;
-    }
-    Map<ObjectReference, ValueMarkup> map = process.getUserData(MARKUP_MAP_KEY);
-    if (map == null) {
-      map = new HashMap<>();
-      process.putUserData(MARKUP_MAP_KEY, map);
-    }
-    return map;
   }
 }

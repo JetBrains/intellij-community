@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis;
 
 import com.intellij.analysis.dialog.ModelScopeItem;
@@ -12,11 +12,9 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.util.RadioUpDownListener;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -119,10 +117,11 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   }
 
   public void setShowInspectInjectedCode(boolean showInspectInjectedCode) {
-    if (Registry.is("idea.batch.inspections.injected.psi.option") &&
-        SystemProperties.getBooleanProperty("idea.batch.inspections.inspect.injected.psi", true)) {
-      myAnalyzeInjectedCode.setVisible(showInspectInjectedCode);
-    }
+    myAnalyzeInjectedCode.setVisible(showInspectInjectedCode);
+  }
+  
+  public void setAnalyzeInjectedCode(boolean selected) {
+    myAnalyzeInjectedCode.setSelected(selected);
   }
 
   private void preselectButton() {
@@ -237,10 +236,11 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     }
 
     if (myAnalyzeInjectedCode.isVisible()) {
+      boolean analyzeInjectedCode = isAnalyzeInjectedCode();
       if (myRememberScope) {
-        myOptions.ANALYZE_INJECTED_CODE = isAnalyzeInjectedCode();
+        myOptions.ANALYZE_INJECTED_CODE = analyzeInjectedCode;
       }
-      scope.setAnalyzeInjectedCode(isAnalyzeInjectedCode());
+      scope.setAnalyzeInjectedCode(analyzeInjectedCode);
     }
 
     FindSettings.getInstance().setDefaultScopeName(scope.getDisplayName());

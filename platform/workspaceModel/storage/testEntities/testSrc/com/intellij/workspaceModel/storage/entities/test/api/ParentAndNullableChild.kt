@@ -20,8 +20,8 @@ interface ParentNullableEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ParentNullableEntity, ModifiableWorkspaceEntity<ParentNullableEntity>, ObjBuilder<ParentNullableEntity> {
-    override var parentData: String
     override var entitySource: EntitySource
+    override var parentData: String
     override var child: ChildNullableEntity?
   }
 
@@ -51,8 +51,8 @@ interface ChildNullableEntity : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ChildNullableEntity, ModifiableWorkspaceEntity<ChildNullableEntity>, ObjBuilder<ChildNullableEntity> {
-    override var childData: String
     override var entitySource: EntitySource
+    override var childData: String
     override var parentEntity: ParentNullableEntity
   }
 

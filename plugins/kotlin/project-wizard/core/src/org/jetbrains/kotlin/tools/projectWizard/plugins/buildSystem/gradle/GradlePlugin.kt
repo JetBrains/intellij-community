@@ -131,7 +131,7 @@ abstract class GradlePlugin(context: Context) : BuildSystemPlugin(context) {
                 val allRepositories = moduleRepositories.flatMapTo(hashSetOf()) { it }
 
                 val commonRepositories = allRepositories.filterTo(
-                    hashSetOf(KotlinPlugin.version.propertyValue.repository)
+                    KotlinPlugin.version.propertyValue.repositories.toMutableSet()
                 ) { repo ->
                     moduleRepositories.all { repo in it }
                 }

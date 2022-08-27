@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.ProjectTopics
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
@@ -15,10 +16,7 @@ import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.addModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import junit.framework.Assert.*
-import org.junit.Assert
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
+import org.junit.*
 
 class WorkspaceModelTest {
   companion object {
@@ -29,7 +27,7 @@ class WorkspaceModelTest {
 
   @Rule
   @JvmField
-  val projectModel = ProjectModelRule(forceEnableWorkspaceModel = true)
+  val projectModel = ProjectModelRule()
 
   @Test
   fun `do not fire rootsChanged if there were no changes`() {
@@ -116,5 +114,51 @@ class WorkspaceModelTest {
     val entities = model.entityStorage.current.entities(ModuleEntity::class.java).toList()
     assertEquals(2, entities.size)
     assertEquals(setOf(firstModuleName, secondModuleName), entities.map { it.name }.toSet())
+  }
+
+  @Test(expected = RuntimeException::class)
+  @Ignore
+  fun `recursive update`() {
+    ApplicationManager.getApplication().runWriteAction {
+      WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
+        WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
+          println("So much updates")
+        }
+      }
+    }
+  }
+
+  @Test(expected = RuntimeException::class)
+  @Ignore
+  fun `recursive update silent`() {
+    WorkspaceModel.getInstance(projectModel.project).updateProjectModelSilent {
+      WorkspaceModel.getInstance(projectModel.project).updateProjectModelSilent {
+        println("So much updates")
+      }
+    }
+  }
+
+  @Test(expected = RuntimeException::class)
+  @Ignore
+  fun `recursive update mixed 1`() {
+    ApplicationManager.getApplication().runWriteAction {
+      WorkspaceModel.getInstance(projectModel.project).updateProjectModelSilent {
+        WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
+          println("So much updates")
+        }
+      }
+    }
+  }
+
+  @Test(expected = RuntimeException::class)
+  @Ignore
+  fun `recursive update mixed 2`() {
+    ApplicationManager.getApplication().runWriteAction {
+      WorkspaceModel.getInstance(projectModel.project).updateProjectModel {
+        WorkspaceModel.getInstance(projectModel.project).updateProjectModelSilent {
+          println("So much updates")
+        }
+      }
+    }
   }
 }

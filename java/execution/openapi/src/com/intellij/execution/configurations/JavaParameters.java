@@ -19,7 +19,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.PathsList;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -194,8 +193,7 @@ public class JavaParameters extends SimpleJavaParameters {
     }
     OrderRootsEnumerator rootsEnumerator = enumerator.classes();
     if ((classPathType & JDK_ONLY) != 0) {
-      rootsEnumerator = rootsEnumerator.usingCustomRootProvider(
-        e -> e instanceof JdkOrderEntry ? jdkRoots(jdk) : e.getFiles(OrderRootType.CLASSES));
+      rootsEnumerator = rootsEnumerator.usingCustomSdkRootProvider(entry -> jdkRoots(jdk));
     }
     return rootsEnumerator;
   }

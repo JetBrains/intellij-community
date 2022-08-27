@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl
 
 import com.intellij.execution.ExecutionBundle
@@ -34,6 +34,7 @@ import com.intellij.openapi.util.Trinity
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance
 import com.intellij.ui.*
+import com.intellij.ui.PlatformIcons
 import com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*
 import com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
 import com.intellij.ui.awt.RelativePoint
@@ -1072,6 +1073,8 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       e.presentation.isEnabled = isEnabled(e)
     }
 
+    override fun getActionUpdateThread() = ActionUpdateThread.EDT
+
     override fun isEnabled(e: AnActionEvent): Boolean {
       var enabled = false
       val selections = tree.selectionPaths
@@ -1091,7 +1094,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
 
   protected inner class MyCopyAction : AnAction(ExecutionBundle.message("copy.configuration.action.name"),
                                                 ExecutionBundle.message("copy.configuration.action.name"),
-                                                PlatformIcons.COPY_ICON), PossiblyDumbAware {
+                                                IconManager.getInstance().getPlatformIcon(PlatformIcons.Copy)), PossiblyDumbAware {
     init {
       val action = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_DUPLICATE)
       registerCustomShortcutSet(action.shortcutSet, tree)
@@ -1124,6 +1127,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       val configuration = selectedConfiguration
       e.presentation.isEnabled = configuration != null && configuration.configuration.type.isManaged
     }
+    override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
     override fun isDumbAware(): Boolean {
       val configuration = selectedConfiguration
@@ -1152,6 +1156,8 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
         else -> configuration.settings.isTemporary
       }
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.EDT
   }
 
   /**
@@ -1207,6 +1213,8 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabled = isEnabled(e)
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
     override fun isEnabled(e: AnActionEvent) = getAvailableDropPosition(direction) != null
   }
@@ -1281,6 +1289,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
                             else ExecutionBundle.message("run.configuration.create.folder.text")
       e.presentation.isEnabled = isEnabled
     }
+    override fun getActionUpdateThread() = ActionUpdateThread.EDT
   }
 
   protected inner class MySortFolderAction : AnAction(ExecutionBundle.message("run.configuration.sort.folder.text"),
@@ -1336,6 +1345,8 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       }
       e.presentation.isEnabled = false
     }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.EDT
   }
 
   private val selectedNodes: Array<DefaultMutableTreeNode>

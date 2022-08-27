@@ -20,7 +20,6 @@ import com.intellij.ide.ui.AntialiasingType
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.GraphicsUtil
 import com.jetbrains.packagesearch.PackageSearchIcons
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.TableColors
 import java.awt.Component
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
@@ -32,7 +31,6 @@ import javax.swing.JList
 
 internal class PopupMenuListItemCellRenderer<T>(
     private val selectedValue: T?,
-    private val colors: TableColors,
     private val itemLabelRenderer: (T) -> String = { it.toString() }
 ) : DefaultListCellRenderer() {
 
@@ -47,7 +45,11 @@ internal class PopupMenuListItemCellRenderer<T>(
         val itemLabel = itemLabelRenderer(item) + " " // The spaces are to compensate for the lack of padding in the label (yes, I know, it's a hack)
         val label = super.getListCellRendererComponent(list, itemLabel, index, isSelected, cellHasFocus) as JLabel
         label.font = list.font
-        colors.applyTo(label, isSelected)
+
+        val colors = computeColors(isSelected, isHover = false, isSearchResult = false)
+
+        label.background = colors.background
+        label.foreground = colors.foreground
 
         currentItemIsSelected = item === selectedValue
 

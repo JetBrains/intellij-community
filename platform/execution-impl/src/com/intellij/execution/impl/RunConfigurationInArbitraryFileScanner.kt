@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl
 
 import com.intellij.openapi.project.Project
-import com.intellij.util.indexing.roots.IndexableFileScanner
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
+import com.intellij.util.indexing.roots.IndexableFileScanner
 import com.intellij.util.indexing.roots.kind.ModuleRootOrigin
 import com.intellij.util.indexing.roots.kind.ProjectFileOrDirOrigin
 
@@ -13,7 +13,7 @@ import com.intellij.util.indexing.roots.kind.ProjectFileOrDirOrigin
  * This class doesn't push any file properties, it is used for scanning the project for `*.run.xml` files - files with run configurations.
  * This is to handle run configurations stored in arbitrary files within project content (not in .idea/runConfigurations or project.ipr file).
  */
-class RunConfigurationInArbitraryFileScanner : IndexableFileScanner {
+internal class RunConfigurationInArbitraryFileScanner : IndexableFileScanner {
   companion object {
     fun isFileWithRunConfigs(file: VirtualFile): Boolean {
       if (!file.isInLocalFileSystem || !StringUtil.endsWith(file.nameSequence, ".run.xml")) return false

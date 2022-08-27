@@ -9,9 +9,6 @@ import com.intellij.util.containers.ContainerUtil;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author Vladimir Kondratyev
- */
 final class FileTree {
   private static final Logger LOG = Logger.getInstance(FileTree.class);
 

@@ -29,7 +29,7 @@ public final class JavaFxResourcePropertyValueInspection extends XmlSuppressable
     if (!JavaFxFileTypeFactory.isFxml(session.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
     return new XmlElementVisitor() {
       @Override
-      public void visitXmlAttributeValue(XmlAttributeValue xmlAttributeValue) {
+      public void visitXmlAttributeValue(@NotNull XmlAttributeValue xmlAttributeValue) {
         super.visitXmlAttributeValue(xmlAttributeValue);
         final String value = xmlAttributeValue.getValue();
         if (value.startsWith("%") && value.length() > 1) {

@@ -77,6 +77,9 @@ open class CustomSourceRootPropertiesEntityImpl : CustomSourceRootPropertiesEnti
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToOneParent<WorkspaceEntityBase>(SOURCEROOT_CONNECTION_ID, this) == null) {
           error("Field CustomSourceRootPropertiesEntity#sourceRoot should be initialized")
@@ -86,9 +89,6 @@ open class CustomSourceRootPropertiesEntityImpl : CustomSourceRootPropertiesEnti
         if (this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)] == null) {
           error("Field CustomSourceRootPropertiesEntity#sourceRoot should be initialized")
         }
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field CustomSourceRootPropertiesEntity#entitySource should be initialized")
       }
       if (!getEntityData().isPropertiesXmlTagInitialized()) {
         error("Field CustomSourceRootPropertiesEntity#propertiesXmlTag should be initialized")
@@ -109,6 +109,15 @@ open class CustomSourceRootPropertiesEntityImpl : CustomSourceRootPropertiesEnti
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var sourceRoot: SourceRootEntity
       get() {
@@ -143,15 +152,6 @@ open class CustomSourceRootPropertiesEntityImpl : CustomSourceRootPropertiesEnti
           this.entityLinks[EntityLink(false, SOURCEROOT_CONNECTION_ID)] = value
         }
         changedProperty.add("sourceRoot")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override var propertiesXmlTag: String

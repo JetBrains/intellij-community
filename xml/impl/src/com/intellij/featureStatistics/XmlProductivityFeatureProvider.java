@@ -22,14 +22,4 @@ public class XmlProductivityFeatureProvider extends ProductivityFeaturesProvider
                                                          3,
                                                          this)};
   }
-
-  @Override
-  public GroupDescriptor[] getGroupDescriptors() {
-    return new GroupDescriptor[0];
-  }
-
-  @Override
-  public ApplicabilityFilter[] getApplicabilityFilters() {
-    return new ApplicabilityFilter[0];
-  }
 }

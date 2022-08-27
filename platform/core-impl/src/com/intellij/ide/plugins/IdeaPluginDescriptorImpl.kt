@@ -95,10 +95,12 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   }
 
   companion object {
-    @VisibleForTesting
-    const val ON_DEMAND_ENABLED_KEY = "idea.on.demand.plugins"
 
-    val isOnDemandEnabled
+    @VisibleForTesting
+    const val ON_DEMAND_ENABLED_KEY: String = "idea.on.demand.plugins"
+
+    @JvmStatic
+    val isOnDemandEnabled: Boolean
       @ApiStatus.Experimental get() = java.lang.Boolean.getBoolean(ON_DEMAND_ENABLED_KEY)
   }
 
@@ -353,7 +355,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   @ApiStatus.Internal
   fun registerExtensions(nameToPoint: Map<String, ExtensionPointImpl<*>>,
                          containerDescriptor: ContainerDescriptor,
-                         listenerCallbacks: MutableList<in Runnable>?) {
+                         listenerCallbacks: MutableList<Runnable>?) {
     containerDescriptor.extensions?.let {
       if (!it.isEmpty()) {
         @Suppress("JavaMapForEach")
@@ -401,7 +403,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   private fun doRegisterExtensions(unsortedMap: Map<String, MutableList<ExtensionDescriptor>>,
                                    nameToPoint: Map<String, ExtensionPointImpl<*>>,
-                                   listenerCallbacks: MutableList<in Runnable>?): Int {
+                                   listenerCallbacks: MutableList<Runnable>?): Int {
     var registeredCount = 0
     for (entry in unsortedMap) {
       val point = nameToPoint.get(entry.key) ?: continue

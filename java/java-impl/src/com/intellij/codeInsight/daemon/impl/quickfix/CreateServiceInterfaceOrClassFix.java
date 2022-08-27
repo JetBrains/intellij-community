@@ -17,6 +17,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -153,7 +154,8 @@ public class CreateServiceInterfaceOrClassFix extends CreateServiceClassFixBase 
       myModuleCombo.setModel(new DefaultComboBoxModel<>(modules));
       updateRootDirsCombo(psiRootDirs);
 
-      myKindCombo.addItem(StringUtil.capitalize(CreateClassKind.CLASS.getDescription()), PlatformIcons.CLASS_ICON, CreateClassKind.CLASS.name());
+      myKindCombo.addItem(StringUtil.capitalize(CreateClassKind.CLASS.getDescription()),
+                          IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class), CreateClassKind.CLASS.name());
       myKindCombo.addItem(StringUtil.capitalize(CreateClassKind.INTERFACE.getDescription()), PlatformIcons.INTERFACE_ICON, CreateClassKind.INTERFACE.name());
       myKindCombo.addItem(StringUtil.capitalize(CreateClassKind.ANNOTATION.getDescription()), PlatformIcons.ANNOTATION_TYPE_ICON, CreateClassKind.ANNOTATION.name());
 

@@ -3,9 +3,14 @@ package com.intellij.devkit.workspaceModel
 
 import com.intellij.workspaceModel.codegen.InterfaceTraverser
 import com.intellij.workspaceModel.codegen.InterfaceVisitor
-import com.intellij.workspaceModel.codegen.deft.model.*
-import com.intellij.workspaceModel.codegen.deft.*
-import com.intellij.workspaceModel.codegen.deft.Field
+import com.intellij.workspaceModel.codegen.deft.meta.Obj
+import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
+import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
+import com.intellij.workspaceModel.codegen.deft.meta.ValueType
+import com.intellij.devkit.workspaceModel.metaModel.impl.ObjClassImpl
+import com.intellij.devkit.workspaceModel.metaModel.impl.ObjModuleImpl
+import com.intellij.devkit.workspaceModel.metaModel.impl.OwnPropertyImpl
+import org.jetbrains.kotlin.descriptors.SourceElement
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -14,21 +19,25 @@ class InterfaceTraverserTest {
   fun `test boolean`() {
     val type = createType()
 
-    Field(type, "myName", TBoolean)
+    type.addField("myName", ValueType.Boolean)
 
     val collector = StringBuilder()
-    InterfaceTraverser(emptyList()).traverse(type, MyInterfaceVisitor(collector))
+    InterfaceTraverser().traverse(type, MyInterfaceVisitor(collector))
     assertEquals("- Boolean - myName\n", collector.toString())
+  }
+
+  private fun ObjClassImpl<Obj>.addField(name: String, type: ValueType<*>) {
+    addField(OwnPropertyImpl(this, name, type, ObjProperty.ValueKind.Plain, false, false, false, 0, false, SourceElement.NO_SOURCE))
   }
 
   @Test
   fun `test int`() {
     val type = createType()
 
-    Field(type, "myName", TInt)
+    type.addField("myName", ValueType.Int)
 
     val collector = StringBuilder()
-    InterfaceTraverser(emptyList()).traverse(type, MyInterfaceVisitor(collector))
+    InterfaceTraverser().traverse(type, MyInterfaceVisitor(collector))
     assertEquals("- Int - myName\n", collector.toString())
   }
 
@@ -36,10 +45,10 @@ class InterfaceTraverserTest {
   fun `test string`() {
     val type = createType()
 
-    Field(type, "myName", TString)
+    type.addField("myName", ValueType.String)
 
     val collector = StringBuilder()
-    InterfaceTraverser(emptyList()).traverse(type, MyInterfaceVisitor(collector))
+    InterfaceTraverser().traverse(type, MyInterfaceVisitor(collector))
     assertEquals("- String - myName\n", collector.toString())
   }
 
@@ -47,10 +56,10 @@ class InterfaceTraverserTest {
   fun `test list`() {
     val type = createType()
 
-    Field(type, "myName", TList(TString))
+    type.addField("myName", ValueType.List(ValueType.String))
 
     val collector = StringBuilder()
-    InterfaceTraverser(emptyList()).traverse(type, MyInterfaceVisitor(collector))
+    InterfaceTraverser().traverse(type, MyInterfaceVisitor(collector))
     assertEquals("""
       -- Start loop --
       - String - _myName
@@ -63,10 +72,10 @@ class InterfaceTraverserTest {
   fun `test map`() {
     val type = createType()
 
-    Field(type, "myName", TMap(TString, TInt))
+    type.addField("myName", ValueType.Map(ValueType.String, ValueType.Int))
 
     val collector = StringBuilder()
-    InterfaceTraverser(emptyList()).traverse(type, MyInterfaceVisitor(collector))
+    InterfaceTraverser().traverse(type, MyInterfaceVisitor(collector))
     assertEquals("""
       -- Start Map --
       - String - key_myName
@@ -80,10 +89,10 @@ class InterfaceTraverserTest {
   fun `test optional`() {
     val type = createType()
 
-    Field(type, "myName", TOptional(TInt))
+    type.addField("myName", ValueType.Optional(ValueType.Int))
 
     val collector = StringBuilder()
-    InterfaceTraverser(emptyList()).traverse(type, MyInterfaceVisitor(collector))
+    InterfaceTraverser().traverse(type, MyInterfaceVisitor(collector))
     assertEquals("""
       -- Start Optional --
       - Int - _myName
@@ -96,20 +105,18 @@ class InterfaceTraverserTest {
   fun `test blob`() {
     val type = createType()
 
-    Field(type, "myName", TBlob<Any>("my.class"))
+    type.addField("myName", ValueType.Blob<Any>("my.class", emptyList()))
 
     val collector = StringBuilder()
-    InterfaceTraverser(emptyList()).traverse(type, MyInterfaceVisitor(collector))
+    InterfaceTraverser().traverse(type, MyInterfaceVisitor(collector))
     assertEquals("""
       -- Blob | myName | my.class --
       
     """.trimIndent(), collector.toString())
   }
 
-  private fun createType(): DefType {
-    val module = KtObjModule(null)
-    return DefType(module, "myName", null,
-                   KtInterface(module, KtScope(null, null), SrcRange(Src("X") { "xyz" }, 0..1), emptyList(), null, null))
+  private fun createType(): ObjClassImpl<Obj> {
+    return ObjClassImpl(ObjModuleImpl("module"), "MyClass", ObjClass.Openness.final, SourceElement.NO_SOURCE)
   }
 }
 
@@ -181,11 +188,11 @@ class MyInterfaceVisitor(val collector: StringBuilder) : InterfaceVisitor {
     TODO("Not yet implemented")
   }
 
-  override fun visitDataClassStart(varName: String, javaSimpleName: String, foundType: DefType): Boolean {
+  override fun visitDataClassStart(varName: String, dataClass: ValueType.DataClass<*>): Boolean {
     TODO("Not yet implemented")
   }
 
-  override fun visitDataClassEnd(varName: String, javaSimpleName: String, traverseResult: Boolean, foundType: DefType): Boolean {
+  override fun visitDataClassEnd(varName: String, dataClass: ValueType.DataClass<*>, traverseResult: Boolean): Boolean {
     TODO("Not yet implemented")
   }
 }

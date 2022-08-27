@@ -82,11 +82,11 @@ open class OoParentWithPidEntityImpl : OoParentWithPidEntity, WorkspaceEntityBas
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isParentPropertyInitialized()) {
         error("Field OoParentWithPidEntity#parentProperty should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field OoParentWithPidEntity#entitySource should be initialized")
       }
     }
 
@@ -97,20 +97,12 @@ open class OoParentWithPidEntityImpl : OoParentWithPidEntity, WorkspaceEntityBas
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as OoParentWithPidEntity
-      this.parentProperty = dataSource.parentProperty
       this.entitySource = dataSource.entitySource
+      this.parentProperty = dataSource.parentProperty
       if (parents != null) {
       }
     }
 
-
-    override var parentProperty: String
-      get() = getEntityData().parentProperty
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().parentProperty = value
-        changedProperty.add("parentProperty")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -119,6 +111,14 @@ open class OoParentWithPidEntityImpl : OoParentWithPidEntity, WorkspaceEntityBas
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var parentProperty: String
+      get() = getEntityData().parentProperty
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().parentProperty = value
+        changedProperty.add("parentProperty")
       }
 
     override var childOne: OoChildForParentWithPidEntity?
@@ -252,8 +252,8 @@ class OoParentWithPidEntityData : WorkspaceEntityData.WithCalculablePersistentId
 
     other as OoParentWithPidEntityData
 
-    if (this.parentProperty != other.parentProperty) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.parentProperty != other.parentProperty) return false
     return true
   }
 

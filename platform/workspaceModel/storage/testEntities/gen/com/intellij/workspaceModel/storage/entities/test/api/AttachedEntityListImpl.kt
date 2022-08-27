@@ -73,7 +73,7 @@ open class AttachedEntityListImpl : AttachedEntityList, WorkspaceEntityBase() {
     fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field AttachedEntityList#entitySource should be initialized")
+        error("Field WorkspaceEntity#entitySource should be initialized")
       }
       if (!getEntityData().isDataInitialized()) {
         error("Field AttachedEntityList#data should be initialized")
@@ -94,6 +94,15 @@ open class AttachedEntityListImpl : AttachedEntityList, WorkspaceEntityBase() {
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var ref: MainEntityList?
       get() {
@@ -131,15 +140,6 @@ open class AttachedEntityListImpl : AttachedEntityList, WorkspaceEntityBase() {
           this.entityLinks[EntityLink(false, REF_CONNECTION_ID)] = value
         }
         changedProperty.add("ref")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override var data: String

@@ -100,7 +100,7 @@ public final class XPathExpressionGenerator {
         }
 
         @Override
-        public void visitXmlAttribute(XmlAttribute attribute) {
+        public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
             uniquePath = getUniquePath(attribute);
             path = getPath(attribute);
         }
@@ -157,7 +157,7 @@ public final class XPathExpressionGenerator {
 
 
         @Override
-        public void visitXmlTag(XmlTag tag) {
+        public void visitXmlTag(@NotNull XmlTag tag) {
             uniquePath = getUniquePath(tag);
             path = getPath(tag);
         }
@@ -198,7 +198,7 @@ public final class XPathExpressionGenerator {
         }
 
         @Override
-        public void visitXmlComment(XmlComment comment) {
+        public void visitXmlComment(@NotNull XmlComment comment) {
             uniquePath = getUniquePath(comment);
             path = getPath(comment);
         }
@@ -218,7 +218,7 @@ public final class XPathExpressionGenerator {
         }
 
         @Override
-        public void visitXmlText(XmlText text) {
+        public void visitXmlText(@NotNull XmlText text) {
             uniquePath = getUniquePath(text);
             path = getPath(text);
         }

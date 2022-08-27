@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
+import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
@@ -73,7 +74,8 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
   public static void importExtensions(Project project,
                                       IdeModifiableModelsProvider modifiableModelsProvider,
                                       List<MavenLegacyModuleImporter.ExtensionImporter> extensionImporters,
-                                      List<MavenProjectsProcessorTask> postTasks) {
+                                      List<MavenProjectsProcessorTask> postTasks,
+                                      StructuredIdeActivity activity) {
     extensionImporters = ContainerUtil.filter(extensionImporters, it -> !it.isModuleDisposed());
 
     if (extensionImporters.isEmpty()) return;
@@ -95,8 +97,12 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
       extensionImporters.forEach(importer -> importer.postConfig(counters));
 
       for (Map.Entry<Class<? extends MavenImporter>, MavenLegacyModuleImporter.ExtensionImporter.CountAndTime> each : counters.entrySet()) {
-        MavenImportCollector.IMPORTER_RUN.log(project, each.getKey(), each.getValue().count,
-                                              TimeUnit.NANOSECONDS.toMillis(each.getValue().timeNano));
+        MavenImportCollector.IMPORTER_RUN.log(project,
+                                              MavenImportCollector.ACTIVITY_ID.with(activity),
+                                              MavenImportCollector.IMPORTER_CLASS.with(each.getKey()),
+                                              MavenImportCollector.NUMBER_OF_MODULES.with(each.getValue().count),
+                                              MavenImportCollector.TOTAL_DURATION_MS.with(
+                                                TimeUnit.NANOSECONDS.toMillis(each.getValue().timeNano)));
       }
     }
     finally {

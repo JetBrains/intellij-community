@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.DumbService.DumbModeListener
 import com.intellij.openapi.project.DumbService.isDumb
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.NlsContexts
@@ -32,7 +33,6 @@ import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitExecutorWithRichDescription
-import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vcs.changes.actions.DefaultCommitExecutorAction
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
@@ -58,8 +58,7 @@ private val isBackgroundCommitChecksValue: RegistryValue get() = Registry.get("v
 fun isBackgroundCommitChecks(): Boolean = isBackgroundCommitChecksValue.asBoolean()
 
 abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : NonModalCommitWorkflowUi> :
-  AbstractCommitWorkflowHandler<W, U>(),
-  DumbService.DumbModeListener {
+  AbstractCommitWorkflowHandler<W, U>() {
 
   abstract override val amendCommitHandler: NonModalAmendCommitHandler
 
@@ -108,27 +107,30 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   }
 
   protected fun setupDumbModeTracking() {
-    if (isDumb(project)) enteredDumbMode()
-    project.messageBus.connect(this).subscribe(DumbService.DUMB_MODE, this)
-  }
+    if (isDumb(project)) ui.commitProgressUi.isDumbMode = true
+    project.messageBus.connect(this).subscribe(DumbService.DUMB_MODE, object : DumbModeListener{
+      override fun enteredDumbMode() {
+        ui.commitProgressUi.isDumbMode = true
+      }
 
-  override fun enteredDumbMode() {
-    ui.commitProgressUi.isDumbMode = true
-  }
-
-  override fun exitDumbMode() {
-    ui.commitProgressUi.isDumbMode = false
+      override fun exitDumbMode() {
+        ui.commitProgressUi.isDumbMode = false
+      }
+    })
   }
 
   override fun executionStarted() = updateDefaultCommitActionEnabled()
   override fun executionEnded() = updateDefaultCommitActionEnabled()
 
   override fun updateDefaultCommitActionName() {
-    val commitText = getCommitActionName()
     val isAmend = amendCommitHandler.isAmendCommitMode
     val isSkipCommitChecks = isSkipCommitChecks()
+    ui.defaultCommitActionName = getCommitActionName(isAmend, isSkipCommitChecks)
+  }
 
-    ui.defaultCommitActionName = when {
+  private fun getCommitActionName(isAmend: Boolean, isSkipCommitChecks: Boolean): @Nls String {
+    val commitText = getCommitActionName()
+    return when {
       isAmend && isSkipCommitChecks -> message("action.amend.commit.anyway.text")
       isAmend && !isSkipCommitChecks -> message("amend.action.name", commitText)
       !isAmend && isSkipCommitChecks -> message("action.commit.anyway.text", commitText)
@@ -136,28 +138,40 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     }
   }
 
+  private fun getActionTextWithoutEllipsis(executor: CommitExecutor?,
+                                           isAmend: Boolean,
+                                           isSkipCommitChecks: Boolean): @Nls String {
+    if (executor == null) {
+      val actionText = getCommitActionName(isAmend, isSkipCommitChecks)
+      return removeEllipsisSuffix(actionText)
+    }
+
+    if (executor is CommitExecutorWithRichDescription) {
+      val state = CommitWorkflowHandlerState(isAmend, isSkipCommitChecks)
+      val actionText = executor.getText(state)
+      if (actionText != null) {
+        return removeEllipsisSuffix(actionText)
+      }
+    }
+
+    // We ignore 'isAmend == true' for now - unclear how to handle without CommitExecutorWithRichDescription.
+    // Ex: executor might not support this flag.
+    val actionText = executor.actionText
+    if (isSkipCommitChecks) {
+      return message("commit.checks.failed.notification.commit.anyway.action", removeEllipsisSuffix(actionText))
+    }
+    else {
+      return removeEllipsisSuffix(actionText)
+    }
+  }
+
   private fun getCommitActionTextForNotification(
     executor: CommitExecutor?,
     isSkipCommitChecks: Boolean
   ): @Nls(capitalization = Nls.Capitalization.Sentence) String {
-    if (executor is CommitExecutorWithRichDescription) {
-      val isAmend = amendCommitHandler.isAmendCommitMode
-      val state = CommitWorkflowHandlerState(isAmend, isSkipCommitChecks)
-      val actionText = executor.getText(state)
-      if (actionText != null) {
-        val notificationText = removeEllipsisSuffix(actionText)
-        return capitalize(toLowerCase(notificationText))
-      }
-    }
-
-    val actionText = executor?.actionText ?: getCommitActionName()
-    val notificationText = if (isSkipCommitChecks) {
-      message("commit.checks.failed.notification.commit.anyway.action", removeEllipsisSuffix(actionText))
-    }
-    else {
-      removeEllipsisSuffix(actionText)
-    }
-    return capitalize(toLowerCase(notificationText))
+    val isAmend = amendCommitHandler.isAmendCommitMode
+    val actionText: @Nls String = getActionTextWithoutEllipsis(executor, isAmend, isSkipCommitChecks)
+    return capitalize(toLowerCase(actionText))
   }
 
   fun updateDefaultCommitActionEnabled() {
@@ -415,10 +429,10 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     return CommitWorkflowHandlerState(isAmend, isSkipCommitChecks)
   }
 
-  protected open inner class CommitStateCleaner : CommitResultHandler {
-    override fun onSuccess(commitMessage: String) = resetState()
+  protected open inner class CommitStateCleaner : CommitterResultHandler {
+    override fun onSuccess() = resetState()
     override fun onCancel() = Unit
-    override fun onFailure(errors: List<VcsException>) = resetState()
+    override fun onFailure() = resetState()
 
     protected open fun resetState() {
       disposeCommitOptions()

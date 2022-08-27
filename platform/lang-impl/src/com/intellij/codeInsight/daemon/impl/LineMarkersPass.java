@@ -26,6 +26,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
@@ -93,7 +94,7 @@ public final class LineMarkersPass extends TextEditorHighlightingPass {
       }
       HighlightingLevelManager highlightingLevelManager = HighlightingLevelManager.getInstance(myProject);
       if (!highlightingLevelManager.shouldHighlight(root)) continue;
-      Divider.divideInsideAndOutsideInOneRoot(root, myRestrictRange.toScalarRange(), myPriorityBounds.toScalarRange(),
+      Divider.divideInsideAndOutsideInOneRoot(root, TextRangeScalarUtil.toScalarRange(myRestrictRange), TextRangeScalarUtil.toScalarRange(myPriorityBounds),
            elements -> {
              Collection<LineMarkerProvider> providers = getMarkerProviders(language, myProject);
              List<LineMarkerProvider> providersList = new ArrayList<>(providers);

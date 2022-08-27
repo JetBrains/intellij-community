@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config
 
 import com.intellij.application.options.editor.CheckboxDescriptor
@@ -137,7 +137,7 @@ internal class GitVcsPanel(private val project: Project) :
   override fun getId() = "vcs.${GitVcs.NAME}"
 
   override fun createConfigurables(): List<UnnamedConfigurable> {
-    return VcsEnvCustomizer.EP_NAME.extensions.mapNotNull { it.getConfigurable(project) }
+    return VcsEnvCustomizer.EP_NAME.extensionList.mapNotNull { it.getConfigurable(project) }
   }
 
   override fun createPanel(): DialogPanel = panel {

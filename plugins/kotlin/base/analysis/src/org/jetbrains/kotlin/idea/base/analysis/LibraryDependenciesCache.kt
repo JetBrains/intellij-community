@@ -19,11 +19,9 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.MultiMap
-import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -39,9 +37,8 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.allSdks
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.checkValidity
+import org.jetbrains.kotlin.idea.base.util.caching.*
 import org.jetbrains.kotlin.idea.base.util.caching.FineGrainedEntityCache.Companion.isFineGrainedCacheInvalidationEnabled
-import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
-import org.jetbrains.kotlin.idea.base.util.caching.WorkspaceEntityChangeListener
 import org.jetbrains.kotlin.idea.caches.project.*
 import org.jetbrains.kotlin.idea.configuration.isMavenized
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -271,9 +268,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
                 get() = ModuleEntity::class.java
 
             override fun map(storage: EntityStorage, entity: ModuleEntity): Module? =
-                entity.findModule(storage) ?:
-                // TODO: workaround to bypass bug with new modules not present in storageAfter
-                WorkspaceModel.getInstance(project).entityStorage.current.findModuleByEntity(entity)
+                storage.findModuleWithHack(entity, project)
 
             override fun entitiesChanged(outdated: List<Module>) {
                 invalidateKeys(outdated) { _, _ -> false }
@@ -372,10 +367,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             val modulesFromNewLibs = libraryChanges.mapNotNull { change ->
                 val newEntity = newEntity(change) ?: return@mapNotNull null
                 val referrers = storageAfter.referrers(newEntity.persistentId, ModuleEntity::class.java)
-                referrers.mapNotNull { storageAfter.findModuleByEntity(it) ?:
-                    // TODO: workaround to bypass bug with new modules not present in storageAfter
-                    WorkspaceModel.getInstance(project).entityStorage.current.findModuleByEntity(it)
-                }
+                referrers.mapNotNull { storageAfter.findModuleByEntityWithHack(it, project) }
             }.flatMapTo(hashSetOf()) { it }
 
             val modulesToInvalidate = modulesChange.old.toHashSet() + modulesFromNewLibs
@@ -413,11 +405,9 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             val oldModules = mutableListOf<Module>()
             val newModules = mutableListOf<Module>()
             for (change in moduleChanges) {
-                oldEntity(change)?.let { oldModules.addIfNotNull(storageBefore.findModuleByEntity(it)) }
+                oldEntity(change)?.let { oldModules.addIfNotNull(it.findModule(storageBefore)) }
                 newEntity(change)?.let {
-                    val moduleBridge = storageAfter.findModuleByEntity(it) ?:
-                        // TODO: workaround to bypass bug with new modules not present in storageAfter
-                        WorkspaceModel.getInstance(project).entityStorage.current.findModuleByEntity(it)
+                    val moduleBridge = storageAfter.findModuleByEntityWithHack(it, project)
                     newModules.addIfNotNull(moduleBridge)
                 }
             }
@@ -434,9 +424,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             for (change in moduleChanges) {
                 oldEntity(change)?.let { oldLibraries.addIfNotNull(it.findLibraryBridge(storageBefore)) }
                 newEntity(change)?.let {
-                    val libraryBridge = it.findLibraryBridge(storageAfter) ?:
-                        // TODO: workaround to bypass bug with new modules not present in storageAfter
-                        it.findLibraryBridge(WorkspaceModel.getInstance(project).entityStorage.current)
+                    val libraryBridge = storageAfter.findLibraryByEntityWithHack(it, project)
                     newLibraries.addIfNotNull(libraryBridge)
                 }
             }

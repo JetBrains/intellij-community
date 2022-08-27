@@ -2,6 +2,7 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.NlsContexts;
@@ -44,7 +45,7 @@ public abstract class AutocreatingMoveDestination implements MoveDestination {
   @Nullable
   protected @NlsContexts.DialogMessage String checkCanCreateInSourceRoot(final VirtualFile targetSourceRoot) {
     final String targetQName = myPackage.getQualifiedName();
-    final String sourceRootPackage = myFileIndex.getPackageNameByDirectory(targetSourceRoot);
+    final String sourceRootPackage = PackageIndex.getInstance(myManager.getProject()).getPackageNameByDirectory(targetSourceRoot);
     if (!CommonJavaRefactoringUtil.canCreateInSourceRoot(sourceRootPackage, targetQName)) {
       return JavaRefactoringBundle.message("source.folder.0.has.package.prefix.1", targetSourceRoot.getPresentableUrl(),
                                        sourceRootPackage, targetQName);

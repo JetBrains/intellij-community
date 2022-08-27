@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.ExtensionPoints;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.MoveToPackageFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -1329,7 +1330,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
           addedTag = (XmlTag)rootTag.addAfter(missingTag, after);
         }
 
-        if (StringUtil.isEmpty(myTagValue)) {
+        if (StringUtil.isEmpty(myTagValue) && !IntentionPreviewUtils.isPreviewElement(descriptor.getPsiElement())) {
           int valueStartOffset = addedTag.getValue().getTextRange().getStartOffset();
           NavigatableAdapter.navigate(project, file.getVirtualFile(), valueStartOffset, true);
         }

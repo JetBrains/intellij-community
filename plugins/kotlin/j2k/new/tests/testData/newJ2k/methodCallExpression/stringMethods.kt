@@ -87,9 +87,8 @@ internal class A {
         val limit = 5
         useSplit(s.split("\\s+".toRegex(), limit.coerceAtLeast(0)).toTypedArray())
         useSplit(s.split("\\s+".toRegex(), (limit + 5).coerceAtLeast(0)).toTypedArray())
-        /* TODO
-        s.matches("\\w+");
-        */s.trim { it <= ' ' }
+        s.matches("\\w+".toRegex())
+        s.trim { it <= ' ' }
         "$s another"
         s.toByteArray()
         s.toByteArray(Charset.forName("utf-8"))

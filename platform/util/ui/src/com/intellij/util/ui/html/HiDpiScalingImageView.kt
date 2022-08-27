@@ -15,8 +15,7 @@ import javax.swing.Icon
 import javax.swing.text.Element
 import javax.swing.text.html.ImageView
 
-class HiDpiScalingImageView(elem: Element) : ImageView(elem) {
-
+internal class HiDpiScalingImageView(elem: Element) : ImageView(elem) {
   private val scaleContext: ScaleContext?
     get() = container?.takeIf(StartupUiUtil::isJreHiDPI)?.let(ScaleContext::create)
 

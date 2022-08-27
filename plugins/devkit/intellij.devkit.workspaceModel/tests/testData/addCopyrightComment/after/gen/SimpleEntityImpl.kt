@@ -62,11 +62,11 @@ open class SimpleEntityImpl : SimpleEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isNameInitialized()) {
         error("Field SimpleEntity#name should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field SimpleEntity#entitySource should be initialized")
       }
     }
 
@@ -77,20 +77,12 @@ open class SimpleEntityImpl : SimpleEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as SimpleEntity
-      this.name = dataSource.name
       this.entitySource = dataSource.entitySource
+      this.name = dataSource.name
       if (parents != null) {
       }
     }
 
-
-    override var name: String
-      get() = getEntityData().name
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().name = value
-        changedProperty.add("name")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -99,6 +91,14 @@ open class SimpleEntityImpl : SimpleEntity, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var name: String
+      get() = getEntityData().name
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().name = value
+        changedProperty.add("name")
       }
 
     override fun getEntityData(): SimpleEntityData = result ?: super.getEntityData() as SimpleEntityData
@@ -158,8 +158,8 @@ class SimpleEntityData : WorkspaceEntityData<SimpleEntity>() {
 
     other as SimpleEntityData
 
-    if (this.name != other.name) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.name != other.name) return false
     return true
   }
 

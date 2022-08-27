@@ -4,9 +4,6 @@ package com.intellij.uiDesigner.core;
 import javax.swing.*;
 import java.lang.reflect.Method;
 
-/**
- * @author Vladimir Kondratyev
- */
 public final class SupportCode {
   /**
    * Parses text that might contain mnemonic and returns structure which contains

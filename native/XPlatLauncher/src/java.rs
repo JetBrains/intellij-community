@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 use std::{mem, thread};
 use std::ffi::{c_void, CString};
 use std::path::{Path, PathBuf};
@@ -138,11 +139,12 @@ pub fn call_intellij_main(jni_env: jni::JNIEnv<'_>, args: Vec<String>) -> Result
     match jni_env.call_static_method("com/intellij/idea/Main", "main", "([Ljava/lang/String;)V", &method_call_args) {
         Ok(_) => {}
         Err(e) => {
-            match e {
+            return match e {
                 Error::JavaException => {
                     jni_env.exception_describe()?;
+                    Err(LauncherError::JniRsError(e))
                 }
-                _ => { return Err(LauncherError::JniRsError(e)) }
+                _ => Err(LauncherError::JniRsError(e))
             }
         }
     };

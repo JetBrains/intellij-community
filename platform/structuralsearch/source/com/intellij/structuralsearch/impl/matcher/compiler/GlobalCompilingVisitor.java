@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MalformedPatternException;
+import com.intellij.structuralsearch.MatchUtil;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
@@ -143,7 +144,7 @@ public class GlobalCompilingVisitor {
     if (kind == OccurenceKind.LITERAL) {
       content = pattern.substring(1, pattern.length() - 1);
     }
-    else if (kind == OccurenceKind.COMMENT) {
+    else if (kind == OccurenceKind.COMMENT || kind == OccurenceKind.TEXT) {
       content = pattern;
     }
     else {
@@ -163,7 +164,7 @@ public class GlobalCompilingVisitor {
       word = content.substring(start, matcher.start());
       if (!word.isEmpty()) {
         hasLiteralContent = true;
-        buf.append(StructuralSearchUtil.makeExtremeSpacesOptional(StructuralSearchUtil.shieldRegExpMetaChars(word)));
+        buf.append(MatchUtil.makeExtremeSpacesOptional(MatchUtil.shieldRegExpMetaChars(word)));
 
         processTokenizedName(word, kind);
       }
@@ -172,7 +173,7 @@ public class GlobalCompilingVisitor {
       if (handler == null) throw new MalformedPatternException();
 
       handlers.add(handler);
-      RegExpPredicate predicate = handler.findRegExpPredicate();
+      RegExpPredicate predicate = handler.findPredicate(RegExpPredicate.class);
 
       if (predicate == null || !predicate.isWholeWords()) {
         buf.append("(.*?)");
@@ -192,7 +193,7 @@ public class GlobalCompilingVisitor {
 
     if (!word.isEmpty()) {
       hasLiteralContent = true;
-      buf.append(StructuralSearchUtil.makeExtremeSpacesOptional(StructuralSearchUtil.shieldRegExpMetaChars(word)));
+      buf.append(MatchUtil.makeExtremeSpacesOptional(MatchUtil.shieldRegExpMetaChars(word)));
 
       processTokenizedName(word, kind);
     }

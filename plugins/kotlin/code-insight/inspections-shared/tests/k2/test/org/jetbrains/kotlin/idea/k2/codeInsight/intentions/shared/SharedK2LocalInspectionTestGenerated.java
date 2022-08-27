@@ -6,7 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -140,6 +140,99 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @TestMetadata("inLambda.kt")
         public void testInLambda() throws Exception {
             runTest("../testData/inspectionsLocal/redundantReturnLabel/inLambda.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/redundantSetter")
+    public static class RedundantSetter extends AbstractSharedK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("annotation.kt")
+        public void testAnnotation() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSetter/annotation.kt");
+        }
+
+        @TestMetadata("blankBody.kt")
+        public void testBlankBody() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSetter/blankBody.kt");
+        }
+
+        @TestMetadata("default.kt")
+        public void testDefault() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSetter/default.kt");
+        }
+
+        @TestMetadata("lowerVisibility1.kt")
+        public void testLowerVisibility1() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSetter/lowerVisibility1.kt");
+        }
+
+        @TestMetadata("lowerVisibility2.kt")
+        public void testLowerVisibility2() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSetter/lowerVisibility2.kt");
+        }
+
+        @TestMetadata("lowerVisibility3.kt")
+        public void testLowerVisibility3() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSetter/lowerVisibility3.kt");
+        }
+
+        @TestMetadata("notOnlyFieldSetBody.kt")
+        public void testNotOnlyFieldSetBody() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSetter/notOnlyFieldSetBody.kt");
+        }
+
+        @TestMetadata("onlyFieldSetBody.kt")
+        public void testOnlyFieldSetBody() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSetter/onlyFieldSetBody.kt");
+        }
+
+        @TestMetadata("overrideBlankBody.kt")
+        public void testOverrideBlankBody() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSetter/overrideBlankBody.kt");
+        }
+
+        @TestMetadata("overrideDefault.kt")
+        public void testOverrideDefault() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSetter/overrideDefault.kt");
+        }
+
+        @TestMetadata("overrideNotOnlyFieldSetBody.kt")
+        public void testOverrideNotOnlyFieldSetBody() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSetter/overrideNotOnlyFieldSetBody.kt");
+        }
+
+        @TestMetadata("overrideOnlyFieldSetBody.kt")
+        public void testOverrideOnlyFieldSetBody() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSetter/overrideOnlyFieldSetBody.kt");
+        }
+
+        @TestMetadata("sameVisibility1.kt")
+        public void testSameVisibility1() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSetter/sameVisibility1.kt");
+        }
+
+        @TestMetadata("sameVisibility2.kt")
+        public void testSameVisibility2() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSetter/sameVisibility2.kt");
+        }
+
+        @TestMetadata("sameVisibility3.kt")
+        public void testSameVisibility3() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSetter/sameVisibility3.kt");
+        }
+
+        @TestMetadata("withAnnotaionAndNonTrivialBlockBody.kt")
+        public void testWithAnnotaionAndNonTrivialBlockBody() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSetter/withAnnotaionAndNonTrivialBlockBody.kt");
+        }
+
+        @TestMetadata("withAnnotaionAndTrivialBlockBody.kt")
+        public void testWithAnnotaionAndTrivialBlockBody() throws Exception {
+            runTest("../testData/inspectionsLocal/redundantSetter/withAnnotaionAndTrivialBlockBody.kt");
         }
     }
 
@@ -359,6 +452,74 @@ public abstract class SharedK2LocalInspectionTestGenerated extends AbstractShare
         @TestMetadata("yield.kt")
         public void testYield() throws Exception {
             runTest("../testData/inspectionsLocal/removeRedundantBackticks/yield.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/inspectionsLocal/simplifyNegatedBinaryExpression")
+    public static class SimplifyNegatedBinaryExpression extends AbstractSharedK2LocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("equals.kt")
+        public void testEquals() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyNegatedBinaryExpression/equals.kt");
+        }
+
+        @TestMetadata("greaterThan.kt")
+        public void testGreaterThan() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyNegatedBinaryExpression/greaterThan.kt");
+        }
+
+        @TestMetadata("greaterThanOrEquals.kt")
+        public void testGreaterThanOrEquals() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyNegatedBinaryExpression/greaterThanOrEquals.kt");
+        }
+
+        @TestMetadata("in.kt")
+        public void testIn() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyNegatedBinaryExpression/in.kt");
+        }
+
+        @TestMetadata("inapplicableBinaryOperation.kt")
+        public void testInapplicableBinaryOperation() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyNegatedBinaryExpression/inapplicableBinaryOperation.kt");
+        }
+
+        @TestMetadata("is.kt")
+        public void testIs() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyNegatedBinaryExpression/is.kt");
+        }
+
+        @TestMetadata("lessThan.kt")
+        public void testLessThan() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyNegatedBinaryExpression/lessThan.kt");
+        }
+
+        @TestMetadata("lessThanOrEquals.kt")
+        public void testLessThanOrEquals() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyNegatedBinaryExpression/lessThanOrEquals.kt");
+        }
+
+        @TestMetadata("notEquals.kt")
+        public void testNotEquals() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyNegatedBinaryExpression/notEquals.kt");
+        }
+
+        @TestMetadata("notIn.kt")
+        public void testNotIn() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyNegatedBinaryExpression/notIn.kt");
+        }
+
+        @TestMetadata("notIs.kt")
+        public void testNotIs() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyNegatedBinaryExpression/notIs.kt");
+        }
+
+        @TestMetadata("simpleInvert.kt")
+        public void testSimpleInvert() throws Exception {
+            runTest("../testData/inspectionsLocal/simplifyNegatedBinaryExpression/simpleInvert.kt");
         }
     }
 

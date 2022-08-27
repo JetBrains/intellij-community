@@ -216,19 +216,21 @@ private class OtherRunOptions : TogglePopupAction(
     val selectedConfiguration = RunManager.getInstance(project).selectedConfiguration
     return createOtherRunnersSubgroup(selectedConfiguration, project)
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 }
 
-internal fun createOtherRunnersSubgroup(runConfiguration: RunnerAndConfigurationSettings?, project: Project): ActionGroup? {
-  val executorFilter: (Executor) -> Boolean = {
-    // Cannot use DefaultDebugExecutor.EXECUTOR_ID because of module dependencies
-    it.id != ToolWindowId.RUN && it.id != ToolWindowId.DEBUG
-  }
+internal val excludeRunAndDebug: (Executor) -> Boolean = {
+  // Cannot use DefaultDebugExecutor.EXECUTOR_ID because of module dependencies
+  it.id != ToolWindowId.RUN && it.id != ToolWindowId.DEBUG
+}
 
+private fun createOtherRunnersSubgroup(runConfiguration: RunnerAndConfigurationSettings?, project: Project): ActionGroup? {
   if (runConfiguration != null) {
-    return RunConfigurationsComboBoxAction.SelectConfigAction(runConfiguration, project, executorFilter)
+    return RunConfigurationsComboBoxAction.SelectConfigAction(runConfiguration, project, excludeRunAndDebug)
   }
   if (RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
-    return RunConfigurationsComboBoxAction.RunCurrentFileAction(executorFilter)
+    return RunConfigurationsComboBoxAction.RunCurrentFileAction(excludeRunAndDebug)
   }
   return ActionGroup.EMPTY_GROUP
 }
@@ -253,6 +255,8 @@ private class RunConfigurationSelector : TogglePopupAction(), CustomComponentAct
     val runConfigAction = action as? RunConfigurationsComboBoxAction ?: return
     runConfigAction.update(e)
   }
+
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   override fun displayTextInToolbar(): Boolean {
     return true

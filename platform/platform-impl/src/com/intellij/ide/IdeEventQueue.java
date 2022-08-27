@@ -74,10 +74,6 @@ public final class IdeEventQueue extends EventQueue {
 
   // IdeEventQueue is created before log configuration - cannot be initialized as a part of IdeEventQueue
   private static final class Logs {
-    static {
-      LoadingState.BASE_LAF_INITIALIZED.checkOccurred();
-    }
-
     private static final Logger LOG = Logger.getInstance(IdeEventQueue.class);
     private static final Logger FOCUS_AWARE_RUNNABLES_LOG = Logger.getInstance(IdeEventQueue.class.getName() + ".runnables");
   }

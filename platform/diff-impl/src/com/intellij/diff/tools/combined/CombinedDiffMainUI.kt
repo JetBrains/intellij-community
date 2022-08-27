@@ -17,7 +17,6 @@ import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.diff.tools.util.PrevNextDifferenceIterable
 import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.tools.util.base.DiffViewerListener
-import com.intellij.diff.tools.util.base.TextDiffViewerUtil
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUtil
@@ -227,10 +226,10 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
     collectToolbarActions(viewerActions)
     (leftToolbar as ActionToolbarImpl).clearPresentationCache()
     leftToolbar.updateActionsImmediately()
-    TextDiffViewerUtil.recursiveRegisterShortcutSet(leftToolbarGroup, mainPanel, null)
+    DiffUtil.recursiveRegisterShortcutSet(leftToolbarGroup, mainPanel, null)
     (rightToolbar as ActionToolbarImpl).clearPresentationCache()
     rightToolbar.updateActionsImmediately()
-    TextDiffViewerUtil.recursiveRegisterShortcutSet(rightToolbarGroup, mainPanel, null)
+    DiffUtil.recursiveRegisterShortcutSet(rightToolbarGroup, mainPanel, null)
   }
 
   private fun collectToolbarActions(viewerActions: List<AnAction?>?) {

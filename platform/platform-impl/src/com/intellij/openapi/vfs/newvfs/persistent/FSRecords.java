@@ -79,7 +79,7 @@ public final class FSRecords {
   }
 
   private static int calculateVersion() {
-    return nextMask(59 + (PersistentFSRecordsStorage.useLockFreeRecordsStorage ? 1 : 0),  // acceptable range is [0..255]
+    return nextMask(59 + (PersistentFSRecordsStorage.RECORDS_STORAGE_KIND.ordinal()),  // acceptable range is [0..255]
                     8,
                     nextMask(useContentHashes,
                     nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
@@ -713,7 +713,9 @@ public final class FSRecords {
 
   static void setFlags(int id, @PersistentFS.Attributes int flags) {
     try {
-      ourConnection.getRecords().setFlags(id, flags);
+      if(ourConnection.getRecords().setFlags(id, flags)) {
+        incModCount(id);
+      }
     }
     catch (IOException e) {
       handleError(e);
@@ -733,7 +735,9 @@ public final class FSRecords {
 
   static void setLength(int id, long len) {
     try {
-      ourConnection.getRecords().putLength(id, len);
+      if(ourConnection.getRecords().putLength(id, len)) {
+        incModCount(id);
+      }
     }
     catch (IOException e) {
       handleError(e);
@@ -757,7 +761,9 @@ public final class FSRecords {
 
   static void setTimestamp(int id, long value) {
     try {
-      ourConnection.getRecords().putTimestamp(id, value);
+      if(ourConnection.getRecords().putTimestamp(id, value)){
+        incModCount(id);
+      }
     }
     catch (IOException e) {
       handleError(e);

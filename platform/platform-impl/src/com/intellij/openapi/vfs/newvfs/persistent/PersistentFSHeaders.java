@@ -5,9 +5,9 @@ final class PersistentFSHeaders {
   static final int HEADER_VERSION_OFFSET = 0;
   //private static final int HEADER_RESERVED_4BYTES_OFFSET = 4; // reserved
   static final int HEADER_GLOBAL_MOD_COUNT_OFFSET = 8;
+  static final int HEADER_CONNECTION_STATUS_OFFSET = 12;
   static final int HEADER_TIMESTAMP_OFFSET = 16;
   static final int HEADER_SIZE = HEADER_TIMESTAMP_OFFSET + 8;
-  static final int HEADER_CONNECTION_STATUS_OFFSET = 12;
 
   static final int CONNECTED_MAGIC = 0x12ad34e4;
   static final int SAFELY_CLOSED_MAGIC = 0x1f2f3f4f;

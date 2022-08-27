@@ -701,6 +701,9 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   @Override
   public Object getData(@NotNull String dataId) {
+    if (CommonDataKeys.PROJECT.is(dataId)) {
+      return myProject;
+    }
     if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
       return myFileEditor;
     }
@@ -714,14 +717,12 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       return myCopyPasteDelegator.getPasteProvider();
     }
     if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      DataProvider superProvider = (DataProvider)super.getData(dataId);
       JBIterable<Object> selection = JBIterable.of(getTree().getSelectionPaths()).map(TreePath::getLastPathComponent);
-      return (DataProvider)slowId -> getSlowData(slowId, selection);
+      return CompositeDataProvider.compose(slowId -> getSlowData(slowId, selection), superProvider);
     }
     if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
       return getHelpID();
-    }
-    if (CommonDataKeys.PROJECT.is(dataId)) {
-      return myProject;
     }
     return super.getData(dataId);
   }

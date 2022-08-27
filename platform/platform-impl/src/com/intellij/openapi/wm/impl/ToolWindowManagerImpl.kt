@@ -32,6 +32,7 @@ import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapManagerListener
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.*
 import com.intellij.openapi.project.ex.ProjectEx
@@ -91,6 +92,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
                                                                                private val isEdtRequired: Boolean)
   : ToolWindowManagerEx(), Disposable {
   private val dispatcher = EventDispatcher.create(ToolWindowManagerListener::class.java)
+
+  private val stripeManager = ToolWindowStripeManager.getInstance(project)
 
   private val state: ToolWindowManagerState
     get() = project.service()
@@ -456,7 +459,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
       }
       else if (currentState == KeyState.RELEASED) {
         currentState = KeyState.HOLD
-        toolWindowPanes.values.forEach { it.setStripesOverlaid(value = true) }
+        if (!AdvancedSettings.getBoolean("ide.suppress.double.click.handler")) {
+          toolWindowPanes.values.forEach { it.setStripesOverlaid(value = true) }
+        }
       }
     }
     else {
@@ -1011,7 +1016,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(v
     }
 
     var info = layoutState.getInfo(task.id)
-    val isButtonNeeded = task.shouldBeAvailable && (info?.isShowStripeButton ?: !isNewUi)
+    val isButtonNeeded = task.shouldBeAvailable && (info?.isShowStripeButton ?: !isNewUi) && stripeManager.allowToShowOnStripe(task.id, info == null, isNewUi)
     // do not create layout for New UI - button is not created for toolwindow by default
     if (info == null) {
       info = layoutState.create(task, isNewUi = isNewUi)

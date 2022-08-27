@@ -21,7 +21,7 @@ import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem.WatchRequest
 import com.intellij.openapi.vfs.StandardFileSystems
@@ -37,6 +37,7 @@ import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.indexing.EntityIndexingService
+import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener.WorkspaceEventRescanningInfo
 import kotlinx.coroutines.*
 import java.lang.Runnable
@@ -257,9 +258,9 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     val flatPaths = CollectionFactory.createFilePathSet()
     val store = myProject.stateStore
     val projectFilePath = store.projectFilePath
-    if (Project.DIRECTORY_STORE_FOLDER != projectFilePath.parent.fileName.toString()) {
-      flatPaths.add(FileUtil.toSystemIndependentName(projectFilePath.toString()))
-      flatPaths.add(FileUtil.toSystemIndependentName(store.workspacePath.toString()))
+    if (Project.DIRECTORY_STORE_FOLDER != projectFilePath.parent.fileName?.toString()) {
+      flatPaths.add(projectFilePath.systemIndependentPath)
+      flatPaths.add(store.workspacePath.systemIndependentPath)
     }
     for (extension in AdditionalLibraryRootsProvider.EP_NAME.extensionList) {
       val toWatch = extension.getRootsToWatch(myProject)
@@ -273,11 +274,11 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
       val toWatch = extension.getRootsToWatch(myProject)
       if (!toWatch.isEmpty()) {
         for (path in toWatch) {
-          recursivePathsToWatch.add(FileUtil.toSystemIndependentName(path))
+          recursivePathsToWatch.add(FileUtilRt.toSystemIndependentName(path))
         }
       }
     }
-    val excludedUrls = CollectionFactory.createSmallMemoryFootprintSet<String>()
+    val excludedUrls = HashSet<String>()
     // changes in files provided by this method should be watched manually because no-one's bothered to set up correct pointers for them
     for (excludePolicy in DirectoryIndexExcludePolicy.EP_NAME.getExtensions(myProject)) {
       excludedUrls.addAll(excludePolicy.excludeUrlsForProject)
@@ -302,8 +303,10 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
       val rootManager = ModuleRootManager.getInstance(module)
       urls.addAll(rootManager.contentRootUrls)
       rootManager.orderEntries().withoutModuleSourceEntries().withoutDepModules().forEach { entry ->
-        for (type in OrderRootType.getAllTypes()) {
-          urls.addAll(entry.getUrls(type))
+        if (entry is LibraryOrSdkOrderEntry) {
+          for (type in OrderRootType.getAllTypes()) {
+            urls.addAll(entry.getRootUrls(type))
+          }
         }
         true
       }

@@ -72,6 +72,7 @@ import com.sun.jdi.event.EventSet;
 import one.util.streamex.StreamEx;
 import org.jdom.Attribute;
 import org.jdom.Element;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -212,7 +213,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
       return false; //is array
     }
 
-    return classFilters.stream().anyMatch(filter -> isFiltered(filter, qName));
+    return ContainerUtil.exists(classFilters, filter -> isFiltered(filter, qName));
   }
 
   public static int getEnabledNumber(ClassFilter[] classFilters) {
@@ -636,8 +637,11 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return "void".equals(method.returnTypeName());
   }
 
-  @Nullable
-  public static Method getMethod(Location location) {
+  @Contract("null -> null")
+  public static Method getMethod(@Nullable Location location) {
+    if (location == null) {
+      return null;
+    }
     try {
       return location.method();
     }
@@ -1095,8 +1099,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
           return true;
         }
         if (methodClassName != null) {
-          boolean res = process.getVirtualMachineProxy().classesByName(className).stream().anyMatch(t -> instanceOf(t, methodClassName));
-          if (res) {
+          if (ContainerUtil.exists(process.getVirtualMachineProxy().classesByName(className), t -> instanceOf(t, methodClassName))) {
             return true;
           }
           PsiClass aClass = PositionManagerImpl.findClass(process.getProject(), className, process.getSearchScope(), true);

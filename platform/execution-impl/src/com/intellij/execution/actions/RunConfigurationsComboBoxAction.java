@@ -6,6 +6,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.executors.ExecutorGroup;
 import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.runToolbar.RunToolbarSlotManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.idea.ActionsBundle;
@@ -49,7 +50,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   public static final Icon EMPTY_ICON = EmptyIcon.ICON_16;
 
   public static boolean hasRunCurrentFileItem(@NotNull Project project) {
-    if (RunManager.getInstance(project).isRunWidgetActive()) {
+    if (RunToolbarSlotManager.Companion.getInstance(project).getActive$intellij_platform_execution_impl()) {
       // Run Widget shows up only in Rider. In other IDEs it's a secret feature backed by the "ide.run.widget" Registry key.
       // The 'Run Current File' feature doesn't look great together with the Run Widget.
       return false;
@@ -78,7 +79,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       presentation.setDescription(ExecutionBundle.messagePointer("choose.run.configuration.action.description"));
     }
     try {
-      if (project == null || project.isDisposed() || !project.isOpen()) {
+      if (project == null || project.isDisposed() || !project.isOpen() || RunManager.IS_RUN_MANAGER_INITIALIZED.get(project) != Boolean.TRUE) {
         updatePresentation(null, null, null, presentation, e.getPlace());
         presentation.setEnabled(false);
       }
@@ -335,6 +336,11 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       }
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
     private static void disable(final Presentation presentation) {
       presentation.setEnabledAndVisible(false);
     }
@@ -397,6 +403,11 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       if (project == null) return;
@@ -442,7 +453,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   }
 
   @ApiStatus.Internal
-  public static final class SelectConfigAction extends DefaultActionGroup implements DumbAware {
+  public static class SelectConfigAction extends DefaultActionGroup implements DumbAware {
     private final RunnerAndConfigurationSettings myConfiguration;
     private final Project myProject;
     private final @NotNull Function<? super Executor, Boolean> myExecutorFilter;
@@ -516,6 +527,11 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       updateIcon(e.getPresentation());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 }

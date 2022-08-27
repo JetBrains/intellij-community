@@ -544,8 +544,7 @@ public final class TipUIUtil {
 
       delegate.paintIcon(c, g2d, x, y);
 
-      // TODO: extract color as TipOfTheDay.Image.borderColor key
-      Color color = new JBColor(new Color(0xDFE1E5), new Color(0x393B40));
+      Color color = JBColor.namedColor("TipOfTheDay.Image.borderColor", JBColor.border());
       g2d.setPaint(color);
       g2d.setStroke(new BasicStroke(2f));
       g2d.draw(clipBounds);

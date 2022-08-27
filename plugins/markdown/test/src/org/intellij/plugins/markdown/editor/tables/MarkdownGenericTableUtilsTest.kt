@@ -6,6 +6,7 @@ import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.valida
 import org.intellij.plugins.markdown.editor.tables.TableUtils.columnsIndices
 import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
 
+@Suppress("MarkdownIncorrectTableFormatting")
 class MarkdownGenericTableUtilsTest: LightPlatformCodeInsightTestCase() {
   fun `test findCellIndex works fine`() {
     // language=Markdown

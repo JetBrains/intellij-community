@@ -1,4 +1,4 @@
-// "Make 'getNumber' return 'double'" "true-preview"
+// "Make 'getNumber()' return 'double'" "true-preview"
 public class Test {
   int number;
 

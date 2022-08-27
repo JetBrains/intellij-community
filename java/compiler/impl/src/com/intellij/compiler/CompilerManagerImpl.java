@@ -198,12 +198,11 @@ public class CompilerManagerImpl extends CompilerManager {
       }
     }
     if (compilerClass.isAssignableFrom(InspectionValidatorWrapper.class)) {
-      InspectionValidator.EP_NAME.extensions(myProject).forEach(
-        validator -> compilers.add(compilerClass.cast(InspectionValidatorWrapper.create(myProject, validator)))
-      );
+      for (InspectionValidator validator : InspectionValidator.EP_NAME.getExtensions(myProject)) {
+        compilers.add(compilerClass.cast(InspectionValidatorWrapper.create(myProject, validator)));
+      }
     }
-    final T[] array = ArrayUtil.newArray(compilerClass, compilers.size());
-    return compilers.toArray(array);
+    return compilers.toArray(ArrayUtil.newArray(compilerClass, compilers.size()));
   }
 
   @Override
@@ -257,11 +256,17 @@ public class CompilerManagerImpl extends CompilerManager {
 
   @Override
   public @NotNull List<CompileTask> getAfterTaskList() {
-    final List<Compiler> extCompilers = Compiler.EP_NAME.getExtensions(myProject);
+    List<Compiler> extCompilers = Compiler.EP_NAME.getExtensions(myProject);
+    List<FileProcessingCompilerAdapterTask> list = new ArrayList<>();
+    for (InspectionValidator validator : InspectionValidator.EP_NAME.getExtensions(myProject)) {
+      FileProcessingCompilerAdapterTask task =
+        new FileProcessingCompilerAdapterTask(InspectionValidatorWrapper.create(myProject, validator));
+      list.add(task);
+    }
     return ContainerUtil.concat(
       myAfterTasks,
       extCompilers.stream().filter(compiler -> compiler instanceof Validator).map(compiler -> new FileProcessingCompilerAdapterTask((Validator)compiler)).collect(Collectors.toList()),
-      InspectionValidator.EP_NAME.extensions(myProject).map(validator -> new FileProcessingCompilerAdapterTask(InspectionValidatorWrapper.create(myProject, validator))).collect(Collectors.toList()),
+      list,
       getExtensionsTasks(CompileTaskBean.CompileTaskExecutionPhase.AFTER)
     );
   }

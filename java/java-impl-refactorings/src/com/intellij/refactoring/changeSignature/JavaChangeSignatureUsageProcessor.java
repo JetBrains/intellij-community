@@ -972,7 +972,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     }
 
     @Override
-    @NotNull PsiRecordComponent getChild(int index) {
+    PsiRecordComponent getChild(int index) {
       return myParent.getRecordComponents()[index];
     }
 
@@ -1012,8 +1012,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     }
 
     @Override
-    @NotNull PsiParameter getChild(int index) {
-      return myParent.getParameters()[index];
+    PsiParameter getChild(int index) {
+      return myParent.getParameter(index);
     }
 
     @Override
@@ -1063,7 +1063,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     }
 
     @Override
-    @Nullable PsiPatternVariable getChild(int index) {
+    PsiPatternVariable getChild(int index) {
       PsiPattern pattern = myParent.getDeconstructionComponents()[index];
       return pattern instanceof PsiTypeTestPattern ? ((PsiTypeTestPattern)pattern).getPatternVariable() : null;
     }

@@ -79,11 +79,11 @@ open class KeyParentImpl : KeyParent, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isKeyFieldInitialized()) {
         error("Field KeyParent#keyField should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field KeyParent#entitySource should be initialized")
       }
       if (!getEntityData().isNotKeyFieldInitialized()) {
         error("Field KeyParent#notKeyField should be initialized")
@@ -108,21 +108,13 @@ open class KeyParentImpl : KeyParent, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as KeyParent
-      this.keyField = dataSource.keyField
       this.entitySource = dataSource.entitySource
+      this.keyField = dataSource.keyField
       this.notKeyField = dataSource.notKeyField
       if (parents != null) {
       }
     }
 
-
-    override var keyField: String
-      get() = getEntityData().keyField
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().keyField = value
-        changedProperty.add("keyField")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -131,6 +123,14 @@ open class KeyParentImpl : KeyParent, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var keyField: String
+      get() = getEntityData().keyField
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().keyField = value
+        changedProperty.add("keyField")
       }
 
     override var notKeyField: String
@@ -241,8 +241,8 @@ class KeyParentData : WorkspaceEntityData<KeyParent>() {
 
     other as KeyParentData
 
-    if (this.keyField != other.keyField) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.keyField != other.keyField) return false
     if (this.notKeyField != other.notKeyField) return false
     return true
   }
@@ -279,14 +279,12 @@ class KeyParentData : WorkspaceEntityData<KeyParent>() {
     other as KeyParentData
 
     if (this.keyField != other.keyField) return false
-    if (this.entitySource != other.entitySource) return false
     return true
   }
 
   override fun hashCodeByKey(): Int {
     var result = javaClass.hashCode()
     result = 31 * result + keyField.hashCode()
-    result = 31 * result + entitySource.hashCode()
     return result
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes.serialization;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -38,13 +38,14 @@ public class AddSerialAnnotationFixTest extends LightJavaInspectionTestCase {
            "    return 1;\n" +
            "  }\n" +
            "}");
-    checkQuickFix("Annotate method 'readResolve' as '@Serial'", "import java.io.*;\n" +
-                                            "class Test implements Serializable {\n" +
-                                            "  @Serial\n" +
-                                            "  protected Object readResolve() throws ObjectStreamException {\n" +
-                                            "    return 1;\n" +
-                                            "  }\n" +
-                                            "}");
+    checkQuickFix("Annotate method 'readResolve()' as '@Serial'",
+                  "import java.io.*;\n" +
+                  "class Test implements Serializable {\n" +
+                  "  @Serial\n" +
+                  "  protected Object readResolve() throws ObjectStreamException {\n" +
+                  "    return 1;\n" +
+                  "  }\n" +
+                  "}");
   }
 
   @Override

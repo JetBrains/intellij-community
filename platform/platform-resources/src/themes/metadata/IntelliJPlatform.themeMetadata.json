@@ -1738,6 +1738,11 @@
       "since": "2021.2"
     },
     {
+      "key": "TipOfTheDay.Image.borderColor",
+      "description": "Border color of the rounded illustrations in Tips of the Day dialog",
+      "since": "2022.3"
+    },
+    {
       "key": "ProblemsView.projectAnalysisButtonBackground",
       "description": "Background for Project-Wide analysis button when enabled",
       "since": "2021.2"

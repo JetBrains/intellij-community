@@ -8,6 +8,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.IProjectStore
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCoreUtil
@@ -67,7 +68,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
 
   private fun loadProjectFromTemplate(defaultProject: Project) {
     val element = (defaultProject.stateStore as DefaultProjectStoreImpl).getStateCopy() ?: return
-    LOG.runAndLogException {
+    runCatching {
       val dotIdea = dotIdea
       if (dotIdea != null) {
         normalizeDefaultProjectElement(defaultProject, element, dotIdea)
@@ -83,7 +84,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
           }
         }
       }
-    }
+    }.getOrLogException(LOG)
   }
 
   final override fun getProjectBasePath(): Path {

@@ -75,6 +75,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static com.intellij.openapi.util.Predicates.nonNull;
 import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.SHELVE_DELETION_UNDO;
 import static com.intellij.openapi.vcs.changes.ChangesViewManager.isEditorPreview;
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.REPOSITORY_GROUPING;
@@ -468,7 +469,7 @@ public class ShelvedChangesViewManager implements Disposable {
     if (selectionPaths == null) return Collections.emptySet();
     return StreamEx.of(selectionPaths)
       .map(path -> TreeUtil.findObjectInPath(path, ShelvedChangeList.class))
-      .filter(Objects::nonNull)
+      .filter(nonNull())
       .filter(condition)
       .collect(Collectors.toSet());
   }

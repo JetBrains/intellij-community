@@ -5,6 +5,7 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventId;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -26,6 +27,7 @@ import java.util.regex.Pattern;
  */
 @ApiStatus.Internal
 public abstract class FeatureUsagesCollector {
+  @NonNls private static final Logger LOG = Logger.getInstance(FeatureUsagesCollector.class);
   @NonNls private static final String GROUP_ID_PATTERN = "([a-zA-Z]*\\.)*[a-zA-Z]*";
 
   public final boolean isValid() {
@@ -41,6 +43,11 @@ public abstract class FeatureUsagesCollector {
     for (T t : ep.getExtensionList()) {
       if (t.isValid()) {
         set.add(t);
+      }
+      else{
+        //RC: at least log !valid groups -- otherwise they are just silently excluded
+        LOG.info(t + " is !valid -> skipped from extension points list");
+        //TODO RC: Why not just throw exception from FeatureUsagesCollector ctor if it is !valid?
       }
     }
     return set;

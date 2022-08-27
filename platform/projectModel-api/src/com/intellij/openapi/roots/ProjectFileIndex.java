@@ -88,12 +88,11 @@ public interface ProjectFileIndex extends FileIndex {
   VirtualFile getContentRootForFile(@NotNull VirtualFile file, final boolean honorExclusion);
 
   /**
-   * Returns the name of the package corresponding to the specified directory.
-   *
-   * @return the package name, or null if the directory does not correspond to any package.
+   * @deprecated use {@link com.intellij.openapi.roots.PackageIndex#getPackageNameByDirectory(VirtualFile)} from Java plugin instead.
    */
+  @Deprecated
   @Nullable
-  String getPackageNameByDirectory(@NotNull VirtualFile dir); //Q: move to FileIndex?
+  String getPackageNameByDirectory(@NotNull VirtualFile dir);
 
   /**
    * Returns true if {@code file} is a file which belongs to the classes (not sources) of some library which is included into dependencies

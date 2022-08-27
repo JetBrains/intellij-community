@@ -660,20 +660,23 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
   @Nullable
   private static File getGradleOutputDir(@Nullable ExternalSourceDirectorySet sourceDirectorySet) {
     if (sourceDirectorySet == null) return null;
-    String firstExistingLang = sourceDirectorySet.getSrcDirs().stream()
+    Set<File> srcDirs = sourceDirectorySet.getSrcDirs();
+    Collection<File> outputDirectories = sourceDirectorySet.getGradleOutputDirs();
+    String firstExistingLang = srcDirs.stream()
+      .sorted()
       .filter(File::exists)
       .findFirst()
       .map(File::getName)
       .orElse(null);
 
     if (firstExistingLang == null) {
-      return ContainerUtil.getFirstItem(sourceDirectorySet.getGradleOutputDirs());
+      return ContainerUtil.getFirstItem(outputDirectories);
     }
 
-    return sourceDirectorySet.getGradleOutputDirs().stream()
+    return outputDirectories.stream()
       .filter(f -> f.getPath().contains(firstExistingLang))
       .findFirst()
-      .orElse(ContainerUtil.getFirstItem(sourceDirectorySet.getGradleOutputDirs()));
+      .orElse(ContainerUtil.getFirstItem(outputDirectories));
   }
 
   private static void excludeOutDir(@NotNull DataNode<ModuleData> ideModule, File ideaOutDir) {

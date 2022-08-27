@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.impl.xml;
 
 import com.intellij.ide.impl.StructureViewWrapperImpl;
@@ -23,7 +23,7 @@ public abstract class AbstractXmlTagTreeElement<T extends XmlElement> extends Ps
 
   protected static Collection<StructureViewTreeElement> getStructureViewTreeElements(XmlTag[] subTags) {
     return ContainerUtil.map2List(subTags, xmlTag -> {
-      for (final XmlStructureViewElementProvider provider : XmlStructureViewElementProvider.EP_NAME.getExtensions()) {
+      for (final XmlStructureViewElementProvider provider : XmlStructureViewElementProvider.EP_NAME.getExtensionList()) {
         final StructureViewTreeElement element = provider.createCustomXmlTagTreeElement(xmlTag);
         if (element != null) {
           return element;

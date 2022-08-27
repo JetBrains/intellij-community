@@ -180,13 +180,12 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement imp
       updateModifier(modifierList, modifierList.getParent());
       return;
     }
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(startElement)) return;
+    if (!IntentionPreviewUtils.prepareElementForWrite(startElement)) return;
     PsiModifierListOwner owner = (PsiModifierListOwner)startElement;
     PsiModifierList modifierList = owner.getModifierList();
     assert modifierList != null;
     updateAccessInHierarchy(project, modifierList, owner);
-
-    ApplicationManager.getApplication().runWriteAction(() -> {
+    IntentionPreviewUtils.write(() -> {
       updateModifier(modifierList, owner);
       UndoUtil.markPsiFileForUndo(modifierList.getContainingFile());
     });

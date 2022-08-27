@@ -452,11 +452,11 @@ BACK_REFERENCES_GROUP = [1-9][0-9]{0,2}
   "(?<" { yybegin(NAMED_GROUP); capturingGroupCount++; return RegExpTT.RUBY_NAMED_GROUP; }
   "(?'" { yybegin(QUOTED_NAMED_GROUP); capturingGroupCount++; return RegExpTT.RUBY_QUOTED_NAMED_GROUP; }
 
-  "(?"[+-]? / [:digit:] { if (allowPcreNumberedGroupRef) {
-                            yybegin(PCRE_NUMBERED_GROUP);
-                            return RegExpTT.PCRE_NUMBERED_GROUP_REF;
-                          }
-                          else { yypushback(yylength() - 2); yybegin(OPTIONS); return RegExpTT.SET_OPTIONS; }}
+  "(?"[+-]?{BACK_REFERENCES_GROUP}")" { if (allowPcreNumberedGroupRef) {
+                                          yybegin(PCRE_NUMBERED_GROUP);
+                                          return RegExpTT.PCRE_NUMBERED_GROUP_REF;
+                                        }
+                                        else { yypushback(yylength() - 2); yybegin(OPTIONS); return RegExpTT.SET_OPTIONS; }}
 
   "(?"        { yybegin(OPTIONS); return RegExpTT.SET_OPTIONS; }
 }

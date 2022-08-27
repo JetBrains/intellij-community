@@ -1,0 +1,49 @@
+<conponent>
+  <group id="vcs">
+    <feature
+      id="vcs.show.quick.list"
+      tip-file="VcsQuickList.html"
+      show-in-guide="false">
+      <track-action id="Vcs.QuickListPopupAction"/>
+    </feature>
+
+    <feature
+      id="vcs.pull.requests"
+      tip-file="pull_requests.html"
+      show-in-guide="false">
+      <track-action id="Github.View.Pull.Request"/>
+    </feature>
+
+    <feature
+      id="vcs.use.integration"
+      tip-file="VCS_general.html"
+      show-in-guide="false">
+      <track-action id="ActivateVersionControlToolWindow"/>
+      <track-action id="CheckinProject"/>
+    </feature>
+
+    <feature
+      id="vcs.compare.file.versions"
+      tip-file="Compare.html"
+      show-in-guide="false">
+      <track-action id="Compare.Selected"/>
+      <track-action id="Git.CompareWithBranch"/>
+      <track-action id="hg4idea.CompareWithBranch"/>
+      <track-action id="Subversion.CompareWithBranch"/>
+    </feature>
+
+    <!--Failed to find the way how to track usage of this feature-->
+    <feature
+      id="vcs.partial.commit"
+      tip-file="partial_git_commit.html"
+      show-in-guide="false">
+    </feature>
+
+    <feature
+      id="vcs.annotate"
+      tip-file="AnnotationsAndDiffs.html"
+      show-in-guide="false">
+      <track-action id="Annotate"/>
+    </feature>
+  </group>
+</conponent>

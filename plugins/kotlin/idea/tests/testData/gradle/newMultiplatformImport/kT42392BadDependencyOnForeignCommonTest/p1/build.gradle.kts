@@ -3,7 +3,7 @@ plugins {
     kotlin("multiplatform")
 }
 android {
-    compileSdkVersion({{compile_sdk_version}})
+    compileSdk = { { compile_sdk_version } }
 }
 kotlin {
     jvm()

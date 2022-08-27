@@ -5,10 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
-import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
@@ -142,8 +139,8 @@ public class HintManagerImpl extends HintManager {
       LogicalPosition pos = editor.getCaretModel().getLogicalPosition();
       Point p = getHintPosition(hint, editor, pos, constraint);
       HintHint hintInfo = createHintHint(editor, p, hint, constraint);
-      ClientHintManager.getCurrentInstance().showEditorHint(hint, editor, hintInfo, p, flags, timeout,
-                                                            reviveOnEditorChange, null);
+      getClientManager(editor).showEditorHint(hint, editor, hintInfo, p, flags, timeout,
+                                              reviveOnEditorChange, null);
     });
   }
 
@@ -177,8 +174,8 @@ public class HintManagerImpl extends HintManager {
                              int timeout,
                              boolean reviveOnEditorChange,
                              @NotNull HintHint hintInfo) {
-    ClientHintManager.getCurrentInstance().showEditorHint(hint, editor, hintInfo, p, flags,
-                                                          timeout, reviveOnEditorChange, null);
+    getClientManager(editor).showEditorHint(hint, editor, hintInfo, p, flags,
+                                            timeout, reviveOnEditorChange, null);
   }
 
   @Override
@@ -432,7 +429,7 @@ public class HintManagerImpl extends HintManager {
   public void showErrorHint(@NotNull Editor editor, @NotNull @HintText String text, short position) {
     JComponent label = HintUtil.createErrorLabel(text);
     LightweightHint hint = new LightweightHint(label);
-    Point p = ClientHintManager.getCurrentInstance().getHintPosition(hint, editor, position);
+    Point p = getClientManager(editor).getHintPosition(hint, editor, position);
     int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
     showEditorHint(hint, editor, p, flags, 0, false);
   }
@@ -478,7 +475,7 @@ public class HintManagerImpl extends HintManager {
     }
 
     LightweightHint hint = new LightweightHint(component);
-    Point p = ClientHintManager.getCurrentInstance().getHintPosition(hint, editor, position);
+    Point p = getClientManager(editor).getHintPosition(hint, editor, position);
     int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
 
     AccessibleContextUtil.setName(hint.getComponent(), IdeBundle.message("information.hint.accessible.context.name"));
@@ -489,6 +486,15 @@ public class HintManagerImpl extends HintManager {
     }
 
     showEditorHint(hint, editor, p, flags, 0, false);
+  }
+
+  @NotNull
+  private static ClientHintManager getClientManager(@NotNull Editor editor) {
+    final ClientHintManager[] instance = new ClientHintManager[1];
+    ClientEditorManager.withEditorClientId(editor, () -> {
+      instance[0] = ClientHintManager.getCurrentInstance();
+    });
+    return instance[0];
   }
 
   @Override
@@ -537,7 +543,7 @@ public class HintManagerImpl extends HintManager {
                                @PositionFlags short constraint) {
     int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.UPDATE_BY_SCROLLING |
                 HintManager.HIDE_IF_OUT_OF_EDITOR | HintManager.DONT_CONSUME_ESCAPE;
-    ClientHintManager.getCurrentInstance().showQuestionHint(editor, p, offset1, offset2, hint, flags, action, constraint);
+    getClientManager(editor).showQuestionHint(editor, p, offset1, offset2, hint, flags, action, constraint);
   }
 
   public static HintHint createHintHint(Editor editor, Point p, LightweightHint hint, @PositionFlags short constraint) {

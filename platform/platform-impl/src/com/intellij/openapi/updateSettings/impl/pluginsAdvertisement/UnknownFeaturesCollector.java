@@ -4,14 +4,12 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @State(name = "UnknownFeatures", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 @Service
@@ -40,9 +38,17 @@ public final class UnknownFeaturesCollector implements PersistentStateComponent<
                                                 featureDisplayName,
                                                 implementationName,
                                                 implementationDisplayName);
-    if (!isIgnored(feature)) {
-      myUnknownFeatures.add(feature);
-    }
+    registerUnknownFeature(feature);
+  }
+
+  @ApiStatus.Internal
+  public boolean registerUnknownFeature(@NotNull UnknownFeature feature) {
+    return !isIgnored(feature) && myUnknownFeatures.add(feature);
+  }
+
+  @ApiStatus.Experimental
+  public boolean unregisterUnknownFeature(@NotNull UnknownFeature feature) {
+    return myUnknownFeatures.remove(feature);
   }
 
   public boolean isIgnored(@NotNull UnknownFeature feature) {
@@ -55,6 +61,13 @@ public final class UnknownFeaturesCollector implements PersistentStateComponent<
 
   public @NotNull Set<UnknownFeature> getUnknownFeatures() {
     return Collections.unmodifiableSet(myUnknownFeatures);
+  }
+
+  @ApiStatus.Experimental
+  public @NotNull Set<UnknownFeature> getUnknownFeaturesOfType(@NotNull @NonNls String featureType) {
+    return myUnknownFeatures.stream()
+      .filter(feature -> feature.getFeatureType().equals(featureType))
+      .collect(Collectors.toUnmodifiableSet());
   }
 
   @Override

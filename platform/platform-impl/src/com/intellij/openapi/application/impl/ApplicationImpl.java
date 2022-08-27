@@ -172,7 +172,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       mySaveAllowed = true;
     }
 
-    Activity activity = StartUpMeasurer.startActivity("AppDelayQueue instantiation", ActivityCategory.DEFAULT);
+    Activity activity = StartUpMeasurer.startActivity("AppDelayQueue instantiation");
     myLock = new ReadMostlyRWLock(edtThread);
     // Acquire IW lock on EDT indefinitely in legacy mode
     if (!USE_SEPARATE_WRITE_THREAD) {

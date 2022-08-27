@@ -3,26 +3,15 @@ package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.ide.*
 import com.intellij.ide.plugins.newui.ListPluginComponent
-import com.intellij.ide.ui.UISettings
-import com.intellij.ide.ui.UISettingsListener
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent
-import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.ui.popup.util.PopupUtil
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.ToolbarComboWidget
-import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory.Position
 import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
@@ -42,74 +31,24 @@ import java.awt.Component
 import java.awt.event.InputEvent
 import java.util.function.Function
 import javax.swing.*
-import kotlin.properties.Delegates
 
 private const val MAX_RECENT_COUNT = 100
 
-internal class ProjectWidgetFactory : MainToolbarProjectWidgetFactory {
-  override fun createWidget(project: Project): JComponent {
-    val widget = ProjectWidget(project)
-    ProjectWidgetUpdater(project, widget).subscribe()
-    return widget
-  }
+internal val projectKey = Key.create<Project>("project-widget-project")
 
-  override fun getPosition(): Position = Position.Center
-}
+internal class ProjectWidget(private val presentation: Presentation) : ToolbarComboWidget() {
 
-private class ProjectWidgetUpdater(private val proj: Project,
-                                   private val widget: ProjectWidget) : FileEditorManagerListener, UISettingsListener, ProjectManagerListener {
-  private var file: VirtualFile? by Delegates.observable(null) { _, _, _ -> updateText() }
-  private var settings: UISettings by Delegates.observable(UISettings.getInstance()) { _, _, _ -> updateText() }
+  private val project: Project?
+    get() = presentation.getClientProperty(projectKey)
 
   init {
-    file = FileEditorManager.getInstance(proj).selectedFiles.firstOrNull()
+    presentation.addPropertyChangeListener { updateWidget() }
   }
 
-  private fun updateText() {
-    val currentFile = file
-    val showFileName = settings.editorTabPlacement == UISettings.TABS_NONE && currentFile != null
-    val maxLength = if (showFileName) 12 else 24
-
-    @NlsSafe val fullName = StringBuilder(proj.name)
-    @NlsSafe val cutName = StringBuilder(cutProject(proj.name, maxLength))
-    if (showFileName) {
-      fullName.append(" — ").append(currentFile!!.name)
-      cutName.append(" — ").append(cutFile(currentFile.name, maxLength))
-    }
-
-    widget.text = cutName.toString()
-    widget.toolTipText = if (cutName.toString() == fullName.toString()) null else fullName.toString()
+  private fun updateWidget() {
+    text = presentation.text
+    toolTipText = presentation.description
   }
-
-  private fun cutFile(value: String, maxLength: Int): String {
-    if (value.length <= maxLength) return value
-
-    val extension = value.substringAfterLast(".", "")
-    val name = value.substringBeforeLast(".")
-    if (name.length + extension.length <= maxLength) return value
-
-    return name.substring(0, maxLength - extension.length) + "..." + extension
-  }
-
-  private fun cutProject(value: String, maxLength: Int): String {
-    return if (value.length <= maxLength) value else value.substring(0, maxLength) + "..."
-  }
-
-  fun subscribe() {
-    ApplicationManager.getApplication().messageBus.connect(widget).subscribe(UISettingsListener.TOPIC, this)
-    proj.messageBus.connect(widget).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, this)
-  }
-
-  override fun uiSettingsChanged(uiSettings: UISettings) {
-    SwingUtilities.invokeLater { settings = uiSettings }
-  }
-
-  override fun selectionChanged(event: FileEditorManagerEvent) {
-    SwingUtilities.invokeLater { file = event.newFile }
-  }
-}
-
-private class ProjectWidget(private val project: Project): ToolbarComboWidget(), Disposable {
 
   override fun doExpand(e: InputEvent) {
     val dataContext = DataManager.getInstance().getDataContext(this)
@@ -130,9 +69,9 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
       }
     }
 
-    val popup = JBPopupFactory.getInstance().createListPopup(project, step, renderer)
-    popup.setRequestFocus(false)
-    popup.showUnderneathOf(this)
+    project?.let {JBPopupFactory.getInstance().createListPopup(it, step, renderer) }
+      ?.apply { setRequestFocus(false) }
+      ?.showUnderneathOf(this)
   }
 
   private fun createActionGroup(initEvent: AnActionEvent): ActionGroup {
@@ -151,13 +90,6 @@ private class ProjectWidget(private val project: Project): ToolbarComboWidget(),
     return JBPopupFactory.getInstance().createActionsStep(actionGroup, context, ActionPlaces.PROJECT_WIDGET_POPUP, false, false,
                                                           null, this, false, 0, false)
   }
-
-  override fun removeNotify() {
-    super.removeNotify()
-    Disposer.dispose(this)
-  }
-
-  override fun dispose() {}
 
   private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionItem> {
     override fun getListCellRendererComponent(list: JList<out PopupFactoryImpl.ActionItem>?,

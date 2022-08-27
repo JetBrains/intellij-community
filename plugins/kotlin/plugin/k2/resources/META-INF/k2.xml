@@ -229,6 +229,8 @@
     <module name="kotlin.code-insight.k2"/>
     <module name="kotlin.code-insight.live-templates-k2"/>
 
+    <module name="kotlin.refactorings.rename.k2"/>
+
     <module name="kotlin.navigation"/>
     <module name="kotlin.highlighting"/>
   </content>

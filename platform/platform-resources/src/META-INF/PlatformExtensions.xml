@@ -76,6 +76,7 @@
     <applicationService serviceInterface="com.intellij.openapi.vfs.pointers.VirtualFilePointerManager"
                         serviceImplementation="com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl"/>
     <vfs.asyncListener implementation="com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl$MyAsyncFileListener"/>
+    <persistentFsConnectionListener implementation="com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl$MyPersistentFsConnectionListener"/>
 
     <applicationService serviceInterface="com.intellij.openapi.editor.colors.EditorColorsManager"
                         serviceImplementation="com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl"/>
@@ -453,7 +454,7 @@
     <applicationService serviceImplementation="com.intellij.diagnostic.HeapDumpAnalysisSupport"/>
 
     <applicationService serviceInterface="com.intellij.diagnostic.EventWatcher"
-                        serviceImplementation="com.intellij.diagnostic.EventWatcherImpl"/>
+                        serviceImplementation="com.intellij.diagnostic.EventWatcherImpl" headlessImplementation=""/>
     <toolWindow id="Events Watcher" anchor="bottom" canCloseContents="false" doNotActivateOnStart="true"
                 factoryClass="com.intellij.diagnostic.ui.EventWatcherToolWindowFactory"/>
 
@@ -548,7 +549,7 @@
     <applicationConfigurable groupId="appearance"
                              groupWeight="149"
                              id="reference.settings.ide.settings.new.ui"
-                             provider="com.intellij.ui.ExperimentalUIConfigurableProvider"
+                             instance="com.intellij.ui.ExperimentalUIConfigurable"
                              bundle="messages.IdeBundle"
                              key="configurable.new.ui.name"/>
 
@@ -614,8 +615,9 @@
                         preload="true"/>
     <applicationService serviceImplementation="com.intellij.ide.plugins.ExpiredPluginsState"
                         preload="true"/>
-    <startupActivity implementation="com.intellij.ide.plugins.DynamicPluginEnabler$Companion$EnableDisablePluginsActivity"
-                     order="first"/>
+    <projectService serviceInterface="com.intellij.ide.plugins.advertiser.PluginFeatureEnabler"
+                    serviceImplementation="com.intellij.ide.plugins.advertiser.OnDemandPluginFeatureEnablerImpl"/>
+
     <postStartupActivity implementation="com.intellij.externalDependencies.impl.CheckRequiredPluginsActivity"/>
     <projectConfigurable groupId="build" provider="com.intellij.externalDependencies.impl.ExternalDependenciesConfigurableProvider"
                          id="preferences.externalDependencies"
@@ -786,7 +788,8 @@
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.vfs.newvfs.VfsUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.project.IndexingStatisticsCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.util.indexing.diagnostic.IndexOperationFusCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.util.indexing.diagnostic.IndexOperationFUS$IndexOperationFusCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.util.indexing.diagnostic.IndexOperationFUS$IndexOperationAggregatesCollector"/>
     <statistics.validation.customValidationRule implementation="com.intellij.util.indexing.diagnostic.IndexIdRuleValidator" />
     <statistics.counterUsagesCollector implementationClass="com.intellij.task.impl.ProjectTaskManagerStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.externalSystem.statistics.ProjectImportCollector"/>
@@ -830,6 +833,9 @@
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.WSLInstallationsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.impl.TrustedProjectsStatistics" />
     <statistics.applicationUsagesCollector implementation="com.intellij.notification.impl.NotificationSettingsCollector"/>
+
+    <applicationService serviceImplementation="com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataSettingsPersistence"
+                        preload="true" />
 
     <registryKey key="usage.statistics.test.action.recorder.id" defaultValue="FUS" description="The data from the recorder with selected id will be sent"/>
 
@@ -916,9 +922,8 @@
     <search.topHitProvider implementation="com.intellij.ide.ui.RegistryOptionsTopHitProvider"/>
     <search.topHitProvider implementation="com.intellij.ide.ui.PluginOptionsTopHitProvider"/>
     <search.topHitProvider implementation="com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsOptionProvider"/>
-    <backgroundPostStartupActivity
-      implementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiserStartupActivity"/>
-    <applicationService serviceImplementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService" />
+    <backgroundPostStartupActivity implementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiserStartupActivity"/>
+    <projectService serviceImplementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService"/>
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.GlobalIgnoredPluginSuggestionState"/>
     <actionPromoter implementation="com.intellij.ui.ToolbarDecoratorActionPromoter"/>
     <actionPromoter implementation="com.intellij.ide.actions.WindowActionPromoter"/>
@@ -1245,6 +1250,8 @@
     <notificationGroup id="Error Report" displayType="BALLOON" isLogByDefault="false" bundle="messages.DiagnosticBundle" key="notification.group.error.report"/>
     <notificationGroup id="Test ToolWindow Notification" displayType="TOOL_WINDOW" toolWindowId="TODO" hideFromSettings="true"/>
     <notificationGroup id="Test Sticky Notification" displayType="STICKY_BALLOON" hideFromSettings="true"/>
+    <notificationGroup id="Test Balloon Notification" displayType="BALLOON" hideFromSettings="true"/>
+    <notificationGroup id="Test Hidden Notification" displayType="NONE" hideFromSettings="true"/>
     <notificationGroup id="Test Notification" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="Test Runner" displayType="NONE" bundle="messages.TestRunnerBundle" key="notification.group.test.runner"/>
     <notificationGroup id="System Messages" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.system.messages"/>
@@ -1360,7 +1367,6 @@
 
     <recoveryAction implementation="com.intellij.ide.actions.cache.InvalidateCachesAndRestartAction"/>
 
-    <projectToolbarWidget implementation="com.intellij.openapi.wm.impl.headertoolbar.ProjectWidgetFactory"/>
     <applicationService serviceInterface="com.intellij.openapi.application.CoroutineSupport"
                         serviceImplementation="com.intellij.openapi.application.impl.PlatformCoroutineSupport"/>
     <applicationService serviceInterface="com.intellij.openapi.application.ReadActionSupport"

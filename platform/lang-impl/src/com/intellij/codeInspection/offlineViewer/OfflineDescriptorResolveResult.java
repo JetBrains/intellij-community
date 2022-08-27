@@ -38,6 +38,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.openapi.util.Predicates.nonNull;
+
 /**
  * @author Dmitry Batkovich
  */
@@ -118,7 +120,7 @@ public final class OfflineDescriptorResolveResult {
                                                                                       offlineDescriptor,
                                                                                       QuickFix.EMPTY_ARRAY,
                                                                                       project);
-    QuickFix[] quickFixes = getFixes(descriptor, element, presentation, offlineDescriptor.getHints());
+    QuickFix<?>[] quickFixes = getFixes(descriptor, element, presentation, offlineDescriptor.getHints());
     if (quickFixes != null) {
       descriptor = createProblemDescriptorFromOfflineDescriptor(element,
                                                                 offlineDescriptor,
@@ -131,7 +133,7 @@ public final class OfflineDescriptorResolveResult {
   @NotNull
   private static CommonProblemDescriptor createProblemDescriptorFromOfflineDescriptor(@Nullable RefEntity element,
                                                                                       @NotNull OfflineProblemDescriptor offlineDescriptor,
-                                                                                      QuickFix @NotNull [] fixes,
+                                                                                      QuickFix<?> @NotNull [] fixes,
                                                                                       @NotNull Project project) {
     InspectionManager inspectionManager = InspectionManager.getInstance(project);
     if (element instanceof RefElement) {
@@ -233,10 +235,10 @@ public final class OfflineDescriptorResolveResult {
     return PsiUtilCore.toPsiElementArray(result);
   }
 
-  private static QuickFix @Nullable [] getFixes(@NotNull CommonProblemDescriptor descriptor,
+  private static QuickFix<?> @Nullable [] getFixes(@NotNull CommonProblemDescriptor descriptor,
                                                 RefEntity entity,
                                                 InspectionToolPresentation presentation, List<String> hints) {
-    List<QuickFix> fixes = new ArrayList<>(hints == null ? 1 : hints.size());
+    List<QuickFix<?>> fixes = new ArrayList<>(hints == null ? 1 : hints.size());
     if (hints == null) {
       addFix(descriptor, entity, fixes, null, presentation);
     }
@@ -248,7 +250,7 @@ public final class OfflineDescriptorResolveResult {
     return fixes.isEmpty() ? null : fixes.toArray(QuickFix.EMPTY_ARRAY);
   }
 
-  private static void addFix(@NotNull CommonProblemDescriptor descriptor, RefEntity entity, List<? super QuickFix> fixes, String hint, @NotNull InspectionToolPresentation presentation) {
+  private static void addFix(@NotNull CommonProblemDescriptor descriptor, RefEntity entity, List<QuickFix<?>> fixes, String hint, @NotNull InspectionToolPresentation presentation) {
     ContainerUtil.addAllNotNull(fixes, presentation.findQuickFixes(descriptor, entity, hint));
   }
 
@@ -284,20 +286,20 @@ public final class OfflineDescriptorResolveResult {
     };
     List<String> hints = offlineDescriptor.getHints();
     if (hints != null && entity instanceof RefModule) {
-      List<QuickFix> fixes = hints.stream().map(hint -> wrapper.getTool().getQuickFix(hint)).filter(f -> f != null).toList();
+      List<QuickFix> fixes = hints.stream().map(hint -> wrapper.getTool().getQuickFix(hint)).filter(nonNull()).toList();
       return InspectionManager.getInstance(project).createProblemDescriptor(offlineDescriptor.getDescription(), ((RefModule)entity).getModule(), ArrayUtil.append(fixes.toArray(QuickFix.EMPTY_ARRAY), rerunFix));
     }
-    return InspectionManager.getInstance(project).createProblemDescriptor(offlineDescriptor.getDescription(), new QuickFix[]{rerunFix});
+    return InspectionManager.getInstance(project).createProblemDescriptor(offlineDescriptor.getDescription(), rerunFix);
   }
 
   private static final class ProblemDescriptorBackedByRefElement implements ProblemDescriptor {
     private final RefElement myElement;
     private final OfflineProblemDescriptor myOfflineProblemDescriptor;
-    private final QuickFix[] myFixes;
+    private final QuickFix<?>[] myFixes;
 
     private ProblemDescriptorBackedByRefElement(RefElement element,
                                                 OfflineProblemDescriptor descriptor,
-                                                QuickFix[] fixes) {
+                                                QuickFix<?>[] fixes) {
       myElement = element;
       myOfflineProblemDescriptor = descriptor;
       myFixes = fixes;
@@ -367,7 +369,7 @@ public final class OfflineDescriptorResolveResult {
     }
 
     @Override
-    public QuickFix @Nullable [] getFixes() {
+    public QuickFix<?> @Nullable [] getFixes() {
       return myFixes;
     }
   }

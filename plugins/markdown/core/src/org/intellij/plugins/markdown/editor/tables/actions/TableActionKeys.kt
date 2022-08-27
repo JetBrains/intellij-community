@@ -1,7 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.editor.tables.actions
 
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import java.awt.Container
@@ -28,12 +30,7 @@ internal object TableActionKeys {
     }
   }
 
-  fun createActionToolbar(group: ActionGroup, isHorizontal: Boolean, editor: Editor, dataProvider: DataProvider? = null): ActionToolbar {
-    val actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_POPUP, group, isHorizontal)
-    val dataContextComponent = dataProvider?.let { TableWrappingBackgroundDataProvider(editor.contentComponent, dataProvider) }
-    actionToolbar.targetComponent = dataContextComponent
-    actionToolbar.adjustTheSameSize(true)
-    actionToolbar.setReservePlaceAutoPopupIcon(false)
-    return actionToolbar
+  fun createDataContextComponent(editor: Editor, dataProvider: DataProvider): JComponent {
+    return TableWrappingBackgroundDataProvider(editor.contentComponent, dataProvider)
   }
 }

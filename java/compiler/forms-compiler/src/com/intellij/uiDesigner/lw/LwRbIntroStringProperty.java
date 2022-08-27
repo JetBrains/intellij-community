@@ -4,9 +4,6 @@ package com.intellij.uiDesigner.lw;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import org.jdom.Element;
 
-/**
- * @author Vladimir Kondratyev
- */
 public final class LwRbIntroStringProperty extends LwIntrospectedProperty {
   LwRbIntroStringProperty(final String name){
     super(name, String.class.getName());

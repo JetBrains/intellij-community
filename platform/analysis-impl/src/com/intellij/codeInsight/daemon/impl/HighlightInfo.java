@@ -267,8 +267,8 @@ public class HighlightInfo implements Segment {
   }
 
   void setVisitingTextRange(long range) {
-    visitingRangeDeltaStartOffset = TextRange.startOffset(range) - getStartOffset();
-    visitingRangeDeltaEndOffset = TextRange.endOffset(range) - getEndOffset();
+    visitingRangeDeltaStartOffset = TextRangeScalarUtil.startOffset(range) - getStartOffset();
+    visitingRangeDeltaEndOffset = TextRangeScalarUtil.endOffset(range) - getEndOffset();
   }
 
   @NotNull
@@ -1047,7 +1047,7 @@ public class HighlightInfo implements Segment {
     }
   }
   
-  public @Nullable IntentionAction getSameFamilyFix(IntentionActionWithFixAllOption action) {
+  public IntentionAction getSameFamilyFix(@NotNull IntentionActionWithFixAllOption action) {
     if (quickFixActionRanges == null) return null;
     for (Pair<IntentionActionDescriptor, TextRange> range : quickFixActionRanges) {
       IntentionAction other = IntentionActionDelegate.unwrap(range.first.myAction);
@@ -1060,6 +1060,6 @@ public class HighlightInfo implements Segment {
   long getVisitingTextRange() {
     int visitStart = getActualStartOffset() + visitingRangeDeltaStartOffset;
     int visitEnd = getActualEndOffset() + visitingRangeDeltaEndOffset;
-    return TextRange.isProperRange(visitStart, visitEnd) ? TextRange.toScalarRange(visitStart, visitEnd) : -1;
+    return TextRange.isProperRange(visitStart, visitEnd) ? TextRangeScalarUtil.toScalarRange(visitStart, visitEnd) : -1;
   }
 }

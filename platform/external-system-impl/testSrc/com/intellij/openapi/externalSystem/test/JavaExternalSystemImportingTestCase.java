@@ -10,16 +10,18 @@ import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemImportingTestCase;
 import com.intellij.task.ProjectTaskManager;
 import com.intellij.testFramework.CompilerTester;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.TestFileSystemItem;
-import com.intellij.platform.externalSystem.testFramework.ExternalSystemImportingTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 
@@ -134,9 +136,16 @@ public abstract class JavaExternalSystemImportingTestCase extends ExternalSystem
   }
 
   protected void assertModuleOutputs(String moduleName, String... outputs) {
-    String[] outputPaths = ContainerUtil.map2Array(CompilerPaths.getOutputPaths(new Module[]{getModule(moduleName)}), String.class,
+    Module module = getModule(moduleName);
+    String[] outputPaths = ContainerUtil.map2Array(CompilerPaths.getOutputPaths(new Module[]{module}), String.class,
                                                    s -> getAbsolutePath(s));
     assertUnorderedElementsAreEqual(outputPaths, outputs);
+    String[] outputPathsFromEnumerator = ContainerUtil.map2Array(
+      OrderEnumerator.orderEntries(module).withoutSdk().withoutLibraries().withoutDepModules().classes().getUrls(),
+      String.class,
+      VfsUtilCore::urlToPath
+    );
+    assertUnorderedElementsAreEqual(outputPathsFromEnumerator, outputs);
   }
 
   protected void assertModuleOutput(String moduleName, String output, String testOutput) {

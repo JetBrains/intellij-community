@@ -15,6 +15,7 @@ import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.assertConsistency
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.system.measureTimeMillis
 
 open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposable {
@@ -28,6 +29,8 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
 
   var userWarningLoggingLevel = false
     @TestOnly set
+
+  private var projectModelUpdating = AtomicBoolean(false)
 
   init {
     log.debug { "Loading workspace model" }
@@ -76,6 +79,9 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
 
   final override fun <R> updateProjectModel(updater: (MutableEntityStorage) -> R): R {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
+    if (!projectModelUpdating.compareAndSet(false, true)) {
+      throw RuntimeException("Recursive call to `updateProjectModel` is not allowed")
+    }
     val before = entityStorage.current
     val builder = MutableEntityStorage.from(before)
     val result = updater(builder)
@@ -86,11 +92,16 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
       before.assertConsistency()
       newStorage.assertConsistency()
     }
-    entityStorage.replace(newStorage, changes, this::onBeforeChanged, this::onChanged)
+    entityStorage.replace(newStorage, changes, this::onBeforeChanged, this::onChanged, projectModelUpdating)
     return result
   }
 
   final override fun <R> updateProjectModelSilent(updater: (MutableEntityStorage) -> R): R {
+    if (!projectModelUpdating.compareAndSet(false, true)) {
+      //throw RuntimeException("Recursive call to `updateProjectModel` is not allowed")
+      // Need to fix all cases and change to the runtime exception
+      log.warn("Recursive call to `updateProjectModel` is not allowed")
+    }
     val before = entityStorage.current
     val builder = MutableEntityStorage.from(entityStorage.current)
     val result = updater(builder)
@@ -100,6 +111,7 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
       newStorage.assertConsistency()
     }
     entityStorage.replaceSilently(newStorage)
+    projectModelUpdating.set(false)
     return result
   }
 
@@ -113,7 +125,7 @@ open class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Di
 
     if (entityStorage.version != replacement.version) return false
 
-    entityStorage.replace(replacement.snapshot, replacement.changes, this::onBeforeChanged, this::onChanged)
+    entityStorage.replace(replacement.snapshot, replacement.changes, this::onBeforeChanged, this::onChanged, null)
 
     return true
   }

@@ -75,11 +75,10 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String,
   // A bit hacky way to schedule the onboarding feedback informer after the lesson was closed
   private fun scheduleOnboardingFeedback() {
     val langSupport = LangManager.getInstance().getLangSupport() ?: return
-
     val onboardingFeedbackData = langSupport.onboardingFeedbackData ?: return
+    langSupport.onboardingFeedbackData = null
 
     invokeLater {
-      langSupport.onboardingFeedbackData = null
       showOnboardingFeedbackNotification(null, onboardingFeedbackData)
       (WelcomeFrame.getInstance()?.balloonLayout as? WelcomeBalloonLayoutImpl)?.showPopup()
     }

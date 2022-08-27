@@ -96,6 +96,8 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
       copiedFileSpecs.add(fileSpec)
     }
 
+    LOG.debug("Copied files for the following fileSpecs: $copiedFileSpecs")
+
     if (copiedFileSpecs.isNotEmpty()) {
       val addCommand = git.add()
       for (fileSpec in copiedFileSpecs) {

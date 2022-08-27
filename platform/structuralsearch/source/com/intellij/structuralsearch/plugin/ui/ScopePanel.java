@@ -328,6 +328,11 @@ public class ScopePanel extends JPanel {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       showScope(myScopeType);
     }

@@ -124,7 +124,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
       fileState(fileName, cloudContent)
     }
 
-    initSettingsSync(SettingsSyncBridge.InitMode.TakeFromServer(SyncSettingsEvent.CloudChange(snapshot)))
+    initSettingsSync(SettingsSyncBridge.InitMode.TakeFromServer(SyncSettingsEvent.CloudChange(snapshot, null)))
 
     assertEquals("Incorrect content", cloudContent, (settingsSyncStorage / "options" / "laf.xml").readText())
 

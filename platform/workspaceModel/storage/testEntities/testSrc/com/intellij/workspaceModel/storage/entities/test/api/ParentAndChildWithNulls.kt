@@ -21,8 +21,8 @@ interface ParentWithNulls : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ParentWithNulls, ModifiableWorkspaceEntity<ParentWithNulls>, ObjBuilder<ParentWithNulls> {
-    override var parentData: String
     override var entitySource: EntitySource
+    override var parentData: String
     override var child: ChildWithNulls?
   }
 
@@ -50,8 +50,8 @@ interface ChildWithNulls : WorkspaceEntity {
   //region generated code
   @GeneratedCodeApiVersion(1)
   interface Builder : ChildWithNulls, ModifiableWorkspaceEntity<ChildWithNulls>, ObjBuilder<ChildWithNulls> {
-    override var childData: String
     override var entitySource: EntitySource
+    override var childData: String
   }
 
   companion object : Type<ChildWithNulls, Builder>() {

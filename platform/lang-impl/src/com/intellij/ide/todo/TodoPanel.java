@@ -365,6 +365,11 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return myOccurenceNavigator.getActionUpdateThread();
+  }
+
+  @Override
   @Nullable
   public OccurenceInfo goPreviousOccurence() {
     return myOccurenceNavigator.goPreviousOccurence();

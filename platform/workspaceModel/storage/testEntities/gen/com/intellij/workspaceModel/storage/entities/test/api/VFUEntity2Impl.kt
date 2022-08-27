@@ -84,11 +84,11 @@ open class VFUEntity2Impl : VFUEntity2, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isDataInitialized()) {
         error("Field VFUEntity2#data should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field VFUEntity2#entitySource should be initialized")
       }
       if (!getEntityData().isDirectoryPathInitialized()) {
         error("Field VFUEntity2#directoryPath should be initialized")
@@ -105,8 +105,8 @@ open class VFUEntity2Impl : VFUEntity2, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as VFUEntity2
-      this.data = dataSource.data
       this.entitySource = dataSource.entitySource
+      this.data = dataSource.data
       this.filePath = dataSource.filePath
       this.directoryPath = dataSource.directoryPath
       this.notNullRoots = dataSource.notNullRoots.toMutableList()
@@ -115,14 +115,6 @@ open class VFUEntity2Impl : VFUEntity2, WorkspaceEntityBase() {
     }
 
 
-    override var data: String
-      get() = getEntityData().data
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().data = value
-        changedProperty.add("data")
-      }
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
@@ -130,6 +122,14 @@ open class VFUEntity2Impl : VFUEntity2, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var data: String
+      get() = getEntityData().data
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().data = value
+        changedProperty.add("data")
       }
 
     override var filePath: VirtualFileUrl?
@@ -243,8 +243,8 @@ class VFUEntity2Data : WorkspaceEntityData<VFUEntity2>() {
 
     other as VFUEntity2Data
 
-    if (this.data != other.data) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.data != other.data) return false
     if (this.filePath != other.filePath) return false
     if (this.directoryPath != other.directoryPath) return false
     if (this.notNullRoots != other.notNullRoots) return false

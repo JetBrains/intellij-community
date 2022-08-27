@@ -29,10 +29,7 @@ import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.ControlFlowException;
@@ -395,6 +392,11 @@ public final class ExternalSystemUtil {
                 public void update(@NotNull AnActionEvent e) {
                   Presentation p = e.getPresentation();
                   p.setEnabled(processHandler.isProcessTerminated());
+                }
+
+                @Override
+                public @NotNull ActionUpdateThread getActionUpdateThread() {
+                  return ActionUpdateThread.EDT;
                 }
 
                 @Override

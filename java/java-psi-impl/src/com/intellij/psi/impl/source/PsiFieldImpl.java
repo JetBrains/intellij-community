@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -25,15 +25,18 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.lang.ref.Reference;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements PsiField, PsiVariableEx, Queryable {
   private static final Logger LOG = Logger.getInstance(PsiFieldImpl.class);
@@ -81,20 +84,17 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
   }
 
   @Override
-  @NotNull
-  public CompositeElement getNode() {
+  public @NotNull CompositeElement getNode() {
     return (CompositeElement)super.getNode();
   }
 
   @Override
-  @NotNull
-  public PsiIdentifier getNameIdentifier() {
+  public @NotNull PsiIdentifier getNameIdentifier() {
     return (PsiIdentifier)getNode().findChildByRoleAsPsiElement(ChildRole.NAME);
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     PsiFieldStub stub = getGreenStub();
     if (stub != null) {
       return stub.getName();
@@ -109,9 +109,8 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
   }
 
   @Override
-  @NotNull
   @SuppressWarnings("Duplicates")
-  public PsiType getType() {
+  public @NotNull PsiType getType() {
     PsiFieldStub stub = getStub();
     if (stub != null) {
       PsiType type = SoftReference.dereference(myCachedType);
@@ -144,8 +143,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
   }
 
   @Override
-  @NotNull
-  public PsiModifierList getModifierList() {
+  public @NotNull PsiModifierList getModifierList() {
     PsiModifierList selfModifierList = getSelfModifierList();
     if (selfModifierList != null) {
       return selfModifierList;
@@ -165,8 +163,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     return firstField.getModifierList();
   }
 
-  @Nullable
-  private PsiModifierList getSelfModifierList() {
+  private @Nullable PsiModifierList getSelfModifierList() {
     return getStubOrPsiChild(JavaStubElementTypes.MODIFIER_LIST);
   }
 
@@ -220,13 +217,11 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
    * Avoids stub-to-AST switch if possible.
    * @return Light generated initializer literal expression if it was stored in stubs, the regular initializer otherwise
    */
-  @Nullable
-  public static PsiExpression getDetachedInitializer(@NotNull PsiVariable variable) {
+  public static @Nullable PsiExpression getDetachedInitializer(@NotNull PsiVariable variable) {
     return variable instanceof PsiFieldImpl ? ((PsiFieldImpl)variable).getDetachedInitializer() : variable.getInitializer();
   }
 
-  @Nullable
-  private PsiExpression getDetachedInitializer() {
+  private @Nullable PsiExpression getDetachedInitializer() {
     PsiFieldStub stub = getGreenStub();
     PsiExpression initializer;
     if (stub == null) {
@@ -264,8 +259,9 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
 
   @Override
   public Icon getElementIcon(int flags) {
+    IconManager iconManager = IconManager.getInstance();
     RowIcon baseIcon =
-      IconManager.getInstance().createLayeredIcon(this, PlatformIcons.FIELD_ICON, ElementPresentationUtil.getFlags(this, false));
+      iconManager.createLayeredIcon(this, iconManager.getPlatformIcon(PlatformIcons.Field), ElementPresentationUtil.getFlags(this, false));
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 
@@ -278,8 +274,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     }
   }
 
-  @Nullable
-  private Object _computeConstantValue(@Nullable Set<PsiVariable> visitedVars) {
+  private @Nullable Object _computeConstantValue(@Nullable Set<PsiVariable> visitedVars) {
     PsiType type = getType();
     // javac rejects all non primitive and non String constants, although JLS states constants "variables whose initializers are constant expressions"
     if (!(type instanceof PsiPrimitiveType) && !type.equalsToText("java.lang.String")) return null;
@@ -406,8 +401,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     return PsiImplUtil.getMemberUseScope(this);
   }
 

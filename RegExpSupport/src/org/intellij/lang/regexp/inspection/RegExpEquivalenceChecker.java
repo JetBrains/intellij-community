@@ -74,8 +74,7 @@ final class RegExpEquivalenceChecker {
 
   private static boolean areNamedGroupRefsEquivalent(RegExpNamedGroupRef namedGroupRef1, RegExpNamedGroupRef namedGroupRef2) {
     final String name = namedGroupRef1.getGroupName();
-    if (name != null) return name.equals(namedGroupRef2.getGroupName());
-    return namedGroupRef1.getText().equals(namedGroupRef2.getText());
+    return name != null && name.equals(namedGroupRef2.getGroupName());
   }
 
   private static boolean areIntersectionsEquivalent(RegExpIntersection intersection1, RegExpIntersection intersection2) {

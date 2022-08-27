@@ -95,7 +95,7 @@ public final class MavenLegacyModuleImporter {
   }
 
   public void configMainAndTestAggregator(MavenRootModelAdapter mavenRootModelAdapter, MavenTreeModuleImportData importData) {
-    assert importData.getModuleData().getType() == MavenModuleType.COMPOUND_MODULE;
+    assert importData.getModuleData().getType() == StandardMavenModuleType.COMPOUND_MODULE;
     myRootModelAdapter = mavenRootModelAdapter;
 
     new MavenLegacyFoldersImporter(myMavenProject, mySettings, myRootModelAdapter).configMainAndTestAggregator();
@@ -105,8 +105,8 @@ public final class MavenLegacyModuleImporter {
   }
 
   public void configMainAndTest(MavenRootModelAdapter mavenRootModelAdapter, MavenTreeModuleImportData importData) {
-    MavenModuleType type = importData.getModuleData().getType();
-    assert type == MavenModuleType.MAIN_ONLY || type == MavenModuleType.TEST_ONLY;
+    StandardMavenModuleType type = importData.getModuleData().getType();
+    assert type == StandardMavenModuleType.MAIN_ONLY || type == StandardMavenModuleType.TEST_ONLY;
     myRootModelAdapter = mavenRootModelAdapter;
     new MavenLegacyFoldersImporter(myMavenProject, mySettings, myRootModelAdapter).configMainAndTest(type);
     configDependencies(importData.getDependencies());
@@ -128,12 +128,12 @@ public final class MavenLegacyModuleImporter {
     @Nullable
     public static MavenLegacyModuleImporter.ExtensionImporter createIfApplicable(@NotNull MavenProject mavenProject,
                                                                                  @NotNull Module module,
-                                                                                 @NotNull MavenModuleType moduleType,
+                                                                                 @NotNull StandardMavenModuleType moduleType,
                                                                                  @NotNull MavenProjectsTree mavenTree,
                                                                                  @NotNull MavenProjectChanges changes,
                                                                                  @NotNull Map<MavenProject, String> mavenProjectToModuleName,
                                                                                  boolean isWorkspaceImport) {
-      if (moduleType == MavenModuleType.COMPOUND_MODULE) return null;
+      if (moduleType == StandardMavenModuleType.COMPOUND_MODULE) return null;
 
       var suitableImporters = MavenImporter.getSuitableImporters(mavenProject, isWorkspaceImport);
 

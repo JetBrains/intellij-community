@@ -31,7 +31,7 @@ import java.util.Map;
 @SuppressWarnings("UseJBColor")
 public final class JBUI {
   static {
-    LoadingState.BASE_LAF_INITIALIZED.checkOccurred();
+    LoadingState.COMPONENTS_REGISTERED.checkOccurred();
   }
 
   /**
@@ -821,6 +821,21 @@ public final class JBUI {
       public static @NotNull Icon comboTabIcon(boolean hovered) {
         return hovered ? getIcon("ToolWindow.header.comboButton.hovered.icon", AllIcons.General.ArrowDown)
                        : getIcon("ToolWindow.header.comboButton.icon", AllIcons.General.ArrowDown);
+      }
+    }
+
+    public static final class Toolbar {
+
+      public static Insets toolbarButtonInsets(boolean isMainToolbar) {
+        return isMainToolbar ? mainToolbarButtonInsets() : toolbarButtonInsets();
+      }
+
+      public static Insets toolbarButtonInsets() {
+        return insets("Toolbar.Button.buttonInsets", JBInsets.create(1, 2));
+      }
+
+      public static Insets mainToolbarButtonInsets() {
+        return insets("MainToolbar.Button.buttonInsets", JBInsets.create(1, 2));
       }
     }
 

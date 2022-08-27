@@ -13,3 +13,7 @@ fun TestInfo.hyphenateWithClass(): String {
 
   return "$className/$methodName".hyphenateTestName()
 }
+
+fun TestInfo.hyphenate(): String {
+  return testMethod.get().name.hyphenateTestName()
+}

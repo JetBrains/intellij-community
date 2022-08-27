@@ -73,11 +73,11 @@ open class ChildEntityImpl : ChildEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isChildDataInitialized()) {
         error("Field ChildEntity#childData should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ChildEntity#entitySource should be initialized")
       }
       if (_diff != null) {
         if (_diff.extractOneToOneParent<WorkspaceEntityBase>(PARENTENTITY_CONNECTION_ID, this) == null) {
@@ -98,21 +98,13 @@ open class ChildEntityImpl : ChildEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ChildEntity
-      this.childData = dataSource.childData
       this.entitySource = dataSource.entitySource
+      this.childData = dataSource.childData
       if (parents != null) {
         this.parentEntity = parents.filterIsInstance<ParentEntity>().single()
       }
     }
 
-
-    override var childData: String
-      get() = getEntityData().childData
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().childData = value
-        changedProperty.add("childData")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -121,6 +113,14 @@ open class ChildEntityImpl : ChildEntity, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var childData: String
+      get() = getEntityData().childData
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().childData = value
+        changedProperty.add("childData")
       }
 
     override var parentEntity: ParentEntity
@@ -217,8 +217,8 @@ class ChildEntityData : WorkspaceEntityData<ChildEntity>() {
 
     other as ChildEntityData
 
-    if (this.childData != other.childData) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.childData != other.childData) return false
     return true
   }
 

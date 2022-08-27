@@ -133,7 +133,7 @@ public final class PatternCompiler {
           }
         }
 
-        private void collectNode(PsiElement element, Object handler) {
+        private void collectNode(PsiElement element, MatchingHandler handler) {
           if (handler instanceof DelegatingHandler) {
             handler = ((DelegatingHandler)handler).getDelegate();
           }
@@ -205,7 +205,7 @@ public final class PatternCompiler {
     final Pattern[] patterns = new Pattern[applicablePrefixes.length];
 
     for (int i = 0; i < applicablePrefixes.length; i++) {
-      patterns[i] = Pattern.compile(StructuralSearchUtil.shieldRegExpMetaChars(applicablePrefixes[i]) + "\\w+\\b");
+      patterns[i] = Pattern.compile(MatchUtil.shieldRegExpMetaChars(applicablePrefixes[i]) + "\\w+\\b");
     }
 
     final int[] varEndOffsets = findAllTypedVarOffsets(file, patterns);

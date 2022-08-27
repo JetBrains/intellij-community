@@ -73,7 +73,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.diff.tools.util.base.TextDiffViewerUtil.recursiveRegisterShortcutSet;
+import static com.intellij.diff.util.DiffUtil.recursiveRegisterShortcutSet;
 
 public abstract class DiffRequestProcessor implements CheckedDisposable {
   private static final Logger LOG = Logger.getInstance(DiffRequestProcessor.class);

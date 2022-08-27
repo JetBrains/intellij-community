@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
@@ -115,11 +116,12 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
 
         fun convert() {
             val additionalImports = dataForConversion.tryResolveImports(targetFile)
+            ProgressManager.checkCanceled()
             var convertedImportsText = additionalImports.convertCodeToKotlin(project, targetModule, useNewJ2k).text
 
             val convertedResult = dataForConversion.convertCodeToKotlin(project, targetModule, useNewJ2k)
             val convertedText = convertedResult.text
-
+            ProgressManager.checkCanceled()
             val newBounds = runWriteAction {
                 val importsInsertOffset = targetFile.importList?.endOffset ?: 0
                 if (targetFile.importDirectives.isEmpty() && importsInsertOffset > 0)
@@ -138,6 +140,7 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
             }
 
             psiDocumentManager.commitAllDocuments()
+            ProgressManager.checkCanceled()
 
             if (useNewJ2k) {
                 val postProcessor = J2kConverterExtension.extension(useNewJ2k).createPostProcessor(formatCode = true)

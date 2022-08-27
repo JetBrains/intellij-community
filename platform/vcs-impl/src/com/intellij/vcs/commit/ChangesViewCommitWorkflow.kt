@@ -28,7 +28,7 @@ class ChangesViewCommitWorkflow(project: Project) : NonModalCommitWorkflow(proje
 
   override fun performCommit(sessionInfo: CommitSessionInfo) {
     if (sessionInfo.isVcsCommit) {
-      doCommit()
+      doCommit(sessionInfo)
     }
     else {
       doCommitCustom(sessionInfo)
@@ -37,36 +37,22 @@ class ChangesViewCommitWorkflow(project: Project) : NonModalCommitWorkflow(proje
 
   override fun getBeforeCommitChecksChangelist(): LocalChangeList = commitState.changeList
 
-  private fun doCommit() {
+  private fun doCommit(sessionInfo: CommitSessionInfo) {
     LOG.debug("Do actual commit")
 
-    with(object : LocalChangesCommitter(project, commitState.changes, commitState.commitMessage, commitContext) {
-      override fun afterRefreshChanges() = endExecution {
-        if (isSuccess) clearChangeListData()
-        super.afterRefreshChanges()
-      }
-    }) {
-      addResultHandler(CommitHandlersNotifier(commitHandlers))
-      addResultHandler(getCommitEventDispatcher())
-      addResultHandler(ShowNotificationCommitResultHandler(this))
+    val committer = LocalChangesCommitter(project, commitState, commitContext)
+    addCommonResultHandlers(sessionInfo, committer)
+    committer.addResultHandler(ShowNotificationCommitResultHandler(committer))
 
-      runCommit(VcsBundle.message("commit.changes"), false)
-    }
+    committer.runCommit(VcsBundle.message("commit.changes"), false)
   }
 
   private fun doCommitCustom(sessionInfo: CommitSessionInfo) {
     sessionInfo as CommitSessionInfo.Custom
 
-    with(CustomCommitter(project, sessionInfo.session, commitState.changes, commitState.commitMessage)) {
-      addResultHandler(CommitHandlersNotifier(commitHandlers))
-      addResultHandler(getCommitCustomEventDispatcher())
-      addResultHandler(getEndExecutionHandler())
+    val committer = CustomCommitter(project, sessionInfo.session, commitState.changes, commitState.commitMessage)
+    addCommonResultHandlers(sessionInfo, committer)
 
-      runCommit(sessionInfo.executor.actionText)
-    }
-  }
-
-  private fun clearChangeListData() {
-    changeListManager.editChangeListData(commitState.changeList.name, null)
+    committer.runCommit(sessionInfo.executor.actionText)
   }
 }

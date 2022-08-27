@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.storage.impl
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.workspaceModel.storage.*
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 internal class ValuesCache {
@@ -174,12 +175,14 @@ open class VersionedEntityStorageImpl(initialStorage: EntityStorageSnapshot) : V
 
   @Synchronized
   fun replace(newStorage: EntityStorageSnapshot, changes: Map<Class<*>, List<EntityChange<*>>>,
-              beforeChanged: (VersionedStorageChange) -> Unit, afterChanged: (VersionedStorageChange) -> Unit) {
+              beforeChanged: (VersionedStorageChange) -> Unit, afterChanged: (VersionedStorageChange) -> Unit,
+              locker: AtomicBoolean?) {
     val oldCopy = currentPointer
     if (oldCopy.storage == newStorage) return
     val change = VersionedStorageChangeImpl(this, oldCopy.storage, newStorage, changes)
     beforeChanged(change)
     currentPointer = Current(version = oldCopy.version + 1, storage = newStorage)
+    locker?.set(false)
     afterChanged(change)
   }
 
@@ -192,8 +195,8 @@ open class VersionedEntityStorageImpl(initialStorage: EntityStorageSnapshot) : V
 }
 
 private class VersionedStorageChangeImpl(entityStorage: VersionedEntityStorage,
-                                         override val storageBefore: EntityStorage,
-                                         override val storageAfter: EntityStorage,
+                                         override val storageBefore: EntityStorageSnapshot,
+                                         override val storageAfter: EntityStorageSnapshot,
                                          private val changes: Map<Class<*>, List<EntityChange<*>>>) : VersionedStorageChange(
   entityStorage) {
   @Suppress("UNCHECKED_CAST")

@@ -1,5 +1,8 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.codeInsight.inspections.shared">
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.idea.codeinsights.impl.base.KotlinInspectionFacade"
+            serviceImplementation="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.KotlinInspectionFacadeImpl"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.RemoveRedundantBackticksInspection"
                      groupPath="Kotlin"
@@ -76,5 +79,22 @@
                      level="WEAK WARNING"
                      language="kotlin" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      key="inspection.redundant.return.label.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.RedundantSetterInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+                     enabledByDefault="true"
+                     cleanupTool="true"
+                     level="WEAK WARNING"
+                     language="kotlin"
+                     key="inspection.redundant.setter.display.name" bundle="messages.KotlinBundle"/>
+    <localInspection
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SimplifyNegatedBinaryExpressionInspection"
+            groupPath="Kotlin"
+            groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+            enabledByDefault="true"
+            level="WEAK WARNING"
+            language="kotlin"
+            key="inspection.simplify.negated.binary.expression.display.name" bundle="messages.KotlinBundle"/>
   </extensions>
 </idea-plugin>

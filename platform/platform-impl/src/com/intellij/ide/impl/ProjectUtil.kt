@@ -51,10 +51,8 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.basicAttributesIfExists
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
@@ -66,8 +64,11 @@ import java.awt.KeyboardFocusManager
 import java.awt.Window
 import java.io.File
 import java.io.IOException
+import java.lang.Runnable
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.Callable
+import java.util.concurrent.CompletableFuture
 
 private val LOG = Logger.getInstance(ProjectUtil::class.java)
 private var ourProjectsPath: String? = null
@@ -697,6 +698,13 @@ inline fun <T> runBlockingUnderModalProgress(@NlsContexts.ProgressTitle title: S
 @Deprecated(message = "temporary solution for old code in java", level = DeprecationLevel.ERROR)
 fun Project.executeOnPooledThread(task: Runnable) {
   coroutineScope.launch { task.run() }
+}
+
+@Suppress("DeprecatedCallableAddReplaceWith")
+@Internal
+@Deprecated(message = "temporary solution for old code in java", level = DeprecationLevel.ERROR)
+fun <T> Project.computeOnPooledThread(task: Callable<T>): CompletableFuture<T> {
+  return coroutineScope.async { task.call() }.asCompletableFuture()
 }
 
 @Suppress("DeprecatedCallableAddReplaceWith")

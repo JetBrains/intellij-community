@@ -23,7 +23,7 @@ class EntityWithCollectionTest {
 
   @Rule
   @JvmField
-  val projectModel = ProjectModelRule(forceEnableWorkspaceModel = true)
+  val projectModel = ProjectModelRule()
 
   @Test
   fun `check events about collection modification are correct`() {

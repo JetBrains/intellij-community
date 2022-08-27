@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
-import com.intellij.application.options.RegistryManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
@@ -227,28 +226,17 @@ public final class ListPluginComponent extends JPanel {
           myLayout.addButtonComponent(myRestartButton = new RestartButton(myPluginModel));
         }
         else {
-          if (DynamicPluginEnabler.isPerProjectEnabled() &&
-              !RegistryManager.getInstance().is("ide.plugins.per.project.use.checkboxes")) {
-            myEnableDisableButton = SelectionBasedPluginModelAction.createGearButton(
-              action -> createEnableDisableAction(action, List.of(this)),
-              () -> createUninstallAction(List.of(this))
-            );
-            myEnableDisableButton.setBorder(JBUI.Borders.emptyLeft(5));
-            myEnableDisableButton.setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
-          }
-          else {
-            myEnableDisableButton = createEnableDisableButton(
-              __ -> {
-                List<IdeaPluginDescriptor> descriptors = List.of(myPlugin);
-                if (myPluginModel.getState(myPlugin).isDisabled()) {
-                  myPluginModel.enable(descriptors);
-                }
-                else {
-                  myPluginModel.disable(descriptors);
-                }
+          myEnableDisableButton = createEnableDisableButton(
+            __ -> {
+              List<IdeaPluginDescriptor> descriptors = List.of(myPlugin);
+              if (myPluginModel.getState(myPlugin).isDisabled()) {
+                myPluginModel.enable(descriptors);
               }
-            );
-          }
+              else {
+                myPluginModel.disable(descriptors);
+              }
+            }
+          );
 
           myLayout.addButtonComponent(myEnableDisableButton);
           myEnableDisableButton.setOpaque(false);
@@ -677,12 +665,10 @@ public final class ListPluginComponent extends JPanel {
   }
 
   private void updateEnabledStateUI() {
-    ProjectDependentPluginEnabledState state = myPluginModel.getProjectDependentState(myPlugin);
-
     if (myEnableDisableButton instanceof JCheckBox) {
-      ((JCheckBox)myEnableDisableButton).setSelected(state.isEnabled());
+      ((JCheckBox)myEnableDisableButton).setSelected(myPluginModel.isEnabled(myPlugin));
     }
-    myNameComponent.setIcon(state.getIcon());
+    myNameComponent.setIcon(AllIcons.General.ProjectConfigurable);
   }
 
   public void updateAfterUninstall(boolean needRestartForUninstall) {

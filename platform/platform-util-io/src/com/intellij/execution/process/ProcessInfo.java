@@ -14,6 +14,7 @@ public class ProcessInfo {
   public static final ProcessInfo[] EMPTY_ARRAY = new ProcessInfo[0];
 
   private final int myPid;
+  private final int myParentPid;
   @NotNull private final String myCommandLine;
   @NotNull private final Optional<String> myExecutablePath;
   @NotNull private final String myExecutableName;
@@ -23,11 +24,7 @@ public class ProcessInfo {
                      @NotNull String commandLine,
                      @NotNull String executableName,
                      @NotNull String args) {
-    myPid = pid;
-    myCommandLine = commandLine;
-    myExecutablePath = Optional.empty();
-    myExecutableName = executableName;
-    myArgs = args;
+    this(pid, commandLine, executableName, args, null, -1);
   }
 
   public ProcessInfo(int pid,
@@ -35,15 +32,29 @@ public class ProcessInfo {
                      @NotNull String executableName,
                      @NotNull String args,
                      @Nullable String executablePath) {
+    this(pid, commandLine, executableName, args, executablePath, -1);
+  }
+
+  public ProcessInfo(int pid,
+                     @NotNull String commandLine,
+                     @NotNull String executableName,
+                     @NotNull String args,
+                     @Nullable String executablePath,
+                     int parentPid) {
     myPid = pid;
     myCommandLine = commandLine;
     myExecutableName = executableName;
     myExecutablePath = StringUtil.isNotEmpty(executablePath) ? Optional.of(executablePath) : Optional.empty();
     myArgs = args;
+    myParentPid = parentPid;
   }
 
   public int getPid() {
     return myPid;
+  }
+
+  public int getParentPid() {
+    return myParentPid;
   }
 
   @NotNull
@@ -101,6 +112,7 @@ public class ProcessInfo {
     if (!myArgs.equals(info.myArgs)) return false;
     if (!myCommandLine.equals(info.myCommandLine)) return false;
     if (!myExecutablePath.equals(info.myExecutablePath)) return false;
+    if (myParentPid != info.myParentPid) return false;
 
     return true;
   }
@@ -111,6 +123,7 @@ public class ProcessInfo {
     result = 31 * result + myExecutableName.hashCode();
     result = 31 * result + myArgs.hashCode();
     result = 31 * result + myCommandLine.hashCode();
+    result = 31 * result + myParentPid;
     return result;
   }
 }

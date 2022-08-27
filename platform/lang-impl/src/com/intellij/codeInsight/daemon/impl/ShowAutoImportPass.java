@@ -34,8 +34,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -77,22 +77,20 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     if (DumbService.isDumb(myProject) || !myFile.isValid()) return;
     if (myEditor.isDisposed() || myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid()) return;
 
-    SlowOperations.allowSlowOperations(() -> doShowImports());
-  }
-
-  private void doShowImports() {
-    int caretOffset = myEditor.getCaretModel().getOffset();
-    importUnambiguousImports(caretOffset);
-    if (isImportHintEnabled()) {
-      List<HighlightInfo> visibleHighlights = getVisibleHighlights(myVisibleRange.getStartOffset(), myVisibleRange.getEndOffset(), myProject, myEditor, hasDirtyTextRange);
-      // sort by distance to the caret
-      visibleHighlights.sort(Comparator.comparingInt(info -> Math.abs(info.getActualStartOffset() - caretOffset)));
-      for (HighlightInfo visibleHighlight : visibleHighlights) {
-        if (showAddImportHint(visibleHighlight)) {
-          break;
+    SlowOperations.allowSlowOperations(() -> {
+      int caretOffset = myEditor.getCaretModel().getOffset();
+      importUnambiguousImports(caretOffset);
+      if (isImportHintEnabled()) {
+        List<HighlightInfo> visibleHighlights = getVisibleHighlights(myVisibleRange, myProject, myEditor, hasDirtyTextRange);
+        // sort by distance to the caret
+        visibleHighlights.sort(Comparator.comparingInt(info -> Math.abs(info.getActualStartOffset() - caretOffset)));
+        for (HighlightInfo visibleHighlight : visibleHighlights) {
+          if (showAddImportHint(visibleHighlight)) {
+            break;
+          }
         }
       }
-    }
+    });
   }
 
   private void importUnambiguousImports(int caretOffset) {
@@ -135,14 +133,13 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   }
 
   @NotNull
-  private static List<HighlightInfo> getVisibleHighlights(int startOffset,
-                                                          int endOffset,
+  private static List<HighlightInfo> getVisibleHighlights(@NotNull TextRange visibleRange,
                                                           @NotNull Project project,
                                                           @NotNull Editor editor,
                                                           boolean isDirty) {
     List<HighlightInfo> highlights = new ArrayList<>();
     int offset = editor.getCaretModel().getOffset();
-    DaemonCodeAnalyzerEx.processHighlights(editor.getDocument(), project, null, startOffset, endOffset, info -> {
+    DaemonCodeAnalyzerEx.processHighlights(editor.getDocument(), project, null, visibleRange.getStartOffset(), visibleRange.getEndOffset(), info -> {
       //no changes after escape => suggest imports under caret only
       if (!isDirty && !info.getFixTextRange().contains(offset)) {
         return true;
@@ -156,9 +153,6 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   }
 
   private boolean showAddImportHint(@NotNull HighlightInfo info) {
-    PsiElement element = myFile.findElementAt(info.startOffset);
-    if (element == null || !element.isValid()) return false;
-
     for (HintAction action : extractHints(info)) {
       if (action.isAvailable(myProject, myEditor, myFile) && action.showHint(myEditor)) {
         return true;
@@ -248,17 +242,8 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
 
   @NotNull
   private static List<HintAction> extractHints(@NotNull HighlightInfo info) {
-    List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> list = info.quickFixActionRanges;
-    if (list == null) return Collections.emptyList();
-
-    List<HintAction> hintActions = new SmartList<>();
-    for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : list) {
-      IntentionAction action = pair.getFirst().getAction();
-      if (action instanceof HintAction) {
-        hintActions.add((HintAction)action);
-      }
-    }
-    return hintActions;
+    return ContainerUtil.mapNotNull(ObjectUtils.notNull(info.quickFixActionRanges, Collections.emptyList()),
+    pair -> ObjectUtils.tryCast(pair.getFirst().getAction(), HintAction.class));
   }
 
 

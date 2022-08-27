@@ -87,6 +87,9 @@ open class ContentRootTestEntityImpl : ContentRootTestEntity, WorkspaceEntityBas
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToManyParent<WorkspaceEntityBase>(MODULE_CONNECTION_ID, this) == null) {
           error("Field ContentRootTestEntity#module should be initialized")
@@ -96,9 +99,6 @@ open class ContentRootTestEntityImpl : ContentRootTestEntity, WorkspaceEntityBas
         if (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] == null) {
           error("Field ContentRootTestEntity#module should be initialized")
         }
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ContentRootTestEntity#entitySource should be initialized")
       }
       // Check initialization for list with ref type
       if (_diff != null) {
@@ -126,6 +126,15 @@ open class ContentRootTestEntityImpl : ContentRootTestEntity, WorkspaceEntityBas
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var module: ModuleTestEntity
       get() {
@@ -164,15 +173,6 @@ open class ContentRootTestEntityImpl : ContentRootTestEntity, WorkspaceEntityBas
           this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
         }
         changedProperty.add("module")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override var sourceRootOrder: SourceRootTestOrderEntity?

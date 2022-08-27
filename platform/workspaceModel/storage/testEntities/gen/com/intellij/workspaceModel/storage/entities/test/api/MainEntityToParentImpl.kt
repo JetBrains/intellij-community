@@ -73,7 +73,7 @@ open class MainEntityToParentImpl : MainEntityToParent, WorkspaceEntityBase() {
     fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field MainEntityToParent#entitySource should be initialized")
+        error("Field WorkspaceEntity#entitySource should be initialized")
       }
       if (!getEntityData().isXInitialized()) {
         error("Field MainEntityToParent#x should be initialized")
@@ -93,6 +93,15 @@ open class MainEntityToParentImpl : MainEntityToParent, WorkspaceEntityBase() {
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var child: AttachedEntityToParent?
       get() {
@@ -127,15 +136,6 @@ open class MainEntityToParentImpl : MainEntityToParent, WorkspaceEntityBase() {
           this.entityLinks[EntityLink(true, CHILD_CONNECTION_ID)] = value
         }
         changedProperty.add("child")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override var x: String

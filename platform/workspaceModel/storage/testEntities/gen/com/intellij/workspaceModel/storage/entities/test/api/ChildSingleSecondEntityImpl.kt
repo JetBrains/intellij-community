@@ -80,6 +80,9 @@ open class ChildSingleSecondEntityImpl : ChildSingleSecondEntity, WorkspaceEntit
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isCommonDataInitialized()) {
         error("Field ChildSingleAbstractBaseEntity#commonData should be initialized")
       }
@@ -96,9 +99,6 @@ open class ChildSingleSecondEntityImpl : ChildSingleSecondEntity, WorkspaceEntit
       if (!getEntityData().isSecondDataInitialized()) {
         error("Field ChildSingleSecondEntity#secondData should be initialized")
       }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ChildSingleSecondEntity#entitySource should be initialized")
-      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
@@ -108,14 +108,23 @@ open class ChildSingleSecondEntityImpl : ChildSingleSecondEntity, WorkspaceEntit
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ChildSingleSecondEntity
+      this.entitySource = dataSource.entitySource
       this.commonData = dataSource.commonData
       this.secondData = dataSource.secondData
-      this.entitySource = dataSource.entitySource
       if (parents != null) {
         this.parentEntity = parents.filterIsInstance<ParentSingleAbEntity>().single()
       }
     }
 
+
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
 
     override var commonData: String
       get() = getEntityData().commonData
@@ -166,15 +175,6 @@ open class ChildSingleSecondEntityImpl : ChildSingleSecondEntity, WorkspaceEntit
         checkModificationAllowed()
         getEntityData().secondData = value
         changedProperty.add("secondData")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override fun getEntityData(): ChildSingleSecondEntityData = result ?: super.getEntityData() as ChildSingleSecondEntityData
@@ -239,9 +239,9 @@ class ChildSingleSecondEntityData : WorkspaceEntityData<ChildSingleSecondEntity>
 
     other as ChildSingleSecondEntityData
 
+    if (this.entitySource != other.entitySource) return false
     if (this.commonData != other.commonData) return false
     if (this.secondData != other.secondData) return false
-    if (this.entitySource != other.entitySource) return false
     return true
   }
 

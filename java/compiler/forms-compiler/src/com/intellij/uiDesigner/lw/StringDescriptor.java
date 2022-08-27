@@ -3,9 +3,6 @@ package com.intellij.uiDesigner.lw;
 
 import java.util.Objects;
 
-/**
- * @author Vladimir Kondratyev
- */
 public final class StringDescriptor {
   /**
    * Name of resource bundle

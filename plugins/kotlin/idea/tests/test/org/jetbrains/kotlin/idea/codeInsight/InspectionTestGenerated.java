@@ -6,7 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -196,6 +196,11 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         @TestMetadata("naming/function/inspectionData/inspections.test")
         public void testNaming_function_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/naming/function/inspectionData/inspections.test");
+        }
+
+        @TestMetadata("naming/localVariable/inspectionData/inspections.test")
+        public void testNaming_localVariable_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/naming/localVariable/inspectionData/inspections.test");
         }
 
         @TestMetadata("naming/objectProperty/inspectionData/inspections.test")
@@ -454,11 +459,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         @TestMetadata("deprecatedCallableAddReplaceWith/inspectionData/inspections.test")
         public void testDeprecatedCallableAddReplaceWith_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspectionsLocal/deprecatedCallableAddReplaceWith/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("simplifyNegatedBinaryExpression/inspectionData/inspections.test")
-        public void testSimplifyNegatedBinaryExpression_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspectionsLocal/simplifyNegatedBinaryExpression/inspectionData/inspections.test");
         }
     }
 }

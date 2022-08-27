@@ -12,12 +12,12 @@ import java.util.function.Function
 import javax.swing.JComponent
 
 internal class KotlinHighlightingSuspendNotificationProvider : EditorNotificationProvider {
-    override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?> {
+    override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
         if (!file.isKotlinFileType()) {
-            return EditorNotificationProvider.CONST_NULL
+            return null
         }
 
-        if (!KotlinHighlightingSuspender.getInstance(project).isSuspended(file)) return EditorNotificationProvider.CONST_NULL
+        if (!KotlinHighlightingSuspender.getInstance(project).isSuspended(file)) return null
 
         return Function {
             EditorNotificationPanel(it, EditorNotificationPanel.Status.Warning).apply {

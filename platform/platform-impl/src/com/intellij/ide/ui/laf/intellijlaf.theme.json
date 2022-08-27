@@ -949,6 +949,33 @@
       "spanForeground": "#F5F5F5",
       "foreground": "#F5F5F5",
       "stepNumberForeground": "#6CA6ED"
+    },
+
+    "TipOfTheDay": {
+      "Image.borderColor": "border"
+    },
+
+    "PackageSearch": {
+      "SearchResult": {
+        "background": "#e4faff",
+        "hoverBackground": "#d0e2ee",
+        "PackageTag": {
+          "background": "#d2e6eb",
+          "foreground": "black",
+          "hoverBackground": "#bfd0db",
+          "selectedBackground": "#4395e2",
+          "selectedForeground": "white"
+        }
+      },
+      "PackageTag": {
+        "background": "grey14",
+        "foreground": "black",
+        "hoverBackground": "#c9d2db",
+        "selectedBackground": "#4395e2",
+        "selectedForeground": "white"
+      },
+      "PackageTagSelected.background": "#4395e2",
+      "PackageTagSelected.foreground": "white"
     }
   }
 }

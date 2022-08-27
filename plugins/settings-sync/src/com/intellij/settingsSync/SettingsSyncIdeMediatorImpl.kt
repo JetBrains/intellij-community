@@ -65,10 +65,8 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     val pluginsFileState = snapshot.fileStates.find { it.file == "$OPTIONS_DIRECTORY/${SettingsSyncPluginManager.FILE_SPEC}" }
     if (pluginsFileState != null) {
       val pluginManager = SettingsSyncPluginManager.getInstance()
-      pluginManager.doWithNoUpdateFromIde {
-        updateSettings(listOf(pluginsFileState))
-        pluginManager.pushChangesToIde()
-      }
+      updateSettings(listOf(pluginsFileState))
+      pluginManager.pushChangesToIde()
     }
 
     // 3. after that update the rest of changed settings
@@ -88,7 +86,9 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
 
   override fun collectFilesToExportFromSettings(appConfigPath: Path): () -> Collection<Path> {
     return {
-      getExportableItemsFromLocalStorage(getExportableComponentsMap(false), componentStore.storageManager).keys
+      val exportableItems = getExportableComponentsMap(isComputePresentableNames = false, componentStore.storageManager,
+                                                       withExportable = false)
+      getExportableItemsFromLocalStorage(exportableItems, componentStore.storageManager).keys
     }
   }
 
@@ -99,7 +99,9 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
       rootConfig.resolve(file).write(content, 0, size)
     }
 
-    if (!isSyncEnabled(fileSpec, roamingType)) {
+    val syncEnabled = isSyncEnabled(fileSpec, roamingType)
+    LOG.debug("Sync is ${if (syncEnabled) "enabled" else "disabled"} for $fileSpec ($file)")
+    if (!syncEnabled) {
       return
     }
 

@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.builtins.StandardNames.ENUM_VALUE_OF
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertContainsElements
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertDoesntContain
-import org.jetbrains.kotlin.idea.test.util.JUnit4Assertions.assertSameElements
+import org.jetbrains.kotlin.idea.base.test.JUnit4Assertions.assertSameElements
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.utils.addToStdlib.cast
@@ -619,6 +619,55 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         TestCase.assertEquals("ListIterator", resolved.containingClass?.name)
     }
 
+    fun checkStringJVM(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+            fun foo() {
+                "with default".capitalize()
+                "without default".capitalize(Locale.US)
+                "with default".toUpperCase()
+                "without default".toUpperCase(Locale.US)
+            }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+
+        val withDefaultCapitalize = uFile.findElementByTextFromPsi<UCallExpression>("capitalize()", strict = false)
+            .orFail("cant convert to UCallExpression")
+        val withDefaultCapitalizeResolved = withDefaultCapitalize.resolve()
+            .orFail("cant resolve from $withDefaultCapitalize")
+        TestCase.assertEquals("capitalize", withDefaultCapitalizeResolved.name)
+        TestCase.assertEquals(1, withDefaultCapitalizeResolved.parameterList.parametersCount)
+        TestCase.assertEquals("PsiType:String", withDefaultCapitalizeResolved.parameterList.parameters[0].type.toString())
+
+        val withoutDefaultCapitalize = uFile.findElementByTextFromPsi<UCallExpression>("capitalize(Locale.US)", strict = false)
+            .orFail("cant convert to UCallExpression")
+        val withoutDefaultCapitalizeResolved = withoutDefaultCapitalize.resolve()
+            .orFail("cant resolve from $withoutDefaultCapitalize")
+        TestCase.assertEquals("capitalize", withoutDefaultCapitalizeResolved.name)
+        TestCase.assertEquals(2, withoutDefaultCapitalizeResolved.parameterList.parametersCount)
+        TestCase.assertEquals("PsiType:String", withoutDefaultCapitalizeResolved.parameterList.parameters[0].type.toString())
+        TestCase.assertEquals("PsiType:Locale", withoutDefaultCapitalizeResolved.parameterList.parameters[1].type.toString())
+
+        val withDefaultUpperCase = uFile.findElementByTextFromPsi<UCallExpression>("toUpperCase()", strict = false)
+            .orFail("cant convert to UCallExpression")
+        val withDefaultUpperCaseResolved = withDefaultUpperCase.resolve()
+            .orFail("cant resolve from $withDefaultUpperCase")
+        TestCase.assertEquals("toUpperCase", withDefaultUpperCaseResolved.name)
+        TestCase.assertEquals(1, withDefaultUpperCaseResolved.parameterList.parametersCount)
+        TestCase.assertEquals("PsiType:String", withDefaultUpperCaseResolved.parameterList.parameters[0].type.toString())
+
+        val withoutDefaultUpperCase = uFile.findElementByTextFromPsi<UCallExpression>("toUpperCase(Locale.US)", strict = false)
+            .orFail("cant convert to UCallExpression")
+        val withoutDefaultUpperCaseResolved = withoutDefaultUpperCase.resolve()
+            .orFail("cant resolve from $withoutDefaultUpperCase")
+        TestCase.assertEquals("toUpperCase", withoutDefaultUpperCaseResolved.name)
+        TestCase.assertEquals(2, withoutDefaultUpperCaseResolved.parameterList.parametersCount)
+        TestCase.assertEquals("PsiType:String", withoutDefaultUpperCaseResolved.parameterList.parameters[0].type.toString())
+        TestCase.assertEquals("PsiType:Locale", withoutDefaultUpperCaseResolved.parameterList.parameters[1].type.toString())
+    }
+
     fun checkArgumentMappingDefaultValue(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "main.kt", """
@@ -1145,6 +1194,34 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
             node.resolve()?.let { resolvedElements[node] = it }
             return true
         }
+    }
+    
+    fun checkResolveToSubstituteOverride(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                open class Box<T>(
+                  open val t: T
+                ) {
+                  fun foo(): T { return t }
+                }
+                
+                class SubBox(
+                  override val t: String
+                ) : Box<String>(t)
+                
+                fun box() {
+                  val b = SubBox("hi")
+                  b.fo<caret>o()
+                }
+            """.trimIndent()
+        )
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        val foo = uCallExpression.resolve()
+            .orFail("cant resolve $uCallExpression")
+        // NB: the return type is not a substituted type, String, but the original one, T, since it's resolved to
+        // the original function Box#foo()T, not a fake overridden one in SubBox.
+        TestCase.assertEquals("PsiType:T", foo.returnType?.toString())
     }
 
 }

@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
@@ -26,15 +27,15 @@ import java.util.function.Predicate;
 
 import static com.intellij.openapi.progress.PerformInBackgroundOption.ALWAYS_BACKGROUND;
 
-public class UnknownSdkTracker {
+@Service(Service.Level.PROJECT)
+public final class UnknownSdkTracker {
   private static final Logger LOG = Logger.getInstance(UnknownSdkTracker.class);
 
-  @NotNull
-  public static UnknownSdkTracker getInstance(@NotNull Project project) {
+  public static @NotNull UnknownSdkTracker getInstance(@NotNull Project project) {
     return project.getService(UnknownSdkTracker.class);
   }
 
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
 
   public UnknownSdkTracker(@NotNull Project project) {
     myProject = project;
@@ -52,17 +53,14 @@ public class UnknownSdkTracker {
 
     var snapshot = collector.collectSdksBlocking();
     var action = createProcessSdksAction(snapshot);
-    if (action == null) return List.of();
-    return action.apply(indicator);
+    return action == null ? List.of() : action.apply(indicator);
   }
 
-  @NotNull
-  private UnknownSdkTrackerTask newUpdateTask(@NotNull ShowStatusCallback showStatus,
-                                              @NotNull Predicate<? super UnknownSdkSnapshot> shouldProcessSnapshot) {
+  private @NotNull UnknownSdkTrackerTask newUpdateTask(@NotNull ShowStatusCallback showStatus,
+                                                       @NotNull Predicate<? super UnknownSdkSnapshot> shouldProcessSnapshot) {
     return new UnknownSdkTrackerTask() {
-      @Nullable
       @Override
-      public UnknownSdkCollector createCollector() {
+      public @Nullable UnknownSdkCollector createCollector() {
         if (!isEnabled() || !Registry.is("unknown.sdk.auto")) {
           showStatus.showEmptyStatus();
           return null;
@@ -72,10 +70,14 @@ public class UnknownSdkTracker {
 
       @Override
       public void onLookupCompleted(@NotNull UnknownSdkSnapshot snapshot) {
-        if (!shouldProcessSnapshot.test(snapshot)) return;
+        if (!shouldProcessSnapshot.test(snapshot)) {
+          return;
+        }
 
         var action = createProcessSdksAction(snapshot, showStatus);
-        if (action == null) return;
+        if (action == null) {
+          return;
+        }
 
         ProgressManager.getInstance()
           .run(new Task.Backgroundable(myProject, ProjectBundle.message("progress.title.resolving.sdks"), false, ALWAYS_BACKGROUND) {
@@ -109,8 +111,7 @@ public class UnknownSdkTracker {
     return UnknownSdkResolver.EP_NAME.findFirstSafe(it -> it.supportsResolution(type)) != null;
   }
 
-  @NotNull
-  private static <E extends UnknownSdk> List<E> filterOnlyAllowedEntries(@NotNull List<? extends E> input) {
+  private static @NotNull <E extends UnknownSdk> List<E> filterOnlyAllowedEntries(@NotNull List<? extends E> input) {
     List<E> copy = new ArrayList<>();
     for (E item : input) {
       SdkType type = item.getSdkType();
@@ -123,8 +124,7 @@ public class UnknownSdkTracker {
     return copy;
   }
 
-  @NotNull
-  private static List<Sdk> filterOnlyAllowedSdkEntries(@NotNull List<? extends Sdk> input) {
+  private static @NotNull List<Sdk> filterOnlyAllowedSdkEntries(@NotNull List<? extends Sdk> input) {
     List<Sdk> copy = new ArrayList<>();
     for (Sdk item : input) {
       SdkTypeId type = item.getSdkType();
@@ -137,8 +137,7 @@ public class UnknownSdkTracker {
     return copy;
   }
 
-  @Nullable
-  private Function<ProgressIndicator, List<UnknownSdkFix>> createProcessSdksAction(@NotNull UnknownSdkSnapshot snapshot) {
+  private @Nullable Function<ProgressIndicator, List<UnknownSdkFix>> createProcessSdksAction(@NotNull UnknownSdkSnapshot snapshot) {
     //it may run on EDT, e.g. in default task
     //we cannot use snapshot#missingSdks here, because it affects other IDEs/languages where our logic is not good enough
     List<UnknownSdk> fixable = filterOnlyAllowedEntries(snapshot.getResolvableSdks());
@@ -215,18 +214,20 @@ public class UnknownSdkTracker {
          };
   }
 
-  @Nullable
-  private Progressive createProcessSdksAction(@NotNull UnknownSdkSnapshot snapshot,
-                                              @NotNull ShowStatusCallback showStatus) {
-    //it may run on EDT, for the standard task
+  private @Nullable Progressive createProcessSdksAction(@NotNull UnknownSdkSnapshot snapshot,
+                                                        @NotNull ShowStatusCallback showStatus) {
+    // it may run on EDT, for the standard task
     var task = createProcessSdksAction(snapshot);
-    if (task == null) return null;
+    if (task == null) {
+      return null;
+    }
 
     return indicator -> {
       try {
         var result = task.apply(indicator);
         showStatus.showStatus(result, indicator);
-      } catch (Throwable t) {
+      }
+      catch (Throwable t) {
         if (t instanceof ControlFlowException) {
           showStatus.showInterruptedStatus();
           ExceptionUtil.rethrow(t);
@@ -258,8 +259,7 @@ public class UnknownSdkTracker {
     }
   }
 
-  @NotNull
-  public List<UnknownSdkFix> applyAutoFixesAndNotify(@NotNull List<? extends UnknownSdkFix> fixes, @NotNull ProgressIndicator indicator) {
+  public @NotNull List<UnknownSdkFix> applyAutoFixesAndNotify(@NotNull List<? extends UnknownSdkFix> fixes, @NotNull ProgressIndicator indicator) {
     List<UnknownSdkFix> otherFixes = new ArrayList<>();
     List<UnknownMissingSdkFixLocal> localFixes = new ArrayList<>();
 
@@ -267,7 +267,8 @@ public class UnknownSdkTracker {
       var action = fix.getSuggestedFixAction();
       if (action instanceof UnknownMissingSdkFixLocal) {
         localFixes.add((UnknownMissingSdkFixLocal)action);
-      } else {
+      }
+      else {
         otherFixes.add(fix);
       }
     }
@@ -296,8 +297,7 @@ public class UnknownSdkTracker {
     return fix instanceof UnknownMissingSdkFixLocal;
   }
 
-  @NotNull
-  public Sdk applyAutoFixAndNotify(@NotNull UnknownSdkFixAction fix, @NotNull ProgressIndicator indicator) throws IllegalArgumentException {
+  public @NotNull Sdk applyAutoFixAndNotify(@NotNull UnknownSdkFixAction fix, @NotNull ProgressIndicator indicator) throws IllegalArgumentException {
     if (!isAutoFixAction(fix)) throw new IllegalArgumentException("The argument must pass #isAutoFixAction test");
     assert fix instanceof UnknownMissingSdkFixLocal : "Invalid fix: " + fix;
 
@@ -313,8 +313,7 @@ public class UnknownSdkTracker {
     }
   }
 
-  @NotNull
-  private List<UnknownSdkLookup> collectSdkLookups(@NotNull ProgressIndicator indicator) {
+  private @NotNull List<UnknownSdkLookup> collectSdkLookups(@NotNull ProgressIndicator indicator) {
     List<UnknownSdkLookup> lookups = new ArrayList<>();
     UnknownSdkResolver.EP_NAME.forEachExtensionSafe(ext -> {
       UnknownSdkLookup resolver = ext.createResolver(myProject, indicator);
@@ -325,11 +324,10 @@ public class UnknownSdkTracker {
     return lookups;
   }
 
-  @NotNull
-  private static <R> Map<UnknownSdk, R> findFixesAndRemoveFixable(@NotNull ProgressIndicator indicator,
-                                                                  @NotNull List<UnknownSdk> infos,
-                                                                  @NotNull List<? extends UnknownSdkLookup> lookups,
-                                                                  @NotNull TripleFunction<? super UnknownSdkLookup, ? super UnknownSdk, ? super ProgressIndicator, ? extends R> fun) {
+  private static @NotNull <R> Map<UnknownSdk, R> findFixesAndRemoveFixable(@NotNull ProgressIndicator indicator,
+                                                                           @NotNull List<UnknownSdk> infos,
+                                                                           @NotNull List<? extends UnknownSdkLookup> lookups,
+                                                                           @NotNull TripleFunction<? super UnknownSdkLookup, ? super UnknownSdk, ? super ProgressIndicator, ? extends R> fun) {
     indicator.pushState();
 
     Map<UnknownSdk, R> result = new LinkedHashMap<>();

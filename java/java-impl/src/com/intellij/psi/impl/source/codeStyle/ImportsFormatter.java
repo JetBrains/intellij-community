@@ -49,7 +49,7 @@ public class ImportsFormatter extends XmlRecursiveElementVisitor {
     myIndentOptions = settings.getIndentOptionsByFile(file);
   }
 
-  @Override public void visitXmlTag(XmlTag tag) {
+  @Override public void visitXmlTag(@NotNull XmlTag tag) {
     if (checkElementContainsRange(tag)) {
       super.visitXmlTag(tag);
     }
@@ -59,11 +59,11 @@ public class ImportsFormatter extends XmlRecursiveElementVisitor {
     return PAGE_DIRECTIVE.equals(tag.getName());
   }
 
-  @Override public void visitXmlText(XmlText text) {
+  @Override public void visitXmlText(@NotNull XmlText text) {
 
   }
 
-  @Override public void visitXmlAttribute(XmlAttribute attribute) {
+  @Override public void visitXmlAttribute(@NotNull XmlAttribute attribute) {
     if (isPageDirectiveTag(attribute.getParent())) {
       final XmlAttributeValue valueElement = attribute.getValueElement();
       if (valueElement != null && checkRangeContainsElement(attribute) && isImportAttribute(attribute) && PostFormatProcessorHelper

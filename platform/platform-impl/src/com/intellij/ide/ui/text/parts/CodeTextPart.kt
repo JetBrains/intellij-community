@@ -31,7 +31,7 @@ open class CodeTextPart(text: String, private val addSpaceAround: Boolean = fals
   }
 
   override fun insertToTextPane(textPane: JTextPane, startOffset: Int): Int {
-    val textToInsert = if (addSpaceAround) " $text " else text
+    val textToInsert = if (addSpaceAround) "\u00A0$text\u00A0" else text
     textPane.document.insertString(startOffset, textToInsert, attributes)
     val endOffset = startOffset + textToInsert.length
 

@@ -16,8 +16,8 @@
 package org.jetbrains.idea.maven.inspections.dom
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import org.jetbrains.idea.maven.dom.inspections.MavenRedundantGroupIdInspection
 import org.junit.Test
 

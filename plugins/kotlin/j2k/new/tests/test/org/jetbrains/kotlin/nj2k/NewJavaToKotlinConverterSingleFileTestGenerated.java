@@ -6,7 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -2761,6 +2761,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("bitwise.java")
         public void testBitwise() throws Exception {
             runTest("testData/newJ2k/implicitCasts/bitwise.java");
+        }
+
+        @TestMetadata("explicitCastReceiver.java")
+        public void testExplicitCastReceiver() throws Exception {
+            runTest("testData/newJ2k/implicitCasts/explicitCastReceiver.java");
         }
 
         @TestMetadata("inConstructorCall.java")

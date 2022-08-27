@@ -148,7 +148,7 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    assertRootsChanged(supportsZeroEventsOnNoProjectChange() ? 0 : 1);
+    assertRootsChanged(0);
   }
 
   @Test

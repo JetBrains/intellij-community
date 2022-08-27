@@ -2,7 +2,6 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
@@ -27,29 +26,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     setLanguageLevel(LanguageLevel.JDK_16);
   }
 
-  @Override
-  protected int findMatchesCount(@Language("JAVA") String in, String pattern, LanguageFileType fileType) {
-    return super.findMatchesCount(in, pattern, fileType);
+  protected List<MatchResult> findMatches(@Language("JAVA") String in, String pattern) {
+    return super.findMatches(in, pattern, JavaFileType.INSTANCE);
   }
 
-  @Override
-  protected List<MatchResult> findMatches(@Language("JAVA") String in,
-                                          String pattern,
-                                          LanguageFileType patternFileType,
-                                          com.intellij.lang.Language patternLanguage,
-                                          LanguageFileType sourceFileType,
-                                          boolean physicalSourceFile) {
-    return super.findMatches(in, pattern, patternFileType, patternLanguage, sourceFileType, physicalSourceFile);
-  }
-
-  @Override
-  protected List<MatchResult> findMatches(@Language("JAVA") String in, String pattern, LanguageFileType patternFileType) {
-    return super.findMatches(in, pattern, patternFileType);
-  }
-
-  @Override
   protected int findMatchesCount(@Language("JAVA") String in, String pattern) {
-    return super.findMatchesCount(in, pattern);
+    return findMatchesCount(in, pattern, JavaFileType.INSTANCE);
   }
 
   public void testSearchExpressions() {
@@ -2405,7 +2387,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals(1, findMatchesCount(source, pattern3));
 
     String pattern4 = "class '_A {" +
-                      "  '_type 'method () throws '_E{0,0}:[ regex( E2 )];" +
+                      "  '_type 'method () throws '_E{0,0}:[ regex( E2 ) ];" +
                       "}";
     assertEquals(2, findMatchesCount(source, pattern4));
   }
@@ -2902,12 +2884,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Find multi catch with variables", 1, findMatchesCount(source, pattern6));
 
     String pattern7 = "try { '_St1*; } catch ('E '_e) { '_St2*; }";
-    final List<MatchResult> matches = findMatches(source, pattern7, JavaFileType.INSTANCE);
+    final List<MatchResult> matches = findMatches(source, pattern7);
     assertEquals(3, matches.size());
     assertEquals("NullPointerException  | UnsupportedOperationException", matches.get(1).getMatchImage());
 
     String pattern8 = "try { '_St1*; } catch ('_E '_e{2,2}) { '_St2*; }";
-    final List<MatchResult> matches2 = findMatches(source, pattern8, JavaFileType.INSTANCE);
+    final List<MatchResult> matches2 = findMatches(source, pattern8);
     assertEquals(1, matches2.size());
     assertEquals("Find try with exactly 2 catch blocks",
                  "try {\n" +
@@ -2919,7 +2901,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                  matches2.get(0).getMatchImage());
 
     String pattern9 = "try { '_st1*; } catch ('_E '_e{0,0}) { '_St2*; }";
-    final List<MatchResult> matches3 = findMatches(source, pattern9, JavaFileType.INSTANCE);
+    final List<MatchResult> matches3 = findMatches(source, pattern9);
     assertEquals(1, matches3.size());
     assertEquals("Should find try without catch blocks",
                  "try (InputStream in = new FileInputStream(\"tmp\")) {\n" +
@@ -2931,7 +2913,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "  try {} finally {}" +
                      "}}";
     String pattern10 = "try { '_st1*; } catch ('_E '_e{0,0}) { '_St2*; } finally { '_St3*; }";
-    final List<MatchResult> matches4 = findMatches(source2, pattern10, JavaFileType.INSTANCE);
+    final List<MatchResult> matches4 = findMatches(source2, pattern10);
     assertEquals(1, matches4.size());
     assertEquals("Should find try without catch blocks",
                  "try {} finally {}",

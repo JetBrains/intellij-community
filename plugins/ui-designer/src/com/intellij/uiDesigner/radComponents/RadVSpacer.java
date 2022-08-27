@@ -8,10 +8,6 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.palette.Palette;
 
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class RadVSpacer extends RadAtomicComponent {
   public static class Factory extends RadComponentFactory {
     @Override

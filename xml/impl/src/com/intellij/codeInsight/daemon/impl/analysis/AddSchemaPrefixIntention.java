@@ -92,7 +92,7 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
         .withName(XmlBundle.message("xml.intention.insert.namespace.prefix.command")).run(() -> {
         tag.accept(new XmlRecursiveElementVisitor() {
           @Override
-          public void visitXmlTag(XmlTag tag) {
+          public void visitXmlTag(@NotNull XmlTag tag) {
             if (tag.getNamespace().equals(namespace) && tag.getNamespacePrefix().isEmpty()) {
               tags.add(tag);
             }
@@ -100,7 +100,7 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
           }
 
           @Override
-          public void visitXmlAttributeValue(XmlAttributeValue value) {
+          public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
             PsiReference ref = null;
             boolean skip = false;
             for (PsiReference reference : value.getReferences()) {

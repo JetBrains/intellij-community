@@ -71,9 +71,6 @@ import java.util.function.Function;
 
 /**
  * This class is automaton with finite number of state.
- *
- * @author Anton Katilin
- * @author Vladimir Kondratyev
  */
 public final class IdeKeyEventDispatcher {
   private static final Logger LOG = Logger.getInstance(IdeKeyEventDispatcher.class);

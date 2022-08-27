@@ -12,11 +12,10 @@ interface FailureDetailsOnCI {
     return if (method == null) "" else "${method.declaringClass.name}.${method.name}"
   }
 
-  fun getFailureDetails(runContext: IDERunContext, stackTraceContent: String): String {
+  fun getFailureDetails(runContext: IDERunContext): String {
     val testMethodName = getTestMethodName().ifEmpty { runContext.contextName }
 
     return "Test: $testMethodName" + System.lineSeparator() +
-           "You can find logs and other useful info in CI artifacts under the path ${runContext.contextName}" + System.lineSeparator() +
-           stackTraceContent
+           "You can find logs and other useful info in CI artifacts under the path ${runContext.contextName}"
   }
 }

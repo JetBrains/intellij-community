@@ -67,14 +67,14 @@ fun initApplication(rawArgs: List<String>, appDeferred: Deferred<Any>) {
 }
 
 suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Any>) {
-  val initAppActivity = appInitPreparationActivity!!.endAndStart("app initialization")
+  val initAppActivity = StartUpMeasurer.appInitPreparationActivity!!.endAndStart("app initialization")
   val pluginSet = initAppActivity.runChild("plugin descriptor init waiting") {
     PluginManagerCore.getInitPluginFuture().await()
   }
 
-  val (app, setBaseLaFJob) = initAppActivity.runChild("app waiting") {
+  val (app, initLafJob) = initAppActivity.runChild("app waiting") {
     @Suppress("UNCHECKED_CAST")
-    appDeferred.await() as Pair<ApplicationImpl, Job>
+    appDeferred.await() as Pair<ApplicationImpl, Job?>
   }
 
   initAppActivity.runChild("app component registration") {
@@ -89,9 +89,14 @@ suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Any>)
   }
 
   coroutineScope {
-    launch {
-      setBaseLaFJob.join()
+    // LaF must be initialized before app init because icons maybe requested and as result,
+    // scale must be already initialized (especially important for Linux)
+    runActivity("init laf waiting") {
+      initLafJob?.join()
+    }
 
+    // executed in main thread
+    launch {
       val lafManagerDeferred = launch(CoroutineName("laf initialization") + SwingDispatcher) {
         // don't wait for result - we just need to trigger initialization if not yet created
         app.getServiceAsync(LafManager::class.java)
@@ -106,7 +111,7 @@ suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Any>)
     withContext(Dispatchers.Default) {
       val args = processProgramArguments(rawArgs)
 
-      val deferredStarter = initAppActivity.runChild("app starter creation") {
+      val deferredStarter = runActivity("app starter creation") {
         createAppStarterAsync(args)
       }
 
@@ -437,7 +442,6 @@ private fun processProgramArguments(args: List<String>): List<String> {
   return arguments
 }
 
-
 fun CoroutineScope.callAppInitialized(listeners: List<ApplicationInitializedListener>, asyncScope: CoroutineScope) {
   for (listener in listeners) {
     launch {
@@ -447,10 +451,10 @@ fun CoroutineScope.callAppInitialized(listeners: List<ApplicationInitializedList
 }
 
 @Internal
-internal inline fun <T> ExtensionPointName<T>.processExtensions(consumer: (extension: T, pluginDescriptor: PluginDescriptor) -> Unit) {
+internal inline fun <T : Any> ExtensionPointName<T>.processExtensions(consumer: (extension: T, pluginDescriptor: PluginDescriptor) -> Unit) {
   val app = ApplicationManager.getApplication()
   val extensionArea = app.extensionArea as ExtensionsAreaImpl
-  for (adapter in extensionArea.getExtensionPoint<T>(name).getSortedAdapters()) {
+  for (adapter in extensionArea.getExtensionPoint<T>(name).sortedAdapters) {
     val extension: T = try {
       adapter.createInstance(app) ?: continue
     }

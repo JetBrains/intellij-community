@@ -2,7 +2,7 @@
 package org.jetbrains.intellij.build.tasks
 
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.rt.execution.junit.FileComparisonFailure
+import junit.framework.ComparisonFailure
 import com.intellij.util.PathUtilRt
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
@@ -51,7 +51,7 @@ fun filterFileIfAlreadyInZip(relativePath: String, file: Path, zipFiles: Mutable
   val isAsciiText: (Char) -> Boolean = { it == '\t' || it == '\n' || it == '\r' || it.code in 32..126 }
   val message = "Two files '${found}' and '${file}' with the same target path '${relativePath}' have different content"
   if (file1Text.take(1024).all(isAsciiText) && file2Text.take(1024).all(isAsciiText)) {
-    throw FileComparisonFailure(message, file1Text, file2Text, file.toString(), found.toString())
+    throw ComparisonFailure(message, file1Text, file2Text)
   }
   else {
     error(message)

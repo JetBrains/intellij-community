@@ -13,8 +13,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.ui.IconManager;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -700,7 +700,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       // if we're a normal module, add module's attrs
       if (PyPsiUtils.getRealContext(element).getContainingFile() instanceof PyFile) {
         for (String name : PyModuleType.getPossibleInstanceMembers()) {
-          ret.add(LookupElementBuilder.create(name).withIcon(PlatformIcons.FIELD_ICON));
+          ret.add(LookupElementBuilder.create(name).withIcon(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Field)));
         }
       }
 

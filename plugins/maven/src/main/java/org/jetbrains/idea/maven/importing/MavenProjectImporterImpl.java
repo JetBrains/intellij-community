@@ -138,7 +138,7 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
       deleteObsoletePhase.finished();
 
       StructuredIdeActivity importersPhase = MavenImportCollector.LEGACY_IMPORTERS_PHASE.startedWithParent(myProject, activity);
-      importExtensions(myProject, myIdeModifiableModelsProvider, extensionImporters, postTasks);
+      importExtensions(myProject, myIdeModifiableModelsProvider, extensionImporters, postTasks, importersPhase);
       importersPhase.finished();
     }
     else {
@@ -464,7 +464,7 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
     return MavenLegacyModuleImporter.ExtensionImporter.createIfApplicable(
       mavenProject,
       module,
-      mavenProject.isAggregator() ? MavenModuleType.AGGREGATOR : MavenModuleType.SINGLE_MODULE,
+      mavenProject.isAggregator() ? StandardMavenModuleType.AGGREGATOR : StandardMavenModuleType.SINGLE_MODULE,
       myProjectsTree,
       changes,
       myMavenProjectToModuleName,

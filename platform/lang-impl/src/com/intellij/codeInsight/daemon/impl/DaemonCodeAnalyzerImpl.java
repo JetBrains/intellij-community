@@ -735,10 +735,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
    * @param minSeverity the minimum HighlightSeverity starting from which infos are considered for collection
    */
   public @Nullable HighlightInfo findHighlightsByOffset(@NotNull Document document,
-                                              int offset,
-                                              boolean includeFixRange,
-                                              boolean highestPriorityOnly,
-                                              @NotNull HighlightSeverity minSeverity) {
+                                                        int offset,
+                                                        boolean includeFixRange,
+                                                        boolean highestPriorityOnly,
+                                                        @NotNull HighlightSeverity minSeverity) {
     HighlightByOffsetProcessor processor = new HighlightByOffsetProcessor(highestPriorityOnly);
     processHighlightsNearOffset(document, myProject, minSeverity, offset, includeFixRange, processor);
     return processor.getResult();

@@ -872,6 +872,11 @@ public class ChangesViewManager implements ChangesViewEx,
       }
 
       @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return ActionUpdateThread.EDT;
+      }
+
+      @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
         return myChangesViewManager.myState.myShowIgnored;
       }

@@ -8,6 +8,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.ObjectUtils
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.containers.getDiff
 import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
@@ -331,6 +332,8 @@ internal class MutableEntityStorageImpl(
       lockWrite()
       val originalImpl = original as AbstractEntityStorage
 
+      cleanupChanges(originalImpl)
+
       val res = HashMap<Class<*>, MutableList<EntityChange<*>>>()
       for ((entityId, change) in this.changeLog.changeLog) {
         when (change) {
@@ -374,6 +377,70 @@ internal class MutableEntityStorageImpl(
       unlockWrite()
     }
   }
+
+  /**
+   * Here we eliminate remove + add changes if the entities are the same and they don't have external mappings.
+   * We don't join events if the entities have external mappings just because it's safer.
+   */
+  internal fun cleanupChanges(originalImpl: AbstractEntityStorage) {
+    val adds = ArrayList<WorkspaceEntityData<*>>()
+    val removes = CollectionFactory.createSmallMemoryFootprintMap<WorkspaceEntityData<out WorkspaceEntity>, MutableList<WorkspaceEntityData<out WorkspaceEntity>>>()
+    changeLog.changeLog.forEach { _, value ->
+      if (value is ChangeEntry.AddEntity) {
+        adds.add(value.entityData)
+      }
+      else if (value is ChangeEntry.RemoveEntity) {
+        val existingValue = removes[value.oldData]
+        removes[value.oldData] = if (existingValue != null) ArrayList(existingValue + value.oldData) else mutableListOf(value.oldData)
+      }
+    }
+    val idsToRemove = ArrayList<EntityId>()
+    adds.forEach { addedEntityData ->
+      if (removes.isEmpty()) return@forEach
+      val possibleRemovedSameEntity = removes[addedEntityData]
+      val addedEntityId = addedEntityData.createEntityId()
+      val hasMapping = this.indexes.externalMappings.any { (_, value) ->
+        (value as ExternalEntityMappingImpl<*>).getDataByEntityId(addedEntityId) != null
+      }
+      if (hasMapping) return@forEach
+      val found = possibleRemovedSameEntity?.firstOrNull { possibleRemovedSame ->
+        same(originalImpl, addedEntityId, possibleRemovedSame.createEntityId())
+      }
+      if (found != null) {
+        val foundEntityId = found.createEntityId()
+        val hasRemovedMapping = originalImpl.indexes.externalMappings.any { (_, value) ->
+          value.getDataByEntityId(foundEntityId) != null
+        }
+        if (hasRemovedMapping) return@forEach
+        possibleRemovedSameEntity.remove(found)
+        if (possibleRemovedSameEntity.isEmpty()) removes.remove(addedEntityData)
+        idsToRemove += addedEntityId
+        idsToRemove += foundEntityId
+      }
+    }
+    idsToRemove.forEach { changeLog.changeLog.remove(it) }
+  }
+
+  private fun same(originalImpl: AbstractEntityStorage,
+                   addedEntityId: EntityId,
+                   removedEntityId: EntityId): Boolean {
+    if (addedEntityId == removedEntityId) return true
+    if (addedEntityId.clazz != removedEntityId.clazz) return false
+
+    val addedParents = this.refs.getParentRefsOfChild(addedEntityId.asChild())
+    val removeParents = originalImpl.refs.getParentRefsOfChild(removedEntityId.asChild())
+    if (addedParents.keys != removeParents.keys) return false
+    return addedParents.entries.all { (connectionId, addedParentEntityId) ->
+      val removedParentEntityId = removeParents[connectionId]!!
+      if (addedParentEntityId == removedParentEntityId) return@all true
+      val addedParentInfo = changeLog.changeLog[addedParentEntityId.id]
+      val removedParentInfo = changeLog.changeLog[removedParentEntityId.id]
+      if (addedParentInfo is ChangeEntry.AddEntity && removedParentInfo is ChangeEntry.RemoveEntity) {
+        same(originalImpl, addedParentEntityId.id, removedParentEntityId.id)
+      } else false
+    }
+  }
+
 
   override fun toSnapshot(): EntityStorageSnapshot {
     val newEntities = entitiesByType.toImmutable()
@@ -646,8 +713,10 @@ internal sealed class AbstractEntityStorage : EntityStorage {
     return entityDataById(entityIds)?.createEntity(this) as E?
   }
 
-  // Do not remove cast to Class<out TypedEntity>. kotlin fails without it
-  @Suppress("USELESS_CAST")
+  operator override fun <E : WorkspaceEntityWithPersistentId> contains(id: PersistentEntityId<E>): Boolean {
+    return indexes.persistentIdIndex.getIdsByEntry(id) != null
+  }
+
   override fun entitiesBySource(sourceFilter: (EntitySource) -> Boolean): Map<EntitySource, Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>> {
     return indexes.entitySourceIndex.entries().asSequence().filter { sourceFilter(it) }.associateWith { source ->
       indexes.entitySourceIndex

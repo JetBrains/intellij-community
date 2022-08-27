@@ -231,6 +231,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
   private void setComboboxModelInternal(final VirtualFile initialTargetDirectorySourceRoot,
                                         final VirtualFile oldSelection,
                                         final boolean forceIncludeAll) {
+    if (myProject.isDisposed()) return;
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     JComboBox<DirectoryChooser.ItemWrapper> comboBox = getComboBox();
     final ComboBoxModel<DirectoryChooser.ItemWrapper> model = comboBox.getModel();

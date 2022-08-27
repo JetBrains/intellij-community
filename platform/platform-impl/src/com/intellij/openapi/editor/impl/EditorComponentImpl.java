@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -94,7 +95,11 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
         VisualPosition magnificationPosition = myEditor.xyToVisualPosition(at);
         float currentSize = myEditor.getColorsScheme().getEditorFontSize2D();
         float defaultFontSize = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize2D();
-        myEditor.setFontSize(Math.max((float)(currentSize * scale), defaultFontSize));
+        float size = Math.max((float)(currentSize * scale), defaultFontSize);
+        myEditor.setFontSize(size);
+        if (EditorSettingsExternalizable.getInstance().isWheelFontChangePersistent()) {
+          myEditor.adjustGlobalFontSize(size);
+        }
 
         return myEditor.visualPositionToXY(magnificationPosition);
       }

@@ -125,6 +125,8 @@ abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, Q : Revie
         e.presentation.icon = FILTER_ICON.getLiveIndicatorIcon(vm.searchState.value.filterCount != 0)
       }
 
+      override fun getActionUpdateThread() = ActionUpdateThread.EDT
+
       override fun actionPerformed(e: AnActionEvent) {
         showQuickFiltersPopup(e.inputEvent.component as JComponent, quickFilters)
       }

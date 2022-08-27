@@ -12,6 +12,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.ide.actions.GotoFileAction;
+import com.intellij.ide.impl.DataValidators;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
 import com.intellij.lang.LangBundle;
@@ -264,37 +265,43 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       if (PlatformDataKeys.SEARCH_INPUT_TEXT.is(dataId)) {
         return myTextField.getText();
       }
-
       if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
         return myModel.getHelpId();
       }
+      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+        List<Object> selection = getChosenElements();
+        return (DataProvider)slowId -> getSlowData(dataId, selection);
+      }
+      else if (PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.is(dataId)) {
+        return getBounds();
+      }
+      return null;
+    }
 
+    private @Nullable Object getSlowData(@NotNull String dataId, @NotNull List<Object> selection) {
       if (myCalcElementsThread != null) {
         return null;
       }
-      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-        Object element = getChosenElement();
 
+      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+        Object element = ContainerUtil.getOnlyItem(selection);
         if (element instanceof PsiElement) {
           return element;
         }
 
         if (element instanceof DataProvider) {
-          return ((DataProvider)element).getData(dataId);
+          Object data = ((DataProvider)element).getData(dataId);
+          return data == null ? null : DataValidators.validOrNull(data, dataId, element);
         }
       }
-      else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-        final List<Object> chosenElements = getChosenElements();
-        List<PsiElement> result = new ArrayList<>(chosenElements.size());
-        for (Object element : chosenElements) {
+      else if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+        List<PsiElement> result = new ArrayList<>(selection.size());
+        for (Object element : selection) {
           if (element instanceof PsiElement) {
             result.add((PsiElement)element);
           }
         }
         return PsiUtilCore.toPsiElementArray(result);
-      }
-      else if (PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.is(dataId)) {
-        return getBounds();
       }
       return null;
     }
@@ -1632,6 +1639,11 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       }
       PsiElement[] elements = getElements();
       e.getPresentation().setEnabled(elements.length > 0);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
 
     public abstract PsiElement @NotNull [] getElements();

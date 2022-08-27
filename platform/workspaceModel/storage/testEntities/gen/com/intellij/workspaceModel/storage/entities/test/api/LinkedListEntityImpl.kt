@@ -72,11 +72,11 @@ open class LinkedListEntityImpl : LinkedListEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isMyNameInitialized()) {
         error("Field LinkedListEntity#myName should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field LinkedListEntity#entitySource should be initialized")
       }
       if (!getEntityData().isNextInitialized()) {
         error("Field LinkedListEntity#next should be initialized")
@@ -90,21 +90,13 @@ open class LinkedListEntityImpl : LinkedListEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as LinkedListEntity
-      this.myName = dataSource.myName
       this.entitySource = dataSource.entitySource
+      this.myName = dataSource.myName
       this.next = dataSource.next
       if (parents != null) {
       }
     }
 
-
-    override var myName: String
-      get() = getEntityData().myName
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().myName = value
-        changedProperty.add("myName")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -113,6 +105,14 @@ open class LinkedListEntityImpl : LinkedListEntity, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var myName: String
+      get() = getEntityData().myName
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().myName = value
+        changedProperty.add("myName")
       }
 
     override var next: LinkedListEntityId
@@ -225,8 +225,8 @@ class LinkedListEntityData : WorkspaceEntityData.WithCalculablePersistentId<Link
 
     other as LinkedListEntityData
 
-    if (this.myName != other.myName) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.myName != other.myName) return false
     if (this.next != other.next) return false
     return true
   }

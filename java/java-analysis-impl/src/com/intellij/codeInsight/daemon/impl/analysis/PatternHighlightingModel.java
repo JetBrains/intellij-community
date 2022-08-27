@@ -7,25 +7,30 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.psi.*;
 import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
+class PatternHighlightingModel {
 
-public class PatternHighlightingModel {
-
-  public static @NotNull List<HighlightInfo> createDeconstructionErrors(@Nullable PsiDeconstructionPattern deconstructionPattern) {
-    if (deconstructionPattern == null) return Collections.emptyList();
+  static void createDeconstructionErrors(@Nullable PsiDeconstructionPattern deconstructionPattern, @NotNull HighlightInfoHolder holder) {
+    if (deconstructionPattern == null) return;
     PsiTypeElement typeElement = deconstructionPattern.getTypeElement();
     PsiType deconstructionType = typeElement.getType();
     PsiClass recordClass = PsiUtil.resolveClassInClassTypeOnly(deconstructionType);
     if (recordClass == null || !recordClass.isRecord()) {
       String message = JavaErrorBundle.message("switch.record.required", typeElement.getText());
-      HighlightInfo error =
+      HighlightInfo info =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(message).create();
-      return new SmartList<>(error);
+      holder.add(info);
+      return;
+    }
+    if (recordClass.hasTypeParameters() &&
+        deconstructionType instanceof PsiClassType && !((PsiClassType)deconstructionType).hasParameters()) {
+      String message = JavaErrorBundle.message("error.raw.deconstruction", typeElement.getText());
+      HighlightInfo info =
+        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(message).create();
+      holder.add(info);
+      return;
     }
     PsiRecordComponent[] recordComponents = recordClass.getRecordComponents();
     PsiPattern[] patternComponents = deconstructionPattern.getDeconstructionList().getDeconstructionComponents();
@@ -35,10 +40,10 @@ public class PatternHighlightingModel {
         .range(deconstructionPattern.getDeconstructionList())
         .description(message)
         .escapedToolTip(message).create();
-      return new SmartList<>(info);
+      holder.add(info);
+      return;
     }
 
-    List<HighlightInfo> results = new SmartList<>();
     for (int i = 0; i < recordComponents.length; i++) {
       PsiPattern patternComponent = patternComponents[i];
       PsiType recordType = recordComponents[i].getType();
@@ -47,12 +52,11 @@ public class PatternHighlightingModel {
           !recordType.equals(patternType) && !JavaPsiPatternUtil.dominates(recordType, patternType)) {
         HighlightInfo info =
           HighlightUtil.createIncompatibleTypeHighlightInfo(recordType, patternType, patternComponent.getTextRange(), 0);
-        results.add(info);
+        holder.add(info);
       }
       if (patternComponent instanceof PsiDeconstructionPattern) {
-        results.addAll(createDeconstructionErrors(((PsiDeconstructionPattern)patternComponent)));
+        createDeconstructionErrors((PsiDeconstructionPattern)patternComponent, holder);
       }
     }
-    return results;
   }
 }

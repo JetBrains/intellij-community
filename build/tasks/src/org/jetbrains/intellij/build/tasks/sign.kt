@@ -133,12 +133,9 @@ fun signMacApp(
     )
 
     val env = sequenceOf("ARTIFACTORY_URL", "SERVICE_ACCOUNT_NAME", "SERVICE_ACCOUNT_TOKEN")
-                .map { it to System.getenv(it) }
-                .filterNot { it.second.isNullOrEmpty() }
-                .toList().takeIf { it.isNotEmpty() }
-                ?.joinToString(separator = " ", postfix = " ") {
-                  "${it.first}=${it.second}"
-                } ?: ""
+      .joinToString(separator = " ", postfix = " ") {
+        "$it=${System.getenv(it)}"
+      }
     tracer.spanBuilder("sign mac app").setAttribute("file", appArchiveFile.toString()).useWithScope {
       signFile(remoteDir = remoteDir,
                commandString = "$env'$remoteDir/signapp.sh' '${args.joinToString("' '")}'",
@@ -282,6 +279,8 @@ private fun downloadResult(remoteFile: String,
       var attempt = 1
       do {
         try {
+          Files.deleteIfExists(tempFile)
+          Files.createFile(tempFile)
           ftpClient.get(remoteFile, NioFileDestination(tempFile))
         }
         catch (e: Exception) {
@@ -368,7 +367,25 @@ private inline fun executeTask(host: String,
 
   SSHClient(config).use { ssh ->
     ssh.addHostKeyVerifier(PromiscuousVerifier())
-    ssh.connect(host)
+    tracer.spanBuilder("connecting to $host").use { span ->
+      var attempt = 1
+      do {
+        try {
+          ssh.connect(host)
+          break
+        }
+        catch (e: Exception) {
+          span.addEvent("cannot connect to $host", Attributes.of(
+            AttributeKey.longKey("attemptNumber"), attempt.toLong(),
+            AttributeKey.stringKey("error"), e.toString()
+          ))
+          attempt++
+          if (attempt > 3) throw e
+          continue
+        }
+      }
+      while (true)
+    }
     val passwordFinder = object : PasswordFinder {
       override fun reqPassword(resource: Resource<*>?) = password.toCharArray().clone()
       override fun shouldRetry(resource: Resource<*>?) = false
@@ -397,7 +414,7 @@ private fun removeDir(ssh: SSHClient, remoteDir: String) {
   tracer.spanBuilder("remove remote dir").setAttribute("remoteDir", remoteDir).use {
     ssh.startSession().use { session ->
       val command = session.exec("rm -rf '$remoteDir'")
-      command.join(30, TimeUnit.SECONDS)
+      command.join(5, TimeUnit.MINUTES)
       // must be called before checking exit code
       command.close()
       if (command.exitStatus != 0) {

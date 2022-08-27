@@ -6,7 +6,7 @@ import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
-import org.jetbrains.kotlin.idea.test.TestRoot;
+import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
 
 /**
@@ -346,6 +346,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             @TestMetadata("extensionFunctionImportImplicitReceiver.before.Main.kt")
             public void testExtensionFunctionImportImplicitReceiver() throws Exception {
                 runTest("testData/quickfix/autoImports/extensionFunctionImportImplicitReceiver.before.Main.kt");
+            }
+
+            @TestMetadata("extensionFunctionWithGenericImport.before.Main.kt")
+            public void testExtensionFunctionWithGenericImport() throws Exception {
+                runTest("testData/quickfix/autoImports/extensionFunctionWithGenericImport.before.Main.kt");
             }
 
             @TestMetadata("extensionPreferDeprecatedSinceApplicable.test")

@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFsConnectionListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
@@ -90,6 +91,16 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     @Override
     public ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
       return ((VirtualFilePointerManagerImpl)getInstance()).prepareChange(events);
+    }
+  }
+
+  static final class MyPersistentFsConnectionListener implements PersistentFsConnectionListener {
+    @Override
+    public void beforeConnectionClosed() {
+      final var service = ApplicationManager.getApplication().getServiceIfCreated(VirtualFilePointerManager.class);
+      if (service != null) {
+        ((VirtualFilePointerManagerImpl)service).switchToUrlBasedPointers();
+      }
     }
   }
 
@@ -417,16 +428,32 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
     return file == null ? create(pointer.getUrl(), parent, listener) : create(file, parent, listener);
   }
 
-  public synchronized void assertAllPointersDisposed() {
+  synchronized void switchToUrlBasedPointers() {
+    myLocalRoot.replaceChildrenWithUPN();
+    myTempRoot.replaceChildrenWithUPN();
+  }
+
+  public synchronized void assertUrlBasedPointers() {
+    assertUrlBasedPointers(myLocalRoot);
+    assertUrlBasedPointers(myTempRoot);
+  }
+
+  private static void assertUrlBasedPointers(@NotNull FilePartNode node) {
+    if (node.isUrlBased()) {
+      for (FilePartNode child : node.children) {
+        assertUrlBasedPointers(child);
+      }
+    }
+    else {
+      node.processPointers(VirtualFilePointerManagerImpl::throwAndDisposeOnLeakedPointer);
+    }
+  }
+
+  private synchronized void assertAllPointersDisposed() {
     List<VirtualFilePointer> leaked = new ArrayList<>(dumpAllPointers());
     leaked.sort(Comparator.comparing(VirtualFilePointer::getUrl));
     for (VirtualFilePointer pointer : leaked) {
-      try {
-        ((VirtualFilePointerImpl)pointer).throwDisposalError("Not disposed pointer: " + pointer);
-      }
-      finally {
-        ((VirtualFilePointerImpl)pointer).dispose();
-      }
+      throwAndDisposeOnLeakedPointer((VirtualFilePointerImpl)pointer);
     }
 
     synchronized (myContainers) {
@@ -434,6 +461,15 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
         VirtualFilePointerContainerImpl container = myContainers.iterator().next();
         container.throwDisposalError("Not disposed container");
       }
+    }
+  }
+
+  private static void throwAndDisposeOnLeakedPointer(@NotNull VirtualFilePointerImpl pointer) {
+    try {
+      pointer.throwDisposalError("Not disposed pointer: " + pointer);
+    }
+    finally {
+      pointer.dispose();
     }
   }
 

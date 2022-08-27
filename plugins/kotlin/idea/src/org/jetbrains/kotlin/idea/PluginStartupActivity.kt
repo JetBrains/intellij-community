@@ -2,14 +2,16 @@
 package org.jetbrains.kotlin.idea
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.updateSettings.impl.UpdateChecker.excludedFromUpdateCheckPlugins
 import com.intellij.util.concurrency.AppExecutorUtil
-import org.jetbrains.kotlin.idea.KotlinPluginCompatibilityVerifier.checkCompatibility
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePluginVersion
 import org.jetbrains.kotlin.idea.configuration.notifications.notifyKotlinStyleUpdateIfNeeded
 import org.jetbrains.kotlin.idea.configuration.notifications.showEapSurveyNotification
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
@@ -21,7 +23,7 @@ import java.util.concurrent.Callable
 internal class PluginStartupActivity : StartupActivity.Background {
     override fun runActivity(project: Project) {
         excludedFromUpdateCheckPlugins.add("org.jetbrains.kotlin")
-        checkCompatibility()
+        checkPluginCompatibility()
         setupReportingFromRelease()
 
         //todo[Sedunov]: wait for fix in platform to avoid misunderstood from Java newbies (also ConfigureKotlinInTempDirTest)
@@ -45,5 +47,24 @@ internal class PluginStartupActivity : StartupActivity.Background {
                 daemonCodeAnalyzer.serializeCodeInsightPasses(true)
             }
             .submit(AppExecutorUtil.getAppExecutorService())
+    }
+
+    private fun checkPluginCompatibility() {
+        val platformVersion = ApplicationInfo.getInstance().shortVersion ?: return
+        val isAndroidStudio = KotlinPlatformUtils.isAndroidStudio
+
+        val rawVersion = KotlinIdePlugin.version
+        val kotlinPluginVersion = KotlinIdePluginVersion.parse(rawVersion).getOrNull() ?: return
+
+        if (kotlinPluginVersion.platformVersion != platformVersion || kotlinPluginVersion.isAndroidStudio != isAndroidStudio) {
+            val ideName = ApplicationInfo.getInstance().versionName
+
+            runInEdt {
+                Messages.showWarningDialog(
+                    KotlinBundle.message("plugin.verifier.compatibility.issue.message", rawVersion, ideName, platformVersion),
+                    KotlinBundle.message("plugin.verifier.compatibility.issue.title")
+                )
+            }
+        }
     }
 }

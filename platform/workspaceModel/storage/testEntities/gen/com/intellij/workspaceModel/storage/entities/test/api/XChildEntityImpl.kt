@@ -86,11 +86,11 @@ open class XChildEntityImpl : XChildEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isChildPropertyInitialized()) {
         error("Field XChildEntity#childProperty should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field XChildEntity#entitySource should be initialized")
       }
       if (_diff != null) {
         if (_diff.extractOneToManyParent<WorkspaceEntityBase>(PARENTENTITY_CONNECTION_ID, this) == null) {
@@ -122,22 +122,14 @@ open class XChildEntityImpl : XChildEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as XChildEntity
-      this.childProperty = dataSource.childProperty
       this.entitySource = dataSource.entitySource
+      this.childProperty = dataSource.childProperty
       this.dataClass = dataSource.dataClass
       if (parents != null) {
         this.parentEntity = parents.filterIsInstance<XParentEntity>().single()
       }
     }
 
-
-    override var childProperty: String
-      get() = getEntityData().childProperty
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().childProperty = value
-        changedProperty.add("childProperty")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -146,6 +138,14 @@ open class XChildEntityImpl : XChildEntity, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var childProperty: String
+      get() = getEntityData().childProperty
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().childProperty = value
+        changedProperty.add("childProperty")
       }
 
     override var dataClass: DataClassX?
@@ -298,8 +298,8 @@ class XChildEntityData : WorkspaceEntityData<XChildEntity>() {
 
     other as XChildEntityData
 
-    if (this.childProperty != other.childProperty) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.childProperty != other.childProperty) return false
     if (this.dataClass != other.dataClass) return false
     return true
   }
@@ -331,7 +331,7 @@ class XChildEntityData : WorkspaceEntityData<XChildEntity>() {
 
   override fun collectClassUsagesData(collector: UsedClassesCollector) {
     collector.add(DataClassX::class.java)
-    collector.add(EntityReference::class.java)
+    this.dataClass?.let { collector.addDataToInspect(it) }
     collector.sameForAllEntities = true
   }
 }

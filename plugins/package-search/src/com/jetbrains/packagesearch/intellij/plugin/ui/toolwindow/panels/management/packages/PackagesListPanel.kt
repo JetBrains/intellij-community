@@ -1,10 +1,9 @@
-/**
- * ****************************************************************************
+/*******************************************************************************
  * Copyright 2000-2022 JetBrains s.r.o. and contributors.
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may
- * not use this file except in compliance with the License. You may obtain
- * a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  * https://www.apache.org/licenses/LICENSE-2.0
  *
@@ -13,8 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * ****************************************************************************
- */
+ ******************************************************************************/
 
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages
 
@@ -86,6 +84,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -120,6 +119,7 @@ import javax.swing.JScrollPane
 import javax.swing.JViewport
 import javax.swing.event.DocumentEvent
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
@@ -189,13 +189,15 @@ internal class PackagesListPanel(
             isSelected = false
         }
 
-    private val mainToolbar = ActionManager.getInstance()
+    private val searchFiltersToolbar = ActionManager.getInstance()
         .createActionToolbar("Packages.Manage", createActionGroup(), true)
         .apply {
-            targetComponent = toolbar
-            component.background = PackageSearchUI.HeaderBackgroundColor
-            val paneBackground = JBUI.CurrentTheme.CustomFrameDecorations.paneBackground()
-            component.border = BorderFactory.createMatteBorder(0, 1.scaled(), 0, 0, paneBackground)
+            component.background = if (PackageSearchUI.isNewUI) {
+                PackageSearchUI.Colors.panelBackground
+            } else {
+                PackageSearchUI.Colors.headerBackground
+            }
+            component.border = JBUI.Borders.customLineLeft(PackageSearchUI.Colors.panelBackground)
         }
 
     private fun createActionGroup() = DefaultActionGroup().apply {
@@ -204,18 +206,33 @@ internal class PackagesListPanel(
     }
 
     private val searchPanel = PackageSearchUI.headerPanel {
-        PackageSearchUI.setHeightPreScaled(this, PackageSearchUI.MediumHeaderHeight.get())
+        PackageSearchUI.setHeightPreScaled(this, PackageSearchUI.mediumHeaderHeight.get())
 
         border = BorderFactory.createEmptyBorder()
 
         addToCenter(object : JPanel() {
             init {
-                layout = MigLayout("ins 0, fill", "[left, fill, grow][right]", "center")
+                layout = MigLayout("ins 0, fill", "[left, fill, grow][right]", "fill")
                 add(searchTextField)
-                add(mainToolbar.component)
+                add(searchFiltersToolbar.component)
+
+                searchFiltersToolbar.targetComponent = this
+
+                if (PackageSearchUI.isNewUI) {
+                    project.coroutineScope.launch {
+                        // This is a hack — the ActionToolbar will reset its own background colour,
+                        // so we need to wait for the next frame to set it
+                        delay(16.milliseconds)
+                        withContext(Dispatchers.EDT) {
+                            searchFiltersToolbar.component.background = PackageSearchUI.Colors.panelBackground
+                        }
+                    }
+                }
+
+                border = JBUI.Borders.customLineBottom(PackageSearchUI.Colors.separator)
             }
 
-            override fun getBackground() = PackageSearchUI.UsualBackgroundColor
+            override fun getBackground() = PackageSearchUI.Colors.panelBackground
         })
     }
 
@@ -224,6 +241,8 @@ internal class PackagesListPanel(
             "The user has clicked the update all link. This will cause many operation(s) to be executed."
         }
         operationExecutor.executeOperations(it)
+    }.apply {
+        border = JBUI.Borders.customLineTop(PackageSearchUI.Colors.separator)
     }
 
     private val tableScrollPane = JBScrollPane(
@@ -259,8 +278,8 @@ internal class PackagesListPanel(
         emptyText.text = PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.empty.base")
         layout = BorderLayout()
         add(tableScrollPane, BorderLayout.CENTER)
-        background = PackageSearchUI.UsualBackgroundColor
-        border = BorderFactory.createMatteBorder(1.scaled(), 0, 0, 0, JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground())
+        background = PackageSearchUI.Colors.panelBackground
+        border = JBUI.Borders.customLineTop(PackageSearchUI.Colors.separator)
     }
 
     internal data class SearchCommandModel(
@@ -531,7 +550,7 @@ internal class PackagesListPanel(
             textEditor.putClientProperty("JTextField.Search.GapEmptyText", (-1).scaled())
             textEditor.border = emptyBorder(left = 6)
             textEditor.isOpaque = true
-            textEditor.background = PackageSearchUI.HeaderBackgroundColor
+            textEditor.background = PackageSearchUI.Colors.headerBackground
         }
     }
 

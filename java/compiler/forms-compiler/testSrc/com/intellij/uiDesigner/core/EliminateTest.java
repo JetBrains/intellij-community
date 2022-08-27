@@ -17,10 +17,6 @@ package com.intellij.uiDesigner.core;
 
 import junit.framework.TestCase;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class EliminateTest extends TestCase{
   public void test1() {
     // 11

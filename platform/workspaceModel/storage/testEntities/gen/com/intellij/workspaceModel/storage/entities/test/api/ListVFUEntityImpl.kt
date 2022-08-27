@@ -75,11 +75,11 @@ open class ListVFUEntityImpl : ListVFUEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isDataInitialized()) {
         error("Field ListVFUEntity#data should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ListVFUEntity#entitySource should be initialized")
       }
       if (!getEntityData().isFilePropertyInitialized()) {
         error("Field ListVFUEntity#fileProperty should be initialized")
@@ -93,21 +93,13 @@ open class ListVFUEntityImpl : ListVFUEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ListVFUEntity
-      this.data = dataSource.data
       this.entitySource = dataSource.entitySource
+      this.data = dataSource.data
       this.fileProperty = dataSource.fileProperty.toMutableList()
       if (parents != null) {
       }
     }
 
-
-    override var data: String
-      get() = getEntityData().data
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().data = value
-        changedProperty.add("data")
-      }
 
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
@@ -116,6 +108,14 @@ open class ListVFUEntityImpl : ListVFUEntity, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var data: String
+      get() = getEntityData().data
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().data = value
+        changedProperty.add("data")
       }
 
     private val filePropertyUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
@@ -203,8 +203,8 @@ class ListVFUEntityData : WorkspaceEntityData<ListVFUEntity>() {
 
     other as ListVFUEntityData
 
-    if (this.data != other.data) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.data != other.data) return false
     if (this.fileProperty != other.fileProperty) return false
     return true
   }

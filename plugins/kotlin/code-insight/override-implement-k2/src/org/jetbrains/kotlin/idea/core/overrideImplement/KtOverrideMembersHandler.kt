@@ -79,15 +79,15 @@ open class KtOverrideMembersHandler : KtGenerateMembersHandler(false) {
                                 // the same behavior. See idea/testData/codeInsight/overrideImplement/noAnyMembersInInterface.kt
                                 continue
                             } else {
-                                BodyType.NO_BODY
+                                BodyType.NoBody
                             }
                         }
                         (originalOverriddenSymbol as? KtSymbolWithModality)?.modality == Modality.ABSTRACT ->
-                            BodyType.FROM_TEMPLATE
+                            BodyType.FromTemplate
                         symbolsToProcess.size > 1 ->
-                            BodyType.QUALIFIED_SUPER
+                            BodyType.QualifiedSuper
                         else ->
-                            BodyType.SUPER
+                            BodyType.Super
                     }
                     // Ideally, we should simply create `KtClassMember` here and remove the intermediate `OverrideMember` data class. But
                     // that doesn't work because this callback function is holding a read lock and `symbol.render(renderOption)` requires

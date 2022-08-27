@@ -187,12 +187,12 @@ public final class SnippetEditorDecorator implements EditorNotificationProvider 
   }
 
   @Override
-  public @NotNull Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
+  public @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
                                                                                                                 @NotNull VirtualFile file) {
     if (ScratchFileService.findRootType(file) instanceof JShellRootType) {
       return editor -> new ConfigurationPane(project, file, editor);
     }
 
-    return CONST_NULL;
+    return null;
   }
 }

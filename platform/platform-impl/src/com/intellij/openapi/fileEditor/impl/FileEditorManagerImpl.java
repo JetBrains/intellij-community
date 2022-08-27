@@ -110,9 +110,7 @@ import static com.intellij.openapi.actionSystem.IdeActions.ACTION_OPEN_IN_NEW_WI
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT;
 
 /**
- * @author Anton Katilin
  * @author Eugene Belyaev
- * @author Vladimir Kondratyev
  */
 @State(name = "FileEditorManager", storages = {
   @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
@@ -1050,6 +1048,9 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
         options = options.clone().withRequestFocus(false);
       }
     }
+    if (entry != null && entry.isPreview()) {
+      options = options.clone().withUsePreviewTab();
+    }
 
     EditorComposite composite = window.getComposite(file);
     boolean newEditor = composite == null;
@@ -1595,6 +1596,7 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
     return result.toArray(FileEditor.EMPTY_ARRAY);
   }
 
+  @Override
   public @Nullable EditorComposite getComposite(@NotNull VirtualFile file) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (!ClientId.isCurrentlyUnderLocalId()) {
@@ -1740,10 +1742,6 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
   }
 
   public @Nullable EditorComposite getComposite(@NotNull FileEditor editor) {
-    if (!ClientId.isCurrentlyUnderLocalId()) {
-      ClientFileEditorManager clientManager = getClientFileEditorManager();
-      return clientManager == null ? null : clientManager.getComposite(editor);
-    }
     for (EditorsSplitters splitters : getAllSplitters()) {
       List<EditorComposite> editorsComposites = splitters.getAllComposites();
       for (int i = editorsComposites.size() - 1; i >= 0; i--) {
@@ -1751,6 +1749,11 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
         if (composite.getAllEditors().contains(editor)) return composite;
       }
     }
+    for (ClientFileEditorManager clientManager: getAllClientFileEditorManagers()) {
+      EditorComposite composite = clientManager.getComposite(editor);
+      if (composite != null) return composite;
+    }
+
     return null;
   }
 

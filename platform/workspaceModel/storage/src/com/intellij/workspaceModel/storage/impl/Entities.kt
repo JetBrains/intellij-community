@@ -629,6 +629,7 @@ class UsedClassesCollector(
   var sameForAllEntities: Boolean = false,
   var collection: MutableSet<Class<out Any>> = HashSet(),
   var collectionObjects: MutableSet<Class<out Any>> = HashSet(),
+  var collectionToInspection: MutableSet<Any> = HashSet(),
 ) {
   fun add(clazz: Class<out Any>) {
     collection.add(clazz)
@@ -636,5 +637,9 @@ class UsedClassesCollector(
 
   fun addObject(clazz: Class<out Any>) {
     collectionObjects.add(clazz)
+  }
+
+  fun addDataToInspect(data: Any) {
+    collectionToInspection.add(data)
   }
 }

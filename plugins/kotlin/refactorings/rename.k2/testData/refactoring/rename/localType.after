@@ -1,0 +1,19 @@
+// NEW_NAME: Bar
+
+package test
+
+fun function(): Int {
+    val miss: Foo = Foo()
+
+    class Bar
+
+    fun foo(f: Bar): Bar = Bar()
+
+    val ref = ::Bar
+
+    run {
+        class Foo
+
+        fun bar(foo: Foo): Foo = Foo()
+    }
+}

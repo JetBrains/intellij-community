@@ -83,6 +83,9 @@
 
     <editorNotificationProvider implementation="com.intellij.dvcs.ignore.IgnoredToExcludeNotificationProvider"/>
     <statistics.notificationIdsHolder implementation="com.intellij.dvcs.DvcsNotificationIdsHolder"/>
+
+    <productivityFeaturesProvider implementation="com.intellij.dvcs.featureStatistics.VcsProductivityFeaturesProvider"/>
+    <featureStatisticsBundle qualifiedName="messages.VcsProductivityFeatures"/>
   </extensions>
 </idea-plugin>
 

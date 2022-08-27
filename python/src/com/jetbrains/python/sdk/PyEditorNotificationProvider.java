@@ -100,14 +100,14 @@ public final class PyEditorNotificationProvider implements DumbAware, EditorNoti
   }
 
   @Override
-  public @NotNull Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
+  public @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
                                                                                                                 @NotNull VirtualFile file) {
     PyFile node = getPyFile(project, file);
     if (node == null) {
-      return CONST_NULL;
+      return null;
     }
     Module module = guessModule(node);
-    if (module == null || isFileIgnored(node)) return CONST_NULL;
+    if (module == null || isFileIgnored(node)) return null;
     final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
 
     final boolean pyCharm = PythonIdeLanguageCustomization.isMainlyPythonIde();
@@ -165,7 +165,7 @@ public final class PyEditorNotificationProvider implements DumbAware, EditorNoti
         }
       }
     }
-    return CONST_NULL;
+    return null;
   }
 
   private static Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> registerProblemWithCommonFixes(PyFile node,

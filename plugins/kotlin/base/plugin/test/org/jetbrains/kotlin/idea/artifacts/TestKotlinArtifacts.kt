@@ -31,6 +31,7 @@ object TestKotlinArtifacts {
     @JvmStatic val kotlinCompiler: File by lazy { getJar("kotlin-compiler") }
     @JvmStatic val kotlinDaemon: File by lazy { getJar("kotlin-daemon") }
     @JvmStatic val kotlinReflect: File by lazy { getJar("kotlin-reflect") }
+    @JvmStatic val kotlinReflectSources: File by lazy { getSourcesJar("kotlin-reflect") }
     @JvmStatic val kotlinScriptRuntime: File by lazy { getJar("kotlin-script-runtime") }
     @JvmStatic val kotlinScriptingCommon: File by lazy { getJar("kotlin-scripting-common") }
     @JvmStatic val kotlinScriptingCompiler: File by lazy { getJar("kotlin-scripting-compiler") }
@@ -40,6 +41,7 @@ object TestKotlinArtifacts {
     @JvmStatic val kotlinStdlibCommon: File by lazy { getJar("kotlin-stdlib-common") }
     @JvmStatic val kotlinStdlibCommonSources: File by lazy { getSourcesJar("kotlin-stdlib-common") }
     @JvmStatic val kotlinStdlibJdk7: File by lazy { getJar("kotlin-stdlib-jdk7") }
+    @JvmStatic val kotlinStdlibJdk7Sources: File by lazy { getSourcesJar("kotlin-stdlib-jdk7") }
     @JvmStatic val kotlinStdlibJdk8: File by lazy { getJar("kotlin-stdlib-jdk8") }
     @JvmStatic val kotlinStdlibJdk8Sources: File by lazy { getSourcesJar("kotlin-stdlib-jdk8") }
     @JvmStatic val kotlinStdlibJs: File by lazy { getJar("kotlin-stdlib-js") }

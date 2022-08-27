@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectImport.ProjectImportProvider
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
-import com.intellij.ui.EditorNotificationProvider.CONST_NULL
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
@@ -34,14 +33,14 @@ internal class GradleScriptNotificationProvider : EditorNotificationProvider {
     override fun collectNotificationData(
         project: Project,
         file: VirtualFile,
-    ): Function<in FileEditor, out JComponent?> {
+    ): Function<in FileEditor, out JComponent?>? {
         if (!isGradleKotlinScript(file) || !file.isKotlinFileType()) {
-            return CONST_NULL
+            return null
         }
 
         val standaloneScriptActions = GradleStandaloneScriptActionsManager.getInstance(project)
         val rootsManager = GradleBuildRootsManager.getInstance(project)
-        val scriptUnderRoot = rootsManager?.findScriptBuildRoot(file) ?: return CONST_NULL
+        val scriptUnderRoot = rootsManager?.findScriptBuildRoot(file) ?: return null
 
         // todo: this actions will be usefull only when gradle fix https://github.com/gradle/gradle/issues/12640
         fun EditorNotificationPanel.showActionsToFixNotEvaluated() {

@@ -11,7 +11,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
 val ObjClass<*>.isStandardInterface: Boolean
   get() = name in setOf(WorkspaceEntity::class.java.simpleName, WorkspaceEntityWithPersistentId::class.java.simpleName)
 
-private val ObjClass<*>.allSuperClasses: List<ObjClass<*>>
+val ObjClass<*>.allSuperClasses: List<ObjClass<*>>
   get() = superTypes.filterIsInstance<ObjClass<*>>().flatMapTo(LinkedHashSet()) { it.allSuperClasses + listOf(it) }.toList() 
 
 val ObjClass<*>.allFields: List<OwnProperty<*, *>>
@@ -36,18 +36,10 @@ private fun collectFields(objClass: ObjClass<*>, fieldsByName: MutableMap<String
 }
 
 val ObjProperty<*, *>.hasSetter: Boolean
-  get() =
-    if (open) true
-    else valueKind == ObjProperty.ValueKind.Plain
+  get() = open || valueKind == ObjProperty.ValueKind.Plain
 
 val ObjProperty<*, *>.javaName: String
   get() = name
-
-val ObjProperty<*, *>.owner: ObjClass<*>
-  get() = receiver
-
-val ObjProperty<*, *>.type: ValueType<*>
-  get() = valueType
 
 val ObjProperty<*, *>.isOverride: Boolean
   get() = receiver.allSuperClasses.any { name in it.fieldsByName }

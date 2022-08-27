@@ -66,10 +66,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class PreviewFormAction extends AnAction{
   private static final Logger LOG = Logger.getInstance(PreviewFormAction.class);
 

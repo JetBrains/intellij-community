@@ -24,10 +24,10 @@ internal class WorkspaceImportStats private constructor(private val project: Pro
     }
   }
 
-  fun <T> recordPhase(phase: IdeActivityDefinition, block: () -> T): T {
+  fun <T> recordPhase(phase: IdeActivityDefinition, block: (phaseActivity: StructuredIdeActivity) -> T): T {
     val phaseActivity = phase.startedWithParent(project, activity)
     try {
-      return block()
+      return block(phaseActivity)
     }
     finally {
       phaseActivity.finished()
@@ -58,6 +58,7 @@ internal class WorkspaceImportStats private constructor(private val project: Pro
       logPairs.add(MavenImportCollector.TOTAL_DURATION_MS.with(totalNano.toMillis()))
       logPairs.add(MavenImportCollector.CONFIGURATOR_CLASS.with(clazz))
       logPairs.add(MavenImportCollector.NUMBER_OF_MODULES.with(numberOfModules))
+      logPairs.add(MavenImportCollector.ACTIVITY_ID.with(activity))
 
       MavenImportCollector.CONFIGURATOR_RUN.log(project, logPairs)
     }

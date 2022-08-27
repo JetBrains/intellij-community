@@ -109,11 +109,11 @@ open class ArtifactEntityImpl : ArtifactEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (!getEntityData().isNameInitialized()) {
         error("Field ArtifactEntity#name should be initialized")
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ArtifactEntity#entitySource should be initialized")
       }
       if (!getEntityData().isArtifactTypeInitialized()) {
         error("Field ArtifactEntity#artifactType should be initialized")
@@ -138,8 +138,8 @@ open class ArtifactEntityImpl : ArtifactEntity, WorkspaceEntityBase() {
     // Relabeling code, move information from dataSource to this builder
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as ArtifactEntity
-      this.name = dataSource.name
       this.entitySource = dataSource.entitySource
+      this.name = dataSource.name
       this.artifactType = dataSource.artifactType
       this.includeInProjectBuild = dataSource.includeInProjectBuild
       this.outputUrl = dataSource.outputUrl
@@ -148,14 +148,6 @@ open class ArtifactEntityImpl : ArtifactEntity, WorkspaceEntityBase() {
     }
 
 
-    override var name: String
-      get() = getEntityData().name
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().name = value
-        changedProperty.add("name")
-      }
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
@@ -163,6 +155,14 @@ open class ArtifactEntityImpl : ArtifactEntity, WorkspaceEntityBase() {
         getEntityData().entitySource = value
         changedProperty.add("entitySource")
 
+      }
+
+    override var name: String
+      get() = getEntityData().name
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().name = value
+        changedProperty.add("name")
       }
 
     override var artifactType: String
@@ -372,8 +372,8 @@ class ArtifactEntityData : WorkspaceEntityData.WithCalculablePersistentId<Artifa
 
     other as ArtifactEntityData
 
-    if (this.name != other.name) return false
     if (this.entitySource != other.entitySource) return false
+    if (this.name != other.name) return false
     if (this.artifactType != other.artifactType) return false
     if (this.includeInProjectBuild != other.includeInProjectBuild) return false
     if (this.outputUrl != other.outputUrl) return false

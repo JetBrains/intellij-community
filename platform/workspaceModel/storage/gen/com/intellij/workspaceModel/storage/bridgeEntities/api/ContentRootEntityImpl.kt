@@ -106,6 +106,9 @@ open class ContentRootEntityImpl : ContentRootEntity, WorkspaceEntityBase() {
 
     fun checkInitialization() {
       val _diff = diff
+      if (!getEntityData().isEntitySourceInitialized()) {
+        error("Field WorkspaceEntity#entitySource should be initialized")
+      }
       if (_diff != null) {
         if (_diff.extractOneToManyParent<WorkspaceEntityBase>(MODULE_CONNECTION_ID, this) == null) {
           error("Field ContentRootEntity#module should be initialized")
@@ -115,9 +118,6 @@ open class ContentRootEntityImpl : ContentRootEntity, WorkspaceEntityBase() {
         if (this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] == null) {
           error("Field ContentRootEntity#module should be initialized")
         }
-      }
-      if (!getEntityData().isEntitySourceInitialized()) {
-        error("Field ContentRootEntity#entitySource should be initialized")
       }
       if (!getEntityData().isUrlInitialized()) {
         error("Field ContentRootEntity#url should be initialized")
@@ -158,6 +158,15 @@ open class ContentRootEntityImpl : ContentRootEntity, WorkspaceEntityBase() {
     }
 
 
+    override var entitySource: EntitySource
+      get() = getEntityData().entitySource
+      set(value) {
+        checkModificationAllowed()
+        getEntityData().entitySource = value
+        changedProperty.add("entitySource")
+
+      }
+
     override var module: ModuleEntity
       get() {
         val _diff = diff
@@ -195,15 +204,6 @@ open class ContentRootEntityImpl : ContentRootEntity, WorkspaceEntityBase() {
           this.entityLinks[EntityLink(false, MODULE_CONNECTION_ID)] = value
         }
         changedProperty.add("module")
-      }
-
-    override var entitySource: EntitySource
-      get() = getEntityData().entitySource
-      set(value) {
-        checkModificationAllowed()
-        getEntityData().entitySource = value
-        changedProperty.add("entitySource")
-
       }
 
     override var url: VirtualFileUrl

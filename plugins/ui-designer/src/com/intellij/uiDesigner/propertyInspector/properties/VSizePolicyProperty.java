@@ -6,10 +6,6 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadHSpacer;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 public final class VSizePolicyProperty extends SizePolicyProperty {
   public static VSizePolicyProperty getInstance(Project project) {
     return project.getService(VSizePolicyProperty.class);

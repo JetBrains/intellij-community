@@ -4,7 +4,7 @@
 
 package org.jetbrains.kotlin.idea.debugger.test
 
-import org.jetbrains.kotlin.test.KotlinRoot
+import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 
 @JvmField
 val DEBUGGER_TESTDATA_PATH_BASE: String =

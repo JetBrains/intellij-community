@@ -1,0 +1,17 @@
+<component name="CopyrightManager">
+  <settings>
+    <module2copyright>
+      <element module="XPlatLauncher" copyright="openapi_short" />
+    </module2copyright>
+    <LanguageOptions name="Rust">
+      <option name="separateBefore" value="true" />
+      <option name="separateAfter" value="true" />
+      <option name="lenBefore" value="120" />
+      <option name="lenAfter" value="120" />
+    </LanguageOptions>
+    <LanguageOptions name="__TEMPLATE__">
+      <option name="addBlankAfter" value="false" />
+      <option name="block" value="false" />
+    </LanguageOptions>
+  </settings>
+</component>
