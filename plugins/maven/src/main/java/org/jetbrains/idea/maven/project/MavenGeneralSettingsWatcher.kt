@@ -7,6 +7,7 @@ import com.intellij.openapi.externalSystem.autoimport.changes.FilesChangesListen
 import com.intellij.openapi.externalSystem.autoimport.settings.ReadAsyncSupplier
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec
+import org.jetbrains.idea.maven.model.MavenTychoConstants
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import java.util.concurrent.ExecutorService
 
@@ -57,8 +58,8 @@ class MavenGeneralSettingsWatcher private constructor(
     if (generalSettings.isTychoProject) {
       val importingSettings = manager.importingSettings
       val dependencyTypes = importingSettings.dependencyTypesAsSet
-      dependencyTypes.add("eclipse-plugin")
-      dependencyTypes.add("eclipse-test-plugin")
+      dependencyTypes.add(MavenTychoConstants.PACKAGING_ECLIPSE_PLUGIN)
+      dependencyTypes.add(MavenTychoConstants.PACKAGING_ECLIPSE_TEST_PLUGIN)
       importingSettings.dependencyTypes = dependencyTypes.joinToString(", ")
     }
   }

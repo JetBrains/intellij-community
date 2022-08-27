@@ -139,12 +139,12 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   @SuppressWarnings("SSBasedInspection")
   private static final Set<String> TYCHO_BANNED_PACKAGING = new HashSet<>(Arrays.asList(
-    "eclipse-feature",
-    "eclipse-repository",
-    "eclipse-application",
-    "eclipse-update-site",
-    "eclipse-target-definition",
-    "p2-installable-unit"
+    MavenTychoConstants.PACKAGING_ECLIPSE_FEATURE,
+    MavenTychoConstants.PACKAGING_ECLIPSE_REPOSITORY,
+    MavenTychoConstants.PACKAGING_ECLIPSE_APPLICATION,
+    MavenTychoConstants.PACKAGING_ECLIPSE_UPDATE_SITE,
+    MavenTychoConstants.PACKAGING_ECLIPSE_TARGET_DEFINITION,
+    MavenTychoConstants.PACKAGING_P2_INSTALLABLE_UNIT
   ));
 
   public Maven3XServerEmbedder(MavenEmbedderSettings settings) throws RemoteException {
