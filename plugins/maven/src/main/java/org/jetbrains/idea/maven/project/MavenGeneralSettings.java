@@ -39,7 +39,7 @@ public class MavenGeneralSettings implements Cloneable {
   private boolean usePluginRegistry = false;
   private boolean nonRecursive = false;
   private boolean alwaysUpdateSnapshots = false;
-  private boolean isTychoProject = false;
+  private boolean tychoProject = false;
   private boolean showDialogWithAdvancedSettings = false;
   private boolean useMavenConfig = false;
   private String threads;
@@ -347,7 +347,7 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   public boolean isTychoProject() {
-    return isTychoProject;
+    return tychoProject;
   }
 
   public void setAlwaysUpdateSnapshots(boolean value) {
@@ -357,9 +357,9 @@ public class MavenGeneralSettings implements Cloneable {
     }
   }
 
-  public void setIsTychoProject(final boolean isTychoProject) {
-    if (this.isTychoProject != isTychoProject) {
-      this.isTychoProject = isTychoProject;
+  public void setTychoProject(final boolean tychoProject) {
+    if (this.tychoProject != tychoProject) {
+      this.tychoProject = tychoProject;
       changed();
     }
   }
@@ -409,7 +409,7 @@ public class MavenGeneralSettings implements Cloneable {
     if (outputLevel != that.outputLevel) return false;
     if (pluginUpdatePolicy != that.pluginUpdatePolicy) return false;
     if (alwaysUpdateSnapshots != that.alwaysUpdateSnapshots) return false;
-    if (isTychoProject != that.isTychoProject) return false;
+    if (tychoProject != that.tychoProject) return false;
     if (showDialogWithAdvancedSettings != that.showDialogWithAdvancedSettings) return false;
     if (printErrorStackTraces != that.printErrorStackTraces) return false;
     if (usePluginRegistry != that.usePluginRegistry) return false;

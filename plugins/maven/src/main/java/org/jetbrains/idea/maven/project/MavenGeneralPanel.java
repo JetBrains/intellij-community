@@ -108,7 +108,7 @@ public class MavenGeneralPanel implements PanelWithAnchor, MavenSettingsObservab
     data.setFailureBehavior((MavenExecutionOptions.FailureMode)ComboBoxUtil.getSelectedValue(failPolicyComboModel));
     data.setPluginUpdatePolicy((MavenExecutionOptions.PluginUpdatePolicy)ComboBoxUtil.getSelectedValue(pluginUpdatePolicyComboModel));
     data.setAlwaysUpdateSnapshots(alwaysUpdateSnapshotsCheckBox.isSelected());
-    data.setIsTychoProject(tychoProjectCheckBox.isSelected());
+    data.setTychoProject(tychoProjectCheckBox.isSelected());
     data.setThreads(threadsEditor.getText());
 
     data.setShowDialogWithAdvancedSettings(showDialogWithAdvancedSettingsCheckBox.isSelected());

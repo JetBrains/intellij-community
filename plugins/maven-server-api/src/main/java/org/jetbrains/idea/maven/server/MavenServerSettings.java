@@ -134,7 +134,7 @@ public class MavenServerSettings implements Serializable, Cloneable {
     return isTychoProject;
   }
 
-  public void setIsTychoProject(final boolean isTychoProject) {
+  public void setTychoProject(final boolean isTychoProject) {
     this.isTychoProject = isTychoProject;
   }
 
