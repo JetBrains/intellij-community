@@ -161,7 +161,7 @@
 
     <applicationService serviceImplementation="com.intellij.ide.GeneralSettings" preload="notHeadless"/>
 
-    <applicationService serviceImplementation="com.intellij.ui.jcef.JBCefStartup" preload="true" os="mac"/>
+    <applicationService serviceImplementation="com.intellij.ui.jcef.JBCefStartup" preload="notHeadless" os="mac"/>
     <cachesInvalidator implementation="com.intellij.ui.jcef.JBCefAppCacheInvalidator" order="last" />
 
     <applicationService serviceInterface="com.intellij.ide.ui.IdeUiService"
