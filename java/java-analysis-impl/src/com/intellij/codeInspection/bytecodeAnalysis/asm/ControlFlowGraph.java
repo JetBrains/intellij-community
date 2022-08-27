@@ -2,9 +2,9 @@
 package com.intellij.codeInspection.bytecodeAnalysis.asm;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph.Edge;
-import gnu.trove.TIntArrayList;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.org.objectweb.asm.tree.MethodNode;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 
@@ -74,7 +74,7 @@ public final class ControlFlowGraph {
 final class ControlFlowBuilder implements FramelessAnalyzer.EdgeCreator {
   final String className;
   final MethodNode methodNode;
-  final TIntArrayList[] transitions;
+  final IntArrayList[] transitions;
   final Set<Edge> errorTransitions;
   final Int2IntMap npeTransitions;
   final FramelessAnalyzer myAnalyzer;
@@ -85,10 +85,10 @@ final class ControlFlowBuilder implements FramelessAnalyzer.EdgeCreator {
     myAnalyzer = jsr ? new FramelessAnalyzer(this) : new LiteFramelessAnalyzer(this);
     this.className = className;
     this.methodNode = methodNode;
-    transitions = new TIntArrayList[methodNode.instructions.size()];
+    transitions = new IntArrayList[methodNode.instructions.size()];
     errors = new boolean[methodNode.instructions.size()];
     for (int i = 0; i < transitions.length; i++) {
-      transitions[i] = new TIntArrayList();
+      transitions[i] = new IntArrayList();
     }
     errorTransitions = new HashSet<>();
     npeTransitions = new Int2IntOpenHashMap();
@@ -100,7 +100,7 @@ final class ControlFlowBuilder implements FramelessAnalyzer.EdgeCreator {
     }
     int[][] resultTransitions = new int[transitions.length][];
     for (int i = 0; i < resultTransitions.length; i++) {
-      resultTransitions[i] = transitions[i].toNativeArray();
+      resultTransitions[i] = transitions[i].toIntArray();
     }
     return new ControlFlowGraph(className, methodNode, resultTransitions, edgeCount, errors, errorTransitions, npeTransitions);
   }
