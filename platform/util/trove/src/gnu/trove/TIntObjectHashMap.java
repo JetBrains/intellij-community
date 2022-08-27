@@ -30,12 +30,12 @@ import java.util.Objects;
  *
  * @author Eric D. Friedman
  */
-public final class TIntObjectHashMap<V> extends THash implements TIntHashingStrategy {
-
+@Deprecated
+public class TIntObjectHashMap<V> extends THash implements TIntHashingStrategy {
   /**
    * the values of the map
    */
-  transient V[] _values;
+  protected transient V[] _values;
 
   /**
    * the set of ints
@@ -301,7 +301,7 @@ public final class TIntObjectHashMap<V> extends THash implements TIntHashingStra
    * @param val an <code>int</code> value
    * @return the index of <tt>val</tt> or -1 if it isn't in the set.
    */
-  private int index(int val) {
+  protected int index(int val) {
     int[] set = _set;
     Object[] values = _values;
     if (values == EMPTY_OBJECT_ARRAY) return -1;
@@ -552,17 +552,6 @@ public final class TIntObjectHashMap<V> extends THash implements TIntHashingStra
    */
   public boolean containsKey(int key) {
     return contains(key);
-  }
-
-  /**
-   * Executes <tt>procedure</tt> for each key in the map.
-   *
-   * @param procedure a <code>TIntProcedure</code> value
-   * @return false if the loop over the keys terminated because
-   * the procedure returned false for some key.
-   */
-  public boolean forEachKey(TIntProcedure procedure) {
-    return forEach(procedure);
   }
 
   /**
