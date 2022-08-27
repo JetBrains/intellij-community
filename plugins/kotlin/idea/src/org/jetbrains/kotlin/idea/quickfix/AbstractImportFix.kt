@@ -667,7 +667,12 @@ internal class DelegateAccessorsImportFix(
     companion object MyFactory : Factory() {
         private fun importNames(diagnostics: Collection<Diagnostic>): Collection<Name> {
             return diagnostics.map {
-                val missingMethodSignature = Errors.DELEGATE_SPECIAL_FUNCTION_MISSING.cast(it).a
+                val missingMethodSignature =
+                    if (it.factory === Errors.DELEGATE_SPECIAL_FUNCTION_MISSING) {
+                        Errors.DELEGATE_SPECIAL_FUNCTION_MISSING.cast(it).a
+                    } else {
+                        Errors.DELEGATE_SPECIAL_FUNCTION_NONE_APPLICABLE.cast(it).a
+                    }
                 if (missingMethodSignature.startsWith(OperatorNameConventions.GET_VALUE.identifier))
                     OperatorNameConventions.GET_VALUE
                 else
