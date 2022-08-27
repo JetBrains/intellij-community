@@ -192,11 +192,10 @@ public class MavenProjectResolver {
       return null;
     }
 
+    final Manifest manifest = new Manifest(manifestFile.getInputStream());
     final Set<String> requiredBundles = new HashSet<>(32);
     final Set<String> importedPackages = new HashSet<>(32);
     final Set<String> exportedPackages = new HashSet<>(32);
-
-    final Manifest manifest = new Manifest(manifestFile.getInputStream());
     final Attributes manifestAttributes = manifest.getMainAttributes();
     final String requiredBundlesStr = manifestAttributes.getValue("Require-Bundle");
 
