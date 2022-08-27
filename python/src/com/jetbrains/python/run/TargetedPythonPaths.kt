@@ -7,7 +7,7 @@ import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.target.value.constant
-import com.intellij.execution.target.value.getTargetEnvironmentValueForLocalPath
+import com.intellij.execution.target.value.targetPath
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
@@ -88,7 +88,7 @@ private fun collectPythonPath(context: Context,
     //that fixes Jython problem changing sys.argv on execfile, see PY-8164
     for (helpersResource in listOf("pycharm", "pydev")) {
       val helperPath = PythonHelpersLocator.getHelperPath(helpersResource)
-      val targetHelperPath = getTargetEnvironmentValueForLocalPath(Path.of(helperPath))
+      val targetHelperPath = targetPath(Path.of(helperPath))
       pythonPath.add(targetHelperPath)
     }
   }
@@ -181,12 +181,12 @@ private fun addLibrariesFromModule(module: Module,
       for (root in entry.getRootFiles(OrderRootType.CLASSES).map { it.toNioPath() }) {
         val library = entry.library
         if (!PlatformUtils.isPyCharm()) {
-          pythonPathList += getTargetEnvironmentValueForLocalPath(root)
+          pythonPathList += targetPath(root)
         }
         else if (library is LibraryEx) {
           val kind = library.kind
           if (kind === PythonLibraryType.getInstance().kind) {
-            pythonPathList += getTargetEnvironmentValueForLocalPath(root)
+            pythonPathList += targetPath(root)
           }
         }
       }
