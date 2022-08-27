@@ -32,9 +32,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.jar.Attributes;
@@ -180,10 +178,10 @@ public class MavenProjectResolver {
 
   @Nullable
   private static MavenProjectManifestData parseManifest(@NotNull final MavenProject mavenProject) {
-    final String directory = mavenProject.getDirectory();
-    final Path manifestPath = Paths.get(directory, "META-INF/MANIFEST.MF");
+    final VirtualFile directoryFile = mavenProject.getDirectoryFile();
+    final VirtualFile manifestFile = directoryFile.findFileByRelativePath("META-INF/MANIFEST.MF");
 
-    if (Files.notExists(manifestPath)) {
+    if (manifestFile == null) {
       return null;
     }
 
@@ -192,7 +190,7 @@ public class MavenProjectResolver {
     final Set<String> exportedPackages = new HashSet<>(32);
 
     try {
-      final Manifest manifest = new Manifest(Files.newInputStream(manifestPath));
+      final Manifest manifest = new Manifest(manifestFile.getInputStream());
       final Attributes manifestAttributes = manifest.getMainAttributes();
       final String requiredBundlesStr = manifestAttributes.getValue("Require-Bundle");
 
