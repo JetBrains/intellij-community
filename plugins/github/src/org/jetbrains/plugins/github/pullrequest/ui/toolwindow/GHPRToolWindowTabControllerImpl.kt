@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.content.Content
+import com.intellij.util.childScope
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -152,24 +153,22 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
     contentDisposable = disposable
     tab.displayName = GithubBundle.message("toolwindow.stripe.Pull_Requests")
 
-    val uiScope = DisposingMainScope(disposable)
+    val scope = DisposingMainScope(disposable)
 
-    val selectorVm = GHPRRepositorySelectorViewModel(repositoryManager, authManager.accountManager) { repo, account ->
+    val selectorVm = GHRepositoryAndAccountSelectorViewModel(scope, repositoryManager, authManager.accountManager) { repo, account ->
       val executor = try {
         service<GithubApiRequestExecutorManager>().getExecutor(account)
       }
       catch (e: Exception) {
-        return@GHPRRepositorySelectorViewModel
+        return@GHRepositoryAndAccountSelectorViewModel
       }
       projectSettings.selectedRepoAndAccount = repo to account
 
       // TODO: extract and subscribe
       showPullRequestsComponent(repo, account, executor, false)
-    }.also {
-      Disposer.register(disposable, it)
     }
 
-    val component = GHPRRepositorySelectorComponentFactory(project, selectorVm, authManager).create(uiScope)
+    val component = GHRepositoryAndAccountSelectorComponentFactory(project, selectorVm, authManager).create(scope.childScope())
 
     val focused = GHUIUtil.isFocusParent(mainPanel)
     with(mainPanel) {

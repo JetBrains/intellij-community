@@ -3,10 +3,7 @@ package com.intellij.collaboration.async
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
@@ -36,6 +33,17 @@ fun DisposingScope(parentDisposable: Disposable, context: CoroutineContext = Sup
 @ApiStatus.Experimental
 fun Disposable.disposingScope(context: CoroutineContext = SupervisorJob()): CoroutineScope =
   DisposingScope(this, context)
+
+@ApiStatus.Experimental
+fun CoroutineScope.nestedDisposable(): Disposable {
+  val job = coroutineContext[Job]
+  require(job != null) {
+    "Found no Job in context: $coroutineContext"
+  }
+  return Disposer.newDisposable().also {
+    job.invokeOnCompletion { _ -> Disposer.dispose(it) }
+  }
+}
 
 @ApiStatus.Experimental
 fun <T1, T2, R> combineState(scope: CoroutineScope,
