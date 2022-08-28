@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.base.analysis
 
 import com.intellij.ProjectTopics
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -13,21 +14,13 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
-import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.MultiMap
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
-import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import org.jetbrains.kotlin.idea.base.analysis.libraries.LibraryDependencyCandidate
 import org.jetbrains.kotlin.idea.base.facet.isHMPPEnabled
@@ -38,10 +31,9 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.allSdks
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.checkValidity
 import org.jetbrains.kotlin.idea.base.util.caching.*
-import org.jetbrains.kotlin.idea.base.util.caching.FineGrainedEntityCache.Companion.isFineGrainedCacheInvalidationEnabled
 import org.jetbrains.kotlin.idea.caches.project.*
+import org.jetbrains.kotlin.idea.caches.trackers.ModuleModificationTracker
 import org.jetbrains.kotlin.idea.configuration.isMavenized
-import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 typealias LibraryDependencyCandidatesAndSdkInfos = Pair<Set<LibraryDependencyCandidate>, Set<SdkInfo>>
@@ -55,12 +47,9 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
     private val moduleDependenciesCache = ModuleDependenciesCache()
 
-    private val libraryUsageIndex = LibraryUsageIndex2()
-
     init {
         Disposer.register(this, cache)
         Disposer.register(this, moduleDependenciesCache)
-        Disposer.register(this, libraryUsageIndex)
     }
 
     override fun getLibraryDependencies(library: LibraryInfo): LibraryDependencies = cache[library]
@@ -85,11 +74,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         val sdks = LinkedHashSet<SdkInfo>()
 
         val modulesLibraryIsUsedIn =
-            if (!isFineGrainedCacheInvalidationEnabled) {
-                getLibraryUsageIndex().getModulesLibraryIsUsedIn(libraryInfo)
-            } else {
-                libraryUsageIndex.getModulesLibraryIsUsedIn(libraryInfo)
-            }
+            getLibraryUsageIndex().getModulesLibraryIsUsedIn(libraryInfo)
 
         for (module in modulesLibraryIsUsedIn) {
             checkCanceled()
@@ -167,11 +152,14 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         }
     }
 
-    private fun getLibraryUsageIndex(): LibraryUsageIndex {
-        return CachedValuesManager.getManager(project).getCachedValue(project) {
-            CachedValueProvider.Result(LibraryUsageIndex(), ProjectRootModificationTracker.getInstance(project))
+    private fun getLibraryUsageIndex(): LibraryUsageIndex =
+        CachedValuesManager.getManager(project).getCachedValue(project) {
+            CachedValueProvider.Result(
+                LibraryUsageIndex(),
+                ModuleModificationTracker.getInstance(project),
+                LibraryModificationTracker.getInstance(project)
+            )
         }!!
-    }
 
     private inner class LibraryDependenciesInnerCache :
         SynchronizedFineGrainedEntityCache<LibraryInfo, LibraryDependencies>(project, cleanOnLowMemory = true),
@@ -287,165 +275,25 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         }
     }
 
-    private data class Change<T>(val old: List<T>, val new: List<T>)
-
-    private inner class LibraryUsageIndex2:
-        SynchronizedFineGrainedEntityCache<LibraryWrapper, Set<Module>>(project, cleanOnLowMemory = true),
-        WorkspaceModelChangeListener {
-
-        init {
-            val initialMap = mutableMapOf<LibraryWrapper, MutableSet<Module>>()
-            for (module in ModuleManager.getInstance(project).modules) {
-                initialMap.populateLibraries(module)
-            }
-            putAll(initialMap)
-        }
-
-        private fun MutableMap<LibraryWrapper, MutableSet<Module>>.populateLibraries(module: Module) {
-            for (entry in ModuleRootManager.getInstance(module).orderEntries) {
-                if (entry is LibraryOrderEntry) {
-                    entry.library?.let { library ->
-                        val modules = getOrPut(library.wrap()) { hashSetOf() }
-                        modules += module
-                    }
-                }
-            }
-        }
-
-        override fun subscribe() {
-            val busConnection = project.messageBus.connect(this)
-            WorkspaceModelTopics.getInstance(project).subscribeImmediately(busConnection, this)
-        }
-
-        override fun calculate(key: LibraryWrapper): Set<Module> {
-            // it should not happen - keep it as last resort fallback
-            val libraryEx = key.library
-            val modules = mutableSetOf<Module>()
-            for (module in ModuleManager.getInstance(project).modules) {
-                for (entry in ModuleRootManager.getInstance(module).orderEntries) {
-                    if (entry is LibraryOrderEntry && entry.library == libraryEx) {
-                        modules += module
-                    }
-                }
-            }
-            return modules
-        }
-
-        override fun checkKeyValidity(key: LibraryWrapper) {
-            key.checkValidity()
-        }
-
-        override fun checkValueValidity(value: Set<Module>) {
-            value.forEach(Module::checkValidity)
-        }
-
-        fun getModulesLibraryIsUsedIn(libraryInfo: LibraryInfo) = sequence {
-            val ideaModelInfosCache = getIdeaModelInfosCache(project)
-            val libraryWrapper = libraryInfo.library.wrap()
-            val modulesLibraryIsUsedIn = get(libraryWrapper)
-            for (module in modulesLibraryIsUsedIn) {
-                checkCanceled()
-                val mappedModuleInfos = ideaModelInfosCache.getModuleInfosForModule(module)
-                if (mappedModuleInfos.any { it.platform.canDependOn(libraryInfo, module.isHMPPEnabled) }) {
-                    yield(module)
-                }
-            }
-        }
-
-        override fun changed(event: VersionedStorageChange) {
-            val storageBefore = event.storageBefore
-            val storageAfter = event.storageAfter
-            val moduleChanges = event.getChanges(ModuleEntity::class.java)
-            val libraryChanges = event.getChanges(LibraryEntity::class.java)
-            if (moduleChanges.isEmpty() && libraryChanges.isEmpty()) {
-                return
-            }
-
-            val modulesChange = modulesChange(moduleChanges, storageBefore, storageAfter)
-            val librariesChange = librariesChange(libraryChanges, storageBefore, storageAfter)
-
-            val modulesFromNewLibs = libraryChanges.mapNotNull { change ->
-                val newEntity = newEntity(change) ?: return@mapNotNull null
-                val referrers = storageAfter.referrers(newEntity.persistentId, ModuleEntity::class.java)
-                referrers.mapNotNull { storageAfter.findModuleByEntityWithHack(it, project) }
-            }.flatMapTo(hashSetOf()) { it }
-
-            val modulesToInvalidate = modulesChange.old.toHashSet() + modulesFromNewLibs
-            val librariesToInvalidate = librariesChange.old.toHashSet()
-
-            invalidateEntries(
-                { libraryWrapper, modules -> libraryWrapper.library in librariesToInvalidate || modules.any { it in modulesToInvalidate } }
-            )
-
-            val newValues = mutableMapOf<LibraryWrapper, MutableSet<Module>>()
-            val modulesToUpdate = modulesChange.new + modulesFromNewLibs
-            modulesToUpdate.forEach { newValues.populateLibraries(it) }
-            putAll(newValues)
-        }
-
-        private fun <T: WorkspaceEntity> oldEntity(change: EntityChange<T>) =
-            when (change) {
-                is EntityChange.Added -> null
-                is EntityChange.Removed -> change.entity
-                is EntityChange.Replaced -> change.oldEntity
-            }
-
-        private fun <T: WorkspaceEntity> newEntity(change: EntityChange<T>) =
-            when (change) {
-                is EntityChange.Added -> change.entity
-                is EntityChange.Removed -> null
-                is EntityChange.Replaced -> change.newEntity
-            }
-
-        private fun modulesChange(
-            moduleChanges: List<EntityChange<ModuleEntity>>,
-            storageBefore: EntityStorage,
-            storageAfter: EntityStorage
-        ): Change<Module> {
-            val oldModules = mutableListOf<Module>()
-            val newModules = mutableListOf<Module>()
-            for (change in moduleChanges) {
-                oldEntity(change)?.let { oldModules.addIfNotNull(it.findModule(storageBefore)) }
-                newEntity(change)?.let {
-                    val moduleBridge = storageAfter.findModuleByEntityWithHack(it, project)
-                    newModules.addIfNotNull(moduleBridge)
-                }
-            }
-            return Change(oldModules, newModules)
-        }
-
-        private fun librariesChange(
-            moduleChanges: List<EntityChange<LibraryEntity>>,
-            storageBefore: EntityStorage,
-            storageAfter: EntityStorage
-        ): Change<Library> {
-            val oldLibraries = mutableListOf<Library>()
-            val newLibraries = mutableListOf<Library>()
-            for (change in moduleChanges) {
-                oldEntity(change)?.let { oldLibraries.addIfNotNull(it.findLibraryBridge(storageBefore)) }
-                newEntity(change)?.let {
-                    val libraryBridge = storageAfter.findLibraryByEntityWithHack(it, project)
-                    newLibraries.addIfNotNull(libraryBridge)
-                }
-            }
-            return Change(oldLibraries, newLibraries)
-        }
-    }
-
     private inner class LibraryUsageIndex {
-        private val modulesLibraryIsUsedIn: MultiMap<LibraryWrapper, Module> = MultiMap.createSet()
+        private val modulesLibraryIsUsedIn: MultiMap<LibraryWrapper, Module>
 
         init {
-            for (module in ModuleManager.getInstance(project).modules) {
-                for (entry in ModuleRootManager.getInstance(module).orderEntries) {
-                    if (entry is LibraryOrderEntry) {
-                        val library = entry.library
-                        if (library != null) {
-                            modulesLibraryIsUsedIn.putValue(library.wrap(), module)
+            val map: MultiMap<LibraryWrapper, Module> = MultiMap.createSet()
+            for (module in runReadAction { ModuleManager.getInstance(project).modules }) {
+                checkCanceled()
+                runReadAction {
+                    for (entry in ModuleRootManager.getInstance(module).orderEntries) {
+                        if (entry is LibraryOrderEntry) {
+                            val library = entry.library
+                            if (library != null) {
+                                map.putValue(library.wrap(), module)
+                            }
                         }
                     }
                 }
             }
+            modulesLibraryIsUsedIn = map
         }
 
         fun getModulesLibraryIsUsedIn(libraryInfo: LibraryInfo) = sequence<Module> {
