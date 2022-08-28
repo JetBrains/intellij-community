@@ -1260,6 +1260,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractFE1UastTypesTest> {
             model("type")
         }
+
+        testClass<AbstractFE1UastValuesTest> {
+            model("value")
+        }
     }
 
     testGroup("uast/uast-kotlin/tests") {

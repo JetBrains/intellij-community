@@ -43,6 +43,21 @@ public class FE1UastTypesTestGenerated extends AbstractFE1UastTypesTest {
         runTest("../../uast-kotlin-fir/testData/type/classLiteral.kt");
     }
 
+    @TestMetadata("nonNullCompanion.kt")
+    public void testNonNullCompanion() throws Exception {
+        runTest("../../uast-kotlin-fir/testData/type/nonNullCompanion.kt");
+    }
+
+    @TestMetadata("nonNullablePair.kt")
+    public void testNonNullablePair() throws Exception {
+        runTest("../../uast-kotlin-fir/testData/type/nonNullablePair.kt");
+    }
+
+    @TestMetadata("nullnessInVarargs.kt")
+    public void testNullnessInVarargs() throws Exception {
+        runTest("../../uast-kotlin-fir/testData/type/nullnessInVarargs.kt");
+    }
+
     @TestMetadata("objectLiteral.kt")
     public void testObjectLiteral() throws Exception {
         runTest("../../uast-kotlin-fir/testData/type/objectLiteral.kt");

@@ -33,6 +33,16 @@ public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationT
         runTest("../../uast-kotlin-fir/testData/declaration/commentsOnProperties.kt");
     }
 
+    @TestMetadata("constructorProperties.kt")
+    public void testConstructorProperties() throws Exception {
+        runTest("../../uast-kotlin-fir/testData/declaration/constructorProperties.kt");
+    }
+
+    @TestMetadata("constructorWithJvmOverloads.kt")
+    public void testConstructorWithJvmOverloads() throws Exception {
+        runTest("../../uast-kotlin-fir/testData/declaration/constructorWithJvmOverloads.kt");
+    }
+
     @TestMetadata("doWhile.kt")
     public void testDoWhile() throws Exception {
         runTest("../../uast-kotlin-fir/testData/declaration/doWhile.kt");
@@ -58,6 +68,11 @@ public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationT
         runTest("../../uast-kotlin-fir/testData/declaration/init.kt");
     }
 
+    @TestMetadata("interfaceCompanionObject.kt")
+    public void testInterfaceCompanionObject() throws Exception {
+        runTest("../../uast-kotlin-fir/testData/declaration/interfaceCompanionObject.kt");
+    }
+
     @TestMetadata("labeledExpression.kt")
     public void testLabeledExpression() throws Exception {
         runTest("../../uast-kotlin-fir/testData/declaration/labeledExpression.kt");
@@ -71,6 +86,16 @@ public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationT
     @TestMetadata("objects.kt")
     public void testObjects() throws Exception {
         runTest("../../uast-kotlin-fir/testData/declaration/objects.kt");
+    }
+
+    @TestMetadata("overriddenYetDeprecated.kt")
+    public void testOverriddenYetDeprecated() throws Exception {
+        runTest("../../uast-kotlin-fir/testData/declaration/overriddenYetDeprecated.kt");
+    }
+
+    @TestMetadata("reflectKclassExperimental.kt")
+    public void testReflectKclassExperimental() throws Exception {
+        runTest("../../uast-kotlin-fir/testData/declaration/reflectKclassExperimental.kt");
     }
 
     @TestMetadata("retention.kt")
