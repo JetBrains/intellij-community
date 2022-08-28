@@ -8,3 +8,4 @@ fun test(): (Int) -> Int {
         }
     }
 }
+// PROBLEM: none

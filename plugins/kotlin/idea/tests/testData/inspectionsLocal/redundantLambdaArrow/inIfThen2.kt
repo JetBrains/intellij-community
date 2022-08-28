@@ -5,3 +5,4 @@ fun test(): (Int) -> Int {
         { _ -> 42 }
     }
 }
+// PROBLEM: none

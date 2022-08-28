@@ -10,3 +10,4 @@ fun bar() {
         print(it)
     }
 }
+// PROBLEM: "Redundant lambda arrow"

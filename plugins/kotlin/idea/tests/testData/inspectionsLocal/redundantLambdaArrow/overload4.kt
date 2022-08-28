@@ -6,3 +6,4 @@ fun bar(g: (Int, Int) -> Unit) {}
 fun test() {
     bar(f = { -><caret> })
 }
+// PROBLEM: "Redundant lambda arrow"

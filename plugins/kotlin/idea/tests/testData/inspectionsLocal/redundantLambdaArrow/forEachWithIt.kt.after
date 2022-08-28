@@ -5,3 +5,4 @@ fun println(s: String) {}
 fun test() {
     listOf(1, 2, 3).forEach { println(it) }
 }
+// PROBLEM: "Redundant lambda arrow"
