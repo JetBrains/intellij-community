@@ -75,17 +75,6 @@ object GHUIUtil {
       GithubIssueState.closed -> GithubBundle.message("issue.state.closed")
     }
 
-  fun isFocusParent(component: JComponent): Boolean {
-    val focusOwner = IdeFocusManager.findInstanceByComponent(component).focusOwner ?: return false
-    return SwingUtilities.isDescendingFrom(focusOwner, component)
-  }
-
-  fun focusPanel(panel: JComponent) {
-    val focusManager = IdeFocusManager.findInstanceByComponent(panel)
-    val toFocus = focusManager.getFocusTargetFor(panel) ?: return
-    focusManager.doWhenFocusSettlesDown { focusManager.requestFocus(toFocus, true) }
-  }
-
   fun createIssueLabelLabel(label: GHLabel): JBLabel = JBLabel(" ${label.name} ", UIUtil.ComponentStyle.SMALL).apply {
     background = getLabelBackground(label)
     foreground = getLabelForeground(background)

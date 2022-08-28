@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.collaboration.async.DisposingMainScope
 import git4idea.remote.hosting.knownRepositories
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -27,7 +28,6 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
 import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
-import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 import java.awt.BorderLayout
@@ -170,7 +170,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
 
     val component = GHRepositoryAndAccountSelectorComponentFactory(project, selectorVm, authManager).create(scope.childScope())
 
-    val focused = GHUIUtil.isFocusParent(mainPanel)
+    val focused = CollaborationToolsUIUtil.isFocusParent(mainPanel)
     with(mainPanel) {
       removeAll()
       add(component, BorderLayout.NORTH)
@@ -178,7 +178,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
       repaint()
     }
     if (focused) {
-      GHUIUtil.focusPanel(mainPanel)
+      CollaborationToolsUIUtil.focusPanel(mainPanel)
     }
     showingSelectors = true
   }
@@ -219,7 +219,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
       wrapper
     }
 
-    val focused = GHUIUtil.isFocusParent(mainPanel)
+    val focused = CollaborationToolsUIUtil.isFocusParent(mainPanel)
     with(mainPanel) {
       removeAll()
       add(panel, BorderLayout.CENTER)
@@ -227,7 +227,7 @@ internal class GHPRToolWindowTabControllerImpl(private val project: Project,
       repaint()
     }
     if (focused) {
-      GHUIUtil.focusPanel(mainPanel)
+      CollaborationToolsUIUtil.focusPanel(mainPanel)
     }
     showingSelectors = false
   }

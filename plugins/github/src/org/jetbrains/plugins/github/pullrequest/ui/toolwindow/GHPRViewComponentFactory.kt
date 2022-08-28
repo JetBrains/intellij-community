@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.commits.CommitsBrowserComponentBuilder
 import com.intellij.ide.DataManager
@@ -57,7 +58,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRStateModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.getResultFlow
 import org.jetbrains.plugins.github.ui.HtmlInfoPanel
-import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.util.DiffRequestChainProducer
 import javax.swing.JComponent
 import javax.swing.JList
@@ -186,7 +186,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
           break
         }
       }
-      GHUIUtil.focusPanel(list)
+      CollaborationToolsUIUtil.focusPanel(list)
     }
 
     private fun findCommitsList(parent: JComponent): JList<VcsCommitMetadata>? {
@@ -209,7 +209,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
         tabs.select(it, false)
       }
       val tree = UIUtil.findComponentOfType(filesComponent, ChangesTree::class.java) ?: return
-      GHUIUtil.focusPanel(tree)
+      CollaborationToolsUIUtil.focusPanel(tree)
 
       if (oid == null || !changesLoadingModel.resultAvailable) {
         tree.selectFile(VcsUtil.getFilePath(filePath, false))

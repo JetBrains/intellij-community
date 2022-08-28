@@ -3,6 +3,7 @@ package com.intellij.collaboration.ui
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.ScrollingUtil
@@ -103,6 +104,23 @@ object CollaborationToolsUIUtil {
     .removePrefix("https://")
     .removePrefix("http://")
     .removeSuffix("/")
+
+  /**
+   * Checks if focus is somewhere down the hierarchy from [component]
+   */
+  fun isFocusParent(component: JComponent): Boolean {
+    val focusOwner = IdeFocusManager.findInstanceByComponent(component).focusOwner ?: return false
+    return SwingUtilities.isDescendingFrom(focusOwner, component)
+  }
+
+  /**
+   * Finds the proper focus target for [panel] and set focus to it
+   */
+  fun focusPanel(panel: JComponent) {
+    val focusManager = IdeFocusManager.findInstanceByComponent(panel)
+    val toFocus = focusManager.getFocusTargetFor(panel) ?: return
+    focusManager.doWhenFocusSettlesDown { focusManager.requestFocus(toFocus, true) }
+  }
 }
 
 internal fun <E> ListModel<E>.findIndex(item: E): Int {
