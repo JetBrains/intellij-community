@@ -53,7 +53,7 @@ private val emptyConstructorMethodType = MethodType.methodType(Void.TYPE)
 abstract class ComponentManagerImpl(
   internal val parent: ComponentManagerImpl?,
   setExtensionsRootArea: Boolean = parent == null
-) : ComponentManager, Disposable.Parent, MessageBusOwner, UserDataHolderBase(), ComponentManagerEx {
+) : ComponentManager, Disposable.Parent, MessageBusOwner, UserDataHolderBase(), ComponentManagerEx, ComponentStoreOwner {
   protected enum class ContainerState {
     PRE_INIT, COMPONENT_CREATED, DISPOSE_IN_PROGRESS, DISPOSED, DISPOSE_COMPLETED
   }

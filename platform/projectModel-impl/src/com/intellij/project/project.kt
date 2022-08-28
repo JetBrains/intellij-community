@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.project
 
-import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.ComponentStoreOwner
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.stateStore
@@ -14,7 +14,7 @@ val Project.stateStore: IProjectStore
   get() = (this as ProjectStoreOwner).componentStore
 
 @ApiStatus.Internal
-interface ProjectStoreOwner : ComponentManagerEx {
+interface ProjectStoreOwner : ComponentStoreOwner {
   override val componentStore: IProjectStore
 }
 

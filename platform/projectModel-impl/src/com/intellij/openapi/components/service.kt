@@ -53,11 +53,4 @@ inline fun <reified T : Any> serviceIfCreated(): T? = ApplicationManager.getAppl
 inline fun <reified T : Any> services(includeLocal: Boolean): List<T> = ApplicationManager.getApplication().getServices(T::class.java, includeLocal)
 
 val ComponentManager.stateStore: IComponentStore
-  get() {
-    return when (this) {
-      is ComponentManagerEx -> this.componentStore
-      else -> {
-        getService(IComponentStore::class.java)
-      }
-    }
-  }
+  get() = if (this is ComponentStoreOwner) this.componentStore else service()
