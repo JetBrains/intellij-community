@@ -1214,10 +1214,10 @@ private suspend fun initProject(file: Path,
     coroutineScope {
       val isTrusted = async { !isTrustCheckNeeded || checkOldTrustedStateAndMigrate(project, file) }
 
-      preloadServicesAndCreateComponents(project, preloadServices)
       projectInitListeners {
-        it.containerConfigured(project)
+        it.execute(project)
       }
+      preloadServicesAndCreateComponents(project, preloadServices)
 
       if (!isTrusted.await()) {
         throw CancellationException("not trusted")
@@ -1323,7 +1323,7 @@ interface ProjectServiceContainerInitializedListener {
   /**
    * Invoked after container configured.
    */
-  suspend fun containerConfigured(project: Project)
+  suspend fun execute(project: Project)
 }
 
 @TestOnly

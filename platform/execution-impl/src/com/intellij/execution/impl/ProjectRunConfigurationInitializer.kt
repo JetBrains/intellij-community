@@ -11,7 +11,7 @@ import com.intellij.openapi.project.impl.ProjectServiceContainerInitializedListe
 import kotlinx.coroutines.async
 
 private class ProjectRunConfigurationInitializer : ProjectServiceContainerInitializedListener {
-  override suspend fun containerConfigured(project: Project) {
+  override suspend fun execute(project: Project) {
     project.coroutineScope.async {
       if (IS_RUN_MANAGER_INITIALIZED.get(project) == true) {
         return@async
