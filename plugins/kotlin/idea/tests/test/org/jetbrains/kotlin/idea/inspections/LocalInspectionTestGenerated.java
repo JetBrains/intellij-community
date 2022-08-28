@@ -6403,6 +6403,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public void testSimple() throws Exception {
             runTest("testData/inspectionsLocal/localVariableName/simple.kt");
         }
+
+        @TestMetadata("unusedVariable.kt")
+        public void testUnusedVariable() throws Exception {
+            runTest("testData/inspectionsLocal/localVariableName/unusedVariable.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

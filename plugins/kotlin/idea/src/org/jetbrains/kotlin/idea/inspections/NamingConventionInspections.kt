@@ -12,10 +12,7 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.ui.LabeledComponent
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.PsiNameIdentifierOwner
+import com.intellij.psi.*
 import com.intellij.ui.EditorTextField
 import com.siyeh.ig.BaseGlobalInspection
 import com.siyeh.ig.psiutils.TestUtils
@@ -287,18 +284,24 @@ abstract class PropertyNameInspectionBase protected constructor(
                 return
             }
 
+            if (parameter.ownerFunction is KtFunctionLiteral && parameter.isSingleUnderscore) {
+                return
+            }
             if (parameter.getKind() == kind) {
                 verifyName(parameter, holder)
             }
         }
 
         override fun visitDestructuringDeclarationEntry(multiDeclarationEntry: KtDestructuringDeclarationEntry) {
-            if (multiDeclarationEntry.name == "_") return
+            if (multiDeclarationEntry.isSingleUnderscore) return
             if (kind == PropertyKind.LOCAL) {
                 verifyName(multiDeclarationEntry, holder)
             }
         }
     }
+
+    private val PsiNamedElement.isSingleUnderscore
+        get() = name == "_"
 
     private fun KtProperty.getKind(): PropertyKind = when {
         isLocal -> PropertyKind.LOCAL
