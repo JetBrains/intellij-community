@@ -17,73 +17,64 @@ import org.junit.runner.RunWith;
 @TestRoot("uast/uast-kotlin/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public abstract class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationTest {
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../uast-kotlin-fir/testData/declaration")
-    public static class Declaration extends AbstractFE1UastDeclarationTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("annotationOnElvis.kt")
-        public void testAnnotationOnElvis() throws Exception {
-            runTest("../../uast-kotlin-fir/testData/declaration/annotationOnElvis.kt");
-        }
-
-        @TestMetadata("commentsOnProperties.kt")
-        public void testCommentsOnProperties() throws Exception {
-            runTest("../../uast-kotlin-fir/testData/declaration/commentsOnProperties.kt");
-        }
-
-        @TestMetadata("doWhile.kt")
-        public void testDoWhile() throws Exception {
-            runTest("../../uast-kotlin-fir/testData/declaration/doWhile.kt");
-        }
-
-        @TestMetadata("facade.kt")
-        public void testFacade() throws Exception {
-            runTest("../../uast-kotlin-fir/testData/declaration/facade.kt");
-        }
-
-        @TestMetadata("if.kt")
-        public void testIf() throws Exception {
-            runTest("../../uast-kotlin-fir/testData/declaration/if.kt");
-        }
-
-        @TestMetadata("importOnDemand.kt")
-        public void testImportOnDemand() throws Exception {
-            runTest("../../uast-kotlin-fir/testData/declaration/importOnDemand.kt");
-        }
-
-        @TestMetadata("init.kt")
-        public void testInit() throws Exception {
-            runTest("../../uast-kotlin-fir/testData/declaration/init.kt");
-        }
-
-        @TestMetadata("labeledExpression.kt")
-        public void testLabeledExpression() throws Exception {
-            runTest("../../uast-kotlin-fir/testData/declaration/labeledExpression.kt");
-        }
-
-        @TestMetadata("mangling.kt")
-        public void testMangling() throws Exception {
-            runTest("../../uast-kotlin-fir/testData/declaration/mangling.kt");
-        }
-
-        @TestMetadata("objects.kt")
-        public void testObjects() throws Exception {
-            runTest("../../uast-kotlin-fir/testData/declaration/objects.kt");
-        }
-
-        @TestMetadata("retention.kt")
-        public void testRetention() throws Exception {
-            runTest("../../uast-kotlin-fir/testData/declaration/retention.kt");
-        }
+@TestMetadata("../../uast-kotlin-fir/testData/declaration")
+public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationTest {
+    private void runTest(String testDataFilePath) throws Exception {
+        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../uast-kotlin-fir/testData/legacy")
-    public abstract static class Legacy extends AbstractFE1UastDeclarationTest {
+    @TestMetadata("annotationOnElvis.kt")
+    public void testAnnotationOnElvis() throws Exception {
+        runTest("../../uast-kotlin-fir/testData/declaration/annotationOnElvis.kt");
+    }
 
+    @TestMetadata("commentsOnProperties.kt")
+    public void testCommentsOnProperties() throws Exception {
+        runTest("../../uast-kotlin-fir/testData/declaration/commentsOnProperties.kt");
+    }
+
+    @TestMetadata("doWhile.kt")
+    public void testDoWhile() throws Exception {
+        runTest("../../uast-kotlin-fir/testData/declaration/doWhile.kt");
+    }
+
+    @TestMetadata("facade.kt")
+    public void testFacade() throws Exception {
+        runTest("../../uast-kotlin-fir/testData/declaration/facade.kt");
+    }
+
+    @TestMetadata("if.kt")
+    public void testIf() throws Exception {
+        runTest("../../uast-kotlin-fir/testData/declaration/if.kt");
+    }
+
+    @TestMetadata("importOnDemand.kt")
+    public void testImportOnDemand() throws Exception {
+        runTest("../../uast-kotlin-fir/testData/declaration/importOnDemand.kt");
+    }
+
+    @TestMetadata("init.kt")
+    public void testInit() throws Exception {
+        runTest("../../uast-kotlin-fir/testData/declaration/init.kt");
+    }
+
+    @TestMetadata("labeledExpression.kt")
+    public void testLabeledExpression() throws Exception {
+        runTest("../../uast-kotlin-fir/testData/declaration/labeledExpression.kt");
+    }
+
+    @TestMetadata("mangling.kt")
+    public void testMangling() throws Exception {
+        runTest("../../uast-kotlin-fir/testData/declaration/mangling.kt");
+    }
+
+    @TestMetadata("objects.kt")
+    public void testObjects() throws Exception {
+        runTest("../../uast-kotlin-fir/testData/declaration/objects.kt");
+    }
+
+    @TestMetadata("retention.kt")
+    public void testRetention() throws Exception {
+        runTest("../../uast-kotlin-fir/testData/declaration/retention.kt");
     }
 }

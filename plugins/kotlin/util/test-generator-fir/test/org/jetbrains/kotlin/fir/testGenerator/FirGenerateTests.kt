@@ -212,7 +212,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     testGroup("uast/uast-kotlin-fir") {
         testClass<AbstractFirUastDeclarationTest> {
             model("declaration")
-            model("legacy")
         }
 
         testClass<AbstractFirUastTypesTest> {
