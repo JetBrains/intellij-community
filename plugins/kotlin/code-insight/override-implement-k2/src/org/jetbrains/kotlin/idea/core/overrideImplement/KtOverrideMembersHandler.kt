@@ -9,9 +9,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.KtIconProvider.getIcon
@@ -80,6 +78,14 @@ open class KtOverrideMembersHandler : KtGenerateMembersHandler(false) {
                                 continue
                             } else {
                                 BodyType.NoBody
+                            }
+                        }
+                        (classOrObjectSymbol as? KtNamedClassOrObjectSymbol)?.isInline == true &&
+                                containingSymbol?.classIdIfNonLocal == StandardClassIds.Any -> {
+                            if ((symbolToProcess as? KtFunctionSymbol)?.name?.asString() in listOf("equals", "hashCode")) {
+                                continue
+                            } else {
+                                BodyType.Super
                             }
                         }
                         (originalOverriddenSymbol as? KtSymbolWithModality)?.modality == Modality.ABSTRACT ->
