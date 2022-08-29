@@ -13,21 +13,22 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nls.Capitalization.Sentence
 
 /**
- * Represents some check for the commit to detect specific problems.
- * E.g. if there are code errors introduced by the commit changes.
+ * Represents some check or code modification that is performed when changes are committed into VCS.
+ * E.g. to enforce the code style or to check if errors are introduced by the committed changes.
  *
- * [CheckinHandler]-s which need to run some asynchronous computation before commit should implement [CommitCheck].
- * Instead of creating separate modal task in synchronous [CheckinHandler.beforeCheckin] implementation.
+ * This interface supersedes [CheckinHandler.beforeCheckin] method,
+ * and will be used instead if [CheckinHandler] implements [CommitCheck].
+ * This interface is better suitable for 'non-modal' commit mode,
+ * as it allows performing operations without modal progress and modal error dialogs.
  *
  * Implement [com.intellij.openapi.project.DumbAware] to allow running commit check in dumb mode.
- *
- * Note that [CommitCheck] API is only supported in Commit Tool Window.
+ * Implement [CheckinModificationHandler] interface if check modifies the code. In this case, it will be called before other checks.
  */
 @ApiStatus.Experimental
 interface CommitCheck : PossiblyDumbAware {
   /**
    * Indicates if commit check should be run for the commit.
-   * E.g. if corresponding option is enabled in settings.
+   * E.g. if the corresponding option is enabled in settings.
    *
    * @return `true` if commit check should be run for the commit and `false` otherwise
    */
@@ -35,9 +36,13 @@ interface CommitCheck : PossiblyDumbAware {
   fun isEnabled(): Boolean
 
   /**
-   * Runs commit check and returns found commit problem if any.
+   * Runs commit check and returns the found commit problem if any.
    *
-   * @param indicator indicator to report running progress to
+   * Method is executed with [com.intellij.openapi.application.EDT] dispatcher.
+   * Consider using explicit [kotlinx.coroutines.Dispatchers.Default] context for potentially long operations,
+   * that can be performed on pooled thread.
+   *
+   * @param indicator indicator to check for cancellation and report running progress to via [ProgressIndicator.setText] and [ProgressIndicator.setText2].
    * @return commit problem found by the commit check or `null` if no problems found
    */
   @RequiresEdt
@@ -46,20 +51,20 @@ interface CommitCheck : PossiblyDumbAware {
 
 /**
  * Represents some problem found in the commit.
- * E.g. code errors introduced by the commit changes.
+ *
+ * @see CommitProblemWithDetails
  */
 @ApiStatus.Experimental
 interface CommitProblem {
   /**
    * Short problem description to show to the user.
-   *
-   * Problem details can be provided by implementing [CommitProblemWithDetails] interface.
    */
   @get:Nls(capitalization = Sentence)
   val text: String
 
   /**
    * Show modal resolution dialog for modal commit mode, if needed.
+   * Method is not called for non-modal commit modes.
    */
   @RequiresEdt
   fun showModalSolution(project: Project, commitInfo: CommitInfo): CheckinHandler.ReturnResult {
@@ -109,8 +114,8 @@ interface CommitProblem {
 @ApiStatus.Experimental
 interface CommitProblemWithDetails : CommitProblem {
   /**
-   * Shows details of the given commit problem.
-   * E.g. navigates to the tool window with problem details.
+   * Allows showing details for the problem (ex: by opening a toolwindow tab with a list of failed inspections).
+   * Modal dialog will be closed after this call if it is shown.
    */
   @RequiresEdt
   fun showDetails(project: Project, commitInfo: CommitInfo)
