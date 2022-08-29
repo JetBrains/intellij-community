@@ -72,6 +72,8 @@ abstract class NonModalCommitPanel(
       val historyActionToolbar = createToolbarWithHistoryAction(editorField)
 
       scrollPane.statusComponent.apply {
+        isOpaque = true
+        background = getButtonPanelBackground()
         add(historyActionToolbar.component)
         revalidate()
         repaint()
@@ -85,7 +87,7 @@ abstract class NonModalCommitPanel(
     val editorToolbar = ActionManager.getInstance().createActionToolbar(COMMIT_EDITOR_PLACE, actions, true).apply {
       setReservePlaceAutoPopupIcon(false)
       component.border = BorderFactory.createEmptyBorder()
-      component.isOpaque = false
+      component.background = getButtonPanelBackground()
       targetComponent = target
     }
     return editorToolbar
