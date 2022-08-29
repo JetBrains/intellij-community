@@ -222,4 +222,11 @@ public class StreamApiMigrationInspectionTestSuite {
       return "java14";
     }
   }
+
+  public static class Java19Test extends StreamApiMigrationInspectionBaseTest {
+    @Override
+    String getFolder() {
+      return "java19";
+    }
+  }
 }
