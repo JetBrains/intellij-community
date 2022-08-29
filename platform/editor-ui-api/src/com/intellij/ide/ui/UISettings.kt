@@ -115,7 +115,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   var separateMainMenu: Boolean
-    get() = SystemInfoRt.isWindows && state.separateMainMenu
+    get() = (SystemInfoRt.isWindows || SystemInfoRt.isLinux) && state.separateMainMenu
     set(value) {
       state.separateMainMenu = value
       state.showMainToolbar = value
