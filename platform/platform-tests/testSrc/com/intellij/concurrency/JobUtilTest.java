@@ -102,9 +102,9 @@ public class JobUtilTest extends LightPlatformTestCase {
     return busySleepAndIncrement(ms, EmptyRunnable.getInstance());
   }
   private static int busySleepAndIncrement(int ms, @NotNull Runnable doWhileWait) {
-    long end = System.currentTimeMillis() + ms;
+    long deadline = System.currentTimeMillis() + ms;
     int nap = Math.max(1, ms / 100);
-    while (System.currentTimeMillis() < end)  {
+    while (System.currentTimeMillis() < deadline)  {
       TimeoutUtil.sleep(nap);
       doWhileWait.run();
     }
@@ -288,21 +288,24 @@ public class JobUtilTest extends LightPlatformTestCase {
   public void testRecursiveCancel() {
     List<Integer> list = IntStream.range(0, 100).boxed().collect(Collectors.toList());
     for (int i = 0; i<10 && !t.timedOut(i); i++) {
+      int fingerPrint = i;
       COUNT.set(0);
+      LOG.debug("--- " + i+"; fingerPrint="+fingerPrint+"; COUNT="+COUNT);
       boolean[] success = new boolean[1];
       logElapsed(()->
         UsefulTestCase.assertThrows(MyException.class, "myMsg", () ->
           success[0] = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(list, null, ind -> {
-            boolean nestedSuccess = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(list, null, ___ -> {
-              if (busySleepAndIncrement(1) == 1000) {
-                LOG.debug("PCE");
-                throw new MyException("myMsg");
+            boolean nestedSuccess = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(list, null, nestedInd -> {
+              if (busySleepAndIncrement(1) % 1024 == 0) {
+                LOG.debug("throw myMsg ind=" + ind + "; nestedInd=" + nestedInd+"; fingerPrint="+fingerPrint+"; COUNT="+COUNT);
+                throw new MyException("myMsg"+fingerPrint+"; COUNT="+COUNT);
               }
               return true;
             });
-            LOG.debug("nestedSuccess: " + nestedSuccess+"; index:"+ind);
+            LOG.debug("nestedSuccess: " + nestedSuccess + "; ind:" + ind+"; fingerPrint="+fingerPrint+"; COUNT="+COUNT);
             return true;
-          })));
+          })
+        ));
       assertFalse(success[0]);
     }
   }
