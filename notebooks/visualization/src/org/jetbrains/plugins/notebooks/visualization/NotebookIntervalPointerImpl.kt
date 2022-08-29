@@ -75,9 +75,8 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
         for (old in e.oldIntervals.asReversed()) {
           pointers[old.ordinal].interval = null
           pointers.removeAt(old.ordinal)
-          // called in reversed order, so ordinals of previous cells remain actual
-          eventBuilder.onRemoved(old)
         }
+        eventBuilder.onRemoved(e.oldIntervals)
 
         e.newIntervals.firstOrNull()?.also { firstNew ->
           pointers.addAll(firstNew.ordinal, e.newIntervals.map { NotebookIntervalPointerImpl(it) })
@@ -183,16 +182,22 @@ private value class NotebookIntervalPointersEventBuilder(val accumulatedChanges:
   }
 
   fun onRemoved(interval: NotebookCellLines.Interval) {
-    accumulatedChanges.add(OnRemoved(interval.ordinal))
+    accumulatedChanges.add(OnRemoved(interval.ordinal..interval.ordinal))
+  }
+
+  fun onRemoved(sequentialIntervals: List<NotebookCellLines.Interval>) {
+    if (sequentialIntervals.isNotEmpty()) {
+      accumulatedChanges.add(OnRemoved(sequentialIntervals.first().ordinal..sequentialIntervals.last().ordinal))
+    }
   }
 
   fun onInserted(interval: NotebookCellLines.Interval) {
-    accumulatedChanges.add(OnInserted(interval.ordinal))
+    accumulatedChanges.add(OnInserted(interval.ordinal..interval.ordinal))
   }
 
-  fun onInserted(intervals: List<NotebookCellLines.Interval>) {
-    for (interval in intervals) {
-      onInserted(interval)
+  fun onInserted(sequentialIntervals: List<NotebookCellLines.Interval>) {
+    if (sequentialIntervals.isNotEmpty()) {
+      accumulatedChanges.add(OnInserted(sequentialIntervals.first().ordinal..sequentialIntervals.last().ordinal))
     }
   }
 

@@ -39,18 +39,18 @@ interface NotebookIntervalPointerFactory {
       for(change in event.changes) {
         when (change) {
           is NotebookIntervalPointersEvent.OnEdited -> onEdited(change.ordinal)
-          is NotebookIntervalPointersEvent.OnInserted -> onInserted(change.ordinal)
-          is NotebookIntervalPointersEvent.OnRemoved -> onRemoved(change.ordinal)
+          is NotebookIntervalPointersEvent.OnInserted -> onInserted(change.ordinals)
+          is NotebookIntervalPointersEvent.OnRemoved -> onRemoved(change.ordinals)
           is NotebookIntervalPointersEvent.OnSwapped -> onSwapped(change.firstOrdinal, change.secondOrdinal)
         }
       }
     }
 
-    fun onInserted(ordinal: Int)
+    fun onInserted(ordinals: IntRange)
 
     fun onEdited(ordinal: Int)
 
-    fun onRemoved(ordinal: Int)
+    fun onRemoved(ordinals: IntRange)
 
     /** [firstOrdinal] and [secondOrdinal] are never equal */
     fun onSwapped(firstOrdinal: Int, secondOrdinal: Int)
