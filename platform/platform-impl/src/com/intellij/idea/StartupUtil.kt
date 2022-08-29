@@ -30,7 +30,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.AWTExceptionHandler
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
-import com.intellij.openapi.application.impl.SwingDispatcher
+import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
@@ -145,7 +145,7 @@ fun CoroutineScope.startApplication(args: List<String>,
     // we shouldn't initialize AWT toolkit in order to avoid unnecessary focus stealing and space switching on macOS.
     initAwtToolkit(lockSystemDirsJob, busyThread).join()
 
-    withContext(SwingDispatcher) {
+    withContext(RawSwingDispatcher) {
       patchSystem(isHeadless)
     }
   }
@@ -331,7 +331,7 @@ private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job,
     // before showEuaIfNeededJob to prepare during showing EUA dialog
     val runnable = prepareSplash(appInfoDeferred, args) ?: return@launch
     showEuaIfNeededJob.join()
-    withContext(SwingDispatcher) {
+    withContext(RawSwingDispatcher) {
       runnable.run()
     }
   }
@@ -428,7 +428,7 @@ private suspend fun importConfig(args: List<String>,
                                  agreementShown: Deferred<Boolean>): Boolean {
   var activity = StartUpMeasurer.startActivity("screen reader checking")
   try {
-    withContext(SwingDispatcher) { AccessibilityUtils.enableScreenReaderSupportIfNecessary() }
+    withContext(RawSwingDispatcher) { AccessibilityUtils.enableScreenReaderSupportIfNecessary() }
   }
   catch (e: Throwable) {
     log.error(e)
@@ -438,7 +438,7 @@ private suspend fun importConfig(args: List<String>,
   appStarter.beforeImportConfigs()
   val newConfigDir = PathManager.getConfigDir()
   val veryFirstStartOnThisComputer = agreementShown.await()
-  withContext(SwingDispatcher) {
+  withContext(RawSwingDispatcher) {
     if (UIManager.getLookAndFeel() !is IntelliJLaf) {
       UIManager.setLookAndFeel(IntelliJLaf())
     }
@@ -496,7 +496,7 @@ private fun CoroutineScope.initUi(initAwtToolkitAndEventQueueJob: Job, preloadLa
   initAwtToolkitAndEventQueueJob.join()
 
   // SwingDispatcher must be used after Toolkit init
-  withContext(SwingDispatcher) {
+  withContext(RawSwingDispatcher) {
     val isHeadless = AppMode.isHeadless()
     if (!isHeadless) {
       val env = runActivity("GraphicsEnvironment init") {
@@ -600,7 +600,7 @@ private fun CoroutineScope.showEuaIfNeeded(euaDocumentDeferred: Deferred<Any?>?,
     suspend fun prepareAndExecuteInEdt(task: () -> Unit) {
       updateCached.join()
       initUiJob.join()
-      withContext(SwingDispatcher) {
+      withContext(RawSwingDispatcher) {
         UIManager.setLookAndFeel(IntelliJLaf())
         task()
       }
@@ -661,11 +661,11 @@ private fun CoroutineScope.updateFrameClassAndWindowIconAndPreloadSystemFonts(in
     }
 
     // preload cursors used by drag-n-drop AWT subsystem, run on SwingDispatcher to avoid a possible deadlock - see RIDER-80810
-    launch(CoroutineName("DnD setup") + SwingDispatcher) {
+    launch(CoroutineName("DnD setup") + RawSwingDispatcher) {
       DragSource.getDefaultDragSource()
     }
 
-    launch(SwingDispatcher) {
+    launch(RawSwingDispatcher) {
       WeakFocusStackManager.getInstance()
     }
   }
