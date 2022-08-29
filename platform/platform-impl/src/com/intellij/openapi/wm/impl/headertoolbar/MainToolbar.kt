@@ -8,7 +8,9 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
@@ -52,10 +54,13 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
       addWidget(it.button, HorizontalLayout.LEFT)
     }
 
-    createActionBar("MainToolbarLeft")?.let { addWidget(it, HorizontalLayout.LEFT) }
-    createActionBar("MainToolbarCenter")?.let { addWidget(it, HorizontalLayout.CENTER) }
-    createActionBar("RunToolbarWidgetCustomizableActionGroup")?.let { addWidget(it, HorizontalLayout.RIGHT) }
-    createActionBar(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_ACTIONS)?.let { addWidget(it, HorizontalLayout.RIGHT) }
+    ActionManagerEx.withLazyActionManager(project?.coroutineScope ?: ApplicationManager.getApplication()?.coroutineScope) {
+      val customActionSchema = CustomActionsSchema.getInstance()
+      createActionBar("MainToolbarLeft", customActionSchema)?.let { addWidget(it, HorizontalLayout.LEFT) }
+      createActionBar("MainToolbarCenter", customActionSchema)?.let { addWidget(it, HorizontalLayout.CENTER) }
+      createActionBar("RunToolbarWidgetCustomizableActionGroup", customActionSchema)?.let { addWidget(it, HorizontalLayout.RIGHT) }
+      createActionBar(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_ACTIONS, customActionSchema)?.let { addWidget(it, HorizontalLayout.RIGHT) }
+    }
     addComponentListener(ResizeListener())
   }
 
@@ -76,25 +81,23 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
     (widget as? Disposable)?.let { Disposer.register(disposable, it) }
   }
 
-  private fun createActionBar(groupId: String): JComponent? {
-    val group = CustomActionsSchema.getInstance().getCorrectedAction(groupId) as ActionGroup?
-    return group?.let {
-      val toolbar = createToolbar(it)
-      toolbar.setMinimumButtonSize(ActionToolbar.EXPERIMENTAL_TOOLBAR_MINIMUM_BUTTON_SIZE)
-      toolbar.targetComponent = null
-      toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
-      val comp = toolbar.component
-      comp.border = JBUI.Borders.empty()
-      comp.isOpaque = false
-      comp
-    }
+  private fun createActionBar(groupId: String, customActionSchema: CustomActionsSchema): JComponent? {
+    val group = customActionSchema.getCorrectedAction(groupId) as ActionGroup? ?: return null
+    val toolbar = createToolbar(group)
+    toolbar.setMinimumButtonSize(ActionToolbar.EXPERIMENTAL_TOOLBAR_MINIMUM_BUTTON_SIZE)
+    toolbar.targetComponent = null
+    toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+    val component = toolbar.component
+    component.border = JBUI.Borders.empty()
+    component.isOpaque = false
+    return component
   }
 
-  private fun createToolbar(group: ActionGroup): ActionToolbar =
-    object : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true) {
-
-      override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) = super.calculateBounds(size2Fit, bounds).apply {
-        bounds.forEach { fitRectangle(it) }
+  private fun createToolbar(group: ActionGroup): ActionToolbar {
+    val result = object : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true) {
+      override fun calculateBounds(size2Fit: Dimension, bounds: List<Rectangle>) {
+        super.calculateBounds(size2Fit, bounds)
+        bounds.forEach(::fitRectangle)
       }
 
       private fun fitRectangle(rect: Rectangle) {
@@ -103,10 +106,11 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
         rect.height = Integer.max(rect.height, minSize.height)
         rect.y = 0
       }
-    }.apply {
-      setActionButtonBorder(JBUI.Borders.empty(mainToolbarButtonInsets()))
-      setCustomButtonLook(HeaderToolbarButtonLook())
     }
+    result.setActionButtonBorder(JBUI.Borders.empty(mainToolbarButtonInsets()))
+    result.setCustomButtonLook(HeaderToolbarButtonLook())
+    return result
+  }
 
   private inner class ResizeListener : ComponentAdapter() {
     override fun componentResized(e: ComponentEvent?) {
