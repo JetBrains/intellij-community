@@ -28,7 +28,7 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
             ?: return null
 
         val output = origin.compilationOutput?.let { buildCompilationOutput(it, compileKotlinTask) } ?: return null
-        val dependencies = buildCompilationDependencies(importingContext, origin, classifier)
+        val dependencies = buildCompilationDependencies(importingContext, origin)
         val kotlinTaskProperties = getKotlinTaskProperties(compileKotlinTask, classifier)
 
         val nativeExtensions = origin.konanTargetName?.let(::KotlinNativeCompilationExtensionsImpl)
@@ -88,15 +88,11 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
         private fun buildCompilationDependencies(
             importingContext: MultiplatformModelImportingContext,
             compilationReflection: KotlinCompilationReflection,
-            classifier: String?
         ): Set<KotlinDependency> {
             return LinkedHashSet<KotlinDependency>().apply {
                 this += compileDependenciesBuilder.buildComponent(compilationReflection.gradleCompilation, importingContext)
                 this += runtimeDependenciesBuilder.buildComponent(compilationReflection.gradleCompilation, importingContext)
                     .onlyNewDependencies(this)
-
-                val sourceSet = importingContext.sourceSetByName(compilationFullName(compilationReflection.compilationName, classifier))
-                this += sourceSet?.dependencies?.mapNotNull { importingContext.dependencyMapper.getDependency(it) } ?: emptySet()
             }
         }
 
