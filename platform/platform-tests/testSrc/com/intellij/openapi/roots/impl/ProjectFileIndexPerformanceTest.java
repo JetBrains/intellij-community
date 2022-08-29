@@ -12,8 +12,7 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 
 import java.io.IOException;
 
-public class DirectoryIndexLightTest extends BasePlatformTestCase {
-
+public class ProjectFileIndexPerformanceTest extends BasePlatformTestCase {
   public void testAccessPerformance() throws IOException {
     VirtualFile fsRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///");
     VirtualFile[] files = new VirtualFile[100*50];
