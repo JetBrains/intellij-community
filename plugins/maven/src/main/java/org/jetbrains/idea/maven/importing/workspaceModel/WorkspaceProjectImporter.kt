@@ -14,6 +14,7 @@ import com.intellij.util.containers.FileCollectionFactory
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.ide.impl.jps.serialization.FileInDirectorySourceNames
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.findModuleByEntity
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -51,7 +52,9 @@ internal class WorkspaceProjectImporter(
   private val createdModulesList = java.util.ArrayList<Module>()
 
   override fun importProject(): List<MavenProjectsProcessorTask> {
-    val (hasChanges, projectToImport) = collectProjectsAndChanges(projectsToImportWithChanges)
+    val storageBeforeImport = WorkspaceModel.getInstance(myProject).entityStorage.current
+
+    val (hasChanges, projectToImport) = collectProjectsAndChanges(storageBeforeImport, projectsToImportWithChanges)
     if (!hasChanges) return emptyList()
 
     val postTasks = ArrayList<MavenProjectsProcessorTask>()
@@ -63,7 +66,7 @@ internal class WorkspaceProjectImporter(
     val contextData = UserDataHolderBase()
 
     val projectsWithModuleEntities = stats.recordPhase(MavenImportCollector.WORKSPACE_POPULATE_PHASE) {
-      importModules(builder, projectToImport, mavenProjectToModuleName, contextData, stats)
+      importModules(storageBeforeImport, builder, projectToImport, mavenProjectToModuleName, contextData, stats)
     }
     val appliedProjectsWithModules = stats.recordPhase(MavenImportCollector.WORKSPACE_COMMIT_PHASE) {
       applyModulesToWorkspaceModel(projectsWithModuleEntities, builder, contextData, stats)
@@ -89,8 +92,9 @@ internal class WorkspaceProjectImporter(
 
   }
 
-  private fun collectProjectsAndChanges(originalProjectsChanges: Map<MavenProject, MavenProjectChanges>): Pair<Boolean, Map<MavenProject, MavenProjectChanges>> {
-    val projectFilesFromPreviousImport = readMavenExternalSystemData(WorkspaceModel.getInstance(myProject).entityStorage.current)
+  private fun collectProjectsAndChanges(storageBeforeImport: EntityStorage,
+                                        originalProjectsChanges: Map<MavenProject, MavenProjectChanges>): Pair<Boolean, Map<MavenProject, MavenProjectChanges>> {
+    val projectFilesFromPreviousImport = readMavenExternalSystemData(storageBeforeImport)
       .mapTo(FileCollectionFactory.createCanonicalFilePathSet()) { it.mavenProjectFilePath }
 
     val allProjectToImport = myProjectsTree.projects
@@ -116,7 +120,8 @@ internal class WorkspaceProjectImporter(
     return mavenProjectToModuleName
   }
 
-  private fun importModules(builder: MutableEntityStorage,
+  private fun importModules(storageBeforeImport: EntityStorage,
+                            builder: MutableEntityStorage,
                             projectsToImport: Map<MavenProject, MavenProjectChanges>,
                             mavenProjectToModuleName: java.util.HashMap<MavenProject, String>,
                             contextData: UserDataHolderBase,
@@ -124,6 +129,7 @@ internal class WorkspaceProjectImporter(
     val context = MavenProjectImportContextProvider(myProject, myProjectsTree, myImportingSettings,
                                                     mavenProjectToModuleName).getContext(projectsToImport)
 
+    val entitySourceNamesBeforeImport = FileInDirectorySourceNames.from(storageBeforeImport)
     val folderImportingContext = WorkspaceFolderImporter.FolderImportingContext()
 
     class PartialModulesData(val changes: MavenProjectChanges,
@@ -135,6 +141,7 @@ internal class WorkspaceProjectImporter(
                                                  importData,
                                                  virtualFileUrlManager,
                                                  builder,
+                                                 entitySourceNamesBeforeImport,
                                                  myImportingSettings,
                                                  folderImportingContext,
                                                  stats).importModule()
