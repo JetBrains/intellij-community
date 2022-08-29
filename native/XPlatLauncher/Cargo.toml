@@ -32,6 +32,10 @@ jni-sys = "0.3.0"
 path-absolutize = "3.0.13"
 
 [dev-dependencies]
+# external CLI tools, specified here so that they would be added to Cargo.lock organically
+cargo-deny = "0.12.2"
+cargo-about = "0.5.1"
+# test dependencies
 junction = "0.2.0"
 fs_extra = "1.2.0"
 anyhow = "1.0.62"
