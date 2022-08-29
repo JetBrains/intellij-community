@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.junit.Assert
 import java.io.File
 import java.nio.file.Files
-import kotlin.io.path.Path
+import java.nio.file.Path
 import kotlin.io.path.createFile
 import kotlin.io.path.div
 
@@ -257,28 +257,28 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
             fileText, "// $fixTextDirectiveName: "
         )
 
+        val canonicalPathToExpectedFile = mainFilePath + afterFileNameSuffix
+        val canonicalPathToExpectedPath = testDataDirectory.toPath() / canonicalPathToExpectedFile
         if (!runInspectionWithFixesAndCheck(inspection, expectedProblemString, expectedHighlightString, localFixTextString)) {
+            assertFalse("$canonicalPathToExpectedFile should not exists as no action could be applied", Files.exists(canonicalPathToExpectedPath))
             return
         }
 
-        val canonicalPathToExpectedFile = mainFilePath + afterFileNameSuffix
-        createAfterFileIfItDoesNotExist(canonicalPathToExpectedFile)
+        createAfterFileIfItDoesNotExist(canonicalPathToExpectedPath)
         try {
             myFixture.checkResultByFile(canonicalPathToExpectedFile)
         } catch (e: ComparisonFailure) {
             KotlinTestUtils.assertEqualsToFile(
-                File(testDataPath, canonicalPathToExpectedFile),
+                File(testDataDirectory, canonicalPathToExpectedFile),
                 editor.document.text
             )
         }
     }
 
-    private fun createAfterFileIfItDoesNotExist(canonicalPathToExpectedFile: String) {
-        val path = Path(testDataPath) / canonicalPathToExpectedFile
-
+    private fun createAfterFileIfItDoesNotExist(path: Path) {
         if (!Files.exists(path)) {
             path.createFile().write(editor.document.text)
-            error("File $canonicalPathToExpectedFile was not found and thus was generated")
+            error("File $path was not found and thus was generated")
         }
     }
 
