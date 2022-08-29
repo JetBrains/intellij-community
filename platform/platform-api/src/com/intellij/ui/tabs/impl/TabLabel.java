@@ -243,7 +243,9 @@ public class TabLabel extends JPanel implements Accessible {
     Insets insets = super.getInsets();
     if (myTabs.isEditorTabs() && (UISettings.getShadowInstance().getShowCloseButton() || myInfo.isPinned()) && hasIcons()) {
       if (UISettings.getShadowInstance().getCloseTabButtonOnTheRight()) {
-        insets.right -= JBUIScale.scale(4);
+        if (!ExperimentalUI.isNewUI()) {
+          insets.right -= JBUIScale.scale(4);
+        }
       }
       else {
         insets.left -= JBUIScale.scale(4);
