@@ -3,7 +3,12 @@ package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.ide.ui.laf.darcula.ui.MainToolbarComboBoxButtonUI
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ComboBoxAction
+import com.intellij.openapi.actionSystem.ex.ComboBoxAction.ComboBoxButton
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionToolbar
@@ -22,6 +27,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.MainMe
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets
+import java.awt.Container
 import java.awt.Dimension
 import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
@@ -95,19 +101,7 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
 
 
   private fun createToolbar(group: ActionGroup): ActionToolbar =
-    object : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true) {
-
-      override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) = super.calculateBounds(size2Fit, bounds).apply {
-        bounds.forEach { fitRectangle(it) }
-      }
-
-      private fun fitRectangle(rect: Rectangle) {
-        val minSize = ActionToolbar.EXPERIMENTAL_TOOLBAR_MINIMUM_BUTTON_SIZE
-        rect.width = Integer.max(rect.width, minSize.width)
-        rect.height = Integer.max(rect.height, minSize.height)
-        rect.y = 0
-      }
-    }.apply {
+    MyActionToolbarImpl(group).apply {
       setActionButtonBorder(JBUI.Borders.empty(mainToolbarButtonInsets()))
       setCustomButtonLook(HeaderToolbarButtonLook())
     }
@@ -145,6 +139,37 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
         comp = visibleComponentsPool.nextToShow()
       }
     }
+  }
+}
+
+private class MyActionToolbarImpl(group: ActionGroup) : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true) {
+
+  override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) = super.calculateBounds(size2Fit, bounds).apply {
+    bounds.forEach { fitRectangle(it) }
+  }
+
+  private fun fitRectangle(rect: Rectangle) {
+    val minSize = EXPERIMENTAL_TOOLBAR_MINIMUM_BUTTON_SIZE
+    rect.width = Integer.max(rect.width, minSize.width)
+    rect.height = Integer.max(rect.height, minSize.height)
+    rect.y = 0
+  }
+
+  override fun createCustomComponent(action: CustomComponentAction, presentation: Presentation): JComponent {
+    val component = super.createCustomComponent(action, presentation)
+    if (action is ComboBoxAction) {
+      findComboButton(component)?.setUI(MainToolbarComboBoxButtonUI())
+    }
+    return component
+  }
+
+  private fun findComboButton(c: Container): ComboBoxButton? {
+    for (child in c.components) {
+      if (child is ComboBoxButton) return child
+      val childCombo = (child as? Container)?.let { findComboButton(it) }
+      if (childCombo != null) return childCombo
+    }
+    return null
   }
 }
 

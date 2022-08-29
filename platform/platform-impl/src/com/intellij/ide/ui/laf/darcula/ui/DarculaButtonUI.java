@@ -39,9 +39,9 @@ import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.MINIMUM_HEIGHT;
  */
 @SuppressWarnings("UnregisteredNamedColor")
 public class DarculaButtonUI extends BasicButtonUI {
-  private final Rectangle viewRect = new Rectangle();
-  private final Rectangle textRect = new Rectangle();
-  private final Rectangle iconRect = new Rectangle();
+  protected final Rectangle viewRect = new Rectangle();
+  protected final Rectangle textRect = new Rectangle();
+  protected final Rectangle iconRect = new Rectangle();
 
   protected static JBValue HELP_BUTTON_DIAMETER = new JBValue.Float(22);
   protected static JBValue MINIMUM_BUTTON_WIDTH = new JBValue.Float(72);
