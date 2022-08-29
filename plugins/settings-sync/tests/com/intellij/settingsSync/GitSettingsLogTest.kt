@@ -52,7 +52,6 @@ internal class GitSettingsLogTest {
     editorXml.writeText(editorContent)
 
     val settingsLog = initializeGitSettingsLog(keymapsFolder, editorXml)
-    settingsLog.logExistingSettings()
 
     settingsLog.collectCurrentSnapshot().assertSettingsSnapshot {
       fileState("keymaps/mykeymap.xml", keymapContent)
@@ -189,6 +188,9 @@ internal class GitSettingsLogTest {
       filesToCopyInitially.toList()
     }
     settingsLog.initialize()
+    settingsLog.logExistingSettings()
+    val masterPosition = settingsLog.advanceMaster()
+    settingsLog.setCloudPosition(masterPosition)
     return settingsLog
   }
 
