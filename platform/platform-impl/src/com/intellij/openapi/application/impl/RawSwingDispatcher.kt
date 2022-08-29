@@ -8,7 +8,6 @@ import kotlin.coroutines.CoroutineContext
 
 /** Do not use it. For start-up code only. */
 internal object RawSwingDispatcher : CoroutineDispatcher() {
-  override fun isDispatchNeeded(context: CoroutineContext): Boolean = !EventQueue.isDispatchThread()
 
   override fun dispatch(context: CoroutineContext, block: Runnable): Unit = EventQueue.invokeLater(block)
 
