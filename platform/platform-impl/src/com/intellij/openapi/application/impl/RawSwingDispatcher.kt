@@ -6,10 +6,16 @@ import kotlinx.coroutines.Runnable
 import java.awt.EventQueue
 import kotlin.coroutines.CoroutineContext
 
-/** Do not use it. For start-up code only. */
+/**
+ * **Do not use it**. For low level Swing code only.
+ */
 internal object RawSwingDispatcher : CoroutineDispatcher() {
 
-  override fun dispatch(context: CoroutineContext, block: Runnable): Unit = EventQueue.invokeLater(block)
+  override fun dispatch(context: CoroutineContext, block: Runnable) {
+    EventQueue.invokeLater(block)
+  }
 
-  override fun toString() = "Swing"
+  override fun toString(): String {
+    return "Swing"
+  }
 }
