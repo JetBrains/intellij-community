@@ -265,12 +265,13 @@ pub fn layout_launcher(
 }
 
 #[cfg(target_os = "windows")]
-pub fn layout_into_test_dir(
+pub fn layout_launcher(
+    target_dir: &Path,
     project_root: &Path,
-    jbr_absolute_path: PathBuf,
-    jar_absolute_path: PathBuf,
-    product_info_absolute_path: PathBuf,
-) {
+    jbr_absolute_path: &Path,
+    intellij_main_mock_jar: &Path,
+    product_info_absolute_path: &Path,
+) -> Result<()> {
     // windows:
     // .
     // ├── bin/
@@ -281,23 +282,30 @@ pub fn layout_into_test_dir(
     // ├── jbr/
     // └── product-info.json
 
-    create_dir("lib").expect("Failed to create lib dir");
-    create_dir("bin").expect("Failed to create bin dir");
-
-    fs::copy(product_info_absolute_path, "product-info.json")
-        .expect("Failed to move product_info.json");
-
     let launcher = project_root
         .join("target")
         .join("debug")
         .join("xplat-launcher.exe");
     assert!(launcher.exists());
 
-    fs::copy(launcher, "bin/xplat-launcher").expect("Failed to copy launcher");
-    fs::copy(jar_absolute_path, "lib/app.jar").expect("Failed to move jar");
-    junction::create(jbr_absolute_path, "jbr").expect("Failed to create junction for jbr");
-    File::create("bin/idea64.exe.vmoptions").expect("Failed to create idea.vmoptions");
-    File::create("lib/test.jar").expect("Failed to create test.jar file for classpath test");
+    layout_launcher_impl(
+        target_dir,
+        vec![ "lib", "bin" ],
+        vec![
+            "bin/idea64.exe.vmoptions",
+            "lib/test.jar"
+        ],
+        HashMap::from([
+            (launcher.as_path(), "bin/xplat-launcher.exe"),
+            (intellij_main_mock_jar, "lib/app.jar"),
+            (product_info_absolute_path, "product-info.json"),
+        ]),
+        HashMap::from([
+            (jbr_absolute_path, "jbr")
+        ])
+    )?;
+
+    Ok(())
 }
 
 fn layout_launcher_impl(
@@ -306,7 +314,7 @@ fn layout_launcher_impl(
     create_files: Vec<&str>,
     copy_files: HashMap<&Path, &str>,
     symlink_dirs: HashMap<&Path, &str>
-) -> Result<()>{
+) -> Result<()> {
     for dir in create_dirs {
         let path = &target_dir.join(dir);
         create_dir(path).context(format!("Failed to create dir {path:?}"))?;

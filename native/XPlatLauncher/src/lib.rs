@@ -242,8 +242,7 @@ fn get_class_path_separator<'a>() -> &'a str {
 
 #[cfg(target_os = "windows")]
 fn get_class_path_separator<'a>() -> &'a str {
-    ";
-            }"
+    ";"
 }
 
 fn show_fail_to_start_message(title: &str, text: &str) {

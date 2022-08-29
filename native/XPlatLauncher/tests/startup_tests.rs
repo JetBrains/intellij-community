@@ -3,29 +3,39 @@ mod tests_util;
 
 #[cfg(test)]
 mod tests {
+    use std::process::ExitStatus;
     use crate::tests_util::{IntellijMainDumpedLaunchParameters, prepare_test_env, run_launcher};
-    use std::os::unix::process::ExitStatusExt;
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
+    use {
+        std::os::unix::process::ExitStatusExt
+    };
 
     #[test]
     fn correct_launcher_startup_test() {
         let test = prepare_test_env();
-        let status = run_launcher(&test).exit_status;
+        let status = &run_launcher(&test).exit_status;
 
-        // let k = launcher_result.exit_status.signal().expect("");
-        // // let exit_code = launcher_result.exit_status.code().expect("There's no exit code for launcher");
-
-        if !status.success() {
-            let exit_code = option_to_string(status.code());
-            let signal = option_to_string(status.signal());
-            let core_dumped = status.core_dumped();
-
-            println!("Launcher didn't exit successfully\nexit code: {exit_code}\ntermination signal: {signal}\ncore dumped: {core_dumped}");
-        }
+        let exit_status_string = exit_status_to_string(status);
+        println!("Launcher's exit status:\n{exit_status_string}");
 
         assert!(
             status.success(),
             "The exit status of the launcher is not successful"
         );
+    }
+
+    #[cfg(target_os = "windows")]
+    fn exit_status_to_string(status: &ExitStatus) -> String {
+        let exit_code = option_to_string(status.code());
+        format!("exit code: {exit_code}")
+    }
+
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
+    fn exit_status_to_string(status: &ExitStatus) -> String {
+        let exit_code = option_to_string(status.code());
+        let signal = option_to_string(status.signal());
+        let core_dumped = status.core_dumped();
+        format!("exit code: {exit_code}, signal: {signal}, core_dumped: {core_dumped}")
     }
 
     fn option_to_string(code: Option<i32>) -> String {
