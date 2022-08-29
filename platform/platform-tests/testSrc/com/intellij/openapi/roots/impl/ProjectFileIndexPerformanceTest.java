@@ -3,7 +3,10 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -13,6 +16,7 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.rules.ClassLevelProjectModelExtension;
+import kotlin.Unit;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -37,9 +41,10 @@ public class ProjectFileIndexPerformanceTest {
     WriteAction.runAndWait(() -> {
       VirtualFile fsRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///");
       ourProjectRoot = fsRoot.createChildDirectory(ourProjectModel, ProjectFileIndexPerformanceTest.class.getSimpleName());
+      VirtualFile bigModuleRoot = ourProjectRoot.createChildDirectory(ourProjectModel, "big");
       WriteAction.runAndWait(() -> {
         for (int i = 0; i < 100; i++) {
-          VirtualFile directory = ourProjectRoot.createChildDirectory(ourProjectModel, "dir" + i);
+          VirtualFile directory = bigModuleRoot.createChildDirectory(ourProjectModel, "dir" + i);
           for (int j = 0; j < 50; j++) {
             directory = directory.createChildDirectory(ourProjectModel, "subDir");
           }
@@ -48,8 +53,29 @@ public class ProjectFileIndexPerformanceTest {
           }
         }
       });
-      Module module = ourProjectModel.createModule("big");
-      PsiTestUtil.addSourceRoot(module, ourProjectRoot);
+      Module bigModule = ourProjectModel.createModule("big");
+      PsiTestUtil.addSourceRoot(bigModule, bigModuleRoot);
+      
+      for (int i = 0; i < 500; i++) {
+        Module module = ourProjectModel.createModule("small" + i);
+        VirtualFile smallModuleRoot = ourProjectRoot.createChildDirectory(ourProjectModel, "small" + i);
+        PsiTestUtil.addContentRoot(module, smallModuleRoot);
+        VirtualFile srcRoot = smallModuleRoot.createChildDirectory(ourProjectModel, "src");
+        PsiTestUtil.addSourceRoot(module, srcRoot);
+        srcRoot.createChildData(ourProjectModel, "File" + i + ".java");
+        VirtualFile excludedRoot = smallModuleRoot.createChildDirectory(ourProjectModel, "excluded");
+        PsiTestUtil.addExcludedRoot(module, excludedRoot);
+
+        VirtualFile libraryRoot = smallModuleRoot.createChildDirectory(ourProjectModel, "lib");
+        VirtualFile libraryClassesRoot = libraryRoot.createChildDirectory(ourProjectModel, "classes");
+        VirtualFile librarySourcesRoot = libraryRoot.createChildDirectory(ourProjectModel, "src");
+        LibraryEx library = ourProjectModel.addProjectLevelLibrary("lib" + i, (model) -> {
+          model.addRoot(libraryClassesRoot, OrderRootType.CLASSES);
+          model.addRoot(librarySourcesRoot, OrderRootType.CLASSES);
+          return Unit.INSTANCE;
+        });
+        ModuleRootModificationUtil.addDependency(module, library);
+      }
     });
   }
 
