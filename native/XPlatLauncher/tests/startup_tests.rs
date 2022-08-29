@@ -4,20 +4,35 @@ mod tests_util;
 #[cfg(test)]
 mod tests {
     use crate::tests_util::{IntellijMainDumpedLaunchParameters, prepare_test_env, run_launcher};
-    use std::path::PathBuf;
-    use std::process::{Command, ExitStatus};
-    use std::time::Duration;
-    use std::{fs, thread, time};
+    use std::os::unix::process::ExitStatusExt;
 
     #[test]
     fn correct_launcher_startup_test() {
         let test = prepare_test_env();
-        let launcher_result = run_launcher(&test);
+        let status = run_launcher(&test).exit_status;
+
+        // let k = launcher_result.exit_status.signal().expect("");
+        // // let exit_code = launcher_result.exit_status.code().expect("There's no exit code for launcher");
+
+        if !status.success() {
+            let exit_code = option_to_string(status.code());
+            let signal = option_to_string(status.signal());
+            let core_dumped = status.core_dumped();
+
+            println!("Launcher didn't exit successfully\nexit code: {exit_code}\ntermination signal: {signal}\ncore dumped: {core_dumped}");
+        }
 
         assert!(
-            launcher_result.exit_status.success(),
-            "The exit code of the launcher is not successful"
+            status.success(),
+            "The exit status of the launcher is not successful"
         );
+    }
+
+    fn option_to_string(code: Option<i32>) -> String {
+        match code {
+            None => { "None".to_string() }
+            Some(x) => { x.to_string() }
+        }
     }
 
     #[test]
@@ -57,6 +72,6 @@ mod tests {
         let test = prepare_test_env();
         let result = run_launcher(&test);
         assert!(result.exit_status.success(), "Launcher didn't exit successfully");
-        result.dump
+        result.dump.expect("Launcher exited successfully, but there is no output")
     }
 }
