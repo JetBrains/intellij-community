@@ -5,12 +5,13 @@ import com.intellij.remoterobot.RemoteRobot
 import com.intellij.remoterobot.fixtures.CommonContainerFixture
 import com.intellij.remoterobot.search.locators.byXpath
 import com.intellij.uiTests.componentTesting.canvas.ComponentToTest
+import java.time.Duration
 
 internal fun <T : Class<out ComponentToTest>> componentUiTest(componentClass: T, test: CommonContainerFixture.() -> Unit) {
   val componentCanonicalName = componentClass.canonicalName
   with(RemoteRobot("http://127.0.0.1:8580")) {
     showComponent(componentCanonicalName)
-    val frame = find(CommonContainerFixture::class.java, byXpath("//div[@title='$componentCanonicalName']"))
+    val frame = find(CommonContainerFixture::class.java, byXpath("//div[@title='$componentCanonicalName']"), Duration.ofSeconds(20))
     try {
       frame.test()
     }

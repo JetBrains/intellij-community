@@ -260,8 +260,7 @@ final class CommunityRepositoryModules {
     plugin("intellij.platform.testFramework.ui") {
       withModuleLibrary("intellij.remoterobot.ide.launcher", mainModule, "")
       withModuleLibrary("intellij.remoterobot.remote.fixtures", mainModule, "")
-      withModuleLibrary("intellij.remoterobot.remote.robot", mainModule, "")
-      withModuleLibrary("intellij.remoterobot.robot.server", mainModule, "")
+      withModuleLibrary("intellij.remoterobot.robot.server.core", mainModule, "")
       withProjectLibrary("okhttp")
     },
   )
