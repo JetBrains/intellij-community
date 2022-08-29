@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.kotlin.config.KotlinFacetSettings;
-import org.jetbrains.kotlin.idea.base.projectStructure.KotlinFacetModificationTracker;
+import org.jetbrains.kotlin.idea.facet.KotlinFacetModificationTracker;
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle;
 import org.jetbrains.kotlin.idea.facet.KotlinFacet;
 import org.jetbrains.kotlin.platform.TargetPlatformKt;

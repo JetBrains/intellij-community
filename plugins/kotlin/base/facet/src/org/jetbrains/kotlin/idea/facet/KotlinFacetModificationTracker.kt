@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.base.projectStructure
+package org.jetbrains.kotlin.idea.facet
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
@@ -12,7 +12,6 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import org.jetbrains.kotlin.idea.base.util.caching.oldEntity
 import org.jetbrains.kotlin.idea.base.util.caching.newEntity
-import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 
 class KotlinFacetModificationTracker(project: Project) :
     SimpleModificationTracker(), WorkspaceModelChangeListener, Disposable {
