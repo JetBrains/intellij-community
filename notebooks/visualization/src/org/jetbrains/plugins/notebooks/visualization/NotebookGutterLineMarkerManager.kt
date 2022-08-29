@@ -21,9 +21,9 @@ import kotlin.math.max
 import kotlin.math.min
 
 
-class NotebookGutterRenderer {
+class NotebookGutterLineMarkerManager {
 
-  fun attachHighlighter(editor: EditorEx) {
+  fun attachHighlighters(editor: EditorEx) {
     editor.addEditorDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) = putHighlighters(editor)
       override fun bulkUpdateFinished(document: Document) = putHighlighters(editor)
@@ -39,7 +39,7 @@ class NotebookGutterRenderer {
   }
 
   private fun putHighlighters(editor: EditorEx) {
-    val highlighters = editor.markupModel.allHighlighters.filter { it.lineMarkerRenderer is NotebookGutterLineMarker }
+    val highlighters = editor.markupModel.allHighlighters.filter { it.lineMarkerRenderer is NotebookGutterLineMarkerRenderer }
     highlighters.forEach { editor.markupModel.removeHighlighter(it) }
 
     val notebookCellLines = NotebookCellLines.get(editor)
@@ -54,7 +54,7 @@ class NotebookGutterRenderer {
         HighlighterLayer.FIRST - 100,  // Border should be seen behind any syntax highlighting, selection or any other effect.
         HighlighterTargetArea.LINES_IN_RANGE
       ).also {
-        it.lineMarkerRenderer = NotebookGutterLineMarker(interval)
+        it.lineMarkerRenderer = NotebookGutterLineMarkerRenderer(interval)
       }
     }
   }
@@ -150,8 +150,7 @@ class NotebookGutterRenderer {
   }
 
 
-
-  inner class NotebookGutterLineMarker(private val interval: NotebookCellLines.Interval) : LineMarkerRendererEx {
+  inner class NotebookGutterLineMarkerRenderer(private val interval: NotebookCellLines.Interval) : LineMarkerRendererEx {
     override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
       editor as EditorImpl
 
@@ -175,9 +174,9 @@ class NotebookGutterRenderer {
   }
 
   companion object {
-    fun install(editor: EditorEx): NotebookGutterRenderer {
-      val instance = NotebookGutterRenderer()
-      instance.attachHighlighter(editor)
+    fun install(editor: EditorEx): NotebookGutterLineMarkerManager {
+      val instance = NotebookGutterLineMarkerManager()
+      instance.attachHighlighters(editor)
 
       return instance
     }
