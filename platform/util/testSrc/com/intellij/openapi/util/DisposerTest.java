@@ -584,4 +584,20 @@ public class DisposerTest extends TestCase {
     assertFalse(Disposer.tryRegister(parent, child));
     Disposer.dispose(child);
   }
+  
+  @Test
+  public void testRegisterManyChildren() {
+    Disposable parent = new MyLoggingDisposable("parent");
+    List<Disposable> children = new ArrayList<>();
+    for (int i = 0; i < ObjectNode.REASONABLY_BIG * 2; i++) {
+      Disposable child = new MyLoggingDisposable("child #" + i);
+      Disposer.register(parent, child);
+      children.add(child);
+    }
+    Disposer.dispose(parent);
+
+    for (Disposable child : children) {
+      Assert.assertTrue(Disposer.isDisposed(child));
+    }
+  }
 }

@@ -53,6 +53,7 @@ final class ObjectTree {
       ObjectNode childNode = getParentNode(child).moveChildNodeToOtherParent(child, parentNode);
       myObject2ParentNode.put(child, parentNode);
 
+      assert childNode.getObject() == child;
       checkWasNotAddedAlreadyAsChild(parentNode, childNode);
     }
   }
