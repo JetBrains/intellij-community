@@ -106,7 +106,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
     val usedPid = replaceMap.getOrDefault(outdatedId, outdatedId.id.asThis())
 
     // We don't modify entity that isn't exist in target version of storage
-    val existingEntityData = target.entityDataById(usedPid.id)
+    val existingEntityData = target.entitiesByType.getEntityDataForModificationOrNull(usedPid.id)
     if (existingEntityData != null) {
       val newEntitySource = data.entitySource
       existingEntityData.entitySource = newEntitySource
