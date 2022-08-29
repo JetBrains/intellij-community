@@ -1410,22 +1410,6 @@ abstract class ComponentManagerImpl(
     return adapter != null || (parent != null && parent.hasComponent(componentKey))
   }
 
-  @Deprecated(message = "Use extensions", level = DeprecationLevel.ERROR)
-  final override fun <T : Any> getComponents(baseClass: Class<T>): Array<T> {
-    checkState()
-    val result = mutableListOf<T>()
-    for (componentAdapter in componentAdapters.getImmutableSet()) {
-      val implementationClass = componentAdapter.getImplementationClass()
-      if (baseClass === implementationClass || baseClass.isAssignableFrom(implementationClass)) {
-        val instance = componentAdapter.getInstance<T>(componentManager = this, keyClass = null, createIfNeeded = false)
-        if (instance != null) {
-          result.add(instance)
-        }
-      }
-    }
-    return ArrayUtil.toObjectArray(result, baseClass)
-  }
-
   final override fun isSuitableForOs(os: ExtensionDescriptor.Os): Boolean {
     return when (os) {
       ExtensionDescriptor.Os.mac -> SystemInfoRt.isMac

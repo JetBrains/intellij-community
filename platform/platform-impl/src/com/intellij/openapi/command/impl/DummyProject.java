@@ -87,11 +87,6 @@ public final class DummyProject extends UserDataHolderBase implements Project {
   }
 
   @Override
-  public <T> T @NotNull [] getComponents(@NotNull Class<T> baseClass) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public @NotNull PicoContainer getPicoContainer() {
     throw new UnsupportedOperationException("getPicoContainer is not implement in : " + getClass());
   }

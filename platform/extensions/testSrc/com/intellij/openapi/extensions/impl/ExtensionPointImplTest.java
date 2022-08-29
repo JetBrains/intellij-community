@@ -368,11 +368,6 @@ public class ExtensionPointImplTest {
     }
 
     @Override
-    public <T> T @NotNull [] getComponents(@NotNull Class<T> baseClass) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
     public @NotNull PicoContainer getPicoContainer() {
       throw new UnsupportedOperationException();
     }
@@ -399,6 +394,11 @@ public class ExtensionPointImplTest {
 
     @Override
     public <T> T getService(@NotNull Class<T> serviceClass) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public @NotNull ExtensionsArea getExtensionArea() {
       throw new UnsupportedOperationException();
     }
 
