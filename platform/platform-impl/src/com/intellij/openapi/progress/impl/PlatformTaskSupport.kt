@@ -2,6 +2,7 @@
 package com.intellij.openapi.progress.impl
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.application.impl.withModalContext
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.*
@@ -154,7 +155,7 @@ private fun CoroutineScope.showModalIndicator(
 ): Job = launch(Dispatchers.IO) {
   delay(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong())
   val mainJob = this@showModalIndicator.coroutineContext.job
-  withContext(Dispatchers.EDT) {
+  withContext(RawSwingDispatcher) {
     val window = ownerWindow(owner)
     if (window == null) {
       if (!GraphicsEnvironment.isHeadless()) {
@@ -183,19 +184,32 @@ private fun CoroutineScope.showModalIndicator(
         }
       },
     )
-    launch { // will be run in an inner event loop
-      val focusComponent = ui.cancelButton
-      val previousFocusOwner = SwingUtilities.getWindowAncestor(focusComponent)?.mostRecentFocusOwner
-      focusComponent.requestFocusInWindow()
-      try {
-        awaitCancellation()
-      }
-      finally {
-        dialog.close(DialogWrapper.OK_EXIT_CODE)
-        previousFocusOwner?.requestFocusInWindow()
+
+    awaitCancellation {
+      dialog.close(DialogWrapper.OK_EXIT_CODE)
+    }
+
+    // 1. If the dialog is heavy (= spins an inner event loop):
+    // show() returns after dialog was closed
+    // => following yield() will resume with CancellationException
+    // 2. If the dialog is glass pane based (= without inner event loop):
+    // show() returns immediately
+    dialog.show()
+
+    // 'Light' popup is shown in glass pane,
+    // glass pane is 'activating' (becomes visible) in 'invokeLater' call (see IdeGlassPaneImp.addImpl),
+    // requesting focus to cancel button until that time has no effect, as it's not showing
+    // => yield() to re-dispatch via invokeLater
+    yield()
+
+    val focusComponent = ui.cancelButton
+    val previousFocusOwner = SwingUtilities.getWindowAncestor(focusComponent)?.mostRecentFocusOwner
+    focusComponent.requestFocusInWindow()
+    if (previousFocusOwner != null) {
+      awaitCancellation {
+        previousFocusOwner.requestFocusInWindow()
       }
     }
-    dialog.show() // will spin an inner event loop
   }
 }
 
@@ -207,4 +221,16 @@ private suspend fun ProgressDialogUI.updateFromSink(stateFlow: Flow<ProgressStat
       updateProgress(it)
     }
   error("collect call must be cancelled")
+}
+
+private fun CoroutineScope.awaitCancellation(action: () -> Unit) {
+  // UNDISPATCHED guarantees that the coroutine will execute until first suspension point (awaitCancellation)
+  launch(start = CoroutineStart.UNDISPATCHED) {
+    try {
+      awaitCancellation()
+    }
+    finally {
+      action()
+    }
+  }
 }
