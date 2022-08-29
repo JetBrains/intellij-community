@@ -144,7 +144,10 @@
       <reference ref="ChangesView.ToggleCommitUi"/>
       <reference ref="ChangesView.Revert"/>
       <reference ref="Diff.ShowDiff"/>
-      <group icon="AllIcons.Vcs.Changelist" id="ChangesView.Changelists" popup="true">
+      <group icon="AllIcons.Vcs.Changelist"
+             id="ChangesView.Changelists"
+             class="com.intellij.openapi.vcs.changes.actions.ChangeListActionGroup"
+             popup="true">
         <action id="ChangesView.NewChangeList" class="com.intellij.openapi.vcs.changes.actions.AddChangeListAction"
                 icon="AllIcons.General.Add"/>
         <action id="ChangesView.Rename" class="com.intellij.openapi.vcs.changes.actions.RenameChangeListAction"
