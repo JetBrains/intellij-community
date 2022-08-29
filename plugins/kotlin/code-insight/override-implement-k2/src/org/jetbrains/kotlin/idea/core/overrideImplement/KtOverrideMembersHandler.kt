@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.KtIconProvider.getIcon
 import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 @ApiStatus.Internal
 open class KtOverrideMembersHandler : KtGenerateMembersHandler(false) {
@@ -57,7 +58,7 @@ open class KtOverrideMembersHandler : KtGenerateMembersHandler(false) {
                 val symbolsToProcess = if (intersectionSymbols.size <= 1) {
                     listOf(symbol)
                 } else {
-                    val nonAbstractMembers = intersectionSymbols.filter { (it as? KtSymbolWithModality)?.modality != Modality.ABSTRACT }
+                    val nonAbstractMembers = intersectionSymbols.filter { it.safeAs<KtSymbolWithModality>()?.modality != Modality.ABSTRACT }
                     // If there are non-abstract members, we only want to show override for these non-abstract members. Otherwise, show any
                     // abstract member to override.
                     nonAbstractMembers.ifEmpty {
@@ -80,15 +81,15 @@ open class KtOverrideMembersHandler : KtGenerateMembersHandler(false) {
                                 BodyType.NoBody
                             }
                         }
-                        (classOrObjectSymbol as? KtNamedClassOrObjectSymbol)?.isInline == true &&
+                        classOrObjectSymbol.safeAs<KtNamedClassOrObjectSymbol>()?.isInline == true &&
                                 containingSymbol?.classIdIfNonLocal == StandardClassIds.Any -> {
-                            if ((symbolToProcess as? KtFunctionSymbol)?.name?.asString() in listOf("equals", "hashCode")) {
+                            if (symbolToProcess.safeAs<KtFunctionSymbol>()?.name?.asString() in listOf("equals", "hashCode")) {
                                 continue
                             } else {
                                 BodyType.Super
                             }
                         }
-                        (originalOverriddenSymbol as? KtSymbolWithModality)?.modality == Modality.ABSTRACT ->
+                        originalOverriddenSymbol.safeAs<KtSymbolWithModality>()?.modality == Modality.ABSTRACT ->
                             BodyType.FromTemplate
                         symbolsToProcess.size > 1 ->
                             BodyType.QualifiedSuper
