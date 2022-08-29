@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.base.plugin.artifacts
 import com.intellij.openapi.application.PathManager
 import org.jetbrains.kotlin.idea.artifacts.KotlinNativeVersion
 import org.jetbrains.kotlin.idea.artifacts.NATIVE_PREBUILT_DEV_CDN_URL
-import org.jetbrains.kotlin.idea.artifacts.KotlinNativePrebuiltDownloader.downloadNativePrebuilt
+import org.jetbrains.kotlin.idea.artifacts.KotlinNativePrebuiltDownloader.downloadFile
 import org.jetbrains.kotlin.idea.artifacts.KotlinNativePrebuiltDownloader.unpackPrebuildArchive
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader.downloadArtifactForIdeFromSources
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinMavenUtils
@@ -135,7 +135,7 @@ object TestKotlinArtifacts {
         }
 
         val archiveFilePath = Paths.get(downloadOut)
-        downloadNativePrebuilt(downloadUrl, Paths.get(downloadOut))
+        downloadFile(downloadUrl, Paths.get(downloadOut))
         unpackPrebuildArchive(archiveFilePath, Paths.get("$baseDir/$prebuilt"))
         Files.deleteIfExists(archiveFilePath)
 

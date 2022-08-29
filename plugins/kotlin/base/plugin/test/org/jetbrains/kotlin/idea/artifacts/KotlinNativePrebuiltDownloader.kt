@@ -7,12 +7,11 @@ package org.jetbrains.kotlin.idea.artifacts
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 
 const val NATIVE_PREBUILT_DEV_CDN_URL = "https://download-cdn.jetbrains.com/kotlin/native/builds/dev"
 
 object KotlinNativePrebuiltDownloader {
-    fun downloadNativePrebuilt(downloadURL: String, downloadOut: Path) {
+    fun downloadFile(downloadURL: String, downloadOut: Path) {
         val url = URL(downloadURL)
 
         url.openStream().use {
