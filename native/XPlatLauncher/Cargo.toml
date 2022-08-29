@@ -33,9 +33,6 @@ utils = { path = "utils" }
 anyhow = { version = "1.0.62", features = ["std", "backtrace"] }
 
 [dev-dependencies]
-# external CLI tools, specified here so that they would be added to Cargo.lock organically
-cargo-deny = "0.12.2"
-cargo-about = "0.5.1"
 # test dependencies
 junction = "0.2.0"
 fs_extra = "1.2.0"
