@@ -86,7 +86,7 @@ public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStora
     //this.records = new UnsafeBuffer(maxRecords * RECORD_SIZE_IN_BYTES+ HEADER_SIZE);
     this.records = ByteBuffer.allocate(maxRecords * RECORD_SIZE_IN_BYTES + HEADER_SIZE);
 
-    if (Files.exists(path)) {
+    if(Files.exists(path)) {
       final long fileSize = Files.size(path);
       if (fileSize > records.capacity()) {
         final long recordsInFile = (fileSize - HEADER_SIZE) / RECORD_SIZE_IN_BYTES;
@@ -206,8 +206,8 @@ public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStora
   }
 
   @Override
-  public void markRecordAsModified(final int recordId) throws IOException {
-    setIntField(recordId, MOD_COUNT_OFFSET, globalModCount.incrementAndGet());
+  public void setModCount(final int recordId, int counter) throws IOException {
+    setIntField(recordId, MOD_COUNT_OFFSET, counter);
   }
 
   @Override
@@ -216,27 +216,24 @@ public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStora
   }
 
   @Override
-  public boolean setContentRecordId(final int recordId,
-                                    final int contentRef) throws IOException {
-    final boolean reallyChanged = getIntField(recordId, CONTENT_REF_OFFSET) != contentRef;
-    if (reallyChanged) {
-      setIntField(recordId, CONTENT_REF_OFFSET, contentRef);
-    }
-    return reallyChanged;
+  public void setContentRecordId(final int recordId,
+                                 final int contentRef) throws IOException {
+    setIntField(recordId, CONTENT_REF_OFFSET, contentRef);
   }
 
   @Override
-  public void fillRecord(final int recordId,
-                         final long timestamp,
-                         final long length,
-                         final int flags,
-                         final int nameId,
-                         final int parentId,
-                         final boolean overwriteAttrRef) throws IOException {
+  public void setAttributesAndIncModCount(final int recordId,
+                                          final long timestamp,
+                                          final long length,
+                                          final int flags,
+                                          final int nameId,
+                                          final int parentId,
+                                          final boolean overwriteMissed) throws IOException {
+    //FIXME RC: method name setAttributesAndIncModCount, but there is no modCount increment here!
     setParent(recordId, parentId);
     setNameId(recordId, nameId);
     setFlags(recordId, flags);
-    if (overwriteAttrRef) {
+    if (overwriteMissed) {
       setAttributeRecordId(recordId, 0);
     }
     putTimestamp(recordId, timestamp);
@@ -290,6 +287,11 @@ public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStora
   @Override
   public int getGlobalModCount() {
     return globalModCount.get();
+  }
+
+  @Override
+  public int incGlobalModCount() {
+    return globalModCount.incrementAndGet();
   }
 
   @Override
