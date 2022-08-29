@@ -35,6 +35,17 @@ interface NotebookIntervalPointerFactory {
   }
 
   interface ChangeListener : EventListener {
+    fun onUpdated(event: NotebookIntervalPointersEvent) {
+      for(change in event.changes) {
+        when (change) {
+          is NotebookIntervalPointersEvent.OnEdited -> onEdited(change.ordinal)
+          is NotebookIntervalPointersEvent.OnInserted -> onInserted(change.ordinal)
+          is NotebookIntervalPointersEvent.OnRemoved -> onRemoved(change.ordinal)
+          is NotebookIntervalPointersEvent.OnSwapped -> onSwapped(change.firstOrdinal, change.secondOrdinal)
+        }
+      }
+    }
+
     fun onInserted(ordinal: Int)
 
     fun onEdited(ordinal: Int)

@@ -3,6 +3,11 @@ package org.jetbrains.plugins.notebooks.visualization
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.util.EventDispatcher
+import org.jetbrains.plugins.notebooks.visualization.NotebookIntervalPointersEvent.OnEdited
+import org.jetbrains.plugins.notebooks.visualization.NotebookIntervalPointersEvent.OnInserted
+import org.jetbrains.plugins.notebooks.visualization.NotebookIntervalPointersEvent.OnRemoved
+import org.jetbrains.plugins.notebooks.visualization.NotebookIntervalPointersEvent.OnSwapped
+import org.jetbrains.plugins.notebooks.visualization.NotebookIntervalPointersEvent.Change
 
 class NotebookIntervalPointerFactoryImplProvider : NotebookIntervalPointerFactoryProvider {
   override fun create(editor: Editor): NotebookIntervalPointerFactory =
@@ -41,7 +46,7 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
         if (mySavedChanges != null) {
           val eventBuilder = NotebookIntervalPointersEventBuilder()
           applySavedChanges(eventBuilder)
-          eventBuilder.applyEvent(changeListeners)
+          eventBuilder.applyEvent(changeListeners, cellLinesEvent = null)
         }
       }
     }
@@ -91,7 +96,7 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
 
     applySavedChanges(eventBuilder)
 
-    eventBuilder.applyEvent(changeListeners)
+    eventBuilder.applyEvent(changeListeners, e)
   }
 
   private fun applySavedChanges(eventBuilder: NotebookIntervalPointersEventBuilder) {
@@ -154,15 +159,10 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
 @JvmInline
 private value class NotebookIntervalPointersEventBuilder(val accumulatedChanges: MutableList<Change> = mutableListOf<Change>()) {
 
-  fun applyEvent(eventDispatcher: EventDispatcher<NotebookIntervalPointerFactory.ChangeListener>) {
-    for (change in accumulatedChanges) {
-      when (change) {
-        is OnInserted -> eventDispatcher.multicaster.onInserted(change.ordinal)
-        is OnEdited -> eventDispatcher.multicaster.onEdited(change.ordinal)
-        is OnRemoved -> eventDispatcher.multicaster.onRemoved(change.ordinal)
-        is OnSwapped -> eventDispatcher.multicaster.onSwapped(change.firstOrdinal, change.secondOrdinal)
-      }
-    }
+  fun applyEvent(eventDispatcher: EventDispatcher<NotebookIntervalPointerFactory.ChangeListener>,
+                 cellLinesEvent: NotebookCellLinesEvent?) {
+    val event = NotebookIntervalPointersEvent(accumulatedChanges, cellLinesEvent)
+    eventDispatcher.multicaster.onUpdated(event)
   }
 
   fun onEdited(interval: NotebookCellLines.Interval) {
@@ -199,10 +199,4 @@ private value class NotebookIntervalPointersEventBuilder(val accumulatedChanges:
   fun onSwapped(fromOrdinal: Int, toOrdinal: Int) {
     accumulatedChanges.add(OnSwapped(fromOrdinal, toOrdinal))
   }
-
-  sealed interface Change
-  data class OnInserted(val ordinal: Int) : Change
-  data class OnEdited(val ordinal: Int) : Change
-  data class OnRemoved(val ordinal: Int) : Change
-  data class OnSwapped(val firstOrdinal: Int, val secondOrdinal: Int) : Change
 }
