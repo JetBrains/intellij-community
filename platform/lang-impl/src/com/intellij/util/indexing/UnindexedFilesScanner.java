@@ -31,7 +31,6 @@ import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.GistManagerImpl;
@@ -55,7 +54,6 @@ import kotlin.Pair;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -266,7 +264,8 @@ public class UnindexedFilesScanner extends DumbModeTask {
 
     ProgressSuspender suspender = ProgressSuspender.getSuspender(indicator);
     if (suspender != null) {
-      listenToProgressSuspenderForSuspendedTimeDiagnostic(suspender, projectIndexingHistory);
+      ApplicationManager.getApplication().getMessageBus().connect(this)
+        .subscribe(ProgressSuspender.TOPIC, projectIndexingHistory.getSuspendListener(suspender));
     }
 
     if (myStartSuspended) {
@@ -300,8 +299,18 @@ public class UnindexedFilesScanner extends DumbModeTask {
       scheduleInitialVfsRefresh();
     }
 
-    UnindexedFilesIndexer indexer = new UnindexedFilesIndexer(myProject);
-    indexer.indexFiles(projectIndexingHistory, indicator, providerToFiles);
+    UnindexedFilesIndexer indexer = new UnindexedFilesIndexer(myProject, providerToFiles);
+    if (shouldScanInSmartMode()) {
+      // Switch to dumb mode and index
+      indexer.queue(myProject);
+    } else {
+      // Already in dumb mode. Just invoke indexer
+      indexer.indexFiles(projectIndexingHistory, indicator);
+    }
+  }
+
+  private static boolean shouldScanInSmartMode() {
+    return Registry.is("scanning.in.smart.mode", false);
   }
 
   private static @NotNull String getLogScanningCompletedStageMessage(@NotNull ProjectIndexingHistoryImpl projectIndexingHistory) {
@@ -315,24 +324,6 @@ public class UnindexedFilesScanner extends DumbModeTask {
            "; " +
            "Number of files for indexing: " +
            numberOfFilesForIndexing;
-  }
-
-  private void listenToProgressSuspenderForSuspendedTimeDiagnostic(@NotNull ProgressSuspender suspender,
-                                                                   @NotNull ProjectIndexingHistoryImpl projectIndexingHistory) {
-    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
-    connection.subscribe(ProgressSuspender.TOPIC, new ProgressSuspender.SuspenderListener() {
-      @Override
-      public void suspendedStatusChanged(@NotNull ProgressSuspender changedSuspender) {
-        if (suspender == changedSuspender) {
-          if (suspender.isSuspended()) {
-            projectIndexingHistory.suspendStages();
-          }
-          else {
-            projectIndexingHistory.stopSuspendingStages();
-          }
-        }
-      }
-    });
   }
 
   public static boolean isIndexUpdateInProgress(@NotNull Project project) {
