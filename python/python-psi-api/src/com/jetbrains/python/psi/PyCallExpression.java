@@ -173,6 +173,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
     @NotNull private final List<PyCallableParameter> myImplicitParameters;
     @NotNull private final Map<PyExpression, PyCallableParameter> myMappedParameters;
     @NotNull private final List<PyCallableParameter> myUnmappedParameters;
+    @NotNull private final List<PyCallableParameter> myUnmappedContainerParameters;
     @NotNull private final List<PyExpression> myUnmappedArguments;
     @NotNull private final List<PyCallableParameter> myParametersMappedToVariadicPositionalArguments;
     @NotNull private final List<PyCallableParameter> myParametersMappedToVariadicKeywordArguments;
@@ -183,6 +184,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
                               @NotNull List<PyCallableParameter> implicitParameters,
                               @NotNull Map<PyExpression, PyCallableParameter> mappedParameters,
                               @NotNull List<PyCallableParameter> unmappedParameters,
+                              @NotNull List<PyCallableParameter> unmappedContainerParameters,
                               @NotNull List<PyExpression> unmappedArguments,
                               @NotNull List<PyCallableParameter> parametersMappedToVariadicPositionalArguments,
                               @NotNull List<PyCallableParameter> parametersMappedToVariadicKeywordArguments,
@@ -192,6 +194,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
       myImplicitParameters = implicitParameters;
       myMappedParameters = mappedParameters;
       myUnmappedParameters = unmappedParameters;
+      myUnmappedContainerParameters = unmappedContainerParameters;
       myUnmappedArguments = unmappedArguments;
       myParametersMappedToVariadicPositionalArguments = parametersMappedToVariadicPositionalArguments;
       myParametersMappedToVariadicKeywordArguments = parametersMappedToVariadicKeywordArguments;
@@ -204,6 +207,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
                                                      null,
                                                      Collections.emptyList(),
                                                      Collections.emptyMap(),
+                                                     Collections.emptyList(),
                                                      Collections.emptyList(),
                                                      Collections.emptyList(),
                                                      Collections.emptyList(),
@@ -234,6 +238,11 @@ public interface PyCallExpression extends PyCallSiteExpression {
     @NotNull
     public List<PyCallableParameter> getUnmappedParameters() {
       return myUnmappedParameters;
+    }
+
+    @NotNull
+    public List<PyCallableParameter> getUnmappedContainerParameters() {
+      return myUnmappedContainerParameters;
     }
 
     @NotNull

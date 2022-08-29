@@ -2114,6 +2114,904 @@ public class PyTypingTest extends PyTestCase {
              expr = x.method()""");
   }
 
+  // PY-53105
+  public void testGenericVariadicType() {
+    doTest("tuple[*Shape]",
+           """
+             from typing import Generic, TypeVarTuple, Tuple
+
+             Shape = TypeVarTuple('Shape')
+
+             t: Tuple[*Shape]
+             expr = t""");
+  }
+
+  // PY-53105
+  public void testGenericVariadicByCallable() {
+    doTest("tuple[int, str]",
+           """
+             from typing import TypeVar, TypeVarTuple, Callable, Tuple
+
+             Ts = TypeVarTuple('Ts')
+
+
+             def foo(f: Callable[[*Ts], Tuple[*Ts]]) -> Tuple[*Ts]: ...
+             def bar(a: int, b: str) -> Tuple[int, str]: ...
+
+
+             expr = foo(bar)
+             """);
+  }
+
+  // PY-53105
+  public void testGenericVariadicByCallablePrefixSuffix() {
+    doTest("tuple[str, str, float, int, bool]",
+           """
+             from typing import TypeVar, TypeVarTuple, Callable, Tuple
+
+             T = TypeVar('T')
+             Ts = TypeVarTuple('Ts')
+
+
+             def foo(f: Callable[[int, *Ts, T], Tuple[T, *Ts]]) -> Tuple[str, *Ts, int, T]: ...
+             def bar(a: int, b: str, c: float, d: bool) -> Tuple[bool, str, float]: ...
+
+
+             expr = foo(bar)
+             """);
+  }
+
+  // PY-53105
+  public void testGenericVariadicClass() {
+    doTest("A[float, bool, list[LiteralString]]",
+           """
+             from typing import TypeVarTuple, Generic, Tuple
+
+             Ts = TypeVarTuple('Ts')
+
+
+             class A(Generic[*Ts]):
+                 def __init__(self, value: Tuple[int, *Ts]) -> None:
+                     self.field: Tuple[int, *Ts] = value
+
+
+             tpl = (42, 1.1, True, ['42'])
+             expr = A(tpl)
+             """);
+  }
+
+  // PY-53105
+  public void testGenericVariadicClassField() {
+    doTest("tuple[int, float, bool, list[LiteralString]]",
+           """
+             from typing import TypeVarTuple, Generic, Tuple
+
+             Ts = TypeVarTuple('Ts')
+
+
+             class A(Generic[*Ts]):
+                 def __init__(self, value: Tuple[int, *Ts]) -> None:
+                     self.field: Tuple[int, *Ts] = value
+
+
+             tpl = (42, 1.1, True, ['42'])
+             a = A(tpl)
+             expr = a.field
+             """);
+  }
+
+  // PY-53105
+  public void testGenericVariadicClassMethod() {
+    doTest("tuple[int, bool, float, str]",
+           """
+             from typing import TypeVarTuple, Generic, Tuple
+
+             Ts = TypeVarTuple('Ts')
+
+
+             class A(Generic[*Ts]):
+                 def __init__(self, value: Tuple[*Ts]) -> None:
+                     ...
+
+                 def foo(self) -> Tuple[int, *Ts, str]:
+                     ...
+
+
+             tpl = (True, 1.1)
+             a = A(tpl)
+             expr = a.foo()
+
+             """);
+  }
+
+  // PY-53105
+  public void testGenericVariadicClassMethodPlus() {
+    doTest("A[int, LiteralString, bool, int]",
+           """
+             from __future__ import annotations
+             from typing import TypeVarTuple, Generic, Tuple, TypeVar
+
+             T = TypeVar('T')
+             Ts = TypeVarTuple('Ts')
+
+
+             class A(Generic[T, *Ts]):
+                 def __init__(self, t: T, *args: *Ts) -> None:
+                     ...
+
+                 def __add__(self, other: A[T, *Ts]) -> A[T, *Ts, T]:
+                     ...
+
+
+             a = A(1, '', True)
+             b = A(1, '', True)
+             expr = a + b
+             """);
+  }
+
+  // PY-53105
+  public void testGenericVariadicAndGenericClass() {
+    doTest("A[int | str, int | str, list[int]]",
+           """
+             from __future__ import annotations
+             from typing import TypeVarTuple, Generic, Tuple, TypeVar
+
+             T = TypeVar('T')
+             T1 = TypeVar('T1')
+             Ts = TypeVarTuple('Ts')
+
+
+             class A(Generic[T, *Ts, T1]):
+                 def __init__(self, t: T, tpl: Tuple[*Ts], t1: T1) -> None:
+                     ...
+
+
+             x: int | str
+             expr = A(x, (x,), [1])
+             """);
+  }
+
+  // PY-53105
+  public void testGenericVariadicClassMethodAddAxisPrefix() {
+    doTest("Array[LiteralString, int, bool]",
+           """
+             from __future__ import annotations
+             from typing import Generic, TypeVarTuple, Tuple, NewType, TypeVar
+
+             T = TypeVar('T')
+             Shape = TypeVarTuple('Shape')
+
+
+             class Array(Generic[*Shape]):
+                 def __init__(self, shape: Tuple[*Shape]):
+                     self._shape: Tuple[*Shape] = shape
+
+                 def add_axis_prefix(self, t: T) -> Array[T, *Shape]: ...
+
+
+             shape = (42, True)
+             arr: Array[int, bool] = Array(shape)
+             expr = arr.add_axis_prefix('')
+             """);
+  }
+
+  // PY-53105
+  public void testGenericVariadicClassMethodAddAxisSuffix() {
+    doTest("Array[list[int], bool, LiteralString]",
+           """
+             from __future__ import annotations
+             from typing import Generic, TypeVarTuple, Tuple, NewType, TypeVar
+
+             T = TypeVar('T')
+             Shape = TypeVarTuple('Shape')
+
+
+             class Array(Generic[*Shape]):
+                 def __init__(self, shape: Tuple[*Shape]):
+                     self._shape: Tuple[*Shape] = shape
+
+                 def add_axis_suffix(self, t: T) -> Array[*Shape, T]: ...
+
+
+             shape = ([42], True)
+             arr: Array[list[int], bool] = Array(shape)
+             expr = arr.add_axis_suffix('42')
+             """);
+  }
+
+  // PY-53105
+  public void testGenericVariadicClassMethodAddAxisPrefixAndSuffix() {
+    doTest("Array[LiteralString, dict[int, LiteralString], int, str, list[int], bool]",
+           """
+             from __future__ import annotations
+             from typing import Generic, TypeVarTuple, Tuple, NewType, TypeVar
+
+             T1 = TypeVar('T1')
+             T2 = TypeVar('T2')
+             T3 = TypeVar('T3')
+             T4 = TypeVar('T4')
+             Shape = TypeVarTuple('Shape')
+
+
+             class Array(Generic[*Shape]):
+                 def __init__(self, shape: Tuple[*Shape]):
+                     self._shape: Tuple[*Shape] = shape
+
+                 def add_axis_prefix_suffix(self, t1: T1, t2: T2, t3: T3, t4: T4) -> Array[T3, T2, *Shape, T1, T4]: ...
+
+
+             shape = (42, '42')
+             arr: Array[int, str] = Array(shape)
+             expr = arr.add_axis_prefix_suffix([42], {42: '42'}, '42', True)
+             """);
+  }
+
+  // PY-53105
+  public void testGenericVariadicFunctionAddPrefixAndSuffix() {
+    doTest("Array[int, list[int], bool, str]",
+           """
+             from typing import Generic, TypeVarTuple, NewType, Tuple
+
+             Ts = TypeVarTuple('Ts')
+
+
+             class Array(Generic[*Ts]):
+                 def __init__(self, shape: Tuple[*Ts]):
+                     ...
+
+
+             def add_suf_pref(x: Array[*Ts]) -> Array[int, *Ts, str]:
+                 ...
+
+
+             ts = ([42], True)
+             arr = Array(ts)
+             expr = add_suf_pref(arr)
+             """);
+  }
+
+  // PY-53105
+  public void testGenericVariadicFunctionDeletePrefixAndSuffix() {
+    doTest("Array[list[int], bool]",
+           """
+             from typing import Generic, TypeVarTuple, NewType, Tuple
+
+             Ts = TypeVarTuple('Ts')
+
+
+             class Array(Generic[*Ts]):
+                 def __init__(self, shape: Tuple[*Ts]):
+                     ...
+
+
+             def del_suf_pref(x: Array[int, *Ts, str]) -> Array[*Ts]:
+                 ...
+
+
+             ts = (42, [42], True, '42')
+             arr = Array(ts)
+             expr = del_suf_pref(arr)
+             """);
+  }
+
+  // PY-53105
+  public void testGenericVariadicStarArgs() {
+    doTest("tuple[int, LiteralString]",
+           """
+             from typing import TypeVarTuple, Tuple
+
+             Ts = TypeVarTuple('Ts')
+
+
+             def args_to_tuple(*args: *Ts) -> Tuple[*Ts]: ...
+
+
+             expr = args_to_tuple(1, 'a')
+             """);
+  }
+
+  // PY-53105
+  public void testGenericVariadicStarArgsOfGenericVariadics() {
+    doTest("tuple[int, LiteralString]",
+           """
+             from typing import Tuple, TypeVarTuple
+
+             Ts = TypeVarTuple('Ts')
+
+
+             def foo(*args: Tuple[*Ts]) -> Tuple[*Ts]: ...
+
+
+             expr = foo((0, '1'), (1, '0'))
+             """);
+  }
+
+  // PY-53105
+  public void testGenericVariadicStarArgsPrefixSuffix() {
+    doTest("tuple[LiteralString, list, dict, bool, int]",
+           """
+             from typing import TypeVarTuple, Tuple
+
+             Ts = TypeVarTuple('Ts')
+
+
+             def foo(*args: *Tuple[int, *Ts, str]) -> Tuple[*Ts, int]: ...
+
+
+             expr = foo(1, '', [], {}, True, '')
+             """);
+  }
+
+  // PY-53105
+  public void testGenericVariadicStarArgsAndTypeVars() {
+    doTest("tuple[LiteralString, list[int], bool, int]",
+           """
+             from typing import TypeVarTuple, Tuple, TypeVar
+
+             Ts = TypeVarTuple('Ts')
+             T1 = TypeVar('T1')
+             T2 = TypeVar('T2')
+
+
+             def args_to_tuple(t1: T1, t2: T2, *args: *Tuple[T2, *Ts, float]) -> Tuple[T2, *Ts, T1]: ...
+
+
+             expr = args_to_tuple(1, 'a', 'a', [1], True, 3.3)
+             """);
+  }
+
+  // PY-53105
+  public void testGenericVariadicTypeAlias() {
+    doTest("tuple[int, str, bool]",
+           """
+             from typing import Tuple, TypeVarTuple
+
+             Ts = TypeVarTuple('Ts')
+
+             MyType = Tuple[int, *Ts]
+
+             t: MyType[str, bool]
+             expr = t
+             """);
+  }
+
+  // PY-53105
+  public void testGenericVariadicAndGenericTypeAlias() {
+    doTest("tuple[int, str, bool, float]",
+           """
+             from typing import Tuple, TypeVarTuple, TypeVar
+
+             T = TypeVar('T')
+             Ts = TypeVarTuple('Ts')
+
+             MyType = Tuple[int, T, *Ts]
+
+             t: MyType[str, bool, float]
+             expr = t
+             """);
+  }
+
+  // PY-53105
+  public void testGenericVariadicAndGenericConsecutiveTypeAlias() {
+    doTest("tuple[int, str, list[str], dict[str, int]]",
+           """
+             from typing import Tuple, TypeVarTuple, TypeVar
+
+             T = TypeVar('T')
+             Ts = TypeVarTuple('Ts')
+
+             MyType = Tuple[int, T, *Ts]
+             MyType1 = MyType[str, *Ts]
+
+             t: MyType1[list[str], dict[str, int]]
+             expr = t
+             """);
+  }
+
+  // PY-53105
+  public void testGenericVariadicsIntersects() {
+    doTest("tuple[int, str, bool, list[str], dict[str, int]]",
+           """
+             from typing import Tuple, TypeVarTuple, TypeVar
+
+             T = TypeVar('T')
+             Ts = TypeVarTuple('Ts')
+             Ts1 = TypeVarTuple('Ts1')
+
+             MyType = Tuple[int, T, *Ts]
+             MyType1 = MyType[str, bool, *Ts1]
+
+             t: MyType1[list[str], dict[str, int]]
+             expr = t
+             """);
+  }
+
+  // PY-53105
+  public void testGenericVariadicsIntersectsSameName() {
+    doTest("tuple[int, str, bool, list[str], dict[str, int]]",
+           """
+             from typing import Tuple, TypeVarTuple, TypeVar
+
+             T = TypeVar('T')
+             Ts = TypeVarTuple('Ts')
+
+             MyType = Tuple[int, T, *Ts]
+             MyType1 = MyType[str, bool, *Ts]
+
+             t: MyType1[list[str], dict[str, int]]  # first place \s
+             expr = t
+             """);
+  }
+
+  // PY-53105
+  public void testGenericVariadicsTupleUnpacking() {
+    doTest("tuple[int, str, bool, float]",
+           """
+           from typing import Tuple, TypeVarTuple, TypeVar
+           Ts = TypeVarTuple('Ts')
+           MyType = Tuple[int, *Ts]
+           t: MyType[*tuple[str, bool, float]]
+           expr = t
+           """);
+  }
+
+  // PY-53105
+  public void testVariadicGenericMatchWithHomogeneousGenericVariadicAndOtherTypes() {
+    doTest("Array[*(Any, ...), int, str]","""
+                    from __future__ import annotations
+                                       
+                    from typing import TypeVarTuple
+                    from typing import Generic
+                    from typing import Any
+                    
+                    Shape = TypeVarTuple("Shape")
+                    
+                    class Array(Generic[*Shape]):
+                        ...
+                    
+                    y: Array[int, *tuple[Any, ...], int, str] = Array()
+                    
+                    def expect_variadic_array(x: Array[int, *Shape]) -> Array[*Shape]:
+                        print(x)
+                    
+                    expr = expect_variadic_array(y)
+                    """);
+  }
+
+  // PY-53105
+  public void testVariadicGenericMatchWithHomogeneousGenericVariadicAndOtherTypesPrefixSuffix() {
+    doTest("Array[*(Any, ...), int, float, str]","""
+                    from __future__ import annotations
+                                       
+                    from typing import TypeVarTuple
+                    from typing import TypeVar
+                    from typing import Generic
+                    from typing import Any
+                    
+                    Shape = TypeVarTuple("Shape")
+                    T = TypeVar("T")
+                    T1 = TypeVar("T1")
+                    
+                    class Array(Generic[*Shape]):
+                        ...
+                    
+                    y: Array[int, float, *tuple[Any, ...], int, str] = Array()
+                    
+                    def expect_variadic_array(x: Array[int, T, *Shape, T1]) -> Array[*Shape, T, T1]:
+                        print(x)
+                    
+                    expr = expect_variadic_array(y)
+                    """);
+  }
+
+  // PY-53105
+  public void testVariadicGenericMatchWithHomogeneousGenericVariadicAmbiguousMatchActualGenericFirst() {
+    doTest("Array[int, str]","""
+                    from __future__ import annotations
+                                       
+                    from typing import TypeVarTuple
+                    from typing import TypeVar
+                    from typing import Generic
+                    from typing import Any
+                    
+                    Shape = TypeVarTuple("Shape")
+                    T = TypeVar("T")
+                    T1 = TypeVar("T1")
+                    
+                    class Array(Generic[*Shape]):
+                        ...
+                    
+                    y: Array[int, *tuple[float, ...], int, str] = Array()
+                    
+                    def expect_variadic_array(x: Array[int, T, *Shape, T1]) -> Array[*Shape, T, T1]:
+                        print(x)
+                    
+                    expr = expect_variadic_array(y)
+                    """);
+  }
+
+  // PY-53105
+  public void testGenericVariadicsNotUnifiedBothAmbiguousMatch() {
+    doTest("Array[int, str]","""
+                    from __future__ import annotations
+                                       
+                    from typing import TypeVarTuple
+                    from typing import TypeVar
+                    from typing import Generic
+                    from typing import Any
+                    
+                    Shape = TypeVarTuple("Shape")
+                    T = TypeVar("T")
+                    T1 = TypeVar("T1")
+                    
+                    class Array(Generic[*Shape]):
+                        ...
+                    
+                    y: Array[*tuple[int, ...], int, str] = Array()
+                    
+                    def expect_variadic_array(x: Array[int, T, *Shape, T1]) -> Array[*Shape, T, T1]:
+                        print(x)
+                    
+                    expr = expect_variadic_array(y)
+                    """);
+  }
+
+  // PY-53105
+  public void testGenericVariadicsNotUnifiedBothActualHomogeneousGenericFirst() {
+    doTest("Array[float, *(float, ...)]","""
+                    from __future__ import annotations
+                                       
+                    from typing import TypeVarTuple
+                    from typing import TypeVar
+                    from typing import Generic
+                    from typing import Any
+                    
+                    Shape = TypeVarTuple("Shape")
+                    T = TypeVar("T")
+                    
+                    class Array(Generic[*Shape]):
+                        ...
+                    
+                    y: Array[*tuple[float, ...]] = Array()
+                    
+                    def expect_variadic_array(x: Array[T, *Shape]) -> Array[T, *Shape]:
+                        print(x)
+                    
+                    expr = expect_variadic_array(y)
+                    """);
+  }
+
+  // PY-53105
+  public void testGenericVariadicsNotUnifiedBothActualHomogeneousGenericLast() {
+    doTest("Array[*(float, ...), float]","""
+                    from __future__ import annotations
+                                       
+                    from typing import TypeVarTuple
+                    from typing import TypeVar
+                    from typing import Generic
+                    from typing import Any
+                    
+                    Shape = TypeVarTuple("Shape")
+                    T = TypeVar("T")
+                    
+                    class Array(Generic[*Shape]):
+                        ...
+                    
+                    y: Array[*tuple[float, ...]] = Array()
+                    
+                    def expect_variadic_array(x: Array[*Shape, T]) -> Array[*Shape, T]:
+                        print(x)
+                    
+                    expr = expect_variadic_array(y)
+                    """);
+  }
+
+  // PY-53105
+  public void testGenericVariadicsNotUnifiedBothActualHomogeneousGenericsBothSides() {
+    doTest("Array[float, *(float, ...), float, float]","""
+                    from __future__ import annotations
+                                       
+                    from typing import TypeVarTuple
+                    from typing import TypeVar
+                    from typing import Generic
+                    from typing import Any
+                    
+                    Shape = TypeVarTuple("Shape")
+                    T = TypeVar("T")
+                    T1 = TypeVar("T1")
+                    T2 = TypeVar("T2")
+                    T3 = TypeVar("T3")
+                    
+                    class Array(Generic[*Shape]):
+                        ...
+                    
+                    y: Array[*tuple[float, ...]] = Array()
+                    
+                    def expect_variadic_array(x: Array[T1, *Shape, T2, T3]) -> Array[T1, *Shape, T2, T3]:
+                        print(x)
+                    
+                    expr = expect_variadic_array(y)
+                    """);
+  }
+
+  // PY-53105
+  public void testGenericVariadicsNotUnifiedBothSameExpectedAndActual() {
+    doTest("Array[*Shape]","""
+                    from __future__ import annotations
+                                       
+                    from typing import TypeVarTuple
+                    from typing import TypeVar
+                    from typing import Generic
+                    from typing import Any
+                    
+                    Shape = TypeVarTuple("Shape")
+                    Shape1 = TypeVarTuple("Shape1")
+                    T = TypeVar("T")
+                    T1 = TypeVar("T1")
+                    
+                    class Array(Generic[*Shape]):
+                        ...
+                    
+                    y: Array[int, *Shape, str] = Array()
+                    
+                    def expect_variadic_array(x: Array[int, *Shape1, str]) -> Array[*Shape1]:
+                        print(x)
+                    
+                    expr = expect_variadic_array(y)
+                    """);
+  }
+
+  // PY-53105
+  public void testGenericVariadicsNotUnifiedBothExpectedExpand() {
+    doTest("Array[float, *Shape, list[str]]","""
+                    from __future__ import annotations
+                                       
+                    from typing import TypeVarTuple
+                    from typing import TypeVar
+                    from typing import Generic
+                    from typing import Any
+                    
+                    Shape = TypeVarTuple("Shape")
+                    Shape1 = TypeVarTuple("Shape1")
+                    T = TypeVar("T")
+                    T1 = TypeVar("T1")
+                    
+                    class Array(Generic[*Shape]):
+                        ...
+                    
+                    y: Array[int, float, *Shape, list[str], str] = Array()
+                    
+                    def expect_variadic_array(x: Array[int, *Shape1, str]) -> Array[*Shape1]:
+                        print(x)
+                    
+                    expr = expect_variadic_array(y)
+                    """);
+  }
+
+  // PY-53105
+  public void testGenericVariadicsNotUnifiedBothExpectedExpandTwoArguments() {
+    doTest("Array[float, bool, list[str]]","""
+                    from __future__ import annotations
+                                       
+                    from typing import TypeVarTuple
+                    from typing import TypeVar
+                    from typing import Generic
+                    from typing import Any
+                    
+                    Shape = TypeVarTuple("Shape")
+                    Shape1 = TypeVarTuple("Shape1")
+                    T = TypeVar("T")
+                    T1 = TypeVar("T1")
+                    
+                    class Array(Generic[*Shape]):
+                        ...
+                    
+                    a: Array[int, float, *Shape, list[str], str] = Array()
+                    
+                    def expect_variadic_arrays(x: Array[int, *Shape1, str], y: Array[int, float, bool, list[str], str]) -> Array[*Shape1]:
+                        print(x, y)
+                    
+                    expr = expect_variadic_arrays(a, a)
+                    """);
+  }
+
+  public void testGenericVariadicsNotUnifiedBothExpectedExpandTwoArgumentsGenericVariadic() {
+    doTest("Array[float, float, *Shape142, list[str], list[str]]","""
+                    from __future__ import annotations
+                                       
+                    from typing import TypeVarTuple
+                    from typing import TypeVar
+                    from typing import Generic
+                    from typing import Any
+                    
+                    Shape = TypeVarTuple("Shape")
+                    Shape1 = TypeVarTuple("Shape1")
+                    T = TypeVar("T")
+                    T1 = TypeVar("T1")
+                    
+                    class Array(Generic[*Shape]):
+                        ...
+                    
+                    a: Array[int, float, *Shape, list[str], str] = Array()
+                    
+                    def expect_variadic_arrays(x: Array[int, *Shape1, str], y: Array[int, float, *Shape1, list[str], str]) -> Array[*Shape1]:
+                        print(x, y)
+                    
+                    expr = expect_variadic_arrays(a, a)
+                    """);
+  }
+
+  public void testGenericVariadicsNotUnifiedBothExpectedExpandTwoDifferentArgumentsGenericVariadic() {
+    doTest("Array[float, *Shape, bool, list[str]] | Array[*Shape]","""
+                    from __future__ import annotations
+                                       
+                    from typing import TypeVarTuple
+                    from typing import TypeVar
+                    from typing import Generic
+                    from typing import Any
+                    
+                    Shape = TypeVarTuple("Shape")
+                    Shape1 = TypeVarTuple("Shape1")
+                    T = TypeVar("T")
+                    T1 = TypeVar("T1")
+                    
+                    class Array(Generic[*Shape]):
+                        ...
+                    
+                    a: Array[int, float, *Shape, list[str], str] = Array()
+                    
+                    def expect_variadic_arrays(x: Array[int, *Shape1, str], y: Array[int, float, *Shape, bool, list[str], str]) -> Array[*Shape1] | Array[*Shape]:
+                        print(x, y)
+                    
+                    expr = expect_variadic_arrays(a, a)
+                    """);
+  }
+
+  // PY-53105
+  public void testGenericVariadicsNotUnifiedBothExpectedExpandNotExactLeft() {
+    doTest("Array[*(Any, ...), list[str]]","""
+                    from __future__ import annotations
+                                       
+                    from typing import TypeVarTuple
+                    from typing import TypeVar
+                    from typing import Generic
+                    from typing import Any
+                    
+                    Shape = TypeVarTuple("Shape")
+                    Shape1 = TypeVarTuple("Shape1")
+                    T = TypeVar("T")
+                    T1 = TypeVar("T1")
+                    
+                    class Array(Generic[*Shape]):
+                        ...
+                    
+                    y: Array[int, *Shape, list[str], str] = Array()
+                    
+                    def expect_variadic_array(x: Array[int, float, *Shape1, str]) -> Array[*Shape1]:
+                        print(x)
+                    
+                    expr = expect_variadic_array(y)
+                    """);
+  }
+
+  // PY-53105
+  public void testGenericVariadicsNotUnifiedBothExpectedExpandNotExactRight() {
+    doTest("Array[float, *(Any, ...)]","""
+                    from __future__ import annotations
+                                       
+                    from typing import TypeVarTuple
+                    from typing import TypeVar
+                    from typing import Generic
+                    from typing import Any
+                    
+                    Shape = TypeVarTuple("Shape")
+                    Shape1 = TypeVarTuple("Shape1")
+                    T = TypeVar("T")
+                    T1 = TypeVar("T1")
+                    
+                    class Array(Generic[*Shape]):
+                        ...
+                    
+                    y: Array[int, float, *Shape, str] = Array()
+                    
+                    def expect_variadic_array(x: Array[int, *Shape1, int, str]) -> Array[*Shape1]:
+                        print(x)
+                    
+                    expr = expect_variadic_array(y)
+                    """);
+  }
+
+  // PY-53105
+  public void testGenericVariadicsNotUnifiedBothActualSwallowAllExpected() {
+    doTest("Array[*Shape1]","""
+                    from __future__ import annotations
+                                       
+                    from typing import TypeVarTuple
+                    from typing import TypeVar
+                    from typing import Generic
+                    from typing import Any
+                    
+                    Shape = TypeVarTuple("Shape")
+                    Shape1 = TypeVarTuple("Shape1")
+                    T = TypeVar("T")
+                    T1 = TypeVar("T1")
+                    
+                    class Array(Generic[*Shape]):
+                        ...
+                    
+                    y: Array[*Shape] = Array()
+                    
+                    def expect_variadic_array(x: Array[int, *Shape1, str]) -> Array[*Shape1]:
+                        print(x)
+                    
+                    expr = expect_variadic_array(y)
+                    """);
+  }
+
+  // PY-53105
+  public void testVariadicGenericClassOverloadedMethods() {
+    doTest("Array[str, int]", """
+                    from __future__ import annotations
+                                     
+                    from typing import TypeVarTuple
+                    from typing import TypeVar
+                    from typing import Generic
+                    from typing import overload
+                    
+                    Shape = TypeVarTuple("Shape")
+                    Axis1 = TypeVar("Axis1")
+                    Axis2 = TypeVar("Axis2")
+                    Axis3 = TypeVar("Axis3")
+                    
+                    
+                    class Array(Generic[*Shape]):
+                       @overload
+                       def transpose(self: Array[Axis1, Axis2]) -> Array[Axis2, Axis1]: ...
+                    
+                       @overload
+                       def transpose(self: Array[Axis1, Axis2, Axis3]) -> Array[Axis3, Axis2, Axis1]: ...
+                    
+                       def transpose(self): ...
+                    
+                    
+                    a: Array[int, str] = Array()
+                    
+                    expr = a.transpose()
+                    """);
+  }
+
+  // PY-53105
+  public void testVariadicGenericClassOverloadedMethodsSecondMethod() {
+    doTest("Array[list[int], str, int]", """
+                    from __future__ import annotations
+                                     
+                    from typing import TypeVarTuple
+                    from typing import TypeVar
+                    from typing import Generic
+                    from typing import overload
+                    
+                    Shape = TypeVarTuple("Shape")
+                    Axis1 = TypeVar("Axis1")
+                    Axis2 = TypeVar("Axis2")
+                    Axis3 = TypeVar("Axis3")
+                    
+                    
+                    class Array(Generic[*Shape]):
+                       @overload
+                       def transpose(self: Array[Axis1, Axis2]) -> Array[Axis2, Axis1]: ...
+                    
+                       @overload
+                       def transpose(self: Array[Axis1, Axis2, Axis3]) -> Array[Axis3, Axis2, Axis1]: ...
+                    
+                       def transpose(self): ...
+                    
+                    
+                    a: Array[int, str, list[int]] = Array()
+                    
+                    expr = a.transpose()
+                    """);
+  }
+
   public void testUnresolvedReturnTypeNotOverridenByAncestorAnnotation() {
     doTest("Any",
            """
@@ -2290,6 +3188,23 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  // PY-53105
+  public void testGenericVariadicMethodCallUnification() {
+    doTest("tuple[int, LiteralString, float]", """
+      from typing import Generic, TypeVarTuple, Tuple
+                      
+      Ts = TypeVarTuple("Ts")
+      
+      class Box(Generic[*Ts]):
+        def __init__(self, value: Tuple[*Ts]) -> None:
+            self.value = value
+        def get(self):
+            return self.value
+      
+      box = Box((42, 'a', 3.3))
+      expr = box.get()""");
+  }
+
   public void testSingleTypeVarSpecifiedOnInheritance() {
     doTest("str", """
       from typing import Generic, TypeVar
@@ -2307,6 +3222,27 @@ public class PyTypingTest extends PyTestCase {
 
       box = StrBox()
       expr = extract(box)""");
+  }
+
+  // PY-53105
+  public void testSingleTypeVarTupleSpecifiedOnInheritance() {
+    doTest("tuple[str, int]", """
+      from typing import Generic, TypeVarTuple, Tuple
+            
+      Ts = TypeVarTuple("Ts")
+            
+      class Box(Generic[*Ts]):
+          pass
+            
+      class StrBox(Box[str, int]):
+          pass
+            
+      def extract(b: Box[*Ts]) -> Tuple[*Ts]:
+          pass
+            
+      box = StrBox()
+      expr = extract(box)
+      """);
   }
 
   public void testPartialTypeVarSpecializationOnInheritanceInherited() {
@@ -2418,6 +3354,30 @@ public class PyTypingTest extends PyTestCase {
              expr = func(box)""");
   }
 
+  // PY-53105
+  public void testTypeVarTupleSpecializedOnInheritanceExtraTypeVarAdded() {
+    doTest("tuple[str, int]",
+           """
+             from typing import Generic, TypeVarTuple, Tuple
+                             
+             Ts1 = TypeVarTuple('Ts1')
+             Ts2 = TypeVarTuple('Ts2')
+             Ts3 = TypeVarTuple('Ts3')
+             
+             class Box(Generic[*Ts1]):
+                 pass
+             
+             class StrBoxWithExtra(Box[str, int], Generic[*Ts2]):
+                 def __init__(self, extra: Tuple[*Ts2]):
+                     self.extra = extra
+             
+             def func(b: Box[*Ts3]) -> Tuple[*Ts3]:
+                 pass
+             
+             box = StrBoxWithExtra((42, 'a', 3.3))
+             expr = func(box)""");
+  }
+
   public void testGenericClassSpecializesInheritedParameterAndAddsNewOne() {
     doTest("StrBoxWithExtra[int]",
            """
@@ -2434,6 +3394,25 @@ public class PyTypingTest extends PyTestCase {
                      self.extra = extra
 
              expr = StrBoxWithExtra(42)""");
+  }
+
+  // PY-53105
+  public void testGenericVariadicClassSpecializesInheritedParameterAndAddsNewOne() {
+    doTest("StrBoxWithExtra[int, LiteralString, float]",
+           """
+             from typing import Generic, TypeVarTuple, Tuple
+                          
+             Ts1 = TypeVarTuple('Ts1')
+             Ts2 = TypeVarTuple('Ts2')
+                          
+             class Box(Generic[*Ts1]):
+                 pass
+                          
+             class StrBoxWithExtra(Box[str], Generic[*Ts2]):
+                 def __init__(self, extra: Tuple[*Ts2]):
+                     self.extra = extra
+                          
+             expr = StrBoxWithExtra((42, 'a', 3.3))""");
   }
 
   public void testGenericSelfSpecializationInOverloadedConstructor() {
@@ -2498,6 +3477,25 @@ public class PyTypingTest extends PyTestCase {
              expr = receiver.get()""");
   }
 
+  // PY-53105
+  public void testWeakUnionTypeOfOfGenericVariadicMethodCallReceiver() {
+    doTest("tuple[str, int, float]",
+           """
+            from typing import Any, Generic, TypeVarTuple, Tuple
+                                
+            Ts = TypeVarTuple("Ts")
+            
+            class Box(Generic[*Ts]):
+                def get(self) -> Tuple[*Ts]:
+                    pass
+            
+            class StrBox(Box[str, int, float]):
+                pass
+            
+            receiver: Any | int | StrBox = ...
+            expr = receiver.get()""");
+  }
+
   public void testGenericClassTypeHintedInDocstrings() {
     doTest("int",
            """
@@ -2513,6 +3511,25 @@ public class PyTypingTest extends PyTestCase {
                      return self.x
 
              c = User1(10)
+             expr = c.get()""");
+  }
+
+  // PY-53105
+  public void testGenericVariadicClassTypeHintedInDocstrings() {
+    doTest("tuple[int, LiteralString, float]",
+           """
+             from typing import Generic, TypeVar, TypeVarTuple, Tuple
+                           
+             Ts = TypeVarTuple('Ts')
+             
+             class User1(Generic[*Ts]):
+                 def __init__(self, x: Tuple[*Ts]):
+                     self.x = x
+             
+                 def get(self) -> Tuple[*Ts]:
+                     return self.x
+             
+             c = User1((1, '2', 3.3))
              expr = c.get()""");
   }
 
@@ -2565,6 +3582,27 @@ public class PyTypingTest extends PyTestCase {
              expr = dec('foo')(func)""");
   }
 
+  // PY-53105
+  public void testGenericVariadicDecoratorWithArgumentCalledAsFunction() {
+    doTest("(tuple[str, int]) -> tuple[int, str, float]",
+           """
+            from typing import Callable, TypeVar, TypeVarTuple, Tuple
+                                    
+            Ss = TypeVarTuple('Ss')
+            Ts = TypeVarTuple('Ts')
+            
+            def dec(ts: Tuple[*Ts]):
+                def g(fun: Callable[[], Tuple[*Ss]]) -> Callable[[*Ts], Tuple[*Ss]]:
+                    ...
+            
+                return g
+            
+            def func() -> Tuple[int, str, float]:
+                ...
+            
+            expr = dec(('foo', 42))(func)""");
+  }
+
   public void testGenericParameterOfExpectedCallable() {
     doTest("int",
            """
@@ -2585,6 +3623,29 @@ public class PyTypingTest extends PyTestCase {
                  pass
 
              expr = f(g)""");
+  }
+
+  // PY-53105
+  public void testGenericVariadicParameterOfExpectedCallable() {
+    doTest("tuple[int, str, float]",
+           """
+            from typing import Callable, Generic, TypeVar, TypeVarTuple, Tuple
+                      
+            Ts = TypeVarTuple('Ts')
+            
+            class Super(Generic[*Ts]):
+                pass
+            
+            class Sub(Super[*Ts]):
+                pass
+            
+            def f(x: Callable[[Sub[*Ts]], None]) -> Tuple[*Ts]:
+                pass
+            
+            def g(x: Super[int, str, float]):
+                pass
+            
+            expr = f(g)""");
   }
 
   // PY-53522
@@ -2609,6 +3670,28 @@ public class PyTypingTest extends PyTestCase {
              """);
   }
 
+  // PY-53105
+  public void testGenericVariadicIteratorParameterizedWithAnotherGenericVariadic() {
+    doTest("Entry[LiteralString, int, float]",
+           """
+             from typing import Iterator, Generic, Tuple, TypeVarTuple
+                             
+             Ts = TypeVarTuple("Ts")
+             
+             class Entry(Generic[*Ts]):
+                 pass
+             
+             class MyIterator(Iterator[Entry[*Ts]]):
+                 def __next__(self) -> Entry[*Ts]: ...
+             
+             def iter_entries(path: Tuple[*Ts]) -> MyIterator[*Ts]: ...
+             
+             def main() -> None:
+                 for x in iter_entries(("some path", 1, 1.1)):
+                     expr = x
+             """);
+  }
+
   // PY-53522
   public void testGenericParameterizedWithGeneric() {
     doTest("list[int]",
@@ -2627,6 +3710,29 @@ public class PyTypingTest extends PyTestCase {
              xs: ListBox[int] = ...
              expr = xs.get()
              """);
+  }
+
+  // PY-53105
+  public void testGenericVariadicParameterizedWithGenericVariadic() {
+    doTest("tuple[tuple[int, str]]",
+              """
+              from typing import Generic, TypeVar, TypeVarTuple, Tuple
+                            
+              Ts = TypeVarTuple('Ts')
+              
+              
+              class Box(Generic[*Ts]):
+                  def get(self) -> Tuple[*Ts]:
+                      pass
+              
+              
+              class ListBox(Box[Tuple[*Ts]]):
+                  pass
+              
+              
+              xs: ListBox[int, str] = ...
+              expr = xs.get()
+              """);
   }
 
   // PY-52656

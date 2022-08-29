@@ -161,7 +161,8 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
                                                   level.isOlderThan(LanguageLevel.PYTHON311) &&
                                                   registerForLanguageLevel(level),
                                          PyPsiBundle.message("INSP.compatibility.feature.support.starred.expressions.in.subscriptions"),
-                                         node);
+                                         node,
+                                         new PyReplaceStarByUnpackQuickFix());
         }
       }
       if (node.getParent() instanceof PySubscriptionExpression || node.getParent() instanceof PySliceItem) {
@@ -169,7 +170,8 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
                                                 level.isOlderThan(LanguageLevel.PYTHON311) &&
                                                 registerForLanguageLevel(level),
                                        PyPsiBundle.message("INSP.compatibility.feature.support.starred.expressions.in.subscriptions"),
-                                       node);
+                                       node,
+                                       new PyReplaceStarByUnpackQuickFix());
       }
     }
 

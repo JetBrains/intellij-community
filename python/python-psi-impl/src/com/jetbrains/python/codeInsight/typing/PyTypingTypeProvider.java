@@ -84,6 +84,7 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
   private static final String TUPLE = "typing.Tuple";
   public static final String CLASS_VAR = "typing.ClassVar";
   public static final String TYPE_VAR = "typing.TypeVar";
+  public static final String TYPE_VAR_TUPLE = "typing.TypeVarTuple";
   public static final String TYPING_PARAM_SPEC = "typing.ParamSpec";
   public static final String TYPING_EXTENSIONS_PARAM_SPEC = "typing_extensions.ParamSpec";
   private static final String CHAIN_MAP = "typing.ChainMap";
@@ -168,6 +169,7 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
     .add(PyKnownDecoratorUtil.KnownDecorator.TYPING_OVERLOAD.name())
     .add(ANY)
     .add(TYPE_VAR)
+    .add(TYPE_VAR_TUPLE)
     .add(GENERIC)
     .add(TYPING_PARAM_SPEC)
     .add(TYPING_EXTENSIONS_PARAM_SPEC)
@@ -396,7 +398,8 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
     }
 
     final PyClass initializedClass = PyUtil.turnConstructorIntoClass(function);
-    if (initializedClass != null && TYPE_VAR.equals(initializedClass.getQualifiedName())) {
+    if (initializedClass != null && (TYPE_VAR.equals(initializedClass.getQualifiedName()) ||
+                                     TYPE_VAR_TUPLE.equals(initializedClass.getQualifiedName()))) {
       // `typing.TypeVar` call should be assigned to a target and hence should be processed by [getReferenceType]
       // but the corresponding type is also returned here to suppress type checker on `T = TypeVar("T")` assignment.
       return Ref.create(getGenericTypeFromTypeVar(callSite, context));
@@ -681,7 +684,7 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
       .map(Ref::deref)
       .flatMap(type -> {
         PyTypeChecker.Generics typeParams = PyTypeChecker.collectGenerics(type, context.myContext);
-        return StreamEx.<PyType>of(typeParams.getTypeVars()).append(StreamEx.of(typeParams.getParamSpecs()));
+        return StreamEx.<PyType>of(typeParams.getTypeVars()).append(typeParams.getTypeVarTuples()).append(StreamEx.of(typeParams.getParamSpecs()));
       })
       .select(PyTypeParameterType.class)
       .distinct()
@@ -846,6 +849,10 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
       final PyType genericType = getGenericTypeFromTypeVar(resolved, context);
       if (genericType != null) {
         return Ref.create(anchorTypeParameter(typeHint, genericType, context));
+      }
+      final PyType genericVariadicType = getGenericVariadicType(resolved, context.getTypeContext());
+      if (genericVariadicType != null) {
+        return Ref.create(anchorTypeParameter(typeHint, genericVariadicType, context));
       }
       final PyType paramSpecType = getParamSpecType(resolved, context);
       if (paramSpecType != null) {
@@ -1460,13 +1467,18 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
       final PyExpression callee = assignedCall.getCallee();
       if (callee != null) {
         final Collection<String> calleeQNames = resolveToQualifiedNames(callee, context.getTypeContext());
-        if (calleeQNames.contains(TYPE_VAR)) {
+        if (calleeQNames.contains(TYPE_VAR) || calleeQNames.contains(TYPE_VAR_TUPLE)) {
           final PyExpression[] arguments = assignedCall.getArguments();
           if (arguments.length > 0) {
             final PyExpression firstArgument = arguments[0];
             if (firstArgument instanceof PyStringLiteralExpression) {
               final String name = ((PyStringLiteralExpression)firstArgument).getStringValue();
-              return new PyTypeVarTypeImpl(name, getGenericTypeBound(arguments, context));
+              if (calleeQNames.contains(TYPE_VAR_TUPLE)) {
+                return new PyGenericVariadicType(name);
+              }
+              else {
+                return new PyTypeVarTypeImpl(name, getGenericTypeBound(arguments, context));
+              }
             }
           }
         }
@@ -1544,6 +1556,26 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
     else {
       return typeHintExpression;
     }
+  }
+
+  @Nullable
+  public static PyType getGenericVariadicType(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
+    if (!(element instanceof PyStarExpression)) return null;
+    var expression = ((PyStarExpression)element).getExpression();
+    if (!(expression instanceof PyReferenceExpression) && !(expression instanceof PySubscriptionExpression)) return null;
+
+    var typeRef = getType(expression, context);
+    if (typeRef == null) return null;
+    var expressionType = typeRef.get();
+
+    if (expressionType instanceof final PyTupleType tupleType) {
+      return new PyGenericVariadicType("", tupleType.isHomogeneous(), tupleType.getElementTypes(), null);
+    }
+    if (expressionType instanceof PyGenericVariadicType) {
+      return expressionType;
+    }
+
+    return null;
   }
 
   @Nullable
@@ -1686,6 +1718,15 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
         }
         if (element != null) {
           elements.add(Pair.create(null, element));
+        }
+      }
+    }
+    else if (expression instanceof PyStarExpression) {
+      var expressionExpression = ((PyStarExpression)expression).getExpression();
+      if (expressionExpression != null) {
+        var type = context.getType(expressionExpression);
+        if (type instanceof PyGenericVariadicType) {
+          return tryResolvingWithAliases(expressionExpression, context);
         }
       }
     }

@@ -31,10 +31,7 @@ import com.jetbrains.python.codeInsight.typing.PyProtocolsKt;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.types.PyClassLikeType;
-import com.jetbrains.python.psi.types.PyStructuralType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -111,6 +108,14 @@ final class PyTypeCheckerInspectionProblemRegistrar {
                                                                          @NotNull TypeEvalContext context) {
     final PyType actualType = argumentResult.getActualType();
     final PyType expectedType = argumentResult.getExpectedType();
+
+    if (expectedType instanceof PyNotMatchedType) {
+      return PyPsiBundle.message("INSP.type.checker.no.expected.type.for");
+    }
+    if (expectedType instanceof PyGenericVariadicType && actualType instanceof PyNotMatchedType) {
+      return PyPsiBundle.message("INSP.type.checker.no.arguments.for.expected.type",
+                                 ((PyGenericVariadicType)expectedType).getElementTypesToStr());
+    }
 
     assert actualType != null; // see PyTypeCheckerInspection.Visitor.analyzeArgument()
     assert expectedType != null; // see PyTypeCheckerInspection.Visitor.analyzeArgument()

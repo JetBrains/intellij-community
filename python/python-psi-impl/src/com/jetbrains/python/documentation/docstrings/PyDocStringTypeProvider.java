@@ -113,7 +113,7 @@ public class PyDocStringTypeProvider extends PyTypeProviderBase {
       }
     }
 
-    for (PyGenericType typeVar : typeParameters.getAllTypeVars()) {
+    for (PyGenericType typeVar : typeParameters.getAllTypeVarsAndTypeVarTuples()) {
       typeVar.setScopeOwner(findScopeOwner.apply(typeVar));
     }
   }

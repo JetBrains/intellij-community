@@ -23,7 +23,7 @@ import java.util.Objects;
  */
 @Deprecated
 public class PyGenericType implements PyTypeVarType {
-  @NotNull private final String myName;
+  @NotNull protected final String myName;
   @Nullable private final PyType myBound;
   private final boolean myIsDefinition;
   @Nullable private final PyTargetExpression myTargetExpression;
@@ -37,7 +37,7 @@ public class PyGenericType implements PyTypeVarType {
     this(name, bound, isDefinition, null);
   }
 
-  private PyGenericType(@NotNull String name, @Nullable PyType bound, boolean isDefinition, @Nullable PyTargetExpression target) {
+  public PyGenericType(@NotNull String name, @Nullable PyType bound, boolean isDefinition, @Nullable PyTargetExpression target) {
     this(name, bound, isDefinition, target, null);
   }
 
@@ -162,6 +162,16 @@ public class PyGenericType implements PyTypeVarType {
       throw new IllegalStateException("Cannot override the existing scope owner");
     }
     myScopeOwner = scopeOwner;
+  }
+
+  @NotNull
+  public PyGenericType withAlias(@Nullable PyTargetExpression alias) {
+    return new PyGenericType(getName(), getBound(), isDefinition(), alias);
+  }
+
+  @NotNull
+  public PyGenericType toggleIsDefinition() {
+    return new PyGenericType(getName(), getBound(), !isDefinition(), getDeclarationElement());
   }
 
   @NotNull

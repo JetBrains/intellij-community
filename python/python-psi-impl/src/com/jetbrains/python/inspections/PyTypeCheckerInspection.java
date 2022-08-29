@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -296,7 +297,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       final List<UnmatchedParameter> unmatchedParameters = new ArrayList<>();
 
       final var receiver = callSite.getReceiver(callableType.getCallable());
-      final var substitutions = PyTypeChecker.unifyReceiverWithParamSpecs(receiver, myTypeEvalContext);
+      final var substitutions = PyTypeChecker.unifyReceiver(receiver, myTypeEvalContext);
       final var mappedParameters = mapping.getMappedParameters();
       final var regularMappedParameters = getRegularMappedParameters(mappedParameters);
 
@@ -354,6 +355,18 @@ public class PyTypeCheckerInspection extends PyInspection {
         }
       }
 
+      for (var unmappedContainer: mapping.getUnmappedContainerParameters()) {
+        PyType containerType = unmappedContainer.getArgumentType(myTypeEvalContext);
+        if (!(containerType instanceof PyGenericVariadicType)) continue;
+        var matchingResult = new ArrayList<Trinity<PyType, PyType, Boolean>>();
+        var matchContext = PyTypeChecker.getMatchContext(myTypeEvalContext, substitutions);
+        if (!PyTypeChecker.matchElementTypes(List.of(containerType), Collections.emptyList(), matchContext, true, false,
+                                             false, matchingResult)) {
+          PyType substContainerType = PyTypeChecker.substitute(containerType, substitutions, myTypeEvalContext);
+          result.add(new AnalyzeArgumentResult(callSite, containerType, substContainerType, PyNotMatchedType.INSTANCE, false));
+        }
+      }
+
       return new AnalyzeCalleeResults(callableType, callableType.getCallable(), result, unmatchedArguments, unmatchedParameters);
     }
 
@@ -404,13 +417,55 @@ public class PyTypeCheckerInspection extends PyInspection {
                                                                 @NotNull List<PyExpression> arguments,
                                                                 @NotNull PyTypeChecker.GenericSubstitutions substitutions) {
       final PyType expected = container.getArgumentType(myTypeEvalContext);
+
+      if (expected instanceof PyGenericVariadicType) {
+        var matchContext = PyTypeChecker.getMatchContext(myTypeEvalContext, substitutions);
+
+        var expectedElementTypes = List.of(expected);
+        var actualElementTypes = ContainerUtil.map(arguments, it -> myTypeEvalContext.getType(it));
+
+        var matchingResult = new ArrayList<Trinity<PyType, PyType, Boolean>>();
+        PyTypeChecker.matchElementTypes(expectedElementTypes, actualElementTypes, matchContext, true, false,
+                                        false, matchingResult);
+
+        var result = new ArrayList<AnalyzeArgumentResult>();
+        for (int i = 0; i < actualElementTypes.size(); ++i) {
+          if (i >= matchingResult.size()) break;
+          var res = matchingResult.get(i);
+          boolean matched = res.third;
+          PyType actualType = res.first;
+          PyType expectedType = res.second;
+          PyType substitutedExpectedType = substituteGenerics(expectedType, substitutions);
+          result.add(new AnalyzeArgumentResult(arguments.get(i), expectedType, substitutedExpectedType, actualType, matched));
+        }
+        if (matchingResult.size() > actualElementTypes.size()) {
+          PsiElement lastArgNextSibling = arguments.get(arguments.size() - 1).getNextSibling();
+          var lastMatingRes = matchingResult.get(matchingResult.size() - 1);
+          boolean matched = lastMatingRes.third;
+          PyType actualType = lastMatingRes.first;
+          PyType expectedType = lastMatingRes.second;
+          PyType substitutedExpectedType = substituteGenerics(expectedType, substitutions);
+          result.add(new AnalyzeArgumentResult(lastArgNextSibling, expectedType, substitutedExpectedType, actualType, matched));
+        }
+
+        return result;
+      }
+
       final PyType expectedWithSubstitutions = substituteGenerics(expected, substitutions);
       // For an expected type with generics we have to match all the actual types against it in order to do proper generic unification
       if (PyTypeChecker.hasGenerics(expected, myTypeEvalContext)) {
-        final PyType actual = PyUnionType.union(ContainerUtil.map(arguments, myTypeEvalContext::getType));
-        final boolean matched = matchParameterAndArgument(expected, actual, null, substitutions);
-        return ContainerUtil.map(arguments, argument ->
-          new AnalyzeArgumentResult(argument, expected, expectedWithSubstitutions, actual, matched));
+        if (container.isPositionalContainer()) {
+          PyType actual = PyGenericVariadicType.fromElementTypes(ContainerUtil.map(arguments, myTypeEvalContext::getType));
+          boolean matched = matchParameterAndArgument(PyGenericVariadicType.homogeneous(expected), actual, null, substitutions);
+          return ContainerUtil.map(arguments, argument ->
+            new AnalyzeArgumentResult(argument, expected, expectedWithSubstitutions, actual, matched));
+        }
+        else {
+          PyType actual = PyUnionType.union(ContainerUtil.map(arguments, myTypeEvalContext::getType));
+          boolean matched = matchParameterAndArgument(expected, actual, null, substitutions);
+          return ContainerUtil.map(arguments, argument ->
+            new AnalyzeArgumentResult(argument, expected, expectedWithSubstitutions, actual, matched));
+        }
       }
       else {
         return ContainerUtil.map(
@@ -542,7 +597,7 @@ public class PyTypeCheckerInspection extends PyInspection {
   static class AnalyzeArgumentResult {
 
     @NotNull
-    private final PyExpression myArgument;
+    private final PsiElement myArgument;
 
     @Nullable
     private final PyType myExpectedType;
@@ -555,7 +610,7 @@ public class PyTypeCheckerInspection extends PyInspection {
 
     private final boolean myIsMatched;
 
-    AnalyzeArgumentResult(@NotNull PyExpression argument,
+    AnalyzeArgumentResult(@NotNull PsiElement argument,
                           @Nullable PyType expectedType,
                           @Nullable PyType expectedTypeAfterSubstitution,
                           @Nullable PyType actualType,
@@ -568,7 +623,7 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     @NotNull
-    public PyExpression getArgument() {
+    public PsiElement getArgument() {
       return myArgument;
     }
 
