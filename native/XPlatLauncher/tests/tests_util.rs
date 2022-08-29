@@ -1,13 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
-use std::{env, fs, io, ptr, thread, time};
+use std::{env, fs, io, thread, time};
 use std::collections::HashMap;
 use std::fs::{create_dir, File};
 use std::io::BufReader;
-use std::iter::Map;
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus, Output};
+use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Once;
 use std::time::SystemTime;
 
@@ -44,12 +44,11 @@ fn prepare_test_env_impl() -> Result<TestEnvironment> {
     let product_info_relative = format!("resources/product_info_{os}.json");
     let product_info_path = shared.project_root.join(product_info_relative);
 
+    let test_number = shared.test_counter.fetch_add(1, Ordering::SeqCst);
     // create tmp dir
-    let dir_name = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)?
-        .as_nanos();
+    let dir_name = shared.start_unix_timestamp_nanos + u128::from(test_number);
     let test_dir = env::temp_dir().join(dir_name.to_string());
-    create_dir(&test_dir)?;
+    create_dir(&test_dir).context(format!("Failed to create temp directory: {test_dir:?}"))?;
 
     layout_launcher(
         &test_dir,
@@ -71,7 +70,6 @@ fn prepare_test_env_impl() -> Result<TestEnvironment> {
 
     Ok(result)
 }
-
 pub fn init_test_environment_once() -> Result<TestEnvironmentShared> {
     let project_root = env::current_dir().expect("Failed to get project root");
 
@@ -98,10 +96,17 @@ pub fn init_test_environment_once() -> Result<TestEnvironmentShared> {
     let jar_path = Path::new("resources/TestProject/build/libs/app.jar");
     let intellij_app_jar_source = jar_path.canonicalize()?;
 
+    let start_unix_timestamp_nanos = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)?
+        .as_nanos();
+
+    let test_counter = AtomicU32::new(0);
     let result = TestEnvironmentShared {
         project_root,
         jbrsdk_root,
-        intellij_app_jar_source
+        intellij_app_jar_source,
+        start_unix_timestamp_nanos,
+        test_counter
     };
 
     Ok(result)
@@ -110,7 +115,9 @@ pub fn init_test_environment_once() -> Result<TestEnvironmentShared> {
 pub struct TestEnvironmentShared {
     project_root: PathBuf,
     jbrsdk_root: PathBuf,
-    intellij_app_jar_source: PathBuf
+    intellij_app_jar_source: PathBuf,
+    start_unix_timestamp_nanos: u128,
+    test_counter: AtomicU32
 }
 
 pub fn gradle_command_wrapper(gradle_command: &str) {
@@ -352,7 +359,7 @@ pub fn resolve_launcher_dir(test_dir: &Path) -> PathBuf {
 
 pub struct LauncherRunResult {
     pub exit_status: ExitStatus,
-    pub dump: IntellijMainDumpedLaunchParameters
+    pub dump: Option<IntellijMainDumpedLaunchParameters>
 }
 
 #[allow(non_snake_case)]
@@ -400,7 +407,10 @@ fn run_launcher_impl(test: &TestEnvironment) -> Result<LauncherRunResult> {
                 }
                 Some(es) => return Ok(LauncherRunResult {
                     exit_status: es,
-                    dump: read_launcher_run_result(&output_file)?
+                    dump: match es.success() {
+                        true => Some(read_launcher_run_result(&output_file)?),
+                        false => None
+                    }
                 }),
             },
             Err(e) => {
