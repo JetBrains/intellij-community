@@ -1,16 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
-package com.intellij.util
+package com.intellij.openapi.util.registry
 
-import com.intellij.application.options.RegistryManager
 import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.registry.RegistryValue
-import com.intellij.openapi.util.registry.RegistryValueListener
 import org.jetbrains.annotations.ApiStatus
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -23,11 +21,12 @@ import java.util.concurrent.ConcurrentHashMap
 @ApiStatus.Internal
 @ApiStatus.Experimental
 object EarlyAccessRegistryManager {
+
   private val configFile: Path by lazy {
     PathManager.getConfigDir().resolve("early-access-registry.txt")
   }
 
-  private val map = lazy {
+  private val lazyMap = lazy {
     val result = ConcurrentHashMap<String, String>()
     val lines = try {
       Files.lines(configFile)
@@ -49,15 +48,26 @@ object EarlyAccessRegistryManager {
     result
   }
 
+  private val map: ConcurrentHashMap<String, String>?
+    get() {
+      return if (lazyMap.isInitialized()) {
+        val map = lazyMap.value
+        if (map.isEmpty()) null else map
+      }
+      else
+        null
+    }
+
   fun getBoolean(key: String): Boolean {
+    val map = lazyMap.value
     if (!LoadingState.APP_STARTED.isOccurred) {
-      return map.value.get(key).toBoolean()
+      return map.get(key).toBoolean()
     }
 
     // use RegistryManager to make sure that Registry is a fully loaded
     val value = RegistryManager.getInstance().`is`(key)
     // ensure that even if for some reason key was not early accessed, it is stored for early access on next start-up
-    map.value.putIfAbsent(key, value.toString())
+    map.putIfAbsent(key, value.toString())
     return value
   }
 
@@ -65,32 +75,27 @@ object EarlyAccessRegistryManager {
     // Why do we sync? get (not yet loaded) -> not changed by a user but actually in a registry -> no explicit put
     // Why maybe in a registry but not in our store?
     // Because store file deleted / removed / loaded from ICS or registry value was set before using EarlyAccessedRegistryManager
-    if (!map.isInitialized() || map.value.isEmpty()) {
-      return
-    }
+    val map = map ?: return
 
     val registryManager = ApplicationManager.getApplication().getServiceIfCreated(RegistryManager::class.java) ?: return
     try {
-      val s = StringBuilder()
-      for (key in map.value.keys.sorted()) {
-        val value = try {
-          registryManager.get(key).asString()
-        }
-        catch (ignore: MissingResourceException) {
-          continue
-        }
+      val lines = mutableListOf<String>()
+      for (key in map.keys.sorted()) {
+        try {
+          val value = registryManager.get(key).asString()
 
-        s.append(key).append('\n').append(value).append('\n')
+          lines.add(key)
+          lines.add(value)
+        }
+        catch (ignore: MissingResourceException) { }
       }
 
-      if (s.isEmpty()) {
+      if (lines.isEmpty()) {
         Files.deleteIfExists(configFile)
       }
       else {
-        s.setLength(s.length - 1)
-
         Files.createDirectories(configFile.parent)
-        Files.writeString(configFile, s)
+        Files.write(configFile, lines, StandardCharsets.UTF_8)
       }
     }
     catch (e: Throwable) {
@@ -98,12 +103,14 @@ object EarlyAccessRegistryManager {
     }
   }
 
-  @Suppress("unused")
+  @Suppress("unused") // registered in an `*.xml` file
   private class MyListener : RegistryValueListener {
+
     override fun afterValueChanged(value: RegistryValue) {
+      val map = map ?: return
+
       // store only if presented - do not store alien keys
       val key = value.key
-      val map = if (map.isInitialized()) map.value else return
       if (map.containsKey(key)) {
         map.put(key, value.asString())
       }

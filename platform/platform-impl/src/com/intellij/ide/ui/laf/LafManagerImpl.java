@@ -2,7 +2,7 @@
 package com.intellij.ide.ui.laf;
 
 import com.intellij.CommonBundle;
-import com.intellij.application.options.RegistryManager;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.LoadingState;

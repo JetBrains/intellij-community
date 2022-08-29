@@ -2,7 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
-import com.intellij.application.options.RegistryManager;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.core.CoreBundle;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.IdeBundle;

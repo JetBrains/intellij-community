@@ -3,7 +3,7 @@ package com.intellij.compiler.server;
 
 import com.intellij.DynamicBundle;
 import com.intellij.ProjectTopics;
-import com.intellij.application.options.RegistryManager;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;

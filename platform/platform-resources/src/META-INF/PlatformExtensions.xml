@@ -82,7 +82,7 @@
     <applicationService serviceInterface="com.intellij.openapi.editor.colors.EditorColorsManager"
                         serviceImplementation="com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl"/>
 
-    <applicationService serviceInterface="com.intellij.application.options.RegistryManager"
+    <applicationService serviceInterface="com.intellij.openapi.util.registry.RegistryManager"
                         serviceImplementation="com.intellij.openapi.util.registry.RegistryManagerImpl" preload="true"/>
 
     <!-- requested by FileBasedIndexImpl, so, to make start-up more flat, also preload -->
@@ -1428,7 +1428,8 @@
     <listener class="com.intellij.ide.impl.UntrustedProjectNotificationProvider$TrustedListener" topic="com.intellij.ide.impl.TrustStateListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
 
-    <listener class="com.intellij.util.EarlyAccessRegistryManager$MyListener" topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
+    <listener class="com.intellij.openapi.util.registry.EarlyAccessRegistryManager$MyListener"
+              topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
     <listener class="com.intellij.ide.ui.experimental.toolbar.ExperimentalToolbarSettings$ToolbarRegistryListener"
               topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
     <listener class="com.intellij.ui.ExperimentalUI$NewUiRegistryListener" topic="com.intellij.openapi.util.registry.RegistryValueListener"/>

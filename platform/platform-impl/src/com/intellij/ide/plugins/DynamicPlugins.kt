@@ -2,7 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.databind.type.TypeFactory
-import com.intellij.application.options.RegistryManager
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.configurationStore.jdomSerializer
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.configurationStore.saveProjectsAndApp
