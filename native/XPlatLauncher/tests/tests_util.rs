@@ -179,12 +179,13 @@ pub fn get_child_dir(parent: &Path, prefix: &str) -> io::Result<PathBuf> {
 }
 
 #[cfg(target_os = "linux")]
-pub fn layout_into_test_dir(
+pub fn layout_launcher(
+    target_dir: &Path,
     project_root: &Path,
-    jbr_absolute_path: PathBuf,
-    jar_absolute_path: PathBuf,
-    product_info_absolute_path: PathBuf,
-) {
+    jbr_absolute_path: &Path,
+    intellij_main_mock_jar: &Path,
+    product_info_absolute_path: &Path,
+) -> Result<()> {
     // linux:
     // .
     // ├── bin/
@@ -194,11 +195,7 @@ pub fn layout_into_test_dir(
     // │   └── app.jar
     // ├── jbr/
     // └── product-info.json
-    create_dir("lib").expect("Failed to create lib dir");
-    create_dir("bin").expect("Failed to create bin dir");
 
-    fs::copy(product_info_absolute_path, "product-info.json")
-        .expect("Failed to move product_info.json");
 
     let launcher = project_root
         .join("target")
@@ -206,11 +203,24 @@ pub fn layout_into_test_dir(
         .join("xplat-launcher");
     assert!(launcher.exists());
 
-    fs::copy(launcher, "bin/xplat-launcher").expect("Failed to copy launcher");
-    fs::copy(jar_absolute_path, "lib/app.jar").expect("Failed to move jar");
-    std::os::unix::fs::symlink(jbr_absolute_path, "jbr").expect("Failed to create symlink for jbr");
-    File::create("bin/idea64.vmoptions").expect("Failed to create idea.vmoptions");
-    File::create("lib/test.jar").expect("Failed to create test.jar file for classpath test");
+    layout_launcher_impl(
+        target_dir,
+        vec![ "lib", "bin" ],
+        vec![
+            "bin/idea64.vmoptions",
+            "lib/test.jar"
+        ],
+        HashMap::from([
+            (launcher.as_path(), "bin/xplat-launcher"),
+            (intellij_main_mock_jar, "lib/app.jar"),
+            (product_info_absolute_path, "product-info.json"),
+        ]),
+        HashMap::from([
+            (jbr_absolute_path, "jbr")
+        ])
+    )?;
+
+    Ok(())
 }
 
 #[cfg(target_os = "macos")]
