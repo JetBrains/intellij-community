@@ -17,7 +17,7 @@ enum class GitRebaseOption(@NonNls private val option: String,
   ROOT("--root", GitBundle.message("rebase.option.root")),
   INTERACTIVE("--interactive", GitBundle.message("rebase.option.interactive")),
   EMPTY_DROP("--empty=drop", GitBundle.message("rebase.option.empty.drop")),
-  EMPTY_KEEP("empty=keep", GitBundle.message("rebase.option.empty.keep"));
+  EMPTY_KEEP("--empty=keep", GitBundle.message("rebase.option.empty.keep"));
 
   fun getOption(gitVersion: GitVersion): String {
     if (this != REBASE_MERGES) return option
