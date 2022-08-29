@@ -297,6 +297,14 @@ public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStora
   @Override
   public long length() {
     final int recordsCount = allocatedRecordsCount.get();
+    final boolean anythingChanged = globalModCount.get() > 0;
+    if (recordsCount == 0 && !anythingChanged) {
+      //Try to mimic other implementations behavior: they return actual file size, which is 0
+      //  before first record allocated -- should be >0, since even no-record storage contains
+      //  header, but other implementations use 0-th record as header...
+      //TODO RC: it is better to have recordsCount() method
+      return 0;
+    }
     return (RECORD_SIZE_IN_INTS * (long)recordsCount) * Integer.BYTES + HEADER_SIZE;
   }
 
