@@ -246,11 +246,18 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
   private fun updateBranchPosition(refName: String, targetPosition: SettingsLog.Position): Ref {
     val ref = repository.findRef(refName)!!
     val previousObjectId = ref.objectId
-    val targetObjectId = ObjectId.fromString(targetPosition.id)
-    val refUpdate = repository.updateRef(ref.name)
-    refUpdate.setNewObjectId(targetObjectId)
-    val result = refUpdate.update()
+    val result = repository.updateRef(ref.name).apply {
+      setNewObjectId(ObjectId.fromString(targetPosition.id))
+      isForceUpdate = true
+    }.update()
     LOG.info("Updated position of ${ref.short} from ${previousObjectId.short} to $targetPosition: $result")
+
+    // updateRef() doesn't change the working tree, it only moves the label
+    // Therefore, after we move the refName to a new position, then some local changes can appear,
+    // because the working tree is now compared with another head.
+    // We don't want these local changes => we reset the working copy to the state of the current head.
+    git.reset().setMode(ResetCommand.ResetType.HARD).call()
+
     return repository.findRef(ref.name)!!
   }
 

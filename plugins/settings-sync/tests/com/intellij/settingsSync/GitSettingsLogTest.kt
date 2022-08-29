@@ -145,6 +145,24 @@ internal class GitSettingsLogTest {
     assertEquals("The date of the snapshot incorrect", instant, snapshot.metaInfo.dateCreated)
   }
 
+  @Test fun `setBranchPosition should reset the working tree as well`() {
+    val editorXml = (configDir / "options" / "editor.xml").createFile()
+    editorXml.writeText("editorContent")
+    val settingsLog = initializeGitSettingsLog(editorXml)
+
+    val masterPosition = settingsLog.getMasterPosition()
+
+    settingsLog.applyCloudState(
+      settingsSnapshot(SettingsSnapshot.MetaInfo(Instant.ofEpochSecond(100500), AppInfo(UUID.randomUUID(), "", "", ""))) {
+        fileState("options/editor.xml", "moreCloudEditorContent")
+      }, "Remote changes"
+    )
+    settingsLog.setCloudPosition(masterPosition)
+
+    assertEquals(masterPosition, settingsLog.getCloudPosition()) // this is just a safety-check that setCloudPosition set the label correctly
+    assertEquals("editorContent", (settingsSyncStorage / "options"/ "editor.xml").readText()) // this is real test that the cloud changes have gone away
+  }
+
   //@Test
   // todo requires a more previse merge conflict strategy implementation
   @Suppress("unused")
