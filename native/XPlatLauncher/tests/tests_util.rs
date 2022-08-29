@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::{env, fs, io, thread, time};
 use std::collections::HashMap;
@@ -10,6 +10,7 @@ use std::process::{Command, ExitStatus, Output};
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Once;
 use std::time::SystemTime;
+use utils::get_path_from_env_var;
 
 static INIT: Once = Once::new();
 static mut SHARED: Option<TestEnvironmentShared> = None;
@@ -196,12 +197,10 @@ pub fn layout_launcher(
     // ├── jbr/
     // └── product-info.json
 
-
-    let launcher = project_root
-        .join("target")
-        .join("debug")
-        .join("xplat-launcher");
-    assert!(launcher.exists());
+    let launcher = &get_testing_binary_root(project_root).join("xplat-launcher");
+    if !launcher.exists() {
+        bail!("Didn't find source launcher to layout, expected path: {launcher:?}");
+    }
 
     layout_launcher_impl(
         target_dir,
@@ -243,11 +242,10 @@ pub fn layout_launcher(
     //     │   └── app.jar
     //     └── jbr/
 
-    let launcher = project_root
-        .join("target")
-        .join("debug")
-        .join("xplat-launcher");
-    assert!(launcher.exists());
+    let launcher = get_testing_binary_root(project_root).join("xplat-launcher");
+    if !launcher.exists() {
+        bail!("Didn't find source launcher to layout, expected path: {launcher:?}");
+    }
 
     layout_launcher_impl(
         target_dir,
@@ -292,11 +290,10 @@ pub fn layout_launcher(
     // ├── jbr/
     // └── product-info.json
 
-    let launcher = project_root
-        .join("target")
-        .join("debug")
-        .join("xplat-launcher.exe");
-    assert!(launcher.exists());
+    let launcher = get_testing_binary_root(project_root).join("xplat-launcher.exe");
+    if !launcher.exists() {
+        bail!("Didn't find source launcher to layout, expected path: {launcher:?}");
+    }
 
     layout_launcher_impl(
         target_dir,
@@ -316,6 +313,22 @@ pub fn layout_launcher(
     )?;
 
     Ok(())
+}
+
+fn get_testing_binary_root(project_root: &Path) -> PathBuf {
+    match get_path_from_env_var("XPLAT_LAUNCHER_TESTS_TARGET_BINARY_ROOT") {
+        Ok(x) => x,
+        Err(_) => {
+            let target = match cfg!(debug_assertions) {
+                true => { "debug".to_string() }
+                false => { "release".to_string() }
+            };
+
+            project_root
+                .join("target")
+                .join(target)
+        }
+    }
 }
 
 fn layout_launcher_impl(

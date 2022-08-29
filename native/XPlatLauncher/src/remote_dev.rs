@@ -5,10 +5,10 @@ use std::io::{BufWriter, Write};
 use std::path::PathBuf;
 use log::{debug, info};
 use path_absolutize::Absolutize;
-use crate::errors::Result;
-use crate::{DefaultLaunchConfiguration, err_from_string, LaunchConfiguration};
+use anyhow::{bail, Context, Result};
 use crate::default::get_config_home;
-use crate::utils::{get_path_from_env_var, PathExt, read_file_to_end};
+use utils::{get_path_from_env_var, PathExt, read_file_to_end};
+use crate::{DefaultLaunchConfiguration, LaunchConfiguration};
 
 pub struct RemoteDevLaunchConfiguration {
     default: DefaultLaunchConfiguration,
@@ -117,7 +117,7 @@ impl DefaultLaunchConfiguration {
 impl RemoteDevLaunchConfiguration {
     pub fn parse_remote_dev_args(args: &[String]) -> Result<RemoteDevArgs> {
         if args.is_empty() {
-            return err_from_string("Starter command is not specified")
+            bail!("Starter command is not specified")
         }
 
         let remote_dev_starter_command = args[0].as_str();
@@ -130,13 +130,13 @@ impl RemoteDevLaunchConfiguration {
             "status" => { "cwmHostStatus" }
             x => {
                 print_help();
-                return err_from_string(format!("Unknown command: {x}"))
+                bail!("Unknown command: {x}")
             }
         };
 
         if args.len() < 1 {
             print_help();
-            return err_from_string("Project path is not specified");
+            bail!("Project path is not specified");
         }
 
         let project_path_string = args[1].as_str();
@@ -156,7 +156,7 @@ impl RemoteDevLaunchConfiguration {
         let project_path = PathBuf::from(project_path_string);
         if !project_path.exists() {
             print_help();
-            return err_from_string(format!("Project path does not exist: {project_path_string}"));
+            bail!("Project path does not exist: {project_path_string}");
         }
 
         // if [ -d "$PROJECT_PATH" ]; then
@@ -196,13 +196,9 @@ impl RemoteDevLaunchConfiguration {
     }
 
     pub fn new(project_path: PathBuf, default: DefaultLaunchConfiguration) -> Result<Self> {
-        let per_project_config_dir_name = match project_path.file_name() {
-            None => {
-                let message = format!("Failed to get project dir name, project path: {project_path:?}");
-                err_from_string(message)
-            }
-            Some(x) => Ok(x)
-        }?.to_string_lossy();
+        let per_project_config_dir_name = project_path.file_name()
+            .context("Failed to get project dir name, project path: {project_path:?}")
+            ?.to_string_lossy();
 
         let config_dir = default.prepare_host_config_dir(&per_project_config_dir_name)?;
         let system_dir = default.prepare_system_config_dir(&per_project_config_dir_name)?;

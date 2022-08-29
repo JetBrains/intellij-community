@@ -5,8 +5,7 @@ use std::path::{Path, PathBuf};
 use jni::errors::Error;
 use jni::objects::{JObject, JValue};
 use log::{debug, error, info};
-use crate::{err_from_string, errors};
-use crate::errors::{LauncherError, Result};
+use anyhow::{bail, Context, Result};
 
 #[cfg(target_os = "linux")] use {
     std::thread::sleep,
@@ -111,7 +110,16 @@ unsafe fn prepare_jni_env(
     };
     debug!("Create VM result={create_jvm_result}");
 
-    errors::JniError::check_result(create_jvm_result)?;
+    match create_jvm_result {
+        jni_sys::JNI_OK => { }
+        jni_sys::JNI_ERR => bail!("JNI_ERR: unknown error"),
+        jni_sys::JNI_EDETACHED => bail!("JNI_EDETACHED: thread is not attached to JVM"),
+        jni_sys::JNI_EVERSION => bail!("JNI_EVERSION: wrong JNI version"),
+        jni_sys::JNI_ENOMEM => bail!("JNI_ENOMEM: no enought memory"),
+        jni_sys::JNI_EEXIST => bail!("JNI_EEXIST: JVM already exists"),
+        jni_sys::JNI_EINVAL => bail!("JNI_EINVAL? invalid arguments"),
+        i => bail!("Other: {i}"),
+    }
 
     let jni_env = unsafe {
         jni::JNIEnv::from_raw(jni_env)?
@@ -139,13 +147,13 @@ pub fn call_intellij_main(jni_env: jni::JNIEnv<'_>, args: Vec<String>) -> Result
     match jni_env.call_static_method("com/intellij/idea/Main", "main", "([Ljava/lang/String;)V", &method_call_args) {
         Ok(_) => {}
         Err(e) => {
-            return match e {
+            match e {
                 Error::JavaException => {
                     jni_env.exception_describe()?;
-                    Err(LauncherError::JniRsError(e))
+                    Err(e)
                 }
-                _ => Err(LauncherError::JniRsError(e))
-            }
+                _ => Err(e)
+            }?;
         }
     };
 
@@ -179,10 +187,7 @@ unsafe fn load_libjvm(libjvm_path: PathBuf) -> Result<libloading::Library> {
 
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 unsafe fn load_libjvm(libjvm_path: PathBuf) -> Result<libloading::Library> {
-    match unsafe { libloading::Library::new(libjvm_path.as_os_str()) } {
-        Ok(l) => { Ok(l)}
-        Err(e) => { Err(LauncherError::LibloadingError(e))}
-    }
+    unsafe { libloading::Library::new(libjvm_path.as_os_str()) }.context("Failed to load libjvm")
 }
 
 fn get_jvm_init_args(vm_options: Vec<String>) -> Result<jni_sys::JavaVMInitArgs> {
@@ -209,8 +214,7 @@ fn get_libjvm(java_home: &Path) -> Result<PathBuf> {
 
     let libjvm = get_libjvm_path(java_home);
     if !libjvm.exists() {
-        let message = format!("libvjm not found at path {libjvm:?}");
-        return err_from_string(message);
+        bail!("libvjm not found at path {libjvm:?}");
     }
     debug!("Found libjvm at {libjvm:?}");
 
