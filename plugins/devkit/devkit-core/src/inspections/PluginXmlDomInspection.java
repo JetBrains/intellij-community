@@ -587,8 +587,11 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
 
                                  @Override
                                  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-                                   extensionPoint.getQualifiedName().undefine();
-                                   extensionPoint.getName().setStringValue(StringUtil.substringAfter(epQualifiedName, pluginId + "."));
+                                   ExtensionPoint fixExtensionPoint = DomUtil.findDomElement(descriptor.getPsiElement(), ExtensionPoint.class);
+                                   if (fixExtensionPoint == null) return;
+
+                                   fixExtensionPoint.getQualifiedName().undefine();
+                                   fixExtensionPoint.getName().setStringValue(StringUtil.substringAfter(epQualifiedName, pluginId + "."));
                                  }
                                }).highlightWholeElement();
         }
