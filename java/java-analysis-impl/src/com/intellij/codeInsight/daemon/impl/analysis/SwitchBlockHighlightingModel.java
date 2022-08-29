@@ -411,7 +411,7 @@ public class SwitchBlockHighlightingModel {
           if (!visited.add(permittedClass)) continue;
           PsiPattern pattern = patternClasses.get(permittedClass);
           if (pattern == null && (PsiUtil.getLanguageLevel(permittedClass).isLessThan(LanguageLevel.JDK_18_PREVIEW) ||
-                                  TypeConversionUtil.areTypesConvertible(selectorType, TypeUtils.getType(permittedClass))) ||
+                                  TypeConversionUtil.areTypesConvertible(selectorType, createTypeWithWildcards(permittedClass))) ||
               pattern != null && !JavaPsiPatternUtil.isTotalForType(pattern, TypeUtils.getType(permittedClass), false)) {
             nonVisited.add(permittedClass);
           }
@@ -427,6 +427,15 @@ public class SwitchBlockHighlightingModel {
       missingClasses.add(selectorClass);
     }
     return missingClasses;
+  }
+
+  private static @NotNull PsiType createTypeWithWildcards(@NotNull PsiClass psiClass){
+    PsiWildcardType[] wildcards = ContainerUtil.map(
+      psiClass.getTypeParameters(),
+      (parameter) -> PsiWildcardType.createUnbounded(psiClass.getManager()),
+      new PsiWildcardType[]{}
+    );
+    return JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass, wildcards);
   }
 
   public static class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlightingModel {
