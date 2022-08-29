@@ -513,7 +513,11 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         if (psiElement is KtCallableDeclaration) {
             psiElement.typeReference?.let { typeReference ->
                 analyzeForUast(typeReference) {
-                    nullability(typeReference.getKtType())?.let { return it }
+                    var ktType = typeReference.getKtType()
+                    if ((psiElement as? KtParameter)?.isVarArg == true) {
+                        (ktType as? KtNonErrorClassType)?.typeArguments?.singleOrNull()?.type?.let { ktType = it }
+                    }
+                    nullability(ktType)?.let { return it }
                 }
             }
         }

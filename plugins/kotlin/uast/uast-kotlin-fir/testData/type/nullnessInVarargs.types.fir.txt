@@ -32,9 +32,9 @@ UFile (package = test.pkg) [package test.pkg...]
                                 USimpleNameReferenceExpression (identifier = second) [second] : PsiType:V
                 UReturnExpression [return map] : PsiType:Void
                     USimpleNameReferenceExpression (identifier = map) [map] : PsiType:ArrayMap<K, V>
-        UMethod (name = arrayMapOfNullable) [public static final fun arrayMapOfNullable(@org.jetbrains.annotations.NotNull pairs: kotlin.Pair<? extends K,? extends V>...) : test.pkg.ArrayMap<K,V> {...}]
-            UParameter (name = pairs) [@org.jetbrains.annotations.NotNull var pairs: kotlin.Pair<? extends K,? extends V>...]
-                UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
+        UMethod (name = arrayMapOfNullable) [public static final fun arrayMapOfNullable(@org.jetbrains.annotations.Nullable pairs: kotlin.Pair<? extends K,? extends V>...) : test.pkg.ArrayMap<K,V> {...}]
+            UParameter (name = pairs) [@org.jetbrains.annotations.Nullable var pairs: kotlin.Pair<? extends K,? extends V>...]
+                UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
             UBlockExpression [{...}] : PsiType:Void
                 UReturnExpression [return null] : PsiType:Void
                     ULiteralExpression (value = null) [null] : PsiType:Void
