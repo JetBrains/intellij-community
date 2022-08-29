@@ -96,6 +96,8 @@ import java.lang.reflect.Method;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 /**
  * Overridden maven components:
@@ -113,6 +115,7 @@ import java.util.*;
  * org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator2 <-> org.apache.maven.model.interpolation.StringSearchModelInterpolator
  * org.jetbrains.idea.maven.server.embedder.CustomModelValidator <-> org.apache.maven.model.validation.ModelValidator
  */
+@SuppressWarnings("SSBasedInspection")
 public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   @NotNull private final DefaultPlexusContainer myContainer;
@@ -137,7 +140,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   @NotNull private final MavenImporterSpy myImporterSpy;
 
-  @SuppressWarnings("SSBasedInspection")
   private static final Set<String> TYCHO_BANNED_PACKAGING = new HashSet<>(Arrays.asList(
     MavenTychoConstants.PACKAGING_ECLIPSE_FEATURE,
     MavenTychoConstants.PACKAGING_ECLIPSE_REPOSITORY,
@@ -833,57 +835,45 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         List<ProjectBuildingResult> buildingResults = getProjectBuildingResults(request, files);
 
         if (myServerSettings.isTychoProject()) {
-          Map<MavenProject, List<MavenProject>> rootProjectsMap = new HashMap<MavenProject, List<MavenProject>>();
-          List<MavenProject> allProjects = new ArrayList<MavenProject>(buildingResults.size());
-
           fillSessionCache(mavenSession, repositorySession, buildingResults);
-          List<ModelProblem> modelProblems = new ArrayList<ModelProblem>();
 
-          for (ProjectBuildingResult buildingResult : buildingResults) {
-            MavenProject project = buildingResult.getProject();
+          final Map<MavenProject, List<MavenProject>> rootProjectsMap = new HashMap<>(8);
+          final List<ModelProblem> modelProblems = new ArrayList<>(8);
+
+          for (final ProjectBuildingResult buildingResult : buildingResults) {
+            final MavenProject project = buildingResult.getProject();
+            final List<ModelProblem> problems = buildingResult.getProblems();
 
             if (project == null) {
-              List<Exception> exceptions = new ArrayList<Exception>();
-              for (ModelProblem problem : buildingResult.getProblems()) {
-                exceptions.add(problem.getException());
-              }
-              MavenExecutionResult mavenExecutionResult = new MavenExecutionResult(buildingResult.getPomFile(), exceptions);
-              executionResults.add(mavenExecutionResult);
+              final List<Exception> exceptions = problems.stream()
+                .map(ModelProblem::getException)
+                .collect(Collectors.toList());
+
+              executionResults.add(new MavenExecutionResult(buildingResult.getPomFile(), exceptions));
               continue;
             }
 
-            if (buildingResult.getProblems() != null) {
-              modelProblems.addAll(buildingResult.getProblems());
-            }
+            modelProblems.addAll(problems);
 
-            MavenProject rootProject = project;
-
-            while (rootProject.getParent() != null) {
-              rootProject = rootProject.getParent();
-            }
-
-            List<MavenProject> projects = rootProjectsMap.get(rootProject);
-
-            if (projects == null) {
-              projects = new ArrayList<>(32);
-              rootProjectsMap.put(rootProject, projects);
-            }
-
-            projects.add(project);
+            final MavenProject rootProject = getOutermostParent(project);
+            final List<MavenProject> childProjects = rootProjectsMap.computeIfAbsent(rootProject, p -> new ArrayList<>(32));
 
             if (TYCHO_BANNED_PACKAGING.contains(project.getPackaging())) {
-              Maven3ServerGlobals.getLogger().print("Excluded Tycho project: " + project);
+              myConsoleWrapper.info("Excluded Tycho " + project + " because of packaging type " + project.getPackaging());
             } else {
-              allProjects.add(project);
+              childProjects.add(project);
             }
           }
 
-          for (Map.Entry<MavenProject, List<MavenProject>> entry : rootProjectsMap.entrySet()) {
+          for (final Entry<MavenProject, List<MavenProject>> entry : rootProjectsMap.entrySet()) {
             final MavenProject rootProject = entry.getKey();
-            final List<Exception> exceptions = new ArrayList<>();
-            loadExtensions(rootProject, allProjects, exceptions);
+            final List<MavenProject> childProjects = entry.getValue();
+            final List<Exception> exceptions = new ArrayList<>(32);
 
-            for (MavenProject project : entry.getValue()) {
+            loadExtensions(rootProject, childProjects, exceptions);
+
+            for (final MavenProject project : childProjects) {
+              // noinspection deprecation
               project.setDependencyArtifacts(project.createArtifacts(getComponent(ArtifactFactory.class), null, null));
 
               if (USE_MVN2_COMPATIBLE_DEPENDENCY_RESOLVING) {
@@ -944,6 +934,17 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     });
 
     return executionResults;
+  }
+
+  @NotNull
+  private static MavenProject getOutermostParent(@NotNull final MavenProject project) {
+    MavenProject rootProject = project;
+
+    while (rootProject.getParent() != null) {
+      rootProject = rootProject.getParent();
+    }
+
+    return rootProject;
   }
 
   private static void fillSessionCache(MavenSession mavenSession,
