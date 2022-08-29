@@ -43,16 +43,16 @@ public abstract class DirectoryIndexTestCase extends HeavyPlatformTestCase {
 
   protected void assertNotInProject(VirtualFile file) {
     DirectoryInfo info = myIndex.getInfoForFile(file);
-    assertFalse(info.toString(), info.isInProject(file));
+    assertFalse(info.toString(), myFileIndex.isInProject(file));
     assertFalse(info.toString(), info.isExcluded(file));
     assertNull(info.toString(), info.getUnloadedModuleName());
   }
 
   protected void assertExcluded(@NotNull VirtualFile file, Module module) {
     DirectoryInfo info = myIndex.getInfoForFile(file);
-    assertTrue(file + " " + info, info.isExcluded(file));
+    assertTrue(file + " " + info, myFileIndex.isExcluded(file));
     assertNull(file + " " + info, info.getUnloadedModuleName());
-    assertEquals(module, info.getModule());
+    assertEquals(module, myFileIndex.getModuleForFile(file, false));
     assertFalse(myFileIndex.isInSource(file));
     assertFalse(myFileIndex.isInSourceContent(file));
     assertFalse(myFileIndex.isInTestSourceContent(file));
@@ -60,27 +60,25 @@ public abstract class DirectoryIndexTestCase extends HeavyPlatformTestCase {
   }
 
   protected void assertInLibrarySources(VirtualFile file, Module module) {
-    DirectoryInfo info = myIndex.getInfoForFile(file);
-    assertTrue(info.toString(), info.isInLibrarySource(file));
-    assertEquals(module, info.getModule());
+    assertTrue(file.getPresentableUrl(), myFileIndex.isInLibrarySource(file));
+    assertEquals(file.getPresentableUrl(), module, myFileIndex.getModuleForFile(file));
   }
 
   protected void assertNotInLibrarySources(VirtualFile file, Module module) {
-    DirectoryInfo info = myIndex.getInfoForFile(file);
-    assertFalse(info.toString(), info.isInLibrarySource(file));
-    assertEquals(module, info.getModule());
+    assertFalse(file.getPresentableUrl(), myFileIndex.isInLibrarySource(file));
+    assertEquals(file.getPresentableUrl(), module, myFileIndex.getModuleForFile(file));
   }
 
   protected DirectoryInfo assertInProject(VirtualFile file) {
+    assertTrue(file.toString(), myFileIndex.isInProject(file));
     DirectoryInfo info = myIndex.getInfoForFile(file);
-    assertTrue(file.toString(), info.isInProject(file));
     assertNull(info.toString(), info.getUnloadedModuleName());
     myIndex.assertConsistency(info);
     return info;
   }
 
   protected void assertNotExcluded(VirtualFile file) {
-    assertFalse(myIndex.getInfoForFile(file).isExcluded(file));
+    assertFalse(myFileIndex.isExcluded(file));
   }
 
   protected void assertExcludedFromProject(VirtualFile file) {

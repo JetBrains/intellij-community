@@ -373,8 +373,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
   }
 
   private void assertIgnored(@NotNull VirtualFile ignoredFile) {
-    DirectoryInfo info = myIndex.getInfoForFile(ignoredFile);
-    assertTrue(info.isIgnored());
+    assertTrue(myFileIndex.isUnderIgnored(ignoredFile));
     assertTrue(myFileIndex.isExcluded(ignoredFile));
     assertTrue(myFileIndex.isUnderIgnored(ignoredFile));
     assertNull(myFileIndex.getContentRootForFile(ignoredFile, false));
@@ -477,14 +476,14 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     ModuleRootModificationUtil.addModuleLibrary(myModule, "someLib", Collections.emptyList(), Collections.singletonList(mySrcDir1.getUrl()));
 
     checkInfo(mySrcDir1, myModule, false, true, "", mySrcDir1Folder, JavaSourceRootType.SOURCE, myModule, myModule);
-    Collection<OrderEntry> entriesResult = myIndex.getOrderEntries(myIndex.getInfoForFile(mySrcDir1));
+    Collection<OrderEntry> entriesResult = myFileIndex.getOrderEntriesForFile(mySrcDir1);
     OrderEntry[] entries = toArray(entriesResult);
 
     assertInstanceOf(entries[0], LibraryOrderEntry.class);
     assertInstanceOf(entries[1], ModuleSourceOrderEntry.class);
 
     checkInfo(myTestSrc1, myModule, false, true, "testSrc", myTestSrc1Folder, JavaSourceRootType.TEST_SOURCE, myModule, myModule);
-    entriesResult = myIndex.getOrderEntries(myIndex.getInfoForFile(myTestSrc1));
+    entriesResult = myFileIndex.getOrderEntriesForFile(myTestSrc1);
     entries = toArray(entriesResult);
     assertInstanceOf(entries[0], LibraryOrderEntry.class);
     assertInstanceOf(entries[1], ModuleSourceOrderEntry.class);
@@ -493,7 +492,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
   public void testModuleSourceAsLibraryClasses() {
     ModuleRootModificationUtil.addModuleLibrary(myModule, "someLib", Collections.singletonList(mySrcDir1.getUrl()), Collections.emptyList());
     checkInfo(mySrcDir1, myModule, true, false, "", mySrcDir1Folder, JavaSourceRootType.SOURCE, myModule);
-    assertInstanceOf(assertOneElement(toArray(myIndex.getOrderEntries(assertInProject(mySrcDir1)))), ModuleSourceOrderEntry.class);
+    assertInstanceOf(assertOneElement(toArray(myFileIndex.getOrderEntriesForFile(mySrcDir1))), ModuleSourceOrderEntry.class);
   }
 
   public void testModulesWithSameSourceContentRoot() {
@@ -507,7 +506,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     checkInfo(myResDir, myModule, false, false, "", myResDirFolder, JavaResourceRootType.RESOURCE, myModule);
 
     checkInfo(mySrcDir2, myModule2, false, false, "", mySrcDir2Folder, JavaSourceRootType.SOURCE, myModule2, myModule3);
-    assertEquals(myModule2Dir, myIndex.getInfoForFile(mySrcDir2).getContentRoot());
+    assertEquals(myModule2Dir, myFileIndex.getContentRootForFile(mySrcDir2));
   }
 
   public void testModuleWithSameSourceRoot() {
@@ -653,7 +652,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     checkInfo(myLibSrcDir, myModule, true, true, "", null, null, myModule, myModule3);
 
     checkInfo(myResDir, myModule, true, false, "", myResDirFolder, JavaResourceRootType.RESOURCE, myModule);
-    assertInstanceOf(assertOneElement(toArray(myIndex.getOrderEntries(assertInProject(myResDir)))), ModuleSourceOrderEntry.class);
+    assertInstanceOf(assertOneElement(toArray(myFileIndex.getOrderEntriesForFile(myResDir))), ModuleSourceOrderEntry.class);
 
     checkInfo(myExcludedLibSrcDir, null, true, false, "lib.src.exc", null, null, myModule3, myModule);
     checkInfo(myExcludedLibClsDir, null, true, false, "lib.cls.exc", null, null, myModule3);
@@ -973,10 +972,11 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
       assertEquals(packageName, myFileIndex.getPackageNameByDirectory(file));
     }
 
-    assertEquals(Arrays.toString(toArray(myIndex.getOrderEntries(info))), modulesOfOrderEntries.length, toArray(myIndex.getOrderEntries(info)).length);
+    List<OrderEntry> orderEntries = myFileIndex.getOrderEntriesForFile(file);
+    assertEquals(Arrays.toString(toArray(orderEntries)), modulesOfOrderEntries.length, toArray(orderEntries).length);
     for (Module aModule : modulesOfOrderEntries) {
-      OrderEntry found = ModuleFileIndexImpl.findOrderEntryWithOwnerModule(aModule, myIndex.getOrderEntries(info));
-      assertNotNull("not found: " + aModule + " in " + Arrays.toString(toArray(myIndex.getOrderEntries(info))), found);
+      OrderEntry found = ModuleFileIndexImpl.findOrderEntryWithOwnerModule(aModule, orderEntries);
+      assertNotNull("not found: " + aModule + " in " + Arrays.toString(toArray(orderEntries)), found);
     }
   }
 
@@ -1000,13 +1000,12 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
       rootEntry.addSourceFolder(createChildDirectory(root, "extsrc"), false);
     }));
 
-    DirectoryIndexImpl dirIndex = (DirectoryIndexImpl)DirectoryIndex.getInstance(myProject);
-    RootIndex rootIndex = dirIndex.getRootIndex();
+    RootIndex rootIndex = myIndex.getRootIndex();
 
     VirtualFile xxx = createChildDirectory(root, "xxx");
     assertFalse(ProjectFileIndex.getInstance(getProject()).isInSource(xxx));
     delete(xxx);
-    assertSame(rootIndex, dirIndex.getRootIndex());
+    assertSame(rootIndex, myIndex.getRootIndex());
   }
 
   public void testSourceRootResidingUnderExcludedDirectoryMustBeIndexed() throws IOException {
