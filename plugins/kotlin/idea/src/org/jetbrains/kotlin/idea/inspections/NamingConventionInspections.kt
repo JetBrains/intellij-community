@@ -306,13 +306,13 @@ abstract class PropertyNameInspectionBase protected constructor(
     private fun KtProperty.getKind(): PropertyKind = when {
         isLocal -> PropertyKind.LOCAL
 
+        visibilityModifierType() == KtTokens.PRIVATE_KEYWORD -> PropertyKind.PRIVATE
+
         containingClassOrObject is KtObjectDeclaration -> PropertyKind.OBJECT_OR_TOP_LEVEL
 
         isTopLevel -> PropertyKind.OBJECT_OR_TOP_LEVEL
 
         hasModifier(KtTokens.CONST_KEYWORD) -> PropertyKind.CONST
-
-        visibilityModifierType() == KtTokens.PRIVATE_KEYWORD -> PropertyKind.PRIVATE
 
         else -> PropertyKind.NORMAL
     }
