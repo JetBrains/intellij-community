@@ -30,6 +30,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.AWTExceptionHandler
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.application.impl.SwingDispatcher
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
@@ -58,7 +59,6 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.io.BuiltInServer
 import sun.awt.AWTAutoShutdown
-import java.awt.EventQueue
 import java.awt.Font
 import java.awt.GraphicsEnvironment
 import java.awt.Toolkit
@@ -85,7 +85,6 @@ import java.util.function.Function
 import java.util.logging.ConsoleHandler
 import java.util.logging.Level
 import javax.swing.*
-import kotlin.coroutines.CoroutineContext
 import kotlin.system.exitProcess
 
 internal const val IDE_STARTED = "------------------------------------------------------ IDE STARTED ------------------------------------------------------"
@@ -625,15 +624,6 @@ private fun CoroutineScope.showEuaIfNeeded(euaDocumentDeferred: Deferred<Any?>?,
       }
     }
   }
-}
-
-/** Do not use it. For start-up code only. */
-internal object SwingDispatcher : CoroutineDispatcher() {
-  override fun isDispatchNeeded(context: CoroutineContext): Boolean = !EventQueue.isDispatchThread()
-
-  override fun dispatch(context: CoroutineContext, block: Runnable): Unit = EventQueue.invokeLater(block)
-
-  override fun toString() = "Swing"
 }
 
 private fun CoroutineScope.updateFrameClassAndWindowIconAndPreloadSystemFonts(initUiDeferred: Job) {
