@@ -627,8 +627,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       @NotNull private final String myConverted;
       private final boolean myEquality;
 
-      SubstringToCharAtQuickFix(@NotNull final String text,
-                                final @NotNull String converted, boolean equality) {
+      SubstringToCharAtQuickFix(@NotNull final String text, final @NotNull String converted, boolean equality) {
         myText = text;
         myConverted = converted;
         myEquality = equality;
@@ -683,7 +682,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       }
 
       private static @NonNls @Nullable String getTargetString(@NotNull final PsiMethodCallExpression call,
-                                            @NotNull Function<@NotNull PsiElement, @NotNull String> textExtractor) {
+                                                              @NotNull Function<@NotNull PsiElement, @NotNull String> textExtractor) {
         final PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
         if (qualifierCall == null) return null;
 
@@ -693,22 +692,17 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
         final PsiExpression[] args = qualifierCall.getArgumentList().getExpressions();
         if (args.length != 2) return null;
 
-        final PsiExpression equalTo = call.getArgumentList().getExpressions()[0];
-
-        final String eqSign = isNegated(call, false) ? "!=" : "==";
-
-        final String equalToValue = PsiLiteralUtil.charLiteralForCharString(textExtractor.apply(equalTo));
-
+        final PsiLiteralExpression equalTo = (PsiLiteralExpression)call.getArgumentList().getExpressions()[0];
+        final String equalToValue = PsiLiteralUtil.charLiteralString(equalTo);
         return String.format("%s.charAt(%s) %s %s",
                              textExtractor.apply(receiver),
                              textExtractor.apply(args[0]),
-                             eqSign,
+                             isNegated(call, false) ? "!=" : "==",
                              equalToValue
         );
       }
     }
   }
-
 
   private static class RemoveRedundantChangeCaseFix implements LocalQuickFix {
     private final @NotNull String caseRedundant;
@@ -916,14 +910,9 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     private final @IntentionName String myName;
 
     private StringConstructorFix(boolean noArguments) {
-      if (noArguments) {
-        myName = InspectionGadgetsBundle.message(
-          "inspection.redundant.string.replace.with.empty.fix.name");
-      }
-      else {
-        myName = InspectionGadgetsBundle.message(
-          "inspection.redundant.string.replace.with.arg.fix.name");
-      }
+      myName = noArguments
+               ? InspectionGadgetsBundle.message("inspection.redundant.string.replace.with.empty.fix.name")
+               : InspectionGadgetsBundle.message("inspection.redundant.string.replace.with.arg.fix.name");
     }
 
     @Override
