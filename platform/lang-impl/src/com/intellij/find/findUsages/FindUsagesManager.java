@@ -358,7 +358,6 @@ public final class FindUsagesManager {
     });
 
     FindUsagesOptions optionsClone = options.clone();
-    ClusteringSearchSession clusteringSearchSession = ClusteringSearchSession.createClusteringSessionIfEnabled();
     return processor -> {
       Project project = ReadAction.compute(() -> scopeFile != null ? scopeFile.getProject() : primaryTargets[0].getProject());
       ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
@@ -376,6 +375,7 @@ public final class FindUsagesManager {
       if (scopeFile != null) {
         optionsClone.searchScope = new LocalSearchScope(scopeFile);
       }
+      ClusteringSearchSession clusteringSearchSession = ClusteringSearchSession.createClusteringSessionIfEnabled();
       Processor<UsageInfo> usageInfoProcessor = new CommonProcessors.UniqueProcessor<>(usageInfo -> {
         Usage usage = ReadAction.compute(
           () -> clusteringSearchSession != null
