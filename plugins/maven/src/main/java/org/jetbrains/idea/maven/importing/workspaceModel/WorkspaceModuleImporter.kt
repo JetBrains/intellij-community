@@ -37,7 +37,6 @@ internal class WorkspaceModuleImporter(
   private val virtualFileUrlManager: VirtualFileUrlManager,
   private val builder: MutableEntityStorage,
   private val importingSettings: MavenImportingSettings,
-  private val dependenciesImportingContext: DependenciesImportingContext,
   private val folderImportingContext: WorkspaceFolderImporter.FolderImportingContext,
   private val stats: WorkspaceImportStats
 ) {
@@ -50,9 +49,7 @@ internal class WorkspaceModuleImporter(
     val moduleName = importData.moduleData.moduleName
     val sourceNames = FileInDirectorySourceNames.from(WorkspaceModel.getInstance(project).entityStorage.current)
 
-    val internalModuleSource = sourceNames.findSource(ModuleEntity::class.java, moduleName + ModuleManagerEx.IML_EXTENSION)
-                               ?: JpsEntitySourceFactory.createInternalEntitySourceForModule(project, baseModuleDir)
-    val moduleLibrarySource = JpsEntitySourceFactory.createImportedEntitySource(project, externalSource, internalModuleSource)
+    val moduleLibrarySource = createModuleLibrarySource(sourceNames, moduleName, baseModuleDir)
 
     val dependencies = collectDependencies(moduleName, importData.dependencies, moduleLibrarySource, sourceNames)
     val moduleEntity = createModuleEntity(moduleName, importData.mavenProject, importData.moduleData.type, dependencies,
@@ -61,12 +58,18 @@ internal class WorkspaceModuleImporter(
     return moduleEntity
   }
 
+  private fun createModuleLibrarySource(sourceNames: FileInDirectorySourceNames,
+                                        moduleName: String,
+                                        baseModuleDir: VirtualFileUrl): EntitySource {
+    val internalSource = sourceNames.findSource(ModuleEntity::class.java, moduleName + ModuleManagerEx.IML_EXTENSION)
+                         ?: JpsEntitySourceFactory.createInternalEntitySourceForModule(project, baseModuleDir)
+    return JpsEntitySourceFactory.createImportedEntitySource(project, externalSource, internalSource)
+  }
+
   private fun createProjectLibrarySource(sourceNames: FileInDirectorySourceNames, libraryName: String): EntitySource {
-    val projectLibrarySource = dependenciesImportingContext.getCachedProjectLibraryEntitySource {
-      sourceNames.findSource(LibraryEntity::class.java, libraryName)
-      ?: JpsEntitySourceFactory.createEntitySourceForProjectLibrary(project, externalSource)
-    }
-    return projectLibrarySource
+    val internalSource = sourceNames.findSource(LibraryEntity::class.java, libraryName)
+                         ?: JpsEntitySourceFactory.createInternalEntitySourceForProjectLibrary(project)
+    return JpsEntitySourceFactory.createImportedEntitySource(project, externalSource, internalSource)
   }
 
   private fun createModuleEntity(moduleName: String,
@@ -237,14 +240,6 @@ internal class WorkspaceModuleImporter(
     }
     builder.addJavaModuleSettingsEntity(inheritCompilerOutput, false, compilerOutputUrl, compilerOutputUrlForTests,
                                         languageLevel.name, moduleEntity, moduleEntity.entitySource)
-  }
-
-  class DependenciesImportingContext {
-    private var projectLibrarySourceCache: EntitySource? = null
-
-    internal fun getCachedProjectLibraryEntitySource(compute: () -> EntitySource): EntitySource {
-      return projectLibrarySourceCache ?: compute().also { projectLibrarySourceCache = it }
-    }
   }
 
   companion object {

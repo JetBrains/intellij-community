@@ -124,7 +124,6 @@ internal class WorkspaceProjectImporter(
     val context = MavenProjectImportContextProvider(myProject, myProjectsTree, myImportingSettings,
                                                     mavenProjectToModuleName).getContext(projectsToImport)
 
-    val dependenciesImportingContext = WorkspaceModuleImporter.DependenciesImportingContext()
     val folderImportingContext = WorkspaceFolderImporter.FolderImportingContext()
 
     class PartialModulesData(val changes: MavenProjectChanges,
@@ -137,7 +136,6 @@ internal class WorkspaceProjectImporter(
                                                  virtualFileUrlManager,
                                                  builder,
                                                  myImportingSettings,
-                                                 dependenciesImportingContext,
                                                  folderImportingContext,
                                                  stats).importModule()
 
