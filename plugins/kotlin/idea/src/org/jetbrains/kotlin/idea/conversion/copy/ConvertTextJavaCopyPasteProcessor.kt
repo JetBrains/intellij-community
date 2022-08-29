@@ -24,8 +24,8 @@ import com.intellij.refactoring.suggested.range
 import com.intellij.util.LocalTimeCounter
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.asJava.toLightClass
-import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
 import org.jetbrains.kotlin.idea.statistics.ConversionType
 import org.jetbrains.kotlin.idea.statistics.J2KFusCollector
@@ -49,10 +49,6 @@ class ConvertTextJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransf
     private class MyTransferableData(val text: String) : TextBlockTransferableData {
 
         override fun getFlavor() = DATA_FLAVOR
-        override fun getOffsetCount() = 0
-
-        override fun getOffsets(offsets: IntArray?, index: Int) = index
-        override fun setOffsets(offsets: IntArray?, index: Int) = index
 
         companion object {
             val DATA_FLAVOR: DataFlavor =

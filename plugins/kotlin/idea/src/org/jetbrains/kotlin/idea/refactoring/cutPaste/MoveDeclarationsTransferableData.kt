@@ -14,10 +14,6 @@ class MoveDeclarationsTransferableData(
 ) : TextBlockTransferableData {
 
     override fun getFlavor() = DATA_FLAVOR
-    override fun getOffsetCount() = 0
-
-    override fun getOffsets(offsets: IntArray?, index: Int) = index
-    override fun setOffsets(offsets: IntArray?, index: Int) = index
 
     companion object {
         val DATA_FLAVOR = DataFlavor(MoveDeclarationsCopyPasteProcessor::class.java, "class: MoveDeclarationsCopyPasteProcessor")
