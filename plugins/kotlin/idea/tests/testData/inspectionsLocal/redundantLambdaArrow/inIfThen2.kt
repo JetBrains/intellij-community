@@ -1,3 +1,4 @@
+// PROBLEM: none
 fun test(): (Int) -> Int {
     return if (true) {
         { <caret>_ -> 42 }
@@ -5,4 +6,3 @@ fun test(): (Int) -> Int {
         { _ -> 42 }
     }
 }
-// PROBLEM: none

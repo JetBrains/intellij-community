@@ -1,3 +1,4 @@
+// PROBLEM: none
 fun test(): (Int) -> Int {
     return when {
         true -> {
@@ -8,4 +9,3 @@ fun test(): (Int) -> Int {
         }
     }
 }
-// PROBLEM: none

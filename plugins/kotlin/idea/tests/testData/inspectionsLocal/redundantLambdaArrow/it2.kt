@@ -1,3 +1,4 @@
+// PROBLEM: "Redundant lambda arrow"
 class A
 
 fun A.foo(f: (String) -> Unit) {}
@@ -10,4 +11,3 @@ fun bar() {
         print(it)
     }
 }
-// PROBLEM: "Redundant lambda arrow"
