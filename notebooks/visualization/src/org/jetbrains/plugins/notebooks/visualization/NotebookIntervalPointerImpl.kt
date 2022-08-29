@@ -129,7 +129,7 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
       return
     }
 
-    if (firstPtr === secondPtr) return // nothing to do
+    if (hint.firstOrdinal == hint.secondOrdinal) return // nothing to do
 
     val interval = firstPtr.interval!!
     firstPtr.interval = secondPtr.interval
