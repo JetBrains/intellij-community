@@ -5,16 +5,19 @@ package org.jetbrains.kotlin.idea.caches.resolve
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.xmlb.XmlSerializerUtil
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analyzer.ModuleInfo
-import org.jetbrains.kotlin.caches.project.cacheByClassInvalidatingOnRootModifications
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryDependenciesCache
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.ResolutionAnchorCacheService
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
+import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfosFromIdeaModel
+import org.jetbrains.kotlin.idea.caches.trackers.ModuleModificationTracker
 import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus.checkCanceled
 import org.jetbrains.kotlin.types.typeUtil.closure
 import org.jetbrains.kotlin.utils.addToStdlib.cast
@@ -42,26 +45,33 @@ class ResolutionAnchorCacheServiceImpl(
         myState = State(mapping)
     }
 
-    object ResolutionAnchorMappingCacheKey
-    object ResolutionAnchorDependenciesCacheKey
-
     override val resolutionAnchorsForLibraries: Map<LibraryInfo, ModuleSourceInfo>
-        get() = project.cacheByClassInvalidatingOnRootModifications(ResolutionAnchorMappingCacheKey::class.java) {
-            mapResolutionAnchorForLibraries()
-        }
+        get() =
+            CachedValuesManager.getManager(project).getCachedValue(project) {
+                CachedValueProvider.Result.create(
+                    mapResolutionAnchorForLibraries(),
+                    ModuleModificationTracker.getInstance(project),
+                    LibraryModificationTracker.getInstance(project)
+                )
+            }
 
     private val resolutionAnchorDependenciesCache: MutableMap<LibraryInfo, Set<ModuleSourceInfo>>
-        get() = project.cacheByClassInvalidatingOnRootModifications(ResolutionAnchorDependenciesCacheKey::class.java) {
-            ContainerUtil.createConcurrentWeakMap()
-        }
+        get() =
+            CachedValuesManager.getManager(project).getCachedValue(project) {
+                CachedValueProvider.Result.create(
+                    ContainerUtil.createConcurrentWeakMap(),
+                    ModuleModificationTracker.getInstance(project),
+                    LibraryModificationTracker.getInstance(project)
+                )
+            }
 
     override fun getDependencyResolutionAnchors(libraryInfo: LibraryInfo): Set<ModuleSourceInfo> {
         return resolutionAnchorDependenciesCache.getOrPut(libraryInfo) {
             val allTransitiveLibraryDependencies = with(LibraryDependenciesCache.getInstance(project)) {
-                val (directDependenciesOnLibraries, _) = getLibrariesAndSdksUsedWith(libraryInfo)
+                val directDependenciesOnLibraries = getLibraryDependencies(libraryInfo).libraries
                 directDependenciesOnLibraries.closure { libraryDependency ->
                     checkCanceled()
-                    getLibrariesAndSdksUsedWith(libraryDependency).first
+                    getLibraryDependencies(libraryDependency).libraries
                 }
             }
             allTransitiveLibraryDependencies.mapNotNull { resolutionAnchorsForLibraries[it] }.toSet()
