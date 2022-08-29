@@ -2916,18 +2916,16 @@ public class JBTabsImpl extends JComponent
 
   private abstract static class BaseNavigationAction extends DumbAwareAction {
     private final ShadowAction myShadow;
-    @NotNull private final ActionManager myActionManager;
     private final JBTabsImpl myTabs;
 
-    BaseNavigationAction(@NotNull String copyFromID, @NotNull JBTabsImpl tabs, @NotNull Disposable parentDisposable) {
-      myActionManager = ActionManager.getInstance();
+    BaseNavigationAction(@NlsSafe @NotNull String copyFromId, @NotNull JBTabsImpl tabs, @NotNull Disposable parentDisposable) {
       myTabs = tabs;
-      myShadow = new ShadowAction(this, myActionManager.getAction(copyFromID), tabs, parentDisposable);
+      myShadow = new ShadowAction(this, copyFromId, tabs, parentDisposable);
       setEnabledInModalContext(true);
     }
 
     @Override
-    public final void update(@NotNull final AnActionEvent e) {
+    public final void update(@NotNull AnActionEvent e) {
       JBTabsImpl tabs = (JBTabsImpl)e.getData(NAVIGATION_ACTIONS_KEY);
       e.getPresentation().setVisible(tabs != null);
       if (tabs == null) return;
@@ -2960,7 +2958,7 @@ public class JBTabsImpl extends JComponent
     }
 
     public void reconnect(String actionId) {
-      myShadow.reconnect(myActionManager.getAction(actionId));
+      myShadow.reconnect(ActionManager.getInstance().getAction(actionId));
     }
 
     protected abstract void _update(AnActionEvent e, final JBTabsImpl tabs, int selectedIndex);

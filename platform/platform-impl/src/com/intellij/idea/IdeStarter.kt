@@ -17,7 +17,6 @@ import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.internal.inspector.UiInspectorAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -69,14 +68,6 @@ open class IdeStarter : ModernApplicationStarter() {
     assert(!app.isDispatchThread)
 
     coroutineScope {
-      if (app.isLightEditMode && !app.isHeadlessEnvironment) {
-        // In a light mode UI is shown very quickly, tab layout requires ActionManager, but it is forbidden to init ActionManager in EDT,
-        // so, preload
-        launch {
-          ActionManager.getInstance()
-        }
-      }
-
       val lifecyclePublisher = app.messageBus.syncPublisher(AppLifecycleListener.TOPIC)
       openProjectIfNeeded(args, app, lifecyclePublisher)
 
