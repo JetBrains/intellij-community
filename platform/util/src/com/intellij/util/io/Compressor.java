@@ -10,7 +10,6 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
-import org.apache.commons.compress.compressors.gzip.GzipParameters;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +26,6 @@ import java.util.function.BiPredicate;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
-import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -48,11 +46,7 @@ public abstract class Compressor implements Closeable {
     }
 
     private static OutputStream compressedStream(OutputStream stream, Compression compression) throws IOException {
-      if (compression == Compression.GZIP) {
-        GzipParameters parameters = new GzipParameters();
-        parameters.setCompressionLevel(Deflater.NO_COMPRESSION);
-        return new GzipCompressorOutputStream(stream, parameters);
-      }
+      if (compression == Compression.GZIP) return new GzipCompressorOutputStream(stream);
       if (compression == Compression.BZIP2) return new BZip2CompressorOutputStream(stream);
       return stream;
     }
