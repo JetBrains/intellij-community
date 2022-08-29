@@ -28,6 +28,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.ToIntFunction;
 
@@ -56,7 +57,7 @@ public class TestCaseLoader {
 
 
   private static final AtomicInteger CYCLIC_BUCKET_COUNTER = new AtomicInteger(0);
-  private static final HashMap<String, Integer> BUCKETS = new HashMap<>();
+  private static final ConcurrentHashMap<String, Integer> BUCKETS = new ConcurrentHashMap<>();
 
   /**
    * Split tests into buckets equally across all the buckets
@@ -198,9 +199,13 @@ public class TestCaseLoader {
     return matchesCurrentBucketFair(testIdentifier, TEST_RUNNERS_COUNT, TEST_RUNNER_INDEX);
   }
 
-  public synchronized static boolean matchesCurrentBucketFair(@NotNull String testIdentifier,
-                                                              int testRunnerCount,
-                                                              int testRunnerIndex) {
+  public static boolean matchesCurrentBucketFair(@NotNull String testIdentifier,
+                                                 int testRunnerCount,
+                                                 int testRunnerIndex) {
+
+    System.out.printf("Fair bucket matching: test identifier `%s`, runner count %s, runner index %s" + System.lineSeparator(),
+                      testIdentifier, testRunnerCount, testRunnerIndex);
+
     var value = BUCKETS.get(testIdentifier);
 
     if (value != null) {
@@ -212,7 +217,13 @@ public class TestCaseLoader {
 
     if (CYCLIC_BUCKET_COUNTER.get() == testRunnerCount) CYCLIC_BUCKET_COUNTER.set(0);
 
-    return BUCKETS.get(testIdentifier) == testRunnerIndex;
+    var isMatchedBucket = BUCKETS.get(testIdentifier) == testRunnerIndex;
+
+    System.out.printf(
+      "Fair bucket matching result: test identifier `%s`, runner count %s, runner index %s, is matching bucket %s" + System.lineSeparator(),
+      testIdentifier, testRunnerCount, testRunnerIndex, isMatchedBucket);
+
+    return isMatchedBucket;
   }
 
   /**
