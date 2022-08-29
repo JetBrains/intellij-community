@@ -57,14 +57,7 @@ internal class PlatformTaskSupport : TaskSupport {
     cancellation: TaskCancellation,
     action: suspend CoroutineScope.() -> T,
   ): T = withModalContext {
-    val sink = FlowProgressSink()
-    val showIndicatorJob = showModalIndicator(owner, title, cancellation, sink.stateFlow)
-    try {
-      withContext(sink.asContextElement(), action)
-    }
-    finally {
-      showIndicatorJob.cancel()
-    }
+    withModalIndicator(owner, title, cancellation, action)
   }
 }
 
@@ -135,6 +128,22 @@ private fun taskInfo(title: @ProgressTitle String, cancellation: TaskCancellatio
   override fun isCancellable(): Boolean = cancellation is CancellableTaskCancellation
   override fun getCancelText(): String? = (cancellation as? CancellableTaskCancellation)?.buttonText
   override fun getCancelTooltipText(): String? = (cancellation as? CancellableTaskCancellation)?.tooltipText
+}
+
+private suspend fun <T> withModalIndicator(
+  owner: ModalTaskOwner,
+  title: @ProgressTitle String,
+  cancellation: TaskCancellation,
+  action: suspend CoroutineScope.() -> T,
+): T = coroutineScope {
+  val sink = FlowProgressSink()
+  val showIndicatorJob = showModalIndicator(owner, title, cancellation, sink.stateFlow)
+  try {
+    withContext(sink.asContextElement(), action)
+  }
+  finally {
+    showIndicatorJob.cancel()
+  }
 }
 
 private fun CoroutineScope.showModalIndicator(
