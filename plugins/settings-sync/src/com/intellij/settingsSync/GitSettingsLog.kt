@@ -212,6 +212,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
 
   override fun collectCurrentSnapshot(): SettingsSnapshot {
     // todo check repository consistency, e.g. there should be no uncommitted changes
+    git.checkout().setName(MASTER_REF_NAME).setForced(true).call()
 
     val lastModifiedDate = getDate(getBranchTip(master))
     val files = settingsSyncStorage.toFile().walkTopDown()

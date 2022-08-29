@@ -163,6 +163,23 @@ internal class GitSettingsLogTest {
     assertEquals("editorContent", (settingsSyncStorage / "options"/ "editor.xml").readText()) // this is real test that the cloud changes have gone away
   }
 
+  @Test fun `collectCurrentSnapshot should take the master content`() {
+    val editorXml = (configDir / "options" / "editor.xml").createFile()
+    editorXml.writeText("editorContent")
+    val settingsLog = initializeGitSettingsLog(editorXml)
+
+    val editorXmlFileState = "options/editor.xml"
+    settingsLog.applyCloudState(
+      settingsSnapshot(SettingsSnapshot.MetaInfo(Instant.ofEpochSecond(100500), AppInfo(UUID.randomUUID(), "", "", ""))) {
+        fileState(editorXmlFileState, "moreCloudEditorContent")
+      }, "Remote changes"
+    )
+
+    val snapshot = settingsLog.collectCurrentSnapshot()
+    val actualFileState = snapshot.fileStates.find { it.file == editorXmlFileState } as FileState.Modified
+    assertEquals("editorContent", String(actualFileState.content))
+  }
+
   //@Test
   // todo requires a more previse merge conflict strategy implementation
   @Suppress("unused")
