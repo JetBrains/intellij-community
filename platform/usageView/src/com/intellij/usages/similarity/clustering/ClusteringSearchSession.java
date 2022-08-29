@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 
@@ -25,12 +26,15 @@ import java.util.stream.Collectors;
 public class ClusteringSearchSession {
   public static final double MAXIMUM_SIMILARITY = 1.0;
   public static final double PRECISION = 1e-4;
-  private final @NotNull List<UsageCluster> myClusters;
+  public static final AtomicInteger counter = new AtomicInteger();
+  private final @NotNull List<@NotNull UsageCluster> myClusters;
   private final double mySimilarityThreshold;
+  private final int myUniqueId;
 
   public ClusteringSearchSession() {
     myClusters = Collections.synchronizedList(new ArrayList<>());
     mySimilarityThreshold = Registry.doubleValue("similarity.find.usages.groups.threshold");
+    myUniqueId = counter.incrementAndGet();
   }
 
   public @NotNull List<UsageCluster> getClusters() {
@@ -81,6 +85,10 @@ public class ClusteringSearchSession {
         indicator.checkCanceled();
         return Integer.compare(o2.getUsages().size(), o1.getUsages().size());
       }).collect(Collectors.toList());
+  }
+
+  public int getUniqueId() {
+    return myUniqueId;
   }
 
   public void updateClusters(@NotNull List<UsageCluster> clusters) {

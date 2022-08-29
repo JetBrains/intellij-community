@@ -81,7 +81,7 @@ public class UsagePreviewToolbarWithSimilarUsagesLink extends JPanel {
         UsageInfo firstSelectedInfo = ContainerUtil.getFirstItem(infos);
         assert firstSelectedInfo != null;
         ClusteringSearchSession session = ContainerUtil.getFirstItem(usages).getClusteringSession();
-        SimilarUsagesCollector.logLinkToSimilarUsagesLinkFromUsagePreviewClicked(session.hashCode());
+        SimilarUsagesCollector.logLinkToSimilarUsagesLinkFromUsagePreviewClicked(firstSelectedInfo.getProject(), session);
         final SimilarUsagesComponent similarComponent =
           new SimilarUsagesComponent(session, firstSelectedInfo, previewPanel);
         previewPanel.add(
