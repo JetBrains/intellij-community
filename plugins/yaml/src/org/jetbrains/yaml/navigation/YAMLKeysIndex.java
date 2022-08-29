@@ -1,9 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.navigation;
 
-import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
@@ -14,7 +12,6 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLFileBasedIndexUtil;
-import org.jetbrains.yaml.YAMLLanguage;
 import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLSequence;
@@ -37,12 +34,11 @@ public final class YAMLKeysIndex extends FileBasedIndexExtension<String, Integer
     return new DataIndexer<>() {
       @NotNull
       @Override
-      public Map<String, Integer> map(final @NotNull FileContent inputData) {
-        final Object2IntMap<String> map = new Object2IntOpenHashMap<>();
-        final FileViewProvider provider = inputData.getPsiFile().getViewProvider();
-        provider.getPsi(YAMLLanguage.INSTANCE).accept(new YamlRecursivePsiElementVisitor() {
+      public Map<String, Integer> map(@NotNull FileContent inputData) {
+        Object2IntMap<String> map = new Object2IntOpenHashMap<>();
+        inputData.getPsiFile().accept(new YamlRecursivePsiElementVisitor() {
           @Override
-          public void visitKeyValue(final @NotNull YAMLKeyValue keyValue) {
+          public void visitKeyValue(@NotNull YAMLKeyValue keyValue) {
             PsiElement key = keyValue.getKey();
             if (key != null) {
               map.put(YAMLUtil.getConfigFullName(keyValue), key.getTextOffset());
@@ -51,13 +47,8 @@ public final class YAMLKeysIndex extends FileBasedIndexExtension<String, Integer
           }
 
           @Override
-          public void visitSequence(final @NotNull YAMLSequence sequence) {
+          public void visitSequence(@NotNull YAMLSequence sequence) {
             // Do not visit children
-          }
-
-          @Override
-          public void visitOuterLanguageElement(final @NotNull OuterLanguageElement element) {
-            // Do not visit outer language elements
           }
         });
         return map;
@@ -86,7 +77,7 @@ public final class YAMLKeysIndex extends FileBasedIndexExtension<String, Integer
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return YAMLFileBasedIndexUtil.CONTAINING_YAML_INPUT_FILTER;
+    return YAMLFileBasedIndexUtil.YAML_INPUT_FILTER;
   }
 
   @Override
