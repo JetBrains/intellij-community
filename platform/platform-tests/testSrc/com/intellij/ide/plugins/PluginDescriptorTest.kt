@@ -10,7 +10,6 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
-import com.intellij.util.ThrowableRunnable
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.java.classFile
 import com.intellij.util.io.write
@@ -547,49 +546,6 @@ class PluginDescriptorTest {
       .build(pluginDirPath.resolve("bar"))
 
     assertThat(PluginSetTestBuilder(pluginDirPath).build().enabledPlugins).hasSize(2)
-
-    withOnDemandEnabled {
-      assertThat(PluginSetTestBuilder(pluginDirPath).build().enabledPlugins).isEmpty()
-    }
-  }
-
-  @Test
-  fun testDisabledOnDemandPlugin() = withOnDemandEnabled {
-    PluginBuilder()
-      .noDepends()
-      .id("foo")
-      .onDemand()
-      .build(pluginDirPath.resolve("foo"))
-
-    PluginBuilder()
-      .noDepends()
-      .id("bar")
-      .onDemand()
-      .pluginDependency("foo")
-      .build(pluginDirPath.resolve("bar"))
-
-    val pluginSet = PluginSetTestBuilder(pluginDirPath)
-      .withDisabledPlugins("foo")
-      .withEnabledOnDemandPlugins("bar")
-      .build()
-    assertThat(pluginSet.enabledPlugins).isEmpty()
-  }
-
-  @Test
-  fun testLoadEnabledOnDemandPlugin() = withOnDemandEnabled {
-    PluginBuilder()
-      .noDepends()
-      .id("foo")
-      .onDemand()
-      .build(pluginDirPath.resolve("foo"))
-
-    val enabledPlugins = PluginSetTestBuilder(pluginDirPath)
-      .withEnabledOnDemandPlugins("foo")
-      .build()
-      .enabledPlugins
-
-    assertThat(enabledPlugins).hasSize(1)
-    assertThat(enabledPlugins.single().pluginId.idString).isEqualTo("foo")
   }
 
   @Test
@@ -689,12 +645,4 @@ fun createFromDescriptor(path: Path,
                       isSub = false,
                       dataLoader = dataLoader)
   return result
-}
-
-private fun withOnDemandEnabled(task: ThrowableRunnable<Throwable>) {
-  PlatformTestUtil.withSystemProperty(
-    /* key = */ IdeaPluginDescriptorImpl.ON_DEMAND_ENABLED_KEY,
-    /* value = */ "true",
-    /* task = */ task,
-  )
 }

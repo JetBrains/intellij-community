@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
+import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
@@ -96,12 +97,15 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   companion object {
 
+    @ApiStatus.Experimental
     @VisibleForTesting
-    const val ON_DEMAND_ENABLED_KEY: String = "idea.on.demand.plugins"
+    const val ON_DEMAND_ENABLED_KEY: String = "ide.plugins.allow.on.demand"
 
     @JvmStatic
-    val isOnDemandEnabled: Boolean
-      @ApiStatus.Experimental get() = java.lang.Boolean.getBoolean(ON_DEMAND_ENABLED_KEY)
+    val isOnDemandEnabled: Boolean by lazy(LazyThreadSafetyMode.NONE) {
+      !AppMode.isHeadless()
+      && EarlyAccessRegistryManager.getBoolean(ON_DEMAND_ENABLED_KEY)
+    }
   }
 
   @Transient @JvmField var jarFiles: List<Path>? = null
