@@ -2,7 +2,6 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.ide.BrowserUtil
-import com.intellij.ui.dsl.gridLayout.Gaps
 import javax.swing.JComponent
 import javax.swing.event.HyperlinkEvent
 
@@ -20,7 +19,7 @@ enum class DslComponentProperty {
   /**
    * Custom visual paddings, which are used instead of [JComponent.getInsets]
    *
-   * Value: [Gaps]
+   * Value: [com.intellij.ui.dsl.gridLayout.Gaps]
    */
   VISUAL_PADDINGS,
 
@@ -31,8 +30,15 @@ enum class DslComponentProperty {
    *
    * Value: [Boolean]
    */
-  NO_BOTTOM_GAP
+  NO_BOTTOM_GAP,
 
+  /**
+   * By default, we're trying to assign [javax.swing.JLabel.setLabelFor] for the cell component itself.
+   * In some cases, a wrapper component needs to be used - and this property allows delegating this feature to a child component.
+   *
+   * Value: [JComponent]
+   */
+  LABEL_FOR
 }
 
 /**

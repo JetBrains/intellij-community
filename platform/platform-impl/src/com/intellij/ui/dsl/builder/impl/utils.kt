@@ -139,14 +139,31 @@ internal fun createComment(@NlsContexts.Label text: String, maxLineLength: Int, 
 }
 
 internal fun isAllowedLabel(cell: CellBaseImpl<*>?): Boolean {
-  return cell is CellImpl<*> && ALLOWED_LABEL_COMPONENTS.any { clazz -> clazz.isInstance(cell.component.origin) }
+  return getLabelComponentFor(cell) != null
 }
 
 internal fun labelCell(label: JLabel, cell: CellBaseImpl<*>?) {
-  if (isAllowedLabel(cell)) {
-    label.labelFor = (cell as CellImpl<*>).component.origin
-  }
+  val component = getLabelComponentFor(cell) ?: return
+  label.labelFor = component
 }
+
+private fun getLabelComponentFor(cell: CellBaseImpl<*>?): JComponent? {
+  if (cell is CellImpl<*>) {
+    return getLabelComponentFor(cell.component.origin)
+  }
+  return null
+}
+
+private fun getLabelComponentFor(component: JComponent): JComponent? {
+  val delegate = component.getClientProperty(DslComponentProperty.LABEL_FOR) as? JComponent
+  if (delegate != null && delegate !== component) return getLabelComponentFor(delegate)
+
+  if (ALLOWED_LABEL_COMPONENTS.any { clazz -> clazz.isInstance(component) }) {
+    return component
+  }
+  return null
+}
+
 
 internal fun warn(message: String) {
   if (FAIL_ON_WARN) {
