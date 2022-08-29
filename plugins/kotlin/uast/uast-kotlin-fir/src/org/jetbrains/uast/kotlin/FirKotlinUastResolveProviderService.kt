@@ -511,20 +511,14 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             }
         }
         if (psiElement is KtCallableDeclaration) {
-            psiElement.typeReference?.let { typeReference ->
-                analyzeForUast(typeReference) {
-                    var ktType = typeReference.getKtType()
-                    if ((psiElement as? KtParameter)?.isVarArg == true) {
-                        (ktType as? KtNonErrorClassType)?.typeArguments?.singleOrNull()?.type?.let { ktType = it }
-                    }
-                    nullability(ktType)?.let { return it }
-                }
+            analyzeForUast(psiElement) {
+                nullability(psiElement)?.let { return it }
             }
         }
         if (psiElement is KtProperty) {
             psiElement.initializer?.let { propertyInitializer ->
                 analyzeForUast(propertyInitializer) {
-                    nullability(propertyInitializer.getKtType())?.let { return it }
+                    nullability(propertyInitializer)?.let { return it }
                 }
             }
             psiElement.delegateExpression?.let { delegatedExpression ->
@@ -535,14 +529,12 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             }
         }
         psiElement.getParentOfType<KtProperty>(false)?.let { property ->
-            property.typeReference?.let { typeReference ->
-                analyzeForUast(typeReference) {
-                    nullability(typeReference.getKtType())
-                }
+            analyzeForUast(property) {
+                nullability(property)
             } ?:
             property.initializer?.let { propertyInitializer ->
                 analyzeForUast(propertyInitializer) {
-                    nullability(propertyInitializer.getKtType())
+                    nullability(propertyInitializer)
                 }
             }
         }?.let { return it }
