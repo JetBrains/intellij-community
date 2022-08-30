@@ -67,7 +67,7 @@ class IdeJavaModuleResolver(private val project: Project) : JavaModuleResolver {
         // use classpath, not the module path, and in the same way everything will work at runtime as well.
         if (ourModule != null) {
             val fqName = referencedPackage?.asString() ?: return null
-            if (!exports(theirModule, fqName, ourModule)) {
+            if (theirModule.name != PsiJavaModule.JAVA_BASE && !exports(theirModule, fqName, ourModule)) {
                 return JavaModuleResolver.AccessError.ModuleDoesNotExportPackage(theirModule.name)
             }
         }
