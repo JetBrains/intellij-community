@@ -909,7 +909,7 @@ public class GradleExecutionHelper {
 
   @Nullable
   public static String renderInitScript(@NotNull Set<String> testTasksPatterns) {
-    InputStream stream = Init.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/init/testFilterInit.gradle");
+    InputStream stream = Init.class.getResourceAsStream("/org/jetbrains/plugins/gradle/tooling/internal/init/testFilter.init.gradle");
     if (stream == null) {
       LOG.error("Can't find test filter init script template");
       return null;

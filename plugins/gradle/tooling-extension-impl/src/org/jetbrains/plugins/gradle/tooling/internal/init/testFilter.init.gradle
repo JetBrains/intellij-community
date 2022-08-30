@@ -9,11 +9,19 @@ try {
  // ignore, class not available
 }
 
+def forceTestTasksToReRun =
+  providers.gradleProperty("org.jetbrains.plugins.gradle.force_test_tasks_to_re_run")
+    .orElse("true")
+    .map({it.toBoolean()})
+
 gradle.taskGraph.whenReady { taskGraph ->
   taskGraph.allTasks.each { Task task ->
     if (task instanceof Test || (abstractTestTaskClass != null && abstractTestTaskClass.isAssignableFrom(task.class))) {
       try {
-        task.outputs.upToDateWhen { false }
+        task.inputs.property("forceTestTasksToReRun", forceTestTasksToReRun)
+        task.outputs.upToDateWhen {
+          !forceTestTasksToReRun.getOrElse(true)
+        }
         String[] strings = ['*']
         if(ijTestIncludes.size() > 0 && ijTestIncludes != strings) {
           def filter = task.getFilter()
