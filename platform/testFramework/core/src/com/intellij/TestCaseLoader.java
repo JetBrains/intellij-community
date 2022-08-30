@@ -202,6 +202,8 @@ public class TestCaseLoader {
   public static boolean matchesCurrentBucketFair(@NotNull String testIdentifier,
                                                  int testRunnerCount,
                                                  int testRunnerIndex) {
+    // TODO: if (BUCKETS.isEmpty()) sort filtered test classes and populate buckets
+
     var value = BUCKETS.get(testIdentifier);
 
     if (value != null) {
