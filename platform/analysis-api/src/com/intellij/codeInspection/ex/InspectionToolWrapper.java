@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectType;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.ResourceUtil;
 import org.jetbrains.annotations.Nls;
@@ -250,6 +251,13 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
       myDisplayKey = key = HighlightDisplayKey.find(getShortName());
     }
     return key;
+  }
+
+  public boolean isApplicable(@Nullable ProjectType projectType) {
+    if (myEP == null) return true;
+    if (myEP.projectType == null) return true;
+
+    return ProjectType.create(myEP.projectType).equals(projectType);
   }
 
   private static @Nullable InputStream getPluginClassLoaderStream(@Nullable ClassLoader classLoader,
