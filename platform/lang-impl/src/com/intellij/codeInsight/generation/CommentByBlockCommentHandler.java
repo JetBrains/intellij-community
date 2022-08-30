@@ -82,7 +82,6 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
         myDocument,
         myFile
       );
-
       if (mySelfManagedCommenterData == null) {
         mySelfManagedCommenterData = SelfManagingCommenter.EMPTY_STATE;
       }
