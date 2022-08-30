@@ -42,7 +42,7 @@
     <refactoring.moveHandler
             id="kotlinAwareJavaMoveClassesOrPackagesHandler"
             order="first"
-            implementation="org.jetbrains.kotlin.idea.refactoring.move.moveClassesOrPackages.KotlinAwareJavaMoveClassesOrPackagesHandler"/>
+            implementation="org.jetbrains.kotlin.idea.refactoring.move.moveClassesOrPackages.KotlinAwareJavaMovePackagesHandler"/>
     <refactoring.moveHandler
             id="kotlin.moveMethod"
             order="first,before kotlin.moveTopLevelDeclarations"
