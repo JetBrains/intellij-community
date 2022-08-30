@@ -7,6 +7,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsConfiguration
 import kotlinx.coroutines.Dispatchers
@@ -27,9 +28,12 @@ abstract class CodeProcessorCheckinHandler(
   val project: Project get() = commitPanel.project
   val settings: VcsConfiguration get() = VcsConfiguration.getInstance(project)
 
-  abstract fun createCodeProcessor(): AbstractLayoutCodeProcessor
+  protected open fun getProgressMessage(): @NlsContexts.ProgressText String? = null
+  protected abstract fun createCodeProcessor(): AbstractLayoutCodeProcessor
 
   override suspend fun runCheck(indicator: ProgressIndicator): CommitProblem? {
+    getProgressMessage()?.let { indicator.text = it }
+
     val processor = createCodeProcessor()
 
     withContext(Dispatchers.Default) {
