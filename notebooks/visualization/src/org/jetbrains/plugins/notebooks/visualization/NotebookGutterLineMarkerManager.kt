@@ -39,7 +39,7 @@ class NotebookGutterLineMarkerManager {
   }
 
   private fun putHighlighters(editor: EditorEx) {
-    val highlighters = editor.markupModel.allHighlighters.filter { it.lineMarkerRenderer is NotebookGutterLineMarkerRenderer }
+    val highlighters = editor.markupModel.allHighlighters.filter { it.lineMarkerRenderer is NotebookLineMarkerRenderer }
     highlighters.forEach { editor.markupModel.removeHighlighter(it) }
 
     val notebookCellLines = NotebookCellLines.get(editor)
@@ -56,6 +56,18 @@ class NotebookGutterLineMarkerManager {
       ).also {
         it.lineMarkerRenderer = NotebookGutterLineMarkerRenderer(interval)
       }
+
+      if (editor.settings.isLineNumbersShown && interval.type == NotebookCellLines.CellType.CODE && editor.notebookAppearance.shouldShowCellLineNumbers() && editor.editorKind != EditorKind.DIFF) {
+        editor.markupModel.addRangeHighlighter(
+          null,
+          startOffset,
+          endOffset,
+          HighlighterLayer.FIRST - 100,  // Border should be seen behind any syntax highlighting, selection or any other effect.
+          HighlighterTargetArea.LINES_IN_RANGE
+        ).also {
+          it.lineMarkerRenderer = NotebookCellLineNumbersLineMarkerRenderer(interval.lines)
+        }
+      }
     }
   }
 
@@ -63,7 +75,6 @@ class NotebookGutterLineMarkerManager {
                      g: Graphics,
                      r: Rectangle,
                      interval: NotebookCellLines.Interval) {
-    val notebookCellLines = NotebookCellLines.get(editor)
     val notebookCellInlayManager = NotebookCellInlayManager.get(editor) ?: throw AssertionError("Register inlay manager first")
 
     val top = editor.offsetToXY(editor.document.getLineStartOffset(interval.lines.first)).y
@@ -103,54 +114,8 @@ class NotebookGutterLineMarkerManager {
       }
     }
   }
-  fun paintLineNumbers(editor: EditorImpl,
-                     g: Graphics,
-                     r: Rectangle,
-                       interval: NotebookCellLines.Interval,
-                     visualLineStart: Int,
-                     visualLineEnd: Int,
-                     logicalLineStart: Int,
-                     logicalLineEnd: Int) {
-    if (!editor.notebookAppearance.shouldShowCellLineNumbers()) {
-      return
-    }
-    if (editor.editorKind == EditorKind.DIFF) return
 
-    if (editor.settings.isLineNumbersShown && interval.type == NotebookCellLines.CellType.CODE) {
-      g.font = editor.colorsScheme.getFont(EditorFontType.PLAIN).let {
-        it.deriveFont(max(1f, it.size2D - 1f))
-      }
-      g.color = editor.colorsScheme.getColor(EditorColors.LINE_NUMBERS_COLOR)
-
-      val notebookAppearance = editor.notebookAppearance
-      var previousVisualLine = -1
-      // The first line of the cell is the delimiter, don't draw the line number for it.
-      for (logicalLine in max(logicalLineStart, interval.lines.first + 1)..min(logicalLineEnd, interval.lines.last)) {
-        val visualLine = editor.logicalToVisualPosition(LogicalPosition(logicalLine, 0)).line
-        if (previousVisualLine == visualLine) continue  // If a region is folded, it draws only the first line number.
-        previousVisualLine = visualLine
-
-        if (visualLine < visualLineStart) continue
-        if (visualLine > visualLineEnd) break
-
-        // TODO conversions from document position to Y are expensive and should be cached.
-        val yTop = editor.visualLineToY(visualLine)
-        val lineNumber = logicalLine - interval.lines.first
-        val text = lineNumber.toString()
-        val left =
-          (
-            r.width
-            - FontLayoutService.getInstance().stringWidth(g.fontMetrics, text)
-            - notebookAppearance.LINE_NUMBERS_MARGIN
-            - notebookAppearance.getLeftBorderWidth()
-          )
-        g.drawString(text, left, yTop + editor.ascent)
-      }
-    }
-  }
-
-
-  inner class NotebookGutterLineMarkerRenderer(private val interval: NotebookCellLines.Interval) : LineMarkerRendererEx {
+  inner class NotebookGutterLineMarkerRenderer(private val interval: NotebookCellLines.Interval) : NotebookLineMarkerRenderer() {
     override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
       editor as EditorImpl
 
@@ -166,11 +131,8 @@ class NotebookGutterLineMarkerManager {
         if (interval.lines.first > logicalLineEnd || interval.lines.last < logicalLineStart) return
 
         paintBackground(editor, g, r, interval)
-        paintLineNumbers(editor, g, r, interval, visualLineStart, visualLineEnd, logicalLineStart, logicalLineEnd)
       }
     }
-
-    override fun getPosition(): LineMarkerRendererEx.Position = LineMarkerRendererEx.Position.CUSTOM
   }
 
   companion object {
@@ -179,6 +141,48 @@ class NotebookGutterLineMarkerManager {
       instance.attachHighlighters(editor)
 
       return instance
+    }
+  }
+}
+
+abstract class NotebookLineMarkerRenderer : LineMarkerRendererEx {
+  override fun getPosition(): LineMarkerRendererEx.Position = LineMarkerRendererEx.Position.CUSTOM
+}
+class NotebookCellLineNumbersLineMarkerRenderer(private val lineRange: IntRange) : NotebookLineMarkerRenderer() {
+  override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
+    val visualLineStart = editor.xyToVisualPosition(Point(0, g.clip.bounds.y)).line
+    val visualLineEnd = editor.xyToVisualPosition(Point(0, g.clip.bounds.run { y + height })).line
+    val logicalLineStart = editor.visualToLogicalPosition(VisualPosition(visualLineStart, 0)).line
+    val logicalLineEnd = editor.visualToLogicalPosition(VisualPosition(visualLineEnd, 0)).line
+
+    g.font = editor.colorsScheme.getFont(EditorFontType.PLAIN).let {
+      it.deriveFont(max(1f, it.size2D - 1f))
+    }
+    g.color = editor.colorsScheme.getColor(EditorColors.LINE_NUMBERS_COLOR)
+
+    val notebookAppearance = editor.notebookAppearance
+    var previousVisualLine = -1
+    // The first line of the cell is the delimiter, don't draw the line number for it.
+    for (logicalLine in max(logicalLineStart, lineRange.first + 1)..min(logicalLineEnd, lineRange.last)) {
+      val visualLine = editor.logicalToVisualPosition(LogicalPosition(logicalLine, 0)).line
+      if (previousVisualLine == visualLine) continue  // If a region is folded, it draws only the first line number.
+      previousVisualLine = visualLine
+
+      if (visualLine < visualLineStart) continue
+      if (visualLine > visualLineEnd) break
+
+      // TODO conversions from document position to Y are expensive and should be cached.
+      val yTop = editor.visualLineToY(visualLine)
+      val lineNumber = logicalLine - lineRange.first
+      val text: String = lineNumber.toString()
+      val left =
+        (
+          r.width
+          - FontLayoutService.getInstance().stringWidth(g.fontMetrics, text)
+          - notebookAppearance.LINE_NUMBERS_MARGIN
+          - notebookAppearance.getLeftBorderWidth()
+        )
+      g.drawString(text, left, yTop + editor.ascent)
     }
   }
 }
