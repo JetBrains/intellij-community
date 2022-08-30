@@ -495,59 +495,6 @@ public class JBTabsImpl extends JComponent
     return null;
   }
 
-  @Override
-  protected void paintChildren(Graphics g) {
-    super.paintChildren(g);
-    if (Registry.is("ui.no.bangs.and.whistles", false) || !isSingleRow() || !UISettings.getInstance().getHideTabsIfNeeded()) {
-      return;
-    }
-    JComponent more = myMoreToolbar.getComponent();
-
-    if (!getTabsPosition().isSide() && Registry.is("ide.editor.tabs.show.fadeout") && (more.isShowing() || isWithScrollBar())) {
-      int width = JBUI.scale(MathUtil.clamp(Registry.intValue("ide.editor.tabs.fadeout.width", 10), 1, 200));
-      Rectangle moreRect = getMoreRect();
-      Rectangle labelsArea = null;
-
-      int moreY = 0;
-      int moreHeight = 0;
-
-      boolean showRightFadeout = false;
-      boolean showLeftFadeout = false;
-      for (TabLabel label : myInfo2Label.values()) {
-        if (labelsArea == null) {
-          labelsArea = label.getBounds();
-        } else {
-          labelsArea = labelsArea.union(label.getBounds());
-        }
-        showLeftFadeout |= label.getX() < 0;
-        boolean needShowRightFadeout = moreRect != null
-                          && label.getX() + label.getPreferredSize().width > moreRect.x
-                          && Math.abs(label.getY() - moreRect.y) < moreRect.height / 2;
-        if (needShowRightFadeout && !showRightFadeout) {
-          moreY = Math.max(label.getY(), (int)getScrollBarBounds().getMaxY());
-          moreHeight = label.getY() + label.getHeight() - moreY;
-        }
-        showRightFadeout |= needShowRightFadeout;
-      }
-      Color tabBg = myTabPainter.getBackgroundColor();
-      Color transparent = ColorUtil.withAlpha(tabBg, 0);
-      if (showLeftFadeout) {
-        Rectangle leftSide = new Rectangle(0, moreY, width, moreHeight - 1);
-        ((Graphics2D)g).setPaint(
-          new GradientPaint(leftSide.x, leftSide.y, tabBg, leftSide.x + leftSide.width,
-                            leftSide.y, transparent));
-        ((Graphics2D)g).fill(leftSide);
-      }
-      if (showRightFadeout) {
-        Rectangle rightSide = new Rectangle(getTabsAreaWidth() - width, moreY, width, moreHeight - 1);
-        ((Graphics2D)g).setPaint(
-          new GradientPaint(rightSide.x, rightSide.y, transparent, rightSide.x + rightSide.width, rightSide.y,
-                            tabBg));
-        ((Graphics2D)g).fill(rightSide);
-      }
-    }
-  }
-
   private Rectangle getScrollBarBounds() {
     if (!isWithScrollBar()) return new Rectangle(0, 0, 0, 0);
 
