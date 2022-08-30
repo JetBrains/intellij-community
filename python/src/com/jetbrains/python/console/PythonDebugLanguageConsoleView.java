@@ -100,7 +100,9 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
     }
 
     myAnsiEscapeDecoder.escapeText(text, outputType, (chunk, attributes) -> {
-      getPydevConsoleView().print(chunk, attributes);
+      ConsoleViewContentType type = getPydevConsoleView().outputTypeForAttributes(attributes);
+      getPrimaryConsoleView().print(chunk, type);
+      getPydevConsoleView().print(chunk, type);
     });
   }
 
