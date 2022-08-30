@@ -37,7 +37,7 @@ internal class ModuleVcsDetector(private val project: Project) {
   private fun autoDetectVcsMappings(tryMapPieces: Boolean) {
     if (vcsManager.haveDefaultMapping() != null) return
 
-    val usedVcses = mutableSetOf<AbstractVcs?>()
+    val usedVcses = mutableSetOf<AbstractVcs>()
     val detectedRoots = mutableSetOf<Pair<VirtualFile, AbstractVcs>>()
 
     val contentRoots = DefaultVcsRootPolicy.getInstance(project).defaultVcsRoots
@@ -45,8 +45,8 @@ internal class ModuleVcsDetector(private val project: Project) {
       val moduleVcs = vcsManager.findVersioningVcs(root)
       if (moduleVcs != null) {
         detectedRoots.add(Pair(root, moduleVcs))
+        usedVcses.add(moduleVcs)
       }
-      usedVcses.add(moduleVcs) // put 'null' for unmapped module
     }
 
     val commonVcs = usedVcses.singleOrNull()
