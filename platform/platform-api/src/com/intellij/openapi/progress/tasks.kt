@@ -4,6 +4,7 @@
 package com.intellij.openapi.progress
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -46,8 +47,7 @@ suspend fun <T> withBackgroundProgressIndicator(
   cancellation: TaskCancellation,
   action: suspend CoroutineScope.() -> T
 ): T {
-  val service = ApplicationManager.getApplication().getService(TaskSupport::class.java)
-  return service.withBackgroundProgressIndicatorInternal(
+  return taskSupport().withBackgroundProgressIndicatorInternal(
     project, title, cancellation, action
   )
 }
@@ -80,8 +80,7 @@ suspend fun <T> withModalProgressIndicator(
   cancellation: TaskCancellation = TaskCancellation.cancellable(),
   action: suspend CoroutineScope.() -> T,
 ): T {
-  val service = ApplicationManager.getApplication().getService(TaskSupport::class.java)
-  return service.withModalProgressIndicatorInternal(owner, title, cancellation, action)
+  return taskSupport().withModalProgressIndicatorInternal(owner, title, cancellation, action)
 }
 
 @RequiresEdt
@@ -153,6 +152,7 @@ fun <T> runBlockingModal(
   cancellation: TaskCancellation,
   action: suspend CoroutineScope.() -> T,
 ): T {
-  val service = ApplicationManager.getApplication().getService(TaskSupport::class.java)
-  return service.runBlockingModalInternal(owner, title, cancellation, action)
+  return taskSupport().runBlockingModalInternal(owner, title, cancellation, action)
 }
+
+private fun taskSupport(): TaskSupport = ApplicationManager.getApplication().service()
