@@ -62,11 +62,19 @@ class NotebookGutterLineMarkerManager {
           null,
           startOffset,
           endOffset,
-          HighlighterLayer.FIRST - 100,  // Border should be seen behind any syntax highlighting, selection or any other effect.
+          HighlighterLayer.FIRST - 99,  // Border should be seen behind any syntax highlighting, selection or any other effect.
           HighlighterTargetArea.LINES_IN_RANGE
         ).also {
           it.lineMarkerRenderer = NotebookCellLineNumbersLineMarkerRenderer(interval.lines)
         }
+      }
+
+      if (interval.type == NotebookCellLines.CellType.CODE) {
+        editor.markupModel.addRangeHighlighter(null, startOffset, endOffset, HighlighterLayer.FIRST - 100, HighlighterTargetArea.LINES_IN_RANGE).lineMarkerRenderer =
+          NotebookCodeCellBackgroundLineMarkerRenderer(interval, interval.lines)
+      } else if (editor.editorKind != EditorKind.DIFF) {
+        editor.markupModel.addRangeHighlighter(null, startOffset, endOffset, HighlighterLayer.FIRST - 100, HighlighterTargetArea.LINES_IN_RANGE).lineMarkerRenderer =
+          NotebookTextCellBackgroundLineMarkerRenderer(interval, interval.lines)
       }
     }
   }
@@ -77,41 +85,8 @@ class NotebookGutterLineMarkerManager {
                      interval: NotebookCellLines.Interval) {
     val notebookCellInlayManager = NotebookCellInlayManager.get(editor) ?: throw AssertionError("Register inlay manager first")
 
-    val top = editor.offsetToXY(editor.document.getLineStartOffset(interval.lines.first)).y
-    val height = editor.offsetToXY(editor.document.getLineEndOffset(interval.lines.last)).y + editor.lineHeight - top
-
-    val appearance = editor.notebookAppearance
-    if (interval.type == NotebookCellLines.CellType.CODE) {
-      paintNotebookCellBackgroundGutter(editor, g, r, interval, top, height) {
-        paintCaretRow(editor, g, interval.lines)
-      }
-    }
-    else {
-      if (editor.editorKind == EditorKind.DIFF) return
-      paintCaretRow(editor, g, interval.lines)
-      appearance.getCellStripeColor(editor, interval)?.let {
-        appearance.paintCellStripe(g, r, it, top, height)
-      }
-    }
-
     for (controller: NotebookCellInlayController in notebookCellInlayManager.inlaysForInterval(interval)) {
       controller.paintGutter(editor, g, r, interval)
-    }
-  }
-
-  private fun paintCaretRow(editor: EditorImpl, g: Graphics, lines: IntRange) {
-    if (editor.settings.isCaretRowShown) {
-      val caretModel = editor.caretModel
-      val caretLine = caretModel.logicalPosition.line
-      if (caretLine in lines) {
-        g.color = editor.colorsScheme.getColor(EditorColors.CARET_ROW_COLOR)
-        g.fillRect(
-          0,
-          editor.visualLineToY(caretModel.visualPosition.line),
-          g.clipBounds.width,
-          editor.lineHeight
-        )
-      }
     }
   }
 
@@ -183,6 +158,50 @@ class NotebookCellLineNumbersLineMarkerRenderer(private val lineRange: IntRange)
           - notebookAppearance.getLeftBorderWidth()
         )
       g.drawString(text, left, yTop + editor.ascent)
+    }
+  }
+}
+
+class NotebookCodeCellBackgroundLineMarkerRenderer(private val interval: NotebookCellLines.Interval, private val lineRange: IntRange) : NotebookLineMarkerRenderer() {
+  override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
+    editor as EditorImpl
+
+    val top = editor.offsetToXY(editor.document.getLineStartOffset(lineRange.first)).y
+    val height = editor.offsetToXY(editor.document.getLineEndOffset(lineRange.last)).y + editor.lineHeight - top
+
+    paintNotebookCellBackgroundGutter(editor, g, r, interval, top, height) {
+      paintCaretRow(editor, g, lineRange)
+    }
+  }
+}
+
+class NotebookTextCellBackgroundLineMarkerRenderer(private val interval: NotebookCellLines.Interval, private val lineRange: IntRange) : NotebookLineMarkerRenderer() {
+  override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
+    editor as EditorImpl
+
+    val top = editor.offsetToXY(editor.document.getLineStartOffset(lineRange.first)).y
+    val height = editor.offsetToXY(editor.document.getLineEndOffset(lineRange.last)).y + editor.lineHeight - top
+
+    paintCaretRow(editor, g, interval.lines)
+    val appearance = editor.notebookAppearance
+    appearance.getCellStripeColor(editor, interval)?.let {
+      appearance.paintCellStripe(g, r, it, top, height)
+    }
+  }
+}
+
+private fun paintCaretRow(editor: EditorImpl, g: Graphics, lines: IntRange) {
+  if (editor.settings.isCaretRowShown) {
+    val caretModel = editor.caretModel
+    val caretLine = caretModel.logicalPosition.line
+    if (caretLine in lines) {
+      g.color = editor.colorsScheme.getColor(EditorColors.CARET_ROW_COLOR)
+      g.fillRect(
+        0,
+        editor.visualLineToY(caretModel.visualPosition.line),
+        g.clipBounds.width,
+        editor.lineHeight
+      )
     }
   }
 }
