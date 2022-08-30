@@ -49,7 +49,7 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
     }
 
     val detailsMap = mutableMapOf<A, CompletableFuture<AccountsDetailsLoader.Result<*>>>()
-    val avatarIconsProvider = LoadingAvatarIconsProvider(detailsLoader, EmptyIcon.ICON_16) { account: A ->
+    val avatarIconsProvider = LoadingAvatarIconsProvider(scope, detailsLoader, EmptyIcon.ICON_16) { account: A ->
       val result = detailsMap[account]?.getNow(null) as? AccountsDetailsLoader.Result.Success
       result?.details?.avatarUrl
     }

@@ -16,6 +16,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.cloneDialog.AccountMenuItem
 import com.intellij.util.ui.cloneDialog.AccountMenuPopupStep
 import com.intellij.util.ui.cloneDialog.AccountsMenuListPopup
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.future.asCompletableFuture
 import java.awt.Component
 import java.awt.event.MouseEvent
@@ -29,14 +30,15 @@ class CompactAccountsPanelFactory<A : Account>(
   private val detailsLoader: AccountsDetailsLoader<A, *>
 ) {
 
-  fun create(defaultAvatarIcon: Icon,
+  fun create(scope: CoroutineScope,
+             defaultAvatarIcon: Icon,
              listAvatarSize: Int,
              popupConfig: PopupConfig<A>): JComponent {
     val detailsMap = mutableMapOf<A, CompletableFuture<AccountsDetailsLoader.Result<*>>>()
     val detailsProvider = LoadedAccountsDetailsProvider { account: A ->
       detailsMap[account]?.getNow(null)
     }
-    val avatarIconsProvider = LoadingAvatarIconsProvider(detailsLoader, defaultAvatarIcon) { account: A ->
+    val avatarIconsProvider = LoadingAvatarIconsProvider(scope, detailsLoader, defaultAvatarIcon) { account: A ->
       val result = detailsMap[account]?.getNow(null) as? AccountsDetailsLoader.Result.Success
       result?.details?.avatarUrl
     }

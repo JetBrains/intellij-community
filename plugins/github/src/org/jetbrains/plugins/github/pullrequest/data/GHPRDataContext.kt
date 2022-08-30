@@ -45,6 +45,7 @@ internal class GHPRDataContext(val listLoader: GHPRListLoader,
   }
 
   override fun dispose() {
+    Disposer.dispose(avatarIconsProvider)
     Disposer.dispose(filesManager)
     Disposer.dispose(listenersDisposable)
     Disposer.dispose(dataProviderRepository)

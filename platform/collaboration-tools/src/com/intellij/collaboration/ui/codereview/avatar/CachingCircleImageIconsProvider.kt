@@ -2,56 +2,59 @@
 package com.intellij.collaboration.ui.codereview.avatar
 
 import com.github.benmanes.caffeine.cache.Caffeine
+import com.intellij.collaboration.async.disposingScope
+import com.intellij.openapi.Disposable
 import com.intellij.ui.AsyncImageIcon
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.IconUtil
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.ImageUtil.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.withContext
 import java.awt.Image
 import java.time.Duration
 import java.time.temporal.ChronoUnit
-import java.util.concurrent.CompletableFuture
 import javax.swing.Icon
 
-abstract class CachingCircleImageIconsProvider<T : Any>(private val defaultIcon: Icon) : IconsProvider<T> {
+abstract class CachingCircleImageIconsProvider<T : Any>(private val scope: CoroutineScope, private val defaultIcon: Icon)
+  : IconsProvider<T> {
 
   private val iconsCache = Caffeine.newBuilder()
     .expireAfterAccess(Duration.of(5, ChronoUnit.MINUTES))
-    .build<Pair<T, Int>, Icon>()
+    .build<Pair<T?, Int>, Icon>()
 
-  override fun getIcon(key: T?, iconSize: Int): Icon {
-    if (key == null) {
-      return IconUtil.resizeSquared(defaultIcon, iconSize)
-    }
-
-    return iconsCache.get(key to iconSize) {
-      AsyncImageIcon(IconUtil.resizeSquared(defaultIcon, iconSize)) { scaleCtx, width, height ->
-        loadAndResizeImage(key, scaleCtx, width, height)
+  override fun getIcon(key: T?, iconSize: Int): Icon =
+    iconsCache.get(key to iconSize) { (key, iconSize) ->
+      val defaultIcon = IconUtil.resizeSquared(defaultIcon, iconSize)
+      if (key == null) {
+        defaultIcon
+      }
+      else {
+        AsyncImageIcon(scope, defaultIcon) { scaleCtx, width, height ->
+          loadAndResizeImage(key, scaleCtx, width, height)
+        }
       }
     }
-  }
 
-  private fun loadAndResizeImage(key: T, scaleCtx: ScaleContext, width: Int, height: Int): CompletableFuture<Image?> {
-    return try {
-      loadImageAsync(key).thenApplyAsync({ image ->
-                                           image?.let {
-                                             val hidpiImage = ensureHiDPI(image, scaleCtx)
-                                             val scaleImage = scaleImage(hidpiImage, width, height)
-                                             createCircleImage(toBufferedImage(scaleImage))
-                                           }
-                                         }, avatarResizeExecutor)
+  private suspend fun loadAndResizeImage(key: T, scaleCtx: ScaleContext, width: Int, height: Int): Image? =
+    withContext(Dispatchers.IO) {
+      loadImage(key)?.let { image ->
+        withContext(RESIZE_DISPATCHER) {
+          val hidpiImage = ensureHiDPI(image, scaleCtx)
+          val scaleImage = scaleImage(hidpiImage, width, height)
+          createCircleImage(toBufferedImage(scaleImage))
+        }
+      }
     }
-    catch (e: Throwable) {
-      CompletableFuture.failedFuture(e)
-    }
-  }
 
-  protected abstract fun loadImageAsync(key: T): CompletableFuture<Image?>
+  protected abstract suspend fun loadImage(key: T): Image?
 
   companion object {
-    private val avatarResizeExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(
+    private val RESIZE_DISPATCHER = AppExecutorUtil.createBoundedApplicationPoolExecutor(
       "Collaboration Tools images resizing executor",
       3
-    )
+    ).asCoroutineDispatcher()
   }
 }

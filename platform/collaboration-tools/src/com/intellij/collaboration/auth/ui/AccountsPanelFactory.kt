@@ -5,7 +5,6 @@ import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.collaboration.async.DisposingMainScope
 import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.auth.AccountManager
-import com.intellij.collaboration.auth.AccountsListener
 import com.intellij.collaboration.auth.DefaultAccountHolder
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.findIndex
@@ -55,8 +54,10 @@ private constructor(disposable: Disposable,
               detailsLoader: AccountsDetailsLoader<A, *>,
               disposable: Disposable) : this(disposable, accountManager, null, accountsModel, detailsLoader)
 
+  private val scope = DisposingMainScope(disposable)
+
   init {
-    DisposingMainScope(disposable).launch {
+    scope.launch {
       accountManager.accountsState.collect {
         if (!isModified()) reset()
       }
@@ -68,7 +69,7 @@ private constructor(disposable: Disposable,
     val detailsProvider = LoadedAccountsDetailsProvider { account: A ->
       detailsMap[account]?.getNow(null)
     }
-    val avatarIconsProvider = LoadingAvatarIconsProvider(detailsLoader, defaultAvatarIcon) { account: A ->
+    val avatarIconsProvider = LoadingAvatarIconsProvider(scope, detailsLoader, defaultAvatarIcon) { account: A ->
       val result = detailsMap[account]?.getNow(null) as? AccountsDetailsLoader.Result.Success
       result?.details?.avatarUrl
     }

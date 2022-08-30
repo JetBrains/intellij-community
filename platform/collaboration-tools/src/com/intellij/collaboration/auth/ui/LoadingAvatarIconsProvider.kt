@@ -4,19 +4,18 @@ package com.intellij.collaboration.auth.ui
 import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.ui.codereview.avatar.CachingCircleImageIconsProvider
 import com.intellij.collaboration.ui.codereview.avatar.IconsProvider
-import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.CoroutineScope
 import java.awt.Image
-import java.util.concurrent.CompletableFuture
 import javax.swing.Icon
 
-class LoadingAvatarIconsProvider<A : Account>(private val detailsLoader: AccountsDetailsLoader<A, *>,
+class LoadingAvatarIconsProvider<A : Account>(private val scope: CoroutineScope,
+                                                       private val detailsLoader: AccountsDetailsLoader<A, *>,
                                               private val defaultAvatarIcon: Icon,
                                               private val avatarUrlSupplier: (A) -> String?)
   : IconsProvider<A> {
 
-  private val cachingDelegate = object : CachingCircleImageIconsProvider<Pair<A, String>>(defaultAvatarIcon) {
-    override fun loadImageAsync(key: Pair<A, String>): CompletableFuture<Image?> =
-      detailsLoader.loadAvatarAsync(key.first, key.second).asCompletableFuture()
+  private val cachingDelegate = object : CachingCircleImageIconsProvider<Pair<A, String>>(scope, defaultAvatarIcon) {
+    override suspend fun loadImage(key: Pair<A, String>): Image? = detailsLoader.loadAvatarAsync(key.first, key.second).await()
   }
 
 

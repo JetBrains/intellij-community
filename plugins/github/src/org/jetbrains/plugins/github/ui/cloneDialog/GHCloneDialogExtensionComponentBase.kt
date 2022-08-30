@@ -148,7 +148,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
     }
 
     val accountsPanel = CompactAccountsPanelFactory(accountListModel, accountDetailsLoader)
-      .create(GithubIcons.DefaultAvatar, VcsCloneDialogUiSpec.Components.avatarSize, AccountsPopupConfig())
+      .create(disposingMainScope(), GithubIcons.DefaultAvatar, VcsCloneDialogUiSpec.Components.avatarSize, AccountsPopupConfig())
 
     repositoriesPanel = panel {
       row {

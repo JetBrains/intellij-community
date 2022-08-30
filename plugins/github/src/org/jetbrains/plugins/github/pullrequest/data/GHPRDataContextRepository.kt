@@ -27,6 +27,7 @@ import org.jetbrains.plugins.github.pullrequest.data.service.*
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
 import git4idea.remote.GitRemoteUrlCoordinates
+import kotlinx.coroutines.MainScope
 import org.jetbrains.plugins.github.util.GithubSharedProjectSettings
 import org.jetbrains.plugins.github.util.LazyCancellableBackgroundProcessValue
 import java.io.IOException
@@ -137,7 +138,7 @@ internal class GHPRDataContextRepository(private val project: Project) {
                                                         repoOwner,
                                                         repositoryInfo.id, repositoryInfo.defaultBranch, repositoryInfo.isFork)
 
-    val avatarIconsProvider = GHAvatarIconsProvider(CachingGHUserAvatarLoader.getInstance(), requestExecutor)
+    val avatarIconsProvider = GHAvatarIconsProvider(MainScope(), CachingGHUserAvatarLoader.getInstance(), requestExecutor)
 
     val filesManager = GHPRFilesManagerImpl(project, parsedRepositoryCoordinates)
 
