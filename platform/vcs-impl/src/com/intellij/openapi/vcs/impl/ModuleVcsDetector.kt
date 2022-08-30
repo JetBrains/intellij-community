@@ -2,12 +2,9 @@
 package com.intellij.openapi.vcs.impl
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.VcsDirectoryMapping
@@ -43,12 +40,7 @@ internal class ModuleVcsDetector(private val project: Project) {
     val usedVcses = mutableSetOf<AbstractVcs?>()
     val detectedRoots = mutableSetOf<Pair<VirtualFile, AbstractVcs>>()
 
-    val contentRoots = runReadAction {
-      ModuleManager.getInstance(project).modules.asSequence()
-        .flatMap { it.rootManager.contentRoots.asSequence() }
-        .filter { it.isInLocalFileSystem }
-        .filter { it.isDirectory }.distinct().toList()
-    }
+    val contentRoots = DefaultVcsRootPolicy.getInstance(project).defaultVcsRoots
     for (root in contentRoots) {
       val moduleVcs = vcsManager.findVersioningVcs(root)
       if (moduleVcs != null) {
