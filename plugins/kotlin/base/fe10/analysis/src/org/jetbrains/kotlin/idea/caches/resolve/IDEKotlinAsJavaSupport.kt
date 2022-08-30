@@ -210,7 +210,7 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaMod
     }
 
     override fun getFakeLightClass(classOrObject: KtClassOrObject): KtFakeLightClass = KtDescriptorBasedFakeLightClass(classOrObject)
-    override val IdeaModuleInfo.contentSearchScope: GlobalSearchScope get() = this.moduleContentScope
+    override val IdeaModuleInfo.contentSearchScope: GlobalSearchScope get() = this.contentScope
 
     override fun createInstanceOfLightFacade(facadeFqName: FqName, files: List<KtFile>, module: IdeaModuleInfo): KtLightClassForFacade {
         return LightClassGenerationSupport.getInstance(project).createUltraLightClassForFacade(facadeFqName, files)
