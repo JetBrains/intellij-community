@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.kdoc.parser.KDocElementTypes
 import org.jetbrains.kotlin.lexer.KtTokens.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.stubs.elements.KtFileElementType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 private val QUALIFIED_OPERATION = TokenSet.create(DOT, SAFE_ACCESS)
@@ -418,7 +419,10 @@ abstract class KotlinCommonBlock(
                 alignmentStrategy
 
             parentType === CLASS_BODY ->
-                getAlignmentForExpressionFunctions(kotlinCustomSettings.ALIGN_IN_COLUMNS_EXPRESSION_BODIES)
+                getAlignmentForExpressionBodies(kotlinCustomSettings.ALIGN_IN_COLUMNS_EXPRESSION_BODIES)
+
+            parentType === KtFileElementType.INSTANCE ->
+                getAlignmentForExpressionBodies(kotlinCustomSettings.ALIGN_IN_COLUMNS_EXPRESSION_BODIES)
 
             parentType === FUN ->
                 alignmentStrategy
@@ -1136,8 +1140,8 @@ private fun ASTNode.suppressBinaryExpressionIndent(): Boolean {
     return psi.parent?.node?.elementType == CONDITION || psi.operationToken == ELVIS
 }
 
-private fun getAlignmentForExpressionFunctions(shouldAlignChild: Boolean) = object : CommonAlignmentStrategy() {
-    private var bodyAlignment = if (shouldAlignChild) Alignment.createAlignment(true) else null
+private fun getAlignmentForExpressionBodies(shouldAlign: Boolean) = object : CommonAlignmentStrategy() {
+    private var bodyAlignment = if (shouldAlign) Alignment.createAlignment(true) else null
 
     override fun getAlignment(node: ASTNode): Alignment? {
         val func = node.treeParent
@@ -1154,7 +1158,7 @@ private fun getAlignmentForExpressionFunctions(shouldAlignChild: Boolean) = obje
                 moreNlsThan(beforeFun, 1)
 
         if (needNewGroup) {
-            bodyAlignment = if (shouldAlignChild) Alignment.createAlignment(true) else null
+            bodyAlignment = if (shouldAlign) Alignment.createAlignment(true) else null
         }
 
         return bodyAlignment
