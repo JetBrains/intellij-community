@@ -1,10 +1,6 @@
 package com.intellij.settingsSync.plugins
 
-import com.intellij.ide.plugins.DisabledPluginsState
-import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.PluginStateListener
-import com.intellij.ide.plugins.PluginStateManager
+import com.intellij.ide.plugins.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
@@ -168,12 +164,12 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
     val pluginManagerProxy = PluginManagerProxy.getInstance()
     val installer = pluginManagerProxy.createInstaller()
     synchronized(LOCK) {
-      this.state.plugins.forEach { mapEntry ->
-        val plugin = findPlugin(mapEntry.key)
+      this.state.plugins.forEach { (pluginId, pluginData) ->
+        val plugin = findPlugin(pluginId)
         if (plugin != null) {
           if (isPluginSyncEnabled(plugin.pluginId.idString, plugin.isBundled, SettingsSyncPluginCategoryFinder.getPluginCategory(plugin))) {
-            if (mapEntry.value.isEnabled != isPluginEnabled(plugin.pluginId)) {
-              if (mapEntry.value.isEnabled) {
+            if (pluginData.isEnabled != isPluginEnabled(plugin.pluginId)) {
+              if (pluginData.isEnabled) {
                 pluginManagerProxy.enablePlugin(plugin.pluginId)
                 LOG.info("Enabled plugin: ${plugin.pluginId.idString}")
               }
@@ -185,10 +181,10 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
           }
         }
         else {
-          if (mapEntry.value.isEnabled &&
-              isPluginSyncEnabled(mapEntry.key, false, mapEntry.value.category) &&
-              checkDependencies(mapEntry.key, mapEntry.value)) {
-            val newPluginId = PluginId.getId(mapEntry.key)
+          if (pluginData.isEnabled &&
+              isPluginSyncEnabled(pluginId, false, pluginData.category) &&
+              checkDependencies(pluginId, pluginData)) {
+            val newPluginId = PluginId.getId(pluginId)
             installer.addPluginId(newPluginId)
             LOG.info("New plugin installation requested: ${newPluginId.idString}")
           }
