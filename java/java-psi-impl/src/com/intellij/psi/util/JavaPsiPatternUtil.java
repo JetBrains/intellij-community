@@ -127,6 +127,9 @@ public final class JavaPsiPatternUtil {
     if (pattern instanceof PsiTypeTestPattern) {
       return ((PsiTypeTestPattern)pattern).getPatternVariable();
     }
+    if (pattern instanceof PsiDeconstructionPattern) {
+      return ((PsiDeconstructionPattern)pattern).getPatternVariable();
+    }
     return null;
   }
 
