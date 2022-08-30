@@ -1,9 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl
 
+import com.intellij.concurrency.resetThreadContext
+import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.application.impl.withModalContext
+import com.intellij.openapi.application.impl.withModalContextEDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
@@ -24,6 +29,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import java.awt.Component
 import java.awt.GraphicsEnvironment
+import java.awt.event.InputEvent
 import javax.swing.SwingUtilities
 
 internal class PlatformTaskSupport : TaskSupport {
@@ -58,7 +64,39 @@ internal class PlatformTaskSupport : TaskSupport {
     cancellation: TaskCancellation,
     action: suspend CoroutineScope.() -> T,
   ): T = withModalContext {
-    withModalIndicator(owner, title, cancellation, action)
+    withModalIndicator(owner, title, cancellation, deferredDialog = null, action)
+  }
+
+  override fun <T> runBlockingModalInternal(
+    owner: ModalTaskOwner,
+    title: @ProgressTitle String,
+    cancellation: TaskCancellation,
+    action: suspend CoroutineScope.() -> T,
+  ): T = resetThreadContext().use {
+    runBlocking(ModalityState.current().asContextElement()) {
+      // Enter modality without releasing the current EDT event, and without dispatching other events in the queue.
+      withModalContextEDT {
+        val deferredDialog = CompletableDeferred<DialogWrapper>()
+        // Dispatch EDT events in the current runBlocking context.
+        val processEventQueueJob = processEventQueueConsumingUnrelatedInputEvents(deferredDialog)
+        try {
+          // Main job is not a child of the current coroutine to prevent cancellation of the current coroutine by main job failure.
+          @OptIn(DelicateCoroutinesApi::class)
+          GlobalScope.async(coroutineContext + Dispatchers.Default) {
+            withModalIndicator(owner, title, cancellation, deferredDialog, action)
+          }.await()
+        }
+        finally {
+          // `runBlocking` resumed this coroutine at this point
+          // => `processEventQueueJob` is suspended in `yield()`.
+
+          // The processing job must be active until the very end.
+          check(processEventQueueJob.isActive)
+          // Stop processing the events just before leaving the modality.
+          processEventQueueJob.cancel()
+        }
+      }
+    }
   }
 }
 
@@ -135,10 +173,11 @@ private suspend fun <T> withModalIndicator(
   owner: ModalTaskOwner,
   title: @ProgressTitle String,
   cancellation: TaskCancellation,
+  deferredDialog: CompletableDeferred<DialogWrapper>?,
   action: suspend CoroutineScope.() -> T,
 ): T = coroutineScope {
   val sink = FlowProgressSink()
-  val showIndicatorJob = showModalIndicator(owner, title, cancellation, sink.stateFlow)
+  val showIndicatorJob = showModalIndicator(owner, title, cancellation, sink.stateFlow, deferredDialog)
   try {
     withContext(sink.asContextElement(), action)
   }
@@ -152,6 +191,7 @@ private fun CoroutineScope.showModalIndicator(
   title: @ProgressTitle String,
   cancellation: TaskCancellation,
   stateFlow: Flow<ProgressState>,
+  deferredDialog: CompletableDeferred<DialogWrapper>?,
 ): Job = launch(Dispatchers.IO) {
   delay(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong())
   val mainJob = this@showModalIndicator.coroutineContext.job
@@ -192,8 +232,10 @@ private fun CoroutineScope.showModalIndicator(
     // 1. If the dialog is heavy (= spins an inner event loop):
     // show() returns after dialog was closed
     // => following yield() will resume with CancellationException
+    // => don't complete deferredDialog
     // 2. If the dialog is glass pane based (= without inner event loop):
     // show() returns immediately
+    // => complete deferredDialog to process component inputs events in processEventQueueConsumingUnrelatedInputEvents
     dialog.show()
 
     // 'Light' popup is shown in glass pane,
@@ -210,6 +252,8 @@ private fun CoroutineScope.showModalIndicator(
         previousFocusOwner.requestFocusInWindow()
       }
     }
+
+    deferredDialog?.complete(dialog)
   }
 }
 
@@ -232,5 +276,41 @@ private fun CoroutineScope.awaitCancellation(action: () -> Unit) {
     finally {
       action()
     }
+  }
+}
+
+/**
+ * Before [deferredDialog] is completed, all input events are consumed unconditionally,
+ * because the absence of the visible dialog means that
+ * [com.intellij.ide.IdeEventQueue.consumeUnrelatedEvent] would consume the event.
+ *
+ * Once [deferredDialog] is completed (glass pane dialog is visible), input events originating in the dialog will be dispatched.
+ * [deferredDialog] might never be completed:
+ * - in case the dialog is heavy, all input events will be handled by the inner event loop;
+ * - in case the dialog never became visible because the task was completed in [DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS] ms,
+ * the processing routine will be simply cancelled.
+ */
+private fun CoroutineScope.processEventQueueConsumingUnrelatedInputEvents(deferredDialog: Deferred<DialogWrapper>): Job = launch {
+  val eventQueue = IdeEventQueue.getInstance()
+  val processConsumingAllInputEventsUnconditionallyJob = launch {
+    while (true) {
+      val event = eventQueue.nextEvent
+      if (event is InputEvent && event.source is Component) {
+        event.consume()
+      }
+      else {
+        eventQueue.dispatchEvent(event)
+      }
+      yield()
+    }
+  }
+  val modalComponent = deferredDialog.await().contentPane
+  processConsumingAllInputEventsUnconditionallyJob.cancel()
+  while (true) {
+    val event = eventQueue.nextEvent
+    if (!IdeEventQueue.consumeUnrelatedEvent(modalComponent, event)) {
+      eventQueue.dispatchEvent(event)
+    }
+    yield()
   }
 }

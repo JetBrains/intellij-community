@@ -15,11 +15,16 @@ internal class TestCoroutineProgressAction : AnAction() {
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
-  override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = e.project != null
-  }
-
   override fun actionPerformed(e: AnActionEvent) {
+    try {
+      runBlockingModal(ModalTaskOwner.guess(), "Synchronous never-ending modal progress", TaskCancellation.cancellable()) {
+        awaitCancellation()
+      }
+    }
+    catch (ignored: CancellationException) {
+
+    }
+
     val project = e.project ?: return
     object : DialogWrapper(project, false, IdeModalityType.MODELESS) {
 
@@ -49,6 +54,22 @@ internal class TestCoroutineProgressAction : AnAction() {
           }
           button("Non-Cancellable Modal Progress") {
             cs.nonCancellableModalProgress(project)
+          }
+        }
+        row {
+          button("Cancellable Synchronous Modal Progress") {
+            runBlockingModal(project, "Cancellable synchronous modal progress") {
+              doStuff()
+            }
+          }
+          button("Non-Cancellable Synchronous Modal Progress") {
+            runBlockingModal(
+              ModalTaskOwner.project(project),
+              "Non-cancellable synchronous modal progress",
+              TaskCancellation.nonCancellable(),
+            ) {
+              doStuff()
+            }
           }
         }
       }

@@ -58,7 +58,8 @@ suspend fun <X> withModalContext(
   }
 }
 
-private suspend fun <X> withModalContextEDT(action: suspend CoroutineScope.() -> X): X {
+@Internal
+suspend fun <X> withModalContextEDT(action: suspend CoroutineScope.() -> X): X {
   val ctx = coroutineContext
   val job = ctx.job
   val newModalityState = (ctx.contextModality() as ModalityStateEx).appendJob(job) as ModalityStateEx
