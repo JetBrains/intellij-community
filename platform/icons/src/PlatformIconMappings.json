@@ -219,6 +219,8 @@
       "help.svg": "actions/help.svg",
       "hide.svg": "general/hideToolWindow.svg",
       "history.svg": "vcs/history.svg",
+      "ideUpdate.svg": "ide/notification/ideUpdate.svg",
+      "pluginUpdate.svg": "ide/notification/pluginUpdate.svg",
       "import.svg": "toolbarDecorator/import.svg",
       "layout.svg": "debugger/restoreLayout.svg",
       "left.svg": "actions/back.svg",
