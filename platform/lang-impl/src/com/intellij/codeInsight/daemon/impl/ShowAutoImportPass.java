@@ -92,7 +92,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     Document document = myEditor.getDocument();
     List<HighlightInfo> infos = new ArrayList<>();
     DaemonCodeAnalyzerEx.processHighlights(document, myProject, null, 0, document.getTextLength(), info -> {
-      if (info.hasHint() && info.getSeverity() == HighlightSeverity.ERROR && !info.getFixTextRange().containsOffset(caretOffset)) {
+      if (info.hasHint() && info.getSeverity() == HighlightSeverity.ERROR && !info.containsOffset(caretOffset, true)) {
         infos.add(info);
       }
       return true;
@@ -135,7 +135,7 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     int offset = editor.getCaretModel().getOffset();
     DaemonCodeAnalyzerEx.processHighlights(editor.getDocument(), project, null, visibleRange.getStartOffset(), visibleRange.getEndOffset(), info -> {
       //no changes after escape => suggest imports under caret only
-      if (!isDirty && !info.getFixTextRange().contains(offset)) {
+      if (!isDirty && !info.containsOffset(offset, true)) {
         return true;
       }
       if (info.hasHint() && !editor.getFoldingModel().isOffsetCollapsed(info.startOffset)) {
