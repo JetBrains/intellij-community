@@ -17,7 +17,7 @@ internal class TestCoroutineProgressAction : AnAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     try {
-      runBlockingModal(ModalTaskOwner.guess(), "Synchronous never-ending modal progress", TaskCancellation.cancellable()) {
+      runBlockingModal(ModalTaskOwner.guess(), "Synchronous never-ending modal progress") {
         awaitCancellation()
       }
     }
@@ -66,7 +66,6 @@ internal class TestCoroutineProgressAction : AnAction() {
             runBlockingModal(
               ModalTaskOwner.project(project),
               "Non-cancellable synchronous modal progress",
-              TaskCancellation.nonCancellable(),
             ) {
               doStuff()
             }

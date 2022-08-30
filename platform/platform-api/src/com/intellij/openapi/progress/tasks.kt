@@ -44,7 +44,7 @@ suspend fun <T> withBackgroundProgressIndicator(
 suspend fun <T> withBackgroundProgressIndicator(
   project: Project,
   title: @ProgressTitle String,
-  cancellation: TaskCancellation,
+  cancellation: TaskCancellation = TaskCancellation.cancellable(),
   action: suspend CoroutineScope.() -> T
 ): T {
   return taskSupport().withBackgroundProgressIndicatorInternal(
@@ -149,7 +149,7 @@ fun <T> runBlockingModal(
 fun <T> runBlockingModal(
   owner: ModalTaskOwner,
   title: @ProgressTitle String,
-  cancellation: TaskCancellation,
+  cancellation: TaskCancellation = TaskCancellation.cancellable(),
   action: suspend CoroutineScope.() -> T,
 ): T {
   return taskSupport().runBlockingModalInternal(owner, title, cancellation, action)
