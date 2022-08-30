@@ -71,14 +71,15 @@ public class JobUtilTest extends LightPlatformTestCase {
   }
 
   public void testUnbalancedTaskJobUtilPerformance() {
-    List<Integer> things = new ArrayList<>(Collections.nCopies(10_000, null));
+    int N = 10_000;
+    List<Integer> things = new ArrayList<>(N);
     int sum = 0;
-    for (int i = 0; i < things.size(); i++) {
-      int v = i < 9950 ? 1 : 1000;
-      things.set(i, v);
-      sum += things.get(i);
+    for (int i = 0; i < N; i++) {
+      int v = i < N-50 ? 1 : 1000;
+      things.add(v);
+      sum += v;
     }
-    assertEquals(59950, sum);
+    assertEquals((N-50)*1 + 50*1000, sum);
 
     long elapsed = TimeoutUtil.measureExecutionTime(() -> assertTrue(JobLauncher.getInstance().invokeConcurrentlyUnderProgress(things, new ProgressIndicatorBase(), o -> {
       if (o <= 1) {

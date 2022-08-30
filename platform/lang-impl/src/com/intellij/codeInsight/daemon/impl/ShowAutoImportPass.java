@@ -106,12 +106,12 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
 
     for (HighlightInfo info : infos) {
       for (HintAction action : extractHints(info)) {
-        if (action.isAvailable(myProject, myEditor, myFile) &&
-            action.fixSilently(myEditor)) {
+        if (action.isAvailable(myProject, myEditor, myFile) && action.fixSilently(myEditor)) {
           break;
         }
       }
     }
+
   }
 
   public static boolean mayAutoImportNow(@NotNull PsiFile psiFile) {
