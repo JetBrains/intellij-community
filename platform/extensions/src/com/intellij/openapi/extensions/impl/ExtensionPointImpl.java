@@ -659,10 +659,10 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
    * Unregisters extensions for which the specified predicate returns false and collects the runnables for listener invocation into the given list
    * so that listeners can be called later.
    */
-  private synchronized boolean unregisterExtensions(boolean stopAfterFirstMatch,
-                                                    @NotNull List<? super Runnable> priorityListenerCallbacks,
-                                                    @NotNull List<? super Runnable> listenerCallbacks,
-                                                    @NotNull Predicate<? super ExtensionComponentAdapter> extensionToKeepFilter) {
+  synchronized boolean unregisterExtensions(boolean stopAfterFirstMatch,
+                                            @NotNull List<? super Runnable> priorityListenerCallbacks,
+                                            @NotNull List<? super Runnable> listenerCallbacks,
+                                            @NotNull Predicate<? super ExtensionComponentAdapter> extensionToKeepFilter) {
     ExtensionPointListener<T>[] listeners = this.listeners;
     List<ExtensionComponentAdapter> removedAdapters = null;
     List<ExtensionComponentAdapter> adapters = this.adapters;
@@ -705,12 +705,12 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
 
     List<ExtensionComponentAdapter> finalRemovedAdapters = removedAdapters;
     if (!priorityListeners.isEmpty()) {
-      priorityListenerCallbacks.add(() ->
+      priorityListenerCallbacks.add((Runnable)() ->
         notifyListeners(true, finalRemovedAdapters, priorityListeners.toArray(ExtensionPointListener.Companion.emptyArray()))
       );
     }
     if (!regularListeners.isEmpty()) {
-      listenerCallbacks.add(() ->
+      listenerCallbacks.add((Runnable)() ->
         notifyListeners(true, finalRemovedAdapters, regularListeners.toArray(ExtensionPointListener.Companion.emptyArray()))
       );
     }
@@ -719,8 +719,8 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
 
   abstract void unregisterExtensions(@NotNull ComponentManager componentManager,
                                      @NotNull PluginDescriptor pluginDescriptor,
-                                     @NotNull List<Runnable> priorityListenerCallbacks,
-                                     @NotNull List<Runnable> listenerCallbacks);
+                                     @NotNull List<? super Runnable> priorityListenerCallbacks,
+                                     @NotNull List<? super Runnable> listenerCallbacks);
 
   private void notifyListeners(boolean isRemoved,
                                @NotNull List<? extends ExtensionComponentAdapter> adapters,
