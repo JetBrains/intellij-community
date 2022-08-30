@@ -49,6 +49,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UI;
 import com.intellij.util.xml.*;
@@ -678,14 +679,14 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     }
 
     List<String> fragments = StringUtil.split(name, ".");
-    if (fragments.stream().anyMatch(f -> Character.isUpperCase(f.charAt(0)))) {
+    if (ContainerUtil.exists(fragments, f -> Character.isUpperCase(f.charAt(0)))) {
       return false;
     }
 
     String epName = fragments.get(fragments.size() - 1);
     fragments.remove(fragments.size() - 1);
     List<String> words = StringUtil.getWordsIn(epName);
-    return words.stream().noneMatch(w -> fragments.stream().anyMatch(f -> StringUtil.equalsIgnoreCase(w, f)));
+    return !ContainerUtil.exists(words, w -> ContainerUtil.exists(fragments, f -> StringUtil.equalsIgnoreCase(w, f)));
   }
 
   private static void annotateExtensions(Extensions extensions, DomElementAnnotationHolder holder) {
