@@ -50,7 +50,7 @@ private class ProjectLoadedListener(private val project: Project) : JpsProjectLo
   override fun loaded() {
     if (!IdeaPluginDescriptorImpl.isOnDemandEnabled) return
 
-    PluginFeatureEnabler.getInstance(project).enableSuggestedHelper()
+    PluginFeatureEnabler.getInstance(project).scheduleEnableSuggested()
   }
 }
 

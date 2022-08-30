@@ -70,7 +70,7 @@ private class OnDemandPluginFeatureEnablerImpl(private val project: Project) : P
     }
   }
 
-  override fun enableSuggestedHelper() {
+  override fun scheduleEnableSuggested() {
     coroutineScope.launch(Dispatchers.IO) {
       enableSuggested()
     }
