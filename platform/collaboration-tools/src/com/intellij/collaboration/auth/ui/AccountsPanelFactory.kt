@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.auth.ui
 
-import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.collaboration.async.DisposingMainScope
 import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.auth.AccountManager
@@ -15,7 +14,9 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
@@ -27,10 +28,11 @@ import com.intellij.ui.dsl.builder.Row
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.awt.event.MouseEvent
-import java.util.concurrent.CompletableFuture
 import javax.swing.*
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
@@ -65,19 +67,17 @@ private constructor(disposable: Disposable,
   }
 
   fun accountsPanelCell(row: Row, needAddBtnWithDropdown: Boolean, defaultAvatarIcon: Icon = EmptyIcon.ICON_16): Cell<JComponent> {
-    val detailsMap = mutableMapOf<A, CompletableFuture<AccountsDetailsLoader.Result<*>>>()
-    val detailsProvider = LoadedAccountsDetailsProvider { account: A ->
-      detailsMap[account]?.getNow(null)
-    }
+    val detailsMap = mutableMapOf<A, AccountsDetailsLoader.Result<*>>()
+    val detailsProvider = LoadedAccountsDetailsProvider(detailsMap::get)
     val avatarIconsProvider = LoadingAvatarIconsProvider(scope, detailsLoader, defaultAvatarIcon) { account: A ->
-      val result = detailsMap[account]?.getNow(null) as? AccountsDetailsLoader.Result.Success
+      val result = detailsMap[account] as? AccountsDetailsLoader.Result.Success
       result?.details?.avatarUrl
     }
 
     val accountsList = createList {
       SimpleAccountsListCellRenderer(accountsModel, detailsProvider, avatarIconsProvider)
     }
-    loadAccountsDetails(accountsList, detailsLoader, detailsMap)
+    loadAccountsDetails(scope, accountsList, detailsLoader, detailsMap)
 
     val component = wrapWithToolbar(accountsList, needAddBtnWithDropdown)
 
@@ -174,48 +174,56 @@ private constructor(disposable: Disposable,
     return toolbar.createPanel()
   }
 
-  private fun <A : Account> loadAccountsDetails(accountsList: JBList<A>,
-                                                detailsLoader: AccountsDetailsLoader<A, *>,
-                                                resultsMap: MutableMap<A, CompletableFuture<AccountsDetailsLoader.Result<*>>>) {
+  companion object {
+    fun <A : Account> loadAccountsDetails(scope: CoroutineScope,
+                                          accountsList: JList<A>,
+                                          detailsLoader: AccountsDetailsLoader<A, *>,
+                                          resultsMap: MutableMap<A, AccountsDetailsLoader.Result<*>>) {
+      val listModel = accountsList.model
+      listModel.addListDataListener(object : ListDataListener {
+        private val jobsMap = mutableMapOf<A, Job>()
 
-    val listModel = accountsList.model
-    listModel.addListDataListener(object : ListDataListener {
-      private var loadingCount by observable(0) { _, _, newValue ->
-        accountsList.setPaintBusy(newValue != 0)
-      }
-
-      override fun intervalAdded(e: ListDataEvent) = loadDetails(e.index0, e.index1)
-      override fun contentsChanged(e: ListDataEvent) = loadDetails(e.index0, e.index1)
-
-      override fun intervalRemoved(e: ListDataEvent) {
-        val accounts = listModel.items.toSet()
-        for (account in resultsMap.keys - accounts) {
-          resultsMap.remove(account)?.cancel(true)
+        private var loadingCount by observable(0) { _, _, newValue ->
+          (accountsList as? JBList<*>)?.setPaintBusy(newValue != 0)
         }
-      }
 
-      private fun loadDetails(startIdx: Int, endIdx: Int) {
-        if (startIdx < 0 || endIdx < 0) return
+        override fun intervalAdded(e: ListDataEvent) = loadDetails(e.index0, e.index1)
+        override fun contentsChanged(e: ListDataEvent) = loadDetails(e.index0, e.index1)
 
-        for (i in startIdx..endIdx) {
-          val account = listModel.getElementAt(i)
-          resultsMap[account]?.cancel(true)
-          loadingCount++
-          val detailsLoadingResult = detailsLoader.loadDetailsAsync(account).asCompletableFuture()
-          detailsLoadingResult.handleOnEdt(ModalityState.any()) { _, _ ->
-            loadingCount--
-            repaint(account)
+        override fun intervalRemoved(e: ListDataEvent) {
+          val accounts = listModel.items.toSet()
+          for (account in jobsMap.keys - accounts) {
+            jobsMap.remove(account)?.cancel()
+            resultsMap.remove(account)
           }
-          resultsMap[account] = detailsLoadingResult
         }
-      }
 
-      private fun repaint(account: A): Boolean {
-        val idx = listModel.findIndex(account).takeIf { it >= 0 } ?: return true
-        val cellBounds = accountsList.getCellBounds(idx, idx)
-        accountsList.repaint(cellBounds)
-        return false
-      }
-    })
+        private fun loadDetails(startIdx: Int, endIdx: Int) {
+          if (startIdx < 0 || endIdx < 0) return
+
+          for (i in startIdx..endIdx) {
+            val account = listModel.getElementAt(i)
+            jobsMap[account]?.cancel()
+            jobsMap[account] = scope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+              loadingCount++
+              try {
+                resultsMap[account] = detailsLoader.loadDetails(account)
+                repaint(account)
+              }
+              finally {
+                loadingCount--
+              }
+            }
+          }
+        }
+
+        private fun repaint(account: A): Boolean {
+          val idx = listModel.findIndex(account).takeIf { it >= 0 } ?: return true
+          val cellBounds = accountsList.getCellBounds(idx, idx)
+          accountsList.repaint(cellBounds)
+          return false
+        }
+      })
+    }
   }
 }

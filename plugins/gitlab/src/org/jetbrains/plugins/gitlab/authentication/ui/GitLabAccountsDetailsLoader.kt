@@ -13,38 +13,20 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDto
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.api.request.loadImage
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
-import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.ui.GitLabBundle
 import java.awt.Image
 
-internal class GitLabAccountsDetailsLoader(private val coroutineScope: CoroutineScope,
-                                           private val accountManager: GitLabAccountManager,
-                                           private val accountsModel: GitLabAccountsListModel)
+internal class GitLabAccountsDetailsLoader(private val apiClientSupplier: (GitLabAccount) -> GitLabApi?)
   : AccountsDetailsLoader<GitLabAccount, GitLabUserDto> {
 
-  override fun loadDetailsAsync(account: GitLabAccount): Deferred<Result<GitLabUserDto>> = coroutineScope.async {
-    loadDetails(account)
-  }
-
-  private suspend fun loadDetails(account: GitLabAccount): Result<GitLabUserDto> {
-    val api = getApiClient(account) ?: return Result.Error(GitLabBundle.message("account.token.missing"), true)
+  override suspend fun loadDetails(account: GitLabAccount): Result<GitLabUserDto> {
+    val api = apiClientSupplier(account) ?: return Result.Error(GitLabBundle.message("account.token.missing"), true)
     val details = api.getCurrentUser(account.server) ?: return Result.Error(GitLabBundle.message("account.token.invalid"), true)
     return Result.Success(details)
   }
 
-  override fun loadAvatarAsync(account: GitLabAccount, url: String): Deferred<Image?> = coroutineScope.async {
-    loadAvatar(account, url)
-  }
-
-  private suspend fun loadAvatar(account: GitLabAccount, url: String): Image? {
-    val api = getApiClient(account) ?: return null
+  override suspend fun loadAvatar(account: GitLabAccount, url: String): Image? {
+    val api = apiClientSupplier(account) ?: return null
     return api.loadImage(url)
-  }
-
-  private fun getApiClient(account: GitLabAccount): GitLabApi? {
-    val token = accountsModel.newCredentials.getOrElse(account) {
-      accountManager.findCredentials(account)
-    } ?: return null
-    return service<GitLabApiManager>().getClient(token)
   }
 }

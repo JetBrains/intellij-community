@@ -1,16 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.google.accounts
 
-import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException
-import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
 import com.intellij.collaboration.auth.ui.AccountsDetailsLoader
-import com.intellij.collaboration.auth.ui.AccountsDetailsLoader.*
-import com.intellij.collaboration.util.ProgressIndicatorsProvider
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.collaboration.auth.ui.AccountsDetailsLoader.Result
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import kotlinx.coroutines.*
-import kotlinx.coroutines.future.asDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.google.GoogleAuthorizedUserException
 import org.intellij.plugins.markdown.google.accounts.data.GoogleAccount
@@ -20,22 +15,16 @@ import org.intellij.plugins.markdown.google.authorization.GoogleOAuthService
 import org.intellij.plugins.markdown.google.utils.GoogleAccountsUtils.getOrUpdateUserCredentials
 import java.awt.Image
 import java.net.URL
-import java.util.concurrent.TimeoutException
 import javax.imageio.ImageIO
 
 internal class GoogleAccountsDetailsLoader(
-  private val coroutineScope: CoroutineScope,
   private val accountManager: GoogleAccountManager,
   private val accountsListModel: GoogleAccountsListModel,
   private val oAuthService: GoogleOAuthService,
   private val userInfoService: GoogleUserInfoService
 ) : AccountsDetailsLoader<GoogleAccount, GoogleUserDetailed> {
 
-  override fun loadDetailsAsync(account: GoogleAccount): Deferred<Result<GoogleUserDetailed>> = coroutineScope.async {
-    loadDetails(account)
-  }
-
-  private suspend fun loadDetails(account: GoogleAccount): Result<GoogleUserDetailed> {
+  override suspend fun loadDetails(account: GoogleAccount): Result<GoogleUserDetailed> {
     return try {
       val credentials = getUserCredentials(account) ?: return noCredentials()
       val userInfo = userInfoService.acquireUserInfo(credentials.accessToken)
@@ -51,7 +40,7 @@ internal class GoogleAccountsDetailsLoader(
     }
   }
 
-  override fun loadAvatarAsync(account: GoogleAccount, url: String): Deferred<Image?> = coroutineScope.async(Dispatchers.IO) {
+  override suspend fun loadAvatar(account: GoogleAccount, url: String): Image? = withContext(Dispatchers.IO) {
     ImageIO.read(URL(url))
   }
 

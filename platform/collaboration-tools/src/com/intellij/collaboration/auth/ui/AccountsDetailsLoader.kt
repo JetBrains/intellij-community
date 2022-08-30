@@ -9,9 +9,9 @@ import java.awt.Image
 
 interface AccountsDetailsLoader<in A : Account, out D : AccountDetails> {
 
-  fun loadDetailsAsync(account: A): Deferred<Result<D>>
+  suspend fun loadDetails(account: A): Result<D>
 
-  fun loadAvatarAsync(account: A, url: String): Deferred<Image?>
+  suspend fun loadAvatar(account: A, url: String): Image?
 
   sealed class Result<out D : AccountDetails> {
     class Success<out D : AccountDetails>(val details: D) : Result<D>()

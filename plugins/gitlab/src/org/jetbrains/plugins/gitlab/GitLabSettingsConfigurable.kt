@@ -6,13 +6,10 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
+import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabProjectDefaultAccountHolder
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsLoader
@@ -26,8 +23,13 @@ internal class GitLabSettingsConfigurable(private val project: Project)
     val defaultAccountHolder = project.service<GitLabProjectDefaultAccountHolder>()
 
     val accountsModel = GitLabAccountsListModel(project)
-    val scope = CoroutineScope(SupervisorJob()).also { Disposer.register(disposable!!) { it.cancel() } }
-    val detailsLoader = GitLabAccountsDetailsLoader(scope, accountManager, accountsModel)
+    val detailsLoader = GitLabAccountsDetailsLoader { account ->
+      accountsModel.newCredentials.getOrElse(account) {
+        accountManager.findCredentials(account)
+      }?.let {
+        service<GitLabApiManager>().getClient(it)
+      }
+    }
     val accountsPanelFactory = AccountsPanelFactory(accountManager, defaultAccountHolder, accountsModel, detailsLoader, disposable!!)
 
     return panel {

@@ -15,7 +15,7 @@ class LoadingAvatarIconsProvider<A : Account>(private val scope: CoroutineScope,
   : IconsProvider<A> {
 
   private val cachingDelegate = object : CachingCircleImageIconsProvider<Pair<A, String>>(scope, defaultAvatarIcon) {
-    override suspend fun loadImage(key: Pair<A, String>): Image? = detailsLoader.loadAvatarAsync(key.first, key.second).await()
+    override suspend fun loadImage(key: Pair<A, String>): Image? = detailsLoader.loadAvatar(key.first, key.second)
   }
 
 
