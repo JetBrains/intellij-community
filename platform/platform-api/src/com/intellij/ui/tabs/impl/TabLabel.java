@@ -742,9 +742,11 @@ public class TabLabel extends JPanel implements Accessible {
     }
 
     private boolean doCustomLayout(Container parent) {
-      int tabPlacement = UISettings.getInstance().getEditorTabPlacement();
+      UISettings settings = UISettings.getInstance();
+      int tabPlacement = settings.getEditorTabPlacement();
       if (!myInfo.isPinned() && myTabs != null && myTabs.ignoreTabLabelLimitedWidthWhenPaint() &&
-          (tabPlacement == SwingConstants.TOP || tabPlacement == SwingConstants.BOTTOM) &&
+          (ExperimentalUI.isNewUI() && !isHovered() || tabPlacement == SwingConstants.TOP || tabPlacement == SwingConstants.BOTTOM) &&
+          settings.getShowCloseButton() && settings.getCloseTabButtonOnTheRight() &&
           parent.getWidth() < parent.getPreferredSize().width) {
         int spaceTop = parent.getInsets().top;
         int spaceLeft = parent.getInsets().left;
@@ -775,7 +777,7 @@ public class TabLabel extends JPanel implements Accessible {
       if (component == null) return;
 
       int height = component.getPreferredSize().height;
-      int top = spaceTop + (spaceHeight - height) / 2;
+      int top = spaceTop + (spaceHeight - height) / 2 + (spaceHeight - height) % 2;
       component.setBounds(left, top, width, height);
     }
   }

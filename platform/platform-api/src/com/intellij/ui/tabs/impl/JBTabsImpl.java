@@ -592,10 +592,12 @@ public class JBTabsImpl extends JComponent
     tabLabelAtMouse = label;
 
     if(old != null) {
+      old.revalidate();
       old.repaint();
     }
 
     if(tabLabelAtMouse != null) {
+      tabLabelAtMouse.revalidate();
       tabLabelAtMouse.repaint();
     }
   }
@@ -603,6 +605,7 @@ public class JBTabsImpl extends JComponent
   void unHover(TabLabel label) {
     if(tabLabelAtMouse == label) {
       tabLabelAtMouse = null;
+      label.revalidate();
       label.repaint();
     }
   }
