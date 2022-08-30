@@ -744,7 +744,10 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
 
       @Override
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        final IdeaPlugin ideaPlugin = extensions.getParentOfType(IdeaPlugin.class, true);
+        DomElement domElement = DomUtil.getDomElement(descriptor.getPsiElement());
+        if (domElement == null) return;
+
+        final IdeaPlugin ideaPlugin = domElement.getParentOfType(IdeaPlugin.class, true);
         assert ideaPlugin != null;
         final Dependency dependency = ideaPlugin.addDependency();
         dependency.setStringValue(dependencyId);
