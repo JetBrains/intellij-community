@@ -14,7 +14,6 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.storage.VersionedStorageChange
 
 internal class ModuleVcsDetector(private val project: Project) {
   private val vcsManager by lazy(LazyThreadSafetyMode.NONE) { ProjectLevelVcsManagerImpl.getInstanceImpl(project) }
@@ -28,14 +27,14 @@ internal class ModuleVcsDetector(private val project: Project) {
 
     WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, MyWorkspaceModelChangeListener())
 
-    if (vcsManager.needAutodetectMappings()) {
-      WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, InitialMappingsDetectionListener())
-      queue.queue(InitialFullScan())
+    if (vcsManager.needAutodetectMappings() &&
+        vcsManager.haveDefaultMapping() == null) {
+      queue.queue(Update.create("initial scan") { autoDetectDefaultRoots() })
     }
   }
 
   @RequiresBackgroundThread
-  private fun autoDetectDefaultRoots(tryMapPieces: Boolean) {
+  private fun autoDetectDefaultRoots() {
     if (vcsManager.haveDefaultMapping() != null) return
 
     val usedVcses = mutableSetOf<AbstractVcs>()
@@ -59,7 +58,7 @@ internal class ModuleVcsDetector(private val project: Project) {
       val additionalMappings = vcsManager.directoryMappings.filter { it.vcs != commonVcs.name || it.directory !in rootPaths }
       vcsManager.setAutoDirectoryMappings(additionalMappings + VcsDirectoryMapping.createDefault(commonVcs.name))
     }
-    else if (tryMapPieces) {
+    else {
       registerNewDirectMappings(detectedRoots)
     }
   }
@@ -68,6 +67,7 @@ internal class ModuleVcsDetector(private val project: Project) {
   private fun autoDetectForContentRoots(contentRoots: List<VirtualFile>) {
     if (vcsManager.haveDefaultMapping() != null) return
 
+    val usedVcses = mutableSetOf<AbstractVcs>()
     val detectedRoots = mutableSetOf<Pair<VirtualFile, AbstractVcs>>()
 
     contentRoots
@@ -77,11 +77,18 @@ internal class ModuleVcsDetector(private val project: Project) {
         val foundVcs = vcsManager.findVersioningVcs(root)
         if (foundVcs != null && foundVcs !== vcsManager.getVcsFor(root)) {
           detectedRoots.add(Pair(root, foundVcs))
+          usedVcses.add(foundVcs)
         }
       }
     if (detectedRoots.isEmpty()) return
 
-    registerNewDirectMappings(detectedRoots)
+    val commonVcs = usedVcses.singleOrNull()
+    if (commonVcs != null && !vcsManager.hasAnyMappings()) {
+      vcsManager.setAutoDirectoryMappings(listOf(VcsDirectoryMapping.createDefault(commonVcs.name)))
+    }
+    else {
+      registerNewDirectMappings(detectedRoots)
+    }
   }
 
   private fun registerNewDirectMappings(detectedRoots: Collection<Pair<VirtualFile, AbstractVcs>>) {
@@ -91,20 +98,6 @@ internal class ModuleVcsDetector(private val project: Project) {
       .map { (root, vcs) -> VcsDirectoryMapping(root.path, vcs.name) }
       .filter { it.directory !in knownMappedRoots }
     vcsManager.setAutoDirectoryMappings(oldMappings + newMappings)
-  }
-
-  private inner class InitialFullScan : Update("initial scan") {
-    override fun run() {
-      autoDetectDefaultRoots(true)
-    }
-
-    override fun canEat(update: Update?): Boolean = update is DelayedFullScan
-  }
-
-  private inner class DelayedFullScan : Update("delayed scan") {
-    override fun run() {
-      autoDetectDefaultRoots(false)
-    }
   }
 
   private inner class MyWorkspaceModelChangeListener : ContentRootChangeListener(skipFileChanges = true) {
@@ -134,17 +127,6 @@ internal class ModuleVcsDetector(private val project: Project) {
       }
 
       autoDetectForContentRoots(contentRoots)
-    }
-  }
-
-  private inner class InitialMappingsDetectionListener : ContentRootChangeListener(skipFileChanges = true) {
-    override fun changed(event: VersionedStorageChange) {
-      if (!vcsManager.needAutodetectMappings()) return
-      super.changed(event)
-    }
-
-    override fun contentRootsChanged(removed: List<VirtualFile>, added: List<VirtualFile>) {
-      queue.queue(DelayedFullScan())
     }
   }
 
