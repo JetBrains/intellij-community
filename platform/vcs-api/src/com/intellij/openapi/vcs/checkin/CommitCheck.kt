@@ -22,10 +22,11 @@ import org.jetbrains.annotations.Nls.Capitalization.Sentence
  * as it allows performing operations without modal progress and modal error dialogs.
  *
  * Implement [com.intellij.openapi.project.DumbAware] to allow running commit check in dumb mode.
- * Implement [CheckinModificationHandler] interface if check modifies the code. In this case, it will be called before other checks.
  */
 @ApiStatus.Experimental
 interface CommitCheck : PossiblyDumbAware {
+  fun getExecutionOrder(): ExecutionOrder = ExecutionOrder.LATE
+
   /**
    * Indicates if commit check should be run for the commit.
    * E.g. if the corresponding option is enabled in settings.
@@ -47,6 +48,23 @@ interface CommitCheck : PossiblyDumbAware {
    */
   @RequiresEdt
   suspend fun runCheck(indicator: ProgressIndicator): CommitProblem?
+
+  enum class ExecutionOrder {
+    /**
+     * Checks to be performed first.
+     */
+    EARLY,
+
+    /**
+     * Checks that can modify content about to be committed (code cleanups, formatters, etc).
+     */
+    MODIFICATION,
+
+    /**
+     * Checks to be performed after all modifications are finished.
+     */
+    LATE
+  }
 }
 
 /**

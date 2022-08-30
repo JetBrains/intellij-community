@@ -22,7 +22,6 @@ import kotlinx.coroutines.withContext
 abstract class CodeProcessorCheckinHandler(
   val commitPanel: CheckinProjectPanel
 ) : CheckinHandler(),
-    CheckinModificationHandler,
     CommitCheck {
 
   val project: Project get() = commitPanel.project
@@ -30,6 +29,8 @@ abstract class CodeProcessorCheckinHandler(
 
   protected open fun getProgressMessage(): @NlsContexts.ProgressText String? = null
   protected abstract fun createCodeProcessor(): AbstractLayoutCodeProcessor
+
+  override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.MODIFICATION
 
   override suspend fun runCheck(indicator: ProgressIndicator): CommitProblem? {
     getProgressMessage()?.let { indicator.text = it }

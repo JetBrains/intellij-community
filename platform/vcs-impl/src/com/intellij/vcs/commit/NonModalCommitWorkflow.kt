@@ -7,7 +7,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
-import com.intellij.openapi.vcs.checkin.CheckinModificationHandler
 import com.intellij.openapi.vcs.checkin.CommitCheck
 import com.intellij.openapi.vcs.checkin.CommitProblem
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
@@ -52,17 +51,18 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
                                         indicator: ProgressIndicator): CommitProblem? {
     try {
       val handlers = commitHandlers
-      val (modificationHandlers, plainHandlers) = handlers.partition { it is CheckinModificationHandler }
-      val modificationCommitChecks = modificationHandlers.map { it.asCommitCheck(sessionInfo, commitContext) }
-      val commitChecks = plainHandlers.map { it.asCommitCheck(sessionInfo, commitContext) }
+      val commitChecks = handlers
+        .map { it.asCommitCheck(sessionInfo, commitContext) }
+        .groupBy { it.getExecutionOrder() }
 
-      val metaHandlers = handlers.filterIsInstance<CheckinMetaHandler>()
-      runMetaHandlers(metaHandlers)
+      runCommitChecks(project, commitChecks[CommitCheck.ExecutionOrder.EARLY], indicator)?.let { return it }
 
-      runCommitChecks(project, modificationCommitChecks, indicator)?.let { return it }
+      runMetaHandlers(handlers.filterIsInstance<CheckinMetaHandler>())
+
+      runCommitChecks(project, commitChecks[CommitCheck.ExecutionOrder.MODIFICATION], indicator)?.let { return it }
       FileDocumentManager.getInstance().saveAllDocuments()
 
-      runCommitChecks(project, commitChecks, indicator)?.let { return it }
+      runCommitChecks(project, commitChecks[CommitCheck.ExecutionOrder.LATE], indicator)?.let { return it }
 
       return null // checks passed
     }
@@ -78,9 +78,9 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
 
   companion object {
     private suspend fun runCommitChecks(project: Project,
-                                        commitChecks: List<CommitCheck>,
+                                        commitChecks: List<CommitCheck>?,
                                         indicator: ProgressIndicator): CommitProblem? {
-      for (commitCheck in commitChecks) {
+      for (commitCheck in commitChecks.orEmpty()) {
         val problem = runCommitCheck(project, commitCheck, indicator)
         if (problem != null) return problem
       }

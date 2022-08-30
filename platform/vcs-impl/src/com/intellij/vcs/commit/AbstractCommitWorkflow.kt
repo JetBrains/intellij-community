@@ -214,21 +214,23 @@ abstract class AbstractCommitWorkflow(val project: Project) {
                                         indicator: ProgressIndicator): CommitChecksResult {
     try {
       val handlers = commitHandlers
-      val (modificationHandlers, plainHandlers) = handlers.partition { it is CheckinModificationHandler }
-      val modificationCommitChecks = modificationHandlers.map { it.asCommitCheck(sessionInfo, commitContext) }
-      val commitChecks = plainHandlers.map { it.asCommitCheck(sessionInfo, commitContext) }
+      val commitChecks = handlers
+        .map { it.asCommitCheck(sessionInfo, commitContext) }
+        .groupBy { it.getExecutionOrder() }
 
-      if (!checkDumbMode(modificationCommitChecks + commitChecks, commitInfo)) {
+      if (!checkDumbMode(commitChecks.values.flatten(), commitInfo)) {
         return CommitChecksResult.Cancelled
       }
+
+      runModalCommitChecks(project, commitInfo, commitChecks[CommitCheck.ExecutionOrder.EARLY], indicator)?.let { return it }
 
       val metaHandlers = handlers.filterIsInstance<CheckinMetaHandler>()
       runMetaHandlers(metaHandlers)
 
-      runModalCommitChecks(project, commitInfo, modificationCommitChecks, indicator)?.let { return it }
+      runModalCommitChecks(project, commitInfo, commitChecks[CommitCheck.ExecutionOrder.MODIFICATION], indicator)?.let { return it }
       FileDocumentManager.getInstance().saveAllDocuments()
 
-      runModalCommitChecks(project, commitInfo, commitChecks, indicator)?.let { return it }
+      runModalCommitChecks(project, commitInfo, commitChecks[CommitCheck.ExecutionOrder.LATE], indicator)?.let { return it }
 
       return CommitChecksResult.Passed
     }
@@ -342,9 +344,9 @@ abstract class AbstractCommitWorkflow(val project: Project) {
 
     private suspend fun runModalCommitChecks(project: Project,
                                              commitInfo: CommitInfo,
-                                             commitChecks: List<CommitCheck>,
+                                             commitChecks: List<CommitCheck>?,
                                              indicator: ProgressIndicator): CommitChecksResult? {
-      for (commitCheck in commitChecks) {
+      for (commitCheck in commitChecks.orEmpty()) {
         try {
           val problem = runCommitCheck(project, commitCheck, indicator)
           if (problem == null) continue
@@ -395,6 +397,11 @@ internal fun CheckinHandler.asCommitCheck(sessionInfo: CommitSessionInfo, commit
 private class ProxyCommitCheck(private val checkinHandler: CheckinHandler,
                                private val sessionInfo: CommitSessionInfo,
                                private val commitContext: CommitContext) : CommitCheck {
+  override fun getExecutionOrder(): CommitCheck.ExecutionOrder {
+    if (checkinHandler is CheckinModificationHandler) return CommitCheck.ExecutionOrder.MODIFICATION
+    return CommitCheck.ExecutionOrder.LATE
+  }
+
   override fun isDumbAware(): Boolean {
     return DumbService.isDumbAware(checkinHandler)
   }

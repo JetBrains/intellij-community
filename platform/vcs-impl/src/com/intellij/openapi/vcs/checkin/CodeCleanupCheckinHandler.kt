@@ -37,7 +37,6 @@ class CodeCleanupCheckinHandlerFactory : CheckinHandlerFactory() {
 
 private class CodeCleanupCheckinHandler(private val panel: CheckinProjectPanel) :
   CheckinHandler(),
-  CheckinModificationHandler,
   CommitCheck {
 
   private val project = panel.project
@@ -49,6 +48,8 @@ private class CodeCleanupCheckinHandler(private val panel: CheckinProjectPanel) 
                    settings::CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT_PROFILE,
                    "before.checkin.cleanup.code",
                    "before.checkin.cleanup.code.profile")
+
+  override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.MODIFICATION
 
   override fun isEnabled(): Boolean = settings.CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT
 
