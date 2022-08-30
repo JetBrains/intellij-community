@@ -971,6 +971,8 @@ public class AllIcons {
   }
 
   public static final class Profiler {
+    /** 9x9 */ public static final @NotNull Icon CollapseNode = load("profiler/collapseNode.svg", 892458108, 0);
+    /** 9x9 */ public static final @NotNull Icon ExpandNode = load("profiler/expandNode.svg", -1666772405, 0);
     /** 12x12 */ public static final @NotNull Icon Rec = load("profiler/rec.svg", -2004362820, 2);
     /** 12x12 */ public static final @NotNull Icon RecInactive = load("profiler/recInactive.svg", 438194600, 2);
   }
