@@ -11,12 +11,12 @@ import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.getPsiFiles
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.psi.formatter.FormatterUtil.getReformatBeforeCommitCommandName
 
-open class ReformatCheckinHandlerFactory : CheckinHandlerFactory() {
+class ReformatCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler =
     ReformatBeforeCheckinHandler(panel)
 }
 
-private class ReformatBeforeCheckinHandler(commitPanel: CheckinProjectPanel) : CodeProcessorCheckinHandler(commitPanel) {
+class ReformatBeforeCheckinHandler(commitPanel: CheckinProjectPanel) : CodeProcessorCheckinHandler(commitPanel) {
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
     BooleanCommitOption(commitPanel, message("checkbox.checkin.options.reformat.code"), true, settings::REFORMAT_BEFORE_PROJECT_COMMIT)
 

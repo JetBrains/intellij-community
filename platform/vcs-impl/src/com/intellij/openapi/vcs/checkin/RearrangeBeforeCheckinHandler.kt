@@ -12,12 +12,12 @@ import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
 import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.getPsiFiles
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 
-open class RearrangeCheckinHandlerFactory : CheckinHandlerFactory() {
+class RearrangeCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler =
     RearrangeBeforeCheckinHandler(panel)
 }
 
-private class RearrangeBeforeCheckinHandler(commitPanel: CheckinProjectPanel) : CodeProcessorCheckinHandler(commitPanel) {
+class RearrangeBeforeCheckinHandler(commitPanel: CheckinProjectPanel) : CodeProcessorCheckinHandler(commitPanel) {
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
     BooleanCommitOption(commitPanel, VcsBundle.message("checkbox.checkin.options.rearrange.code"), true,
                         settings::REARRANGE_BEFORE_PROJECT_COMMIT)

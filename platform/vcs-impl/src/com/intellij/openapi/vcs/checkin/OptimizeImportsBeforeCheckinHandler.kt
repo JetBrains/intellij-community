@@ -13,12 +13,12 @@ import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
 import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.getPsiFiles
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 
-open class OptimizeOptionsCheckinHandlerFactory : CheckinHandlerFactory() {
+class OptimizeOptionsCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler =
     OptimizeImportsBeforeCheckinHandler(panel)
 }
 
-private class OptimizeImportsBeforeCheckinHandler(commitPanel: CheckinProjectPanel) : CodeProcessorCheckinHandler(commitPanel) {
+class OptimizeImportsBeforeCheckinHandler(commitPanel: CheckinProjectPanel) : CodeProcessorCheckinHandler(commitPanel) {
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
     BooleanCommitOption(commitPanel, VcsBundle.message("checkbox.checkin.options.optimize.imports"), true,
                         settings::OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT)
