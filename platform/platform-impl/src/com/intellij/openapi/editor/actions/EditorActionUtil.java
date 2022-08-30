@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FoldingModelImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.DocumentUtil;
@@ -131,19 +130,12 @@ public final class EditorActionUtil {
     if (lineNumber >= document.getLineCount()) {
       return;
     }
-
-    Pair<LogicalPosition, LogicalPosition> lines =
-      EditorUtil.calcSurroundingRange(editor,
-                                      resetToSingleLineAtCaret ? caret.getVisualPosition() : caret.getSelectionStartPosition(),
-                                      resetToSingleLineAtCaret ? caret.getVisualPosition() : caret.getSelectionEndPosition());
-    LogicalPosition lineStart = lines.first;
-    LogicalPosition nextLineStart = lines.second;
-
-    int start = editor.logicalPositionToOffset(lineStart);
-    int end = editor.logicalPositionToOffset(nextLineStart);
-
+    TextRange range =
+      EditorUtil.calcSurroundingTextRange(editor,
+                                          resetToSingleLineAtCaret ? caret.getVisualPosition() : caret.getSelectionStartPosition(),
+                                          resetToSingleLineAtCaret ? caret.getVisualPosition() : caret.getSelectionEndPosition());
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    caret.setSelection(start, end);
+    caret.setSelection(range.getStartOffset(), range.getEndOffset());
   }
 
   @NotNull
