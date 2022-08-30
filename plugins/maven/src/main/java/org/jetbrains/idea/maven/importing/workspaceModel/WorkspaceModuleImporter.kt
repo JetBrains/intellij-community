@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.util.containers.addIfNotNull
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.jps.serialization.FileInDirectorySourceNames
 import com.intellij.workspaceModel.storage.EntitySource
@@ -101,8 +102,8 @@ internal class WorkspaceModuleImporter(
     result.add(ModuleDependencyItem.InheritedSdkDependency)
     result.add(ModuleDependencyItem.ModuleSourceDependency)
 
-    result.addAll(dependencies.mapNotNull { dependency ->
-      when (dependency) {
+    for (dependency in dependencies) {
+      val created = when (dependency) {
         is SystemDependency ->
           createSystemDependency(moduleName, dependency.artifact) { moduleLibrarySource }
         is LibraryDependency ->
@@ -125,7 +126,8 @@ internal class WorkspaceModuleImporter(
           createLibraryDependency(dependency.artifact) { reuseOrCreateProjectLibrarySource(dependency.artifact.libraryName) }
         else -> null
       }
-    })
+      result.addIfNotNull(created)
+    }
     return result
   }
 
