@@ -72,10 +72,6 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
 
     @Override
     public ReturnResult beforeCheckin(@Nullable CommitExecutor executor, PairConsumer<Object, Object> additionalDataConsumer) {
-      if (emptyCommitMessage()) {
-        return ReturnResult.CANCEL;
-      }
-
       if (commitOrCommitAndPush(executor)) {
         ReturnResult result = checkGitVersionAndEnv();
         if (result != ReturnResult.COMMIT) {
@@ -271,15 +267,6 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       String name = GitConfigUtil.getValue(project, root, GitConfigUtil.USER_NAME);
       String email = GitConfigUtil.getValue(project, root, GitConfigUtil.USER_EMAIL);
       return Couple.of(name, email);
-    }
-
-    private boolean emptyCommitMessage() {
-      if (myPanel.getCommitMessage().trim().isEmpty()) {
-        Messages.showMessageDialog(myPanel.getComponent(), GitBundle.message("git.commit.message.empty"),
-                                   GitBundle.message("git.commit.message.empty.title"), Messages.getErrorIcon());
-        return true;
-      }
-      return false;
     }
 
     private ReturnResult warnAboutDetachedHeadIfNeeded() {
