@@ -839,6 +839,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 runTest("testData/formatter/EnumWrapping.after.kt");
             }
 
+            @TestMetadata("ExpressionBodiesAlign.after.kt")
+            public void testExpressionBodiesAlign() throws Exception {
+                runTest("testData/formatter/ExpressionBodiesAlign.after.kt");
+            }
+
             @TestMetadata("ExpressionBodyWrap.after.kt")
             public void testExpressionBodyWrap() throws Exception {
                 runTest("testData/formatter/ExpressionBodyWrap.after.kt");

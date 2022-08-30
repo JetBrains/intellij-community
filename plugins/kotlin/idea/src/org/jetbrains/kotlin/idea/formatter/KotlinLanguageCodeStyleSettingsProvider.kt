@@ -271,6 +271,12 @@ class KotlinLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvide
                     KotlinBundle.message("formatter.title.use.continuation.indent.in.conditions"),
                     codeStyleSettingsCustomizableOptions.WRAPPING_IF_STATEMENT
                 )
+
+                showCustomOption(
+                    KotlinCodeStyleSettings::ALIGN_IN_COLUMNS_EXPRESSION_BODIES,
+                    KotlinBundle.message("formatter.title.align.expression.bodies.in.columns"),
+                    KotlinBundle.message("formatter.title.expression.body.functions")
+                )
             }
             SettingsType.BLANK_LINES_SETTINGS -> {
                 consumer.showStandardOptions(
@@ -345,6 +351,10 @@ class KotlinLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvide
                            println("> 0")
                        }
                    }
+                   
+                   fun one() = 1
+                   fun two() = 2
+                   fun three() = 2
                }
 
                @Deprecated val bar = 1

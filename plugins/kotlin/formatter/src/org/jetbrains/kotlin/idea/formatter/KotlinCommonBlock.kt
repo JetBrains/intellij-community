@@ -7,6 +7,7 @@ import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.TokenType
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
@@ -414,6 +415,12 @@ abstract class KotlinCommonBlock(
                 getAlignmentForCaseBranch(kotlinCustomSettings.ALIGN_IN_COLUMNS_CASE_BRANCH)
 
             parentType === WHEN_ENTRY ->
+                alignmentStrategy
+
+            parentType === CLASS_BODY ->
+                getAlignmentForExpressionFunctions(kotlinCustomSettings.ALIGN_IN_COLUMNS_EXPRESSION_BODIES)
+
+            parentType === FUN ->
                 alignmentStrategy
 
             parentType in BINARY_EXPRESSIONS && getOperationType(node) in ALIGN_FOR_BINARY_OPERATIONS ->
@@ -1007,7 +1014,17 @@ private val INDENT_RULES = arrayOf(
 
     strategy("Indent for parts")
         .within(PROPERTY, FUN, DESTRUCTURING_DECLARATION, SECONDARY_CONSTRUCTOR)
-        .notForType(BLOCK, FUN_KEYWORD, VAL_KEYWORD, VAR_KEYWORD, CONSTRUCTOR_KEYWORD, RPAR, EOL_COMMENT, CONTEXT_RECEIVER_LIST, MODIFIER_LIST)
+        .notForType(
+            BLOCK,
+            FUN_KEYWORD,
+            VAL_KEYWORD,
+            VAR_KEYWORD,
+            CONSTRUCTOR_KEYWORD,
+            RPAR,
+            EOL_COMMENT,
+            CONTEXT_RECEIVER_LIST,
+            MODIFIER_LIST
+        )
         .set(Indent.getContinuationWithoutFirstIndent()),
 
     strategy("Chained calls")
@@ -1117,6 +1134,41 @@ private fun ASTNode.suppressBinaryExpressionIndent(): Boolean {
     }
 
     return psi.parent?.node?.elementType == CONDITION || psi.operationToken == ELVIS
+}
+
+private fun getAlignmentForExpressionFunctions(shouldAlignChild: Boolean) = object : CommonAlignmentStrategy() {
+    private var bodyAlignment = if (shouldAlignChild) Alignment.createAlignment(true) else null
+
+    override fun getAlignment(node: ASTNode): Alignment? {
+        val func = node.treeParent
+        val beforeFun = func.treePrev
+        val afterAssign = node.treeNext
+        val beforeAssign = node.treePrev
+
+        if (node.elementType != EQ || func.elementType != FUN) {
+            return null
+        }
+
+        val needNewGroup = moreNlsThan(afterAssign, 0) ||
+                moreNlsThan(beforeAssign, 0) ||
+                moreNlsThan(beforeFun, 1)
+
+        if (needNewGroup) {
+            bodyAlignment = if (shouldAlignChild) Alignment.createAlignment(true) else null
+        }
+
+        return bodyAlignment
+    }
+
+    private fun moreNlsThan(nextNode: ASTNode?, maxCount: Int): Boolean {
+        if (nextNode != null && nextNode.psi is PsiWhiteSpace) {
+            val countNls = nextNode.text.count { it == '\n' }
+            if (countNls > maxCount) {
+                return true
+            }
+        }
+        return false
+    }
 }
 
 private fun getAlignmentForChildInParenthesis(
