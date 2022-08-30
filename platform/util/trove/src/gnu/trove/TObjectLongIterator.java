@@ -102,7 +102,7 @@ public final class TObjectLongIterator<K> extends TIterator {
    * @return an <code>int</code> value
    */
   @Override
-  protected final int nextIndex() {
+  protected int nextIndex() {
     if (_expectedSize != _hash.size()) {
       throw new ConcurrentModificationException();
     }

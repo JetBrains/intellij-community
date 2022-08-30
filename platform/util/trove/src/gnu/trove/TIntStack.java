@@ -47,8 +47,6 @@ public final class TIntStack {
 
   /**
    * Copy constructor.
-   *
-   * @param copy
    */
   public TIntStack(TIntStack copy) {
     _list = new TIntArrayList(copy._list.toNativeArray());

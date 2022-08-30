@@ -109,7 +109,7 @@ public final class TIntObjectIterator<V> extends TIterator {
    *                                         size has been modified since the iterator was created.
    */
   @Override
-  protected final int nextIndex() {
+  protected int nextIndex() {
     if (_expectedSize != _map.size()) {
       throw new ConcurrentModificationException();
     }

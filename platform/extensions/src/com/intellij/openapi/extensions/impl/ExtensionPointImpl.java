@@ -705,12 +705,12 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
 
     List<ExtensionComponentAdapter> finalRemovedAdapters = removedAdapters;
     if (!priorityListeners.isEmpty()) {
-      priorityListenerCallbacks.add((Runnable)() ->
+      priorityListenerCallbacks.add(() ->
         notifyListeners(true, finalRemovedAdapters, priorityListeners.toArray(ExtensionPointListener.Companion.emptyArray()))
       );
     }
     if (!regularListeners.isEmpty()) {
-      listenerCallbacks.add((Runnable)() ->
+      listenerCallbacks.add(() ->
         notifyListeners(true, finalRemovedAdapters, regularListeners.toArray(ExtensionPointListener.Companion.emptyArray()))
       );
     }
