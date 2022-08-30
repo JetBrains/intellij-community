@@ -147,8 +147,7 @@ fun signMacApp(
       if (publishAppArchive) {
         downloadResult(remoteFile = "$remoteDir/${appArchiveFile.fileName}",
                        localFile = appArchiveFile,
-                       ftpClient = sftp,
-                       failedToSign = null)
+                       ftpClient = sftp)
       }
     }
 
@@ -168,8 +167,7 @@ fun signMacApp(
                     taskLogClassifier = "dmg")
         downloadResult(remoteFile = "$remoteDir/${dmgFile.fileName}",
                        localFile = dmgFile,
-                       ftpClient = sftp,
-                       failedToSign = null)
+                       ftpClient = sftp)
 
         artifactBuilt.accept(dmgFile)
       }
@@ -267,8 +265,7 @@ private fun InputStream.writeEachLineTo(vararg outputStreams: OutputStream, chan
 
 private fun downloadResult(remoteFile: String,
                            localFile: Path,
-                           ftpClient: SFTPClient,
-                           failedToSign: MutableList<Path>?) {
+                           ftpClient: SFTPClient) {
   tracer.spanBuilder("download file")
     .setAttribute("remoteFile", remoteFile)
     .setAttribute("localFile", localFile.toString())
@@ -276,44 +273,23 @@ private fun downloadResult(remoteFile: String,
       val localFileParent = localFile.parent
       val tempFile = localFileParent.resolve("${localFile.fileName}.download")
       Files.createDirectories(localFileParent)
-      var attempt = 1
-      do {
-        try {
-          Files.deleteIfExists(tempFile)
-          Files.createFile(tempFile)
-          ftpClient.get(remoteFile, NioFileDestination(tempFile))
-        }
-        catch (e: Exception) {
-          span.addEvent("cannot download $remoteFile", Attributes.of(
+      retryWithExponentialBackOff(action = { attempt ->
+        Files.deleteIfExists(tempFile)
+        Files.createFile(tempFile)
+        ftpClient.get(remoteFile, NioFileDestination(tempFile))
+        if (attempt != 1) {
+          span.addEvent("file was downloaded", Attributes.of(
             AttributeKey.longKey("attemptNumber"), attempt.toLong(),
-            AttributeKey.stringKey("error"), e.toString(),
-            AttributeKey.stringKey("remoteFile"), remoteFile,
           ))
-          attempt++
-          if (attempt > 3) {
-            Files.deleteIfExists(tempFile)
-            if (failedToSign == null) {
-              throw RuntimeException("Failed to sign file: $localFile")
-            }
-            else {
-              failedToSign.add(localFile)
-            }
-            return
-          }
-          else {
-            continue
-          }
         }
-
-        break
-      }
-      while (true)
-
-      if (attempt != 1) {
-        span.addEvent("file was downloaded", Attributes.of(
+      }, onException = { attempt, e ->
+        span.addEvent("cannot download $remoteFile", Attributes.of(
           AttributeKey.longKey("attemptNumber"), attempt.toLong(),
+          AttributeKey.stringKey("error"), e.toString(),
+          AttributeKey.stringKey("remoteFile"), remoteFile,
         ))
-      }
+        Files.deleteIfExists(tempFile)
+      })
       Files.move(tempFile, localFile, StandardCopyOption.REPLACE_EXISTING)
     }
 }
@@ -368,23 +344,14 @@ private inline fun executeTask(host: String,
   SSHClient(config).use { ssh ->
     ssh.addHostKeyVerifier(PromiscuousVerifier())
     tracer.spanBuilder("connecting to $host").use { span ->
-      var attempt = 1
-      do {
-        try {
-          ssh.connect(host)
-          break
-        }
-        catch (e: Exception) {
-          span.addEvent("cannot connect to $host", Attributes.of(
-            AttributeKey.longKey("attemptNumber"), attempt.toLong(),
-            AttributeKey.stringKey("error"), e.toString()
-          ))
-          attempt++
-          if (attempt > 3) throw e
-          continue
-        }
-      }
-      while (true)
+      retryWithExponentialBackOff(action = {
+        ssh.connect(host)
+      }, onException = { attempt, e ->
+        span.addEvent("cannot connect to $host", Attributes.of(
+          AttributeKey.longKey("attemptNumber"), attempt.toLong(),
+          AttributeKey.stringKey("error"), e.toString()
+        ))
+      })
     }
     val passwordFinder = object : PasswordFinder {
       override fun reqPassword(resource: Resource<*>?) = password.toCharArray().clone()
