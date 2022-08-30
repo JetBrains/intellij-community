@@ -22,7 +22,7 @@ private val LOG get() = logger<OnDemandPluginFeatureEnablerImpl>()
 private class OnDemandPluginFeatureEnablerImpl(private val project: Project) : PluginFeatureEnabler,
                                                                                Disposable {
 
-  private val coroutineScope = CoroutineScope(Job())
+  private val coroutineScope = CoroutineScope(SupervisorJob())
 
   override suspend fun enableSuggested(): Boolean {
     val application = ApplicationManager.getApplication()

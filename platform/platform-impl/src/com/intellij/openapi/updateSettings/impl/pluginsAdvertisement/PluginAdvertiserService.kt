@@ -36,7 +36,7 @@ open class PluginAdvertiserService(private val project: Project) : Disposable {
     fun getInstance(project: Project): PluginAdvertiserService = project.service()
   }
 
-  private val coroutineScope = CoroutineScope(Job())
+  private val coroutineScope = CoroutineScope(SupervisorJob())
 
   open suspend fun run(
     customPlugins: List<PluginNode>,
