@@ -15,6 +15,7 @@ abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
     productLayout.mainJarName = "pycharm.jar"
     productLayout.withAdditionalPlatformJar("testFramework.jar",
                                             "intellij.platform.testFramework.core",
+                                            "intellij.platform.testFramework.impl",
                                             "intellij.platform.testFramework.common",
                                             "intellij.platform.testFramework.junit5",
                                             "intellij.platform.testFramework",

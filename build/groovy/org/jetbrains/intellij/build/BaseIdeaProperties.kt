@@ -148,6 +148,7 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
       for (moduleName in listOf(
         "intellij.java.testFramework",
         "intellij.platform.testFramework.core",
+        "intellij.platform.testFramework.impl",
         "intellij.platform.testFramework.common",
         "intellij.platform.testFramework.junit5",
         "intellij.platform.testFramework",
