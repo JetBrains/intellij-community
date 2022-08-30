@@ -16,8 +16,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class DumbServiceMergingTaskQueue<T extends MergeableQueueTask<T>> {
-  private static final Logger LOG = Logger.getInstance(DumbServiceMergingTaskQueue.class);
+public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
+  private static final Logger LOG = Logger.getInstance(MergingTaskQueue.class);
   private static final ExtensionPointName<DumbServiceInitializationCondition> DUMB_SERVICE_INITIALIZATION_CONDITION_EXTENSION_POINT_NAME =
     ExtensionPointName.create("com.intellij.dumbServiceInitializationCondition");
 
