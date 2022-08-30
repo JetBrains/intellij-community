@@ -27,7 +27,7 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
   /**
    * Disposes tasks, cancel underlying progress indicators, clears tasks queue
    */
-  void disposePendingTasks() {
+  public void disposePendingTasks() {
     List<T> disposeQueue;
     List<ProgressIndicatorEx> indicatorsQueue;
     synchronized (myLock) {
@@ -44,7 +44,7 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
     disposeSafe(disposeQueue);
   }
 
-  void cancelAllTasks() {
+  public void cancelAllTasks() {
     List<ProgressIndicatorEx> tasks;
     synchronized (myLock) {
       tasks = new ArrayList<>(myProgresses.values());
@@ -179,7 +179,7 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
     }
   }
 
-  static class QueuedTask<T extends MergeableQueueTask<T>> implements AutoCloseable {
+  public static class QueuedTask<T extends MergeableQueueTask<T>> implements AutoCloseable {
     private final T myTask;
     private final ProgressIndicatorEx myIndicator;
 
@@ -194,15 +194,15 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
     }
 
     @NotNull
-    ProgressIndicatorEx getIndicator() {
+    public ProgressIndicatorEx getIndicator() {
       return myIndicator;
     }
 
-    void executeTask() {
+    public void executeTask() {
       executeTask(null);
     }
 
-    void executeTask(@Nullable ProgressIndicator customIndicator) {
+    public void executeTask(@Nullable ProgressIndicator customIndicator) {
       //this is the cancellation check
       myIndicator.checkCanceled();
       myIndicator.setIndeterminate(true);
