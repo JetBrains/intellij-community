@@ -195,7 +195,7 @@ fun CoroutineScope.startApplication(args: List<String>,
     updateFrameClassAndWindowIconAndPreloadSystemFonts(initLafJob)
   }
 
-  if (java.lang.Boolean.getBoolean("idea.enable.coroutine.dump")) {
+  if (System.getProperty("idea.enable.coroutine.dump", "true").toBoolean()) {
     launch(CoroutineName("coroutine debug probes init")) {
       enableCoroutineDump()
     }
