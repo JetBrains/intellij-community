@@ -7,7 +7,7 @@ public abstract class MyClass {
     public final fun getNonConstructorProperty() : java.lang.String = UastEmptyExpression
     public final fun getFirstConstructorProperty() : int = UastEmptyExpression
     public final fun getSecondConstructorProperty() : boolean = UastEmptyExpression
-    private fun MyClass(@org.jetbrains.annotations.NotNull firstConstructorProperty: int, @org.jetbrains.annotations.NotNull secondConstructorProperty: boolean) = UastEmptyExpression
+    protected fun MyClass(@org.jetbrains.annotations.NotNull firstConstructorProperty: int, @org.jetbrains.annotations.NotNull secondConstructorProperty: boolean) = UastEmptyExpression
 }
 
 public final class MyDataClass {
