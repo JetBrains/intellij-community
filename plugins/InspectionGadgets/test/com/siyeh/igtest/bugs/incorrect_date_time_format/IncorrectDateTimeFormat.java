@@ -1,11 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 import java.time.format.DateTimeFormatter;
 
 class Test {
   public static final String TT = "T" + "T";
+  public static final String WITH_QUOTE = "'T''";
 
   void test(boolean b) {
     DateTimeFormatter.ofPattern(<warning descr="Unsupported token: 'TT'">TT</warning>);
+    DateTimeFormatter.ofPattern(<warning descr="Character without a pair: '''">WITH_QUOTE</warning>);
     DateTimeFormatter.ofPattern("<warning descr="Unsupported token: 'bb'">bb</warning>");
     DateTimeFormatter.ofPattern("<warning descr="Unsupported token: 'b'">b</warning>");
     DateTimeFormatter.ofPattern("<warning descr="Unsupported token: 'bb'">bb</warning>-");
@@ -31,6 +32,7 @@ class Test {
     DateTimeFormatter.ofPattern("dd-MM-yyyy<warning descr="Unsupported token: '#'">#</warning>a");
     DateTimeFormatter.ofPattern("dd-MM'QQQ'-yyyy");
     DateTimeFormatter.ofPattern("dd-MM'QQQ'MMMMM-yyyy");
+    DateTimeFormatter.ofPattern("\u6F22");
 
     DateTimeFormatter.ofPattern("<warning descr="Unsupported token: '{'">{</warning>");
     DateTimeFormatter.ofPattern("<warning descr="Unsupported token: '}'">}</warning>");
@@ -44,11 +46,13 @@ class Test {
     DateTimeFormatter.ofPattern("pppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppppMMpM");
     DateTimeFormatter.ofPattern("p<warning descr="Unsupported token: 'TT'">TT</warning>");
 
-    DateTimeFormatter.ofPattern(<warning descr="Character without a pair: ']'">"[MMMMM[MMMMM[MMMMM]MMMMM[MMMMM]MMMMM]MMMMM]MMMMM]"</warning>);
+    DateTimeFormatter.ofPattern("[MMMMM[MMMMM[MMMMM]MMMMM[MMMMM]MMMMM]MMMMM]MMMMM<warning descr="Character without a pair: ']'">]</warning>");
     DateTimeFormatter.ofPattern("[MMMMM[MMMMM[MMMMM]MMMMM[MMMMM]MMMMM]");
     DateTimeFormatter.ofPattern("[[[");
     DateTimeFormatter.ofPattern("[[[]");
-    DateTimeFormatter.ofPattern(<warning descr="Character without a pair: ']'">"[[[]]]]"</warning>);
+    DateTimeFormatter.ofPattern("<warning descr="Character without a pair: ']'">]</warning>[");
+    DateTimeFormatter.ofPattern("<warning descr="Character without a pair: ']'">]</warning><warning descr="Character without a pair: ']'">]</warning><warning descr="Character without a pair: ']'">]</warning>[]<warning descr="Character without a pair: ']'">]</warning>[]");
+    DateTimeFormatter.ofPattern("[[[]]]<warning descr="Character without a pair: ']'">]</warning>");
 
     DateTimeFormatter.ofPattern("GGGGG");
     DateTimeFormatter.ofPattern("<warning descr="Unsupported token: 'GGGGGG'">GGGGGG</warning>");
