@@ -34,15 +34,7 @@ public class CutHandler extends EditorWriteActionHandler {
   public void executeWriteAction(final @NotNull Editor editor, Caret caret, DataContext dataContext) {
     assert caret == null : "Invocation of 'cut' operation for specific caret is not supported";
     Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getContentComponent()));
-    if (project == null) {
-      if (myOriginalHandler != null) {
-        myOriginalHandler.execute(editor, null, dataContext);
-      }
-      return;
-    }
-
-    final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-
+    PsiFile file = project == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (file == null) {
       if (myOriginalHandler != null) {
         myOriginalHandler.execute(editor, null, dataContext);

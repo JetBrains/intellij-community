@@ -67,26 +67,16 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     if (transferable == null) return;
 
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
-
-    final Document document = editor.getDocument();
-    if (!EditorModificationUtil.requestWriting(editor)) {
-      return;
-    }
+    if (!EditorModificationUtil.requestWriting(editor)) return;
 
     DataContext context = dataId -> {
       return PasteAction.TRANSFERABLE_PROVIDER.is(dataId) ? (Producer<Transferable>)() -> transferable : dataContext.getData(dataId);
     };
 
     final Project project = editor.getProject();
-    if (project == null || editor.isColumnMode() || editor.getCaretModel().getCaretCount() > 1) {
-      if (myOriginalHandler != null) {
-        myOriginalHandler.execute(editor, null, context);
-      }
-      return;
-    }
-
-    final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    if (file == null) {
+    final Document document = editor.getDocument();
+    final PsiFile file = project == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(document);
+    if (file == null || editor.isColumnMode() || editor.getCaretModel().getCaretCount() > 1) {
       if (myOriginalHandler != null) {
         myOriginalHandler.execute(editor, null, context);
       }

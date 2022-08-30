@@ -50,15 +50,8 @@ public class EndHandler extends EditorActionHandler.ForEachCaret {
     }
 
     final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
-    if (project == null) {
-      if (myOriginalHandler != null) {
-        myOriginalHandler.execute(editor, caret, dataContext);
-      }
-      return;
-    }
     final Document document = editor.getDocument();
-    final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-
+    final PsiFile file = project == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) {
       if (myOriginalHandler != null){
         myOriginalHandler.execute(editor, caret, dataContext);

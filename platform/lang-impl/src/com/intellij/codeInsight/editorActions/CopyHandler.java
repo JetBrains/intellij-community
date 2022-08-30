@@ -49,13 +49,7 @@ public class CopyHandler extends EditorActionHandler implements CopyAction.Trans
   public void doExecute(@NotNull final Editor editor, Caret caret, final DataContext dataContext) {
     assert caret == null : "Invocation of 'copy' operation for specific caret is not supported";
     final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
-    if (project == null){
-      if (myOriginalAction != null){
-        myOriginalAction.execute(editor, null, dataContext);
-      }
-      return;
-    }
-    final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    final PsiFile file = project == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (file == null) {
       if (myOriginalAction != null) {
         myOriginalAction.execute(editor, null, dataContext);
