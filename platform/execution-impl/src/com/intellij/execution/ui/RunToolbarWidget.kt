@@ -23,7 +23,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.ex.InlineActionsHolder
 import com.intellij.openapi.components.*
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
@@ -38,8 +38,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
-import com.intellij.ui.components.JBPanel
-import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.popup.PopupState
 import com.intellij.ui.popup.list.ListPopupImpl
@@ -85,28 +83,6 @@ internal class RunToolbarWidgetCustomizableActionGroupProvider : CustomizableAct
       registrar?.addCustomizableActionGroup(RUN_TOOLBAR_WIDGET_GROUP, ExecutionBundle.message("run.toolbar.widget.customizable.group.name"))
     }
   }
-}
-
-internal class RunToolbarWidget(val project: Project) : JBPanel<RunToolbarWidget>(VerticalLayout(0)) {
-  init {
-    isOpaque = false
-    add(createRunActionToolbar().component.apply {
-      isOpaque = false
-    }, VerticalLayout.CENTER)
-  }
-
-  private fun createRunActionToolbar(): ActionToolbar {
-  val actionGroup = CustomActionsSchema.getInstance().getCorrectedAction(RUN_TOOLBAR_WIDGET_GROUP) as ActionGroup
-  return ActionManager.getInstance().createActionToolbar(
-    ActionPlaces.MAIN_TOOLBAR,
-    actionGroup,
-    true
-  ).apply {
-    targetComponent = null
-    setReservePlaceAutoPopupIcon(false)
-    layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
-  }
-}
 }
 
 internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), CustomComponentAction, DumbAware {
@@ -839,7 +815,7 @@ private class ExecutionReasonableHistoryManager : StartupActivity.DumbAware {
           runManager.selectedConfiguration = conf
         }
         ActivityTracker.getInstance().inc()
-      } ?: logger<RunToolbarWidget>().warn(
+      } ?: thisLogger().warn(
         "Cannot find persisted configuration of '${env.runnerAndConfigurationSettings}'." +
         "It won't be saved in the run history."
       )
