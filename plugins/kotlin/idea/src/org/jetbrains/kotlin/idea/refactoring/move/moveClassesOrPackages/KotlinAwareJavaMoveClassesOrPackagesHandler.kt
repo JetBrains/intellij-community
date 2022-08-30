@@ -1,16 +1,23 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.move.moveClassesOrPackages
 
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
 import com.intellij.refactoring.move.MoveCallback
 import com.intellij.refactoring.move.moveClassesOrPackages.JavaMoveClassesOrPackagesHandler
 
 class KotlinAwareJavaMoveClassesOrPackagesHandler : JavaMoveClassesOrPackagesHandler() {
     override fun createMoveClassesOrPackagesToNewDirectoryDialog(
         directory: PsiDirectory,
-        elementsToMove: Array<out PsiElement>,
+        elementsToMove: Array<PsiElement>,
         moveCallback: MoveCallback?
     ) = KotlinAwareMoveClassesOrPackagesToNewDirectoryDialog(directory, elementsToMove, moveCallback)
+
+    override fun canMove(elements: Array<PsiElement>, targetContainer: PsiElement?, reference: PsiReference?): Boolean {
+        return elements.isNotEmpty() && elements.all(::isPackageOrDirectory)
+    }
+
+    override fun isValidTarget(psiElement: PsiElement?, sources: Array<PsiElement>): Boolean = isPackageOrDirectory(psiElement)
 }
