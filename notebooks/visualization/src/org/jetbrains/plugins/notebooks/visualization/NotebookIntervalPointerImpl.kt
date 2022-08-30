@@ -43,9 +43,9 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
       require(mySavedChanges == null) { "NotebookIntervalPointerFactory hints already added somewhere" }
       mySavedChanges = changes
       return modifyDocumentAction().also {
-        if (mySavedChanges != null) {
+        mySavedChanges?.let {
           val eventBuilder = NotebookIntervalPointersEventBuilder()
-          applySavedChanges(eventBuilder)
+          applyChanges(it, eventBuilder)
           eventBuilder.applyEvent(changeListeners, cellLinesEvent = null)
         }
       }
@@ -55,13 +55,17 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
     }
   }
 
-  override fun documentChanged(e: NotebookCellLinesEvent) {
+  override fun documentChanged(event: NotebookCellLinesEvent) {
     val eventBuilder = NotebookIntervalPointersEventBuilder()
 
-    updateIntervals(e, eventBuilder)
-    applySavedChanges(eventBuilder)
+    updateIntervals(event, eventBuilder)
 
-    eventBuilder.applyEvent(changeListeners, e)
+    mySavedChanges?.let {
+      applyChanges(it, eventBuilder)
+      mySavedChanges = null
+    }
+
+    eventBuilder.applyEvent(changeListeners, event)
   }
 
   private fun updateIntervals(e: NotebookCellLinesEvent, eventBuilder: NotebookIntervalPointersEventBuilder) {
@@ -101,18 +105,17 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
     updatePointersFrom(invalidPointersStart)
   }
 
-  private fun applySavedChanges(eventBuilder: NotebookIntervalPointersEventBuilder) {
-    mySavedChanges?.forEach { hint ->
+  private fun applyChanges(changes: Iterable<NotebookIntervalPointerFactory.Change>, eventBuilder: NotebookIntervalPointersEventBuilder) {
+    for(hint in changes) {
       when (hint) {
-        is NotebookIntervalPointerFactory.Invalidate -> applySavedChange(eventBuilder, hint)
-        is NotebookIntervalPointerFactory.Swap -> applySavedChange(eventBuilder, hint)
+        is NotebookIntervalPointerFactory.Invalidate -> applyChange(eventBuilder, hint)
+        is NotebookIntervalPointerFactory.Swap -> applyChange(eventBuilder, hint)
       }
     }
-    mySavedChanges = null
   }
 
-  private fun applySavedChange(eventBuilder: NotebookIntervalPointersEventBuilder,
-                               hint: NotebookIntervalPointerFactory.Invalidate) {
+  private fun applyChange(eventBuilder: NotebookIntervalPointersEventBuilder,
+                          hint: NotebookIntervalPointerFactory.Invalidate) {
     val ptr = hint.ptr as NotebookIntervalPointerImpl
     val interval = ptr.interval
     if (interval == null) return
@@ -122,8 +125,8 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
     eventBuilder.onInserted(interval)
   }
 
-  private fun applySavedChange(eventBuilder: NotebookIntervalPointersEventBuilder,
-                               hint: NotebookIntervalPointerFactory.Swap) {
+  private fun applyChange(eventBuilder: NotebookIntervalPointersEventBuilder,
+                          hint: NotebookIntervalPointerFactory.Swap) {
     val success = trySwapPointers(eventBuilder, hint)
   }
 
