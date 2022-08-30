@@ -5,7 +5,6 @@ import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Disposer;
@@ -14,12 +13,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
   private static final Logger LOG = Logger.getInstance(MergingTaskQueue.class);
-  private static final ExtensionPointName<DumbServiceInitializationCondition> DUMB_SERVICE_INITIALIZATION_CONDITION_EXTENSION_POINT_NAME =
-    ExtensionPointName.create("com.intellij.dumbServiceInitializationCondition");
 
   private final Object myLock = new Object();
   //does not include a running task
@@ -27,8 +23,6 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
 
   //includes running tasks too
   private final Map<T, ProgressIndicatorBase> myProgresses = new HashMap<>();
-
-  private final AtomicBoolean myFirstExecution = new AtomicBoolean(true);
 
   /**
    * Disposes tasks, cancel underlying progress indicators, clears tasks queue
@@ -113,7 +107,7 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
   }
 
   @Nullable
-  public QueuedDumbModeTask extractNextTask() {
+  public MergingTaskQueue.QueuedTask<T> extractNextTask() {
     List<Disposable> disposeQueue = new ArrayList<>(1);
 
     try {
@@ -130,12 +124,17 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
             continue;
           }
 
-          return new QueuedDumbModeTask(task, indicator);
+          return wrapTask(task, indicator);
         }
       }
-    } finally {
+    }
+    finally {
       disposeSafe(disposeQueue);
     }
+  }
+
+  protected MergingTaskQueue.QueuedTask<T> wrapTask(T task, ProgressIndicatorBase indicator) {
+    return new QueuedTask<>(task, indicator);
   }
 
   private static void disposeSafe(@NotNull Collection<? extends Disposable> tasks) {
@@ -149,7 +148,8 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
       if (Disposer.isDisposed(task)) return;
 
       Disposer.dispose(task);
-    } catch (Throwable t) {
+    }
+    catch (Throwable t) {
       if (!(t instanceof ControlFlowException)) {
         LOG.warn("Failed to dispose DumbModeTask: " + t.getMessage(), t);
       }
@@ -173,11 +173,11 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
     }
   }
 
-  class QueuedDumbModeTask implements AutoCloseable {
+  static class QueuedTask<T extends MergeableQueueTask<T>> implements AutoCloseable {
     private final T myTask;
     private final ProgressIndicatorEx myIndicator;
 
-    QueuedDumbModeTask(@NotNull T task, @NotNull ProgressIndicatorEx progress) {
+    QueuedTask(@NotNull T task, @NotNull ProgressIndicatorEx progress) {
       myTask = task;
       myIndicator = progress;
     }
@@ -208,25 +208,20 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
         customIndicator.checkCanceled();
       }
 
-      waitRequiredTasksToStartIndexing();
+      beforeTask();
       myTask.perform(customIndicator);
-    }
-
-    void registerStageStarted(@NotNull StructuredIdeActivity activity) {
-      activity.stageStarted(IndexingStatisticsCollector.INDEXING_STAGE,
-                            () -> Collections.singletonList(IndexingStatisticsCollector.STAGE_CLASS.with(myTask.getClass())));
     }
 
     String getInfoString() {
       return String.valueOf(myTask);
     }
-  }
 
-  private void waitRequiredTasksToStartIndexing() {
-    if (myFirstExecution.compareAndSet(true, false)) {
-      for (DumbServiceInitializationCondition condition : DUMB_SERVICE_INITIALIZATION_CONDITION_EXTENSION_POINT_NAME.getExtensionList()) {
-        condition.waitForInitialization();
-      }
+    protected T getTask() {
+      return myTask;
+    }
+
+    public void beforeTask() {
+
     }
   }
 }
