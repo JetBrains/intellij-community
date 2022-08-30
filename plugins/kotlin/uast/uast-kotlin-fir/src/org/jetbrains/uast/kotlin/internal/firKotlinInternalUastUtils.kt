@@ -201,6 +201,10 @@ internal fun KtAnalysisSession.nullability(ktCallableDeclaration: KtCallableDecl
     return nullability(ktType)
 }
 
+internal fun KtAnalysisSession.nullability(ktDeclaration: KtDeclaration): TypeNullability? {
+    return nullability(ktDeclaration.getReturnKtType())
+}
+
 internal fun KtAnalysisSession.nullability(ktExpression: KtExpression): TypeNullability? {
     return nullability(ktExpression.getKtType())
 }

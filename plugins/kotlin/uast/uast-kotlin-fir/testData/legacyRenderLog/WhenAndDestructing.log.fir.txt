@@ -27,7 +27,7 @@ UFile (package = )
                             UExpressionList (when_entry)
                                 UDeclarationsExpression
                                     ULocalVariable (name = var837f2350)
-                                        UAnnotation (fqName = null)
+                                        UAnnotation (fqName = org.jetbrains.annotations.NotNull)
                                         USimpleNameReferenceExpression (identifier = arr)
                                     ULocalVariable (name = bindingContext)
                                         UAnnotation (fqName = org.jetbrains.annotations.NotNull)

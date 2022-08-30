@@ -4,9 +4,9 @@ UFile (package = ) [public final class DestructuringDeclarationKt {...]
             UParameter (name = data) [@org.jetbrains.annotations.NotNull var data: java.lang.Object]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UBlockExpression [{...}] : PsiType:void
-                UDeclarationsExpression [@null var var268d41a5: kotlin.Pair<? extends java.lang.String,? extends java.lang.Integer> = "foo" <other> 1...@org.jetbrains.annotations.NotNull var b: int = var268d41a5.<anonymous class>()]
-                    ULocalVariable (name = var268d41a5) [@null var var268d41a5: kotlin.Pair<? extends java.lang.String,? extends java.lang.Integer> = "foo" <other> 1]
-                        UAnnotation (fqName = null) [@null]
+                UDeclarationsExpression [@org.jetbrains.annotations.NotNull var var268d41a5: kotlin.Pair<? extends java.lang.String,? extends java.lang.Integer> = "foo" <other> 1...@org.jetbrains.annotations.NotNull var b: int = var268d41a5.<anonymous class>()]
+                    ULocalVariable (name = var268d41a5) [@org.jetbrains.annotations.NotNull var var268d41a5: kotlin.Pair<? extends java.lang.String,? extends java.lang.Integer> = "foo" <other> 1]
+                        UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                         UBinaryExpression (operator = <other>) ["foo" <other> 1] : PsiType:Pair<? extends String, ? extends Integer>
                             ULiteralExpression (value = "foo") ["foo"] : PsiType:String
                             ULiteralExpression (value = 1) [1] : PsiType:int
@@ -24,9 +24,9 @@ UFile (package = ) [public final class DestructuringDeclarationKt {...]
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] : PsiType:<ErrorType>
                                 UIdentifier (Identifier (component2)) [UIdentifier (Identifier (component2))]
                                 USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] : PsiType:<ErrorType>
-                UDeclarationsExpression [@null @kotlin.Suppress(names = "UNCHECKED_CAST") var var465978a0: kotlin.Pair<? extends java.lang.String,? extends java.lang.String> = data as kotlin.Pair<? extends java.lang.String,? extends java.lang.String>...@org.jetbrains.annotations.NotNull var v: java.lang.String = var465978a0.<anonymous class>()]
-                    ULocalVariable (name = var465978a0) [@null @kotlin.Suppress(names = "UNCHECKED_CAST") var var465978a0: kotlin.Pair<? extends java.lang.String,? extends java.lang.String> = data as kotlin.Pair<? extends java.lang.String,? extends java.lang.String>]
-                        UAnnotation (fqName = null) [@null]
+                UDeclarationsExpression [@org.jetbrains.annotations.NotNull @kotlin.Suppress(names = "UNCHECKED_CAST") var var465978a0: kotlin.Pair<? extends java.lang.String,? extends java.lang.String> = data as kotlin.Pair<? extends java.lang.String,? extends java.lang.String>...@org.jetbrains.annotations.NotNull var v: java.lang.String = var465978a0.<anonymous class>()]
+                    ULocalVariable (name = var465978a0) [@org.jetbrains.annotations.NotNull @kotlin.Suppress(names = "UNCHECKED_CAST") var var465978a0: kotlin.Pair<? extends java.lang.String,? extends java.lang.String> = data as kotlin.Pair<? extends java.lang.String,? extends java.lang.String>]
+                        UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                         UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress(names = "UNCHECKED_CAST")]
                             UNamedExpression (name = names) [names = "UNCHECKED_CAST"]
                                 ULiteralExpression (value = "UNCHECKED_CAST") ["UNCHECKED_CAST"] : PsiType:String

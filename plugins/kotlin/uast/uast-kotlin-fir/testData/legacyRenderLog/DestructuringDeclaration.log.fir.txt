@@ -6,7 +6,7 @@ UFile (package = )
             UBlockExpression
                 UDeclarationsExpression
                     ULocalVariable (name = var268d41a5)
-                        UAnnotation (fqName = null)
+                        UAnnotation (fqName = org.jetbrains.annotations.NotNull)
                         UBinaryExpression (operator = <other>)
                             ULiteralExpression (value = "foo")
                             ULiteralExpression (value = 1)
@@ -26,7 +26,7 @@ UFile (package = )
                                 USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
                 UDeclarationsExpression
                     ULocalVariable (name = var465978a0)
-                        UAnnotation (fqName = null)
+                        UAnnotation (fqName = org.jetbrains.annotations.NotNull)
                         UAnnotation (fqName = kotlin.Suppress)
                             UNamedExpression (name = names)
                                 ULiteralExpression (value = "UNCHECKED_CAST")
