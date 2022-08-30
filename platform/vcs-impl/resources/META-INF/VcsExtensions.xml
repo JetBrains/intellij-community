@@ -274,7 +274,6 @@
 
     <openapi.vcs.changes.vcsPreservingExecutor implementation="com.intellij.openapi.vcs.changes.DefaultPreservingExecutor" order="last" />
 
-    <postStartupActivity implementation="com.intellij.platform.PlatformVcsDetector"/>
     <postStartupActivity implementation="com.intellij.openapi.vcs.update.RestoreUpdateTree$MyStartUpActivity"/>
     <vcsStartupActivity implementation="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl$ActivateVcsesStartupActivity"/>
     <vcsStartupActivity implementation="com.intellij.openapi.vcs.changes.ChangeListManagerImpl$MyStartupActivity"/>
