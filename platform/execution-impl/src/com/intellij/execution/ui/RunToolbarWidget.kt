@@ -81,6 +81,10 @@ private const val PROFILER: String = "Profiler"
 private const val LOADING: String = "Loading"
 private const val RESTART: String = "Restart"
 
+private val runUiColorPatcher = SVGLoader.getStrokePatcher(
+  listOf("#ffffff", "white"),
+  resultColor = JBColor.namedColor("RunWidget.iconColor", Color.WHITE))
+
 internal class RunToolbarWidgetCustomizableActionGroupProvider : CustomizableActionGroupProvider() {
   override fun registerGroups(registrar: CustomizableActionGroupRegistrar?) {
     if (ExperimentalUI.isNewUI()) {
@@ -155,14 +159,17 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
   }
 
   private fun iconFor(executorId: String): Icon {
-    return when (executorId) {
+    if (executorId == LOADING) {
+      return spinningIcon
+    }
+    val icon = when (executorId) {
       RUN -> IconManager.getInstance().getIcon("expui/run/widget/run.svg", AllIcons::class.java)
       DEBUG -> IconManager.getInstance().getIcon("expui/run/widget/debug.svg", AllIcons::class.java)
       "Coverage" -> AllIcons.General.RunWithCoverage
-      LOADING -> spinningIcon
       RESTART -> IconManager.getInstance().getIcon("expui/run/widget/restart.svg", AllIcons::class.java)
       else -> IconManager.getInstance().getIcon("expui/run/widget/run.svg", AllIcons::class.java)
     }
+    return IconLoader.colorPatchedIcon(icon, runUiColorPatcher)
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
@@ -679,19 +686,7 @@ private class RunDropDownButtonUI : BasicButtonUI() {
         paintArrow(c, g2d, popupBounds)
       }
 
-      val fg = ColorUtil.toHtmlColor(JBColor.namedColor("RunWidget.iconColor", b.foreground))
-      val map: Map<String, String> = mapOf("#ffffff" to fg, "white" to fg)
-      val alpha = HashMap<String, Int>(map.size)
-      map.values.forEach { alpha[it] = 255 }
-      SVGLoader.setContextColorPatcher(object : SVGLoader.SvgElementColorPatcherProvider {
-        override fun forPath(path: String?): SVGLoader.SvgElementColorPatcher? {
-          return SVGLoader.newPatcher(digest = null, map, alpha)
-        }
-      })
-      SVGLoader.isColorRedefinitionContext = true
       paintIcon(g2d, c, iconRect)
-      SVGLoader.isColorRedefinitionContext = false
-      SVGLoader.setContextColorPatcher(null)
       paintText(g2d, c, textRect, text)
     }
     finally {

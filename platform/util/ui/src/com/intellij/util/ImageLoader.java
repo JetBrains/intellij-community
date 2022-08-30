@@ -6,9 +6,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.ui.icons.IconLoadMeasurer;
 import com.intellij.ui.icons.ImageDescriptor;
+import com.intellij.ui.icons.LoadIconParameters;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
+import com.intellij.ui.svg.SvgCacheMapper;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.EmptyIcon;
@@ -41,10 +43,8 @@ import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -134,32 +134,34 @@ public final class ImageLoader {
     }
   }
 
+  // Some duplication here: isDark presents in parameters and in flags
   @ApiStatus.Internal
   public static @Nullable Image loadImage(@NotNull String path,
-                                          @NotNull List<? extends ImageFilter> filters,
+                                          @NotNull LoadIconParameters parameters,
                                           @Nullable Class<?> resourceClass,
                                           @Nullable ClassLoader classLoader,
                                           @MagicConstant(flagsFromClass = ImageLoader.class) int flags,
-                                          @NotNull ScaleContext scaleContext,
                                           boolean isUpScaleNeeded) {
     long start = StartUpMeasurer.getCurrentTimeIfEnabled();
 
-    List<ImageDescriptor> descriptors = createImageDescriptorList(path, flags, scaleContext);
+    List<ImageDescriptor> descriptors = createImageDescriptorList(path, flags, parameters.scaleContext);
     ImageCache imageCache = ImageCache.INSTANCE;
     boolean ioExceptionThrown = false;
     for (int i = 0; i < descriptors.size(); i++) {
       ImageDescriptor descriptor = descriptors.get(i);
       try {
         // check only for the first one, as io miss cache doesn't have scale
-        Image image = loadByDescriptor(descriptor, flags, resourceClass, classLoader, i == 0 ? imageCache.ioMissCache : null, imageCache, path);
+        Image image = loadByDescriptor(descriptor, flags, resourceClass, classLoader,
+                                       i == 0 ? imageCache.ioMissCache : null, imageCache, path, parameters.colorPatcher);
         if (image == null) {
           continue;
         }
         if (start != -1) {
           IconLoadMeasurer.addLoading(descriptor.isSvg, start);
         }
-        boolean isHiDpiNeeded = StartupUiUtil.isJreHiDPI(scaleContext);
-        return convertImage(image, filters, flags, scaleContext, isUpScaleNeeded, isHiDpiNeeded, descriptor.scale, descriptor.isSvg);
+        boolean isHiDpiNeeded = StartupUiUtil.isJreHiDPI(parameters.scaleContext);
+        return convertImage(image, parameters.filters, flags, parameters.scaleContext, isUpScaleNeeded,
+                            isHiDpiNeeded, descriptor.scale, descriptor.isSvg);
       }
       catch (IOException e) {
         ioExceptionThrown = true;
@@ -182,7 +184,7 @@ public final class ImageLoader {
     boolean isHiDpiNeeded = StartupUiUtil.isJreHiDPI(scaleContext);
     for (ImageDescriptor descriptor : descriptors) {
       try {
-        Image image = loadByDescriptorWithoutCache(descriptor, null, classLoader);
+        Image image = loadByDescriptorWithoutCache(descriptor, null, classLoader, null);
         if (image == null) {
           continue;
         }
@@ -201,10 +203,26 @@ public final class ImageLoader {
                                                   @Nullable ClassLoader classLoader,
                                                   @Nullable Set<String> ioMissCache,
                                                   @NotNull ImageCache imageCache,
-                                                  @Nullable String ioMissCacheKey) throws IOException {
+                                                  @Nullable String ioMissCacheKey,
+                                                  @Nullable SVGLoader.SvgElementColorPatcherProvider colorPatcher) throws IOException {
     CacheKey cacheKey = null;
-    if ((flags & USE_CACHE) == USE_CACHE && !SVGLoader.isColorRedefinitionContext()) {
-      cacheKey = new CacheKey(descriptor.path, descriptor.isSvg ? descriptor.scale : 0);
+    boolean tmpPatcher = false;
+    byte[] digest = null;
+    if (colorPatcher != null) {
+      SVGLoader.SvgElementColorPatcher subPatcher = colorPatcher.forPath(descriptor.path);
+      if (subPatcher != null) {
+        digest = subPatcher.digest();
+        if (digest == null) {
+          tmpPatcher = true;
+        }
+      }
+    }
+    if (digest == null) {
+      digest = SVGLoader.getDEFAULT_THEME();
+    }
+
+    if ((flags & USE_CACHE) == USE_CACHE && !tmpPatcher) {
+      cacheKey = new CacheKey(descriptor.path, descriptor.isSvg ? descriptor.scale : 0, digest);
       Image image = imageCache.imageCache.get(cacheKey);
       if (image != null) {
         return image;
@@ -220,7 +238,7 @@ public final class ImageLoader {
       return null;
     }
 
-    Image image = loadByDescriptorWithoutCache(descriptor, resourceClass, classLoader);
+    Image image = loadByDescriptorWithoutCache(descriptor, resourceClass, classLoader, colorPatcher);
     if (image == null) {
       return null;
     }
@@ -238,7 +256,9 @@ public final class ImageLoader {
 
   private static @Nullable Image loadByDescriptorWithoutCache(@NotNull ImageDescriptor descriptor,
                                                               @Nullable Class<?> resourceClass,
-                                                              @Nullable ClassLoader classLoader) throws IOException {
+                                                              @Nullable ClassLoader classLoader,
+                                                              @Nullable SVGLoader.SvgElementColorPatcherProvider colorPatcher
+  ) throws IOException {
     Image image;
     long start = StartUpMeasurer.getCurrentTimeIfEnabled();
     if (resourceClass == null && (classLoader == null || URLUtil.containsScheme(descriptor.path)) && !descriptor.path.startsWith("file://")) {
@@ -249,7 +269,7 @@ public final class ImageLoader {
 
       try (InputStream stream = connection.getInputStream()) {
         if (descriptor.isSvg) {
-          image = SVGLoader.load(descriptor.path, stream, descriptor.scale, descriptor.isDark, null);
+          image = SVGLoader.load(descriptor.path, stream, descriptor.getSvgMapper(), colorPatcher, null);
         }
         else {
           image = loadPng(stream, descriptor.scale, null);
@@ -261,8 +281,8 @@ public final class ImageLoader {
     }
     else {
       if (descriptor.isSvg) {
-        image = SVGLoader.loadFromClassResource(resourceClass, classLoader, descriptor.path, 0, descriptor.scale, descriptor.isDark,
-                                                null);
+        image = SVGLoader.loadFromClassResource(resourceClass, classLoader, descriptor.path, 0, descriptor.getSvgMapper(),
+                                                colorPatcher, null);
       }
       else {
         image = loadPngFromClassResource(descriptor.path, resourceClass, classLoader, descriptor.scale, null);
@@ -328,7 +348,8 @@ public final class ImageLoader {
                                               @MagicConstant(flags = {USE_DARK, USE_SVG}) int flags) throws IOException {
     try (stream) {
       if ((flags & USE_SVG) == USE_SVG) {
-        return SVGLoader.load(path, stream, scale, (flags & USE_DARK) == USE_DARK, originalUserSize);
+        SvgCacheMapper mapper = new SvgCacheMapper(scale, (flags & USE_DARK) == USE_DARK);
+        return SVGLoader.load(path, stream, mapper, null, originalUserSize);
       }
       else {
         return loadPng(stream, scale, originalUserSize);
@@ -445,11 +466,12 @@ public final class ImageLoader {
 
   public static @Nullable Image loadFromUrl(@NotNull URL url) {
     int flags = USE_SVG | USE_CACHE | ALLOW_FLOAT_SCALING;
-    if (StartupUiUtil.isUnderDarcula()) {
+    boolean isDark = StartupUiUtil.isUnderDarcula();
+    if (isDark) {
       flags |= USE_DARK;
     }
     String path = url.toString();
-    return loadImage(path, Collections.emptyList(), null, null, flags, ScaleContext.create(), !path.endsWith(".svg"));
+    return loadImage(path, LoadIconParameters.defaultParameters(isDark), null, null, flags, !path.endsWith(".svg"));
   }
 
   /**
@@ -462,7 +484,8 @@ public final class ImageLoader {
                                             @NotNull ScaleContext scaleContext) {
     // We can't check all 3rd party plugins and convince the authors to add @2x icons.
     // In IDE-managed HiDPI mode with scale > 1.0 we scale images manually - pass isUpScaleNeeded = true
-    return loadImage(path, Collections.emptyList(), aClass, null, flags, scaleContext, !path.endsWith(".svg"));
+    LoadIconParameters parameters = new LoadIconParameters(Collections.emptyList(), scaleContext, (flags & USE_DARK) == USE_DARK, null);
+    return loadImage(path, parameters, aClass, null, flags, !path.endsWith(".svg"));
   }
 
   public static float adjustScaleFactor(boolean allowFloatScaling, float scale) {
@@ -524,12 +547,12 @@ public final class ImageLoader {
   }
 
   public static @Nullable Image loadFromResource(@NonNls @NotNull String path, @NotNull Class<?> aClass) {
-    ScaleContext scaleContext = ScaleContext.create();
     int flags = USE_SVG | ALLOW_FLOAT_SCALING | USE_CACHE;
-    if (StartupUiUtil.isUnderDarcula()) {
+    boolean isDark = StartupUiUtil.isUnderDarcula();
+    if (isDark) {
       flags |= USE_DARK;
     }
-    return loadImage(path, Collections.emptyList(), aClass, null, flags, scaleContext, false);
+    return loadImage(path, LoadIconParameters.defaultParameters(isDark), aClass, null, flags, false);
   }
 
   public static Image loadFromBytes(byte @NotNull [] bytes) {
@@ -566,7 +589,9 @@ public final class ImageLoader {
     // probably, need implement naming conventions: filename ends with @2x => HiDPI (scale=2)
     float scale = (float)scaleContext.getScale(DerivedScaleType.PIX_SCALE);
     ImageDescriptor imageDescriptor = new ImageDescriptor(iconPath, scale, StringUtilRt.endsWithIgnoreCase(iconPath, ".svg"), iconPath.contains("_dark."));
-    Image icon = ImageUtil.ensureHiDPI(loadByDescriptor(imageDescriptor, USE_CACHE, null, null, null, ImageCache.INSTANCE, null), scaleContext);
+    Image icon = ImageUtil.ensureHiDPI(
+      loadByDescriptor(imageDescriptor, USE_CACHE, null, null, null, ImageCache.INSTANCE, null, null),
+      scaleContext);
     if (icon == null) {
       return null;
     }
@@ -590,10 +615,12 @@ public final class ImageLoader {
 final class CacheKey {
   private final String path;
   private final double scale;
+  private final byte @NotNull [] digest;
 
-  CacheKey(@NotNull String path, double scale) {
+  CacheKey(@NotNull String path, double scale, byte @NotNull [] digest) {
     this.path = path;
     this.scale = scale;
+    this.digest = digest;
   }
 
   @Override
@@ -606,12 +633,14 @@ final class CacheKey {
     }
 
     CacheKey key = (CacheKey)o;
-    return key.scale == scale && path.equals(key.path);
+    return key.scale == scale && path.equals(key.path) && Arrays.equals(key.digest, digest);
   }
 
   @Override
   public int hashCode() {
     long temp = Double.doubleToLongBits(scale);
-    return 31 * path.hashCode() + (int)(temp ^ (temp >>> 32));
+    int result = Objects.hash(path, (int)(temp ^ (temp >>> 32)));
+    result = 31 * result + Arrays.hashCode(digest);
+    return result;
   }
 }

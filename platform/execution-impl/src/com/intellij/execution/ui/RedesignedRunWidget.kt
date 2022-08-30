@@ -25,11 +25,11 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.ui.DeferredIcon
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.util.SVGLoader
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
-import com.intellij.util.ui.UIUtil
 import java.awt.*
 import java.awt.event.InputEvent
 import java.awt.geom.Area
@@ -172,15 +172,10 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
     if (icon.iconWidth == 0 || icon.iconHeight == 0) {
       return
     }
-    // TODO: need more magic about icons
-    var targetIcon = icon
-    if (targetIcon is DeferredIcon) {
-      targetIcon = targetIcon.evaluate()
-
-    } else {
-      targetIcon = IconLoader.filterIcon(icon, { UIUtil.GrayFilter(100, 100, 100) }, null)
-    }
-    super.paintIcon(g, actionButton, targetIcon, x, y)
+    val targetIcon = (icon as? DeferredIcon)?.baseIcon ?: icon
+    val patcher = SVGLoader.getStrokePatcher(listOf("#767a8a", "#6c707e", "#ced0d6", "#6e6e6e", "#afb1b3"), backgroundColors = listOf("#ebecf0"),
+                                             resultColor = Color.WHITE)
+    super.paintIcon(g, actionButton, IconLoader.colorPatchedIcon(targetIcon, patcher), x, y)
   }
 
   override fun paintLookBorder(g: Graphics, rect: Rectangle, color: Color) {}
