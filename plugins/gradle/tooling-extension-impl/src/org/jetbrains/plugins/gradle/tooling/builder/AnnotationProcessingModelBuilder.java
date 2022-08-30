@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.tooling.builder;
 
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
@@ -15,12 +16,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.AnnotationProcessingConfig;
 import org.jetbrains.plugins.gradle.model.AnnotationProcessingModel;
+import org.jetbrains.plugins.gradle.model.DefaultFileCollectionDependency;
+import org.jetbrains.plugins.gradle.model.ExternalDependency;
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService;
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.internal.AnnotationProcessingConfigImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.AnnotationProcessingModelImpl;
 import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil;
+import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder;
+import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl;
 
 import java.io.File;
 import java.util.*;
@@ -60,20 +65,32 @@ public class AnnotationProcessingModelBuilder extends AbstractModelBuilderServic
       if (compileTask instanceof JavaCompile) {
         CompileOptions options = ((JavaCompile)compileTask).getOptions();
         FileCollection path = options.getAnnotationProcessorPath();
-        if (path != null) {
-          final Set<File> files = path.getFiles();
+
+        List<ExternalDependency> dependencies = new ArrayList<>();
+
+        if (path instanceof Configuration) {
+          Configuration config = (Configuration)path;
+          dependencies.addAll(
+            new DependencyResolverImpl(project, false, false, new SourceSetCachedFinder(context))
+              .resolveDependencies(config));
+        } else if (path != null) {
+          Set<File> files = path.getFiles();
           if (!files.isEmpty()) {
-            List<String> annotationProcessorArgs = new ArrayList<String>();
-            List<String> args = isAtLeastGradle4_5 ? options.getAllCompilerArgs() : options.getCompilerArgs();
-            for (String arg : args) {
-              if (arg.startsWith("-A")) {
-                annotationProcessorArgs.add(arg);
-              }
-            }
-            File generatedSourcesDirectory = isAtLeastGradle4_3 ? options.getAnnotationProcessorGeneratedSourcesDirectory() : null;
-            String output = generatedSourcesDirectory != null ? generatedSourcesDirectory.getAbsolutePath() : null;
-            sourceSetConfigs.put(sourceSet.getName(), new AnnotationProcessingConfigImpl(files, annotationProcessorArgs, output, isTestSourceSet(sourceSet, ideaModule)));
+            dependencies.add(new DefaultFileCollectionDependency(files));
           }
+        }
+        if (!dependencies.isEmpty()) {
+          List<String> annotationProcessorArgs = new ArrayList<String>();
+          List<String> args = isAtLeastGradle4_5 ? options.getAllCompilerArgs() : options.getCompilerArgs();
+          for (String arg : args) {
+            if (arg.startsWith("-A")) {
+              annotationProcessorArgs.add(arg);
+            }
+          }
+          File generatedSourcesDirectory = isAtLeastGradle4_3 ? options.getAnnotationProcessorGeneratedSourcesDirectory() : null;
+          String output = generatedSourcesDirectory != null ? generatedSourcesDirectory.getAbsolutePath() : null;
+          sourceSetConfigs.put(sourceSet.getName(), new AnnotationProcessingConfigImpl(
+            annotationProcessorArgs, output, isTestSourceSet(sourceSet, ideaModule), dependencies));
         }
       }
     }

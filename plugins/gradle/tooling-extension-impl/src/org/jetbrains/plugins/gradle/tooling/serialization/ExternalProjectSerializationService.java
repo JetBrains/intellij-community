@@ -186,7 +186,7 @@ public final class ExternalProjectSerializationService implements SerializationS
     writer.stepOut();
   }
 
-  private static void writeDependencies(IonWriter writer,
+  static void writeDependencies(IonWriter writer,
                                         WriteContext context,
                                         Collection<ExternalDependency> dependencies) throws IOException {
     writer.setFieldName("dependencies");
@@ -563,7 +563,7 @@ public final class ExternalProjectSerializationService implements SerializationS
     return patternSet;
   }
 
-  private static Collection<? extends ExternalDependency> readDependencies(IonReader reader,
+  static Collection<? extends ExternalDependency> readDependencies(IonReader reader,
                                                                            ReadContext context) {
     List<ExternalDependency> dependencies = new ArrayList<ExternalDependency>();
     reader.next();

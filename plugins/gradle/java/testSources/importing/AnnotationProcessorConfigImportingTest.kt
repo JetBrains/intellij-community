@@ -379,6 +379,61 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
     }
   }
 
+  @Test
+  @TargetVersions("5.0+")
+  fun `test import with annotation processor in subproject`() {
+
+    createProjectSubFile("settings.gradle.kts", """
+      include("processor")
+      include("lib")
+    """.trimIndent())
+
+    currentExternalProjectSettings.delegatedBuild = false
+    GradleSettings.getInstance(myProject).publisher.onBuildDelegationChange(false, projectPath)
+
+    //We don't need a real processor. We only check that it is in the compiler options
+    importProject(createBuildScriptBuilder()
+                    .allprojects {
+                      withJavaLibraryPlugin()
+                    }
+                    .addPostfix("""
+        project(":lib") {
+          dependencies {
+            annotationProcessor(project(":processor"))
+            testAnnotationProcessor(project(":processor"))
+          }
+        }
+      """.trimIndent()).generate())
+
+    val moduleWithAnnotationProcessor = ModuleManager.getInstance(myProject)
+      .findModuleByName("project.lib.main")
+    assertNotNull(moduleWithAnnotationProcessor)
+
+    val testModuleWithAnnotationProcessor = ModuleManager.getInstance(myProject)
+      .findModuleByName("project.lib.test")
+    assertNotNull(testModuleWithAnnotationProcessor)
+
+    val annotationProcessingConfiguration = CompilerConfiguration.getInstance(myProject)
+      .getAnnotationProcessingConfiguration(moduleWithAnnotationProcessor)
+    assertEquals("$projectPath/processor/out/production/classes", annotationProcessingConfiguration.processorPath)
+
+    val testAnnotationProcessingConfiguration = CompilerConfiguration.getInstance(myProject)
+      .getAnnotationProcessingConfiguration(testModuleWithAnnotationProcessor)
+    assertEquals("$projectPath/processor/out/production/classes", testAnnotationProcessingConfiguration.processorPath)
+
+    currentExternalProjectSettings.delegatedBuild = true
+    GradleSettings.getInstance(myProject).publisher.onBuildDelegationChange(true, projectPath)
+    importProject()
+
+    val annotationProcessingConfigurationWithDelegation = CompilerConfiguration.getInstance(myProject)
+      .getAnnotationProcessingConfiguration(moduleWithAnnotationProcessor)
+    assertEquals("$projectPath/processor/build/classes/java/main", annotationProcessingConfigurationWithDelegation.processorPath)
+
+    val testAnnotationProcessingConfigurationWithDelegation = CompilerConfiguration.getInstance(myProject)
+      .getAnnotationProcessingConfiguration(testModuleWithAnnotationProcessor)
+    assertEquals("$projectPath/processor/build/classes/java/main", testAnnotationProcessingConfigurationWithDelegation.processorPath)
+  }
+
 
   @Test
   @TargetVersions("3.4+")

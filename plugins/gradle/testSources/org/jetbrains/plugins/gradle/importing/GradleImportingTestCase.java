@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.RunAll;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -368,14 +369,25 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
 
   @NotNull
   protected String injectRepo(@NonNls @Language("Groovy") String config) {
-    String mavenRepositoryPatch =
-      "allprojects {\n" +
-      "    repositories {\n" +
-      "        maven {\n" +
-      "            url 'https://repo.labs.intellij.net/repo1'\n" +
-      "        }\n" +
-      "    }\n" +
-      "}\n";
+    String mavenRepositoryPatch;
+
+    if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+      mavenRepositoryPatch = "allprojects {\n" +
+                             "    repositories {\n" +
+                             "        maven {\n" +
+                             "            url 'https://repo.labs.intellij.net/repo1'\n" +
+                             "        }\n" +
+                             "    }\n" +
+                             "}\n";
+    }
+    else {
+      mavenRepositoryPatch = "allprojects {\n" +
+                             "    repositories {\n" +
+                             "        mavenCentral()" +
+                             "    }\n" +
+                             "}\n";
+    }
+
     if (config.contains(MAVEN_REPOSITORY_PATCH_PLACE)) {
       return config.replace(MAVEN_REPOSITORY_PATCH_PLACE, mavenRepositoryPatch);
     }

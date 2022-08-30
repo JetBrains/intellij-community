@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project;
 
+import com.intellij.build.events.MessageEvent;
+import com.intellij.build.issue.BuildIssue;
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.externalSystem.JavaModuleData;
 import com.intellij.externalSystem.JavaProjectData;
@@ -30,6 +32,7 @@ import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.issue.UnresolvedDependencySyncIssue;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.model.data.AnnotationProcessingData;
 import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData;
@@ -92,6 +95,17 @@ public class JavaGradleProjectResolver extends AbstractProjectResolverExtension 
         }
       }
     }
+
+    for (AnnotationProcessingConfig value : apModel.allConfigs().values()) {
+      for (ExternalDependency processor : value.annotationProcessors()) {
+        if (processor instanceof UnresolvedExternalDependency unresolved) {
+          boolean isOfflineWork = resolverCtx.getSettings() != null && resolverCtx.getSettings().isOfflineWork();
+          BuildIssue buildIssue = new UnresolvedDependencySyncIssue(
+            unresolved.getName(), unresolved.getFailureMessage(), resolverCtx.getProjectPath(), isOfflineWork, gradleModule.getName());
+          resolverCtx.report(MessageEvent.Kind.ERROR, buildIssue);
+        }
+      }
+    }
   }
 
   private static void populateAnnotationProcessorOutput(@NotNull DataNode<AnnotationProcessingData> parent,
@@ -117,9 +131,9 @@ public class JavaGradleProjectResolver extends AbstractProjectResolverExtension 
   @NotNull
   private static AnnotationProcessingData getMergedAnnotationProcessingData(@NotNull AnnotationProcessingModel apModel) {
 
-    final Set<String> mergedAnnotationProcessorPath = new LinkedHashSet<>();
+    final Set<ExternalDependency> processors = new LinkedHashSet<>();
     for (AnnotationProcessingConfig config : apModel.allConfigs().values()) {
-      mergedAnnotationProcessorPath.addAll(config.getAnnotationProcessorPath());
+      processors.addAll(config.annotationProcessors());
     }
 
     final List<String> apArguments = new ArrayList<>();
@@ -128,7 +142,7 @@ public class JavaGradleProjectResolver extends AbstractProjectResolverExtension 
        apArguments.addAll(mainConfig.getAnnotationProcessorArguments());
     }
 
-    return AnnotationProcessingData.create(mergedAnnotationProcessorPath, apArguments);
+    return AnnotationProcessingData.create(apArguments, processors);
   }
 
   @Nullable
@@ -138,8 +152,8 @@ public class JavaGradleProjectResolver extends AbstractProjectResolverExtension 
     if (config == null) {
       return null;
     } else {
-      return AnnotationProcessingData.create(config.getAnnotationProcessorPath(),
-                                             config.getAnnotationProcessorArguments());
+      return AnnotationProcessingData.create(config.getAnnotationProcessorArguments(),
+                                             config.annotationProcessors());
     }
   }
 
