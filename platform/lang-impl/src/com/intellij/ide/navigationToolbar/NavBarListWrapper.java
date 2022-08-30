@@ -56,18 +56,28 @@ class NavBarListWrapper extends JBScrollPane implements DataProvider {
     });
 
     ScrollingUtil.installActions(list);
+    myList = list;
 
-    final int modelSize = list.getModel().getSize();
     setBorder(BorderFactory.createEmptyBorder());
-    if (modelSize > 0 && modelSize <= MAX_SIZE) {
+    if (modelIsNotEmptyAndLessOrEqualThanMax()) {
       list.setVisibleRowCount(0);
-      getViewport().setPreferredSize(list.getPreferredSize());
+      updateViewportPreferredSizeIfNeeded();
     } else {
       list.setVisibleRowCount(MAX_SIZE);
     }
-    myList = list;
   }
 
+  void updateViewportPreferredSizeIfNeeded() {
+    if (modelIsNotEmptyAndLessOrEqualThanMax()) {
+      getViewport().setPreferredSize(myList.getPreferredSize());
+    }
+  }
+
+  private boolean modelIsNotEmptyAndLessOrEqualThanMax() {
+    final int modelSize = myList.getModel().getSize();
+    setBorder(BorderFactory.createEmptyBorder());
+    return modelSize > 0 && modelSize <= MAX_SIZE;
+  }
 
   @Override
   @Nullable

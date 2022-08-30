@@ -194,7 +194,9 @@ public class NavBarPopup extends LightweightHint implements Disposable{
       }
     });
 
-    JComponent component = ListWithFilter.wrap(list, new NavBarListWrapper(list), o -> panel.getPresentation().getPresentableText(o, false));
+    NavBarListWrapper navBarListWrapper = new NavBarListWrapper(list);
+    JComponent component = ListWithFilter.wrap(list, navBarListWrapper, o -> panel.getPresentation().getPresentableText(o, false));
+    navBarListWrapper.updateViewportPreferredSizeIfNeeded();
     component.putClientProperty(JBLIST_KEY, list);
     OpenInRightSplitAction.Companion.overrideDoubleClickWithOneClick(component);
     return component;
