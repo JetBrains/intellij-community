@@ -24,7 +24,7 @@ public class PluginXmlCapitalizationInspectionTest extends LightJavaCodeInsightF
   public void testPluginNameDomElementFix() {
     myFixture.testHighlighting("pluginXmlPluginNameDomElementFix.xml");
     IntentionAction capitalizeIntention = myFixture.findSingleIntention("Properly capitalize");
-    myFixture.launchAction(capitalizeIntention);
+    myFixture.checkPreviewAndLaunchAction(capitalizeIntention);
     myFixture.checkResultByFile("pluginXmlPluginNameDomElementFix_after.xml");
   }
 
@@ -32,6 +32,10 @@ public class PluginXmlCapitalizationInspectionTest extends LightJavaCodeInsightF
     myFixture.testHighlighting("pluginXmlActionDescriptionPropertyFix.xml",
                                "ActionDescriptionFixBundle.properties");
     IntentionAction capitalizeIntention = myFixture.findSingleIntention("Properly capitalize 'lower case description'");
+
+    String customPreviewText = myFixture.getIntentionPreviewText(capitalizeIntention);
+    assertEquals("action.BundleActionWrongCasing.description=Lower case description", customPreviewText);
+
     myFixture.launchAction(capitalizeIntention);
     myFixture.checkResultByFile("ActionDescriptionFixBundle.properties",
                                 "ActionDescriptionFixBundle_after.properties",true);
