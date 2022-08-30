@@ -20,6 +20,7 @@ class KotlinExpressionNameSuggesterTest : KotlinLightCodeInsightFixtureTestCase(
     fun testGenericIntArray() = test("arrayOf(1, 2, 3)", "ints")
     fun testGenericArray() = test("arrayOf(1, 'c')", "values")
     fun testIntList() = test("listOf(1, 2, 3)", "ints")
+    fun testClassList() = test("listOf(String::class.java, Long::class.java)", "classes")
     fun testStringList() = test("listOf(\"foo\", \"bar\")", "strings")
     fun testGenericList() = test("listOf(1, 'c')", "values")
     fun testLazy() = test("lazy { 5 }", "lazy")
