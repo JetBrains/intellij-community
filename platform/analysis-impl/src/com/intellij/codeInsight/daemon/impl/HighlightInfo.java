@@ -129,7 +129,7 @@ public class HighlightInfo implements Segment {
     fixStartOffset = startOffset;
     fixEndOffset = endOffset;
     description = escapedDescription;
-    // optimization: do not retain extra memory if can recompute
+    // optimization: do not retain extra memory if we can recompute
     toolTip = encodeTooltip(escapedToolTip, escapedDescription);
     this.severity = severity;
     myFlags = (byte)((afterEndOfLine ? AFTER_END_OF_LINE_MASK : 0) |
@@ -259,6 +259,7 @@ public class HighlightInfo implements Segment {
   }
 
   private void setFlag(@FlagConstant byte mask, boolean value) {
+    //noinspection NonAtomicOperationOnVolatileField
     myFlags = BitUtil.set(myFlags, mask, value);
   }
 
@@ -269,6 +270,11 @@ public class HighlightInfo implements Segment {
   void setVisitingTextRange(long range) {
     visitingRangeDeltaStartOffset = TextRangeScalarUtil.startOffset(range) - getStartOffset();
     visitingRangeDeltaEndOffset = TextRangeScalarUtil.endOffset(range) - getEndOffset();
+  }
+  long getVisitingTextRange() {
+    int visitStart = getActualStartOffset() + visitingRangeDeltaStartOffset;
+    int visitEnd = getActualEndOffset() + visitingRangeDeltaEndOffset;
+    return TextRange.isProperRange(visitStart, visitEnd) ? TextRangeScalarUtil.toScalarRange(visitStart, visitEnd) : -1;
   }
 
   @NotNull
@@ -342,7 +348,9 @@ public class HighlightInfo implements Segment {
     if (getSeverity() == HighlightSeverity.WARNING) {
       return scheme.getAttributes(CodeInsightColors.WARNINGS_ATTRIBUTES).getErrorStripeColor();
     }
+    //noinspection deprecation
     if (getSeverity() == HighlightSeverity.INFO){
+      //noinspection deprecation
       return scheme.getAttributes(CodeInsightColors.INFO_ATTRIBUTES).getErrorStripeColor();
     }
     if (getSeverity() == HighlightSeverity.WEAK_WARNING){
@@ -372,7 +380,7 @@ public class HighlightInfo implements Segment {
 
   private static boolean calcNeedUpdateOnTyping(@Nullable Boolean needsUpdateOnTyping, HighlightInfoType type) {
     if (needsUpdateOnTyping != null) {
-      return needsUpdateOnTyping.booleanValue();
+      return needsUpdateOnTyping;
     }
     if (type instanceof HighlightInfoType.UpdateOnTypingSuppressible) {
       return ((HighlightInfoType.UpdateOnTypingSuppressible)type).needsUpdateOnTyping();
@@ -786,7 +794,7 @@ public class HighlightInfo implements Segment {
 
   @NotNull
   public static ProblemHighlightType convertSeverityToProblemHighlight(@NotNull HighlightSeverity severity) {
-    //noinspection deprecation
+    //noinspection deprecation,removal
     return severity == HighlightSeverity.ERROR ? ProblemHighlightType.ERROR :
            severity == HighlightSeverity.WARNING ? ProblemHighlightType.WARNING :
            severity == HighlightSeverity.INFO ? ProblemHighlightType.INFO :
@@ -1055,11 +1063,5 @@ public class HighlightInfo implements Segment {
           action.belongsToMyFamily((IntentionActionWithFixAllOption)other)) return other;
     }
     return null;
-  }
-
-  long getVisitingTextRange() {
-    int visitStart = getActualStartOffset() + visitingRangeDeltaStartOffset;
-    int visitEnd = getActualEndOffset() + visitingRangeDeltaEndOffset;
-    return TextRange.isProperRange(visitStart, visitEnd) ? TextRangeScalarUtil.toScalarRange(visitStart, visitEnd) : -1;
   }
 }

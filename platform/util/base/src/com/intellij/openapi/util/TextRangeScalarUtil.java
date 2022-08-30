@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
  * It might be useful to address atomicity or memory concerns.
  */
 public class TextRangeScalarUtil {
-  public static long toScalarRange(@NotNull TextRange range) {
+  public static long toScalarRange(@NotNull Segment range) {
     return toScalarRange(range.getStartOffset(), range.getEndOffset());
   }
 
