@@ -45,4 +45,14 @@ public class FileComparisonFailure extends ComparisonFailure implements FileComp
   public String getActual() {
     return myActual;
   }
+
+  @Override
+  public String getActualStringPresentation() {
+    return myActual;
+  }
+
+  @Override
+  public String getExpectedStringPresentation() {
+    return myExpected;
+  }
 }
