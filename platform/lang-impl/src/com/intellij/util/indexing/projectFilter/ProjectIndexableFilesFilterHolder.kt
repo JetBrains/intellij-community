@@ -18,6 +18,7 @@ import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.IdFilter
+import com.intellij.util.indexing.UnindexedFilesScanner
 import com.intellij.util.indexing.UnindexedFilesUpdater
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentMap
@@ -56,7 +57,7 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
   }
 
   override fun getProjectIndexableFiles(project: Project): IdFilter? {
-    if (!UnindexedFilesUpdater.isProjectContentFullyScanned(project) || UnindexedFilesUpdater.isIndexUpdateInProgress(project)) {
+    if (!UnindexedFilesScanner.isProjectContentFullyScanned(project) || UnindexedFilesUpdater.isIndexUpdateInProgress(project)) {
       return null
     }
     return myProjectFilters[project]

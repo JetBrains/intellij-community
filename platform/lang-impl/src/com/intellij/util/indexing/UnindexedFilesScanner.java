@@ -68,11 +68,6 @@ public class UnindexedFilesScanner extends DumbModeTask {
   public static final Key<Boolean> INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY = new Key<>("INDEX_PROJECT_WITH_MANY_UPDATERS_TEST_KEY");
   // should be used only for test debugging purpose
   private static final Logger LOG = Logger.getInstance(UnindexedFilesScanner.class);
-  private static final boolean useConservativeThreadCountPolicy =
-    SystemProperties.getBooleanProperty("idea.indexing.use.conservative.thread.count.policy", false);
-  private static final int DEFAULT_MAX_INDEXER_THREADS = 4;
-  // Allows to specify number of indexing threads. -1 means the default value (currently, 4).
-  private static final int INDEXER_THREAD_COUNT = SystemProperties.getIntProperty("caches.indexerThreadsCount", -1);
 
   public enum TestMode {
     PUSHING, PUSHING_AND_SCANNING
@@ -81,9 +76,6 @@ public class UnindexedFilesScanner extends DumbModeTask {
   @SuppressWarnings("StaticNonFinalField") @VisibleForTesting
   public static volatile TestMode ourTestMode;
 
-  public static final ExecutorService GLOBAL_INDEXING_EXECUTOR = AppExecutorUtil.createBoundedApplicationPoolExecutor(
-    "Indexing", getMaxNumberOfIndexingThreads()
-  );
   private static final @NotNull Key<Boolean> CONTENT_SCANNED = Key.create("CONTENT_SCANNED");
   private static final @NotNull Key<Boolean> INDEX_UPDATE_IN_PROGRESS = Key.create("INDEX_UPDATE_IN_PROGRESS");
   private static final @NotNull Key<UnindexedFilesScanner> RUNNING_TASK = Key.create("RUNNING_INDEX_UPDATER_TASK");
@@ -500,7 +492,7 @@ public class UnindexedFilesScanner extends DumbModeTask {
         }
       };
     });
-    LOG.info("Scanning of " + myProject.getName() + " uses " + getNumberOfScanningThreads() + " scanning threads");
+    LOG.info("Scanning of " + myProject.getName() + " uses " + UnindexedFilesUpdater.getNumberOfScanningThreads() + " scanning threads");
     try {
       PushedFilePropertiesUpdaterImpl.invokeConcurrentlyIfPossible(tasks);
     }
@@ -588,45 +580,6 @@ public class UnindexedFilesScanner extends DumbModeTask {
                          ? (", " + myPredefinedIndexableFilesIterators.size() + " iterators")
                          : "";
     return "UnindexedFilesScanner[" + myProject.getName() + partialInfo + "]";
-  }
-
-  /**
-   * Returns the best number of threads to be used for indexing at this moment.
-   * It may change during execution of the IDE depending on other activities' load.
-   */
-  public static int getNumberOfIndexingThreads() {
-    int threadCount = INDEXER_THREAD_COUNT;
-    if (threadCount <= 0) {
-      threadCount =
-        Math.max(1, Math.min(useConservativeThreadCountPolicy
-                             ? DEFAULT_MAX_INDEXER_THREADS : getMaxBackgroundThreadCount(), getMaxBackgroundThreadCount()));
-    }
-    return threadCount;
-  }
-
-  /**
-   * Returns the maximum number of threads to be used for indexing during this execution of the IDE.
-   */
-  public static int getMaxNumberOfIndexingThreads() {
-    // Change of the registry option requires IDE restart.
-    int threadCount = INDEXER_THREAD_COUNT;
-    return threadCount <= 0 ? getMaxBackgroundThreadCount() : threadCount;
-  }
-
-  /**
-   * Scanning activity can be scaled well across number of threads, so we're trying to use all available resources to do it faster.
-   */
-  public static int getNumberOfScanningThreads() {
-    int scanningThreadCount = Registry.intValue("caches.scanningThreadsCount");
-    if (scanningThreadCount > 0) return scanningThreadCount;
-    int maxBackgroundThreadCount = getMaxBackgroundThreadCount();
-    return Math.max(maxBackgroundThreadCount, getNumberOfIndexingThreads());
-  }
-
-  private static int getMaxBackgroundThreadCount() {
-    int coresToLeaveForOtherActivity = DumbServiceImpl.ALWAYS_SMART
-                                       ? getMaxNumberOfIndexingThreads() : ApplicationManager.getApplication().isCommandLine() ? 0 : 1;
-    return Runtime.getRuntime().availableProcessors() - coresToLeaveForOtherActivity;
   }
 
   private static boolean skipInitialRefresh() {

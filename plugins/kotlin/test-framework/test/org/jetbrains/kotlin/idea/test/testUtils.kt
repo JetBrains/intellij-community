@@ -71,7 +71,7 @@ fun Project.waitIndexingComplete(indexingReason: String? = null) {
         // TODO: [VD] a dirty hack to reindex created android project
         IndexingFlag.cleanupProcessedFlag()
         with(DumbService.getInstance(project)) {
-            queueTask(UnindexedFilesUpdater(project, indexingReason))
+            UnindexedFilesUpdater(project, indexingReason).queue(project)
             completeJustSubmittedTasks()
         }
         UIUtil.dispatchAllInvocationEvents()

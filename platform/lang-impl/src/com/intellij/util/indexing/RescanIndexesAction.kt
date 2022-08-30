@@ -39,7 +39,7 @@ class RescanIndexesAction : RecoveryAction {
     if (recoveryScope is FilesRecoveryScope) {
       predefinedIndexableFilesIterators = recoveryScope.files.map { ProjectIndexableFilesIteratorImpl(it) }
     }
-    object : UnindexedFilesUpdater(project, false, false,
+    object : UnindexedFilesScanner(project, false, false,
                                    predefinedIndexableFilesIterators, null, "Rescanning indexes recovery action",
                                    if(predefinedIndexableFilesIterators == null) ScanningType.FULL_FORCED else ScanningType.PARTIAL_FORCED) {
       private val stubIndex =
@@ -85,7 +85,7 @@ class RescanIndexesAction : RecoveryAction {
       }
 
       override fun tryMergeWith(taskFromQueue: DumbModeTask): DumbModeTask? =
-        if (taskFromQueue is UnindexedFilesUpdater && project == taskFromQueue.myProject && taskFromQueue.javaClass == javaClass) this else null
+        if (taskFromQueue is UnindexedFilesScanner && project == taskFromQueue.myProject && taskFromQueue.javaClass == javaClass) this else null
     }.queue(project)
     try {
       return ProgressIndicatorUtils.awaitWithCheckCanceled(historyFuture).extractConsistencyProblems() +
