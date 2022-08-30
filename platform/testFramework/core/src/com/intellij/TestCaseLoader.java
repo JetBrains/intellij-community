@@ -202,14 +202,16 @@ public class TestCaseLoader {
   public static boolean matchesCurrentBucketFair(@NotNull String testIdentifier,
                                                  int testRunnerCount,
                                                  int testRunnerIndex) {
-
-    System.out.printf("Fair bucket matching: test identifier `%s`, runner count %s, runner index %s" + System.lineSeparator(),
-                      testIdentifier, testRunnerCount, testRunnerIndex);
-
     var value = BUCKETS.get(testIdentifier);
 
     if (value != null) {
-      return value == testRunnerIndex;
+      var isMatchedBucket = value == testRunnerIndex;
+
+      System.out.printf(
+        "Fair bucket matching: test identifier `%s`, runner count %s, runner index %s, is matching bucket %s" + System.lineSeparator(),
+        testIdentifier, testRunnerCount, testRunnerIndex, isMatchedBucket);
+
+      return isMatchedBucket;
     }
     else {
       BUCKETS.put(testIdentifier, CYCLIC_BUCKET_COUNTER.getAndIncrement());
@@ -220,7 +222,7 @@ public class TestCaseLoader {
     var isMatchedBucket = BUCKETS.get(testIdentifier) == testRunnerIndex;
 
     System.out.printf(
-      "Fair bucket matching result: test identifier `%s`, runner count %s, runner index %s, is matching bucket %s" + System.lineSeparator(),
+      "Fair bucket matching: test identifier `%s`, runner count %s, runner index %s, is matching bucket %s" + System.lineSeparator(),
       testIdentifier, testRunnerCount, testRunnerIndex, isMatchedBucket);
 
     return isMatchedBucket;
@@ -416,8 +418,9 @@ public class TestCaseLoader {
       ourFilter = calcTestClassFilter("tests/testGroups.properties");
     }
     return (isIncludingPerformanceTestsRun() || isPerformanceTestsRun() == isPerformanceTest(null, className)) &&
-           matchesCurrentBucket(className) &&
-           ourFilter.matches(className);
+           // no need to calculate bucket matching (especially that may break fair bucketing), if test will not pass the filter
+           ourFilter.matches(className) &&
+           matchesCurrentBucket(className);
   }
 
   public void fillTestCases(String rootPackage, List<Path> classesRoots) {
