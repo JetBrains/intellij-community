@@ -162,13 +162,13 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         }!!
 
     private inner class LibraryDependenciesInnerCache :
-        SynchronizedFineGrainedEntityCache<LibraryInfo, LibraryDependencies>(project, cleanOnLowMemory = true),
-        OutdatedLibraryInfoListener,
-        ModuleRootListener,
-        ProjectJdkTable.Listener {
+      SynchronizedFineGrainedEntityCache<LibraryInfo, LibraryDependencies>(project, cleanOnLowMemory = true),
+      LibraryInfoListener,
+      ModuleRootListener,
+      ProjectJdkTable.Listener {
         override fun subscribe() {
             val connection = project.messageBus.connect(this)
-            connection.subscribe(OutdatedLibraryInfoListener.TOPIC, this)
+            connection.subscribe(LibraryInfoListener.TOPIC, this)
             connection.subscribe(ProjectTopics.PROJECT_ROOTS, this)
             connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this)
         }
@@ -208,15 +208,15 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
     }
 
     private inner class ModuleDependenciesCache :
-        SynchronizedFineGrainedEntityCache<Module, LibraryDependencyCandidatesAndSdkInfos>(project, cleanOnLowMemory = true),
-        ProjectJdkTable.Listener,
-        OutdatedLibraryInfoListener,
-        ModuleRootListener {
+      SynchronizedFineGrainedEntityCache<Module, LibraryDependencyCandidatesAndSdkInfos>(project, cleanOnLowMemory = true),
+      ProjectJdkTable.Listener,
+      LibraryInfoListener,
+      ModuleRootListener {
 
         override fun subscribe() {
             val connection = project.messageBus.connect(this)
             WorkspaceModelTopics.getInstance(project).subscribeImmediately(connection, ModelChangeListener())
-            connection.subscribe(OutdatedLibraryInfoListener.TOPIC, this)
+            connection.subscribe(LibraryInfoListener.TOPIC, this)
             connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this)
             connection.subscribe(ProjectTopics.PROJECT_ROOTS, this)
         }
