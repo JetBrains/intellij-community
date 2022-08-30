@@ -397,9 +397,7 @@ public class TestCaseLoader {
   }
 
   public static boolean shouldIncludePerformanceTestCase(String className) {
-    if (isIncludingPerformanceTestsRun()) return true;
-    boolean isPerformanceTest = isPerformanceTest(null, className);
-    return isPerformanceTestsRun() == isPerformanceTest;
+    return isIncludingPerformanceTestsRun() || isPerformanceTestsRun() || !isPerformanceTest(null, className);
   }
 
   static boolean isPerformanceTest(String methodName, String className) {
@@ -417,7 +415,7 @@ public class TestCaseLoader {
     if (ourFilter == null) {
       ourFilter = calcTestClassFilter("tests/testGroups.properties");
     }
-    return shouldIncludePerformanceTestCase(className) &&
+    return (isIncludingPerformanceTestsRun() || isPerformanceTestsRun() == isPerformanceTest(null, className)) &&
            matchesCurrentBucket(className) &&
            ourFilter.matches(className);
   }
