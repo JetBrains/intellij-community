@@ -225,9 +225,6 @@
       <action id="ShelvedChanges.Rename" class="com.intellij.openapi.vcs.changes.shelf.RenameShelvedChangeListAction"/>
       <reference ref="$Delete"/>
       <separator/>
-      <action id="ShelvedChanges.ShowHideDeleted" class="com.intellij.openapi.vcs.changes.shelf.ShowHideRecycledAction"/>
-      <action id="ShelvedChanges.CleanMarkedToDelete" class="com.intellij.openapi.vcs.changes.shelf.CleanUnshelvedAction"
-              icon="AllIcons.Actions.GC"/>
     </group>
 
     <group id="ShelvedChangesToolbar">
@@ -236,10 +233,11 @@
         <keyboard-shortcut first-keystroke="control alt U" keymap="$default"/>
       </action>
       <reference ref="Diff.ShowDiff"/>
-      <reference ref="ShelvedChanges.CleanMarkedToDelete"/>
-      <separator/>
-      <reference ref="ChangesView.GroupBy"/>
-      <reference ref="ShelvedChanges.ShowHideDeleted"/>
+      <group id="ShelvedChangesToolbar.ViewOptions" popup="true" icon="AllIcons.Actions.Show">
+        <reference ref="ChangesView.GroupBy"/>
+        <separator key="separator.show"/>
+        <action id="ShelvedChanges.ShowHideDeleted" class="com.intellij.openapi.vcs.changes.shelf.ShowHideRecycledAction"/>
+      </group>
       <reference ref="ExpandAll"/>
       <reference ref="CollapseAll"/>
     </group>

@@ -92,6 +92,9 @@ public class ShelvedChangesViewManager implements Disposable {
   @NonNls static final String SHELF_CONTEXT_MENU = "Vcs.Shelf.ContextMenu";
   private static final String SHELVE_PREVIEW_SPLITTER_PROPORTION = "ShelvedChangesViewManager.DETAILS_SPLITTER_PROPORTION"; //NON-NLS
 
+  @NonNls
+  static final String SHELVED_CHANGES_TOOLBAR = "ShelvedChangesToolbar";
+
   private final ShelveChangesManager myShelveChangesManager;
   private final Project myProject;
   private ShelfToolWindowPanel myPanel = null;
@@ -726,7 +729,7 @@ public class ShelvedChangesViewManager implements Disposable {
       editSourceAction.registerCustomShortcutSet(editSourceAction.getShortcutSet(), myTree);
 
       DefaultActionGroup actionGroup = new DefaultActionGroup();
-      actionGroup.addAll((ActionGroup)ActionManager.getInstance().getAction("ShelvedChangesToolbar"));
+      actionGroup.addAll((ActionGroup)ActionManager.getInstance().getAction(SHELVED_CHANGES_TOOLBAR));
       actionGroup.add(Separator.getInstance());
       actionGroup.add(new MyToggleDetailsAction());
 
