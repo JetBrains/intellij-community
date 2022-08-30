@@ -20,8 +20,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.UserActivityProviderComponent;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus;
@@ -35,7 +35,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.awt.geom.Path2D;
 import java.beans.PropertyChangeEvent;
 
 public abstract class ComboBoxAction extends AnAction implements CustomComponentAction {
@@ -87,12 +86,18 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
   @NotNull
   @Override
   public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-    JPanel panel = new JPanel(new GridBagLayout());
     ComboBoxButton button = createComboBoxButton(presentation);
+    if (isNoWrapping(place)) return button;
+
+    JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints constraints = new GridBagConstraints(
       0, 0, 1, 1, 1, 1, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBInsets.create(0, 3), 0, 0);
     panel.add(button, constraints);
     return panel;
+  }
+
+  protected boolean isNoWrapping(@NotNull String place) {
+    return ExperimentalUI.isNewUI() && ActionPlaces.isMainToolbar(place);
   }
 
   @NotNull

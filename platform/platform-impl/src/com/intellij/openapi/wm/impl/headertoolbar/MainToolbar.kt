@@ -164,6 +164,8 @@ private class MyActionToolbarImpl(group: ActionGroup) : ActionToolbarImpl(Action
   }
 
   private fun findComboButton(c: Container): ComboBoxButton? {
+    if (c is ComboBoxButton) return c
+
     for (child in c.components) {
       if (child is ComboBoxButton) return child
       val childCombo = (child as? Container)?.let { findComboButton(it) }
