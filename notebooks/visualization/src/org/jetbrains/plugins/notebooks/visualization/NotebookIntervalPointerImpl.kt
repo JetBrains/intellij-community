@@ -58,6 +58,13 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
   override fun documentChanged(e: NotebookCellLinesEvent) {
     val eventBuilder = NotebookIntervalPointersEventBuilder()
 
+    updateIntervals(e, eventBuilder)
+    applySavedChanges(eventBuilder)
+
+    eventBuilder.applyEvent(changeListeners, e)
+  }
+
+  private fun updateIntervals(e: NotebookCellLinesEvent, eventBuilder: NotebookIntervalPointersEventBuilder) {
     when {
       !e.isIntervalsChanged() -> {
         // content edited without affecting intervals values
@@ -92,10 +99,6 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
       ?: pointers.size
 
     updatePointersFrom(invalidPointersStart)
-
-    applySavedChanges(eventBuilder)
-
-    eventBuilder.applyEvent(changeListeners, e)
   }
 
   private fun applySavedChanges(eventBuilder: NotebookIntervalPointersEventBuilder) {
@@ -121,15 +124,20 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
 
   private fun applySavedChange(eventBuilder: NotebookIntervalPointersEventBuilder,
                                hint: NotebookIntervalPointerFactory.Swap) {
+    val success = trySwapPointers(eventBuilder, hint)
+  }
+
+  private fun trySwapPointers(eventBuilder: NotebookIntervalPointersEventBuilder,
+                              hint: NotebookIntervalPointerFactory.Swap): Boolean {
     val firstPtr = pointers.getOrNull(hint.firstOrdinal)
     val secondPtr = pointers.getOrNull(hint.secondOrdinal)
 
     if (firstPtr == null || secondPtr == null) {
       thisLogger().error("cannot swap invalid NotebookIntervalPointers: ${hint.firstOrdinal} and ${hint.secondOrdinal}")
-      return
+      return false
     }
 
-    if (hint.firstOrdinal == hint.secondOrdinal) return // nothing to do
+    if (hint.firstOrdinal == hint.secondOrdinal) return false // nothing to do
 
     val interval = firstPtr.interval!!
     firstPtr.interval = secondPtr.interval
@@ -139,6 +147,7 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
     pointers[hint.secondOrdinal] = firstPtr
 
     eventBuilder.onSwapped(hint.firstOrdinal, hint.secondOrdinal)
+    return true
   }
 
   private fun invalidate(ptr: NotebookIntervalPointerImpl) {
