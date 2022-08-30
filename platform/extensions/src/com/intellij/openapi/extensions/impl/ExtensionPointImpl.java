@@ -659,10 +659,10 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
    * Unregisters extensions for which the specified predicate returns false and collects the runnables for listener invocation into the given list
    * so that listeners can be called later.
    */
-  synchronized boolean unregisterExtensions(boolean stopAfterFirstMatch,
-                                            @NotNull List<? super Runnable> priorityListenerCallbacks,
-                                            @NotNull List<? super Runnable> listenerCallbacks,
-                                            @NotNull Predicate<? super ExtensionComponentAdapter> extensionToKeepFilter) {
+  final synchronized boolean unregisterExtensions(boolean stopAfterFirstMatch,
+                                                  @NotNull List<? super Runnable> priorityListenerCallbacks,
+                                                  @NotNull List<? super Runnable> listenerCallbacks,
+                                                  @NotNull Predicate<? super ExtensionComponentAdapter> extensionToKeepFilter) {
     ExtensionPointListener<T>[] listeners = this.listeners;
     List<ExtensionComponentAdapter> removedAdapters = null;
     List<ExtensionComponentAdapter> adapters = this.adapters;
