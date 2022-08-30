@@ -15,7 +15,7 @@ import java.nio.file.Path
 @RunWith(JUnit3RunnerWithInners::class)
 abstract class FirUastResolveApiTest : AbstractFirUastTest() {
     override val isFirUastPlugin: Boolean = true
-    override val basePath: Path = KotlinRoot.PATH.resolve("uast")
+    override val testBasePath: Path = KotlinRoot.PATH.resolve("uast")
     override fun check(filePath: String, file: UFile) {
         // Bogus
     }
