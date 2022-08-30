@@ -18,8 +18,7 @@ use anyhow::{bail, Context, Result};
 };
 
 #[cfg(target_os = "windows")] use {
-    crate::utils::canonical_non_unc,
-    crate::utils::PathExt,
+    utils::{canonical_non_unc, PathExt},
     std::env
 };
 
@@ -174,14 +173,11 @@ unsafe fn load_libjvm(libjvm_path: PathBuf) -> Result<libloading::Library> {
 
     // using UNC for libjvm leads to crash when trying to resolve jimage
     // classloader.cpp:   guarantee(name != NULL, "jimage file name is null");
-    let load_path = canonical_non_unc(&libjvm_path)?;
+    let load_path = canonical_non_unc(&libjvm_path).context("Failed to get canonical path for libjvm from {libjvm_path:?}")?;
     debug!("Loading libvjm by path {load_path:?}");
 
     unsafe {
-        match libloading::Library::new(load_path) {
-            Ok(l) => { Ok(l) }
-            Err(e) => { Err(LauncherError::LibloadingError(e)) }
-        }
+        libloading::Library::new(load_path).context("Failed to load libjvm by path {load_path:?}")
     }
 }
 
