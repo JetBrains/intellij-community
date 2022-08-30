@@ -8,12 +8,12 @@ import com.intellij.psi.PsiReference
 import com.intellij.refactoring.move.MoveCallback
 import com.intellij.refactoring.move.moveClassesOrPackages.JavaMoveClassesOrPackagesHandler
 
-class KotlinAwareJavaMoveClassesOrPackagesHandler : JavaMoveClassesOrPackagesHandler() {
+class KotlinAwareJavaMovePackagesHandler : JavaMoveClassesOrPackagesHandler() {
     override fun createMoveClassesOrPackagesToNewDirectoryDialog(
         directory: PsiDirectory,
         elementsToMove: Array<PsiElement>,
         moveCallback: MoveCallback?
-    ) = KotlinAwareMoveClassesOrPackagesToNewDirectoryDialog(directory, elementsToMove, moveCallback)
+    ) = KotlinAwareMovePackagesToNewDirectoryDialog(directory, elementsToMove, moveCallback)
 
     override fun canMove(elements: Array<PsiElement>, targetContainer: PsiElement?, reference: PsiReference?): Boolean {
         return elements.isNotEmpty() && elements.all(::isPackageOrDirectory)
