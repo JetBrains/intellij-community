@@ -8,13 +8,6 @@
     </problem>
     <problem>
         <file>test.kt</file>
-        <line>30</line>
-        <module>light_idea_test_case</module>
-        <entry_point TYPE="field" FQNAME="test.D FOO_BAZ" />
-        <description>Private property name &lt;code&gt;FOO_BAZ&lt;/code&gt; should not contain underscores in the middle or the end #loc</description>
-    </problem>
-    <problem>
-        <file>test.kt</file>
         <line>41</line>
         <module>light_idea_test_case</module>
         <entry_point TYPE="file" FQNAME="temp:///src/test.kt" />

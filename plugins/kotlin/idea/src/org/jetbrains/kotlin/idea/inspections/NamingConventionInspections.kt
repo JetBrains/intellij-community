@@ -153,7 +153,7 @@ sealed class NamingConventionInspection(
     @Suppress("MemberVisibilityCanBePrivate")
     var namePattern: String = defaultNamePattern
 
-    private val rules: Array<NamingRule> by lazy(::getNamingRules)
+    protected val rules: Array<NamingRule> by lazy(::getNamingRules)
 
     protected abstract fun getNamingRules(): Array<NamingRule>
 
@@ -164,8 +164,13 @@ sealed class NamingConventionInspection(
         }
     )
 
-    protected fun verifyName(element: PsiNameIdentifierOwner, holder: ProblemsHolder, additionalCheck: () -> Boolean = { true }) {
-        namingSettings.verifyName(element, holder, additionalCheck, rules)
+    protected fun verifyName(
+        element: PsiNameIdentifierOwner,
+        holder: ProblemsHolder,
+        additionalCheck: () -> Boolean = { true },
+        verificationRules: Array<NamingRule> = rules
+    ) {
+        namingSettings.verifyName(element, holder, additionalCheck, verificationRules)
     }
 
     protected fun getNameMismatchMessage(name: String): String {
@@ -222,7 +227,7 @@ class FunctionNameInspection : NamingConventionInspection(
                 return@namedFunctionVisitor
             }
             if (!TestUtils.isInTestSourceContent(function)) {
-                verifyName(function, holder) {
+                verifyName(function, holder, additionalCheck = {
                     val functionName = function.name
                     val typeReference = function.typeReference
                     if (typeReference != null) {
@@ -235,7 +240,7 @@ class FunctionNameInspection : NamingConventionInspection(
                             ?.shortName()
                             ?.asString() != functionName
                     }
-                }
+                })
             }
         }
     }
@@ -268,6 +273,10 @@ abstract class PropertyNameInspectionBase protected constructor(
 
     protected enum class PropertyKind { NORMAL, PRIVATE, OBJECT_OR_TOP_LEVEL, CONST, LOCAL }
 
+    protected open fun verifyProperty(property: KtProperty, holder: ProblemsHolder) {
+        verifyName(property, holder)
+    }
+
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : KtVisitorVoid() {
         override fun visitProperty(property: KtProperty) {
             if (property.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
@@ -275,7 +284,7 @@ abstract class PropertyNameInspectionBase protected constructor(
             }
 
             if (property.getKind() == kind) {
-                verifyName(property, holder)
+                verifyProperty(property, holder)
             }
         }
 
@@ -287,6 +296,7 @@ abstract class PropertyNameInspectionBase protected constructor(
             if (parameter.ownerFunction is KtFunctionLiteral && parameter.isSingleUnderscore) {
                 return
             }
+
             if (parameter.getKind() == kind) {
                 verifyName(parameter, holder)
             }
@@ -306,13 +316,13 @@ abstract class PropertyNameInspectionBase protected constructor(
     private fun KtProperty.getKind(): PropertyKind = when {
         isLocal -> PropertyKind.LOCAL
 
-        visibilityModifierType() == KtTokens.PRIVATE_KEYWORD -> PropertyKind.PRIVATE
-
         containingClassOrObject is KtObjectDeclaration -> PropertyKind.OBJECT_OR_TOP_LEVEL
 
         isTopLevel -> PropertyKind.OBJECT_OR_TOP_LEVEL
 
         hasModifier(KtTokens.CONST_KEYWORD) -> PropertyKind.CONST
+
+        visibilityModifierType() == KtTokens.PRIVATE_KEYWORD -> PropertyKind.PRIVATE
 
         else -> PropertyKind.NORMAL
     }
@@ -339,7 +349,24 @@ class ObjectPropertyNameInspection : PropertyNameInspectionBase(
     KotlinBundle.message("object.or.top.level.property"),
     "[A-Za-z][_A-Za-z\\d]*",
 ) {
+    private val privatePropertyNamingSettings = NamingConventionInspectionSettings(
+        KotlinBundle.message("object.or.top.level.property"), "_?[A-Za-z][_A-Za-z\\d]*",
+        setNamePatternCallback = { value ->
+            namePattern = value
+        }
+    )
+
+    private val privatePropertyNamingRules = arrayOf(NO_BAD_CHARACTERS_OR_UNDERSCORE)
+
     override fun getNamingRules(): Array<NamingRule> = arrayOf(NO_START_UNDERSCORE, NO_BAD_CHARACTERS_OR_UNDERSCORE)
+
+    override fun verifyProperty(property: KtProperty, holder: ProblemsHolder) {
+        if (property.visibilityModifierType() == KtTokens.PRIVATE_KEYWORD) {
+            privatePropertyNamingSettings.verifyName(property, holder, { true }, privatePropertyNamingRules)
+        } else {
+            super.verifyProperty(property, holder)
+        }
+    }
 }
 
 class PrivatePropertyNameInspection : PropertyNameInspectionBase(
