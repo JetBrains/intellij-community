@@ -34,6 +34,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.ui.*
@@ -103,6 +104,11 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
   }
 
   override fun update(e: AnActionEvent) {
+    if (Registry.`is`("ide.experimental.ui.redesigned.run.widget")) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+
     val project = e.project
     val runManager = project?.serviceIfCreated<RunManager>()
     if (runManager == null) {

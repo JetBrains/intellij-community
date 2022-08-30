@@ -17,14 +17,15 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.ui.DeferredIcon
 import com.intellij.ui.JBColor
-import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.JBUI.Borders
 import com.intellij.util.ui.JBUI.CurrentTheme.CustomFrameDecorations
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.UIUtil
@@ -33,32 +34,12 @@ import java.awt.event.InputEvent
 import java.awt.geom.Area
 import java.awt.geom.Rectangle2D
 import java.awt.geom.RoundRectangle2D
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.SwingConstants
 
-internal fun createRunToolbarWithoutStop(project: Project): ActionToolbar {
-  val actionGroup = DefaultActionGroup()
-  actionGroup.add(RunToolboxWrapper(project))
-  actionGroup.addSeparator()
-  actionGroup.add(StopWithDropDownAction())
-  return ActionManager.getInstance().createActionToolbar(
-    ActionPlaces.MAIN_TOOLBAR,
-    actionGroup,
-    true
-  ).apply {
-    targetComponent = null
-    setReservePlaceAutoPopupIcon(false)
-    layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
-    if (this is ActionToolbarImpl) {
-      isOpaque = false
-      setSeparatorCreator { Box.createHorizontalStrut(JBUIScale.scale(8)) }
-      setMinimumButtonSize(JBUI.size(36, 30))
-      setActionButtonBorder(Borders.empty())
-      border = Borders.empty(5, 0)
-    }
-  }
-}
-
-private fun createRunActionToolbar(project: Project): ActionToolbar {
+private fun createRunActionToolbar(isCurrentConfigurationRunning: () -> Boolean): ActionToolbar {
   val actionGroup = DefaultActionGroup()
 
   actionGroup.add(RunConfigurationSelector())
@@ -80,37 +61,64 @@ private fun createRunActionToolbar(project: Project): ActionToolbar {
     if (this is ActionToolbarImpl) {
       isOpaque = false
       setMinimumButtonSize(JBUI.size(36, 30))
-      setActionButtonBorder(Borders.empty())
+      setActionButtonBorder(JBUI.Borders.empty())
       setSeparatorCreator { createSeparator() }
-      setCustomButtonLook(RunWidgetButtonLook(project))
+      setCustomButtonLook(RunWidgetButtonLook(isCurrentConfigurationRunning))
       border = null
     }
   }
 }
 
-private class RunToolboxWrapper(private val project: Project) : AnAction(), CustomComponentAction {
-  private var remembered: RunnerAndConfigurationSettings? = null
-  private var isRunning = false
+private data class RunToolbarData(val project: Project,
+                                  val chosenRunConfiguration: RunnerAndConfigurationSettings?,
+                                  val isRunning: Boolean)
+
+private val runToolbarDataKey = Key.create<RunToolbarData>("run-toolbar-data")
+
+private class RedesignedRunToolbarWrapper : AnAction(), CustomComponentAction {
+  override fun getActionUpdateThread(): ActionUpdateThread  = ActionUpdateThread.EDT
 
   override fun actionPerformed(e: AnActionEvent): Unit = error("Should not be invoked")
 
-  override fun createCustomComponent(presentation: Presentation, place: String): JComponent = createRunActionToolbar(project).component
+  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+    return createRunActionToolbar {
+      presentation.getClientProperty(runToolbarDataKey)?.isRunning ?: false
+    }.component.let {
+      Wrapper(it).apply { border = JBUI.Borders.empty(5, 2) }
+    }
+  }
+
+  override fun update(e: AnActionEvent) {
+    if (!Registry.`is`("ide.experimental.ui.redesigned.run.widget")) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    e.presentation.isEnabled = false
+    val project = e.project ?: return
+    val selectedConfiguration: RunnerAndConfigurationSettings? = RunManager.getInstance(project).selectedConfiguration
+    val runningDescriptors = ExecutionManagerImpl.getInstance(project).getRunningDescriptors { it === selectedConfiguration }
+    val someRunning = !runningDescriptors.isEmpty()
+    e.presentation.putClientProperty(runToolbarDataKey, RunToolbarData(project, selectedConfiguration, someRunning))
+  }
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
-    val selectedConfiguration: RunnerAndConfigurationSettings? = RunManager.getInstance(project).selectedConfiguration
-    val someRunning = isCurrentConfigurationRunning(project)
-    if (remembered != selectedConfiguration || someRunning != isRunning) {
-      component.repaint()
+    val data = presentation.getClientProperty(runToolbarDataKey) ?: return
+    val dataPropertyName = "old-run-toolbar-data"
+    val oldData = component.getClientProperty(dataPropertyName) as? RunToolbarData
+    if (oldData == null) {
+      component.putClientProperty(dataPropertyName, data)
     }
-    remembered = selectedConfiguration
-    isRunning = someRunning
+    else if (data != oldData) {
+      component.repaint()
+      component.putClientProperty(dataPropertyName, data)
+    }
   }
 }
 
-private class RunWidgetButtonLook(private val project: Project) : IdeaActionButtonLook() {
+private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () -> Boolean) : IdeaActionButtonLook() {
   override fun getStateBackground(component: JComponent, state: Int): Color {
 
-    val color = if (isCurrentConfigurationRunning(project))
+    val color = if (isCurrentConfigurationRunning())
       JBColor.namedColor("Green5", 0x599E5E)
     else
       JBColor.namedColor("Blue5",0x3369D6)
