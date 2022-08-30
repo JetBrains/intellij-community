@@ -45,5 +45,5 @@ interface NotebookCellInlayController {
   fun paintGutter(editor: EditorImpl,
                   g: Graphics,
                   r: Rectangle,
-                  intervalIterator: ListIterator<NotebookCellLines.Interval>)
+                  interval: NotebookCellLines.Interval)
 }

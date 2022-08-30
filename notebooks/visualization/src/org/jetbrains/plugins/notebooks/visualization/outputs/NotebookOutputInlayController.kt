@@ -90,7 +90,10 @@ class NotebookOutputInlayController private constructor(
     }
   }
 
-  override fun paintGutter(editor: EditorImpl, g: Graphics, r: Rectangle, intervalIterator: ListIterator<NotebookCellLines.Interval>) {
+  override fun paintGutter(editor: EditorImpl,
+                           g: Graphics,
+                           r: Rectangle,
+                           interval: NotebookCellLines.Interval) {
     val yOffset = innerComponent.yOffsetFromEditor(editor) ?: return
     val bounds = Rectangle()
     val oldClip = g.clipBounds

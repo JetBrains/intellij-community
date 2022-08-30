@@ -84,7 +84,7 @@ class NotebookGutterLineMarkerManager {
     }
 
     for (controller: NotebookCellInlayController in notebookCellInlayManager.inlaysForInterval(interval)) {
-      controller.paintGutter(editor, g, r, notebookCellLines.intervals.listIterator(interval.ordinal))
+      controller.paintGutter(editor, g, r, interval)
     }
   }
 
