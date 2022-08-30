@@ -2,6 +2,7 @@
 package com.intellij.openapi.project;
 
 import com.intellij.internal.statistic.StructuredIdeActivity;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -15,17 +16,17 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class DumbServiceMergingTaskQueue {
+public class DumbServiceMergingTaskQueue<T extends MergeableQueueTask<T>> {
   private static final Logger LOG = Logger.getInstance(DumbServiceMergingTaskQueue.class);
   private static final ExtensionPointName<DumbServiceInitializationCondition> DUMB_SERVICE_INITIALIZATION_CONDITION_EXTENSION_POINT_NAME =
     ExtensionPointName.create("com.intellij.dumbServiceInitializationCondition");
 
   private final Object myLock = new Object();
   //does not include a running task
-  private final List<@NotNull DumbModeTask> myTasksQueue = new ArrayList<>();
+  private final List<@NotNull T> myTasksQueue = new ArrayList<>();
 
   //includes running tasks too
-  private final Map<DumbModeTask, ProgressIndicatorBase> myProgresses = new HashMap<>();
+  private final Map<T, ProgressIndicatorBase> myProgresses = new HashMap<>();
 
   private final AtomicBoolean myFirstExecution = new AtomicBoolean(true);
 
@@ -33,7 +34,7 @@ public class DumbServiceMergingTaskQueue {
    * Disposes tasks, cancel underlying progress indicators, clears tasks queue
    */
   void disposePendingTasks() {
-    List<DumbModeTask> disposeQueue;
+    List<T> disposeQueue;
     List<ProgressIndicatorEx> indicatorsQueue;
     synchronized (myLock) {
       //running task is not included, we must not dispose it if it is (probably) running
@@ -71,12 +72,12 @@ public class DumbServiceMergingTaskQueue {
     }
   }
 
-  public void addTask(@NotNull DumbModeTask task) {
-    List<DumbModeTask> disposeQueue = new ArrayList<>(1);
+  public void addTask(@NotNull T task) {
+    List<T> disposeQueue = new ArrayList<>(1);
 
     synchronized (myLock) {
       for (int i = myTasksQueue.size() - 1; i >= 0; i--) {
-        DumbModeTask oldTask = myTasksQueue.get(i);
+        T oldTask = myTasksQueue.get(i);
         ProgressIndicatorBase indicator = myProgresses.get(oldTask);
         //dispose cancelled tasks
         if (indicator == null || indicator.isCanceled()) {
@@ -84,7 +85,7 @@ public class DumbServiceMergingTaskQueue {
           disposeQueue.add(oldTask);
           continue;
         }
-        DumbModeTask mergedTask = task.tryMergeWith(oldTask);
+        T mergedTask = task.tryMergeWith(oldTask);
         if (mergedTask != null) {
           LOG.debug("Merged " + task + " with " + oldTask);
           task = mergedTask;
@@ -95,7 +96,7 @@ public class DumbServiceMergingTaskQueue {
       }
 
       //register the new task last, preserving FIFO order
-      DumbModeTask taskToAdd = task;
+      T taskToAdd = task;
       myTasksQueue.add(taskToAdd);
       ProgressIndicatorBase progress = new ProgressIndicatorBase();
       myProgresses.put(taskToAdd, progress);
@@ -113,14 +114,14 @@ public class DumbServiceMergingTaskQueue {
 
   @Nullable
   public QueuedDumbModeTask extractNextTask() {
-    List<DumbModeTask> disposeQueue = new ArrayList<>(1);
+    List<Disposable> disposeQueue = new ArrayList<>(1);
 
     try {
       synchronized (myLock) {
         while (true) {
           if (myTasksQueue.isEmpty()) return null;
 
-          DumbModeTask task = myTasksQueue.remove(0);
+          T task = myTasksQueue.remove(0);
 
           ProgressIndicatorBase indicator = myProgresses.get(task);
           //a disposed task is just ignored here
@@ -137,13 +138,13 @@ public class DumbServiceMergingTaskQueue {
     }
   }
 
-  private static void disposeSafe(@NotNull Collection<? extends DumbModeTask> tasks) {
-    for (DumbModeTask task : tasks) {
+  private static void disposeSafe(@NotNull Collection<? extends Disposable> tasks) {
+    for (Disposable task : tasks) {
       disposeSafe(task);
     }
   }
 
-  private static void disposeSafe(@NotNull DumbModeTask task) {
+  private static void disposeSafe(@NotNull Disposable task) {
     try {
       if (Disposer.isDisposed(task)) return;
 
@@ -173,10 +174,10 @@ public class DumbServiceMergingTaskQueue {
   }
 
   class QueuedDumbModeTask implements AutoCloseable {
-    private final DumbModeTask myTask;
+    private final T myTask;
     private final ProgressIndicatorEx myIndicator;
 
-    QueuedDumbModeTask(@NotNull DumbModeTask task, @NotNull ProgressIndicatorEx progress) {
+    QueuedDumbModeTask(@NotNull T task, @NotNull ProgressIndicatorEx progress) {
       myTask = task;
       myIndicator = progress;
     }
@@ -208,7 +209,7 @@ public class DumbServiceMergingTaskQueue {
       }
 
       waitRequiredTasksToStartIndexing();
-      myTask.performInDumbMode(customIndicator);
+      myTask.perform(customIndicator);
     }
 
     void registerStageStarted(@NotNull StructuredIdeActivity activity) {
