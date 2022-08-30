@@ -101,7 +101,7 @@ public final class VersionComparatorUtil {
     }
   }
 
-  static List<String> splitVersionString(final String ver) {
+  public static List<String> splitVersionString(final String ver) {
     StringTokenizer st = new StringTokenizer(ver.trim(), "()._-;:/, +~");
     List<String> result = new ArrayList<String>();
 
