@@ -2,12 +2,18 @@
 
 package org.jetbrains.kotlin.nj2k
 
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.TokenSet
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.conversions.RecursiveApplicableConversionBase
@@ -39,13 +45,16 @@ fun untilToExpression(
     from: JKExpression,
     to: JKExpression,
     conversionContext: NewJ2kConverterContext
-): JKExpression =
-    rangeExpression(
+): JKExpression {
+    val isPossibleToUseRangeUntil = conversionContext.converter.targetModule
+        ?.let { it.languageVersionSettings.isPossibleToUseRangeUntil(it, conversionContext.project) } == true
+    return rangeExpression(
         from,
         to,
-        if (conversionContext.converter.targetModule?.languageVersionSettings?.isPossibleToUseRangeUntil() == true) "..<" else "until",
+        if (isPossibleToUseRangeUntil) "..<" else "until",
         conversionContext
     )
+}
 
 fun downToExpression(
     from: JKExpression,
@@ -371,6 +380,24 @@ val JKClass.isObjectOrCompanionObject
 
 const val EXPERIMENTAL_STDLIB_API_ANNOTATION = "kotlin.ExperimentalStdlibApi"
 
-fun LanguageVersionSettings.isPossibleToUseRangeUntil(): Boolean =
-    supportsFeature(LanguageFeature.RangeUntilOperator) &&
+@ApiStatus.Internal
+fun LanguageVersionSettings.isPossibleToUseRangeUntil(module: Module, project: Project): Boolean =
+    areKotlinVersionsSufficientToUseRangeUntil(module, project) &&
             FqName(EXPERIMENTAL_STDLIB_API_ANNOTATION).asString() in getFlag(AnalysisFlags.optIn)
+
+/**
+ * Checks that compilerVersion and languageVersion (or -XXLanguage:+RangeUntilOperator) versions are high enough to use rangeUntil
+ * operator.
+ *
+ * Note that this check is not enough. You also need to check for OptIn (because stdlib declarations are annotated with OptIn)
+ */
+@ApiStatus.Internal
+fun LanguageVersionSettings.areKotlinVersionsSufficientToUseRangeUntil(module: Module, project: Project): Boolean {
+    val compilerVersion = ExternalCompilerVersionProvider.get(module)
+        ?: IdeKotlinVersion.opt(KotlinJpsPluginSettings.jpsVersion(project))
+        ?: return false
+    // `rangeUntil` is added to languageVersion 1.8 only since 1.7.20-Beta compiler
+    return compilerVersion >= COMPILER_VERSION_WITH_RANGEUNTIL_SUPPORT && supportsFeature(LanguageFeature.RangeUntilOperator)
+}
+
+private val COMPILER_VERSION_WITH_RANGEUNTIL_SUPPORT = IdeKotlinVersion.get("1.7.20-Beta")

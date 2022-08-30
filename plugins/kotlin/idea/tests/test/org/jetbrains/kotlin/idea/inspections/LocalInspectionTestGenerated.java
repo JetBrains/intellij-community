@@ -13145,6 +13145,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/replaceUntilWithRangeUntil/simple.kt");
         }
 
+        @TestMetadata("tooOldCompilerVersion.kt")
+        public void testTooOldCompilerVersion() throws Exception {
+            runTest("testData/inspectionsLocal/replaceUntilWithRangeUntil/tooOldCompilerVersion.kt");
+        }
+
         @TestMetadata("tooOldLanguageVersion.kt")
         public void testTooOldLanguageVersion() throws Exception {
             runTest("testData/inspectionsLocal/replaceUntilWithRangeUntil/tooOldLanguageVersion.kt");
