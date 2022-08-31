@@ -38,6 +38,9 @@ class MavenImportCollector : CounterUsagesCollector() {
     val LEGACY_IMPORTERS_PHASE = GROUP.registerIdeActivity("importers", parentActivity = LEGACY_IMPORT)
     // <<< Legacy import phases
 
+    @JvmField
+    val ACTIVITY_ID = EventFields.IdeActivityIdField
+
     // >>> Workspace import phases
     @JvmField
     val WORKSPACE_IMPORT = GROUP.registerIdeActivity("workspace_import",
@@ -51,6 +54,19 @@ class MavenImportCollector : CounterUsagesCollector() {
     val WORKSPACE_POPULATE_PHASE = GROUP.registerIdeActivity("populate", parentActivity = WORKSPACE_IMPORT)
 
     @JvmField
+    val DURATION_BACKGROUND_MS = EventFields.Long("duration_in_background_ms")
+
+    @JvmField
+    val DURATION_WRITE_ACTION_MS = EventFields.Long("duration_in_write_action_ms")
+
+    @JvmField
+    val ATTEMPTS = EventFields.Int("attempts")
+
+    @JvmField
+    val WORKSPACE_COMMIT_STATS = GROUP.registerVarargEvent("workspace_commit", ACTIVITY_ID, DURATION_BACKGROUND_MS,
+                                                           DURATION_WRITE_ACTION_MS, ATTEMPTS)
+
+    @JvmField
     val WORKSPACE_COMMIT_PHASE = GROUP.registerIdeActivity("commit", parentActivity = WORKSPACE_IMPORT)
 
     @JvmField
@@ -59,9 +75,6 @@ class MavenImportCollector : CounterUsagesCollector() {
 
     @JvmField
     val TOTAL_DURATION_MS = EventFields.Long("total_duration_ms")
-
-    @JvmField
-    val ACTIVITY_ID = EventFields.IdeActivityIdField
 
     @JvmField
     val COLLECT_FOLDERS_DURATION_MS = EventFields.Long("collect_folders_duration_ms")

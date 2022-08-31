@@ -12,9 +12,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
+import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceProjectImporterKt;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.junit.Assume;
 import org.junit.Test;
 
 import java.io.File;
@@ -56,6 +58,27 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
 
     assertModules("project");
     assertEquals("2", getProjectsTree().getRootProjects().get(0).getName());
+  }
+
+  @Test
+  public void testFallbackToSlowWorkspaceCommit() {
+    Assume.assumeTrue(MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject));
+
+    try {
+      WorkspaceProjectImporterKt.setWORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE(true);
+      importProject("<groupId>test</groupId>" +
+                    "<artifactId>project</artifactId>" +
+                    "<version>1</version>" +
+                    "<name>1</name>");
+
+      assertModules("project");
+
+      // make sure the logic in WorkspaceProjectImporter worked as expected
+      assertFalse(WorkspaceProjectImporterKt.getWORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE());
+    }
+    finally {
+      WorkspaceProjectImporterKt.setWORKSPACE_IMPORTER_SKIP_FAST_APPLY_ATTEMPTS_ONCE(false);
+    }
   }
 
   @Test
