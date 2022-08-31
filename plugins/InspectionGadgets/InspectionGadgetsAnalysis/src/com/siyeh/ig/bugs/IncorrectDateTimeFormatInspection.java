@@ -2,8 +2,8 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -11,28 +11,34 @@ import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.IntPredicate;
+import java.util.function.BiFunction;
 
 import static com.siyeh.ig.callMatcher.CallMatcher.*;
 
 public class IncorrectDateTimeFormatInspection extends AbstractBaseJavaLocalInspectionTool {
 
-  private static IntPredicate rangeOf(int from, int to) {
-    return count -> count >= from && count <= to;
+  private static BiFunction<Character, Integer, String> rangeOf(int from, int to) {
+    return (letter, count) -> {
+      if (count < from) return InspectionGadgetsBundle.message("inspection.incorrect.date.format.too.few.letters", letter, from, count);
+      if (count > to) return InspectionGadgetsBundle.message("inspection.incorrect.date.format.too.many.letters", letter, to, count);
+      return null;
+    };
   }
 
-  private static IntPredicate setOf(int... numbers) {
-    return  count -> ArrayUtil.indexOf(numbers, count) >= 0;
+  private static BiFunction<Character, Integer, String> setOf(int... numbers) {
+    return  (letter, count) -> {
+      if (ArrayUtil.indexOf(numbers, count) >= 0) return null;
+      final String expected = StringUtil.join(numbers, ", ");
+      return InspectionGadgetsBundle.message("inspection.incorrect.date.format.wrong.number.of.letters", letter, expected, count);
+    };
   }
 
-  private static final Map<Character, IntPredicate> ALLOWED_DATE_TIME_FORMATTER = Map.ofEntries(
+  private static final Map<Character, BiFunction<Character, Integer, String>> ALLOWED_DATE_TIME_FORMATTER = Map.ofEntries(
     Map.entry('G', rangeOf(1, 5)),
     Map.entry('u', rangeOf(1, 19)),
     Map.entry('y', rangeOf(1, 19)),
@@ -95,6 +101,7 @@ public class IncorrectDateTimeFormatInspection extends AbstractBaseJavaLocalInsp
         Object patternObject = ExpressionUtils.computeConstantExpression(expression);
         if (!(patternObject instanceof String)) return;
         String pattern = (String)patternObject;
+        record Token(char character, int pos, int length) {}
         List<Token> tokens = new ArrayList<>();
         int optionalDepth = 0;
         char[] array = pattern.toCharArray();
@@ -111,7 +118,7 @@ public class IncorrectDateTimeFormatInspection extends AbstractBaseJavaLocalInsp
               continue;
             }
             else {
-              tokens.add(new Token(array, pos - length + 1, length));
+              tokens.add(new Token(c, pos - length + 1, length));
               checkPadding(expression, array, pos - length + 1, pos + 1);
             }
           }
@@ -148,87 +155,60 @@ public class IncorrectDateTimeFormatInspection extends AbstractBaseJavaLocalInsp
         checkInQuoteProblem(expression, inQuote, lastQuoteIndex);
 
         for (Token token : tokens) {
-          checkAvailableCount(expression, token, holder);
+          checkAvailableCount(expression, token.character, token.pos, token.length);
         }
       }
 
       private void checkOptionalDepthProblem(@NotNull PsiExpression expression, int optionalDepth, int pos) {
         if (optionalDepth < 0) {
-          TextRange range = ExpressionUtils.findStringLiteralRange(expression, pos, pos + 1);
-          holder.registerProblem(expression, range,
-                                 InspectionGadgetsBundle.message("inspection.incorrect.date.format.message.unpaired", ']'),
-                                 LocalQuickFix.EMPTY_ARRAY);
+          holder.registerProblem(expression, ExpressionUtils.findStringLiteralRange(expression, pos, pos + 1),
+                                 InspectionGadgetsBundle.message("inspection.incorrect.date.format.message.unpaired", '['));
         }
       }
 
-      private void checkInQuoteProblem(@NotNull PsiExpression expression, boolean inQuote, int lastQuoteIndex) {
+      private void checkInQuoteProblem(@NotNull PsiExpression expression, boolean inQuote, int pos) {
         if (inQuote) {
-          TextRange range = ExpressionUtils.findStringLiteralRange(expression, lastQuoteIndex, lastQuoteIndex + 1);
-          holder.registerProblem(expression, range,
-                                 InspectionGadgetsBundle.message("inspection.incorrect.date.format.message.unpaired", '\''),
-                                 LocalQuickFix.EMPTY_ARRAY);
+          holder.registerProblem(expression, ExpressionUtils.findStringLiteralRange(expression, pos, pos + 1),
+                                 InspectionGadgetsBundle.message("inspection.incorrect.date.format.message.literal", '\''));
         }
       }
 
       private void checkUnsupportedSymbolsProblem(@NotNull PsiExpression expression, int pos, char c) {
         if (c == '{' || c == '}' || c == '#') {
-          TextRange range = ExpressionUtils.findStringLiteralRange(expression, pos, pos + 1);
-          holder.registerProblem(expression, range,
-                                 InspectionGadgetsBundle.message("inspection.incorrect.date.format.message.unsupported", c),
-                                 LocalQuickFix.EMPTY_ARRAY);
+          holder.registerProblem(expression, ExpressionUtils.findStringLiteralRange(expression, pos, pos + 1),
+                                 InspectionGadgetsBundle.message("inspection.incorrect.date.format.message.reserved.character", c));
         }
       }
 
-      private void checkPadding(@NotNull PsiExpression expression, char[] array, int firstLetterIndex, int nextAfterP) {
-        if (array[firstLetterIndex] == 'p') {
-          if (nextAfterP >= array.length || !isLetter(array[nextAfterP])) {
-            TextRange range = ExpressionUtils.findStringLiteralRange(expression, firstLetterIndex, nextAfterP);
-            holder.registerProblem(expression, range,
-                                   InspectionGadgetsBundle.message("inspection.incorrect.date.format.message.padding",
-                                                                   array[firstLetterIndex]),
-                                   LocalQuickFix.EMPTY_ARRAY);
-          }
+      private void checkPadding(@NotNull PsiExpression expression, char[] array, int from, int to) {
+        if (array[from] == 'p' && (to >= array.length || !isLetter(array[to]))) {
+          holder.registerProblem(expression, ExpressionUtils.findStringLiteralRange(expression, from, to),
+                                 InspectionGadgetsBundle.message("inspection.incorrect.date.format.message.padding", 'p'));
         }
       }
 
-      private boolean isLetter(char c) {
+      private static boolean isLetter(char c) {
         return c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z';
       }
 
-      private void checkAvailableCount(PsiExpression expression, @Nullable Token token, ProblemsHolder holder) {
-        if (token == null) {
-          return;
-        }
-        if (token.character == 'p') {
+      private void checkAvailableCount(PsiExpression expression, char character, int pos, int length) {
+        if (character == 'p') {
           //checked during tokenizing
           return;
         }
-        IntPredicate verifier = ALLOWED_DATE_TIME_FORMATTER.get(token.character);
-        if (verifier == null || !verifier.test(token.length)) {
-          TextRange range = ExpressionUtils.findStringLiteralRange(expression, token.pos, token.pos + token.length);
-          holder.registerProblem(expression, range,
-                                 InspectionGadgetsBundle.message("inspection.incorrect.date.format.message.unsupported",
-                                                                 token.toString()),
-                                 LocalQuickFix.EMPTY_ARRAY);
+        BiFunction<Character, Integer, @InspectionMessage String> verifier = ALLOWED_DATE_TIME_FORMATTER.get(character);
+        if (verifier == null) {
+          holder.registerProblem(expression, ExpressionUtils.findStringLiteralRange(expression, pos, pos + length),
+                                 InspectionGadgetsBundle.message("inspection.incorrect.date.format.message.unsupported", character));
+        }
+        else {
+          String message = verifier.apply(character, length);
+          if (message != null) {
+            final TextRange range = ExpressionUtils.findStringLiteralRange(expression, pos, pos + length);
+            holder.registerProblem(expression, range, message);
+          }
         }
       }
     };
-  }
-
-  private static class Token {
-    final char character;
-    final int pos;
-    final int length;
-
-    Token(char[] chars, int pos, int length) {
-      this.character = chars[pos];
-      this.pos = pos;
-      this.length = length;
-    }
-
-    @Override
-    public String toString() {
-      return StringUtil.repeat(String.valueOf(character), length);
-    }
   }
 }
