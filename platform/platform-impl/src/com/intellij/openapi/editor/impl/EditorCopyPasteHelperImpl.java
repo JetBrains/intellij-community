@@ -6,9 +6,9 @@ import com.intellij.codeInsight.editorActions.TextBlockTransferableData;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.BasePasteHandler;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,21 +24,22 @@ import java.util.List;
 
 public class EditorCopyPasteHelperImpl extends EditorCopyPasteHelper {
   @Override
-  public void copySelectionToClipboard(@NotNull Editor editor) {
-    if (editor.getContentComponent() instanceof JPasswordField) return;
+  public @Nullable Transferable getSelectionTransferable(@NotNull Editor editor) {
+    if (editor.getContentComponent() instanceof JPasswordField) return null;
 
     ApplicationManager.getApplication().assertIsDispatchThread();
     List<TextBlockTransferableData> extraData = new ArrayList<>();
     String s = editor.getCaretModel().supportsMultipleCarets() ? getSelectedTextForClipboard(editor, extraData)
                                                                : editor.getSelectionModel().getSelectedText();
-    if (s == null) return;
+    if (StringUtil.isEmpty(s)) return null;
 
     s = TextBlockTransferable.convertLineSeparators(s, "\n", extraData);
-    Transferable contents = editor.getCaretModel().supportsMultipleCarets() ? new TextBlockTransferable(s, extraData, null) : new StringSelection(s);
-    CopyPasteManager.getInstance().setContents(contents);
+    return editor.getCaretModel().supportsMultipleCarets() ? new TextBlockTransferable(s, extraData, null)
+                                                           : new StringSelection(s);
   }
 
-  public static String getSelectedTextForClipboard(@NotNull Editor editor, @NotNull Collection<? super TextBlockTransferableData> extraDataCollector) {
+  public static String getSelectedTextForClipboard(@NotNull Editor editor,
+                                                   @NotNull Collection<? super TextBlockTransferableData> extraDataCollector) {
     final StringBuilder buf = new StringBuilder();
     String separator = "";
     List<Caret> carets = editor.getCaretModel().getAllCarets();

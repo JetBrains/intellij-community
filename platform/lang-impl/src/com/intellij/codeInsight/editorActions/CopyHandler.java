@@ -2,7 +2,6 @@
 
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -16,10 +15,7 @@ import com.intellij.openapi.editor.RawText;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actions.CopyAction;
-import com.intellij.openapi.editor.actions.EditorActionUtil;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorCopyPasteHelperImpl;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
@@ -57,27 +53,7 @@ public class CopyHandler extends EditorActionHandler implements CopyAction.Trans
       return;
     }
 
-    final SelectionModel selectionModel = editor.getSelectionModel();
-    if (!selectionModel.hasSelection(true)) {
-      if (CopyAction.isSkipCopyPasteForEmptySelection()) {
-        return;
-      }
-      FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.copy.line");
-      editor.getCaretModel().runForEachCaret(__ -> selectionModel.selectLineAtCaret());
-      if (!selectionModel.hasSelection(true)) return;
-      editor.getCaretModel().runForEachCaret(__ -> EditorActionUtil.moveCaretToLineStartIgnoringSoftWraps(editor));
-    }
-
-    Transferable transferable = getSelection(editor, project, file);
-    if (transferable == null) return;
-
-    CopyPasteManager.getInstance().setContents(transferable);
-    if (editor instanceof EditorEx) {
-      EditorEx ex = (EditorEx)editor;
-      if (ex.isStickySelection()) {
-        ex.setStickySelection(false);
-      }
-    }
+    CopyAction.copyToClipboard(editor, e -> getSelection(e, project, file));
   }
 
   @Override

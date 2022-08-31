@@ -10,8 +10,12 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorCopyPasteHelper;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,17 +33,42 @@ public class CopyAction extends TextComponentEditorAction implements HintManager
   public static class Handler extends EditorActionHandler {
     @Override
     public void doExecute(@NotNull final Editor editor, @Nullable Caret caret, DataContext dataContext) {
-      if (!editor.getSelectionModel().hasSelection(true)) {
-        if (isSkipCopyPasteForEmptySelection()) {
-          return;
-        }
-        FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.copy.line");
-        editor.getCaretModel().runForEachCaret(__ -> {
-          editor.getSelectionModel().selectLineAtCaret();
-          EditorActionUtil.moveCaretToLineStartIgnoringSoftWraps(editor);
-        });
+      copyToClipboard(editor, EditorCopyPasteHelper.getInstance()::getSelectionTransferable);
+    }
+  }
+
+  public static void copyToClipboard(@NotNull Editor editor, @NotNull TransferableProvider transferableProvider) {
+    SelectionModel selectionModel = editor.getSelectionModel();
+
+    if (!selectionModel.hasSelection(true)) {
+      if (isSkipCopyPasteForEmptySelection()) {
+        return;
       }
-      editor.getSelectionModel().copySelectionToClipboard();
+      FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.copy.line");
+
+      editor.getCaretModel().runForEachCaret(caret -> {
+        EditorActionUtil.selectEntireLines(caret);
+        if (caret.hasSelection()) {
+          caret.moveToVisualPosition(caret.getSelectionStartPosition());
+        }
+      });
+      if (!selectionModel.hasSelection(true)) {
+        return;
+      }
+    }
+
+    Transferable transferable = transferableProvider.getSelection(editor);
+    if (transferable == null) {
+      return;
+    }
+
+    CopyPasteManager.getInstance().setContents(transferable);
+
+    if (editor instanceof EditorEx) {
+      EditorEx ex = (EditorEx)editor;
+      if (ex.isStickySelection()) {
+        ex.setStickySelection(false);
+      }
     }
   }
 
