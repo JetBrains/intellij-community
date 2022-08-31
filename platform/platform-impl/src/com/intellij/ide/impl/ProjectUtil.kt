@@ -684,7 +684,7 @@ fun <T> runUnderModalProgressIfIsEdt(task: suspend () -> T): T {
 
 @Internal
 @RequiresEdt
-inline fun <T> runBlockingUnderModalProgress(@NlsContexts.ProgressTitle title: String = "", project: Project? = null, crossinline task: suspend () -> T): T {
+fun <T> runBlockingUnderModalProgress(@NlsContexts.ProgressTitle title: String = "", project: Project? = null, task: suspend () -> T): T {
   return ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
     val modalityState = CoreProgressManager.getCurrentThreadProgressModality()
     runBlocking(modalityState.asContextElement()) {
