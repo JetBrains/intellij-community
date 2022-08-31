@@ -124,9 +124,6 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
     val toolbarGroup = DefaultActionGroup()
     toolbarGroup.add(ActionManager.getInstance().getAction("Git.Stage.Toolbar"))
-    toolbarGroup.addSeparator()
-    toolbarGroup.add(ActionManager.getInstance().getAction(ChangesTree.GROUP_BY_ACTION_GROUP))
-    toolbarGroup.addSeparator()
     toolbarGroup.addAll(TreeActionsToolbarPanel.createTreeActions(tree))
     toolbar = ActionManager.getInstance().createActionToolbar(GIT_STAGE_PANEL_PLACE, toolbarGroup, true)
     toolbar.targetComponent = tree

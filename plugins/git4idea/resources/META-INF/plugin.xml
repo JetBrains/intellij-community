@@ -358,7 +358,9 @@
       <reference id="Diff.ShowDiff"/>
       <reference id="ChangesView.Refresh"/>
       <reference id="Git.Stash.Silently"/>
-      <group id="Git.Stage.Ui.Settings" icon="AllIcons.Actions.Show" popup="true">
+      <group id="Git.Stage.Ui.Settings" icon="AllIcons.Actions.GroupBy" popup="true">
+        <reference id="ChangesView.GroupBy"/>
+        <separator key="separator.show"/>
         <reference id="Git.Stage.ToggleIgnored"/>
       </group>
     </group>
