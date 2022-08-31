@@ -24,7 +24,6 @@ import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataP
 import org.jetbrains.intellij.build.impl.DistributionJARsBuilder.Companion.layout
 import org.jetbrains.intellij.build.impl.JarPackager.Companion.getSearchableOptionsDir
 import org.jetbrains.intellij.build.impl.JarPackager.Companion.pack
-import org.jetbrains.intellij.build.impl.PlatformModules.collectPlatformModules
 import org.jetbrains.intellij.build.impl.SVGPreBuilder.createPrebuildSvgIconsTask
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.copyDir
@@ -71,89 +70,6 @@ class DistributionJARsBuilder {
   }
 
   companion object {
-    fun getModulesToCompile(buildContext: BuildContext): Set<String> {
-      val productLayout = buildContext.productProperties.productLayout
-      val result = LinkedHashSet<String>()
-      result.addAll(productLayout.getIncludedPluginModules(java.util.Set.copyOf(productLayout.bundledPluginModules)))
-      collectPlatformModules(result)
-      result.addAll(productLayout.productApiModules)
-      result.addAll(productLayout.productImplementationModules)
-      result.addAll(productLayout.additionalPlatformJars.values())
-      result.addAll(getToolModules())
-      result.addAll(buildContext.productProperties.additionalModulesToCompile)
-      result.add("intellij.idea.community.build.tasks")
-      result.add("intellij.platform.images.build")
-      result.removeAll(productLayout.excludedModuleNames)
-      return result
-    }
-
-    private fun buildThirdPartyLibrariesList(projectStructureMapping: ProjectStructureMapping, context: BuildContext): ForkJoinTask<*>? {
-      return createSkippableTask(spanBuilder("generate table of licenses for used third-party libraries"),
-                                 BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP, context) {
-        val generator = LibraryLicensesListGenerator.create(project = context.project,
-                                                            licensesList = context.productProperties.allLibraryLicenses,
-                                                            usedModulesNames = projectStructureMapping.includedModules)
-        generator.generateHtml(getThirdPartyLibrariesHtmlFilePath(context))
-        generator.generateJson(getThirdPartyLibrariesJsonFilePath(context))
-      }
-    }
-
-    private fun satisfiesBundlingRequirements(plugin: PluginLayout,
-                                              osFamily: OsFamily?,
-                                              arch: JvmArchitecture?,
-                                              context: BuildContext): Boolean {
-      val bundlingRestrictions = plugin.bundlingRestrictions
-      if (bundlingRestrictions.includeInEapOnly && !context.applicationInfo.isEAP) {
-        return false
-      }
-
-      if (osFamily == null && bundlingRestrictions.supportedOs != OsFamily.ALL) {
-        return false
-      }
-      else if (osFamily != null &&
-               (bundlingRestrictions.supportedOs == OsFamily.ALL || !bundlingRestrictions.supportedOs.contains(osFamily))) {
-        return false
-      }
-      else if (arch == null && bundlingRestrictions.supportedArch != JvmArchitecture.ALL) {
-        return false
-      }
-      else{
-        return arch == null || bundlingRestrictions.supportedArch.contains(arch)
-      }
-    }
-
-    /**
-     * @see [[build/plugins-autoupload.txt]] for the specification.
-     *
-     * @return predicate to test if the given plugin should be auto-published
-     */
-    private fun loadPluginAutoPublishList(buildContext: BuildContext): Predicate<PluginLayout> {
-      val file = getPluginAutoUploadFile(buildContext.paths.communityHomeDir)
-      val config = readPluginAutoUploadFile(file)
-
-      val productCode = buildContext.applicationInfo.productCode
-      return Predicate<PluginLayout> { plugin ->
-        val mainModuleName = plugin.mainModule
-
-        val includeInAllProducts = config.contains(mainModuleName)
-        val includeInProduct = config.contains("+$productCode:$mainModuleName")
-        val excludedFromProduct = config.contains("-$productCode:$mainModuleName")
-
-        if (includeInProduct && (excludedFromProduct || includeInAllProducts)) {
-          buildContext.messages.error("Unsupported rules combination: " + config.filter {
-            it == mainModuleName || it.endsWith(":$mainModuleName")
-          })
-        }
-
-        !excludedFromProduct && (includeInAllProducts || includeInProduct)
-      }
-    }
-
-    private fun buildKeymapPlugins(targetDir: Path, context: BuildContext): ForkJoinTask<List<Pair<Path, ByteArray>>> {
-      val keymapDir = context.paths.communityHomeDir.communityRoot.resolve("platform/platform-resources/src/keymaps")
-      return buildKeymapPlugins(context.buildNumber, targetDir, keymapDir)
-    }
-
     suspend fun layout(layout: BaseLayout,
                        targetDirectory: Path,
                        copyFiles: Boolean,
@@ -1067,4 +983,71 @@ private fun createBuildBrokenPluginListTask(context: BuildContext): ForkJoinTask
       context.addDistFile(java.util.Map.entry(targetFile, "bin"))
     }
   }
+}
+
+private fun buildThirdPartyLibrariesList(projectStructureMapping: ProjectStructureMapping, context: BuildContext): ForkJoinTask<*>? {
+  return createSkippableTask(spanBuilder("generate table of licenses for used third-party libraries"),
+                             BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP, context) {
+    val generator = LibraryLicensesListGenerator.create(project = context.project,
+                                                        licensesList = context.productProperties.allLibraryLicenses,
+                                                        usedModulesNames = projectStructureMapping.includedModules)
+    generator.generateHtml(getThirdPartyLibrariesHtmlFilePath(context))
+    generator.generateJson(getThirdPartyLibrariesJsonFilePath(context))
+  }
+}
+
+private fun satisfiesBundlingRequirements(plugin: PluginLayout,
+                                          osFamily: OsFamily?,
+                                          arch: JvmArchitecture?,
+                                          context: BuildContext): Boolean {
+  val bundlingRestrictions = plugin.bundlingRestrictions
+  if (bundlingRestrictions.includeInEapOnly && !context.applicationInfo.isEAP) {
+    return false
+  }
+
+  if (osFamily == null && bundlingRestrictions.supportedOs != OsFamily.ALL) {
+    return false
+  }
+  else if (osFamily != null &&
+           (bundlingRestrictions.supportedOs == OsFamily.ALL || !bundlingRestrictions.supportedOs.contains(osFamily))) {
+    return false
+  }
+  else if (arch == null && bundlingRestrictions.supportedArch != JvmArchitecture.ALL) {
+    return false
+  }
+  else {
+    return arch == null || bundlingRestrictions.supportedArch.contains(arch)
+  }
+}
+
+/**
+ * @see [[build/plugins-autoupload.txt]] for the specification.
+ *
+ * @return predicate to test if the given plugin should be auto-published
+ */
+private fun loadPluginAutoPublishList(buildContext: BuildContext): Predicate<PluginLayout> {
+  val file = getPluginAutoUploadFile(buildContext.paths.communityHomeDir)
+  val config = readPluginAutoUploadFile(file)
+
+  val productCode = buildContext.applicationInfo.productCode
+  return Predicate<PluginLayout> { plugin ->
+    val mainModuleName = plugin.mainModule
+
+    val includeInAllProducts = config.contains(mainModuleName)
+    val includeInProduct = config.contains("+$productCode:$mainModuleName")
+    val excludedFromProduct = config.contains("-$productCode:$mainModuleName")
+
+    if (includeInProduct && (excludedFromProduct || includeInAllProducts)) {
+      buildContext.messages.error("Unsupported rules combination: " + config.filter {
+        it == mainModuleName || it.endsWith(":$mainModuleName")
+      })
+    }
+
+    !excludedFromProduct && (includeInAllProducts || includeInProduct)
+  }
+}
+
+private fun buildKeymapPlugins(targetDir: Path, context: BuildContext): ForkJoinTask<List<Pair<Path, ByteArray>>> {
+  val keymapDir = context.paths.communityHomeDir.communityRoot.resolve("platform/platform-resources/src/keymaps")
+  return buildKeymapPlugins(context.buildNumber, targetDir, keymapDir)
 }

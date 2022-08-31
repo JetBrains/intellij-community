@@ -590,7 +590,7 @@ private suspend fun compileModulesForDistribution(pluginsToPublish: Set<PluginLa
   val mavenArtifacts = productProperties.mavenArtifacts
 
   val toCompile = LinkedHashSet<String>()
-  toCompile.addAll(DistributionJARsBuilder.getModulesToCompile(context))
+  toCompile.addAll(getModulesToCompile(context))
   context.proprietaryBuildTools.scrambleTool?.getAdditionalModulesToCompile()?.let {
     toCompile.addAll(it)
   }
@@ -1223,4 +1223,20 @@ private fun crossPlatformZip(macX64DistDir: Path,
       }, entryCustomizer = entryCustomizer)
     }
   }
+}
+
+fun getModulesToCompile(buildContext: BuildContext): Set<String> {
+  val productLayout = buildContext.productProperties.productLayout
+  val result = LinkedHashSet<String>()
+  result.addAll(productLayout.getIncludedPluginModules(java.util.Set.copyOf(productLayout.bundledPluginModules)))
+  PlatformModules.collectPlatformModules(result)
+  result.addAll(productLayout.productApiModules)
+  result.addAll(productLayout.productImplementationModules)
+  result.addAll(productLayout.additionalPlatformJars.values())
+  result.addAll(getToolModules())
+  result.addAll(buildContext.productProperties.additionalModulesToCompile)
+  result.add("intellij.idea.community.build.tasks")
+  result.add("intellij.platform.images.build")
+  result.removeAll(productLayout.excludedModuleNames)
+  return result
 }
