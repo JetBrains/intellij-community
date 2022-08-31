@@ -244,13 +244,14 @@ internal class PackageSearchProjectService(private val project: Project) {
                 val allKnownRepos = allKnownRepositoryModels(moduleModels, repos)
                 val nativeModulesMap = moduleModels.associateBy { it.projectModule }
 
-                val getUpgrades: suspend (Boolean) -> PackagesToUpgrade = {
-                    computePackageUpgrades(installedPackages, it, packageVersionNormalizer, allKnownRepos, nativeModulesMap)
-                }
-
-                val stableUpdates = async { getUpgrades(true) }
-                val allUpdates = async { getUpgrades(false) }
-                PackageUpgradeCandidates(stableUpdates.await(), allUpdates.await())
+                val allUpdates = computePackageUpgrades(
+                    installedPackages = installedPackages,
+                    onlyStable = false,
+                    normalizer = packageVersionNormalizer,
+                    repos = allKnownRepos,
+                    nativeModulesMap = nativeModulesMap
+                )
+                PackageUpgradeCandidates(allUpdates)
             }.value
         }
     }
@@ -258,7 +259,7 @@ internal class PackageSearchProjectService(private val project: Project) {
             context = "${this::class.qualifiedName}#packageUpgradesStateFlow",
             message = "Error while evaluating packages upgrade candidates"
         )
-        .stateIn(project.lifecycleScope, SharingStarted.Eagerly, PackageUpgradeCandidates.EMPTY)
+        .stateIn(project.lifecycleScope, SharingStarted.Lazily, PackageUpgradeCandidates.EMPTY)
 
     init {
         // allows rerunning PKGS inspections on already opened files
