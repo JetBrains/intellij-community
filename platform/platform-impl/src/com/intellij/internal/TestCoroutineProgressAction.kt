@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.dsl.builder.panel
 import kotlinx.coroutines.*
 import javax.swing.JComponent
+import kotlin.coroutines.coroutineContext
 
 internal class TestCoroutineProgressAction : AnAction() {
 
@@ -115,7 +116,7 @@ internal class TestCoroutineProgressAction : AnAction() {
   }
 
   private suspend fun doStuff() {
-    val sink = progressSink()
+    val sink = coroutineContext.progressSink
     val total = 100
     sink?.text("Indeterminate stage")
     delay(2000)

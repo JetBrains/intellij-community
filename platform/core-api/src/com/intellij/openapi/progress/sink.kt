@@ -9,7 +9,6 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.coroutineContext
 
 /**
  * Usage example:
@@ -33,12 +32,9 @@ fun ProgressSink.asContextElement(): CoroutineContext.Element {
   return ProgressSinkElement(this)
 }
 
-internal val CoroutineContext.progressSink: ProgressSink? get() = this[ProgressSinkKey]?.sink
+val CoroutineContext.progressSink: ProgressSink? get() = this[ProgressSinkKey]?.sink
 
 val CoroutineScope.progressSink: ProgressSink? get() = coroutineContext.progressSink
-
-// kotlin doesn't allow 'suspend' modifier on properties
-suspend fun progressSink(): ProgressSink? = coroutineContext.progressSink
 
 private object ProgressSinkKey : CoroutineContext.Key<ProgressSinkElement>
 private class ProgressSinkElement(val sink: ProgressSink) : AbstractCoroutineContextElement(ProgressSinkKey)
