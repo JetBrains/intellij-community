@@ -14,9 +14,10 @@ import java.awt.*
 import javax.swing.*
 
 internal class SimpleAccountsListCellRenderer<A : Account, D : AccountDetails>(
-  private val listModel: AccountsListModel<A, *>,
+  private val defaultPredicate: (A) -> Boolean,
   private val detailsProvider: AccountsDetailsProvider<A, D>,
-  private val avatarIconsProvider: IconsProvider<A>
+  private val avatarIconsProvider: IconsProvider<A>,
+  private val actionsController: AccountsPanelActionsController<A>
 ) : ListCellRenderer<A>, JPanel() {
 
   private val accountName = JLabel()
@@ -63,7 +64,7 @@ internal class SimpleAccountsListCellRenderer<A : Account, D : AccountDetails>(
 
     accountName.apply {
       text = account.name
-      setBold(if (getDetails(account)?.name == null) isDefault(account) else false)
+      setBold(if (getDetails(account)?.name == null) defaultPredicate(account) else false)
       foreground = if (getDetails(account)?.name == null) primaryTextColor else secondaryTextColor
     }
     serverName.apply {
@@ -81,7 +82,7 @@ internal class SimpleAccountsListCellRenderer<A : Account, D : AccountDetails>(
     }
     fullName.apply {
       text = getDetails(account)?.name
-      setBold(isDefault(account))
+      setBold(defaultPredicate(account))
       isVisible = getDetails(account)?.name != null
       foreground = primaryTextColor
     }
@@ -98,8 +99,7 @@ internal class SimpleAccountsListCellRenderer<A : Account, D : AccountDetails>(
     return this
   }
 
-  private fun isDefault(account: A): Boolean = (listModel is AccountsListModel.WithDefault) && account == listModel.defaultAccount
-  private fun editAccount(parentComponent: JComponent, account: A) = listModel.editAccount(parentComponent, account)
+  private fun editAccount(parentComponent: JComponent, account: A) = actionsController.editAccount(parentComponent, account)
 
   private fun getDetails(account: A): D? = detailsProvider.getDetails(account)
 

@@ -14,6 +14,7 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabProjectDefaultAccountHolder
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsLoader
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsListModel
+import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsPanelActionsController
 import org.jetbrains.plugins.gitlab.util.GitLabUtil
 
 internal class GitLabSettingsConfigurable(private val project: Project)
@@ -22,7 +23,7 @@ internal class GitLabSettingsConfigurable(private val project: Project)
     val accountManager = service<GitLabAccountManager>()
     val defaultAccountHolder = project.service<GitLabProjectDefaultAccountHolder>()
 
-    val accountsModel = GitLabAccountsListModel(project)
+    val accountsModel = GitLabAccountsListModel()
     val detailsLoader = GitLabAccountsDetailsLoader { account ->
       accountsModel.newCredentials.getOrElse(account) {
         accountManager.findCredentials(account)
@@ -30,11 +31,12 @@ internal class GitLabSettingsConfigurable(private val project: Project)
         service<GitLabApiManager>().getClient(it)
       }
     }
+    val actionsController = GitLabAccountsPanelActionsController(project, accountsModel)
     val accountsPanelFactory = AccountsPanelFactory(accountManager, defaultAccountHolder, accountsModel, detailsLoader, disposable!!)
 
     return panel {
       row {
-        accountsPanelFactory.accountsPanelCell(this, true)
+        accountsPanelFactory.accountsPanelCell(this, actionsController)
           .horizontalAlign(HorizontalAlign.FILL)
           .verticalAlign(VerticalAlign.FILL)
       }.resizableRow()

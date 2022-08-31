@@ -2,13 +2,11 @@
 package org.jetbrains.plugins.github.ui
 
 import com.intellij.collaboration.auth.ui.AccountsPanelFactory
-import com.intellij.collaboration.util.ProgressIndicatorsProvider
 import com.intellij.ide.DataManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
@@ -19,6 +17,7 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefault
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsDetailsLoader
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsHost
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsListModel
+import org.jetbrains.plugins.github.authentication.ui.GHAccountsPanelActionsController
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.GithubSettings
 import org.jetbrains.plugins.github.util.GithubUtil
@@ -30,7 +29,7 @@ internal class GithubSettingsConfigurable internal constructor(private val proje
     val accountManager = service<GHAccountManager>()
     val settings = GithubSettings.getInstance()
 
-    val accountsModel = GHAccountsListModel(project)
+    val accountsModel = GHAccountsListModel()
     val detailsLoader = GHAccountsDetailsLoader {
       val token = accountsModel.newCredentials.getOrElse(it) {
         accountManager.findCredentials(it)
@@ -39,10 +38,11 @@ internal class GithubSettingsConfigurable internal constructor(private val proje
     }
 
     val panelFactory = AccountsPanelFactory(accountManager, defaultAccountHolder, accountsModel, detailsLoader, disposable!!)
+    val actionsController = GHAccountsPanelActionsController(project, accountsModel)
 
     return panel {
       row {
-        panelFactory.accountsPanelCell(this, true, GithubIcons.DefaultAvatar)
+        panelFactory.accountsPanelCell(this, actionsController, GithubIcons.DefaultAvatar)
           .horizontalAlign(HorizontalAlign.FILL)
           .verticalAlign(VerticalAlign.FILL)
           .also {

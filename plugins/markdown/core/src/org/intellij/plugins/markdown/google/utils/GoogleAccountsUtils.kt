@@ -23,10 +23,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.google.GoogleAppCredentialsException
-import org.intellij.plugins.markdown.google.accounts.GoogleAccountManager
-import org.intellij.plugins.markdown.google.accounts.GoogleAccountsDetailsLoader
-import org.intellij.plugins.markdown.google.accounts.GoogleAccountsListModel
-import org.intellij.plugins.markdown.google.accounts.GoogleUserInfoService
+import org.intellij.plugins.markdown.google.accounts.*
 import org.intellij.plugins.markdown.google.accounts.data.GoogleAccount
 import org.intellij.plugins.markdown.google.authorization.GoogleCredentials
 import org.intellij.plugins.markdown.google.authorization.GoogleOAuthService
@@ -137,10 +134,11 @@ internal object GoogleAccountsUtils {
     )
 
     val panelFactory = AccountsPanelFactory(accountManager, accountsListModel, detailsLoader, disposable)
+    val actionsController = GoogleAccountsPanelActionsController(accountsListModel)
 
     return panel {
       row {
-        panelFactory.accountsPanelCell(this, false)
+        panelFactory.accountsPanelCell(this, actionsController)
           .horizontalAlign(HorizontalAlign.FILL)
           .verticalAlign(VerticalAlign.FILL)
       }.resizableRow()

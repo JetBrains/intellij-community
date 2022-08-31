@@ -66,7 +66,10 @@ private constructor(disposable: Disposable,
     }
   }
 
-  fun accountsPanelCell(row: Row, needAddBtnWithDropdown: Boolean, defaultAvatarIcon: Icon = EmptyIcon.ICON_16): Cell<JComponent> {
+  fun accountsPanelCell(row: Row,
+                        actionsController: AccountsPanelActionsController<A>,
+                        defaultAvatarIcon: Icon = EmptyIcon.ICON_16): Cell<JComponent> {
+
     val detailsMap = mutableMapOf<A, AccountsDetailsLoader.Result<*>>()
     val detailsProvider = LoadedAccountsDetailsProvider(detailsMap::get)
     val avatarIconsProvider = LoadingAvatarIconsProvider(scope, detailsLoader, defaultAvatarIcon) { account: A ->
@@ -74,12 +77,13 @@ private constructor(disposable: Disposable,
       result?.details?.avatarUrl
     }
 
-    val accountsList = createList {
-      SimpleAccountsListCellRenderer(accountsModel, detailsProvider, avatarIconsProvider)
+    val accountsList = createList(actionsController) {
+      SimpleAccountsListCellRenderer({ (accountManager is AccountsListModel.WithDefault<*, *>) && it == accountManager.defaultAccount },
+                                     detailsProvider, avatarIconsProvider, actionsController)
     }
     loadAccountsDetails(scope, accountsList, detailsLoader, detailsMap)
 
-    val component = wrapWithToolbar(accountsList, needAddBtnWithDropdown)
+    val component = wrapWithToolbar(accountsList, actionsController)
 
     return row.cell(component)
       .onIsModified(::isModified)
@@ -121,7 +125,8 @@ private constructor(disposable: Disposable,
     }
   }
 
-  private fun <R> createList(listCellRendererFactory: () -> R): JBList<A> where R : ListCellRenderer<A>, R : JComponent {
+  private fun <R> createList(actionsController: AccountsPanelActionsController<A>, listCellRendererFactory: () -> R)
+    : JBList<A> where R : ListCellRenderer<A>, R : JComponent {
 
     val accountsList = JBList(accountsModel.accountsListModel).apply {
       val renderer = listCellRendererFactory()
@@ -139,19 +144,19 @@ private constructor(disposable: Disposable,
       appendSecondaryText(CollaborationToolsBundle.message("accounts.add.link"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
         val event = it.source
         val relativePoint = if (event is MouseEvent) RelativePoint(event) else null
-        accountsModel.addAccount(accountsList, relativePoint)
+        actionsController.addAccount(accountsList, relativePoint)
       }
       appendSecondaryText(" (${KeymapUtil.getFirstKeyboardShortcutText(CommonShortcuts.getNew())})", StatusText.DEFAULT_ATTRIBUTES, null)
     }
     return accountsList
   }
 
-  private fun wrapWithToolbar(accountsList: JBList<A>, needAddBtnWithDropdown: Boolean): JPanel {
-    val addIcon: Icon = if (needAddBtnWithDropdown) LayeredIcon.ADD_WITH_DROPDOWN else AllIcons.General.Add
+  private fun wrapWithToolbar(accountsList: JBList<A>, actionsController: AccountsPanelActionsController<A>): JPanel {
+    val addIcon: Icon = if (actionsController.isAddActionWithPopup) LayeredIcon.ADD_WITH_DROPDOWN else AllIcons.General.Add
 
     val toolbar = ToolbarDecorator.createDecorator(accountsList)
       .disableUpDownActions()
-      .setAddAction { accountsModel.addAccount(accountsList, it.preferredPopupPoint) }
+      .setAddAction { actionsController.addAccount(accountsList, it.preferredPopupPoint) }
       .setAddIcon(addIcon)
 
     if (accountsModel is AccountsListModel.WithDefault) {
