@@ -17,13 +17,14 @@ import java.util.stream.Collectors;
 @State(name = "UnknownFeatures", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 @Service
 public final class UnknownFeaturesCollector implements PersistentStateComponent<Element> {
+
   private static final @NonNls String FEATURE_ID = "featureType";
   private static final @NonNls String IMPLEMENTATION_NAME = "implementationName";
 
   private final Set<UnknownFeature> myUnknownFeatures = new HashSet<>();
   private final Set<UnknownFeature> myIgnoredUnknownFeatures = new HashSet<>();
 
-  public static UnknownFeaturesCollector getInstance(Project project) {
+  public static @NotNull UnknownFeaturesCollector getInstance(@NotNull Project project) {
     return project.getService(UnknownFeaturesCollector.class);
   }
 
