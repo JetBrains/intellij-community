@@ -1,20 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.python
 
-import groovy.transform.CompileStatic
-import org.jetbrains.intellij.build.BuildContext
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.impl.PluginLayout
-import org.jetbrains.intellij.build.impl.PluginLayoutGroovy
-import org.jetbrains.intellij.build.io.FileKt
-
+import org.jetbrains.intellij.build.io.copyDir
 import java.nio.file.Files
-import java.nio.file.Path
-import java.util.function.BiConsumer
-import java.util.function.Predicate
 
-@CompileStatic
-final class PythonCommunityPluginModules {
-  static final List<String> COMMUNITY_MODULES = List.of(
+object PythonCommunityPluginModules {
+  @JvmStatic
+  val COMMUNITY_MODULES: PersistentList<String> = persistentListOf(
     "intellij.python.community",
     "intellij.python.community.plugin.impl",
     "intellij.python.community.plugin.java",
@@ -32,62 +27,51 @@ final class PythonCommunityPluginModules {
     "intellij.python.featuresTrainer",
     "intellij.jupyter.core"
   )
-  static final String pythonCommunityName = "python-ce"
 
-  static PluginLayout pythonCommunityPluginLayout(@DelegatesTo(PluginLayout.PluginLayoutSpec) Closure body = {}) {
-    def communityOnlyModules = [
+  const val pythonCommunityName = "python-ce"
+
+  fun pythonCommunityPluginLayout(body: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
+    val communityOnlyModules = persistentListOf(
       "intellij.python.community.plugin",
       "intellij.python.community.plugin.minor",
-    ]
-    pythonPlugin("intellij.python.community.plugin", pythonCommunityName, COMMUNITY_MODULES + communityOnlyModules) {
-      body.delegate = delegate
-      body()
+    )
+    return pythonPlugin("intellij.python.community.plugin", pythonCommunityName, COMMUNITY_MODULES.addAll(communityOnlyModules)) { spec ->
+      body?.invoke(spec)
     }
   }
 
-  static PluginLayout pythonPlugin(String mainModuleName, String name, List<String> modules,
-                                   @DelegatesTo(PluginLayout.PluginLayoutSpec) Closure body = {}) {
-    PluginLayoutGroovy.plugin(mainModuleName) {
-      directoryName = name
-      mainJarName = "${name}.jar"
-      modules.each { module ->
-        withModule(module, mainJarName)
+  @JvmStatic
+  fun pythonPlugin(mainModuleName: String,
+                   name: String,
+                   modules: List<String>,
+                   body: (PluginLayout.PluginLayoutSpec) -> Unit): PluginLayout {
+    return PluginLayout.plugin(mainModuleName) { spec ->
+      spec.directoryName = name
+      spec.mainJarName = "${name}.jar"
+      spec.withModules(modules)
+      spec.withModule(mainModuleName)
+      spec.withGeneratedResources { targetDir, context ->
+        val output = targetDir.resolve("helpers")
+        Files.createDirectories(output)
+        copyDir(
+          sourceDir = context.paths.communityHomeDir.communityRoot.resolve("python/helpers"), targetDir = output,
+          dirFilter = { path ->
+            when {
+              path.endsWith("tests") || path.endsWith(".idea") -> false
+              path.parent?.fileName?.toString() == "pydev" -> !path.fileName.toString().startsWith("pydev_test")
+              else -> true
+            }
+          },
+          fileFilter = { path -> !path.endsWith("setup.py") }
+        )
       }
-      withModule(mainModuleName, mainJarName)
-      withGeneratedResources(new HelpersGenerator())
-      withProjectLibrary("libthrift")  // Required for "Python Console" in intellij.python.community.impl module
-      body.delegate = delegate
-      body()
+      // required for "Python Console" in intellij.python.community.impl module
+      @Suppress("SpellCheckingInspection")
+      spec.withProjectLibrary("libthrift")
+      body(spec)
     }
   }
 
-  static String getPluginBuildNumber() {
-    System.getProperty("build.number", "SNAPSHOT")
-  }
-}
-
-@CompileStatic
-final class HelpersGenerator implements BiConsumer<Path, BuildContext> {
-  @Override
-  void accept(Path targetDir, BuildContext context) {
-    Path output = targetDir.resolve("helpers")
-    Files.createDirectories(output)
-    FileKt.copyDir(context.paths.communityHomeDir.communityRoot.resolve("python/helpers"), output, new Predicate<Path>() {
-      @Override
-      boolean test(Path path) {
-        if (path.endsWith("tests") || path.endsWith(".idea")) {
-          return false
-        }
-        if (path.parent?.fileName?.toString() == "pydev") {
-          return !path.fileName.toString().startsWith("pydev_test")
-        }
-        return true
-      }
-    }, new Predicate<Path>() {
-      @Override
-      boolean test(Path path) {
-        return !path.endsWith("setup.py")
-      }
-    })
-  }
+  @JvmStatic
+  fun getPluginBuildNumber(): String = System.getProperty("build.number", "SNAPSHOT")
 }
