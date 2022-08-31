@@ -20,6 +20,7 @@ import com.intellij.ide.ui.customization.CustomizationUtil
 import com.intellij.ide.ui.customization.CustomizeActionGroupPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.ex.InlineActionsHolder
 import com.intellij.openapi.components.*
@@ -167,7 +168,7 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
       addActionListener {
         val anActionEvent = AnActionEvent.createFromDataContext(place, presentation, DataManager.getInstance().getDataContext(this))
         if (it.modifiers and ActionEvent.SHIFT_MASK != 0) {
-          ActionManager.getInstance().getAction("editRunConfigurations").actionPerformed(anActionEvent)
+          ActionUtil.performActionDumbAwareWithCallbacks(ActionManager.getInstance().getAction("editRunConfigurations"), anActionEvent)
         }
         else if (it.modifiers  and ActionEvent.ALT_MASK != 0) {
           CustomizeActionGroupPanel.showDialog(RUN_TOOLBAR_WIDGET_GROUP, listOf(IdeActions.GROUP_NAVBAR_TOOLBAR), ExecutionBundle.message("run.toolbar.widget.customizable.group.dialog.title"))
@@ -177,7 +178,7 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
             }
         }
         else {
-          actionPerformed(anActionEvent)
+          ActionUtil.performActionDumbAwareWithCallbacks(this@RunWithDropDownAction, anActionEvent)
         }
       }
     }.let { Wrapper(it).apply { border = JBUI.Borders.empty(7,6) } }
@@ -305,7 +306,9 @@ class StopWithDropDownAction : AnAction(), CustomComponentAction, DumbAware {
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     return RunDropDownButton(icon = AllIcons.Actions.Suspend).apply {
       addActionListener {
-        actionPerformed(AnActionEvent.createFromDataContext(place, presentation, DataManager.getInstance().getDataContext(this)))
+        ActionUtil.performActionDumbAwareWithCallbacks(
+          this@StopWithDropDownAction, AnActionEvent.createFromDataContext(
+          place, presentation, DataManager.getInstance().getDataContext(this)))
       }
       isPaintEnable = false
       isCombined = true
