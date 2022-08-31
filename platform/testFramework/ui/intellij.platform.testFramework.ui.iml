@@ -12,6 +12,11 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.resources" />
     <orderEntry type="library" scope="RUNTIME" name="okhttp" level="project" />
+    <orderEntry type="module" module-name="intellij.ide.starter.extended" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.tools.ide.starter" />
+    <orderEntry type="module" module-name="intellij.tools.ide.starter.junit4" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.performancePlugin.extended.java" />
+    <orderEntry type="module" module-name="intellij.performanceTesting.commands" />
     <orderEntry type="module-library">
       <library name="intellij.remoterobot.remote.fixtures" type="repository">
         <properties include-transitive-deps="false" maven-id="com.intellij.remoterobot:remote-fixtures:0.11.16" />
