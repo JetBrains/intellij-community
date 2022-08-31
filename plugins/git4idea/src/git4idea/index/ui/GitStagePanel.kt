@@ -25,11 +25,8 @@ import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPOSITORY_GROUPING
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.ui.ExpandableItemsHandler
-import com.intellij.ui.OnePixelSplitter
-import com.intellij.ui.PopupHandler
+import com.intellij.ui.*
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
-import com.intellij.ui.SideBorder
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.switcher.QuickActionProvider
 import com.intellij.util.EditSourceOnDoubleClickHandler
@@ -142,7 +139,8 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
       addToLeft(commitPanel.toolbar.component)
     }
-    val treePanel = simplePanel(createScrollPane(tree, SideBorder.TOP)).addToBottom(statusPanel)
+    val sideBorder = if (ExperimentalUI.isNewUI()) SideBorder.NONE else SideBorder.TOP
+    val treePanel = simplePanel(createScrollPane(tree, sideBorder)).addToBottom(statusPanel)
     progressStripe = ProgressStripe(treePanel, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
     val treePanelWithToolbar = JPanel(BorderLayout())
     treePanelWithToolbar.add(toolbar.component, BorderLayout.NORTH)
