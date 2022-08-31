@@ -10,6 +10,7 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.api.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 
+//TODO:: Rework it
 interface ModuleSettingsContributor {
   fun addSettings(project: Project) { }
   fun addSettings(project: Project, module: ModuleEntity, entitySource: EntitySource, mutableStorage: MutableEntityStorage) { }

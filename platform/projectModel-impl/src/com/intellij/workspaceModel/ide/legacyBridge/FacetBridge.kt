@@ -13,4 +13,5 @@ interface FacetBridge<T: WorkspaceEntity> {
   fun renameModuleSettings(mutableStorage: MutableEntityStorage, moduleEntity: ModuleEntity, newName: String)
   fun applyChangesToStorage(mutableStorage: MutableEntityStorage, module: ModuleBridge)
   fun updateFacetConfiguration(rootEntity: T)
+  fun getRootEntity(): T
 }

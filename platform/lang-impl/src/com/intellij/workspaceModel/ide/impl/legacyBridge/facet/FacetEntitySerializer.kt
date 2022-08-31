@@ -10,7 +10,7 @@ class FacetEntitySerializer: CustomFacetEntitySerializer<FacetEntity> {
   override val entityType: Class<FacetEntity>
     get() = FacetEntity::class.java
 
-  override fun serialize(rootElement: Element, entity: FacetEntity): Element {
+  override fun serializeIntoXml(entity: FacetEntity): Element {
     return entity.configurationXmlTag?.let { JDOMUtil.load(it) }!!
   }
 }

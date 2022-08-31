@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.addIfNotNull
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.facetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.mutableFacetMapping
@@ -19,8 +20,10 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBri
 import com.intellij.workspaceModel.ide.legacyBridge.FacetBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableFacetModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
+import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addFacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
@@ -152,9 +155,14 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
 
   override fun getAllFacets(): Array<Facet<*>> {
     val facetMapping = diff.facetMapping()
-    val facetEntities = moduleEntity.facets
-    return (facetEntities.mapNotNull { facetMapping.getDataByEntity(it) }.toList() +
-            ModuleSettingsContributor.EP_NAME.extensionList.mapNotNull { it.getFacetBridge(moduleEntity, diff) as? Facet<*> }).toTypedArray()
+    val facetEntities: MutableList<WorkspaceEntity> = mutableListOf()
+    facetEntities.addAll(moduleEntity.facets)
+    WorkspaceFacetContributor.EP_NAME.extensions.forEach {
+      if (it.rootEntityType != FacetEntity::class.java) {
+        facetEntities.addIfNotNull(it.getRootEntityByModuleEntity(moduleEntity))
+      }
+    }
+    return facetEntities.mapNotNull { facetMapping.getDataByEntity(it) }.toList().toTypedArray()
   }
 
   @TestOnly

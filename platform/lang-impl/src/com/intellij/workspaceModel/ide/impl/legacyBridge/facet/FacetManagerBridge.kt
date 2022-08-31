@@ -15,11 +15,13 @@ import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.util.containers.addIfNotNull
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.ModuleSettingsContributor
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.legacyBridge.FacetBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
+import com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor
 import com.intellij.workspaceModel.ide.toExternalSource
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.api.FacetEntity
@@ -135,9 +137,14 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
       LOG.error("Cannot resolve module entity ${moduleBridge.moduleEntityId}")
       return emptyArray()
     }
-    val facetEntities = moduleEntity.facets
-    return (facetEntities.mapNotNull { facetMapping().getDataByEntity(it) }.toList() +
-           ModuleSettingsContributor.EP_NAME.extensionList.mapNotNull { it.getFacetBridge(moduleEntity, moduleBridge.entityStorage.current) as? Facet<*> }).toTypedArray()
+    val facetEntities: MutableList<WorkspaceEntity> = mutableListOf()
+    facetEntities.addAll(moduleEntity.facets)
+    WorkspaceFacetContributor.EP_NAME.extensions.forEach {
+      if (it.rootEntityType != FacetEntity::class.java) {
+        facetEntities.addIfNotNull(it.getRootEntityByModuleEntity(moduleEntity))
+      }
+    }
+    return facetEntities.mapNotNull { facetMapping().getDataByEntity(it) }.toList().toTypedArray()
   }
 
   internal fun getOrCreateFacet(entity: FacetEntity): Facet<*> {

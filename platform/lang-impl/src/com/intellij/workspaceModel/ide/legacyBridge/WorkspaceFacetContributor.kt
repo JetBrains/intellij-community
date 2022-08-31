@@ -12,7 +12,7 @@ interface WorkspaceFacetContributor<T: WorkspaceEntity> {
   val rootEntityType: Class<T>
   fun getFacetName(entity: T): String
   fun getRelatedModuleEntity(entity: T): ModuleEntity
-  fun getRootEntityByModuleEntity(moduleEntity: ModuleEntity): T
+  fun getRootEntityByModuleEntity(moduleEntity: ModuleEntity): T?
   fun createFacetBridgeFromEntity(entity: T, project: Project): Facet<*>
 
   val childEntityTypes: List<Class<out WorkspaceEntity>>

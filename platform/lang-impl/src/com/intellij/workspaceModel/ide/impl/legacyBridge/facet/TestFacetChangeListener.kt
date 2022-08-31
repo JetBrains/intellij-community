@@ -91,8 +91,8 @@ class TestFacetChangeListener(private val project: Project): Disposable {
           val moduleEntity = workspaceFacetContributor.getRelatedModuleEntity(change.newEntity)
           getFacetManager(moduleEntity)?.model?.facetsChanged()
 
-          FacetManagerBase.setFacetName(facet, workspaceFacetContributor.getFacetName(change.entity))
-          facet.initFacet()
+          //FacetManagerBase.setFacetName(facet, workspaceFacetContributor.getFacetName(change.entity))
+          //facet.initFacet()
 
           // We should not send an event if the associated module was added in the same transaction.
           // Event will be sent with "moduleAdded" event.
@@ -114,7 +114,7 @@ class TestFacetChangeListener(private val project: Project): Disposable {
         }
         is EntityChange.Replaced -> {
           val moduleEntity = workspaceFacetContributor.getRelatedModuleEntity(change.newEntity)
-          val facet = event.storageBefore.facetMapping().getDataByEntity(change.oldEntity) ?: error("Facet should be available")
+          val facet = event.storageAfter.facetMapping().getDataByEntity(change.newEntity) ?: error("Facet should be available")
           val workspaceModel = WorkspaceModel.getInstance(project)
           workspaceModel.updateProjectModelSilent {
             it.mutableFacetMapping().addMapping(change.newEntity, facet)
@@ -155,7 +155,7 @@ class TestFacetChangeListener(private val project: Project): Disposable {
               val facet = actualStorageSnapshot.facetMapping().getDataByEntity(rootEntity) ?: error("Facet should be available")
               val actualModuleEntity = actualStorageSnapshot.resolve(workspaceFacetContributor.getRelatedModuleEntity(rootEntity).persistentId)
                                        ?: error("Module should be available in actual storage")
-              val actualRootElement = workspaceFacetContributor.getRootEntityByModuleEntity(actualModuleEntity)
+              val actualRootElement = workspaceFacetContributor.getRootEntityByModuleEntity(actualModuleEntity)!!
               changedFacets[facet] = actualRootElement
             }
           }
@@ -170,14 +170,18 @@ class TestFacetChangeListener(private val project: Project): Disposable {
 
     val entityTypeToSerializer = CustomFacetEntitySerializer.EP_NAME.extensions.associateBy { it.entityType }
     changedFacets.forEach { (facet, rootEntity) ->
-      // TODO:: Fix cast inspection
-      val serializer = entityTypeToSerializer[rootEntity.getEntityInterface()]
-      val rootElement = serializer!!.serializeIntoXml(rootEntity)
+      val serializer = entityTypeToSerializer[rootEntity.getEntityInterface()] ?: error("Unavailable XML serializer for ${rootEntity.getEntityInterface()}")
+      val rootElement = serializer.serializeIntoXml(rootEntity)
 
-      val facetConfigurationXml = FacetUtil.saveFacetConfiguration(facet)?.let { JDOMUtil.write(it) }
+      val facetConfigurationElement = if (facet is FacetBridge<*>)
+        serializer.serializeIntoXml(facet.getRootEntity())
+      else
+        FacetUtil.saveFacetConfiguration(facet)
+      val facetConfigurationXml = facetConfigurationElement?.let { JDOMUtil.write(it) }
       // If this change is performed in FacetManagerBridge.facetConfigurationChanged,
       // FacetConfiguration is already updated and there is no need to update it again
       if (facetConfigurationXml != JDOMUtil.write(rootElement)) {
+        // TODO:: Fix cast inspection
         (facet as? FacetBridge<WorkspaceEntity>)?.updateFacetConfiguration(rootEntity)
         publisher.fireFacetConfigurationChanged(facet)
       }

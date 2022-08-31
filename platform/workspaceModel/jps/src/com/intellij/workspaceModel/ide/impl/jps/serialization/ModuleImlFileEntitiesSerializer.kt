@@ -367,10 +367,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       writer.saveComponent(fileUrl.url, DEPRECATED_MODULE_MANAGER_COMPONENT_NAME, null)
     }
 
-    @Suppress("UNCHECKED_CAST")
-    //TODO:: Add check for custome entities accept by source
-    val facets = (entities[FacetEntity::class.java] as List<FacetEntity>?)?.filter { acceptsSource(it.entitySource) } ?: emptyList()
-    createFacetSerializer().saveFacetEntities(module, facets, writer)
+    createFacetSerializer().saveFacetEntities(module, entities, writer, this::acceptsSource)
   }
 
   protected open fun createFacetSerializer(): FacetEntitiesSerializer {
@@ -637,7 +634,6 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     }.reversed()
 
     private val CUSTOM_MODULE_COMPONENT_SERIALIZER_EP = ExtensionPointName.create<CustomModuleComponentSerializer>("com.intellij.workspaceModel.customModuleComponentSerializer")
-    val CUSTOM_MODULE_RELATED_ENTITY_SERIALIZER_EP = ExtensionPointName.create<CustomModuleRelatedEntitySerializer>("com.intellij.workspaceModel.customModuleRelatedEntitySerializer")
   }
 }
 
