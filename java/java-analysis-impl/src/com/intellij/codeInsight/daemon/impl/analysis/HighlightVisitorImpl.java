@@ -1969,11 +1969,14 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (ref == null) return;
     if (ref.multiResolve(true).length == 0) {
       PsiElementFactory elementFactory = PsiElementFactory.getInstance(myFile.getProject());
-      PsiExpression expression = elementFactory.createExpressionFromText(pattern.getText(), grandParent);
-      PsiMethodCallExpression call = tryCast(expression, PsiMethodCallExpression.class);
-      if (call == null) return;
-      if (call.getMethodExpression().resolve() != null) {
-        myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(pattern.getTextRange()).descriptionAndTooltip(JavaErrorBundle.message("switch.constant.expression.required")).create());
+      if (pattern.getPatternVariable() == null && pattern.getDeconstructionList().getDeconstructionComponents().length == 0) {
+        PsiExpression expression = elementFactory.createExpressionFromText(pattern.getText(), grandParent);
+        PsiMethodCallExpression call = tryCast(expression, PsiMethodCallExpression.class);
+        if (call == null) return;
+        if (call.getMethodExpression().resolve() != null) {
+          myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(pattern.getTextRange())
+                         .descriptionAndTooltip(JavaErrorBundle.message("switch.constant.expression.required")).create());
+        }
       }
     }
   }
