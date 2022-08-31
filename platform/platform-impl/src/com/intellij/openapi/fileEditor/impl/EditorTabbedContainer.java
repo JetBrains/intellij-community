@@ -707,7 +707,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
 
     @Override
     protected void paintChildren(Graphics g) {
-      if (!isHideTabs() && !getTabsPosition().isSide() && ExperimentalUI.isNewUI() && paintBorder()) {
+      if (!isHideTabs() && !getTabsPosition().isSide() && ExperimentalUI.isNewUI() && shouldPaintBottomBorder()) {
         TabLabel label = getSelectedLabel();
         if (label != null) {
           int h = label.getHeight();
@@ -720,7 +720,8 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
       drawBorder(g);
     }
 
-    private boolean paintBorder() {
+    @Override
+    public boolean shouldPaintBottomBorder() {
       TabInfo info = getSelectedInfo();
       if (info == null) {
         return true;

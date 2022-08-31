@@ -31,7 +31,9 @@ class EditorTabPainterAdapter : TabPainterAdapter {
       paintBorders(g2d, label, tabs)
     }
     else {
-      if (ExperimentalUI.isNewUI() && isHovered && tabs.tabsPosition == JBTabsPosition.top) {
+      if (ExperimentalUI.isNewUI() && isHovered
+          && tabs.tabsPosition == JBTabsPosition.top
+          && (tabs as JBEditorTabs).shouldPaintBottomBorder()) {
         rect.height -= 1
       }
       painter.paintTab(tabs.position, g2d, rect, tabs.borderThickness, info.tabColor, tabs.isActiveTabs(info), isHovered)
