@@ -4,6 +4,7 @@ package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.navbar.ide.NavigationBarKt;
+import com.intellij.ide.ui.NavBarLocation;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
@@ -34,7 +35,8 @@ public class ShowNavBarAction extends AnAction implements DumbAware, PopupAction
     final Project project = CommonDataKeys.PROJECT.getData(context);
     if (project != null) {
       UISettings uiSettings = UISettings.getInstance();
-      if (uiSettings.getShowNavigationBar() && !uiSettings.getPresentationMode()){
+      if (uiSettings.getShowNavigationBar() && !uiSettings.getPresentationMode()
+          && (uiSettings.getShowStatusBar() || uiSettings.getNavBarLocation() != NavBarLocation.BOTTOM)){
         SelectInNavBarTarget.selectInNavBar(true);
       } else {
         final Component component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context);
