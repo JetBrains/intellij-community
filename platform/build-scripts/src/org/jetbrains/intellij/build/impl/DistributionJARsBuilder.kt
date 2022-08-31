@@ -124,116 +124,7 @@ class DistributionJARsBuilder {
       }.flatMap { it.getCompleted() }
     }
 
-    private fun layoutAdditionalResources(layout: BaseLayout, context: BuildContext, targetDirectory: Path) {
-      for (resourceData in layout.resourcePaths) {
-        val source = basePath(context, resourceData.moduleName).resolve(resourceData.resourcePath).normalize()
-        var target = targetDirectory.resolve(resourceData.relativeOutputPath).normalize()
-        if (resourceData.packToZip) {
-          if (Files.isDirectory(source)) {
-            // do not compress - doesn't make sense as it is a part of distribution
-            zip(target, mapOf(source to ""), compress = false)
-          }
-          else {
-            target = target.resolve(source.fileName)
-            Compressor.Zip(target).use { it.addFile(target.fileName.toString(), source) }
-          }
-        }
-        else {
-          if (Files.isRegularFile(source)) {
-            copyFileToDir(source, target)
-          }
-          else {
-            copyDir(source, target)
-          }
-        }
-      }
 
-      if (layout !is PluginLayout) {
-        return
-      }
-
-      val resourceGenerators = layout.resourceGenerators
-      if (!resourceGenerators.isEmpty()) {
-        spanBuilder("generate and pack resources").useWithScope {
-          for (item in resourceGenerators) {
-            val resourceFile = item.apply(targetDirectory, context) ?: continue
-            if (Files.isRegularFile(resourceFile)) {
-              copyFileToDir(resourceFile, targetDirectory)
-            }
-            else {
-              copyDir(resourceFile, targetDirectory)
-            }
-          }
-        }
-      }
-    }
-
-    private fun layoutArtifacts(layout: BaseLayout,
-                                context: BuildContext,
-                                copyFiles: Boolean,
-                                targetDirectory: Path): Collection<DistributionFileEntry> {
-      val span = Span.current()
-      val entries = ArrayList<DistributionFileEntry>()
-      for (entry in layout.includedArtifacts.entries) {
-        val artifactName = entry.key
-        val relativePath = entry.value
-        span.addEvent("include artifact", Attributes.of(AttributeKey.stringKey("artifactName"), artifactName))
-        val artifact = JpsArtifactService.getInstance().getArtifacts(context.project).find { it.name == artifactName }
-                       ?: throw IllegalArgumentException("Cannot find artifact $artifactName in the project")
-        var artifactFile: Path
-        if (artifact.outputFilePath == artifact.outputPath) {
-          val source = Path.of(artifact.outputPath!!)
-          artifactFile = targetDirectory.resolve("lib").resolve(relativePath)
-          if (copyFiles) {
-            copyDir(source, targetDirectory.resolve("lib").resolve(relativePath))
-          }
-        }
-        else {
-          val source = Path.of(artifact.outputFilePath!!)
-          artifactFile = targetDirectory.resolve("lib").resolve(relativePath).resolve(source.fileName)
-          if (copyFiles) {
-            copyFile(source, artifactFile)
-          }
-        }
-        addArtifactMapping(artifact, entries, artifactFile)
-      }
-      return entries
-    }
-
-    private fun addArtifactMapping(artifact: JpsArtifact, entries: MutableCollection<DistributionFileEntry>, artifactFile: Path) {
-      val rootElement = artifact.rootElement
-      for (element in rootElement.children) {
-        if (element is JpsProductionModuleOutputPackagingElement) {
-          entries.add(ModuleOutputEntry(artifactFile, element.moduleReference.moduleName, 0, "artifact: ${artifact.name}"))
-        }
-        else if (element is JpsTestModuleOutputPackagingElement) {
-          entries.add(ModuleTestOutputEntry(artifactFile, element.moduleReference.moduleName))
-        }
-        else if (element is JpsLibraryFilesPackagingElement) {
-          val library = element.libraryReference.resolve()
-          val parentReference = library!!.createReference().parentReference
-          if (parentReference is JpsModuleReference) {
-            entries.add(ModuleLibraryFileEntry(artifactFile, parentReference.moduleName, null, 0))
-          }
-          else {
-            val libraryData = ProjectLibraryData(library.name, LibraryPackMode.MERGED)
-            entries.add(ProjectLibraryEntry(artifactFile, libraryData, null, 0))
-          }
-        }
-      }
-    }
-
-    private fun checkModuleExcludes(moduleExcludes: MultiMap<String, String>, context: BuildContext) {
-      for ((module, value) in moduleExcludes.entrySet()) {
-        for (pattern in value) {
-          if (Files.notExists(context.getModuleOutputDir(context.findRequiredModule(module)))) {
-            context.messages.error("There are excludes defined for module `$module`, but the module wasn't compiled;" +
-                                   " most probably it means that \'$module\' isn\'t include into the product distribution " +
-                                   "so it makes no sense to define excludes for it.")
-          }
-        }
-      }
-    }
   }
 
   suspend fun buildJARs(context: BuildContext, isUpdateFromSources: Boolean = false): ProjectStructureMapping {
@@ -1050,4 +941,115 @@ private fun loadPluginAutoPublishList(buildContext: BuildContext): Predicate<Plu
 private fun buildKeymapPlugins(targetDir: Path, context: BuildContext): ForkJoinTask<List<Pair<Path, ByteArray>>> {
   val keymapDir = context.paths.communityHomeDir.communityRoot.resolve("platform/platform-resources/src/keymaps")
   return buildKeymapPlugins(context.buildNumber, targetDir, keymapDir)
+}
+
+private fun layoutAdditionalResources(layout: BaseLayout, context: BuildContext, targetDirectory: Path) {
+  for (resourceData in layout.resourcePaths) {
+    val source = basePath(context, resourceData.moduleName).resolve(resourceData.resourcePath).normalize()
+    var target = targetDirectory.resolve(resourceData.relativeOutputPath).normalize()
+    if (resourceData.packToZip) {
+      if (Files.isDirectory(source)) {
+        // do not compress - doesn't make sense as it is a part of distribution
+        zip(target, mapOf(source to ""), compress = false)
+      }
+      else {
+        target = target.resolve(source.fileName)
+        Compressor.Zip(target).use { it.addFile(target.fileName.toString(), source) }
+      }
+    }
+    else {
+      if (Files.isRegularFile(source)) {
+        copyFileToDir(source, target)
+      }
+      else {
+        copyDir(source, target)
+      }
+    }
+  }
+
+  if (layout !is PluginLayout) {
+    return
+  }
+
+  val resourceGenerators = layout.resourceGenerators
+  if (!resourceGenerators.isEmpty()) {
+    spanBuilder("generate and pack resources").useWithScope {
+      for (item in resourceGenerators) {
+        val resourceFile = item.apply(targetDirectory, context) ?: continue
+        if (Files.isRegularFile(resourceFile)) {
+          copyFileToDir(resourceFile, targetDirectory)
+        }
+        else {
+          copyDir(resourceFile, targetDirectory)
+        }
+      }
+    }
+  }
+}
+
+private fun layoutArtifacts(layout: BaseLayout,
+                            context: BuildContext,
+                            copyFiles: Boolean,
+                            targetDirectory: Path): Collection<DistributionFileEntry> {
+  val span = Span.current()
+  val entries = ArrayList<DistributionFileEntry>()
+  for (entry in layout.includedArtifacts.entries) {
+    val artifactName = entry.key
+    val relativePath = entry.value
+    span.addEvent("include artifact", Attributes.of(AttributeKey.stringKey("artifactName"), artifactName))
+    val artifact = JpsArtifactService.getInstance().getArtifacts(context.project).find { it.name == artifactName }
+                   ?: throw IllegalArgumentException("Cannot find artifact $artifactName in the project")
+    var artifactFile: Path
+    if (artifact.outputFilePath == artifact.outputPath) {
+      val source = Path.of(artifact.outputPath!!)
+      artifactFile = targetDirectory.resolve("lib").resolve(relativePath)
+      if (copyFiles) {
+        copyDir(source, targetDirectory.resolve("lib").resolve(relativePath))
+      }
+    }
+    else {
+      val source = Path.of(artifact.outputFilePath!!)
+      artifactFile = targetDirectory.resolve("lib").resolve(relativePath).resolve(source.fileName)
+      if (copyFiles) {
+        copyFile(source, artifactFile)
+      }
+    }
+    addArtifactMapping(artifact, entries, artifactFile)
+  }
+  return entries
+}
+
+private fun addArtifactMapping(artifact: JpsArtifact, entries: MutableCollection<DistributionFileEntry>, artifactFile: Path) {
+  val rootElement = artifact.rootElement
+  for (element in rootElement.children) {
+    if (element is JpsProductionModuleOutputPackagingElement) {
+      entries.add(ModuleOutputEntry(artifactFile, element.moduleReference.moduleName, 0, "artifact: ${artifact.name}"))
+    }
+    else if (element is JpsTestModuleOutputPackagingElement) {
+      entries.add(ModuleTestOutputEntry(artifactFile, element.moduleReference.moduleName))
+    }
+    else if (element is JpsLibraryFilesPackagingElement) {
+      val library = element.libraryReference.resolve()
+      val parentReference = library!!.createReference().parentReference
+      if (parentReference is JpsModuleReference) {
+        entries.add(ModuleLibraryFileEntry(artifactFile, parentReference.moduleName, null, 0))
+      }
+      else {
+        val libraryData = ProjectLibraryData(library.name, LibraryPackMode.MERGED)
+        entries.add(ProjectLibraryEntry(artifactFile, libraryData, null, 0))
+      }
+    }
+  }
+}
+
+private fun checkModuleExcludes(moduleExcludes: MultiMap<String, String>, context: BuildContext) {
+  for ((module, value) in moduleExcludes.entrySet()) {
+    for (pattern in value) {
+      if (Files.notExists(context.getModuleOutputDir(context.findRequiredModule(module)))) {
+        context.messages.error("There are excludes defined for module `$module`, but the module wasn't compiled;" +
+                               " most probably it means that \'$module\' isn\'t include into the product distribution " +
+                               "so it makes no sense to define excludes for it.")
+      }
+    }
+  }
 }
