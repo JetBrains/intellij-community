@@ -98,7 +98,7 @@ public class ActionsCollectorImpl extends ActionsCollector {
 
     if (event != null) {
       if (action instanceof ToggleAction) {
-        data.add(ActionsEventLogGroup.TOGGLE_ACTION.with(((ToggleAction)action).isSelected(event)));
+        data.add(ActionsEventLogGroup.TOGGLE_ACTION.with(Toggleable.isSelected(event.getPresentation())));
       }
       data.addAll(actionEventData(event));
     }
