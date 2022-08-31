@@ -103,7 +103,7 @@ public final class MavenSelectProjectPopup {
           }
         });
 
-        new TreeSpeedSearch(projectTree, o -> {
+        new TreeSpeedSearch(projectTree, false, o -> {
           Object lastPathComponent = o.getLastPathComponent();
           if (!(lastPathComponent instanceof DefaultMutableTreeNode)) return null;
 

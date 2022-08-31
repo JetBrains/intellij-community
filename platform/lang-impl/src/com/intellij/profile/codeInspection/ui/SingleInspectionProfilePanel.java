@@ -603,7 +603,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
     });
 
-    new TreeSpeedSearch(tree, o -> {
+    new TreeSpeedSearch(tree, false, o -> {
       final InspectionConfigTreeNode node = (InspectionConfigTreeNode)o.getLastPathComponent();
       return InspectionsConfigTreeComparator.getDisplayTextToSort(node.getText());
     });
