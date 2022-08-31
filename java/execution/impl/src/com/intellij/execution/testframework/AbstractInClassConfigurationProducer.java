@@ -15,6 +15,7 @@ import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.lang.jvm.annotation.JvmAnnotationArrayValue;
 import com.intellij.lang.jvm.annotation.JvmAnnotationAttribute;
 import com.intellij.lang.jvm.annotation.JvmAnnotationAttributeValue;
+import com.intellij.lang.jvm.annotation.JvmAnnotationConstantValue;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static com.siyeh.ig.junit.JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST;
 import static com.siyeh.ig.junit.JUnitCommonClassNames.SOURCE_ANNOTATIONS;
@@ -242,9 +244,17 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
     if (annotationValues instanceof JvmAnnotationArrayValue) {
       JvmAnnotationArrayValue values = (JvmAnnotationArrayValue)annotationValues;
       List<JvmAnnotationAttributeValue> valuesAttr = values.getValues();
-      JvmAnnotationAttributeValue first = ContainerUtil.getFirstItem(valuesAttr);
-      if (first != null) {
-        return valuesAttr.indexOf(first);
+      Optional<JvmAnnotationAttributeValue> first = valuesAttr.stream().filter(val -> {
+        if (val instanceof JvmAnnotationConstantValue) {
+          Object value = ((JvmAnnotationConstantValue)val).getConstantValue();
+          if (value == null) return false;
+          return token.getText().equals("\"" + value + "\"");
+        }
+        return false;
+      }).findFirst();
+      if (first.isPresent()) {
+        JvmAnnotationAttributeValue value = first.get();
+        return valuesAttr.indexOf(value);
       }
     }
     return null;
