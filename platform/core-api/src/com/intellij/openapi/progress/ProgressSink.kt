@@ -4,6 +4,7 @@ package com.intellij.openapi.progress
 import com.intellij.openapi.util.NlsContexts.ProgressDetails
 import com.intellij.openapi.util.NlsContexts.ProgressText
 import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.NonExtendable
 
 /**
  * Represents an entity used to send progress updates to.
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.ApiStatus.Experimental
  * It's up to implementors of this interface to decide what to do with these updates.
  */
 @Experimental
+@NonExtendable
 interface ProgressSink {
 
   /**
