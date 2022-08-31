@@ -61,7 +61,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
@@ -108,7 +107,7 @@ internal class PackageSearchProjectService(private val project: Project) {
 
     private val cacheDirectory = project.packageSearchProjectCachesService.projectCacheDirectory.resolve("installedDependencies")
 
-    val isLoadingFlow = combineTransform(
+    val isLoadingFlow = combine(
         projectModulesLoadingFlow,
         knownRepositoriesLoadingFlow,
         moduleModelsLoadingFlow,
@@ -117,7 +116,7 @@ internal class PackageSearchProjectService(private val project: Project) {
         installedPackagesStep2LoadingFlow,
         installedPackagesDifferenceLoadingFlow,
         packageUpgradesLoadingFlow
-    ) { booleans -> emit(booleans.any { it }) }
+    ) { booleans -> booleans.any { it } }
         .stateIn(project.lifecycleScope, SharingStarted.Eagerly, false)
 
     private val projectModulesSharedFlow = project.trustedProjectFlow

@@ -760,6 +760,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/package-search/intellij.packageSearch.iml" filepath="$PROJECT_DIR$/plugins/package-search/intellij.packageSearch.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/package-search/compat/intellij.packageSearch.compat.iml" filepath="$PROJECT_DIR$/plugins/package-search/compat/intellij.packageSearch.compat.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/package-search/gradle/intellij.packageSearch.gradle.iml" filepath="$PROJECT_DIR$/plugins/package-search/gradle/intellij.packageSearch.gradle.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/package-search/gradleTooling/intellij.packageSearch.gradleTooling.iml" filepath="$PROJECT_DIR$/plugins/package-search/gradleTooling/intellij.packageSearch.gradleTooling.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/package-search/kotlin/intellij.packageSearch.kotlin.iml" filepath="$PROJECT_DIR$/plugins/package-search/kotlin/intellij.packageSearch.kotlin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/package-search/maven/intellij.packageSearch.maven.iml" filepath="$PROJECT_DIR$/plugins/package-search/maven/intellij.packageSearch.maven.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/analysis-api/intellij.platform.analysis.iml" filepath="$PROJECT_DIR$/platform/analysis-api/intellij.platform.analysis.iml" />

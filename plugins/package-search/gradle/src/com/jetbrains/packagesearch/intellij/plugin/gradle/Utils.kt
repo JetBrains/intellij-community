@@ -16,11 +16,10 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.gradle
 
-import com.intellij.openapi.components.service
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.externalSystem.model.DataNode
+import com.intellij.openapi.externalSystem.model.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.BuildSystemType
-import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 internal fun StringBuilder.appendEscapedToRegexp(text: String) =
@@ -44,5 +43,11 @@ val BuildSystemType.Companion.GRADLE_CONTAINER
         statisticsKey = "gradle"
     )
 
-internal val Project.lifecycleScope: CoroutineScope
-    get() = service<PackageSearchGradleLifecycleScope>()
+internal fun DataNode<*>.childrenGroupedByKey() = NodesMap(children)
+
+internal class NodesMap(children: Iterable<DataNode<*>>) {
+    private val map = children.groupBy { it.key }
+
+    @Suppress("UNCHECKED_CAST")
+    operator fun <T> get(key: Key<T>): List<DataNode<T>> = map[key]?.let { it as List<DataNode<T>> } ?: emptyList()
+}
