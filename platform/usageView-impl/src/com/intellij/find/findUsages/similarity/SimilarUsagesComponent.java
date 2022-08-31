@@ -26,7 +26,7 @@ import java.util.Set;
 public class SimilarUsagesComponent extends JPanel implements Disposable {
 
   public static final int SNIPPET_LIMIT = 10;
-  private int myAlreadyShownUsages = 0;
+  private int myAlreadyProcessedUsages = 0;
   private final @NotNull UsageInfo myOriginalUsage;
 
   private final @NotNull ClusteringSearchSession mySession;
@@ -40,15 +40,15 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
   }
 
   public int renderSimilarUsages(@NotNull Collection<SimilarUsage> similarUsagesGroupUsages) {
-    int alreadyShowUsagesBefore = myAlreadyShownUsages;
-    similarUsagesGroupUsages.stream().skip(myAlreadyShownUsages).limit(SNIPPET_LIMIT).forEach(usage -> {
+    int alreadyShowUsagesBefore = myAlreadyProcessedUsages;
+    similarUsagesGroupUsages.stream().skip(myAlreadyProcessedUsages).limit(SNIPPET_LIMIT).forEach(usage -> {
       final UsageInfo info = ((UsageInfo2UsageAdapter)usage).getUsageInfo();
       if (myOriginalUsage != info) {
         renderUsage(info);
-        myAlreadyShownUsages++;
       }
+      myAlreadyProcessedUsages++;
     });
-    return myAlreadyShownUsages - alreadyShowUsagesBefore;
+    return myAlreadyProcessedUsages - alreadyShowUsagesBefore;
   }
 
   private void renderUsage(@NotNull UsageInfo info) {
@@ -90,7 +90,7 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
     renderOriginalUsage();
     renderSimilarUsages(usagesToRender);
     BoundedRangeModelThresholdListener.install(similarUsagesScrollPane.getVerticalScrollBar(), () -> {
-      if (myAlreadyShownUsages < usagesToRender.size()) {
+      if (myAlreadyProcessedUsages < usagesToRender.size()) {
         int renderedNumber = renderSimilarUsages(usagesToRender);
         SimilarUsagesCollector.logMoreUsagesLoaded(myOriginalUsage.getProject(), mySession, renderedNumber);
       }
