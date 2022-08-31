@@ -298,7 +298,7 @@ public class JpsBootstrapMain {
     }
     IdeaLogRecordFormatter layout = new IdeaLogRecordFormatter();
     ConsoleHandler consoleHandler = new ConsoleHandler();
-    consoleHandler.setFormatter(new IdeaLogRecordFormatter(layout, false));
+    consoleHandler.setFormatter(new IdeaLogRecordFormatter(false, layout));
     consoleHandler.setLevel(java.util.logging.Level.WARNING);
     rootLogger.addHandler(consoleHandler);
   }

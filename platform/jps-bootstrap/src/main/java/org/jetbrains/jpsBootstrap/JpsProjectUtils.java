@@ -45,7 +45,7 @@ public class JpsProjectUtils {
     pathVariablesConfiguration.addPathVariable("KOTLIN_BUNDLED", kotlincHome.toString());
 
     Map<String, String> pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.getGlobal());
-    JpsProjectLoader.loadProject(model.getProject(), pathVariables, projectHome.toString());
+    JpsProjectLoader.loadProject(model.getProject(), pathVariables, projectHome);
     System.out.println(
       "Loaded project " + projectHome + ": " +
         model.getProject().getModules().size() + " modules, " +
