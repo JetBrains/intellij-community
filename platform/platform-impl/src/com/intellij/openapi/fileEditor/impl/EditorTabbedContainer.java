@@ -707,7 +707,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
 
     @Override
     protected void paintChildren(Graphics g) {
-      if (!isHideTabs() && ExperimentalUI.isNewUI() && paintBorder()) {
+      if (!isHideTabs() && !getTabsPosition().isSide() && ExperimentalUI.isNewUI() && paintBorder()) {
         TabLabel label = getSelectedLabel();
         if (label != null) {
           int h = label.getHeight();
