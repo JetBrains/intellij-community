@@ -52,7 +52,6 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.ForkJoinTask
 import java.util.function.Predicate
 import java.util.stream.Collectors
-import kotlin.io.path.isRegularFile
 
 /**
  * Assembles output of modules to platform JARs (in [BuildPaths.distAllDir]/lib directory),
@@ -65,7 +64,6 @@ class DistributionJARsBuilder {
   @JvmOverloads
   constructor(context: BuildContext, pluginsToPublish: Set<PluginLayout> = emptySet()) {
     state = DistributionBuilderState(pluginsToPublish, context)
-
   }
 
   constructor(state: DistributionBuilderState) {
@@ -73,88 +71,6 @@ class DistributionJARsBuilder {
   }
 
   companion object {
-    fun getPluginAutoUploadFile(communityRoot: BuildDependenciesCommunityRoot): Path {
-      val autoUploadFile = communityRoot.communityRoot.resolve("../build/plugins-autoupload.txt")
-      require(autoUploadFile.isRegularFile()) {
-        "File '$autoUploadFile' must exist"
-      }
-      return autoUploadFile
-    }
-
-    fun readPluginAutoUploadFile(autoUploadFile: Path): Collection<String> {
-      val config = Files.lines(autoUploadFile).use { lines ->
-        lines
-          .map { StringUtil.split(it, "//", true, false)[0] }
-          .map { StringUtil.split(it, "#", true, false)[0].trim() }
-          .filter { !it.isEmpty() }
-          .collect(Collectors.toCollection { TreeSet(String.CASE_INSENSITIVE_ORDER) })
-      }
-
-      return config
-    }
-
-    private fun scramble(context: BuildContext) {
-      val tool = context.proprietaryBuildTools.scrambleTool
-
-      val actualModuleJars = if (tool == null) emptyMap() else mapOf("internalUtilities.jar" to listOf("intellij.tools.internalUtilities"))
-      pack(actualModuleJars = actualModuleJars,
-           outputDir = context.paths.buildOutputDir.resolve("internal"),
-           context = context)
-      tool?.scramble(context.productProperties.productLayout.mainJarName, context)
-      ?: Span.current().addEvent("skip scrambling because `scrambleTool` isn't defined")
-
-      // e.g. JetBrainsGateway doesn't have a main jar with license code
-      if (Files.exists(context.paths.distAllDir.resolve("lib/${context.productProperties.productLayout.mainJarName}"))) {
-        packInternalUtilities(context)
-      }
-    }
-
-    private suspend fun copyAnt(antDir: Path, antTargetFile: Path, context: BuildContext): List<DistributionFileEntry> {
-      return spanBuilder("copy Ant lib").setAttribute("antDir", antDir.toString()).useWithScope2 {
-        val sources = ArrayList<ZipSource>()
-        val result = ArrayList<DistributionFileEntry>()
-        val libraryData = ProjectLibraryData("Ant", LibraryPackMode.MERGED)
-        copyDir(sourceDir = context.paths.communityHomeDir.communityRoot.resolve("lib/ant"),
-                targetDir = antDir,
-                dirFilter = { !it.endsWith("src") },
-                fileFilter = Predicate { file ->
-                  if (file.toString().endsWith(".jar")) {
-                    sources.add(createZipSource(file) { result.add(ProjectLibraryEntry(antTargetFile, libraryData, file, it)) })
-                    false
-                  }
-                  else {
-                    true
-                  }
-                })
-        sources.sort()
-        // path in class log - empty, do not reorder, doesn't matter
-        buildJars(listOf(Triple(antTargetFile, "", sources)), false)
-        result
-      }
-    }
-
-    private fun packInternalUtilities(context: BuildContext) {
-      val sources = ArrayList<Path>()
-      for (file in context.project.libraryCollection.findLibrary("JUnit4")!!.getFiles(JpsOrderRootType.COMPILED)) {
-        sources.add(file.toPath())
-      }
-      sources.add(context.paths.buildOutputDir.resolve("internal/internalUtilities.jar"))
-      packInternalUtilities(context.paths.artifactDir.resolve("internalUtilities.zip"), sources)
-    }
-
-    private fun createBuildBrokenPluginListTask(context: BuildContext): ForkJoinTask<*>? {
-      val buildString = context.fullBuildNumber
-      val targetFile = context.paths.tempDir.resolve("brokenPlugins.db")
-      return createSkippableTask(spanBuilder("build broken plugin list")
-                                   .setAttribute("buildNumber", buildString)
-                                   .setAttribute("path", targetFile.toString()), BuildOptions.BROKEN_PLUGINS_LIST_STEP, context) {
-        buildBrokenPlugins(targetFile, buildString, context.options.isInDevelopmentMode)
-        if (Files.exists(targetFile)) {
-          context.addDistFile(java.util.Map.entry(targetFile, "bin"))
-        }
-      }
-    }
-
     fun getModulesToCompile(buildContext: BuildContext): Set<String> {
       val productLayout = buildContext.productProperties.productLayout
       val result = LinkedHashSet<String>()
@@ -1069,4 +985,86 @@ private fun containsFileInOutput(moduleName: String,
     set.exclude(it)
   }
   return !set.isEmpty()
+}
+
+fun getPluginAutoUploadFile(communityRoot: BuildDependenciesCommunityRoot): Path {
+  val autoUploadFile = communityRoot.communityRoot.resolve("../build/plugins-autoupload.txt")
+  require(Files.isRegularFile(autoUploadFile)) {
+    "File '$autoUploadFile' must exist"
+  }
+  return autoUploadFile
+}
+
+fun readPluginAutoUploadFile(autoUploadFile: Path): Collection<String> {
+  val config = Files.lines(autoUploadFile).use { lines ->
+    lines
+      .map { StringUtil.split(it, "//", true, false)[0] }
+      .map { StringUtil.split(it, "#", true, false)[0].trim() }
+      .filter { !it.isEmpty() }
+      .collect(Collectors.toCollection { TreeSet(String.CASE_INSENSITIVE_ORDER) })
+  }
+
+  return config
+}
+
+private fun scramble(context: BuildContext) {
+  val tool = context.proprietaryBuildTools.scrambleTool
+
+  val actualModuleJars = if (tool == null) emptyMap() else mapOf("internalUtilities.jar" to listOf("intellij.tools.internalUtilities"))
+  pack(actualModuleJars = actualModuleJars,
+       outputDir = context.paths.buildOutputDir.resolve("internal"),
+       context = context)
+  tool?.scramble(context.productProperties.productLayout.mainJarName, context)
+  ?: Span.current().addEvent("skip scrambling because `scrambleTool` isn't defined")
+
+  // e.g. JetBrainsGateway doesn't have a main jar with license code
+  if (Files.exists(context.paths.distAllDir.resolve("lib/${context.productProperties.productLayout.mainJarName}"))) {
+    packInternalUtilities(context)
+  }
+}
+
+private suspend fun copyAnt(antDir: Path, antTargetFile: Path, context: BuildContext): List<DistributionFileEntry> {
+  return spanBuilder("copy Ant lib").setAttribute("antDir", antDir.toString()).useWithScope2 {
+    val sources = ArrayList<ZipSource>()
+    val result = ArrayList<DistributionFileEntry>()
+    val libraryData = ProjectLibraryData("Ant", LibraryPackMode.MERGED)
+    copyDir(sourceDir = context.paths.communityHomeDir.communityRoot.resolve("lib/ant"),
+            targetDir = antDir,
+            dirFilter = { !it.endsWith("src") },
+            fileFilter = Predicate { file ->
+              if (file.toString().endsWith(".jar")) {
+                sources.add(createZipSource(file) { result.add(ProjectLibraryEntry(antTargetFile, libraryData, file, it)) })
+                false
+              }
+              else {
+                true
+              }
+            })
+    sources.sort()
+    // path in class log - empty, do not reorder, doesn't matter
+    buildJars(listOf(Triple(antTargetFile, "", sources)), false)
+    result
+  }
+}
+
+private fun packInternalUtilities(context: BuildContext) {
+  val sources = ArrayList<Path>()
+  for (file in context.project.libraryCollection.findLibrary("JUnit4")!!.getFiles(JpsOrderRootType.COMPILED)) {
+    sources.add(file.toPath())
+  }
+  sources.add(context.paths.buildOutputDir.resolve("internal/internalUtilities.jar"))
+  packInternalUtilities(context.paths.artifactDir.resolve("internalUtilities.zip"), sources)
+}
+
+private fun createBuildBrokenPluginListTask(context: BuildContext): ForkJoinTask<*>? {
+  val buildString = context.fullBuildNumber
+  val targetFile = context.paths.tempDir.resolve("brokenPlugins.db")
+  return createSkippableTask(spanBuilder("build broken plugin list")
+                               .setAttribute("buildNumber", buildString)
+                               .setAttribute("path", targetFile.toString()), BuildOptions.BROKEN_PLUGINS_LIST_STEP, context) {
+    buildBrokenPlugins(targetFile, buildString, context.options.isInDevelopmentMode)
+    if (Files.exists(targetFile)) {
+      context.addDistFile(java.util.Map.entry(targetFile, "bin"))
+    }
+  }
 }
