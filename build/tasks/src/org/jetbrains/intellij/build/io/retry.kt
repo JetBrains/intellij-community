@@ -25,9 +25,12 @@ fun <T> retryWithExponentialBackOff(
   }
   catch (e: Exception) {
     onException(attempt, e)
-    exceptions.add(e)
+    exceptions += if (effectiveDelay > 0) {
+      Exception("Attempt $attempt failed with '${e.message}', retrying in ${effectiveDelay}ms", e)
+    }
+    else e
     if (attempt == attempts) {
-      throw Exception("$attempts attempts failed, see suppressed exceptions for details", e).apply {
+      throw Exception("$attempts attempts failed, see suppressed exceptions for details").apply {
         exceptions.forEach(this::addSuppressed)
       }
     }
