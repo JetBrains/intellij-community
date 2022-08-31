@@ -96,6 +96,8 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
   public static final String FINAL_EXT = "typing_extensions.Final";
   public static final String LITERAL = "typing.Literal";
   public static final String LITERAL_EXT = "typing_extensions.Literal";
+  public static final String LITERALSTRING = "typing.LiteralString";
+  public static final String LITERALSTRING_EXT = "typing_extensions.LiteralString";
   public static final String ANNOTATED = "typing.Annotated";
   public static final String ANNOTATED_EXT = "typing_extensions.Annotated";
   public static final String TYPE_ALIAS = "typing.TypeAlias";
@@ -902,6 +904,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       if (requiredOrNotRequiredType != null) {
         return requiredOrNotRequiredType;
       }
+      final Ref<PyType> literalStringType = getLiteralStringType(resolved, context);
+      if (literalStringType != null) {
+        return literalStringType;
+      }
       final Ref<PyType> literalType = getLiteralType(resolved, context);
       if (literalType != null) {
         return literalType;
@@ -1133,6 +1139,18 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
         return Ref.create();
       }
     }
+    return null;
+  }
+
+  @Nullable
+  private static Ref<PyType> getLiteralStringType(@NotNull PsiElement resolved, @NotNull Context context) {
+    if (resolved instanceof PyTargetExpression referenceExpression) {
+      final Collection<String> operandNames = resolveToQualifiedNames(referenceExpression, context.getTypeContext());
+      if (ContainerUtil.exists(operandNames, name -> name.equals(LITERALSTRING) || name.equals(LITERALSTRING_EXT))) {
+        return Ref.create(PyBuiltinCache.getInstance(resolved).getStringType(LanguageLevel.forElement(resolved)));
+      }
+    }
+
     return null;
   }
 
