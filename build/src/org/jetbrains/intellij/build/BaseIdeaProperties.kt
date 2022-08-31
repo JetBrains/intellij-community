@@ -13,7 +13,6 @@ import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import java.util.function.BiConsumer
 
 private val JAVA_IDE_API_MODULES: List<String> = java.util.List.of(
   "intellij.xml.dom",
@@ -139,7 +138,7 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
 
     productLayout.withAdditionalPlatformJar(BaseLayout.APP_JAR, "intellij.java.ide.resources")
 
-    productLayout.addPlatformCustomizer(BiConsumer { layout, _ ->
+    productLayout.addPlatformCustomizer { layout, _ ->
       for (name in JAVA_IDE_API_MODULES) {
         if (!productLayout.productApiModules.contains(name)) {
           layout.withModule(name)
@@ -179,13 +178,13 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
 
       //this library is placed into subdirectory of 'lib' directory in Android plugin layout, so we need to exclude it from the platform layout explicitly
       layout.withoutProjectLibrary("layoutlib")
-    })
+    }
 
-    productLayout.compatiblePluginsToIgnore = java.util.List.of(
+    productLayout.compatiblePluginsToIgnore = persistentListOf(
       "intellij.java.plugin",
     )
-    additionalModulesToCompile = java.util.List.of("intellij.tools.jps.build.standalone")
-    modulesToCompileTests = java.util.List.of("intellij.platform.jps.build.tests")
+    additionalModulesToCompile = persistentListOf("intellij.tools.jps.build.standalone")
+    modulesToCompileTests = persistentListOf("intellij.platform.jps.build.tests")
 
     isAntRequired = true
   }

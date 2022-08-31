@@ -21,7 +21,7 @@ internal fun createCommunityBuildContext(
 
 open class IdeaCommunityProperties(private val communityHome: BuildDependenciesCommunityRoot) : BaseIdeaProperties() {
   companion object {
-    val MAVEN_ARTIFACTS_ADDITIONAL_MODULES = listOf(
+    val MAVEN_ARTIFACTS_ADDITIONAL_MODULES = persistentListOf(
       "intellij.tools.jps.build.standalone",
       "intellij.platform.debugger.testFramework",
       "intellij.platform.vcs.testFramework",
@@ -38,7 +38,7 @@ open class IdeaCommunityProperties(private val communityHome: BuildDependenciesC
     baseFileName = "idea"
     platformPrefix = "Idea"
     applicationInfoModule = "intellij.idea.community.resources"
-    additionalIDEPropertiesFilePaths = listOf(communityHome.communityRoot.resolve("build/conf/ideaCE.properties"))
+    additionalIDEPropertiesFilePaths = persistentListOf(communityHome.communityRoot.resolve("build/conf/ideaCE.properties"))
     toolsJarRequired = true
     scrambleMainJar = false
     useSplash = true
@@ -52,7 +52,7 @@ open class IdeaCommunityProperties(private val communityHome: BuildDependenciesC
     productLayout.pluginLayouts = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS.addAll(listOf(
       JavaPluginLayout.javaPlugin(),
       CommunityRepositoryModules.androidPlugin(emptyMap()),
-      CommunityRepositoryModules.groovyPlugin(emptyList())
+      CommunityRepositoryModules.groovyPlugin()
     ))
 
     productLayout.addPlatformCustomizer { layout, _ ->
@@ -61,11 +61,11 @@ open class IdeaCommunityProperties(private val communityHome: BuildDependenciesC
     }
 
     mavenArtifacts.forIdeModules = true
-    mavenArtifacts.additionalModules += MAVEN_ARTIFACTS_ADDITIONAL_MODULES
-    mavenArtifacts.squashedModules += listOf(
+    mavenArtifacts.additionalModules = mavenArtifacts.additionalModules.addAll(MAVEN_ARTIFACTS_ADDITIONAL_MODULES)
+    mavenArtifacts.squashedModules = mavenArtifacts.squashedModules.addAll(persistentListOf(
       "intellij.platform.util.base",
       "intellij.platform.util.zip",
-    )
+    ))
 
     versionCheckerConfig = CE_CLASS_VERSIONS
   }

@@ -3,6 +3,7 @@
 
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.Strings
 import io.opentelemetry.api.common.AttributeKey
@@ -23,7 +24,9 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
+import kotlin.collections.ArrayList
 
 class BuildContextImpl private constructor(private val compilationContext: CompilationContextImpl,
                                            override val productProperties: ProductProperties,

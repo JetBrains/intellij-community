@@ -75,7 +75,7 @@ open class BaseLayoutSpec(private val layout: BaseLayout) {
    * @param relativeOutputPath target path relative to 'lib' directory
    */
   fun withArtifact(artifactName: String, relativeOutputPath: String) {
-    layout.includedArtifacts.put(artifactName, relativeOutputPath)
+    layout.includedArtifacts = layout.includedArtifacts.put(artifactName, relativeOutputPath)
   }
 
   /**

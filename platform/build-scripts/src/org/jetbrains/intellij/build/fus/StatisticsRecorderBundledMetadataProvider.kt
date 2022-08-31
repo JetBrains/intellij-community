@@ -6,20 +6,22 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.StatusCode
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
-import org.jetbrains.intellij.build.impl.createSkippableTask
-import java.util.concurrent.ForkJoinTask
+import org.jetbrains.intellij.build.impl.createSkippableJob
+import java.util.concurrent.CancellationException
 
 /**
  * Download a default version of feature usage statistics metadata to be bundled with IDE.
  */
-internal fun createStatisticsRecorderBundledMetadataProviderTask(moduleOutputPatcher: ModuleOutputPatcher,
-                                                                 context: BuildContext): ForkJoinTask<*>? {
+internal fun CoroutineScope.createStatisticsRecorderBundledMetadataProviderTask(moduleOutputPatcher: ModuleOutputPatcher,
+                                                                                context: BuildContext): Job? {
   val featureUsageStatisticsProperties = context.proprietaryBuildTools.featureUsageStatisticsProperties ?: return null
-  return createSkippableTask(
+  return createSkippableJob(
     spanBuilder("bundle a default version of feature usage statistics"),
     BuildOptions.FUS_METADATA_BUNDLE_STEP,
     context
@@ -31,6 +33,9 @@ internal fun createStatisticsRecorderBundledMetadataProviderTask(moduleOutputPat
         path = "resources/event-log-metadata/$recorderId/events-scheme.json",
         content = download(appendProductCode(metadataServiceUri(featureUsageStatisticsProperties, context), context))
       )
+    }
+    catch (e: CancellationException) {
+      throw e
     }
     catch (e: Throwable) {
       // do not halt build, just record exception

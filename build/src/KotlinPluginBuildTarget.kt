@@ -1,5 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.IdeaCommunityProperties
 import org.jetbrains.intellij.build.IdeaProjectLoaderUtil
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
@@ -8,6 +10,10 @@ object KotlinPluginBuildTarget {
   @JvmStatic
   fun main(args: Array<String>) {
     val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
-    KotlinPluginBuilder(communityHome, communityHome.communityRoot, IdeaCommunityProperties(communityHome)).build()
+    runBlocking(Dispatchers.Default) {
+      KotlinPluginBuilder.build(communityHome = communityHome,
+                                home = communityHome.communityRoot,
+                                properties = IdeaCommunityProperties(communityHome))
+    }
   }
 }

@@ -1,11 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import com.intellij.util.SystemProperties
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.IdeaProjectLoaderUtil
 import org.jetbrains.intellij.build.createCommunityBuildContext
-import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import java.nio.file.Path
 
 /**
@@ -29,8 +30,10 @@ object OpenSourceCommunityUpdateFromSourcesBuildTarget {
 
     //when IDEA CE is updated from IDEA UE sources project should be loaded from IDEA UE directory
     val projectHome = System.getProperty("devIdeaHome")?.let { Path.of(it) } ?: communityHome.communityRoot
-    BuildTasks.create(createCommunityBuildContext(communityHome = communityHome, options = options, projectHome = projectHome))
-      .buildUnpackedDistribution(targetDirectory = Path.of("${options.outputRootPath}/$distOutputRelativePath"),
-                                 includeBinAndRuntime = false)
+    runBlocking(Dispatchers.Default) {
+      BuildTasks.create(createCommunityBuildContext(communityHome = communityHome, options = options, projectHome = projectHome))
+        .buildUnpackedDistribution(targetDirectory = Path.of("${options.outputRootPath}/$distOutputRelativePath"),
+                                   includeBinAndRuntime = false)
+    }
   }
 }

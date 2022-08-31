@@ -17,7 +17,7 @@ import java.util.concurrent.ForkJoinTask
 
 private const val algorithm = "SHA-256"
 
-fun bulkZipWithPrefix(commonSourceDir: Path, items: Collection<Map.Entry<String, Path>>, compress: Boolean) {
+fun bulkZipWithPrefix(commonSourceDir: Path, items: Collection<Pair<String, Path>>, compress: Boolean) {
   tracer.spanBuilder("archive directories")
     .setAttribute(AttributeKey.longKey("count"), items.size.toLong())
     .setAttribute(AttributeKey.stringKey("commonSourceDir"), commonSourceDir.toString())
@@ -26,15 +26,15 @@ fun bulkZipWithPrefix(commonSourceDir: Path, items: Collection<Map.Entry<String,
       ForkJoinTask.invokeAll(items.map { item ->
         ForkJoinTask.adapt {
           parentSpan.makeCurrent().use {
-            val target = item.value
-            val dir = commonSourceDir.resolve(item.key)
+            val target = item.second
+            val dir = commonSourceDir.resolve(item.first)
             tracer.spanBuilder("build plugin archive")
               .setAttribute("inputDir", dir.toString())
               .setAttribute("outputFile", target.toString())
               .use {
                 writeNewZip(target, compress = compress) { zipCreator ->
                   ZipArchiver(zipCreator).use { archiver ->
-                    archiver.setRootDir(dir, item.key)
+                    archiver.setRootDir(dir, item.first)
                     compressDir(dir, archiver, excludes = null)
                   }
                 }

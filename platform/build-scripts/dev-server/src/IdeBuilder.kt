@@ -3,9 +3,10 @@
 package org.jetbrains.intellij.build.devServer
 
 import com.intellij.util.PathUtilRt
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.IdeaProjectLoaderUtil
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.impl.*
@@ -21,11 +22,22 @@ import java.util.concurrent.TimeUnit
 
 internal const val UNMODIFIED_MARK_FILE_NAME = ".unmodified"
 
-class IdeBuilder(val pluginBuilder: PluginBuilder,
-                 homePath: Path,
-                 runDir: Path,
-                 outDir: Path,
-                 moduleNameToPlugin: Map<String, BuildItem>) {
+class IdeBuilder private constructor(internal val pluginBuilder: PluginBuilder,
+                                     outDir: Path,
+                                     moduleNameToPlugin: Map<String, BuildItem>) {
+  companion object {
+    suspend fun createIdeBuilder(pluginBuilder: PluginBuilder,
+                                 moduleNameToPlugin: Map<String, BuildItem>,
+                                 runDir: Path,
+                                 outDir: Path,
+                                 homePath: Path): IdeBuilder {
+      withContext(Dispatchers.IO) {
+        Files.writeString(runDir.resolve("libClassPath.txt"), createLibClassPath(pluginBuilder.buildContext, homePath))
+      }
+      return IdeBuilder(pluginBuilder, outDir, moduleNameToPlugin)
+    }
+  }
+
   private class ModuleChangeInfo(@JvmField val moduleName: String,
                                  @JvmField var checkFile: Path,
                                  @JvmField var plugin: BuildItem)
@@ -33,10 +45,6 @@ class IdeBuilder(val pluginBuilder: PluginBuilder,
   private val moduleChanges = moduleNameToPlugin.entries.map {
     val checkFile = outDir.resolve(it.key).resolve(UNMODIFIED_MARK_FILE_NAME)
     ModuleChangeInfo(moduleName = it.key, checkFile = checkFile, plugin = it.value)
-  }
-
-  init {
-    Files.writeString(runDir.resolve("libClassPath.txt"), createLibClassPath(pluginBuilder.buildContext, homePath))
   }
 
   fun checkChanged() {
@@ -52,7 +60,7 @@ class IdeBuilder(val pluginBuilder: PluginBuilder,
   }
 }
 
-internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: Path, outDir: Path): IdeBuilder {
+internal suspend fun initialBuild(productConfiguration: ProductConfiguration, homePath: Path, outDir: Path): IdeBuilder {
   val productProperties = URLClassLoader.newInstance(productConfiguration.modules.map { outDir.resolve(it).toUri().toURL() }.toTypedArray())
     .loadClass(productConfiguration.className)
     .getConstructor(Path::class.java).newInstance(homePath) as ProductProperties
@@ -114,20 +122,20 @@ internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: 
   val pluginBuilder = PluginBuilder(buildContext, outDir)
   pluginBuilder.initialBuild(plugins = pluginLayouts)
   LOG.info("Initial full build of ${pluginLayouts.size} plugins in ${TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - start)}s")
-  return IdeBuilder(pluginBuilder = pluginBuilder,
-                    homePath = homePath,
-                    runDir = runDir,
-                    outDir = outDir,
-                    moduleNameToPlugin = moduleNameToPlugin)
+  return IdeBuilder.createIdeBuilder(pluginBuilder = pluginBuilder,
+                                     homePath = homePath,
+                                     runDir = runDir,
+                                     outDir = outDir,
+                                     moduleNameToPlugin = moduleNameToPlugin)
 }
 
-private fun createLibClassPath(context: BuildContext, homePath: Path): String {
+private suspend fun createLibClassPath(context: BuildContext, homePath: Path): String {
   val platformLayout = createPlatformLayout(emptySet(), context)
   val isPackagedLib = System.getProperty("dev.server.pack.lib") == "true"
   val projectStructureMapping = processLibDirectoryLayout(moduleOutputPatcher = ModuleOutputPatcher(),
                                                           platform = platformLayout,
                                                           context = context,
-                                                          copyFiles = isPackagedLib).fork().join()
+                                                          copyFiles = isPackagedLib)
   // for some reasons maybe duplicated paths - use set
   val classPath = LinkedHashSet<String>()
   if (isPackagedLib) {
@@ -165,6 +173,7 @@ private fun createLibClassPath(context: BuildContext, homePath: Path): String {
   }
 
   val projectLibDir = homePath.resolve("lib")
+
   @Suppress("SpellCheckingInspection")
   val extraJarNames = listOf("ideaLicenseDecoder.jar", "ls-client-api.jar", "y.jar", "ysvg.jar")
   for (extraJarName in extraJarNames) {

@@ -1,8 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.IdeaProjectLoaderUtil
-import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.pycharm.PyCharmCommunityProperties
 
@@ -16,6 +17,8 @@ object PyCharmCommunityInstallersBuildTarget {
       projectHome = communityHome.communityRoot,
       productProperties = PyCharmCommunityProperties(communityHome),
     )
-    BuildTasks.create(context).buildDistributions()
+    runBlocking(Dispatchers.Default) {
+      BuildTasks.create(context).buildDistributions()
+    }
   }
 }

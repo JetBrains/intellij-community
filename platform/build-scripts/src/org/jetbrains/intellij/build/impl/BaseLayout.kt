@@ -3,6 +3,9 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.containers.MultiMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
 
 /**
  * Describes layout of a plugin or the platform JARs in the product distribution
@@ -15,9 +18,9 @@ open class BaseLayout {
   /** JAR name (or path relative to 'lib' directory) to names of modules */
   val moduleJars: MultiMap<String, String> = MultiMap.createLinkedSet()
   /** artifact name to relative output path */
-  val includedArtifacts: MutableMap<String, String> = LinkedHashMap()
+  internal var includedArtifacts: kotlinx.collections.immutable.PersistentMap<String, String> = persistentMapOf()
   /** list of additional resources which should be included into the distribution */
-  internal val resourcePaths = mutableListOf<ModuleResourceData>()
+  internal var resourcePaths: PersistentList<ModuleResourceData> = persistentListOf()
   /** module name to entries which should be excluded from its output */
   val moduleExcludes: MultiMap<String, String> = MultiMap.createLinked()
   @Suppress("SSBasedInspection")

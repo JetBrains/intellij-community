@@ -6,6 +6,7 @@ import org.jetbrains.intellij.build.impl.PluginLayout
 
 object JavaPluginLayout {
   @JvmStatic
+  @JvmOverloads
   fun javaPlugin(addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
     return PluginLayout.plugin("intellij.java.plugin") { spec ->
       spec.directoryName = "java"
@@ -37,7 +38,7 @@ object JavaPluginLayout {
       }
 
       // api modules
-      for (moduleName in listOf(
+      spec.withModules(listOf(
         "intellij.java.compiler",
         "intellij.java.debugger",
         "intellij.java.execution",
@@ -49,11 +50,9 @@ object JavaPluginLayout {
         "intellij.java",
         "intellij.jsp",
         "intellij.platform.uast"
-      )) {
-        spec.withModule(moduleName, mainJarName)
-      }
+      ))
 
-      for (moduleName in listOf(
+      spec.withModules(listOf(
         "intellij.java.compiler.impl",
         "intellij.java.debugger.impl",
         "intellij.java.debugger.memory.agent",
@@ -75,9 +74,7 @@ object JavaPluginLayout {
         "intellij.java.structuralSearch",
         "intellij.java.typeMigration",
         "intellij.java.featuresTrainer"
-      )) {
-        spec.withModule(moduleName, mainJarName)
-      }
+      ))
 
       spec.withArtifact("debugger-agent", "rt")
       spec.withProjectLibrary("Eclipse", "ecj", LibraryPackMode.STANDALONE_MERGED)

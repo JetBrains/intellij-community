@@ -19,12 +19,7 @@ import java.nio.file.Path
 import java.util.function.BiConsumer
 import java.util.regex.Pattern
 
-class KotlinPluginBuilder(
-  private val communityHome: BuildDependenciesCommunityRoot,
-  private val home: Path,
-  private val properties: ProductProperties,
-) {
-  companion object {
+object KotlinPluginBuilder {
     /**
      * Module which contains META-INF/plugin.xml
      */
@@ -228,11 +223,17 @@ class KotlinPluginBuilder(
     @JvmStatic
     fun kotlinPlugin(ultimateSources: KotlinUltimateSources): PluginLayout {
       return kotlinPlugin(
-        KotlinPluginKind.valueOf(System.getProperty("kotlin.plugin.kind", "IJ")),
-        ultimateSources,
+        kind = KotlinPluginKind.valueOf(System.getProperty("kotlin.plugin.kind", "IJ")),
+        ultimateSources = ultimateSources,
       )
     }
 
+  // weird groovy bug - remove method once AppCodeProperties will be converted to kotlin
+  fun kotlinPluginAcKmm(): PluginLayout {
+    return kotlinPlugin(KotlinPluginKind.AC_KMM, KotlinPluginBuilder.KotlinUltimateSources.WITH_ULTIMATE_MODULES)
+  }
+
+    @JvmStatic
     fun kotlinPlugin(kind: KotlinPluginKind, ultimateSources: KotlinUltimateSources): PluginLayout {
         return PluginLayout.plugin(MAIN_KOTLIN_PLUGIN_MODULE) { spec ->
           spec.directoryName = "Kotlin"
@@ -392,9 +393,8 @@ class KotlinPluginBuilder(
       }
       return result
     }
-  }
 
-  suspend fun build() {
+  suspend fun build(communityHome: BuildDependenciesCommunityRoot, home: Path, properties: ProductProperties) {
     val buildContext = BuildContextImpl.createContext(communityHome = communityHome, projectHome = home, productProperties = properties)
     BuildTasks.create(buildContext).buildNonBundledPlugins(listOf(MAIN_KOTLIN_PLUGIN_MODULE))
   }

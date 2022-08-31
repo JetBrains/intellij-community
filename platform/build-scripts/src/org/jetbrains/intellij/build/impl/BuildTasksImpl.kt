@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.diagnostic.telemetry.use
 import com.intellij.diagnostic.telemetry.useWithScope
+import com.intellij.diagnostic.telemetry.useWithScope2
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
@@ -15,6 +16,8 @@ import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context
 import kotlinx.collections.immutable.toImmutableSet
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.jetbrains.idea.maven.aether.ArtifactKind
@@ -59,12 +62,12 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
     zipSourcesOfModules(modules, targetFile, includeLibraries, context)
   }
 
-  override fun compileModulesFromProduct() {
+  override suspend fun compileModulesFromProduct() {
     checkProductProperties(context)
     compileModulesForDistribution(context)
   }
 
-  override fun buildDistributions() {
+  override suspend fun buildDistributions() {
     buildDistributions(context)
   }
 
@@ -78,19 +81,24 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
     invokeAllSettled(listOfNotNull(createTask(JvmArchitecture.x64, context), createTask(JvmArchitecture.aarch64, context)))
   }
 
-  override fun buildNonBundledPlugins(mainPluginModules: List<String>) {
+  override suspend fun buildNonBundledPlugins(mainPluginModules: List<String>) {
     checkProductProperties(context)
     checkPluginModules(mainPluginModules, "mainPluginModules", context.productProperties.productLayout.pluginLayouts, context)
     copyDependenciesFile(context)
     val pluginsToPublish = getPluginsByModules(mainPluginModules, context)
     val distributionJARsBuilder = DistributionJARsBuilder(compilePlatformAndPluginModules(pluginsToPublish, context))
     distributionJARsBuilder.buildSearchableOptions(context)
-    distributionJARsBuilder.createBuildNonBundledPluginsTask(pluginsToPublish, true, null, context)!!.fork().join()
+    distributionJARsBuilder.buildNonBundledPlugins(pluginsToPublish = pluginsToPublish,
+                                                   compressPluginArchive = true,
+                                                   buildPlatformLibJob = null,
+                                                   context = context)
   }
 
-  override fun generateProjectStructureMapping(targetFile: Path) {
-    Files.createDirectories(context.paths.tempDir)
-    val pluginLayoutRoot = Files.createTempDirectory(context.paths.tempDir, "pluginLayoutRoot")
+  override suspend fun generateProjectStructureMapping(targetFile: Path) {
+    val pluginLayoutRoot = withContext(Dispatchers.IO) {
+      Files.createDirectories(context.paths.tempDir)
+      Files.createTempDirectory(context.paths.tempDir, "pluginLayoutRoot")
+    }
     ProjectStructureMapping.writeReport(
       entries = DistributionJARsBuilder(context).generateProjectStructureMapping(context, pluginLayoutRoot),
       file = targetFile,
@@ -118,7 +126,7 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
     doBuildUpdaterJar(context, "updater.jar")
   }
 
-  override fun runTestBuild() {
+  override suspend fun runTestBuild() {
     checkProductProperties(context)
     val builderState = compileModulesForDistribution(context)
 
@@ -134,14 +142,14 @@ class BuildTasksImpl(private val context: BuildContext) : BuildTasks {
     mavenArtifactTask?.join()
   }
 
-  override fun buildUnpackedDistribution(targetDirectory: Path, includeBinAndRuntime: Boolean) {
+  override suspend fun buildUnpackedDistribution(targetDirectory: Path, includeBinAndRuntime: Boolean) {
     val currentOs = OsFamily.currentOs
     context.paths.distAllDir = targetDirectory
     context.options.targetOs = currentOs.osId
     context.options.buildStepsToSkip.add(BuildOptions.GENERATE_JAR_ORDER_STEP)
     BundledMavenDownloader.downloadMavenCommonLibs(context.paths.communityHomeDir)
     BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDir)
-    DistributionJARsBuilder(compileModulesForDistribution(context)).buildJARs(context, true)
+    DistributionJARsBuilder(compileModulesForDistribution(context)).buildJARs(context = context, isUpdateFromSources = true)
     val arch = JvmArchitecture.currentJvmArch
     layoutShared(context)
     if (includeBinAndRuntime) {
@@ -190,7 +198,7 @@ private fun getLocalArtifactRepositoryRoot(global: JpsGlobal): Path {
 /**
  * Building a list of modules that the IDE will provide for plugins.
  */
-private fun buildProvidedModuleList(targetFile: Path, state: DistributionBuilderState, context: BuildContext) {
+private suspend fun buildProvidedModuleList(targetFile: Path, state: DistributionBuilderState, context: BuildContext) {
   context.executeStep(spanBuilder("build provided module list"), BuildOptions.PROVIDED_MODULES_LIST_STEP) {
     Files.deleteIfExists(targetFile)
     val ideClasspath = DistributionJARsBuilder(state).createIdeClassPath(context)
@@ -577,7 +585,7 @@ private fun compilePlatformAndPluginModules(pluginsToPublish: Set<PluginLayout>,
   return distState
 }
 
-private fun compileModulesForDistribution(pluginsToPublish: Set<PluginLayout>, context: BuildContext): DistributionBuilderState {
+private suspend fun compileModulesForDistribution(pluginsToPublish: Set<PluginLayout>, context: BuildContext): DistributionBuilderState {
   val productProperties = context.productProperties
   val mavenArtifacts = productProperties.mavenArtifacts
 
@@ -619,14 +627,14 @@ private class BuildTaskRunnable(
   @JvmField val task: () -> DistributionForOsTaskResult,
 )
 
-private fun compileModulesForDistribution(context: BuildContext): DistributionBuilderState {
+private suspend fun compileModulesForDistribution(context: BuildContext): DistributionBuilderState {
   val pluginsToPublish = getPluginsByModules(context.productProperties.productLayout.pluginModulesToPublish, context)
   return compileModulesForDistribution(pluginsToPublish, context)
 }
 
-fun buildDistributions(context: BuildContext) {
+suspend fun buildDistributions(context: BuildContext) {
   try {
-    spanBuilder("build distributions").useWithScope {
+    spanBuilder("build distributions").useWithScope2 {
       checkProductProperties(context)
       copyDependenciesFile(context)
       logFreeDiskSpace("before compilation", context)
@@ -636,7 +644,7 @@ fun buildDistributions(context: BuildContext) {
 
       val mavenTask = createMavenArtifactTask(context, distributionState)?.fork()
 
-      spanBuilder("build platform and plugin JARs").useWithScope {
+      spanBuilder("build platform and plugin JARs").useWithScope2 {
         val distributionJARsBuilder = DistributionJARsBuilder(distributionState)
         if (context.shouldBuildDistributions()) {
           val projectStructureMapping = distributionJARsBuilder.buildJARs(context)
@@ -646,10 +654,10 @@ fun buildDistributions(context: BuildContext) {
           Span.current().addEvent("skip building product distributions because " +
                                   "\"intellij.build.target.os\" property is set to \"${BuildOptions.OS_NONE}\"")
           distributionJARsBuilder.buildSearchableOptions(context)
-          distributionJARsBuilder.createBuildNonBundledPluginsTask(pluginsToPublish = pluginsToPublish,
-                                                                   compressPluginArchive = true,
-                                                                   buildPlatformLibTask = null,
-                                                                   context = context)?.fork()?.join()
+          distributionJARsBuilder.buildNonBundledPlugins(pluginsToPublish = pluginsToPublish,
+                                                         compressPluginArchive = true,
+                                                         buildPlatformLibJob = null,
+                                                         context = context)
         }
       }
 
