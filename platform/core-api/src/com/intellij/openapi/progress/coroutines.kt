@@ -163,7 +163,6 @@ suspend fun <T> runUnderIndicator(action: () -> T): T {
 }
 
 @Internal
-@Suppress("EXPERIMENTAL_API_USAGE_ERROR")
 fun <T> runUnderIndicator(job: Job, progressSink: ProgressSink?, action: () -> T): T {
   job.ensureActive()
   val indicator = if (progressSink == null) EmptyProgressIndicator() else ProgressSinkIndicator(progressSink)
