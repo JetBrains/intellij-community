@@ -79,6 +79,7 @@ public class JobUtilTest extends LightPlatformTestCase {
       things.add(v);
       sum += v;
     }
+    //noinspection PointlessArithmeticExpression
     assertEquals((N-50)*1 + 50*1000, sum);
 
     long elapsed = TimeoutUtil.measureExecutionTime(() -> assertTrue(JobLauncher.getInstance().invokeConcurrentlyUnderProgress(things, new ProgressIndicatorBase(), o -> {
