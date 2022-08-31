@@ -38,7 +38,7 @@ class AndroidStudioBuilder {
 
   void buildDistributions() {
     def tasks = BuildTasks.create(buildContext)
-    tasks.buildDistributions()
+    tasks.buildDistributionsBlocking()
     tasks.buildFullUpdaterJar()
   }
 }
