@@ -166,6 +166,11 @@ suspend fun <T> runUnderIndicator(action: () -> T): T {
 fun <T> runUnderIndicator(job: Job, progressSink: ProgressSink?, action: () -> T): T {
   job.ensureActive()
   val indicator = if (progressSink == null) EmptyProgressIndicator() else ProgressSinkIndicator(progressSink)
+  return runUnderIndicator(job, indicator, action)
+}
+
+@Internal
+fun <T> runUnderIndicator(job: Job, indicator: ProgressIndicator, action: () -> T): T {
   try {
     return ProgressManager.getInstance().runProcess(Computable {
       // Register handler inside runProcess to avoid cancelling the indicator before even starting the progress.
