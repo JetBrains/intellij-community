@@ -445,12 +445,12 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
 
     List<LocalInspectionToolWrapper> enabled = new ArrayList<>();
-    ProjectType projectType = ProjectTypeService.getProjectType(myProject);
+    Collection<ProjectType> projectTypes = ProjectTypeService.getProjectTypes(myProject);
 
     for (InspectionToolWrapper<?, ?> toolWrapper : toolWrappers) {
       ProgressManager.checkCanceled();
 
-      if (!toolWrapper.isApplicable(projectType)) continue;
+      if (!toolWrapper.isApplicable(projectTypes)) continue;
 
       if (toolWrapper instanceof LocalInspectionToolWrapper && !isAcceptableLocalTool((LocalInspectionToolWrapper)toolWrapper)) {
         continue;

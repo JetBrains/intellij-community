@@ -418,12 +418,12 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     initInspectionTools();
 
     List<Tools> result = new ArrayList<>();
-    ProjectType projectType = ProjectTypeService.getProjectType(project);
+    Collection<ProjectType> projectTypes = ProjectTypeService.getProjectTypes(project);
 
     for (ToolsImpl toolList : myTools.values()) {
       if (toolList.isEnabled()) {
         InspectionToolWrapper<?, ?> toolWrapper = toolList.getTool();
-        if (!toolWrapper.isApplicable(projectType)) {
+        if (!toolWrapper.isApplicable(projectTypes)) {
           continue;
         }
 
