@@ -267,18 +267,28 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   private static @Nls @NotNull String getUsagesTitle(@NotNull PsiElement element) {
     HtmlBuilder builder = new HtmlBuilder();
 
-    builder.append(StringUtil.capitalize(UsageViewUtil.getType(element))).nbsp().
+    HtmlChunk type = HtmlChunk.text(StringUtil.capitalize(UsageViewUtil.getType(element)));
+    if (ExperimentalUI.isNewUI()) {
+      type = type.bold();
+    }
+
+    builder.append(type).nbsp().
       append(HtmlChunk.text(UsageViewUtil.getLongName(element)).bold());
 
     if (element instanceof NavigationItem) {
       ItemPresentation itemPresentation = ((NavigationItem)element).getPresentation();
       if (itemPresentation != null && StringUtil.isNotEmpty(itemPresentation.getLocationString())) {
-        builder.nbsp().append(HtmlChunk.text(itemPresentation.getLocationString()).
-                                wrapWith("font").attr("color", "#" + ColorUtil.toHex(SimpleTextAttributes.GRAY_ATTRIBUTES.getFgColor())));
+        builder.nbsp().append(getLocationString(itemPresentation.getLocationString()));
       }
     }
 
     return builder.toString();
+  }
+
+  private static @NotNull HtmlChunk getLocationString(@Nls @NotNull String locationString) {
+    Color color = ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.ContextHelp.FOREGROUND : SimpleTextAttributes.GRAY_ATTRIBUTES.getFgColor();
+    return HtmlChunk.text(locationString).
+      wrapWith("font").attr("color", "#" + ColorUtil.toHex(color));
   }
 
   @NotNull
@@ -780,6 +790,9 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
     if (Registry.is("ide.usages.popup.show.options.string")) {
       JLabel optionsLabel = new JLabel(actionHandler.getPresentation().getOptionsString());
+      if (ExperimentalUI.isNewUI()) {
+        optionsLabel.setForeground(JBUI.CurrentTheme.ContextHelp.FOREGROUND);
+      }
       northPanel.add(optionsLabel, gc.next());
     }
     northPanel.add(settingsToolbarComponent, gc.next());
@@ -920,7 +933,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       table.setBackground(background);
       northPanel.setBorder(createComplexPopupToolbarBorder());
       toolbarComponent.setBorder(JBUI.Borders.emptyRight(16));
-      settingsToolbarComponent.setBorder(JBUI.Borders.emptyLeft(12));
+      settingsToolbarComponent.setBorder(JBUI.Borders.emptyLeft(8));
       if (contentSplitter != null) {
         contentSplitter.setBackground(background);
         contentSplitter.setOpaque(true);
@@ -958,11 +971,12 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   }
 
   private static Border createComplexPopupToolbarBorder() {
-    Insets textFieldBorderInsets = JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets();
+    Insets lineInsets = JBUI.CurrentTheme.ComplexPopup.textFieldBorderInsets();
     //noinspection UseDPIAwareBorders
-    return JBUI.Borders.compound(new EmptyBorder(0, textFieldBorderInsets.left, 4, textFieldBorderInsets.right),
+    return JBUI.Borders.compound(new EmptyBorder(0, lineInsets.left, 4, lineInsets.right),
                                  JBUI.Borders.customLineBottom(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()),
-                                 JBUI.Borders.empty(6, 4));
+                                 new EmptyBorder(JBUIScale.scale(6), JBUIScale.scale(3), JBUIScale.scale(6),
+                                                 JBUI.CurrentTheme.ComplexPopup.headerInsets().right - lineInsets.right));
   }
 
   @NotNull

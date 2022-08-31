@@ -9,6 +9,7 @@ import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.JBGaps
 import com.intellij.usageView.UsageViewBundle
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.JBUI
@@ -40,18 +41,24 @@ internal class ShowUsagesHeader(pinButton: JComponent, @NlsContexts.PopupTitle t
             .gap(RightGap.SMALL)
           titleLabel = titleCell.component
 
-          if (ExperimentalUI.isNewUI()) {
-            val headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets()
-            titleCell.customize(Gaps(top = headerInsets.top, bottom = headerInsets.bottom, right = JBUI.scale(12)))
-          }
-
           processIcon = cell(AsyncProcessIcon("xxx"))
             .gap(RightGap.SMALL)
             .component
-          statusLabel = label("")
-            .gap(RightGap.SMALL)
-            .component
-          cell(pinButton)
+          val statusCell = label("")
+          statusLabel = statusCell.component
+          val pinCell = cell(pinButton)
+
+          if (ExperimentalUI.isNewUI()) {
+            val headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets()
+            titleCell.customize(Gaps(top = headerInsets.top, bottom = headerInsets.bottom, right = JBUI.scale(12)))
+            statusCell.component.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
+            statusCell.customize(JBGaps(right = 8))
+            // Fix vertical alignment for the pin icon
+            pinCell.customize(JBGaps(top = 2))
+          }
+          else {
+            statusCell.gap(RightGap.SMALL)
+          }
         }
       }
     }
