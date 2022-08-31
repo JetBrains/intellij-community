@@ -12,6 +12,10 @@ open class BaseLayoutSpec(private val layout: BaseLayout) {
     layout.withModule(moduleName)
   }
 
+  fun withModules(names: Iterable<String>) {
+    names.forEach(layout::withModule)
+  }
+
   /**
    * Register an additional module to be included into the plugin distribution. If {@code relativeJarPath} doesn't contain '/' (i.e. the
    * JAR will be added to the plugin's classpath) this will also cause modules library from {@code moduleName} with scopes 'Compile' and
