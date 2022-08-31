@@ -585,11 +585,11 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/ktorio/ktor")
       .apache("https://github.com/ktorio/ktor/blob/main/LICENSE"),
     LibraryLicense(name = "kXML2", libraryName = "kxml2", license = "BSD", url = "https://sourceforge.net/projects/kxml/"),
-    LibraryLicense(name = "Language Tool", libraryName = "org.languagetool:languagetool-core:5.7",
+    LibraryLicense(name = "Language Tool", libraryName = "org.languagetool:languagetool-core",
                    url = "https://github.com/languagetool-org/languagetool",
                    license = "LGPL 2.1",
                    licenseUrl = "https://www.gnu.org/licenses/lgpl-2.1.txt"),
-    LibraryLicense(name = "Language Tool (English)", libraryName = "org.languagetool:language-en:5.7",
+    LibraryLicense(name = "Language Tool (English)", libraryName = "org.languagetool:language-en",
                    url = "https://github.com/languagetool-org/languagetool",
                    license = "LGPL 2.1",
                    licenseUrl = "https://www.gnu.org/licenses/lgpl-2.1.txt"),
