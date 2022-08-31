@@ -1,8 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Experimental
 
 package com.intellij.openapi.progress
 
+import com.intellij.openapi.util.NlsContexts.ProgressDetails
+import com.intellij.openapi.util.NlsContexts.ProgressText
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.AbstractCoroutineContextElement
@@ -43,11 +45,11 @@ private class ProgressSinkElement(val sink: ProgressSink) : AbstractCoroutineCon
 
 internal class ProgressIndicatorSink(private val indicator: ProgressIndicator) : ProgressSink {
 
-  override fun text(text: String) {
+  override fun text(text: @ProgressText String) {
     indicator.text = text
   }
 
-  override fun details(details: String) {
+  override fun details(details: @ProgressDetails String) {
     indicator.text2 = details
   }
 
