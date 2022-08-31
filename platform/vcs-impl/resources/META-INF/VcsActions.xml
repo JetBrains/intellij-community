@@ -233,7 +233,7 @@
         <keyboard-shortcut first-keystroke="control alt U" keymap="$default"/>
       </action>
       <reference ref="Diff.ShowDiff"/>
-      <group id="ShelvedChangesToolbar.ViewOptions" popup="true" icon="AllIcons.Actions.Show">
+      <group id="ShelvedChangesToolbar.ViewOptions" popup="true" icon="AllIcons.Actions.GroupBy">
         <reference ref="ChangesView.GroupBy"/>
         <separator key="separator.show"/>
         <action id="ShelvedChanges.ShowHideDeleted" class="com.intellij.openapi.vcs.changes.shelf.ShowHideRecycledAction"/>
