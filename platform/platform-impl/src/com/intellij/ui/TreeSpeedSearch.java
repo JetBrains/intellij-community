@@ -69,7 +69,7 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
    */
   @Deprecated
   public TreeSpeedSearch(JTree tree, Convertor<? super TreePath, String> toString) {
-    this(tree, false, (Function<? super TreePath, String>)toString::convert);
+    this(tree, false, toString.asFunction());
   }
 
   /**
@@ -77,7 +77,7 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
    */
   @Deprecated
   public TreeSpeedSearch(Tree tree, Convertor<? super TreePath, String> toString) {
-    this(tree, false, (Function<? super TreePath, String>)toString::convert);
+    this(tree, false, toString.asFunction());
   }
 
   /**
@@ -85,7 +85,7 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
    */
   @Deprecated
   public TreeSpeedSearch(Tree tree, Convertor<? super TreePath, String> toString, boolean canExpand) {
-    this(tree, canExpand, (Function<? super TreePath, String>)toString::convert);
+    this(tree, canExpand, toString.asFunction());
   }
 
   /**
@@ -93,7 +93,7 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
    */
   @Deprecated
   public TreeSpeedSearch(JTree tree, Convertor<? super TreePath, String> toString, boolean canExpand) {
-    this (tree, canExpand, (Function<? super TreePath, String>)toString::convert);
+    this (tree, canExpand, toString.asFunction());
   }
 
 
