@@ -972,7 +972,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     private volatile boolean myPopupVisible;
 
     MyTreeSpeedSearch() {
-      super(myTree, path -> getSpeedSearchText(TreeUtil.getLastUserObject(path)), true);
+      super(myTree, true, path -> getSpeedSearchText(TreeUtil.getLastUserObject(path)));
     }
 
     @Override

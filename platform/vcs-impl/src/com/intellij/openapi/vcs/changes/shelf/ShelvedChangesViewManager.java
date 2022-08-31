@@ -360,7 +360,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
     private ShelfTree(@NotNull Project project) {
       super(project, false, false, false);
-      new TreeSpeedSearch(this, ChangesBrowserNode.TO_TEXT_CONVERTER, true);
+      new TreeSpeedSearch(this, true, ChangesBrowserNode.TO_TEXT_CONVERTER.asFunction());
       setKeepTreeState(true);
       setDoubleClickHandler(e -> showShelvedChangesDiff());
       setEnterKeyHandler(e -> showShelvedChangesDiff());
