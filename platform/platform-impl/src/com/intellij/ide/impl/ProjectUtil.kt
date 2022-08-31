@@ -64,7 +64,6 @@ import java.awt.KeyboardFocusManager
 import java.awt.Window
 import java.io.File
 import java.io.IOException
-import java.lang.Runnable
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.Callable
@@ -675,7 +674,7 @@ object ProjectUtil {
 
 @Internal
 // inline is not used - easier debug
-fun <T> runUnderModalProgressIfIsEdt(task: suspend () -> T): T {
+fun <T> runUnderModalProgressIfIsEdt(task: suspend CoroutineScope.() -> T): T {
   if (!ApplicationManager.getApplication().isDispatchThread) {
     return runBlocking(CoreProgressManager.getCurrentThreadProgressModality().asContextElement()) { task() }
   }
@@ -684,7 +683,7 @@ fun <T> runUnderModalProgressIfIsEdt(task: suspend () -> T): T {
 
 @Internal
 @RequiresEdt
-fun <T> runBlockingUnderModalProgress(@NlsContexts.ProgressTitle title: String = "", project: Project? = null, task: suspend () -> T): T {
+fun <T> runBlockingUnderModalProgress(@NlsContexts.ProgressTitle title: String = "", project: Project? = null, task: suspend CoroutineScope.() -> T): T {
   return ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
     val modalityState = CoreProgressManager.getCurrentThreadProgressModality()
     runBlocking(modalityState.asContextElement()) {
