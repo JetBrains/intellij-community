@@ -2,4 +2,4 @@ interface <!LINE_MARKER("descr='Is implemented by SimpleEntity  Click or press .
 
 actual typealias <!LINE_MARKER("descr='Has expects in common module'")!>Shared<!> = Any
 
-class SimpleEntity : I2<Shared, <!UPPER_BOUND_VIOLATED!>I1ImplOfShared<!>>
+class SimpleEntity : I2<Shared, I1ImplOfShared>
