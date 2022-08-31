@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.devServer
 
-import com.intellij.diagnostic.telemetry.useWithScope
+import com.intellij.diagnostic.telemetry.useWithScope2
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -99,7 +99,7 @@ private suspend fun buildPlugin(plugin: BuildItem, buildContext: BuildContext, p
   TraceManager.spanBuilder("build plugin")
     .setAttribute("mainModule", mainModule)
     .setAttribute("dir", plugin.dir.fileName.toString())
-    .useWithScope {
+    .useWithScope2 {
       Span.current().addEvent("build ${mainModule}")
 
       if (mainModule != "intellij.platform.builtInHelp") {
