@@ -504,7 +504,7 @@ private fun configureLanguageAndApiVersion(
         if (compilerArguments != null) {
             compilerArguments.apiVersion = null
         }
-        facet.configureFacet(IdeKotlinVersion.fromLanguageVersion(languageVersion), null, modelsProvider, emptySet())
+        facet.configureFacet(IdeKotlinVersion.fromLanguageVersion(languageVersion), null, modelsProvider)
         if (apiVersion != null) {
             facet.configuration.settings.apiLevel = LanguageVersion.fromVersionString(apiVersion.versionString)
         }

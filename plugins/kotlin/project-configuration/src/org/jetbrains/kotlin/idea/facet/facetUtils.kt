@@ -67,33 +67,14 @@ fun Module.removeKotlinFacet(
     }
 }
 
-//method used for non-mpp modules
-@JvmOverloads
-fun KotlinFacet.configureFacet(
-    compilerVersion: IdeKotlinVersion?,
-    platform: TargetPlatform?,
-    modelsProvider: IdeModifiableModelsProvider,
-    additionalVisibleModuleNames: Set<String> = emptySet()
-) {
-    configureFacet(
-        compilerVersion = compilerVersion,
-        platform = platform,
-        modelsProvider = modelsProvider,
-        hmppEnabled = false,
-        pureKotlinSourceFolders = emptyList(),
-        dependsOnList = emptyList(),
-        additionalVisibleModuleNames = additionalVisibleModuleNames
-    )
-}
-
 @JvmOverloads
 fun KotlinFacet.configureFacet(
     compilerVersion: IdeKotlinVersion?,
     platform: TargetPlatform?, // if null, detect by module dependencies
     modelsProvider: IdeModifiableModelsProvider,
-    hmppEnabled: Boolean,
-    pureKotlinSourceFolders: List<String>,
-    dependsOnList: List<String>,
+    hmppEnabled: Boolean = false,
+    pureKotlinSourceFolders: List<String> = emptyList(),
+    dependsOnList: List<String> = emptyList(),
     additionalVisibleModuleNames: Set<String> = emptySet()
 ) {
     val module = module

@@ -924,7 +924,7 @@ class KtLightAnnotationTest : KotlinLightCodeInsightFixtureTestCase() {
         WriteAction.run<Throwable> {
             val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(project)
             val facet = module.getOrCreateFacet(modelsProvider, useProjectSettings = false)
-            facet.configureFacet(version, null, modelsProvider, emptySet())
+            facet.configureFacet(version, null, modelsProvider)
             modelsProvider.commit()
         }
     }
