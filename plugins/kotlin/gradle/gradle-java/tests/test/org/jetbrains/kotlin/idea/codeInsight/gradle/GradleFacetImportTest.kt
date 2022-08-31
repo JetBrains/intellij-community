@@ -651,7 +651,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
             val moduleSDK = ModuleRootManager.getInstance(getModule("project.main")).sdk!!
             assertTrue(moduleSDK.sdkType is JavaSdk)
             assertEquals("myJDK", moduleSDK.name)
-            assertEquals(mockJdkPath, moduleSDK.homePath)
+            assertEquals(mockJdkPath, moduleSDK.homePath?.let(FileUtil::toSystemDependentName))
         } finally {
             runWriteActionAndWait {
               val jdkTable = runReadAction<ProjectJdkTable> { ProjectJdkTable.getInstance() }
