@@ -5,7 +5,6 @@ import com.intellij.collaboration.async.disposingMainScope
 import com.intellij.collaboration.auth.ui.CompactAccountsPanelFactory
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.util.CollectionDelta
-import com.intellij.collaboration.util.ProgressIndicatorsProvider
 import com.intellij.dvcs.repo.ClonePathProvider
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
 import com.intellij.dvcs.ui.DvcsBundle.message
@@ -130,15 +129,11 @@ internal abstract class GHCloneDialogExtensionComponentBase(
       }
     }
 
-    val indicatorsProvider = ProgressIndicatorsProvider()
-
     @Suppress("LeakingThis")
     val parentDisposable: Disposable = this
     Disposer.register(parentDisposable, loader)
-    Disposer.register(parentDisposable, indicatorsProvider)
 
-
-    val accountDetailsLoader = GHAccountsDetailsLoader(indicatorsProvider) {
+    val accountDetailsLoader = GHAccountsDetailsLoader {
       try {
         executorManager.getExecutor(it)
       }

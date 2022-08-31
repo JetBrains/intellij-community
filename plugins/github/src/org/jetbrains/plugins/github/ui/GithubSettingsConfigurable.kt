@@ -31,10 +31,7 @@ internal class GithubSettingsConfigurable internal constructor(private val proje
     val settings = GithubSettings.getInstance()
 
     val accountsModel = GHAccountsListModel(project)
-    val indicatorsProvider = ProgressIndicatorsProvider().also {
-      Disposer.register(disposable!!, it)
-    }
-    val detailsLoader = GHAccountsDetailsLoader(indicatorsProvider) {
+    val detailsLoader = GHAccountsDetailsLoader {
       val token = accountsModel.newCredentials.getOrElse(it) {
         accountManager.findCredentials(it)
       } ?: return@GHAccountsDetailsLoader null

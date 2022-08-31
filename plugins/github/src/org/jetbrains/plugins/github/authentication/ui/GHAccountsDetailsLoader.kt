@@ -1,14 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.authentication.ui
 
-import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
 import com.intellij.collaboration.auth.ui.AccountsDetailsLoader
 import com.intellij.collaboration.auth.ui.AccountsDetailsLoader.Result
 import com.intellij.collaboration.ui.ExceptionUtil
-import com.intellij.collaboration.util.ProgressIndicatorsProvider
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runUnderIndicator
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.api.data.GithubUserDetailed
@@ -18,23 +18,29 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
 import java.awt.Image
 
-internal class GHAccountsDetailsLoader(private val indicatorsProvider: ProgressIndicatorsProvider,
-                                       private val executorSupplier: (GithubAccount) -> GithubApiRequestExecutor?)
+internal class GHAccountsDetailsLoader(private val executorSupplier: (GithubAccount) -> GithubApiRequestExecutor?)
   : AccountsDetailsLoader<GithubAccount, GithubUserDetailed> {
 
   override suspend fun loadDetails(account: GithubAccount): Result<GithubUserDetailed> {
-    val executor = executorSupplier(account) ?: return Result.Error(GithubBundle.message("account.token.missing"), true)
-
-    return ProgressManager.getInstance().submitIOTask(indicatorsProvider, true) {
-      doLoadDetails(executor, it, account)
-    }.await()
+    val executor = try {
+      executorSupplier(account)
+    }
+    catch (e: Exception) {
+      null
+    }
+    if (executor == null) return Result.Error(GithubBundle.message("account.token.missing"), true)
+    return withContext(Dispatchers.IO) {
+      runUnderIndicator {
+        doLoadDetails(executor, account)
+      }
+    }
   }
 
-  private fun doLoadDetails(executor: GithubApiRequestExecutor, indicator: ProgressIndicator, account: GithubAccount)
+  private fun doLoadDetails(executor: GithubApiRequestExecutor, account: GithubAccount)
     : Result<GithubAuthenticatedUser> {
 
     val (details, scopes) = try {
-      GHSecurityUtil.loadCurrentUserWithScopes(executor, indicator, account.server)
+      GHSecurityUtil.loadCurrentUserWithScopes(executor, ProgressManager.getInstance().progressIndicator, account.server)
     }
     catch (e: Throwable) {
       val errorMessage = ExceptionUtil.getPresentableMessage(e)

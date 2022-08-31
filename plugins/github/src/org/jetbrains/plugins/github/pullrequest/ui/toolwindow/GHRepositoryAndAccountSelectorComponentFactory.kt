@@ -1,12 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
-import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
 import com.intellij.collaboration.ui.util.bindVisibility
-import com.intellij.collaboration.util.ProgressIndicatorsProvider
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.ActionLink
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorComponentFactory
 import kotlinx.coroutines.CoroutineScope
@@ -26,10 +23,7 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
                                                                           private val authManager: GithubAuthenticationManager) {
 
   fun create(scope: CoroutineScope): JComponent {
-    val indicatorsProvider = ProgressIndicatorsProvider().also {
-      Disposer.register(scope.nestedDisposable(), it)
-    }
-    val accountDetailsLoader = GHAccountsDetailsLoader(indicatorsProvider) {
+    val accountDetailsLoader = GHAccountsDetailsLoader {
       GithubApiRequestExecutorManager.getInstance().getExecutor(it)
     }
 
