@@ -276,6 +276,7 @@ final class KotlinPluginBuilder {
         withModule("kotlin-ultimate.javascript.nodeJs")
         withModule("kotlin-ultimate.ultimate-plugin")
         withModule("kotlin-ultimate.ultimate-native")
+        withModule("kotlin.performanceExtendedPlugin")
       }
 
       String kotlincKotlinCompilerCommon = "kotlinc.kotlin-compiler-common"
