@@ -44,8 +44,6 @@ class ParameterInfoLesson(private val sample: LessonSample) :
     return partOfSequence.matches(parametersRegex)
   }
 
-  override val suitableTips = listOf("ParameterInfo")
-
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("parameter.info.help.link"),
          LessonUtil.getHelpLink("viewing-reference-information.html#view-parameter-info")),

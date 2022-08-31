@@ -146,8 +146,6 @@ abstract class DeclarationAndUsagesLesson
 
   private data class MyPosition(val file: PsiFile, val offset: Int)
 
-  override val suitableTips = listOf("GoToDeclaration", "ShowUsages")
-
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("declaration.and.usages.help.link"),
          LessonUtil.getHelpLink("navigating-through-the-source-code.html#go_to_declaration")),
