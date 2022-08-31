@@ -565,10 +565,7 @@ public final class DeadCodeHelper {
           }
         }
       }
-      if(graph.getBlocks().size() == originBlocksCount && merged){
-        break;
-      }
-      if (!merged) {
+      if (!merged || graph.getBlocks().size() == originBlocksCount) {
         break;
       }
     }
