@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeature
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.packaging.artifacts.ArtifactProperties
 import com.intellij.packaging.artifacts.ArtifactPropertiesProvider
 import com.intellij.packaging.artifacts.ArtifactType
@@ -16,7 +17,6 @@ import com.intellij.packaging.elements.PackagingElement
 import com.intellij.packaging.elements.PackagingElementFactory
 import com.intellij.packaging.elements.PackagingElementType
 import com.intellij.packaging.impl.artifacts.ArtifactLoadingErrorDescription
-import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.FEATURE_TYPE
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.mutableArtifactsMap
 import com.intellij.packaging.impl.elements.*
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -75,7 +75,7 @@ private fun createInvalidArtifact(it: ArtifactEntity,
   ProjectLoadingErrorsNotifier.getInstance(project).registerError(ArtifactLoadingErrorDescription(project, invalidArtifactBridge));
   UnknownFeaturesCollector.getInstance(project)
     .registerUnknownFeature(UnknownFeature(
-      FEATURE_TYPE,
+      ArtifactManager.FEATURE_TYPE,
       JavaCompilerBundle.message("plugins.advertiser.feature.artifact"),
       it.artifactType,
     ))
