@@ -74,8 +74,8 @@ internal class FacetEventsPublisherImpl(private val project: Project): FacetEven
     onFacetRemoved(facet, false)
   }
 
-  override fun fireFacetRenamed(facet: Facet<*>, newName: String) {
-    getPublisher(facet.module).facetRenamed(facet, newName)
+  override fun fireFacetRenamed(facet: Facet<*>, oldName: String) {
+    getPublisher(facet.module).facetRenamed(facet, oldName)
   }
 
   override fun fireFacetConfigurationChanged(facet: Facet<*>) {

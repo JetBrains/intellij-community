@@ -55,7 +55,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
         moduleSource.internalSource
       else -> moduleSource
     }
-    if (facet is FacetBridge) {
+    if (facet is FacetBridge<*>) {
       facet.addNewModuleSettings(diff, moduleEntity, source)
     } else {
       val facetConfigurationXml = FacetUtil.saveFacetConfiguration(facet)?.let { JDOMUtil.write(it) }
@@ -70,7 +70,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
 
   override fun removeFacet(facet: Facet<*>?) {
     if (facet == null) return
-    if (facet is FacetBridge) {
+    if (facet is FacetBridge<*>) {
       facet.removeModuleSettings(diff, moduleEntity)
     } else {
       val facetEntity = diff.facetMapping().getEntities(facet).singleOrNull() as? FacetEntity ?: return
@@ -95,7 +95,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
   }
 
   override fun rename(facet: Facet<*>, newName: String) {
-    if (facet is FacetBridge) {
+    if (facet is FacetBridge<*>) {
       facet.renameModuleSettings(diff, moduleEntity, newName)
     } else {
       val entity = diff.facetMapping().getEntities(facet).single() as FacetEntity
@@ -109,7 +109,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
   }
 
   override fun getNewName(facet: Facet<*>): String {
-    if (facet is FacetBridge) {
+    if (facet is FacetBridge<*>) {
       return facet.getNewModuleSettingsName(diff, moduleEntity)
     } else {
       val entity = diff.facetMapping().getEntities(facet).single() as FacetEntity
@@ -165,7 +165,7 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
   }
 
   override fun isNewFacet(facet: Facet<*>): Boolean {
-    if (facet is FacetBridge) {
+    if (facet is FacetBridge<*>) {
       return facet.isNewModuleSettings(diff, moduleEntity)
     } else {
       val entity = diff.facetMapping().getEntities(facet).singleOrNull() as FacetEntity?

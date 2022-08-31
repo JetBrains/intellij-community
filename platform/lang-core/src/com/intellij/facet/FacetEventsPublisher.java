@@ -10,7 +10,7 @@ public interface FacetEventsPublisher {
   void fireBeforeFacetRenamed(Facet<?> facet);
   void fireFacetAdded(Facet<?> facet);
   void fireFacetRemoved(Module module, Facet<?> facet);
-  void fireFacetRenamed(Facet<?> facet, String newName);
+  void fireFacetRenamed(Facet<?> facet, String oldName);
   void fireFacetConfigurationChanged(Facet<?> facet);
 
   static FacetEventsPublisher getInstance(Project project) {

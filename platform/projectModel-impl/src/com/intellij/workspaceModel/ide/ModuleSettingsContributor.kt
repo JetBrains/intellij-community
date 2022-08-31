@@ -13,7 +13,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 interface ModuleSettingsContributor {
   fun addSettings(project: Project) { }
   fun addSettings(project: Project, module: ModuleEntity, entitySource: EntitySource, mutableStorage: MutableEntityStorage) { }
-  fun getFacetBridge(moduleEntity: ModuleEntity, entityStorage: EntityStorage): FacetBridge?
+  fun getFacetBridge(moduleEntity: ModuleEntity, entityStorage: EntityStorage): FacetBridge<*>?
 
   companion object {
     val EP_NAME: ExtensionPointName<ModuleSettingsContributor> = ExtensionPointName.create("com.intellij.workspaceModel.moduleSettingsContributor")

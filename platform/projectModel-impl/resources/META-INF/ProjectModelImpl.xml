@@ -15,6 +15,8 @@
                     dynamic="true"/>
     <extensionPoint name="workspaceModel.moduleSettingsContributor" interface="com.intellij.workspaceModel.ide.ModuleSettingsContributor"
                     dynamic="true"/>
+    <extensionPoint name="workspaceModel.facetBridgeContributor" interface="com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor"
+                    dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.openapi.components.PathMacroManager"
