@@ -13130,6 +13130,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("minusXxCompilerFlag.kt")
+        public void testMinusXxCompilerFlag() throws Exception {
+            runTest("testData/inspectionsLocal/replaceUntilWithRangeUntil/minusXxCompilerFlag.kt");
+        }
+
         @TestMetadata("noOptIn.kt")
         public void testNoOptIn() throws Exception {
             runTest("testData/inspectionsLocal/replaceUntilWithRangeUntil/noOptIn.kt");
