@@ -168,9 +168,9 @@
               topic="com.intellij.notification.Notifications"/>
 
     <listener class="com.intellij.ide.ui.html.GlobalStyleSheetHolder$UpdateListener"
-              topic="com.intellij.ide.ui.LafManagerListener"/>
+              topic="com.intellij.ide.ui.LafManagerListener" activeInHeadlessMode="false"/>
     <listener class="com.intellij.ide.ui.html.GlobalStyleSheetHolder$UpdateListener"
-              topic="com.intellij.openapi.editor.colors.EditorColorsListener"/>
+              topic="com.intellij.openapi.editor.colors.EditorColorsListener" activeInHeadlessMode="false"/>
 
     <listener class="com.intellij.openapi.editor.actions.ResetFontSizeAction$Listener"
               topic="com.intellij.openapi.editor.colors.EditorColorsListener"/>
