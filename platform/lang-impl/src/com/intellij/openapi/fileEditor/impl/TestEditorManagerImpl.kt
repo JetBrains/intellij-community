@@ -17,7 +17,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.*
-import com.intellij.openapi.fileEditor.ex.EditorCompositeBase
+import com.intellij.openapi.fileEditor.FileEditorComposite
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
@@ -478,7 +478,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
     return EditorComposite.retrofit(getComposite(file))
   }
 
-  override fun getComposite(file: VirtualFile): EditorCompositeBase? {
+  override fun getComposite(file: VirtualFile): FileEditorComposite? {
     if (!isCurrentlyUnderLocalId) {
       return clientFileEditorManager?.getComposite(file)
     }
@@ -512,7 +512,7 @@ internal class TestEditorManagerImpl(private val project: Project) : FileEditorM
   }
 }
 
-data class TestEditorComposite(val editor: FileEditor, val provider: FileEditorProvider) : EditorCompositeBase() {
+data class TestEditorComposite(val editor: FileEditor, val provider: FileEditorProvider) : FileEditorComposite() {
   override val allEditors: List<FileEditor>
     get() = listOf(editor)
   override val allProviders: List<FileEditorProvider>
