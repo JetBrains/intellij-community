@@ -1,0 +1,4 @@
+Function evaluating
+:math:`F(\\rho_1, \\rho_2)`
+:param param1: the first parameter
+:type param1: `MyClass`

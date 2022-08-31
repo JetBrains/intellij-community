@@ -127,3 +127,18 @@ class DocstringFormatterTest(HelpersTestCase):
 
     def test_rest_simple(self):
         self._test()
+
+    def test_rest_no_empty_line_between_text_and_param(self):
+        self._test()
+
+    def test_rest_no_empty_line_between_math_and_param(self):
+        self._test()
+
+    def test_google_no_empty_line_between_text_and_seealso(self):
+        self._test()
+
+    def test_google_no_empty_line_between_text_and_attributes(self):
+        self._test()
+
+    def test_numpy_no_empty_line_between_text_and_param(self):
+        self._test()
