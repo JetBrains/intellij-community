@@ -108,7 +108,8 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
                                      VcsLogStorageImpl.VERSION + VERSION);
     myIndexStorage = createIndexStorage(myIndexStorageId, errorHandler, userRegistry);
     if (myIndexStorage != null) {
-      myDataGetter = new IndexDataGetter(myProject, myRoots, myIndexStorage, myStorage, myErrorHandler);
+      myDataGetter = new IndexDataGetter(myProject, ContainerUtil.filter(providers, root -> myRoots.contains(root)),
+                                         myIndexStorage, myStorage, myErrorHandler);
     }
     else {
       myDataGetter = null;
