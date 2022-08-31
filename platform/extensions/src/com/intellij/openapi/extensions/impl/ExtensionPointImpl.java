@@ -911,7 +911,7 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
    */
   public final synchronized void registerExtensions(@NotNull List<ExtensionDescriptor> extensionElements,
                                                     @NotNull PluginDescriptor pluginDescriptor,
-                                                    @Nullable /* Mutable */ List<Runnable> listenerCallbacks) {
+                                                    @Nullable /* Mutable */ List<? super Runnable> listenerCallbacks) {
     List<ExtensionComponentAdapter> adapters = this.adapters;
     if (adapters == Collections.<ExtensionComponentAdapter>emptyList()) {
       adapters = new ArrayList<>(extensionElements.size());
@@ -954,7 +954,7 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
     }
 
     List<ExtensionComponentAdapter> finalAddedAdapters = addedAdapters;
-    listenerCallbacks.add(() -> notifyListeners(false, finalAddedAdapters, listeners));
+    listenerCallbacks.add((Runnable)() -> notifyListeners(false, finalAddedAdapters, listeners));
   }
 
   @TestOnly

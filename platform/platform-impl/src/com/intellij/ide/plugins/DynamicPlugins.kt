@@ -1043,15 +1043,10 @@ private fun optionalDependenciesOnPlugin(
 private fun loadModules(
   modules: Collection<IdeaPluginDescriptorImpl>,
   app: ApplicationImpl,
-  listenerCallbacks: MutableList<Runnable>,
+  listenerCallbacks: MutableList<in Runnable>,
 ) {
   fun registerComponents(componentManager: ComponentManager) {
-    (componentManager as ComponentManagerImpl).registerComponents(
-      modules = modules.toList(),
-      app = app,
-      precomputedExtensionModel = null,
-      listenerCallbacks = listenerCallbacks,
-    )
+    (componentManager as ComponentManagerImpl).registerComponents(modules.toList(), app, null, listenerCallbacks)
   }
 
   registerComponents(app)

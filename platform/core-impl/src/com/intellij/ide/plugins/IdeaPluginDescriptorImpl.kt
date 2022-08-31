@@ -355,7 +355,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
   @ApiStatus.Internal
   fun registerExtensions(nameToPoint: Map<String, ExtensionPointImpl<*>>,
                          containerDescriptor: ContainerDescriptor,
-                         listenerCallbacks: MutableList<Runnable>?) {
+                         listenerCallbacks: MutableList<in Runnable>?) {
     containerDescriptor.extensions?.let {
       if (!it.isEmpty()) {
         @Suppress("JavaMapForEach")
@@ -403,7 +403,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
 
   private fun doRegisterExtensions(unsortedMap: Map<String, MutableList<ExtensionDescriptor>>,
                                    nameToPoint: Map<String, ExtensionPointImpl<*>>,
-                                   listenerCallbacks: MutableList<Runnable>?): Int {
+                                   listenerCallbacks: MutableList<in Runnable>?): Int {
     var registeredCount = 0
     for (entry in unsortedMap) {
       val point = nameToPoint.get(entry.key) ?: continue
