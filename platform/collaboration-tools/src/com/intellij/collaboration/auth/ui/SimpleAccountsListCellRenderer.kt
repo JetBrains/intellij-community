@@ -5,7 +5,6 @@ import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.auth.AccountDetails
 import com.intellij.collaboration.auth.ServerAccount
 import com.intellij.collaboration.messages.CollaborationToolsBundle
-import com.intellij.collaboration.ui.codereview.avatar.IconsProvider
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.ui.*
@@ -15,8 +14,7 @@ import javax.swing.*
 
 internal class SimpleAccountsListCellRenderer<A : Account, D : AccountDetails>(
   private val defaultPredicate: (A) -> Boolean,
-  private val detailsProvider: AccountsDetailsProvider<A, D>,
-  private val avatarIconsProvider: IconsProvider<A>,
+  private val detailsProvider: LoadingAccountsDetailsProvider<A, D>,
   private val actionsController: AccountsPanelActionsController<A>
 ) : ListCellRenderer<A>, JPanel() {
 
@@ -78,7 +76,7 @@ internal class SimpleAccountsListCellRenderer<A : Account, D : AccountDetails>(
       foreground = secondaryTextColor
     }
     profilePicture.apply {
-      icon = avatarIconsProvider.getIcon(account, 40)
+      icon = detailsProvider.getIcon(account, 40)
     }
     fullName.apply {
       text = getDetails(account)?.name

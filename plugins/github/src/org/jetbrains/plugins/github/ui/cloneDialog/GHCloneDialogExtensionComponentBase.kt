@@ -40,13 +40,12 @@ import git4idea.commands.Git
 import git4idea.remote.GitRememberedInputs
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
-import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.authentication.ui.GHAccountsDetailsLoader
+import org.jetbrains.plugins.github.authentication.ui.GHAccountsDetailsProvider
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -133,17 +132,10 @@ internal abstract class GHCloneDialogExtensionComponentBase(
     val parentDisposable: Disposable = this
     Disposer.register(parentDisposable, loader)
 
-    val accountDetailsLoader = GHAccountsDetailsLoader {
-      try {
-        executorManager.getExecutor(it)
-      }
-      catch (e: Exception) {
-        null
-      }
-    }
+    val accountDetailsProvider = GHAccountsDetailsProvider(disposingMainScope(), authenticationManager.accountManager)
 
-    val accountsPanel = CompactAccountsPanelFactory(accountListModel, accountDetailsLoader)
-      .create(disposingMainScope(), GithubIcons.DefaultAvatar, VcsCloneDialogUiSpec.Components.avatarSize, AccountsPopupConfig())
+    val accountsPanel = CompactAccountsPanelFactory(accountListModel)
+      .create(accountDetailsProvider, VcsCloneDialogUiSpec.Components.avatarSize, AccountsPopupConfig())
 
     repositoriesPanel = panel {
       row {

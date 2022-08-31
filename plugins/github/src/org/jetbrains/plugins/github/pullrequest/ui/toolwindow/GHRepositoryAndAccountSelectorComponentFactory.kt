@@ -7,9 +7,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.components.ActionLink
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorComponentFactory
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
-import org.jetbrains.plugins.github.authentication.ui.GHAccountsDetailsLoader
+import org.jetbrains.plugins.github.authentication.ui.GHAccountsDetailsProvider
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
@@ -23,9 +22,7 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
                                                                           private val authManager: GithubAuthenticationManager) {
 
   fun create(scope: CoroutineScope): JComponent {
-    val accountDetailsLoader = GHAccountsDetailsLoader {
-      GithubApiRequestExecutorManager.getInstance().getExecutor(it)
-    }
+    val accountDetailsProvider = GHAccountsDetailsProvider(scope, authManager.accountManager)
 
     return RepositoryAndAccountSelectorComponentFactory(vm)
       .create(scope = scope,
@@ -33,7 +30,7 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
                 val allRepositories = vm.repositoriesState.value.map { it.repository }
                 GHUIUtil.getRepositoryDisplayName(allRepositories, mapping.repository, true)
               },
-              detailsLoader = accountDetailsLoader,
+              detailsProvider = accountDetailsProvider,
               accountsPopupActionsSupplier = { createPopupLoginActions(it) },
               credsMissingText = GithubBundle.message("account.token.missing"),
               submitActionText = GithubBundle.message("pull.request.view.list"),

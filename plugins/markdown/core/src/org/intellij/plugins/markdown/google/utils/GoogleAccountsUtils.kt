@@ -6,8 +6,11 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.api.client.auth.oauth2.Credential
 import com.google.api.client.auth.oauth2.TokenResponse
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
+import com.intellij.collaboration.async.DisposingMainScope
 import com.intellij.collaboration.auth.ui.AccountsPanelFactory
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
@@ -21,6 +24,7 @@ import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.alsoIfNull
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.plus
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.google.GoogleAppCredentialsException
 import org.intellij.plugins.markdown.google.accounts.*
@@ -126,19 +130,21 @@ internal object GoogleAccountsUtils {
     val oAuthService = service<GoogleOAuthService>()
     val userInfoService = service<GoogleUserInfoService>()
 
-    val detailsLoader = GoogleAccountsDetailsLoader(
+    val scope = DisposingMainScope(disposable) + ModalityState.any().asContextElement()
+    val detailsProvider = GoogleAccountsDetailsProvider(
+      scope,
       accountManager,
       accountsListModel,
       oAuthService,
       userInfoService
     )
 
-    val panelFactory = AccountsPanelFactory(accountManager, accountsListModel, detailsLoader, disposable)
+    val panelFactory = AccountsPanelFactory(scope, accountManager, accountsListModel)
     val actionsController = GoogleAccountsPanelActionsController(accountsListModel)
 
     return panel {
       row {
-        panelFactory.accountsPanelCell(this, actionsController)
+        panelFactory.accountsPanelCell(this, detailsProvider, actionsController)
           .horizontalAlign(HorizontalAlign.FILL)
           .verticalAlign(VerticalAlign.FILL)
       }.resizableRow()

@@ -1,8 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui
 
+import com.intellij.collaboration.async.DisposingMainScope
 import com.intellij.collaboration.auth.ui.AccountsPanelFactory
 import com.intellij.ide.DataManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.project.Project
@@ -10,11 +13,10 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
-import org.jetbrains.plugins.github.GithubIcons
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import kotlinx.coroutines.plus
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
-import org.jetbrains.plugins.github.authentication.ui.GHAccountsDetailsLoader
+import org.jetbrains.plugins.github.authentication.ui.GHAccountsDetailsProvider
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsHost
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsListModel
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsPanelActionsController
@@ -29,20 +31,16 @@ internal class GithubSettingsConfigurable internal constructor(private val proje
     val accountManager = service<GHAccountManager>()
     val settings = GithubSettings.getInstance()
 
+    val scope = DisposingMainScope(disposable!!) + ModalityState.any().asContextElement()
     val accountsModel = GHAccountsListModel()
-    val detailsLoader = GHAccountsDetailsLoader {
-      val token = accountsModel.newCredentials.getOrElse(it) {
-        accountManager.findCredentials(it)
-      } ?: return@GHAccountsDetailsLoader null
-      service<GithubApiRequestExecutor.Factory>().create(token)
-    }
+    val detailsProvider = GHAccountsDetailsProvider(scope, accountManager, accountsModel)
 
-    val panelFactory = AccountsPanelFactory(accountManager, defaultAccountHolder, accountsModel, detailsLoader, disposable!!)
+    val panelFactory = AccountsPanelFactory(scope, accountManager, defaultAccountHolder, accountsModel)
     val actionsController = GHAccountsPanelActionsController(project, accountsModel)
 
     return panel {
       row {
-        panelFactory.accountsPanelCell(this, actionsController, GithubIcons.DefaultAvatar)
+        panelFactory.accountsPanelCell(this, detailsProvider, actionsController)
           .horizontalAlign(HorizontalAlign.FILL)
           .verticalAlign(VerticalAlign.FILL)
           .also {

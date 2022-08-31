@@ -2,7 +2,6 @@
 package com.intellij.collaboration.auth.ui
 
 import com.intellij.collaboration.auth.Account
-import com.intellij.collaboration.auth.AccountDetails
 import com.intellij.collaboration.auth.ServerAccount
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.codereview.avatar.IconsProvider
@@ -13,28 +12,19 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.cloneDialog.AccountMenuItem
 import com.intellij.util.ui.cloneDialog.AccountMenuPopupStep
 import com.intellij.util.ui.cloneDialog.AccountsMenuListPopup
-import kotlinx.coroutines.CoroutineScope
 import java.awt.Component
 import java.awt.event.MouseEvent
 import javax.swing.*
 
 class CompactAccountsPanelFactory<A : Account>(
-  private val accountsListModel: ListModel<A>,
-  private val detailsLoader: AccountsDetailsLoader<A, *>
+  private val accountsListModel: ListModel<A>
 ) {
 
-  fun create(scope: CoroutineScope,
-             defaultAvatarIcon: Icon,
+  fun create(detailsProvider: LoadingAccountsDetailsProvider<A, *>,
              listAvatarSize: Int,
              popupConfig: PopupConfig<A>): JComponent {
-    val detailsMap = mutableMapOf<A, AccountsDetailsLoader.Result<*>>()
-    val detailsProvider = LoadedAccountsDetailsProvider(detailsMap::get)
-    val avatarIconsProvider = LoadingAvatarIconsProvider(scope, detailsLoader, defaultAvatarIcon) { account: A ->
-      val result = detailsMap[account] as? AccountsDetailsLoader.Result.Success
-      result?.details?.avatarUrl
-    }
 
-    val iconRenderer = IconCellRenderer(avatarIconsProvider, listAvatarSize)
+    val iconRenderer = IconCellRenderer(detailsProvider, listAvatarSize)
 
     @Suppress("UndesirableClassUsage")
     val accountsList = JList(accountsListModel).apply {
@@ -46,9 +36,7 @@ class CompactAccountsPanelFactory<A : Account>(
       layoutOrientation = JList.HORIZONTAL_WRAP
     }
 
-    PopupMenuListener(accountsListModel, detailsProvider, avatarIconsProvider, popupConfig).installOn(accountsList)
-
-    AccountsPanelFactory.loadAccountsDetails(scope, accountsList, detailsLoader, detailsMap)
+    PopupMenuListener(accountsListModel, detailsProvider, popupConfig).installOn(accountsList)
     return accountsList
   }
 
@@ -74,8 +62,7 @@ class CompactAccountsPanelFactory<A : Account>(
 
   private class PopupMenuListener<A : Account>(
     private val model: ListModel<A>,
-    private val detailsProvider: AccountsDetailsProvider<A, AccountDetails>,
-    private val avatarIconsProvider: IconsProvider<A>,
+    private val detailsProvider: LoadingAccountsDetailsProvider<A, *>,
     private val popupConfig: PopupConfig<A>
   ) : ClickListener() {
 
@@ -92,7 +79,7 @@ class CompactAccountsPanelFactory<A : Account>(
       for ((index, account) in model.items.withIndex()) {
         val accountTitle = detailsProvider.getDetails(account)?.name ?: account.name
         val serverInfo = if (account is ServerAccount) CollaborationToolsUIUtil.cleanupUrl(account.server.toString()) else ""
-        val avatar = avatarIconsProvider.getIcon(account, popupConfig.avatarSize)
+        val avatar = detailsProvider.getIcon(account, popupConfig.avatarSize)
         val showSeparatorAbove = index != 0
 
         menuItems += AccountMenuItem.Account(accountTitle, serverInfo, avatar, emptyList(), showSeparatorAbove)

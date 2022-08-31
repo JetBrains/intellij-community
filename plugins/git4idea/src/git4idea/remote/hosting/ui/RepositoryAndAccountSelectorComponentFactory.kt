@@ -3,8 +3,7 @@ package git4idea.remote.hosting.ui
 
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.auth.ServerAccount
-import com.intellij.collaboration.auth.ui.AccountsDetailsLoader
-import com.intellij.collaboration.auth.ui.LoadingAvatarIconsProvider
+import com.intellij.collaboration.auth.ui.LoadingAccountsDetailsProvider
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.AccountSelectorComponentFactory
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
@@ -19,7 +18,6 @@ import net.miginfocom.layout.LC
 import net.miginfocom.layout.PlatformDefaults
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
-import java.util.concurrent.CompletableFuture
 import javax.swing.*
 
 private const val AVATAR_SIZE = 20
@@ -32,7 +30,7 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
   fun create(
     scope: CoroutineScope,
     repoNamer: (M) -> @Nls String,
-    detailsLoader: AccountsDetailsLoader<A, *>, //TODO: move to VM
+    detailsProvider: LoadingAccountsDetailsProvider<A, *>,
     accountsPopupActionsSupplier: (M) -> List<Action>,
     credsMissingText: @Nls String,
     submitActionText: @Nls String,
@@ -48,15 +46,9 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
       putClientProperty(PlatformDefaults.VISUAL_PADDING_PROPERTY, insets)
     }
 
-    val detailsMap = mutableMapOf<A, CompletableFuture<AccountsDetailsLoader.Result<*>>>()
-    val avatarIconsProvider = LoadingAvatarIconsProvider(scope, detailsLoader, EmptyIcon.ICON_16) { account: A ->
-      val result = detailsMap[account]?.getNow(null) as? AccountsDetailsLoader.Result.Success
-      result?.details?.avatarUrl
-    }
-
     val accountCombo = AccountSelectorComponentFactory(vm.accountsState, vm.accountSelectionState).create(
       scope,
-      avatarIconsProvider,
+      detailsProvider,
       AVATAR_SIZE,
       AVATAR_SIZE_POPUP,
       CollaborationToolsBundle.message("account.choose.link"),

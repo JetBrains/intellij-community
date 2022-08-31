@@ -1,23 +1,21 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.authentication.ui
 
-import com.intellij.collaboration.auth.ui.AccountsDetailsLoader
-import com.intellij.collaboration.auth.ui.AccountsDetailsLoader.Result
-import com.intellij.openapi.components.service
+import com.intellij.collaboration.auth.ui.LazyLoadingAccountsDetailsProvider
+import com.intellij.util.ui.EmptyIcon
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
 import org.jetbrains.plugins.gitlab.api.GitLabApi
-import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDto
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.api.request.loadImage
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.ui.GitLabBundle
 import java.awt.Image
+import javax.swing.Icon
 
-internal class GitLabAccountsDetailsLoader(private val apiClientSupplier: (GitLabAccount) -> GitLabApi?)
-  : AccountsDetailsLoader<GitLabAccount, GitLabUserDto> {
+internal class GitLabAccountsDetailsProvider(scope: CoroutineScope,
+                                             private val apiClientSupplier: (GitLabAccount) -> GitLabApi?)
+  : LazyLoadingAccountsDetailsProvider<GitLabAccount, GitLabUserDto>(scope, EmptyIcon.ICON_16) {
 
   override suspend fun loadDetails(account: GitLabAccount): Result<GitLabUserDto> {
     val api = apiClientSupplier(account) ?: return Result.Error(GitLabBundle.message("account.token.missing"), true)
