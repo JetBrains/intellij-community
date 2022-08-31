@@ -11,6 +11,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
@@ -201,14 +202,21 @@ public class PsiElement2UsageTargetAdapter
   @Nullable
   @Override
   public Object getData(@NotNull String dataId) {
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      return (DataProvider)this::getSlowData;
+    }
+    else if (UsageView.USAGE_SCOPE.is(dataId)) {
+      return myOptions.searchScope;
+    }
+    return null;
+  }
+
+  private @Nullable Object getSlowData(@NotNull String dataId) {
     if (UsageView.USAGE_INFO_KEY.is(dataId)) {
       PsiElement element = getElement();
       if (element != null && element.getTextRange() != null) {
         return new UsageInfo(element);
       }
-    }
-    else if (UsageView.USAGE_SCOPE.is(dataId)) {
-      return myOptions.searchScope;
     }
     return null;
   }
