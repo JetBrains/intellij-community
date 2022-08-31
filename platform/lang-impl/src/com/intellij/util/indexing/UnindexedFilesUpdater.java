@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.VfsUsageCollector;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.ExceptionUtil;
@@ -58,6 +59,7 @@ import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl.getImmediateValuesEx;
@@ -613,8 +615,9 @@ public class UnindexedFilesUpdater extends DumbModeTask {
     ProjectRootManagerEx.getInstanceEx(myProject).markRootsForRefresh();
 
     Application app = ApplicationManager.getApplication();
+    var t = System.nanoTime();
     if (!app.isCommandLine() || CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()) {
-      long sessionId = VirtualFileManager.getInstance().asyncRefresh(null);
+      long sessionId = VirtualFileManager.getInstance().asyncRefresh(() -> timeInitialVfsRefresh(t));
       MessageBusConnection connection = app.getMessageBus().connect();
       connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
         @Override
@@ -627,8 +630,15 @@ public class UnindexedFilesUpdater extends DumbModeTask {
       });
     }
     else {
-      ApplicationManager.getApplication().invokeAndWait(() -> VirtualFileManager.getInstance().syncRefresh());
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        VirtualFileManager.getInstance().syncRefresh();
+        timeInitialVfsRefresh(t);
+      });
     }
+  }
+
+  private void timeInitialVfsRefresh(long t) {
+    VfsUsageCollector.logInitialRefresh(myProject, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - t));
   }
 
   private static double getPowerForSmoothProgressIndicator() {
