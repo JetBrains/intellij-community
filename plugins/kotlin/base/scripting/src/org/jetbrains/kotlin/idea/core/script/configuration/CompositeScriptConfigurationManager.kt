@@ -94,14 +94,16 @@ class CompositeScriptConfigurationManager(val project: Project) : ScriptConfigur
         return default.getOrLoadConfiguration(virtualFile, preloadedKtFile)
     }
 
+    private val KtFile.alwaysVirtualFile: VirtualFile get() = originalFile.virtualFile ?: viewProvider.virtualFile
+
     override fun getConfiguration(file: KtFile) =
-        getOrLoadConfiguration(file.originalFile.virtualFile, file)
+        getOrLoadConfiguration(file.alwaysVirtualFile, file)
 
     override fun hasConfiguration(file: KtFile): Boolean =
-        classpathRoots.contains(file.originalFile.virtualFile)
+        classpathRoots.contains(file.alwaysVirtualFile)
 
     override fun isConfigurationLoadingInProgress(file: KtFile): Boolean =
-        plugins.firstOrNull { it.isApplicable(file.originalFile.virtualFile) }?.isConfigurationLoadingInProgress(file)
+        plugins.firstOrNull { it.isApplicable(file.alwaysVirtualFile) }?.isConfigurationLoadingInProgress(file)
             ?: default.isConfigurationLoadingInProgress(file)
 
     fun getLightScriptInfo(file: String): ScriptClassRootsCache.LightScriptInfo? =
