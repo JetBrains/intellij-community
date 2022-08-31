@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.kotlin
 
 import com.intellij.util.io.Decompressor
+import kotlinx.collections.immutable.persistentListOf
 import okhttp3.internal.immutableListOf
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildTasks
@@ -230,7 +231,7 @@ object KotlinPluginBuilder {
 
   // weird groovy bug - remove method once AppCodeProperties will be converted to kotlin
   fun kotlinPluginAcKmm(): PluginLayout {
-    return kotlinPlugin(KotlinPluginKind.AC_KMM, KotlinPluginBuilder.KotlinUltimateSources.WITH_ULTIMATE_MODULES)
+    return kotlinPlugin(KotlinPluginKind.AC_KMM, KotlinUltimateSources.WITH_ULTIMATE_MODULES)
   }
 
     @JvmStatic
@@ -259,13 +260,16 @@ object KotlinPluginBuilder {
           }
 
           if (ultimateSources == KotlinUltimateSources.WITH_ULTIMATE_MODULES && kind == KotlinPluginKind.IJ) {
-            spec.withModule("kotlin-ultimate.common-native")
-            spec.withModule("kotlin-ultimate.common-for-kotlin")
-            //noinspection SpellCheckingInspection
-            spec.withModule("kotlin-ultimate.javascript.debugger")
-            spec.withModule("kotlin-ultimate.javascript.nodeJs")
-            spec.withModule("kotlin-ultimate.ultimate-plugin")
-            spec.withModule("kotlin-ultimate.ultimate-native")
+            spec.withModules(persistentListOf(
+              "kotlin-ultimate.common-native",
+              "kotlin-ultimate.common-for-kotlin",
+              //noinspection SpellCheckingInspection
+              "kotlin-ultimate.javascript.debugger",
+              "kotlin-ultimate.javascript.nodeJs",
+              "kotlin-ultimate.ultimate-plugin",
+              "kotlin-ultimate.ultimate-native",
+              "kotlin.performanceExtendedPlugin",
+            ))
           }
 
           val kotlincKotlinCompilerCommon = "kotlinc.kotlin-compiler-common"
