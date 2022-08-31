@@ -4,7 +4,10 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -22,23 +25,6 @@ public final class UnknownFeaturesCollector implements PersistentStateComponent<
 
   public static UnknownFeaturesCollector getInstance(Project project) {
     return project.getService(UnknownFeaturesCollector.class);
-  }
-
-  public void registerUnknownFeature(@NonNls @NotNull String featureType,
-                                     @NonNls @NotNull String implementationName,
-                                     @Nls @NotNull String featureDisplayName) {
-    registerUnknownFeature(featureType, featureDisplayName, implementationName, null);
-  }
-
-  public void registerUnknownFeature(@NonNls @NotNull String featureType,
-                                     @Nls @NotNull String featureDisplayName,
-                                     @NonNls @NotNull String implementationName,
-                                     @Nls @Nullable String implementationDisplayName) {
-    UnknownFeature feature = new UnknownFeature(featureType,
-                                                featureDisplayName,
-                                                implementationName,
-                                                implementationDisplayName);
-    registerUnknownFeature(feature);
   }
 
   @ApiStatus.Internal

@@ -5,6 +5,7 @@ import com.intellij.configurationStore.serialize
 import com.intellij.openapi.compiler.JavaCompilerBundle
 import com.intellij.openapi.module.ProjectLoadingErrorsNotifier
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeature
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.packaging.artifacts.ArtifactProperties
@@ -72,7 +73,12 @@ private fun createInvalidArtifact(it: ArtifactEntity,
                                   @Nls message: String): InvalidArtifactBridge {
   val invalidArtifactBridge = InvalidArtifactBridge(it.persistentId, entityStorage, project, null, message)
   ProjectLoadingErrorsNotifier.getInstance(project).registerError(ArtifactLoadingErrorDescription(project, invalidArtifactBridge));
-  UnknownFeaturesCollector.getInstance(project).registerUnknownFeature(FEATURE_TYPE, it.artifactType, JavaCompilerBundle.message("plugins.advertiser.feature.artifact"));
+  UnknownFeaturesCollector.getInstance(project)
+    .registerUnknownFeature(UnknownFeature(
+      FEATURE_TYPE,
+      JavaCompilerBundle.message("plugins.advertiser.feature.artifact"),
+      it.artifactType,
+    ))
   return invalidArtifactBridge
 }
 
