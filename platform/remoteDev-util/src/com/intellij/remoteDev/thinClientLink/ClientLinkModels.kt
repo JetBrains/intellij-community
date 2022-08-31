@@ -35,6 +35,10 @@ sealed class GtwToClientMessage {
   /** @since 2022.1 */
   @Serializable
   data class GatewayLogs(val gtwLogs: String) : GtwToClientMessage()
+
+  /** @since 2022.3 */
+  @Serializable
+  object RequestWindowFocus: GtwToClientMessage()
 }
 
 
