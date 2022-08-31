@@ -41,6 +41,18 @@ private class ProgressSinkElement(val sink: ProgressSink) : AbstractCoroutineCon
 
 internal class ProgressIndicatorSink(private val indicator: ProgressIndicator) : ProgressSink {
 
+  override fun update(text: @ProgressText String?, details: @ProgressDetails String?, fraction: Double?) {
+    if (text != null) {
+      indicator.text = text
+    }
+    if (details != null) {
+      indicator.text2 = details
+    }
+    if (fraction != null) {
+      indicator.fraction = fraction
+    }
+  }
+
   override fun text(text: @ProgressText String) {
     indicator.text = text
   }

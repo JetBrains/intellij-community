@@ -16,19 +16,34 @@ import org.jetbrains.annotations.ApiStatus.NonExtendable
 interface ProgressSink {
 
   /**
+   * Updates the current progress state. `null` value means "don't change corresponding property".
+   */
+  fun update(
+    text: @ProgressText String? = null,
+    details: @ProgressDetails String? = null,
+    fraction: Double? = null,
+  )
+
+  /**
    * Updates current progress text.
    */
-  fun text(text: @ProgressText String)
+  fun text(text: @ProgressText String) {
+    update(text = text)
+  }
 
   /**
    * Updates current progress details.
    */
-  fun details(details: @ProgressDetails String)
+  fun details(details: @ProgressDetails String) {
+    update(details = details)
+  }
 
   /**
    * Updates current progress fraction.
    *
    * @param fraction a number between 0.0 and 1.0 reflecting the ratio of work that has already been done (0.0 for nothing, 1.0 for all)
    */
-  fun fraction(fraction: Double)
+  fun fraction(fraction: Double) {
+    update(fraction = fraction)
+  }
 }

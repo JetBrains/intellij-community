@@ -64,16 +64,16 @@ class RunUnderIndicatorTest : CancellationTest() {
       var details: String? = null
       var fraction: Double? = null
 
-      override fun text(text: String) {
-        this.text = text
-      }
-
-      override fun details(details: String) {
-        this.details = details
-      }
-
-      override fun fraction(fraction: Double) {
-        this.fraction = fraction
+      override fun update(text: String?, details: String?, fraction: Double?) {
+        if (text != null) {
+          this.text = text
+        }
+        if (details != null) {
+          this.details = details
+        }
+        if (fraction != null) {
+          this.fraction = fraction
+        }
       }
     }
 
