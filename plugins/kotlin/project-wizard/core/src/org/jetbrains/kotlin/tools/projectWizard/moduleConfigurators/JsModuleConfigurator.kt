@@ -99,7 +99,7 @@ interface JSConfigurator : ModuleConfiguratorWithModuleType, ModuleConfiguratorW
         }
 
         internal fun Reader.irOrLegacyCompiler(module: Module): String {
-            fun Reader.useJsLegacyCompiler(module: Module): Boolean = settingValue(module, useJsLegacyCompiler) ?: true
+            fun Reader.useJsLegacyCompiler(module: Module): Boolean = settingValue(module, useJsLegacyCompiler) ?: false
             return if (!useJsLegacyCompiler(module)) JsCompiler.IR.scriptValue else JsCompiler.LEGACY.scriptValue
         }
 
