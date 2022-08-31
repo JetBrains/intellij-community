@@ -17,8 +17,8 @@ import java.time.Duration
 
 /*
  How to run UI test locally:
- - run `Idea Dev Build Server for UI tests`
- - run `IDEA for UI tests`
+ - run `Idea Dev Build Server for UI tests` (kotlin Run configuration)
+ - run `IDEA for UI tests` (application Run configuration)
  - run UI test via gutter
  */
 
