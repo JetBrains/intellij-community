@@ -141,9 +141,10 @@ public abstract class FacetManagerBase extends FacetManager {
       if (!invalidFacetManager.isIgnored(facet)) {
         FacetLoadingErrorDescription description = new FacetLoadingErrorDescription(facet);
         ProjectLoadingErrorsNotifier.getInstance(project).registerError(description);
+
         if (unknownType) {
           UnknownFeaturesCollector.getInstance(project)
-            .registerUnknownFeature(new UnknownFeature(FEATURE_TYPE,
+            .registerUnknownFeature(new UnknownFeature(description.getErrorType().getFeatureType(),
                                                        ProjectBundle.message("plugins.advertiser.feature.facet"),
                                                        state.getFacetType()));
         }

@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeature
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.packaging.artifacts.ArtifactProperties
 import com.intellij.packaging.artifacts.ArtifactPropertiesProvider
 import com.intellij.packaging.artifacts.ArtifactType
@@ -72,10 +71,13 @@ private fun createInvalidArtifact(it: ArtifactEntity,
                                   project: Project,
                                   @Nls message: String): InvalidArtifactBridge {
   val invalidArtifactBridge = InvalidArtifactBridge(it.persistentId, entityStorage, project, null, message)
-  ProjectLoadingErrorsNotifier.getInstance(project).registerError(ArtifactLoadingErrorDescription(project, invalidArtifactBridge));
+
+  val errorDescription = ArtifactLoadingErrorDescription(project, invalidArtifactBridge)
+  ProjectLoadingErrorsNotifier.getInstance(project).registerError(errorDescription)
+
   UnknownFeaturesCollector.getInstance(project)
     .registerUnknownFeature(UnknownFeature(
-      ArtifactManager.FEATURE_TYPE,
+      errorDescription.errorType.featureType,
       JavaCompilerBundle.message("plugins.advertiser.feature.artifact"),
       it.artifactType,
     ))
