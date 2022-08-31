@@ -211,9 +211,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
           IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.getPanel(), stopCondition, event -> {
             if (isCancellationEvent(event)) {
               cancel();
-              return true;
             }
-            return false;
           });
         }
         return null;
