@@ -38,7 +38,7 @@ public class PluginXmlCapitalizationInspectionTest extends LightJavaCodeInsightF
 
     myFixture.launchAction(capitalizeIntention);
     myFixture.checkResultByFile("ActionDescriptionFixBundle.properties",
-                                "ActionDescriptionFixBundle_after.properties",true);
+                                "ActionDescriptionFixBundle_after.properties", true);
   }
 
   public void testActionPluginName() {
