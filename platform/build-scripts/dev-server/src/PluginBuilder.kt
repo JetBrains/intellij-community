@@ -7,10 +7,10 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.TraceManager
-import org.jetbrains.intellij.build.impl.DistributionJARsBuilder
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.checkOutputOfPluginModules
+import org.jetbrains.intellij.build.impl.layoutDistribution
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -106,12 +106,12 @@ private suspend fun buildPlugin(plugin: BuildItem, buildContext: BuildContext, p
         checkOutputOfPluginModules(mainModule, plugin.layout.moduleJars, plugin.layout.moduleExcludes, buildContext)
       }
 
-      DistributionJARsBuilder.layout(plugin.layout,
-                                     plugin.dir,
-                                     true,
-                                     moduleOutputPatcher,
-                                     plugin.layout.moduleJars,
-                                     buildContext)
+      layoutDistribution(layout = plugin.layout,
+                         targetDirectory = plugin.dir,
+                         copyFiles = true,
+                         moduleOutputPatcher = moduleOutputPatcher,
+                         moduleJars = plugin.layout.moduleJars,
+                         context = buildContext)
       plugin.markAsBuilt(projectOutDir)
     }
 }

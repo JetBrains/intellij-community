@@ -35,6 +35,9 @@ import java.util.function.IntConsumer
 
 private val JAR_NAME_WITH_VERSION_PATTERN = "(.*)-\\d+(?:\\.\\d+)*\\.jar*".toPattern()
 
+internal val BuildContext.searchableOptionDir: Path
+  get() = paths.tempDir.resolve("searchableOptionsResult")
+
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 private val libsThatUsedInJps = java.util.Set.of(
   "ASM",
@@ -211,8 +214,6 @@ class JarPackager private constructor(private val context: BuildContext) {
       }
       return packager.projectStructureMapping
     }
-
-    fun getSearchableOptionsDir(buildContext: BuildContext): Path = buildContext.paths.tempDir.resolve("searchableOptionsResult")
   }
 
   private fun mergeLibsByPredicate(jarName: String,
@@ -248,7 +249,7 @@ class JarPackager private constructor(private val context: BuildContext) {
                                                           layout: BaseLayout,
                                                           moduleNameToSize: MutableMap<String, Int>,
                                                           sourceList: MutableList<Source>) {
-    val searchableOptionsDir = getSearchableOptionsDir(context)
+    val searchableOptionsDir = context.searchableOptionDir
     Span.current().addEvent("include module outputs", Attributes.of(AttributeKey.stringArrayKey("modules"), java.util.List.copyOf(modules)))
     for (moduleName in modules) {
       addModuleSources(moduleName = moduleName,

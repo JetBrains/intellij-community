@@ -21,8 +21,6 @@ import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataProviderTask
-import org.jetbrains.intellij.build.impl.DistributionJARsBuilder.Companion.layout
-import org.jetbrains.intellij.build.impl.JarPackager.Companion.getSearchableOptionsDir
 import org.jetbrains.intellij.build.impl.JarPackager.Companion.pack
 import org.jetbrains.intellij.build.impl.SVGPreBuilder.createPrebuildSvgIconsTask
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
@@ -67,64 +65,6 @@ class DistributionJARsBuilder {
 
   constructor(state: DistributionBuilderState) {
     this.state = state
-  }
-
-  companion object {
-    suspend fun layout(layout: BaseLayout,
-                       targetDirectory: Path,
-                       copyFiles: Boolean,
-                       moduleOutputPatcher: ModuleOutputPatcher,
-                       moduleJars: MultiMap<String, String>,
-                       context: BuildContext): List<DistributionFileEntry> {
-      if (copyFiles) {
-        checkModuleExcludes(layout.moduleExcludes, context)
-      }
-
-      // patchers must be executed _before_ pack because patcher patches module output
-      if (copyFiles && layout is PluginLayout && !layout.patchers.isEmpty()) {
-        val patchers = layout.patchers
-        spanBuilder("execute custom patchers").setAttribute("count", patchers.size.toLong()).useWithScope {
-          for (patcher in patchers) {
-            patcher.accept(moduleOutputPatcher, context)
-          }
-        }
-      }
-
-      return coroutineScope {
-        val tasks = ArrayList<Deferred<Collection<DistributionFileEntry>>>(3)
-        tasks.add(async {
-          spanBuilder("pack").useWithScope2 {
-            val actualModuleJars = TreeMap<String, MutableList<String>>()
-            for (entry in moduleJars.entrySet()) {
-              val modules = entry.value
-              val jarPath = getActualModuleJarPath(entry.key, modules, layout.explicitlySetJarPaths, context)
-              actualModuleJars.computeIfAbsent(jarPath) { mutableListOf() }.addAll(modules)
-            }
-            withContext(Dispatchers.IO) {
-              pack(actualModuleJars, targetDirectory.resolve("lib"), layout, moduleOutputPatcher, !copyFiles, context)
-            }
-          }
-        })
-
-        if (copyFiles && (!layout.resourcePaths.isEmpty() || (layout is PluginLayout && !layout.resourceGenerators.isEmpty()))) {
-          tasks.add(async(Dispatchers.IO) {
-            spanBuilder("pack additional resources").useWithScope2 {
-              layoutAdditionalResources(layout, context, targetDirectory)
-              emptyList()
-            }
-          })
-        }
-
-        if (!layout.includedArtifacts.isEmpty()) {
-          tasks.add(async(Dispatchers.IO) {
-            spanBuilder("pack artifacts").useWithScope2 { layoutArtifacts(layout, context, copyFiles, targetDirectory) }
-          })
-        }
-        tasks
-      }.flatMap { it.getCompleted() }
-    }
-
-
   }
 
   suspend fun buildJARs(context: BuildContext, isUpdateFromSources: Boolean = false): ProjectStructureMapping {
@@ -243,7 +183,7 @@ class DistributionJARsBuilder {
     }
 
     val messages = context.messages
-    val targetDirectory = getSearchableOptionsDir(context)
+    val targetDirectory = context.searchableOptionDir
     val modules = withContext(Dispatchers.IO) {
       val ideClasspath = createIdeClassPath(context)
       NioFiles.deleteRecursively(targetDirectory)
@@ -318,7 +258,7 @@ class DistributionJARsBuilder {
       val entries = ArrayList<DistributionFileEntry>()
       for (plugin in allPlugins) {
         if (satisfiesBundlingRequirements(plugin = plugin, osFamily = null, arch = null, context = context)) {
-          entries.addAll(layout(layout = plugin,
+          entries.addAll(layoutDistribution(layout = plugin,
                                 targetDirectory = pluginLayoutRoot,
                                 copyFiles = false,
                                 moduleOutputPatcher = moduleOutputPatcher,
@@ -541,7 +481,7 @@ private suspend fun buildPlugins(moduleOutputPatcher: ModuleOutputPatcher,
       val pluginDir = targetDirectory.resolve(directoryName)
       async {
         spanBuilder("plugin").setAttribute("path", context.paths.buildOutputDir.relativize(pluginDir).toString()).useWithScope2 {
-          val result = layout(layout = plugin,
+          val result = layoutDistribution(layout = plugin,
                               targetDirectory = pluginDir,
                               copyFiles = true,
                               moduleOutputPatcher = moduleOutputPatcher,
@@ -714,12 +654,12 @@ suspend fun processLibDirectoryLayout(moduleOutputPatcher: ModuleOutputPatcher,
   return spanBuilder("layout")
     .setAttribute("path", context.paths.buildOutputDir.relativize(context.paths.distAllDir).toString())
     .useWithScope2 {
-      layout(layout = platform,
-             targetDirectory = context.paths.distAllDir,
-             copyFiles = copyFiles,
-             moduleOutputPatcher = moduleOutputPatcher,
-             moduleJars = platform.moduleJars,
-             context = context)
+      layoutDistribution(layout = platform,
+                         targetDirectory = context.paths.distAllDir,
+                         copyFiles = copyFiles,
+                         moduleOutputPatcher = moduleOutputPatcher,
+                         moduleJars = platform.moduleJars,
+                         context = context)
     }
 }
 
@@ -941,6 +881,60 @@ private fun loadPluginAutoPublishList(buildContext: BuildContext): Predicate<Plu
 private fun buildKeymapPlugins(targetDir: Path, context: BuildContext): ForkJoinTask<List<Pair<Path, ByteArray>>> {
   val keymapDir = context.paths.communityHomeDir.communityRoot.resolve("platform/platform-resources/src/keymaps")
   return buildKeymapPlugins(context.buildNumber, targetDir, keymapDir)
+}
+
+suspend fun layoutDistribution(layout: BaseLayout,
+                               targetDirectory: Path,
+                               copyFiles: Boolean,
+                               moduleOutputPatcher: ModuleOutputPatcher,
+                               moduleJars: MultiMap<String, String>,
+                               context: BuildContext): List<DistributionFileEntry> {
+  if (copyFiles) {
+    checkModuleExcludes(layout.moduleExcludes, context)
+  }
+
+  // patchers must be executed _before_ pack because patcher patches module output
+  if (copyFiles && layout is PluginLayout && !layout.patchers.isEmpty()) {
+    val patchers = layout.patchers
+    spanBuilder("execute custom patchers").setAttribute("count", patchers.size.toLong()).useWithScope {
+      for (patcher in patchers) {
+        patcher.accept(moduleOutputPatcher, context)
+      }
+    }
+  }
+
+  return coroutineScope {
+    val tasks = ArrayList<Deferred<Collection<DistributionFileEntry>>>(3)
+    tasks.add(async {
+      spanBuilder("pack").useWithScope2 {
+        val actualModuleJars = TreeMap<String, MutableList<String>>()
+        for (entry in moduleJars.entrySet()) {
+          val modules = entry.value
+          val jarPath = getActualModuleJarPath(entry.key, modules, layout.explicitlySetJarPaths, context)
+          actualModuleJars.computeIfAbsent(jarPath) { mutableListOf() }.addAll(modules)
+        }
+        withContext(Dispatchers.IO) {
+          pack(actualModuleJars, targetDirectory.resolve("lib"), layout, moduleOutputPatcher, !copyFiles, context)
+        }
+      }
+    })
+
+    if (copyFiles && (!layout.resourcePaths.isEmpty() || (layout is PluginLayout && !layout.resourceGenerators.isEmpty()))) {
+      tasks.add(async(Dispatchers.IO) {
+        spanBuilder("pack additional resources").useWithScope2 {
+          layoutAdditionalResources(layout, context, targetDirectory)
+          emptyList()
+        }
+      })
+    }
+
+    if (!layout.includedArtifacts.isEmpty()) {
+      tasks.add(async(Dispatchers.IO) {
+        spanBuilder("pack artifacts").useWithScope2 { layoutArtifacts(layout, context, copyFiles, targetDirectory) }
+      })
+    }
+    tasks
+  }.flatMap { it.getCompleted() }
 }
 
 private fun layoutAdditionalResources(layout: BaseLayout, context: BuildContext, targetDirectory: Path) {
