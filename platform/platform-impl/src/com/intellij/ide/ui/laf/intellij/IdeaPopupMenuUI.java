@@ -5,6 +5,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -81,7 +82,7 @@ public final class IdeaPopupMenuUI extends BasicPopupMenuUI {
   }
 
   public static boolean isRoundBorder() {
-    return SystemInfoRt.isMac && ExperimentalUI.isNewUI();
+    return SystemInfoRt.isMac && ExperimentalUI.isNewUI() && Registry.is("ide.mac.rounded.corners");
   }
 
   public static boolean hideEmptyIcon(Component c) {
