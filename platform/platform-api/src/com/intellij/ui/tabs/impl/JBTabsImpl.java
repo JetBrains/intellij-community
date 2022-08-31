@@ -20,7 +20,6 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPane;
@@ -484,7 +483,7 @@ public class JBTabsImpl extends JComponent
   private ActionToolbar createToolbar(DefaultActionGroup group) {
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TABS_MORE_TOOLBAR, group, true);
     toolbar.setTargetComponent(this);
-    toolbar.getComponent().setBorder(ExperimentalUI.isNewUI() ? JBUI.Borders.emptyRight(8) : JBUI.Borders.empty());
+    toolbar.getComponent().setBorder(JBUI.Borders.empty());
     toolbar.getComponent().setOpaque(false);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     return toolbar;
@@ -1954,21 +1953,21 @@ public class JBTabsImpl extends JComponent
       int theMostLeftX = 0;
       for (TabLabel tab : myInfo2Label.values()) {
         if (tab.isPinned() && pinnedTabsSeparately) continue;
-        maximum += tab.getPreferredSize().width;
+        maximum += tab.getPreferredSize().width + (isEditorTabs() ? getTabHGap() : 0);
         theMostLeftX = Math.min(theMostLeftX, tab.getX());
       }
       value = Math.max(0, -theMostLeftX);
     }
     else {
       extent = getHeight();
-      if (myEntryPointToolbar != null && myEntryPointToolbar.getComponent().isVisible()) {
+      if (!ExperimentalUI.isNewUI() && myEntryPointToolbar != null && myEntryPointToolbar.getComponent().isVisible()) {
         extent = myEntryPointToolbar.getComponent().getY();
       }
 
       int theMostTopX = 0;
       for (TabLabel tab : myInfo2Label.values()) {
         if (tab.isPinned() && pinnedTabsSeparately) continue;
-        maximum += tab.getPreferredSize().height;
+        maximum += tab.getPreferredSize().height + (isEditorTabs() ? getTabHGap() : 0);
         theMostTopX = Math.min(theMostTopX, tab.getY());
       }
       value = Math.max(0, -theMostTopX);
@@ -2036,12 +2035,14 @@ public class JBTabsImpl extends JComponent
           if (entryPointRect != null && !entryPointRect.isEmpty() && getTabCount() > 0) {
             Dimension preferredSize = eComponent.getPreferredSize();
             Rectangle bounds = new Rectangle(entryPointRect);
-            int xDiff = (bounds.width - preferredSize.width) / 2;
-            int yDiff = (bounds.height - preferredSize.height) / 2;
-            bounds.x += xDiff + 2;
-            bounds.width -= 2 * xDiff;
-            bounds.y += yDiff;
-            bounds.height -= 2 * yDiff;
+            if (!ExperimentalUI.isNewUI() || !getTabsPosition().isSide()) {
+              int xDiff = (bounds.width - preferredSize.width) / 2;
+              int yDiff = (bounds.height - preferredSize.height) / 2;
+              bounds.x += xDiff + 2;
+              bounds.width -= 2 * xDiff;
+              bounds.y += yDiff;
+              bounds.height -= 2 * yDiff;
+            }
             eComponent.setBounds(bounds);
           }
           else {
@@ -2110,14 +2111,16 @@ public class JBTabsImpl extends JComponent
     Rectangle moreRect = getMoreRect();
     JComponent mComponent = myMoreToolbar.getComponent();
     if (moreRect != null && !moreRect.isEmpty()) {
-      Dimension preferredSize = mComponent.getPreferredSize();
       Rectangle bounds = new Rectangle(moreRect);
-      int xDiff = (bounds.width - preferredSize.width) / 2;
-      int yDiff = (bounds.height - preferredSize.height) / 2;
-      bounds.x += xDiff + 2;
-      bounds.width -= 2 * xDiff;
-      bounds.y += yDiff;
-      bounds.height -= 2 * yDiff;
+      if (!ExperimentalUI.isNewUI() || !getTabsPosition().isSide()) {
+        Dimension preferredSize = mComponent.getPreferredSize();
+        int xDiff = (bounds.width - preferredSize.width) / 2;
+        int yDiff = (bounds.height - preferredSize.height) / 2;
+        bounds.x += xDiff + 2;
+        bounds.width -= 2 * xDiff;
+        bounds.y += yDiff;
+        bounds.height -= 2 * yDiff;
+      }
       mComponent.setBounds(bounds);
     }
     else {
@@ -3327,9 +3330,17 @@ public class JBTabsImpl extends JComponent
     OnePixelDivider divider = mySplitter.getDivider();
     if (position.isSide() && divider.getParent() == null) {
       add(divider);
-    } else if (divider.getParent() == this && !position.isSide()){
+    }
+    else if (divider.getParent() == this && !position.isSide()) {
       remove(divider);
     }
+    if (ExperimentalUI.isNewUI()) {
+      if (myEntryPointToolbar != null) {
+        myEntryPointToolbar.getComponent().setBorder(getTabsPosition().isSide() ? JBUI.Borders.empty(4, 3) : JBUI.Borders.emptyRight(8));
+      }
+      myMoreToolbar.getComponent().setBorder(JBUI.Borders.empty(4, 3));
+    }
+
     relayout(true, false);
     return this;
   }
