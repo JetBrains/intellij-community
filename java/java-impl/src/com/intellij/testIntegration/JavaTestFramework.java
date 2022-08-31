@@ -57,7 +57,7 @@ public abstract class JavaTestFramework implements TestFramework {
   protected abstract String getMarkerClassFQName();
 
   /**
-   * Return {@code true} if {@link #getMarkerClassFQName()} can be found in the resolve scope of {@code clazz}
+   * Return {@code true} iff {@link #getMarkerClassFQName()} can be found in the resolve scope of {@code clazz}
    */
   protected boolean isFrameworkAvailable(@NotNull PsiElement clazz) {
     String markerClassFQName = getMarkerClassFQName();
