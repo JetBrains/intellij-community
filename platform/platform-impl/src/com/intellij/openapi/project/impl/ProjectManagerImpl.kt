@@ -1252,27 +1252,25 @@ private suspend fun confirmOpenNewProject(options: OpenProjectTask): Int {
       IdeBundle.message("prompt.open.project.with.name.in.new.frame", options.projectName)
     }
 
-    mode = withContext(Dispatchers.EDT) {
-      if (options.isNewProject) {
-        val openInExistingFrame = MessageDialogBuilder.yesNo(IdeCoreBundle.message("title.new.project"), message)
+    val openInExistingFrame = withContext(Dispatchers.EDT) {
+      if (options.isNewProject)
+        MessageDialogBuilder.yesNoCancel(IdeUICustomization.getInstance().projectMessage("title.new.project"), message)
           .yesText(IdeBundle.message("button.existing.frame"))
           .noText(IdeBundle.message("button.new.frame"))
           .doNotAsk(ProjectNewWindowDoNotAskOption())
           .guessWindowAndAsk()
-        if (openInExistingFrame) GeneralSettings.OPEN_PROJECT_SAME_WINDOW else GeneralSettings.OPEN_PROJECT_NEW_WINDOW
-      }
-      else {
-        val exitCode = MessageDialogBuilder.yesNoCancel(IdeBundle.message("title.open.project"), message)
+      else
+        MessageDialogBuilder.yesNoCancel(IdeUICustomization.getInstance().projectMessage("title.open.project"), message)
           .yesText(IdeBundle.message("button.existing.frame"))
           .noText(IdeBundle.message("button.new.frame"))
           .doNotAsk(ProjectNewWindowDoNotAskOption())
           .guessWindowAndAsk()
-        when (exitCode) {
-          Messages.YES -> GeneralSettings.OPEN_PROJECT_SAME_WINDOW
-          Messages.NO -> GeneralSettings.OPEN_PROJECT_NEW_WINDOW
-          else -> Messages.CANCEL
-        }
-      }
+    }
+
+    mode = when (openInExistingFrame) {
+      Messages.YES -> GeneralSettings.OPEN_PROJECT_SAME_WINDOW
+      Messages.NO -> GeneralSettings.OPEN_PROJECT_NEW_WINDOW
+      else -> Messages.CANCEL
     }
     if (mode != Messages.CANCEL) {
       LifecycleUsageTriggerCollector.onProjectFrameSelected(mode)
