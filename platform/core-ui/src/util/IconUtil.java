@@ -70,8 +70,10 @@ public final class IconUtil {
 
     double scale = 1.0f;
     if (image instanceof JBHiDPIScaledImage) {
-      scale = ((JBHiDPIScaledImage)image).getScale();
-      image = ((JBHiDPIScaledImage)image).getDelegate();
+      JBHiDPIScaledImage hdpi = ((JBHiDPIScaledImage)image);
+      scale = hdpi.getScale();
+      if (hdpi.getDelegate() != null)
+        image = hdpi.getDelegate();
     }
 
     BufferedImage bi = ImageUtil.toBufferedImage(Objects.requireNonNull(image));
