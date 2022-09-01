@@ -20,6 +20,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
@@ -313,11 +314,13 @@ open class ProjectFrameHelper(
       CommonDataKeys.PROJECT.`is`(dataId) -> if (project != null && project.isInitialized) project else null
       IdeFrame.KEY.`is`(dataId) -> this
       PlatformDataKeys.LAST_ACTIVE_TOOL_WINDOWS.`is`(dataId) -> {
-        val manager = if (project != null && project.isInitialized) project.serviceIfCreated<ToolWindowManager>() else null
-        if (manager is ToolWindowManagerImpl) manager.getLastActiveToolWindows().toList().toTypedArray() else null
+        if (project == null || !project.isInitialized) return null
+        val manager = project.serviceIfCreated<ToolWindowManager>() as? ToolWindowManagerImpl ?: return null
+        manager.getLastActiveToolWindows().toList().toTypedArray()
       }
       PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.`is`(dataId) -> {
-        (if (project != null && project.isInitialized) FileEditorManager.getInstance(project) else null)?.selectedEditor
+        if (project == null || !project.isInitialized) return null
+        FileEditorManagerEx.getInstanceEx(project).currentWindow?.getSelectedComposite(true)?.selectedEditor
       }
       else -> null
     }

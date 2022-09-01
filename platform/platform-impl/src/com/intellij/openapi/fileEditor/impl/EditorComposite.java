@@ -5,10 +5,7 @@ import com.intellij.featureStatistics.fusCollectors.FileEditorCollector;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.DataValidators;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -575,6 +572,11 @@ public class EditorComposite extends FileEditorComposite implements Disposable {
       }
       if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
         return new VirtualFile[]{myFile};
+      }
+      if (PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.is(dataId)) {
+        EditorWindow window = FileEditorManagerEx.getInstanceEx(myProject).getCurrentWindow();
+        EditorComposite composite = window != null ? window.getSelectedComposite(true) : null;
+        return composite != null ? composite.getSelectedEditor() : null;
       }
       JComponent component = getPreferredFocusedComponent();
       if (component instanceof DataProvider && component != this) {
