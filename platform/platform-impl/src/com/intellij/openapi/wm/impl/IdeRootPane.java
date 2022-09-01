@@ -622,7 +622,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   @ApiStatus.Internal
   public static boolean isMenuButtonInToolbar() {
     UISettings uiSettings = UISettings.getShadowInstance();
-    return SystemInfoRt.isLinux && ExperimentalUI.isNewUI() && !uiSettings.getSeparateMainMenu() && FrameInfoHelper.isFloatingMenuBarSupported();
+    return SystemInfoRt.isXWindow && ExperimentalUI.isNewUI() && !uiSettings.getSeparateMainMenu() && FrameInfoHelper.isFloatingMenuBarSupported();
   }
 
   private static boolean isDecoratedMenu() {

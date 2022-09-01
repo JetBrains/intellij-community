@@ -30,12 +30,16 @@ internal class ExperimentalUIConfigurable : BoundSearchableConfigurable(
     row { browserLink(IdeBundle.message("new.ui.blog.changes.and.issues"), "https://youtrack.jetbrains.com/articles/IDEA-A-156/Main-changes-and-known-issues") }
     row { link(IdeBundle.message("new.ui.submit.feedback")) { SendFeedbackAction.submit(null) } }
 
-    if (!SystemInfo.isMac) {
+    if (SystemInfo.isWindows || SystemInfo.isXWindow) {
       group(IdeBundle.message("new.ui.settings.group.name")) {
         row {
           checkBox(IdeBundle.message("checkbox.main.menu.separate.toolbar"))
             .bindSelected(UISettings.getInstance()::separateMainMenu)
-          comment(IdeBundle.message("main.menu.separate.toolbar.comment"))
+            .apply {
+              if (SystemInfo.isXWindow) {
+                comment(IdeBundle.message("ide.restart.required.comment"))
+              }
+            }
         }
       }
     }
@@ -43,5 +47,13 @@ internal class ExperimentalUIConfigurable : BoundSearchableConfigurable(
 
   override fun getHelpTopic(): String? {
     return null
+  }
+
+  override fun apply() {
+    val uiSettingsChanged = isModified
+    super.apply()
+    if (uiSettingsChanged) {
+      UISettings.getInstance().fireUISettingsChanged()
+    }
   }
 }
