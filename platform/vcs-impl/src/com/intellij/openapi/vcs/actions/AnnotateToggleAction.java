@@ -28,8 +28,10 @@ import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.LightColors;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,6 +50,11 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
 
   public AnnotateToggleAction() {
     setEnabledInModalContext(true);
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -364,12 +371,16 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
   }
 
   public interface Provider {
+    @CalledInAny
     boolean isEnabled(AnActionEvent e);
 
+    @CalledInAny
     boolean isSuspended(@NotNull AnActionEvent e);
 
+    @CalledInAny
     boolean isAnnotated(AnActionEvent e);
 
+    @RequiresEdt
     void perform(@NotNull AnActionEvent e, boolean selected);
 
     default @Nls(capitalization = Nls.Capitalization.Title) String getActionName(@NotNull AnActionEvent e) {
