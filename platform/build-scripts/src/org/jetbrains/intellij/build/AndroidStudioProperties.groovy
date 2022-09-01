@@ -18,6 +18,8 @@ package org.jetbrains.intellij.build
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import kotlin.Pair
+import kotlin.coroutines.Continuation
+import kotlinx.collections.immutable.ExtensionsKt
 import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.io.FileKt
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
@@ -166,8 +168,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
   @Override
   @CompileDynamic
-  void copyAdditionalFiles(BuildContext buildContext, String targetDirectory) {
-    super.copyAdditionalFiles(buildContext, targetDirectory)
+  Object copyAdditionalFiles(BuildContext buildContext, String targetDirectory, Continuation continuation) {
 
     new FileSet(buildContext.paths.communityHomeDir.communityRoot)
       .include("LICENSE.txt")
@@ -193,6 +194,8 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     new FileSet(buildContext.paths.communityHomeDir.communityRoot)
       .include("CIDR_LICENSE.txt")
       .copyToDir(Path.of(targetDirectory, "plugins/cidr-base-plugin/lib/LICENSE.txt"))
+
+    return super.copyAdditionalFiles(buildContext, targetDirectory, continuation)
   }
 
   @Override
@@ -223,7 +226,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
       @Override
       @CompileDynamic
-      void copyAdditionalFiles(BuildContext buildContext, String targetDirectory) {
+      void copyAdditionalFilesBlocking(BuildContext buildContext, String targetDirectory) {
         new FileSet(buildContext.paths.communityHomeDir.communityRoot.resolve("../../prebuilts/tools/clion/bin/clang/win"))
           .includeAll()
           .copyToDir(Path.of(targetDirectory, "plugins/c-clangd/bin/clang/win"))
@@ -281,11 +284,11 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
     @Override
     @CompileDynamic
-    void copyAdditionalFiles(BuildContext buildContext, String targetDirectory) {
+    void copyAdditionalFilesBlocking(BuildContext buildContext, String targetDirectory) {
       new FileSet(buildContext.paths.communityHomeDir.communityRoot.resolve("../../prebuilts/tools/clion/bin/clang/mac"))
         .includeAll()
         .copyToDir(Path.of(targetDirectory, "plugins/c-clangd/bin/clang/mac"))
-      extraExecutables = List.of("plugins/c-clangd/bin/clang/mac/clangd", "plugins/c-clangd/bin/clang/mac/clang-tidy")
+      extraExecutables = ExtensionsKt.persistentListOf("plugins/c-clangd/bin/clang/mac/clangd", "plugins/c-clangd/bin/clang/mac/clang-tidy")
 
       Path distBinDir = Paths.get(targetDirectory).resolve("bin")
       buildGameToolsScriptsForUnix(buildContext, distBinDir, OsFamily.MACOS)
