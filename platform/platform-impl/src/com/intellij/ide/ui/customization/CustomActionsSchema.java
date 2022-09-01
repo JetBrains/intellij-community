@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBImageIcon;
@@ -85,7 +86,16 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
       idToName.put(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR, ActionsTreeUtil.getExperimentalToolbar());
       idToName.put(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_XAMARIN, ActionsTreeUtil.getExperimentalToolbarXamarin());
     }
-    idToName.put(IdeActions.GROUP_MAIN_TOOLBAR, ActionsTreeUtil.getMainToolbar());
+
+    if (ExperimentalUI.isNewUI()) {
+      idToName.put(IdeActions.GROUP_MAIN_TOOLBAR_LEFT, ActionsTreeUtil.getMainToolbarLeft());
+      idToName.put(IdeActions.GROUP_MAIN_TOOLBAR_CENTER, ActionsTreeUtil.getMainToolbarCenter());
+      idToName.put(IdeActions.GROUP_MAIN_TOOLBAR_RIGHT, ActionsTreeUtil.getMainToolbarRight());
+    }
+    else {
+      idToName.put(IdeActions.GROUP_MAIN_TOOLBAR, ActionsTreeUtil.getMainToolbar());
+    }
+
     idToName.put(IdeActions.GROUP_EDITOR_POPUP, ActionsTreeUtil.getEditorPopup());
     idToName.put(IdeActions.GROUP_EDITOR_GUTTER, ActionsTreeUtil.getEditorGutterPopupMenu());
     idToName.put(IdeActions.GROUP_EDITOR_TAB_POPUP, ActionsTreeUtil.getEditorTabPopup());

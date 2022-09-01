@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionToolbar
-import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
@@ -64,8 +63,7 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
       val customActionSchema = CustomActionsSchema.getInstance()
       createActionBar("MainToolbarLeft", customActionSchema)?.let { addWidget(it, HorizontalLayout.LEFT) }
       createActionBar("MainToolbarCenter", customActionSchema)?.let { addWidget(it, HorizontalLayout.CENTER) }
-      createActionBar("RunToolbarWidgetCustomizableActionGroup", customActionSchema)?.let { addWidget(it, HorizontalLayout.RIGHT) }
-      createActionBar(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_ACTIONS, customActionSchema)?.let { addWidget(it, HorizontalLayout.RIGHT) }
+      createActionBar("MainToolbarRight", customActionSchema)?.let { addWidget(it, HorizontalLayout.RIGHT) }
     }
     addComponentListener(ResizeListener())
   }
@@ -88,8 +86,7 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
   }
 
   private fun createActionBar(groupId: String, customActionSchema: CustomActionsSchema): JComponent? {
-    val group = customActionSchema.getCorrectedAction(groupId) as ActionGroup? ?: return null
-    val toolbar = createToolbar(group)
+    val toolbar = createToolbar(groupId, customActionSchema) ?: return null
     toolbar.setMinimumButtonSize(ActionToolbar.EXPERIMENTAL_TOOLBAR_MINIMUM_BUTTON_SIZE)
     toolbar.targetComponent = null
     toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
@@ -99,12 +96,14 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
     return component
   }
 
+  private fun createToolbar(groupId: String, schema: CustomActionsSchema): ActionToolbar? {
+    val group = schema.getCorrectedAction(groupId) as ActionGroup? ?: return null
 
-  private fun createToolbar(group: ActionGroup): ActionToolbar =
-    MyActionToolbarImpl(group).apply {
+    return MyActionToolbarImpl(group).apply {
       setActionButtonBorder(JBUI.Borders.empty(mainToolbarButtonInsets()))
       setCustomButtonLook(HeaderToolbarButtonLook())
     }
+  }
 
   private inner class ResizeListener : ComponentAdapter() {
     override fun componentResized(e: ComponentEvent?) {

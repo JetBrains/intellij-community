@@ -913,9 +913,7 @@
     <group id="MainToolbarCenter" searchable="false">
       <action id="main.toolbar.Project" class="com.intellij.openapi.wm.impl.headertoolbar.ProjectToolbarWidgetAction"/>
     </group>
-    <group id="MainToolbarRight" searchable="false"/>
-
-    <group id="ExperimentalToolbarActions">
+    <group id="MainToolbarRight" searchable="false">
       <reference ref="SearchEverywhere"/>
       <reference ref="SettingsEntryPoint"/>
     </group>
