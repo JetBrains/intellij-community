@@ -59,7 +59,8 @@ public final class JsonDuplicatePropertyKeysInspection extends LocalInspectionTo
   }
 
   private static final class NavigateToDuplicatesFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-    private final @NotNull Collection<SmartPsiElementPointer> mySameNamedKeys;
+    @SafeFieldForPreview
+    private final @NotNull Collection<SmartPsiElementPointer<PsiElement>> mySameNamedKeys;
     private final @NotNull String myEntryKey;
 
     private NavigateToDuplicatesFix(@NotNull Collection<PsiElement> sameNamedKeys, @NotNull PsiElement element, @NotNull String entryKey) {
@@ -87,7 +88,7 @@ public final class JsonDuplicatePropertyKeysInspection extends LocalInspectionTo
       if (editor == null) return;
 
       if (mySameNamedKeys.size() == 2) {
-        final Iterator<SmartPsiElementPointer> iterator = mySameNamedKeys.iterator();
+        final Iterator<SmartPsiElementPointer<PsiElement>> iterator = mySameNamedKeys.iterator();
         final PsiElement next = iterator.next().getElement();
         PsiElement toNavigate = next != startElement ? next : iterator.next().getElement();
         if (toNavigate == null) return;
@@ -115,7 +116,7 @@ public final class JsonDuplicatePropertyKeysInspection extends LocalInspectionTo
             }
 
             @Override
-            public @Nullable PopupStep onChosen(PsiElement selectedValue, boolean finalChoice) {
+            public @Nullable PopupStep<?> onChosen(PsiElement selectedValue, boolean finalChoice) {
               navigateTo(editor, selectedValue);
               return PopupStep.FINAL_CHOICE;
             }
