@@ -11,6 +11,6 @@ class FacetEntitySerializer: CustomFacetEntitySerializer<FacetEntity> {
     get() = FacetEntity::class.java
 
   override fun serializeIntoXml(entity: FacetEntity): Element {
-    return entity.configurationXmlTag?.let { JDOMUtil.load(it) }!!
+    return entity.configurationXmlTag?.let { JDOMUtil.load(it) } ?: Element("configuration")
   }
 }

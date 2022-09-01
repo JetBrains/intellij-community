@@ -91,8 +91,8 @@ class TestFacetChangeListener(private val project: Project): Disposable {
           val moduleEntity = workspaceFacetContributor.getRelatedModuleEntity(change.newEntity)
           getFacetManager(moduleEntity)?.model?.facetsChanged()
 
-          //FacetManagerBase.setFacetName(facet, workspaceFacetContributor.getFacetName(change.entity))
-          //facet.initFacet()
+          FacetManagerBase.setFacetName(facet, workspaceFacetContributor.getFacetName(change.entity))
+          facet.initFacet()
 
           // We should not send an event if the associated module was added in the same transaction.
           // Event will be sent with "moduleAdded" event.
@@ -181,8 +181,8 @@ class TestFacetChangeListener(private val project: Project): Disposable {
       // If this change is performed in FacetManagerBridge.facetConfigurationChanged,
       // FacetConfiguration is already updated and there is no need to update it again
       if (facetConfigurationXml != JDOMUtil.write(rootElement)) {
-        // TODO:: Fix cast inspection
-        (facet as? FacetBridge<WorkspaceEntity>)?.updateFacetConfiguration(rootEntity)
+        (facet as? FacetBridge<WorkspaceEntity>)?.updateFacetConfiguration(rootEntity) ?:
+        FacetUtil.loadFacetConfiguration(facet.configuration, rootElement)
         publisher.fireFacetConfigurationChanged(facet)
       }
     }
