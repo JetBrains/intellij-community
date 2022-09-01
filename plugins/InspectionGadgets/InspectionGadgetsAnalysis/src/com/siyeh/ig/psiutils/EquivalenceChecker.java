@@ -518,6 +518,32 @@ public class EquivalenceChecker {
     if (pattern1 instanceof PsiTypeTestPattern && pattern2 instanceof PsiTypeTestPattern) {
       return Match.exact(primaryPatternsMatch((PsiTypeTestPattern)pattern1, (PsiTypeTestPattern)pattern2));
     }
+    if (pattern1 instanceof PsiDeconstructionPattern && pattern2 instanceof PsiDeconstructionPattern) {
+      PsiDeconstructionPattern deconstruction1 = (PsiDeconstructionPattern)pattern1;
+      PsiDeconstructionPattern deconstruction2 = (PsiDeconstructionPattern)pattern2;
+      PsiPattern[] components1 = deconstruction1.getDeconstructionList().getDeconstructionComponents();
+      PsiPattern[] components2 = deconstruction2.getDeconstructionList().getDeconstructionComponents();
+      if (components1.length != components2.length) {
+        return EXACT_MISMATCH;
+      }
+      for (int i = 0; i < components1.length; i++) {
+        if (!patternsMatch(components1[i], components2[i]).isExactMatch()) {
+          return EXACT_MISMATCH;
+        }
+      }
+      PsiPatternVariable variable1 = deconstruction1.getPatternVariable();
+      PsiPatternVariable variable2 = deconstruction2.getPatternVariable();
+      if ((variable1 == null || variable2 == null) && !Match.exact(variable1 == variable2).isExactMatch()) {
+        return EXACT_MISMATCH;
+      }
+      PsiTypeElement typeElement1 = deconstruction1.getTypeElement();
+      PsiTypeElement typeElement2 = deconstruction2.getTypeElement();
+      if (!typeElementsAreEquivalent(typeElement1, typeElement2).isExactMatch()) {
+        return EXACT_MISMATCH;
+      }
+      markDeclarationsAsEquivalent(variable1, variable2);
+      return EXACT_MATCH;
+    }
     return EXACT_MISMATCH;
   }
 
@@ -857,18 +883,9 @@ public class EquivalenceChecker {
     if (!expressionsMatch(operand1, operand2).isExactMatch()) {
       return EXACT_MISMATCH;
     }
-    final PsiTypeElement typeElement1 = instanceOfExpression1.getCheckType();
-    final PsiTypeElement typeElement2 = instanceOfExpression2.getCheckType();
-    if (!typeElementsAreEquivalent(typeElement1, typeElement2).isExactMatch()) {
-      return EXACT_MISMATCH;
-    }
-    PsiPatternVariable patternVariable1 = JavaPsiPatternUtil.getPatternVariable(instanceOfExpression1.getPattern());
-    PsiPatternVariable patternVariable2 = JavaPsiPatternUtil.getPatternVariable(instanceOfExpression2.getPattern());
-    if (patternVariable1 == null || patternVariable2 == null) {
-      return Match.exact(patternVariable1 == patternVariable2);
-    }
-    markDeclarationsAsEquivalent(patternVariable1, patternVariable2);
-    return EXACT_MATCH;
+    PsiPrimaryPattern pattern1 = instanceOfExpression1.getPattern();
+    PsiPrimaryPattern pattern2 = instanceOfExpression2.getPattern();
+    return patternsMatch(pattern1, pattern2);
   }
 
   protected Match typeElementsAreEquivalent(PsiTypeElement typeElement1, PsiTypeElement typeElement2) {
