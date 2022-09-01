@@ -36,6 +36,8 @@
 
     <projectService serviceInterface="com.intellij.openapi.module.AutomaticModuleUnloader"
                     serviceImplementation="com.intellij.openapi.module.DummyAutomaticModuleUnloader"/>
+    <projectService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex" 
+                    serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleDependencyIndexImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.AdditionalLibraryRootsListenerHelper"
                         serviceImplementation="com.intellij.openapi.roots.impl.AdditionalLibraryRootsListenerHelperImpl"/>
