@@ -266,7 +266,6 @@ class CompilerArgumentsCachingTest {
         inheritMultifileParts = Random.nextBoolean()
         useTypeTable = Random.nextBoolean()
         useOldClassFilesReading = Random.nextBoolean()
-        singleModule = Random.nextBoolean()
         suppressMissingBuiltinsError = Random.nextBoolean()
         useJavac = Random.nextBoolean()
         compileJava = Random.nextBoolean()
