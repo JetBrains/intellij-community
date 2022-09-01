@@ -782,7 +782,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     List<Object> popupObjects = null;
 
     if (mySelection != null) {
-      barObject = myModel.getElement(mySelection.myBarIndex);
+      barObject = myModel.getRawElement(mySelection.myBarIndex);
       popupObjects = mySelection.myNodePopupObjects;
     }
 
@@ -792,12 +792,12 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
 
     if (popupObjects == null) {
       final Object obj = barObject;
-      return getDataImpl(dataId, this, () -> JBIterable.of(obj));
+      return getDataImpl(dataId, this, () -> JBIterable.of(obj).filterMap(myModel::unwrapRaw));
     }
 
     if (!popupObjects.isEmpty()) {
       final List<Object> objects = popupObjects;
-      return getDataImpl(dataId, this, () -> JBIterable.from(objects));
+      return getDataImpl(dataId, this, () -> JBIterable.from(objects).filterMap(myModel::unwrapRaw));
     }
 
     return getDataImpl(dataId, this, this::getSelection);
