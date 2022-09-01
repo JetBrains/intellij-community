@@ -3,6 +3,7 @@ package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.CachedSingletonsRegistry;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsContexts.ProgressDetails;
@@ -271,4 +272,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    */
   @ApiStatus.Internal
   public abstract <X> X silenceGlobalIndicator(@NotNull Supplier<? extends X> computable);
+
+  @ApiStatus.Internal
+  public abstract @Nullable ModalityState getCurrentProgressModality();
 }
