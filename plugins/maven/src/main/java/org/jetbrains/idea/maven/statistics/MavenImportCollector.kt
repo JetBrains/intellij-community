@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class MavenImportCollector : CounterUsagesCollector() {
   companion object {
-    val GROUP = EventLogGroup("maven.import", 6)
+    val GROUP = EventLogGroup("maven.import", 7)
 
     @JvmField
     val HAS_USER_ADDED_LIBRARY_DEP = GROUP.registerEvent("hasUserAddedLibraryDependency")
