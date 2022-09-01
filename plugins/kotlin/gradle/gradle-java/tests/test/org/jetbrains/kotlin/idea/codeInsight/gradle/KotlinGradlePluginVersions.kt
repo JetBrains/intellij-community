@@ -3,5 +3,5 @@ package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 // minimal version for cherry-pick to the kt-[213|221]-* branches
 object KotlinGradlePluginVersions {
-    val latest = "1.8.0-dev-446"
+    val latest = "1.8.0-dev-2466"
 }
