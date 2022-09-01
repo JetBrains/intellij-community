@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.code;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -529,7 +529,7 @@ public final class DeadCodeHelper {
     while (true) {
 
       boolean merged = false;
-
+      int originBlocksCount = graph.getBlocks().size();
       for (BasicBlock block : graph.getBlocks()) {
 
         InstructionSequence seq = block.getSeq();
@@ -565,8 +565,7 @@ public final class DeadCodeHelper {
           }
         }
       }
-
-      if (!merged) {
+      if (!merged || graph.getBlocks().size() == originBlocksCount) {
         break;
       }
     }
