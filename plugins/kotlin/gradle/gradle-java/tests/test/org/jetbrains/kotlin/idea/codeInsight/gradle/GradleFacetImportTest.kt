@@ -75,7 +75,7 @@ class GradleFacetImportTest : KotlinGradleImportingTestCase() {
             assertEquals(JvmPlatforms.jvm8, targetPlatform)
             assertEquals("1.7", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
             assertEquals(
-                "-Xallow-no-source-files -Xdump-declarations-to=tmp -Xsingle-module",
+                "-Xallow-no-source-files -Xdump-declarations-to=tmp",
                 compilerSettings!!.additionalArguments
             )
         }
@@ -133,7 +133,7 @@ class GradleFacetImportTest : KotlinGradleImportingTestCase() {
             assertEquals(JvmPlatforms.jvm8, targetPlatform)
             assertEquals("1.7", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
             assertEquals(
-                "-Xallow-no-source-files -Xdump-declarations-to=tmp -Xsingle-module",
+                "-Xallow-no-source-files -Xdump-declarations-to=tmp",
                 compilerSettings!!.additionalArguments
             )
         }
