@@ -18,8 +18,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.IntStack;
 import com.intellij.util.containers.Stack;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -96,9 +96,6 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.*;
 
-/**
- * @author ven
- */
 public final class PsiUtil {
   private static final Logger LOG = Logger.getInstance(PsiUtil.class);
 
@@ -346,8 +343,9 @@ public final class PsiUtil {
     return new Iterable<>() {
       @Override
       public Iterator<PsiClass> iterator() {
+        //noinspection SSBasedInspection
         return new Iterator<>() {
-          final IntStack indices = new IntStack();
+          final IntArrayList indices = new IntArrayList();
           final Stack<PsiClassType[]> superTypesStack = new Stack<>();
           final Set<PsiClass> visited = new HashSet<>();
           PsiClass current;
@@ -377,9 +375,9 @@ public final class PsiUtil {
 
             nextObtained = true;
             while (!superTypesStack.empty()) {
-              assert indices.size() > 0;
+              assert !indices.isEmpty();
 
-              int i = indices.pop();
+              int i = indices.popInt();
               PsiClassType[] superTypes = superTypesStack.peek();
               while (i < superTypes.length) {
                 PsiClass clazz = superTypes[i].resolve();
