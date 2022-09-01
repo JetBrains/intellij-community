@@ -17,83 +17,9 @@ import org.jetbrains.annotations.TestOnly
 @State(name = "SettingsSyncPlugins", storages = [Storage(FILE_SPEC)])
 internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSyncPluginManager.SyncPluginsState>, Disposable {
 
-  internal companion object {
-    fun getInstance(): SettingsSyncPluginManager = ApplicationManager.getApplication().getService(SettingsSyncPluginManager::class.java)
-
-    const val FILE_SPEC = "settingsSyncPlugins.xml"
-
-    val LOG = logger<SettingsSyncPluginManager>()
-  }
-
+  private val pluginStateListener = SettingsSyncPluginStateListener()
+  private val disabledListener = SettingsSyncDisabledPluginListener()
   private val LOCK = Object()
-
-  private val pluginStateListener = object : PluginStateListener {
-
-    override fun install(descriptor: IdeaPluginDescriptor) {
-      LOG.info("Installed plugin ${descriptor.pluginId.idString}")
-      synchronized(LOCK) {
-        sessionUninstalledPlugins.remove(descriptor.pluginId.idString)
-        if (shouldSaveState(descriptor)) {
-          savePluginState(descriptor)
-        }
-      }
-    }
-
-    override fun uninstall(descriptor: IdeaPluginDescriptor) {
-      val idString = descriptor.pluginId.idString
-      LOG.info("Uninstalled plugin ${idString}")
-      synchronized(LOCK) {
-        state.plugins[idString]?.let {
-          it.isEnabled = false
-          LOG.info("${idString} state changed to disabled.")
-        }
-        sessionUninstalledPlugins.add(idString)
-      }
-    }
-  }
-
-  private val disabledListener = Runnable {
-    val disabledIds = PluginManagerProxy.getInstance().getDisabledPluginIds()
-    val disabledIdStrings = HashSet<String>()
-    synchronized(LOCK) {
-      disabledIds.forEach {
-        LOG.info("Plugin ${it.idString} is disabled.")
-        disabledIdStrings.add(it.idString)
-        if (!state.plugins.containsKey(it.idString)) {
-          PluginManagerProxy.getInstance().findPlugin(it)?.let { descriptor ->
-            if (isPluginSyncEnabled(
-                descriptor.pluginId.idString, descriptor.isBundled, SettingsSyncPluginCategoryFinder.getPluginCategory(descriptor))) {
-              savePluginState(descriptor)
-            }
-          }
-        }
-      }
-      val droppedKeys = ArrayList<String>()
-      state.plugins.forEach { (id, pluginData) ->
-        val pluginId = PluginId.getId(id)
-        PluginManagerProxy.getInstance().findPlugin(pluginId)?.let {
-          if (disabledIdStrings.contains(id)) {
-            pluginData.isEnabled = false
-            LOG.info("${pluginId.idString} state changed to disabled")
-          }
-          else {
-            if (it.isBundled) {
-              droppedKeys.add(id)
-            }
-            else {
-              pluginData.isEnabled = true
-              LOG.info("${pluginId.idString} state changed to enabled")
-            }
-          }
-        }
-      }
-      droppedKeys.forEach {
-        state.plugins.remove(it)
-        LOG.info("Removed plugin data for ${it}")
-      }
-    }
-  }
-
   private var state = SyncPluginsState()
   private val sessionUninstalledPlugins = HashSet<String>()
 
@@ -216,11 +142,84 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
             settings.isSubcategoryEnabled(SettingsCategory.PLUGINS, idString))
   }
 
-
-  @TestOnly
-  fun getPluginStateListener() = pluginStateListener
-
   override fun dispose() {
     PluginStateManager.removeStateListener(pluginStateListener)
+  }
+
+  @TestOnly
+  internal fun getPluginStateListener(): PluginStateListener = pluginStateListener
+
+  private inner class SettingsSyncPluginStateListener : PluginStateListener {
+    override fun install(descriptor: IdeaPluginDescriptor) {
+      LOG.info("Installed plugin ${descriptor.pluginId.idString}")
+      synchronized(LOCK) {
+        sessionUninstalledPlugins.remove(descriptor.pluginId.idString)
+        if (shouldSaveState(descriptor)) {
+          savePluginState(descriptor)
+        }
+      }
+    }
+
+    override fun uninstall(descriptor: IdeaPluginDescriptor) {
+      val idString = descriptor.pluginId.idString
+      LOG.info("Uninstalled plugin ${idString}")
+      synchronized(LOCK) {
+        state.plugins[idString]?.let {
+          it.isEnabled = false
+          LOG.info("${idString} state changed to disabled.")
+        }
+        sessionUninstalledPlugins.add(idString)
+      }
+    }
+  }
+
+  private inner class SettingsSyncDisabledPluginListener : Runnable {
+    override fun run() {
+      val disabledIds = PluginManagerProxy.getInstance().getDisabledPluginIds()
+      val disabledIdStrings = HashSet<String>()
+      synchronized(LOCK) {
+        disabledIds.forEach {
+          LOG.info("Plugin ${it.idString} is disabled.")
+          disabledIdStrings.add(it.idString)
+          if (!state.plugins.containsKey(it.idString)) {
+            PluginManagerProxy.getInstance().findPlugin(it)?.let { descriptor ->
+              if (isPluginSyncEnabled(
+                  descriptor.pluginId.idString, descriptor.isBundled, SettingsSyncPluginCategoryFinder.getPluginCategory(descriptor))) {
+                savePluginState(descriptor)
+              }
+            }
+          }
+        }
+        val droppedKeys = ArrayList<String>()
+        state.plugins.forEach { (id, pluginData) ->
+          val pluginId = PluginId.getId(id)
+          PluginManagerProxy.getInstance().findPlugin(pluginId)?.let {
+            if (disabledIdStrings.contains(id)) {
+              pluginData.isEnabled = false
+              LOG.info("${pluginId.idString} state changed to disabled")
+            }
+            else {
+              if (it.isBundled) {
+                droppedKeys.add(id)
+              }
+              else {
+                pluginData.isEnabled = true
+                LOG.info("${pluginId.idString} state changed to enabled")
+              }
+            }
+          }
+        }
+        droppedKeys.forEach {
+          state.plugins.remove(it)
+          LOG.info("Removed plugin data for ${it}")
+        }
+      }
+    }
+  }
+
+  internal companion object {
+    fun getInstance(): SettingsSyncPluginManager = ApplicationManager.getApplication().getService(SettingsSyncPluginManager::class.java)
+    const val FILE_SPEC = "settingsSyncPlugins.xml"
+    private val LOG = logger<SettingsSyncPluginManager>()
   }
 }
