@@ -38,6 +38,23 @@ abstract class KotlinVersionProviderService : WizardService {
     }
 
     companion object {
+
+        @Deprecated(message = "This declaration is used in mobile-ide 213 platform, left for compatibility")
+        fun getBuildSystemPluginRepository(
+            versionKind: KotlinVersionKind,
+            devRepository: Repository
+        ): (BuildSystemType) -> Repository? =
+            when (versionKind) {
+                KotlinVersionKind.STABLE, KotlinVersionKind.EAP, KotlinVersionKind.M -> { buildSystem ->
+                    when (buildSystem) {
+                        BuildSystemType.GradleKotlinDsl, BuildSystemType.GradleGroovyDsl -> DefaultRepository.GRADLE_PLUGIN_PORTAL
+                        BuildSystemType.Maven -> DefaultRepository.MAVEN_CENTRAL
+                        BuildSystemType.Jps -> null
+                    }
+                }
+                KotlinVersionKind.DEV -> { _ -> devRepository }
+            }
+
         fun getBuildSystemPluginRepository(
             versionKind: KotlinVersionKind,
             devRepositories: List<Repository>

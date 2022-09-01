@@ -15,11 +15,24 @@ data class WizardKotlinVersion(
         version: Version,
         kind: KotlinVersionKind,
         repository: Repository,
-        buildSystemPluginRepository: (BuildSystemType) -> List<Repository>
+        buildSystemPluginRepository: (BuildSystemType) -> List<Repository>,
+        unused:Any? = null, // hack to save binary compatibility with the mobile-ide
     ) : this(
         version,
         kind,
         listOf(repository),
         buildSystemPluginRepository
+    )
+
+    @Deprecated(message = "This declaration is used in mobile-ide 213 platform, left for compatibility")
+    constructor(
+        version: Version,
+        kind: KotlinVersionKind,
+        repository: Repository,
+        buildSystemPluginRepository: (BuildSystemType) -> Repository?
+    ): this(
+        version,
+        kind, listOf(repository),
+        { listOfNotNull(buildSystemPluginRepository(it)) }
     )
 }
