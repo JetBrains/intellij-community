@@ -17,6 +17,8 @@ import org.jetbrains.kotlin.asJava.KotlinAsJavaSupportBase
 import org.jetbrains.kotlin.asJava.LightClassGenerationSupport
 import org.jetbrains.kotlin.asJava.classes.*
 import org.jetbrains.kotlin.idea.caches.lightClasses.platformMutabilityWrapper
+import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
+import org.jetbrains.kotlin.idea.caches.project.getPlatformModuleInfo
 import org.jetbrains.kotlin.idea.caches.project.*
 import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.decompiler.navigation.SourceNavigationHelper
@@ -31,7 +33,6 @@ import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtScript
-import org.jetbrains.kotlin.psi.analysisContext
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
 
 class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaModuleInfo>(project) {
@@ -87,12 +88,17 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaMod
         else -> false
     }
 
-    override fun tracker(file: KtFile): ModificationTracker =
-        if (file.isCompiled) {
-            LibraryModificationTracker.getInstance(project)
-        } else {
-            KotlinModificationTrackerService.getInstance(project).outOfBlockModificationTracker
-        }
+    override fun projectWideOutOfBlockModificationTracker(): ModificationTracker {
+        return KotlinModificationTrackerService.getInstance(project).outOfBlockModificationTracker
+    }
+
+    override fun outOfBlockModificationTracker(element: PsiElement, module: IdeaModuleInfo): ModificationTracker {
+        return KotlinModificationTrackerService.getInstance(project).outOfBlockModificationTracker
+    }
+
+    override fun librariesTracker(element: PsiElement, module: IdeaModuleInfo): ModificationTracker {
+        return LibraryModificationTracker.getInstance(project)
+    }
 
     override fun getSubPackages(fqn: FqName, scope: GlobalSearchScope): Collection<FqName> = PackageIndexUtil.getSubPackageFqNames(
         fqn,
@@ -103,35 +109,21 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaMod
         MemberScope.ALL_NAME_FILTER,
     )
 
-    private val recursiveGuard = ThreadLocal<Boolean>()
-
-    private inline fun <T> guardedRun(body: () -> T): T? {
-        if (recursiveGuard.get() == true) return null
-        return try {
-            recursiveGuard.set(true)
-            body()
-        } finally {
-            recursiveGuard.set(false)
-        }
+    override fun createInstanceOfLightClass(classOrObject: KtClassOrObject, module: IdeaModuleInfo): KtLightClass? {
+        return LightClassGenerationSupport.getInstance(project).createUltraLightClass(classOrObject)
     }
 
-    override fun getLightClass(classOrObject: KtClassOrObject): KtLightClass? {
-        if (!classOrObject.isValid) {
-            return null
-        }
+    override fun createInstanceOfDecompiledLightClass(classOrObject: KtClassOrObject, module: IdeaModuleInfo): KtLightClass? {
+        return getLightClassForDecompiledClassOrObject(classOrObject, project)
+    }
 
-        val virtualFile = classOrObject.containingFile.virtualFile
-        if (virtualFile != null) {
-            when {
-                ProjectRootsUtil.isProjectSourceFile(project, virtualFile) ->
-                    return KotlinLightClassFactory.createClass(classOrObject)
-                ProjectRootsUtil.isLibraryClassFile(project, virtualFile) ->
-                    return getLightClassForDecompiledClassOrObject(classOrObject, project)
-                ProjectRootsUtil.isLibrarySourceFile(project, virtualFile) ->
-                    return guardedRun {
-                        SourceNavigationHelper.getOriginalClass(classOrObject) as? KtLightClass
-                    }
-            }
+    override fun declarationLocation(file: KtFile, module: IdeaModuleInfo): DeclarationLocation? {
+        val virtualFile = file.virtualFile ?: return null
+        return when {
+            RootKindFilter.projectSources.matches(project, virtualFile) -> DeclarationLocation.ProjectSources
+            RootKindFilter.libraryClasses.matches(project, virtualFile) -> DeclarationLocation.LibraryClasses
+            RootKindFilter.librarySources.matches(project, virtualFile) -> DeclarationLocation.LibrarySources
+            else -> null
         }
 
         if ((classOrObject.containingFile as? KtFile)?.analysisContext != null ||
@@ -139,6 +131,7 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaMod
         ) {
             return KotlinLightClassFactory.createClass(classOrObject)
         }
+
         return null
     }
 
