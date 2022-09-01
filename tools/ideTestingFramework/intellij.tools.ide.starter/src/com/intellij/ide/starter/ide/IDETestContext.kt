@@ -67,12 +67,6 @@ data class IDETestContext(
       addSystemProperty("uiLockTempFile", paths.tempDir / fileName)
     }
 
-  fun disableJcef(): IDETestContext =
-    addVMOptionsPatch {
-      // Disable JCEF (IDEA-243147). Otherwise, tests will fail with LOG.error
-      addSystemProperty("ide.browser.jcef.enabled", false)
-    }
-
   fun disableLinuxNativeMenuForce(): IDETestContext =
     addVMOptionsPatch {
       addSystemProperty("linux.native.menu.force.disable", true)

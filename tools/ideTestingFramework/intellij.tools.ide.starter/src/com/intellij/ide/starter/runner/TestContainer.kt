@@ -90,7 +90,6 @@ interface TestContainer<T> : Closeable {
       false -> testContext
         .disableInstantIdeShutdown()
         .disableFusSendingOnIdeClose()
-        .disableJcef()
         .disableLinuxNativeMenuForce()
         .withGtk2OnLinux()
         .disableGitLogIndexing()
