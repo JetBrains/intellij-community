@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+import errno
 import logging
 import os
 import shutil
@@ -16,10 +17,12 @@ if six.PY2:
     from io import open
 
 _test_root = os.path.dirname(os.path.abspath(__file__))
+_helpers_root = os.path.dirname(_test_root)
 _test_data_root = os.path.join(_test_root, 'data')
 _override_test_data = False
 
 
+# noinspection PyMethodMayBeStatic
 class HelpersTestCase(unittest.TestCase):
     longMessage = True
     maxDiff = None
@@ -121,8 +124,7 @@ class HelpersTestCase(unittest.TestCase):
                                                   'Different content at {!r}'.format(actual_child))
                 except AssertionError:
                     if _override_test_data:
-                        with open(expected_child, 'w') as f:
-                            f.write(actual_text)
+                        self._dump_file(expected_child, actual_text)
                     raise
             else:
                 raise AssertionError('%r != %r' % (actual_child, expected_child))
@@ -132,6 +134,27 @@ class HelpersTestCase(unittest.TestCase):
             content = f.read()
             self.assertTrue(content and not content.isspace(),
                             "File {!r} is empty or contains only whitespaces".format(path))
+
+    def assertEqualsToFileContent(self, actual_text, expected_path):
+        try:
+            with open(expected_path) as f:
+                expected = f.read()
+        except IOError as e:
+            if e.errno == errno.ENOENT:
+                self._dump_file(expected_path, actual_text)
+            raise AssertionError("File {} doesn't exist".format(expected_path))
+
+        try:
+            self.assertMultiLineEqual(actual_text.strip(), expected.strip())
+        except AssertionError:
+            if _override_test_data:
+                self._dump_file(expected_path, actual_text)
+            raise
+
+    def _dump_file(self, path, text):
+        self.log.warning("Creating new file {}".format(path))
+        with open(path, 'w') as f:
+            f.write(text)
 
     @contextmanager
     def comparing_dirs(self, subdir='', tmp_subdir=''):
