@@ -5,12 +5,13 @@ package org.jetbrains.intellij.build.tasks
 
 import com.intellij.diagnostic.telemetry.use
 import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.context.Context
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.intellij.build.io.*
 import org.jetbrains.intellij.build.tracer
 import java.nio.file.Path
 import java.nio.file.PathMatcher
-import java.util.concurrent.ForkJoinTask
 import java.util.function.IntConsumer
 import java.util.zip.Deflater
 
@@ -83,39 +84,36 @@ fun createZipSource(file: Path, sizeConsumer: IntConsumer?): ZipSource {
   return ZipSource(file = file, sizeConsumer = sizeConsumer)
 }
 
-fun buildJars(descriptors: List<Triple<Path, String, List<Source>>>, dryRun: Boolean) {
+suspend fun buildJars(descriptors: List<Triple<Path, String, List<Source>>>, dryRun: Boolean) {
   val uniqueFiles = HashMap<Path, List<Source>>()
   for (descriptor in descriptors) {
     val existing = uniqueFiles.putIfAbsent(descriptor.first, descriptor.third)
-    if (existing != null) {
-      throw IllegalStateException(
-        "File ${descriptor.first} is already associated." +
-        "\nPrevious:\n  ${existing.joinToString(separator = "\n  ")}" +
-        "\nCurrent:\n  ${descriptor.third.joinToString(separator = "\n  ")}"
-      )
+    check(existing == null) {
+      "File ${descriptor.first} is already associated." +
+      "\nPrevious:\n  ${existing!!.joinToString(separator = "\n  ")}" +
+      "\nCurrent:\n  ${descriptor.third.joinToString(separator = "\n  ")}"
     }
   }
 
-  val traceContext = Context.current()
+  coroutineScope {
+    for (item in descriptors) {
+      launch(Dispatchers.IO) {
+        val file = item.first
+        tracer.spanBuilder("build jar")
+          .setAttribute(DO_NOT_EXPORT_TO_CONSOLE, true)
+          .setAttribute("jar", file.toString())
+          .setAttribute(AttributeKey.stringArrayKey("sources"), item.third.map { item.toString() })
+          .use {
+            buildJar(file, item.third, dryRun = dryRun)
+          }
 
-  ForkJoinTask.invokeAll(descriptors.map { item ->
-    ForkJoinTask.adapt {
-      val file = item.first
-      tracer.spanBuilder("build jar")
-        .setParent(traceContext)
-        .setAttribute(DO_NOT_EXPORT_TO_CONSOLE, true)
-        .setAttribute("jar", file.toString())
-        .setAttribute(AttributeKey.stringArrayKey("sources"), item.third.map { item.toString() })
-        .use {
-          buildJar(file, item.third, dryRun = dryRun)
+        // app.jar is combined later with other JARs and then re-ordered
+        if (!dryRun && item.second.isNotEmpty() && item.second != "lib/app.jar") {
+          reorderJar(relativePath = item.second, file = file)
         }
-
-      // app.jar is combined later with other JARs and then re-ordered
-      if (!dryRun && item.second.isNotEmpty() && item.second != "lib/app.jar") {
-        reorderJar(relativePath = item.second, file = file, traceContext = traceContext)
       }
     }
-  })
+  }
 }
 
 @JvmOverloads

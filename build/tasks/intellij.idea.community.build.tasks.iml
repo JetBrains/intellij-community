@@ -43,7 +43,6 @@
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="ASM" level="project" />
     <orderEntry type="library" name="opentelemetry" level="project" />
-    <orderEntry type="library" name="blockmap" level="project" />
     <orderEntry type="library" name="jackson-jr-objects" level="project" />
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="SSHJ" level="project" />
@@ -64,5 +63,6 @@
     <orderEntry type="library" name="kotlinx-collections-immutable-jvm" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.rt" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
+    <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
   </component>
 </module>

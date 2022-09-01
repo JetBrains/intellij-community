@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import com.intellij.diagnostic.telemetry.useWithScope
+import com.intellij.diagnostic.telemetry.useWithScope2
 import io.opentelemetry.api.trace.SpanBuilder
 import kotlinx.collections.immutable.PersistentList
 import org.jetbrains.jps.model.module.JpsModule
@@ -85,13 +85,12 @@ interface BuildContext: CompilationContext {
   fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path): BuildContext
 }
 
-inline fun BuildContext.executeStep(spanBuilder: SpanBuilder, stepId: String, step: () -> Unit) {
-  if (options.buildStepsToSkip.contains(stepId)) {
+suspend inline fun BuildContext.executeStep(spanBuilder: SpanBuilder, stepId: String, crossinline step: suspend () -> Unit) {
+  if (isStepSkipped(stepId)) {
     spanBuilder.startSpan().addEvent("skip").end()
   }
   else {
-    // we cannot flush tracing after "throw e" as we have to end the current span before that
-    spanBuilder.useWithScope { step() }
+    spanBuilder.useWithScope2 { step() }
   }
 }
 

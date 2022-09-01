@@ -1,6 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.impl.JarPackager
 import org.jetbrains.intellij.build.impl.LibraryPackMode
@@ -15,7 +18,7 @@ import java.util.*
 /**
  * Creates JARs containing classes required to run the external build for IDEA project without IDE.
  */
-fun buildCommunityStandaloneJpsBuilder(targetDir: Path, context: BuildContext) {
+suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path, context: BuildContext) {
   val layout = BaseLayout()
 
   listOf(
@@ -82,12 +85,12 @@ fun buildCommunityStandaloneJpsBuilder(targetDir: Path, context: BuildContext) {
 
   layout.withModule("intellij.space.java.jps", "space-java-jps.jar")
 
-  listOf(
+  for (it in listOf(
     "jna", "OroMatcher", "ASM", "NanoXML", "protobuf", "cli-parser", "Log4J", "jgoodies-forms", "Eclipse",
     "netty-codec-http", "lz4-java", "commons-codec", "commons-logging", "http-client", "Slf4j", "Guava", "plexus-utils",
     "jetbrains-annotations-java5", "gson", "jps-javac-extension", "fastutil-min", "kotlin-stdlib-jdk8",
     "commons-lang3", "maven-resolver-provider", "netty-buffer", "aalto-xml"
-  ).forEach {
+  )) {
     layout.withProjectLibrary(it, LibraryPackMode.STANDALONE_MERGED)
   }
 
@@ -99,27 +102,34 @@ fun buildCommunityStandaloneJpsBuilder(targetDir: Path, context: BuildContext) {
   }
   val buildNumber = context.fullBuildNumber
 
-  Files.createDirectories(targetDir)
-  val tempDir = Files.createTempDirectory(targetDir, "jps-standalone-community-")
+  val tempDir = withContext(Dispatchers.IO) {
+    Files.createDirectories(targetDir)
+    Files.createTempDirectory(targetDir, "jps-standalone-community-")
+  }
   try {
     JarPackager.pack(actualModuleJars = actualModuleJars,
                      outputDir = tempDir,
                      context = context,
                      layout = layout)
 
-    buildJar(tempDir.resolve("jps-build-test-$buildNumber.jar"), listOf(
-      "intellij.platform.jps.build",
-      "intellij.platform.jps.model.tests",
-      "intellij.platform.jps.model.serialization.tests"
-    ).map { moduleName ->
-      DirSource(context.getModuleOutputDir(context.findRequiredModule(moduleName)))
-    })
+    withContext(Dispatchers.IO) {
+      buildJar(tempDir.resolve("jps-build-test-$buildNumber.jar"), listOf(
+        "intellij.platform.jps.build",
+        "intellij.platform.jps.model.tests",
+        "intellij.platform.jps.model.serialization.tests"
+      ).map { moduleName ->
+        DirSource(context.getModuleOutputDir(context.findRequiredModule(moduleName)))
+      })
 
-    zip(targetDir.resolve("standalone-jps-$buildNumber.zip"), mapOf(tempDir to ""), compress = true)
+
+      zip(targetDir.resolve("standalone-jps-$buildNumber.zip"), mapOf(tempDir to ""), compress = true)
+    }
 
     context.notifyArtifactWasBuilt(targetDir)
   }
   finally {
-    deleteDir(tempDir)
+    withContext(Dispatchers.IO + NonCancellable) {
+      deleteDir(tempDir)
+    }
   }
 }

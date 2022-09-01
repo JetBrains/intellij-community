@@ -247,7 +247,7 @@ abstract class ProductProperties {
   /**
    * Override this method to copy additional files to distributions of all operating systems.
    */
-  open fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
+  open suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
   }
 
   /**

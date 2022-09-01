@@ -6,13 +6,7 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 
 open class PyCharmWindowsDistributionCustomizer : WindowsDistributionCustomizer() {
-  override suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
-    super.copyAdditionalFiles(context, targetDirectory)
-
-    copyAdditionalFilesBlocking(context, targetDirectory)
-  }
-
-  open fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: String) {
+  override fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: String) {
     PyCharmBuildUtils.copySkeletons(context, targetDirectory, "skeletons-win*.zip")
   }
 

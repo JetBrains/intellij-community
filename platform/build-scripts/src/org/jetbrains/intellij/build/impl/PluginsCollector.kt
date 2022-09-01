@@ -192,11 +192,8 @@ private class SourcesBasedXIncludeResolver(
 ) : JDOMXIncluder.PathResolver {
   override fun resolvePath(relativePath: String, base: URL?): URL {
     var result: URL? = null
-    for (moduleName in pluginLayout.getIncludedModuleNames()) {
-      val path = context.findFileInModuleSources(moduleName, relativePath)
-      if (path != null) {
-        result = path.toUri().toURL()
-      }
+    for (moduleName in pluginLayout.includedModuleNames) {
+      result = (context.findFileInModuleSources(moduleName, relativePath) ?: continue).toUri().toURL()
     }
     if (result == null) {
       result = if (base == null) URL(relativePath) else URL(base, relativePath)
@@ -214,7 +211,7 @@ private object JDOMXIncluder {
   fun resolveNonXIncludeElement(original: Element,
                                 base: Path,
                                 pathResolver: PathResolver) {
-    LOG.assertTrue(!isIncludeElement(original))
+    check(!isIncludeElement(original))
     val bases = ArrayDeque<URL>()
     bases.push(base.toUri().toURL())
     doResolveNonXIncludeElement(original, bases, pathResolver)

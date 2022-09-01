@@ -3,7 +3,6 @@ package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import java.nio.file.Path
-import java.nio.file.Paths
 
 abstract class WindowsDistributionCustomizer {
   /**
@@ -77,8 +76,13 @@ abstract class WindowsDistributionCustomizer {
    * @param targetDirectory contents of this directory will be packed into zip archive and exe installer, so when the product is installed
    * it'll be placed under its root directory.
    */
-  open fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
-    RepairUtilityBuilder.bundle(context, OsFamily.WINDOWS, JvmArchitecture.x64, Paths.get(targetDirectory))
+  open suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
+    RepairUtilityBuilder.bundle(context, OsFamily.WINDOWS, JvmArchitecture.x64, Path.of(targetDirectory))
+
+    copyAdditionalFilesBlocking(context, targetDirectory)
+  }
+
+  open fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: String) {
   }
 
   /**

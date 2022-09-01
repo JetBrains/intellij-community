@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.containers.MultiMap
 import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
@@ -29,7 +30,7 @@ class PluginLayout(val mainModule: String): BaseLayout() {
   var directoryNameSetExplicitly: Boolean = false
   @JvmField
   internal var bundlingRestrictions: PluginBundlingRestrictions = PluginBundlingRestrictions.NONE
-  val pathsToScramble: MutableList<String> = mutableListOf()
+  var pathsToScramble: PersistentList<String> = persistentListOf()
   val scrambleClasspathPlugins: MutableList<Pair<String /*plugin name*/, String /*relative path*/>> = mutableListOf()
   var scrambleClasspathFilter: BiPredicate<BuildContext, Path> = BiPredicate { _, _ -> true }
 
@@ -70,7 +71,7 @@ class PluginLayout(val mainModule: String): BaseLayout() {
       val spec = PluginLayoutSpec(layout)
       body.accept(spec)
       layout.directoryName = spec.directoryName
-      if (!layout.getIncludedModuleNames().contains(mainModuleName)) {
+      if (!layout.includedModuleNames.contains(mainModuleName)) {
         layout.withModule(mainModuleName, layout.mainJarName)
       }
       if (spec.mainJarNameSetExplicitly) {
@@ -325,7 +326,7 @@ class PluginLayout(val mainModule: String): BaseLayout() {
      * @param relativePath - a path to a jar file relative to plugin root directory
      */
     fun scramble(relativePath: String) {
-      layout.pathsToScramble.add(relativePath)
+      layout.pathsToScramble = layout.pathsToScramble.add(relativePath)
     }
 
     /**

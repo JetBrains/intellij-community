@@ -3,23 +3,13 @@
 
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.diagnostic.telemetry.createTask
-import com.intellij.diagnostic.telemetry.use
 import com.intellij.diagnostic.telemetry.useWithScope
+import com.intellij.diagnostic.telemetry.useWithScope2
 import com.intellij.util.JavaModuleOptions
-import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.system.OS
 import com.intellij.util.xml.dom.readXmlAsModel
-import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
-import io.opentelemetry.api.trace.StatusCode
-import io.opentelemetry.context.Context
-import io.opentelemetry.extension.kotlin.asContextElement
-import io.opentelemetry.semconv.trace.attributes.SemanticAttributes
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildScriptsLoggedError
 import org.jetbrains.intellij.build.CompilationContext
@@ -33,7 +23,6 @@ import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
-import java.util.concurrent.ForkJoinTask
 import java.util.concurrent.TimeUnit
 import java.util.function.Predicate
 import kotlin.io.path.copyTo
@@ -46,42 +35,17 @@ internal fun span(spanBuilder: SpanBuilder, task: Runnable) {
   }
 }
 
-inline fun createSkippableTask(spanBuilder: SpanBuilder,
-                               taskId: String,
-                               context: BuildContext,
-                               crossinline task: () -> Unit): ForkJoinTask<*>? {
-  if (context.options.buildStepsToSkip.contains(taskId)) {
-    val span = spanBuilder.startSpan()
-    span.addEvent("skip")
-    span.end()
-    return null
-  }
-  else {
-    return createTask(spanBuilder) { task() }
-  }
-}
-
 inline fun CoroutineScope.createSkippableJob(spanBuilder: SpanBuilder,
                                              taskId: String,
                                              context: BuildContext,
                                              crossinline task: suspend () -> Unit): Job? {
-  if (context.options.buildStepsToSkip.contains(taskId)) {
-    val span = spanBuilder.startSpan()
-    span.addEvent("skip")
-    span.end()
+  if (context.isStepSkipped(taskId)) {
+    spanBuilder.startSpan().addEvent("skip").end()
     return null
   }
-
-  val traceContext = Context.current()
-  return launch {
-    val thread = Thread.currentThread()
-    val span = spanBuilder
-      .setParent(traceContext)
-      .setAttribute(SemanticAttributes.THREAD_NAME, thread.name)
-      .setAttribute(SemanticAttributes.THREAD_ID, thread.id)
-      .startSpan()
-    withContext(traceContext.with(span).asContextElement()) {
-      span.use {
+  else {
+    return launch {
+      spanBuilder.useWithScope2 {
         task()
       }
     }
@@ -113,9 +77,9 @@ fun zipWithPrefixes(context: CompilationContext, targetFile: Path, map: Map<Path
 @JvmOverloads
 fun runJava(context: CompilationContext,
             mainClass: String,
-            args: Iterable<String>,
-            jvmArgs: Iterable<String>,
-            classPath: Iterable<String>,
+            args: List<String>,
+            jvmArgs: List<String>,
+            classPath: List<String>,
             timeoutMillis: Long = DEFAULT_TIMEOUT,
             workingDir: Path? = null,
             onError: (() -> Unit)? = null) {
@@ -128,47 +92,6 @@ fun runJava(context: CompilationContext,
           timeoutMillis = timeoutMillis,
           workingDir = workingDir,
           onError = onError)
-}
-
-/**
- * Forks all tasks in the specified collection, returning when
- * `isDone` holds for each task or an (unchecked) exception is encountered, in which case the exception is rethrown.
- * If more than one task encounters an exception, then this method throws a compound exception.
- * If any task encounters an exception, others will be not cancelled.
- *
- * It is typically used when you have multiple asynchronous tasks that are not dependent on one another to complete successfully,
- * or you'd always like to know the result of each promise.
- *
- * This way, we can get valid artifacts for one OS if building artifacts for another OS failed.
- */
-internal fun invokeAllSettled(tasks: List<ForkJoinTask<*>>) {
-  for (task in tasks) {
-    task.fork()
-  }
-  joinAllSettled(tasks)
-}
-
-private fun joinAllSettled(tasks: List<ForkJoinTask<*>>) {
-  if (tasks.isEmpty()) {
-    return
-  }
-
-  val errors = ArrayList<Throwable>()
-  for (task in tasks.asReversed()) {
-    try {
-      task.join()
-    }
-    catch (e: Throwable) {
-      errors.add(e)
-    }
-  }
-  if (!errors.isEmpty()) {
-    val error = if (errors.size == 1) errors[0] else CompoundRuntimeException(errors)
-    val span = Span.current()
-    span.recordException(error)
-    span.setStatus(StatusCode.ERROR)
-    throw error
-  }
 }
 
 fun runApplicationStarter(context: BuildContext,
@@ -210,7 +133,12 @@ fun runApplicationStarter(context: BuildContext,
     }
   }
   disableCompatibleIgnoredPlugins(context, tempDir.resolve("config"), additionalPluginIds)
-  runJava(context, "com.intellij.idea.Main", arguments, jvmArgs, effectiveIdeClasspath, timeoutMillis) {
+  runJava(context = context,
+          mainClass = "com.intellij.idea.Main",
+          args = arguments,
+          jvmArgs = jvmArgs,
+          classPath = effectiveIdeClasspath.toList(),
+          timeoutMillis = timeoutMillis) {
     val logFile = systemDir.resolve("log").resolve("idea.log")
     if (Files.exists(logFile)) {
       val logFileToPublish = File.createTempFile("idea-", ".log")

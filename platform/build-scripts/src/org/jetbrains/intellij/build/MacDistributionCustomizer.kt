@@ -5,6 +5,7 @@ import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Predicate
 
 abstract class MacDistributionCustomizer {
@@ -82,7 +83,19 @@ abstract class MacDistributionCustomizer {
   /**
    * Relative paths to files in macOS distribution which should take 'executable' permissions
    */
-  var extraExecutables: MutableList<String> = mutableListOf()
+  private var extraExecutablesRef = AtomicReference<PersistentList<String>>(persistentListOf())
+
+  // use setter only if you configure build context first time
+  var extraExecutables: PersistentList<String>
+    get() = extraExecutablesRef.get()
+    set(value) {
+      extraExecutablesRef.set(value)
+    }
+
+  // thread-safe
+  fun addExtraExecutable(path: String) {
+    extraExecutablesRef.updateAndGet { it.add(path) }
+  }
 
   /**
    * Filter for files that is going to be put to `<distribution>/bin` directory.
@@ -124,6 +137,10 @@ abstract class MacDistributionCustomizer {
    * @param targetDirectory application bundle directory
    */
   open fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
+    copyAdditionalFilesBlocking(context, targetDirectory)
+  }
+
+  protected open fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: String) {
   }
 
   /**
@@ -136,7 +153,11 @@ abstract class MacDistributionCustomizer {
    * @param targetDirectory application bundle directory
    * @param arch distribution target architecture, not null
    */
-  open fun copyAdditionalFiles(context: BuildContext, targetDirectory: Path, arch: JvmArchitecture) {
+  open suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: Path, arch: JvmArchitecture) {
     RepairUtilityBuilder.bundle(context, OsFamily.MACOS, arch, targetDirectory)
+    copyAdditionalFilesBlocking(context, targetDirectory, arch)
+  }
+
+  protected open fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: Path, arch: JvmArchitecture) {
   }
 }

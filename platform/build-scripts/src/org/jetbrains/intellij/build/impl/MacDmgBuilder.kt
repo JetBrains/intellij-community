@@ -5,6 +5,9 @@ import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.productInfo.validateProductJson
@@ -19,18 +22,20 @@ import java.nio.file.attribute.PosixFilePermissions
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.exists
 
-internal val BuildContext.publishSitArchive get() = !options.buildStepsToSkip.contains(BuildOptions.MAC_SIT_PUBLICATION_STEP)
+internal val BuildContext.publishSitArchive: Boolean
+  get() = !options.buildStepsToSkip.contains(BuildOptions.MAC_SIT_PUBLICATION_STEP)
 
-internal fun MacDistributionBuilder.signAndBuildDmg(builtinModule: BuiltinModulesFileData?,
-                                                    context: BuildContext,
-                                                    customizer: MacDistributionCustomizer,
-                                                    macHostProperties: MacHostProperties?,
-                                                    macZip: Path,
-                                                    isRuntimeBundled: Boolean,
-                                                    suffix: String,
-                                                    arch: JvmArchitecture,
-                                                    notarize: Boolean) {
-  require(macZip.exists()) {
+internal suspend fun signAndBuildDmg(builder: MacDistributionBuilder,
+                                     builtinModule: BuiltinModulesFileData?,
+                                     context: BuildContext,
+                                     customizer: MacDistributionCustomizer,
+                                     macHostProperties: MacHostProperties?,
+                                     macZip: Path,
+                                     isRuntimeBundled: Boolean,
+                                     suffix: String,
+                                     arch: JvmArchitecture,
+                                     notarize: Boolean) {
+  check(macZip.exists()) {
     "Missing $macZip"
   }
   var javaExePath: String? = null
@@ -68,24 +73,28 @@ internal fun MacDistributionBuilder.signAndBuildDmg(builtinModule: BuiltinModule
     buildAndSignWithMacBuilderHost(sitFile, macHostProperties, notarize, customizer, context)
   }
 
-  require(Files.exists(sitFile)) {
+  check(Files.exists(sitFile)) {
     "$sitFile wasn't created"
   }
-  checkExecutablePermissions(sitFile, zipRoot, isRuntimeBundled)
+  builder.checkExecutablePermissions(sitFile, zipRoot, isRuntimeBundled)
   if (isRuntimeBundled) {
     generateIntegrityManifest(sitFile, zipRoot, context, arch)
   }
 }
 
-private fun generateIntegrityManifest(sitFile: Path, sitRoot: String, context: BuildContext, arch: JvmArchitecture) {
+private suspend fun generateIntegrityManifest(sitFile: Path, sitRoot: String, context: BuildContext, arch: JvmArchitecture) {
   if (!context.options.buildStepsToSkip.contains(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
     val tempSit = Files.createTempDirectory(context.paths.tempDir, "sit-")
     try {
-      runProcess(args = listOf("7z", "x", "-bd", sitFile.toString()), workingDir = tempSit, logger = context.messages)
+      withContext(Dispatchers.IO) {
+        runProcess(args = listOf("7z", "x", "-bd", sitFile.toString()), workingDir = tempSit, logger = context.messages)
+      }
       RepairUtilityBuilder.generateManifest(context, tempSit.resolve(sitRoot), OsFamily.MACOS, arch)
     }
     finally {
-      NioFiles.deleteRecursively(tempSit)
+      withContext(Dispatchers.IO + NonCancellable) {
+        NioFiles.deleteRecursively(tempSit)
+      }
     }
   }
 }

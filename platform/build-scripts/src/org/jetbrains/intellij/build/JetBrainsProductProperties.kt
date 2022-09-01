@@ -19,4 +19,11 @@ abstract class JetBrainsProductProperties : ProductProperties() {
       }
     }
   }
+
+  override suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
+    copyAdditionalFilesBlocking(context, targetDirectory)
+  }
+
+  open fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: String) {
+  }
 }

@@ -98,12 +98,12 @@ class JarPackager private constructor(private val context: BuildContext) {
       return PathUtilRt.getFileName(roots.first().url.removeSuffix(URLUtil.JAR_SEPARATOR))
     }
 
-    fun pack(actualModuleJars: Map<String, List<String>>,
-             outputDir: Path,
-             layout: BaseLayout = BaseLayout(),
-             moduleOutputPatcher: ModuleOutputPatcher = ModuleOutputPatcher(),
-             dryRun: Boolean = false,
-             context: BuildContext): Collection<DistributionFileEntry> {
+    suspend fun pack(actualModuleJars: Map<String, List<String>>,
+                     outputDir: Path,
+                     layout: BaseLayout = BaseLayout(),
+                     moduleOutputPatcher: ModuleOutputPatcher = ModuleOutputPatcher(),
+                     dryRun: Boolean = false,
+                     context: BuildContext): Collection<DistributionFileEntry> {
       val copiedFiles = HashMap<Path, CopiedFor>()
       val packager = JarPackager(context)
       for (data in layout.includedModuleLibraries) {

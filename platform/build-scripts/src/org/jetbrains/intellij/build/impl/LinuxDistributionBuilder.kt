@@ -2,10 +2,13 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.diagnostic.telemetry.useWithScope
+import com.intellij.diagnostic.telemetry.useWithScope2
 import com.intellij.openapi.util.io.NioFiles
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.BundledRuntimeImpl.Companion.getProductPrefix
@@ -29,38 +32,40 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     iconPngPath = if (iconPng.isNullOrEmpty()) null else Path.of(iconPng)
   }
 
-  override fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture) {
-    spanBuilder("copy files for os distribution").setAttribute("os", targetOs.osName).setAttribute("arch", arch.name).useWithScope {
-      val distBinDir = targetPath.resolve("bin")
-      val sourceBinDir = context.paths.communityHomeDir.communityRoot.resolve("bin/linux")
-      copyFileToDir(sourceBinDir.resolve("restart.py"), distBinDir)
-      if (arch == JvmArchitecture.x64 || arch == JvmArchitecture.aarch64) {
-        @Suppress("SpellCheckingInspection")
-        listOf("fsnotifier", "libdbm.so").forEach {
-          copyFileToDir(sourceBinDir.resolve("${arch.dirName}/${it}"), distBinDir)
+  override suspend fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture) {
+    spanBuilder("copy files for os distribution").setAttribute("os", targetOs.osName).setAttribute("arch", arch.name).useWithScope2 {
+      withContext(Dispatchers.IO) {
+        val distBinDir = targetPath.resolve("bin")
+        val sourceBinDir = context.paths.communityHomeDir.communityRoot.resolve("bin/linux")
+        copyFileToDir(sourceBinDir.resolve("restart.py"), distBinDir)
+        if (arch == JvmArchitecture.x64 || arch == JvmArchitecture.aarch64) {
+          @Suppress("SpellCheckingInspection")
+          listOf("fsnotifier", "libdbm.so").forEach {
+            copyFileToDir(sourceBinDir.resolve("${arch.dirName}/${it}"), distBinDir)
+          }
         }
+        unpackPty4jNative(context, targetPath, "linux")
+        generateBuildTxt(context, targetPath)
+        copyDistFiles(context, targetPath)
+        val extraJarNames = addDbusJava(context, targetPath.resolve("lib"))
+        Files.copy(ideaProperties!!, distBinDir.resolve(ideaProperties.fileName), StandardCopyOption.REPLACE_EXISTING)
+        //todo[nik] converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;
+        // for real installers we need to checkout all text files with 'lf' separators anyway
+        convertLineSeparators(targetPath.resolve("bin/idea.properties"), "\n")
+        if (iconPngPath != null) {
+          Files.copy(iconPngPath, distBinDir.resolve("${context.productProperties.baseFileName}.png"), StandardCopyOption.REPLACE_EXISTING)
+        }
+        generateVMOptions(distBinDir)
+        generateUnixScripts(context, extraJarNames, distBinDir, OsFamily.LINUX)
+        generateReadme(targetPath)
+        generateVersionMarker(targetPath, context)
+        RepairUtilityBuilder.bundle(context, OsFamily.LINUX, arch, targetPath)
+        customizer.copyAdditionalFiles(context = context, targetDir = targetPath, arch = arch)
       }
-      unpackPty4jNative(context, targetPath, "linux")
-      generateBuildTxt(context, targetPath)
-      copyDistFiles(context, targetPath)
-      val extraJarNames = addDbusJava(context, targetPath.resolve("lib"))
-      Files.copy(ideaProperties!!, distBinDir.resolve(ideaProperties.fileName), StandardCopyOption.REPLACE_EXISTING)
-      //todo[nik] converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;
-      // for real installers we need to checkout all text files with 'lf' separators anyway
-      convertLineSeparators(targetPath.resolve("bin/idea.properties"), "\n")
-      if (iconPngPath != null) {
-        Files.copy(iconPngPath, distBinDir.resolve("${context.productProperties.baseFileName}.png"), StandardCopyOption.REPLACE_EXISTING)
-      }
-      generateVMOptions(distBinDir)
-      generateUnixScripts(context, extraJarNames, distBinDir, OsFamily.LINUX)
-      generateReadme(targetPath)
-      generateVersionMarker(targetPath, context)
-      RepairUtilityBuilder.bundle(context, OsFamily.LINUX, arch, targetPath)
-      customizer.copyAdditionalFiles(context = context, targetDir = targetPath, arch = arch)
     }
   }
 
-  override fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture) {
+  override suspend fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture) {
     copyFilesForOsDistribution(osAndArchSpecificDistPath, arch)
     val suffix = if (arch == JvmArchitecture.x64) "" else "-${arch.fileSuffix}"
     context.executeStep(spanBuilder("build linux .tar.gz").setAttribute("arch", arch.name), BuildOptions.LINUX_ARTIFACTS_STEP) {

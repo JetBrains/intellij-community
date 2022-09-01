@@ -148,7 +148,7 @@ class ProductModulesLayout {
     result.addAll(enabledPluginModules)
     pluginLayouts.asSequence()
       .filter { enabledPluginModules.contains(it.mainModule) }
-      .flatMapTo(result) { it.getIncludedModuleNames() }
+      .flatMapTo(result) { it.includedModuleNames }
     return result
   }
 

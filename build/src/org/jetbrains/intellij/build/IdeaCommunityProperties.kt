@@ -70,7 +70,7 @@ open class IdeaCommunityProperties(private val communityHome: BuildDependenciesC
     versionCheckerConfig = CE_CLASS_VERSIONS
   }
 
-  override fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
+  override suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
     super.copyAdditionalFiles(context, targetDirectory)
     FileSet(context.paths.communityHomeDir.communityRoot)
       .include("LICENSE.txt")

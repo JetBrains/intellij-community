@@ -45,8 +45,8 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
   }
 
   @Override
-  void copyAdditionalFiles(BuildContext context, String targetDirectory) {
-    super.copyAdditionalFiles(context, targetDirectory)
+  void copyAdditionalFilesBlocking(BuildContext context, String targetDirectory) {
+    super.copyAdditionalFilesBlocking(context, targetDirectory)
 
     new FileSet(context.paths.communityHomeDir.communityRoot)
       .include("LICENSE.txt")

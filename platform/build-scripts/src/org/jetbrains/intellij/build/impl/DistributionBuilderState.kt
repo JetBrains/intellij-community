@@ -31,12 +31,12 @@ class DistributionBuilderState(pluginsToPublish: Set<PluginLayout>, private val 
   }
 
   val platformModules: Collection<String>
-    get() = platform.getIncludedModuleNames() + getToolModules()
+    get() = platform.includedModuleNames + getToolModules()
 
   fun getModulesForPluginsToPublish(): Set<String> {
     val result = LinkedHashSet<String>()
     result.addAll(platformModules)
-    pluginsToPublish.flatMapTo(result) { it.getIncludedModuleNames() }
+    pluginsToPublish.flatMapTo(result) { it.includedModuleNames }
     return result
   }
 
@@ -101,7 +101,7 @@ private fun computeProjectLibsUsedByPlugins(enabledPluginModules: Set<String>, c
 
   for (plugin in getPluginsByModules(enabledPluginModules, context)) {
     val libsToUnpack = plugin.projectLibrariesToUnpack.values()
-    for (moduleName in plugin.getIncludedModuleNames()) {
+    for (moduleName in plugin.includedModuleNames) {
       val dependencies = JpsJavaExtensionService.dependencies(context.findRequiredModule(moduleName))
       dependencies.includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).processLibraries(com.intellij.util.Consumer {library ->
         if (!isProjectLibraryUsedByPlugin(library, plugin, libsToUnpack)) {

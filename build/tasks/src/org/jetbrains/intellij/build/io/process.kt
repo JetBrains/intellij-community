@@ -22,8 +22,8 @@ import java.util.concurrent.atomic.AtomicReference
  */
 fun runJava(mainClass: String,
             args: Iterable<String>,
-            jvmArgs: Iterable<String>,
-            classPath: Iterable<String>,
+            jvmArgs: List<String> = emptyList(),
+            classPath: List<String>,
             javaExe: Path,
             logger: Logger = System.getLogger(mainClass),
             timeoutMillis: Long = Timeout.DEFAULT,
@@ -87,29 +87,30 @@ fun runJava(mainClass: String,
     }
 }
 
-internal fun runJavaWithOutputToFile(mainClass: String,
-                                     args: Iterable<String>,
-                                     jvmArgs: Iterable<String>,
-                                     classPath: Iterable<String>,
-                                     javaExe: Path,
-                                     timeoutMillis: Long = Timeout.DEFAULT,
-                                     outputFile: Path,
-                                     workingDir: Path? = null) {
+fun runJavaWithOutputToFile(mainClass: String,
+                            args: List<String>,
+                            jvmArgs: List<String>,
+                            classPath: List<String>,
+                            javaExe: Path,
+                            timeoutMillis: Long = Timeout.DEFAULT,
+                            outputFile: Path,
+                            workingDir: Path? = null) {
   Files.createDirectories(outputFile.parent)
 
   val timeout = Timeout(timeoutMillis)
   val classpathFile = Files.createTempFile("classpath-", ".txt")
   tracer.spanBuilder("runJava")
     .setAttribute("mainClass", mainClass)
-    .setAttribute(AttributeKey.stringArrayKey("args"), args.toList())
-    .setAttribute(AttributeKey.stringArrayKey("jvmArgs"), jvmArgs.toList())
+    .setAttribute(AttributeKey.stringArrayKey("args"), args)
+    .setAttribute(AttributeKey.stringArrayKey("jvmArgs"), jvmArgs)
     .setAttribute("outputFile", outputFile.toString())
     .setAttribute("workingDir", workingDir?.toString() ?: "")
     .setAttribute("timeoutMillis", timeoutMillis)
     .use { span ->
       try {
         createClassPathFile(classPath, classpathFile)
-        val processArgs = createProcessArgs(javaExe = javaExe, jvmArgs = jvmArgs, classpathFile = classpathFile, mainClass = mainClass, args = args)
+        val processArgs = createProcessArgs(javaExe = javaExe, jvmArgs = jvmArgs, classpathFile = classpathFile, mainClass = mainClass,
+                                            args = args)
         span.setAttribute(AttributeKey.stringArrayKey("processArgs"), processArgs)
         val process = ProcessBuilder(processArgs)
           .directory(workingDir?.toFile())
@@ -161,7 +162,7 @@ private fun createProcessArgs(javaExe: Path,
   return processArgs
 }
 
-private fun createClassPathFile(classPath: Iterable<String>, classpathFile: Path): StringBuilder {
+private fun createClassPathFile(classPath: List<String>, classpathFile: Path): StringBuilder {
   val classPathStringBuilder = StringBuilder()
   classPathStringBuilder.append("-classpath").append('\n')
   for (s in classPath) {
@@ -343,7 +344,7 @@ private fun appendArg(value: String, builder: StringBuilder) {
   }
 }
 
-internal class ProcessRunTimedOut(message: String) : RuntimeException(message)
+class ProcessRunTimedOut(message: String) : RuntimeException(message)
 
 internal class Timeout(private val millis: Long) {
   companion object {

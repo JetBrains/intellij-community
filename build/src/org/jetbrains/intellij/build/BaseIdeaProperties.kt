@@ -189,7 +189,7 @@ abstract class BaseIdeaProperties : JetBrainsProductProperties() {
     isAntRequired = true
   }
 
-  override fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
+  override suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
     val targetDir = Path.of(targetDirectory)
     // for compatibility with users projects which refer to IDEA_HOME/lib/annotations.jar
     Files.move(targetDir.resolve("lib/annotations-java5.jar"), targetDir.resolve("lib/annotations.jar"),

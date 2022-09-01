@@ -16,10 +16,22 @@ interface BuildTasks {
    * Builds archive containing production source roots of the project modules. If `includeLibraries` is `true`, the produced
    * archive also includes sources of project-level libraries on which platform API modules from `modules` list depend on.
    */
-  fun zipSourcesOfModules(modules: Collection<String>, targetFile: Path, includeLibraries: Boolean)
+  suspend fun zipSourcesOfModules(modules: Collection<String>, targetFile: Path, includeLibraries: Boolean)
 
-  fun zipSourcesOfModules(modules: Collection<String>, targetFile: Path) {
+  suspend fun zipSourcesOfModules(modules: Collection<String>, targetFile: Path) {
     zipSourcesOfModules(modules, targetFile, false)
+  }
+
+  fun zipSourcesOfModulesBlocking(modules: Collection<String>, targetFile: Path, includeLibraries: Boolean) {
+    runBlocking {
+      zipSourcesOfModules(modules, targetFile, includeLibraries = includeLibraries)
+    }
+  }
+
+  fun zipSourcesOfModulesBlocking(modules: Collection<String>, targetFile: Path) {
+    runBlocking {
+      zipSourcesOfModules(modules, targetFile, includeLibraries = false)
+    }
   }
 
   /**
@@ -75,5 +87,5 @@ interface BuildTasks {
 
   suspend fun buildUnpackedDistribution(targetDirectory: Path, includeBinAndRuntime: Boolean)
 
-  fun buildDmg(macZipDir: Path)
+  suspend fun buildDmg(macZipDir: Path)
 }

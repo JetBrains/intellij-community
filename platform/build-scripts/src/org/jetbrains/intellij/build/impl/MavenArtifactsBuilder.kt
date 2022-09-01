@@ -157,7 +157,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext, private va
       return null
     }
     val scrambleTool = context.proprietaryBuildTools.scrambleTool
-    if (scrambleTool != null && scrambleTool.getNamesOfModulesRequiredToBeScrambled().contains(module.name)) {
+    if (scrambleTool != null && scrambleTool.namesOfModulesRequiredToBeScrambled.contains(module.name)) {
       Span.current().addEvent("module must be scrambled so it cannot be published", Attributes.of(
         AttributeKey.stringKey("module"), module.name
       ))

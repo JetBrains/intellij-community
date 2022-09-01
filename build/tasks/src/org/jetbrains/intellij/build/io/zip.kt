@@ -141,10 +141,10 @@ fun compressDir(startDir: Path, archiver: ZipArchiver, excludes: List<PathMatche
   }
 }
 
-internal fun copyZipRaw(sourceFile: Path,
-                        packageIndexBuilder: PackageIndexBuilder,
-                        zipCreator: ZipFileWriter,
-                        filter: (entryName: String) -> Boolean = { true }) {
+inline fun copyZipRaw(sourceFile: Path,
+                      packageIndexBuilder: PackageIndexBuilder,
+                      zipCreator: ZipFileWriter,
+                      crossinline filter: (entryName: String) -> Boolean = { true }) {
   readZipFile(sourceFile) { name, entry ->
     if (filter(name)) {
       packageIndexBuilder.addFile(name)

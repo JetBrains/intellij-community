@@ -1,14 +1,16 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("BlockingMethodInNonBlockingContext")
+
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.diagnostic.telemetry.createTask
-import com.intellij.diagnostic.telemetry.useWithScope
+import com.intellij.diagnostic.telemetry.useWithScope2
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.*
 import org.jdom.Element
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
@@ -21,7 +23,6 @@ import org.jetbrains.intellij.build.io.transformFile
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
-import java.util.concurrent.ForkJoinTask
 import java.util.function.BiPredicate
 
 internal class WindowsDistributionBuilder(
@@ -40,59 +41,67 @@ internal class WindowsDistributionBuilder(
   override val targetOs: OsFamily
     get() = OsFamily.WINDOWS
 
-  override fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture) {
+  override suspend fun copyFilesForOsDistribution(targetPath: Path, arch: JvmArchitecture) {
     val distBinDir = targetPath.resolve("bin")
-    Files.createDirectories(distBinDir)
+    val pty4jNativeDir = withContext(Dispatchers.IO) {
+      Files.createDirectories(distBinDir)
 
-    val binWin = FileSet(context.paths.communityHomeDir.communityRoot.resolve("bin/win")).includeAll()
-    if (!context.includeBreakGenLibraries()) {
-      @Suppress("SpellCheckingInspection")
-      binWin.exclude("breakgen*")
+      val binWin = FileSet(context.paths.communityHomeDir.communityRoot.resolve("bin/win")).includeAll()
+      if (!context.includeBreakGenLibraries()) {
+        @Suppress("SpellCheckingInspection")
+        binWin.exclude("breakgen*")
+      }
+      binWin.copyToDir(distBinDir)
+
+      val pty4jNativeDir = unpackPty4jNative(context, targetPath, "win")
+      generateBuildTxt(context, targetPath)
+      copyDistFiles(context, targetPath)
+
+      Files.writeString(distBinDir.resolve(ideaProperties!!.fileName),
+                        StringUtilRt.convertLineSeparators(Files.readString(ideaProperties), "\r\n"))
+
+      if (icoFile != null) {
+        Files.copy(icoFile, distBinDir.resolve("${context.productProperties.baseFileName}.ico"), StandardCopyOption.REPLACE_EXISTING)
+      }
+      if (customizer.includeBatchLaunchers) {
+        generateScripts(distBinDir)
+      }
+      generateVMOptions(distBinDir)
+      buildWinLauncher(targetPath)
+      customizer.copyAdditionalFiles(context, targetPath.toString())
+
+      pty4jNativeDir
     }
-    binWin.copyToDir(distBinDir)
-
-    val pty4jNativeDir = unpackPty4jNative(context, targetPath, "win")
-    generateBuildTxt(context, targetPath)
-    copyDistFiles(context, targetPath)
-
-    Files.writeString(distBinDir.resolve(ideaProperties!!.fileName),
-                      StringUtilRt.convertLineSeparators(Files.readString(ideaProperties), "\r\n"))
-
-    if (icoFile != null) {
-      Files.copy(icoFile, distBinDir.resolve("${context.productProperties.baseFileName}.ico"), StandardCopyOption.REPLACE_EXISTING)
-    }
-    if (customizer.includeBatchLaunchers) {
-      generateScripts(distBinDir)
-    }
-    generateVMOptions(distBinDir)
-    buildWinLauncher(targetPath)
-    customizer.copyAdditionalFiles(context, targetPath.toString())
 
     context.executeStep(spanBuilder = spanBuilder("sign windows"), stepId = BuildOptions.WIN_SIGN_STEP) {
       val nativeFiles = ArrayList<Path>()
-      for (nativeRoot in listOf(distBinDir, pty4jNativeDir)) {
-        Files.find(nativeRoot, Integer.MAX_VALUE, BiPredicate { file, attributes ->
-          if (attributes.isRegularFile) {
-            val path = file.toString()
-            path.endsWith(".exe") || path.endsWith(".dll")
+      withContext(Dispatchers.IO) {
+        for (nativeRoot in listOf(distBinDir, pty4jNativeDir)) {
+          Files.find(nativeRoot, Integer.MAX_VALUE, BiPredicate { file, attributes ->
+            if (attributes.isRegularFile) {
+              val path = file.toString()
+              path.endsWith(".exe") || path.endsWith(".dll")
+            }
+            else {
+              false
+            }
+          }).use { stream ->
+            stream.forEach(nativeFiles::add)
           }
-          else {
-            false
-          }
-        }).use { stream ->
-          stream.forEach(nativeFiles::add)
         }
       }
 
       Span.current().setAttribute(AttributeKey.stringArrayKey("files"), nativeFiles.map(Path::toString))
       customizer.getBinariesToSign(context).mapTo(nativeFiles) { targetPath.resolve(it) }
       if (nativeFiles.isNotEmpty()) {
-        context.signFiles(nativeFiles, BuildOptions.WIN_SIGN_OPTIONS)
+        withContext(Dispatchers.IO) {
+          context.signFiles(nativeFiles, BuildOptions.WIN_SIGN_OPTIONS)
+        }
       }
     }
   }
 
-  override fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture) {
+  override suspend fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture) {
     copyFilesForOsDistribution(osAndArchSpecificDistPath, arch)
 
     val jreDir = context.bundledRuntime.extract(BundledRuntimeImpl.getProductPrefix(context), OsFamily.WINDOWS, arch)
@@ -106,49 +115,53 @@ internal class WindowsDistributionBuilder(
     }
 
     copyFileToDir(vcRtDll, osAndArchSpecificDistPath.resolve("bin"))
-
-    val zipWithJbrPathTask = if (customizer.buildZipArchiveWithBundledJre) {
-      createBuildWinZipTask(listOf(jreDir), customizer.zipArchiveWithBundledJreSuffix, osAndArchSpecificDistPath, customizer, context).fork()
-    }
-    else {
-      null
-    }
-
-    val zipWithoutJbrPathTask = if (customizer.buildZipArchiveWithoutBundledJre) {
-      createBuildWinZipTask(emptyList(), customizer.zipArchiveWithoutBundledJreSuffix, osAndArchSpecificDistPath, customizer, context).fork()
-    }
-    else {
-      null
-    }
-
     var exePath: Path? = null
-    context.executeStep("build Windows Exe Installer", BuildOptions.WINDOWS_EXE_INSTALLER_STEP) {
-      val productJsonDir = context.paths.tempDir.resolve("win.dist.product-info.json.exe")
-      validateProductJson(jsonText = generateProductJson(targetDir = productJsonDir, isJreIncluded = true, context = context),
-                          relativePathToProductJson = "",
-                          installationDirectories = listOf(context.paths.distAllDir, osAndArchSpecificDistPath, jreDir),
-                          installationArchives = emptyList(),
-                          context = context)
+    val zipWithJbrPath = coroutineScope {
+      val zipWithJbrPathTask = if (customizer.buildZipArchiveWithBundledJre) {
+        createBuildWinZipTask(jreDirectoryPaths = listOf(jreDir),
+                              zipNameSuffix = customizer.zipArchiveWithBundledJreSuffix,
+                              winDistPath = osAndArchSpecificDistPath,
+                              customizer = customizer,
+                              context = context)
+      }
+      else {
+        null
+      }
 
-      exePath = buildNsisInstaller(winDistPath = osAndArchSpecificDistPath,
-                                   additionalDirectoryToInclude = productJsonDir,
-                                   suffix = "",
-                                   customizer = customizer,
-                                   jreDir = jreDir,
-                                   context = context)
+      if (customizer.buildZipArchiveWithoutBundledJre) {
+        createBuildWinZipTask(jreDirectoryPaths = emptyList(),
+                              zipNameSuffix = customizer.zipArchiveWithoutBundledJreSuffix,
+                              winDistPath = osAndArchSpecificDistPath,
+                              customizer = customizer,
+                              context = context)
+      }
+
+      context.executeStep(spanBuilder("build Windows Exe Installer"), BuildOptions.WINDOWS_EXE_INSTALLER_STEP) {
+        val productJsonDir = context.paths.tempDir.resolve("win.dist.product-info.json.exe")
+        validateProductJson(jsonText = generateProductJson(targetDir = productJsonDir, isJreIncluded = true, context = context),
+                            relativePathToProductJson = "",
+                            installationDirectories = listOf(context.paths.distAllDir, osAndArchSpecificDistPath, jreDir),
+                            installationArchives = emptyList(),
+                            context = context)
+
+        exePath = buildNsisInstaller(winDistPath = osAndArchSpecificDistPath,
+                                     additionalDirectoryToInclude = productJsonDir,
+                                     suffix = "",
+                                     customizer = customizer,
+                                     jreDir = jreDir,
+                                     context = context)
+      }
+
+      zipWithJbrPathTask?.await()
     }
 
-    val zipWithJbrPath = zipWithJbrPathTask?.join()
-    zipWithoutJbrPathTask?.join()
-
-    val exePath1 = exePath
-    if (zipWithJbrPath != null && exePath1 != null) {
-      checkThatExeInstallerAndZipWithJbrAreTheSame(zipWithJbrPath, exePath1, arch)
+    if (zipWithJbrPath != null && exePath != null) {
+      checkThatExeInstallerAndZipWithJbrAreTheSame(zipPath = zipWithJbrPath, exePath = exePath!!, arch = arch)
       return
     }
   }
 
-  private fun checkThatExeInstallerAndZipWithJbrAreTheSame(zipPath: Path, exePath: Path, arch: JvmArchitecture) {
+  private suspend fun checkThatExeInstallerAndZipWithJbrAreTheSame(zipPath: Path, exePath: Path, arch: JvmArchitecture) {
     if (context.options.isInDevelopmentMode) {
       Span.current().addEvent("comparing .zip and .exe skipped in development mode")
       return
@@ -161,22 +174,26 @@ internal class WindowsDistributionBuilder(
 
     Span.current().addEvent("compare ${zipPath.fileName} vs. ${exePath.fileName}")
 
-    val tempZip = Files.createTempDirectory(context.paths.tempDir, "zip-")
-    val tempExe = Files.createTempDirectory(context.paths.tempDir, "exe-")
+    val tempZip = withContext(Dispatchers.IO) { Files.createTempDirectory(context.paths.tempDir, "zip-") }
+    val tempExe = withContext(Dispatchers.IO) { Files.createTempDirectory(context.paths.tempDir, "exe-") }
     try {
-      runProcess(args = listOf("7z", "x", "-bd", exePath.toString()), workingDir = tempExe, logger = context.messages)
-      runProcess(args = listOf("unzip", "-q", zipPath.toString()), workingDir = tempZip, logger = context.messages)
-      @Suppress("SpellCheckingInspection")
-      NioFiles.deleteRecursively(tempExe.resolve("\$PLUGINSDIR"))
+      withContext(Dispatchers.IO) {
+        runProcess(args = listOf("7z", "x", "-bd", exePath.toString()), workingDir = tempExe, logger = context.messages)
+        runProcess(args = listOf("unzip", "-q", zipPath.toString()), workingDir = tempZip, logger = context.messages)
+        @Suppress("SpellCheckingInspection")
+        NioFiles.deleteRecursively(tempExe.resolve("\$PLUGINSDIR"))
 
-      runProcess(listOf("diff", "-q", "-r", tempZip.toString(), tempExe.toString()), null, context.messages)
+        runProcess(args = listOf("diff", "-q", "-r", tempZip.toString(), tempExe.toString()), workingDir = null, logger = context.messages)
+      }
       if (!context.options.buildStepsToSkip.contains(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
         RepairUtilityBuilder.generateManifest(context, tempExe, OsFamily.WINDOWS, arch)
       }
     }
     finally {
-      NioFiles.deleteRecursively(tempZip)
-      NioFiles.deleteRecursively(tempExe)
+      withContext(Dispatchers.IO + NonCancellable) {
+        NioFiles.deleteRecursively(tempZip)
+        NioFiles.deleteRecursively(tempExe)
+      }
     }
   }
 
@@ -268,8 +285,8 @@ internal class WindowsDistributionBuilder(
     VmOptionsGenerator.writeVmOptions(distBinDir.resolve(fileName), vmOptions, "\r\n")
   }
 
-  private fun buildWinLauncher(winDistPath: Path) {
-    spanBuilder("build Windows executable").useWithScope {
+  private suspend fun buildWinLauncher(winDistPath: Path) {
+    spanBuilder("build Windows executable").useWithScope2 {
       val executableBaseName = "${context.productProperties.baseFileName}64"
       val launcherPropertiesPath = context.paths.tempDir.resolve("launcher.properties")
       val upperCaseProductName = context.applicationInfo.upperCaseProductName
@@ -361,27 +378,29 @@ internal class WindowsDistributionBuilder(
   }
 }
 
-private fun createBuildWinZipTask(jreDirectoryPaths: List<Path>,
-                                  @Suppress("SameParameterValue") zipNameSuffix: String,
-                                  winDistPath: Path,
-                                  customizer: WindowsDistributionCustomizer,
-                                  context: BuildContext): ForkJoinTask<Path> {
+private fun CoroutineScope.createBuildWinZipTask(jreDirectoryPaths: List<Path>,
+                                                 @Suppress("SameParameterValue") zipNameSuffix: String,
+                                                 winDistPath: Path,
+                                                 customizer: WindowsDistributionCustomizer,
+                                                 context: BuildContext): Deferred<Path> {
   val baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
   val targetFile = context.paths.artifactDir.resolve("${baseName}${zipNameSuffix}.zip")
-  return createTask(spanBuilder("build Windows ${zipNameSuffix}.zip distribution")
-                      .setAttribute("targetFile", targetFile.toString())) {
-    val productJsonDir = context.paths.tempDir.resolve("win.dist.product-info.json.zip$zipNameSuffix")
-    generateProductJson(productJsonDir, !jreDirectoryPaths.isEmpty(), context)
+  return async(Dispatchers.IO) {
+    spanBuilder("build Windows ${zipNameSuffix}.zip distribution")
+      .setAttribute("targetFile", targetFile.toString()).useWithScope2 {
+        val productJsonDir = context.paths.tempDir.resolve("win.dist.product-info.json.zip$zipNameSuffix")
+        generateProductJson(productJsonDir, !jreDirectoryPaths.isEmpty(), context)
 
-    val zipPrefix = customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)
-    val dirs = listOf(context.paths.distAllDir, winDistPath, productJsonDir) + jreDirectoryPaths
-    zipWithPrefixes(context = context,
-                    targetFile = targetFile,
-                    map = dirs.associateWithTo(LinkedHashMap(dirs.size)) { zipPrefix },
-                    compress = true)
-    checkInArchive(archiveFile = targetFile, pathInArchive = zipPrefix, context = context)
-    context.notifyArtifactWasBuilt(targetFile)
-    targetFile
+        val zipPrefix = customizer.getRootDirectoryName(context.applicationInfo, context.buildNumber)
+        val dirs = listOf(context.paths.distAllDir, winDistPath, productJsonDir) + jreDirectoryPaths
+        zipWithPrefixes(context = context,
+                        targetFile = targetFile,
+                        map = dirs.associateWithTo(LinkedHashMap(dirs.size)) { zipPrefix },
+                        compress = true)
+        checkInArchive(archiveFile = targetFile, pathInArchive = zipPrefix, context = context)
+        context.notifyArtifactWasBuilt(targetFile)
+        targetFile
+      }
   }
 }
 

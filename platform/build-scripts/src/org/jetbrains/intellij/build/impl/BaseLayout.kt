@@ -36,7 +36,8 @@ open class BaseLayout {
 
   private val moduleNameToJarPath: MutableMap<String, String> = LinkedHashMap()
 
-  fun getIncludedModuleNames(): Collection<String> = moduleJars.values()
+  val includedModuleNames: Collection<String>
+    get() = moduleJars.values()
 
   fun getJarToIncludedModuleNames(): Set<Map.Entry<String, Collection<String>>> = moduleJars.entrySet()
 

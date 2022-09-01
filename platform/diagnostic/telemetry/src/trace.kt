@@ -12,23 +12,6 @@ import java.util.concurrent.Callable
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ForkJoinTask
 
-inline fun <T> createTask(spanBuilder: SpanBuilder, crossinline task: () -> T): ForkJoinTask<T> {
-  val context = Context.current()
-  return ForkJoinTask.adapt(Callable {
-    val thread = Thread.currentThread()
-    val span = spanBuilder
-      .setParent(context)
-      .setAttribute(SemanticAttributes.THREAD_NAME, thread.name)
-      .setAttribute(SemanticAttributes.THREAD_ID, thread.id)
-      .startSpan()
-    span.makeCurrent().use {
-      span.use {
-        task()
-      }
-    }
-  })
-}
-
 /**
  * Returns a new [ForkJoinTask] that performs the given function as its action within a trace, and returns
  * a null result upon [ForkJoinTask.join].
