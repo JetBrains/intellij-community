@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.intellij.build.tasks
 
@@ -12,7 +12,6 @@ import org.jetbrains.org.objectweb.asm.ClassVisitor
 import org.jetbrains.org.objectweb.asm.Opcodes
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.List
 import java.util.concurrent.ForkJoinTask
 import java.util.function.Consumer
 
@@ -36,7 +35,7 @@ fun runScrambler(scramblerJar: Path,
         mainClass = mainClass,
         args = args,
         jvmArgs = jvmArgs,
-        classPath = List.of(scramblerJar.toString()),
+        classPath = listOf(scramblerJar.toString()),
         workingDir = workingDir,
         outputFile = processOutputFile,
         javaExe = javaExe,
