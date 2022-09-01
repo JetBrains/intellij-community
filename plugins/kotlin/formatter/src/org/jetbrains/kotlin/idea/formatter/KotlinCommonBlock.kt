@@ -14,6 +14,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.KtNodeTypes.*
 import org.jetbrains.kotlin.idea.core.formatter.KotlinCodeStyleSettings
 import org.jetbrains.kotlin.idea.formatter.NodeIndentStrategy.Companion.strategy
@@ -419,12 +420,27 @@ abstract class KotlinCommonBlock(
                 alignmentStrategy
 
             parentType === CLASS_BODY ->
-                getAlignmentForExpressionBodies(kotlinCustomSettings.ALIGN_IN_COLUMNS_EXPRESSION_BODIES)
+                getAlignmentForGroupDeclaration(
+                    kotlinCustomSettings.ALIGN_IN_COLUMNS_EXPRESSION_BODIES,
+                    kotlinCustomSettings.ALIGN_IN_COLUMNS_PROPERTIES,
+                )
 
             parentType === KtFileElementType.INSTANCE ->
-                getAlignmentForExpressionBodies(kotlinCustomSettings.ALIGN_IN_COLUMNS_EXPRESSION_BODIES)
+                getAlignmentForGroupDeclaration(
+                    kotlinCustomSettings.ALIGN_IN_COLUMNS_EXPRESSION_BODIES,
+                    kotlinCustomSettings.ALIGN_IN_COLUMNS_PROPERTIES,
+                )
+
+            parentType === BLOCK ->
+                getAlignmentForGroupDeclaration(
+                    kotlinCustomSettings.ALIGN_IN_COLUMNS_LOCAL_EXPRESSION_BODIES,
+                    kotlinCustomSettings.ALIGN_IN_COLUMNS_LOCAL_PROPERTIES,
+                )
 
             parentType === FUN ->
+                alignmentStrategy
+
+            parentType === PROPERTY ->
                 alignmentStrategy
 
             parentType in BINARY_EXPRESSIONS && getOperationType(node) in ALIGN_FOR_BINARY_OPERATIONS ->
@@ -1130,40 +1146,86 @@ private fun ASTNode.suppressBinaryExpressionIndent(): Boolean {
     return psi.parent?.node?.elementType == CONDITION || psi.operationToken == ELVIS
 }
 
-private fun getAlignmentForExpressionBodies(shouldAlign: Boolean) = object : CommonAlignmentStrategy() {
-    private var bodyAlignment = if (shouldAlign) Alignment.createAlignment(true) else null
-
-    override fun getAlignment(node: ASTNode): Alignment? {
-        val func = node.treeParent
-        val beforeFun = func.treePrev
-        val afterAssign = node.treeNext
-        val beforeAssign = node.treePrev
-
-        if (node.elementType != EQ || func.elementType != FUN) {
-            return null
+private fun getAlignmentForGroupDeclaration(
+    alignFunctions: Boolean,
+    alignProperties: Boolean,
+) =
+    alignmentStrategyForGroupDeclaration(
+        buildList {
+            if (alignFunctions)
+                add(FUN)
+            if (alignProperties)
+                add(PROPERTY)
         }
+    )
 
-        val needNewGroup = moreNlsThan(afterAssign, 0) ||
-                moreNlsThan(beforeAssign, 0) ||
-                moreNlsThan(beforeFun, 1)
+private fun alignmentStrategyForGroupDeclaration(elements: List<IElementType>) =
+    object : CommonAlignmentStrategy() {
+        private var alignments = genAlignments()
+        private var prevElement: IElementType? = null
+        private val anchors = listOf(TYPE_REFERENCE, EQ)
 
-        if (needNewGroup) {
-            bodyAlignment = if (shouldAlign) Alignment.createAlignment(true) else null
-        }
-
-        return bodyAlignment
-    }
-
-    private fun moreNlsThan(nextNode: ASTNode?, maxCount: Int): Boolean {
-        if (nextNode != null && nextNode.psi is PsiWhiteSpace) {
-            val countNls = nextNode.text.count { it == '\n' }
-            if (countNls > maxCount) {
-                return true
+        override fun getAlignment(node: ASTNode): Alignment? {
+            if (elements.isEmpty()) {
+                return null
             }
+
+            val parent = node.treeParent
+            val beforeParent = parent.treePrev
+            val afterAssign = node.treeNext
+            val beforeAssign = node.treePrev
+
+            if (!elements.contains(parent.elementType)) {
+                return null
+            }
+
+            // if no "=", then just skip
+            val withAssign = PsiTreeUtil.findSiblingForward(node.psi, EQ, null) != null || node.elementType == EQ
+            if (!withAssign) {
+                return null
+            }
+            // if, "=" after ":"
+            val wasTypeReference = PsiTreeUtil.findSiblingBackward(node.psi, TYPE_REFERENCE, null) != null
+
+            val anchorIndex = anchors.indexOf(node.elementType)
+            if (anchorIndex == -1) {
+                return null
+            }
+
+            val needNewGroup = moreNlsThan(afterAssign, 0) ||
+                    moreNlsThan(beforeAssign, 0) ||
+                    moreNlsThan(beforeParent, 1) && !wasTypeReference ||
+                    prevElement != parent.elementType
+
+            if (needNewGroup) {
+                // regenerate alignments for next group
+                alignments = genAlignments()
+                prevElement = parent.elementType
+
+                if (moreNlsThan(afterAssign, 0) ||
+                    moreNlsThan(beforeAssign, 0)
+                )
+                    return null
+            }
+
+            return alignments[anchorIndex]
         }
-        return false
+
+        private fun moreNlsThan(nextNode: ASTNode?, maxCount: Int): Boolean {
+            if (nextNode != null && nextNode.psi is PsiWhiteSpace) {
+                val countNls = nextNode.text.count { it == '\n' }
+                if (countNls > maxCount) {
+                    return true
+                }
+            }
+            return false
+        }
+
+        private fun genAlignments() = listOf(
+            Alignment.createAlignment(true),
+            Alignment.createAlignment(true),
+        )
     }
-}
 
 private fun getAlignmentForChildInParenthesis(
     shouldAlignChild: Boolean,

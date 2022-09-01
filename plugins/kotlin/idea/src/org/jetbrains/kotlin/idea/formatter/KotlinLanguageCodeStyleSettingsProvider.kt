@@ -275,7 +275,25 @@ class KotlinLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvide
                 showCustomOption(
                     KotlinCodeStyleSettings::ALIGN_IN_COLUMNS_EXPRESSION_BODIES,
                     KotlinBundle.message("formatter.title.align.expression.bodies.in.columns"),
-                    KotlinBundle.message("formatter.title.expression.body.functions")
+                    KotlinBundle.message("formatter.title.group.declarations")
+                )
+
+                showCustomOption(
+                    KotlinCodeStyleSettings::ALIGN_IN_COLUMNS_PROPERTIES,
+                    KotlinBundle.message("formatter.title.align.properties.in.columns"),
+                    KotlinBundle.message("formatter.title.group.declarations")
+                )
+
+                showCustomOption(
+                    KotlinCodeStyleSettings::ALIGN_IN_COLUMNS_LOCAL_PROPERTIES,
+                    KotlinBundle.message("formatter.title.align.local.properties.in.columns"),
+                    KotlinBundle.message("formatter.title.group.declarations")
+                )
+
+                showCustomOption(
+                    KotlinCodeStyleSettings::ALIGN_IN_COLUMNS_LOCAL_EXPRESSION_BODIES,
+                    KotlinBundle.message("formatter.title.align.local.expression.bodies.in.columns"),
+                    KotlinBundle.message("formatter.title.group.declarations")
                 )
             }
             SettingsType.BLANK_LINES_SETTINGS -> {
@@ -352,9 +370,9 @@ class KotlinLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvide
                        }
                    }
                    
-                   fun one() = 1
-                   fun two() = 2
-                   fun three() = 2
+                   fun one(): Int = 1
+                   fun two(): String = "2"
+                   fun three(): Double = 3.0
                }
 
                @Deprecated val bar = 1
@@ -364,6 +382,16 @@ class KotlinLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvide
                }
 
                fun veryLongExpressionBodyMethod() = "abc"
+               
+               fun withLocals() {
+                   fun one(): Int = 1
+                   fun two(): String = "2"
+                   fun three(): Double = 3.0
+
+                   val one: Int = 1
+                   val two: String = "2"
+                   val three: Double = 3.0
+               }
             """.trimIndent()
 
         SettingsType.BLANK_LINES_SETTINGS ->

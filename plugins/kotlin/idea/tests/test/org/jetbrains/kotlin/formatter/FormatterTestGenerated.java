@@ -839,9 +839,9 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 runTest("testData/formatter/EnumWrapping.after.kt");
             }
 
-            @TestMetadata("ExpressionBodiesAlign.after.kt")
+            @TestMetadata("ExpressionBodiesColumnAlign.after.kt")
             public void testExpressionBodiesAlign() throws Exception {
-                runTest("testData/formatter/ExpressionBodiesAlign.after.kt");
+                runTest("testData/formatter/ExpressionBodiesColumnAlign.after.kt");
             }
 
             @TestMetadata("ExpressionBodyWrap.after.kt")
@@ -1137,6 +1137,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             @TestMetadata("PrimaryConstructor.after.kt")
             public void testPrimaryConstructor() throws Exception {
                 runTest("testData/formatter/PrimaryConstructor.after.kt");
+            }
+
+            @TestMetadata("PropertiesColumnAlign.after.kt")
+            public void testPropertiesColumnAlign() throws Exception {
+                runTest("testData/formatter/PropertiesColumnAlign.after.kt");
             }
 
             @TestMetadata("PropertyAccessorLineBreak.after.kt")
