@@ -11,8 +11,6 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.tasks.consumeDataByPrefix
-import org.jetbrains.jps.model.JpsSimpleElement
-import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 
@@ -316,8 +314,7 @@ object KotlinPluginBuilder {
                 val minor = ijBuildNumber.group(2)
                 val library = context.project.libraryCollection.libraries
                   .firstOrNull { it.name.startsWith("kotlinc.kotlin-jps-plugin-classpath") && it.type is JpsRepositoryLibraryType }
-                @Suppress("UNCHECKED_CAST")
-                val kotlinVersion = (library?.properties as JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>?)?.data?.version
+                val kotlinVersion = library?.asTyped(JpsRepositoryLibraryType.INSTANCE)?.properties?.data?.version
                                     ?: KOTLIN_COOP_DEV_VERSION
 
                 val version = "${major}-${kotlinVersion}-${kind}${minor}"
