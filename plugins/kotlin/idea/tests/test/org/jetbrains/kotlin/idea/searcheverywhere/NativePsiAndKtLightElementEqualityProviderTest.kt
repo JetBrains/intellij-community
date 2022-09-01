@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.searcheverywhere
 
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.asJava.LightClassGenerationSupport
+import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFile
@@ -17,7 +17,7 @@ class NativePsiAndKtLightElementEqualityProviderTest : KotlinSearchEverywhereTes
     fun `test only class presented`() {
         val file = myFixture.configureByText("MyKotlinClassWithStrangeName.kt", "class MyKotlinClassWithStrangeName")
         val klass = file.findElementAt(myFixture.caretOffset)?.parentOfType<KtClass>()!!
-        val ulc = LightClassGenerationSupport.getInstance(project).createUltraLightClass(klass)!!
+        val ulc = klass.toLightClass()!!
         findPsiByPattern("MyKotlinClassWithStrangeName") { results ->
             assertTrue(klass in results)
             assertFalse(file in results)
@@ -33,8 +33,8 @@ class NativePsiAndKtLightElementEqualityProviderTest : KotlinSearchEverywhereTes
 
         val klass = file.declarations.first() as KtClass
         val klass2 = file.declarations.last() as KtClass
-        val ulc = LightClassGenerationSupport.getInstance(project).createUltraLightClass(klass)!!
-        val ulc2 = LightClassGenerationSupport.getInstance(project).createUltraLightClass(klass2)!!
+        val ulc = klass.toLightClass()!!
+        val ulc2 = klass2.toLightClass()!!
         findPsiByPattern("MyKotlinClassWithStrangeName") { results ->
             assertTrue(klass in results)
             assertTrue(klass2 in results)
@@ -51,7 +51,7 @@ class NativePsiAndKtLightElementEqualityProviderTest : KotlinSearchEverywhereTes
         ) as KtFile
 
         val klass = file.findElementAt(myFixture.caretOffset)?.parentOfType<KtClass>()!!
-        val ulc = LightClassGenerationSupport.getInstance(project).createUltraLightClass(klass)!!
+        val ulc = klass.toLightClass()!!
         val syntheticClass = file.declarations.last().cast<KtNamedFunction>().toLightMethods().single().parent
         findPsiByPattern("MyKotlinClassWithStrangeName") { results ->
             assertTrue(results.toString(), results.size == 1)
