@@ -27,6 +27,7 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
 
   public static final int SNIPPET_LIMIT = 10;
   private int myAlreadyProcessedUsages = 0;
+  private int myAlreadyRenderedUsages = 0;
   private final @NotNull UsageInfo myOriginalUsage;
 
   private final @NotNull ClusteringSearchSession mySession;
@@ -39,8 +40,7 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
     Disposer.register(parent, this);
   }
 
-  public int renderSimilarUsages(@NotNull Collection<SimilarUsage> similarUsagesGroupUsages) {
-    int alreadyShowUsagesBefore = myAlreadyProcessedUsages;
+  public void renderSimilarUsages(@NotNull Collection<SimilarUsage> similarUsagesGroupUsages) {
     similarUsagesGroupUsages.stream().skip(myAlreadyProcessedUsages).limit(SNIPPET_LIMIT).forEach(usage -> {
       final UsageInfo info = ((UsageInfo2UsageAdapter)usage).getUsageInfo();
       if (myOriginalUsage != info) {
@@ -48,7 +48,6 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
       }
       myAlreadyProcessedUsages++;
     });
-    return myAlreadyProcessedUsages - alreadyShowUsagesBefore;
   }
 
   private void renderUsage(@NotNull UsageInfo info) {
@@ -59,6 +58,7 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
     Color color = codeSnippet.getEditor().getBackgroundColor();
     add(getHeaderPanelForUsage(myOriginalUsage, info, color));
     add(codeSnippet);
+    myAlreadyRenderedUsages++;
   }
 
   public void renderOriginalUsage() {
@@ -88,11 +88,10 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
   public @NotNull JScrollPane createLazyLoadingScrollPane(@NotNull Set<SimilarUsage> usagesToRender) {
     JScrollPane similarUsagesScrollPane = ScrollPaneFactory.createScrollPane(this, true);
     renderOriginalUsage();
-    renderSimilarUsages(usagesToRender);
     BoundedRangeModelThresholdListener.install(similarUsagesScrollPane.getVerticalScrollBar(), () -> {
       if (myAlreadyProcessedUsages < usagesToRender.size()) {
-        int renderedNumber = renderSimilarUsages(usagesToRender);
-        SimilarUsagesCollector.logMoreUsagesLoaded(myOriginalUsage.getProject(), mySession, renderedNumber);
+        renderSimilarUsages(usagesToRender);
+        SimilarUsagesCollector.logMoreUsagesLoaded(myOriginalUsage.getProject(), mySession, myAlreadyRenderedUsages);
       }
       return Unit.INSTANCE;
     });

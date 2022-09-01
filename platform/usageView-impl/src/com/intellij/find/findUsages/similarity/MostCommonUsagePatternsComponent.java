@@ -122,13 +122,12 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     if (mySortedClusters.isNull()) return;
     Collection<UsageCluster> sortedClusters = mySortedClusters.get();
     if (myAlreadyRenderedSnippets < sortedClusters.size()) {
-      int renderedBefore = myAlreadyRenderedSnippets;
       sortedClusters.stream().skip(myAlreadyRenderedSnippets).limit(CLUSTER_LIMIT).forEach(cluster -> {
         final Set<SimilarUsage> usagesFilteredByGroup = new HashSet<>(cluster.getUsages());
         SimilarUsage usage = ContainerUtil.getFirstItem(usagesFilteredByGroup);
         renderClusterDescription(usage, usagesFilteredByGroup);
       });
-      SimilarUsagesCollector.logMoreClustersLoaded(myProject, mySession, myAlreadyRenderedSnippets - renderedBefore);
+      SimilarUsagesCollector.logMoreClustersLoaded(myProject, mySession, myAlreadyRenderedSnippets);
     }
     else {
       int numberOfAlreadyRenderedNonClusteredUsages = myAlreadyRenderedSnippets - sortedClusters.size();
@@ -136,6 +135,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
         myNonClusteredUsages.stream().skip(numberOfAlreadyRenderedNonClusteredUsages).limit(CLUSTER_LIMIT).forEach(e -> {
           renderClusterDescription(e, Collections.emptySet());
         });
+        SimilarUsagesCollector.logMoreNonClusteredUsagesLoaded(myProject, mySession, myAlreadyRenderedSnippets);
       }
     }
     myMainPanel.revalidate();

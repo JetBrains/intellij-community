@@ -11,7 +11,7 @@ class SimilarUsagesCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("similar.usages", 2)
+    private val GROUP = EventLogGroup("similar.usages", 3)
     private val SESSION_ID = EventFields.Int("id")
     private val NUMBER_OF_LOADED = EventFields.Int("number_of_loaded")
     private val MOST_COMMON_USAGE_PATTERNS_SHOWN = GROUP.registerEvent("most.common.usages.shown", SESSION_ID)
@@ -20,6 +20,7 @@ class SimilarUsagesCollector : CounterUsagesCollector() {
     private val SHOW_SIMILAR_USAGES_LINK_CLICKED = GROUP.registerEvent("show.similar.usages.link.clicked", SESSION_ID)
     private val MORE_CLUSTERS_LOADED = GROUP.registerEvent("more.clusters.loaded", SESSION_ID, NUMBER_OF_LOADED)
     private val MORE_USAGES_LOADED = GROUP.registerEvent("more.usages.loaded", SESSION_ID, NUMBER_OF_LOADED)
+    private val MORE_NON_CLUSTERED_USAGES_LOADED = GROUP.registerEvent("more.non.clustered.usage.loaded", SESSION_ID, NUMBER_OF_LOADED)
 
     @JvmStatic
     fun logMoreSimilarUsagePatternsShow(project: Project, session: ClusteringSearchSession) {
@@ -44,6 +45,11 @@ class SimilarUsagesCollector : CounterUsagesCollector() {
     @JvmStatic
     fun logMoreClustersLoaded(project: Project, session: ClusteringSearchSession, numberOfAddedUsages: Int) {
       MORE_CLUSTERS_LOADED.log(project, session.uniqueId, numberOfAddedUsages)
+    }
+
+    @JvmStatic
+    fun logMoreNonClusteredUsagesLoaded(project: Project, session: ClusteringSearchSession, numberOfAddedUsages: Int) {
+      MORE_NON_CLUSTERED_USAGES_LOADED.log(project, session.uniqueId, numberOfAddedUsages)
     }
 
     @JvmStatic
