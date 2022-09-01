@@ -152,6 +152,11 @@ public final class JBCefApp {
 
     settings.cache_path = ApplicationManager.getApplication().getService(JBCefAppCache.class).getPath().toString();
 
+    if (Registry.is("ide.browser.jcef.sandbox.enable")) {
+      LOG.debug("enabled JCEF-sandbox");
+      settings.no_sandbox = false;
+    }
+
     String[] argsFromProviders = JBCefAppRequiredArgumentsProvider
       .getProviders()
       .stream()
