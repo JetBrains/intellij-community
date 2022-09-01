@@ -116,11 +116,6 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
     this.state = state
   }
 
-  @TestOnly
-  fun clearState() {
-    state.plugins.clear()
-  }
-
   class SyncPluginsState : BaseState() {
     var plugins by map<String, PluginData>()
   }

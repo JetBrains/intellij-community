@@ -59,8 +59,8 @@ internal class TestPluginManager : PluginManagerProxy {
     return installer
   }
 
-  fun addPluginDescriptor(descriptor: IdeaPluginDescriptor) {
+  fun addPluginDescriptor(pluginManager: SettingsSyncPluginManager, descriptor: IdeaPluginDescriptor) {
     ownPluginDescriptors[descriptor.pluginId] = descriptor
-    SettingsSyncPluginManager.getInstance().getPluginStateListener().install(descriptor)
+    pluginManager.getPluginStateListener().install(descriptor)
   }
 }

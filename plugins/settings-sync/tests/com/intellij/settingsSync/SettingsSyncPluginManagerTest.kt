@@ -1,12 +1,21 @@
 package com.intellij.settingsSync
 
+import com.intellij.configurationStore.ComponentSerializationUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.util.Disposer
 import com.intellij.settingsSync.plugins.PluginManagerProxy
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.replaceService
+import com.intellij.util.xmlb.XmlSerializer
 import junit.framework.TestCase
+import org.jdom.Element
+import org.jdom.input.SAXBuilder
+import org.jdom.output.Format
+import org.jdom.output.XMLOutputter
+import java.io.StringReader
+import java.io.StringWriter
 
 // region Test data
 private const val incomingPluginData = """<component name="SettingsSyncPlugins">
@@ -66,6 +75,7 @@ private const val incomingPluginData = """<component name="SettingsSyncPlugins">
 // endregion
 
 class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
+  private lateinit var pluginManager: SettingsSyncPluginManager
   private lateinit var testPluginManager: TestPluginManager
 
   override fun setUp() {
@@ -73,24 +83,13 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
     SettingsSyncSettings.getInstance().syncEnabled = true
     testPluginManager = TestPluginManager()
     ApplicationManager.getApplication().replaceService(PluginManagerProxy::class.java, testPluginManager, testRootDisposable)
-    SettingsSyncPluginManager.getInstance().clearState()
-  }
-
-  override fun tearDown() {
-    try {
-      SettingsSyncPluginManager.getInstance().clearState()
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
+    pluginManager = SettingsSyncPluginManager()
+    Disposer.register(testRootDisposable, pluginManager)
   }
 
   fun `test install missing plugins`() {
     loadPluginManagerState(incomingPluginData)
-    SettingsSyncPluginManager.getInstance().pushChangesToIde()
+    pluginManager.pushChangesToIde()
     val installedPluginIds = testPluginManager.installer.installedPluginIds
     // Make sure QuickJump is skipped because it is disabled
     TestCase.assertEquals(2, installedPluginIds.size)
@@ -103,7 +102,7 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
     SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.PLUGINS, false)
     try {
       loadPluginManagerState(incomingPluginData)
-      SettingsSyncPluginManager.getInstance().pushChangesToIde()
+      pluginManager.pushChangesToIde()
       val installedPluginIds = testPluginManager.installer.installedPluginIds
       // IdeaLight is a UI plugin, it doesn't fall under PLUGINS category
       TestCase.assertEquals(1, installedPluginIds.size)
@@ -118,7 +117,7 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
     SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.UI, false)
     try {
       loadPluginManagerState(incomingPluginData)
-      SettingsSyncPluginManager.getInstance().pushChangesToIde()
+      pluginManager.pushChangesToIde()
       val installedPluginIds = testPluginManager.installer.installedPluginIds
       // IdeaLight is a UI plugin, it doesn't fall under PLUGINS category
       TestCase.assertEquals(1, installedPluginIds.size)
@@ -135,15 +134,15 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
       "QuickJump",
       listOf(TestPluginDependency("com.intellij.modules.platform", false))
     )
-    testPluginManager.addPluginDescriptor(descriptor)
+    testPluginManager.addPluginDescriptor(pluginManager, descriptor)
     TestCase.assertTrue(descriptor.isEnabled)
     loadPluginManagerState(incomingPluginData)
-    SettingsSyncPluginManager.getInstance().pushChangesToIde()
+    pluginManager.pushChangesToIde()
     TestCase.assertFalse(descriptor.isEnabled)
   }
 
   fun `test default state is empty` () {
-    val state = SettingsSyncPluginManager.getInstance().state
+    val state = pluginManager.state
     TestCase.assertTrue(state.plugins.isEmpty())
   }
 
@@ -152,7 +151,7 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
       "QuickJump",
       listOf(TestPluginDependency("com.intellij.modules.platform", false))
     )
-    testPluginManager.addPluginDescriptor(descriptor)
+    testPluginManager.addPluginDescriptor(pluginManager, descriptor)
     assertSerializedStateEquals(
       """
       <component>
@@ -172,5 +171,28 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
           </map>
         </option>
       </component>""".trimIndent())
+  }
+
+  private fun loadElement(xmlData: String): Element {
+    val builder = SAXBuilder()
+    val doc = builder.build(StringReader(xmlData))
+    return doc.rootElement
+  }
+
+  fun loadPluginManagerState(xmlData: String) {
+    val element = loadElement(xmlData)
+    ComponentSerializationUtil.loadComponentState(pluginManager, element)
+  }
+
+  fun assertSerializedStateEquals(expected: String) {
+    val state = pluginManager.state
+    val e = Element("component")
+    XmlSerializer.serializeInto(state, e)
+    val writer = StringWriter()
+    val format = Format.getPrettyFormat()
+    format.lineSeparator = "\n"
+    XMLOutputter(format).output(e, writer)
+    val actual = writer.toString()
+    TestCase.assertEquals(expected, actual)
   }
 }

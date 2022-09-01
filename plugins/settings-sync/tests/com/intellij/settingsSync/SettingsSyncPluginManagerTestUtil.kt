@@ -1,19 +1,9 @@
 package com.intellij.settingsSync
 
-import com.intellij.configurationStore.ComponentSerializationUtil
 import com.intellij.ide.plugins.IdeaPluginDependency
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.settingsSync.plugins.SettingsSyncPluginInstaller
-import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
-import com.intellij.util.xmlb.XmlSerializer
-import junit.framework.TestCase
-import org.jdom.Element
-import org.jdom.input.SAXBuilder
-import org.jdom.output.Format
-import org.jdom.output.XMLOutputter
-import java.io.StringReader
-import java.io.StringWriter
 import java.nio.file.Path
 import java.util.*
 
@@ -76,27 +66,4 @@ data class TestPluginDescriptor(val idString: String, var pluginDependencies: Li
   override fun getDependencies(): MutableList<IdeaPluginDependency> = pluginDependencies.toMutableList()
 
   override fun getDescriptorPath(): String? = null
-}
-
-private fun loadElement(xmlData: String): Element {
-  val builder = SAXBuilder()
-  val doc = builder.build(StringReader(xmlData))
-  return doc.rootElement
-}
-
-fun loadPluginManagerState(xmlData: String) {
-  val element = loadElement(xmlData)
-  ComponentSerializationUtil.loadComponentState(SettingsSyncPluginManager.getInstance(), element)
-}
-
-fun assertSerializedStateEquals(expected: String) {
-  val state = SettingsSyncPluginManager.getInstance().state
-  val e = Element("component")
-  XmlSerializer.serializeInto(state, e)
-  val writer = StringWriter()
-  val format = Format.getPrettyFormat()
-  format.lineSeparator = "\n"
-  XMLOutputter(format).output(e, writer)
-  val actual = writer.toString()
-  TestCase.assertEquals(expected, actual)
 }
