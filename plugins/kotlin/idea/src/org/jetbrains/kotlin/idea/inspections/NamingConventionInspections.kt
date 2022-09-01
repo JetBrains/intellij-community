@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.awt.BorderLayout
 import java.util.regex.PatternSyntaxException
 import javax.swing.JPanel
@@ -227,22 +228,25 @@ class FunctionNameInspection : NamingConventionInspection(
                 return@namedFunctionVisitor
             }
             if (!TestUtils.isInTestSourceContent(function)) {
-                verifyName(function, holder, additionalCheck = {
-                    val functionName = function.name
-                    val typeReference = function.typeReference
-                    if (typeReference != null) {
-                        typeReference.nameForReceiverLabel() != functionName
-                    } else {
-                        function.resolveToDescriptorIfAny()
-                            ?.returnType
-                            ?.fqName
-                            ?.takeUnless(FqName::isRoot)
-                            ?.shortName()
-                            ?.asString() != functionName
-                    }
-                })
+                verifyName(function, holder, additionalCheck = { !function.isFactoryFunction() })
             }
         }
+    }
+
+    private fun KtNamedFunction.isFactoryFunction(): Boolean {
+        val functionName = this.name ?: return false
+        val typeElement = typeReference?.typeElement
+        val returnType = if (typeElement != null) {
+            (typeElement.safeAs<KtNullableType>()?.innerType ?: typeElement).safeAs<KtUserType>()?.referencedName
+        } else {
+            resolveToDescriptorIfAny()
+                ?.returnType
+                ?.fqName
+                ?.takeUnless(FqName::isRoot)
+                ?.shortName()
+                ?.asString()
+        }
+        return functionName == returnType
     }
 }
 
