@@ -777,7 +777,9 @@ public class SwitchBlockHighlightingModel {
           if (!(switchLabel instanceof PsiSwitchLabelStatement)) return;
           PsiCaseLabelElementList labelElementList = switchLabel.getCaseLabelElementList();
           if (labelElementList == null) continue;
-          List<PsiCaseLabelElement> patternElements = ContainerUtil.filter(labelElementList.getElements(), labelElement -> labelElement instanceof PsiPattern);
+          List<PsiCaseLabelElement> patternElements = ContainerUtil.filter(labelElementList.getElements(),
+             labelElement -> labelElement instanceof PsiPattern || labelElement instanceof PsiPatternGuard
+          );
           if (patternElements.isEmpty()) continue;
           PsiStatement prevStatement = PsiTreeUtil.getPrevSiblingOfType(firstSwitchLabelInGroup, PsiStatement.class);
           if (prevStatement == null) continue;
