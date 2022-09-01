@@ -37,6 +37,11 @@ class NavBarItemPresentation(
    * Not used, tobe deleted
    */
   @Deprecated("not used, to be deleted")
-  val selectedTextAttributes: SimpleTextAttributes
+  val selectedTextAttributes: SimpleTextAttributes,
 
+  /**
+   * Find better place for that.
+   * Currently used as one more criteria to show item's icon
+   */
+  val hasContainingFile: Boolean
 )

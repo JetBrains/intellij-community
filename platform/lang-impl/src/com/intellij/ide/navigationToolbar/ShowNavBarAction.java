@@ -3,6 +3,7 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.navbar.ide.NavBarService;
 import com.intellij.ide.navbar.ide.NavigationBarKt;
 import com.intellij.ide.ui.NavBarLocation;
 import com.intellij.ide.ui.UISettings;
@@ -20,38 +21,42 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class ShowNavBarAction extends AnAction implements DumbAware, PopupAction {
+
   @Override
-  public void actionPerformed(@NotNull AnActionEvent e){
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    final DataContext context = e.getDataContext();
+    final Project project = CommonDataKeys.PROJECT.getData(context);
+    if (project == null) {
+      return;
+    }
     if (NavigationBarKt.getNavbarV2Enabled()) {
-      showNavBarV2(e);
+      showNavBarV2(e, project);
     }
     else {
-      showNavBar(e);
+      showNavBar(e, project);
     }
   }
 
-  private void showNavBar(@NotNull AnActionEvent e) {
+  private static void showNavBar(@NotNull AnActionEvent e, @NotNull Project project) {
     final DataContext context = e.getDataContext();
-    final Project project = CommonDataKeys.PROJECT.getData(context);
-    if (project != null) {
-      UISettings uiSettings = UISettings.getInstance();
-      if (uiSettings.getShowNavigationBar() && !uiSettings.getPresentationMode()
-          && (uiSettings.getShowStatusBar() || uiSettings.getNavBarLocation() != NavBarLocation.BOTTOM)){
-        SelectInNavBarTarget.selectInNavBar(true);
-      } else {
-        final Component component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context);
-        if (!isInsideNavBar(component)) {
-          IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
-          final Editor editor = CommonDataKeys.EDITOR.getData(context);
-          final NavBarPanel toolbarPanel = new NavBarPanel(project, false);
-          toolbarPanel.showHint(editor, context);
-        }
+    UISettings uiSettings = UISettings.getInstance();
+    if (uiSettings.getShowNavigationBar() && !uiSettings.getPresentationMode()
+      && (uiSettings.getShowStatusBar() || uiSettings.getNavBarLocation() != NavBarLocation.BOTTOM)){SelectInNavBarTarget.selectInNavBar(true);
+    }
+    else {
+      final Component component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context);
+      if (!isInsideNavBar(component)) {
+        IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
+        final Editor editor = CommonDataKeys.EDITOR.getData(context);
+        final NavBarPanel toolbarPanel = new NavBarPanel(project, false);
+        toolbarPanel.showHint(editor, context);
       }
     }
   }
 
-  private void showNavBarV2(@NotNull AnActionEvent e) {
-    // Not implemented yet: show nav bar v2
+  private static void showNavBarV2(@NotNull AnActionEvent e, @NotNull Project project) {
+    DataContext context = e.getDataContext();
+    project.getService(NavBarService.class).jumpToNavbar(context);
   }
 
   private static boolean isInsideNavBar(Component c) {
@@ -62,7 +67,7 @@ public class ShowNavBarAction extends AnAction implements DumbAware, PopupAction
 
 
   @Override
-  public void update(@NotNull final AnActionEvent e){
+  public void update(@NotNull final AnActionEvent e) {
     final boolean enabled = e.getData(CommonDataKeys.PROJECT) != null;
     e.getPresentation().setEnabled(enabled);
 
