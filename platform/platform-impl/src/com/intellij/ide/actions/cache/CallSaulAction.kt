@@ -5,8 +5,8 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.psi.util.CachedValueProvider
 import com.intellij.util.SystemProperties
 
 internal class CallSaulAction : DumbAwareAction() {
@@ -28,24 +28,26 @@ internal class CallSaulAction : DumbAwareAction() {
   }
 }
 
-internal class CacheRecoveryActionGroup: ComputableActionGroup() {
-  override fun createChildrenProvider(actionManager: ActionManager): CachedValueProvider<Array<AnAction>> {
-    return CachedValueProvider {
-      isPopup = ApplicationManager.getApplication().isInternal
-      val actions = if (isSaulHere) {
-        val baseActions = arrayListOf<AnAction>(actionManager.getAction("CallSaul"))
+internal class CacheRecoveryActionGroup: ActionGroup(), DumbAware {
+  init {
+    templatePresentation.isPopupGroup = ApplicationManager.getApplication().isInternal
+    templatePresentation.isHideGroupIfEmpty = true
+  }
 
-        if (isPopup) {
-          baseActions.add(Separator.getInstance())
-        }
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+    if (e == null) return emptyArray()
+    return if (isSaulHere) {
+      val baseActions = arrayListOf<AnAction>(e.actionManager.getAction("CallSaul"))
 
-        (baseActions + service<Saul>().sortedActions.map {
-          it.toAnAction()
-        }).toTypedArray()
+      if (isPopup) {
+        baseActions.add(Separator.getInstance())
       }
-      else emptyArray()
-      CachedValueProvider.Result.create(actions, service<Saul>().modificationRecoveryActionTracker)
+
+      (baseActions + service<Saul>().sortedActions.map {
+        it.toAnAction()
+      }).toTypedArray()
     }
+    else emptyArray()
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {
