@@ -173,6 +173,12 @@ public final class TextMateServiceImpl extends TextMateService {
     return myCustomHighlightingColors;
   }
 
+  @Override
+  public @NotNull ShellVariablesRegistry getShellVariableRegistry() {
+    ensureInitialized();
+    return myShellVariablesRegistry;
+  }
+
   @Nullable
   @Override
   public TextMateShellVariable getVariable(@NotNull String name, @NotNull EditorEx editor) {
