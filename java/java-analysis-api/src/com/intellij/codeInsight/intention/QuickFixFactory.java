@@ -615,4 +615,6 @@ public abstract class QuickFixFactory {
    * @return a fix that converts an anonymous class to an inner class
    */
   public abstract @NotNull IntentionAction createConvertAnonymousToInnerAction(@NotNull PsiAnonymousClass anonymousClass);
+
+  public abstract @NotNull IntentionAction createSplitSwitchBranchWithSeveralCaseValuesAction();
 }
