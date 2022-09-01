@@ -1,14 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints;
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.diff.impl.DiffUtil;
+import com.intellij.openapi.editor.ClientEditorManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
@@ -81,7 +84,9 @@ public final class ParameterHintsPass extends EditorBoundHighlightingPass {
     ReadAction.nonBlocking(() -> collectInlaysInPass(editor, filter, elementPtr))
       .finishOnUiThread(ModalityState.any(), pass -> {
         if (pass != null) {
-          pass.applyInformationToEditor();
+          try (AccessToken ignored = ClientId.withClientId(ClientEditorManager.getClientId(editor))) {
+            pass.applyInformationToEditor();
+          }
         }
         promise.setResult(null);
       })
@@ -89,12 +94,12 @@ public final class ParameterHintsPass extends EditorBoundHighlightingPass {
     return promise;
   }
 
-  private static ParameterHintsPass collectInlaysInPass(Editor editor,
+  private static ParameterHintsPass collectInlaysInPass(@NotNull Editor editor,
                                                         MethodInfoExcludeListFilter filter,
                                                         SmartPsiElementPointer<PsiElement> elementPtr) {
     PsiElement element = elementPtr.getElement();
     if (element == null || editor.isDisposed()) return null;
-    try {
+    try (AccessToken ignored = ClientId.withClientId(ClientEditorManager.getClientId(editor))) {
       ParameterHintsPass pass = new ParameterHintsPass(element, editor, filter, true);
       pass.doCollectInformation(new ProgressIndicatorBase());
       return pass;

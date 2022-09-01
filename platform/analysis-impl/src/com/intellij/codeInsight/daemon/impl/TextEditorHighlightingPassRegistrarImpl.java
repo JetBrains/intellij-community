@@ -1,8 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.*;
+import com.intellij.codeWithMe.ClientId;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.ClientEditorManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -187,7 +190,12 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
         continue;
       }
       TextEditorHighlightingPassFactory factory = passConfig.passFactory;
-      TextEditorHighlightingPass pass = isDumb && !DumbService.isDumbAware(factory) ? null : factory.createHighlightingPass(psiFile, editor);
+      TextEditorHighlightingPass pass = null;
+      if (!isDumb || DumbService.isDumbAware(factory)) {
+        try (AccessToken ignored = ClientId.withClientId(ClientEditorManager.getClientId(editor))) {
+          pass = factory.createHighlightingPass(psiFile, editor);
+        }
+      }
       if (pass == null || isDumb && !DumbService.isDumbAware(pass)) {
         passesRefusedToCreate.add(passId);
       }

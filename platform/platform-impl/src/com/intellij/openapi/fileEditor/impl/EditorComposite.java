@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.DataValidators;
@@ -59,6 +60,8 @@ public class EditorComposite extends FileEditorComposite implements Disposable {
    */
   private final @NotNull VirtualFile myFile;
 
+  private final @NotNull ClientId myClientId;
+
   private final @NotNull Project myProject;
   /**
    * Whether the composite is pinned or not
@@ -99,9 +102,12 @@ public class EditorComposite extends FileEditorComposite implements Disposable {
                   final @NotNull FileEditorManagerEx fileEditorManager) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myFile = file;
+    myClientId = ClientId.getCurrent();
     myEditorsWithProviders.addAll(editorsWithProviders);
     for (FileEditorWithProvider editorWithProvider : myEditorsWithProviders) {
-      FileEditor.FILE_KEY.set(editorWithProvider.getFileEditor(), myFile);
+      FileEditor editor = editorWithProvider.getFileEditor();
+      FileEditor.FILE_KEY.set(editor, myFile);
+      ClientFileEditorManager.assignClientId(editor, myClientId);
     }
     myFileEditorManager = fileEditorManager;
     myInitialFileTimeStamp = myFile.getTimeStamp();
@@ -605,6 +611,7 @@ public class EditorComposite extends FileEditorComposite implements Disposable {
     myEditorsWithProviders.add(editorWithProvider);
 
     FileEditor.FILE_KEY.set(editor, myFile);
+    ClientFileEditorManager.assignClientId(editor, myClientId);
     if (myTabbedPaneWrapper == null) {
       myTabbedPaneWrapper = createTabbedPaneWrapper(myComponent);
       myComponent.setComponent(myTabbedPaneWrapper.getComponent());

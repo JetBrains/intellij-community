@@ -287,6 +287,7 @@ public class TextEditorProvider implements DefaultPlatformFileEditorProvider, Te
 
     EditorWrapper(@NotNull Editor editor) {
       myEditor = editor;
+      ClientFileEditorManager.assignClientId(this, ClientEditorManager.getClientId(editor));
     }
 
     @Override

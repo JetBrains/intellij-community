@@ -1,8 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeTooltip;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -490,11 +492,9 @@ public class HintManagerImpl extends HintManager {
 
   @NotNull
   private static ClientHintManager getClientManager(@NotNull Editor editor) {
-    final ClientHintManager[] instance = new ClientHintManager[1];
-    ClientEditorManager.withEditorClientId(editor, () -> {
-      instance[0] = ClientHintManager.getCurrentInstance();
-    });
-    return instance[0];
+    try (AccessToken ignored = ClientId.withClientId(ClientEditorManager.getClientId(editor))) {
+      return ClientHintManager.getCurrentInstance();
+    }
   }
 
   @Override

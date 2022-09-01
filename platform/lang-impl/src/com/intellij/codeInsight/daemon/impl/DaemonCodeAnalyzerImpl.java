@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.FileLevelIntentionComponent;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.ide.PowerSaveMode;
@@ -14,10 +15,7 @@ import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -28,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.fileEditor.ClientFileEditorManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -911,9 +910,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     Map<FileEditor, BackgroundEditorHighlighter> highlighters = new HashMap<>(fileEditors.size());
 
     for (FileEditor fileEditor : fileEditors) {
-      BackgroundEditorHighlighter highlighter = fileEditor.getBackgroundHighlighter();
-      if (highlighter != null) {
-        highlighters.put(fileEditor, highlighter);
+      try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(fileEditor))) {
+        BackgroundEditorHighlighter highlighter = fileEditor.getBackgroundHighlighter();
+        if (highlighter != null) {
+          highlighters.put(fileEditor, highlighter);
+        }
       }
     }
     DaemonProgressIndicator progress = createUpdateProgress(highlighters.keySet());
@@ -932,7 +933,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
         return null;
       }
       EditorColorsScheme scheme = editor == null ? null : editor.getColorsScheme();
-      session = HighlightingSessionImpl.createHighlightingSession(psiFile, editor, scheme, progress);
+      try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(fileEditor))) {
+        session = HighlightingSessionImpl.createHighlightingSession(psiFile, editor, scheme, progress);
+      }
     }
     if (session == null) {
       // happens e.g., when we are trying to open a directory and there's a FileEditor supporting this
@@ -1007,13 +1010,16 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
                 // editor or something was changed between commit document notification in EDT and this point in the FJP thread
                 throw new ProcessCanceledException();
               }
-              HighlightingPass[] result = highlighter instanceof TextEditorBackgroundHighlighter ?
-                                          ((TextEditorBackgroundHighlighter)highlighter).getPasses(passesToIgnore).toArray(HighlightingPass.EMPTY_ARRAY) :
-                                          highlighter.createPassesForEditor();
-              if (heavyProcessIsRunning) {
-                result = ContainerUtil.findAllAsArray(result, DumbService::isDumbAware);
+              try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(fileEditor))) {
+                HighlightingPass[] result = highlighter instanceof TextEditorBackgroundHighlighter ?
+                                            ((TextEditorBackgroundHighlighter)highlighter).getPasses(passesToIgnore)
+                                              .toArray(HighlightingPass.EMPTY_ARRAY) :
+                                            highlighter.createPassesForEditor();
+                if (heavyProcessIsRunning) {
+                  result = ContainerUtil.findAllAsArray(result, DumbService::isDumbAware);
+                }
+                return result;
               }
-              return result;
             });
             info.myHighlightingPasses = passes;
             hasPasses = hasPasses || passes.length != 0;
@@ -1075,6 +1081,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
                                            @NotNull List<FileEditorInfo.FileEditorHighlightingInfo> fileEditors) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     assert !fileEditors.isEmpty();
+    // todo decide what to do with focuses and remote-dev
     int focusedIndex = ContainerUtil.indexOf(fileEditors, info -> info.myFileEditor instanceof TextEditor &&
                                                                   ((TextEditor)info.myFileEditor).getEditor().getContentComponent().isFocusOwner());
     if (focusedIndex == -1) {
