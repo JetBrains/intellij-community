@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
 import org.jetbrains.intellij.build.dependencies.JdkDownloader;
+import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -233,7 +234,7 @@ public class JpsBootstrapMain {
 
   private void downloadOrBuildClasses(JpsModule module, JpsModel model, Path kotlincHome) throws Throwable {
     String fromJpsBuildEnvValue = System.getenv(JpsBuild.CLASSES_FROM_JPS_BUILD_ENV_NAME);
-    boolean runJpsBuild = fromJpsBuildEnvValue != null && JpsBootstrapUtil.toBooleanChecked(fromJpsBuildEnvValue);
+    boolean runJpsBuild = fromJpsBuildEnvValue != null && JpsBootstrapUtil.toBooleanChecked(fromJpsBuildEnvValue) || ProjectStamps.PORTABLE_CACHES;
 
     String manifestJsonUrl = System.getenv(ClassesFromCompileInc.MANIFEST_JSON_URL_ENV_NAME);
     if (manifestJsonUrl != null && manifestJsonUrl.isBlank()) {
