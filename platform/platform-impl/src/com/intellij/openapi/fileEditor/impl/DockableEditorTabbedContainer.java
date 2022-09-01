@@ -23,6 +23,7 @@ import com.intellij.ui.tabs.impl.TabLayout;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.Activatable;
+import kotlin.Unit;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +34,6 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -225,9 +225,13 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
       AnActionEvent event = AnActionEvent.createFromInputEvent(
         new MouseEvent(mySplitters, MouseEvent.MOUSE_DRAGGED, System.currentTimeMillis(), 0, 0, 0, 0, false,
                        MouseEvent.BUTTON1), ActionPlaces.EDITOR_TAB, null, DataContext.EMPTY_CONTEXT);
-      ActionsCollectorImpl.recordActionInvoked(myProject, ActionManager.getInstance().getAction(actionId), event,
-                                               Collections.singletonList(ActionsEventLogGroup.ADDITIONAL.with(
-                                                 new ObjectEventData(SAME_WINDOW.with(sameWindow)))));
+      ActionsCollectorImpl.recordActionInvoked(
+        myProject, ActionManager.getInstance().getAction(actionId), event,
+        (list) -> {
+          list.add(ActionsEventLogGroup.ADDITIONAL.with(
+            new ObjectEventData(SAME_WINDOW.with(sameWindow))));
+          return Unit.INSTANCE;
+        });
     }
   }
 

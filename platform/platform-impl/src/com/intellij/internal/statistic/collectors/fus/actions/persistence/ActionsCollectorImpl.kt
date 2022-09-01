@@ -4,7 +4,6 @@ package com.intellij.internal.statistic.collectors.fus.actions.persistence
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.ide.actions.ActionsCollector
 import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.eventLog.events.FusInputEvent.Companion.from
 import com.intellij.internal.statistic.utils.PluginInfo
@@ -36,7 +35,9 @@ class ActionsCollectorImpl : ActionsCollector() {
   }
 
   override fun record(project: Project?, action: AnAction?, event: AnActionEvent?, lang: Language?) {
-    recordActionInvoked(project, action, event, listOf<EventPair<*>>(EventFields.CurrentFile.with(lang)))
+    recordActionInvoked(project, action, event) {
+      add(EventFields.CurrentFile.with(lang))
+    }
   }
 
   override fun onActionConfiguredByActionId(action: AnAction, actionId: String) {
@@ -45,23 +46,25 @@ class ActionsCollectorImpl : ActionsCollector() {
 
   override fun recordUpdate(action: AnAction, event: AnActionEvent, durationMs: Long) {
     if (durationMs <= 5) return
-    val data: MutableList<EventPair<*>> = ArrayList()
-    val info = getPluginInfo(action.javaClass)
-    val actionId = addActionClass(data, action, info)
     val dataContext = getCachedDataContext(event)
     val project = CommonDataKeys.PROJECT.getData(dataContext)
-    var language = getInjectedOrFileLanguage(project, dataContext)
-    if (language == null) {
-      language = Language.ANY
-    }
-    val statsKey = ActionUpdateStatsKey(actionId, language!!.id)
-    val reportedData = myUpdateStats.getLong(statsKey)
-    if (reportedData == 0L || durationMs >= 2 * reportedData) {
-      myUpdateStats.put(statsKey, durationMs)
-      data.add(EventFields.PluginInfo.with(info))
-      data.add(EventFields.Language.with(language))
-      data.add(EventFields.DurationMs.with(durationMs))
-      ActionsEventLogGroup.ACTION_UPDATED.log(project, data)
+    ActionsEventLogGroup.ACTION_UPDATED.log(project) {
+      val info = getPluginInfo(action.javaClass)
+      val actionId = addActionClass(this, action, info)
+      var language = getInjectedOrFileLanguage(project, dataContext)
+      if (language == null) {
+        language = Language.ANY
+      }
+      val statsKey = ActionUpdateStatsKey(actionId, language!!.id)
+      val reportedData = myUpdateStats.getLong(statsKey)
+      if (reportedData == 0L || durationMs >= 2 * reportedData) {
+        myUpdateStats.put(statsKey, durationMs)
+        add(EventFields.PluginInfo.with(info))
+        add(EventFields.Language.with(language))
+        add(EventFields.DurationMs.with(durationMs))
+      } else {
+        skip()
+      }
     }
   }
 
@@ -108,8 +111,8 @@ class ActionsCollectorImpl : ActionsCollector() {
     fun recordActionInvoked(project: Project?,
                             action: AnAction?,
                             event: AnActionEvent?,
-                            customData: List<EventPair<*>>) {
-      record(ActionsEventLogGroup.ACTION_FINISHED, project, action, event, customData)
+                            customDataProvider: MutableList<EventPair<*>>.() -> Unit) {
+      record(ActionsEventLogGroup.ACTION_FINISHED, project, action, event, customDataProvider)
     }
 
     @JvmStatic
@@ -117,27 +120,25 @@ class ActionsCollectorImpl : ActionsCollector() {
                project: Project?,
                action: AnAction?,
                event: AnActionEvent?,
-               customData: List<EventPair<*>>?) {
+               customDataProvider: MutableList<EventPair<*>>.() -> Unit) {
       if (action == null) return
-      val info = getPluginInfo(action.javaClass)
-      val data: MutableList<EventPair<*>> = ArrayList()
-      data.add(EventFields.PluginInfoFromInstance.with(action))
-      if (event != null) {
-        if (action is ToggleAction) {
-          data.add(ActionsEventLogGroup.TOGGLE_ACTION.with(Toggleable.isSelected(event.presentation)))
+      eventId.log(project) {
+        val info = getPluginInfo(action.javaClass)
+        add(EventFields.PluginInfoFromInstance.with(action))
+        if (event != null) {
+          if (action is ToggleAction) {
+            add(ActionsEventLogGroup.TOGGLE_ACTION.with(Toggleable.isSelected(event.presentation)))
+          }
+          addAll(actionEventData(event))
         }
-        data.addAll(actionEventData(event))
+        if (project != null && !project.isDisposed) {
+          add(ActionsEventLogGroup.DUMB.with(DumbService.isDumb(project)))
+        }
+        customDataProvider()
+        addActionClass(this, action, info)
       }
-      if (project != null && !project.isDisposed) {
-        data.add(ActionsEventLogGroup.DUMB.with(DumbService.isDumb(project)))
-      }
-      if (customData != null) {
-        data.addAll(customData)
-      }
-      val actionId = addActionClass(data, action, info)
-      eventId.log(project, data)
       if (eventId == ActionsEventLogGroup.ACTION_FINISHED) {
-        FeatureUsageTracker.getInstance().triggerFeatureUsedByAction(actionId)
+        FeatureUsageTracker.getInstance().triggerFeatureUsedByAction(getActionId(action))
       }
     }
 
@@ -180,6 +181,10 @@ class ActionsCollectorImpl : ActionsCollector() {
       if (!pluginInfo.isSafeToReport()) {
         return DEFAULT_ID
       }
+      return getActionId(action)
+    }
+
+    private fun getActionId(action: AnAction): String {
       var actionId = ActionManager.getInstance().getId(action)
       if (actionId == null && action is ActionIdProvider) {
         actionId = (action as ActionIdProvider).id
@@ -222,26 +227,26 @@ class ActionsCollectorImpl : ActionsCollector() {
     @JvmStatic
     fun onAfterActionInvoked(action: AnAction, event: AnActionEvent, result: AnActionResult) {
       val stats = ourStats.remove(event)
-      val durationMillis = if (stats != null) TimeoutUtil.getDurationMillis(stats.start) else -1
-      val data: MutableList<EventPair<*>> = ArrayList()
-      if (stats != null) {
-        data.add(EventFields.StartTime.with(stats.startMs))
-        if (stats.isDumb != null) {
-          data.add(ActionsEventLogGroup.DUMB_START.with(stats.isDumb))
-        }
-      }
-      val reportedResult = toReportedResult(result)
-      data.add(ActionsEventLogGroup.RESULT.with(reportedResult))
       val project = stats?.projectRef?.get()
-      val contextBefore = stats?.fileLanguage
-      val injectedContextBefore = stats?.injectedFileLanguage
-      addLanguageContextFields(project, event, contextBefore, injectedContextBefore, data)
-      if (action is FusAwareAction) {
-        val additionalUsageData = (action as FusAwareAction).getAdditionalUsageData(event)
-        data.add(ActionsEventLogGroup.ADDITIONAL.with(ObjectEventData(additionalUsageData)))
+      recordActionInvoked(project, action, event) {
+        val durationMillis = if (stats != null) TimeoutUtil.getDurationMillis(stats.start) else -1
+        if (stats != null) {
+          add(EventFields.StartTime.with(stats.startMs))
+          if (stats.isDumb != null) {
+            add(ActionsEventLogGroup.DUMB_START.with(stats.isDumb))
+          }
+        }
+        val reportedResult = toReportedResult(result)
+        add(ActionsEventLogGroup.RESULT.with(reportedResult))
+        val contextBefore = stats?.fileLanguage
+        val injectedContextBefore = stats?.injectedFileLanguage
+        addLanguageContextFields(project, event, contextBefore, injectedContextBefore, this)
+        if (action is FusAwareAction) {
+          val additionalUsageData = (action as FusAwareAction).getAdditionalUsageData(event)
+          add(ActionsEventLogGroup.ADDITIONAL.with(ObjectEventData(additionalUsageData)))
+        }
+        add(EventFields.DurationMs.with(roundDuration(durationMillis)))
       }
-      data.add(EventFields.DurationMs.with(roundDuration(durationMillis)))
-      recordActionInvoked(project, action, event, data)
     }
 
     private fun toReportedResult(result: AnActionResult): ObjectEventData {

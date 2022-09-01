@@ -65,6 +65,14 @@ open class StatisticsFileEventLogger(private val recorderId: String,
     }
   }
 
+  override fun logAsync(group: EventLogGroup,
+                        eventId: String,
+                        dataProvider: () -> Map<String, Any>?,
+                        isState: Boolean): CompletableFuture<Void> {
+    val data = dataProvider() ?: return CompletableFuture.completedFuture(null)
+    return logAsync(group, eventId, data, isState)
+  }
+
   private fun log(event: LogEvent, createdTime: Long, rawEventId: String, rawData: Map<String, Any>) {
     if (lastEvent != null && event.time - lastEventTime <= eventMergeTimeoutMs && mergeStrategy.shouldMerge(lastEvent!!.validatedEvent, event)) {
       lastEventTime = event.time
