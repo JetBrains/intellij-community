@@ -17,7 +17,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.vcs.CompareWithLocalDialog;
 import com.intellij.vcsUtil.VcsFileUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -116,7 +115,7 @@ public final class VcsDiffUtil {
     String revNumTitle1 = getRevisionTitle(getShortRevisionString(targetRevNumber), false);
     String revNumTitle2 = VcsBundle.message("diff.title.local");
     String dialogTitle = VcsBundle.message("history.dialog.title.difference.between.versions.in",
-                                           revNumTitle1, revNumTitle2, VcsUtil.getFilePath(file));
+                                           revNumTitle1, revNumTitle2, file.getName());
 
     CompareWithLocalDialog.showChanges(project, dialogTitle, CompareWithLocalDialog.LocalContent.AFTER, () -> {
       return provider.compareWithWorkingDir(file, targetRevNumber);
