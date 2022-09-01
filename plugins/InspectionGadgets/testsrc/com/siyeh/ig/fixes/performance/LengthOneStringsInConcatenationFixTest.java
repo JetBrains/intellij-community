@@ -9,44 +9,43 @@ import com.siyeh.ig.performance.LengthOneStringsInConcatenationInspection;
 /**
  * @author Fabrice TIERCELIN
  */
+@SuppressWarnings("SingleCharacterStringConcatenation")
 public class LengthOneStringsInConcatenationFixTest extends IGQuickFixesTestCase {
-  @SuppressWarnings("SingleCharacterStringConcatenation")
   public void testFirstConcatenationOperand() {
     doExpressionTest(InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix"),
                      "\"f\"/**/ + \"bar\"", "'f' + \"bar\"");
   }
 
-  @SuppressWarnings("SingleCharacterStringConcatenation")
   public void testSecondConcatenationOperand() {
     doExpressionTest(InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix"),
                      "\"foo\" + /**/\"b\"", "\"foo\" + 'b'");
   }
 
-  @SuppressWarnings("SingleCharacterStringConcatenation")
   public void testThirdConcatenationOperand() {
     doExpressionTest(InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix"),
                      "\"foo\" + 1 + /**/\"c\"", "\"foo\" + 1 + 'c'");
   }
 
-  @SuppressWarnings("SingleCharacterStringConcatenation")
   public void testAppendMethodParameter() {
     doExpressionTest(InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix"),
                      "new StringBuilder().append(/**/\"c\")", "new StringBuilder().append('c')");
   }
 
-  @SuppressWarnings("SingleCharacterStringConcatenation")
   public void testNewLine() {
     doExpressionTest(InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix"),
                      "\"\\n\"/**/ + \"bar\"", "'\\n' + \"bar\"");
   }
 
-  @SuppressWarnings("SingleCharacterStringConcatenation")
+  public void testTextBlock() {
+    doExpressionTest(InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix"),
+                     "\"string\" + /**/\"\"\"\n    !\"\"\"", "\"string\" + '!'");
+  }
+
   public void testQuote() {
     doExpressionTest(InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix"),
                      "\"\\'\"/**/ + \"bar\"", "'\\'' + \"bar\"");
   }
 
-  @SuppressWarnings("SingleCharacterStringConcatenation")
   public void testDoubleQuote() {
     doExpressionTest(InspectionGadgetsBundle.message("length.one.strings.in.concatenation.replace.quickfix"),
                      "\"\\\"\"/**/ + \"bar\"", "'\"' + \"bar\"");

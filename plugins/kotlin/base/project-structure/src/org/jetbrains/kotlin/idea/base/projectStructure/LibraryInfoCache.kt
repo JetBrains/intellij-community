@@ -10,15 +10,12 @@ import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.PathUtil
 import com.intellij.util.messages.Topic
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
-import org.jetbrains.kotlin.idea.base.util.caching.WorkspaceEntityChangeListener
 import org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider
 import org.jetbrains.kotlin.idea.base.platforms.isKlibLibraryRootForPlatform
 import org.jetbrains.kotlin.idea.base.platforms.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
-import org.jetbrains.kotlin.idea.base.util.caching.findLibraryByEntityWithHack
+import org.jetbrains.kotlin.idea.base.util.caching.LibraryEntityChangeListener
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.idePlatformKind
@@ -41,13 +38,15 @@ class LibraryInfoCache(project: Project): SynchronizedFineGrainedEntityCache<Lib
     }
 
     override fun calculate(key: Library): List<LibraryInfo> {
-        return when (val platformKind = getPlatform(key).idePlatformKind) {
+        val libraryInfos = when (val platformKind = getPlatform(key).idePlatformKind) {
             is JvmIdePlatformKind -> listOf(JvmLibraryInfo(project, key))
             is CommonIdePlatformKind -> createLibraryInfos(key, platformKind, ::CommonKlibLibraryInfo, ::CommonMetadataLibraryInfo)
             is JsIdePlatformKind -> createLibraryInfos(key, platformKind, ::JsKlibLibraryInfo, ::JsMetadataLibraryInfo)
             is NativeIdePlatformKind -> createLibraryInfos(key, platformKind, ::NativeKlibLibraryInfo, null)
             else -> error("Unexpected platform kind: $platformKind")
         }
+        project.messageBus.syncPublisher(LibraryInfoListener.TOPIC).libraryInfosAdded(libraryInfos)
+        return libraryInfos
     }
 
     private fun createLibraryInfos(
@@ -81,19 +80,14 @@ class LibraryInfoCache(project: Project): SynchronizedFineGrainedEntityCache<Lib
         return JvmPlatforms.defaultJvmPlatform
     }
 
-    internal class ModelChangeListener(project: Project) : WorkspaceEntityChangeListener<LibraryEntity, Library>(project, afterChangeApplied = false) {
-        override val entityClass: Class<LibraryEntity>
-            get() = LibraryEntity::class.java
-
-        override fun map(storage: EntityStorage, entity: LibraryEntity): Library? =
-            storage.findLibraryByEntityWithHack(entity, project)
+    internal class ModelChangeListener(project: Project) : LibraryEntityChangeListener(project, afterChangeApplied = false) {
 
         override fun entitiesChanged(outdated: List<Library>) {
             val libraryInfoCache = getInstance(project)
             val droppedLibraryInfos = libraryInfoCache.invalidateKeysAndGetOutdatedValues(outdated).flatten()
 
             if (droppedLibraryInfos.isNotEmpty()) {
-                project.messageBus.syncPublisher(OutdatedLibraryInfoListener.TOPIC).libraryInfosRemoved(droppedLibraryInfos)
+                project.messageBus.syncPublisher(LibraryInfoListener.TOPIC).libraryInfosRemoved(droppedLibraryInfos)
             }
         }
     }
@@ -103,13 +97,15 @@ class LibraryInfoCache(project: Project): SynchronizedFineGrainedEntityCache<Lib
     }
 }
 
-interface OutdatedLibraryInfoListener {
+interface LibraryInfoListener {
 
     fun libraryInfosRemoved(libraryInfos: Collection<LibraryInfo>)
+
+    fun libraryInfosAdded(libraryInfos: Collection<LibraryInfo>) {}
 
     companion object {
         @JvmStatic
         @Topic.ProjectLevel
-        val TOPIC = Topic.create("library info listener", OutdatedLibraryInfoListener::class.java)
+        val TOPIC = Topic.create("library info listener", LibraryInfoListener::class.java)
     }
 }

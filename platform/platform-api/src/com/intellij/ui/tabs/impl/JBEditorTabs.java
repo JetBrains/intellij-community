@@ -94,4 +94,8 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
   @Override
   public void setEmptySpaceColorCallback(@NotNull Supplier<? extends Color> callback) {
   }
+
+  public boolean shouldPaintBottomBorder() {
+    return true;
+  }
 }

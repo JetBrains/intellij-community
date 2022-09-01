@@ -17,10 +17,15 @@ import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.inspection.StructuralSearchProfileActionProvider;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -327,6 +332,7 @@ public final class ExistingTemplatesComponent {
 
     final TreeSpeedSearch speedSearch = new TreeSpeedSearch(
       tree,
+      false,
       treePath -> {
         final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)treePath.getLastPathComponent();
         if (treeNode instanceof DraftTemplateNode) return SSRBundle.message("draft.template.node");

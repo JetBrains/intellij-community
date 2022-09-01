@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.impl.BuildTasksImpl
 import java.nio.file.Path
 
@@ -24,20 +26,32 @@ interface BuildTasks {
    * Produces distributions for all operating systems from sources. This includes compiling required modules, packing their output into JAR
    * files accordingly to [ProductProperties.productLayout], and creating distributions and installers for all OS.
    */
-  fun buildDistributions()
+  suspend fun buildDistributions()
 
-  fun compileModulesFromProduct()
+  fun buildDistributionsBlocking() {
+    runBlocking(Dispatchers.Default) {
+      buildDistributions()
+    }
+  }
+
+  suspend fun compileModulesFromProduct()
 
   /**
    * Compiles required modules and builds zip archives of the specified plugins in [artifacts][BuildPaths.artifactDir]/&lt;product-code&gt;-plugins
    * directory.
    */
-  fun buildNonBundledPlugins(mainPluginModules: List<String>)
+  suspend fun buildNonBundledPlugins(mainPluginModules: List<String>)
+
+  fun blockingBuildNonBundledPlugins(mainPluginModules: List<String>) {
+    runBlocking(Dispatchers.Default) {
+      buildNonBundledPlugins(mainPluginModules)
+    }
+  }
 
   /**
    * Generates a JSON file containing mapping between files in the product distribution and modules and libraries in the project configuration
    */
-  fun generateProjectStructureMapping(targetFile: Path)
+  suspend fun generateProjectStructureMapping(targetFile: Path)
 
   fun compileProjectAndTests(includingTestsInModules: List<String>)
 
@@ -57,9 +71,9 @@ interface BuildTasks {
    * build searchable options index and scramble the main JAR, but won't produce the product archives and installation files which occupy a lot
    * of disk space and take a long time to build.
    */
-  fun runTestBuild()
+  suspend fun runTestBuild()
 
-  fun buildUnpackedDistribution(targetDirectory: Path, includeBinAndRuntime: Boolean)
+  suspend fun buildUnpackedDistribution(targetDirectory: Path, includeBinAndRuntime: Boolean)
 
   fun buildDmg(macZipDir: Path)
 }

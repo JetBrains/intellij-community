@@ -16,6 +16,16 @@ import java.util.List;
 import java.util.Set;
 
 class LightEditProjectFileIndex implements ProjectFileIndex {
+  @Override
+  public boolean isInProject(@NotNull VirtualFile file) {
+    return isInContent(file);
+  }
+
+  @Override
+  public boolean isInProjectOrExcluded(@NotNull VirtualFile file) {
+    return isInContent(file);
+  }
+
   @Nullable
   @Override
   public Module getModuleForFile(@NotNull VirtualFile file) {
@@ -129,11 +139,6 @@ class LightEditProjectFileIndex implements ProjectFileIndex {
   @Override
   public boolean isInContent(@NotNull VirtualFile fileOrDir) {
     return LightEditDirectoryIndex.getFileInfo().isInProject(fileOrDir);
-  }
-
-  @Override
-  public boolean isContentSourceFile(@NotNull VirtualFile file) {
-    return false;
   }
 
   @Override

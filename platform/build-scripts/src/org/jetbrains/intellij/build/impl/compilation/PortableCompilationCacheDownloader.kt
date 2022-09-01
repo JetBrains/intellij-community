@@ -10,6 +10,7 @@ import org.jetbrains.intellij.build.get
 import org.jetbrains.intellij.build.httpClient
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
+import org.jetbrains.intellij.build.io.retryWithExponentialBackOff
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ForkJoinTask
@@ -35,14 +36,18 @@ internal class PortableCompilationCacheDownloader(
 
   private val lastCommits by lazy { git.log(COMMITS_COUNT) }
 
-  private fun downloadString(url: String) = httpClient.get(url).useSuccessful { it.body.string() }
+  private fun downloadString(url: String) = retryWithExponentialBackOff {
+    httpClient.get(url).useSuccessful { it.body.string() }
+  }
 
   private fun downloadToFile(url: String, file: Path, spanName: String) {
     TraceManager.spanBuilder(spanName).setAttribute("url", url).setAttribute("path", "$file").useWithScope {
       Files.createDirectories(file.parent)
-      httpClient.get(url).useSuccessful { response ->
-        Files.newOutputStream(file).use {
-          response.body.byteStream().transferTo(it)
+      retryWithExponentialBackOff {
+        httpClient.get(url).useSuccessful { response ->
+          Files.newOutputStream(file).use {
+            response.body.byteStream().transferTo(it)
+          }
         }
       }
     }
@@ -59,21 +64,12 @@ internal class PortableCompilationCacheDownloader(
     CommitsHistory(json).commitsForRemote(gitUrl)
   }
 
-  val anyLocalChanges by lazy {
-    val localChanges = git.status()
-    if (!localChanges.isEmpty()) {
-      context.messages.info("Local changes:")
-      localChanges.forEach { context.messages.info("\t$it") }
-    }
-    !localChanges.isEmpty()
-  }
-
   fun download() {
     if (availableCommitDepth in 0 until lastCommits.count()) {
       val lastCachedCommit = lastCommits.get(availableCommitDepth)
       context.messages.info("Using cache for commit $lastCachedCommit ($availableCommitDepth behind last commit).")
       val tasks = mutableListOf<ForkJoinTask<*>>()
-      if (!downloadCompilationOutputsOnly || anyLocalChanges) {
+      if (!downloadCompilationOutputsOnly) {
         tasks.add(ForkJoinTask.adapt { saveJpsCache(lastCachedCommit) })
       }
 

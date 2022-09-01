@@ -165,13 +165,13 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
 
     myTree.setCellRenderer(new UpdateTreeCellRenderer());
     TreeUtil.installActions(myTree);
-    new TreeSpeedSearch(myTree, path -> {
+    new TreeSpeedSearch(myTree, true, path -> {
       Object last = path.getLastPathComponent();
       if (last instanceof AbstractTreeNode) {
         return ((AbstractTreeNode)last).getText();
       }
-      return TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING.convert(path);
-    }, true);
+      return TreeSpeedSearch.NODE_PRESENTATION_FUNCTION.apply(path);
+    });
 
     PopupHandler.installPopupMenu(myTree, "UpdateActionGroup", ActionPlaces.UPDATE_POPUP);
     EditSourceOnDoubleClickHandler.install(myTree);

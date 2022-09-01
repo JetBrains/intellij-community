@@ -15,10 +15,17 @@ import java.awt.event.KeyEvent
 import java.net.ConnectException
 import java.time.Duration
 
+/*
+ How to run UI test locally:
+ - run `Idea Dev Build Server for UI tests` (kotlin Run configuration)
+ - run `IDEA for UI tests` (application Run configuration)
+ - run UI test via gutter
+ */
+
 internal abstract class UITest {
   companion object {
     @JvmStatic
-    protected val robot = RemoteRobot("http://127.0.0.1:8580").apply {
+    protected val robot = RemoteRobot("http://localhost:63343/api/robot/").apply {
       StepWorker.registerProcessor(StepPrinter())
     }
 

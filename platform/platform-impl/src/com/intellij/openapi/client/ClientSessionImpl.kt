@@ -77,7 +77,7 @@ abstract class ClientSessionImpl(
   override fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,
                                   app: Application?,
                                   precomputedExtensionModel: PrecomputedExtensionModel?,
-                                  listenerCallbacks: MutableList<Runnable>?) {
+                                  listenerCallbacks: MutableList<in Runnable>?) {
     for (rootModule in modules) {
       registerServices(getContainerDescriptor(rootModule).services, rootModule)
       executeRegisterTaskForOldContent(rootModule) { module ->
@@ -96,7 +96,7 @@ abstract class ClientSessionImpl(
   }
 
   fun <T : Any> doGetService(serviceClass: Class<T>, createIfNeeded: Boolean, fallbackToShared: Boolean): T? {
-    val clientService = super.doGetService(serviceClass, createIfNeeded)
+    val clientService = ClientId.withClientId(clientId) { super.doGetService(serviceClass, createIfNeeded) }
     if (clientService != null || !fallbackToShared) return clientService
 
     if (createIfNeeded && !isLocal) {

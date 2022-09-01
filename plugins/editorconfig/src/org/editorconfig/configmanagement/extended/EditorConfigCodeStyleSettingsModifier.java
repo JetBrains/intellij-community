@@ -376,7 +376,7 @@ public final class EditorConfigCodeStyleSettingsModifier implements CodeStyleSet
       }
       else {
         providers.clear();
-        providers.addAll(LanguageCodeStyleSettingsProvider.EP_NAME.getExtensionList());
+        providers.addAll(LanguageCodeStyleSettingsProvider.getAllProviders());
         break;
       }
     }

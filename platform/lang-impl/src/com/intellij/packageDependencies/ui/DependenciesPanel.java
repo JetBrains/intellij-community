@@ -511,7 +511,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -535,7 +535,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -562,7 +562,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -586,7 +586,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
+      return ActionUpdateThread.EDT;
     }
 
     @Override
@@ -617,7 +617,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
+      return ActionUpdateThread.EDT;
     }
 
     @Override

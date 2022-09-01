@@ -34,7 +34,6 @@ import com.intellij.openapi.util.Trinity
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance
 import com.intellij.ui.*
-import com.intellij.ui.PlatformIcons
 import com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*
 import com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
 import com.intellij.ui.awt.RelativePoint
@@ -43,7 +42,10 @@ import com.intellij.ui.mac.touchbar.Touchbar
 import com.intellij.ui.mac.touchbar.TouchbarActionCustomizations
 import com.intellij.ui.popup.PopupState
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.util.*
+import com.intellij.util.Alarm
+import com.intellij.util.ArrayUtilRt
+import com.intellij.util.IconUtil
+import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.TreeTraversal
 import com.intellij.util.ui.EditableModel
@@ -192,7 +194,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       override fun getSourceActions(c: JComponent) = COPY_OR_MOVE
     }
     TreeUtil.installActions(tree)
-    TreeSpeedSearch(tree) { o ->
+    TreeSpeedSearch(tree, false) { o ->
       val node = o.lastPathComponent as DefaultMutableTreeNode
       when (val userObject = node.userObject) {
         is RunnerAndConfigurationSettingsImpl -> return@TreeSpeedSearch userObject.name

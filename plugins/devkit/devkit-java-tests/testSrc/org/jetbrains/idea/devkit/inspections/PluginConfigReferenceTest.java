@@ -10,6 +10,7 @@ import com.intellij.notification.impl.NotificationGroupEP;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -34,6 +35,7 @@ public class PluginConfigReferenceTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8);
+    moduleBuilder.addLibrary("core-api", PathUtil.getJarPathForClass(RegistryManager.class));
     moduleBuilder.addLibrary("platform-ide", PathUtil.getJarPathForClass(JBList.class));
     moduleBuilder.addLibrary("platform-impl", PathUtil.getJarPathForClass(ITNReporter.class));
     moduleBuilder.addLibrary("platform-rt", PathUtil.getJarPathForClass(IncorrectOperationException.class));

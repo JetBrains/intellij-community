@@ -244,10 +244,10 @@ class PluginLayout(val mainModule: String): BaseLayout() {
      * @param relativeOutputPath target path relative to the plugin root directory
      */
     fun withResourceFromModule(moduleName: String, resourcePath: String, relativeOutputPath: String) {
-      layout.resourcePaths.add(ModuleResourceData(moduleName = moduleName,
-                                                  resourcePath = resourcePath,
-                                                  relativeOutputPath = relativeOutputPath,
-                                                  packToZip = false))
+      layout.resourcePaths = layout.resourcePaths.add(ModuleResourceData(moduleName = moduleName,
+                                                                         resourcePath = resourcePath,
+                                                                         relativeOutputPath = relativeOutputPath,
+                                                                         packToZip = false))
     }
 
     /**
@@ -263,10 +263,13 @@ class PluginLayout(val mainModule: String): BaseLayout() {
      * @param relativeOutputFile target path relative to the plugin root directory
      */
     fun withResourceArchiveFromModule(moduleName: String, resourcePath: String, relativeOutputFile: String) {
-      layout.resourcePaths.add(ModuleResourceData(moduleName, resourcePath, relativeOutputFile, true))
+      layout.resourcePaths = layout.resourcePaths.add(ModuleResourceData(moduleName = moduleName,
+                                                                         resourcePath = resourcePath,
+                                                                         relativeOutputPath = relativeOutputFile,
+                                                                         packToZip = true))
     }
 
-    fun withPatch(patcher: BiConsumer<ModuleOutputPatcher, BuildContext> ) {
+    fun withPatch(patcher: BiConsumer<ModuleOutputPatcher, BuildContext>) {
       layout.patchers.add(patcher)
     }
 

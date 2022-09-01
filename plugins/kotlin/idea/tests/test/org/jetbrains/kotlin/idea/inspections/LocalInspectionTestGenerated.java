@@ -6403,6 +6403,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public void testSimple() throws Exception {
             runTest("testData/inspectionsLocal/localVariableName/simple.kt");
         }
+
+        @TestMetadata("unusedVariable.kt")
+        public void testUnusedVariable() throws Exception {
+            runTest("testData/inspectionsLocal/localVariableName/unusedVariable.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -14240,74 +14245,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("withMessageLambdaOutside.kt")
         public void testWithMessageLambdaOutside() throws Exception {
             runTest("testData/inspectionsLocal/simplifyAssertNotNull/withMessageLambdaOutside.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/inspectionsLocal/simplifyNegatedBinaryExpression")
-    public static class SimplifyNegatedBinaryExpression extends AbstractLocalInspectionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("equals.kt")
-        public void testEquals() throws Exception {
-            runTest("testData/inspectionsLocal/simplifyNegatedBinaryExpression/equals.kt");
-        }
-
-        @TestMetadata("greaterThan.kt")
-        public void testGreaterThan() throws Exception {
-            runTest("testData/inspectionsLocal/simplifyNegatedBinaryExpression/greaterThan.kt");
-        }
-
-        @TestMetadata("greaterThanOrEquals.kt")
-        public void testGreaterThanOrEquals() throws Exception {
-            runTest("testData/inspectionsLocal/simplifyNegatedBinaryExpression/greaterThanOrEquals.kt");
-        }
-
-        @TestMetadata("in.kt")
-        public void testIn() throws Exception {
-            runTest("testData/inspectionsLocal/simplifyNegatedBinaryExpression/in.kt");
-        }
-
-        @TestMetadata("inapplicableBinaryOperation.kt")
-        public void testInapplicableBinaryOperation() throws Exception {
-            runTest("testData/inspectionsLocal/simplifyNegatedBinaryExpression/inapplicableBinaryOperation.kt");
-        }
-
-        @TestMetadata("is.kt")
-        public void testIs() throws Exception {
-            runTest("testData/inspectionsLocal/simplifyNegatedBinaryExpression/is.kt");
-        }
-
-        @TestMetadata("lessThan.kt")
-        public void testLessThan() throws Exception {
-            runTest("testData/inspectionsLocal/simplifyNegatedBinaryExpression/lessThan.kt");
-        }
-
-        @TestMetadata("lessThanOrEquals.kt")
-        public void testLessThanOrEquals() throws Exception {
-            runTest("testData/inspectionsLocal/simplifyNegatedBinaryExpression/lessThanOrEquals.kt");
-        }
-
-        @TestMetadata("notEquals.kt")
-        public void testNotEquals() throws Exception {
-            runTest("testData/inspectionsLocal/simplifyNegatedBinaryExpression/notEquals.kt");
-        }
-
-        @TestMetadata("notIn.kt")
-        public void testNotIn() throws Exception {
-            runTest("testData/inspectionsLocal/simplifyNegatedBinaryExpression/notIn.kt");
-        }
-
-        @TestMetadata("notIs.kt")
-        public void testNotIs() throws Exception {
-            runTest("testData/inspectionsLocal/simplifyNegatedBinaryExpression/notIs.kt");
-        }
-
-        @TestMetadata("simpleInvert.kt")
-        public void testSimpleInvert() throws Exception {
-            runTest("testData/inspectionsLocal/simplifyNegatedBinaryExpression/simpleInvert.kt");
         }
     }
 

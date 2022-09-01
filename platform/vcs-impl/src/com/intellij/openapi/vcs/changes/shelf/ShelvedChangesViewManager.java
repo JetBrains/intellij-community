@@ -92,6 +92,9 @@ public class ShelvedChangesViewManager implements Disposable {
   @NonNls static final String SHELF_CONTEXT_MENU = "Vcs.Shelf.ContextMenu";
   private static final String SHELVE_PREVIEW_SPLITTER_PROPORTION = "ShelvedChangesViewManager.DETAILS_SPLITTER_PROPORTION"; //NON-NLS
 
+  @NonNls
+  static final String SHELVED_CHANGES_TOOLBAR = "ShelvedChangesToolbar";
+
   private final ShelveChangesManager myShelveChangesManager;
   private final Project myProject;
   private ShelfToolWindowPanel myPanel = null;
@@ -357,7 +360,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
     private ShelfTree(@NotNull Project project) {
       super(project, false, false, false);
-      new TreeSpeedSearch(this, ChangesBrowserNode.TO_TEXT_CONVERTER, true);
+      new TreeSpeedSearch(this, true, ChangesBrowserNode.TO_TEXT_CONVERTER.asFunction());
       setKeepTreeState(true);
       setDoubleClickHandler(e -> showShelvedChangesDiff());
       setEnterKeyHandler(e -> showShelvedChangesDiff());
@@ -559,7 +562,6 @@ public class ShelvedChangesViewManager implements Disposable {
     Notification shelfDeletionNotification = new ShelfDeleteNotification(message);
     shelfDeletionNotification.setDisplayId(VcsNotificationIdsHolder.SHELF_UNDO_DELETE);
     shelfDeletionNotification.addAction(new UndoShelfDeletionAction(project, createdDeletedListsWithOriginalDate));
-    shelfDeletionNotification.addAction(ActionManager.getInstance().getAction("ShelvedChanges.ShowRecentlyDeleted"));
     VcsNotifier.getInstance(project).showNotificationAndHideExisting(shelfDeletionNotification, ShelfDeleteNotification.class);
   }
 
@@ -727,7 +729,7 @@ public class ShelvedChangesViewManager implements Disposable {
       editSourceAction.registerCustomShortcutSet(editSourceAction.getShortcutSet(), myTree);
 
       DefaultActionGroup actionGroup = new DefaultActionGroup();
-      actionGroup.addAll((ActionGroup)ActionManager.getInstance().getAction("ShelvedChangesToolbar"));
+      actionGroup.addAll((ActionGroup)ActionManager.getInstance().getAction(SHELVED_CHANGES_TOOLBAR));
       actionGroup.add(Separator.getInstance());
       actionGroup.add(new MyToggleDetailsAction());
 

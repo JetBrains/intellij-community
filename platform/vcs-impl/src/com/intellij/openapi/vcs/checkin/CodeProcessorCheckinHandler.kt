@@ -7,15 +7,13 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsConfiguration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * [CheckinMetaHandler] is only implemented for correct execution order of [CheckinHandler]-s.
- * To allow running handlers provided by [CheckinHandlerFactory] before the ones provided by [VcsCheckinHandlerFactory].
- *
  * Should only be used in Commit Tool Window. Commit Dialog is not supported.
  *
  * @see com.intellij.openapi.vcs.impl.CheckinHandlersManagerImpl.getRegisteredCheckinHandlerFactories
@@ -24,15 +22,19 @@ import kotlinx.coroutines.withContext
 abstract class CodeProcessorCheckinHandler(
   val commitPanel: CheckinProjectPanel
 ) : CheckinHandler(),
-    CheckinMetaHandler,
-    CommitCheck<CommitProblem> {
+    CommitCheck {
 
   val project: Project get() = commitPanel.project
   val settings: VcsConfiguration get() = VcsConfiguration.getInstance(project)
 
-  abstract fun createCodeProcessor(): AbstractLayoutCodeProcessor
+  protected open fun getProgressMessage(): @NlsContexts.ProgressText String? = null
+  protected abstract fun createCodeProcessor(): AbstractLayoutCodeProcessor
+
+  override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.MODIFICATION
 
   override suspend fun runCheck(indicator: ProgressIndicator): CommitProblem? {
+    getProgressMessage()?.let { indicator.text = it }
+
     val processor = createCodeProcessor()
 
     withContext(Dispatchers.Default) {
@@ -47,16 +49,6 @@ abstract class CodeProcessorCheckinHandler(
 
     return null
   }
-
-  /**
-   * Does nothing as no problem is reported in [runCheck].
-   */
-  override fun showDetails(problem: CommitProblem) = Unit
-
-  /**
-   * Do nothing - interface is implemented to override execution order.
-   */
-  override fun runCheckinHandlers(runnable: Runnable) = runnable.run()
 }
 
 internal class NoTextIndicator(indicator: ProgressIndicator) : DelegatingProgressIndicator(indicator) {

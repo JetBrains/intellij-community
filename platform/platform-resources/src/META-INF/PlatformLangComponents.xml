@@ -61,7 +61,7 @@
                         headlessImplementation="com.intellij.openapi.wm.impl.IdeFocusManagerHeadless" preload="notHeadless"/>
 
     <applicationService serviceInterface="com.intellij.openapi.actionSystem.ActionManager"
-                        serviceImplementation="com.intellij.openapi.actionSystem.impl.ActionManagerImpl"/>
+                        serviceImplementation="com.intellij.openapi.actionSystem.impl.ActionManagerImpl" preload="notHeadless"/>
     <applicationService serviceInterface="com.intellij.ide.DataManager"
                         serviceImplementation="com.intellij.ide.impl.DataManagerImpl"
                         testServiceImplementation="com.intellij.ide.impl.HeadlessDataManager"/>
@@ -82,6 +82,9 @@
                     serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowManagerImpl"
                     testServiceImplementation="com.intellij.toolWindow.ToolWindowHeadlessManagerImpl"
                     headlessImplementation="com.intellij.toolWindow.ToolWindowHeadlessManagerImpl" preload="notHeadless"/>
+
+    <projectService serviceInterface="com.intellij.toolWindow.ToolWindowStripeManager"
+                    serviceImplementation="com.intellij.toolWindow.ToolWindowStripeManagerImpl"/>
 
     <projectService serviceInterface="com.intellij.openapi.wm.impl.ToolWindowManagerState"
                     serviceImplementation="com.intellij.openapi.wm.impl.ToolWindowManagerStateImpl"/>
@@ -112,7 +115,6 @@
       serviceInterface="com.intellij.formatting.visualLayer.VisualFormattingLayerService"
       serviceImplementation="com.intellij.formatting.visualLayer.VisualFormattingLayerServiceImpl"/>
 
-    <!-- as last - to preload after all others preloaded services -->
     <applicationService serviceImplementation="com.intellij.ide.IdeTooltipManager" preload="notHeadless"/>
 
     <applicationService serviceInterface="com.intellij.refactoring.RefactoringUiService" serviceImplementation="com.intellij.refactoring.RefactoringUiServiceImpl"/>
@@ -166,9 +168,9 @@
               topic="com.intellij.notification.Notifications"/>
 
     <listener class="com.intellij.ide.ui.html.GlobalStyleSheetHolder$UpdateListener"
-              topic="com.intellij.ide.ui.LafManagerListener"/>
+              topic="com.intellij.ide.ui.LafManagerListener" activeInHeadlessMode="false"/>
     <listener class="com.intellij.ide.ui.html.GlobalStyleSheetHolder$UpdateListener"
-              topic="com.intellij.openapi.editor.colors.EditorColorsListener"/>
+              topic="com.intellij.openapi.editor.colors.EditorColorsListener" activeInHeadlessMode="false"/>
 
     <listener class="com.intellij.openapi.editor.actions.ResetFontSizeAction$Listener"
               topic="com.intellij.openapi.editor.colors.EditorColorsListener"/>

@@ -179,6 +179,8 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   @Override
   public JComponent createCustomComponent(@NotNull final Presentation presentation, @NotNull String place) {
     ComboBoxButton button = new RunConfigurationsComboBoxButton(presentation);
+    if (isNoWrapping(place)) return button;
+
     NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
     Border border = UIUtil.isUnderDefaultMacTheme() ?
                     JBUI.Borders.empty(0, 2) : JBUI.Borders.empty(0, 5, 0, 4);

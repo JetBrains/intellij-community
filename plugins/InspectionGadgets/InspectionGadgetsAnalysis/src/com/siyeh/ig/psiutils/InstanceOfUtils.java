@@ -362,13 +362,7 @@ public final class InstanceOfUtils {
     }
     if (condition instanceof PsiInstanceOfExpression && whenTrue) {
       PsiInstanceOfExpression instanceOf = (PsiInstanceOfExpression)condition;
-      PsiTypeElement typeElement = instanceOf.getCheckType();
-      if (typeElement  == null) {
-        PsiPrimaryPattern pattern = instanceOf.getPattern();
-        if (pattern instanceof PsiTypeTestPattern) {
-          typeElement = ((PsiTypeTestPattern)pattern).getCheckType();
-        }
-      }
+      PsiTypeElement typeElement = findCheckTypeElement(instanceOf);
       if (typeElement != null) {
         PsiType type = typeElement.getType();
         PsiType castType = Objects.requireNonNull(cast.getCastType()).getType();

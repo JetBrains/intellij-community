@@ -1,3 +1,4 @@
+// PROBLEM: "Redundant lambda arrow"
 class A
 
 fun A.foo(f: (String) -> Unit) {}

@@ -164,6 +164,7 @@ data class IDETestContext(
       addSystemProperty("ide.plugins.per.project", true)
     }
 
+  // seems, doesn't work for Maven
   fun disableAutoImport(disabled: Boolean = true) = addVMOptionsPatch {
     addSystemProperty("external.system.auto.import.disabled", disabled)
   }
@@ -188,6 +189,10 @@ data class IDETestContext(
 
   fun collectOpenTelemetry() = addVMOptionsPatch {
     addSystemProperty("idea.diagnostic.opentelemetry.file", paths.logsDir.resolve(OPENTELEMETRY_FILE))
+  }
+
+  fun enableVerboseOpenTelemetry() = addVMOptionsPatch {
+    addSystemProperty("idea.diagnostic.opentelemetry.verbose", true)
   }
 
   fun enableWorkspaceModelVerboseLogs() = addVMOptionsPatch {

@@ -25,7 +25,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileEditor.ex.EditorCompositeBase;
+import com.intellij.openapi.fileEditor.FileEditorComposite;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -126,7 +126,7 @@ public final class FileTypeUsageCounterCollector extends CounterUsagesCollector 
     List<@NotNull EventPair<?>> data = buildCommonEventPairs(project, file, true);
     if (fileEditor != null) {
       data.add(FILE_EDITOR.with(fileEditor.getClass()));
-      EditorCompositeBase composite = FileEditorManagerEx.getInstanceEx(project).getComposite(file);
+      FileEditorComposite composite = FileEditorManagerEx.getInstanceEx(project).getComposite(file);
       if (composite != null) {
         data.add(IS_PREVIEW_TAB.with(composite.isPreview()));
       }

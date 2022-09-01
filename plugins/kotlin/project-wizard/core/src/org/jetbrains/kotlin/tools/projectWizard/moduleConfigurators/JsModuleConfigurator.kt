@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.irsList
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.multiplatform.DefaultTargetConfigurationIR
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.BrowserJsSinglePlatformModuleConfigurator.settingsValue
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JSConfigurator.Companion.isApplication
-import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JSConfigurator.Companion.irOrLegacyCompiler
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JsBrowserBasedConfigurator.Companion.browserSubTarget
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JsNodeBasedConfigurator.Companion.nodejsSubTarget
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JvmModuleConfigurator.Companion.testFramework
@@ -29,6 +28,7 @@ import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.gradle.Gradl
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleSubType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModulesToIrConversionData
+import org.jetbrains.kotlin.tools.projectWizard.plugins.printer.GradlePrinter
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Module
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.ModuleKind
 import org.jetbrains.kotlin.tools.projectWizard.templates.ReactJsClientTemplate
@@ -46,11 +46,11 @@ interface JSConfigurator : ModuleConfiguratorWithModuleType, ModuleConfiguratorW
     ): TaskResult<Unit> =
         GradlePlugin.gradleProperties
             .addValues(
-                "kotlin.js.generate.executable.default" to "false",
+                "kotlin.js.compiler" to irOrLegacyCompiler(module).lowercase()
             )
 
     override fun getConfiguratorSettings(): List<ModuleConfiguratorSetting<*, *>> =
-        super.getConfiguratorSettings() + kind + useJsIrCompiler
+        super.getConfiguratorSettings() + kind + useJsLegacyCompiler
 
     companion object : ModuleConfiguratorSettings() {
         val kind by enumSetting<JsTargetKind>(
@@ -90,8 +90,8 @@ interface JSConfigurator : ModuleConfiguratorWithModuleType, ModuleConfiguratorW
 
         internal fun Reader.jsCompilerParam(module: Module): String? = settingValue(module, compiler)?.scriptValue
 
-        val useJsIrCompiler by booleanSetting(
-            KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.use.js.ir.title"),
+        val useJsLegacyCompiler by booleanSetting(
+            KotlinNewProjectWizardBundle.message("module.configurator.js.target.settings.use.js.legacy.title"),
             GenerationPhase.PROJECT_GENERATION
         ) {
             defaultValue = value(false)
@@ -99,8 +99,8 @@ interface JSConfigurator : ModuleConfiguratorWithModuleType, ModuleConfiguratorW
         }
 
         internal fun Reader.irOrLegacyCompiler(module: Module): String {
-            fun Reader.useJsIrCompiler(module: Module): Boolean = settingValue(module, useJsIrCompiler) ?: false
-            return if (useJsIrCompiler(module)) JsCompiler.IR.scriptValue else JsCompiler.LEGACY.scriptValue
+            fun Reader.useJsLegacyCompiler(module: Module): Boolean = settingValue(module, useJsLegacyCompiler) ?: false
+            return if (!useJsLegacyCompiler(module)) JsCompiler.IR.scriptValue else JsCompiler.LEGACY.scriptValue
         }
 
         fun Reader.isApplication(module: Module): Boolean =
@@ -140,8 +140,7 @@ abstract class JsSinglePlatformModuleConfigurator :
     JSConfigurator,
     ModuleConfiguratorWithTests,
     SinglePlatformModuleConfigurator,
-    ModuleConfiguratorWithSettings
-{
+    ModuleConfiguratorWithSettings {
     override fun getConfiguratorSettings(): List<ModuleConfiguratorSetting<*, *>> =
         super<ModuleConfiguratorWithTests>.getConfiguratorSettings() +
                 super<JSConfigurator>.getConfiguratorSettings()
@@ -162,7 +161,7 @@ abstract class JsSinglePlatformModuleConfigurator :
         module: Module
     ): List<BuildSystemIR> = irsList {
         "kotlin" {
-            "js(${reader.irOrLegacyCompiler(module)})" {
+            "js" {
                 subTarget(module, reader)
             }
         }
@@ -209,7 +208,15 @@ fun GradleIRListBuilder.applicationSupport() {
 
 fun GradleIRListBuilder.commonCssSupport() {
     "commonWebpackConfig" {
-        +"cssSupport.enabled = true"
+        "cssSupport" {
+            addRaw {
+                val receiver = when (dsl) {
+                    GradlePrinter.GradleDsl.KOTLIN -> ""
+                    GradlePrinter.GradleDsl.GROOVY -> "it."
+                }
+                +"${receiver}enabled.set(true)"
+            }
+        }
     }
 }
 

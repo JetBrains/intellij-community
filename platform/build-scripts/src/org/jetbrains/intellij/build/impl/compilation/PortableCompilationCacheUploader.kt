@@ -16,6 +16,7 @@ import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.intellij.build.impl.compilation.cache.SourcesStateProcessor
 import org.jetbrains.intellij.build.io.moveFile
+import org.jetbrains.intellij.build.io.retryWithExponentialBackOff
 import org.jetbrains.intellij.build.io.zip
 import org.jetbrains.jps.incremental.storage.ProjectStamps
 import java.nio.file.Files
@@ -160,7 +161,7 @@ private class Uploader(serverUrl: String) {
         "The file $file does not exist"
       }
 
-      httpClient.newCall(Request.Builder().url(url).put(object : RequestBody() {
+      val call = httpClient.newCall(Request.Builder().url(url).put(object : RequestBody() {
         override fun contentType() = MEDIA_TYPE_BINARY
 
         override fun contentLength() = Files.size(file)
@@ -168,7 +169,8 @@ private class Uploader(serverUrl: String) {
         override fun writeTo(sink: BufferedSink) {
           file.source().use(sink::writeAll)
         }
-      }).build()).execute().useSuccessful {}
+      }).build())
+      retryWithExponentialBackOff { call.execute().useSuccessful {} }
     }
     return true
   }
@@ -176,7 +178,9 @@ private class Uploader(serverUrl: String) {
   fun isExist(path: String, logIfExists: Boolean = false): Boolean {
     val url = pathToUrl(path)
     spanBuilder("head").setAttribute("url", url).use { span ->
-      val code = httpClient.head(url).use { it.code }
+      val code = retryWithExponentialBackOff {
+        httpClient.head(url).use { it.code }
+      }
       if (code == 200) {
         if (logIfExists) {
           span.addEvent("File '$path' already exists on server, nothing to upload")
@@ -190,7 +194,9 @@ private class Uploader(serverUrl: String) {
     return false
   }
 
-  fun getAsString(path: String) = httpClient.get(pathToUrl(path)).useSuccessful { it.body.string() }
+  fun getAsString(path: String) = retryWithExponentialBackOff {
+    httpClient.get(pathToUrl(path)).useSuccessful { it.body.string() }
+  }
 
   private fun pathToUrl(path: String) = "$serverUrl${path.trimStart('/')}"
 }

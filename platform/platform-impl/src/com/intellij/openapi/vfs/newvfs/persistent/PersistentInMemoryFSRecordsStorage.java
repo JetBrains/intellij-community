@@ -76,9 +76,9 @@ public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStora
   private final Path storagePath;
 
 
-  public PersistentInMemoryFSRecordsStorage(final Path file,
+  public PersistentInMemoryFSRecordsStorage(final Path path,
                                             final int maxRecords) throws IOException {
-    storagePath = Objects.requireNonNull(file, "file");
+    storagePath = Objects.requireNonNull(path, "file");
     if (maxRecords <= 0) {
       throw new IllegalArgumentException("maxRecords(=" + maxRecords + ") should be >0");
     }
@@ -86,24 +86,26 @@ public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStora
     //this.records = new UnsafeBuffer(maxRecords * RECORD_SIZE_IN_BYTES+ HEADER_SIZE);
     this.records = ByteBuffer.allocate(maxRecords * RECORD_SIZE_IN_BYTES + HEADER_SIZE);
 
-    final long fileSize = Files.size(file);
-    if (fileSize > records.capacity()) {
-      final long recordsInFile = (fileSize - HEADER_SIZE) / RECORD_SIZE_IN_BYTES;
-      throw new IllegalArgumentException(
-        "[" + file + "](=" + fileSize + "b) contains " + recordsInFile + " records > maxRecords(=" + maxRecords + ") " +
-        "=> can't load all the records from file!");
-    }
-
-    try (ByteChannel channel = Files.newByteChannel(file)) {
-      final int actualBytesRead = channel.read(records);
-      final int recordsRead = (actualBytesRead - HEADER_SIZE) / RECORD_SIZE_IN_BYTES;
-      final int recordExcess = (actualBytesRead - HEADER_SIZE) % RECORD_SIZE_IN_BYTES;
-      if (recordExcess > 0) {
-        throw new IOException(
-          "[" + file + "] likely truncated: (" + actualBytesRead + "b) " +
-          " = (" + recordsRead + " whole records) + " + recordExcess + "b excess");
+    if(Files.exists(path)) {
+      final long fileSize = Files.size(path);
+      if (fileSize > records.capacity()) {
+        final long recordsInFile = (fileSize - HEADER_SIZE) / RECORD_SIZE_IN_BYTES;
+        throw new IllegalArgumentException(
+          "[" + path + "](=" + fileSize + "b) contains " + recordsInFile + " records > maxRecords(=" + maxRecords + ") " +
+          "=> can't load all the records from file!");
       }
-      allocatedRecordsCount.set(recordsRead);
+
+      try (ByteChannel channel = Files.newByteChannel(path)) {
+        final int actualBytesRead = channel.read(records);
+        final int recordsRead = (actualBytesRead - HEADER_SIZE) / RECORD_SIZE_IN_BYTES;
+        final int recordExcess = (actualBytesRead - HEADER_SIZE) % RECORD_SIZE_IN_BYTES;
+        if (recordExcess > 0) {
+          throw new IOException(
+            "[" + path + "] likely truncated: (" + actualBytesRead + "b) " +
+            " = (" + recordsRead + " whole records) + " + recordExcess + "b excess");
+        }
+        allocatedRecordsCount.set(recordsRead);
+      }
     }
     globalModCount.set(getIntHeaderField(HEADER_GLOBAL_MOD_COUNT_OFFSET));
   }
@@ -295,6 +297,14 @@ public class PersistentInMemoryFSRecordsStorage extends PersistentFSRecordsStora
   @Override
   public long length() {
     final int recordsCount = allocatedRecordsCount.get();
+    final boolean anythingChanged = globalModCount.get() > 0;
+    if (recordsCount == 0 && !anythingChanged) {
+      //Try to mimic other implementations behavior: they return actual file size, which is 0
+      //  before first record allocated -- should be >0, since even no-record storage contains
+      //  header, but other implementations use 0-th record as header...
+      //TODO RC: it is better to have recordsCount() method
+      return 0;
+    }
     return (RECORD_SIZE_IN_INTS * (long)recordsCount) * Integer.BYTES + HEADER_SIZE;
   }
 

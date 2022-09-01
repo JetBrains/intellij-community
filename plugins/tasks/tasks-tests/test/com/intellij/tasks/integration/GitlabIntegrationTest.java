@@ -2,6 +2,7 @@ package com.intellij.tasks.integration;
 
 import com.google.gson.Gson;
 import com.intellij.configurationStore.XmlSerializer;
+import com.intellij.platform.testFramework.io.ExternalResourcesChecker;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManagerTestCase;
 import com.intellij.tasks.gitlab.GitlabRepository;
@@ -11,16 +12,23 @@ import com.intellij.tasks.gitlab.model.GitlabProject;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.tasks.impl.gson.TaskGsonUtil;
+import com.intellij.testFramework.JUnit38AssumeSupportRunner;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.junit.runner.RunWith;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
 /**
  * @author Mikhail Golubev
  */
+@RunWith(JUnit38AssumeSupportRunner.class)
 public class GitlabIntegrationTest extends TaskManagerTestCase {
   private static final Gson GSON = TaskGsonUtil.createDefaultBuilder().create();
   private static final String SERVER_URL = "http://trackers-tests.labs.intellij.net:8045";
@@ -61,7 +69,7 @@ public class GitlabIntegrationTest extends TaskManagerTestCase {
   }
 
   public void testIssueFilteringByState() throws Exception {
-    final GitlabProject project = ContainerUtil.find(myRepository.getProjects(), p -> p.getName().equals("Issue Filtering Tests"));
+    final GitlabProject project = ContainerUtil.find(myRepository.fetchProjects(), p -> p.getName().equals("Issue Filtering Tests"));
     assertNotNull(project);
     myRepository.setCurrentProject(project);
 
@@ -112,5 +120,18 @@ public class GitlabIntegrationTest extends TaskManagerTestCase {
     myRepository = new GitlabRepository();
     myRepository.setUrl(SERVER_URL);
     myRepository.setPassword("PqbBxWaqFxZijQXKPLLo"); // buildtest
+  }
+
+  @Override
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    try {
+      super.runTestRunnable(testRunnable);
+    }
+    catch (Throwable e) {
+      if (ExceptionUtil.causedBy(e, IOException.class)) {
+        ExternalResourcesChecker.reportUnavailability(SERVER_URL, e);
+      }
+      throw e;
+    }
   }
 }

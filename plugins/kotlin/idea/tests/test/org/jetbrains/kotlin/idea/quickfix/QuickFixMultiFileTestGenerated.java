@@ -318,6 +318,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/delegateExtensionSet.test");
             }
 
+            @TestMetadata("delegateGetValueFunction.before.Main.kt")
+            public void testDelegateGetValueFunction() throws Exception {
+                runTest("testData/quickfix/autoImports/delegateGetValueFunction.before.Main.kt");
+            }
+
             @TestMetadata("delegateNoOperator.test")
             public void testDelegateNoOperator() throws Exception {
                 runTest("testData/quickfix/autoImports/delegateNoOperator.test");

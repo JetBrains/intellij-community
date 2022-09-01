@@ -4,8 +4,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import java.util.*
 
-@State(name = "SettingsSyncLocalSettings", storages = [Storage("settings-sync-local.xml", roamingType = RoamingType.DISABLED)])
-@Service
+@State(name = "SettingsSyncLocalSettings", storages = [Storage("settingsSyncLocal.xml", roamingType = RoamingType.DISABLED)])
+@Service(Service.Level.APP)
 internal class SettingsSyncLocalSettings : SimplePersistentStateComponent<SettingsSyncLocalSettings.State>(State()) {
 
   companion object {

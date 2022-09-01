@@ -412,7 +412,7 @@ internal object BranchesDashboardActions {
       super.actionPerformed(e)
     }
 
-    override fun onFetchFinished(result: GitFetchResult) {
+    override fun onFetchFinished(project: Project, result: GitFetchResult) {
       ui.stopLoadingBranches()
     }
   }

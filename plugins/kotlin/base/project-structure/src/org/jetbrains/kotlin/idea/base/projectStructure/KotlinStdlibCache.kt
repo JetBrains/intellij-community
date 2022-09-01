@@ -120,10 +120,10 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
     override fun dispose() = Unit
 
     private abstract class BaseStdLibCache(project: Project) : SynchronizedFineGrainedEntityCache<LibraryInfo, Boolean>(project, cleanOnLowMemory = true),
-                                                               OutdatedLibraryInfoListener {
+                                                               LibraryInfoListener {
         override fun subscribe() {
             val busConnection = project.messageBus.connect(this)
-            busConnection.subscribe(OutdatedLibraryInfoListener.TOPIC, this)
+            busConnection.subscribe(LibraryInfoListener.TOPIC, this)
         }
 
         override fun checkKeyValidity(key: LibraryInfo) {
@@ -170,13 +170,13 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
         override fun dispose() = Unit
 
         private abstract inner class AbstractCache<Key : IdeaModuleInfo> :
-            SynchronizedFineGrainedEntityCache<Key, StdlibDependency>(project, cleanOnLowMemory = true),
-            OutdatedLibraryInfoListener,
-            ProjectJdkTable.Listener,
-            ModuleRootListener {
+          SynchronizedFineGrainedEntityCache<Key, StdlibDependency>(project, cleanOnLowMemory = true),
+          LibraryInfoListener,
+          ProjectJdkTable.Listener,
+          ModuleRootListener {
             override fun subscribe() {
                 val connection = project.messageBus.connect(this)
-                connection.subscribe(OutdatedLibraryInfoListener.TOPIC, this)
+                connection.subscribe(LibraryInfoListener.TOPIC, this)
                 connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, this)
                 connection.subscribe(ProjectTopics.PROJECT_ROOTS, this)
                 subscribe(connection)

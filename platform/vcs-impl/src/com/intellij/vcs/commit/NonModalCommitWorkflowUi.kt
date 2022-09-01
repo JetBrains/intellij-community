@@ -38,8 +38,6 @@ interface CommitProgressUi {
   fun startProgress(isOnlyRunCommitChecks: Boolean): ProgressIndicatorEx
 
   fun addCommitCheckFailure(failure: CommitCheckFailure)
-  fun addCommitCheckFailure(@Nls(capitalization = Sentence) text: String, detailsViewer: (() -> Unit)?) =
-    addCommitCheckFailure(CommitCheckFailure(text, detailsViewer))
 
   fun clearCommitCheckFailures()
   fun getCommitCheckFailures(): List<CommitCheckFailure>

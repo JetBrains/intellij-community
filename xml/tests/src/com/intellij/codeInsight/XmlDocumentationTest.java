@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -35,20 +36,20 @@ public class XmlDocumentationTest extends BasePlatformTestCase {
     doOneTest("9.xml", "laquo");
   }
 
-  public void testXmlDocWithCData() throws Exception {
+  public void testXmlDocWithCData() {
     doQuickDocGenerationTestWithCheckExpectedResult(getTestName(false) + ".xml", "spring-beans.xsd");
     doQuickDocGenerationTestWithCheckExpectedResult(getTestName(false) + "2.xml", "spring-beans.xsd");
   }
 
-  public void testXmlDoc2() throws Exception {
+  public void testXmlDoc2() {
     doQuickDocGenerationTestWithCheckExpectedResult(getTestName(false) + ".xml", "web-app_2_4.xsd");
   }
 
-  public void testXmlDoc3() throws Exception {
+  public void testXmlDoc3() {
     doQuickDocGenerationTestWithCheckExpectedResult(getTestName(false) + ".xml", "hibernate-mapping-3.0.dtd");
   }
 
-  public void testXmlDoc4() throws Exception {
+  public void testXmlDoc4() {
     final String testName = getTestName(false);
     doQuickDocGenerationTestWithCheckExpectedResult(testName + ".xml", testName + ".xsd");
   }
@@ -63,51 +64,78 @@ public class XmlDocumentationTest extends BasePlatformTestCase {
     assertEquals("\"&#171;\"", context.getQuickNavigateInfo());
   }
 
-  public void testXmlDoc6() throws Exception {
+  public void testXmlDoc6() {
     final String testName = getTestName(false);
     doQuickDocGenerationTestWithCheckExpectedResult((Object)"car", testName + ".xml", testName + ".xsd");
   }
 
-  public void testXmlDoc7() throws Exception {
+  public void testXmlDoc7() {
     final String testName = getTestName(false);
     doQuickDocGenerationTestWithCheckExpectedResult((Object)"$Paste", testName + ".xml", testName + ".xsd");
   }
 
-  public void testSvgDoc() throws Exception {
+  public void testSvgDoc() {
     final String testName = getTestName(false);
     doQuickDocGenerationTestWithCheckExpectedResult((Object)"rect", testName + ".svg");
   }
 
-  public void testSvgDoc2() throws Exception {
+  public void testSvgDoc2() {
     final String testName = getTestName(false);
     doQuickDocGenerationTestWithCheckExpectedResult((Object)"stroke-width", testName + ".svg");
   }
 
-  public void testSvgDoc3() throws Exception {
+  public void testSvgDoc3() {
     doQuickDocGenerationTestWithCheckExpectedResult(getTestName(false) + ".svg");
   }
 
-  private void doQuickDocGenerationTestWithCheckExpectedResult(final String... baseFileNames) throws Exception {
+  public void testScopeAttribute() {
+    doQuickDocGenerationTestWithCheckExpectedResult(getTestName(false) + ".xml", "spring-beans.xsd");
+  }
+
+  public void testClassAttribute() {
+    doQuickDocGenerationTestWithNullExpectedResult("class.xml");
+  }
+
+  public void testXslCompletion() {
+    doQuickDocGenerationTestWithCheckExpectedResult((Object)"apply-imports", "xslCompletion.xsl");
+  }
+
+  public void testNoHtmlDocInXml() {
+    doQuickDocGenerationTestWithNullExpectedResult("component.xml");
+  }
+
+  private void doQuickDocGenerationTestWithCheckExpectedResult(final String... baseFileNames) {
     doQuickDocGenerationTestWithCheckExpectedResult(null, baseFileNames);
   }
 
-  private void doQuickDocGenerationTestWithCheckExpectedResult(Object completionVariant, final String... baseFileNames) throws Exception {
+  private void doQuickDocGenerationTestWithNullExpectedResult(final String... baseFileNames) {
+    final DocumentationTestContext context = new DocumentationTestContext(baseFileNames);
+    String text = context.generateDoc();
+    assertThat(text).isNull();
+  }
+
+  private void doQuickDocGenerationTestWithCheckExpectedResult(Object completionVariant, final String... baseFileNames) {
     final DocumentationTestContext context = new DocumentationTestContext(baseFileNames);
     String pathname = getTestDataPath() + baseFileNames[0] + ".expected.html";
     VirtualFile vfile = LocalFileSystem.getInstance().findFileByIoFile(new File(pathname));
     assertNotNull(pathname + " not found", vfile);
-    String expectedText = StringUtil.convertLineSeparators(VfsUtilCore.loadText(vfile));
-    String text = context.generateDoc();
-    assertThat(text).isNotNull();
-    assertEquals(stripFirstLine(expectedText).replaceAll("\\s+", ""),
-                 stripFirstLine(StringUtil.convertLineSeparators(text)).replaceAll("\\s+", ""));
-
-    if (completionVariant != null) {
-      vfile = LocalFileSystem.getInstance().findFileByIoFile(new File(getTestDataPath() + baseFileNames[0] + ".expected.completion.html"));
-      expectedText = StringUtil.convertLineSeparators(VfsUtilCore.loadText(vfile), "\n");
+    try {
+      String expectedText = StringUtil.convertLineSeparators(VfsUtilCore.loadText(vfile));
+      String text = context.generateDoc();
+      assertThat(text).isNotNull();
       assertEquals(stripFirstLine(expectedText).replaceAll("\\s+", ""),
-                   stripFirstLine(StringUtil.convertLineSeparators(context.generateDocForCompletion(completionVariant), "\n"))
-                     .replaceAll("\\s+", ""));
+                   stripFirstLine(StringUtil.convertLineSeparators(text)).replaceAll("\\s+", ""));
+
+      if (completionVariant != null) {
+        vfile =
+          LocalFileSystem.getInstance().findFileByIoFile(new File(getTestDataPath() + baseFileNames[0] + ".expected.completion.html"));
+        expectedText = StringUtil.convertLineSeparators(VfsUtilCore.loadText(vfile), "\n");
+        assertEquals(stripFirstLine(expectedText).replaceAll("\\s+", ""),
+                     stripFirstLine(StringUtil.convertLineSeparators(context.generateDocForCompletion(completionVariant), "\n"))
+                       .replaceAll("\\s+", ""));
+      }
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -201,18 +229,6 @@ public class XmlDocumentationTest extends BasePlatformTestCase {
         assertNotNull("external help for lookup", context.documentationProvider.getUrlFor(docElement, context.originalElement));
       }
     }
-  }
-
-  public void testScopeAttribute() throws Exception {
-    doQuickDocGenerationTestWithCheckExpectedResult(getTestName(false) + ".xml", "spring-beans.xsd");
-  }
-
-  public void _testClassAttribute() throws Exception {
-    doQuickDocGenerationTestWithCheckExpectedResult("class.xml");
-  }
-
-  public void testXslCompletion() throws Exception {
-    doQuickDocGenerationTestWithCheckExpectedResult((Object)"apply-imports", "xslCompletion.xsl");
   }
 
   @Override

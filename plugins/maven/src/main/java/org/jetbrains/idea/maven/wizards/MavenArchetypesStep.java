@@ -5,7 +5,6 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.wizard.StepAdapter;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
@@ -103,7 +102,7 @@ public class MavenArchetypesStep extends ModuleWizardStep implements Disposable 
       }
     });
 
-    new TreeSpeedSearch(myArchetypesTree, path -> {
+    new TreeSpeedSearch(myArchetypesTree, false, path -> {
       MavenArchetype info = getArchetypeInfoFromPathComponent(path.getLastPathComponent());
       return info.groupId + ":" + info.artifactId + ":" + info.version;
     }).setComparator(new SpeedSearchComparator(false));

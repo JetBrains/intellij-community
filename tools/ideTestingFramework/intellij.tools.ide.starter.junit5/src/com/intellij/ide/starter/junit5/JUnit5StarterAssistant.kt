@@ -46,13 +46,20 @@ open class JUnit5StarterAssistant : BeforeEachCallback, AfterEachCallback {
   open fun injectTestContainerProperty(testInstance: Any) {
     val containerProp = getProperty(testInstance, TestContainerImpl::class)
     if (containerProp != null) {
-      val jbContainerInstance = TestContainerImpl()
+      val containerInstance = TestContainerImpl()
 
       try {
-        containerProp.javaField!!.apply { trySetAccessible() }.set(testInstance, jbContainerInstance)
+        containerProp.javaField!!.trySetAccessible()
+
+        if (containerProp.javaField!!.get(testInstance) != null) {
+          logOutput("Property `${containerProp.name}` already manually initialized in the code")
+          return
+        }
+
+        containerProp.javaField!!.set(testInstance, containerInstance)
       }
       catch (e: Throwable) {
-        logError("Unable to inject value for property ${containerProp.name}")
+        logError("Unable to inject value for property `${containerProp.name}`")
       }
     }
   }
@@ -70,10 +77,17 @@ open class JUnit5StarterAssistant : BeforeEachCallback, AfterEachCallback {
       }
 
       try {
-        testInfoProperty.javaField!!.apply { trySetAccessible() }.set(testInstance, testInfoInstance)
+        testInfoProperty.javaField!!.trySetAccessible()
+
+        if (testInfoProperty.javaField!!.get(testInstance) != null) {
+          logOutput("Property `${testInfoProperty.name}` already manually initialized in the code")
+          return
+        }
+
+        testInfoProperty.javaField!!.set(testInstance, testInfoInstance)
       }
       catch (e: Throwable) {
-        logError("Unable to inject value for property ${testInfoProperty.name}")
+        logError("Unable to inject value for property `${testInfoProperty.name}`")
       }
     }
   }

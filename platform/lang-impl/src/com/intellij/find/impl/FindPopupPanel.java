@@ -854,17 +854,23 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
 
   @Override
   public @Nullable Object getData(@NotNull String dataId) {
-    if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
       Map<Integer, Usage> usages = getSelectedUsages();
       if (usages == null) return null;
+      return (DataProvider)slowId -> getSlowData(slowId, usages);
+    }
 
+    return null;
+  }
+
+  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull Map<Integer, Usage> usages) {
+    if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
       return usages.values().stream()
         .filter(usage -> usage instanceof UsageInfoAdapter)
         .flatMap(usage -> Arrays.stream(((UsageInfoAdapter)usage).getMergedInfos()))
         .map(info -> info.getElement())
-        .toArray(PsiElement[]::new );
+        .toArray(PsiElement[]::new);
     }
-
     return null;
   }
 

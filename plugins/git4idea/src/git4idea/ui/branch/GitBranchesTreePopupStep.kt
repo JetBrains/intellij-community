@@ -183,6 +183,7 @@ class GitBranchesTreePopupStep(private val project: Project, internal val reposi
   override fun isAutoSelectionEnabled() = false
 
   companion object {
+    internal const val HEADER_SETTINGS_ACTION_GROUP = "Git.Branches.Popup.Settings"
     private const val TOP_LEVEL_ACTION_GROUP = "Git.Branches.List"
     private const val BRANCH_ACTION_GROUP = "Git.Branch"
 

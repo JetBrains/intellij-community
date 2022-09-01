@@ -34,6 +34,10 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
     BLANK_LINES_SETTINGS, SPACING_SETTINGS, WRAPPING_AND_BRACES_SETTINGS, INDENT_SETTINGS, COMMENTER_SETTINGS, LANGUAGE_SPECIFIC
   }
 
+  public static @NotNull List<LanguageCodeStyleSettingsProvider> getAllProviders() {
+    return LanguageCodeStyleSettingsProviderService.getInstance().getAllProviders();
+  }
+
   @Nullable
   public abstract String getCodeSample(@NotNull SettingsType settingsType);
 
@@ -155,7 +159,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
   @NotNull
   public static List<Language> getLanguagesWithCodeStyleSettings() {
     final ArrayList<Language> languages = new ArrayList<>();
-    for (LanguageCodeStyleSettingsProvider provider : EP_NAME.getExtensionList()) {
+    for (LanguageCodeStyleSettingsProvider provider : getAllProviders()) {
       languages.add(provider.getLanguage());
     }
     languages.sort((l1, l2) -> Comparing.compare(getLanguageName(l1), getLanguageName(l2)));
@@ -179,7 +183,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
 
   @Nullable
   public static Language getLanguage(String langName) {
-    for (LanguageCodeStyleSettingsProvider provider : EP_NAME.getExtensionList()) {
+    for (LanguageCodeStyleSettingsProvider provider : getAllProviders()) {
       String name = provider.getLanguageName();
       if (name == null) name = provider.getLanguage().getDisplayName();
       if (langName.equals(name)) {
@@ -212,7 +216,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
 
   @Nullable
   public static LanguageCodeStyleSettingsProvider forLanguage(final Language language) {
-    for (LanguageCodeStyleSettingsProvider provider : EP_NAME.getExtensionList()) {
+    for (LanguageCodeStyleSettingsProvider provider : getAllProviders()) {
       if (provider.getLanguage().equals(language)) {
         return provider;
       }
@@ -237,7 +241,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
 
   @Nullable
   public static LanguageCodeStyleSettingsProvider findByExternalLanguageId(@NotNull String languageId) {
-    return ContainerUtil.find(EP_NAME.getExtensionList(), provider -> provider.getExternalLanguageId().equals(languageId));
+    return ContainerUtil.find(getAllProviders(), provider -> provider.getExternalLanguageId().equals(languageId));
   }
 
   @Nullable
@@ -370,7 +374,7 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
   @NotNull
   private static Set<LanguageCodeStyleSettingsProvider> calcSettingPagesProviders() {
     Set<LanguageCodeStyleSettingsProvider> settingsPagesProviders = new HashSet<>();
-    for (LanguageCodeStyleSettingsProvider provider : EP_NAME.getExtensionList()) {
+    for (LanguageCodeStyleSettingsProvider provider : getAllProviders()) {
       registerSettingsPageProvider(settingsPagesProviders, provider);
     }
     return settingsPagesProviders;

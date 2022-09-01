@@ -24,9 +24,6 @@ import com.intellij.openapi.project.DumbService.DumbModeListener
 import com.intellij.openapi.project.DumbService.isDumb
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.registry.RegistryValue
-import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.util.text.StringUtil.*
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.VcsBundle.message
@@ -36,11 +33,7 @@ import com.intellij.openapi.vcs.changes.CommitExecutorWithRichDescription
 import com.intellij.openapi.vcs.changes.actions.DefaultCommitExecutorAction
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
-import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
-import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
-import com.intellij.openapi.vcs.checkin.CommitCheck
-import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory
-import com.intellij.openapi.vcs.impl.PartialChangesUtil
+import com.intellij.openapi.vcs.checkin.*
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
@@ -53,9 +46,6 @@ import java.lang.Runnable
 import kotlin.properties.Delegates.observable
 
 private val LOG = logger<NonModalCommitWorkflowHandler<*, *>>()
-
-private val isBackgroundCommitChecksValue: RegistryValue get() = Registry.get("vcs.background.commit.checks")
-fun isBackgroundCommitChecks(): Boolean = isBackgroundCommitChecksValue.asBoolean()
 
 abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : NonModalCommitWorkflowUi> :
   AbstractCommitWorkflowHandler<W, U>() {
@@ -71,7 +61,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   private val coroutineScope =
     CoroutineScope(CoroutineName("commit workflow") + uiDispatcher + SupervisorJob() + exceptionHandler)
 
-  private var isCommitChecksResultUpToDate: Boolean by observable(false) { _, oldValue, newValue ->
+  private var isCommitChecksResultUpToDate: RecentCommitChecks by observable(RecentCommitChecks.UNKNOWN) { _, oldValue, newValue ->
     if (oldValue == newValue) return@observable
     updateDefaultCommitActionName()
   }
@@ -80,9 +70,6 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
                                                                        NotificationType.ERROR)
 
   protected fun setupCommitHandlersTracking() {
-    isBackgroundCommitChecksValue.addListener(object : RegistryValueListener {
-      override fun afterValueChanged(value: RegistryValue) = commitHandlersChanged()
-    }, this)
     CheckinHandlerFactory.EP_NAME.addChangeListener(Runnable { commitHandlersChanged() }, this)
     VcsCheckinHandlerFactory.EP_NAME.addChangeListener(Runnable { commitHandlersChanged() }, this)
   }
@@ -108,7 +95,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
   protected fun setupDumbModeTracking() {
     if (isDumb(project)) ui.commitProgressUi.isDumbMode = true
-    project.messageBus.connect(this).subscribe(DumbService.DUMB_MODE, object : DumbModeListener{
+    project.messageBus.connect(this).subscribe(DumbService.DUMB_MODE, object : DumbModeListener {
       override fun enteredDumbMode() {
         ui.commitProgressUi.isDumbMode = true
       }
@@ -124,7 +111,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
   override fun updateDefaultCommitActionName() {
     val isAmend = amendCommitHandler.isAmendCommitMode
-    val isSkipCommitChecks = isSkipCommitChecks()
+    val isSkipCommitChecks = isCommitChecksResultUpToDate == RecentCommitChecks.FAILED
     ui.defaultCommitActionName = getCommitActionName(isAmend, isSkipCommitChecks)
   }
 
@@ -222,7 +209,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     // reset commit checks on VFS updates
     project.messageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun after(events: MutableList<out VFileEvent>) {
-        if (!isCommitChecksResultUpToDate) {
+        if (isCommitChecksResultUpToDate == RecentCommitChecks.UNKNOWN) {
           return
         }
         val updatedFiles = events.mapNotNull { it.file }
@@ -235,7 +222,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     // reset commit checks on documents modification (e.g. user typed in the editor)
     EditorFactory.getInstance().eventMulticaster.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
-        if (!isCommitChecksResultUpToDate) {
+        if (isCommitChecksResultUpToDate == RecentCommitChecks.UNKNOWN) {
           return
         }
         val file = FileDocumentManager.getInstance().getFile(event.document)
@@ -246,8 +233,8 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     }, this)
   }
 
-  private fun resetCommitChecksResult() {
-    isCommitChecksResultUpToDate = false
+  protected fun resetCommitChecksResult() {
+    isCommitChecksResultUpToDate = RecentCommitChecks.UNKNOWN
     hideCommitChecksFailureNotification()
   }
 
@@ -294,7 +281,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   }
 
   private fun getCommitCheckFailureDescription(): @NlsContexts.NotificationContent String {
-    return ui.commitProgressUi.getCommitCheckFailures().joinToString { it.text }
+    return ui.commitProgressUi.getCommitCheckFailures().mapNotNull { it.text }.joinToString()
   }
 
   private fun createShowDetailsNotificationAction(): NotificationAction {
@@ -312,71 +299,77 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     }
   }
 
-  protected fun isSkipCommitChecks(): Boolean = isBackgroundCommitChecks() && isCommitChecksResultUpToDate
-
   override fun doExecuteSession(sessionInfo: CommitSessionInfo): Boolean {
+    val isAmend = amendCommitHandler.isAmendCommitMode
+    val actionName = getActionTextWithoutEllipsis(sessionInfo.executor, isAmend, false)
+    val commitInfo = CommitInfoImpl(actionName)
+
     if (!sessionInfo.isVcsCommit) {
-      return workflow.executeSession(sessionInfo)
+      return workflow.executeSession(sessionInfo, commitInfo)
     }
 
-    if (!isBackgroundCommitChecks()) {
-      return workflow.executeSession(sessionInfo)
-    }
+    workflow.asyncSession(coroutineScope, sessionInfo) {
+      val isOnlyRunCommitChecks = commitContext.isOnlyRunCommitChecks
+      commitContext.isOnlyRunCommitChecks = false
 
-    coroutineScope.launch {
-      workflow.executeBackgroundSession(sessionInfo) {
-        val isOnlyRunCommitChecks = commitContext.isOnlyRunCommitChecks
-        commitContext.isOnlyRunCommitChecks = false
+      val isSkipCommitChecks = isCommitChecksResultUpToDate == RecentCommitChecks.FAILED
+      if (isSkipCommitChecks && !isOnlyRunCommitChecks) {
+        return@asyncSession CommitChecksResult.Passed
+      }
 
-        if (isSkipCommitChecks() && !isOnlyRunCommitChecks) {
-          return@executeBackgroundSession CommitChecksResult.Passed
-        }
-
-        val indicator = ui.commitProgressUi.startProgress(isOnlyRunCommitChecks)
-        indicator.addStateDelegate(object : AbstractProgressIndicatorExBase() {
-          override fun cancel() = this@launch.cancel() // cancel coroutine
-        })
-        try {
-          indicator.start()
-
-          PartialChangesUtil.underChangeList(project, workflow.getBeforeCommitChecksChangelist()) {
-            runAllHandlers(sessionInfo, indicator, isOnlyRunCommitChecks)
-          }
-        }
-        finally {
-          indicator.stop()
-        }
+      runWithProgress(isOnlyRunCommitChecks) { indicator ->
+        val problem = workflow.runBackgroundBeforeCommitChecks(sessionInfo, indicator)
+        handleCommitProblem(problem, isOnlyRunCommitChecks, commitInfo)
       }
     }
 
     return true
   }
 
-  private suspend fun runAllHandlers(
-    sessionInfo: CommitSessionInfo,
-    indicator: ProgressIndicator,
-    isOnlyRunCommitChecks: Boolean
-  ): CommitChecksResult {
-    val metaHandlers = commitHandlers.filterIsInstance<CheckinMetaHandler>()
-    workflow.runMetaHandlers(metaHandlers, ui.commitProgressUi, indicator)
-    FileDocumentManager.getInstance().saveAllDocuments()
+  private suspend fun <T> runWithProgress(isOnlyRunCommitChecks: Boolean, task: suspend (ProgressIndicator) -> T): T {
+    val context = currentCoroutineContext()
+    val indicator = ui.commitProgressUi.startProgress(isOnlyRunCommitChecks)
+    indicator.addStateDelegate(object : AbstractProgressIndicatorExBase() {
+      override fun cancel() = context.cancel() // cancel coroutine
+    })
+    try {
+      indicator.start()
+      return task(indicator)
+    }
+    finally {
+      indicator.stop()
+    }
+  }
 
-    val plainHandlers = commitHandlers.filterNot { it is CommitCheck<*> }
-    val plainHandlersResult = workflow.runBeforeCommitHandlersChecks(sessionInfo, plainHandlers)
-    if (!plainHandlersResult.shouldCommit) return plainHandlersResult
+  private fun handleCommitProblem(problem: CommitProblem?,
+                                  isOnlyRunCommitChecks: Boolean,
+                                  commitInfo: CommitInfo): CommitChecksResult {
+    if (problem != null) {
+      val checkFailure = when (problem) {
+        is UnknownCommitProblem -> CommitCheckFailure(null, null)
+        is CommitProblemWithDetails -> CommitCheckFailure(problem.text) { problem.showDetails(project, commitInfo) }
+        else -> CommitCheckFailure(problem.text, null)
+      }
+      ui.commitProgressUi.addCommitCheckFailure(checkFailure)
+    }
 
-    val commitChecks = commitHandlers.filterNot { it is CheckinMetaHandler }.filterIsInstance<CommitCheck<*>>()
-    val checksPassed = workflow.runCommitChecks(commitChecks, ui.commitProgressUi, indicator)
+    val checksPassed = problem == null
     when {
       isOnlyRunCommitChecks -> {
-        isCommitChecksResultUpToDate = true
+        if (checksPassed) {
+          isCommitChecksResultUpToDate = RecentCommitChecks.PASSED
+        }
+        else {
+          isCommitChecksResultUpToDate = RecentCommitChecks.FAILED
+        }
         return CommitChecksResult.OnlyChecks(checksPassed)
       }
       checksPassed -> {
+        isCommitChecksResultUpToDate = RecentCommitChecks.UNKNOWN
         return CommitChecksResult.Passed
       }
       else -> {
-        isCommitChecksResultUpToDate = true
+        isCommitChecksResultUpToDate = RecentCommitChecks.FAILED
         return CommitChecksResult.Failed()
       }
     }
@@ -425,7 +418,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
   override fun getState(): CommitWorkflowHandlerState {
     val isAmend = amendCommitHandler.isAmendCommitMode
-    val isSkipCommitChecks = isSkipCommitChecks()
+    val isSkipCommitChecks = isCommitChecksResultUpToDate == RecentCommitChecks.FAILED
     return CommitWorkflowHandlerState(isAmend, isSkipCommitChecks)
   }
 
@@ -445,3 +438,5 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     }
   }
 }
+
+private enum class RecentCommitChecks { UNKNOWN, PASSED, FAILED }

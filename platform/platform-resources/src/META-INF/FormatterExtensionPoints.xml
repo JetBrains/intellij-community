@@ -47,6 +47,7 @@
     <extensionPoint name="fileCodeStyleProvider" interface="com.intellij.psi.codeStyle.FileCodeStyleProvider" dynamic="true"/>
 
     <extensionPoint name="langCodeStyleSettingsProvider" interface="com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider" dynamic="true"/>
+    <extensionPoint name="langCodeStyleSettingsContributor" interface="com.intellij.psi.codeStyle.LanguageCodeStyleSettingsContributor" dynamic="true"/>
     <extensionPoint name="predefinedCodeStyle" interface="com.intellij.psi.codeStyle.PredefinedCodeStyle" dynamic="true"/>
 
     <extensionPoint name="fileSetDescriptorFactory" interface="com.intellij.formatting.fileSet.FileSetDescriptorFactory" dynamic="true"/>

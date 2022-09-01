@@ -1173,4 +1173,9 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
       return myMessage;
     }
   }
+
+  @Override
+  public @NotNull IntentionAction createSplitSwitchBranchWithSeveralCaseValuesAction() {
+    return new SplitSwitchBranchWithSeveralCaseValuesAction();
+  }
 }

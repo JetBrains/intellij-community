@@ -1,19 +1,21 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.devServer
 
-import com.intellij.diagnostic.telemetry.useWithScope
+import com.intellij.diagnostic.telemetry.useWithScope2
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.TraceManager
 import org.jetbrains.intellij.build.impl.DistributionJARsBuilder
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.checkOutputOfPluginModules
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.util.*
-import java.util.concurrent.ForkJoinTask
 
 private val TOUCH_OPTIONS = EnumSet.of(StandardOpenOption.CREATE, StandardOpenOption.WRITE)
 
@@ -34,14 +36,14 @@ data class BuildItem(val dir: Path, val layout: PluginLayout) {
 class PluginBuilder(val buildContext: BuildContext, private val outDir: Path) {
   private val dirtyPlugins = HashSet<BuildItem>()
 
-  fun initialBuild(plugins: List<BuildItem>) {
-    val tasks = mutableListOf<ForkJoinTask<*>>()
-    for (plugin in plugins) {
-      tasks.add(ForkJoinTask.adapt {
-        buildPlugin(plugin, buildContext, outDir)
-      })
+  suspend fun initialBuild(plugins: List<BuildItem>) {
+    coroutineScope {
+      for (plugin in plugins) {
+        launch {
+          buildPlugin(plugin, buildContext, outDir)
+        }
+      }
     }
-    ForkJoinTask.invokeAll(tasks)
   }
 
   @Synchronized
@@ -62,30 +64,32 @@ class PluginBuilder(val buildContext: BuildContext, private val outDir: Path) {
     return result
   }
 
-  fun buildChanged(): String {
+  suspend fun buildChanged(): String {
     val dirtyPlugins = getDirtyPluginsAndClear()
     if (dirtyPlugins.isEmpty()) {
       return "All plugins are up to date"
     }
 
-    for (plugin in dirtyPlugins) {
-      try {
-        clearDirContent(plugin.dir)
-        buildPlugin(plugin, buildContext, outDir)
-      }
-      catch (e: Throwable) {
-        // put back (that's ok to add already processed plugins - doesn't matter, no need to complicate)
-        for (dirtyPlugin in dirtyPlugins) {
-          addDirtyPluginDir(dirtyPlugin, "<internal error>")
+    coroutineScope {
+      for (plugin in dirtyPlugins) {
+        try {
+          clearDirContent(plugin.dir)
+          launch { buildPlugin(plugin, buildContext, outDir) }
         }
-        throw e
+        catch (e: Throwable) {
+          // put back (that's ok to add already processed plugins - doesn't matter, no need to complicate)
+          for (dirtyPlugin in dirtyPlugins) {
+            addDirtyPluginDir(dirtyPlugin, "<internal error>")
+          }
+          throw e
+        }
       }
     }
     return "Plugins ${dirtyPlugins.joinToString { it.dir.fileName.toString() }} were updated"
   }
 }
 
-private fun buildPlugin(plugin: BuildItem, buildContext: BuildContext, projectOutDir: Path) {
+private suspend fun buildPlugin(plugin: BuildItem, buildContext: BuildContext, projectOutDir: Path) {
   val mainModule = plugin.layout.mainModule
   if (skippedPluginModules.contains(mainModule)) {
     return
@@ -95,11 +99,11 @@ private fun buildPlugin(plugin: BuildItem, buildContext: BuildContext, projectOu
   TraceManager.spanBuilder("build plugin")
     .setAttribute("mainModule", mainModule)
     .setAttribute("dir", plugin.dir.fileName.toString())
-    .useWithScope {
+    .useWithScope2 {
       Span.current().addEvent("build ${mainModule}")
 
       if (mainModule != "intellij.platform.builtInHelp") {
-        DistributionJARsBuilder.checkOutputOfPluginModules(mainModule, plugin.layout.moduleJars, plugin.layout.moduleExcludes, buildContext)
+        checkOutputOfPluginModules(mainModule, plugin.layout.moduleJars, plugin.layout.moduleExcludes, buildContext)
       }
 
       DistributionJARsBuilder.layout(plugin.layout,

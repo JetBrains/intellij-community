@@ -6,17 +6,18 @@ Reports incorrect date time format patterns.
 <ul>
   <li>Unsupported patterns, like "TT"</li>
   <li>Using reserved patterns, like "#"</li>
-  <li>Unappropriated padding.</li>
-  <li>Optional brackets without a pair.</li>
+  <li>Inappropriate padding</li>
+  <li>Unbalanced brackets</li>
 </ul>
-<p>
-  Examples:<br>
-  <code>DateTimeFormatter.ofPattern("[][]])"<br></code>
-  <code>DateTimeFormatter.ofPattern("TT")<br></code>
-  <code>DateTimeFormatter.ofPattern("[[")<br></code>
-  <code>DateTimeFormatter.ofPattern("{")<br></code>
-  <code>DateTimeFormatter.ofPattern("MMMMMM")<br></code>
-</p>
+<p>Examples:</p>
+<pre><code>
+  DateTimeFormatter.ofPattern("[][]]");
+  DateTimeFormatter.ofPattern("TT");
+  DateTimeFormatter.ofPattern("[[");
+  DateTimeFormatter.ofPattern("{");
+  DateTimeFormatter.ofPattern("MMMMMM");
+</code></pre>
 <!-- tooltip end -->
+<p><small>New in 2022.3</small>
 </body>
 </html>

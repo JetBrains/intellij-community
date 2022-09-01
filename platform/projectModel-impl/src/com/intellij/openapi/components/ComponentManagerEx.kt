@@ -2,16 +2,9 @@
 package com.intellij.openapi.components
 
 import com.intellij.openapi.components.impl.stores.IComponentStore
-import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-interface ComponentManagerEx {
-  @ApiStatus.Experimental
-  @ApiStatus.Internal
-  suspend fun <T : Any> getServiceAsync(keyClass: Class<T>): Deferred<T> {
-    throw AbstractMethodError()
-  }
-
+interface ComponentStoreOwner {
   val componentStore: IComponentStore
 }

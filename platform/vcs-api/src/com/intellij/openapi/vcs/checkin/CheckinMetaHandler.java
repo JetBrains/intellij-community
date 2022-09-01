@@ -4,9 +4,12 @@ package com.intellij.openapi.vcs.checkin;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Implemented by checkin handlers that need to control the process of running other
- * checkin handlers.
+ * @deprecated Prefer using {@link CheckinModificationHandler} with {@link CheckinHandler#beforeCheckin} or {@link CommitCheck}.
  */
-public interface CheckinMetaHandler {
+@Deprecated
+public interface CheckinMetaHandler extends CheckinModificationHandler {
+  /**
+   * Implementations MUST call the callback or throw an exception.
+   */
   void runCheckinHandlers(@NotNull Runnable runnable);
 }

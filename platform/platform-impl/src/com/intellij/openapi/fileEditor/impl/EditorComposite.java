@@ -5,10 +5,7 @@ import com.intellij.featureStatistics.fusCollectors.FileEditorCollector;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.DataValidators;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -54,7 +51,7 @@ import java.util.function.Supplier;
  * It's a composite what can be pinned in the tabs list or opened as a preview, not concrete file editors.
  * It also manages the internal UI structure: bottom and top components, panels, labels, actions for navigating between editors it owns.
  */
-public class EditorComposite extends EditorCompositeBase implements Disposable {
+public class EditorComposite extends FileEditorComposite implements Disposable {
   private static final Logger LOG = Logger.getInstance(EditorComposite.class);
 
   /**
@@ -576,6 +573,11 @@ public class EditorComposite extends EditorCompositeBase implements Disposable {
       if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
         return new VirtualFile[]{myFile};
       }
+      if (PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR.is(dataId)) {
+        EditorWindow window = FileEditorManagerEx.getInstanceEx(myProject).getCurrentWindow();
+        EditorComposite composite = window != null ? window.getSelectedComposite(true) : null;
+        return composite != null ? composite.getSelectedEditor() : null;
+      }
       JComponent component = getPreferredFocusedComponent();
       if (component instanceof DataProvider && component != this) {
         Object data = ((DataProvider)component).getData(dataId);
@@ -666,7 +668,7 @@ public class EditorComposite extends EditorCompositeBase implements Disposable {
   /**
    * A mapper for old API with arrays and pairs
    */
-  public static @NotNull Pair<FileEditor @NotNull [], FileEditorProvider @NotNull []> retrofit(@Nullable EditorCompositeBase composite) {
+  public static @NotNull Pair<FileEditor @NotNull [], FileEditorProvider @NotNull []> retrofit(@Nullable FileEditorComposite composite) {
     if (composite == null) return new Pair<>(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY);
 
     FileEditor[] editors = composite.getAllEditors().toArray(FileEditor.EMPTY_ARRAY);

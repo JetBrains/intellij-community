@@ -825,6 +825,7 @@ class ModuleBridgesTest {
     }
 
     fun catchLog(): String {
+      val prev = System.out
       return try {
         val outCatcher = OutCatcher(System.out)
         System.setOut(outCatcher)
@@ -832,7 +833,7 @@ class ModuleBridgesTest {
         outCatcher.catcher
       }
       finally {
-        System.setOut(System.out)
+        System.setOut(prev)
       }
     }
   }

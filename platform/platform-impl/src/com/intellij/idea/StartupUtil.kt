@@ -7,7 +7,7 @@ package com.intellij.idea
 import com.intellij.BundleBase
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.diagnostic.*
-import com.intellij.diagnostic.opentelemetry.TraceManager
+import com.intellij.diagnostic.telemetry.TraceManager
 import com.intellij.ide.*
 import com.intellij.ide.customize.CommonCustomizeIDEWizardDialog
 import com.intellij.ide.gdpr.ConsentOptions
@@ -30,6 +30,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.AWTExceptionHandler
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
@@ -58,7 +59,6 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.io.BuiltInServer
 import sun.awt.AWTAutoShutdown
-import java.awt.EventQueue
 import java.awt.Font
 import java.awt.GraphicsEnvironment
 import java.awt.Toolkit
@@ -85,7 +85,6 @@ import java.util.function.Function
 import java.util.logging.ConsoleHandler
 import java.util.logging.Level
 import javax.swing.*
-import kotlin.coroutines.CoroutineContext
 import kotlin.system.exitProcess
 
 internal const val IDE_STARTED = "------------------------------------------------------ IDE STARTED ------------------------------------------------------"
@@ -146,7 +145,7 @@ fun CoroutineScope.startApplication(args: List<String>,
     // we shouldn't initialize AWT toolkit in order to avoid unnecessary focus stealing and space switching on macOS.
     initAwtToolkit(lockSystemDirsJob, busyThread).join()
 
-    withContext(SwingDispatcher) {
+    withContext(RawSwingDispatcher) {
       patchSystem(isHeadless)
     }
   }
@@ -196,7 +195,7 @@ fun CoroutineScope.startApplication(args: List<String>,
     updateFrameClassAndWindowIconAndPreloadSystemFonts(initLafJob)
   }
 
-  if (java.lang.Boolean.getBoolean("idea.enable.coroutine.dump")) {
+  if (System.getProperty("idea.enable.coroutine.dump", "true").toBoolean()) {
     launch(CoroutineName("coroutine debug probes init")) {
       enableCoroutineDump()
     }
@@ -332,7 +331,7 @@ private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job,
     // before showEuaIfNeededJob to prepare during showing EUA dialog
     val runnable = prepareSplash(appInfoDeferred, args) ?: return@launch
     showEuaIfNeededJob.join()
-    withContext(SwingDispatcher) {
+    withContext(RawSwingDispatcher) {
       runnable.run()
     }
   }
@@ -429,7 +428,7 @@ private suspend fun importConfig(args: List<String>,
                                  agreementShown: Deferred<Boolean>): Boolean {
   var activity = StartUpMeasurer.startActivity("screen reader checking")
   try {
-    withContext(SwingDispatcher) { AccessibilityUtils.enableScreenReaderSupportIfNecessary() }
+    withContext(RawSwingDispatcher) { AccessibilityUtils.enableScreenReaderSupportIfNecessary() }
   }
   catch (e: Throwable) {
     log.error(e)
@@ -439,7 +438,7 @@ private suspend fun importConfig(args: List<String>,
   appStarter.beforeImportConfigs()
   val newConfigDir = PathManager.getConfigDir()
   val veryFirstStartOnThisComputer = agreementShown.await()
-  withContext(SwingDispatcher) {
+  withContext(RawSwingDispatcher) {
     if (UIManager.getLookAndFeel() !is IntelliJLaf) {
       UIManager.setLookAndFeel(IntelliJLaf())
     }
@@ -497,7 +496,7 @@ private fun CoroutineScope.initUi(initAwtToolkitAndEventQueueJob: Job, preloadLa
   initAwtToolkitAndEventQueueJob.join()
 
   // SwingDispatcher must be used after Toolkit init
-  withContext(SwingDispatcher) {
+  withContext(RawSwingDispatcher) {
     val isHeadless = AppMode.isHeadless()
     if (!isHeadless) {
       val env = runActivity("GraphicsEnvironment init") {
@@ -601,7 +600,7 @@ private fun CoroutineScope.showEuaIfNeeded(euaDocumentDeferred: Deferred<Any?>?,
     suspend fun prepareAndExecuteInEdt(task: () -> Unit) {
       updateCached.join()
       initUiJob.join()
-      withContext(SwingDispatcher) {
+      withContext(RawSwingDispatcher) {
         UIManager.setLookAndFeel(IntelliJLaf())
         task()
       }
@@ -625,15 +624,6 @@ private fun CoroutineScope.showEuaIfNeeded(euaDocumentDeferred: Deferred<Any?>?,
       }
     }
   }
-}
-
-/** Do not use it. For start-up code only. */
-internal object SwingDispatcher : CoroutineDispatcher() {
-  override fun isDispatchNeeded(context: CoroutineContext): Boolean = !EventQueue.isDispatchThread()
-
-  override fun dispatch(context: CoroutineContext, block: Runnable): Unit = EventQueue.invokeLater(block)
-
-  override fun toString() = "Swing"
 }
 
 private fun CoroutineScope.updateFrameClassAndWindowIconAndPreloadSystemFonts(initUiDeferred: Job) {
@@ -671,11 +661,11 @@ private fun CoroutineScope.updateFrameClassAndWindowIconAndPreloadSystemFonts(in
     }
 
     // preload cursors used by drag-n-drop AWT subsystem, run on SwingDispatcher to avoid a possible deadlock - see RIDER-80810
-    launch(CoroutineName("DnD setup") + SwingDispatcher) {
+    launch(CoroutineName("DnD setup") + RawSwingDispatcher) {
       DragSource.getDefaultDragSource()
     }
 
-    launch(SwingDispatcher) {
+    launch(RawSwingDispatcher) {
       WeakFocusStackManager.getInstance()
     }
   }
@@ -857,6 +847,13 @@ private fun CoroutineScope.lockSystemDirs(configImportNeededDeferred: Job,
             synchronized(AppStarter::class.java) {
               socketLock!!.dispose()
               socketLock = null
+
+              // Temporary hack to debug "Zombie" process issue. See CWM-7058
+              // TL;DR ShutDownTracker gets called but application still exists
+              if (AppMode.isIsRemoteDevHost()) {
+                val stacktrace = Thread.currentThread().stackTrace.joinToString("\n")
+                println("ShutDownTracker stacktrace:\n$stacktrace")
+              }
             }
           }
         }

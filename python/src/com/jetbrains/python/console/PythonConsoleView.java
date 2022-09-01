@@ -2,7 +2,6 @@
 package com.jetbrains.python.console;
 
 import com.google.common.collect.Maps;
-import com.intellij.application.options.RegistryManager;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.filters.OpenFileHyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewUtil;

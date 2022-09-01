@@ -27,9 +27,7 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -704,7 +702,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
                                              boolean includeFixRange,
                                              @NotNull Processor<? super HighlightInfo> processor) {
     return processHighlights(document, project, null, 0, document.getTextLength(), info -> {
-      if (!isOffsetInsideHighlightInfo(offset, info, includeFixRange)) return true;
+      if (!info.containsOffset(offset, includeFixRange)) return true;
 
       int compare = info.getSeverity().compareTo(minSeverity);
       return compare < 0 || processor.process(info);
@@ -779,25 +777,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       foundInfoList.sort(Comparator.comparing(HighlightInfo::getSeverity).reversed());
       return HighlightInfoComposite.create(foundInfoList);
     }
-  }
-
-  private static boolean isOffsetInsideHighlightInfo(int offset, @NotNull HighlightInfo info, boolean includeFixRange) {
-    RangeHighlighterEx highlighter = info.getHighlighter();
-    if (highlighter == null || !highlighter.isValid()) return false;
-    int startOffset = highlighter.getStartOffset();
-    int endOffset = highlighter.getEndOffset();
-    if (startOffset <= offset && offset <= endOffset) {
-      return true;
-    }
-    if (!includeFixRange) return false;
-    RangeMarker fixMarker = info.fixMarker;
-    if (fixMarker != null) {  // null means its range is the same as highlighter
-      if (!fixMarker.isValid()) return false;
-      startOffset = fixMarker.getStartOffset();
-      endOffset = fixMarker.getEndOffset();
-      return startOffset <= offset && offset <= endOffset;
-    }
-    return false;
   }
 
   public static @NotNull List<LineMarkerInfo<?>> getLineMarkers(@NotNull Document document, @NotNull Project project) {
@@ -1062,7 +1041,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
   // return list of document/virtualFile/opened fileEditors for these (with preferred file editor in the head)
   private @NotNull List<FileEditorInfo> createPreferredFileEditorMap(@NotNull Collection<? extends FileEditor> fileEditors,
-                                                            @NotNull Map<FileEditor, BackgroundEditorHighlighter> highlighters) {
+                                                            @NotNull Map<? extends FileEditor, ? extends BackgroundEditorHighlighter> highlighters) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     List<FileEditorInfo> result = new ArrayList<>(fileEditors.size());
     MultiMap<Pair<Document, VirtualFile>, FileEditor> map = ContainerUtil.groupBy(fileEditors, fileEditor -> {

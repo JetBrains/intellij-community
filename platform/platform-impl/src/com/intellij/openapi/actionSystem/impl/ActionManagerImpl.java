@@ -5,7 +5,6 @@ import com.intellij.AbstractBundle;
 import com.intellij.BundleBase;
 import com.intellij.DynamicBundle;
 import com.intellij.codeWithMe.ClientId;
-import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.icons.AllIcons;
@@ -132,11 +131,8 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
 
   protected ActionManagerImpl() {
     Application app = ApplicationManager.getApplication();
-    if (!app.isUnitTestMode()) {
-      LoadingState.COMPONENTS_LOADED.checkOccurred();
-      if (!app.isHeadlessEnvironment() && !app.isCommandLine()) {
-        LOG.assertTrue(!app.isDispatchThread(), "assert !app.isDispatchThread()");
-      }
+    if (!app.isUnitTestMode() && !app.isHeadlessEnvironment() && !app.isCommandLine()) {
+      LOG.assertTrue(!app.isDispatchThread(), "assert !app.isDispatchThread()");
     }
 
     registerActions(PluginManagerCore.getPluginSet().getEnabledModules());
@@ -154,7 +150,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
         extension.unregisterActions(ActionManagerImpl.this);
       }
     }, this);
-    ApplicationManager.getApplication().getExtensionArea().getExtensionPoint("com.intellij.editorActionHandler")
+    app.getExtensionArea().getExtensionPoint("com.intellij.editorActionHandler")
       .addChangeListener(() -> {
         synchronized (myLock) {
           actionToId.keySet().forEach(ActionManagerImpl::updateHandlers);

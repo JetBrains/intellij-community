@@ -6,7 +6,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.impl.DirectoryIndex
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vcs.VcsRootChecker
 import com.intellij.openapi.vfs.VirtualFile
 
@@ -44,7 +44,7 @@ private class VcsDefaultMappingDetector(
   private val project: Project,
   private val rootChecker: VcsRootChecker
 ) {
-  private val directoryIndex = DirectoryIndex.getInstance(project)
+  private val fileIndex = ProjectFileIndex.getInstance(project)
 
   private val checkedDirs = mutableMapOf<VirtualFile, Boolean>()
 
@@ -103,7 +103,7 @@ private class VcsDefaultMappingDetector(
       if (project.isDisposed) {
         throw ProcessCanceledException()
       }
-      directoryIndex.getInfoForFile(f).isInProject(f)
+      fileIndex.isInContent(f)
     }
   }
 }

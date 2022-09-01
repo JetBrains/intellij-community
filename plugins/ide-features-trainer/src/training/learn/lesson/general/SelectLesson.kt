@@ -33,5 +33,4 @@ class SelectLesson(private val sample: LessonSample) : KLesson("Select", Lessons
       }
     }
 
-  override val suitableTips = listOf("CtrlW")
 }

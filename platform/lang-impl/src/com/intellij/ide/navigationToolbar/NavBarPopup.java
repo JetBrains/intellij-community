@@ -102,7 +102,9 @@ public class NavBarPopup extends LightweightHint implements Disposable{
   private void show(final NavBarItem item, boolean checkRepaint) {
     UIEventLogger.NavBarShowPopup.log(myPanel.getProject());
 
-    int relativeY = ExperimentalUI.isNewUI() && UISettings.getInstance().getNavBarLocation() == NavBarLocation.BOTTOM
+    int relativeY = ExperimentalUI.isNewUI()
+                    && UISettings.getInstance().getNavBarLocation() == NavBarLocation.BOTTOM
+                    && UISettings.getInstance().getShowNavigationBar()
                     ? -getComponent().getPreferredSize().height
                     : item.getHeight();
 
@@ -194,7 +196,9 @@ public class NavBarPopup extends LightweightHint implements Disposable{
       }
     });
 
-    JComponent component = ListWithFilter.wrap(list, new NavBarListWrapper(list), o -> panel.getPresentation().getPresentableText(o, false));
+    NavBarListWrapper navBarListWrapper = new NavBarListWrapper(list);
+    JComponent component = ListWithFilter.wrap(list, navBarListWrapper, o -> panel.getPresentation().getPresentableText(o, false));
+    navBarListWrapper.updateViewportPreferredSizeIfNeeded();
     component.putClientProperty(JBLIST_KEY, list);
     OpenInRightSplitAction.Companion.overrideDoubleClickWithOneClick(component);
     return component;

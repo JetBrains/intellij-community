@@ -127,6 +127,9 @@ public final class JavaPsiPatternUtil {
     if (pattern instanceof PsiTypeTestPattern) {
       return ((PsiTypeTestPattern)pattern).getPatternVariable();
     }
+    if (pattern instanceof PsiDeconstructionPattern) {
+      return ((PsiDeconstructionPattern)pattern).getPatternVariable();
+    }
     return null;
   }
 
@@ -439,7 +442,12 @@ public final class JavaPsiPatternUtil {
 
     @Override
     public String getEffectiveInitializerText() {
-      return myParent.getName() + "." + myRecordComponent.getName() + "()";
+      String text = myParent.getName() + "." + myRecordComponent.getName() + "()";
+      PsiType type = getVariable().getType();
+      if (!type.equals(myRecordComponent.getType())) {
+        return "(" + type.getCanonicalText() + ")" + text;
+      }
+      return text;
     }
   }
 

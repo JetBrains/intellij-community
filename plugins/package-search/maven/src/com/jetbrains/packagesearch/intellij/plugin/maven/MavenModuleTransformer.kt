@@ -84,5 +84,5 @@ internal class MavenModuleTransformer : CoroutineModuleTransformer {
 
 val BuildSystemType.Companion.MAVEN
     get() = BuildSystemType(
-        name = "MAVEN", language = "xml", dependencyAnalyzerKey = MavenUtil.SYSTEM_ID, statisticsKey = "maven"
+      name = "MAVEN", language = "xml", dependencyAnalyzerKey = MavenUtil.SYSTEM_ID, statisticsKey = "maven"
     )

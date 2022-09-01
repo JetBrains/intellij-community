@@ -14,10 +14,12 @@ object TestKotlinArtifacts {
         return KotlinMavenUtils.findArtifactOrFail(groupId, artifactId, version).toFile()
     }
 
-    private fun getJar(artifactId: String) =
-        downloadArtifactForIdeFromSources("kotlinc_kotlin_stdlib.xml", artifactId)
-    private fun getSourcesJar(artifactId: String) =
-        downloadArtifactForIdeFromSources("kotlinc_kotlin_stdlib.xml", artifactId, suffix = "-sources.jar")
+    private fun getJar(artifactId: String): File {
+        return downloadArtifactForIdeFromSources("kotlinc_kotlin_stdlib.xml", artifactId)
+    }
+
+    private fun getSourcesJar(artifactId: String): File {
+        return downloadArtifactForIdeFromSources("kotlinc_kotlin_stdlib.xml", artifactId, suffix = "-sources.jar")
             .copyTo(                                       // Some tests hardcode jar names in their test data
                 File(PathManager.getCommunityHomePath())   // (KotlinReferenceTypeHintsProviderTestGenerated).
                     .resolve("out")                        // That's why we need to strip version from the jar name
@@ -25,6 +27,7 @@ object TestKotlinArtifacts {
                     .resolve("$artifactId-sources.jar"),
                 overwrite = true
             )
+    }
 
     @JvmStatic val androidExtensionsRuntime: File by lazy { getJar("android-extensions-compiler-plugin-for-ide") }
     @JvmStatic val kotlinAnnotationsJvm: File by lazy { getJar("kotlin-annotations-jvm") }
@@ -51,7 +54,9 @@ object TestKotlinArtifacts {
     @JvmStatic val kotlinTestJunit: File by lazy { getJar("kotlin-test-junit") }
     @JvmStatic val parcelizeRuntime: File by lazy { getJar("parcelize-compiler-plugin-for-ide") }
 
-    @JvmStatic val trove4j: File by lazy { getLibraryFile("org.jetbrains.intellij.deps", "trove4j", "Trove4j.xml") }
+    @JvmStatic val trove4j: File by lazy {
+        PathManager.getJarForClass(TestKotlinArtifacts::class.java.classLoader.loadClass("gnu.trove.THashMap"))!!.toFile()
+    }
     @JvmStatic val jetbrainsAnnotations: File by lazy { getLibraryFile("org.jetbrains", "annotations", "jetbrains_annotations.xml") }
     @JvmStatic val jsr305: File by lazy { getLibraryFile("com.google.code.findbugs", "jsr305", "jsr305.xml") }
     @JvmStatic val junit3: File by lazy { getLibraryFile("junit", "junit", "JUnit3.xml") }

@@ -16,6 +16,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -97,7 +98,7 @@ suspend fun doInitApplication(rawArgs: List<String>, appDeferred: Deferred<Any>)
 
     // executed in main thread
     launch {
-      val lafManagerDeferred = launch(CoroutineName("laf initialization") + SwingDispatcher) {
+      val lafManagerDeferred = launch(CoroutineName("laf initialization") + RawSwingDispatcher) {
         // don't wait for result - we just need to trigger initialization if not yet created
         app.getServiceAsync(LafManager::class.java)
       }
@@ -137,7 +138,7 @@ private suspend fun initApplicationImpl(args: List<String>,
     launch {
       initAppActivity.runChild("old component init task creating", app::createInitOldComponentsTask)?.let { loadComponentInEdtTask ->
         val placeOnEventQueueActivity = initAppActivity.startChild("place on event queue")
-        withContext(SwingDispatcher) {
+        withContext(RawSwingDispatcher) {
           placeOnEventQueueActivity.end()
           loadComponentInEdtTask()
         }

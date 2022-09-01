@@ -118,8 +118,8 @@ class ExtensionsAreaImpl(private val componentManager: ComponentManager) : Exten
 
   fun unregisterExtensions(extensionPointName: String,
                            pluginDescriptor: PluginDescriptor,
-                           priorityListenerCallbacks: List<Runnable>,
-                           listenerCallbacks: List<Runnable>): Boolean {
+                           priorityListenerCallbacks: MutableList<in Runnable>,
+                           listenerCallbacks: MutableList<in Runnable>): Boolean {
     val point = extensionPoints.get(extensionPointName) ?: return false
     point.unregisterExtensions(componentManager, pluginDescriptor, priorityListenerCallbacks, listenerCallbacks)
     return true

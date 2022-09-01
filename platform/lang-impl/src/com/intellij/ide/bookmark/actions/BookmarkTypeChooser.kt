@@ -46,6 +46,9 @@ private object MySpacingConfiguration: IntelliJSpacingConfiguration() {
     get() = 0
 
   override val verticalSmallGap: Int
+    get() = JBUI.scale(8)
+
+  override val verticalMediumGap: Int
     get() = JBUI.scale(if (ExperimentalUI.isNewUI()) 16 else 8)
 }
 
@@ -73,12 +76,12 @@ internal class BookmarkTypeChooser(
           comment(message("mnemonic.chooser.comment"), lineLength).apply {
             if (ExperimentalUI.isNewUI()) border = JBUI.Borders.empty(2, 4, 0, 4)
           }
-        }.bottomGap(BottomGap.SMALL)
+        }.bottomGap(BottomGap.MEDIUM)
 
         row {
           cell(bookmarkLayoutGrid)
             .horizontalAlign(HorizontalAlign.CENTER)
-        }.bottomGap(BottomGap.SMALL)
+        }.bottomGap(BottomGap.MEDIUM)
 
         row {
           descriptionField = textField()

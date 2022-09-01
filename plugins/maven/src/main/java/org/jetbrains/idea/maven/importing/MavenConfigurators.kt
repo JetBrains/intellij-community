@@ -70,8 +70,9 @@ interface MavenWorkspaceConfigurator {
 
   /**
    * Called for each imported project. Order of projects is not defined.
-   * [ModuleEntity]-es are already created and filled with folders and dependencies,
+   * Corresponding [ModuleEntity] is already created and filled with folders and dependencies,
    * but not yet applied to [com.intellij.workspaceModel.ide.WorkspaceModel].
+   * Other Modules are not accessible.
    *
    * * Called on a background thread.
    * * WriteActions are not allowed.

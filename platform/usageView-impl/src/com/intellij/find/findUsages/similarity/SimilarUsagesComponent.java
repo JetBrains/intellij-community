@@ -26,7 +26,7 @@ import java.util.Set;
 public class SimilarUsagesComponent extends JPanel implements Disposable {
 
   public static final int SNIPPET_LIMIT = 10;
-  private int alreadyShown = 0;
+  private int myAlreadyProcessedUsages = 0;
   private final @NotNull UsageInfo myOriginalUsage;
 
   private final @NotNull ClusteringSearchSession mySession;
@@ -39,16 +39,16 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
     Disposer.register(parent, this);
   }
 
-  public void renderSimilarUsages(@NotNull Collection<SimilarUsage> similarUsagesGroupUsages) {
-    if (alreadyShown < similarUsagesGroupUsages.size() - 1) {
-      similarUsagesGroupUsages.stream().skip(alreadyShown).limit(SNIPPET_LIMIT).forEach(usage -> {
-        final UsageInfo info = ((UsageInfo2UsageAdapter)usage).getUsageInfo();
-        if (myOriginalUsage != info) {
-          renderUsage(info);
-          alreadyShown++;
-        }
-      });
-    }
+  public int renderSimilarUsages(@NotNull Collection<SimilarUsage> similarUsagesGroupUsages) {
+    int alreadyShowUsagesBefore = myAlreadyProcessedUsages;
+    similarUsagesGroupUsages.stream().skip(myAlreadyProcessedUsages).limit(SNIPPET_LIMIT).forEach(usage -> {
+      final UsageInfo info = ((UsageInfo2UsageAdapter)usage).getUsageInfo();
+      if (myOriginalUsage != info) {
+        renderUsage(info);
+      }
+      myAlreadyProcessedUsages++;
+    });
+    return myAlreadyProcessedUsages - alreadyShowUsagesBefore;
   }
 
   private void renderUsage(@NotNull UsageInfo info) {
@@ -90,8 +90,10 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
     renderOriginalUsage();
     renderSimilarUsages(usagesToRender);
     BoundedRangeModelThresholdListener.install(similarUsagesScrollPane.getVerticalScrollBar(), () -> {
-      SimilarUsagesCollector.logMoreUsagesLoaded(mySession.hashCode());
-      renderSimilarUsages(usagesToRender);
+      if (myAlreadyProcessedUsages < usagesToRender.size()) {
+        int renderedNumber = renderSimilarUsages(usagesToRender);
+        SimilarUsagesCollector.logMoreUsagesLoaded(myOriginalUsage.getProject(), mySession, renderedNumber);
+      }
       return Unit.INSTANCE;
     });
     return similarUsagesScrollPane;

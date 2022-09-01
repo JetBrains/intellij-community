@@ -78,7 +78,7 @@ class VcsUserRegistryImpl internal constructor(project: Project) : Disposable, V
 
   override fun getUsers(): Set<VcsUser> {
     return try {
-      persistentEnumerator?.getAllDataObjects { true }?.toMutableSet() ?: emptySet()
+      persistentEnumerator?.getAllDataObjects { true }?.filterNotNullTo(mutableSetOf()) ?: emptySet()
     }
     catch (e: IOException) {
       LOG.warn(e)

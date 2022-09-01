@@ -10,7 +10,9 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
+import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity
 import org.jetbrains.kotlin.caches.project.cacheByClassInvalidatingOnRootModifications
@@ -310,3 +312,18 @@ class StorageProvider<Storage: Any>(
 }
 
 fun <T: Any> SynchronizedFineGrainedEntityCache<Unit, T>.get() = get(Unit)
+
+
+fun <T: WorkspaceEntity> EntityChange<T>.oldEntity() =
+    when (this) {
+        is EntityChange.Added -> null
+        is EntityChange.Removed -> entity
+        is EntityChange.Replaced -> oldEntity
+    }
+
+fun <T: WorkspaceEntity> EntityChange<T>.newEntity() =
+    when (this) {
+        is EntityChange.Added -> newEntity
+        is EntityChange.Removed -> null
+        is EntityChange.Replaced -> newEntity
+    }

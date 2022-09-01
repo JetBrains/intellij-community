@@ -41,6 +41,11 @@ public class JumpToTypeSourceAction extends ClassesActionBase {
   }
 
   @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
+  @Override
   protected void perform(AnActionEvent e) {
     final PsiClass psiClass = getPsiClass(e, false);
     if (psiClass != null) {

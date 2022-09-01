@@ -121,34 +121,43 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     );
   }
 
+  @Override
+  protected boolean useDirectoryBasedProjectFormat() {
+    return true;
+  }
+
+  public boolean isWorkspaceImport() {
+    return MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject);
+  }
+
   public boolean supportModuleGroups() {
-    return !MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject)
+    return !isWorkspaceImport()
            && !MavenProjectImporter.isLegacyImportToTreeStructureEnabled(myProject);
   }
 
   public boolean supportsKeepingManualChanges() {
-    return !MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject);
+    return !isWorkspaceImport();
   }
 
   public boolean supportsImportOfNonExistingFolders() {
-    return MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject);
+    return isWorkspaceImport();
   }
 
   public boolean supportsKeepingModulesFromPreviousImport() {
-    return !MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject)
+    return !isWorkspaceImport()
            && !MavenProjectImporter.isLegacyImportToTreeStructureEnabled(myProject);
   }
 
   public boolean supportsLegacyKeepingFoldersFromPreviousImport() {
-    return !MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject);
+    return !isWorkspaceImport();
   }
 
   public boolean supportsKeepingFacetsFromPreviousImport() {
-    return !MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject);
+    return !isWorkspaceImport();
   }
 
   public boolean supportsCreateAggregatorOption() {
-    return !MavenProjectImporter.isImportToWorkspaceModelEnabled(myProject)
+    return !isWorkspaceImport()
            && !MavenProjectImporter.isLegacyImportToTreeStructureEnabled(myProject);
   }
 

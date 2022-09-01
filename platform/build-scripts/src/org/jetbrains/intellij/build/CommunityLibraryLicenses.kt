@@ -797,9 +797,6 @@ object CommunityLibraryLicenses {
     // for traceprocessor-proto module library in intellij.android.profilersAndroid
     androidDependency(name = "TraceProcessor Daemon Protos", libraryName = "traceprocessor-proto"),
     androidDependency(name = "Transport Pipeline", libraryName = "transport-proto"),
-    LibraryLicense(name = "Trove4j (JetBrains's fork)", libraryName = "Trove4j", license = "LGPL",
-                   url = "https://github.com/JetBrains/intellij-deps-trove4j",
-                   licenseUrl = "https://github.com/JetBrains/intellij-deps-trove4j/blob/master/LICENSE.txt"),
     LibraryLicense(name = "TwelveMonkeys ImageIO", libraryName = "imageio-tiff",
                    url = "https://github.com/haraldk/TwelveMonkeys")
       .newBsd("https://github.com/haraldk/TwelveMonkeys#license"),
@@ -888,8 +885,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("git-learning-project"),
     jetbrainsLibrary("intellij.remoterobot.ide.launcher"),
     jetbrainsLibrary("intellij.remoterobot.remote.fixtures"),
-    jetbrainsLibrary("intellij.remoterobot.remote.robot"),
-    jetbrainsLibrary("intellij.remoterobot.robot.server"),
+    jetbrainsLibrary("intellij.remoterobot.robot.server.core"),
     jetbrainsLibrary("jshell-frontend"),
     jetbrainsLibrary("jvm-native-trusted-roots"),
     jetbrainsLibrary("kotlin-gradle-plugin-idea"),

@@ -11,8 +11,6 @@ import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
-import com.intellij.util.containers.SoftFactoryMap
-import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
@@ -23,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 @Service(Service.Level.PROJECT)
 class LibraryEffectiveKindProvider(project: Project): Disposable {
-    private val effectiveKindMap = ConcurrentHashMap<LibraryEx, PersistentLibraryKind<*>?>();
+    private val effectiveKindMap = ConcurrentHashMap<LibraryEx, PersistentLibraryKind<*>?>()
 
     init {
         val connection = project.messageBus.connect(this)

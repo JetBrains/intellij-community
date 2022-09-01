@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
 public final class PythonHelpersLocator {
@@ -33,10 +34,9 @@ public final class PythonHelpersLocator {
   private PythonHelpersLocator() {}
 
   /**
-   * @return the base directory under which various scripts, etc are stored.
+   * @return the base directory under which various scripts, etc. are stored.
    */
-  @NotNull
-  public static File getHelpersRoot() {
+  public static @NotNull File getHelpersRoot() {
     String property = System.getProperty(PROPERTY_HELPERS_LOCATION);
     if (property != null) {
       return new File(property);
@@ -44,13 +44,11 @@ public final class PythonHelpersLocator {
     return assertHelpersLayout(getHelperRoot("intellij.python.helpers", "/python/helpers"));
   }
 
-  @NotNull
-  public static File getHelpersProRoot() {
-    return assertHelpersProLayout(getHelperRoot("intellij.python.helpers.pro", "/../python/helpers-pro"));
+  public static @NotNull Path getHelpersProRoot() {
+    return assertHelpersProLayout(getHelperRoot("intellij.python.helpers.pro", "/../python/helpers-pro")).toPath().normalize();
   }
 
-  @NotNull
-  private static File getHelperRoot(@NotNull String moduleName, @NotNull String relativePath) {
+  private static @NotNull File getHelperRoot(@NotNull String moduleName, @NotNull String relativePath) {
     @NonNls String jarPath = PathUtil.getJarPathForClass(PythonHelpersLocator.class);
 
     if (PluginManagerCore.isRunningFromSources()) {
@@ -67,8 +65,7 @@ public final class PythonHelpersLocator {
     }
   }
 
-  @Nullable
-  private static File getPluginBaseDir(@NonNls String jarPath) {
+  private static @Nullable File getPluginBaseDir(@NonNls String jarPath) {
     if (jarPath.endsWith(".jar")) {
       final File jarFile = new File(jarPath);
 
@@ -114,8 +111,7 @@ public final class PythonHelpersLocator {
    * @param resourceName a path relative to helper root
    * @return a file object pointing to that path; existence is not checked.
    */
-  @NotNull
-  public static File getHelperFile(@NotNull String resourceName) {
+  public static @NotNull File getHelperFile(@NotNull String resourceName) {
     return new File(getHelpersRoot(), resourceName);
   }
 

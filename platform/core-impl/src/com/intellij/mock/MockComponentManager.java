@@ -128,11 +128,6 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   }
 
   @Override
-  public <T> T @NotNull [] getComponents(@NotNull Class<T> baseClass) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public <T> T getService(@NotNull Class<T> serviceClass) {
     T result = myPicoContainer.getService(serviceClass);
     registerComponentInDisposer(result);

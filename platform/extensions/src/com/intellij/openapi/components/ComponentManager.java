@@ -53,12 +53,6 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   boolean hasComponent(@NotNull Class<?> interfaceClass);
 
   /**
-   * @deprecated use <a href="https://plugins.jetbrains.com/docs/intellij/plugin-extensions.html">extension points</a> instead
-   */
-  @Deprecated
-  <T> T @NotNull [] getComponents(@NotNull Class<T> baseClass);
-
-  /**
    * @deprecated Use ComponentManager API
    */
   @Deprecated
@@ -127,10 +121,7 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   }
 
   @Override
-  default @NotNull ExtensionsArea getExtensionArea() {
-    // default impl to keep backward compatibility
-    throw new AbstractMethodError();
-  }
+  @NotNull ExtensionsArea getExtensionArea();
 
   @ApiStatus.Internal
   default <T> T instantiateClass(@NotNull Class<T> aClass, @NotNull PluginId pluginId) {

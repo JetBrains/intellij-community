@@ -1,7 +1,13 @@
 package org.jetbrains.plugins.notebooks.visualization
 
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.util.EventDispatcher
+import org.jetbrains.plugins.notebooks.visualization.NotebookIntervalPointersEvent.OnEdited
+import org.jetbrains.plugins.notebooks.visualization.NotebookIntervalPointersEvent.OnInserted
+import org.jetbrains.plugins.notebooks.visualization.NotebookIntervalPointersEvent.OnRemoved
+import org.jetbrains.plugins.notebooks.visualization.NotebookIntervalPointersEvent.OnSwapped
+import org.jetbrains.plugins.notebooks.visualization.NotebookIntervalPointersEvent.Change
 
 class NotebookIntervalPointerFactoryImplProvider : NotebookIntervalPointerFactoryProvider {
   override fun create(editor: Editor): NotebookIntervalPointerFactory =
@@ -37,10 +43,10 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
       require(mySavedChanges == null) { "NotebookIntervalPointerFactory hints already added somewhere" }
       mySavedChanges = changes
       return modifyDocumentAction().also {
-        if (mySavedChanges != null) {
+        mySavedChanges?.let {
           val eventBuilder = NotebookIntervalPointersEventBuilder()
-          applySavedChanges(eventBuilder)
-          eventBuilder.applyEvent(changeListeners)
+          applyChanges(it, eventBuilder)
+          eventBuilder.applyEvent(changeListeners, cellLinesEvent = null)
         }
       }
     }
@@ -49,9 +55,20 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
     }
   }
 
-  override fun documentChanged(e: NotebookCellLinesEvent) {
+  override fun documentChanged(event: NotebookCellLinesEvent) {
     val eventBuilder = NotebookIntervalPointersEventBuilder()
 
+    updateIntervals(event, eventBuilder)
+
+    mySavedChanges?.let {
+      applyChanges(it, eventBuilder)
+      mySavedChanges = null
+    }
+
+    eventBuilder.applyEvent(changeListeners, event)
+  }
+
+  private fun updateIntervals(e: NotebookCellLinesEvent, eventBuilder: NotebookIntervalPointersEventBuilder) {
     when {
       !e.isIntervalsChanged() -> {
         // content edited without affecting intervals values
@@ -69,9 +86,8 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
         for (old in e.oldIntervals.asReversed()) {
           pointers[old.ordinal].interval = null
           pointers.removeAt(old.ordinal)
-          // called in reversed order, so ordinals of previous cells remain actual
-          eventBuilder.onRemoved(old)
         }
+        eventBuilder.onRemoved(e.oldIntervals)
 
         e.newIntervals.firstOrNull()?.also { firstNew ->
           pointers.addAll(firstNew.ordinal, e.newIntervals.map { NotebookIntervalPointerImpl(it) })
@@ -87,24 +103,19 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
       ?: pointers.size
 
     updatePointersFrom(invalidPointersStart)
-
-    applySavedChanges(eventBuilder)
-
-    eventBuilder.applyEvent(changeListeners)
   }
 
-  private fun applySavedChanges(eventBuilder: NotebookIntervalPointersEventBuilder) {
-    mySavedChanges?.forEach { hint ->
+  private fun applyChanges(changes: Iterable<NotebookIntervalPointerFactory.Change>, eventBuilder: NotebookIntervalPointersEventBuilder) {
+    for(hint in changes) {
       when (hint) {
-        is NotebookIntervalPointerFactory.Invalidate -> applySavedChange(eventBuilder, hint)
-        is NotebookIntervalPointerFactory.Reuse -> applySavedChange(eventBuilder, hint)
+        is NotebookIntervalPointerFactory.Invalidate -> applyChange(eventBuilder, hint)
+        is NotebookIntervalPointerFactory.Swap -> applyChange(eventBuilder, hint)
       }
     }
-    mySavedChanges = null
   }
 
-  private fun applySavedChange(eventBuilder: NotebookIntervalPointersEventBuilder,
-                               hint: NotebookIntervalPointerFactory.Invalidate) {
+  private fun applyChange(eventBuilder: NotebookIntervalPointersEventBuilder,
+                          hint: NotebookIntervalPointerFactory.Invalidate) {
     val ptr = hint.ptr as NotebookIntervalPointerImpl
     val interval = ptr.interval
     if (interval == null) return
@@ -114,21 +125,32 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
     eventBuilder.onInserted(interval)
   }
 
-  private fun applySavedChange(eventBuilder: NotebookIntervalPointersEventBuilder,
-                               hint: NotebookIntervalPointerFactory.Reuse) {
-    val oldPtr = hint.ptr as NotebookIntervalPointerImpl
-    val newPtr = pointers.getOrNull(hint.ordinalAfterChange) ?: return
+  private fun applyChange(eventBuilder: NotebookIntervalPointersEventBuilder,
+                          hint: NotebookIntervalPointerFactory.Swap) {
+    val success = trySwapPointers(eventBuilder, hint)
+  }
 
-    if (oldPtr === newPtr) return // nothing to do
+  private fun trySwapPointers(eventBuilder: NotebookIntervalPointersEventBuilder,
+                              hint: NotebookIntervalPointerFactory.Swap): Boolean {
+    val firstPtr = pointers.getOrNull(hint.firstOrdinal)
+    val secondPtr = pointers.getOrNull(hint.secondOrdinal)
 
-    val oldOrdinal = oldPtr.interval?.ordinal
-    invalidate(oldPtr)
-    oldPtr.interval = newPtr.interval
-    newPtr.interval = null
-    pointers[hint.ordinalAfterChange] = oldPtr
-    if (oldOrdinal != null && oldOrdinal != hint.ordinalAfterChange) {
-      eventBuilder.onMoved(oldOrdinal, hint.ordinalAfterChange)
+    if (firstPtr == null || secondPtr == null) {
+      thisLogger().error("cannot swap invalid NotebookIntervalPointers: ${hint.firstOrdinal} and ${hint.secondOrdinal}")
+      return false
     }
+
+    if (hint.firstOrdinal == hint.secondOrdinal) return false // nothing to do
+
+    val interval = firstPtr.interval!!
+    firstPtr.interval = secondPtr.interval
+    secondPtr.interval = interval
+
+    pointers[hint.firstOrdinal] = secondPtr
+    pointers[hint.secondOrdinal] = firstPtr
+
+    eventBuilder.onSwapped(hint.firstOrdinal, hint.secondOrdinal)
+    return true
   }
 
   private fun invalidate(ptr: NotebookIntervalPointerImpl) {
@@ -145,18 +167,13 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
   }
 }
 
-private class NotebookIntervalPointersEventBuilder {
-  val accumulatedChanges = mutableListOf<Change>()
+@JvmInline
+private value class NotebookIntervalPointersEventBuilder(val accumulatedChanges: MutableList<Change> = mutableListOf<Change>()) {
 
-  fun applyEvent(eventDispatcher: EventDispatcher<NotebookIntervalPointerFactory.ChangeListener>) {
-    for (change in accumulatedChanges) {
-      when (change) {
-        is OnInserted -> eventDispatcher.multicaster.onInserted(change.ordinal)
-        is OnEdited -> eventDispatcher.multicaster.onEdited(change.ordinal)
-        is OnRemoved -> eventDispatcher.multicaster.onRemoved(change.ordinal)
-        is OnMoved -> eventDispatcher.multicaster.onMoved(change.fromOrdinal, change.toOrdinal)
-      }
-    }
+  fun applyEvent(eventDispatcher: EventDispatcher<NotebookIntervalPointerFactory.ChangeListener>,
+                 cellLinesEvent: NotebookCellLinesEvent?) {
+    val event = NotebookIntervalPointersEvent(accumulatedChanges, cellLinesEvent)
+    eventDispatcher.multicaster.onUpdated(event)
   }
 
   fun onEdited(interval: NotebookCellLines.Interval) {
@@ -177,26 +194,26 @@ private class NotebookIntervalPointersEventBuilder {
   }
 
   fun onRemoved(interval: NotebookCellLines.Interval) {
-    accumulatedChanges.add(OnRemoved(interval.ordinal))
+    accumulatedChanges.add(OnRemoved(interval.ordinal..interval.ordinal))
   }
 
-  fun onInserted(interval: NotebookCellLines.Interval) {
-    accumulatedChanges.add(OnInserted(interval.ordinal))
-  }
-
-  fun onInserted(intervals: List<NotebookCellLines.Interval>) {
-    for (interval in intervals) {
-      onInserted(interval)
+  fun onRemoved(sequentialIntervals: List<NotebookCellLines.Interval>) {
+    if (sequentialIntervals.isNotEmpty()) {
+      accumulatedChanges.add(OnRemoved(sequentialIntervals.first().ordinal..sequentialIntervals.last().ordinal))
     }
   }
 
-  fun onMoved(fromOrdinal: Int, toOrdinal: Int) {
-    accumulatedChanges.add(OnMoved(fromOrdinal, toOrdinal))
+  fun onInserted(interval: NotebookCellLines.Interval) {
+    accumulatedChanges.add(OnInserted(interval.ordinal..interval.ordinal))
   }
 
-  sealed interface Change
-  data class OnInserted(val ordinal: Int) : Change
-  data class OnEdited(val ordinal: Int) : Change
-  data class OnRemoved(val ordinal: Int) : Change
-  data class OnMoved(val fromOrdinal: Int, val toOrdinal: Int) : Change
+  fun onInserted(sequentialIntervals: List<NotebookCellLines.Interval>) {
+    if (sequentialIntervals.isNotEmpty()) {
+      accumulatedChanges.add(OnInserted(sequentialIntervals.first().ordinal..sequentialIntervals.last().ordinal))
+    }
+  }
+
+  fun onSwapped(fromOrdinal: Int, toOrdinal: Int) {
+    accumulatedChanges.add(OnSwapped(fromOrdinal, toOrdinal))
+  }
 }

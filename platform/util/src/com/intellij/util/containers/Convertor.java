@@ -38,4 +38,9 @@ public interface Convertor<Src, Dst> {
     //noinspection unchecked
     return SELF;
   }
+
+  default @NotNull java.util.function.Function<Src,Dst> asFunction() {
+    return this::convert;
+  }
+
 }

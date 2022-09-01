@@ -4,6 +4,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.diagnostic.telemetry.createTask
+import com.intellij.diagnostic.telemetry.use
 import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.util.JavaModuleOptions
 import com.intellij.util.lang.CompoundRuntimeException
@@ -12,6 +13,13 @@ import com.intellij.util.xml.dom.readXmlAsModel
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.StatusCode
+import io.opentelemetry.context.Context
+import io.opentelemetry.extension.kotlin.asContextElement
+import io.opentelemetry.semconv.trace.attributes.SemanticAttributes
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildScriptsLoggedError
 import org.jetbrains.intellij.build.CompilationContext
@@ -50,6 +58,33 @@ inline fun createSkippableTask(spanBuilder: SpanBuilder,
   }
   else {
     return createTask(spanBuilder) { task() }
+  }
+}
+
+inline fun CoroutineScope.createSkippableJob(spanBuilder: SpanBuilder,
+                                             taskId: String,
+                                             context: BuildContext,
+                                             crossinline task: suspend () -> Unit): Job? {
+  if (context.options.buildStepsToSkip.contains(taskId)) {
+    val span = spanBuilder.startSpan()
+    span.addEvent("skip")
+    span.end()
+    return null
+  }
+
+  val traceContext = Context.current()
+  return launch {
+    val thread = Thread.currentThread()
+    val span = spanBuilder
+      .setParent(traceContext)
+      .setAttribute(SemanticAttributes.THREAD_NAME, thread.name)
+      .setAttribute(SemanticAttributes.THREAD_ID, thread.id)
+      .startSpan()
+    withContext(traceContext.with(span).asContextElement()) {
+      span.use {
+        task()
+      }
+    }
   }
 }
 
@@ -197,7 +232,7 @@ private fun readPluginId(pluginJar: Path): String? {
   }
 
   try {
-    FileSystems.newFileSystem(pluginJar, null as ClassLoader).use {
+    FileSystems.newFileSystem(pluginJar, null as ClassLoader?).use {
       return readXmlAsModel(Files.newInputStream(it.getPath("META-INF/plugin.xml"))).getChild("id")?.content
     }
   }

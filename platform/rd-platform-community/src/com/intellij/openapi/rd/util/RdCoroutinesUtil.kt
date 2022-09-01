@@ -43,6 +43,11 @@ fun <T> Lifetime.startOnUiAsync(
   action: suspend CoroutineScope.() -> T
 ): Deferred<T> = startAsync(uiDispatcher, start, action)
 
+fun <T> Lifetime.startOnUiAnyModalityAsync(
+  start: CoroutineStart = CoroutineStart.DEFAULT,
+  action: suspend CoroutineScope.() -> T
+): Deferred<T> = startAsync(uiDispatcherAnyModality, start, action)
+
 fun <T> Lifetime.startIOBackgroundAsync(
   start: CoroutineStart = CoroutineStart.DEFAULT,
   action: suspend CoroutineScope.() -> T

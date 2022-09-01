@@ -7550,6 +7550,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertReferenceToLambda/companionNoImport.kt");
         }
 
+        @TestMetadata("companionNoImport2.kt")
+        public void testCompanionNoImport2() throws Exception {
+            runTest("testData/intentions/convertReferenceToLambda/companionNoImport2.kt");
+        }
+
         @TestMetadata("constructor.kt")
         public void testConstructor() throws Exception {
             runTest("testData/intentions/convertReferenceToLambda/constructor.kt");

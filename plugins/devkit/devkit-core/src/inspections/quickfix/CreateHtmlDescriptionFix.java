@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
@@ -23,6 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -173,7 +174,7 @@ public class CreateHtmlDescriptionFix implements LocalQuickFix, Iconable {
 
   private boolean containsDescriptionDir(VirtualFile root) {
     if (!root.isDirectory()) return false;
-    return Arrays.stream(root.getChildren()).anyMatch(file -> file.isDirectory() && getDescriptionFolderName().equals(file.getName()));
+    return ContainerUtil.exists(root.getChildren(), file -> file.isDirectory() && getDescriptionFolderName().equals(file.getName()));
   }
 
   private String getDescriptionFolderName() {

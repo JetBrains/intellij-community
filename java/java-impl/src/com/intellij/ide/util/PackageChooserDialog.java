@@ -118,7 +118,7 @@ public class PackageChooserDialog extends PackageChooser {
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     scrollPane.setPreferredSize(JBUI.size(500, 300));
 
-    new TreeSpeedSearch(myTree, path -> {
+    new TreeSpeedSearch(myTree, false, path -> {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       Object object = node.getUserObject();
       if (object instanceof PsiPackage) return ((PsiPackage)object).getName();

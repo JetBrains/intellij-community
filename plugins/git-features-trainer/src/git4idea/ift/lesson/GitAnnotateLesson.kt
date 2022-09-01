@@ -411,8 +411,6 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
     }
   }
 
-  override val suitableTips = listOf("AnnotationsAndDiffs")
-
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(GitLessonsBundle.message("git.annotate.help.link"),
          LessonUtil.getHelpLink("investigate-changes.html#annotate_blame")),

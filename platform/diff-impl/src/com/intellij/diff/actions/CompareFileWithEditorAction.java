@@ -7,13 +7,13 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.Side;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.fileEditor.impl.EditorComposite;
-import com.intellij.openapi.fileEditor.impl.EditorWindow;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,6 +40,11 @@ public class CompareFileWithEditorAction extends BaseShowDiffAction {
     return true;
   }
 
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
+  }
+
   private static @Nullable VirtualFile getSelectedFile(@NotNull AnActionEvent e) {
     VirtualFile[] array = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (array == null || array.length != 1 || array[0].isDirectory()) {
@@ -50,13 +55,8 @@ public class CompareFileWithEditorAction extends BaseShowDiffAction {
   }
 
   private static @Nullable VirtualFile getEditingFile(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
-    if (project == null) return null;
-
-    EditorWindow window = FileEditorManagerEx.getInstanceEx(project).getCurrentWindow();
-    if (window == null) return null;
-    EditorComposite composite = window.getSelectedComposite(true);
-    return composite == null ? null : composite.getFile();
+    FileEditor fileEditor = e.getData(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR);
+    return fileEditor != null ? fileEditor.getFile() : null;
   }
 
   private static boolean canCompare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {

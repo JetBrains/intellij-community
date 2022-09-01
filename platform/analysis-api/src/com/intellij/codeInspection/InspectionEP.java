@@ -49,6 +49,14 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   @Attribute("shortName")
   public String shortName;
 
+  /**
+   * Shows that the inspection is only applicable in certain project types, e.g. Android.
+   *
+   * @see com.intellij.openapi.project.ProjectTypeService
+   */
+  @Attribute("projectType")
+  public String projectType;
+
   @NonNls
   public @NotNull String getShortName() {
     if (implementationClass == null) {

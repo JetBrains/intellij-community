@@ -28,10 +28,10 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RuleChain
 import com.intellij.util.io.systemIndependentPath
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
-import com.intellij.workspaceModel.storage.EntityStorageSnapshot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
+import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.AfterEachCallback
+import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.rules.ExternalResource
@@ -188,6 +188,17 @@ open class ProjectModelRule : TestRule {
     FacetUtil.deleteFacet(facet)
   }
 
+  protected fun setUp(methodName: String) {
+    baseProjectDir.before(methodName)
+    projectResource.before()
+  }
+
+  protected fun tearDown() {
+    baseProjectDir.after()
+    projectResource.after()
+    disposableRule.after()
+  }
+
   val sdkType: SdkTypeId
     get() = SimpleJavaSdkType.getInstance()
 
@@ -203,13 +214,20 @@ open class ProjectModelRule : TestRule {
 
 class ProjectModelExtension : ProjectModelRule(), BeforeEachCallback, AfterEachCallback {
   override fun beforeEach(context: ExtensionContext) {
-    baseProjectDir.before(context.displayName)
-    projectResource.before()
+    setUp(context.displayName)
   }
 
   override fun afterEach(context: ExtensionContext) {
-    baseProjectDir.after()
-    projectResource.after()
-    disposableRule.after()
+    tearDown()
+  }
+}
+
+class ClassLevelProjectModelExtension : ProjectModelRule(), BeforeAllCallback, AfterAllCallback {
+  override fun beforeAll(context: ExtensionContext) {
+    setUp(context.displayName)
+  }
+
+  override fun afterAll(context: ExtensionContext) {
+    tearDown()
   }
 }

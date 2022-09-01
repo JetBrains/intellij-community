@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
-import gnu.trove.TIntObjectHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -61,7 +60,7 @@ public final class BuildResult implements MessageHandler {
     for (BuildTarget<?> target : targets) {
       id2Target.put(pd.dataManager.getTargetsState().getBuildTargetId(target), target);
     }
-    TIntObjectHashMap<String> hashCodeToOutputPath = new TIntObjectHashMap<>();
+    Int2ObjectMap<String> hashCodeToOutputPath = new Int2ObjectOpenHashMap<>();
     for (BuildTarget<?> target : targets) {
       stream.println("Begin Of SourceToOutput (target " + getTargetIdWithTypeId(target) + ")");
       SourceToOutputMapping map = pd.dataManager.getSourceToOutputMap(target);

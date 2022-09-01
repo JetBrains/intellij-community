@@ -532,8 +532,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 //
 // Now we should highlight the line before the curly brace, since we are still inside the `also` inline lambda.
 private fun decorateSourcePosition(location: Location, sourcePosition: SourcePosition): SourcePosition {
-    val lambda = sourcePosition.elementAt.parent
-    if (lambda !is KtFunctionLiteral) return sourcePosition
+    val lambda = sourcePosition.elementAt?.parent as? KtFunctionLiteral ?: return sourcePosition
     val lines = lambda.getLineRange() ?: return sourcePosition
     if (!location.hasVisibleInlineLambdasOnLines(lines)) {
         return KotlinSourcePositionWithEntireLineHighlighted(sourcePosition)

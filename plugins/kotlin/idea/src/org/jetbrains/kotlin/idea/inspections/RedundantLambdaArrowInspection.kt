@@ -35,7 +35,7 @@ class RedundantLambdaArrowInspection : AbstractKotlinInspection() {
             val parameters = functionLiteral.valueParameters
             val singleParameter = parameters.singleOrNull()
             if (singleParameter?.typeReference != null) return
-            if (parameters.isNotEmpty() && singleParameter?.isSingleUnderscore != true && singleParameter?.name != "it") {
+            if (parameters.isNotEmpty() && singleParameter?.name != "it") {
                 return
             }
 

@@ -27,10 +27,10 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DeleteCatchSectionFix;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public class CaughtExceptionImmediatelyRethrownInspection extends BaseInspection {
@@ -120,7 +120,7 @@ public class CaughtExceptionImmediatelyRethrownInspection extends BaseInspection
         index++;
       }
       final PsiType type = parameter.getType();
-      final Set<PsiClass> parameterClasses = new THashSet<>();
+      final Set<PsiClass> parameterClasses = new HashSet<>();
       processExceptionClasses(type, aClass -> {
         parameterClasses.add(aClass);
         return true;

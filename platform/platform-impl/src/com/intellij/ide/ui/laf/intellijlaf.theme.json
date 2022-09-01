@@ -182,7 +182,10 @@
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI"
     },
 
-    "ComboBoxButton.background": "contentBackground",
+    "ComboBoxButton": {
+      "background": "contentBackground",
+      "UI": "com.intellij.ide.ui.laf.darcula.ui.ComboBoxButtonUI"
+    },
 
     "CompletionPopup": {
       "foreground": "foreground",

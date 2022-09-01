@@ -28,6 +28,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.ToIntFunction;
 
@@ -56,9 +57,11 @@ public class TestCaseLoader {
 
 
   private static final AtomicInteger CYCLIC_BUCKET_COUNTER = new AtomicInteger(0);
-  private static final HashMap<String, Integer> BUCKETS = new HashMap<>();
+  private static final ConcurrentHashMap<String, Integer> BUCKETS = new ConcurrentHashMap<>();
 
-  /** Split tests into buckets equally across all the buckets */
+  /**
+   * Split tests into buckets equally across all the buckets
+   */
   private static final boolean IS_FAIR_BUCKETING = "true".equals(System.getProperty(FAIR_BUCKETING_FLAG));
 
   /**
@@ -193,18 +196,38 @@ public class TestCaseLoader {
       return MathUtil.nonNegativeAbs(testIdentifier.hashCode()) % TEST_RUNNERS_COUNT == TEST_RUNNER_INDEX;
     }
 
+    return matchesCurrentBucketFair(testIdentifier, TEST_RUNNERS_COUNT, TEST_RUNNER_INDEX);
+  }
+
+  public static boolean matchesCurrentBucketFair(@NotNull String testIdentifier,
+                                                 int testRunnerCount,
+                                                 int testRunnerIndex) {
+    // TODO: if (BUCKETS.isEmpty()) sort filtered test classes and populate buckets
+
     var value = BUCKETS.get(testIdentifier);
 
     if (value != null) {
-      return value == TEST_RUNNER_INDEX;
+      var isMatchedBucket = value == testRunnerIndex;
+
+      System.out.printf(
+        "Fair bucket matching: test identifier `%s`, runner count %s, runner index %s, is matching bucket %s" + System.lineSeparator(),
+        testIdentifier, testRunnerCount, testRunnerIndex, isMatchedBucket);
+
+      return isMatchedBucket;
     }
     else {
       BUCKETS.put(testIdentifier, CYCLIC_BUCKET_COUNTER.getAndIncrement());
     }
 
-    if (CYCLIC_BUCKET_COUNTER.get() == TEST_RUNNERS_COUNT) CYCLIC_BUCKET_COUNTER.set(0);
+    if (CYCLIC_BUCKET_COUNTER.get() == testRunnerCount) CYCLIC_BUCKET_COUNTER.set(0);
 
-    return BUCKETS.get(testIdentifier) == TEST_RUNNER_INDEX;
+    var isMatchedBucket = BUCKETS.get(testIdentifier) == testRunnerIndex;
+
+    System.out.printf(
+      "Fair bucket matching: test identifier `%s`, runner count %s, runner index %s, is matching bucket %s" + System.lineSeparator(),
+      testIdentifier, testRunnerCount, testRunnerIndex, isMatchedBucket);
+
+    return isMatchedBucket;
   }
 
   /**
@@ -378,9 +401,7 @@ public class TestCaseLoader {
   }
 
   public static boolean shouldIncludePerformanceTestCase(String className) {
-    if (isIncludingPerformanceTestsRun()) return true;
-    boolean isPerformanceTest = isPerformanceTest(null, className);
-    return isPerformanceTestsRun() == isPerformanceTest;
+    return isIncludingPerformanceTestsRun() || isPerformanceTestsRun() || !isPerformanceTest(null, className);
   }
 
   static boolean isPerformanceTest(String methodName, String className) {
@@ -398,9 +419,10 @@ public class TestCaseLoader {
     if (ourFilter == null) {
       ourFilter = calcTestClassFilter("tests/testGroups.properties");
     }
-    return shouldIncludePerformanceTestCase(className) &&
-           matchesCurrentBucket(className) &&
-           ourFilter.matches(className);
+    return (isIncludingPerformanceTestsRun() || isPerformanceTestsRun() == isPerformanceTest(null, className)) &&
+           // no need to calculate bucket matching (especially that may break fair bucketing), if test will not pass the filter
+           ourFilter.matches(className) &&
+           matchesCurrentBucket(className);
   }
 
   public void fillTestCases(String rootPackage, List<Path> classesRoots) {

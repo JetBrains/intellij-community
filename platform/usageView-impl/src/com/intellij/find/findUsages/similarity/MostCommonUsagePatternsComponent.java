@@ -60,10 +60,10 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
 
   public MostCommonUsagePatternsComponent(@NotNull UsageViewImpl usageView, @NotNull ClusteringSearchSession session) {
     super(true);
-    SimilarUsagesCollector.logMoreSimilarUsagePatternsShow(session.hashCode());
     mySession = session;
     myUsageView = usageView;
     myProject = usageView.getProject();
+    SimilarUsagesCollector.logMoreSimilarUsagePatternsShow(myProject, session);
     mySortedClusters = new Ref<>();
     mySelectedUsages = myUsageView.getSelectedUsages();
     myMainPanel = new JBPanelWithEmptyText();
@@ -74,7 +74,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
       new RefreshAction(IdeBundle.messagePointer("action.refresh"), IdeBundle.messagePointer("action.refresh"), AllIcons.Actions.Refresh) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          SimilarUsagesCollector.logMostCommonUsagePatternsRefreshClicked(mySession.hashCode());
+          SimilarUsagesCollector.logMostCommonUsagePatternsRefreshClicked(myProject, mySession);
           mySortedClusters.set(null);
           myMainPanel.removeAll();
           myMainPanel.revalidate();
@@ -109,15 +109,23 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     JScrollPane lazyLoadingScrollPane = ScrollPaneFactory.createScrollPane(myMainPanel, true);
     lazyLoadingScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
     BoundedRangeModelThresholdListener.install(lazyLoadingScrollPane.getVerticalScrollBar(), () -> {
-      if (!mySortedClusters.isNull()) {
-        SimilarUsagesCollector.logMoreClustersLoaded(mySession.hashCode());
-        mySortedClusters.get().stream().skip(myAlreadyRenderedSnippets).limit(CLUSTER_LIMIT).forEach(cluster -> {
-          renderClusterDescription(cluster.getUsages());
-        });
-      }
+      loadMoreClusters();
       return Unit.INSTANCE;
     });
     return lazyLoadingScrollPane;
+  }
+
+  private void loadMoreClusters() {
+    if (!mySortedClusters.isNull()) {
+      Collection<UsageCluster> sortedClusters = mySortedClusters.get();
+      if (myAlreadyRenderedSnippets < sortedClusters.size()) {
+        int renderedBefore = myAlreadyRenderedSnippets;
+        sortedClusters.stream().skip(myAlreadyRenderedSnippets).limit(CLUSTER_LIMIT).forEach(cluster -> {
+          renderClusterDescription(cluster.getUsages());
+        });
+        SimilarUsagesCollector.logMoreClustersLoaded(myProject, mySession, myAlreadyRenderedSnippets - renderedBefore);
+      }
+    }
   }
 
   private void addInternalClusteringSessionActions(@NotNull UsageViewImpl usageView) {
@@ -133,7 +141,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
   private @NotNull ActionLink createOpenSimilarUsagesActionLink(@NotNull UsageInfo info, @NotNull Set<SimilarUsage> usagesToRender) {
     final ActionLink actionLink =
       new ActionLink(UsageViewBundle.message("similar.usages.show.0.similar.usages.title", usagesToRender.size() - 1), e -> {
-        SimilarUsagesCollector.logShowSimilarUsagesLinkClicked(mySession.hashCode());
+        SimilarUsagesCollector.logShowSimilarUsagesLinkClicked(myProject, mySession);
         final SimilarUsagesComponent similarComponent = new SimilarUsagesComponent(mySession, info, this);
         removeAll();
         setToolbar(new SimilarUsagesToolbar(similarComponent, UsageViewBundle.message("0.similar.usages", usagesToRender.size() - 1),
@@ -170,7 +178,7 @@ public class MostCommonUsagePatternsComponent extends SimpleToolWindowPanel impl
     });
   }
 
-  private void renderClusterDescription(@NotNull Collection<SimilarUsage> clusterUsages) {
+  private void renderClusterDescription(@NotNull Collection<@NotNull SimilarUsage> clusterUsages) {
     final Set<SimilarUsage> usagesFilteredByGroup = new HashSet<>(clusterUsages);
     SimilarUsage usage = ContainerUtil.getFirstItem(usagesFilteredByGroup);
     if (usage instanceof UsageInfo2UsageAdapter) {

@@ -37,16 +37,13 @@ internal abstract class MoveDiffPreviewAction(private val openInNewWindow: Boole
 }
 
 private fun AnActionEvent.findDiffPreviewFile(): VirtualFile? {
-  val file = JBIterable.from(getData(VIRTUAL_FILES)).single()
-  if (file == null) return null
-
-  if (file is DiffContentVirtualFile) return file
-
-  // in case if Find Action executed, the first selected (focused) file will be a possible candidate
-  val selectedFile = getData(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR)?.file
-  if (selectedFile is DiffContentVirtualFile) return selectedFile
-
-  return null
+  return JBIterable.empty<VirtualFile>()
+    .append(JBIterable.from(getData(VIRTUAL_FILES)).single())
+    .append(getData(PlatformDataKeys.FILE_EDITOR)?.file)
+    // for 'Find Action' context, the first selected file will be a possible candidate
+    .append(getData(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR)?.file)
+    .filter { it is DiffContentVirtualFile }
+    .first()
 }
 
 internal class MoveDiffPreviewToEditorAction : MoveDiffPreviewAction(false) {

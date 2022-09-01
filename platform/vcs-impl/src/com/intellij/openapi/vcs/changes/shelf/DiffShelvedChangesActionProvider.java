@@ -45,6 +45,7 @@ import com.intellij.openapi.vcs.changes.patch.ApplyPatchForBaseRevisionTexts;
 import com.intellij.openapi.vcs.changes.patch.tool.PatchDiffRequest;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -86,6 +87,8 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
 
   public static void updateAvailability(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(isEnabled(e.getDataContext()));
+    boolean shouldBeHidden = ExperimentalUI.isNewUI() && e.isFromActionToolbar();
+    e.getPresentation().setVisible(!shouldBeHidden);
   }
 
   @Override

@@ -5,7 +5,9 @@ import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context
+import io.opentelemetry.extension.kotlin.asContextElement
 import io.opentelemetry.semconv.trace.attributes.SemanticAttributes
+import kotlinx.coroutines.withContext
 import java.util.concurrent.Callable
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ForkJoinTask
@@ -51,6 +53,15 @@ inline fun <T> SpanBuilder.useWithScope(operation: (Span) -> T): T {
   val span = startSpan()
   return span.makeCurrent().use {
     span.use(operation)
+  }
+}
+
+suspend inline fun <T> SpanBuilder.useWithScope2(crossinline operation: suspend (Span) -> T): T {
+  val span = startSpan()
+  return withContext(Context.current().with(span).asContextElement()) {
+    span.use {
+      operation(span)
+    }
   }
 }
 

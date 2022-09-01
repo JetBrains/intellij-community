@@ -86,9 +86,9 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   }
 
   public void doAction(@NotNull ActionHint actionHint,
-                              @NotNull String testFullPath,
-                              @NotNull String testName,
-                              @NotNull QuickFixTestCase quickFix) throws Exception {
+                       @NotNull String testFullPath,
+                       @NotNull String testName,
+                       @NotNull QuickFixTestCase quickFix) throws Exception {
     IntentionAction action = actionHint.findAndCheck(quickFix.getAvailableActions(),
                                                      () -> getTestInfo(testFullPath, quickFix));
     if (action != null) {
@@ -96,7 +96,8 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
       if (actionHint.shouldCheckPreview()) {
         String previewFilePath = ObjectUtils.notNull(quickFix.getBasePath(), "") + "/" + PREVIEW_PREFIX + testName;
         quickFix.checkPreviewAndInvoke(action, previewFilePath);
-      } else {
+      }
+      else {
         quickFix.invoke(action);
       }
       UIUtil.dispatchAllInvocationEvents();

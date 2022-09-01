@@ -19,6 +19,10 @@ class OverrideMembersHandler(private val preferConstructorParameters: Boolean = 
 
                 if (DescriptorUtils.isInterface(descriptor) && overridden.any { descriptor.builtIns.isMemberOfAny(it) }) continue
 
+                if ((descriptor.isValue || descriptor.isInline) &&
+                    overridden.any { descriptor.builtIns.isMemberOfAny(it) && it.name.asString() in listOf("equals", "hashCode") }
+                ) continue
+
                 class Data(
                     val realSuper: CallableMemberDescriptor,
                     val immediateSupers: MutableList<CallableMemberDescriptor> = SmartList()

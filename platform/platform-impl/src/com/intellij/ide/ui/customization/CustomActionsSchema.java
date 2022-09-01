@@ -298,8 +298,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     return element;
   }
 
-  @Nullable
-  public AnAction getCorrectedAction(String id) {
+  public @Nullable AnAction getCorrectedAction(String id) {
     if (!idToName.containsKey(id)) {
       return ActionManager.getInstance().getAction(id);
     }
@@ -319,8 +318,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     return null;
   }
 
-  @Nullable
-  public String getDisplayName(@NotNull String id) {
+  public @Nullable String getDisplayName(@NotNull String id) {
     return idToName.get(id);
   }
 
@@ -378,8 +376,7 @@ public final class CustomActionsSchema implements PersistentStateComponent<Eleme
     return true;
   }
 
-  @NotNull
-  public List<ActionUrl> getChildActions(ActionUrl url) {
+  public @NotNull List<ActionUrl> getChildActions(ActionUrl url) {
     ArrayList<ActionUrl> result = new ArrayList<>();
     ArrayList<String> groupPath = url.getGroupPath();
     for (ActionUrl actionUrl : actions) {

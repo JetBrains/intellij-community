@@ -22,6 +22,6 @@ public class RedundantStringOperationInspectionFixTest extends LightQuickFixPara
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_11;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_15;
   }
 }

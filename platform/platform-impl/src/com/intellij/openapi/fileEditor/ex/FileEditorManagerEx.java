@@ -4,10 +4,7 @@ package com.intellij.openapi.fileEditor.ex;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.EditorDataProvider;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorProvider;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.*;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.project.Project;
@@ -48,8 +45,6 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
   public abstract @Nullable JComponent getPreferredFocusedComponent();
 
   public abstract @NotNull Pair<FileEditor[], FileEditorProvider[]> getEditorsWithProviders(@NotNull VirtualFile file);
-
-  public abstract @Nullable EditorCompositeBase getComposite(@NotNull VirtualFile file);
 
   /** @deprecated use {@link FileEditor#getFile()} instead */
   @Deprecated(forRemoval = true)

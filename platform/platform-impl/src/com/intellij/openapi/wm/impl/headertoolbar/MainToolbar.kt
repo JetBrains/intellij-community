@@ -3,12 +3,19 @@ package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.ide.ui.laf.darcula.ui.MainToolbarComboBoxButtonUI
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ComboBoxAction
+import com.intellij.openapi.actionSystem.ex.ComboBoxAction.ComboBoxButton
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
@@ -20,6 +27,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.MainMe
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets
+import java.awt.Container
 import java.awt.Dimension
 import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
@@ -52,10 +60,13 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
       addWidget(it.button, HorizontalLayout.LEFT)
     }
 
-    createActionBar("MainToolbarLeft")?.let { addWidget(it, HorizontalLayout.LEFT) }
-    createActionBar("MainToolbarCenter")?.let { addWidget(it, HorizontalLayout.CENTER) }
-    createActionBar("RunToolbarWidgetCustomizableActionGroup")?.let { addWidget(it, HorizontalLayout.RIGHT) }
-    createActionBar(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_ACTIONS)?.let { addWidget(it, HorizontalLayout.RIGHT) }
+    ActionManagerEx.withLazyActionManager(project?.coroutineScope ?: ApplicationManager.getApplication()?.coroutineScope) {
+      val customActionSchema = CustomActionsSchema.getInstance()
+      createActionBar("MainToolbarLeft", customActionSchema)?.let { addWidget(it, HorizontalLayout.LEFT) }
+      createActionBar("MainToolbarCenter", customActionSchema)?.let { addWidget(it, HorizontalLayout.CENTER) }
+      createActionBar("RunToolbarWidgetCustomizableActionGroup", customActionSchema)?.let { addWidget(it, HorizontalLayout.RIGHT) }
+      createActionBar(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_ACTIONS, customActionSchema)?.let { addWidget(it, HorizontalLayout.RIGHT) }
+    }
     addComponentListener(ResizeListener())
   }
 
@@ -76,34 +87,21 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
     (widget as? Disposable)?.let { Disposer.register(disposable, it) }
   }
 
-  private fun createActionBar(groupId: String): JComponent? {
-    val group = CustomActionsSchema.getInstance().getCorrectedAction(groupId) as ActionGroup?
-    return group?.let {
-      val toolbar = createToolbar(it)
-      toolbar.setMinimumButtonSize(ActionToolbar.EXPERIMENTAL_TOOLBAR_MINIMUM_BUTTON_SIZE)
-      toolbar.targetComponent = null
-      toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
-      val comp = toolbar.component
-      comp.border = JBUI.Borders.empty()
-      comp.isOpaque = false
-      comp
-    }
+  private fun createActionBar(groupId: String, customActionSchema: CustomActionsSchema): JComponent? {
+    val group = customActionSchema.getCorrectedAction(groupId) as ActionGroup? ?: return null
+    val toolbar = createToolbar(group)
+    toolbar.setMinimumButtonSize(ActionToolbar.EXPERIMENTAL_TOOLBAR_MINIMUM_BUTTON_SIZE)
+    toolbar.targetComponent = null
+    toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
+    val component = toolbar.component
+    component.border = JBUI.Borders.empty()
+    component.isOpaque = false
+    return component
   }
 
+
   private fun createToolbar(group: ActionGroup): ActionToolbar =
-    object : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true) {
-
-      override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) = super.calculateBounds(size2Fit, bounds).apply {
-        bounds.forEach { fitRectangle(it) }
-      }
-
-      private fun fitRectangle(rect: Rectangle) {
-        val minSize = ActionToolbar.EXPERIMENTAL_TOOLBAR_MINIMUM_BUTTON_SIZE
-        rect.width = Integer.max(rect.width, minSize.width)
-        rect.height = Integer.max(rect.height, minSize.height)
-        rect.y = 0
-      }
-    }.apply {
+    MyActionToolbarImpl(group).apply {
       setActionButtonBorder(JBUI.Borders.empty(mainToolbarButtonInsets()))
       setCustomButtonLook(HeaderToolbarButtonLook())
     }
@@ -141,6 +139,39 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
         comp = visibleComponentsPool.nextToShow()
       }
     }
+  }
+}
+
+private class MyActionToolbarImpl(group: ActionGroup) : ActionToolbarImpl(ActionPlaces.MAIN_TOOLBAR, group, true) {
+
+  override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) = super.calculateBounds(size2Fit, bounds).apply {
+    bounds.forEach { fitRectangle(it) }
+  }
+
+  private fun fitRectangle(rect: Rectangle) {
+    val minSize = EXPERIMENTAL_TOOLBAR_MINIMUM_BUTTON_SIZE
+    rect.width = Integer.max(rect.width, minSize.width)
+    rect.height = Integer.max(rect.height, minSize.height)
+    rect.y = 0
+  }
+
+  override fun createCustomComponent(action: CustomComponentAction, presentation: Presentation): JComponent {
+    val component = super.createCustomComponent(action, presentation)
+    if (action is ComboBoxAction) {
+      findComboButton(component)?.setUI(MainToolbarComboBoxButtonUI())
+    }
+    return component
+  }
+
+  private fun findComboButton(c: Container): ComboBoxButton? {
+    if (c is ComboBoxButton) return c
+
+    for (child in c.components) {
+      if (child is ComboBoxButton) return child
+      val childCombo = (child as? Container)?.let { findComboButton(it) }
+      if (childCombo != null) return childCombo
+    }
+    return null
   }
 }
 

@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
  * It might be useful to address atomicity or memory concerns.
  */
 public class TextRangeScalarUtil {
-  public static long toScalarRange(@NotNull TextRange range) {
+  public static long toScalarRange(@NotNull Segment range) {
     return toScalarRange(range.getStartOffset(), range.getEndOffset());
   }
 
@@ -41,6 +41,9 @@ public class TextRangeScalarUtil {
 
   public static boolean containsRange(long outerRange, int innerRangeStartOffset, int innerRangeEndOffset) {
     return startOffset(outerRange) <= innerRangeStartOffset && innerRangeEndOffset <= endOffset(outerRange);
+  }
+  public static boolean containsOffset(long range, int offset) {
+    return startOffset(range) <= offset && offset <= endOffset(range);
   }
   public static boolean intersects(@NotNull TextRange thisRange, long otherRange) {
     return thisRange.intersects(startOffset(otherRange), endOffset(otherRange));

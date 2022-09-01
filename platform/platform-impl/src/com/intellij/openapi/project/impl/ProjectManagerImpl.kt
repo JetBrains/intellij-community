@@ -9,7 +9,7 @@ import com.intellij.conversion.CannotConvertException
 import com.intellij.conversion.ConversionResult
 import com.intellij.conversion.ConversionService
 import com.intellij.diagnostic.*
-import com.intellij.diagnostic.opentelemetry.TraceManager
+import com.intellij.diagnostic.telemetry.TraceManager
 import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.*
@@ -1214,10 +1214,10 @@ private suspend fun initProject(file: Path,
     coroutineScope {
       val isTrusted = async { !isTrustCheckNeeded || checkOldTrustedStateAndMigrate(project, file) }
 
-      preloadServicesAndCreateComponents(project, preloadServices)
       projectInitListeners {
-        it.containerConfigured(project)
+        it.execute(project)
       }
+      preloadServicesAndCreateComponents(project, preloadServices)
 
       if (!isTrusted.await()) {
         throw CancellationException("not trusted")
@@ -1252,27 +1252,25 @@ private suspend fun confirmOpenNewProject(options: OpenProjectTask): Int {
       IdeBundle.message("prompt.open.project.with.name.in.new.frame", options.projectName)
     }
 
-    mode = withContext(Dispatchers.EDT) {
-      if (options.isNewProject) {
-        val openInExistingFrame = MessageDialogBuilder.yesNo(IdeCoreBundle.message("title.new.project"), message)
+    val openInExistingFrame = withContext(Dispatchers.EDT) {
+      if (options.isNewProject)
+        MessageDialogBuilder.yesNoCancel(IdeUICustomization.getInstance().projectMessage("title.new.project"), message)
           .yesText(IdeBundle.message("button.existing.frame"))
           .noText(IdeBundle.message("button.new.frame"))
           .doNotAsk(ProjectNewWindowDoNotAskOption())
           .guessWindowAndAsk()
-        if (openInExistingFrame) GeneralSettings.OPEN_PROJECT_SAME_WINDOW else GeneralSettings.OPEN_PROJECT_NEW_WINDOW
-      }
-      else {
-        val exitCode = MessageDialogBuilder.yesNoCancel(IdeBundle.message("title.open.project"), message)
+      else
+        MessageDialogBuilder.yesNoCancel(IdeUICustomization.getInstance().projectMessage("title.open.project"), message)
           .yesText(IdeBundle.message("button.existing.frame"))
           .noText(IdeBundle.message("button.new.frame"))
           .doNotAsk(ProjectNewWindowDoNotAskOption())
           .guessWindowAndAsk()
-        when (exitCode) {
-          Messages.YES -> GeneralSettings.OPEN_PROJECT_SAME_WINDOW
-          Messages.NO -> GeneralSettings.OPEN_PROJECT_NEW_WINDOW
-          else -> Messages.CANCEL
-        }
-      }
+    }
+
+    mode = when (openInExistingFrame) {
+      Messages.YES -> GeneralSettings.OPEN_PROJECT_SAME_WINDOW
+      Messages.NO -> GeneralSettings.OPEN_PROJECT_NEW_WINDOW
+      else -> Messages.CANCEL
     }
     if (mode != Messages.CANCEL) {
       LifecycleUsageTriggerCollector.onProjectFrameSelected(mode)
@@ -1323,7 +1321,7 @@ interface ProjectServiceContainerInitializedListener {
   /**
    * Invoked after container configured.
    */
-  suspend fun containerConfigured(project: Project)
+  suspend fun execute(project: Project)
 }
 
 @TestOnly

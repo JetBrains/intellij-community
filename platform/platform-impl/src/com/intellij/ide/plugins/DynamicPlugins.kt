@@ -2,7 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.databind.type.TypeFactory
-import com.intellij.application.options.RegistryManager
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.configurationStore.jdomSerializer
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.configurationStore.saveProjectsAndApp
@@ -1043,15 +1043,10 @@ private fun optionalDependenciesOnPlugin(
 private fun loadModules(
   modules: Collection<IdeaPluginDescriptorImpl>,
   app: ApplicationImpl,
-  listenerCallbacks: MutableList<Runnable>,
+  listenerCallbacks: MutableList<in Runnable>,
 ) {
   fun registerComponents(componentManager: ComponentManager) {
-    (componentManager as ComponentManagerImpl).registerComponents(
-      modules = modules.toList(),
-      app = app,
-      precomputedExtensionModel = null,
-      listenerCallbacks = listenerCallbacks,
-    )
+    (componentManager as ComponentManagerImpl).registerComponents(modules.toList(), app, null, listenerCallbacks)
   }
 
   registerComponents(app)

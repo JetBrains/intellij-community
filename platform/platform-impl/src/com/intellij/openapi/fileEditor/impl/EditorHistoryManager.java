@@ -10,7 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileEditor.ex.EditorCompositeBase;
+import com.intellij.openapi.fileEditor.FileEditorComposite;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -102,7 +102,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
 
     FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(myProject);
 
-    @Nullable EditorCompositeBase editorComposite = editorManager.getComposite(file);
+    @Nullable FileEditorComposite editorComposite = editorManager.getComposite(file);
     FileEditor[] editors = editorComposite == null ? FileEditor.EMPTY_ARRAY : editorComposite.getAllEditors().toArray(FileEditor.EMPTY_ARRAY);
     FileEditorProvider[] oldProviders = editorComposite == null ? FileEditorProvider.EMPTY_ARRAY : editorComposite.getAllProviders().toArray(FileEditorProvider.EMPTY_ARRAY);
     LOG.assertTrue(editors.length == oldProviders.length, "Different number of editors and providers");
@@ -161,7 +161,7 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
     FileEditorProvider[] providers;
     boolean preview = false;
     if (fileEditor == null || fileEditorProvider == null) {
-      EditorCompositeBase composite = editorManager.getComposite(file);
+      FileEditorComposite composite = editorManager.getComposite(file);
       editors = composite == null ? FileEditor.EMPTY_ARRAY : composite.getAllEditors().toArray(FileEditor.EMPTY_ARRAY);
       providers = composite == null ? FileEditorProvider.EMPTY_ARRAY : composite.getAllProviders().toArray(FileEditorProvider.EMPTY_ARRAY);
       preview = composite != null && composite.isPreview();

@@ -660,9 +660,9 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
    * so that listeners can be called later.
    */
   final synchronized boolean unregisterExtensions(boolean stopAfterFirstMatch,
-                                                  @NotNull List<Runnable> priorityListenerCallbacks,
-                                                  @NotNull List<Runnable> listenerCallbacks,
-                                                  @NotNull Predicate<ExtensionComponentAdapter> extensionToKeepFilter) {
+                                                  @NotNull List<? super Runnable> priorityListenerCallbacks,
+                                                  @NotNull List<? super Runnable> listenerCallbacks,
+                                                  @NotNull Predicate<? super ExtensionComponentAdapter> extensionToKeepFilter) {
     ExtensionPointListener<T>[] listeners = this.listeners;
     List<ExtensionComponentAdapter> removedAdapters = null;
     List<ExtensionComponentAdapter> adapters = this.adapters;
@@ -719,8 +719,8 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
 
   abstract void unregisterExtensions(@NotNull ComponentManager componentManager,
                                      @NotNull PluginDescriptor pluginDescriptor,
-                                     @NotNull List<Runnable> priorityListenerCallbacks,
-                                     @NotNull List<Runnable> listenerCallbacks);
+                                     @NotNull List<? super Runnable> priorityListenerCallbacks,
+                                     @NotNull List<? super Runnable> listenerCallbacks);
 
   private void notifyListeners(boolean isRemoved,
                                @NotNull List<? extends ExtensionComponentAdapter> adapters,
@@ -911,7 +911,7 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
    */
   public final synchronized void registerExtensions(@NotNull List<ExtensionDescriptor> extensionElements,
                                                     @NotNull PluginDescriptor pluginDescriptor,
-                                                    @Nullable /* Mutable */ List<Runnable> listenerCallbacks) {
+                                                    @Nullable /* Mutable */ List<? super Runnable> listenerCallbacks) {
     List<ExtensionComponentAdapter> adapters = this.adapters;
     if (adapters == Collections.<ExtensionComponentAdapter>emptyList()) {
       adapters = new ArrayList<>(extensionElements.size());
@@ -954,7 +954,7 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
     }
 
     List<ExtensionComponentAdapter> finalAddedAdapters = addedAdapters;
-    listenerCallbacks.add(() -> notifyListeners(false, finalAddedAdapters, listeners));
+    listenerCallbacks.add((Runnable)() -> notifyListeners(false, finalAddedAdapters, listeners));
   }
 
   @TestOnly

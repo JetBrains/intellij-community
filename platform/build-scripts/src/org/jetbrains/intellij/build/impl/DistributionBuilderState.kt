@@ -13,7 +13,7 @@ import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.util.*
 
-class DistributionBuilderState(pluginsToPublish: Set<PluginLayout>, val context: BuildContext) {
+class DistributionBuilderState(pluginsToPublish: Set<PluginLayout>, private val context: BuildContext) {
   @JvmField
   val pluginsToPublish: Set<PluginLayout>
 

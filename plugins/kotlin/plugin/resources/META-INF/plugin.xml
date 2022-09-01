@@ -199,6 +199,8 @@ The plugin supports Kotlin 1.7 and lower.
     <plugin id="com.intellij.java"/>
   </dependencies>
 
+  <depends optional="true" config-file="performance-plugin.xml">com.jetbrains.performancePlugin</depends>
+
   <!-- IJ/AS-INCOMPATIBLE-PLACEHOLDER -->
 
   <xi:include href="k1.xml" includeUnless="idea.kotlin.plugin.use.k2"/>

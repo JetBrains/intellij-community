@@ -359,7 +359,7 @@ final class ActionUpdater {
           promise.setResult(result);
         }
         catch (Throwable e) {
-          promise.setError(e);
+          cancelPromise(promise, e);
         }
         return null;
       };
@@ -382,7 +382,7 @@ final class ActionUpdater {
       }
       catch (Throwable e) {
         if (!promise.isDone()) {
-          promise.setError(e);
+          cancelPromise(promise, e);
         }
       }
       finally {
@@ -709,7 +709,12 @@ final class ActionUpdater {
       String place = ourDebugPromisesMap.remove(promise);
       if (place == null && promise.isDone()) return;
       String message = "'" + place + "' update cancelled: " + reason;
-      LOG.debug(message, message.contains("fast-track") || message.contains("all updates") ? null : new ProcessCanceledException());
+      if (reason instanceof String && (message.contains("fast-track") || message.contains("all updates"))) {
+        LOG.debug(message);
+      }
+      else {
+        LOG.debug(message, reason instanceof Throwable ? (Throwable)reason : new ProcessCanceledException());
+      }
     }
     boolean nestedWA = reason instanceof String && ((String)reason).startsWith(NESTED_WA_REASON_PREFIX);
     if (nestedWA) {
@@ -718,7 +723,7 @@ final class ActionUpdater {
                                    "See CustomComponentAction.createCustomComponent javadoc, if caused by a custom component."));
     }
     if (!nestedWA && promise instanceof AsyncPromise) {
-      ((AsyncPromise<?>)promise).setError(new Utils.ProcessCanceledWithReasonException(reason));
+      ((AsyncPromise<?>)promise).setError(reason instanceof Throwable ? (Throwable)reason : new Utils.ProcessCanceledWithReasonException(reason));
     }
     else {
       promise.cancel();

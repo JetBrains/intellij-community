@@ -11,6 +11,6 @@
     ]]></description>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationInitializedListener implementation="com.intellij.uiTests.robot.RobotServerListener"/>
+    <httpRequestHandler implementation="com.intellij.uiTests.robot.RobotRestService"/>
   </extensions>
 </idea-plugin>

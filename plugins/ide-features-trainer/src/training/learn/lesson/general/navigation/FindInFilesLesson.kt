@@ -225,8 +225,6 @@ class FindInFilesLesson(override val sampleFilePath: String)
 
   override val testScriptProperties = TaskTestContext.TestScriptProperties(10)
 
-  override val suitableTips = listOf("FindReplaceToggle", "FindInPath")
-
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("find.in.files.help.link"),
          LessonUtil.getHelpLink("finding-and-replacing-text-in-project.html")),

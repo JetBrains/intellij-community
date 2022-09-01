@@ -678,7 +678,11 @@ public abstract class FileEditorManagerImpl extends FileEditorManagerEx implemen
 
   @Override
   public EditorWindow getCurrentWindow() {
-    if (!ApplicationManager.getApplication().isDispatchThread() || !ClientId.isCurrentlyUnderLocalId()) return null;
+    if (!ClientId.isCurrentlyUnderLocalId()) return null;
+    if (!ApplicationManager.getApplication().isDispatchThread()) {
+      LOG.warn("Requesting getCurrentWindow() on BGT, returning null", new Throwable());
+      return null;
+    }
     return getActiveSplittersSync().getCurrentWindow();
   }
 

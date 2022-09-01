@@ -25,7 +25,7 @@ public class GitBranchesComboBoxAction extends ComboBoxAction implements DumbAwa
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.EDT;
+    return ActionUpdateThread.BGT;
   }
 
   @Override
@@ -36,7 +36,7 @@ public class GitBranchesComboBoxAction extends ComboBoxAction implements DumbAwa
       presentation.setEnabledAndVisible(false);
       return;
     }
-    GitRepository repo = GitBranchUtil.guessWidgetRepository(project);
+    GitRepository repo = GitBranchUtil.guessWidgetRepository(project, e.getDataContext());
     if (repo == null) {
       presentation.setEnabledAndVisible(false);
       return;

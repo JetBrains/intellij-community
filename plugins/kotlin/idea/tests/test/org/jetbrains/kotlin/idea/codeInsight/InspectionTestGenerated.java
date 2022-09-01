@@ -460,10 +460,5 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         public void testDeprecatedCallableAddReplaceWith_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspectionsLocal/deprecatedCallableAddReplaceWith/inspectionData/inspections.test");
         }
-
-        @TestMetadata("simplifyNegatedBinaryExpression/inspectionData/inspections.test")
-        public void testSimplifyNegatedBinaryExpression_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspectionsLocal/simplifyNegatedBinaryExpression/inspectionData/inspections.test");
-        }
     }
 }

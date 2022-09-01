@@ -29,6 +29,8 @@ import com.intellij.openapi.editor.markup.UnmodifiableTextAttributes;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectType;
+import com.intellij.openapi.project.ProjectTypeService;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
@@ -443,8 +445,13 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
 
     List<LocalInspectionToolWrapper> enabled = new ArrayList<>();
+    Collection<ProjectType> projectTypes = ProjectTypeService.getProjectTypes(myProject);
+
     for (InspectionToolWrapper<?, ?> toolWrapper : toolWrappers) {
       ProgressManager.checkCanceled();
+
+      if (!toolWrapper.isApplicable(projectTypes)) continue;
+
       if (toolWrapper instanceof LocalInspectionToolWrapper && !isAcceptableLocalTool((LocalInspectionToolWrapper)toolWrapper)) {
         continue;
       }

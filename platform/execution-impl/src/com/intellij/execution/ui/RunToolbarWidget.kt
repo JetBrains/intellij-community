@@ -20,10 +20,11 @@ import com.intellij.ide.ui.customization.CustomizationUtil
 import com.intellij.ide.ui.customization.CustomizeActionGroupPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.ex.InlineActionsHolder
 import com.intellij.openapi.components.*
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
@@ -34,12 +35,11 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
-import com.intellij.ui.components.JBPanel
-import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.popup.PopupState
 import com.intellij.ui.popup.list.ListPopupImpl
@@ -87,28 +87,6 @@ internal class RunToolbarWidgetCustomizableActionGroupProvider : CustomizableAct
   }
 }
 
-internal class RunToolbarWidget(val project: Project) : JBPanel<RunToolbarWidget>(VerticalLayout(0)) {
-  init {
-    isOpaque = false
-    add(createRunActionToolbar().component.apply {
-      isOpaque = false
-    }, VerticalLayout.CENTER)
-  }
-
-  private fun createRunActionToolbar(): ActionToolbar {
-  val actionGroup = CustomActionsSchema.getInstance().getCorrectedAction(RUN_TOOLBAR_WIDGET_GROUP) as ActionGroup
-  return ActionManager.getInstance().createActionToolbar(
-    ActionPlaces.MAIN_TOOLBAR,
-    actionGroup,
-    true
-  ).apply {
-    targetComponent = null
-    setReservePlaceAutoPopupIcon(false)
-    layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
-  }
-}
-}
-
 internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), CustomComponentAction, DumbAware {
   private val spinningIcon = SpinningProgressIcon()
 
@@ -127,6 +105,11 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
   }
 
   override fun update(e: AnActionEvent) {
+    if (Registry.`is`("ide.experimental.ui.redesigned.run.widget")) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+
     val project = e.project
     val runManager = project?.serviceIfCreated<RunManager>()
     if (runManager == null) {
@@ -185,7 +168,7 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
       addActionListener {
         val anActionEvent = AnActionEvent.createFromDataContext(place, presentation, DataManager.getInstance().getDataContext(this))
         if (it.modifiers and ActionEvent.SHIFT_MASK != 0) {
-          ActionManager.getInstance().getAction("editRunConfigurations").actionPerformed(anActionEvent)
+          ActionUtil.performActionDumbAwareWithCallbacks(ActionManager.getInstance().getAction("editRunConfigurations"), anActionEvent)
         }
         else if (it.modifiers  and ActionEvent.ALT_MASK != 0) {
           CustomizeActionGroupPanel.showDialog(RUN_TOOLBAR_WIDGET_GROUP, listOf(IdeActions.GROUP_NAVBAR_TOOLBAR), ExecutionBundle.message("run.toolbar.widget.customizable.group.dialog.title"))
@@ -195,7 +178,7 @@ internal class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), Custo
             }
         }
         else {
-          actionPerformed(anActionEvent)
+          ActionUtil.performActionDumbAwareWithCallbacks(this@RunWithDropDownAction, anActionEvent)
         }
       }
     }.let { Wrapper(it).apply { border = JBUI.Borders.empty(7,6) } }
@@ -323,7 +306,9 @@ class StopWithDropDownAction : AnAction(), CustomComponentAction, DumbAware {
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     return RunDropDownButton(icon = AllIcons.Actions.Suspend).apply {
       addActionListener {
-        actionPerformed(AnActionEvent.createFromDataContext(place, presentation, DataManager.getInstance().getDataContext(this)))
+        ActionUtil.performActionDumbAwareWithCallbacks(
+          this@StopWithDropDownAction, AnActionEvent.createFromDataContext(
+          place, presentation, DataManager.getInstance().getDataContext(this)))
       }
       isPaintEnable = false
       isCombined = true
@@ -839,7 +824,7 @@ private class ExecutionReasonableHistoryManager : StartupActivity.DumbAware {
           runManager.selectedConfiguration = conf
         }
         ActivityTracker.getInstance().inc()
-      } ?: logger<RunToolbarWidget>().warn(
+      } ?: thisLogger().warn(
         "Cannot find persisted configuration of '${env.runnerAndConfigurationSettings}'." +
         "It won't be saved in the run history."
       )

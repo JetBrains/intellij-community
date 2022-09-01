@@ -30,19 +30,30 @@ interface NotebookIntervalPointerFactory {
     modifyingPointers(listOf(Invalidate(create(cell)))) {}
   }
 
-  fun moveCells(newPositions: List<Pair<NotebookCellLines.Interval, Int>>) {
-    modifyingPointers(newPositions.map { (interval, newOrdinal) -> Reuse(create(interval), newOrdinal) }) {}
+  fun swapCells(swapped: List<Swap>) {
+    modifyingPointers(swapped) {}
   }
 
   interface ChangeListener : EventListener {
-    fun onInserted(ordinal: Int)
+    fun onUpdated(event: NotebookIntervalPointersEvent) {
+      for(change in event.changes) {
+        when (change) {
+          is NotebookIntervalPointersEvent.OnEdited -> onEdited(change.ordinal)
+          is NotebookIntervalPointersEvent.OnInserted -> onInserted(change.ordinals)
+          is NotebookIntervalPointersEvent.OnRemoved -> onRemoved(change.ordinals)
+          is NotebookIntervalPointersEvent.OnSwapped -> onSwapped(change.firstOrdinal, change.secondOrdinal)
+        }
+      }
+    }
+
+    fun onInserted(ordinals: IntRange)
 
     fun onEdited(ordinal: Int)
 
-    fun onRemoved(ordinal: Int)
+    fun onRemoved(ordinals: IntRange)
 
-    /** [fromOrdinal] and [toOrdinal] are never equal */
-    fun onMoved(fromOrdinal: Int, toOrdinal: Int)
+    /** [firstOrdinal] and [secondOrdinal] are never equal */
+    fun onSwapped(firstOrdinal: Int, secondOrdinal: Int)
   }
 
   val changeListeners: EventDispatcher<ChangeListener>
@@ -66,8 +77,8 @@ interface NotebookIntervalPointerFactory {
   /** invalidate pointer, create new pointer for interval if necessary */
   data class Invalidate(val ptr: NotebookIntervalPointer) : Change
 
-  /** reuse old pointer instead of creating new, for example when moving interval */
-  data class Reuse(val ptr: NotebookIntervalPointer, val ordinalAfterChange: Int) : Change
+  /** swap two pointers */
+  data class Swap(val firstOrdinal: Int, val secondOrdinal: Int) : Change
 }
 
 fun <T> NotebookIntervalPointerFactory?.invalidatingCell(cell: NotebookCellLines.Interval, action: () -> T): T =
@@ -80,15 +91,12 @@ fun <T> NotebookIntervalPointerFactory?.invalidatingCell(cell: NotebookCellLines
     }
   }
 
-/**
- * input pairs - current interval and it's ordinal after document change
- */
-fun <T> NotebookIntervalPointerFactory?.movingCells(newPositions: List<Pair<NotebookCellLines.Interval, Int>>, action: () -> T): T =
+fun <T> NotebookIntervalPointerFactory?.swappingCells(swapedCells: List<NotebookIntervalPointerFactory.Swap>, action: () -> T): T =
   if (this == null) {
     action()
   }
   else {
-    modifyingPointers(newPositions.map { (interval, newOrdinal) -> NotebookIntervalPointerFactory.Reuse(create(interval), newOrdinal) }) {
+    modifyingPointers(swapedCells) {
       action()
     }
   }

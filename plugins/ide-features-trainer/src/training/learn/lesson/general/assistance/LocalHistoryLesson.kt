@@ -382,8 +382,6 @@ class LocalHistoryLesson : KLesson("CodeAssistance.LocalHistory", LessonsBundle.
     }
   }
 
-  override val suitableTips = listOf("local_history")
-
   override val helpLinks: Map<String, String> get() = mapOf(
     Pair(LessonsBundle.message("local.history.help.link"),
          LessonUtil.getHelpLink("local-history.html")),

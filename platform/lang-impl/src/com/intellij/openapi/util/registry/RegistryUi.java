@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.registry;
 
 import com.intellij.icons.AllIcons;
@@ -160,7 +160,7 @@ public class RegistryUi implements Disposable {
   private final class RevertAction extends AnAction implements DumbAware {
 
     private RevertAction() {
-      new ShadowAction(this, ActionManager.getInstance().getAction("EditorDelete"), myTable, RegistryUi.this);
+      new ShadowAction(this, "EditorDelete", myTable, RegistryUi.this);
     }
 
     @Override
@@ -192,7 +192,7 @@ public class RegistryUi implements Disposable {
 
   private final class EditAction extends AnAction implements DumbAware {
     private EditAction() {
-      new ShadowAction(this, ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE), myTable, RegistryUi.this);
+      new ShadowAction(this, IdeActions.ACTION_EDIT_SOURCE, myTable, RegistryUi.this);
     }
 
     @Override

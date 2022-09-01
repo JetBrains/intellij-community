@@ -61,7 +61,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
@@ -108,7 +107,7 @@ internal class PackageSearchProjectService(private val project: Project) {
 
     private val cacheDirectory = project.packageSearchProjectCachesService.projectCacheDirectory.resolve("installedDependencies")
 
-    val isLoadingFlow = combineTransform(
+    val isLoadingFlow = combine(
         projectModulesLoadingFlow,
         knownRepositoriesLoadingFlow,
         moduleModelsLoadingFlow,
@@ -117,7 +116,7 @@ internal class PackageSearchProjectService(private val project: Project) {
         installedPackagesStep2LoadingFlow,
         installedPackagesDifferenceLoadingFlow,
         packageUpgradesLoadingFlow
-    ) { booleans -> emit(booleans.any { it }) }
+    ) { booleans -> booleans.any { it } }
         .stateIn(project.lifecycleScope, SharingStarted.Eagerly, false)
 
     private val projectModulesSharedFlow = project.trustedProjectFlow
@@ -245,13 +244,14 @@ internal class PackageSearchProjectService(private val project: Project) {
                 val allKnownRepos = allKnownRepositoryModels(moduleModels, repos)
                 val nativeModulesMap = moduleModels.associateBy { it.projectModule }
 
-                val getUpgrades: suspend (Boolean) -> PackagesToUpgrade = {
-                    computePackageUpgrades(installedPackages, it, packageVersionNormalizer, allKnownRepos, nativeModulesMap)
-                }
-
-                val stableUpdates = async { getUpgrades(true) }
-                val allUpdates = async { getUpgrades(false) }
-                PackageUpgradeCandidates(stableUpdates.await(), allUpdates.await())
+                val allUpdates = computePackageUpgrades(
+                    installedPackages = installedPackages,
+                    onlyStable = false,
+                    normalizer = packageVersionNormalizer,
+                    repos = allKnownRepos,
+                    nativeModulesMap = nativeModulesMap
+                )
+                PackageUpgradeCandidates(allUpdates)
             }.value
         }
     }
@@ -259,7 +259,7 @@ internal class PackageSearchProjectService(private val project: Project) {
             context = "${this::class.qualifiedName}#packageUpgradesStateFlow",
             message = "Error while evaluating packages upgrade candidates"
         )
-        .stateIn(project.lifecycleScope, SharingStarted.Eagerly, PackageUpgradeCandidates.EMPTY)
+        .stateIn(project.lifecycleScope, SharingStarted.Lazily, PackageUpgradeCandidates.EMPTY)
 
     init {
         // allows rerunning PKGS inspections on already opened files

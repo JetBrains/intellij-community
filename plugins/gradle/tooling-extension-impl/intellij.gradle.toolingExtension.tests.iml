@@ -57,7 +57,6 @@
     </orderEntry>
     <orderEntry type="library" scope="TEST" name="ion" level="project" />
     <orderEntry type="library" scope="TEST" name="fastutil-min" level="project" />
-    <orderEntry type="library" scope="TEST" name="Trove4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.boot" scope="TEST" />
   </component>
 </module>

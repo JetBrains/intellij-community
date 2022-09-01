@@ -32,20 +32,25 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
   }
 
   private suspend fun loadModules(project: Project, activity: Activity?) {
+    val componentManager = project as ComponentManagerEx
+
     val childActivity = activity?.startChild("modules instantiation")
-    val componentManagerEx = project as ComponentManagerEx
-    val moduleManager = componentManagerEx.getServiceAsync(ModuleManager::class.java).await() as ModuleManagerComponentBridge
+    // ModuleManagerComponentBridge calls WorkspaceModel in init - getting entityStorage
+    componentManager.getServiceAsync(WorkspaceModel::class.java).await()
+
+    val moduleManager = componentManager.getServiceAsync(ModuleManager::class.java).await() as ModuleManagerComponentBridge
     val entities = moduleManager.entityStore.current.entities(ModuleEntity::class.java)
     moduleManager.loadModules(entities)
     childActivity?.setDescription("modules count: ${moduleManager.modules.size}")
     childActivity?.end()
-    val librariesActivity = StartUpMeasurer.startActivity("libraries instantiation")
-    (LibraryTablesRegistrar.getInstance().getLibraryTable(project) as ProjectLibraryTableBridgeImpl).loadLibraries()
-    librariesActivity.end()
+
+    runActivity("libraries instantiation") {
+      (LibraryTablesRegistrar.getInstance().getLibraryTable(project) as ProjectLibraryTableBridgeImpl).loadLibraries()
+    }
     activity?.end()
   }
 
-  override suspend fun containerConfigured(project: Project) {
+  override suspend fun execute(project: Project) {
     val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project)
     val componentManagerEx = project as ComponentManagerEx
     val workspaceModel = componentManagerEx.getServiceAsync(WorkspaceModel::class.java).await() as WorkspaceModelImpl

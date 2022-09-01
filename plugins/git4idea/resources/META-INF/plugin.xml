@@ -203,6 +203,11 @@
       <reference id="Git.Rebase.Skip"/>
     </group>
 
+    <group id="Git.Branches.Popup.Settings" class="git4idea.ui.branch.GitBranchesTreePopupSettings" icon="AllIcons.Actions.More">
+      <action class="git4idea.ui.branch.GitBranchesTreePopupResizeAction"/>
+      <action class="git4idea.ui.branch.GitBranchesTreePopupTrackReposSynchronouslyAction"/>
+    </group>
+
     <group id="Git.Branches.List">
       <reference ref="Git.Ongoing.Rebase.Actions"/>
       <action class="git4idea.actions.branch.GitNewBranchAction"/>
@@ -353,7 +358,9 @@
       <reference id="Diff.ShowDiff"/>
       <reference id="ChangesView.Refresh"/>
       <reference id="Git.Stash.Silently"/>
-      <group id="Git.Stage.Ui.Settings" icon="AllIcons.Actions.Show" popup="true">
+      <group id="Git.Stage.Ui.Settings" icon="AllIcons.Actions.GroupBy" popup="true">
+        <reference id="ChangesView.GroupBy"/>
+        <separator key="separator.show"/>
         <reference id="Git.Stage.ToggleIgnored"/>
       </group>
     </group>
@@ -444,7 +451,7 @@
       <reference id="git4idea.actions.GitDumpLogIndexDataAction"/>
       <add-to-group group-id="Vcs.Log.Internal"/>
     </group>
-    
+
     <action id="main.toolbar.git.Branches" class="git4idea.ui.toolbar.GitToolbarWidgetAction" >
       <add-to-group group-id="MainToolbarLeft"/>
     </action>

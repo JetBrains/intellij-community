@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package org.jetbrains.intellij.build.devServer
 
@@ -7,6 +7,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.sun.net.httpserver.HttpContext
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.IdeaProjectLoaderUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -133,17 +135,19 @@ class DevIdeaBuildServer {
           buildQueueLock.acquire()
 
           exchange.responseHeaders.add("Content-Type", "text/plain")
-          val ideBuilder = buildServer.checkOrCreateIdeBuilder(platformPrefix)
-          statusMessage = ideBuilder.pluginBuilder.buildChanged()
+          runBlocking(Dispatchers.Default) {
+            val ideBuilder = buildServer.checkOrCreateIdeBuilder(platformPrefix)
+            statusMessage = ideBuilder.pluginBuilder.buildChanged()
+          }
           LOG.info(statusMessage)
         }
         catch (e: ConfigurationException) {
           statusCode = HttpURLConnection.HTTP_BAD_REQUEST
-          productBuildStatus[platformPrefix] = DevIdeaBuildServerStatus.FAILED
+          productBuildStatus.put(platformPrefix, DevIdeaBuildServerStatus.FAILED)
           statusMessage = e.message!!
         }
         catch (e: Throwable) {
-          productBuildStatus[platformPrefix] = DevIdeaBuildServerStatus.FAILED
+          productBuildStatus.put(platformPrefix, DevIdeaBuildServerStatus.FAILED)
           exchange.sendResponseHeaders(HttpURLConnection.HTTP_UNAVAILABLE, -1)
           LOG.error("Cannot handle build request", e)
           return@createContext

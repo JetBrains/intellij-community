@@ -6,7 +6,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.CachedValue
@@ -20,7 +19,9 @@ import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.facet.platform.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsTracker
 import org.jetbrains.kotlin.idea.core.script.ScriptRelatedModuleNameFile
+import org.jetbrains.kotlin.idea.facet.KotlinFacetModificationTracker
 import org.jetbrains.kotlin.platform.*
 import org.jetbrains.kotlin.platform.jvm.JdkPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
@@ -119,7 +120,8 @@ private inline fun createCachedValue(project: Project, crossinline body: () -> S
     return CachedValuesManager.getManager(project).createCachedValue {
         CachedValueProvider.Result(
             body(),
-            ProjectRootModificationTracker.getInstance(project), ModuleManager.getInstance(project)
+            KotlinFacetModificationTracker.getInstance(project),
+            KotlinCompilerSettingsTracker.getInstance(project)
         )
     }
 }

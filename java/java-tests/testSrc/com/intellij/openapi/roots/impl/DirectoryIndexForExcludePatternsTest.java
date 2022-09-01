@@ -211,8 +211,8 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
     VirtualFile java = createChildData(myLibraryRoot, "A.java");
     registerLibrary(myLibraryRoot, file -> file.equals(myLibraryRoot));
 
-    assertFalse(myIndex.getInfoForFile(txt).isInProject(txt));
-    assertFalse(myIndex.getInfoForFile(java).isInProject(java));
+    assertFalse(myFileIndex.isInProject(txt));
+    assertFalse(myFileIndex.isInProject(java));
   }
 
   public void testExcludeLibraryRootThatIsUnderContentRoot() {
@@ -246,8 +246,8 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
     VirtualFile txt = createChildData(createChildDirectory(myLibraryRoot, "subdir"), "dir");
     registerLibrary(myLibraryRoot, file -> !file.isDirectory() && "dir".contentEquals(file.getNameSequence()));
 
-    assertFalse(myIndex.getInfoForFile(txt).isInProject(txt));
-    assertTrue(myIndex.getInfoForFile(dir).isInProject(dir));
+    assertFalse(myFileIndex.isInProject(txt));
+    assertTrue(myFileIndex.isInProject(dir));
   }
 
   private void addExcludePattern(@NotNull String pattern) {

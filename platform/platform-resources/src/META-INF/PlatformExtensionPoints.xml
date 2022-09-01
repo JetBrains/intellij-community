@@ -6,9 +6,7 @@
                     interface="com.intellij.openapi.application.ApplicationStarter"
                     dynamic="true"/>
 
-    <extensionPoint name="defaultProjectTypeProvider"
-                    beanClass="com.intellij.openapi.project.DefaultProjectTypeEP"/>
-
+    <extensionPoint name="projectTypesProvider" interface="com.intellij.openapi.project.ProjectTypesProvider" dynamic="true"/>
     <extensionPoint name="errorHandler" interface="com.intellij.openapi.diagnostic.ErrorReportSubmitter" dynamic="true"/>
 
     <extensionPoint name="jps.plugin"

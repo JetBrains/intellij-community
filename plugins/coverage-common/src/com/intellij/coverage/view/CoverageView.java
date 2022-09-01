@@ -54,7 +54,10 @@ import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -127,7 +130,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
       }
     }.installOn(myTable.getTree());
 
-    final TreeSpeedSearch speedSearch = new TreeSpeedSearch(myTable.getTree(), (path) -> path.getLastPathComponent().toString());
+    final TreeSpeedSearch speedSearch = new TreeSpeedSearch(myTable.getTree(), false, path -> path.getLastPathComponent().toString());
     speedSearch.setCanExpand(true);
     speedSearch.setClearSearchOnNavigateNoMatch(true);
     PopupHandler.installPopupMenu(myTable, createPopupGroup(), "CoverageViewPopup");

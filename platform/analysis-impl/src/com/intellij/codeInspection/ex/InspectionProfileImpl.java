@@ -15,6 +15,8 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectType;
+import com.intellij.openapi.project.ProjectTypeService;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
@@ -414,9 +416,17 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   @Override
   public @NotNull List<Tools> getAllEnabledInspectionTools(Project project) {
     initInspectionTools();
+
     List<Tools> result = new ArrayList<>();
+    Collection<ProjectType> projectTypes = ProjectTypeService.getProjectTypes(project);
+
     for (ToolsImpl toolList : myTools.values()) {
       if (toolList.isEnabled()) {
+        InspectionToolWrapper<?, ?> toolWrapper = toolList.getTool();
+        if (!toolWrapper.isApplicable(projectTypes)) {
+          continue;
+        }
+
         result.add(toolList);
       }
     }

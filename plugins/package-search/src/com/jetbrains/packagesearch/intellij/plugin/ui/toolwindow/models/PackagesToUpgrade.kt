@@ -24,7 +24,8 @@ internal data class PackagesToUpgrade(
     val upgradesByModule: Map<Module, Set<PackageUpgradeInfo>>
 ) {
 
-    val allUpdates by lazy { upgradesByModule.values.flatten() }
+    val allUpdates
+        get() = upgradesByModule.values.flatten()
 
     fun getUpdatesForModule(moduleModel: ModuleModel) =
         upgradesByModule[moduleModel.projectModule.nativeModule]?.toList() ?: emptyList()

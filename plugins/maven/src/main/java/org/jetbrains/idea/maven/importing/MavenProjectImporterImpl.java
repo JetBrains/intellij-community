@@ -138,7 +138,7 @@ class MavenProjectImporterImpl extends MavenProjectImporterLegacyBase {
       deleteObsoletePhase.finished();
 
       StructuredIdeActivity importersPhase = MavenImportCollector.LEGACY_IMPORTERS_PHASE.startedWithParent(myProject, activity);
-      importExtensions(myProject, myIdeModifiableModelsProvider, extensionImporters, postTasks);
+      importExtensions(myProject, myIdeModifiableModelsProvider, extensionImporters, postTasks, importersPhase);
       importersPhase.finished();
     }
     else {

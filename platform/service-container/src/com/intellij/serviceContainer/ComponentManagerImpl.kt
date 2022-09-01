@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.util.ArrayUtil
 import com.intellij.util.childScope
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusEx
@@ -53,7 +52,7 @@ private val emptyConstructorMethodType = MethodType.methodType(Void.TYPE)
 abstract class ComponentManagerImpl(
   internal val parent: ComponentManagerImpl?,
   setExtensionsRootArea: Boolean = parent == null
-) : ComponentManager, Disposable.Parent, MessageBusOwner, UserDataHolderBase(), ComponentManagerEx {
+) : ComponentManager, Disposable.Parent, MessageBusOwner, UserDataHolderBase(), ComponentManagerEx, ComponentStoreOwner {
   protected enum class ContainerState {
     PRE_INIT, COMPONENT_CREATED, DISPOSE_IN_PROGRESS, DISPOSED, DISPOSE_COMPLETED
   }
@@ -249,7 +248,7 @@ abstract class ComponentManagerImpl(
   open fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,
                               app: Application?,
                               precomputedExtensionModel: PrecomputedExtensionModel?,
-                              listenerCallbacks: MutableList<Runnable>?) {
+                              listenerCallbacks: MutableList<in Runnable>?) {
     val activityNamePrefix = activityNamePrefix()
 
     var map: ConcurrentMap<String, MutableList<ListenerDescriptor>>? = null
@@ -330,7 +329,7 @@ abstract class ComponentManagerImpl(
   }
 
   private fun registerExtensionPointsAndExtensionByPrecomputedModel(precomputedExtensionModel: PrecomputedExtensionModel,
-                                                                    listenerCallbacks: List<Runnable>?) {
+                                                                    listenerCallbacks: MutableList<in Runnable>?) {
     assert(extensionArea.extensionPoints.isEmpty())
     val n = precomputedExtensionModel.pluginDescriptors.size
     if (n == 0) {
@@ -1408,22 +1407,6 @@ abstract class ComponentManagerImpl(
   final override fun hasComponent(componentKey: Class<*>): Boolean {
     val adapter = componentKeyToAdapter.get(componentKey) ?: componentKeyToAdapter.get(componentKey.name)
     return adapter != null || (parent != null && parent.hasComponent(componentKey))
-  }
-
-  @Deprecated(message = "Use extensions", level = DeprecationLevel.ERROR)
-  final override fun <T : Any> getComponents(baseClass: Class<T>): Array<T> {
-    checkState()
-    val result = mutableListOf<T>()
-    for (componentAdapter in componentAdapters.getImmutableSet()) {
-      val implementationClass = componentAdapter.getImplementationClass()
-      if (baseClass === implementationClass || baseClass.isAssignableFrom(implementationClass)) {
-        val instance = componentAdapter.getInstance<T>(componentManager = this, keyClass = null, createIfNeeded = false)
-        if (instance != null) {
-          result.add(instance)
-        }
-      }
-    }
-    return ArrayUtil.toObjectArray(result, baseClass)
   }
 
   final override fun isSuitableForOs(os: ExtensionDescriptor.Os): Boolean {

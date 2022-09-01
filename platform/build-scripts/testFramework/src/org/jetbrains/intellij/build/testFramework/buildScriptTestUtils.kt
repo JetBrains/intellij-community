@@ -8,6 +8,8 @@ import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.util.ExceptionUtil
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.exporter.jaeger.JaegerGrpcSpanExporter
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.impl.BuildContextImpl
@@ -72,7 +74,7 @@ fun runTestBuild(
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
   communityHomePath: BuildDependenciesCommunityRoot = BuildDependenciesCommunityRoot(homePath.resolve("community")),
   traceSpanName: String? = null,
-  onFinish: (context: BuildContext) -> Unit = {},
+  onFinish: suspend (context: BuildContext) -> Unit = {},
   buildOptionsCustomizer: (BuildOptions) -> Unit = {}
 ) {
   val buildArtifactsReproducibilityTest = BuildArtifactsReproducibilityTest()
@@ -102,7 +104,7 @@ private fun testBuild(
   buildTools: ProprietaryBuildTools,
   communityHomePath: BuildDependenciesCommunityRoot,
   traceSpanName: String?,
-  onFinish: (context: BuildContext) -> Unit,
+  onFinish: suspend (context: BuildContext) -> Unit,
   buildOptionsCustomizer: (BuildOptions) -> Unit,
 ) {
   val context = createBuildContext(
@@ -125,7 +127,7 @@ private fun testBuild(
 fun runTestBuild(
   buildContext: BuildContext,
   traceSpanName: String? = null,
-  onFinish: (context: BuildContext) -> Unit = {},
+  onFinish: suspend (context: BuildContext) -> Unit = {},
 ) {
   initializeTracer
 
@@ -142,8 +144,10 @@ fun runTestBuild(
     span.setAttribute("outDir", outDir.toString())
     val messages = buildContext.messages as BuildMessagesImpl
     try {
-      BuildTasks.create(buildContext).runTestBuild()
-      onFinish(buildContext)
+      runBlocking(Dispatchers.Default) {
+        BuildTasks.create(buildContext).runTestBuild()
+        onFinish(buildContext)
+      }
     }
     catch (e: Throwable) {
       if (e !is FileComparisonData) {
@@ -192,7 +196,7 @@ private fun copyDebugLog(productProperties: ProductProperties, messages: BuildMe
   try {
     val targetFile = TestLoggerFactory.getTestLogDir().resolve("${productProperties.baseFileName}-test-build-debug.log")
     Files.createDirectories(targetFile.parent)
-    Files.copy(messages.debugLogFile, targetFile, StandardCopyOption.REPLACE_EXISTING)
+    Files.copy(messages.debugLogFile!!, targetFile, StandardCopyOption.REPLACE_EXISTING)
     messages.info("Debug log copied to $targetFile")
   }
   catch (e: Throwable) {

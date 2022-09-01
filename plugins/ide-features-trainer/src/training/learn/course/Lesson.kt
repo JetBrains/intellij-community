@@ -43,6 +43,7 @@ abstract class Lesson(@NonNls val id: String, @Nls val name: String) {
   open val helpLinks: Map<String, String> get() = emptyMap()
 
   /** IDs of TipAndTrick suggestions in that this lesson can be promoted */
+  @Deprecated("Specify tips in LearningCourse.getLessonIdToTipsMap()")
   open val suitableTips: List<String> = emptyList()
 
   open val testScriptProperties: TaskTestContext.TestScriptProperties = TaskTestContext.TestScriptProperties()
