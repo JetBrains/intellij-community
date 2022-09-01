@@ -6692,6 +6692,39 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/declaringJavaClass")
+    public static class DeclaringJavaClass extends AbstractQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("basic.kt")
+        public void testBasic() throws Exception {
+            runTest("testData/quickfix/declaringJavaClass/basic.kt");
+        }
+
+        @TestMetadata("customEnum.kt")
+        public void testCustomEnum() throws Exception {
+            runTest("testData/quickfix/declaringJavaClass/customEnum.kt");
+        }
+
+        @TestMetadata("enumFromCall.kt")
+        public void testEnumFromCall() throws Exception {
+            runTest("testData/quickfix/declaringJavaClass/enumFromCall.kt");
+        }
+
+        @TestMetadata("noQuickFixFor16.kt")
+        public void testNoQuickFixFor16() throws Exception {
+            runTest("testData/quickfix/declaringJavaClass/noQuickFixFor16.kt");
+        }
+
+        @TestMetadata("quickFixAvailableForError19.kt")
+        public void testQuickFixAvailableForError19() throws Exception {
+            runTest("testData/quickfix/declaringJavaClass/quickFixAvailableForError19.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/decreaseVisibility")
     public static class DecreaseVisibility extends AbstractQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
