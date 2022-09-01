@@ -5,16 +5,20 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder.Companion.groovy
 import org.jetbrains.plugins.gradle.testFramework.util.buildscript
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule
+import org.jetbrains.plugins.groovy.lang.parser.closureParameter
 import org.junit.runners.Parameterized
 
 abstract class GradleJavaCompilerSettingsImportingTestCase : GradleJavaImportingTestCase() {
 
+  var isNotSupportedCompilerArgumentProviders: Boolean = false
+    private set
   var isNotSupportedJava14: Boolean = false
     private set
 
   override fun setUp() {
     super.setUp()
     isNotSupportedJava14 = isGradleOlderThan("6.3")
+    isNotSupportedCompilerArgumentProviders = isGradleOlderThan("4.5")
   }
 
   fun createGradleSettingsFile(vararg moduleNames: String) {
@@ -39,7 +43,7 @@ abstract class GradleJavaCompilerSettingsImportingTestCase : GradleJavaImporting
   ): VirtualFile {
     createProjectSubDir("$relativePath/src/main/java")
     createProjectSubDir("$relativePath/src/test/java")
-    return createProjectSubFile("$relativePath/build.gradle", buildscript {
+    val file = createProjectSubFile("$relativePath/build.gradle", buildscript {
       withJavaPlugin()
       withPrefix {
         assignIfNotNull("sourceCompatibility", projectSourceCompatibility)
@@ -48,18 +52,27 @@ abstract class GradleJavaCompilerSettingsImportingTestCase : GradleJavaImporting
           assignIfNotNull("sourceCompatibility", mainSourceCompatibility)
           assignIfNotNull("targetCompatibility", mainTargetCompatibility)
           if (mainSourceCompatibilityEnablePreview) {
-            call("options.compilerArgs.add", "--enable-preview")
+            if (isNotSupportedCompilerArgumentProviders) {
+              call("options.compilerArgs.add", "--enable-preview")
+            } else {
+              code("options.compilerArgumentProviders.add({ ['--enable-preview'] } as CommandLineArgumentProvider)")
+            }
           }
         }
         call("compileTestJava") {
           assignIfNotNull("sourceCompatibility", testSourceCompatibility)
           assignIfNotNull("targetCompatibility", testTargetCompatibility)
           if (testSourceCompatibilityEnablePreview) {
-            call("options.compilerArgs.add", "--enable-preview")
+            if (isNotSupportedCompilerArgumentProviders) {
+              call("options.compilerArgs.add", "--enable-preview")
+            } else {
+              code("options.compilerArgumentProviders.add({ ['--enable-preview'] } as CommandLineArgumentProvider)")
+            }
           }
         }
       }
     })
+    return file
   }
 
   companion object {

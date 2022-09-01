@@ -272,7 +272,12 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
       def javaCompileTask = project.tasks.findByName(sourceSet.compileJavaTaskName)
       if (javaCompileTask instanceof JavaCompile) {
         externalSourceSet.sourceCompatibility = javaCompileTask.sourceCompatibility ?: projectSourceCompatibility
-        externalSourceSet.preview = javaCompileTask.options.compilerArgs.contains("--enable-preview")
+
+        // allCompileArgs was added in Gradle 4.5 and IntelliJ supports older versions of Gradle
+        def compilerArgs = javaCompileTask.options.hasProperty("allCompilerArgs")
+          ? javaCompileTask.options.allCompilerArgs : javaCompileTask.options.compilerArgs
+
+        externalSourceSet.preview = compilerArgs.contains("--enable-preview")
         externalSourceSet.targetCompatibility = javaCompileTask.targetCompatibility ?: projectTargetCompatibility
       }
       else {
