@@ -40,24 +40,24 @@
     <orderEntry type="library" scope="RUNTIME" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module-library">
-      <library name="org.languagetool:languagetool-core:5.7" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:languagetool-core:5.7" />
+      <library name="org.languagetool:languagetool-core" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.languagetool:languagetool-core:5.8" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.7/languagetool-core-5.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/languagetool-core/5.8/languagetool-core-5.8.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="org.languagetool:language-en:5.7" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.languagetool:language-en:5.7" />
+      <library name="org.languagetool:language-en" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.languagetool:language-en:5.8" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-en/5.7/language-en-5.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-en/5.8/language-en-5.8.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-en/5.7/language-en-5.7-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/languagetool/language-en/5.8/language-en-5.8-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -74,26 +74,26 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="org.carrot2:morfologik-stemming:2.1.7" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.carrot2:morfologik-stemming:2.1.7" />
+      <library name="org.carrot2:morfologik-stemming" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.carrot2:morfologik-stemming:2.1.9" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-stemming/2.1.7/morfologik-stemming-2.1.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-stemming/2.1.9/morfologik-stemming-2.1.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-stemming/2.1.7/morfologik-stemming-2.1.7-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-stemming/2.1.9/morfologik-stemming-2.1.9-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="org.carrot2:morfologik-speller:2.1.7" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.carrot2:morfologik-speller:2.1.7" />
+      <library name="org.carrot2:morfologik-speller" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.carrot2:morfologik-speller:2.1.9" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-speller/2.1.7/morfologik-speller-2.1.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-speller/2.1.9/morfologik-speller-2.1.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-speller/2.1.7/morfologik-speller-2.1.7-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-speller/2.1.9/morfologik-speller-2.1.9-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -108,26 +108,26 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="org.carrot2:morfologik-fsa-builders:2.1.7" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.carrot2:morfologik-fsa-builders:2.1.7" />
+      <library name="org.carrot2:morfologik-fsa-builders" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.carrot2:morfologik-fsa-builders:2.1.9" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-fsa-builders/2.1.7/morfologik-fsa-builders-2.1.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-fsa-builders/2.1.9/morfologik-fsa-builders-2.1.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-fsa-builders/2.1.7/morfologik-fsa-builders-2.1.7-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-fsa-builders/2.1.9/morfologik-fsa-builders-2.1.9-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="org.carrot2:morfologik-fsa:2.1.7" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.carrot2:morfologik-fsa:2.1.7" />
+      <library name="org.carrot2:morfologik-fsa" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.carrot2:morfologik-fsa:2.1.9" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-fsa/2.1.7/morfologik-fsa-2.1.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-fsa/2.1.9/morfologik-fsa-2.1.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-fsa/2.1.7/morfologik-fsa-2.1.7-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/carrot2/morfologik-fsa/2.1.9/morfologik-fsa-2.1.9-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
