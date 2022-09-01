@@ -4950,6 +4950,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         public void testOutOfRange() throws Exception {
             runTest("testData/intentions/convertEnumToSealedClass/outOfRange.kt");
         }
+
+        @TestMetadata("useDataObjectSince18.kt")
+        public void testUseDataObjectSince18() throws Exception {
+            runTest("testData/intentions/convertEnumToSealedClass/useDataObjectSince18.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
