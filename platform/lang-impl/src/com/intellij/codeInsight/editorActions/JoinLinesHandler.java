@@ -8,9 +8,7 @@ import com.intellij.formatting.FormatterEx;
 import com.intellij.formatting.FormattingContext;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
-import com.intellij.ide.DataManager;
 import com.intellij.lang.*;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -59,7 +57,7 @@ public class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
       }
       return;
     }
-    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getContentComponent()));
+    Project project = editor.getProject();
     PsiFile psiFile = project == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (psiFile == null) {
       if (myOriginalHandler != null) {

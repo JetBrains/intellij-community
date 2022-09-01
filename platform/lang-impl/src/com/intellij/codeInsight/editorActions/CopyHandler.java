@@ -2,9 +2,7 @@
 
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.ide.DataManager;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -44,8 +42,8 @@ public class CopyHandler extends EditorActionHandler implements CopyAction.Trans
   @Override
   public void doExecute(@NotNull final Editor editor, Caret caret, final DataContext dataContext) {
     assert caret == null : "Invocation of 'copy' operation for specific caret is not supported";
-    final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
-    final PsiFile file = project == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    Project project = editor.getProject();
+    PsiFile file = project == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (file == null) {
       if (myOriginalAction != null) {
         myOriginalAction.execute(editor, null, dataContext);

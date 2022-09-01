@@ -2,8 +2,6 @@
 
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.*;
@@ -33,7 +31,7 @@ public class CutHandler extends EditorWriteActionHandler {
   @Override
   public void executeWriteAction(final @NotNull Editor editor, Caret caret, DataContext dataContext) {
     assert caret == null : "Invocation of 'cut' operation for specific caret is not supported";
-    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getContentComponent()));
+    Project project = editor.getProject();
     PsiFile file = project == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     if (file == null) {
       if (myOriginalHandler != null) {
