@@ -161,7 +161,7 @@ public final class ArtifactRepositoryManager {
       }
       // setup session here
 
-      session.setLocalRepositoryManager(ourSystem.newLocalRepositoryManager(session, new LocalRepository(localRepositoryPath)));
+      session.setLocalRepositoryManager(new StrictLocalRepositoryManager(ourSystem.newLocalRepositoryManager(session, new LocalRepository(localRepositoryPath))));
       session.setProxySelector(ourProxySelector);
       session.setOffline(offline);
       session.setReadOnly();
