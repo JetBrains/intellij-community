@@ -428,6 +428,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
                 runTest("testData/stepping/stepOver/asIterableInFor.kt");
             }
 
+            @TestMetadata("breakpointOnMultilineLambda.kt")
+            public void testBreakpointOnMultilineLambda() throws Exception {
+                runTest("testData/stepping/stepOver/breakpointOnMultilineLambda.kt");
+            }
+
             @TestMetadata("ifCapturedVariableKt9118.kt")
             public void testIfCapturedVariableKt9118() throws Exception {
                 runTest("testData/stepping/stepOver/ifCapturedVariableKt9118.kt");
