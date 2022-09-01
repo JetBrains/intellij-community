@@ -32,4 +32,18 @@ class RunBlockingModalTest {
       Assertions.assertSame(t, thrown)
     }
   }
+
+  @Test
+  fun nested(): Unit = timeoutRunBlocking {
+    val result = withContext(Dispatchers.EDT) {
+      runBlockingModal(ModalTaskOwner.guess(), "") {
+        withContext(Dispatchers.EDT) {
+          runBlockingModal(ModalTaskOwner.guess(), "") {
+            42
+          }
+        }
+      }
+    }
+    Assertions.assertEquals(42, result)
+  }
 }
