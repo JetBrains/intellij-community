@@ -7,7 +7,7 @@ package com.intellij.idea
 import com.intellij.BundleBase
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.diagnostic.*
-import com.intellij.diagnostic.opentelemetry.TraceManager
+import com.intellij.diagnostic.telemetry.TraceManager
 import com.intellij.ide.*
 import com.intellij.ide.customize.CommonCustomizeIDEWizardDialog
 import com.intellij.ide.gdpr.ConsentOptions
