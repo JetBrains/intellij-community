@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.parameterInfo
 
 import com.intellij.codeInsight.hints.InlayInfo
 import com.intellij.psi.PsiWhiteSpace
+import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeInsight.hints.InlayInfoDetails
 import org.jetbrains.kotlin.idea.codeInsight.hints.PsiInlayInfoDetail
@@ -13,8 +14,10 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingContext.USED_AS_RESULT_OF_LAMBDA
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 fun KtExpression.isLambdaReturnValueHintsApplicable(): Boolean {
     if (this is KtWhenExpression || this is KtBlockExpression) {
@@ -51,26 +54,47 @@ fun provideLambdaReturnValueHints(expression: KtExpression): InlayInfoDetails? {
     }
 
     val bindingContext = expression.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL_WITH_CFA)
-    if (bindingContext[USED_AS_RESULT_OF_LAMBDA, expression] == true) {
-        val lambdaExpression = expression.getStrictParentOfType<KtLambdaExpression>() ?: return null
+    return if (bindingContext[USED_AS_RESULT_OF_LAMBDA, expression] == true) {
+        val functionLiteral = expression.getStrictParentOfType<KtFunctionLiteral>() ?: return null
+        val lambdaExpression = functionLiteral.getStrictParentOfType<KtLambdaExpression>() ?: return null
+
         val lambdaName = lambdaExpression.getNameOfFunctionThatTakesLambda() ?: "lambda"
         val inlayInfo = InlayInfo("", expression.endOffset)
-        return InlayInfoDetails(inlayInfo, listOf(TextInlayInfoDetail("^"), PsiInlayInfoDetail(lambdaName, lambdaExpression)))
+        InlayInfoDetails(inlayInfo, listOf(TextInlayInfoDetail("^"), PsiInlayInfoDetail(lambdaName, lambdaExpression)))
+    } else null
+}
+
+fun provideLambdaReturnTypeHints(expression: KtExpression): InlayInfoDetails? {
+    if (!expression.isLambdaReturnValueHintsApplicable()) {
+        return null
     }
-    return null
+
+    val bindingContext = expression.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL_WITH_CFA)
+    return if (bindingContext[USED_AS_RESULT_OF_LAMBDA, expression] == true) {
+        val functionLiteral = expression.getStrictParentOfType<KtFunctionLiteral>() ?: return null
+        //val lambdaExpression = functionLiteral.getStrictParentOfType<KtLambdaExpression>() ?: return null
+        val type = bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR, functionLiteral).safeAs<FunctionDescriptor>()?.returnType ?: return null
+        //val lambdaName = lambdaExpression.getNameOfFunctionThatTakesLambda() ?: "lambda"
+        val inlayInfo = InlayInfo("", expression.endOffset)
+        val infoDetails = buildList {
+            add(TextInlayInfoDetail(": "))
+            addAll(HintsTypeRenderer.getInlayHintsTypeRenderer(bindingContext, expression).renderTypeIntoInlayInfo(type))
+        }
+        InlayInfoDetails(inlayInfo, infoDetails)
+    } else null
 }
 
 private fun KtLambdaExpression.getNameOfFunctionThatTakesLambda(): String? {
     val lambda = this
     val callExpression = this.getStrictParentOfType<KtCallExpression>() ?: return null
-    if (callExpression.lambdaArguments.any { it.getLambdaExpression() == lambda }) {
+    return if (callExpression.lambdaArguments.any { it.getLambdaExpression() == lambda }) {
         val parent = lambda.parent
         if (parent is KtLabeledExpression) {
-            return parent.getLabelName()
+            parent.getLabelName()
+        } else {
+            callExpression.calleeExpression.safeAs<KtNameReferenceExpression>()?.getReferencedName()
         }
-        return (callExpression.calleeExpression as? KtNameReferenceExpression)?.getReferencedName()
-    }
-    return null
+    } else null
 }
 
 private fun allowLabelOnExpressionPart(expression: KtExpression): Boolean {

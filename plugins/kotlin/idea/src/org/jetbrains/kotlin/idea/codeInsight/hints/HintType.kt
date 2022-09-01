@@ -66,16 +66,20 @@ enum class HintType(
         false
     ) {
         override fun provideHintDetails(e: PsiElement): List<InlayInfoDetails> {
-            (e as? KtNamedFunction)?.let { namedFunc ->
-                namedFunc.valueParameterList?.let { paramList ->
-                    provideTypeHint(namedFunc, paramList.endOffset)?.let { return listOf(it) }
+            e.safeAs<KtNamedFunction>()?.let { namedFunction ->
+                namedFunction.valueParameterList?.let { paramList ->
+                    provideTypeHint(namedFunction, paramList.endOffset)?.let { return listOf(it) }
                 }
+            }
+            e.safeAs<KtExpression>()?.let { expression ->
+                provideLambdaReturnTypeHints(expression)?.let { return listOf(it) }
             }
             return emptyList()
         }
 
         override fun isApplicable(e: PsiElement): Boolean =
-            e is KtNamedFunction && !(e.hasBlockBody() || e.hasDeclaredReturnType())
+            e is KtNamedFunction && !(e.hasBlockBody() || e.hasDeclaredReturnType()) ||
+                    e is KtExpression && e !is KtFunctionLiteral && !e.isNameReferenceInCall() && e.isLambdaReturnValueHintsApplicable()
     },
 
     PARAMETER_TYPE_HINT(

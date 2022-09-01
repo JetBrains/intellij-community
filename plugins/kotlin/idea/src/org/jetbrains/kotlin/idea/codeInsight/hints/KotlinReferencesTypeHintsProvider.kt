@@ -12,6 +12,8 @@ import javax.swing.JComponent
 
 class KotlinReferencesTypeHintsProvider : KotlinAbstractHintsProvider<KotlinReferencesTypeHintsProvider.Settings>() {
 
+    override val hintsPriority: Int = 0
+
     data class Settings(
         var propertyType: Boolean = false,
         var localVariableType: Boolean = false,

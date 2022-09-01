@@ -187,4 +187,9 @@ public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotli
     public void testUnitLocalVariable3() throws Exception {
         runTest("testData/codeInsight/hints/types/UnitLocalVariable3.kt");
     }
+
+    @TestMetadata("When.kt")
+    public void testWhen() throws Exception {
+        runTest("testData/codeInsight/hints/types/When.kt");
+    }
 }
