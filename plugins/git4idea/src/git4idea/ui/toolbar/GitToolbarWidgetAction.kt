@@ -34,13 +34,13 @@ internal class GitToolbarWidgetAction : AnAction(), CustomComponentAction {
 
   override fun actionPerformed(e: AnActionEvent) {}
 
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent = GitToolbarWidget(presentation)
 
   override fun update(e: AnActionEvent) {
     val project = e.project
-    val repository = project?.let { GitBranchUtil.guessWidgetRepository(it) }
+    val repository = project?.let { GitBranchUtil.guessWidgetRepository(project, e.dataContext) }
 
     e.presentation.putClientProperty(projectKey, project)
     e.presentation.putClientProperty(repositoryKey, repository)
