@@ -5,15 +5,18 @@ import org.jetbrains.intellij.build.ApplicationInfoProperties
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
 
-class PyCharmWindowsDistributionCustomizer extends WindowsDistributionCustomizer {
-  @Override
-  void copyAdditionalFilesBlocking(BuildContext context, String targetDirectory) {
-    super.copyAdditionalFilesBlocking(context, targetDirectory)
+open class PyCharmWindowsDistributionCustomizer : WindowsDistributionCustomizer() {
+  override suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
+    super.copyAdditionalFiles(context, targetDirectory)
+
+    copyAdditionalFilesBlocking(context, targetDirectory)
+  }
+
+  open fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: String) {
     PyCharmBuildUtils.copySkeletons(context, targetDirectory, "skeletons-win*.zip")
   }
 
-  @Override
-  String getUninstallFeedbackPageUrl(ApplicationInfoProperties applicationInfo) {
-    "https://www.jetbrains.com/pycharm/uninstall/?version=${applicationInfo.productCode}-${applicationInfo.majorVersion}.${applicationInfo.minorVersion}"
+  override fun getUninstallFeedbackPageUrl(applicationInfo: ApplicationInfoProperties): String {
+    return "https://www.jetbrains.com/pycharm/uninstall/?version=${applicationInfo.productCode}-${applicationInfo.majorVersion}.${applicationInfo.minorVersion}"
   }
 }
