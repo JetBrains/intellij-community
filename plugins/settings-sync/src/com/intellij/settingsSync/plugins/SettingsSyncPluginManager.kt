@@ -94,17 +94,12 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
     }
   }
 
+  private var state = SyncPluginsState()
+  private val sessionUninstalledPlugins = HashSet<String>()
+
   init {
     PluginStateManager.addStateListener(pluginStateListener)
     PluginManagerProxy.getInstance().addDisablePluginListener(disabledListener, this)
-  }
-
-  private var state = SyncPluginsState()
-
-  private val sessionUninstalledPlugins = HashSet<String>()
-
-
-  init {
     updateStateFromIde()
   }
 
