@@ -1194,7 +1194,7 @@ private fun alignmentStrategyForGroupDeclaration(elements: List<IElementType>) =
 
             val needNewGroup = moreNlsThan(afterAssign, 0) ||
                     moreNlsThan(beforeAssign, 0) ||
-                    moreNlsThan(beforeParent, 1) && !wasTypeReference ||
+                    (moreNlsThan(beforeParent, 1) || withComment(beforeParent) )&& !wasTypeReference ||
                     prevElement != parent.elementType
 
             if (needNewGroup) {
@@ -1211,14 +1211,23 @@ private fun alignmentStrategyForGroupDeclaration(elements: List<IElementType>) =
             return alignments[anchorIndex]
         }
 
-        private fun moreNlsThan(nextNode: ASTNode?, maxCount: Int): Boolean {
-            if (nextNode != null && nextNode.psi is PsiWhiteSpace) {
-                val countNls = nextNode.text.count { it == '\n' }
+        private fun moreNlsThan(node: ASTNode?, maxCount: Int): Boolean {
+            if (node != null && node.psi is PsiWhiteSpace) {
+                val countNls = node.text.count { it == '\n' }
                 if (countNls > maxCount) {
                     return true
                 }
             }
             return false
+        }
+
+        private fun withComment(node: ASTNode?): Boolean {
+            if (node == null) {
+                return false
+            }
+
+            val prev = node.treePrev
+            return prev != null && prev.psi is PsiComment
         }
 
         private fun genAlignments() = listOf(

@@ -1,21 +1,24 @@
 class Test {
+    // cases without type
     val longName = 100
     val short = 200
     val tiny = 300
 
-    val longNameWithReturnType: Int = 100
+    // cases with type
+    val longWithReturnType: Int = 100
     val shortWithReturnType: String = "200"
     val tinyWithReturnType: Boolean = true
 
-    val longLongLong       = 100
-    val longLongLonglongLongLong       =           200
-
-    val longLongLongWithReturnType: Int       = 100
-    val longLongLonglongLongLongWithReturnType: String      =           "200"
-
+    // with type and without
     val withType: Int = 100
     val withoutType = "200"
 
+    // without type beetwen typed ones
+    val withType1: Int = 100
+    val withoutType1 = "200"
+    val withType21: String = "100"
+
+    // with kdoc and without
     /**
      * @return 100
      */
