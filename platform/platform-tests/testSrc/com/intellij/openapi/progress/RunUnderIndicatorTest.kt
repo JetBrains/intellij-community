@@ -1,7 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -54,7 +57,7 @@ class RunUnderIndicatorTest : CancellationTest() {
   }
 
   @Test
-  fun `delegates reporting to context sink`(): Unit = runBlocking {
+  fun `delegates reporting to context sink`(): Unit = timeoutRunBlocking {
     val sink = object : ProgressSink {
 
       var text: String? = null
