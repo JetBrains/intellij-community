@@ -16,17 +16,17 @@ KotlinStackFrame (optimisedVariablesInNestedFunctions.kt:12)
     JavaValue[local] a: int = 1 (optimisedVariablesInNestedFunctions.kt:10)
 optimisedVariablesInNestedFunctions.kt:18
 CoroutinePreflightFrame invokeSuspend (optimisedVariablesInNestedFunctions.kt:18)
-    JavaValue[local] $result: java.lang.Object = kotlin.Unit
+    JavaValue[local] result: Unit@uniqueID = kotlin.Unit
     JavaValue[local] p: int = 1 (optimisedVariablesInNestedFunctions.kt:15)
     JavaValue[local] a: int = 1 (optimisedVariablesInNestedFunctions.kt:16)
 optimisedVariablesInNestedFunctions.kt:20
 CoroutinePreflightFrame invokeSuspend (optimisedVariablesInNestedFunctions.kt:20)
-    JavaValue[local] $result: java.lang.Object = kotlin.Unit
+    JavaValue[local] result: Unit@uniqueID = kotlin.Unit
     JavaValue[local] a: int = 1 (optimisedVariablesInNestedFunctions.kt:16)
     DummyMessageValueNode = 'p' was optimised out
 optimisedVariablesInNestedFunctions.kt:22
 CoroutinePreflightFrame invokeSuspend (optimisedVariablesInNestedFunctions.kt:22)
-    JavaValue[local] $result: java.lang.Object = kotlin.Unit
+    JavaValue[local] result: Unit@uniqueID = kotlin.Unit
     DummyMessageValueNode = 'a' was optimised out
     DummyMessageValueNode = 'p' was optimised out
 optimisedVariablesInNestedFunctions.kt:27
@@ -38,21 +38,21 @@ KotlinStackFrame (optimisedVariablesInNestedFunctions.kt:30)
     JavaValue[local] x: int = 1 (optimisedVariablesInNestedFunctions.kt:27)
 optimisedVariablesInNestedFunctions.kt:37
 CoroutinePreflightFrame invokeSuspend (optimisedVariablesInNestedFunctions.kt:37)
-    JavaValue[local] $result: java.lang.Object = kotlin.Unit
+    JavaValue[local] result: Unit@uniqueID = kotlin.Unit
     JavaValue[local] p: int = 1 (optimisedVariablesInNestedFunctions.kt:35)
 optimisedVariablesInNestedFunctions.kt:40
 CoroutinePreflightFrame invokeSuspend (optimisedVariablesInNestedFunctions.kt:40)
-    JavaValue[local] $result: java.lang.Object = kotlin.Unit
+    JavaValue[local] result: Unit@uniqueID = kotlin.Unit
     JavaValue[local] p: int = 1 (optimisedVariablesInNestedFunctions.kt:35)
     JavaValue[local] x: int = 1 (optimisedVariablesInNestedFunctions.kt:37)
 optimisedVariablesInNestedFunctions.kt:42
 CoroutinePreflightFrame invokeSuspend (optimisedVariablesInNestedFunctions.kt:42)
-    JavaValue[local] $result: java.lang.Object = kotlin.Unit
+    JavaValue[local] result: Unit@uniqueID = kotlin.Unit
     JavaValue[local] x: int = 1 (optimisedVariablesInNestedFunctions.kt:37)
     DummyMessageValueNode = 'p' was optimised out
 optimisedVariablesInNestedFunctions.kt:44
 CoroutinePreflightFrame invokeSuspend (optimisedVariablesInNestedFunctions.kt:44)
-    JavaValue[local] $result: java.lang.Object = kotlin.Unit
+    JavaValue[local] result: Unit@uniqueID = kotlin.Unit
     DummyMessageValueNode = 'x' was optimised out
     DummyMessageValueNode = 'p' was optimised out
 Disconnected from the target VM

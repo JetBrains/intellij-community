@@ -15,9 +15,9 @@ import org.jetbrains.kotlin.codegen.coroutines.SUSPEND_FUNCTION_COMPLETION_PARAM
 import org.jetbrains.kotlin.codegen.inline.INLINE_FUN_VAR_SUFFIX
 import org.jetbrains.kotlin.codegen.inline.INLINE_TRANSFORMATION_SUFFIX
 import org.jetbrains.kotlin.idea.debugger.base.util.*
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.InlineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineStackFrameProxyImpl
-import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentParameter
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentParameter.Kind
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.DebugLabelPropertyDescriptorProvider
@@ -390,7 +390,10 @@ class VariableFinder(val context: ExecutionContext) {
                     || name == AsmUtil.THIS_IN_DEFAULT_IMPLS
                     || INLINED_THIS_REGEX.matches(name)
 
-        if (kind is VariableKind.ExtensionThis) {
+        // In the old backend captured variables are stored as fields of a generated lambda class.
+        // In the IR backend SAM lambdas are generated as functions, and captured variables are
+        // stored in the LVT table.
+        if (kind is VariableKind.ExtensionThis || kind is VariableKind.Ordinary) {
             variables.namedEntitySequence()
                 .filter { kind.capturedNameMatches(it.name) && kind.typeMatches(it.type) }
                 .mapNotNull { it.unwrapAndCheck(kind) }
