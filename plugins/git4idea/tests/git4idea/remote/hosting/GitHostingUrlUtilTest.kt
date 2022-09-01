@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.collaboration.hosting
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package git4idea.remote.hosting
 
-import com.intellij.collaboration.git.hosting.GitHostingUrlUtil
-import junit.framework.Assert.assertEquals
+import junit.framework.Assert
 import junit.framework.TestCase
 import org.junit.Test
 import java.net.URI
@@ -11,7 +10,7 @@ internal class GitHostingUrlUtilTest {
   private fun <T> checkStringConversion(mapping: List<Pair<String, T>>, mapper: (String) -> T) {
     for ((initial, expected) in mapping) {
       val actual = mapper(initial)
-      assertEquals(initial, expected, actual)
+      Assert.assertEquals(initial, expected, actual)
     }
   }
 
@@ -55,8 +54,10 @@ internal class GitHostingUrlUtilTest {
       "HTTP://GITHUB.com/user/repo/" to URI("HTTP", null, "GITHUB.com", -1, "/user/repo", null, null),
       "HttP://GitHub.com/user/repo/" to URI("HttP", null, "GitHub.com", -1, "/user/repo", null, null),
       "git@github.com:user/repo/" to URI("https", null, "github.com", -1, "/user/repo", null, null),
-      "ssh://git@git.jetbrains.space/company/project/repository.git" to URI("ssh", "git", "git.jetbrains.space", -1, "/company/project/repository", null, null),
-      "https://git.jetbrains.space/company/project/repository.git" to URI("https", null, "git.jetbrains.space", -1, "/company/project/repository", null, null)
+      "ssh://git@git.jetbrains.space/company/project/repository.git" to URI("ssh", "git", "git.jetbrains.space", -1,
+                                                                            "/company/project/repository", null, null),
+      "https://git.jetbrains.space/company/project/repository.git" to URI("https", null, "git.jetbrains.space", -1,
+                                                                          "/company/project/repository", null, null)
     ), GitHostingUrlUtil::getUriFromRemoteUrl)
   }
 

@@ -2,7 +2,6 @@
 
 package org.jetbrains.plugins.github.extensions
 
-import com.intellij.collaboration.git.hosting.GitHostingUrlUtil.match
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.DumbProgressIndicator
@@ -10,6 +9,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.util.AuthData
 import git4idea.remote.GitHttpAuthDataProvider
+import git4idea.remote.hosting.GitHostingUrlUtil.match
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser

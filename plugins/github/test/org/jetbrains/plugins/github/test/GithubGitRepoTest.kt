@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.test
 
-import com.intellij.collaboration.git.hosting.knownRepositories
+import git4idea.remote.hosting.knownRepositories
 import com.intellij.openapi.components.service
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile

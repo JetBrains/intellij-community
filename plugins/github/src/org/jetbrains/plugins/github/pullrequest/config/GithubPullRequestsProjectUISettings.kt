@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.config
 
-import com.intellij.collaboration.git.hosting.knownRepositories
+import git4idea.remote.hosting.knownRepositories
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates

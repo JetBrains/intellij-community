@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.collaboration.async.DisposingMainScope
 import com.intellij.collaboration.auth.AccountsListener
-import com.intellij.collaboration.git.hosting.knownRepositories
+import git4idea.remote.hosting.knownRepositories
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer

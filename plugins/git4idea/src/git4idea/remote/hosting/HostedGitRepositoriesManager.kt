@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.collaboration.git.hosting
+package git4idea.remote.hosting
 
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.flow.StateFlow

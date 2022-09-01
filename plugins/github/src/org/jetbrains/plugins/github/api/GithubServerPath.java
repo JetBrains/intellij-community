@@ -2,12 +2,12 @@
 package org.jetbrains.plugins.github.api;
 
 import com.intellij.collaboration.api.ServerPath;
-import com.intellij.collaboration.git.hosting.GitHostingUrlUtil;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
+import git4idea.remote.hosting.GitHostingUrlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

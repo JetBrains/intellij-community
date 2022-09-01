@@ -7,7 +7,7 @@ import com.google.common.graph.ImmutableGraph
 import com.google.common.graph.Traverser
 import com.intellij.collaboration.async.CompletableFutureUtil
 import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
-import com.intellij.collaboration.git.GitRemoteUrlCoordinates
+import git4idea.remote.GitRemoteUrlCoordinates
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.FilePatch
 import com.intellij.openapi.diff.impl.patch.PatchReader

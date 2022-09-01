@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.util
 
-import com.intellij.collaboration.git.hosting.GitHostingUrlUtil.match
 import com.intellij.collaboration.ui.SimpleEventListener
 import com.intellij.concurrency.JobScheduler
 import com.intellij.openapi.diagnostic.Logger
@@ -14,6 +13,7 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
+import git4idea.remote.hosting.GitHostingUrlUtil.match
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.ApiStatus

@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.util
 
-import com.intellij.collaboration.git.GitRemoteUrlCoordinates
-import com.intellij.collaboration.git.hosting.HostedGitRepositoryMapping
+import git4idea.remote.GitRemoteUrlCoordinates
+import git4idea.remote.hosting.HostedGitRepositoryMapping
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitRepositoryMappingData

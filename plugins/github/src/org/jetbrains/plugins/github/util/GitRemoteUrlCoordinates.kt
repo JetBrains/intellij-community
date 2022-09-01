@@ -6,14 +6,14 @@ import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 
 @Deprecated("extracted to collab",
-            replaceWith = ReplaceWith("GitRemoteUrlCoordinates", "com.intellij.collaboration.git.GitRemoteUrlCoordinates"))
+            replaceWith = ReplaceWith("GitRemoteUrlCoordinates", "git4idea.remote.GitRemoteUrlCoordinates"))
 class GitRemoteUrlCoordinates(@NlsSafe val url: String, val remote: GitRemote, val repository: GitRepository) {
 
-  constructor(extracted: com.intellij.collaboration.git.GitRemoteUrlCoordinates) :
+  constructor(extracted: git4idea.remote.GitRemoteUrlCoordinates) :
     this(extracted.url, extracted.remote, extracted.repository)
 
-  fun toExtracted(): com.intellij.collaboration.git.GitRemoteUrlCoordinates =
-    com.intellij.collaboration.git.GitRemoteUrlCoordinates(url, remote, repository)
+  fun toExtracted(): git4idea.remote.GitRemoteUrlCoordinates =
+    git4idea.remote.GitRemoteUrlCoordinates(url, remote, repository)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

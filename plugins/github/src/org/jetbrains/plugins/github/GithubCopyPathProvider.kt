@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github
 
-import com.intellij.collaboration.git.hosting.findKnownRepositories
+import git4idea.remote.hosting.findKnownRepositories
 import com.intellij.ide.actions.DumbAwareCopyPathProvider
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor

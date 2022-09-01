@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create
 
 import com.intellij.collaboration.async.CompletableFutureUtil.completionOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
-import com.intellij.collaboration.git.hosting.knownRepositories
+import git4idea.remote.hosting.knownRepositories
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.commits.CommitsBrowserComponentBuilder
 import com.intellij.diff.chains.DiffRequestChain

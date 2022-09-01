@@ -2,15 +2,14 @@
 package org.jetbrains.plugins.github.util
 
 import com.intellij.collaboration.auth.AccountManager
-import com.intellij.collaboration.git.GitRemoteUrlCoordinates
-import com.intellij.collaboration.git.hosting.GitHostingUrlUtil
-import com.intellij.collaboration.git.hosting.GitHostingUrlUtil.match
-import com.intellij.collaboration.git.hosting.DiscoveringAuthenticatingServersStateSupplier
-import com.intellij.collaboration.git.hosting.MappingHostedGitRepositoriesManager
+import git4idea.remote.GitRemoteUrlCoordinates
+import git4idea.remote.hosting.DiscoveringAuthenticatingServersStateSupplier
+import git4idea.remote.hosting.MappingHostedGitRepositoriesManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import git4idea.remote.hosting.GitHostingUrlUtil
 import kotlinx.coroutines.future.await
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager

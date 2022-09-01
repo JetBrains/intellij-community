@@ -3,7 +3,7 @@
 package org.jetbrains.plugins.github
 
 import com.intellij.CommonBundle
-import com.intellij.collaboration.git.hosting.findKnownRepositories
+import git4idea.remote.hosting.findKnownRepositories
 import com.intellij.icons.AllIcons
 import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.actionSystem.ActionUpdateThread
