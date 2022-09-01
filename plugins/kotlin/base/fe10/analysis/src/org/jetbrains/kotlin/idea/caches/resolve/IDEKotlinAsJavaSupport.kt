@@ -7,6 +7,8 @@ import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.DecompiledLightClassesFactory
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.DecompiledLightClassesFactory.getLightClassForDecompiledClassOrObject
@@ -29,6 +31,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.PlatformModule
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.caches.lightClasses.platformMutabilityWrapper
+import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
 import org.jetbrains.kotlin.idea.caches.project.getPlatformModuleInfo
 import org.jetbrains.kotlin.idea.decompiler.navigation.SourceNavigationHelper
 import org.jetbrains.kotlin.idea.stubindex.*
@@ -146,7 +149,7 @@ class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSupport
                 }
 
                 RootKindFilter.libraryClasses.matches(project, virtualFile) -> {
-                    return getLightClassForDecompiledClassOrObject(classOrObject, project)
+                    return getOrCreateLightClassForDecompiledClassOrObject(classOrObject)
                 }
 
                 RootKindFilter.librarySources.matches(project, virtualFile) -> {
@@ -166,6 +169,16 @@ class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSupport
         }
 
         return null
+    }
+    
+    private fun getOrCreateLightClassForDecompiledClassOrObject(classOrObject: KtClassOrObject): KtLightClass? {
+        return CachedValuesManager.getCachedValue(classOrObject) {
+            val project = classOrObject.project
+            CachedValueProvider.Result.createSingleDependency(
+                getLightClassForDecompiledClassOrObject(classOrObject, project),
+                LibraryModificationTracker.getInstance(project),
+            )
+        }
     }
 
     override fun getLightClassForScript(script: KtScript): KtLightClass? {
