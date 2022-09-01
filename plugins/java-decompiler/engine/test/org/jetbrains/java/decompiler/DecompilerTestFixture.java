@@ -108,7 +108,7 @@ public class DecompilerTestFixture {
           @Override
           public FileVisitResult visitFile(Path expectedFile, BasicFileAttributes attrs) {
             Path actualFile = actual.resolve(expected.relativize(expectedFile));
-            assertThat(actualFile).usingCharset(StandardCharsets.UTF_8).hasSameTextualContentAs(expectedFile);
+            assertThat(actualFile).usingCharset(StandardCharsets.UTF_8).hasSameTextualContentAs(expectedFile, StandardCharsets.UTF_8);
             return FileVisitResult.CONTINUE;
           }
         });
@@ -118,7 +118,7 @@ public class DecompilerTestFixture {
       }
     }
     else {
-      assertThat(actual).usingCharset(StandardCharsets.UTF_8).hasSameTextualContentAs(expected);
+      assertThat(actual).usingCharset(StandardCharsets.UTF_8).hasSameTextualContentAs(expected, StandardCharsets.UTF_8);
     }
   }
 
