@@ -15,6 +15,10 @@ import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.analyzer.KotlinModificationTrackerService
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupportBase
 import org.jetbrains.kotlin.asJava.LightClassGenerationSupport
+import org.jetbrains.kotlin.asJava.classes.KtDescriptorBasedFakeLightClass
+import org.jetbrains.kotlin.asJava.classes.KtFakeLightClass
+import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.classes.*
 import org.jetbrains.kotlin.idea.caches.lightClasses.platformMutabilityWrapper
 import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
@@ -135,12 +139,8 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaMod
         return null
     }
 
-    override fun getLightClassForScript(script: KtScript): KtLightClass? {
-        if (!script.isValid) {
-            return null
-        }
-
-        return KotlinLightClassFactory.createScript(script)
+    override fun createInstanceOfLightScript(script: KtScript): KtLightClass? {
+        return LightClassGenerationSupport.getInstance(project).createUltraLightClassForScript(script)
     }
 
     override fun getScriptClasses(scriptFqName: FqName, scope: GlobalSearchScope): Collection<PsiClass> {
