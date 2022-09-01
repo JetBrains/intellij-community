@@ -55,12 +55,16 @@ public class ClientEditorManager {
   }
 
   public void editorCreated(@NotNull Editor editor) {
-    CLIENT_ID.set(editor, myClientId);
+    if (!ClientId.isLocal(myClientId)) {
+      CLIENT_ID.set(editor, myClientId);
+    }
     myEditors.add(editor);
   }
 
   public boolean editorReleased(@NotNull Editor editor) {
-    CLIENT_ID.set(editor, null);
+    if (!ClientId.isLocal(myClientId)) {
+      CLIENT_ID.set(editor, null);
+    }
     return myEditors.remove(editor);
   }
 }

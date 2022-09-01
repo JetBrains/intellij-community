@@ -14,7 +14,10 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.fileEditor.*;
-import com.intellij.openapi.fileEditor.ex.*;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
+import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -107,7 +110,9 @@ public class EditorComposite extends FileEditorComposite implements Disposable {
     for (FileEditorWithProvider editorWithProvider : myEditorsWithProviders) {
       FileEditor editor = editorWithProvider.getFileEditor();
       FileEditor.FILE_KEY.set(editor, myFile);
-      ClientFileEditorManager.assignClientId(editor, myClientId);
+      if (!ClientId.isLocal(myClientId)) {
+        ClientFileEditorManager.assignClientId(editor, myClientId);
+      }
     }
     myFileEditorManager = fileEditorManager;
     myInitialFileTimeStamp = myFile.getTimeStamp();
@@ -611,7 +616,9 @@ public class EditorComposite extends FileEditorComposite implements Disposable {
     myEditorsWithProviders.add(editorWithProvider);
 
     FileEditor.FILE_KEY.set(editor, myFile);
-    ClientFileEditorManager.assignClientId(editor, myClientId);
+    if (!ClientId.isLocal(myClientId)) {
+      ClientFileEditorManager.assignClientId(editor, myClientId);
+    }
     if (myTabbedPaneWrapper == null) {
       myTabbedPaneWrapper = createTabbedPaneWrapper(myComponent);
       myComponent.setComponent(myTabbedPaneWrapper.getComponent());
