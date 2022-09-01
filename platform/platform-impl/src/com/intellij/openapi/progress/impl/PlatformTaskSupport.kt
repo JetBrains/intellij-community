@@ -6,9 +6,7 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.impl.RawSwingDispatcher
-import com.intellij.openapi.application.impl.withModalContext
-import com.intellij.openapi.application.impl.withModalContextEDT
+import com.intellij.openapi.application.impl.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
@@ -18,6 +16,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentati
 import com.intellij.openapi.progress.util.createDialogWrapper
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
@@ -73,28 +72,29 @@ internal class PlatformTaskSupport : TaskSupport {
     cancellation: TaskCancellation,
     action: suspend CoroutineScope.() -> T,
   ): T = resetThreadContext().use {
-    runBlocking(ModalityState.current().asContextElement()) {
+    val currentModality = ModalityState.current()
+    runBlocking {
       // Enter modality without releasing the current EDT event, and without dispatching other events in the queue.
-      withModalContextEDT {
+      val blockingJob = coroutineContext.job
+      val newModalityState = (currentModality as ModalityStateEx).appendJob(blockingJob) as ModalityStateEx
+      LaterInvocator.enterModal(blockingJob, newModalityState)
+      try {
         val deferredDialog = CompletableDeferred<DialogWrapper>()
         // Dispatch EDT events in the current runBlocking context.
         val processEventQueueJob = processEventQueueConsumingUnrelatedInputEvents(deferredDialog)
-        try {
-          // Main job is not a child of the current coroutine to prevent cancellation of the current coroutine by main job failure.
-          @OptIn(DelicateCoroutinesApi::class)
-          GlobalScope.async(coroutineContext + Dispatchers.Default) {
-            withModalIndicator(owner, title, cancellation, deferredDialog, action)
-          }.await()
+        // Main job is not a child of the current coroutine to prevent cancellation of the current coroutine by main job failure.
+        @OptIn(DelicateCoroutinesApi::class)
+        val mainJob = GlobalScope.async(Dispatchers.Default + newModalityState.asContextElement()) {
+          withModalIndicator(owner, title, cancellation, deferredDialog, action)
         }
-        finally {
-          // `runBlocking` resumed this coroutine at this point
-          // => `processEventQueueJob` is suspended in `yield()`.
-
-          // The processing job must be active until the very end.
-          check(processEventQueueJob.isActive)
-          // Stop processing the events just before leaving the modality.
-          processEventQueueJob.cancel()
+        mainJob.invokeOnCompletion {
+          processEventQueueJob.cancel() // Stop processing the events when the task (with its subtasks) is completed.
+          SwingUtilities.invokeLater(EmptyRunnable.INSTANCE) // Unblock `getNextEvent()`
         }
+        mainJob.await()
+      }
+      finally {
+        LaterInvocator.leaveModal(blockingJob)
       }
     }
   }
