@@ -4,7 +4,9 @@ import com.intellij.configurationStore.ComponentSerializationUtil
 import com.intellij.ide.plugins.IdeaPluginDependency
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.Disposer
 import com.intellij.settingsSync.plugins.PluginManagerProxy
 import com.intellij.settingsSync.plugins.SettingsSyncPluginInstaller
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
@@ -18,10 +20,12 @@ import java.io.StringReader
 import java.io.StringWriter
 import java.nio.file.Path
 import java.util.*
+import java.util.concurrent.CopyOnWriteArrayList
 
 class TestPluginManager : PluginManagerProxy {
   val installer = TestPluginInstaller()
   private val ownPluginDescriptors = HashMap<PluginId, IdeaPluginDescriptor>()
+  private val disabledPluginListeners = CopyOnWriteArrayList<Runnable>()
 
   override fun getPlugins(): Array<IdeaPluginDescriptor> {
     val descriptors = arrayListOf<IdeaPluginDescriptor>()
@@ -40,6 +44,20 @@ class TestPluginManager : PluginManagerProxy {
     val descriptor = findPlugin(pluginId)
     assert(descriptor is TestPluginDescriptor)
     descriptor?.isEnabled = false
+    for (disabledPluginListener in disabledPluginListeners) {
+      disabledPluginListener.run()
+    }
+  }
+
+  override fun getDisabledPluginIds(): Set<PluginId> {
+    return ownPluginDescriptors.filter { (_, descriptor) -> !descriptor.isEnabled }.keys
+  }
+
+  override fun addDisablePluginListener(disabledListener: Runnable, parentDisposable: Disposable) {
+    disabledPluginListeners.add(disabledListener)
+    Disposer.register(parentDisposable, Disposable {
+      disabledPluginListeners.remove(disabledListener)
+    })
   }
 
   override fun findPlugin(pluginId: PluginId): IdeaPluginDescriptor? {

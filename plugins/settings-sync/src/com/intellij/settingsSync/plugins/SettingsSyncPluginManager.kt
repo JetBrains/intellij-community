@@ -1,6 +1,9 @@
 package com.intellij.settingsSync.plugins
 
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.DisabledPluginsState
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginStateListener
+import com.intellij.ide.plugins.PluginStateManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
@@ -50,14 +53,14 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
   }
 
   private val disabledListener = Runnable {
-    val disabledIds = DisabledPluginsState.getDisabledIds()
+    val disabledIds = PluginManagerProxy.getInstance().getDisabledPluginIds()
     val disabledIdStrings = HashSet<String>()
     synchronized(LOCK) {
       disabledIds.forEach {
         LOG.info("Plugin ${it.idString} is disabled.")
         disabledIdStrings.add(it.idString)
         if (!state.plugins.containsKey(it.idString)) {
-          PluginManagerCore.getPlugin(it)?.let { descriptor ->
+          PluginManagerProxy.getInstance().findPlugin(it)?.let { descriptor ->
             if (isPluginSyncEnabled(
                 descriptor.pluginId.idString, descriptor.isBundled, SettingsSyncPluginCategoryFinder.getPluginCategory(descriptor))) {
               savePluginState(descriptor)
@@ -66,19 +69,19 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
         }
       }
       val droppedKeys = ArrayList<String>()
-      state.plugins.forEach { entry ->
-        val pluginId = PluginId.getId(entry.key)
-        PluginManagerCore.findPlugin(pluginId)?.let {
-          if (disabledIdStrings.contains(entry.key)) {
-            entry.value.isEnabled = false
+      state.plugins.forEach { (id, pluginData) ->
+        val pluginId = PluginId.getId(id)
+        PluginManagerProxy.getInstance().findPlugin(pluginId)?.let {
+          if (disabledIdStrings.contains(id)) {
+            pluginData.isEnabled = false
             LOG.info("${pluginId.idString} state changed to disabled")
           }
           else {
             if (it.isBundled) {
-              droppedKeys.add(entry.key)
+              droppedKeys.add(id)
             }
             else {
-              entry.value.isEnabled = true
+              pluginData.isEnabled = true
               LOG.info("${pluginId.idString} state changed to enabled")
             }
           }
@@ -93,7 +96,7 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
 
   init {
     PluginStateManager.addStateListener(pluginStateListener)
-    DisabledPluginsState.addDisablePluginListener(disabledListener)
+    PluginManagerProxy.getInstance().addDisablePluginListener(disabledListener, this)
   }
 
   private var state = SyncPluginsState()
@@ -228,7 +231,6 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
   fun getPluginStateListener() = pluginStateListener
 
   override fun dispose() {
-    DisabledPluginsState.removeDisablePluginListener(disabledListener)
     PluginStateManager.removeStateListener(pluginStateListener)
   }
 }

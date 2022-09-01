@@ -1,6 +1,7 @@
 package com.intellij.settingsSync.plugins
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.PluginId
 
@@ -15,4 +16,7 @@ interface PluginManagerProxy {
   fun findPlugin(pluginId: PluginId): IdeaPluginDescriptor?
 
   fun createInstaller(): SettingsSyncPluginInstaller
+
+  fun addDisablePluginListener(disabledListener: Runnable, parentDisposable: Disposable)
+  fun getDisabledPluginIds(): Set<PluginId>
 }
