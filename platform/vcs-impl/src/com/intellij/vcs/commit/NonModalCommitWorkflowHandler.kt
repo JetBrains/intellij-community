@@ -17,8 +17,6 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.DumbModeListener
 import com.intellij.openapi.project.DumbService.isDumb
@@ -317,28 +315,13 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
         return@asyncSession CommitChecksResult.Passed
       }
 
-      runWithProgress(isOnlyRunCommitChecks) { indicator ->
-        val problem = workflow.runBackgroundBeforeCommitChecks(sessionInfo, indicator)
+      ui.commitProgressUi.runWithProgress(isOnlyRunCommitChecks) {
+        val problem = workflow.runBackgroundBeforeCommitChecks(sessionInfo)
         handleCommitProblem(problem, isOnlyRunCommitChecks, commitInfo)
       }
     }
 
     return true
-  }
-
-  private suspend fun <T> runWithProgress(isOnlyRunCommitChecks: Boolean, task: suspend (ProgressIndicator) -> T): T {
-    val context = currentCoroutineContext()
-    val indicator = ui.commitProgressUi.startProgress(isOnlyRunCommitChecks)
-    indicator.addStateDelegate(object : AbstractProgressIndicatorExBase() {
-      override fun cancel() = context.cancel() // cancel coroutine
-    })
-    try {
-      indicator.start()
-      return task(indicator)
-    }
-    finally {
-      indicator.stop()
-    }
   }
 
   private fun handleCommitProblem(problem: CommitProblem?,

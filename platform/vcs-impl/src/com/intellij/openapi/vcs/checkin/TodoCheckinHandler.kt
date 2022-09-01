@@ -4,13 +4,14 @@ package com.intellij.openapi.vcs.checkin
 import com.intellij.CommonBundle.getCancelButtonText
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.todo.*
-import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.ProgressSink
+import com.intellij.openapi.progress.asContextElement
+import com.intellij.openapi.progress.progressSink
+import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.JBPopupMenu
@@ -19,7 +20,7 @@ import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNoCancel
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Messages.YesNoCancelResult
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.NlsContexts.DialogMessage
+import com.intellij.openapi.util.NlsContexts.*
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsConfiguration
@@ -39,6 +40,9 @@ import com.intellij.util.ui.UIUtil.getWarningIcon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.swing.JComponent
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.coroutineContext
 
 class TodoCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler = TodoCheckinHandler(panel)
@@ -65,17 +69,17 @@ class TodoCheckinHandler(private val commitPanel: CheckinProjectPanel) : Checkin
 
   override fun isEnabled(): Boolean = settings.CHECK_NEW_TODO
 
-  override suspend fun runCheck(indicator: ProgressIndicator): TodoCommitProblem? {
-    indicator.text = message("progress.text.checking.for.todo")
+  override suspend fun runCheck(): TodoCommitProblem? {
+    val sink = coroutineContext.progressSink
+    sink?.text(message("progress.text.checking.for.todo"))
 
     val changes = commitPanel.selectedChanges
     val worker = TodoCheckinHandlerWorker(project, changes, todoFilter)
 
-    withContext(Dispatchers.Default) {
-      ProgressManager.getInstance().executeProcessUnderProgress(
-        { worker.execute() },
-        TextToText2Indicator(indicator)
-      )
+    withContext(Dispatchers.Default + textToDetailsSinkContext(sink)) {
+      runUnderIndicator {
+        worker.execute()
+      }
     }
 
     val noTodo = worker.inOneList().isEmpty()
@@ -159,9 +163,24 @@ class TodoCheckinHandler(private val commitPanel: CheckinProjectPanel) : Checkin
   }
 }
 
-internal class TextToText2Indicator(indicator: ProgressIndicator) : DelegatingProgressIndicator(indicator) {
-  override fun setText(text: String?) = super.setText2(text)
-  override fun setText2(text: String?) = Unit
+internal fun textToDetailsSinkContext(sink: ProgressSink?): CoroutineContext {
+  if (sink == null) {
+    return EmptyCoroutineContext
+  }
+  else {
+    return TextToDetailsProgressSink(sink).asContextElement()
+  }
+}
+
+internal class TextToDetailsProgressSink(private val original: ProgressSink) : ProgressSink {
+
+  override fun update(text: @ProgressText String?, details: @ProgressDetails String?, fraction: Double?) {
+    original.update(
+      text = null,
+      details = text, // incoming text will be shown as details in the original sink
+      fraction = fraction,
+    )
+  }
 }
 
 private fun confirmCommitWithSkippedFiles(worker: TodoCheckinHandlerWorker, @NlsContexts.Button commitActionText: String) =

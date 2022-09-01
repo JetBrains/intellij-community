@@ -2,15 +2,15 @@
 package com.intellij.vcs.commit
 
 import com.intellij.CommonBundle.getCancelButtonText
-import com.intellij.ide.impl.runBlockingUnderModalProgress
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.progressSink
+import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -30,11 +30,11 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil.newUnmodifiableList
 import com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptySet
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
+import java.lang.Runnable
 import java.util.*
+import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
@@ -164,11 +164,10 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     commitCustomEventDispatcher.addListener(listener, parent)
 
   fun executeSession(sessionInfo: CommitSessionInfo, commitInfo: CommitInfo): Boolean {
-    return runBlockingUnderModalProgress(message("commit.checks.on.commit.progress.text"), project) {
-      val indicator = ProgressManager.getGlobalProgressIndicator()!!
+    return runBlockingModal(project, message("commit.checks.on.commit.progress.text")) {
       withContext(Dispatchers.EDT) {
         fireBeforeCommitChecksStarted(sessionInfo)
-        val result = runModalBeforeCommitChecks(sessionInfo, commitInfo, indicator)
+        val result = runModalBeforeCommitChecks(sessionInfo, commitInfo)
         fireBeforeCommitChecksEnded(sessionInfo, result)
 
         if (result.shouldCommit) {
@@ -202,16 +201,14 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     eventDispatcher.multicaster.beforeCommitChecksEnded(sessionInfo, result)
 
   private suspend fun runModalBeforeCommitChecks(sessionInfo: CommitSessionInfo,
-                                                 commitInfo: CommitInfo,
-                                                 indicator: ProgressIndicator): CommitChecksResult {
+                                                 commitInfo: CommitInfo): CommitChecksResult {
     return PartialChangesUtil.underChangeList(project, getBeforeCommitChecksChangelist()) {
-      runCommitHandlers(sessionInfo, commitInfo, indicator)
+      runCommitHandlers(sessionInfo, commitInfo)
     }
   }
 
   private suspend fun runCommitHandlers(sessionInfo: CommitSessionInfo,
-                                        commitInfo: CommitInfo,
-                                        indicator: ProgressIndicator): CommitChecksResult {
+                                        commitInfo: CommitInfo): CommitChecksResult {
     try {
       val handlers = commitHandlers
       val commitChecks = handlers
@@ -222,19 +219,19 @@ abstract class AbstractCommitWorkflow(val project: Project) {
         return CommitChecksResult.Cancelled
       }
 
-      runModalCommitChecks(project, commitInfo, commitChecks[CommitCheck.ExecutionOrder.EARLY], indicator)?.let { return it }
+      runModalCommitChecks(project, commitInfo, commitChecks[CommitCheck.ExecutionOrder.EARLY])?.let { return it }
 
       val metaHandlers = handlers.filterIsInstance<CheckinMetaHandler>()
       runMetaHandlers(metaHandlers)
 
-      runModalCommitChecks(project, commitInfo, commitChecks[CommitCheck.ExecutionOrder.MODIFICATION], indicator)?.let { return it }
+      runModalCommitChecks(project, commitInfo, commitChecks[CommitCheck.ExecutionOrder.MODIFICATION])?.let { return it }
       FileDocumentManager.getInstance().saveAllDocuments()
 
-      runModalCommitChecks(project, commitInfo, commitChecks[CommitCheck.ExecutionOrder.LATE], indicator)?.let { return it }
+      runModalCommitChecks(project, commitInfo, commitChecks[CommitCheck.ExecutionOrder.LATE])?.let { return it }
 
       return CommitChecksResult.Passed
     }
-    catch (e: ProcessCanceledException) {
+    catch (e: CancellationException) {
       return CommitChecksResult.Cancelled
     }
     catch (e: Throwable) {
@@ -322,9 +319,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       }
     }
 
-    suspend fun runCommitCheck(project: Project,
-                               commitCheck: CommitCheck,
-                               indicator: ProgressIndicator): CommitProblem? {
+    suspend fun runCommitCheck(project: Project, commitCheck: CommitCheck): CommitProblem? {
       if (!commitCheck.isEnabled()) {
         LOG.debug("Commit check disabled $commitCheck")
         return null
@@ -335,30 +330,31 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       }
 
       LOG.debug("Running commit check $commitCheck")
-      indicator.checkCanceled()
-      indicator.text = ""
-      indicator.text2 = ""
+      val ctx = coroutineContext
+      ctx.ensureActive()
+      ctx.progressSink?.update(text = "", details = "")
 
-      return commitCheck.runCheck(indicator)
+      return commitCheck.runCheck()
     }
 
     private suspend fun runModalCommitChecks(project: Project,
                                              commitInfo: CommitInfo,
-                                             commitChecks: List<CommitCheck>?,
-                                             indicator: ProgressIndicator): CommitChecksResult? {
+                                             commitChecks: List<CommitCheck>?): CommitChecksResult? {
       for (commitCheck in commitChecks.orEmpty()) {
         try {
-          val problem = runCommitCheck(project, commitCheck, indicator)
+          val problem = runCommitCheck(project, commitCheck)
           if (problem == null) continue
 
-          val result = problem.showModalSolution(project, commitInfo)
+          val result = blockingContext {
+            problem.showModalSolution(project, commitInfo)
+          }
           return when (result) {
             CheckinHandler.ReturnResult.COMMIT -> continue
             CheckinHandler.ReturnResult.CANCEL -> CommitChecksResult.Failed()
             CheckinHandler.ReturnResult.CLOSE_WINDOW -> CommitChecksResult.Failed(toCloseWindow = true)
           }
         }
-        catch (e: ProcessCanceledException) {
+        catch (e: CancellationException) {
           LOG.debug("CheckinHandler cancelled $commitCheck")
           throw e
         }
@@ -408,8 +404,10 @@ private class ProxyCommitCheck(private val checkinHandler: CheckinHandler,
 
   override fun isEnabled(): Boolean = checkinHandler.acceptExecutor(sessionInfo.executor)
 
-  override suspend fun runCheck(indicator: ProgressIndicator): CommitProblem? {
-    val result = checkinHandler.beforeCheckin(sessionInfo.executor, commitContext.additionalDataConsumer)
+  override suspend fun runCheck(): CommitProblem? {
+    val result = blockingContext {
+      checkinHandler.beforeCheckin(sessionInfo.executor, commitContext.additionalDataConsumer)
+    }
     if (result == null || result == CheckinHandler.ReturnResult.COMMIT) return null
     return UnknownCommitProblem(result)
   }

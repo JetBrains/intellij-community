@@ -14,11 +14,11 @@ import com.intellij.lang.LangBundle
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.CommandProcessorEx
 import com.intellij.openapi.command.UndoConfirmationPolicy
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.util.ProgressWrapper
+import com.intellij.openapi.progress.ProgressSink
+import com.intellij.openapi.progress.progressSink
+import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsConfiguration
@@ -30,6 +30,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.util.SequentialModalProgressTask
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.coroutineContext
 
 class CodeCleanupCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler = CodeCleanupCheckinHandler(panel)
@@ -53,29 +54,28 @@ private class CodeCleanupCheckinHandler(private val panel: CheckinProjectPanel) 
 
   override fun isEnabled(): Boolean = settings.CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT
 
-  override suspend fun runCheck(indicator: ProgressIndicator): CommitProblem? {
-    indicator.text = message("progress.text.inspecting.code")
-    val cleanupProblems = findProblems(indicator)
+  override suspend fun runCheck(): CommitProblem? {
+    val sink = coroutineContext.progressSink
+    sink?.text(message("progress.text.inspecting.code"))
+    val cleanupProblems = findProblems()
 
-    indicator.text = message("progress.text.applying.fixes")
-    indicator.text2 = ""
-    applyFixes(cleanupProblems, indicator)
+    sink?.text(message("progress.text.applying.fixes"))
+    sink?.details("")
+    applyFixes(cleanupProblems)
 
     return null
   }
 
-  private suspend fun findProblems(indicator: ProgressIndicator): CleanupProblems {
+  private suspend fun findProblems(): CleanupProblems {
     val files = filterOutGeneratedAndExcludedFiles(panel.virtualFiles, project)
     val globalContext = InspectionManager.getInstance(project).createNewGlobalContext() as GlobalInspectionContextImpl
     val profile = getProfile()
     val scope = AnalysisScope(project, files)
-    val wrapper = TextToText2Indicator(ProgressWrapper.wrap(indicator))
-
-    return withContext(Dispatchers.Default) {
-      ProgressManager.getInstance().runProcess(
-        Computable { globalContext.findProblems(scope, profile, wrapper) { true } },
-        wrapper
-      )
+    return withContext(Dispatchers.Default + textToDetailsSinkContext(coroutineContext.progressSink)) {
+      runUnderIndicator {
+        val indicator = ProgressManager.getGlobalProgressIndicator()
+        globalContext.findProblems(scope, profile, indicator) { true }
+      }
     }
   }
 
@@ -90,7 +90,7 @@ private class CodeCleanupCheckinHandler(private val panel: CheckinProjectPanel) 
     return InspectionProjectProfileManager.getInstance(project).currentProfile
   }
 
-  private suspend fun applyFixes(cleanupProblems: CleanupProblems, indicator: ProgressIndicator) {
+  private suspend fun applyFixes(cleanupProblems: CleanupProblems) {
     if (cleanupProblems.files.isEmpty()) return
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(cleanupProblems.files)) return
 
@@ -98,12 +98,16 @@ private class CodeCleanupCheckinHandler(private val panel: CheckinProjectPanel) 
     commandProcessor.executeCommand {
       if (cleanupProblems.isGlobalScope) commandProcessor.markCurrentCommandAsGlobal(project)
 
+      val sink = coroutineContext.progressSink
       val runner = SequentialModalProgressTask(project, "", true)
       runner.setMinIterationTime(200)
-      runner.setTask(ApplyFixesTask(project, cleanupProblems.problemDescriptors, indicator))
+      runner.setTask(ApplyFixesTask(project, cleanupProblems.problemDescriptors, sink))
 
-      withContext(Dispatchers.IO) {
-        runner.doRun(NoTextIndicator(indicator))
+      withContext(Dispatchers.IO + noTextSinkContext(sink)) {
+        runUnderIndicator {
+          // TODO get rid of SequentialModalProgressTask
+          runner.doRun(ProgressManager.getGlobalProgressIndicator())
+        }
       }
     }
   }
@@ -119,10 +123,10 @@ private class CodeCleanupCheckinHandler(private val panel: CheckinProjectPanel) 
   }
 }
 
-private class ApplyFixesTask(project: Project, descriptors: List<CommonProblemDescriptor>, private val indicator: ProgressIndicator) :
+private class ApplyFixesTask(project: Project, descriptors: List<CommonProblemDescriptor>, private val sink: ProgressSink?) :
   PerformFixesTask(project, descriptors, null) {
 
   override fun beforeProcessing(descriptor: CommonProblemDescriptor) {
-    indicator.text2 = getPresentableText(descriptor)
+    sink?.update(details = getPresentableText(descriptor))
   }
 }

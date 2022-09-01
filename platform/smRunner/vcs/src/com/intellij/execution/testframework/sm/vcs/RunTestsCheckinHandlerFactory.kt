@@ -31,6 +31,8 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProgressSink
+import com.intellij.openapi.progress.progressSink
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.JBPopupMenu
@@ -52,6 +54,7 @@ import com.intellij.vcs.commit.NullCommitWorkflowHandler
 import com.intellij.vcs.commit.isNonModalCommit
 import kotlinx.coroutines.*
 import javax.swing.JComponent
+import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume
 
 private val LOG = logger<RunTestsCheckinHandlerFactory>()
@@ -116,19 +119,19 @@ data class FailureDescription(val historyFileName: String, val failed: Int, val 
 private fun createCommitProblem(descriptions: List<FailureDescription>): FailedTestCommitProblem? =
   if (descriptions.isNotEmpty()) FailedTestCommitProblem(descriptions) else null
 
-class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel) : BaseCommitCheck() {
+class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel) : CheckinHandler(), CommitCheck {
   private val project: Project get() = commitPanel.project
   private val settings: TestsVcsConfiguration get() = project.getService(TestsVcsConfiguration::class.java)
 
   override fun isEnabled(): Boolean = settings.myState.enabled
 
-  override suspend fun doRunCheck(): FailedTestCommitProblem? {
+  override suspend fun runCheck(): FailedTestCommitProblem? {
     val configurationBean = settings.myState.configuration ?: return null
     val configurationSettings = RunManager.getInstance(project).findConfigurationByTypeAndName(configurationBean.configurationId, configurationBean.name)
     if (configurationSettings == null) {
       return createCommitProblem(listOf(FailureDescription("", 0, 0, configurationSettings, configurationBean.name)))
     }
-    progress(name = SmRunnerBundle.message("progress.text.running.tests", configurationSettings.name))
+    coroutineContext.progressSink?.text(SmRunnerBundle.message("progress.text.running.tests", configurationSettings.name))
 
     return withContext(Dispatchers.IO) {
       val problems = ArrayList<FailureDescription>()
@@ -157,6 +160,7 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
     val executionTarget = ExecutionTargetManager.getInstance(project).findTarget(configurationSettings.configuration)
     val environment = environmentBuilder.target(executionTarget).build()
     environment.setHeadless()
+    val sink = coroutineContext.progressSink
     val formDescriptor = suspendCancellableCoroutine<TestResultsFormDescriptor?> { continuation ->
       val messageBus = project.messageBus
       messageBus.connect(environment).subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
@@ -170,7 +174,7 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
       })
       ProgramRunnerUtil.executeConfigurationAsync(environment, false, true) {
         if (it != null) {
-          onProcessStarted(it, continuation)
+          onProcessStarted(sink, it, continuation)
         }
       }
     } ?: return
@@ -187,7 +191,7 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
     disposeConsole(formDescriptor.executionConsole)
   }
 
-  private fun onProcessStarted(descriptor: RunContentDescriptor, continuation: CancellableContinuation<TestResultsFormDescriptor?>) {
+  private fun onProcessStarted(sink: ProgressSink?, descriptor: RunContentDescriptor, continuation: CancellableContinuation<TestResultsFormDescriptor?>) {
     val handler = descriptor.processHandler
     if (handler != null) {
       val executionConsole = descriptor.console
@@ -198,9 +202,11 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
       }
 
       handler.addProcessListener(processListener)
-      resultsForm?.addEventsListener(object : TestResultsViewer.EventsListener {
-        override fun onTestNodeAdded(sender: TestResultsViewer, test: SMTestProxy) = progress(details = test.getFullName())
-      })
+      if (sink != null) {
+        resultsForm?.addEventsListener(object : TestResultsViewer.EventsListener {
+          override fun onTestNodeAdded(sender: TestResultsViewer, test: SMTestProxy) = sink.details(test.getFullName())
+        })
+      }
 
       continuation.invokeOnCancellation {
         handler.removeProcessListener(processListener)

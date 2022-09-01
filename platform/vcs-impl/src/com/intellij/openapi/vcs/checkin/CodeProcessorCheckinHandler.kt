@@ -2,16 +2,19 @@
 package com.intellij.openapi.vcs.checkin
 
 import com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor
-import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsContexts.ProgressDetails
+import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsConfiguration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.coroutineContext
 
 /**
  * Should only be used in Commit Tool Window. Commit Dialog is not supported.
@@ -32,18 +35,19 @@ abstract class CodeProcessorCheckinHandler(
 
   override fun getExecutionOrder(): CommitCheck.ExecutionOrder = CommitCheck.ExecutionOrder.MODIFICATION
 
-  override suspend fun runCheck(indicator: ProgressIndicator): CommitProblem? {
-    getProgressMessage()?.let { indicator.text = it }
+  override suspend fun runCheck(): CommitProblem? {
+    val sink = coroutineContext.progressSink
+    getProgressMessage()?.let {
+      sink?.text(it)
+    }
 
     val processor = createCodeProcessor()
 
-    withContext(Dispatchers.Default) {
-      val noTextIndicator = NoTextIndicator(indicator)
-
-      ProgressManager.getInstance().executeProcessUnderProgress(
-        { processor.processFilesUnderProgress(noTextIndicator) },
-        noTextIndicator
-      )
+    withContext(Dispatchers.Default + noTextSinkContext(sink)) {
+      // TODO suspending code processor
+      runUnderIndicator {
+        processor.processFilesUnderProgress(ProgressManager.getGlobalProgressIndicator())
+      }
     }
     FileDocumentManager.getInstance().saveAllDocuments()
 
@@ -51,6 +55,18 @@ abstract class CodeProcessorCheckinHandler(
   }
 }
 
-internal class NoTextIndicator(indicator: ProgressIndicator) : DelegatingProgressIndicator(indicator) {
-  override fun setText(text: String?) = Unit
+internal fun noTextSinkContext(sink: ProgressSink?): CoroutineContext {
+  if (sink == null) {
+    return EmptyCoroutineContext
+  }
+  else {
+    return NoTextProgressSink(sink).asContextElement()
+  }
+}
+
+internal class NoTextProgressSink(private val sink: ProgressSink) : ProgressSink {
+
+  override fun update(text: @ProgressText String?, details: @ProgressDetails String?, fraction: Double?) {
+    sink.update(text = null, details, fraction)
+  }
 }

@@ -11,10 +11,15 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.nls.NlsMessages.formatAndList
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.ProgressSink
+import com.intellij.openapi.progress.progressSink
+import com.intellij.openapi.progress.runUnderIndicator
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.JBPopupMenu
@@ -36,7 +41,6 @@ import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.filterOutGeneratedAnd
 import com.intellij.openapi.vcs.checkin.CodeAnalysisBeforeCheckinHandler.Companion.processFoundCodeSmells
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiDocumentManager
@@ -47,14 +51,15 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.containers.ConcurrentFactoryMap
-import com.intellij.util.progress.DelegatingProgressIndicatorEx
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil.getWarningIcon
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 import javax.swing.JComponent
+import kotlin.coroutines.coroutineContext
 import kotlin.reflect.KMutableProperty0
 
 class CodeAnalysisCheckinHandlerFactory : CheckinHandlerFactory() {
@@ -95,18 +100,22 @@ class CodeAnalysisBeforeCheckinHandler(private val commitPanel: CheckinProjectPa
 
   override fun isEnabled(): Boolean = settings.CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT
 
-  override suspend fun runCheck(indicator: ProgressIndicator): CodeAnalysisCommitProblem? {
-    indicator.text = message("progress.text.analyzing.code")
+  override suspend fun runCheck(): CodeAnalysisCommitProblem? {
+    val sink = coroutineContext.progressSink
+    sink?.text(message("progress.text.analyzing.code"))
 
     val files = filterOutGeneratedAndExcludedFiles(commitPanel.virtualFiles, project)
     PsiDocumentManager.getInstance(project).commitAllDocuments()
 
     lateinit var codeSmells: List<CodeSmellInfo>
+    val text2DetailsSink = sink?.let(::TextToDetailsProgressSink)
     withContext(Dispatchers.Default) {
-      ProgressManager.getInstance().executeProcessUnderProgress(
-        { codeSmells = findCodeSmells(files) },
-        TextToText2IndicatorEx(indicator as ProgressIndicatorEx) // [findCodeSmells] requires [ProgressIndicatorEx] set for thread
-      )
+      // [findCodeSmells] requires [ProgressIndicatorEx] set for thread
+      val progressIndicatorEx = ProgressSinkIndicatorEx(text2DetailsSink, coroutineContext.contextModality() ?: ModalityState.NON_MODAL)
+      runUnderIndicator(coroutineContext.job, progressIndicatorEx) {
+        // TODO suspending [findCodeSmells]
+        codeSmells = findCodeSmells(files)
+      }
     }
     return if (codeSmells.isNotEmpty()) CodeAnalysisCommitProblem(codeSmells) else null
   }
@@ -252,11 +261,6 @@ class ProfileChooser(commitPanel: CheckinProjectPanel,
   }
 }
 
-private class TextToText2IndicatorEx(indicator: ProgressIndicatorEx) : DelegatingProgressIndicatorEx(indicator) {
-  override fun setText(text: String?) = super.setText2(text)
-  override fun setText2(text: String?) = Unit
-}
-
 @YesNoCancelResult
 private fun askReviewCommitCancel(project: Project, codeSmells: List<CodeSmellInfo>, @NlsContexts.Button commitActionText: String): Int =
   yesNoCancel(message("code.smells.error.messages.tab.name"), getDescription(codeSmells))
@@ -278,4 +282,26 @@ private fun getDescription(codeSmells: List<CodeSmellInfo>): String {
   }
 
   return message("before.commit.files.contain.code.smells.edit.them.confirm.text", virtualFiles.size, errorCount, warningCount)
+}
+
+private class ProgressSinkIndicatorEx(
+  private val sink: ProgressSink?,
+  private val contextModality: ModalityState,
+) : AbstractProgressIndicatorExBase() {
+
+  override fun getModalityState(): ModalityState {
+    return contextModality
+  }
+
+  override fun setText(text: String?) {
+    sink?.update(text = text)
+  }
+
+  override fun setText2(text: String?) {
+    sink?.update(details = text)
+  }
+
+  override fun setFraction(fraction: Double) {
+    sink?.update(fraction = fraction)
+  }
 }

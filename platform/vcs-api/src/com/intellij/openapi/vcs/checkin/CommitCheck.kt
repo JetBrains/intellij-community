@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.checkin
 
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.PossiblyDumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -43,11 +42,12 @@ interface CommitCheck : PossiblyDumbAware {
    * Consider using explicit [kotlinx.coroutines.Dispatchers.Default] context for potentially long operations,
    * that can be performed on pooled thread.
    *
-   * @param indicator indicator to check for cancellation and report running progress to via [ProgressIndicator.setText] and [ProgressIndicator.setText2].
-   * @return commit problem found by the commit check or `null` if no problems found
+   * Use [com.intellij.openapi.progress.progressSink] to report progress state.
+   *
+   * @return a commit problem found by the commit check or `null` if no problems found
    */
   @RequiresEdt
-  suspend fun runCheck(indicator: ProgressIndicator): CommitProblem?
+  suspend fun runCheck(): CommitProblem?
 
   enum class ExecutionOrder {
     /**

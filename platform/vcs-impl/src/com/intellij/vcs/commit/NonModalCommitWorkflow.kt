@@ -3,13 +3,12 @@ package com.intellij.vcs.commit
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.checkin.CheckinMetaHandler
 import com.intellij.openapi.vcs.checkin.CommitCheck
 import com.intellij.openapi.vcs.checkin.CommitProblem
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -40,48 +39,44 @@ abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow
     }
   }
 
-  suspend fun runBackgroundBeforeCommitChecks(sessionInfo: CommitSessionInfo,
-                                              indicator: ProgressIndicator): CommitProblem? {
+  suspend fun runBackgroundBeforeCommitChecks(sessionInfo: CommitSessionInfo): CommitProblem? {
     return PartialChangesUtil.underChangeList(project, getBeforeCommitChecksChangelist()) {
-      runCommitHandlers(sessionInfo, indicator)
+      runCommitHandlers(sessionInfo)
     }
   }
 
-  private suspend fun runCommitHandlers(sessionInfo: CommitSessionInfo,
-                                        indicator: ProgressIndicator): CommitProblem? {
+  private suspend fun runCommitHandlers(sessionInfo: CommitSessionInfo): CommitProblem? {
     try {
       val handlers = commitHandlers
       val commitChecks = handlers
         .map { it.asCommitCheck(sessionInfo, commitContext) }
         .groupBy { it.getExecutionOrder() }
 
-      runCommitChecks(project, commitChecks[CommitCheck.ExecutionOrder.EARLY], indicator)?.let { return it }
+      runCommitChecks(project, commitChecks[CommitCheck.ExecutionOrder.EARLY])?.let { return it }
 
       runMetaHandlers(handlers.filterIsInstance<CheckinMetaHandler>())
 
-      runCommitChecks(project, commitChecks[CommitCheck.ExecutionOrder.MODIFICATION], indicator)?.let { return it }
+      runCommitChecks(project, commitChecks[CommitCheck.ExecutionOrder.MODIFICATION])?.let { return it }
       FileDocumentManager.getInstance().saveAllDocuments()
 
-      runCommitChecks(project, commitChecks[CommitCheck.ExecutionOrder.LATE], indicator)?.let { return it }
+      runCommitChecks(project, commitChecks[CommitCheck.ExecutionOrder.LATE])?.let { return it }
 
       return null // checks passed
     }
-    catch (e: Throwable) {
+    catch (ce: CancellationException) {
       // Do not report error on cancellation
-      // DO report error if someone threw PCE for no reason, ex: IDEA-234006
-      if (e is ProcessCanceledException && indicator.isCanceled) throw e
-
+      throw ce
+    }
+    catch (e: Throwable) {
       LOG.warn(Throwable(e))
       return CommitProblem.createError(e)
     }
   }
 
   companion object {
-    private suspend fun runCommitChecks(project: Project,
-                                        commitChecks: List<CommitCheck>?,
-                                        indicator: ProgressIndicator): CommitProblem? {
+    private suspend fun runCommitChecks(project: Project, commitChecks: List<CommitCheck>?): CommitProblem? {
       for (commitCheck in commitChecks.orEmpty()) {
-        val problem = runCommitCheck(project, commitCheck, indicator)
+        val problem = runCommitCheck(project, commitCheck)
         if (problem != null) return problem
       }
       return null
