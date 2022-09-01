@@ -749,9 +749,9 @@ public final class IndexOperationFUS {
 
             FIELD_LOOKUP_DURATION_MEAN.with(recordedValuesHistogram.getMean()),
 
-            FIELD_LOOKUP_DURATION_90P.with((int)recordedValuesHistogram.getValueAtPercentile(0.90)),
-            FIELD_LOOKUP_DURATION_95P.with((int)recordedValuesHistogram.getValueAtPercentile(0.95)),
-            FIELD_LOOKUP_DURATION_99P.with((int)recordedValuesHistogram.getValueAtPercentile(0.99)),
+            FIELD_LOOKUP_DURATION_90P.with((int)recordedValuesHistogram.getValueAtPercentile(90)),
+            FIELD_LOOKUP_DURATION_95P.with((int)recordedValuesHistogram.getValueAtPercentile(95)),
+            FIELD_LOOKUP_DURATION_99P.with((int)recordedValuesHistogram.getValueAtPercentile(99)),
             FIELD_LOOKUP_DURATION_MAX.with((int)recordedValuesHistogram.getMaxValue()
             )
           );
@@ -768,9 +768,9 @@ public final class IndexOperationFUS {
 
             FIELD_LOOKUP_DURATION_MEAN.with(recordedValuesHistogram.getMean()),
 
-            FIELD_LOOKUP_DURATION_90P.with((int)recordedValuesHistogram.getValueAtPercentile(0.90)),
-            FIELD_LOOKUP_DURATION_95P.with((int)recordedValuesHistogram.getValueAtPercentile(0.95)),
-            FIELD_LOOKUP_DURATION_99P.with((int)recordedValuesHistogram.getValueAtPercentile(0.99)),
+            FIELD_LOOKUP_DURATION_90P.with((int)recordedValuesHistogram.getValueAtPercentile(90)),
+            FIELD_LOOKUP_DURATION_95P.with((int)recordedValuesHistogram.getValueAtPercentile(95)),
+            FIELD_LOOKUP_DURATION_99P.with((int)recordedValuesHistogram.getValueAtPercentile(99)),
             FIELD_LOOKUP_DURATION_MAX.with((int)recordedValuesHistogram.getMaxValue()
             )
           );
