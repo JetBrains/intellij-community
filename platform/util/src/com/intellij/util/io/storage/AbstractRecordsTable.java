@@ -15,6 +15,15 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.text.MessageFormat;
 
+/**
+ * Table of indirect addressing, logically contains tuples (id, address, size, capacity), do
+ * the mapping id -> (address, size, capacity), and stores tuples as fixed-size records on
+ * the top of {@link PagedFileStorage}.
+ * <br>
+ * Subclasses could add fields to the tuple, and implement more efficient storage formats.
+ * <br>
+ * Thread safety is unclear: some methods are protected against concurrent access, some are not.
+ */
 public abstract class AbstractRecordsTable implements Closeable, Forceable {
   private static final Logger LOG = Logger.getInstance(AbstractRecordsTable.class);
 

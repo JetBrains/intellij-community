@@ -65,8 +65,8 @@ public final class FileBasedIndexScanUtil {
   }
 
   /**
-   * Basically this method implements processAllKeys() for the indexes that could be implemented without index -- usually by direct
-   * scan of apt subset of VFS
+   * Basically this method short-circuits processAllKeys() for the indexes that could be implemented without index
+   * -- usually by direct scan of apt subset of VFS
    */
   static <K> @Nullable Boolean processAllKeys(@NotNull ID<K, ?> indexId,
                                               @NotNull Processor<? super K> processor,

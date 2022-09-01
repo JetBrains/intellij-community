@@ -101,7 +101,7 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
   @NotNull
   public abstract Collection<VirtualFile> getCachedChildren();
 
-  /** iterated children will NOT contain NullVirtualFile.INSTANCE */
+  /** iterated children will NOT contain {@link NullVirtualFile#INSTANCE} */
   @NotNull
   public abstract Iterable<VirtualFile> iterInDbChildren();
 
