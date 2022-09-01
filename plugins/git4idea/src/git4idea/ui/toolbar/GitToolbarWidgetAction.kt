@@ -30,7 +30,7 @@ private val projectKey = Key.create<Project>("git-widget-project")
 private val repositoryKey = Key.create<GitRepository>("git-widget-repository")
 private val changesKey = Key.create<MyRepoChanges>("git-widget-changes")
 
-internal class GitToolbarWidgetAction: AnAction(), CustomComponentAction {
+internal class GitToolbarWidgetAction : AnAction(), CustomComponentAction {
 
   override fun actionPerformed(e: AnActionEvent) {}
 
@@ -45,6 +45,7 @@ internal class GitToolbarWidgetAction: AnAction(), CustomComponentAction {
     e.presentation.putClientProperty(projectKey, project)
     e.presentation.putClientProperty(repositoryKey, repository)
     e.presentation.text = repository?.calcText() ?: GitBundle.message("git.toolbar.widget.no.repo")
+    e.presentation.icon = repository.calcIcon()
     e.presentation.description = repository?.calcTooltip() ?: GitBundle.message("git.toolbar.widget.no.repo.tooltip")
 
     val changes = repository?.currentBranchName?.let { branch ->
@@ -55,7 +56,18 @@ internal class GitToolbarWidgetAction: AnAction(), CustomComponentAction {
   }
 
   @NlsSafe
-  private fun GitRepository.calcText(): String = cutText(GitBranchUtil.getBranchNameOrRev(this))
+  private fun GitRepository.calcText(): String {
+    return GitBranchUtil.getDisplayableBranchText(this, ::cutText)
+  }
+
+  private fun GitRepository?.calcIcon(): Icon {
+    this ?: return AllIcons.Vcs.Branch
+
+    if (state != Repository.State.NORMAL) {
+      return AllIcons.General.Warning
+    }
+    return AllIcons.Vcs.Branch
+  }
 
   @Tooltip
   private fun GitRepository.calcTooltip(): String {
@@ -76,7 +88,9 @@ internal class GitToolbarWidgetAction: AnAction(), CustomComponentAction {
   private val SHORTENED_BEGIN_PART = 16
   private val SHORTENED_END_PART = 8
 
-  private fun cutText(value: String): String {
+
+  @NlsSafe
+  private fun cutText(value: @NlsSafe String): String {
     if (value.length <= MAX_TEXT_LENGTH) return value
 
     val beginRange = IntRange(0, SHORTENED_BEGIN_PART - 1)
@@ -96,13 +110,13 @@ private class GitToolbarWidget(val presentation: Presentation) : ToolbarComboWid
     get() = presentation.getClientProperty(repositoryKey)
 
   init {
-    leftIcons = listOf(AllIcons.Vcs.Branch)
-    presentation.addPropertyChangeListener { updateWidget()}
+    presentation.addPropertyChangeListener { updateWidget() }
   }
 
   private fun updateWidget() {
     text = presentation.text
     toolTipText = presentation.description
+    leftIcons = listOfNotNull(presentation.icon)
     rightIcons = presentation.getClientProperty(changesKey)?.let { changes ->
       val res = mutableListOf<Icon>()
       if (changes.incoming) res.add(INCOMING_CHANGES_ICON)
