@@ -34,10 +34,9 @@ class TestPluginDependency(private val idString: String, override val isOptional
 
 }
 
-class TestPluginDescriptor(idString: String, dependencies: List<TestPluginDependency>?) : IdeaPluginDescriptor {
+data class TestPluginDescriptor(val idString: String, var pluginDependencies: List<TestPluginDependency> = emptyList()) : IdeaPluginDescriptor {
   private var _enabled = true
   private val _pluginId = PluginId.getId(idString)
-  private val _dependencies = dependencies ?: Collections.emptyList()
 
   override fun getPluginId(): PluginId = _pluginId
 
@@ -74,7 +73,7 @@ class TestPluginDescriptor(idString: String, dependencies: List<TestPluginDepend
     _enabled = enabled
   }
 
-  override fun getDependencies(): MutableList<IdeaPluginDependency> = _dependencies.toMutableList()
+  override fun getDependencies(): MutableList<IdeaPluginDependency> = pluginDependencies.toMutableList()
 
   override fun getDescriptorPath(): String? = null
 }
