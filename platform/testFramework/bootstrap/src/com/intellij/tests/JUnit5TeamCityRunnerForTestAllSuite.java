@@ -290,8 +290,8 @@ public class JUnit5TeamCityRunnerForTestAllSuite {
             Class<? extends Throwable> aClass = ex.getClass();
             if (isComparisonFailure(aClass)){
               try {
-                String expected = (String)aClass.getDeclaredMethod("getExpected").invoke(ex);
-                String actual = (String)aClass.getDeclaredMethod("getActual").invoke(ex);
+                String expected = (String)aClass.getMethod("getExpected").invoke(ex);
+                String actual = (String)aClass.getMethod("getActual").invoke(ex);
 
                 attrs.put("expected", expected);
                 attrs.put("actual", actual);
