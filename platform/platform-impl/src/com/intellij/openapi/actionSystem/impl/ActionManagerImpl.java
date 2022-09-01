@@ -17,6 +17,7 @@ import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -156,6 +157,11 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
           actionToId.keySet().forEach(ActionManagerImpl::updateHandlers);
         }
       }, this);
+
+    // Preload FUS classes (IDEA-301206)
+    if (!app.isDispatchThread()) {
+      ActionsEventLogGroup.GROUP.getId();
+    }
   }
 
   @ApiStatus.Internal
