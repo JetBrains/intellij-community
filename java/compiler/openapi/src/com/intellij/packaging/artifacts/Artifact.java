@@ -33,7 +33,7 @@ public interface Artifact extends UserDataHolder, ProjectModelBuildableElement {
   @NotNull
   ArtifactType getArtifactType();
 
-  @NlsSafe String getName();
+  @NotNull @NlsSafe String getName();
 
   boolean isBuildOnMake();
 
