@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtScript
 import org.jetbrains.kotlin.psi.analysisContext
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSupport() {
     override fun getFacadeNames(packageFqName: FqName, scope: GlobalSearchScope): Collection<String> {
@@ -149,8 +150,10 @@ class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSupport
                 }
 
                 RootKindFilter.librarySources.matches(project, virtualFile) -> {
+                    val originalElement = SourceNavigationHelper.getOriginalElement(classOrObject).safeAs<KtClassOrObject>()
+                    if (originalElement?.equals(classOrObject) != false) return null
                     return guardedRun {
-                        SourceNavigationHelper.getOriginalClass(classOrObject) as? KtLightClass
+                        originalElement.let(::getLightClass)
                     }
                 }
             }
