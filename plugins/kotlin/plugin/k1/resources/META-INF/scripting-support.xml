@@ -89,6 +89,12 @@
     <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptResolveScopeProvider"/>
     <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependenciesResolveScopeProvider"/>
 
+    <!--suppress PluginXmlValidity -->
+    <customEntityProjectModelInfoProvider implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptProjectModelInfoProvider"/>
+
+    <!--suppress PluginXmlValidity -->
+    <indexableEntityProvider implementation="org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptDependencyIndexableEntityProvider"/>
+
     <registryKey key="kotlin.scripts.as.entities"
                  description="Enables explicit script dependencies support"
                  defaultValue="false"
