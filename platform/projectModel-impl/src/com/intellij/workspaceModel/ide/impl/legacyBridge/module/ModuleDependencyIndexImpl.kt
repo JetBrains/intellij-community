@@ -35,7 +35,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
 
   private val eventDispatcher = EventDispatcher.create(ModuleDependencyListener::class.java)
   
-  private val globalLibraryTableListener = GlobalLibraryTableListener()
+  private val libraryTablesListener = LibraryTablesListener()
   private val jdkChangeListener = JdkChangeListener()
   
   init {
@@ -74,18 +74,22 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     return jdkChangeListener.hasProjectSdkDependency()
   }
 
+  override fun hasDependencyOn(libraryId: LibraryId): Boolean {
+    return libraryId.tableId is LibraryTableId.ModuleLibraryTableId || libraryTablesListener.hasDependencyOn(libraryId)
+  }
+
   private fun addTrackedLibraryAndJdkFromEntity(moduleEntity: ModuleEntity) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     LOG.debug { "Add tracked global libraries and JDK from ${moduleEntity.name}" }
     val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
     moduleEntity.dependencies.forEach {
       when {
-        it is ModuleDependencyItem.Exportable.LibraryDependency && it.library.tableId is LibraryTableId.GlobalLibraryTableId -> {
+        it is ModuleDependencyItem.Exportable.LibraryDependency && it.library.tableId !is LibraryTableId.ModuleLibraryTableId -> {
           val libraryName = it.library.name
           val libraryLevel = it.library.tableId.level
           val libraryTable = libraryTablesRegistrar.getLibraryTableByLevel(libraryLevel, project) ?: return@forEach
-          if (globalLibraryTableListener.isEmpty(libraryLevel)) libraryTable.addListener(globalLibraryTableListener)
-          globalLibraryTableListener.addTrackedLibrary(moduleEntity, libraryTable, libraryName)
+          if (libraryTablesListener.isEmpty(libraryLevel)) libraryTable.addListener(libraryTablesListener)
+          libraryTablesListener.addTrackedLibrary(moduleEntity, libraryTable, libraryName)
         }
         it is ModuleDependencyItem.SdkDependency || it is ModuleDependencyItem.InheritedSdkDependency -> {
           jdkChangeListener.addTrackedJdk(it, moduleEntity)
@@ -103,8 +107,8 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
           val libraryName = it.library.name
           val libraryLevel = it.library.tableId.level
           val libraryTable = libraryTablesRegistrar.getLibraryTableByLevel(libraryLevel, project) ?: return@forEach
-          globalLibraryTableListener.unTrackLibrary(moduleEntity, libraryTable, libraryName)
-          if (globalLibraryTableListener.isEmpty(libraryLevel)) libraryTable.removeListener(globalLibraryTableListener)
+          libraryTablesListener.unTrackLibrary(moduleEntity, libraryTable, libraryName)
+          if (libraryTablesListener.isEmpty(libraryLevel)) libraryTable.removeListener(libraryTablesListener)
         }
         it is ModuleDependencyItem.SdkDependency || it is ModuleDependencyItem.InheritedSdkDependency -> {
           jdkChangeListener.removeTrackedJdk(it, moduleEntity)
@@ -117,23 +121,19 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     if (project.isDefault) return
 
     val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
-    val globalLibraryTable = libraryTablesRegistrar.libraryTable
-    globalLibraryTableListener.getLibraryLevels().forEach { libraryLevel ->
-      val libraryTable = when (libraryLevel) {
-        LibraryTablesRegistrar.APPLICATION_LEVEL -> globalLibraryTable
-        else -> libraryTablesRegistrar.getLibraryTableByLevel(libraryLevel, project)
-      }
+    libraryTablesListener.getLibraryLevels().forEach { libraryLevel ->
+      val libraryTable = libraryTablesRegistrar.getLibraryTableByLevel(libraryLevel, project)
       libraryTable?.libraryIterator?.forEach { 
         eventDispatcher.multicaster.removedDependencyOn(it)
       }
-      libraryTable?.removeListener(globalLibraryTableListener)
+      libraryTable?.removeListener(libraryTablesListener)
     }
-    globalLibraryTableListener.clear()
+    libraryTablesListener.clear()
     jdkChangeListener.unsubscribeListeners()
   }
 
   // Listener for global libraries linked to module
-  private inner class GlobalLibraryTableListener : LibraryTable.Listener {
+  private inner class LibraryTablesListener : LibraryTable.Listener {
     private val librariesPerModuleMap = BidirectionalMultiMap<ModuleId, String>()
 
     fun addTrackedLibrary(moduleEntity: ModuleEntity, libraryTable: LibraryTable, libraryName: String) {
@@ -159,16 +159,19 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     fun getLibraryLevels() = librariesPerModuleMap.values.mapTo(HashSet()) { it.substringBefore(LIBRARY_NAME_DELIMITER) }
 
     override fun afterLibraryAdded(newLibrary: Library) {
-      if (librariesPerModuleMap.containsValue(getLibraryIdentifier(newLibrary))) {
+      if (hasDependencyOn(newLibrary)) {
         eventDispatcher.multicaster.referencedLibraryAdded(newLibrary)
       }
     }
 
     override fun afterLibraryRemoved(library: Library) {
-      if (librariesPerModuleMap.containsValue(getLibraryIdentifier(library))) {
+      if (hasDependencyOn(library)) {
         eventDispatcher.multicaster.referencedLibraryRemoved(library)
       }
     }
+
+    private fun hasDependencyOn(library: Library) = librariesPerModuleMap.containsValue(getLibraryIdentifier(library))
+    fun hasDependencyOn(libraryId: LibraryId) = librariesPerModuleMap.containsValue(getLibraryIdentifier(libraryId))
 
     override fun afterLibraryRenamed(library: Library, oldName: String?) {
       val libraryTable = library.table
@@ -197,6 +200,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     }
 
     private fun getLibraryIdentifier(library: Library) = "${library.table.tableLevel}$LIBRARY_NAME_DELIMITER${library.name}"
+    private fun getLibraryIdentifier(libraryId: LibraryId) = "${libraryId.tableId.level}$LIBRARY_NAME_DELIMITER${libraryId.name}"
     private fun getLibraryIdentifier(libraryTable: LibraryTable,
                                      libraryName: String) = "${libraryTable.tableLevel}$LIBRARY_NAME_DELIMITER$libraryName"
 

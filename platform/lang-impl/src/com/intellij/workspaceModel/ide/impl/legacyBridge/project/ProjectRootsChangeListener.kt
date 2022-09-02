@@ -4,13 +4,11 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.project
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.RootsChangeRescanningInfo
-import com.intellij.openapi.roots.LibraryOrderEntry
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.util.indexing.roots.IndexableEntityProvider
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
@@ -85,9 +83,9 @@ internal class ProjectRootsChangeListener(private val project: Project) {
 
     internal fun shouldFireRootsChanged(entity: WorkspaceEntity, project: Project): Boolean {
       return when (entity) {
-        // Library changes should not fire any events if the library is not included in any of order entries
-        is LibraryEntity -> libraryHasOrderEntry(entity, project)
-        is LibraryPropertiesEntity -> libraryHasOrderEntry(entity.library, project)
+        // Library changes should not fire any events if no modules depend on it
+        is LibraryEntity -> hasDependencyOn(entity, project)
+        is LibraryPropertiesEntity -> hasDependencyOn(entity.library, project)
         is ModuleGroupPathEntity, is CustomSourceRootPropertiesEntity -> true
         else -> {
           val entityClass = entity::class.java
@@ -96,16 +94,8 @@ internal class ProjectRootsChangeListener(private val project: Project) {
       }
     }
 
-    private fun libraryHasOrderEntry(library: LibraryEntity, project: Project): Boolean {
-      if (library.tableId is LibraryTableId.ModuleLibraryTableId) {
-        return true
-      }
-      val libraryName = library.name
-      ModuleManager.getInstance(project).modules.forEach { module ->
-        val exists = ModuleRootManager.getInstance(module).orderEntries.any { it is LibraryOrderEntry && it.libraryName == libraryName }
-        if (exists) return true
-      }
-      return false
+    private fun hasDependencyOn(library: LibraryEntity, project: Project): Boolean {
+      return ModuleDependencyIndex.getInstance(project).hasDependencyOn(library.persistentId)
     }
   }
 

@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.RootProvider
 import com.intellij.openapi.roots.impl.OrderRootsCache
 import com.intellij.openapi.roots.impl.ProjectRootManagerComponent
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.OrderRootsCacheBridge
@@ -58,11 +59,15 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
     private var insideRootsChange = false
 
     override fun addedDependencyOn(library: Library) {
-      (library as? RootProvider)?.addRootSetChangedListener(this)
+      if (shouldListen(library)) {
+        (library as? RootProvider)?.addRootSetChangedListener(this)
+      }
     }
 
     override fun removedDependencyOn(library: Library) {
-      (library as? RootProvider)?.removeRootSetChangedListener(this)
+      if (shouldListen(library)) {
+        (library as? RootProvider)?.removeRootSetChangedListener(this)
+      }
     }
 
     override fun rootSetChanged(wrapper: RootProvider) {
@@ -84,11 +89,20 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
     }
 
     override fun referencedLibraryAdded(library: Library) {
-      fireRootsChanged(BuildableRootsChangeRescanningInfo.newInstance().addLibrary(library))
+      if (shouldListen(library)) {
+        fireRootsChanged(BuildableRootsChangeRescanningInfo.newInstance().addLibrary(library))
+      }
     }
 
     override fun referencedLibraryRemoved(library: Library) {
-      fireRootsChanged(RootsChangeRescanningInfo.NO_RESCAN_NEEDED)
+      if (shouldListen(library)) {
+        fireRootsChanged(RootsChangeRescanningInfo.NO_RESCAN_NEEDED)
+      }
+    }
+
+    private fun shouldListen(library: Library): Boolean {
+      //project-level libraries are stored in WorkspaceModel, and changes in their roots are handled by RootsChangeWatcher 
+      return library.table?.tableLevel != LibraryTablesRegistrar.PROJECT_LEVEL
     }
 
     override fun addedDependencyOn(sdk: Sdk) {

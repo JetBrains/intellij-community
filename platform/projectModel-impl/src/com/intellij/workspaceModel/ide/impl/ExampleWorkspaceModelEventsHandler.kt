@@ -5,10 +5,12 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.ModuleFileIndex
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.isModuleUnloaded
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.VersionedStorageChange
@@ -198,13 +200,7 @@ class ExampleWorkspaceModelEventsHandler(private val project: Project): Disposab
   }
 
   private fun libraryIsDependency(library: LibraryEntity, project: Project): Boolean {
-    if (library.tableId is LibraryTableId.ModuleLibraryTableId) return true
-    val libraryName = library.name
-    ModuleManager.getInstance(project).modules.forEach { module ->
-      val exists = ModuleRootManager.getInstance(module).orderEntries.any { it is LibraryOrderEntry && it.libraryName == libraryName }
-      if (exists) return true
-    }
-    return false
+    return ModuleDependencyIndex.getInstance(project).hasDependencyOn(library.persistentId)
   }
 
   private fun updateCache() { }

@@ -5,6 +5,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryId
 import org.jetbrains.annotations.ApiStatus
 import java.util.EventListener
 
@@ -19,7 +20,7 @@ interface ModuleDependencyIndex {
   }
 
   /**
-   * Registers a listener to track dependencies on application-level libraries and libraries from custom application-level
+   * Registers a listener to track dependencies on project-level, application-level libraries and libraries from custom application-level
    * tables. [ModuleDependencyListener.removedDependencyOn] methods are automatically called when the project is disposed. 
    */
   fun addListener(listener: ModuleDependencyListener)
@@ -30,10 +31,16 @@ interface ModuleDependencyIndex {
    * Return `true` if at least one module has dependency on 'Project SDK'
    */
   fun hasProjectSdkDependency(): Boolean
+
+  /**
+   * Return `true` if at least one module has dependency on [libraryId]
+   */
+  fun hasDependencyOn(libraryId: LibraryId): Boolean
 }
 
 /**
- * The methods of this listener are called synchronously under 'write action' lock. 
+ * The methods of this listener are called synchronously under 'write action' lock. Events about module-level libraries aren't fired,
+ * because such libraries are implicitly added to containing modules.
  */
 interface ModuleDependencyListener : EventListener {
   /** 
