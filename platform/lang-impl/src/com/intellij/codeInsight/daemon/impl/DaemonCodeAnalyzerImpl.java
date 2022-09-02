@@ -236,8 +236,13 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     VirtualFile vFile = BackedVirtualFile.getOriginFileIfBacked(psiFile.getViewProvider().getVirtualFile());
     for (FileEditor fileEditor : myFileEditorManager.getAllEditors(vFile)) {
       if (fileEditor instanceof TextEditor) {
+        List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> actionRanges = new ArrayList<>();
+        info.findRegisteredQuickFix((descriptor, range) -> {
+          actionRanges.add(Pair.create(descriptor, range));
+          return null;
+        });
         FileLevelIntentionComponent component = new FileLevelIntentionComponent(info.getDescription(), info.getSeverity(),
-                                                                                info.getGutterIconRenderer(), info.quickFixActionRanges,
+                                                                                info.getGutterIconRenderer(), actionRanges,
                                                                                 psiFile, ((TextEditor)fileEditor).getEditor(), info.getToolTip());
         myFileEditorManager.addTopComponent(fileEditor, component);
         List<HighlightInfo> fileLevelInfos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);

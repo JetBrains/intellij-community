@@ -7,8 +7,6 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.sh.settings.ShSettings;
 import com.intellij.sh.shellcheck.intention.ShDisableInspectionIntention;
 import com.intellij.sh.shellcheck.intention.ShSuppressInspectionIntention;
@@ -84,15 +82,15 @@ public class ShShellcheckInspectionTest extends BasePlatformTestCase {
     CaretModel caretModel = myFixture.getEditor().getCaretModel();
     List<HighlightInfo> inspections = myFixture.doHighlighting(HighlightSeverity.WEAK_WARNING);
     while (!inspections.isEmpty()) {
-      List<Pair<HighlightInfo.IntentionActionDescriptor, TextRange>> ranges = inspections.get(0).quickFixActionRanges;
-      if (ranges != null) {
-        ranges.stream()
-          .filter(pair -> intentionType.isInstance(pair.getFirst().getAction()))
-          .forEach(pair -> {
-            caretModel.moveToOffset(pair.getSecond().getStartOffset());
-            myFixture.launchAction(pair.getFirst().getAction());
-          });
-      }
+
+      inspections.get(0).findRegisteredQuickFix((descriptor, range) -> {
+        IntentionAction action = descriptor.getAction();
+        if (intentionType.isInstance(action)) {
+          caretModel.moveToOffset(range.getStartOffset());
+          myFixture.launchAction(action);
+        }
+        return null;
+      });
       inspections = myFixture.doHighlighting(HighlightSeverity.WARNING);
     }
   }

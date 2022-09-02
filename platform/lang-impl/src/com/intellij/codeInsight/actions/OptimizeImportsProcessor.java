@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixActionRegistrarImpl;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.HintAction;
 import com.intellij.formatting.service.FormattingService;
@@ -20,11 +19,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.HintText;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.CoreCodeStyleUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -136,18 +138,7 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
         super.visitElement(element);
       }
     });
-    if (fakeInfo.quickFixActionRanges != null) {
-      List<HintAction> result = new ArrayList<>(fakeInfo.quickFixActionRanges.size());
-      for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> marker : fakeInfo.quickFixActionRanges) {
-        ProgressManager.checkCanceled();
-        IntentionAction action = marker.first.getAction();
-        if (action instanceof HintAction && action.isAvailable(project, null, file)) {
-          result.add((HintAction)action);
-        }
-      }
-      return result;
-    }
-    return Collections.emptyList();
+    return ContainerUtil.filter(ShowAutoImportPass.extractHints(fakeInfo), action -> action.isAvailable(project, null, file));
   }
 
   private static boolean hasUnresolvedReferences(@NotNull PsiFile file) {

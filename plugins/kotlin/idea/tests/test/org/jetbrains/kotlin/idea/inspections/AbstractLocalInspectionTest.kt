@@ -6,8 +6,10 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeHighlighting.Pass
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.intention.EmptyIntentionAction
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.testFramework.PsiTestUtil
@@ -190,7 +192,13 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
             )
         }
 
-        val allLocalFixActions = highlightInfos.flatMap { it.quickFixActionMarkers ?: emptyList() }.map { it.first.action }
+        val allLocalFixActions:MutableList<IntentionAction> = ArrayList()
+        highlightInfos.forEach { info ->
+            info.findRegisteredQuickFix<Any?> { desc, _ ->
+                allLocalFixActions.add(desc.action)
+                null
+            }
+        }
 
         val localFixActions = if (localFixTextString == null || localFixTextString == "none") {
             allLocalFixActions

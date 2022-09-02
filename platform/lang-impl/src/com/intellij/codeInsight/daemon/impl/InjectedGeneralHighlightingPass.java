@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
@@ -323,18 +322,14 @@ public final class InjectedGeneralHighlightingPass extends GeneralHighlightingPa
                           false, 0, info.getProblemGroup(), info.getInspectionToolId(), info.getGutterIconRenderer(), info.getGroup());
       patched.setHint(info.hasHint());
 
-      if (info.quickFixActionRanges != null) {
-        for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
-          TextRange quickfixTextRange = pair.getSecond();
-          List<TextRange> editableQF = injectedLanguageManager.intersectWithAllEditableFragments(injectedPsi, quickfixTextRange);
-          for (TextRange editableRange : editableQF) {
-            HighlightInfo.IntentionActionDescriptor descriptor = pair.getFirst();
-            if (patched.quickFixActionRanges == null) patched.quickFixActionRanges = new ArrayList<>();
-            TextRange hostEditableRange = documentWindow.injectedToHost(editableRange);
-            patched.quickFixActionRanges.add(Pair.create(descriptor, hostEditableRange));
-          }
+      info.findRegisteredQuickFix((descriptor, quickfixTextRange) -> {
+        List<TextRange> editableQF = injectedLanguageManager.intersectWithAllEditableFragments(injectedPsi, quickfixTextRange);
+        for (TextRange editableRange : editableQF) {
+          TextRange hostEditableRange = documentWindow.injectedToHost(editableRange);
+          patched.registerFix(descriptor.getAction(), descriptor.myOptions, descriptor.getDisplayName(), hostEditableRange, descriptor.myKey);
         }
-      }
+        return null;
+      });
       patched.markFromInjection();
       out.add(patched);
     }

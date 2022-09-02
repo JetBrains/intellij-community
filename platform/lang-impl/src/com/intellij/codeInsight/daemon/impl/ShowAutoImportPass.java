@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.ReferenceImporter;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.HintAction;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -20,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -28,14 +30,12 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -171,9 +171,17 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
   }
 
   @NotNull
-  private static List<HintAction> extractHints(@NotNull HighlightInfo info) {
-    return ContainerUtil.mapNotNull(ObjectUtils.notNull(info.quickFixActionRanges, Collections.emptyList()),
-    pair -> ObjectUtils.tryCast(pair.getFirst().getAction(), HintAction.class));
+  public static List<HintAction> extractHints(@NotNull HighlightInfo info) {
+    List<HintAction> result = new ArrayList<>();
+    info.findRegisteredQuickFix((descriptor, range) -> {
+      ProgressManager.checkCanceled();
+      IntentionAction action = descriptor.getAction();
+      if (action instanceof HintAction) {
+        result.add((HintAction)action);
+      }
+      return null;
+    });
+    return result;
   }
 
 

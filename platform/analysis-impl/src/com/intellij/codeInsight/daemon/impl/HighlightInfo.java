@@ -44,6 +44,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import java.util.function.BiFunction;
 
 import static com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import static com.intellij.openapi.util.NlsContexts.Tooltip;
@@ -73,8 +74,48 @@ public class HighlightInfo implements Segment {
   public final int startOffset;
   public final int endOffset;
 
+  /**
+   * @deprecated use {@link #findRegisteredQuickFix(BiFunction)} instead
+   */
+  @Deprecated
   public List<Pair<IntentionActionDescriptor, TextRange>> quickFixActionRanges;
+  /**
+   * @deprecated use {@link #findRegisteredQuickFix(BiFunction)} instead
+   */
+  @Deprecated
   public List<Pair<IntentionActionDescriptor, RangeMarker>> quickFixActionMarkers;
+
+  /**
+   * Find the quickfix (among ones added by {@link #registerFix}) selected by returning non-null value from the {@code predicate}
+   * and return that value, or null if the quickfix was not found.
+   */
+  public <T> T findRegisteredQuickFix(@NotNull BiFunction<? super @NotNull IntentionActionDescriptor, ? super @NotNull TextRange, ? extends @Nullable T> predicate) {
+    Set<IntentionActionDescriptor> processed = new HashSet<>();
+    // prefer range markers as having more actual offsets
+    T result = find(quickFixActionMarkers, processed, predicate);
+    if (result != null) return result;
+    return find(quickFixActionRanges, processed, predicate);
+  }
+
+  @Nullable
+  private static <T> T find(@Nullable List<? extends Pair<IntentionActionDescriptor, ? extends Segment>> markers,
+                            @NotNull Set<? super IntentionActionDescriptor> processed,
+                            @NotNull BiFunction<? super @NotNull IntentionActionDescriptor, ? super @NotNull TextRange, ? extends T> predicate) {
+    if (markers != null) {
+      for (Pair<IntentionActionDescriptor, ? extends Segment> pair : markers) {
+        Segment segment = pair.second;
+        TextRange range = segment instanceof RangeMarker ? ((RangeMarker)segment).isValid() ? ((RangeMarker)segment).getTextRange() : null : (TextRange)segment;
+        if (range == null) continue;
+        IntentionActionDescriptor descriptor = pair.first;
+        if (!processed.add(descriptor)) continue;
+        T result = predicate.apply(descriptor, range);
+        if (result != null) {
+          return result;
+        }
+      }
+    }
+    return null;
+  }
 
   private final @DetailedDescription String description;
   private final @Tooltip String toolTip;
@@ -428,8 +469,8 @@ public class HighlightInfo implements Segment {
     }
     if (highlighter != null) s += " text='" + getText() + "'";
     if (getDescription() != null) s += ", description='" + getDescription() + "'";
-    s += " severity=" + getSeverity();
-    s += " group=" + getGroup();
+    s += "; severity=" + getSeverity();
+    s += "; group=" + getGroup();
     if (quickFixActionRanges != null) {
       s += "; quickFixes: " + quickFixActionRanges;
     }
@@ -835,8 +876,8 @@ public class HighlightInfo implements Segment {
 
   public static class IntentionActionDescriptor {
     private final IntentionAction myAction;
-    private volatile List<? extends IntentionAction> myOptions;
-    private volatile HighlightDisplayKey myKey;
+    volatile List<? extends IntentionAction> myOptions;
+    volatile HighlightDisplayKey myKey;
     private final ProblemGroup myProblemGroup;
     private final HighlightSeverity mySeverity;
     private final @Nls String myDisplayName;
@@ -998,7 +1039,7 @@ public class HighlightInfo implements Segment {
     @Override
     public String toString() {
       String text = getAction().getText();
-      return "descriptor: " + (text.isEmpty() ? getAction().getClass() : text);
+      return "IntentionActionDescriptor: " + (text.isEmpty() ? IntentionActionDelegate.unwrap(getAction()).getClass() : text + " (" + IntentionActionDelegate.unwrap(getAction()).getClass() + ")");
     }
 
     @Nullable
@@ -1063,6 +1104,9 @@ public class HighlightInfo implements Segment {
   public void unregisterQuickFix(@NotNull Condition<? super IntentionAction> condition) {
     if (quickFixActionRanges != null) {
       quickFixActionRanges.removeIf(pair -> condition.value(pair.first.getAction()));
+    }
+    if (quickFixActionMarkers != null) {
+      quickFixActionMarkers.removeIf(pair -> condition.value(pair.first.getAction()));
     }
   }
 

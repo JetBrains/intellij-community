@@ -287,11 +287,11 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
                 val group = highlight.problemGroup
                 if (group is SuppressableProblemGroup) {
                     val at = myFixture.file.findElementAt(highlight.actualStartOffset) ?: continue
-                    val actions = highlight.quickFixActionRanges[0].first.getOptions(at, null)
-                    for (action in actions) {
-                        if (action.text == text) {
-                            return action
-                        }
+                    val action = highlight.findRegisteredQuickFix<IntentionAction?> { desc, range ->
+                        desc.getOptions(at, null).find { action -> action.text == text }
+                    }
+                    if (action != null) {
+                        return action
                     }
                 }
             }
