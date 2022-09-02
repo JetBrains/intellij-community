@@ -256,7 +256,6 @@ object CommunityRepositoryModules {
     simplePlugin("intellij.keymap.visualStudio"),
     simplePlugin("intellij.keymap.netbeans"),
     plugin("intellij.platform.testFramework.ui") { spec ->
-      spec.withModuleLibrary("intellij.remoterobot.ide.launcher", spec.mainModule, "")
       spec.withModuleLibrary("intellij.remoterobot.remote.fixtures", spec.mainModule, "")
       spec.withModuleLibrary("intellij.remoterobot.robot.server.core", spec.mainModule, "")
       spec.withProjectLibrary("okhttp")
