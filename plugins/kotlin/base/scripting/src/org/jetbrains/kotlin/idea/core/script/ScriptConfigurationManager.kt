@@ -102,6 +102,12 @@ interface ScriptConfigurationManager {
 
     fun getScriptDependenciesClassFilesScope(file: VirtualFile): GlobalSearchScope
 
+    fun getScriptDependenciesClassFiles(file: VirtualFile): Collection<VirtualFile>
+    fun getScriptDependenciesSourceFiles(file: VirtualFile): Collection<VirtualFile>
+
+    fun getScriptSdkDependenciesClassFiles(file: VirtualFile): Collection<VirtualFile>
+    fun getScriptSdkDependenciesSourceFiles(file: VirtualFile): Collection<VirtualFile>
+
     fun getAllScriptsDependenciesClassFilesScope(): GlobalSearchScope
     fun getAllScriptDependenciesSourcesScope(): GlobalSearchScope
     fun getAllScriptsDependenciesClassFiles(): Collection<VirtualFile>
