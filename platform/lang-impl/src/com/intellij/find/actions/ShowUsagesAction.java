@@ -383,15 +383,14 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
     Project project = parameters.project;
     UsageViewImpl usageView = createUsageView(project);
-    UsageViewStatisticsCollector.logSearchStarted(project);
-
+    UsageViewStatisticsCollector.logSearchStarted(project, usageView);
     final SearchScope searchScope = actionHandler.getSelectedScope();
     final AtomicInteger outOfScopeUsages = new AtomicInteger();
     AtomicBoolean manuallyResized = new AtomicBoolean();
 
     Predicate<? super Usage> originUsageCheck = originUsageCheck(parameters.editor);
     var renderer = new ShowUsagesTableCellRenderer(project, originUsageCheck, outOfScopeUsages, searchScope);
-    var table = new ShowUsagesTable(renderer);
+    var table = new ShowUsagesTable(renderer, usageView);
 
     addUsageNodes(usageView.getRoot(), usageView, new ArrayList<>());
 
@@ -412,7 +411,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       }
     };
 
-    ShowUsagesPopupData showUsagesPopupData = new ShowUsagesPopupData(parameters, table, actionHandler);
+    ShowUsagesPopupData showUsagesPopupData = new ShowUsagesPopupData(parameters, table, actionHandler, usageView);
     AbstractPopup popup = createUsagePopup(usageView, showUsagesPopupData, itemChosenCallback, tableResizer);
 
     popup.addResizeListener(() -> manuallyResized.set(true), popup);
@@ -571,12 +570,13 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         }
 
         long current = System.nanoTime();
+
         UsageViewStatisticsCollector.logSearchFinished(project,
            actionHandler.getTargetClass(), searchScope, actionHandler.getTargetLanguage(), usages.size(),
            TimeUnit.NANOSECONDS.toMillis(current - firstUsageAddedTS.get()),
            TimeUnit.NANOSECONDS.toMillis(current - searchStarted),
            tooManyResults.get(),
-           CodeNavigateSource.ShowUsagesPopup);
+           CodeNavigateSource.ShowUsagesPopup, usageView);
       },
       project.getDisposed()
     ));
@@ -770,7 +770,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
     if (!(actionHandler.getMaximalScope() instanceof LocalSearchScope)) {
       ScopeChooserCombo scopeChooserCombo = scopeChooser(project, actionHandler.getSelectedScope(), scope -> {
-        UsageViewStatisticsCollector.logScopeChanged(project, actionHandler.getSelectedScope(), scope, actionHandler.getTargetClass());
+        UsageViewStatisticsCollector.logScopeChanged(project,usageView, actionHandler.getSelectedScope(), scope, actionHandler.getTargetClass());
         cancel(popupRef.get());
         showElementUsages(parameters, actionHandler.withScope(scope));
       });

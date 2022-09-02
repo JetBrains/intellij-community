@@ -180,7 +180,7 @@ public class UsageViewImpl implements UsageViewEx {
       ContainerUtil.filter(navigatables, n -> n.canNavigateToSource() && n instanceof PsiElementUsage).
         forEach(n -> {
           PsiElement psiElement = ((PsiElementUsage)n).getElement();
-          if (psiElement != null) UsageViewStatisticsCollector.logItemChosen(getProject(), CodeNavigateSource.FindToolWindow, psiElement.getLanguage());
+          if (psiElement != null) UsageViewStatisticsCollector.logItemChosen(getProject(), this, CodeNavigateSource.FindToolWindow, psiElement.getLanguage());
       });
     }
   };
@@ -727,7 +727,7 @@ public class UsageViewImpl implements UsageViewEx {
           UsageContextPanel.Provider selectedProvider = myUsageContextPanelProviders.get(currentIndex);
           if (selectedProvider != myCurrentUsageContextProvider) {
             tabSelected(selectedProvider);
-            UsageViewStatisticsCollector.logTabSwitched(myProject);
+            UsageViewStatisticsCollector.logTabSwitched(myProject, this);
           }
         });
         panel.add(tabbedPane, BorderLayout.CENTER);
@@ -1394,7 +1394,7 @@ public class UsageViewImpl implements UsageViewEx {
     if (element != null && referenceClass != null) {
       Language language = element.getLanguage();
       if (myReportedReferenceClasses.add(Pair.create(referenceClass, language))) {
-        UsageViewStatisticsCollector.logUsageShown(myProject, referenceClass, language);
+        UsageViewStatisticsCollector.logUsageShown(myProject, referenceClass, language, this);
       }
     }
   }

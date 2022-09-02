@@ -228,7 +228,6 @@ public final class FindUsagesManager {
                                PsiFile scopeFile,
                                FileEditor fileEditor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    UsageViewStatisticsCollector.logSearchStarted(myProject);
     boolean singleFile = scopeFile != null;
 
     clearFindingNextUsageInFile();
