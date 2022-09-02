@@ -3,6 +3,7 @@
 
 package com.intellij.openapi.progress
 
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.util.NlsContexts.ProgressDetails
 import com.intellij.openapi.util.NlsContexts.ProgressText
 import kotlinx.coroutines.CoroutineScope
@@ -66,7 +67,10 @@ internal class ProgressIndicatorSink(private val indicator: ProgressIndicator) :
   }
 }
 
-internal class ProgressSinkIndicator(private val sink: ProgressSink) : EmptyProgressIndicator() {
+internal class ProgressSinkIndicator(
+  private val sink: ProgressSink,
+  contextModality: ModalityState,
+) : EmptyProgressIndicator(contextModality) {
 
   override fun setText(text: String?) {
     if (text != null) {
