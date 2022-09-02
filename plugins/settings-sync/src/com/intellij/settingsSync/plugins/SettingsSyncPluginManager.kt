@@ -96,7 +96,7 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
       for ((pluginId, pluginData) in state.plugins) {
         val plugin = findPlugin(pluginId)
         if (plugin != null) {
-          if (isPluginSyncEnabled(plugin.pluginId.idString, plugin.isBundled, SettingsSyncPluginCategoryFinder.getPluginCategory(plugin))) {
+          if (isPluginSyncEnabled(plugin)) {
             if (pluginData.isEnabled != isPluginEnabled(plugin.pluginId)) {
               if (pluginData.isEnabled) {
                 pluginsToEnable += plugin.pluginId
@@ -147,9 +147,12 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
   }
 
   private fun shouldSaveState(plugin: IdeaPluginDescriptor): Boolean {
-    return isPluginSyncEnabled(plugin.pluginId.idString, plugin.isBundled, SettingsSyncPluginCategoryFinder.getPluginCategory(plugin)) &&
+    return isPluginSyncEnabled(plugin) &&
            (!plugin.isBundled || !plugin.isEnabled || state.plugins.containsKey(plugin.pluginId.idString))
   }
+
+  private fun isPluginSyncEnabled(plugin: IdeaPluginDescriptor) =
+    isPluginSyncEnabled(plugin.pluginId.idString, plugin.isBundled, SettingsSyncPluginCategoryFinder.getPluginCategory(plugin))
 
   private fun isPluginSyncEnabled(idString: String, isBundled: Boolean, category: SettingsCategory): Boolean {
     val settings = SettingsSyncSettings.getInstance()
@@ -200,8 +203,7 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
           disabledIdStrings.add(disabledPluginId.idString)
           if (!state.plugins.containsKey(disabledPluginId.idString)) {
             PluginManagerProxy.getInstance().findPlugin(disabledPluginId)?.let { descriptor ->
-              if (isPluginSyncEnabled(
-                  descriptor.pluginId.idString, descriptor.isBundled, SettingsSyncPluginCategoryFinder.getPluginCategory(descriptor))) {
+              if (isPluginSyncEnabled(descriptor)) {
                 savePluginState(descriptor)
               }
             }
