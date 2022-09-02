@@ -34,6 +34,8 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.psi.psiUtil.unwrapNullability
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.typeUtil.supertypes
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.awt.BorderLayout
 import java.util.regex.PatternSyntaxException
@@ -237,18 +239,14 @@ class FunctionNameInspection : NamingConventionInspection(
     private fun KtNamedFunction.isFactoryFunction(): Boolean {
         val functionName = this.name ?: return false
         val typeElement = typeReference?.typeElement
-        val plainReturnTypeName = if (typeElement != null) {
-            typeElement.unwrapNullability().safeAs<KtUserType>()?.referencedName
-        } else {
-            resolveToDescriptorIfAny()
-                ?.returnType
-                ?.fqName
-                ?.takeUnless(FqName::isRoot)
-                ?.shortName()
-                ?.asString()
+        if (typeElement != null) {
+            return typeElement.unwrapNullability().safeAs<KtUserType>()?.referencedName == functionName
         }
-        return functionName == plainReturnTypeName
+        val returnType = resolveToDescriptorIfAny()?.returnType ?: return false
+        return returnType.shortName() == functionName || returnType.supertypes().any { it.shortName() == functionName }
     }
+
+    private fun KotlinType.shortName(): String? = fqName?.takeUnless(FqName::isRoot)?.shortName()?.asString()
 }
 
 class TestFunctionNameInspection : NamingConventionInspection(

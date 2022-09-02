@@ -36,3 +36,7 @@ fun Generic2() = Generic2(0)
 
 class Generic3<ID>(val id: ID)
 fun Generic3(b: Boolean): Generic3<Int>? = if (b) Generic3(0) else null
+
+interface Baz
+class BazImpl : Baz
+fun Baz() = BazImpl()
