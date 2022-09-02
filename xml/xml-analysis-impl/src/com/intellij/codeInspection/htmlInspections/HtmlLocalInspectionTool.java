@@ -24,10 +24,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlToken;
-import com.intellij.psi.xml.XmlTokenType;
+import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -45,6 +42,10 @@ public abstract class HtmlLocalInspectionTool extends XmlSuppressableInspectionT
   }
 
   protected void checkAttribute(@NotNull final XmlAttribute attribute, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+    // should be overridden
+  }
+
+  protected void checkAttributeValue(@NotNull final XmlAttributeValue attributeValue, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     // should be overridden
   }
 
@@ -74,6 +75,12 @@ public abstract class HtmlLocalInspectionTool extends XmlSuppressableInspectionT
       public void visitXmlAttribute(final @NotNull XmlAttribute attribute) {
         checkAttribute(attribute, holder, isOnTheFly);
       }
+
+      @Override
+      public void visitXmlAttributeValue(@NotNull XmlAttributeValue value) {
+        checkAttributeValue(value, holder, isOnTheFly);
+      }
+
     };
   }
 }

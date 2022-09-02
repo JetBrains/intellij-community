@@ -1944,6 +1944,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testSvgAttrValueInHtml() throws Exception {
+    enableInspectionTools(new HtmlWrongAttributeValueInspection());
     doTest(getFullRelativeTestName(".html"), true, false);
   }
 
