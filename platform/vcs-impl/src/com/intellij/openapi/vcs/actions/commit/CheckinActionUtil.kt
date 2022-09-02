@@ -16,10 +16,9 @@ import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.CommitModeManager
 import com.intellij.vcs.commit.CommitWorkflowHandler
-import com.intellij.vcs.commit.removeEllipsisSuffix
+import com.intellij.vcs.commit.cleanActionText
 
 internal fun AnActionEvent.getContextCommitWorkflowHandler(): CommitWorkflowHandler? = getData(VcsDataKeys.COMMIT_WORKFLOW_HANDLER)
 
@@ -51,7 +50,7 @@ object CheckinActionUtil {
     LOG.debug("performCommonCommitAction")
 
     val isFreezedDialogTitle = actionName?.let {
-      val operationName = UIUtil.removeMnemonic(actionName).removeEllipsisSuffix()
+      val operationName = cleanActionText(actionName)
       VcsBundle.message("error.cant.perform.operation.now", operationName)
     }
     val changeListManager = ChangeListManager.getInstance(project)
