@@ -643,6 +643,11 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     public void update(@NotNull AnActionEvent event) {
       event.getPresentation().setEnabled(getCurrentBuildFile() != null);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private final class RunAction extends AnAction {
@@ -747,6 +752,11 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       setTargetsFiltered(flag);
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
   }
 
   private void setTargetsFiltered(boolean value) {
@@ -794,6 +804,11 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       final AntBuildFile buildFile = myTarget.getModel().getBuildFile();
       e.getPresentation().setEnabled(buildFile != null && buildFile.exists());
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
+    }
   }
 
   private final class ExecuteBeforeRunAction extends AnAction {
@@ -813,6 +828,11 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myTarget.getModel().getBuildFile().exists());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 
@@ -842,6 +862,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       final TreePath[] paths = myTree.getSelectionPaths();
       e.getPresentation().setEnabled(paths != null && paths.length > 1 && canRunSelection());
     }
+
   }
 
   private final class RemoveMetaTargetsOrBuildFileAction extends AnAction {
@@ -948,6 +969,11 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
         presentation.setEnabled(enabled);
       }
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private final class AssignShortcutAction extends AnAction {
@@ -966,6 +992,11 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myActionId != null && ActionManager.getInstance().getAction(myActionId) != null);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 
