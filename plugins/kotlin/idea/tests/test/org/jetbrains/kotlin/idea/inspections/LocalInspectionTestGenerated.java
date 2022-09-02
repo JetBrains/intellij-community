@@ -3786,6 +3786,124 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/convertObjectToDataObject")
+    public static class ConvertObjectToDataObject extends AbstractLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("alreadyAnnotatedWithData.kt")
+        public void testAlreadyAnnotatedWithData() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/alreadyAnnotatedWithData.kt");
+        }
+
+        @TestMetadata("anonymousObject.kt")
+        public void testAnonymousObject() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/anonymousObject.kt");
+        }
+
+        @TestMetadata("companionObject.kt")
+        public void testCompanionObject() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/companionObject.kt");
+        }
+
+        @TestMetadata("compatibleEquals.kt")
+        public void testCompatibleEquals() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/compatibleEquals.kt");
+        }
+
+        @TestMetadata("compatibleReadResolve.kt")
+        public void testCompatibleReadResolve() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/compatibleReadResolve.kt");
+        }
+
+        @TestMetadata("constHashCode.kt")
+        public void testConstHashCode() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/constHashCode.kt");
+        }
+
+        @TestMetadata("doubleBangReflectToString.kt")
+        public void testDoubleBangReflectToString() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/doubleBangReflectToString.kt");
+        }
+
+        @TestMetadata("elvisReflectToString.kt")
+        public void testElvisReflectToString() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/elvisReflectToString.kt");
+        }
+
+        @TestMetadata("expressionBodyToString.kt")
+        public void testExpressionBodyToString() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/expressionBodyToString.kt");
+        }
+
+        @TestMetadata("javaReflectToString.kt")
+        public void testJavaReflectToString() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/javaReflectToString.kt");
+        }
+
+        @TestMetadata("languageLevelIsTooLow.kt")
+        public void testLanguageLevelIsTooLow() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/languageLevelIsTooLow.kt");
+        }
+
+        @TestMetadata("notCompatibleEquals.kt")
+        public void testNotCompatibleEquals() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/notCompatibleEquals.kt");
+        }
+
+        @TestMetadata("notCompatibleToString.kt")
+        public void testNotCompatibleToString() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/notCompatibleToString.kt");
+        }
+
+        @TestMetadata("notConstHashCode.kt")
+        public void testNotConstHashCode() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/notConstHashCode.kt");
+        }
+
+        @TestMetadata("notSingleExpressionToString.kt")
+        public void testNotSingleExpressionToString() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/notSingleExpressionToString.kt");
+        }
+
+        @TestMetadata("plainObject.kt")
+        public void testPlainObject() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/plainObject.kt");
+        }
+
+        @TestMetadata("preserveNotRelatedMembers.kt")
+        public void testPreserveNotRelatedMembers() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/preserveNotRelatedMembers.kt");
+        }
+
+        @TestMetadata("preserveUnrelatedReadResolve.kt")
+        public void testPreserveUnrelatedReadResolve() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/preserveUnrelatedReadResolve.kt");
+        }
+
+        @TestMetadata("preserveUnrelatedReadResolve2.kt")
+        public void testPreserveUnrelatedReadResolve2() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/preserveUnrelatedReadResolve2.kt");
+        }
+
+        @TestMetadata("publicReadResolve.kt")
+        public void testPublicReadResolve() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/publicReadResolve.kt");
+        }
+
+        @TestMetadata("serializableDirect.kt")
+        public void testSerializableDirect() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/serializableDirect.kt");
+        }
+
+        @TestMetadata("serializableTransitive.kt")
+        public void testSerializableTransitive() throws Exception {
+            runTest("testData/inspectionsLocal/convertObjectToDataObject/serializableTransitive.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/convertPairConstructorToToFunction")
     public static class ConvertPairConstructorToToFunction extends AbstractLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
