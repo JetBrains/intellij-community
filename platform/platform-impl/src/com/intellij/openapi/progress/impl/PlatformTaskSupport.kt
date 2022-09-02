@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentati
 import com.intellij.openapi.progress.util.createDialogWrapper
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl.isHeadlessEnv
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.openapi.wm.ex.IdeFrameEx
@@ -27,7 +28,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import java.awt.Component
-import java.awt.GraphicsEnvironment
 import java.awt.event.InputEvent
 import javax.swing.SwingUtilities
 
@@ -193,14 +193,15 @@ private fun CoroutineScope.showModalIndicator(
   stateFlow: Flow<ProgressState>,
   deferredDialog: CompletableDeferred<DialogWrapper>?,
 ): Job = launch(Dispatchers.IO) {
+  if (isHeadlessEnv()) {
+    return@launch
+  }
   delay(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong())
   val mainJob = this@showModalIndicator.coroutineContext.job
   withContext(RawSwingDispatcher) {
     val window = ownerWindow(owner)
     if (window == null) {
-      if (!GraphicsEnvironment.isHeadless()) {
-        logger<PlatformTaskSupport>().error("Cannot show progress dialog because owner window is not found")
-      }
+      logger<PlatformTaskSupport>().error("Cannot show progress dialog because owner window is not found")
       return@withContext
     }
 
