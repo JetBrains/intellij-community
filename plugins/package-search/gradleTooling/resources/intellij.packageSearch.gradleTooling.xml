@@ -1,5 +1,0 @@
-<idea-plugin package="com.jetbrains.packagesearch.intellij.plugin.gradle.tooling" implementation-detail="true">
-  <dependencies>
-    <plugin id="com.intellij.gradle"/>
-  </dependencies>
-</idea-plugin>

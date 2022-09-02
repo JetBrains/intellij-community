@@ -181,11 +181,8 @@ internal fun <T, R> Flow<T>.mapLatestTimedWithLoading(
 
 internal fun <T> Flow<T>.catchAndLog(context: String, message: String? = null) =
     catch {
-        if (message != null) {
-            logDebug(context, it) { message }
-        } else {
-            logDebug(context, it)
-        }
+        if (message!= null) { logDebug(context, it) { message } }
+        else logDebug(context, it)
     }
 
 internal suspend inline fun <R> MutableStateFlow<Boolean>.whileLoading(action: () -> R): TimedValue<R> {

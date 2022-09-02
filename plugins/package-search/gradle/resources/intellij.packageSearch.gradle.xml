@@ -33,8 +33,6 @@
         <packagesearch.coroutineModuleTransformer
                 implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GradleModuleTransformer"/>
 
-        <externalProjectDataService implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GradleConfigurationReportNodeProcessor"/>
-
         <packagesearch.flowModuleChangesSignalProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.SmartModeSignalProvider"/>
 
@@ -55,9 +53,6 @@
 
         <projectService
                 serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.gradle.configuration.PackageSearchGradleConfiguration"/>
-    </extensions>
-    <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
-        <projectResolve implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GradleConfigurationResolver"/>
     </extensions>
 
     <actions>

@@ -146,7 +146,6 @@
     <orderEntry type="module" module-name="intellij.space.java.jps" scope="TEST" />
     <orderEntry type="module" module-name="intellij.packageSearch" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.packageSearch.gradle" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.packageSearch.gradleTooling" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.packageSearch.kotlin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.packageSearch.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.emojipicker" scope="RUNTIME" />
