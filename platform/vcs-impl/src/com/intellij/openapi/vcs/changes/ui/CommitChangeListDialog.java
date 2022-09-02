@@ -66,7 +66,7 @@ import static com.intellij.util.ui.SwingHelper.buildHtml;
 import static com.intellij.util.ui.UIUtil.*;
 import static com.intellij.vcs.commit.AbstractCommitWorkflow.getCommitExecutors;
 import static com.intellij.vcs.commit.AbstractCommitWorkflow.getCommitHandlerFactories;
-import static com.intellij.vcs.commit.SingleChangeListCommitWorkflowKt.getPresentableText;
+import static com.intellij.vcs.commit.SingleChangeListCommitWorkflowKt.cleanActionText;
 import static java.lang.Math.max;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
@@ -235,7 +235,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
       throw new IllegalArgumentException("nothing found to execute commit with");
     }
 
-    setTitle(isDefaultCommitEnabled() ? DIALOG_TITLE : getPresentableText(executors.get(0)));
+    setTitle(isDefaultCommitEnabled() ? DIALOG_TITLE : cleanActionText(executors.get(0).getActionText()));
     myHelpId = isDefaultCommitEnabled() ? HELP_ID : getHelpId(executors);
 
     myDiffDetails = new MyChangeProcessor(myProject, myWorkflow.isPartialCommitEnabled());

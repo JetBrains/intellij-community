@@ -267,7 +267,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       val hasPartialChanges = changes.any { getPartialTracker(project, it)?.hasPartialChangesToCommit() ?: false }
       if (hasPartialChanges) {
         return YES == showYesNoDialog(
-          project, message("commit.dialog.partial.commit.warning.body", executor.getPresentableText()),
+          project, message("commit.dialog.partial.commit.warning.body", cleanActionText(executor.actionText)),
           message("commit.dialog.partial.commit.warning.title"), executor.actionText, getCancelButtonText(),
           getWarningIcon())
       }

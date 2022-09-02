@@ -207,7 +207,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
                                changes: List<Change>,
                                commitMessage: String): Boolean {
       if (sessionInfo is CommitSessionInfo.Custom) {
-        val title = sessionInfo.executor.getPresentableText()
+        val title = cleanActionText(sessionInfo.executor.actionText)
         return SessionDialog.configureCommitSession(project, title, sessionInfo.session, changes, commitMessage)
       }
       return true
