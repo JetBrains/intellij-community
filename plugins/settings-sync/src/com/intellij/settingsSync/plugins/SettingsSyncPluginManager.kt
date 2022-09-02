@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.PluginStateListener
 import com.intellij.ide.plugins.PluginStateManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
@@ -88,8 +89,8 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
     val pluginManagerProxy = PluginManagerProxy.getInstance()
     val installer = pluginManagerProxy.createInstaller()
 
-    val pluginsToDisable = mutableListOf<PluginId>()
-    val pluginsToEnable = mutableListOf<PluginId>()
+    val pluginsToDisable = mutableSetOf<PluginId>()
+    val pluginsToEnable = mutableSetOf<PluginId>()
     val pluginsToInstall = mutableListOf<PluginId>()
 
     synchronized(LOCK) {
@@ -118,14 +119,16 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
       }
     }
 
-    LOG.info("Enabling plugins: $pluginsToEnable")
-    for (plugin in pluginsToEnable) {
-      pluginManagerProxy.enablePlugin(plugin)
+    runInEdt {
+      LOG.info("Enabling plugins: $pluginsToEnable")
+      pluginManagerProxy.enablePlugins(pluginsToEnable)
     }
-    LOG.info("Disabling plugins: $pluginsToDisable")
-    for (plugin in pluginsToDisable) {
-      pluginManagerProxy.disablePlugin(plugin)
+
+    runInEdt {
+      LOG.info("Disabling plugins: $pluginsToDisable")
+      pluginManagerProxy.disablePlugins(pluginsToDisable)
     }
+
     LOG.info("Installing plugins: $pluginsToInstall")
     installer.installPlugins(pluginsToInstall)
   }

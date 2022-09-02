@@ -13,27 +13,31 @@ import java.util.concurrent.CopyOnWriteArrayList
 internal class TestPluginManager : PluginManagerProxy {
   val installer = TestPluginInstaller()
   private val ownPluginDescriptors = HashMap<PluginId, IdeaPluginDescriptor>()
-  private val disabledPluginListeners = CopyOnWriteArrayList<Runnable>()
+  private val pluginEnabledStateListeners = CopyOnWriteArrayList<Runnable>()
 
   override fun getPlugins(): Array<IdeaPluginDescriptor> {
-    val descriptors = arrayListOf<IdeaPluginDescriptor>()
-    descriptors.addAll(PluginManagerCore.getPlugins())
-    descriptors.addAll(ownPluginDescriptors.values)
-    return descriptors.toTypedArray()
+    return ownPluginDescriptors.values.toTypedArray()
   }
 
-  override fun enablePlugin(pluginId: PluginId) {
-    val descriptor = findPlugin(pluginId)
-    assert(descriptor is TestPluginDescriptor)
-    descriptor?.isEnabled = true
+  override fun enablePlugins(plugins: Set<PluginId>) {
+    for (plugin in plugins) {
+      val descriptor = findPlugin(plugin)
+      assert(descriptor is TestPluginDescriptor)
+      descriptor?.isEnabled = true
+    }
+    for (pluginListener in pluginEnabledStateListeners) {
+      pluginListener.run()
+    }
   }
 
-  override fun disablePlugin(pluginId: PluginId) {
-    val descriptor = findPlugin(pluginId)
-    assert(descriptor is TestPluginDescriptor)
-    descriptor?.isEnabled = false
-    for (disabledPluginListener in disabledPluginListeners) {
-      disabledPluginListener.run()
+  override fun disablePlugins(plugins: Set<PluginId>) {
+    for (plugin in plugins) {
+      val descriptor = findPlugin(plugin)
+      assert(descriptor is TestPluginDescriptor)
+      descriptor?.isEnabled = false
+    }
+    for (pluginListener in pluginEnabledStateListeners) {
+      pluginListener.run()
     }
   }
 
@@ -42,9 +46,9 @@ internal class TestPluginManager : PluginManagerProxy {
   }
 
   override fun addDisablePluginListener(disabledListener: Runnable, parentDisposable: Disposable) {
-    disabledPluginListeners.add(disabledListener)
+    pluginEnabledStateListeners.add(disabledListener)
     Disposer.register(parentDisposable, Disposable {
-      disabledPluginListeners.remove(disabledListener)
+      pluginEnabledStateListeners.remove(disabledListener)
     })
   }
 
@@ -59,8 +63,18 @@ internal class TestPluginManager : PluginManagerProxy {
     return installer
   }
 
-  fun addPluginDescriptor(pluginManager: SettingsSyncPluginManager, descriptor: IdeaPluginDescriptor) {
-    ownPluginDescriptors[descriptor.pluginId] = descriptor
-    pluginManager.getPluginStateListener().install(descriptor)
+  fun addPluginDescriptors(pluginManager: SettingsSyncPluginManager, vararg descriptors: IdeaPluginDescriptor) {
+    for (descriptor in descriptors) {
+      ownPluginDescriptors[descriptor.pluginId] = descriptor
+      pluginManager.getPluginStateListener().install(descriptor)
+    }
+  }
+
+  fun disablePlugin(pluginId: PluginId) {
+    disablePlugins(setOf(pluginId))
+  }
+
+  fun enablePlugin(pluginId: PluginId) {
+    enablePlugins(setOf(pluginId))
   }
 }

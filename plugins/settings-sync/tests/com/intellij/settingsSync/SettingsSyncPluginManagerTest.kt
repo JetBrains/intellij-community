@@ -134,7 +134,7 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
       "QuickJump",
       listOf(TestPluginDependency("com.intellij.modules.platform", false))
     )
-    testPluginManager.addPluginDescriptor(pluginManager, descriptor)
+    testPluginManager.addPluginDescriptors(pluginManager, descriptor)
     TestCase.assertTrue(descriptor.isEnabled)
     loadPluginManagerState(incomingPluginData)
     pluginManager.pushChangesToIde()
@@ -151,7 +151,7 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
       "QuickJump",
       listOf(TestPluginDependency("com.intellij.modules.platform", false))
     )
-    testPluginManager.addPluginDescriptor(pluginManager, descriptor)
+    testPluginManager.addPluginDescriptors(pluginManager, descriptor)
     assertSerializedStateEquals(
       """
       <component>
@@ -183,8 +183,7 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
       "codeflections.typengo",
       listOf(TestPluginDependency("com.intellij.modules.platform", false))
     )
-    testPluginManager.addPluginDescriptor(pluginManager, quickJump)
-    testPluginManager.addPluginDescriptor(pluginManager, typengo)
+    testPluginManager.addPluginDescriptors(pluginManager, quickJump, typengo)
 
     loadPluginManagerState(incomingPluginData)
     pluginManager.state.plugins["codeflections.typengo"] = SettingsSyncPluginManager.PluginData().apply {

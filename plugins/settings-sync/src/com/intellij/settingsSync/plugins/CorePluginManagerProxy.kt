@@ -1,6 +1,7 @@
 package com.intellij.settingsSync.plugins
 
 import com.intellij.ide.plugins.DisabledPluginsState
+import com.intellij.ide.plugins.PluginEnabler
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.PluginId
@@ -10,12 +11,12 @@ class CorePluginManagerProxy : PluginManagerProxy {
 
   override fun getPlugins() = PluginManagerCore.getPlugins()
 
-  override fun enablePlugin(pluginId: PluginId) {
-    PluginManagerCore.enablePlugin(pluginId)
+  override fun enablePlugins(plugins: Set<PluginId>) {
+    PluginEnabler.getInstance().enableById(plugins)
   }
 
-  override fun disablePlugin(pluginId: PluginId) {
-    PluginManagerCore.disablePlugin(pluginId)
+  override fun disablePlugins(plugins: Set<PluginId>) {
+    PluginEnabler.getInstance().disableById(plugins)
   }
 
   override fun addDisablePluginListener(disabledListener: Runnable, parentDisposable: Disposable) {

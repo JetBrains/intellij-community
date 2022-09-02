@@ -11,8 +11,8 @@ interface PluginManagerProxy {
   }
 
   fun getPlugins(): Array<IdeaPluginDescriptor>
-  fun enablePlugin(pluginId: PluginId)
-  fun disablePlugin(pluginId: PluginId)
+  fun enablePlugins(plugins: Set<PluginId>)
+  fun disablePlugins(plugins: Set<PluginId>)
   fun findPlugin(pluginId: PluginId): IdeaPluginDescriptor?
 
   fun createInstaller(): SettingsSyncPluginInstaller
