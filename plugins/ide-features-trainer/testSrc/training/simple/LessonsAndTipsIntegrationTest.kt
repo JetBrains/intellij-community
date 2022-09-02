@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.simple
 
-import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -10,6 +9,7 @@ import com.intellij.testFramework.registerExtension
 import org.junit.Assert
 import org.junit.Test
 import training.lang.LangSupport
+import training.lang.LangSupportBean
 import training.learn.course.LearningCourse
 
 abstract class LessonsAndTipsIntegrationTest : BasePlatformTestCase() {
@@ -22,9 +22,9 @@ abstract class LessonsAndTipsIntegrationTest : BasePlatformTestCase() {
 
     val langId = languageId
     val langSupport = languageSupport
-    val EP_NAME = ExtensionPointName<LanguageExtensionPoint<LangSupport>>(LangSupport.EP_NAME)
+    val EP_NAME = ExtensionPointName<LangSupportBean>(LangSupport.EP_NAME)
     if (langId != null && langSupport != null && EP_NAME.extensionList.find { it.language == langId } == null) {
-      val langExtension = LanguageExtensionPoint(langId, langSupport)
+      val langExtension = LangSupportBean(langId, langSupport)
       // specify fake descriptor because it is required to be not null, but will not be used, because extension instance already created
       langExtension.pluginDescriptor = DefaultPluginDescriptor("")
       ApplicationManager.getApplication().registerExtension(EP_NAME, langExtension, testRootDisposable)

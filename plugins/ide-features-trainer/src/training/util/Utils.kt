@@ -104,11 +104,11 @@ internal fun clearTrainingProgress() {
   LearningUiManager.activeToolWindow = null
 }
 
-internal fun resetPrimaryLanguage(activeLangSupport: LangSupport): Boolean {
-  val old = LangManager.getInstance().getLangSupport()
-  if (activeLangSupport != old) {
+internal fun resetPrimaryLanguage(newLanguageId: String): Boolean {
+  val oldLanguageId = LangManager.getInstance().getLanguageId()
+  if (newLanguageId != oldLanguageId) {
     LessonManager.instance.stopLesson()
-    LangManager.getInstance().updateLangSupport(activeLangSupport)
+    LangManager.getInstance().updateLangSupport(newLanguageId)
     LearningUiManager.activeToolWindow?.setModulesPanel()
     return true
   }
