@@ -127,10 +127,7 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
       pluginManagerProxy.disablePlugin(plugin)
     }
     LOG.info("Installing plugins: $pluginsToInstall")
-    for (plugin in pluginsToInstall) {
-      installer.addPluginId(plugin)
-    }
-    installer.installPlugins()
+    installer.installPlugins(pluginsToInstall)
   }
 
   private fun isPluginEnabled(pluginId: PluginId) = !DisabledPluginsState.getDisabledIds().contains(pluginId)

@@ -18,23 +18,17 @@ import com.intellij.util.Consumer
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 
 internal class SettingsSyncPluginInstallerImpl : SettingsSyncPluginInstaller {
-  private val pluginsIds = ArrayList<PluginId>()
-
-  override fun addPluginId(pluginId: PluginId) {
-    pluginsIds.add(pluginId)
-  }
-
   companion object {
     val LOG = logger<SettingsSyncPluginInstallerImpl>()
   }
 
   @RequiresBackgroundThread
-  override fun installPlugins() {
-    if (pluginsIds.isEmpty() ||
+  override fun installPlugins(pluginsToInstall: List<PluginId>) {
+    if (pluginsToInstall.isEmpty() ||
         ApplicationManager.getApplication().isUnitTestMode // Register TestPluginManager in Unit Test Mode
     ) return
     ApplicationManager.getApplication().invokeAndWait {
-      val prepareRunnable = PrepareInstallationRunnable(pluginsIds)
+      val prepareRunnable = PrepareInstallationRunnable(pluginsToInstall)
       if (ProgressManager.getInstance().runProcessWithProgressSynchronously(
           prepareRunnable, SettingsSyncBundle.message("installing.plugins.indicator"), true, null)) {
         installCollected(prepareRunnable.getInstallers())

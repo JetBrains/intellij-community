@@ -10,11 +10,8 @@ import java.util.*
 class TestPluginInstaller : SettingsSyncPluginInstaller {
   val installedPluginIds = HashSet<String>()
 
-  override fun addPluginId(pluginId: PluginId) {
-    installedPluginIds.add(pluginId.idString)
-  }
-
-  override fun installPlugins() {
+  override fun installPlugins(pluginsToInstall: List<PluginId>) {
+    installedPluginIds += pluginsToInstall.map { it.idString }
   }
 }
 
