@@ -34,6 +34,9 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.common" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.gradle" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.maven" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.value-container-assignment.common" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.value-container-assignment.gradle" scope="PROVIDED" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.value-container-assignment.maven" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.scripting" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.copyright" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.core" scope="PROVIDED" />

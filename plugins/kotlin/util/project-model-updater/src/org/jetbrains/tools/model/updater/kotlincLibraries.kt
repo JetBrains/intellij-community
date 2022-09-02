@@ -31,6 +31,7 @@ fun generateKotlincLibraries(
         kotlincForIdeWithStandardNaming("kotlinc.noarg-compiler-plugin", kotlincArtifactsCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.parcelize-compiler-plugin", kotlincArtifactsCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.sam-with-receiver-compiler-plugin", kotlincArtifactsCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.value-container-assignment-compiler-plugin", kotlincArtifactsCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-common", kotlincArtifactsCoordinates)
 
         kotlincWithStandardNaming("kotlinc.kotlin-scripting-common", kotlincArtifactsCoordinates)

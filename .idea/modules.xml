@@ -20,7 +20,6 @@
     <module old-name="android-annotations" new-name="android.sdktools.android-annotations" />
     <module old-name="android-common" new-name="intellij.android.common" />
     <module old-name="android-gradle-jps" new-name="intellij.android.gradle.jps" />
-    <module old-name="android-gradle-jps" new-name="intellij.android.gradle.jps" />
     <module old-name="android-jps-plugin" new-name="intellij.android.jpsBuildPlugin.jps" />
     <module old-name="android-plugin" new-name="intellij.android.plugin" />
     <module old-name="android-test-framework" new-name="intellij.android.testFramework" />
@@ -1060,6 +1059,9 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/compiler-plugins/sam-with-receiver/common/kotlin.compiler-plugins.sam-with-receiver.common.iml" filepath="$PROJECT_DIR$/plugins/kotlin/compiler-plugins/sam-with-receiver/common/kotlin.compiler-plugins.sam-with-receiver.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/compiler-plugins/sam-with-receiver/gradle/kotlin.compiler-plugins.sam-with-receiver.gradle.iml" filepath="$PROJECT_DIR$/plugins/kotlin/compiler-plugins/sam-with-receiver/gradle/kotlin.compiler-plugins.sam-with-receiver.gradle.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/compiler-plugins/sam-with-receiver/maven/kotlin.compiler-plugins.sam-with-receiver.maven.iml" filepath="$PROJECT_DIR$/plugins/kotlin/compiler-plugins/sam-with-receiver/maven/kotlin.compiler-plugins.sam-with-receiver.maven.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/compiler-plugins/value-container-assignment/common/kotlin.compiler-plugins.value-container-assignment.common.iml" filepath="$PROJECT_DIR$/plugins/kotlin/compiler-plugins/value-container-assignment/common/kotlin.compiler-plugins.value-container-assignment.common.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/compiler-plugins/value-container-assignment/gradle/kotlin.compiler-plugins.value-container-assignment.gradle.iml" filepath="$PROJECT_DIR$/plugins/kotlin/compiler-plugins/value-container-assignment/gradle/kotlin.compiler-plugins.value-container-assignment.gradle.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/compiler-plugins/value-container-assignment/maven/kotlin.compiler-plugins.value-container-assignment.maven.iml" filepath="$PROJECT_DIR$/plugins/kotlin/compiler-plugins/value-container-assignment/maven/kotlin.compiler-plugins.value-container-assignment.maven.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/compiler-plugins/scripting/kotlin.compiler-plugins.scripting.iml" filepath="$PROJECT_DIR$/plugins/kotlin/compiler-plugins/scripting/kotlin.compiler-plugins.scripting.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/copyright/kotlin.copyright.iml" filepath="$PROJECT_DIR$/plugins/kotlin/copyright/kotlin.copyright.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/copyright/tests/kotlin.copyright.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/copyright/tests/kotlin.copyright.tests.iml" />

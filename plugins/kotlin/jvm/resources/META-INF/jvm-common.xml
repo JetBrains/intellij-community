@@ -203,6 +203,9 @@
         <diagnosticSuppressor implementation="org.jetbrains.kotlin.idea.debugger.DiagnosticSuppressorForDebugger"/>
         <storageComponentContainerContributor implementation="org.jetbrains.kotlin.idea.compilerPlugin.samWithReceiver.IdeSamWithReceiverComponentContributor"/>
 
+        <assignResolutionAltererExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.valueContainerAssignment.IdeValueContainerAssignResolutionAltererExtension"/>
+        <storageComponentContainerContributor implementation="org.jetbrains.kotlin.idea.compilerPlugin.valueContainerAssignment.IdeValueContainerAssignmentContainerContributor"/>
+
         <declarationAttributeAltererExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.allopen.IdeAllOpenDeclarationAttributeAltererExtension"/>
         <ultraLightClassModifierExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.allopen.AllOpenUltraLightClassModifierExtension"/>
 

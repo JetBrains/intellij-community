@@ -58,6 +58,7 @@ class KotlinArtifacts private constructor(val kotlincDirectory: File) {
     val allopenCompilerPlugin = File(kotlincLibDirectory, KotlinArtifactNames.ALLOPEN_COMPILER_PLUGIN)
     val noargCompilerPlugin = File(kotlincLibDirectory, KotlinArtifactNames.NOARG_COMPILER_PLUGIN)
     val samWithReceiverCompilerPlugin = File(kotlincLibDirectory, KotlinArtifactNames.SAM_WITH_RECEIVER_COMPILER_PLUGIN)
+    val valueContainerAssignmentCompilerPlugin = File(kotlincLibDirectory, KotlinArtifactNames.VALUE_CONTAINER_ASSIGNMENT_COMPILER_PLUGIN)
     val kotlinxSerializationCompilerPlugin = File(kotlincLibDirectory, KotlinArtifactNames.KOTLINX_SERIALIZATION_COMPILER_PLUGIN)
     val parcelizeRuntime = File(kotlincLibDirectory, KotlinArtifactNames.PARCELIZE_RUNTIME)
     val androidExtensionsRuntime = File(kotlincLibDirectory, KotlinArtifactNames.ANDROID_EXTENSIONS_RUNTIME)

@@ -266,6 +266,8 @@ The plugin supports Kotlin 1.7 and lower.
     <module name="kotlin.compiler-plugins.noarg.maven"/>
     <module name="kotlin.compiler-plugins.sam-with-receiver.gradle"/>
     <module name="kotlin.compiler-plugins.sam-with-receiver.maven"/>
+    <module name="kotlin.compiler-plugins.value-container-assignment.gradle"/>
+    <module name="kotlin.compiler-plugins.value-container-assignment.maven"/>
     <module name="kotlin.compiler-plugins.parcelize.gradle"/>
     <module name="kotlin.compiler-plugins.scripting"/>
     <module name="kotlin.compiler-plugins.kapt"/>
