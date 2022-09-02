@@ -10,8 +10,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.containers.addIfNotNull
+import com.intellij.workspaceModel.ide.impl.FileInDirectorySourceNames
 import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
-import com.intellij.workspaceModel.ide.impl.jps.serialization.FileInDirectorySourceNames
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addJavaModuleSettingsEntity
@@ -49,7 +49,9 @@ internal class WorkspaceModuleImporter(
 
     val moduleName = importData.moduleData.moduleName
 
-    val moduleLibrarySource = reuseOrCreateModuleLibrarySource(moduleName, baseModuleDir)
+    val moduleLibrarySource = JpsEntitySourceFactory.createEntitySourceForModule(project, baseModuleDir, externalSource,
+                                                                                 existingEntitySourceNames,
+                                                                                 moduleName + ModuleManagerEx.IML_EXTENSION)
 
     val dependencies = collectDependencies(moduleName, importData.dependencies, moduleLibrarySource)
     val moduleEntity = createModuleEntity(moduleName, importData.mavenProject, importData.moduleData.type, dependencies,
@@ -58,17 +60,8 @@ internal class WorkspaceModuleImporter(
     return moduleEntity
   }
 
-  private fun reuseOrCreateModuleLibrarySource(moduleName: String,
-                                               baseModuleDir: VirtualFileUrl): EntitySource {
-    val internalSource = existingEntitySourceNames.findSource(ModuleEntity::class.java, moduleName + ModuleManagerEx.IML_EXTENSION)
-                         ?: JpsEntitySourceFactory.createInternalEntitySourceForModule(project, baseModuleDir)
-    return JpsEntitySourceFactory.createImportedEntitySource(project, externalSource, internalSource)
-  }
-
   private fun reuseOrCreateProjectLibrarySource(libraryName: String): EntitySource {
-    val internalSource = existingEntitySourceNames.findSource(LibraryEntity::class.java, libraryName)
-                         ?: JpsEntitySourceFactory.createInternalEntitySourceForProjectLibrary(project)
-    return JpsEntitySourceFactory.createImportedEntitySource(project, externalSource, internalSource)
+    return JpsEntitySourceFactory.createEntitySourceForProjectLibrary(project, externalSource, existingEntitySourceNames, libraryName)
   }
 
   private fun createModuleEntity(moduleName: String,

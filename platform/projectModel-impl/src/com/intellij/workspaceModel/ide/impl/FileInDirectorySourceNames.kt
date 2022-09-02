@@ -1,12 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspaceModel.ide.impl.jps.serialization
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.workspaceModel.ide.CustomModuleEntitySource
+import com.intellij.workspaceModel.ide.JpsFileDependentEntitySource
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ArtifactEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.LibraryEntity
@@ -54,5 +56,12 @@ class FileInDirectorySourceNames private constructor(entitiesBySource: Map<Entit
     )
 
     fun empty() = FileInDirectorySourceNames(emptyMap())
+
+    private fun getInternalFileSource(source: EntitySource) = when (source) {
+      is JpsFileDependentEntitySource -> source.originalSource
+      is CustomModuleEntitySource -> source.internalSource
+      is JpsFileEntitySource -> source
+      else -> null
+    }
   }
 }

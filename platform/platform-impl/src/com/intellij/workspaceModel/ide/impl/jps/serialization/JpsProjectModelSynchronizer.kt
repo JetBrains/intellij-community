@@ -32,6 +32,7 @@ import com.intellij.project.stateStore
 import com.intellij.util.PlatformUtils.isIntelliJ
 import com.intellij.util.PlatformUtils.isRider
 import com.intellij.workspaceModel.ide.*
+import com.intellij.workspaceModel.ide.impl.FileInDirectorySourceNames
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.storage.*
