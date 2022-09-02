@@ -690,6 +690,9 @@ object ProjectUtil {
   }
 }
 
+private val delegateToCoroutineOnlyRunBlocking: Boolean =
+  System.getProperty("ide.use.coroutine.only.runBlocking", "true").toBoolean()
+
 @Suppress("DeprecatedCallableAddReplaceWith")
 @Internal
 @ScheduledForRemoval
@@ -700,6 +703,9 @@ object ProjectUtil {
 // inline is not used - easier debug
 fun <T> runUnderModalProgressIfIsEdt(task: suspend CoroutineScope.() -> T): T {
   if (!ApplicationManager.getApplication().isDispatchThread) {
+    if (delegateToCoroutineOnlyRunBlocking) {
+      return runBlockingMaybeCancellable(task)
+    }
     return runBlocking(CoreProgressManager.getCurrentThreadProgressModality().asContextElement()) { task() }
   }
   return runBlockingUnderModalProgress(task = task)
@@ -711,6 +717,10 @@ fun <T> runUnderModalProgressIfIsEdt(task: suspend CoroutineScope.() -> T): T {
 @ScheduledForRemoval
 @Deprecated("Use runBlockingModal with proper owner and title")
 fun <T> runBlockingUnderModalProgress(@NlsContexts.ProgressTitle title: String = "", project: Project? = null, task: suspend CoroutineScope.() -> T): T {
+  if (delegateToCoroutineOnlyRunBlocking) {
+    val owner = if (project == null) ModalTaskOwner.guess() else ModalTaskOwner.project(project)
+    return runBlockingModal(owner, title, TaskCancellation.cancellable(), task)
+  }
   return ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable {
     val modalityState = CoreProgressManager.getCurrentThreadProgressModality()
     runBlocking(modalityState.asContextElement()) {
