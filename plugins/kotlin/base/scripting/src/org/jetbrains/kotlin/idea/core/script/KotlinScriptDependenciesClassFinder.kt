@@ -20,6 +20,7 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.Processor
 import com.intellij.util.containers.ConcurrentFactoryMap
 import org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptMarkerFileSystem
+import org.jetbrains.kotlin.idea.core.script.ucache.computeClassRoots
 import org.jetbrains.kotlin.idea.core.script.ucache.scriptsAsEntities
 import org.jetbrains.kotlin.resolve.jvm.KotlinSafeClassFinder
 
@@ -48,10 +49,7 @@ internal class KotlinScriptDependenciesClassFinder(private val project: Project)
     }
 
     override fun calcClassRoots(): List<VirtualFile> {
-        val manager = ScriptConfigurationManager.getInstance(project)
-        return (manager.getAllScriptsDependenciesClassFiles() +
-                manager.getAllScriptsSdkDependenciesClassFiles()
-                ).filter { it.isValid }
+        return computeClassRoots(project)
     }
 
     private val everywhereCache = CachedValuesManager.getManager(project).createCachedValue {

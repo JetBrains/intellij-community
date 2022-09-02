@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.utils.addIfNotNull
 class ScratchAdditionalIdeaDependenciesProvider : ScriptAdditionalIdeaDependenciesProvider() {
 
     override fun getRelatedModules(file: VirtualFile, project: Project): List<Module> {
-        if (!file.isKotlinScratch) return emptyList()
+        if (!file.isKotlinScratch && !file.isKotlinWorksheet) return emptyList()
 
         val scratchModule = ScriptRelatedModuleNameFile[project, file]?.let {
             ModuleManager.getInstance(project).findModuleByName(it)
@@ -33,7 +33,7 @@ class ScratchAdditionalIdeaDependenciesProvider : ScriptAdditionalIdeaDependenci
     }
 
     override fun getRelatedLibraries(file: VirtualFile, project: Project): List<Library> {
-        if (!file.isKotlinScratch) return emptyList()
+        if (!file.isKotlinScratch && !file.isKotlinWorksheet) return emptyList()
 
         val result = linkedSetOf<Library>()
         getRelatedModules(file, project).forEach {

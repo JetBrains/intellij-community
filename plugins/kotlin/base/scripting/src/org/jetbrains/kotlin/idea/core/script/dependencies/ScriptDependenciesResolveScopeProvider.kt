@@ -7,14 +7,31 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.ResolveScopeProvider
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.ucache.getAllScriptDependenciesSourcesScope
+import org.jetbrains.kotlin.idea.core.script.ucache.getAllScriptsDependenciesClassFiles
+import org.jetbrains.kotlin.idea.core.script.ucache.getAllScriptsDependenciesClassFilesScope
 
+/**
+ * @see KotlinScriptResolveScopeProvider
+ */
 class ScriptDependenciesResolveScopeProvider : ResolveScopeProvider() {
-    override fun getResolveScope(file: VirtualFile, project: Project): GlobalSearchScope? {
-        val manager = ScriptConfigurationManager.getInstance(project)
-        if (manager.getAllScriptsDependenciesClassFiles().isEmpty()) return null
 
-        if (file !in manager.getAllScriptsDependenciesClassFilesScope() && file !in manager.getAllScriptDependenciesSourcesScope()) {
+    /**
+     * @param file is a file belonging to dependencies of a script being analysed
+     */
+    override fun getResolveScope(file: VirtualFile, project: Project): GlobalSearchScope? {
+        /*
+        Unfortunately, we cannot limit the scope to the concrete script dependencies. There is no way to say, what .kts is being analysed.
+        Some facts to consider:
+        - dependencies are analysed first, .kts file itself goes last
+        - multiple editors can be opened (selected is only one of them)
+        */
+
+        if (getAllScriptsDependenciesClassFiles(project).isEmpty()) return null
+
+        if (file !in getAllScriptsDependenciesClassFilesScope(project)
+            && file !in getAllScriptDependenciesSourcesScope(project)
+        ) {
             return null
         }
 

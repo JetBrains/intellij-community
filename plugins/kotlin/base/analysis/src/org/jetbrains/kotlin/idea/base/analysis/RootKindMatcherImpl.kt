@@ -12,6 +12,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindMatcher
 import org.jetbrains.kotlin.idea.base.projectStructure.isKotlinBinary
+import org.jetbrains.kotlin.idea.core.script.ucache.getAllScriptDependenciesSourcesScope
+import org.jetbrains.kotlin.idea.core.script.ucache.getAllScriptsDependenciesClassFilesScope
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
@@ -81,17 +83,16 @@ internal class RootKindMatcherImpl(private val project: Project) : RootKindMatch
         val canContainClassFiles = fileType == ArchiveFileType.INSTANCE || virtualFile.isDirectory
         val isBinary = fileType.isKotlinBinary
 
-        val scriptConfigurationManager = when {
-            correctedFilter.includeScriptDependencies -> ScriptConfigurationManager.getInstance(project)
-            else -> null
-        }
-
         if (correctedFilter.includeLibraryClassFiles && (isBinary || canContainClassFiles)) {
             if (fileIndex.isInLibraryClasses(virtualFile)) {
                 return true
             }
 
-            val classFileScope = scriptConfigurationManager?.getAllScriptsDependenciesClassFilesScope()
+            val classFileScope = when {
+                correctedFilter.includeScriptDependencies -> getAllScriptsDependenciesClassFilesScope(project)
+                else -> null
+            }
+
             if (classFileScope != null && classFileScope.contains(virtualFile)) {
                 return true
             }
@@ -102,7 +103,11 @@ internal class RootKindMatcherImpl(private val project: Project) : RootKindMatch
                 return true
             }
 
-            val sourceFileScope = scriptConfigurationManager?.getAllScriptDependenciesSourcesScope()
+            val sourceFileScope = when {
+                correctedFilter.includeScriptDependencies -> getAllScriptDependenciesSourcesScope(project)
+                else -> null
+            }
+
             if (sourceFileScope != null &&
                 sourceFileScope.contains(virtualFile) &&
                 !(virtualFile !is VirtualFileWindow && fileIndex.isInSourceContent(virtualFile))
