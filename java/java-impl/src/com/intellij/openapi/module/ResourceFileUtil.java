@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
+import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.FilteredQuery;
@@ -32,7 +32,7 @@ public final class ResourceFileUtil {
     final String fileName = index >= 0 ? resourceName.substring(index+1) : resourceName;
 
     final VirtualFile dir = new FilteredQuery<>(
-      DirectoryIndex.getInstance(project).getDirectoriesByPackageName(packageName, false), file -> {
+      PackageIndex.getInstance(project).getDirsByPackageName(packageName, false), file -> {
       final VirtualFile child = file.findChild(fileName);
       return child != null && scope.contains(child);
     }).findFirst();
