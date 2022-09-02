@@ -8,7 +8,6 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SystemProperties
-import com.intellij.util.xml.dom.readXmlAsModel
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -60,7 +59,6 @@ class CompilationContextImpl private constructor(model: JpsModel,
                                                  communityHome: BuildDependenciesCommunityRoot,
                                                  projectHome: Path,
                                                  override val messages: BuildMessages,
-                                                 private val oldToNewModuleName: Map<String, String>,
                                                  buildOutputRootEvaluator: (JpsProject) -> Path,
                                                  override val options: BuildOptions) : CompilationContext {
 
@@ -71,7 +69,6 @@ class CompilationContextImpl private constructor(model: JpsModel,
                                       communityHome = paths.communityHomeDir,
                                       projectHome = paths.projectHome,
                                       messages = messages,
-                                      oldToNewModuleName = oldToNewModuleName,
                                       buildOutputRootEvaluator = buildOutputRootEvaluator,
                                       options = options)
     copy.compilationData = compilationData
@@ -130,19 +127,7 @@ class CompilationContextImpl private constructor(model: JpsModel,
     return module
   }
 
-  override fun findModule(name: String): JpsModule? {
-    val actualName: String?
-    if (oldToNewModuleName.containsKey(name)) {
-      actualName = oldToNewModuleName[name]
-      messages.warning("Old module name \'$name\' is used in the build scripts; use the new name \'$actualName\' instead")
-    }
-    else {
-      actualName = name
-    }
-    return nameToModule.get(actualName)
-  }
-
-  override fun getOldModuleName(newName: String) = newToOldModuleName.get(newName)
+  override fun findModule(name: String): JpsModule? = nameToModule.get(name)
 
   override fun getModuleOutputDir(module: JpsModule): Path {
     val url = JpsJavaExtensionService.getInstance().getOutputUrl(module, false)
@@ -192,7 +177,6 @@ class CompilationContextImpl private constructor(model: JpsModel,
   override val project: JpsProject
   val global: JpsGlobal
   override val projectModel: JpsModel = model
-  private val newToOldModuleName: Map<String, String>
   private val nameToModule: Map<String?, JpsModule>
   override val dependenciesProperties: DependenciesProperties
   override val bundledRuntime: BundledRuntime
@@ -236,12 +220,10 @@ class CompilationContextImpl private constructor(model: JpsModel,
       logFreeDiskSpace(dir = projectHome, phase = "before downloading dependencies")
       val kotlinBinaries = KotlinBinaries(communityHome, options, messages)
       val model = loadProject(projectHome, kotlinBinaries)
-      val oldToNewModuleName = loadModuleRenamingHistory(projectHome) + loadModuleRenamingHistory(communityHome.communityRoot)
       val context = CompilationContextImpl(model = model,
                                            communityHome = communityHome,
                                            projectHome = projectHome,
                                            messages = messages,
-                                           oldToNewModuleName = oldToNewModuleName,
                                            buildOutputRootEvaluator = buildOutputRootEvaluator,
                                            options = options)
       defineJavaSdk(context)
@@ -264,7 +246,6 @@ class CompilationContextImpl private constructor(model: JpsModel,
   init {
     project = model.project
     global = model.global
-    newToOldModuleName = oldToNewModuleName.entries.associate { it.value to it.key }
     val modules = model.project.modules
     this.nameToModule = modules.associateBy { it.name }
     val buildOut = options.outputRootPath?.let { Path.of(it) } ?: buildOutputRootEvaluator(project)
@@ -367,18 +348,6 @@ private fun readModulesFromReleaseFile(model: JpsModel, sdkName: String, sdkHome
       additionalSdk.addRoot(it, JpsOrderRootType.COMPILED)
     }
   }
-}
-
-private fun loadModuleRenamingHistory(projectHome: Path): Map<String, String> {
-  val modulesXml = projectHome.resolve(".idea/modules.xml")
-  check(Files.exists(modulesXml)) {
-    "Incorrect project home: $modulesXml doesn\'t exist"
-  }
-  return Files.newInputStream(modulesXml).use { readXmlAsModel(it) }.children("component")
-           .find { it.getAttributeValue("name") == "ModuleRenamingHistory" }
-           ?.children("module")
-           ?.associate { it.getAttributeValue("old-name")!! to it.getAttributeValue("new-name")!! }
-         ?: emptyMap()
 }
 
 private fun CompilationContext.cleanOutput(keepCompilationState: Boolean) {

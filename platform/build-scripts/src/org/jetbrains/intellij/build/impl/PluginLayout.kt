@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.containers.MultiMap
@@ -122,7 +124,7 @@ class PluginLayout(val mainModule: String): BaseLayout() {
     patchers.add(BiConsumer { patcher, context ->
       val discoveredServiceFiles: MultiMap<String, Pair<String, Path>> = MultiMap.createLinkedSet()
 
-      for (moduleName in moduleJars.get(mainJarName)) {
+      for (moduleName in jarToModules.get(mainJarName)!!) {
         val path = context.findFileInModuleSources(moduleName, "META-INF/services") ?: continue
         Files.list(path).use { stream ->
           stream
@@ -133,21 +135,19 @@ class PluginLayout(val mainModule: String): BaseLayout() {
         }
       }
 
-      discoveredServiceFiles.entrySet().forEach { entry: Map.Entry<String, Collection<Pair<String, Path>>> ->
-        val serviceFileName = entry.key
-        val serviceFiles: Collection<Pair<String, Path>> = entry.value
+      for ((serviceFileName, serviceFiles) in discoveredServiceFiles.entrySet()) {
+        if (serviceFiles.size <= 1) {
+          continue
+        }
 
-        if (serviceFiles.size <= 1) return@forEach
         val content = serviceFiles.joinToString("\n") { Files.readString(it.second) }
-
-        context.messages.info("Merging service file " + serviceFileName + " (" + serviceFiles.joinToString(", ") { it.first } + ")")
-        patcher.patchModuleOutput(serviceFiles.first().first, // first one wins
-                                  "META-INF/services/$serviceFileName",
-                                  content)
+        context.messages.info("Merging service file $serviceFileName (${serviceFiles.joinToString(", ") { it.first }})")
+        patcher.patchModuleOutput(moduleName = serviceFiles.first().first, // first one wins
+                                  path = "META-INF/services/$serviceFileName",
+                                  content = content)
       }
     })
-    }
-
+  }
 
   class PluginLayoutSpec(private val layout: PluginLayout): BaseLayoutSpec(layout) {
     var directoryName: String = convertModuleNameToFileName(layout.mainModule)

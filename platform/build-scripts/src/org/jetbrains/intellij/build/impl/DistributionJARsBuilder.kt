@@ -17,6 +17,7 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Context
 import io.opentelemetry.extension.kotlin.asContextElement
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.*
@@ -156,22 +157,18 @@ class DistributionJARsBuilder {
    */
   fun validateModuleStructure(context: BuildContext) {
     if (context.options.validateModuleStructure) {
-      ModuleStructureValidator(context, state.platform.moduleJars).validate()
+      ModuleStructureValidator(context, state.platform.jarToModules).validate()
     }
   }
 
-  // Filter out jars with relative paths in name
+  // filter out jars with relative paths in name
   val productModules: List<String>
     get() {
-      val result = ArrayList<String>()
-      for (moduleJar in state.platform.getJarToIncludedModuleNames()) {
-        // Filter out jars with relative paths in name
-        if (moduleJar.key.contains('\\') || moduleJar.key.contains('/')) {
-          continue
-        }
-        result.addAll((moduleJar.value))
-      }
-      return result
+      return state.platform.jarToModules.asSequence()
+        .filterNot { it.key.contains('\\') || it.key.contains('/') }
+        .flatMap { it.value }
+        .distinct()
+        .toList()
     }
 
   /**
@@ -261,11 +258,11 @@ class DistributionJARsBuilder {
       for (plugin in allPlugins) {
         if (satisfiesBundlingRequirements(plugin = plugin, osFamily = null, arch = null, context = context)) {
           entries.addAll(layoutDistribution(layout = plugin,
-                                targetDirectory = pluginLayoutRoot,
-                                copyFiles = false,
-                                moduleOutputPatcher = moduleOutputPatcher,
-                                moduleJars = plugin.moduleJars,
-                                context = context))
+                                            targetDirectory = pluginLayoutRoot,
+                                            copyFiles = false,
+                                            moduleOutputPatcher = moduleOutputPatcher,
+                                            jarToModule = plugin.jarToModules,
+                                            context = context))
         }
       }
       entries.addAll(libDirLayout.await())
@@ -440,11 +437,11 @@ class DistributionJARsBuilder {
   }
 
   private suspend fun buildHelpPlugin(helpPlugin: PluginLayout,
-                              pluginsToPublishDir: Path,
-                              targetDir: Path,
-                              moduleOutputPatcher: ModuleOutputPatcher,
-                              context: BuildContext): PluginRepositorySpec {
-    val directory = getActualPluginDirectoryName(helpPlugin, context)
+                                      pluginsToPublishDir: Path,
+                                      targetDir: Path,
+                                      moduleOutputPatcher: ModuleOutputPatcher,
+                                      context: BuildContext): PluginRepositorySpec {
+    val directory = helpPlugin.directoryName
     val destFile = targetDir.resolve("$directory.zip")
     spanBuilder("build help plugin").setAttribute("dir", directory).useWithScope {
       buildPlugins(moduleOutputPatcher = moduleOutputPatcher,
@@ -477,7 +474,10 @@ private suspend fun buildPlugins(moduleOutputPatcher: ModuleOutputPatcher,
     plugins.map { plugin ->
       val isHelpPlugin = plugin.mainModule == "intellij.platform.builtInHelp"
       if (!isHelpPlugin) {
-        checkOutputOfPluginModules(plugin.mainModule, plugin.moduleJars, plugin.moduleExcludes, context)
+        checkOutputOfPluginModules(mainPluginModule = plugin.mainModule,
+                                   jarToModules = plugin.jarToModules,
+                                   moduleExcludes = plugin.moduleExcludes,
+                                   context = context)
         patchPluginXml(moduleOutputPatcher = moduleOutputPatcher,
                        plugin = plugin,
                        releaseDate = context.applicationInfo.majorReleaseDate,
@@ -486,7 +486,7 @@ private suspend fun buildPlugins(moduleOutputPatcher: ModuleOutputPatcher,
                        context = context)
       }
 
-      val directoryName = getActualPluginDirectoryName(plugin, context)
+      val directoryName = plugin.directoryName
       val pluginDir = targetDir.resolve(directoryName)
       val task = async {
         spanBuilder("plugin").setAttribute("path", context.paths.buildOutputDir.relativize(pluginDir).toString()).useWithScope2 {
@@ -494,7 +494,7 @@ private suspend fun buildPlugins(moduleOutputPatcher: ModuleOutputPatcher,
                                           targetDirectory = pluginDir,
                                           copyFiles = true,
                                           moduleOutputPatcher = moduleOutputPatcher,
-                                          moduleJars = plugin.moduleJars,
+                                          jarToModule = plugin.jarToModules,
                                           context = context)
           pluginBuilt?.invoke(plugin, pluginDir)
           result
@@ -603,39 +603,6 @@ internal fun getThirdPartyLibrariesJsonFilePath(context: BuildContext): Path {
   return context.paths.tempDir.resolve("third-party-libraries.json")
 }
 
-/**
- * Returns path to a JAR file in the product distribution where platform/plugin classes will be placed. If the JAR name corresponds to
- * a module name and the module was renamed, return the old name to temporary keep the product layout unchanged.
- */
-private fun getActualModuleJarPath(relativeJarPath: String,
-                                   moduleNames: Collection<String>,
-                                   explicitlySetJarPaths: Set<String>,
-                                   context: BuildContext): String {
-  if (explicitlySetJarPaths.contains(relativeJarPath)) {
-    return relativeJarPath
-  }
-
-  for (moduleName in moduleNames) {
-    if (relativeJarPath == "${convertModuleNameToFileName(moduleName)}.jar" && context.getOldModuleName(moduleName) != null) {
-      return "${context.getOldModuleName(moduleName)}.jar"
-    }
-  }
-  return relativeJarPath
-}
-
-/**
- * Returns name of directory in the product distribution where plugin will be placed. For plugins which use the main module name as the
- * directory name return the old module name to temporary keep layout of plugins unchanged.
- */
-fun getActualPluginDirectoryName(plugin: PluginLayout, context: BuildContext): String {
-  if (!plugin.directoryNameSetExplicitly && (plugin.directoryName == convertModuleNameToFileName(plugin.mainModule))) {
-    context.getOldModuleName(plugin.mainModule)?.let {
-      return it
-    }
-  }
-  return plugin.directoryName
-}
-
 private fun basePath(buildContext: BuildContext, moduleName: String): Path {
   return Path.of(JpsPathUtil.urlToPath(buildContext.findRequiredModule(moduleName).contentRootsList.urls.first()))
 }
@@ -658,12 +625,12 @@ suspend fun buildLib(moduleOutputPatcher: ModuleOutputPatcher, platform: Platfor
   }
 
   val modulesToBeScrambled = scrambleTool.namesOfModulesRequiredToBeScrambled.toHashSet()
-  val productLayout = context.productProperties.productLayout
-  for (jarName in platform.moduleJars.keySet()) {
-    if (jarName != productLayout.mainJarName && jarName != PlatformModules.PRODUCT_JAR) {
-      val notScrambled = platform.moduleJars.get(jarName).intersect(modulesToBeScrambled)
+  val mainJarName = context.productProperties.productLayout.mainJarName
+  for ((jar, modules) in platform.jarToModules) {
+    if (jar != mainJarName && jar != PlatformModules.PRODUCT_JAR) {
+      val notScrambled = modules.intersect(modulesToBeScrambled)
       check(notScrambled.isEmpty()) {
-        "Module \'${notScrambled.first()}\' is included into $jarName which is not scrambled."
+        "Module \'${notScrambled.first()}\' is included into $jar which is not scrambled."
       }
     }
   }
@@ -681,7 +648,7 @@ suspend fun processLibDirectoryLayout(moduleOutputPatcher: ModuleOutputPatcher,
                          targetDirectory = context.paths.distAllDir,
                          copyFiles = copyFiles,
                          moduleOutputPatcher = moduleOutputPatcher,
-                         moduleJars = platform.moduleJars,
+                         jarToModule = platform.jarToModules,
                          context = context)
     }
 }
@@ -705,37 +672,37 @@ internal fun getOsAndArchSpecificDistDirectory(osFamily: OsFamily, arch: JvmArch
 }
 
 fun checkOutputOfPluginModules(mainPluginModule: String,
-                               moduleJars: MultiMap<String, String>,
+                               jarToModules: Map<String, List<String>>,
                                moduleExcludes: MultiMap<String, String>,
                                context: BuildContext) {
   // don't check modules which are not direct children of lib/ directory
-  val modulesWithPluginXml = ArrayList<String>()
-  for (entry in moduleJars.entrySet()) {
+  var modulesWithPluginXml = persistentListOf<String>()
+  for (entry in jarToModules.entries) {
     if (!entry.key.contains('/')) {
       for (moduleName in entry.value) {
         if (containsFileInOutput(moduleName, "META-INF/plugin.xml", moduleExcludes.get(moduleName), context)) {
-          modulesWithPluginXml.add(moduleName)
+          modulesWithPluginXml = modulesWithPluginXml.add(moduleName)
         }
       }
     }
   }
 
-  if (modulesWithPluginXml.size > 1) {
-    context.messages.error("Multiple modules (${modulesWithPluginXml.joinToString()}) from \'$mainPluginModule\' plugin " +
-                           "contain plugin.xml files so the plugin won\'t work properly")
+  check(!modulesWithPluginXml.isEmpty()) {
+    "No module from \'$mainPluginModule\' plugin contains plugin.xml"
   }
-  if (modulesWithPluginXml.isEmpty()) {
-    context.messages.error("No module from \'$mainPluginModule\' plugin contains plugin.xml")
+  check(modulesWithPluginXml.size == 1) { (
+    "Multiple modules (${modulesWithPluginXml.joinToString()}) from \'$mainPluginModule\' plugin " +
+    "contain plugin.xml files so the plugin won\'t work properly")
   }
-  for (moduleJar in moduleJars.values()) {
-    if (moduleJar != "intellij.java.guiForms.rt" &&
-        containsFileInOutput(moduleJar, "com/intellij/uiDesigner/core/GridLayoutManager.class",
-                                                     moduleExcludes.get(moduleJar),
-                                                     context)) {
-      context.messages.error("Runtime classes of GUI designer must not be packaged to \'$moduleJar\' module in" +
-                             " \'$mainPluginModule\' plugin, because they are included into a platform JAR. " +
-                             "Make sure that 'Automatically copy form runtime classes " +
-                             "to the output directory' is disabled in Settings | Editor | GUI Designer.")
+  for (module in jarToModules.values.asSequence().flatten().distinct()) {
+    if (module == "intellij.java.guiForms.rt" ||
+        !containsFileInOutput(moduleName = module,
+                              filePath = "com/intellij/uiDesigner/core/GridLayoutManager.class",
+                              excludes = moduleExcludes.get(module),
+                              context = context)) {
+      "Runtime classes of GUI designer must not be packaged to \'$module\' module in \'$mainPluginModule\' plugin, " +
+      "because they are included into a platform JAR. Make sure that 'Automatically copy form runtime classes " +
+      "to the output directory' is disabled in Settings | Editor | GUI Designer."
     }
   }
 }
@@ -743,8 +710,8 @@ fun checkOutputOfPluginModules(mainPluginModule: String,
 private fun containsFileInOutput(moduleName: String,
                                  filePath: String,
                                  excludes: Collection<String>,
-                                 buildContext: BuildContext): Boolean {
-  val moduleOutput = buildContext.getModuleOutputDir(buildContext.findRequiredModule(moduleName))
+                                 context: BuildContext): Boolean {
+  val moduleOutput = context.getModuleOutputDir(context.findRequiredModule(moduleName))
   val fileInOutput = moduleOutput.resolve(filePath)
   if (!Files.exists(fileInOutput)) {
     return false
@@ -781,7 +748,7 @@ private suspend fun scramble(context: BuildContext) {
   val tool = context.proprietaryBuildTools.scrambleTool
 
   val actualModuleJars = if (tool == null) emptyMap() else mapOf("internalUtilities.jar" to listOf("intellij.tools.internalUtilities"))
-  pack(actualModuleJars = actualModuleJars,
+  pack(jarToModules = actualModuleJars,
        outputDir = context.paths.buildOutputDir.resolve("internal"),
        context = context)
   tool?.scramble(context.productProperties.productLayout.mainJarName, context)
@@ -922,7 +889,7 @@ suspend fun layoutDistribution(layout: BaseLayout,
                                targetDirectory: Path,
                                copyFiles: Boolean,
                                moduleOutputPatcher: ModuleOutputPatcher,
-                               moduleJars: MultiMap<String, String>,
+                               jarToModule: Map<String, List<String>>,
                                context: BuildContext): List<DistributionFileEntry> {
   if (copyFiles) {
     checkModuleExcludes(layout.moduleExcludes, context)
@@ -942,14 +909,8 @@ suspend fun layoutDistribution(layout: BaseLayout,
     val tasks = ArrayList<Deferred<Collection<DistributionFileEntry>>>(3)
     tasks.add(async {
       spanBuilder("pack").useWithScope2 {
-        val actualModuleJars = TreeMap<String, MutableList<String>>()
-        for (entry in moduleJars.entrySet()) {
-          val modules = entry.value
-          val jarPath = getActualModuleJarPath(entry.key, modules, layout.explicitlySetJarPaths, context)
-          actualModuleJars.computeIfAbsent(jarPath) { mutableListOf() }.addAll(modules)
-        }
         withContext(Dispatchers.IO) {
-          pack(actualModuleJars, targetDirectory.resolve("lib"), layout, moduleOutputPatcher, !copyFiles, context)
+          pack(jarToModule, targetDirectory.resolve("lib"), layout, moduleOutputPatcher, !copyFiles, context)
         }
       }
     })

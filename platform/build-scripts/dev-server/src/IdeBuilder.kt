@@ -82,7 +82,7 @@ internal suspend fun initialBuild(productConfiguration: ProductConfiguration, ho
   val mainModuleToNonTrivialPlugin = HashMap<String, BuildItem>(bundledMainModuleNames.size)
   for (plugin in pluginLayoutsFromProductProperties) {
     if (bundledMainModuleNames.contains(plugin.mainModule)) {
-      val item = BuildItem(pluginsDir.resolve(getActualPluginDirectoryName(plugin, buildContext)), plugin)
+      val item = BuildItem(pluginsDir.resolve(plugin.directoryName), plugin)
       mainModuleToNonTrivialPlugin.put(plugin.mainModule, item)
     }
   }
@@ -97,12 +97,12 @@ internal suspend fun initialBuild(productConfiguration: ProductConfiguration, ho
       item = BuildItem(dir = pluginsDir.resolve(pluginLayout.directoryName), layout = pluginLayout)
     }
     else {
-      for (entry in item.layout.getJarToIncludedModuleNames()) {
-        if (!entry.key.contains('/')) {
-          for (name in entry.value) {
+      for ((jar, modules) in item.layout.jarToModules) {
+        if (!jar.contains('/')) {
+          for (name in modules) {
             moduleNameToPlugin.put(name, item)
           }
-          item.moduleNames.addAll(entry.value)
+          item.moduleNames.addAll(modules)
         }
       }
     }
@@ -129,6 +129,7 @@ internal suspend fun initialBuild(productConfiguration: ProductConfiguration, ho
                                      moduleNameToPlugin = moduleNameToPlugin)
 }
 
+@Suppress("KotlinConstantConditions")
 private suspend fun createLibClassPath(context: BuildContext, homePath: Path): String {
   val platformLayout = createPlatformLayout(emptySet(), context)
   val isPackagedLib = System.getProperty("dev.server.pack.lib") == "true"

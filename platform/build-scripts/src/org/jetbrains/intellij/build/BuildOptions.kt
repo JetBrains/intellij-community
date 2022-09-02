@@ -191,9 +191,7 @@ class BuildOptions {
   var buildStepsToSkip: MutableSet<String> = System.getProperty(BUILD_STEPS_TO_SKIP_PROPERTY, "")
     .split(',')
     .dropLastWhile { it.isEmpty() }
-    .asSequence()
-    .filter { s: String -> !s.isBlank() }
-    .toHashSet()
+    .filterTo(HashSet()) { !it.isBlank() }
 
   var buildMacArtifactsWithoutRuntime = SystemProperties.getBooleanProperty(BUILD_MAC_ARTIFACTS_WITHOUT_RUNTIME,
                                                                             SystemProperties.getBooleanProperty("artifact.mac.no.jdk", false))
@@ -227,11 +225,6 @@ class BuildOptions {
    * If `true` the project modules will be compiled incrementally
    */
   var incrementalCompilation = SystemProperties.getBooleanProperty("intellij.build.incremental.compilation", false)
-
-  /**
-   * By default, some build steps are executed in parallel threads. Set this property to `false` to disable this.
-   */
-  var runBuildStepsInParallel = SystemProperties.getBooleanProperty("intellij.build.run.steps.in.parallel", true)
 
   /**
    * Build number without product code (e.g. '162.500.10'), if `null` '&lt;baseline&gt;.SNAPSHOT' will be used. Use [BuildContext.buildNumber] to

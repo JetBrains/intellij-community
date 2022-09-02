@@ -1,13 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import com.intellij.openapi.util.io.FileUtil
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.impl.BundledMavenDownloader
 import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.plugin
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.simplePlugin
+import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
 
@@ -100,10 +100,10 @@ object CommunityRepositoryModules {
         val targetLib = targetDir.resolve("lib")
 
         val mavenLibs = BundledMavenDownloader.downloadMavenCommonLibs(context.paths.communityHomeDir)
-        FileUtil.copyDir(mavenLibs.toFile(), targetLib.resolve("maven3-server-lib").toFile())
+        copyDir(mavenLibs, targetLib.resolve("maven3-server-lib"))
 
         val mavenDist = BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDir)
-        FileUtil.copyDir(mavenDist.toFile(), targetLib.resolve("maven3").toFile())
+        copyDir(mavenDist, targetLib.resolve("maven3"))
       })
     },
     plugin("intellij.gradle") { spec ->
@@ -286,7 +286,7 @@ object CommunityRepositoryModules {
     }
   )
 
-  fun androidDesignPlugin(mainModuleName: String = "intellij.android.design-plugin"): PluginLayout {
+  private fun androidDesignPlugin(mainModuleName: String = "intellij.android.design-plugin"): PluginLayout {
     return plugin(mainModuleName) { spec ->
       spec.directoryName = "design-tools"
       spec.mainJarName = "design-tools.jar"

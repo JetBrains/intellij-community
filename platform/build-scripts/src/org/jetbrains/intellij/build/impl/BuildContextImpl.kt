@@ -3,7 +3,6 @@
 
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.Strings
 import io.opentelemetry.api.common.AttributeKey
@@ -26,7 +25,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
-import kotlin.collections.ArrayList
 
 class BuildContextImpl private constructor(private val compilationContext: CompilationContextImpl,
                                            override val productProperties: ProductProperties,
@@ -152,10 +150,6 @@ class BuildContextImpl private constructor(private val compilationContext: Compi
 
   override fun findModule(name: String): JpsModule? {
     return compilationContext.findModule(name)
-  }
-
-  override fun getOldModuleName(newName: String): String? {
-    return compilationContext.getOldModuleName(newName)
   }
 
   override fun getModuleOutputDir(module: JpsModule): Path {

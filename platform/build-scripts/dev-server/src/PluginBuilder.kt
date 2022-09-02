@@ -6,7 +6,7 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.TraceManager
+import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.checkOutputOfPluginModules
@@ -89,29 +89,32 @@ class PluginBuilder(val buildContext: BuildContext, private val outDir: Path) {
   }
 }
 
-private suspend fun buildPlugin(plugin: BuildItem, buildContext: BuildContext, projectOutDir: Path) {
+private suspend fun buildPlugin(plugin: BuildItem, context: BuildContext, projectOutDir: Path) {
   val mainModule = plugin.layout.mainModule
   if (skippedPluginModules.contains(mainModule)) {
     return
   }
 
   val moduleOutputPatcher = ModuleOutputPatcher()
-  TraceManager.spanBuilder("build plugin")
+  spanBuilder("build plugin")
     .setAttribute("mainModule", mainModule)
     .setAttribute("dir", plugin.dir.fileName.toString())
     .useWithScope2 {
       Span.current().addEvent("build ${mainModule}")
 
       if (mainModule != "intellij.platform.builtInHelp") {
-        checkOutputOfPluginModules(mainModule, plugin.layout.moduleJars, plugin.layout.moduleExcludes, buildContext)
+        checkOutputOfPluginModules(mainPluginModule = mainModule,
+                                   jarToModules = plugin.layout.jarToModules,
+                                   moduleExcludes = plugin.layout.moduleExcludes,
+                                   context = context)
       }
 
       layoutDistribution(layout = plugin.layout,
                          targetDirectory = plugin.dir,
                          copyFiles = true,
                          moduleOutputPatcher = moduleOutputPatcher,
-                         moduleJars = plugin.layout.moduleJars,
-                         context = buildContext)
+                         jarToModule = plugin.layout.jarToModules,
+                         context = context)
       plugin.markAsBuilt(projectOutDir)
     }
 }

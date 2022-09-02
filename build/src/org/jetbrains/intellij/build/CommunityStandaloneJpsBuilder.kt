@@ -13,7 +13,6 @@ import org.jetbrains.intellij.build.tasks.DirSource
 import org.jetbrains.intellij.build.tasks.buildJar
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
 
 /**
  * Creates JARs containing classes required to run the external build for IDEA project without IDE.
@@ -96,10 +95,6 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path, context: BuildCo
 
   layout.withModule("intellij.ant.jps", "ant-jps.jar")
 
-  val actualModuleJars = TreeMap<String, MutableList<String>>()
-  for (entry in layout.moduleJars.entrySet()) {
-    actualModuleJars.computeIfAbsent(entry.key) { mutableListOf() }.addAll(entry.value)
-  }
   val buildNumber = context.fullBuildNumber
 
   val tempDir = withContext(Dispatchers.IO) {
@@ -107,10 +102,7 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path, context: BuildCo
     Files.createTempDirectory(targetDir, "jps-standalone-community-")
   }
   try {
-    JarPackager.pack(actualModuleJars = actualModuleJars,
-                     outputDir = tempDir,
-                     context = context,
-                     layout = layout)
+    JarPackager.pack(jarToModules = layout.jarToModules, outputDir = tempDir, context = context, layout = layout)
 
     withContext(Dispatchers.IO) {
       buildJar(tempDir.resolve("jps-build-test-$buildNumber.jar"), listOf(

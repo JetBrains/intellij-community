@@ -288,19 +288,21 @@ object PlatformModules {
       "intellij.platform.resources",
       "intellij.platform.resources.en",
       "intellij.platform.colorSchemes",
-      ), productLayout, layout)
+    ), productLayout, layout)
 
     jar("stats.jar", listOf(
       "intellij.platform.statistics",
       "intellij.platform.statistics.uploader",
       "intellij.platform.statistics.config",
-      ), productLayout, layout)
+    ), productLayout, layout)
 
     layout.excludedModuleLibraries.putValue("intellij.platform.credentialStore", "dbus-java")
 
     addModule("intellij.platform.statistics.devkit", productLayout, layout)
     addModule("intellij.platform.objectSerializer.annotations", productLayout, layout)
-    addModule("intellij.java.guiForms.rt", productLayout, layout)
+    if (!productLayout.excludedModuleNames.contains("intellij.java.guiForms.rt")) {
+      layout.withModule("intellij.java.guiForms.rt", "forms_rt.jar")
+    }
 
     addModule("intellij.platform.jps.model.serialization", "jps-model.jar", productLayout, layout)
     addModule("intellij.platform.jps.model.impl", "jps-model.jar", productLayout, layout)

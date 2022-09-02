@@ -861,9 +861,9 @@ private fun checkPluginDuplicates(nonTrivialPlugins: List<PluginLayout>, context
   // indexing-shared-ultimate has a separate layout for bundled & public plugins
   val duplicateDirectoryNameExceptions = setOf("indexing-shared-ultimate")
 
-  val pluginsGroupedByDirectoryName = nonTrivialPlugins.groupBy { getActualPluginDirectoryName(it, context) to it.bundlingRestrictions }.values
+  val pluginsGroupedByDirectoryName = nonTrivialPlugins.groupBy { it.directoryName to it.bundlingRestrictions }.values
   for (duplicatedPlugins in pluginsGroupedByDirectoryName) {
-    val pluginDirectoryName = getActualPluginDirectoryName(duplicatedPlugins.first(), context)
+    val pluginDirectoryName = duplicatedPlugins.first().directoryName
     if (duplicateDirectoryNameExceptions.contains(pluginDirectoryName)) {
       continue
     }
@@ -891,7 +891,7 @@ private fun checkArtifacts(names: Collection<String>, fieldName: String, context
 }
 
 private fun checkScrambleClasspathPlugins(pluginLayoutList: List<PluginLayout>, context: BuildContext) {
-  val pluginDirectories = pluginLayoutList.map { getActualPluginDirectoryName(it, context) }.toImmutableSet()
+  val pluginDirectories = pluginLayoutList.map { it.directoryName }.toImmutableSet()
 
   for (pluginLayout in pluginLayoutList) {
     for ((pluginDirectoryName, _) in pluginLayout.scrambleClasspathPlugins) {

@@ -98,7 +98,7 @@ class JarPackager private constructor(private val context: BuildContext) {
       return PathUtilRt.getFileName(roots.first().url.removeSuffix(URLUtil.JAR_SEPARATOR))
     }
 
-    suspend fun pack(actualModuleJars: Map<String, List<String>>,
+    suspend fun pack(jarToModules: Map<String, List<String>>,
                      outputDir: Path,
                      layout: BaseLayout = BaseLayout(),
                      moduleOutputPatcher: ModuleOutputPatcher = ModuleOutputPatcher(),
@@ -138,7 +138,7 @@ class JarPackager private constructor(private val context: BuildContext) {
       }
 
       val extraLibSources = HashMap<String, MutableList<Source>>()
-      val libraryToMerge = packager.packProjectLibraries(jarToModuleNames = actualModuleJars,
+      val libraryToMerge = packager.packProjectLibraries(jarToModuleNames = jarToModules,
                                                          outputDir = outputDir,
                                                          layout = layout,
                                                          copiedFiles = copiedFiles,
@@ -154,13 +154,13 @@ class JarPackager private constructor(private val context: BuildContext) {
       }
       else if (!libraryToMerge.isEmpty()) {
         val mainJarName = (layout as PluginLayout).getMainJarName()
-        assert(actualModuleJars.containsKey(mainJarName))
+        assert(jarToModules.containsKey(mainJarName))
         packager.filesToSourceWithMappings(outputDir.resolve(mainJarName), libraryToMerge)
       }
 
       // must be concurrent - buildJars executed in parallel
       val moduleNameToSize = ConcurrentHashMap<String, Int>()
-      for ((jarPath, modules) in actualModuleJars) {
+      for ((jarPath, modules) in jarToModules) {
         val jarFile = outputDir.resolve(jarPath)
         val descriptor = packager.jarDescriptors.computeIfAbsent(jarFile) { JarDescriptor(jarFile = it) }
         val includedModules = descriptor.includedModules
