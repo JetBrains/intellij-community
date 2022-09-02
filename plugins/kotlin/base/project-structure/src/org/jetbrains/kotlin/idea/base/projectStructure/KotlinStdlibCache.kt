@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -190,8 +191,13 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
             } as LibraryInfo?
 
             protected fun LibraryInfo?.toStdlibDependency(): StdlibDependency {
-                if (this == null && runReadAction { project.isDisposed || DumbService.isDumb(project) }) {
-                    throw ProcessCanceledException()
+                if (this == null) {
+                    if (runReadAction { project.isDisposed }) {
+                        throw ProcessCanceledException()
+                    }
+                    if (runReadAction { DumbService.isDumb(project) }) {
+                        throw IndexNotReadyException.create()
+                    }
                 }
 
                 return StdlibDependency(this)
