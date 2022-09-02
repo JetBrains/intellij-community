@@ -207,7 +207,7 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
 
     if (sourceValueIndex != null) {
       String oldParameters = configuration.getProgramParameters() != null ? configuration.getProgramParameters() : "";
-      final String newProgramParameters = oldParameters + " --valueSource \"" + sourceValueIndex + "\"";
+      final String newProgramParameters = oldParameters + " valueSource " + sourceValueIndex;
       configuration.setProgramParameters(newProgramParameters);
     }
     return true;

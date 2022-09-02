@@ -103,7 +103,7 @@ public class ConfigurationFromEditorTest extends LightJavaCodeInsightFixtureTest
       "  })\n" +
       "public void palindromes(String candidate) {}}");
     String parameters = configuration.getPersistentData().getProgramParameters();
-    assertTrue(parameters.contains("--valueSource \"1\""));
+    assertTrue(parameters.contains("valueSource 1"));
   }
 
   public void testStaticNestedClassWithAnnotations() {

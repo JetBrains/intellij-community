@@ -663,6 +663,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   }
 
   public static class Data implements Cloneable {
+    private static final Pattern VALUE_SOURCE_PATTERN = Pattern.compile("valueSource\\s(\\d+)");
     public String PACKAGE_NAME;
     public @NlsSafe String MAIN_CLASS_NAME;
     public String METHOD_NAME;
@@ -869,8 +870,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     public static Integer getIndexFromParameters(String parameters) {
       Integer index = null;
       if (parameters != null && !parameters.isEmpty()) {
-        Pattern pattern = Pattern.compile("--valueSource \"(\\d+)\"");
-        Matcher matcher = pattern.matcher(parameters);
+        Matcher matcher = VALUE_SOURCE_PATTERN.matcher(parameters);
         if (matcher.find()) {
           String group = matcher.group(1);
           try {
