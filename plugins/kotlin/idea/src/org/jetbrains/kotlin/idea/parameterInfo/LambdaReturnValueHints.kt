@@ -72,9 +72,7 @@ fun provideLambdaReturnTypeHints(expression: KtExpression): InlayInfoDetails? {
     val bindingContext = expression.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL_WITH_CFA)
     return if (bindingContext[USED_AS_RESULT_OF_LAMBDA, expression] == true) {
         val functionLiteral = expression.getStrictParentOfType<KtFunctionLiteral>() ?: return null
-        //val lambdaExpression = functionLiteral.getStrictParentOfType<KtLambdaExpression>() ?: return null
         val type = bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR, functionLiteral).safeAs<FunctionDescriptor>()?.returnType ?: return null
-        //val lambdaName = lambdaExpression.getNameOfFunctionThatTakesLambda() ?: "lambda"
         val inlayInfo = InlayInfo("", expression.endOffset)
         val infoDetails = buildList {
             add(TextInlayInfoDetail(": "))
