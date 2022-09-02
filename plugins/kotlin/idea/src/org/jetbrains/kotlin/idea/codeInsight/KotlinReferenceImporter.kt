@@ -44,6 +44,10 @@ abstract class AbstractKotlinReferenceImporter : ReferenceImporter {
         }
 
     override fun autoImportReferenceAtCursor(editor: Editor, file: PsiFile): Boolean {
+        return autoImportReferenceAtOffset(editor, file, editor.caretModel.offset)
+    }
+
+    override fun autoImportReferenceAtOffset(editor: Editor, file: PsiFile, caretOffset: Int): Boolean {
         if (file !is KtFile || !DaemonListeners.canChangeFileSilently(file)) return false
 
         fun hasUnresolvedImportWhichCanImport(name: String): Boolean = file.importDirectives.any {
@@ -70,7 +74,6 @@ abstract class AbstractKotlinReferenceImporter : ReferenceImporter {
             return result
         }
 
-        val caretOffset = editor.caretModel.offset
         val document = editor.document
         val lineNumber = document.getLineNumber(caretOffset)
         val startOffset = document.getLineStartOffset(lineNumber)
