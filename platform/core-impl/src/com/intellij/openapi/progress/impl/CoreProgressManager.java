@@ -7,11 +7,11 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityKt;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
-import com.intellij.openapi.application.impl.ModalityKt;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
@@ -920,7 +920,6 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   @NotNull
   public static ModalityState getCurrentThreadProgressModality() {
-    //noinspection TestOnlyProblems
     ModalityState contextModality = ModalityKt.contextModality(ThreadContext.currentThreadContext());
     if (contextModality != null) {
       return contextModality;

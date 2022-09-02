@@ -3,7 +3,7 @@ package com.intellij.openapi.progress
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.impl.contextModality
+import com.intellij.openapi.application.contextModality
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
