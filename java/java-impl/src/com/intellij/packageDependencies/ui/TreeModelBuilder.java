@@ -298,7 +298,7 @@ public class TreeModelBuilder {
   }
 
   private ScopeType getFileScopeType(VirtualFile file) {
-    if (myFileIndex.isLibraryClassFile(file) || myFileIndex.isInLibrarySource(file)) return ScopeType.LIB;
+    if (myFileIndex.isInLibraryClasses(file) || myFileIndex.isInLibrarySource(file)) return ScopeType.LIB;
     if (myFileIndex.isInTestSourceContent(file)) return ScopeType.TEST;
     return ScopeType.SOURCE;
   }

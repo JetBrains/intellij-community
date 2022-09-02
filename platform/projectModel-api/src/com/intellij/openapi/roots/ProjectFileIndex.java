@@ -108,7 +108,10 @@ public interface ProjectFileIndex extends FileIndex {
   /**
    * Returns true if {@code file} is a file which belongs to the classes (not sources) of some library which is included into dependencies
    * of some module.
+   * @deprecated name of this method may be misleading, actually it doesn't check that {@code file} has the 'class' extension. 
+   * Use {@link #isInLibraryClasses} with additional {@code !file.isDirectory()} check instead.   
    */
+  @Deprecated
   boolean isLibraryClassFile(@NotNull VirtualFile file);
 
   /**
