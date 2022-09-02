@@ -20,8 +20,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 public final class BaseRevisionTextPatchEP implements PatchEP {
+  public static final Key<Boolean> ourProvideStoredBaseRevisionTextKey =
+    Key.create("com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP.ourProvideStoredBaseRevisionTextKey");
   public static final Key<Map<FilePath, ContentRevision>> ourBaseRevisions =
     Key.create("com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP.ourBaseRevisionPaths");
+
   private static final Key<Map<String, String>> ourStoredTexts =
     Key.create("com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP.ourStoredTexts");
   private static final Logger LOG = Logger.getInstance(BaseRevisionTextPatchEP.class);
@@ -40,7 +43,7 @@ public final class BaseRevisionTextPatchEP implements PatchEP {
 
     Map<FilePath, ContentRevision> baseRevisions = commitContext.getUserData(ourBaseRevisions);
     if (baseRevisions != null) {
-      Path file = ProjectKt.getStateStore(project).getProjectBasePath().resolve(path);
+      Path file = resolvePatchPath(project, path);
       FilePath filePath = VcsContextFactory.getInstance().createFilePath(file, Files.isDirectory(file));
       ContentRevision baseRevision = baseRevisions.get(filePath);
       if (baseRevision != null) {
@@ -53,6 +56,13 @@ public final class BaseRevisionTextPatchEP implements PatchEP {
       }
     }
 
+    if (Boolean.TRUE.equals(commitContext.getUserData(ourProvideStoredBaseRevisionTextKey))) {
+      Map<String, String> map = commitContext.getUserData(ourStoredTexts);
+      if (map != null) {
+        String content = map.get(getStoredTextKey(project, path));
+        if (content != null) return content;
+      }
+    }
     return null;
   }
 
@@ -70,7 +80,7 @@ public final class BaseRevisionTextPatchEP implements PatchEP {
       map = new HashMap<>();
       commitContext.putUserData(ourStoredTexts, map);
     }
-    map.put(ProjectKt.getStateStore(project).getProjectBasePath().resolve(path).toString(), content.toString());
+    map.put(getStoredTextKey(project, path), content.toString());
   }
 
   /**
@@ -83,10 +93,20 @@ public final class BaseRevisionTextPatchEP implements PatchEP {
 
     Map<String, String> map = commitContext.getUserData(ourStoredTexts);
     if (map != null) {
-      String content = map.get(ProjectKt.getStateStore(project).getProjectBasePath().resolve(path).toString());
+      String content = map.get(getStoredTextKey(project, path));
       if (content == null) return null;
       return StringUtil.convertLineSeparators(content);
     }
     return null;
+  }
+
+  @NotNull
+  private static String getStoredTextKey(@NotNull Project project, @NotNull String path) {
+    return resolvePatchPath(project, path).toString();
+  }
+
+  @NotNull
+  private static Path resolvePatchPath(@NotNull Project project, @NotNull String path) {
+    return ProjectKt.getStateStore(project).getProjectBasePath().resolve(path);
   }
 }

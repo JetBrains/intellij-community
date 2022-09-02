@@ -58,7 +58,6 @@ import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
-import io.opentelemetry.context.Context;
 import io.opentelemetry.context.Scope;
 import org.jdom.Element;
 import org.jdom.Parent;
@@ -772,6 +771,8 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     List<FilePatch> remainingPatches = new ArrayList<>();
 
     CommitContext commitContext = new CommitContext();
+    commitContext.putUserData(BaseRevisionTextPatchEP.ourProvideStoredBaseRevisionTextKey, true);
+
     List<TextFilePatch> textFilePatches;
     try {
       textFilePatches = loadTextPatches(myProject, changeList, changes, remainingPatches, commitContext);
@@ -860,6 +861,8 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     remainingBinaries.removeAll(binaryFiles);
 
     final CommitContext commitContext = new CommitContext();
+    commitContext.putUserData(BaseRevisionTextPatchEP.ourProvideStoredBaseRevisionTextKey, true);
+
     final List<FilePatch> remainingPatches = new ArrayList<>();
     try {
       loadTextPatches(myProject, list, changes, remainingPatches, commitContext);
@@ -1196,7 +1199,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
       //changes should be loaded
       saveRemainingChangesInList(changeList, remainingPatches, remainingBinaries, commitContext);
 
-      removeFromListWithChanges(listCopy, Objects.requireNonNull(changeList.getChanges()), changeList.getBinaryFiles());
+      removeFromListWithChanges(listCopy, Objects.requireNonNull(changeList.getChanges()), changeList.getBinaryFiles(), commitContext);
       if (delete) {
         markChangeListAsDeleted(listCopy);
       }
@@ -1287,14 +1290,14 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
 
   private void removeFromListWithChanges(@NotNull final ShelvedChangeList listCopy,
                                          @NotNull List<ShelvedChange> shelvedChanges,
-                                         @NotNull List<? extends ShelvedBinaryFile> shelvedBinaryChanges) {
+                                         @NotNull List<? extends ShelvedBinaryFile> shelvedBinaryChanges,
+                                         @NotNull CommitContext commitContext) {
     //listCopy should contain loaded changes
     removeBinaries(listCopy, shelvedBinaryChanges);
     removeChanges(listCopy, shelvedChanges);
 
     // create patch file based on filtered changes
     try {
-      final CommitContext commitContext = new CommitContext();
       final List<FilePatch> patches = new ArrayList<>();
       List<TextFilePatch> filePatches = loadPatches(myProject, listCopy.path, commitContext);
       for (ShelvedChange change : Objects.requireNonNull(listCopy.getChanges())) {
