@@ -1,31 +1,44 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.sdk;
+package com.jetbrains.python.inspections;
 
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptorBase;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
+import com.intellij.openapi.options.ex.ConfigurableVisitor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotificationProvider;
 import com.intellij.util.PathUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
@@ -35,12 +48,13 @@ import com.intellij.workspaceModel.storage.VersionedStorageChange;
 import com.intellij.workspaceModel.storage.bridgeEntities.api.ModuleEntity;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonIdeLanguageCustomization;
-import com.jetbrains.python.inspections.PyInspectionExtension;
-import com.jetbrains.python.inspections.quickfix.sdk.*;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer;
+import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration;
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension;
+import com.jetbrains.python.ui.PyUiUtil;
 import kotlin.Pair;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -58,8 +72,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static com.jetbrains.python.PythonHelper.guessModule;
 
 public final class PyEditorNotificationProvider implements DumbAware, EditorNotificationProvider {
 
@@ -370,7 +382,214 @@ public final class PyEditorNotificationProvider implements DumbAware, EditorNoti
     }
   }
 
+  @Nullable
+  private static Module guessModule(@NotNull PsiElement element) {
+    Module module = ModuleUtilCore.findModuleForPsiElement(element);
+    if (module == null) {
+      Module[] modules = ModuleManager.getInstance(element.getProject()).getModules();
+      if (modules.length != 1) {
+        return null;
+      }
+      module = modules[0];
+    }
+    return module;
+  }
+
   private static boolean isFileIgnored(@NotNull PyFile pyFile) {
     return PyInspectionExtension.EP_NAME.getExtensionList().stream().anyMatch(ep -> ep.ignoreInterpreterWarnings(pyFile));
+  }
+
+  public static final class InterpreterSettingsQuickFix implements LocalQuickFix {
+
+    @NotNull
+    private final Module myModule;
+
+    public InterpreterSettingsQuickFix(@NotNull Module module) {
+      myModule = module;
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return PlatformUtils.isPyCharm()
+             ? PyPsiBundle.message("INSP.interpreter.interpreter.settings")
+             : PyPsiBundle.message("INSP.interpreter.configure.python.interpreter");
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      showPythonInterpreterSettings(project, myModule);
+    }
+
+    public static void showPythonInterpreterSettings(@NotNull Project project, @Nullable Module module) {
+      final var id = "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable";
+      final var group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, true);
+      if (ConfigurableVisitor.findById(id, Collections.singletonList(group)) != null) {
+        ShowSettingsUtilImpl.showSettingsDialog(project, id, null);
+        return;
+      }
+
+      final ProjectSettingsService settingsService = ProjectSettingsService.getInstance(project);
+      if (module == null || justOneModuleInheritingSdk(project, module)) {
+        settingsService.openProjectSettings();
+      }
+      else {
+        settingsService.openModuleSettings(module);
+      }
+    }
+
+    private static boolean justOneModuleInheritingSdk(@NotNull Project project, @NotNull Module module) {
+      return ProjectRootManager.getInstance(project).getProjectSdk() == null &&
+             ModuleRootManager.getInstance(module).isSdkInherited() &&
+             ModuleManager.getInstance(project).getModules().length < 2;
+    }
+  }
+
+  public static final class ConfigureInterpreterFix implements LocalQuickFix {
+
+    @Override
+    public @IntentionFamilyName @NotNull String getFamilyName() {
+      return PyPsiBundle.message("INSP.interpreter.configure.python.interpreter");
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
+    public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
+      if (element == null) return;
+
+      final Module module = guessModule(element);
+      if (module == null) return;
+
+      PySdkPopupFactory.Companion.createAndShow(project, module);
+    }
+  }
+
+  private static final class UseProvidedInterpreterFix implements LocalQuickFix {
+
+    @NotNull
+    private final Module myModule;
+
+    @NotNull
+    private final PyProjectSdkConfigurationExtension myExtension;
+
+    @NotNull
+    @IntentionName
+    private final String myName;
+
+    private UseProvidedInterpreterFix(@NotNull Module module,
+                                      @NotNull PyProjectSdkConfigurationExtension extension,
+                                      @NotNull @IntentionName String name) {
+      myModule = module;
+      myExtension = extension;
+      myName = name;
+    }
+
+    @Override
+    public @IntentionFamilyName @NotNull String getFamilyName() {
+      return PyPsiBundle.message("INSP.interpreter.use.suggested.interpreter");
+    }
+
+    @Override
+    public @IntentionName @NotNull String getName() {
+      return myName;
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PyProjectSdkConfiguration.INSTANCE.configureSdkUsingExtension(myModule, myExtension,
+                                                                    () -> myExtension.createAndAddSdkForInspection(myModule));
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      // The quick fix doesn't change the code and is suggested on a file level
+      return IntentionPreviewInfo.EMPTY;
+    }
+  }
+
+  private static abstract class UseInterpreterFix<T extends Sdk> implements LocalQuickFix {
+
+    @NotNull
+    protected final T mySdk;
+
+    protected UseInterpreterFix(@NotNull T sdk) {
+      mySdk = sdk;
+    }
+
+    @Override
+    public @IntentionFamilyName @NotNull String getFamilyName() {
+      return PyPsiBundle.message("INSP.interpreter.use.suggested.interpreter");
+    }
+
+    @Override
+    public @IntentionName @NotNull String getName() {
+      return PyPsiBundle.message("INSP.interpreter.use.interpreter", PySdkPopupFactory.Companion.shortenNameInPopup(mySdk, 75));
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+  }
+
+  private static final class UseExistingInterpreterFix extends UseInterpreterFix<Sdk> {
+
+    @NotNull
+    private final Module myModule;
+
+    private UseExistingInterpreterFix(@NotNull Sdk existingSdk, @NotNull Module module) {
+      super(existingSdk);
+      myModule = module;
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PyUiUtil.clearFileLevelInspectionResults(project);
+      PyProjectSdkConfiguration.INSTANCE.setReadyToUseSdk(project, myModule, mySdk);
+    }
+  }
+
+  private static final class UseDetectedInterpreterFix extends UseInterpreterFix<PyDetectedSdk> {
+
+    @NotNull
+    private final List<Sdk> myExistingSdks;
+
+    private final boolean myAssociate;
+
+    @NotNull
+    private final Module myModule;
+
+    private UseDetectedInterpreterFix(@NotNull PyDetectedSdk detectedSdk,
+                                      @NotNull List<Sdk> existingSdks,
+                                      boolean associate,
+                                      @NotNull Module module) {
+      super(detectedSdk);
+      myExistingSdks = existingSdks;
+      myAssociate = associate;
+      myModule = module;
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PyUiUtil.clearFileLevelInspectionResults(project);
+      final Sdk newSdk = myAssociate
+                         ? PySdkExtKt.setupAssociated(mySdk, myExistingSdks, BasePySdkExtKt.getBasePath(myModule))
+                         : PySdkExtKt.setup(mySdk, myExistingSdks);
+      if (newSdk == null) return;
+
+      SdkConfigurationUtil.addSdk(newSdk);
+      if (myAssociate) PySdkExtKt.associateWithModule(newSdk, myModule, null);
+      PyProjectSdkConfiguration.INSTANCE.setReadyToUseSdk(project, myModule, newSdk);
+    }
   }
 }
