@@ -338,21 +338,21 @@ private inline fun executeTask(host: String,
                                remoteDirPrefix: String,
                                task: (ssh: SSHClient, sftp: SFTPClient, remoteDir: String) -> Unit) {
   initLog
-  val config = DefaultConfig()
-  config.keepAliveProvider = KeepAliveProvider.KEEP_ALIVE
-
-  SSHClient(config).use { ssh ->
-    ssh.addHostKeyVerifier(PromiscuousVerifier())
-    tracer.spanBuilder("connecting to $host").use { span ->
-      retryWithExponentialBackOff(action = {
-        ssh.connect(host)
-      }, onException = { attempt, e ->
-        span.addEvent("cannot connect to $host", Attributes.of(
-          AttributeKey.longKey("attemptNumber"), attempt.toLong(),
-          AttributeKey.stringKey("error"), e.toString()
-        ))
-      })
-    }
+  tracer.spanBuilder("connecting to $host").use { span ->
+    retryWithExponentialBackOff(attempts = 10, action = {
+      val config = DefaultConfig()
+      config.keepAliveProvider = KeepAliveProvider.KEEP_ALIVE
+      val ssh = SSHClient(config)
+      ssh.addHostKeyVerifier(PromiscuousVerifier())
+      ssh.connect(host)
+      ssh
+    }, onException = { attempt, e ->
+      span.addEvent("cannot connect to $host", Attributes.of(
+        AttributeKey.longKey("attemptNumber"), attempt.toLong(),
+        AttributeKey.stringKey("error"), e.toString()
+      ))
+    })
+  }.use { ssh ->
     val passwordFinder = object : PasswordFinder {
       override fun reqPassword(resource: Resource<*>?) = password.toCharArray().clone()
       override fun shouldRetry(resource: Resource<*>?) = false
