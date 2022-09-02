@@ -5,16 +5,17 @@ import com.intellij.collaboration.async.combineState
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorViewModelBase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 
 internal class GHRepositoryAndAccountSelectorViewModel(
-  scope: CoroutineScope,
+  private val scope: CoroutineScope,
   repositoriesManager: GHHostedRepositoriesManager,
   accountManager: GHAccountManager,
-  private val onSelected: (GHGitRepositoryMapping, GithubAccount) -> Unit
+  private val onSelected: suspend (GHGitRepositoryMapping, GithubAccount) -> Unit
 ) : RepositoryAndAccountSelectorViewModelBase<GHGitRepositoryMapping, GithubAccount>(scope, repositoriesManager, accountManager) {
 
   val githubLoginAvailableState: StateFlow<Boolean> =
@@ -37,6 +38,8 @@ internal class GHRepositoryAndAccountSelectorViewModel(
   override fun submitSelection() {
     val repo = repoSelectionState.value ?: return
     val account = accountSelectionState.value ?: return
-    onSelected(repo, account)
+    scope.launch {
+      onSelected(repo, account)
+    }
   }
 }

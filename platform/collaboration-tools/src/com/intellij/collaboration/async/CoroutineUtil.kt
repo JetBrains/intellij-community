@@ -67,3 +67,29 @@ fun <T, M> StateFlow<T>.mapState(
   scope: CoroutineScope,
   mapper: (value: T) -> M
 ): StateFlow<M> = map { mapper(it) }.stateIn(scope, SharingStarted.Eagerly, mapper(value))
+
+@ApiStatus.Experimental
+fun <T, R> StateFlow<T>.mapStateScoped(scope: CoroutineScope, mapper: (CoroutineScope, T) -> R): StateFlow<R?> {
+  val result = MutableStateFlow<R?>(null)
+  scope.launch {
+    collectLatest { state ->
+      coroutineScope {
+        val nestedScope = this
+        result.value = mapper(nestedScope, state)
+        awaitCancellation()
+      }
+    }
+  }
+  return result
+}
+
+@ApiStatus.Experimental
+suspend fun <T> StateFlow<T>.collectScoped(collector: (CoroutineScope, T) -> Unit) {
+  collectLatest { state ->
+    coroutineScope {
+      val nestedScope = this
+      collector(nestedScope, state)
+      awaitCancellation()
+    }
+  }
+}
