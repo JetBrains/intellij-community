@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.core.CoreBundle;
 import com.intellij.diagnostic.LoadingState;
@@ -204,7 +205,7 @@ public final class PluginInstaller {
     }
     else {
       target = targetPath.resolve(rootEntryName(sourceFile));
-      FileUtilRt.delete(target.toFile());
+      NioFiles.deleteRecursively(target);
       new Decompressor.Zip(sourceFile).extract(targetPath);
     }
     return target;

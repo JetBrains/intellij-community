@@ -768,7 +768,7 @@ public class FileUtilRt {
    */
   public static boolean delete(@NotNull File file) {
     try {
-      deleteRecursivelyNIO(file.toPath(), null);
+      deleteRecursively(file.toPath(), null);
       return true;
     }
     catch (IOException e) {
@@ -780,7 +780,7 @@ public class FileUtilRt {
     }
   }
 
-  static void deleteRecursivelyNIO(@NotNull Path path, @SuppressWarnings("BoundedWildcard") @Nullable final Consumer<Path> callback) throws IOException {
+  static void deleteRecursively(@NotNull Path path, @SuppressWarnings("BoundedWildcard") @Nullable final Consumer<Path> callback) throws IOException {
     try {
       Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
         @Override
