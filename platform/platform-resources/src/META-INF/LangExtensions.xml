@@ -317,8 +317,6 @@
     <projectService serviceInterface="com.intellij.facet.FacetFinder" serviceImplementation="com.intellij.facet.impl.FacetFinderImpl"/>
     <projectService serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.facet.TestFacetChangeListener" preload="await"/>
     <workspaceModel.facetBridgeContributor implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityContributor" />
-    <workspaceModel.customFacetEntitySerializer implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntitySerializer" />
-    <!--<projectService serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener"/>-->
     <projectService serviceInterface="com.intellij.facet.FacetEventsPublisher"
                     serviceImplementation="com.intellij.facet.impl.FacetEventsPublisherImpl"/>
 

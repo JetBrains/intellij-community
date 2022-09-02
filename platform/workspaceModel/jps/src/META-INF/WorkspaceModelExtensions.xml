@@ -10,11 +10,8 @@
     <extensionPoint name="workspaceModel.customModuleComponentSerializer"
                     interface="com.intellij.workspaceModel.ide.impl.jps.serialization.CustomModuleComponentSerializer"
                     dynamic="true"/>
-    <extensionPoint name="workspaceModel.customModuleRelatedEntitySerializer"
-                    interface="com.intellij.workspaceModel.ide.impl.jps.serialization.CustomModuleRelatedEntitySerializer"
-                    dynamic="true"/>
-    <extensionPoint name="workspaceModel.customFacetEntitySerializer"
-                    interface="com.intellij.workspaceModel.ide.impl.jps.serialization.CustomFacetEntitySerializer"
+    <extensionPoint name="workspaceModel.customFacetRelatedEntitySerializer"
+                    interface="com.intellij.workspaceModel.ide.impl.jps.serialization.CustomFacetRelatedEntitySerializer"
                     dynamic="true"/>
     <extensionPoint name="workspaceModel.preUpdateHandler"
                     interface="com.intellij.workspaceModel.ide.WorkspaceModelPreUpdateHandler"
@@ -38,6 +35,6 @@
                  description="Enable new algorithm for ReplaceBySource operation"/>
     <registryKey key="ide.workspace.model.generated.code.for.cache" defaultValue="true" restartRequired="false"
                  description="Enable new method of workspace model caching"/>
-    <workspaceModel.customModuleRelatedEntitySerializer implementation="com.intellij.workspaceModel.ide.impl.jps.serialization.FacetEntityUnifiedSerializer" />
+    <workspaceModel.customFacetRelatedEntitySerializer implementation="com.intellij.workspaceModel.ide.impl.jps.serialization.DefaultFacetEntitySerializer" />
   </extensions>
 </idea-plugin>

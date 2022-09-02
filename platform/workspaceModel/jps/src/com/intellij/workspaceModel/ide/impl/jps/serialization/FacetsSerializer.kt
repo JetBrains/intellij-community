@@ -16,11 +16,8 @@ import org.jetbrains.jps.model.serialization.facet.FacetManagerState
 import org.jetbrains.jps.model.serialization.facet.FacetState
 import com.intellij.workspaceModel.storage.bridgeEntities.api.modifyEntity
 
-internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
-                                       private val internalSource: JpsFileEntitySource,
-                                       private val componentName: String,
-                                       private val baseModuleDirPath: String?,
-                                       private val externalStorage: Boolean) {
+internal class FacetsSerializer(private val imlFileUrl: VirtualFileUrl, private val internalSource: JpsFileEntitySource,
+                                private val componentName: String, private val baseModuleDirPath: String?, private val externalStorage: Boolean) {
   /**
    * This function should return void (Unit)
    * The current result value is a temporal solution to find the root cause of https://ea.jetbrains.com/browser/ea_problems/239676
@@ -56,10 +53,10 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
       return actualExternalSystemId to entitySource
     }
 
-    val facetTypeToSerializer = CustomModuleRelatedEntitySerializer.EP_NAME.extensionList.associateBy { it.supportedType() }
+    val facetTypeToSerializer = CustomFacetRelatedEntitySerializer.EP_NAME.extensionList.associateBy { it.supportedFacetType }
     for (facetState in facetStates) {
       orderOfFacets.add(facetState.name)
-      val serializer = facetTypeToSerializer[facetState.facetType] ?: FacetEntityUnifiedSerializer.instance
+      val serializer = facetTypeToSerializer[facetState.facetType] ?: DefaultFacetEntitySerializer.instance
       serializer.loadEntitiesFromFacetState(builder, moduleEntity, facetState, ::evaluateExternalSystemIdAndEntitySource)
     }
   }
@@ -70,10 +67,9 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
                                  entitySourceFilter: (EntitySource) -> Boolean) {
     val fileUrl = imlFileUrl.url
 
-    val facetStatesFromEP = CustomModuleRelatedEntitySerializer.EP_NAME.extensionList
+    val facetStatesFromEP = CustomFacetRelatedEntitySerializer.EP_NAME.extensionList
       .mapNotNull { entitySerializer ->
-        entitySerializer as CustomModuleRelatedEntitySerializer<WorkspaceEntity>
-        val entitiesToSave = affectedEntities[entitySerializer.supportedEntityType]?.filter { entitySourceFilter.invoke(it.entitySource) }
+        val entitiesToSave = affectedEntities[entitySerializer.rootEntityType]?.filter { entitySourceFilter.invoke(it.entitySource) }
                              ?: return@mapNotNull null
         entitySerializer.createFacetStateFromEntities(entitiesToSave, externalStorage)
       }.flatten()
@@ -97,7 +93,7 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
     XmlSerializer.serializeInto(facetManagerState, componentTag)
     if (externalStorage && FileUtil.extensionEquals(fileUrl, "iml")) {
       // Trying to catch https://ea.jetbrains.com/browser/ea_problems/239676
-      logger<FacetEntitiesSerializer>().error("""Incorrect file for the serializer
+      logger<FacetsSerializer>().error("""Incorrect file for the serializer
         |externalStorage: $externalStorage
         |file path: $fileUrl
         |componentName: $componentName

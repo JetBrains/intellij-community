@@ -7,13 +7,14 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.addFacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.api.*
+import org.jdom.Element
 import org.jetbrains.jps.model.serialization.facet.FacetState
 
-class FacetEntityUnifiedSerializer: CustomModuleRelatedEntitySerializer<FacetEntity> {
-  override val supportedEntityType: Class<FacetEntity>
+class DefaultFacetEntitySerializer: CustomFacetRelatedEntitySerializer<FacetEntity> {
+  override val rootEntityType: Class<FacetEntity>
     get() = FacetEntity::class.java
-
-  override fun supportedType(): String = ""
+  override val supportedFacetType: String
+    get() = ""
 
   override fun loadEntitiesFromFacetState(builder: MutableEntityStorage, moduleEntity: ModuleEntity, facetState: FacetState,
                                           evaluateExternalSystemIdAndEntitySource: (FacetState) -> Pair<String?, EntitySource>) {
@@ -90,8 +91,14 @@ class FacetEntityUnifiedSerializer: CustomModuleRelatedEntitySerializer<FacetEnt
     return state
   }
 
+  override fun serializeIntoXml(entity: FacetEntity): Element {
+    return entity.configurationXmlTag?.let { JDOMUtil.load(it) } ?: Element("configuration")
+  }
+
   companion object {
-    val instance: FacetEntityUnifiedSerializer
-      get() = CustomModuleRelatedEntitySerializer.EP_NAME.findExtensionOrFail(FacetEntityUnifiedSerializer::class.java)
+    val instance: DefaultFacetEntitySerializer
+      // It should be rewritten to `findExtensionOrFail` because of caching evaluation result
+      get() = CustomFacetRelatedEntitySerializer.EP_NAME.extensions.filterIsInstance<DefaultFacetEntitySerializer>().first()
+
   }
 }

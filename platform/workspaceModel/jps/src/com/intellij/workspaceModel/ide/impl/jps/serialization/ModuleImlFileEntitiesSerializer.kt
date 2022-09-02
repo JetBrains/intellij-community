@@ -370,8 +370,8 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     createFacetSerializer().saveFacetEntities(module, entities, writer, this::acceptsSource)
   }
 
-  protected open fun createFacetSerializer(): FacetEntitiesSerializer {
-    return FacetEntitiesSerializer(fileUrl, internalEntitySource, JpsFacetSerializer.FACET_MANAGER_COMPONENT_NAME, null, false)
+  protected open fun createFacetSerializer(): FacetsSerializer {
+    return FacetsSerializer(fileUrl, internalEntitySource, JpsFacetSerializer.FACET_MANAGER_COMPONENT_NAME, null, false)
   }
 
   protected open fun acceptsSource(entitySource: EntitySource): Boolean {
