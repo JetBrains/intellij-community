@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.os
 
 import com.intellij.diagnostic.VMOptions
@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Version
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.system.CpuArch
 import com.sun.management.OperatingSystemMXBean
+import java.io.IOException
 import java.lang.management.ManagementFactory
 import java.nio.file.Files
 import java.util.*
@@ -101,6 +102,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector(), AllowedDuringStartu
     return physicalMemory to swapSize
   }
 
+  @Suppress("LocalVariableName")
   private fun getIndexVolumeSizeAndFreeSpace(): Pair<Int, Int>? {
     try {
       val fileStore = Files.getFileStore(PathManager.getIndexRoot())
@@ -111,6 +113,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector(), AllowedDuringStartu
         return size to freeSpace
       }
     }
+    catch (_: IOException) { }  // missing directory or something
     catch (_: UnsupportedOperationException) { }  // some non-standard FS
     catch (_: SecurityException) { }  // security manager denies reading of FS attributes
     return null
