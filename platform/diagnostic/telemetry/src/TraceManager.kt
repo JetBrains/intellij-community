@@ -30,12 +30,20 @@ object TraceManager {
   private var verboseSdk: OpenTelemetry = OpenTelemetry.noop()
 
   fun init() {
+    val traceFile = System.getProperty("idea.diagnostic.opentelemetry.file")
+    val endpoint = System.getProperty("idea.diagnostic.opentelemetry.otlp")
+    val jaegerEndpoint = System.getProperty("idea.diagnostic.opentelemetry.jaeger")
+
+    if (traceFile == null && endpoint == null && jaegerEndpoint == null) {
+      // noop
+      return
+    }
+
     val serviceName = ApplicationNamesInfo.getInstance().fullProductName
     val appInfo = ApplicationInfoImpl.getShadowInstance()
     val serviceVersion = appInfo.build.asStringWithoutProductCode()
     val serviceNamespace = appInfo.build.productCode
 
-    val traceFile = System.getProperty("idea.diagnostic.opentelemetry.file")
     val spanExporters = mutableListOf<SpanExporter>()
     if (traceFile != null) {
       val jsonSpanExporter = JaegerJsonSpanExporter()
@@ -46,12 +54,10 @@ object TraceManager {
       spanExporters.add(jsonSpanExporter)
     }
 
-    val jaegerEndpoint = System.getProperty("idea.diagnostic.opentelemetry.jaeger")
     if (jaegerEndpoint != null) {
       spanExporters.add(JaegerGrpcSpanExporter.builder().setEndpoint(jaegerEndpoint).build())
     }
 
-    val endpoint = System.getProperty("idea.diagnostic.opentelemetry.otlp")
     if (endpoint != null) {
       spanExporters.add(OtlpGrpcSpanExporter.builder().setEndpoint(endpoint).build())
     }
