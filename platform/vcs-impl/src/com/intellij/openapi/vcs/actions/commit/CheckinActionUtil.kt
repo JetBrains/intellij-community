@@ -18,7 +18,10 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.CommitModeManager
+import com.intellij.vcs.commit.CommitWorkflowHandler
 import com.intellij.vcs.commit.removeEllipsisSuffix
+
+internal fun AnActionEvent.getContextCommitWorkflowHandler(): CommitWorkflowHandler? = getData(VcsDataKeys.COMMIT_WORKFLOW_HANDLER)
 
 object CheckinActionUtil {
   private val LOG = logger<CheckinActionUtil>()

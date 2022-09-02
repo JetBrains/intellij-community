@@ -3,7 +3,7 @@ package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.vcs.actions.getContextCommitWorkflowHandler
+import com.intellij.openapi.vcs.actions.commit.getContextCommitWorkflowHandler
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.CommitExecutorWithRichDescription
 import com.intellij.util.ui.JButtonAction

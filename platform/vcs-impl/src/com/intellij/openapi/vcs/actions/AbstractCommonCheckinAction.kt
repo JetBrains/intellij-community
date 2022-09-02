@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -10,18 +9,14 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.VcsDataKeys.COMMIT_WORKFLOW_HANDLER
 import com.intellij.openapi.vcs.actions.commit.CheckinActionUtil
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.util.ui.UIUtil.removeMnemonic
 import com.intellij.vcs.commit.CommitModeManager
-import com.intellij.vcs.commit.CommitWorkflowHandler
 import com.intellij.vcs.commit.removeEllipsisSuffix
 import org.jetbrains.annotations.ApiStatus
 
 private val LOG = logger<AbstractCommonCheckinAction>()
-
-internal fun AnActionEvent.getContextCommitWorkflowHandler(): CommitWorkflowHandler? = getData(COMMIT_WORKFLOW_HANDLER)
 
 abstract class AbstractCommonCheckinAction : AbstractVcsAction() {
 
