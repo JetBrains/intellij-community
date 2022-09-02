@@ -27,10 +27,7 @@ import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.application.impl.AWTExceptionHandler
-import com.intellij.openapi.application.impl.ApplicationImpl
-import com.intellij.openapi.application.impl.ApplicationInfoImpl
-import com.intellij.openapi.application.impl.RawSwingDispatcher
+import com.intellij.openapi.application.impl.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
@@ -223,19 +220,26 @@ fun CoroutineScope.startApplication(args: List<String>,
   }
 
   val appDeferred = async {
+    val rwLockHolderDeferred = async {
+      // preload class by creating before waiting for EDT thread
+      val rwLockHolder = RwLockHolder()
+
+      // configure EDT thread
+      initAwtToolkitAndEventQueueJob.join()
+
+      rwLockHolder.initialize(EDT.getEventDispatchThread())
+      rwLockHolder
+    }
+
     // logging must be initialized before creating application
     val log = logDeferred.await()
     if (!configImportNeededDeferred.await()) {
       runPreAppClass(log, args)
     }
 
-    // we must wait for UI before creating application - EDT thread is required
-    runActivity("prepare ui waiting") {
-      initAwtToolkitAndEventQueueJob.join()
-    }
-
+    val rwLockHolder = rwLockHolderDeferred.await()
     val app = runActivity("app instantiation") {
-      ApplicationImpl(isInternal, AppMode.isHeadless(), AppMode.isCommandLine(), EDT.getEventDispatchThread())
+      ApplicationImpl(isInternal, AppMode.isHeadless(), AppMode.isCommandLine(), rwLockHolder)
     }
 
     runActivity("telemetry waiting") {
