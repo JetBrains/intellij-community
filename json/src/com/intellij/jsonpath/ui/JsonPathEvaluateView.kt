@@ -151,7 +151,7 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
     fillToolbarOptions(actionGroup)
 
     val toolbar = ActionManager.getInstance().createActionToolbar("JsonPathEvaluateToolbar", actionGroup, true)
-    toolbar.setTargetComponent(this)
+    toolbar.targetComponent = this
 
     setToolbar(toolbar.component)
   }
@@ -168,6 +168,8 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
 
   private fun fillToolbarOptions(group: DefaultActionGroup) {
     val outputComboBox = object : ComboBoxAction() {
+      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
       override fun createPopupActionGroup(button: JComponent?): DefaultActionGroup {
         val outputItems = DefaultActionGroup()
         outputItems.add(OutputOptionAction(false, JsonBundle.message("jsonpath.evaluate.output.values")))
@@ -293,6 +295,8 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
   }
 
   private inner class OptionToggleAction(private val option: Option, @NlsActions.ActionText message: String) : ToggleAction(message) {
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
     override fun isSelected(e: AnActionEvent): Boolean {
       return evalOptions.contains(option)
     }
