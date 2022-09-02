@@ -25,6 +25,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class JUnit5TestRunnerUtil {
+  private static final Pattern VALUE_SOURCE_PATTERN = Pattern.compile("valueSource\\s(\\d+)");
+
   public static LauncherDiscoveryRequest buildRequest(String[] suiteClassNames, String[] packageNameRef, String param) {
     if (suiteClassNames.length == 0) {
       return null;
@@ -225,9 +227,8 @@ public class JUnit5TestRunnerUtil {
 
   private static DiscoverySelector createMethodSelectIteration(DiscoverySelector methodSelector, String param) {
     Integer index = null;
-    Pattern pattern = Pattern.compile("--valueSource \"(\\d+)\"");
     if (param != null) {
-      Matcher matcher = pattern.matcher(param);
+      Matcher matcher = VALUE_SOURCE_PATTERN.matcher(param);
       if (matcher.find()) {
         String group = matcher.group(1);
         try {
