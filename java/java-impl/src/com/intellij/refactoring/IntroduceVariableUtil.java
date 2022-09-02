@@ -4,6 +4,7 @@ package com.intellij.refactoring;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddNewArrayExpressionFix;
 import com.intellij.codeInsight.intention.impl.TypeExpression;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.template.Expression;
@@ -420,7 +421,7 @@ public class IntroduceVariableUtil {
     } else {
       expr2 = CommonJavaRefactoringUtil.outermostParenthesizedExpression(expr1);
     }
-    if (expr2.isPhysical() || expr1.getUserData(ElementToWorkOn.REPLACE_NON_PHYSICAL) != null) {
+    if (expr2.isPhysical() || expr1.getUserData(ElementToWorkOn.REPLACE_NON_PHYSICAL) != null || IntentionPreviewUtils.isPreviewElement(expr2)) {
       return expr2.replace(ref);
     }
     else {

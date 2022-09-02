@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.ui;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.ExpectedTypeUtil;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.TailType;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
@@ -87,11 +88,17 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
 
     Ref<PsiType[]> mainTypes = new Ref<>();
     Ref<PsiType[]> allTypes = new Ref<>();
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.run(() -> {
+    Runnable calculateTypes = () -> ReadAction.run(() -> {
       mainTypes.set(getTypesForMain());
       allTypes.set(getTypesForAll(true));
-    }), JavaBundle.message("progress.title.calculate.applicable.types"), false, project);
-    
+    });
+    if (ApplicationManager.getApplication().isDispatchThread()) {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(calculateTypes, JavaBundle.message("progress.title.calculate.applicable.types"), false, project);
+    }
+    else {
+      calculateTypes.run();
+    }
+
     myTypesForMain = mainTypes.get();
     myTypesForAll = allTypes.get();
 
