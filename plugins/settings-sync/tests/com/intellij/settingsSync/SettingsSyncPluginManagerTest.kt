@@ -173,6 +173,33 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
       </component>""".trimIndent())
   }
 
+  fun `test disable two plugins at once`() {
+    // install two plugins
+    val quickJump = TestPluginDescriptor(
+      "QuickJump",
+      listOf(TestPluginDependency("com.intellij.modules.platform", false))
+    )
+    val typengo = TestPluginDescriptor(
+      "codeflections.typengo",
+      listOf(TestPluginDependency("com.intellij.modules.platform", false))
+    )
+    testPluginManager.addPluginDescriptor(pluginManager, quickJump)
+    testPluginManager.addPluginDescriptor(pluginManager, typengo)
+
+    loadPluginManagerState(incomingPluginData)
+    pluginManager.state.plugins["codeflections.typengo"] = SettingsSyncPluginManager.PluginData().apply {
+      this.isEnabled = false
+    }
+
+    TestCase.assertTrue(quickJump.isEnabled)
+    TestCase.assertTrue(typengo.isEnabled)
+
+    pluginManager.pushChangesToIde()
+
+    TestCase.assertFalse(quickJump.isEnabled)
+    TestCase.assertFalse(typengo.isEnabled)
+  }
+
   private fun loadElement(xmlData: String): Element {
     val builder = SAXBuilder()
     val doc = builder.build(StringReader(xmlData))

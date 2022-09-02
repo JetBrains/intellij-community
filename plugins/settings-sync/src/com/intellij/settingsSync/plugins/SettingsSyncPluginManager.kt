@@ -79,9 +79,19 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
     return pluginData
   }
 
+  /**
+   * Makes the state of plugins in the running IDE match their state written in this component,
+   * i.e. disables, enables and installs plugins according to the State.
+   * It doesn't uninstall plugins - it only disable it.
+   */
   fun pushChangesToIde() {
     val pluginManagerProxy = PluginManagerProxy.getInstance()
     val installer = pluginManagerProxy.createInstaller()
+
+    val pluginsToDisable = mutableListOf<PluginId>()
+    val pluginsToEnable = mutableListOf<PluginId>()
+    val pluginsToInstall = mutableListOf<PluginId>()
+
     synchronized(LOCK) {
       for ((pluginId, pluginData) in state.plugins) {
         val plugin = findPlugin(pluginId)
@@ -89,26 +99,36 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
           if (isPluginSyncEnabled(plugin.pluginId.idString, plugin.isBundled, SettingsSyncPluginCategoryFinder.getPluginCategory(plugin))) {
             if (pluginData.isEnabled != isPluginEnabled(plugin.pluginId)) {
               if (pluginData.isEnabled) {
-                pluginManagerProxy.enablePlugin(plugin.pluginId)
-                LOG.info("Enabled plugin: ${plugin.pluginId.idString}")
+                pluginsToEnable += plugin.pluginId
               }
               else {
-                pluginManagerProxy.disablePlugin(plugin.pluginId)
-                LOG.info("Disabled plugin: ${plugin.pluginId.idString}")
+                pluginsToDisable += plugin.pluginId
               }
             }
           }
         }
         else {
+          // we don't know this plugin => it should be installed (unless it is disabled in the state and if installation is possible)
           if (pluginData.isEnabled &&
               isPluginSyncEnabled(pluginId, false, pluginData.category) &&
               checkDependencies(pluginId, pluginData)) {
-            val newPluginId = PluginId.getId(pluginId)
-            installer.addPluginId(newPluginId)
-            LOG.info("New plugin installation requested: ${newPluginId.idString}")
+            pluginsToInstall += PluginId.getId(pluginId)
           }
         }
       }
+    }
+
+    LOG.info("Enabling plugins: $pluginsToEnable")
+    for (plugin in pluginsToEnable) {
+      pluginManagerProxy.enablePlugin(plugin)
+    }
+    LOG.info("Disabling plugins: $pluginsToDisable")
+    for (plugin in pluginsToDisable) {
+      pluginManagerProxy.disablePlugin(plugin)
+    }
+    LOG.info("Installing plugins: $pluginsToInstall")
+    for (plugin in pluginsToInstall) {
+      installer.addPluginId(plugin)
     }
     installer.installPlugins()
   }
