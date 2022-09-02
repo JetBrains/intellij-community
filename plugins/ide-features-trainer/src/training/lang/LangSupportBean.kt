@@ -3,6 +3,7 @@ package training.lang
 
 import com.intellij.lang.Language
 import com.intellij.openapi.extensions.CustomLoadingExtensionPointBean
+import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.TestOnly
 
@@ -19,6 +20,12 @@ class LangSupportBean : CustomLoadingExtensionPointBean<LangSupport> {
   @Attribute("defaultProductName")
   var defaultProductName: String? = null
 
+  /**
+   * [ToolWindowAnchor]
+   */
+  @Attribute("learnWindowAnchor")
+  var learnWindowAnchor: String? = null
+
   @Attribute("implementationClass")
   var implementationClass: String? = null
 
@@ -31,6 +38,12 @@ class LangSupportBean : CustomLoadingExtensionPointBean<LangSupport> {
 
 
   fun getLang(): String = language ?: error("Language must be specified for bean: $implementationClass")
+
+  fun getLearnToolWindowAnchor(): ToolWindowAnchor {
+    return learnWindowAnchor?.let {
+      ToolWindowAnchor.fromText(it)
+    } ?: ToolWindowAnchor.LEFT
+  }
 
   override fun getImplementationClassName() = implementationClass
 }

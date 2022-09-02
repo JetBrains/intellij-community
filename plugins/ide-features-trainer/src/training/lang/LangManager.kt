@@ -78,6 +78,10 @@ class LangManager : SimplePersistentStateComponent<LangManager.State>(State()) {
 
   fun getLanguageId(): String? = state.languageName
 
+  fun getLangSupportBean(): LangSupportBean? {
+    return supportedLanguagesExtensions.find { langBean -> langBean.language == state.languageName }
+  }
+
   override fun loadState(state: State) {
     val oldLanguage = this.state.languageName
     super.loadState(state)
