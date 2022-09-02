@@ -153,7 +153,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   // ui management
   private final Alarm myAlarm;
   private boolean myUseLastConfiguration;
-  private boolean myPinned;
+  private volatile boolean myPinned;
   private final boolean myEditConfigOnly;
 
   // components
@@ -488,7 +488,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
                                                                    AllIcons.Actions.PreviewDetails) {
       @Override
       public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return ActionUpdateThread.BGT;
+        return ActionUpdateThread.EDT;
       }
 
 
@@ -510,7 +510,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
                                                             filterModifiedIcon) {
       @Override
       public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return ActionUpdateThread.BGT;
+        return ActionUpdateThread.EDT;
       }
 
       @Override
