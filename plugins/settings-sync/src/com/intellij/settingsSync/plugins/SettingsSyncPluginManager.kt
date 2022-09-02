@@ -17,15 +17,15 @@ import org.jetbrains.annotations.TestOnly
 @State(name = "SettingsSyncPlugins", storages = [Storage(FILE_SPEC)])
 internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSyncPluginManager.SyncPluginsState>, Disposable {
 
-  private val pluginStateListener = SettingsSyncPluginStateListener()
-  private val disabledListener = SettingsSyncDisabledPluginListener()
+  private val pluginInstallationStateListener = PluginInstallationStateListener()
+  private val pluginEnabledStateListener = PluginEnabledStateListener()
   private val LOCK = Object()
   private var state = SyncPluginsState()
   private val sessionUninstalledPlugins = HashSet<String>()
 
   init {
-    PluginStateManager.addStateListener(pluginStateListener)
-    PluginManagerProxy.getInstance().addDisablePluginListener(disabledListener, this)
+    PluginStateManager.addStateListener(pluginInstallationStateListener)
+    PluginManagerProxy.getInstance().addDisablePluginListener(pluginEnabledStateListener, this)
     updateStateFromIde()
   }
 
@@ -160,13 +160,13 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
   }
 
   override fun dispose() {
-    PluginStateManager.removeStateListener(pluginStateListener)
+    PluginStateManager.removeStateListener(pluginInstallationStateListener)
   }
 
   @TestOnly
-  internal fun getPluginStateListener(): PluginStateListener = pluginStateListener
+  internal fun getPluginStateListener(): PluginStateListener = pluginInstallationStateListener
 
-  private inner class SettingsSyncPluginStateListener : PluginStateListener {
+  private inner class PluginInstallationStateListener : PluginStateListener {
     override fun install(descriptor: IdeaPluginDescriptor) {
       LOG.info("Installed plugin ${descriptor.pluginId.idString}")
       synchronized(LOCK) {
@@ -190,7 +190,7 @@ internal class SettingsSyncPluginManager : PersistentStateComponent<SettingsSync
     }
   }
 
-  private inner class SettingsSyncDisabledPluginListener : Runnable {
+  private inner class PluginEnabledStateListener : Runnable {
     override fun run() {
       val disabledIds = PluginManagerProxy.getInstance().getDisabledPluginIds()
       val disabledIdStrings = HashSet<String>()
