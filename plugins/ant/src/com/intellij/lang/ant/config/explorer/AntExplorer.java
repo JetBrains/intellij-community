@@ -407,10 +407,9 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       .toArray(AntBuildTarget[]::new);
   }
 
-  public boolean isBuildFileSelected() {
-    if( myProject == null) return false;
-    final AntBuildFileBase file = getCurrentBuildFile();
-    return file != null && file.exists();
+  public AntBuildFileBase getSelectedFile() {
+    if( myProject == null) return null;
+    return getCurrentBuildFile();
   }
 
   @Nullable
