@@ -18,10 +18,10 @@
 
   <projectListeners>
     <listener
-      class="com.jetbrains.python.sdk.PyEditorNotificationProvider$CacheCleaner"
+      class="com.jetbrains.python.inspections.PyInterpreterInspection$CacheCleaner"
       topic="com.intellij.workspaceModel.ide.WorkspaceModelChangeListener"/>
     <listener
-      class="com.jetbrains.python.sdk.PyEditorNotificationProvider$CacheCleaner"
+      class="com.jetbrains.python.inspections.PyInterpreterInspection$CacheCleaner"
       topic="com.intellij.openapi.projectRoots.ProjectJdkTable$Listener"/>
   </projectListeners>
 
@@ -185,7 +185,7 @@
     <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.PyFunctionNameMacro"/>
     <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.PyIterableVariableMacro"/>
 
-    <editorNotificationProvider implementation="com.jetbrains.python.sdk.PyEditorNotificationProvider"/>
+    <editorNotificationProvider implementation="com.jetbrains.python.inspections.PyInterpreterInspection"/>
 
     <codeInsight.overrideMethod language="Python" implementationClass="com.jetbrains.python.codeInsight.override.PyOverrideMethodsHandler"/>
     <codeInsight.implementMethod language="Python" implementationClass="com.jetbrains.python.codeInsight.implement.PyImplementMethodsHandler"/>

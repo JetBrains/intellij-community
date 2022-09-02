@@ -73,10 +73,10 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public final class PyEditorNotificationProvider implements DumbAware, EditorNotificationProvider {
+public final class PyInterpreterInspection implements DumbAware, EditorNotificationProvider {
 
   @NotNull
-  private static final Logger LOGGER = Logger.getInstance(PyEditorNotificationProvider.class);
+  private static final Logger LOGGER = Logger.getInstance(PyInterpreterInspection.class);
 
   @NotNull
   private static final Pattern NAME = Pattern.compile("Python (?<version>\\d\\.\\d+)\\s*(\\((?<name>.+?)\\))?");
@@ -297,7 +297,7 @@ public final class PyEditorNotificationProvider implements DumbAware, EditorNoti
     return findAssociatedViaRootNameEnv(
       associatedName,
       PySdkExtKt.detectVirtualEnvs(module, existingSdks, context),
-      PyEditorNotificationProvider::getVirtualEnvRootName
+      PyInterpreterInspection::getVirtualEnvRootName
     );
   }
 
