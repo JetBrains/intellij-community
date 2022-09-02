@@ -37,18 +37,15 @@ internal class KotlinNativeABICompatibilityCheckerService(private val project: P
         connection.subscribe(LibraryInfoListener.TOPIC, object : LibraryInfoListener {
             override fun libraryInfosAdded(libraryInfos: Collection<LibraryInfo>) {
                 val incompatibleLibraries =
-                    libraryInfos
-                        .toIncompatibleLibraries()
-                        .filterKeys {
-                            synchronized(cachedIncompatibleLibraries) {
-                                it !in cachedIncompatibleLibraries
-                            }
-                        }
-                        .ifEmpty { return }
+                    synchronized(cachedIncompatibleLibraries) {
+                        val libraryInfoMap = libraryInfos
+                            .toIncompatibleLibraries()
+                            .filterKeys { it !in cachedIncompatibleLibraries }
+                            .ifEmpty { return }
 
-                synchronized(cachedIncompatibleLibraries) {
-                    cachedIncompatibleLibraries.addAll(incompatibleLibraries.keys)
-                }
+                        cachedIncompatibleLibraries.addAll(libraryInfoMap.keys)
+                        libraryInfoMap
+                    }
 
                 prepareNotifications(incompatibleLibraries).forEach {
                     it.notify(project)
