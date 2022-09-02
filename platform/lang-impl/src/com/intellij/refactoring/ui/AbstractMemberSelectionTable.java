@@ -5,6 +5,7 @@ package com.intellij.refactoring.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
@@ -149,9 +150,17 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
   @Nullable
   @Override
   public Object getData(@NotNull String dataId) {
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
       M item = ContainerUtil.getFirstItem(getSelectedMemberInfos());
-      return item == null ? null : item.getMember();
+      if (item == null) return null;
+      return (DataProvider)slowId -> getSlowData(slowId, item);
+    }
+    return null;
+  }
+
+  private @Nullable Object getSlowData(@NotNull String dataId, @NotNull M item) {
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+      return item.getMember();
     }
     return null;
   }
