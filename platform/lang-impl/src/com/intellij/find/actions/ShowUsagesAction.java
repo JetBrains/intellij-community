@@ -78,7 +78,6 @@ import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -692,10 +691,9 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     @NotNull ShowUsagesParameters parameters = showUsagesPopupData.parameters;
     @NotNull Project project = parameters.project;
     @NotNull DialogPanel headerPanel = showUsagesPopupData.header.panel;
-    String title = actionHandler.getPresentation().getSearchTargetString();
 
     PopupChooserBuilder<?> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(table).
-      setTitle(XmlStringUtil.wrapInHtml("<body><nobr>" + title + "</nobr></body>")).
+      setTitle(showUsagesPopupData.header.getTitle()).
       setAdText(getSecondInvocationHint(actionHandler)).
       setMovable(true).
       setResizable(true).
@@ -914,13 +912,16 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     Disposer.register(popup, contentDisposable);
 
     // Replace compound header by ShowUsagesHeader. A little hack because there is no suitable popup API
+    // CWM: new API method in popup API should be introduced for setting headerPanel
     CaptionPanel captionPanel = popup.getTitle();
     Container parent = captionPanel.getParent();
-    parent.remove(captionPanel);
-    parent.add(headerPanel);
-    WindowMoveListener windowListener = new WindowMoveListener(headerPanel);
-    headerPanel.addMouseListener(windowListener);
-    headerPanel.addMouseMotionListener(windowListener);
+    if (parent != null) {
+      parent.remove(captionPanel);
+      parent.add(headerPanel);
+      WindowMoveListener windowListener = new WindowMoveListener(headerPanel);
+      headerPanel.addMouseListener(windowListener);
+      headerPanel.addMouseMotionListener(windowListener);
+    }
 
     if (ExperimentalUI.isNewUI()) {
       headerPanel.setBorder(

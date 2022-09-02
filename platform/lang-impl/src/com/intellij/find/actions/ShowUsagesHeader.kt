@@ -76,6 +76,11 @@ internal class ShowUsagesHeader(pinButton: JComponent, @NlsContexts.PopupTitle t
     }
   }
 
+  @NlsContexts.PopupTitle
+  fun getTitle(): String {
+    return titleLabel.text
+  }
+
   private fun getStatusString(findUsagesInProgress: Boolean, hasMore: Boolean, visibleCount: Int, totalCount: Int): @Nls String {
     return if (findUsagesInProgress || hasMore) {
       UsageViewBundle.message("showing.0.usages", visibleCount - if (hasMore) 1 else 0)
