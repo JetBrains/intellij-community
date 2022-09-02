@@ -51,7 +51,7 @@ object CheckinActionUtil {
     LOG.debug("performCommonCommitAction")
 
     val isFreezedDialogTitle = actionName?.let {
-      val operationName = UIUtil.removeMnemonic(actionName).removeEllipsisSuffix().toLowerCase()
+      val operationName = UIUtil.removeMnemonic(actionName).removeEllipsisSuffix()
       VcsBundle.message("error.cant.perform.operation.now", operationName)
     }
     val changeListManager = ChangeListManager.getInstance(project)

@@ -15,6 +15,7 @@ import com.intellij.util.ui.UIUtil.removeMnemonic
 import com.intellij.vcs.commit.CommitModeManager
 import com.intellij.vcs.commit.removeEllipsisSuffix
 import org.jetbrains.annotations.ApiStatus
+import java.util.*
 
 private val LOG = logger<AbstractCommonCheckinAction>()
 
@@ -50,7 +51,7 @@ abstract class AbstractCommonCheckinAction : AbstractVcsAction() {
     val project = context.project!!
     val actionName = getActionName(context) ?: templatePresentation.text
     val isFreezedDialogTitle = actionName?.let {
-      val operationName = removeMnemonic(actionName).removeEllipsisSuffix().toLowerCase()
+      val operationName = removeMnemonic(actionName).removeEllipsisSuffix()
       VcsBundle.message("error.cant.perform.operation.now", operationName)
     }
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(isFreezedDialogTitle)) {
