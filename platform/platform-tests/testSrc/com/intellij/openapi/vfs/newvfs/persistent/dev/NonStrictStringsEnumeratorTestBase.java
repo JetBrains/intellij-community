@@ -16,15 +16,15 @@ import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
 
-public abstract class NonStrictStringsEnumeratorTestBase {
+public abstract class NonStrictStringsEnumeratorTestBase<T extends DataEnumerator<String>> {
 
   public static final int MANY = 500_000;
   @Rule
   public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  private DataEnumerator<String> enumerator;
-  private Path storageFile;
-  private String[] manyValues;
+  protected T enumerator;
+  protected Path storageFile;
+  protected String[] manyValues;
 
   @Before
   public void setUp() throws Exception {
@@ -113,7 +113,7 @@ public abstract class NonStrictStringsEnumeratorTestBase {
     }
   }
 
-  protected abstract DataEnumerator<String> openEnumerator(final @NotNull Path storagePath) throws IOException;
+  protected abstract T openEnumerator(final @NotNull Path storagePath) throws IOException;
 
   private static String[] generateValues(final int size) {
     final ThreadLocalRandom rnd = ThreadLocalRandom.current();

@@ -10,9 +10,9 @@ import java.nio.file.Path;
 /**
  * Just to compare 'classic' strict enumerator against non-strict
  */
-public class PersistentDataEnumeratorTest extends NonStrictStringsEnumeratorTestBase{
+public class PersistentStringEnumeratorTest extends NonStrictStringsEnumeratorTestBase<PersistentStringEnumerator>{
   @Override
-  protected DataEnumerator<String> openEnumerator(final @NotNull Path storagePath) throws IOException {
+  protected PersistentStringEnumerator openEnumerator(final @NotNull Path storagePath) throws IOException {
     return new PersistentStringEnumerator(storagePath);
   }
 }
