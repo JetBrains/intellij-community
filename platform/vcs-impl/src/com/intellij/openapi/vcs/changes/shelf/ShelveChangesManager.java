@@ -570,7 +570,6 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
           toKeep.put(filePath, change.getBeforeRevision());
         }
       }
-      commitContext.putUserData(BaseRevisionTextPatchEP.ourPutBaseRevisionTextKey, true);
       commitContext.putUserData(BaseRevisionTextPatchEP.ourBaseRevisions, toKeep);
     }
   }
