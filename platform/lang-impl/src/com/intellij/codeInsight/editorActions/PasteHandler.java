@@ -263,5 +263,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
       selectionModel.removeSelection();
       editor.putUserData(EditorEx.LAST_PASTED_REGION, TextRange.create(bounds));
     }
+    // Don't dispose the 'bounds' RangeMarker because the processors
+    // from 'extraData' may use it later, for instance, in an invokeLater() block.
   }
 }
