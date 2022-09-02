@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.platform.impl.JsIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.utils.addToStdlib.flattenTo
 
 class LibraryInfoCache(project: Project): SynchronizedFineGrainedEntityCache<Library, List<LibraryInfo>>(project, cleanOnLowMemory = true) {
     override fun subscribe() {
@@ -84,7 +85,7 @@ class LibraryInfoCache(project: Project): SynchronizedFineGrainedEntityCache<Lib
 
         override fun entitiesChanged(outdated: List<Library>) {
             val libraryInfoCache = getInstance(project)
-            val droppedLibraryInfos = libraryInfoCache.invalidateKeysAndGetOutdatedValues(outdated).flatten()
+            val droppedLibraryInfos = libraryInfoCache.invalidateKeysAndGetOutdatedValues(outdated).flattenTo(hashSetOf())
 
             if (droppedLibraryInfos.isNotEmpty()) {
                 project.messageBus.syncPublisher(LibraryInfoListener.TOPIC).libraryInfosRemoved(droppedLibraryInfos)
