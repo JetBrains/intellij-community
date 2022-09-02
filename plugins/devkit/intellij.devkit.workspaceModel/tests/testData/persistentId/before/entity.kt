@@ -26,7 +26,7 @@ sealed class SealedClassWithLinks {
   
   sealed class Many() : SealedClassWithLinks() {
     data class Ordered(val list: List<SimpleId>) : Many()
-    data class Unordered(val set: List<SimpleId>) : Many()
+    data class Unordered(val set: Set<SimpleId>) : Many()
   }
   
 }
