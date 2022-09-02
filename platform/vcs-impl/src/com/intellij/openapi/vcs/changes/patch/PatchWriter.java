@@ -45,9 +45,19 @@ public final class PatchWriter {
                                   @NotNull List<? extends FilePatch> patches,
                                   @Nullable CommitContext commitContext,
                                   @NotNull Charset charset) throws IOException {
+    writePatches(project, file, basePath, patches, null, commitContext, charset);
+  }
+
+  public static void writePatches(@NotNull Project project,
+                                  @NotNull Path file,
+                                  @Nullable Path basePath,
+                                  @NotNull List<? extends FilePatch> patches,
+                                  @Nullable String commitMessage,
+                                  @Nullable CommitContext commitContext,
+                                  @NotNull Charset charset) throws IOException {
     Files.createDirectories(file.getParent());
     try (Writer writer = new OutputStreamWriter(Files.newOutputStream(file), charset)) {
-      write(project, writer, basePath, patches, commitContext);
+      write(project, writer, basePath, patches, commitMessage, commitContext);
     }
   }
 
@@ -55,8 +65,10 @@ public final class PatchWriter {
                             @NotNull Writer writer,
                             @Nullable Path basePath,
                             @NotNull List<? extends FilePatch> patches,
+                            @Nullable String commitMessage,
                             @Nullable CommitContext commitContext) throws IOException {
     String lineSeparator = CodeStyle.getSettings(project).getLineSeparator();
+    UnifiedDiffWriter.writeCommitMessageHeader(project, writer, lineSeparator, commitMessage);
     UnifiedDiffWriter.write(project, basePath, patches, writer, lineSeparator, commitContext, null);
     BinaryPatchWriter.writeBinaries(basePath, ContainerUtil.findAll(patches, BinaryFilePatch.class), writer);
   }
@@ -82,8 +94,16 @@ public final class PatchWriter {
                                              @NotNull List<? extends FilePatch> patches,
                                              @NotNull Path basePath,
                                              @Nullable CommitContext commitContext) throws IOException {
+    writeAsPatchToClipboard(project, patches, null, basePath, commitContext);
+  }
+
+  public static void writeAsPatchToClipboard(@NotNull Project project,
+                                             @NotNull List<? extends FilePatch> patches,
+                                             @Nullable String commitMessage,
+                                             @NotNull Path basePath,
+                                             @Nullable CommitContext commitContext) throws IOException {
     StringWriter writer = new StringWriter();
-    write(project, writer, basePath, patches, commitContext);
+    write(project, writer, basePath, patches, commitMessage, commitContext);
     CopyPasteManager.getInstance().setContents(new StringSelection(writer.toString()));
   }
 
@@ -136,6 +156,6 @@ public final class PatchWriter {
                             @NotNull List<? extends FilePatch> patches,
                             @Nullable CommitContext commitContext,
                             boolean includeBinaries) throws IOException {
-    write(project, writer, basePath, patches, commitContext);
+    write(project, writer, basePath, patches, null, commitContext);
   }
 }
