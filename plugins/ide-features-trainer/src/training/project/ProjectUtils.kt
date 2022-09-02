@@ -74,7 +74,7 @@ object ProjectUtils {
   }
 
   private fun getLearningInstallationContentRoot(langSupport: LangSupport): Path? {
-    val storedProjectPath = LangManager.getInstance().getLearningProjectPath(langSupport)
+    val storedProjectPath = LangManager.getInstance().getLearningProjectPath(langSupport.primaryLanguage)
     val path = if (storedProjectPath != null) langSupport.getContentRootPath(Paths.get(storedProjectPath)) else null
     val canonicalPlace = learningProjectsPath.resolve(langSupport.contentRootDirectoryName)
 
