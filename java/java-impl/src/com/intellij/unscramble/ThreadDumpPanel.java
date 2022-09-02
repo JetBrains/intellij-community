@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.unscramble;
 
 import com.intellij.CommonBundle;
@@ -26,7 +26,6 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PlatformIcons;
@@ -325,6 +324,11 @@ public final class ThreadDumpPanel extends JPanel implements DataProvider {
     }
 
     @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setIcon(COMPARATOR == BY_TYPE ? AllIcons.ObjectBrowser.SortByType : AllIcons.ObjectBrowser.Sorted);
       e.getPresentation().setText(COMPARATOR == BY_TYPE ? JavaBundle.message("sort.threads.by.type") :
@@ -355,7 +359,8 @@ public final class ThreadDumpPanel extends JPanel implements DataProvider {
     }
   }
 
-  private final class FilterAction extends ToggleAction implements DumbAware {
+  private final class 
+  FilterAction extends ToggleAction implements DumbAware {
 
     private FilterAction() {
       super(CommonBundle.messagePointer("action.text.filter"), JavaBundle.messagePointer(
@@ -378,7 +383,8 @@ public final class ThreadDumpPanel extends JPanel implements DataProvider {
     }
   }
 
-  private final class MergeStacktracesAction extends ToggleAction implements DumbAware {
+  private final class 
+  MergeStacktracesAction extends ToggleAction implements DumbAware {
     private MergeStacktracesAction() {
       super(JavaBundle.messagePointer("action.text.merge.identical.stacktraces"), JavaBundle.messagePointer(
         "action.description.group.threads.with.identical.stacktraces"), AllIcons.Actions.Collapseall);

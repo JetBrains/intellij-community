@@ -407,6 +407,11 @@ public class PackageChooserDialog extends PackageChooser {
       presentation.setEnabled(getTreeSelection() != null);
     }
 
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
     public void enableInModalConext() {
       setEnabledInModalContext(true);
     }
