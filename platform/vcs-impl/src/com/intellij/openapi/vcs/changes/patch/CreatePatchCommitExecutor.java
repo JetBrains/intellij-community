@@ -170,7 +170,7 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
       VcsApplicationSettings.getInstance().PATCH_STORAGE_LOCATION = valueToStore;
 
       List<FilePatch> patches = patchBuilder.buildPatches(baseDir, changes, reversePatch, true);
-      PatchWriter.writePatches(project, file, baseDir, patches, commitContext, encoding, true);
+      PatchWriter.writePatches(project, file, baseDir, patches, commitContext, encoding);
 
       WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> {
         final VcsConfiguration configuration = VcsConfiguration.getInstance(project);
