@@ -8,6 +8,7 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.psi.*
 import com.intellij.psi.search.searches.OverridingMethodsSearch
+import com.intellij.psi.util.elementType
 import com.intellij.refactoring.changeSignature.*
 import com.intellij.refactoring.util.CanonicalTypes
 import com.intellij.usageView.UsageInfo
@@ -303,8 +304,24 @@ open class KotlinChangeInfo(
             return signatureParameters[0].getDeclarationSignature(0, inheritedCallable).text
         }
 
-        return signatureParameters.indices.joinToString(separator = ", ") { i ->
-            signatureParameters[i].getDeclarationSignature(i, inheritedCallable).text
+        return buildString {
+            val indices = signatureParameters.indices
+            val lastIndex = indices.last
+            indices.forEach { index ->
+                val parameter = signatureParameters[index].getDeclarationSignature(index, inheritedCallable)
+                if (index == lastIndex) {
+                    append(parameter.text)
+                } else {
+                    val eolComment = parameter.lastChild.takeIf { it.elementType == KtTokens.EOL_COMMENT }
+                    if (eolComment != null) {
+                        val eolCommentText = eolComment.text
+                        eolComment.delete()
+                        append("${parameter.text}, $eolCommentText\n")
+                    } else {
+                        append("${parameter.text}, ")
+                    }
+                }
+            }
         }
     }
 
