@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -164,16 +163,7 @@ public abstract class EditorAction extends AnAction implements DumbAware, LightE
     if (PROJECT.getData(original) == editor.getProject()) {
       return original;
     }
-
-    return dataId -> {
-      if (PROJECT.is(dataId)) {
-        Project project = editor.getProject();
-        if (project != null) {
-          return project;
-        }
-      }
-      return original.getData(dataId);
-    };
+    return CustomizedDataContext.create(original, dataId -> PROJECT.is(dataId) ? editor.getProject() : null);
   }
 
   public synchronized void clearDynamicHandlersCache() {

@@ -36,7 +36,7 @@ class RunToolbarProcessData {
 
     @ApiStatus.Internal
     @JvmStatic
-    fun prepareSuppressMainSlotCustomization(project: Project, addition: Consumer<ExecutionEnvironment>? = null): Consumer<ExecutionEnvironment> {
+    fun prepareSuppressMainSlotCustomization(project: Project, addition: Consumer<in ExecutionEnvironment>? = null): Consumer<in ExecutionEnvironment> {
       return Consumer { ee: ExecutionEnvironment ->
         val runManager = getInstance(project)
         if (runManager.isRunWidgetActive()) {

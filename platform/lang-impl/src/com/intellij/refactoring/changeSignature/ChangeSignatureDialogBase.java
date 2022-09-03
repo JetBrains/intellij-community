@@ -106,7 +106,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
   protected abstract PsiCodeFragment createReturnTypeCodeFragment();
 
   @Nullable
-  protected abstract CallerChooserBase<Method> createCallerChooser(@Nls String title, Tree treeToReuse, Consumer<Set<Method>> callback);
+  protected abstract CallerChooserBase<Method> createCallerChooser(@Nls String title, Tree treeToReuse, Consumer<? super Set<Method>> callback);
 
   @Nullable
   protected abstract @NlsContexts.DialogMessage String validateAndCommitData();

@@ -477,6 +477,7 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     }
 
     private void updateActionText() {
+      // Triggers listener in com.intellij.ui.popup.PopupFactoryImpl.ActionItem.ActionItem
       getTemplatePresentation().setText(myIsExpanded ? myToCollapseText : myToExpandText);
     }
 

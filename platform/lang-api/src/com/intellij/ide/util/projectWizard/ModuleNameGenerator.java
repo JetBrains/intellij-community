@@ -21,5 +21,5 @@ public interface ModuleNameGenerator {
    * @param nameSetter function that sets module name
    * @return UI component that will be shown near to module name field
    */
-  @Nullable JComponent getUi(@Nullable String place, @NotNull Consumer<String> nameSetter);
+  @Nullable JComponent getUi(@Nullable String place, @NotNull Consumer<? super String> nameSetter);
 }

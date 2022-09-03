@@ -81,31 +81,37 @@ public class GitBranchPopupActions {
   }
 
   ActionGroup createActions(@Nullable LightActionGroup toInsert, @Nullable GitRepository specificRepository, boolean firstLevelGroup) {
-    LightActionGroup popupGroup = new LightActionGroup(false);
+    LightActionGroup topActions = new LightActionGroup(false);
     List<GitRepository> repositoryList = Collections.singletonList(myRepository);
 
     GitRebaseSpec rebaseSpec = GitRepositoryManager.getInstance(myProject).getOngoingRebaseSpec();
     if (rebaseSpec != null && isSpecForRepo(rebaseSpec, myRepository)) {
-      popupGroup.addAll(getRebaseActions());
+      topActions.addAll(getRebaseActions());
     }
     else {
-      popupGroup.addAll(createPerRepoRebaseActions(myRepository));
+      topActions.addAll(createPerRepoRebaseActions(myRepository));
     }
 
     if (ExperimentalUI.isNewUI()) {
       ActionGroup actionGroup = (ActionGroup)ActionManager.getInstance().getAction("Git.Experimental.Branch.Popup.Actions");
-      popupGroup.addAll(actionGroup);
-      popupGroup.addSeparator();
+      topActions.addAll(actionGroup);
+      topActions.addSeparator();
     }
 
-    popupGroup.addAction(new GitNewBranchAction(myProject, repositoryList));
+    topActions.addAction(new GitNewBranchAction(myProject, repositoryList));
 
     if (!ExperimentalUI.isNewUI()) {
-      popupGroup.addAction(new CheckoutRevisionActions(myProject, repositoryList));
+      topActions.addAction(new CheckoutRevisionActions(myProject, repositoryList));
     }
 
     if (toInsert != null) {
-      popupGroup.addAll(toInsert);
+      topActions.addAll(toInsert);
+    }
+
+    LightActionGroup popupGroup = new LightActionGroup(true);
+    for (AnAction action : topActions.getChildren(null)) {
+      boolean isSeparatorOrGroup = action instanceof Separator || action instanceof ActionGroup;
+      popupGroup.addAction(isSeparatorOrGroup ? action : new MyDelegateWithShortcutText(action));
     }
 
     popupGroup.addSeparator(specificRepository == null ?
@@ -144,13 +150,7 @@ public class GitBranchPopupActions {
     wrapWithMoreActionIfNeeded(myProject, popupGroup, sorted(remoteBranchActions, FAVORITE_BRANCH_COMPARATOR),
                                getNumOfTopShownBranches(remoteBranchActions), firstLevelGroup ? GitBranchPopup.SHOW_ALL_REMOTES_KEY : null);
 
-    LightActionGroup result = new LightActionGroup(true);
-    for (AnAction action : popupGroup.getChildren(null)) {
-      boolean isSeparatorOrGroup = action instanceof Separator || action instanceof ActionGroup;
-      result.addAction(isSeparatorOrGroup ? action : new MyDelegateWithShortcutText(action));
-    }
-
-    return result;
+    return popupGroup;
   }
 
   private static boolean isSpecForRepo(@NotNull GitRebaseSpec spec, @NotNull GitRepository repository) {

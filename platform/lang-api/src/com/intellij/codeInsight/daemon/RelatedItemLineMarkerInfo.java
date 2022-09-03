@@ -70,7 +70,7 @@ public class RelatedItemLineMarkerInfo<T extends PsiElement> extends MergeableLi
 
   public RelatedItemLineMarkerInfo(@NotNull T element, @NotNull TextRange range, Icon icon,
                                    @Nullable Function<? super T, String> tooltipProvider,
-                                   @Nullable Function<PsiElement, @Nls(capitalization = Nls.Capitalization.Title) String> presentationProvider,
+                                   @Nullable Function<? super PsiElement, @Nls(capitalization = Nls.Capitalization.Title) String> presentationProvider,
                                    @Nullable GutterIconNavigationHandler<T> navHandler,
                                    @NotNull GutterIconRenderer.Alignment alignment,
                                    @NotNull NotNullFactory<? extends Collection<? extends GotoRelatedItem>> targets,

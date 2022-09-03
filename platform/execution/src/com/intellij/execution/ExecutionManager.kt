@@ -104,7 +104,7 @@ abstract class ExecutionManager {
                                  target: ExecutionTarget,
                                  configuration: RunnerAndConfigurationSettings?,
                                  processHandler: ProcessHandler?,
-                                 environmentCustomization: Consumer<ExecutionEnvironment>?)
+                                 environmentCustomization: Consumer<in ExecutionEnvironment>?)
   abstract fun restartRunProfile(environment: ExecutionEnvironment)
 
   fun isStarting(environment: ExecutionEnvironment): Boolean {

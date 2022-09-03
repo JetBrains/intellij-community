@@ -11,10 +11,10 @@ import java.util.Set;
 
 public class JavaSyntheticLibrary extends ImmutableSyntheticLibrary {
 
-  public JavaSyntheticLibrary(@NotNull List<VirtualFile> sourceRoots,
-                              @NotNull List<VirtualFile> binaryRoots,
-                              @NotNull Set<VirtualFile> excludedRoots,
-                              @Nullable Condition<VirtualFile> excludeCondition) {
+  public JavaSyntheticLibrary(@NotNull List<? extends VirtualFile> sourceRoots,
+                              @NotNull List<? extends VirtualFile> binaryRoots,
+                              @NotNull Set<? extends VirtualFile> excludedRoots,
+                              @Nullable Condition<? super VirtualFile> excludeCondition) {
     super(sourceRoots, binaryRoots, excludedRoots, excludeCondition);
   }
 }

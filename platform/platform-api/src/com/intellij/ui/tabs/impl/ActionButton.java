@@ -27,7 +27,7 @@ class ActionButton extends IconButton implements ActionListener {
   private boolean myAutoHide;
   private boolean myToShow;
 
-  ActionButton(TabInfo tabInfo, AnAction action, String place, Consumer<MouseEvent> pass, Consumer<Boolean> hover, TimedDeadzone.Length deadzone) {
+  ActionButton(TabInfo tabInfo, AnAction action, String place, Consumer<? super MouseEvent> pass, Consumer<? super Boolean> hover, TimedDeadzone.Length deadzone) {
     super(null, action.getTemplatePresentation().getIcon());
     myTabInfo = tabInfo;
     myAction = action;

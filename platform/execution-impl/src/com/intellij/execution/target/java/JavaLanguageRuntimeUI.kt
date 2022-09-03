@@ -9,7 +9,7 @@ import java.util.function.Supplier
 
 class JavaLanguageRuntimeUI(private val config: JavaLanguageRuntimeConfiguration,
                             private val targetType: TargetEnvironmentType<*>,
-                            private val targetProvider: Supplier<TargetEnvironmentConfiguration>,
+                            private val targetProvider: Supplier<out TargetEnvironmentConfiguration>,
                             private val project: Project) :
   LanguageRuntimeConfigurable(config, targetType, targetProvider, project) {
 

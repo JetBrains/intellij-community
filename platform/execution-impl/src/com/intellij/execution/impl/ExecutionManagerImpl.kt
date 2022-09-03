@@ -451,7 +451,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
                                  target: ExecutionTarget,
                                  configuration: RunnerAndConfigurationSettings?,
                                  processHandler: ProcessHandler?,
-                                 environmentCustomization: Consumer<ExecutionEnvironment>?) {
+                                 environmentCustomization: Consumer<in ExecutionEnvironment>?) {
     val builder = createEnvironmentBuilder(project, executor, configuration)
     if (processHandler != null) {
       for (descriptor in getAllDescriptors(project)) {

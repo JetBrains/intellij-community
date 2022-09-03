@@ -51,7 +51,7 @@ public final class JBUIScale {
 
   private static volatile Map.Entry<String, Integer> systemFontData;
 
-  private synchronized static @NotNull Map.Entry<String, Integer> computeSystemFontData(@Nullable Supplier<UIDefaults> uiDefaults) {
+  private synchronized static @NotNull Map.Entry<String, Integer> computeSystemFontData(@Nullable Supplier<? extends UIDefaults> uiDefaults) {
     Map.Entry<String, Integer > result = systemFontData;
     if (result != null) {
       return result;
@@ -360,7 +360,7 @@ public final class JBUIScale {
     return discreteScale(dpi / 96f);
   }
 
-  public static @NotNull Map.Entry<String, Integer> getSystemFontData(@Nullable Supplier<UIDefaults> uiDefaults) {
+  public static @NotNull Map.Entry<String, Integer> getSystemFontData(@Nullable Supplier<? extends UIDefaults> uiDefaults) {
     Map.Entry<String, Integer> result = systemFontData;
     return result == null ? computeSystemFontData(uiDefaults) : result;
   }

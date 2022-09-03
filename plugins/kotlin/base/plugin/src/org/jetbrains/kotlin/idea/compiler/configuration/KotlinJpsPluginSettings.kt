@@ -55,7 +55,7 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
                 return
             }
 
-            if (jpsPluginSettings.settings.version.isEmpty() && bundledVersion.isStableRelease) {
+            if (jpsPluginSettings.settings.version.isEmpty() && bundledVersion.buildNumber == null) {
                 // Encourage user to specify desired Kotlin compiler version in project settings for sake of reproducible builds
                 // it's important to trigger `.idea/kotlinc.xml` file creation
                 jpsPluginSettings.setVersion(rawBundledVersion)
@@ -75,21 +75,21 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
 
         /**
          * @param jpsVersion version to parse
-         * @param source where did [jpsVersion] come from (e.g. from kotlin.xml)
+         * @param fromFile true if [jpsVersion] come from kotlin.xml
          * @return error message if [jpsVersion] is not valid
          */
         @Nls
-        fun checkJpsVersion(jpsVersion: String, source: String? = null): String? {
+        fun checkJpsVersion(jpsVersion: String, fromFile: Boolean = false): String? {
             val parsedKotlinVersion = IdeKotlinVersion.opt(jpsVersion)?.kotlinVersion
             if (parsedKotlinVersion == null) {
-                return if (source == null) {
-                    KotlinBasePluginBundle.message("failed.to.parse.kotlin.version.0", jpsVersion)
-                } else {
+                return if (fromFile) {
                     KotlinBasePluginBundle.message(
                         "failed.to.parse.kotlin.version.0.from.1",
                         jpsVersion,
                         SettingConstants.KOTLIN_COMPILER_SETTINGS_FILE,
                     )
+                } else {
+                    KotlinBasePluginBundle.message("failed.to.parse.kotlin.version.0", jpsVersion)
                 }
             }
 
@@ -115,7 +115,7 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
 
         fun supportedJpsVersion(project: Project, onUnsupportedVersion: (String) -> Unit): String? {
             val version = jpsVersion(project) ?: return null
-            val error = checkJpsVersion(version, SettingConstants.KOTLIN_COMPILER_SETTINGS_FILE)
+            val error = checkJpsVersion(version, fromFile = true)
             if (error != null) {
                 onUnsupportedVersion(error)
                 return null
@@ -128,27 +128,30 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
             project: Project,
             rawVersion: String,
             progressIndicator: ProgressIndicator = ProgressManager.getInstance().progressIndicator,
-        ) {
-            val instance = getInstance(project) ?: return
+            showNotification: Boolean = true,
+        ): Boolean {
+            val instance = getInstance(project) ?: return true
             if (rawVersion == rawBundledVersion) {
                 instance.setVersion(rawVersion)
-                return
+                return true
             }
 
             val error = checkJpsVersion(rawVersion)
             if (error != null) {
                 instance.dropExplicitVersion()
-                showNotificationUnsupportedJpsPluginVersion(
-                    project,
-                    KotlinBasePluginBundle.message("notification.title.unsupported.kotlin.jps.plugin.version"),
-                    KotlinBasePluginBundle.message(
-                        "notification.content.bundled.version.0.will.be.used.reason.1",
-                        rawBundledVersion,
-                        error
-                    ),
-                )
+                if (showNotification) {
+                    showNotificationUnsupportedJpsPluginVersion(
+                        project,
+                        KotlinBasePluginBundle.message("notification.title.unsupported.kotlin.jps.plugin.version"),
+                        KotlinBasePluginBundle.message(
+                            "notification.content.bundled.version.0.will.be.used.reason.1",
+                            rawBundledVersion,
+                            error
+                        ),
+                    )
+                }
 
-                return
+                return false
             }
 
             val ok = KotlinArtifactsDownloader.lazyDownloadMissingJpsPluginDependencies(
@@ -156,15 +159,17 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
                 jpsVersion = rawVersion,
                 indicator = progressIndicator,
                 onError = {
-                    showNotificationUnsupportedJpsPluginVersion(
-                        project,
-                        KotlinBasePluginBundle.message("notification.title.jps.artifacts.were.not.found"),
-                        KotlinBasePluginBundle.message(
-                            "notification.content.bundled.version.0.will.be.used.reason.1",
-                            rawBundledVersion,
-                            it
-                        ),
-                    )
+                    if (showNotification) {
+                        showNotificationUnsupportedJpsPluginVersion(
+                            project,
+                            KotlinBasePluginBundle.message("notification.title.jps.artifacts.were.not.found"),
+                            KotlinBasePluginBundle.message(
+                                "notification.content.bundled.version.0.will.be.used.reason.1",
+                                rawBundledVersion,
+                                it
+                            ),
+                        )
+                    }
                 },
             )
 
@@ -173,6 +178,8 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
             } else {
                 instance.dropExplicitVersion()
             }
+
+            return ok
         }
     }
 }

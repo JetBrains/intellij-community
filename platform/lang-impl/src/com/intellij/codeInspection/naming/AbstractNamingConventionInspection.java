@@ -51,7 +51,7 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
   private final Set<String> myDisabledShortNames = new HashSet<>();
   @Nullable private final String myDefaultConventionShortName;
 
-  protected AbstractNamingConventionInspection(Iterable<NamingConvention<T>> extensions, @Nullable final String defaultConventionShortName) {
+  protected AbstractNamingConventionInspection(Iterable<? extends NamingConvention<T>> extensions, @Nullable final String defaultConventionShortName) {
     for (NamingConvention<T> convention : extensions) {
       registerConvention(convention);
     }

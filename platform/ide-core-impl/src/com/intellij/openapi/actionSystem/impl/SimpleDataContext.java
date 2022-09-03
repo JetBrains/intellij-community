@@ -1,9 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
-import com.intellij.ide.DataManager;
-import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CustomizedDataContext;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
@@ -13,24 +12,26 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
-public final class SimpleDataContext implements DataContext {
-  private final Map<String, Object> myDataId2Data;
+public final class SimpleDataContext extends CustomizedDataContext {
+  private final Map<String, Object> myMap;
   private final DataContext myParent;
 
-  private SimpleDataContext(@NotNull Map<String, Object> dataId2data, @Nullable DataContext parent) {
-    myDataId2Data = dataId2data;
-    myParent = parent;
+  private SimpleDataContext(@NotNull Map<String, Object> map, @Nullable DataContext parent) {
+    myMap = map;
+    myParent = Objects.requireNonNullElse(parent, DataContext.EMPTY_CONTEXT);
   }
 
   @Override
-  public Object getData(@NotNull String dataId) {
-    return ((DataManagerImpl)DataManager.getInstance()).getDataSimple(dataId, this::getDataFromSelfOrParent);
+  public @NotNull DataContext getParent() {
+    return myParent;
   }
 
-  private Object getDataFromSelfOrParent(@NotNull String dataId) {
-    return myDataId2Data.containsKey(dataId) ? myDataId2Data.get(dataId) :
-           myParent == null ? null : myParent.getData(dataId);
+  @Override
+  public @Nullable Object getRawCustomData(@NotNull String dataId) {
+    return myMap.containsKey(dataId) ?
+           Objects.requireNonNullElse(myMap.get(dataId), EXPLICIT_NULL) : null;
   }
 
   /** @deprecated use {@link SimpleDataContext#getSimpleContext(DataKey, Object, DataContext)} instead. */

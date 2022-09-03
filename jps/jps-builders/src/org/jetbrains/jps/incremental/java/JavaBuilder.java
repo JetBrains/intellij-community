@@ -113,13 +113,8 @@ public final class JavaBuilder extends ModuleLevelBuilder {
   );
 
   private static final List<ClassPostProcessor> ourClassProcessors = new ArrayList<>();
-  private static final Set<JpsModuleType<?>> ourCompilableModuleTypes = new HashSet<>();
   @Nullable private static final File ourDefaultRtJar;
   static {
-    for (JavaBuilderExtension extension : JpsServiceManager.getInstance().getExtensions(JavaBuilderExtension.class)) {
-      ourCompilableModuleTypes.addAll(extension.getCompilableModuleTypes());
-    }
-
     File rtJar = null;
     StringTokenizer tokenizer = new StringTokenizer(System.getProperty("sun.boot.class.path", ""), File.pathSeparator, false);
     while (tokenizer.hasMoreTokens()) {
@@ -130,6 +125,16 @@ public final class JavaBuilder extends ModuleLevelBuilder {
       }
     }
     ourDefaultRtJar = rtJar;
+  }
+
+  private static final class CompilableModuleTypesHolder {
+    // avoid loading extensions on JavaBuilder.class load. Init compilable types atomically on demand
+    static final Set<JpsModuleType<?>> ourCompilableModuleTypes = new HashSet<>();
+    static {
+      for (JavaBuilderExtension extension : JpsServiceManager.getInstance().getExtensions(JavaBuilderExtension.class)) {
+        ourCompilableModuleTypes.addAll(extension.getCompilableModuleTypes());
+      }
+    }
   }
 
   public static void registerClassPostProcessor(ClassPostProcessor processor) {
@@ -247,7 +252,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     try {
       Set<File> filesToCompile = FileCollectionFactory.createCanonicalFileLinkedSet();
       dirtyFilesHolder.processDirtyFiles((target, file, descriptor) -> {
-        if (JAVA_SOURCES_FILTER.accept(file) && ourCompilableModuleTypes.contains(target.getModule().getModuleType())) {
+        if (JAVA_SOURCES_FILTER.accept(file) && CompilableModuleTypesHolder.ourCompilableModuleTypes.contains(target.getModule().getModuleType())) {
           filesToCompile.add(file);
         }
         return true;

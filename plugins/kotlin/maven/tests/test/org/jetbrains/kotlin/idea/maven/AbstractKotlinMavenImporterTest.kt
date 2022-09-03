@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.maven
 
 import com.intellij.application.options.CodeStyle
+import com.intellij.notification.Notification
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -14,6 +15,7 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.ThrowableRunnable
 import junit.framework.TestCase
+import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
@@ -1804,12 +1806,12 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
                             </execution>
                         </executions>
                         <configuration>
-                            <jvmTarget>1.6</jvmTarget>
+                            <jvmTarget>1.8</jvmTarget>
                             <languageVersion>1.0</languageVersion>
                             <apiVersion>1.0</apiVersion>
                             <args>
                                 <arg>-jvm-target</arg>
-                                <arg>1.8</arg>
+                                <arg>11</arg>
                                 <arg>-language-version</arg>
                                 <arg>1.1</arg>
                                 <arg>-api-version</arg>
@@ -1826,10 +1828,10 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             assertImporterStatePresent()
 
             with(facetSettings) {
-                Assert.assertEquals("JVM 1.8", targetPlatform!!.oldFashionedDescription)
+                Assert.assertEquals("JVM 11", targetPlatform!!.oldFashionedDescription)
                 Assert.assertEquals(LanguageVersion.KOTLIN_1_1.description, languageLevel!!.description)
                 Assert.assertEquals(LanguageVersion.KOTLIN_1_1.description, apiLevel!!.description)
-                Assert.assertEquals("1.8", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
+                Assert.assertEquals("11", (compilerArguments as K2JVMCompilerArguments).jvmTarget)
             }
         }
     }
@@ -2098,8 +2100,9 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             val kotlinMainPluginVersion = "1.5.10"
             val kotlinMavenPluginVersion1 = "1.6.21"
             val kotlinMavenPluginVersion2 = "1.5.31"
-            val mainPom = createProjectPom(
-                """
+            val notifications = catchNotifications(myProject) {
+                val mainPom = createProjectPom(
+                    """
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1.0.0</version>
@@ -2122,11 +2125,11 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
                         </plugins>
                     </build>
                 """
-            )
+                )
 
-            val module1 = createModulePom(
-                "module1",
-                """
+                val module1 = createModulePom(
+                    "module1",
+                    """
                     <parent>
                         <groupId>test</groupId>
                         <artifactId>project</artifactId>
@@ -2147,11 +2150,11 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
                         </plugins>
                     </build>
                 """
-            )
+                )
 
-            val module2 = createModulePom(
-                "module2",
-                """
+                val module2 = createModulePom(
+                    "module2",
+                    """
                     <parent>
                         <groupId>test</groupId>
                         <artifactId>project</artifactId>
@@ -2172,17 +2175,18 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
                         </plugins>
                     </build>
                 """
-            )
+                )
 
-            importProjects(mainPom, module1, module2)
+                importProjects(mainPom, module1, module2)
+            }
 
             assertModules("project", "module1", "module2")
             assertImporterStatePresent()
-
+            assertEquals(1, notifications.count { it.title == "Kotlin JPS plugin artifacts were not found" })
             // The highest of available versions should be picked
             // TODO: should be reverted after KTI-724
-            Assert.assertNotEquals(kotlinMavenPluginVersion1, KotlinJpsPluginSettings.jpsVersion(myProject))
-            Assert.assertEquals(KotlinJpsPluginSettings.rawBundledVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
+            assertNotEquals(kotlinMavenPluginVersion1, KotlinJpsPluginSettings.jpsVersion(myProject))
+            assertEquals(KotlinJpsPluginSettings.rawBundledVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
         }
     }
 
@@ -2212,7 +2216,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             }
 
             assertEquals(
-                "The bundled version (1.7.0-RC-246) of the Kotlin JPS plugin will be used<br>" +
+                "The bundled version (${KotlinJpsPluginSettings.rawBundledVersion}) of the Kotlin JPS plugin will be used<br>" +
                         "The reason: Kotlin JPS compiler maximum supported version is '$maxVersion' but '$versionToImport' is specified",
                 text
             )
@@ -2253,9 +2257,27 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             assertImporterStatePresent()
 
             // Fallback to bundled to unsupported version
-            Assert.assertNotEquals(version, KotlinJpsPluginSettings.jpsVersion(myProject))
-            Assert.assertEquals(KotlinJpsPluginSettings.rawBundledVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
+            assertNotEquals(version, KotlinJpsPluginSettings.jpsVersion(myProject))
+            assertEquals(KotlinJpsPluginSettings.rawBundledVersion, KotlinJpsPluginSettings.jpsVersion(myProject))
         }
+
+        @Test
+        fun testDontShowNotificationWhenBuildIsDelegatedToMaven() {
+            val isBuildDelegatedToMaven = MavenRunner.getInstance(myProject).settings.isDelegateBuildToMaven
+            MavenRunner.getInstance(myProject).settings.isDelegateBuildToMaven = true
+
+            try {
+                val version = "1.1.0"
+                val notifications = catchNotifications(myProject) {
+                    doUnsupportedVersionTest(version)
+                }
+
+                assertNull(notifications.find { it.title == "Unsupported Kotlin JPS plugin version" })
+            } finally {
+                MavenRunner.getInstance(myProject).settings.isDelegateBuildToMaven = isBuildDelegatedToMaven
+            }
+        }
+
     }
 
     class MultiModuleImport : AbstractKotlinMavenImporterTest() {
@@ -3350,6 +3372,100 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
             checkStableModuleName("project", "test", JsPlatforms.defaultJsPlatform, isProduction = true)
             checkStableModuleName("project", "test", JsPlatforms.defaultJsPlatform, isProduction = false)
         }
+    }
+
+    class JvmTarget6IsImportedAsIs : AbstractKotlinMavenImporterTest() {
+        @Test
+        fun testJvmTargetIsImportedAsIs() {
+            // If version isn't specified then we will fall back to bundled frontend which is already downloaded => Unbundled JPS can be used
+            val (facet, notifications) = doJvmTarget6Test(version = null)
+            Assert.assertEquals("JVM 1.6", facet.targetPlatform!!.oldFashionedDescription)
+            Assert.assertEquals("1.6", (facet.compilerArguments as K2JVMCompilerArguments).jvmTarget)
+            Assert.assertEquals("", notifications.asText)
+        }
+    }
+
+    class JvmTarget6IsImported8 : AbstractKotlinMavenImporterTest() {
+        @Test
+        fun testJvmTarget6IsImported8() {
+            // Some version which cannot be downloaded (because it was never published) => explicit
+            // JPS version during import will be dropped => we will fall back to the bundled JPS =>
+            // we have to load 1.6 jvmTarget as 1.8 KTIJ-21515
+            val (facet, notifications) = doJvmTarget6Test("1.5.135")
+
+            Assert.assertEquals("JVM 1.8", facet.targetPlatform!!.oldFashionedDescription)
+            Assert.assertEquals("1.8", (facet.compilerArguments as K2JVMCompilerArguments).jvmTarget)
+
+            Assert.assertEquals(
+                "Title: ''\n" +
+                        "Content: 'Kotlin version 1.7.0 is available'\n" +
+                        "-----\n" +
+                        "Title: 'Unsupported JVM target 1.6'\n" +
+                        "Content: 'Maven project uses JVM target 1.6 for Kotlin compilation, which is no longer supported. " +
+                        "It has been imported as JVM target 1.8. Consider migrating the project to JVM 1.8.'\n" +
+                        "-----\n" +
+                        "Title: 'Kotlin JPS plugin artifacts were not found'\n" +
+                        "Content: 'The bundled version (${KotlinJpsPluginSettings.rawBundledVersion}) of the Kotlin JPS plugin will be used<br>The reason: " +
+                        "Failed to download Maven artifact (org.jetbrains.kotlin:kotlin-jps-plugin:1.5.135). " +
+                        "Searched the artifact in the following repos:\n" +
+                        "https://repo.maven.apache.org/maven2\n" +
+                        "https://repo1.maven.org/maven2\n" +
+                        "https://repository.jboss.org/nexus/content/repositories/public/'",
+                notifications.asText,
+            )
+        }
+    }
+
+    protected fun doJvmTarget6Test(version: String?): Pair<KotlinFacetSettings, List<Notification>> {
+        createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
+
+        val notifications = catchNotifications(myProject) {
+            importProject(
+                """
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1.0.0</version>
+
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.jetbrains.kotlin</groupId>
+                            <artifactId>kotlin-stdlib</artifactId>
+                            <version>$kotlinVersion</version>
+                        </dependency>
+                    </dependencies>
+
+                    <build>
+                        <sourceDirectory>src/main/kotlin</sourceDirectory>
+
+                        <plugins>
+                            <plugin>
+                                <groupId>org.jetbrains.kotlin</groupId>
+                                <artifactId>kotlin-maven-plugin</artifactId>
+                                ${version?.let { "<version>$it</version>" }}
+
+                                <executions>
+                                    <execution>
+                                        <id>compile</id>
+                                        <phase>compile</phase>
+                                        <goals>
+                                            <goal>compile</goal>
+                                        </goals>
+                                    </execution>
+                                </executions>
+                                <configuration>
+                                    <jvmTarget>1.6</jvmTarget>
+                                </configuration>
+                            </plugin>
+                        </plugins>
+                    </build>
+                """
+            )
+        }
+
+        assertModules("project")
+        assertImporterStatePresent()
+
+        return facetSettings to notifications
     }
 
     class CompilerPlugins : AbstractKotlinMavenImporterTest() {

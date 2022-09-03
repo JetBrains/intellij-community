@@ -336,7 +336,7 @@ public final class ClassRepr extends ClassFileRepr {
   }
 
   @NotNull
-  public Collection<MethodRepr> findMethods(final Predicate<MethodRepr> p) {
+  public Collection<MethodRepr> findMethods(final Predicate<? super MethodRepr> p) {
     final Collection<MethodRepr> result = new LinkedList<>();
 
     for (MethodRepr mm : myMethods) {

@@ -17,7 +17,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.keyFMap.KeyFMap;
@@ -34,6 +33,7 @@ import java.util.Map;
 
 import static com.intellij.ide.impl.DataManagerImpl.getDataProviderEx;
 import static com.intellij.ide.impl.DataManagerImpl.validateEditor;
+import static com.intellij.openapi.actionSystem.CustomizedDataContext.EXPLICIT_NULL;
 
 /**
  * This is an internal API. Do not use it.
@@ -48,7 +48,6 @@ import static com.intellij.ide.impl.DataManagerImpl.validateEditor;
 @ApiStatus.Internal
 public class EdtDataContext implements DataContext, UserDataHolder, AnActionEvent.InjectedDataContextSupplier {
   private static final Logger LOG = Logger.getInstance(EdtDataContext.class);
-  private static final Object ourExplicitNull = ObjectUtils.sentinel("explicit.null");
 
   private int myEventCount;
   // To prevent memory leak we have to wrap passed component into
@@ -110,13 +109,13 @@ public class EdtDataContext implements DataContext, UserDataHolder, AnActionEven
     if (answer == null) {
       answer = myDataManager.getDataFromRules(dataId, GetDataRuleType.CONTEXT, id -> {
         Object o = getDataInner(id, cacheable);
-        return o == ourExplicitNull ? null : o;
+        return o == EXPLICIT_NULL ? null : o;
       });
       if (cacheable) {
-        myCachedData.put(dataId, answer == null ? ourExplicitNull : answer);
+        myCachedData.put(dataId, answer == null ? EXPLICIT_NULL : answer);
       }
     }
-    return answer == ourExplicitNull ? null : answer;
+    return answer == EXPLICIT_NULL ? null : answer;
   }
 
   private @Nullable Object getDataInner(@NotNull String dataId, boolean cacheable) {
@@ -139,7 +138,7 @@ public class EdtDataContext implements DataContext, UserDataHolder, AnActionEven
       answer = validateEditor((Editor)answer, component);
     }
     if (cacheable) {
-      myCachedData.put(dataId, answer == null ? ourExplicitNull : answer);
+      myCachedData.put(dataId, answer == null ? EXPLICIT_NULL : answer);
     }
     return answer;
   }
@@ -158,7 +157,7 @@ public class EdtDataContext implements DataContext, UserDataHolder, AnActionEven
 
   @Nullable Object getRawDataIfCached(@NotNull String dataId) {
     Object data = myCachedData.get(dataId);
-    return data == ourExplicitNull ? null : data;
+    return data == EXPLICIT_NULL ? null : data;
   }
 
   @Override

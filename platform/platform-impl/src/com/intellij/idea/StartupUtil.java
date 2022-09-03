@@ -336,7 +336,7 @@ public final class StartupUtil {
   }
 
   // called by the app after startup
-  public static synchronized void addExternalInstanceListener(@NotNull Function<List<String>, Future<CliResult>> processor) {
+  public static synchronized void addExternalInstanceListener(@NotNull Function<? super List<String>, ? extends Future<CliResult>> processor) {
     if (socketLock == null) {
       throw new AssertionError("Not initialized yet");
     }

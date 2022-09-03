@@ -26,7 +26,7 @@ final class UnixScriptBuilder {
       classPath += "\nCLASS_PATH=\"\$CLASS_PATH:\$IDE_HOME/lib/${classPathJars.get(i)}\""
     }
 
-    List<String> additionalJvmArguments = context.additionalJvmArguments
+    List<String> additionalJvmArguments = context.getAdditionalJvmArguments(osFamily)
     if (!context.getXBootClassPathJarNames().isEmpty()) {
       additionalJvmArguments = new ArrayList<>(additionalJvmArguments)
       String bootCp = String.join(':', context.getXBootClassPathJarNames().collect { "\$IDE_HOME/lib/${it}" })

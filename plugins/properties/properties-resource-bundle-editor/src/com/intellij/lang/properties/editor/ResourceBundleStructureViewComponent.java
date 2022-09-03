@@ -45,6 +45,7 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
     myResourceBundle = resourceBundle;
     tunePopupActionGroup();
     getTree().setCellRenderer(new ResourceBundleEditorRenderer());
+    showToolbar();
   }
 
   @NotNull

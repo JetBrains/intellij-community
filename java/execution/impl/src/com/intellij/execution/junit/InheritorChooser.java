@@ -137,7 +137,7 @@ public class InheritorChooser {
     return false;
   }
 
-  private static void collectClasses(PsiClass containingClass, List<PsiClass> classes, HashSet<PsiClass> visited) {
+  private static void collectClasses(PsiClass containingClass, List<? super PsiClass> classes, HashSet<? super PsiClass> visited) {
     if (!visited.add(containingClass)) return;
     Set<PsiClass> containers = new HashSet<>();
     final boolean isJUnit5 = ReadAction.compute(() -> JUnitUtil.isJUnit5(containingClass));
@@ -189,7 +189,7 @@ public class InheritorChooser {
 
   public static void chooseAbstractClassInheritors(final ConfigurationContext context,
                                                    final PsiClass psiClass,
-                                                   final Consumer<List<PsiClass>> onClassesChosen) {
+                                                   final Consumer<? super List<PsiClass>> onClassesChosen) {
     InheritorChooser inheritorChooser = new InheritorChooser() {
       @Override
       protected void runForClasses(List<PsiClass> classes, PsiMethod method, ConfigurationContext context, Runnable performRunnable) {

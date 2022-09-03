@@ -81,7 +81,7 @@ public class APIWrappers {
       myLastProcName = getProcessorName(proc);
     }
 
-    public Iterable<Processor> wrapProcessors(Iterable<Processor> processors) {
+    public Iterable<Processor> wrapProcessors(Iterable<? extends Processor> processors) {
       return myAllProcessors = Iterators.map(processors, new Function<Processor, Processor>() {
         @Override
         public Processor fun(Processor processor) {

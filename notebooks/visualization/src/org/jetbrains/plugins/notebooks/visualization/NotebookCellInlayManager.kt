@@ -247,8 +247,8 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
   private fun rememberController(controller: NotebookCellInlayController, interval: NotebookCellLines.Interval) {
     val inlay = controller.inlay
     inlay.renderer.castSafelyTo<JComponent>()?.let { component ->
-      component.putClientProperty(
-        DataManager.CLIENT_PROPERTY_DATA_PROVIDER,
+      DataManager.registerDataProvider(
+        component,
         DataProvider { key ->
           when (key) {
             NOTEBOOK_CELL_LINES_INTERVAL_DATA_KEY.name -> interval
@@ -261,7 +261,7 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
     }
     if (inlays.put(inlay, controller) !== controller) {
       val disposable = Disposable {
-        inlay.renderer.castSafelyTo<JComponent>()?.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, null)
+        inlay.renderer.castSafelyTo<JComponent>()?.let { DataManager.removeDataProvider(it) }
         inlays.remove(inlay)
       }
       if (Disposer.isDisposed(inlay)) {

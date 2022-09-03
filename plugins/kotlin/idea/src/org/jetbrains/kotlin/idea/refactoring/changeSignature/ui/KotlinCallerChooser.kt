@@ -41,7 +41,7 @@ class KotlinCallerChooser(
     project: Project,
     @NlsContexts.DialogTitle title: String,
     previousTree: Tree?,
-    callback: Consumer<Set<PsiElement>>
+    callback: Consumer<in Set<PsiElement>>
 ) : CallerChooserBase<PsiElement>(declaration, project, title, previousTree, "dummy." + KotlinFileType.EXTENSION, callback) {
     override fun createTreeNodeFor(method: PsiElement?, called: HashSet<PsiElement>?, cancelCallback: Runnable?) =
         KotlinMethodNode(method, called ?: HashSet(), myProject, cancelCallback ?: Runnable {})

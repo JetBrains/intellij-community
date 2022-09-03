@@ -141,15 +141,13 @@ public class DataManagerImpl extends DataManager {
     }
   }
 
-  @ApiStatus.Internal
-  public @Nullable Object getDataSimple(@NotNull String dataId, @NotNull DataProvider provider) {
-    Object result = getDataFromProviderAndRules(dataId, GetDataRuleType.PROVIDER, provider);
-    if (result != null) return result;
-    GetDataRule rule = myRulesCache.get(Pair.create(dataId, GetDataRuleType.CONTEXT));
-    if (rule == null) return null;
-    Set<String> computedIds = new HashSet<>();
-    return getDataFromRuleInner(rule, dataId, GetDataRuleType.CONTEXT, computedIds, id ->
-      getDataFromProviderInner(id, GetDataRuleType.PROVIDER, computedIds, provider));
+  @Override
+  public @Nullable Object getCustomizedData(@NotNull String dataId, @NotNull DataContext dataContext, @NotNull DataProvider provider) {
+    return getDataFromProviderAndRules(dataId, GetDataRuleType.CONTEXT, id -> {
+      Object result = getDataFromProviderAndRules(id, GetDataRuleType.PROVIDER, provider);
+      if (result != null) return result;
+      return dataContext.getData(id);
+    });
   }
 
   private static @Nullable GetDataRule getDataRule(@NotNull String dataId, @NotNull GetDataRuleType ruleType) {
@@ -316,10 +314,12 @@ public class DataManagerImpl extends DataManager {
 
   @Override
   public <T> void saveInDataContext(DataContext dataContext, @NotNull Key<T> dataKey, @Nullable T data) {
-    if (dataContext instanceof UserDataHolder &&
-        !((dataContext instanceof FreezingDataContext) && ((FreezingDataContext)dataContext).isFrozenDataContext())) {
-      ((UserDataHolder)dataContext).putUserData(dataKey, data);
+    if (!(dataContext instanceof UserDataHolder)) return;
+    for (DataContext cur = dataContext; cur != null; ) {
+      if (cur instanceof FreezingDataContext && ((FreezingDataContext)cur).isFrozenDataContext()) return;
+      cur = cur instanceof CustomizedDataContext ? ((CustomizedDataContext)cur).getParent() : null;
     }
+    ((UserDataHolder)dataContext).putUserData(dataKey, data);
   }
 
   @Override

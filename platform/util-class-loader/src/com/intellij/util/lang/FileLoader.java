@@ -37,7 +37,7 @@ final class FileLoader implements Loader {
   // find . -name "classpath.index" -delete
   private static final short indexFileVersion = 24;
 
-  private final @NotNull Predicate<String> nameFilter;
+  private final @NotNull Predicate<? super String> nameFilter;
   private final @NotNull Path path;
 
   FileLoader(@NotNull Path path) {
@@ -45,7 +45,7 @@ final class FileLoader implements Loader {
     this.nameFilter = __ -> true;
   }
 
-  private FileLoader(@NotNull Path path, @NotNull Predicate<String> nameFilter) {
+  private FileLoader(@NotNull Path path, @NotNull Predicate<? super String> nameFilter) {
     this.path = path;
     this.nameFilter = nameFilter;
   }

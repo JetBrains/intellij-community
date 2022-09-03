@@ -25,7 +25,8 @@ public final class AnnotationContext {
 
   private final @Nullable PsiModifierListOwner myOwner;
   private final @Nullable PsiType myType;
-  private final @Nullable Supplier<Stream<PsiModifierListOwner>> myNext;
+  @Nullable
+  private final Supplier<? extends Stream<PsiModifierListOwner>> myNext;
 
   private AnnotationContext(@Nullable PsiModifierListOwner owner, @Nullable PsiType type) {
     this(owner, type, null);
@@ -33,7 +34,7 @@ public final class AnnotationContext {
 
   private AnnotationContext(@Nullable PsiModifierListOwner owner,
                             @Nullable PsiType type,
-                            @Nullable Supplier<Stream<PsiModifierListOwner>> next) {
+                            @Nullable Supplier<? extends Stream<PsiModifierListOwner>> next) {
     myOwner = owner;
     myType = type;
     myNext = next;

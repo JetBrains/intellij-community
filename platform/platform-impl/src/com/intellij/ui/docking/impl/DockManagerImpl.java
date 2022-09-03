@@ -148,7 +148,7 @@ public final class DockManagerImpl extends DockManager implements PersistentStat
 
   @Contract("null, _ -> null")
   @Override
-  public @Nullable DockContainer getContainerFor(@Nullable Component c, @NotNull Predicate<DockContainer> filter) {
+  public @Nullable DockContainer getContainerFor(@Nullable Component c, @NotNull Predicate<? super DockContainer> filter) {
     if (c == null) {
       return null;
     }

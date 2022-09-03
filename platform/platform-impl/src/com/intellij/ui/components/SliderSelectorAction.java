@@ -142,11 +142,11 @@ public class SliderSelectorAction extends DumbAwareAction {
     private final int myMin;
     private final int myMax;
     @NotNull
-    private final Consumer<Integer> myResultConsumer;
+    private final Consumer<? super Integer> myResultConsumer;
     private boolean showOk = false;
 
     public Configuration(int selected, @NotNull Dictionary<Integer, @Nls String> dictionary, 
-                         @NotNull @Nls String selectText, @NotNull Consumer<Integer> consumer) {
+                         @NotNull @Nls String selectText, @NotNull Consumer<? super Integer> consumer) {
       mySelected = selected;
       myDictionary = new HashMap<>();
       mySelectText = selectText;
@@ -183,7 +183,7 @@ public class SliderSelectorAction extends DumbAwareAction {
     }
 
     @NotNull
-    public Consumer<Integer> getResultConsumer() {
+    public Consumer<? super Integer> getResultConsumer() {
       return myResultConsumer;
     }
 

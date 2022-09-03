@@ -57,6 +57,7 @@ import org.jetbrains.kotlin.platform.impl.isJavaScript
 import org.jetbrains.kotlin.platform.impl.isJvm
 import org.jetbrains.kotlin.psi.UserDataProperty
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
 
@@ -114,7 +115,8 @@ class KotlinGradleSourceSetDataService : AbstractProjectDataService<GradleSource
             GradleProjectImportHandler.getInstances(project).forEach { it.importBySourceSet(kotlinFacet, sourceSetNode) }
         }
 
-        if (maxCompilerVersion != null) {
+        val isBuildDelegatedToGradle = GradleProjectSettings.isDelegatedBuildEnabled(project, projectData?.linkedExternalProjectPath)
+        if (maxCompilerVersion != null && !isBuildDelegatedToGradle) {
             KotlinJpsPluginSettings.updateAndDownloadOrDropVersion(project, maxCompilerVersion.rawVersion)
         }
     }

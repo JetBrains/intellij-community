@@ -234,7 +234,7 @@ public final class ExecutionUtil {
                                         @Nullable ExecutionTarget targetOrNullForDefault,
                                         @Nullable Long executionId,
                                         @Nullable DataContext dataContext,
-                                        @Nullable Consumer<ExecutionEnvironment> environmentCustomization) {
+                                        @Nullable Consumer<? super ExecutionEnvironment> environmentCustomization) {
     ExecutionEnvironmentBuilder builder = createEnvironment(executor, configuration);
     if (builder == null) {
       return;

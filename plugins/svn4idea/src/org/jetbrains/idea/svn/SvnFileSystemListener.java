@@ -963,7 +963,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
   }
 
   @Override
-  public void afterDone(@NotNull final ThrowableConsumer<LocalFileOperationsHandler, IOException> invoker) {
+  public void afterDone(final @NotNull ThrowableConsumer<? super LocalFileOperationsHandler, ? extends IOException> invoker) {
     if (!myIsInCommand && myIsOperationStarted) commandFinished();
   }
 }

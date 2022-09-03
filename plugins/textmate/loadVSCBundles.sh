@@ -88,6 +88,14 @@ cp -r "jsp-configuration.json" "$ROOT/lib/bundles/jsp"
 cp -r "README.md" "$ROOT/lib/bundles/jsp"
 cp -r "syntaxes" "$ROOT/lib/bundles/jsp"
 
+cd ..
+
+echo "Adding erlang"
+mkdir -p "$ROOT/lib/bundles/erlang/grammar"
+wget -q https://raw.githubusercontent.com/erlang-ls/vscode/main/language-configuration.json -O "$ROOT/lib/bundles/erlang/language-configuration.json"
+wget -q https://raw.githubusercontent.com/erlang-ls/vscode/main/package.json -O "$ROOT/lib/bundles/erlang/package.json"
+wget -q https://raw.githubusercontent.com/erlang-ls/grammar/main/Erlang.plist -O "$ROOT/lib/bundles/erlang/grammar/Erlang.plist"
+
 cd $ROOT
 
 rm -rf $ROOT/temp

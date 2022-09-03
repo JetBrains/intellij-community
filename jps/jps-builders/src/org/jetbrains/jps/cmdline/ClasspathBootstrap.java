@@ -12,7 +12,6 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.tracing.Tracer;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.util.PathUtilRt;
 import com.intellij.util.SystemProperties;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.thoughtworks.qdox.JavaProjectBuilder;
@@ -264,7 +263,7 @@ public final class ClasspathBootstrap {
     return resourcePath != null? new File(resourcePath) : null;
   }
 
-  public static void configureReflectionOpenPackages(Consumer<String> paramConsumer) {
+  public static void configureReflectionOpenPackages(Consumer<? super String> paramConsumer) {
     for (String aPackage : REFLECTION_OPEN_PACKAGES) {
       paramConsumer.accept("--add-opens");
       paramConsumer.accept(aPackage);

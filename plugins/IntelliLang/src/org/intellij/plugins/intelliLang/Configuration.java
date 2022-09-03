@@ -570,7 +570,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
                                                    final T remove,
                                                    boolean global,
                                                    final List<? extends PsiElement> psiElementsToRemove,
-                                                   final PairProcessor<T, T> actualProcessor) {
+                                                   final PairProcessor<? super T, ? super T> actualProcessor) {
 
     PsiFile[] psiFiles = StreamEx.ofNullable(hostFile)
                                  .append(psiElementsToRemove

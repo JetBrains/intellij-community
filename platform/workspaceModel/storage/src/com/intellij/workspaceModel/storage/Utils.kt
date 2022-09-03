@@ -14,3 +14,8 @@ internal fun EntityId.asThis(): ThisEntityId = ThisEntityId(this)
 internal fun EntityId.notThis(): NotThisEntityId = NotThisEntityId(this)
 
 internal fun currentStackTrace(depth: Int): String = Throwable().stackTrace.take(depth).joinToString(separator = "\n") { it.toString() }
+
+fun loadClassByName(name: String, classLoader: ClassLoader): Class<*> {
+  if (name.startsWith("[")) return Class.forName(name)
+  return classLoader.loadClass(name)
+}

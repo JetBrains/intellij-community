@@ -34,7 +34,7 @@ public enum ThreeState {
    * @return {@code YES} if the given states contain {@code YES}, otherwise {@code UNSURE} if the given states contain {@code UNSURE}, otherwise {@code NO}
    */
   @NotNull
-  public static ThreeState mostPositive(@NotNull Iterable<ThreeState> states) {
+  public static ThreeState mostPositive(@NotNull Iterable<? extends ThreeState> states) {
     ThreeState result = NO;
     for (ThreeState state : states) {
       switch (state) {
@@ -50,7 +50,7 @@ public enum ThreeState {
    * @throws IllegalArgumentException if {@code states} is empty
    */
   @NotNull
-  public static ThreeState merge(@NotNull Iterable<ThreeState> states) {
+  public static ThreeState merge(@NotNull Iterable<? extends ThreeState> states) {
     ThreeState result = null;
     for (ThreeState state : states) {
       if (state == UNSURE) {

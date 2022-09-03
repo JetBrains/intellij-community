@@ -65,7 +65,7 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
         TextRange range = expression.getTextRange();
         editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
         // noinspection unchecked
-        displayHint(expression, expr -> provider.getInformationHint(expr), new DisplayedTypeInfo(expression, provider, editor));
+        displayHint(expression, new DisplayedTypeInfo(expression, provider, editor), expr -> provider.getInformationHint(expr));
       }
     };
     if (map.isEmpty()) {
@@ -81,7 +81,7 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
       DisplayedTypeInfo typeInfo = new DisplayedTypeInfo(expression, provider, editor);
       if (typeInfo.isRepeating() && provider.hasAdvancedInformation()) {
         //noinspection unchecked
-        displayHint(expression, expr -> provider.getAdvancedInformationHint(expr), typeInfo);
+        displayHint(expression, typeInfo, expr -> provider.getAdvancedInformationHint(expr));
       } else {
         callback.pass(expression);
       }
@@ -94,8 +94,9 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
     }
   }
 
-  private void displayHint(@NotNull PsiElement expression, @NotNull Function<PsiElement, @Nls String> hintGetter,
-                           @NotNull DisplayedTypeInfo typeInfo) {
+  private void displayHint(@NotNull PsiElement expression,
+                           @NotNull DisplayedTypeInfo typeInfo,
+                           @NotNull Function<? super PsiElement, @Nls String> hintGetter) {
     Callable<@Nls String> getHintAction = () -> hintGetter.apply(expression);
     ReadAction.nonBlocking(getHintAction)
       .finishOnUiThread(ModalityState.any(), hint -> {

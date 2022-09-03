@@ -44,7 +44,7 @@ class CoverageTableModel extends AbstractTreeModel implements TreeTableModel, So
     myStructureModel.invalidate();
   }
 
-  public void makeVisible(CoverageListNode node, Consumer<TreePath> onSuccess) {
+  public void makeVisible(CoverageListNode node, Consumer<? super TreePath> onSuccess) {
     myStructureModel.makeVisible(node, myTree, onSuccess);
   }
 

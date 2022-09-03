@@ -71,5 +71,5 @@ public interface LocalFileOperationsHandler {
    */
   boolean createDirectory(@NotNull VirtualFile dir, @NotNull String name) throws IOException;
 
-  void afterDone(@NotNull ThrowableConsumer<LocalFileOperationsHandler, IOException> invoker);
+  void afterDone(@NotNull ThrowableConsumer<? super LocalFileOperationsHandler, ? extends IOException> invoker);
 }

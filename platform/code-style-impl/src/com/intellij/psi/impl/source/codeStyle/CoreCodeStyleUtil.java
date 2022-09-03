@@ -85,8 +85,8 @@ public class CoreCodeStyleUtil {
     return infos;
   }
 
-  public static void postProcessRanges(@NotNull List<RangeFormatInfo> rangeFormatInfoList,
-                                       @NotNull Consumer<TextRange> postProcessFormatter) {
+  public static void postProcessRanges(@NotNull List<? extends RangeFormatInfo> rangeFormatInfoList,
+                                       @NotNull Consumer<? super TextRange> postProcessFormatter) {
     for (RangeFormatInfo info : rangeFormatInfoList) {
       int startOffset = info.getStartOffset();
       int endOffset = info.getEndOffset();

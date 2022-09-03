@@ -98,12 +98,12 @@ public class ImplementationViewComponent extends JPanel {
     }
   }
 
-  public ImplementationViewComponent(Collection<ImplementationViewElement> elements,
-                                   final int index) {
+  public ImplementationViewComponent(Collection<? extends ImplementationViewElement> elements,
+                                     final int index) {
     this(elements, index, null);
   }
 
-  public ImplementationViewComponent(Collection<ImplementationViewElement> elements, final int index, Consumer<ImplementationViewComponent> openUsageView) {
+  public ImplementationViewComponent(Collection<? extends ImplementationViewElement> elements, final int index, Consumer<? super ImplementationViewComponent> openUsageView) {
     super(new BorderLayout());
 
     project = elements.size() > 0 ? elements.iterator().next().getProject() : null;
@@ -184,7 +184,7 @@ public class ImplementationViewComponent extends JPanel {
     });
   }
 
-  private DefaultActionGroup createGearActionButton(Consumer<ImplementationViewComponent> openUsageView) {
+  private DefaultActionGroup createGearActionButton(Consumer<? super ImplementationViewComponent> openUsageView) {
     DefaultActionGroup gearActions = new DefaultActionGroup() {
       @Override
       public void update(@NotNull AnActionEvent e) {
@@ -517,7 +517,7 @@ public class ImplementationViewComponent extends JPanel {
     }
   }
 
-  private ActionToolbar createToolbar(Consumer<ImplementationViewComponent> openUsageView) {
+  private ActionToolbar createToolbar(Consumer<? super ImplementationViewComponent> openUsageView) {
     DefaultActionGroup group = new DefaultActionGroup();
 
     BackAction back = new BackAction();

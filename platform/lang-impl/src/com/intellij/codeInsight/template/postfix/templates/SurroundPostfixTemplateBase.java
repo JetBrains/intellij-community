@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.lang.surroundWith.Surrounder;
@@ -10,6 +10,11 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Base for surrounding postfix templates that utilize existing {@link Surrounder} implementations.
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/advanced-postfix-templates.html">Advanced Postfix Templates (IntelliJ Platform Docs)</a>
+ */
 public abstract class SurroundPostfixTemplateBase extends PostfixTemplateWithExpressionSelector {
 
   @NotNull protected final PostfixTemplatePsiInfo myPsiInfo;
@@ -33,7 +38,6 @@ public abstract class SurroundPostfixTemplateBase extends PostfixTemplateWithExp
     super(null, name, descr, selector, provider);
     myPsiInfo = psiInfo;
   }
-
 
   @Override
   public final void expandForChooseExpression(@NotNull PsiElement expression, @NotNull final Editor editor) {

@@ -51,8 +51,8 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
     myEventStealer = startStealingInputEvents(this::dispatchInputEvent, this);
   }
 
-  static @NotNull EventStealer startStealingInputEvents(@NotNull Consumer<InputEvent> inputConsumer, @NotNull Disposable parent) {
-    return new EventStealer(inputConsumer, parent);
+  static @NotNull EventStealer startStealingInputEvents(@NotNull Consumer<? super InputEvent> inputConsumer, @NotNull Disposable parent) {
+    return new EventStealer(parent, inputConsumer);
   }
 
   private static boolean isUrgentInvocationEvent(AWTEvent event) {
@@ -208,9 +208,9 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
   static final class EventStealer {
     private final LinkedBlockingQueue<InputEvent> myInputEvents = new LinkedBlockingQueue<>();
     private final LinkedBlockingQueue<InvocationEvent> myInvocationEvents = new LinkedBlockingQueue<>();
-    private final Consumer<InputEvent> myInputEventDispatcher;
+    private final @NotNull Consumer<? super InputEvent> myInputEventDispatcher;
 
-    private EventStealer(@NotNull Consumer<InputEvent> inputConsumer, @NotNull Disposable parent) {
+    private EventStealer(@NotNull Disposable parent, @NotNull Consumer<? super InputEvent> inputConsumer) {
       myInputEventDispatcher = inputConsumer;
       IdeEventQueue.getInstance().addPostEventListener(event -> {
         if (event instanceof MouseEvent || event instanceof KeyEvent && ((KeyEvent)event).getKeyCode() == KeyEvent.VK_ESCAPE) {

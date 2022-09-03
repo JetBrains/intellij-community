@@ -20,7 +20,7 @@ import java.util.function.Consumer;
 final class ComponentsNavBarPanel extends Breadcrumbs {
   private boolean isAccessibleEnabled = false;
 
-  ComponentsNavBarPanel(@NotNull Component selectedComponent, @NotNull Consumer<Component> selectionHandler) {
+  ComponentsNavBarPanel(@NotNull Component selectedComponent, @NotNull Consumer<? super Component> selectionHandler) {
     rebuild(selectedComponent);
     onSelect((crumb, event) -> {
       if (crumb != null) {

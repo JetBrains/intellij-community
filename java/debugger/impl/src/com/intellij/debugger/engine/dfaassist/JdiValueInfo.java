@@ -92,12 +92,12 @@ interface JdiValueInfo {
     }
   }
 
-  static @Nullable JdiValueInfo from(@NotNull Value value, @NotNull Predicate<ClassLoaderReference> classLoaderFilter) {
+  static @Nullable JdiValueInfo from(@NotNull Value value, @NotNull Predicate<? super ClassLoaderReference> classLoaderFilter) {
     return from(value, classLoaderFilter, true);
   }
 
   private static @Nullable JdiValueInfo from(@NotNull Value value,
-                                             @NotNull Predicate<ClassLoaderReference> classLoaderFilter,
+                                             @NotNull Predicate<? super ClassLoaderReference> classLoaderFilter,
                                              boolean fillSpecial) {
     DfConstantType<?> constant = primitiveConstant(value);
     if (constant != null) {

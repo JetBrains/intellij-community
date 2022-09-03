@@ -141,7 +141,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     return myExternalProjectsView.getTaskActivator();
   }
 
-  public @Nullable <DataType> DataType findNode(Class<DataType> aClass, @NotNull Function<ExternalSystemNode<?>, Object> map) {
+  public @Nullable <DataType> DataType findNode(Class<DataType> aClass, @NotNull Function<? super ExternalSystemNode<?>, Object> map) {
     ExternalSystemNode<?> node = this;
     while (node != null) {
       var data = map.apply(node);

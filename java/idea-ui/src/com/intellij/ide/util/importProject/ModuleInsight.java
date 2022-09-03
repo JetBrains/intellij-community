@@ -482,7 +482,7 @@ public abstract class ModuleInsight {
     }
   }
 
-  protected abstract void scanSourceFileForImportedPackages(final CharSequence chars, Consumer<String> result);
+  protected abstract void scanSourceFileForImportedPackages(final CharSequence chars, Consumer<? super String> result);
 
   private void scanRootForLibraries(File fromRoot) {
     if (isIgnoredName(fromRoot)) {
@@ -532,6 +532,6 @@ public abstract class ModuleInsight {
 
   protected abstract boolean isLibraryFile(final String fileName);
 
-  protected abstract void scanLibraryForDeclaredPackages(File file, Consumer<String> result) throws IOException;
+  protected abstract void scanLibraryForDeclaredPackages(File file, Consumer<? super String> result) throws IOException;
 
 }

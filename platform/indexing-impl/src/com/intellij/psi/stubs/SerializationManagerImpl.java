@@ -2,7 +2,6 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
@@ -30,7 +29,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
   private static final Logger LOG = Logger.getInstance(SerializationManagerImpl.class);
 
   private final AtomicBoolean myNameStorageCrashed = new AtomicBoolean();
-  private final @NotNull Supplier<Path> myFile;
+  private final @NotNull Supplier<? extends Path> myFile;
   private final boolean myUnmodifiable;
   private final AtomicBoolean myInitialized = new AtomicBoolean();
 
@@ -49,7 +48,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
   }
 
   @NonInjectable
-  public SerializationManagerImpl(@NotNull Supplier<Path> nameStorageFile, boolean unmodifiable) {
+  public SerializationManagerImpl(@NotNull Supplier<? extends Path> nameStorageFile, boolean unmodifiable) {
     myFile = nameStorageFile;
     myUnmodifiable = unmodifiable;
     try {
@@ -185,7 +184,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
     }
   }
 
-  private void registerSerializer(@NotNull String externalId, @NotNull Supplier<ObjectStubSerializer<?, ? extends Stub>> lazySerializer) {
+  private void registerSerializer(@NotNull String externalId, @NotNull Supplier<? extends ObjectStubSerializer<?, ? extends Stub>> lazySerializer) {
     try {
       mySerializerEnumerator.assignId(lazySerializer, externalId);
     }

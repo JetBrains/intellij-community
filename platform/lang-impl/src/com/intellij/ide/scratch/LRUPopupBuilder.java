@@ -62,7 +62,7 @@ public abstract class LRUPopupBuilder<T> {
   @NotNull
   public static LRUPopupBuilder<Language> languagePopupBuilder(@NotNull Project project,
                                                                @NotNull @PopupTitle String title,
-                                                               @Nullable Function<Language, Icon> iconProvider) {
+                                                               @Nullable Function<? super Language, ? extends Icon> iconProvider) {
     return new LRUPopupBuilder<Language>(project, title) {
       @Override
       public String getDisplayName(Language language) {
@@ -165,8 +165,8 @@ public abstract class LRUPopupBuilder<T> {
       lru.sort(Comparator.comparingInt(o -> ids.indexOf(getStorageId(o))));
     }
     List<T> combinedItems = ContainerUtil.concat(topItems, lru, middleItems, items, bottomItems);
-    T sep1 = combinedItems.get(topItems.size() + lru.size() + middleItems.size());
-    T sep2 = bottomItems.isEmpty() ? null : combinedItems.get(topItems.size() + lru.size() + items.size());
+    T sep1 = ContainerUtil.getOrElse(combinedItems, topItems.size() + lru.size() + middleItems.size(), null);
+    T sep2 = ContainerUtil.getOrElse(combinedItems, topItems.size() + lru.size() + middleItems.size() + items.size(), null);
 
     BaseListPopupStep<T> step =
       new BaseListPopupStep<>(myTitle, combinedItems) {

@@ -45,7 +45,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     private volatile int myStart;
     private volatile int myEnd;
     private static final byte ATTACHED_TO_TREE_FLAG = COLOR_MASK <<1; // true if the node is inserted to the tree
-    final List<Supplier<E>> intervals;
+    final List<Supplier<? extends E>> intervals;
     int maxEnd; // max of all intervalEnd()s among all children.
     int delta;  // delta of startOffset. getStartOffset() = myStartOffset + Sum of deltas up to root
 
@@ -86,7 +86,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     public boolean processAliveKeys(@NotNull Processor<? super E> processor) {
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < intervals.size(); i++) {
-        Supplier<E> interval = intervals.get(i);
+        Supplier<? extends E> interval = intervals.get(i);
         E key = interval.get();
         if (key != null && !processor.process(key)) {
           return false;
@@ -99,7 +99,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     public boolean hasAliveKey(boolean purgeDead) {
       boolean hasAliveInterval = false;
       for (int i = intervals.size() - 1; i >= 0; i--) {
-        Supplier<E> interval = intervals.get(i);
+        Supplier<? extends E> interval = intervals.get(i);
         if (interval.get() != null) {
           hasAliveInterval = true;
           if (purgeDead) {
@@ -123,7 +123,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
       myIntervalTree.checkBelongsToTheTree(key, true);
       myIntervalTree.assertUnderWriteLock();
       for (int i = intervals.size() - 1; i >= 0; i--) {
-        Supplier<E> interval = intervals.get(i);
+        Supplier<? extends E> interval = intervals.get(i);
         E t = interval.get();
         if (t == key) {
           removeIntervalInternal(i);
@@ -162,13 +162,13 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     }
 
     void addIntervalsFrom(@NotNull IntervalNode<E> otherNode) {
-      for (Supplier<E> key : otherNode.intervals) {
+      for (Supplier<? extends E> key : otherNode.intervals) {
         E interval = key.get();
         if (interval != null) addInterval(interval);
       }
     }
 
-    private Supplier<E> createGetter(@NotNull E interval) {
+    private Supplier<? extends E> createGetter(@NotNull E interval) {
       return myIntervalTree.keepIntervalsOnWeakReferences() ? new WeakReferencedGetter<>(interval, myIntervalTree.myReferenceQueue) : () -> interval;
     }
 
@@ -624,7 +624,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
         }
 
         private boolean nextInterval() {
-          List<Supplier<T>> intervals = currentNode.intervals;
+          List<Supplier<? extends T>> intervals = currentNode.intervals;
           while (indexInCurrentList < intervals.size()) {
             T t = intervals.get(indexInCurrentList).get();
             indexInCurrentList++;
@@ -1397,10 +1397,10 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
 
       boolean foundMarker = false;
       while (node != null) {
-        List<Supplier<T>> intervals = node.intervals;
+        List<Supplier<? extends T>> intervals = node.intervals;
         //noinspection ForLoopReplaceableByForEach
         for (int i = 0; i < intervals.size(); i++) {
-          Supplier<T> interval = intervals.get(i);
+          Supplier<? extends T> interval = intervals.get(i);
           T m = interval.get();
           if (m == null) continue;
           if (m == marker) {
@@ -1428,9 +1428,9 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
 
       boolean foundMarker = false;
       while (node != null) {
-        List<Supplier<T>> intervals = node.intervals;
+        List<Supplier<? extends T>> intervals = node.intervals;
         for (int i = intervals.size() - 1; i >= 0; i--) {
-          Supplier<T> interval = intervals.get(i);
+          Supplier<? extends T> interval = intervals.get(i);
           T m = interval.get();
           if (m == null) continue;
           if (m == marker) {

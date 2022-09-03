@@ -18,7 +18,7 @@ public final class Dfs {
   public static <Node> void performDfs(
     @NotNull OutboundSemiGraph<Node> graph,
     @NotNull Node root,
-    @NotNull Consumer<Node> visitor
+    @NotNull Consumer<? super Node> visitor
   ) {
     final Set<Node> visited = new HashSet<>();
     final Deque<Node> stack = new ArrayDeque<>();

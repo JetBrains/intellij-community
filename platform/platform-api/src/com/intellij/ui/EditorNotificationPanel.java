@@ -63,7 +63,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   protected final @Nullable Color myBackgroundColor;
   protected final @NotNull ColorKey myBackgroundColorKey;
 
-  private @NotNull Consumer<Class<?>> myClassConsumer = VOID_CONSUMER;
+  private @NotNull Consumer<? super Class<?>> myClassConsumer = VOID_CONSUMER;
 
   public EditorNotificationPanel(@Nullable Color backgroundColor) {
     this(null, backgroundColor);
@@ -168,7 +168,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   }
 
   @ApiStatus.Internal
-  public void setClassConsumer(@NotNull Consumer<Class<?>> classConsumer) {
+  public void setClassConsumer(@NotNull Consumer<? super Class<?>> classConsumer) {
     myClassConsumer = classConsumer;
   }
 

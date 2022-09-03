@@ -141,7 +141,7 @@ abstract class SEResultsListFactory {
     return component;
   }
 
-  private static @Nullable Color extractUnselectedBackground(boolean isSelected, Supplier<Component> supplier) {
+  private static @Nullable Color extractUnselectedBackground(boolean isSelected, Supplier<? extends Component> supplier) {
     if (ExperimentalUI.isNewUI() && isSelected) {
       Component component = supplier.get();
       if (component != null) {

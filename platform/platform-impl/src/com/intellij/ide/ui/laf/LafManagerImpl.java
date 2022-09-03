@@ -13,6 +13,7 @@ import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.actions.QuickChangeLookAndFeel;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.*;
 import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
@@ -156,6 +157,16 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private @Nullable String themeIdBeforePluginUpdate = null;
   private boolean autodetect;
 
+  public LafManagerImpl() {
+    List<? extends IdeaPluginDescriptor> plugins = PluginManagerCore.getLoadedPlugins();
+    for (IdeaPluginDescriptor plugin : plugins) {
+      if (isNewUIPlugin(plugin)) {
+        ExperimentalUI.previewPluginInstalled = true;
+      }
+    }
+  }
+
+
   public UIManager.LookAndFeelInfo getDefaultLightLaf() {
     return UiThemeProviderListManager.getInstance().findJetBrainsLightTheme();
   }
@@ -269,6 +280,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
         if (isNewUIPlugin(pluginDescriptor)) {
           ExperimentalUI.getInstance().onExpUIDisabled();
+          ExperimentalUI.previewPluginInstalled = false;
         }
       }
 
@@ -281,16 +293,16 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         }
       }
 
-      private boolean isNewUIPlugin(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-        return pluginDescriptor.getPluginId().getIdString().equals("com.intellij.plugins.expui");
-      }
-
       private void enableExpUI() {
         if (!Registry.is("ide.experimental.ui")) {
           ExperimentalUI.getInstance().onExpUIEnabled();
         }
       }
     });
+  }
+
+  private static boolean isNewUIPlugin(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+    return pluginDescriptor.getPluginId().getIdString().equals("com.intellij.plugins.expui");
   }
 
   private void detectAndSyncLaf() {

@@ -128,7 +128,7 @@ abstract class ServiceView extends JPanel implements Disposable {
         return serviceView.isGroupByServiceGroups();
       }
     };
-    serviceView.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, (DataProvider)dataId -> {
+    DataManager.registerDataProvider(serviceView, (DataProvider)dataId -> {
       if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
         return ServiceViewManagerImpl.getToolWindowContextHelpId();
       }

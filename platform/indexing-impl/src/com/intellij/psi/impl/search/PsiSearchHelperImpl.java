@@ -1100,7 +1100,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           registerRequest(globals.computeIfAbsent(key, __ -> new SmartList<>()), primitive, processor);
         }
       }
-      for (Processor<Processor<? super PsiReference>> customAction : collector.takeCustomSearchActions()) {
+      for (Processor<? super Processor<? super PsiReference>> customAction : collector.takeCustomSearchActions()) {
         ProgressManager.checkCanceled();
         customs.add((Computable<Boolean>)() -> customAction.process(processor));
       }

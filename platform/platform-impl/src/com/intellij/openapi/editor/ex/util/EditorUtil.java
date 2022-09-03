@@ -9,10 +9,7 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandEvent;
@@ -52,7 +49,9 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
+import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 import static com.intellij.openapi.editor.impl.InlayModelImpl.showWhenFolded;
 
 public final class EditorUtil {
@@ -1142,14 +1141,22 @@ public final class EditorUtil {
   @NotNull
   public static DataContext getEditorDataContext(@NotNull Editor editor) {
     DataContext context = DataManager.getInstance().getDataContext(editor.getContentComponent());
-    if (CommonDataKeys.PROJECT.getData(context) == editor.getProject()) {
+    if (PROJECT.getData(context) == editor.getProject()) {
       return context;
     }
-    return dataId -> {
-      if (CommonDataKeys.PROJECT.is(dataId)) {
-        return editor.getProject();
+    return new CustomizedDataContext() {
+      @Override
+      public @NotNull DataContext getParent() {
+        return context;
       }
-      return context.getData(dataId);
+
+      @Override
+      public @Nullable Object getRawCustomData(@NotNull String dataId) {
+        if (PROJECT.is(dataId)) {
+          return Objects.requireNonNullElse(editor.getProject(), EXPLICIT_NULL);
+        }
+        return null;
+      }
     };
   }
 

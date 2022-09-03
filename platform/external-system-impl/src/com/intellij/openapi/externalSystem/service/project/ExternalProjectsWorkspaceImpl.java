@@ -54,7 +54,7 @@ public final class ExternalProjectsWorkspaceImpl implements PersistentStateCompo
     return Registry.is("external.system.substitute.library.dependencies");
   }
 
-  public ModifiableWorkspace createModifiableWorkspace(Supplier<List<Module>> modulesSupplier) {
+  public ModifiableWorkspace createModifiableWorkspace(Supplier<? extends List<Module>> modulesSupplier) {
     return new ModifiableWorkspace(myState, modulesSupplier);
   }
 }

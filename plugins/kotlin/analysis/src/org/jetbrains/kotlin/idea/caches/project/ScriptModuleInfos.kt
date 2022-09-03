@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.caches.project
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.caches.resolve.JvmLibraryInfo
@@ -18,6 +19,7 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 data class ScriptModuleInfo(
     override val project: Project,
@@ -124,12 +126,14 @@ sealed class ScriptDependenciesInfo(override val project: Project) : IdeaModuleI
                 if (moduleInfos.any { gradleApiPresentInModule(it) }) ForProject(project) else null
 
             private fun gradleApiPresentInModule(moduleInfo: IdeaModuleInfo) =
-                moduleInfo is JvmLibraryInfo && moduleInfo.getLibraryRoots().any {
-                    // TODO: it's ugly ugly hack as Script (Gradle) SDK has to be provided in case of providing script dependencies.
-                    //  So far the indication of usages of  script dependencies by module is `gradleApi`
-                    //  Note: to be deleted with https://youtrack.jetbrains.com/issue/KTIJ-19276
-                    it.contains("gradle-api")
-                }
+                moduleInfo is JvmLibraryInfo &&
+                        moduleInfo.library.safeAs<LibraryEx>()?.isDisposed != true &&
+                        moduleInfo.getLibraryRoots().any {
+                            // TODO: it's ugly ugly hack as Script (Gradle) SDK has to be provided in case of providing script dependencies.
+                            //  So far the indication of usages of  script dependencies by module is `gradleApi`
+                            //  Note: to be deleted with https://youtrack.jetbrains.com/issue/KTIJ-19276
+                            it.contains("gradle-api")
+                        }
         }
     }
 }

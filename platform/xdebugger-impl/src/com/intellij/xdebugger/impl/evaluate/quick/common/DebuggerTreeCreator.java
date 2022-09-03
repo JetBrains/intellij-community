@@ -23,7 +23,7 @@ public interface DebuggerTreeCreator<D> {
   @NotNull
   String getTitle(@NotNull D descriptor);
 
-  void createDescriptorByNode(Object node, ResultConsumer<D> resultConsumer);
+  void createDescriptorByNode(Object node, ResultConsumer<? super D> resultConsumer);
 
   @NotNull
   Tree createTree(@NotNull D descriptor);

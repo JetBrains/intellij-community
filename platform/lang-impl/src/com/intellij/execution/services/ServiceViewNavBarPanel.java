@@ -20,11 +20,11 @@ import java.util.List;
 import java.util.function.Consumer;
 
 final class ServiceViewNavBarPanel extends NavBarPanel {
-  private final Consumer<ServiceViewItem> mySelector;
+  private final @NotNull Consumer<? super ServiceViewItem> mySelector;
   private boolean myRebuildNeeded = true;
 
   ServiceViewNavBarPanel(@NotNull Project project, boolean docked, @NotNull ServiceViewModel viewModel,
-                         @NotNull Consumer<ServiceViewItem> selector) {
+                         @NotNull Consumer<? super ServiceViewItem> selector) {
     super(project, docked);
     mySelector = selector;
     Disposer.register(viewModel, this);

@@ -611,11 +611,9 @@ public final class IdeKeyEventDispatcher {
     Pair<Trinity<AnAction, AnActionEvent, Long>, Boolean> chosenPair = ProgressManager.getInstance().runProcess(() -> {
       Map<Presentation, AnActionEvent> events = new ConcurrentHashMap<>();
       Trinity<AnAction, AnActionEvent, Long> chosen = Utils.runUpdateSessionForInputEvent(
-        e, wrappedContext, place, processor, presentationFactory,
+        actions, e, wrappedContext, place, processor, presentationFactory,
         event -> events.put(event.getPresentation(), event),
-        session -> Utils.tryInReadAction(
-          () -> rearrangeByPromoters(actions, Utils.freezeDataContext(wrappedContext, null))) ?
-                   doUpdateActionsInner(actions, dumb, wouldBeEnabledIfNotDumb, session, events::get) : null);
+        (session, adjusted) -> doUpdateActionsInner(session, adjusted, dumb, wouldBeEnabledIfNotDumb, events::get));
       if (chosen == null) return null;
 
       if (!myContext.getSecondStrokeActions().contains(chosen.first)) {
@@ -661,10 +659,10 @@ public final class IdeKeyEventDispatcher {
   }
 
   @Nullable
-  private static Trinity<AnAction, AnActionEvent, Long> doUpdateActionsInner(@NotNull List<AnAction> actions,
+  private static Trinity<AnAction, AnActionEvent, Long> doUpdateActionsInner(@NotNull UpdateSession session,
+                                                                             @NotNull List<AnAction> actions,
                                                                              boolean dumb,
                                                                              @NotNull List<? super AnAction> wouldBeEnabledIfNotDumb,
-                                                                             @NotNull UpdateSession session,
                                                                              @NotNull Function<? super Presentation, ? extends AnActionEvent> events) {
     for (AnAction action : actions) {
       long startedAt = System.currentTimeMillis();
@@ -806,29 +804,6 @@ public final class IdeKeyEventDispatcher {
     catch (Exception ex) {
       LOG.error(ex);
     }
-  }
-
-  private static boolean rearrangeByPromoters(@NotNull List<AnAction> actions, @NotNull DataContext context) {
-    List<AnAction> readOnlyActions = Collections.unmodifiableList(actions);
-    List<ActionPromoter> promoters = ContainerUtil.concat(
-      ActionPromoter.EP_NAME.getExtensionList(), ContainerUtil.filterIsInstance(actions, ActionPromoter.class));
-    for (ActionPromoter promoter : promoters) {
-      try {
-        List<AnAction> promoted = promoter.promote(readOnlyActions, context);
-        if (promoted != null && !promoted.isEmpty()) {
-          actions.removeAll(promoted);
-          actions.addAll(0, promoted);
-        }
-        List<AnAction> suppressed = promoter.suppress(readOnlyActions, context);
-        if (suppressed != null && !suppressed.isEmpty()) {
-          actions.removeAll(suppressed);
-        }
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    }
-    return true;
   }
 
   private void addActionsFromActiveKeymap(@NotNull Shortcut shortcut) {

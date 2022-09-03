@@ -15,6 +15,7 @@ class KtDataFlowInspectionTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testBooleanConst() = doTest()
     fun testBoxedInt() = doTest()
     fun testBrokenCode() = doTest()
+    fun testCastArray() = doTest()
     fun testCastGenericMethodReturn() = doTest()
     fun testClassRef() = doTest()
     fun testCollectionConstructors() = doTest()

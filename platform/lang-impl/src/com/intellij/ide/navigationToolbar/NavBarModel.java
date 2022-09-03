@@ -238,7 +238,7 @@ public class NavBarModel {
     final List<Object> objects = new ArrayList<>();
     boolean update = false;
     for (Object o : myModel) {
-      if (isValid(TreeAnchorizer.getService().retrieveElement(o))) {
+      if (isValid(unwrapRaw(o))) {
         objects.add(o);
       }
       else {
@@ -350,14 +350,22 @@ public class NavBarModel {
     return true;
   }
 
-  public Object get(final int index) {
-    return TreeAnchorizer.getService().retrieveElement(myModel.get(index));
+  @NotNull Object getRaw(int i) {
+    return myModel.get(i);
+  }
+
+  @Nullable Object unwrapRaw(@NotNull Object o) {
+    return TreeAnchorizer.getService().retrieveElement(o);
+  }
+
+  public @Nullable Object get(int index) {
+    return unwrapRaw(getRaw(index));
   }
 
   public int indexOf(Object value) {
     for (int i = 0; i < myModel.size(); i++) {
-      Object o = myModel.get(i);
-      if (Objects.equals(TreeAnchorizer.getService().retrieveElement(o), value)) {
+      Object o = getRaw(i);
+      if (Objects.equals(unwrapRaw(o), value)) {
         return i;
       }
     }

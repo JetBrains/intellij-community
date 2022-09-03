@@ -410,11 +410,21 @@ Java_com_intellij_ui_mac_screenmenu_Menu_nativeFindItemByTitle(JNIEnv *env, jobj
  */
 JNIEXPORT jlong JNICALL
 Java_com_intellij_ui_mac_screenmenu_Menu_nativeGetAppMenu(JNIEnv *env, jclass peerClass) {
-    NSMenu * mainMenu = [NSApplication sharedApplication].mainMenu;
-    id appMenu = [mainMenu numberOfItems] > 0 ? [mainMenu itemAtIndex:0] : nil;
-    if (appMenu != nil) {
-        appMenu = [appMenu submenu];
-        [appMenu retain];
+    JNI_COCOA_ENTER();
+    __block id appMenu = nil;
+    dispatch_block_t block = ^{
+        NSMenu * mainMenu = [NSApplication sharedApplication].mainMenu;
+        appMenu = [mainMenu numberOfItems] > 0 ? [mainMenu itemAtIndex:0] : nil;
+        if (appMenu != nil) {
+            appMenu = [appMenu submenu];
+            [appMenu retain];
+        }
+    };
+    if ([NSThread isMainThread]) {
+        block();
+    } else {
+        dispatch_async_and_wait(dispatch_get_main_queue(), block);
     }
     return (jlong)appMenu;
+    JNI_COCOA_EXIT();
 }

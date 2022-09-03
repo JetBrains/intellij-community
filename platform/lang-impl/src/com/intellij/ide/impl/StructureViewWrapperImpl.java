@@ -2,7 +2,6 @@
 package com.intellij.ide.impl;
 
 import com.intellij.ide.ActivityTracker;
-import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.structureView.*;
@@ -40,6 +39,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.content.*;
 import com.intellij.ui.switcher.QuickActionProvider;
@@ -59,7 +59,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -166,6 +165,10 @@ public final class StructureViewWrapperImpl implements StructureViewWrapper, Dis
               break;
             }
           }
+        }
+        if (ExperimentalUI.isNewUI() && myStructureView instanceof StructureViewComponent) {
+          DefaultActionGroup additional = ((StructureViewComponent)myStructureView).getDotsActions();
+          myToolWindow.setAdditionalGearActions(additional);
         }
       }
     });
@@ -326,15 +329,10 @@ public final class StructureViewWrapperImpl implements StructureViewWrapper, Dis
   public void rebuild() {
     if (myProject.isDisposed()) return;
 
-    Dimension referenceSize = null;
-
     Container container = myToolWindow.getComponent();
     boolean wasFocused = UIUtil.isFocusAncestor(container);
 
     if (myStructureView != null) {
-      if (myStructureView instanceof StructureView.Scrollable) {
-        referenceSize = ((StructureView.Scrollable)myStructureView).getCurrentSize();
-      }
 
       myStructureView.storeState();
       Disposer.dispose(myStructureView);
@@ -382,10 +380,6 @@ public final class StructureViewWrapperImpl implements StructureViewWrapper, Dis
           myStructureView = structureViewBuilder.createStructureView(editor, myProject);
           myFileEditor = editor;
           Disposer.register(this, myStructureView);
-
-          if (myStructureView instanceof StructureView.Scrollable) {
-            ((StructureView.Scrollable)myStructureView).setReferenceSizeWhileInitializing(referenceSize);
-          }
 
           if (myStructureView instanceof StructureViewComposite) {
             final StructureViewComposite composite = (StructureViewComposite)myStructureView;
@@ -442,13 +436,17 @@ public final class StructureViewWrapperImpl implements StructureViewWrapper, Dis
   }
 
   private void updateHeaderActions(@Nullable StructureView structureView) {
-    List<AnAction> titleActions = Collections.emptyList();
+    List<AnAction> titleActions;
     if (structureView instanceof StructureViewComponent) {
-      JTree tree = ((StructureViewComponent)structureView).getTree();
-      CommonActionsManager commonActionManager = CommonActionsManager.getInstance();
-      titleActions = Arrays.asList(
-        commonActionManager.createExpandAllHeaderAction(tree),
-        commonActionManager.createCollapseAllHeaderAction(tree));
+      if (ExperimentalUI.isNewUI()) {
+        titleActions = List.of(((StructureViewComponent)structureView).getViewActions());
+      }
+      else {
+        titleActions = ((StructureViewComponent)structureView).addExpandCollapseActions();
+      }
+    }
+    else {
+      titleActions = Collections.emptyList();
     }
     myToolWindow.setTitleActions(titleActions);
   }

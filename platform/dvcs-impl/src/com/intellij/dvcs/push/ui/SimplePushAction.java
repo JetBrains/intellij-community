@@ -13,7 +13,7 @@ import java.util.function.Predicate;
 @ApiStatus.Internal
 public final class SimplePushAction extends PushActionBase {
 
-  private Predicate<VcsPushUi> condition;
+  private @Nullable Predicate<? super VcsPushUi> condition;
 
   SimplePushAction() {
     super(DvcsBundle.message("action.complex.push"));
@@ -36,7 +36,7 @@ public final class SimplePushAction extends PushActionBase {
     }
   }
 
-  void setCondition(@Nullable Predicate<VcsPushUi> condition) {
+  void setCondition(@Nullable Predicate<? super VcsPushUi> condition) {
     this.condition = condition;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
 import com.intellij.openapi.application.ApplicationManager
@@ -21,6 +21,7 @@ import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
+import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NotNull
 import org.junit.Assert
@@ -171,7 +172,7 @@ class DumbServiceImplTest extends BasePlatformTestCase {
             def index = FileBasedIndex.getInstance() as FileBasedIndexImpl
             new IndexUpdateRunner(index, ConcurrencyUtil.newSameThreadExecutorService(), 1)
               .indexFiles(project, Collections.singletonList(new IndexUpdateRunner.FileSet(project, "child", [child])),
-                          indicator, new ProjectIndexingHistoryImpl(getProject(), "Testing", false))
+                          indicator, new ProjectIndexingHistoryImpl(getProject(), "Testing", ScanningType.PARTIAL))
           }
         }
         catch (ProcessCanceledException e) {

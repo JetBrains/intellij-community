@@ -423,10 +423,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       }
     };
 
-    AbstractPopup popup = createUsagePopup(
-      usageView, table, itemChosenCallback, tableResizer, statusPanel,
-      parameters, actionHandler
-    );
+    AbstractPopup popup = createUsagePopup(usageView, table, itemChosenCallback, statusPanel, parameters, actionHandler, tableResizer);
 
     popup.addResizeListener(() -> manuallyResized.set(true), popup);
 
@@ -700,10 +697,10 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   private static AbstractPopup createUsagePopup(@NotNull UsageViewImpl usageView,
                                                 @NotNull JTable table,
                                                 @NotNull Runnable itemChoseCallback,
-                                                @NotNull Consumer<AbstractPopup> tableResizer,
                                                 @NotNull TitlePanel statusPanel,
                                                 @NotNull ShowUsagesParameters parameters,
-                                                @NotNull ShowUsagesActionHandler actionHandler) {
+                                                @NotNull ShowUsagesActionHandler actionHandler,
+                                                @NotNull Consumer<? super AbstractPopup> tableResizer) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     Project project = parameters.project;
     String title = actionHandler.getPresentation().getSearchTargetString();

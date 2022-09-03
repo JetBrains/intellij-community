@@ -17,6 +17,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.Stack;
@@ -30,6 +31,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.GradleManager;
+import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder;
+import org.jetbrains.plugins.gradle.model.data.GradleProjectBuildScriptData;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 
@@ -331,5 +334,16 @@ public final class GradleUtil {
 
   public static boolean isSupportedImplementationScope(@NotNull GradleVersion gradleVersion) {
     return gradleVersion.getBaseVersion().compareTo(GradleVersion.version("3.4")) >= 0;
+  }
+
+  @Nullable
+  public static VirtualFile getGradleBuildScriptSource(@NotNull Module module) {
+    DataNode<? extends ModuleData> moduleData = CachedModuleDataFinder.getInstance(module.getProject()).findModuleData(module);
+    if (moduleData == null) return null;
+    DataNode<GradleProjectBuildScriptData> dataNode = ExternalSystemApiUtil.find(moduleData, GradleProjectBuildScriptData.KEY);
+    if (dataNode == null) return null;
+    File data = dataNode.getData().getBuildScriptSource();
+    if (data == null) return null;
+    return VfsUtil.findFileByIoFile(data, true);
   }
 }

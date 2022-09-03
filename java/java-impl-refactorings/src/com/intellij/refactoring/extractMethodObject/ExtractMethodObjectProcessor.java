@@ -751,7 +751,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     }
 
     @Override
-    protected void initDuplicates(@Nullable Set<TextRange> textRanges) {
+    protected void initDuplicates(@Nullable Set<? extends TextRange> textRanges) {
       myDuplicates = Optional.ofNullable(getExactDuplicatesFinder())
                              .map(finder -> finder.findDuplicates(myTargetClass))
                              .orElse(new ArrayList<>());

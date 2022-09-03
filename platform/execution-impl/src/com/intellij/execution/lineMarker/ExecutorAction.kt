@@ -4,10 +4,6 @@ package com.intellij.execution.lineMarker
 import com.intellij.execution.Executor
 import com.intellij.execution.actions.RunContextAction
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.UserDataHolder
-import com.intellij.openapi.util.UserDataHolderBase
-import org.jetbrains.annotations.NonNls
 
 
 /**
@@ -123,29 +119,12 @@ class ExecutorAction private constructor(val origin: AnAction,
     return result
   }
   
-  private class MyDataContext(private val myDelegate: DataContext, val order: Int) : UserDataHolderBase(), DataContext {
-    @Synchronized
-    override fun getData(dataId: @NonNls String): Any? {
+  private class MyDataContext(delegate: DataContext, val order: Int) : DataContextWrapper(delegate) {
+    override fun getRawCustomData(dataId: String): Any? {
       if (orderKey.`is`(dataId)) {
         return order
       }
-      return myDelegate.getData(dataId)
-    }
-
-    override fun <T : Any?> getUserData(key: Key<T>): T? {
-      if (myDelegate is UserDataHolder) {
-        return myDelegate.getUserData(key)
-      }
-      return super.getUserData(key)
-    }
-
-    override fun <T : Any?> putUserData(key: Key<T>, value: T?) {
-      if (myDelegate is UserDataHolder) {
-        myDelegate.putUserData(key, value)
-      }
-      else{
-        super.putUserData(key, value)
-      }
+      return null
     }
   }
 }

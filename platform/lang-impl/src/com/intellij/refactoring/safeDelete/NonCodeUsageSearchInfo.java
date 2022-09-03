@@ -10,24 +10,24 @@ import java.util.Collections;
 
 
 public class NonCodeUsageSearchInfo {
-  private final Condition<PsiElement> myInsideDeletedCondition;
-  private final Collection<PsiElement> myElementsToSearch;
+  private final Condition<? super PsiElement> myInsideDeletedCondition;
+  private final Collection<? extends PsiElement> myElementsToSearch;
 
-  public NonCodeUsageSearchInfo(final Condition<PsiElement> insideDeletedCondition, final Collection<PsiElement> elementsToSearch) {
+  public NonCodeUsageSearchInfo(final Condition<? super PsiElement> insideDeletedCondition, final Collection<? extends PsiElement> elementsToSearch) {
     myInsideDeletedCondition = insideDeletedCondition;
     myElementsToSearch = elementsToSearch;
   }
 
-  public NonCodeUsageSearchInfo(final Condition<PsiElement> insideDeletedCondition, final PsiElement elementToSearch) {
+  public NonCodeUsageSearchInfo(final Condition<? super PsiElement> insideDeletedCondition, final PsiElement elementToSearch) {
     myInsideDeletedCondition = insideDeletedCondition;
     myElementsToSearch = Collections.singletonList(elementToSearch);
   }
 
-  public Condition<PsiElement> getInsideDeletedCondition() {
+  public Condition<? super PsiElement> getInsideDeletedCondition() {
     return myInsideDeletedCondition;
   }
 
-  public Collection<PsiElement> getElementsToSearch() {
+  public Collection<? extends PsiElement> getElementsToSearch() {
     return myElementsToSearch;
   }
 }

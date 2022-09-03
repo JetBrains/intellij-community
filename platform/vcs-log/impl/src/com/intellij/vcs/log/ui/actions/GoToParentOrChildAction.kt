@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.ui.actions
 
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.DumbAwareAction
@@ -21,6 +22,8 @@ import com.intellij.vcs.log.util.VcsLogUtil.jumpToRow
 import java.awt.event.KeyEvent
 
 open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
     val ui = e.getData(VcsLogDataKeys.VCS_LOG_UI) as? VcsLogUiEx

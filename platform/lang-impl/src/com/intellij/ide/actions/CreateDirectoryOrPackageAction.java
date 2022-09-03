@@ -57,8 +57,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfo;
-
 public class CreateDirectoryOrPackageAction extends AnAction implements DumbAware {
   private static final ExtensionPointName<CreateDirectoryCompletionContributor> EP = new ExtensionPointName<>("com.intellij.createDirectoryCompletionContributor");
 
@@ -168,7 +166,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
                                                 String initialText,
                                                 @NotNull PsiDirectory directory,
                                                 CreateGroupHandler validator,
-                                                Consumer<List<PsiElement>> consumer) {
+                                                Consumer<? super List<PsiElement>> consumer) {
     List<CompletionItem> variants = collectSuggestedDirectories(directory);
     DirectoriesWithCompletionPopupPanel contentPanel = new DirectoriesWithCompletionPopupPanel(variants);
 

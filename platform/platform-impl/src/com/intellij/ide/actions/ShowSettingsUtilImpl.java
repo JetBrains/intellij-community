@@ -212,7 +212,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   }
 
   @Override
-  public <T extends Configurable> boolean editConfigurable(Project project, @NotNull T configurable, @NotNull Consumer<T> advancedInitialization) {
+  public <T extends Configurable> boolean editConfigurable(Project project, @NotNull T configurable, @NotNull Consumer<? super T> advancedInitialization) {
     return editConfigurable(null, project, configurable, advancedInitialization, createDimensionKey(configurable), isWorthToShowApplyButton(configurable));
   }
 
@@ -256,7 +256,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   private static <T extends Configurable> boolean editConfigurable(@Nullable Component parent,
                                                                    @Nullable Project project,
                                                                    @NotNull T configurable,
-                                                                   @Nullable final Consumer<T> advancedInitialization,
+                                                                   @Nullable final Consumer<? super T> advancedInitialization,
                                                                    @NotNull String dimensionKey,
                                                                    boolean showApplyButton) {
     final DialogWrapper editor;

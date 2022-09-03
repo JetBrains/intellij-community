@@ -88,7 +88,7 @@ final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
 
     private void recalculateRenderFlags() {
       boolean renderedInGutter = false;
-      for (Supplier<RangeHighlighterEx> getter : intervals) {
+      for (Supplier<? extends RangeHighlighterEx> getter : intervals) {
         RangeHighlighterEx h = getter.get();
         renderedInGutter |= h.isRenderedInGutter();
       }

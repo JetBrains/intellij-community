@@ -105,14 +105,16 @@ class DataContextDialog(
   }
 
   private fun collectDataFrom(component: Component, showDataRules: Boolean): List<ContextData> {
-    val dataManager = DataManager.getInstance() as DataManagerImpl
+    val dataManager = DataManager.getInstance()
     val provider = DataManagerImpl.getDataProviderEx(component) ?: return emptyList()
     val result = mutableListOf<ContextData>()
     for (key in DataKey.allKeys()) {
-      val data = when {
-                   showDataRules -> dataManager.getDataSimple(key.name, provider)
-                   else -> provider.getData(key.name)
-                 } ?: continue
+      val data =
+        when {
+          showDataRules -> dataManager.getCustomizedData(
+            key.name, dataManager.getDataContext(component.parent), provider)
+          else -> provider.getData(key.name)
+        } ?: continue
       result += ContextData(key.name, data)
     }
     return result

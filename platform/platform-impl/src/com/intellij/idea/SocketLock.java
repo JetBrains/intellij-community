@@ -31,6 +31,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static com.intellij.ide.SpecialConfigFiles.*;
 
@@ -50,7 +51,7 @@ public final class SocketLock {
   private static final String OK_RESPONSE = "ok";
   private static final String PATHS_EOT_RESPONSE = "---";
 
-  private final AtomicReference<Function<List<String>, Future<CliResult>>> myCommandProcessorRef;
+  private final AtomicReference<Function<? super List<String>, ? extends Future<CliResult>>> myCommandProcessorRef;
   private final Path myConfigPath;
   private final Path mySystemPath;
   private final List<AutoCloseable> myLockedFiles = new ArrayList<>(4);
@@ -62,7 +63,8 @@ public final class SocketLock {
     if (myConfigPath.equals(mySystemPath)) {
       throw new IllegalArgumentException("'config' and 'system' paths should point to different directories");
     }
-    myCommandProcessorRef = new AtomicReference<>(args -> CliResult.error(Main.ACTIVATE_NOT_INITIALIZED, IdeBundle.message("activation.not.initialized")));
+    myCommandProcessorRef =
+      new AtomicReference<>(args -> CliResult.error(Main.ACTIVATE_NOT_INITIALIZED, IdeBundle.message("activation.not.initialized")));
   }
 
   public @NotNull Path getConfigPath() {
@@ -73,7 +75,7 @@ public final class SocketLock {
     return mySystemPath;
   }
 
-  public void setCommandProcessor(@NotNull Function<List<String>, Future<CliResult>> processor) {
+  public void setCommandProcessor(@NotNull Function<? super List<String>, ? extends Future<CliResult>> processor) {
     myCommandProcessorRef.set(processor);
   }
 
@@ -147,7 +149,7 @@ public final class SocketLock {
 
       String token = UUID.randomUUID().toString();
       Path[] lockedPaths = {myConfigPath, mySystemPath};
-      BuiltInServer server = BuiltInServer.Companion.start(6942, 50, false, () -> new MyChannelInboundHandler(lockedPaths, myCommandProcessorRef, token));
+      BuiltInServer server = BuiltInServer.Companion.start(6942, 50, false, () -> new MyChannelInboundHandler(lockedPaths, myCommandProcessorRef::get, token));
       try {
         byte[] portBytes = Integer.toString(server.getPort()).getBytes(StandardCharsets.UTF_8);
         Files.write(myConfigPath.resolve(PORT_FILE), portBytes);
@@ -283,11 +285,11 @@ public final class SocketLock {
     private enum State {HEADER, CONTENT}
 
     private final List<String> myLockedPaths;
-    private final AtomicReference<Function<List<String>, Future<CliResult>>> myCommandProcessorRef;
+    private final Supplier<? extends Function<? super List<String>, ? extends Future<CliResult>>> myCommandProcessorRef;
     private final String myToken;
     private State myState = State.HEADER;
 
-    MyChannelInboundHandler(Path[] lockedPaths, AtomicReference<Function<List<String>, Future<CliResult>>> commandProcessorRef, String token) {
+    MyChannelInboundHandler(Path[] lockedPaths, Supplier<? extends Function<? super List<String>, ? extends Future<CliResult>>> commandProcessorRef, String token) {
       myLockedPaths = new ArrayList<>(lockedPaths.length);
       for (Path path : lockedPaths) {
         myLockedPaths.add(path.toString());

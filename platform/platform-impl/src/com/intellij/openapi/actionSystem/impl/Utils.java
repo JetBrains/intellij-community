@@ -56,9 +56,9 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 @ApiStatus.Internal
@@ -71,15 +71,25 @@ public final class Utils {
   }
 
   public static @NotNull DataContext wrapToAsyncDataContext(@NotNull DataContext dataContext) {
-    Component component = dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
-    if (dataContext instanceof EdtDataContext) {
+    if (isAsyncDataContext(dataContext)) {
+      return dataContext;
+    }
+    else if (dataContext instanceof EdtDataContext) {
+      Component component = dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
       return newPreCachedDataContext(component);
     }
-    else if (dataContext instanceof SimpleDataContext && component != null) {
-      DataContext wrapped = newPreCachedDataContext(component);
-      LOG.assertTrue(wrapped.getData(CommonDataKeys.PROJECT) == dataContext.getData(CommonDataKeys.PROJECT));
-      LOG.warn(new Throwable("Use DataManager.getDataContext(component) instead of SimpleDataContext for wrapping."));
-      return wrapped;
+    else if (dataContext instanceof CustomizedDataContext) {
+      CustomizedDataContext context = (CustomizedDataContext)dataContext;
+      DataContext delegate = wrapToAsyncDataContext(context.getParent());
+      if (delegate == DataContext.EMPTY_CONTEXT) {
+        return new PreCachedDataContext(null).prependProvider(context::getRawCustomData);
+      }
+      else if (delegate instanceof PreCachedDataContext) {
+        return ((PreCachedDataContext)delegate).prependProvider(context::getRawCustomData);
+      }
+    }
+    else if (!ApplicationManager.getApplication().isUnitTestMode()) { // see `HeadlessContext`
+      LOG.warn(new Throwable("Unable to wrap '" + dataContext.getClass().getName() + "'. Use CustomizedDataContext or EdtDataContext"));
     }
     return dataContext;
   }
@@ -100,7 +110,7 @@ public final class Utils {
   }
 
   public static boolean isAsyncDataContext(@NotNull DataContext dataContext) {
-    return dataContext instanceof AsyncDataContext;
+    return dataContext == DataContext.EMPTY_CONTEXT || dataContext instanceof AsyncDataContext;
   }
 
   @ApiStatus.Internal
@@ -276,7 +286,7 @@ public final class Utils {
   static @Nullable List<AnAction> expandActionGroupFastTrack(@NotNull ActionUpdater updater,
                                                              @NotNull ActionGroup group,
                                                              boolean hideDisabled,
-                                                             @Nullable Consumer<String> missedKeys) {
+                                                             @Nullable Consumer<? super String> missedKeys) {
     int maxTime = Registry.intValue("actionSystem.update.actions.async.fast-track.timeout.ms", 20);
     if (maxTime < 1) return null;
     BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
@@ -481,7 +491,7 @@ public final class Utils {
 
   @ApiStatus.Internal
   public static <T> void updateComponentActions(@NotNull JComponent component,
-                                                @NotNull Iterable<AnAction> actions,
+                                                @NotNull Iterable<? extends AnAction> actions,
                                                 @NotNull DataContext dataContext,
                                                 @NotNull String place,
                                                 @NotNull PresentationFactory presentationFactory,
@@ -589,13 +599,14 @@ public final class Utils {
   private static boolean ourInUpdateSessionForInputEventEDTLoop;
 
   @ApiStatus.Internal
-  public static @Nullable <T> T runUpdateSessionForInputEvent(@NotNull InputEvent inputEvent,
+  public static @Nullable <T> T runUpdateSessionForInputEvent(@NotNull List<AnAction> actions,
+                                                              @NotNull InputEvent inputEvent,
                                                               @NotNull DataContext dataContext,
                                                               @NotNull String place,
                                                               @NotNull ActionProcessor actionProcessor,
                                                               @NotNull PresentationFactory factory,
                                                               @Nullable Consumer<? super AnActionEvent> eventTracker,
-                                                              @NotNull Function<? super UpdateSession, ? extends T> function) {
+                                                              @NotNull BiFunction<? super UpdateSession, ? super List<AnAction>, ? extends T> function) {
     ApplicationEx applicationEx = ApplicationManagerEx.getApplicationEx();
     if (ProgressIndicatorUtils.isWriteActionRunningOrPending(applicationEx)) {
       LOG.error("Actions cannot be updated when write-action is running or pending");
@@ -629,17 +640,27 @@ public final class Utils {
         try {
           Ref<T> ref = Ref.create();
           ThrowableComputable<Void, RuntimeException> computable = () -> {
-            Set<String> missedKeys = Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt") ? null : ContainerUtil.newConcurrentSet();
+            List<AnAction> adjusted = new ArrayList<>(actions);
+            actionUpdater.tryRunReadActionAndCancelBeforeWrite(promise, () -> rearrangeByPromoters(adjusted, dataContext));
+            if (promise.isDone()) return null;
+            boolean oldEdtMode = ContainerUtil.find(adjusted, o -> o.getActionUpdateThread() == ActionUpdateThread.OLD_EDT) != null;
+            Set<String> missedKeys = !oldEdtMode || Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt") ? null : ContainerUtil.newConcurrentSet();
+            // fast-track
             if (missedKeys != null) {
               UpdateSession fastSession = actionUpdater.asFastUpdateSession(missedKeys::add, null);
               ActionUpdater fastUpdater = ActionUpdater.getActionUpdater(fastSession);
-              fastUpdater.tryRunReadActionAndCancelBeforeWrite(promise, () -> ref.set(function.apply(fastSession)));
+              fastUpdater.tryRunReadActionAndCancelBeforeWrite(promise, () -> ref.set(function.apply(fastSession, adjusted)));
               if (!ref.isNull()) queue.offer(fastUpdater::applyPresentationChanges);
+              if (!ref.isNull() || promise.isDone()) return null;
             }
-            if (!ref.isNull() || promise.isDone()) return null;
-            if (missedKeys == null || tryInReadAction(() -> ContainerUtil.exists(missedKeys, o -> dataContext.getData(o) != null))) {
+            // ordinary-track
+            boolean[] missedKeyPresent = {false};
+            if (missedKeys == null ||
+                actionUpdater.tryRunReadActionAndCancelBeforeWrite(promise, () ->
+                  missedKeyPresent[0] = ContainerUtil.exists(missedKeys, o -> dataContext.getData(o) != null)) &&
+                missedKeyPresent[0]) {
               UpdateSession session = actionUpdater.asUpdateSession();
-              actionUpdater.tryRunReadActionAndCancelBeforeWrite(promise, () -> ref.set(function.apply(session)));
+              actionUpdater.tryRunReadActionAndCancelBeforeWrite(promise, () -> ref.set(function.apply(session, adjusted)));
               queue.offer(actionUpdater::applyPresentationChanges);
             }
             return null;
@@ -668,7 +689,9 @@ public final class Utils {
       }
     }
     else {
-      result = function.apply(actionUpdater.asUpdateSession());
+      List<AnAction> adjusted = new ArrayList<>(actions);
+      rearrangeByPromoters(adjusted, freezeDataContext(dataContext, null));
+      result = function.apply(actionUpdater.asUpdateSession(), adjusted);
       actionUpdater.applyPresentationChanges();
     }
     long elapsed = TimeoutUtil.getDurationMillis(start);
@@ -676,6 +699,29 @@ public final class Utils {
       LOG.warn(elapsed + " ms to update actions for " + place);
     }
     return result;
+  }
+
+  private static void rearrangeByPromoters(@NotNull List<AnAction> actions, @NotNull DataContext dataContext) {
+    DataContext frozenContext = freezeDataContext(dataContext, null);
+    List<AnAction> readOnlyActions = Collections.unmodifiableList(actions);
+    List<ActionPromoter> promoters = ContainerUtil.concat(
+      ActionPromoter.EP_NAME.getExtensionList(), ContainerUtil.filterIsInstance(actions, ActionPromoter.class));
+    for (ActionPromoter promoter : promoters) {
+      try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.FAST_TRACK)) {
+        List<AnAction> promoted = promoter.promote(readOnlyActions, frozenContext);
+        if (promoted != null && !promoted.isEmpty()) {
+          actions.removeAll(promoted);
+          actions.addAll(0, promoted);
+        }
+        List<AnAction> suppressed = promoter.suppress(readOnlyActions, frozenContext);
+        if (suppressed != null && !suppressed.isEmpty()) {
+          actions.removeAll(suppressed);
+        }
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
   }
 
   private static <T> T runLoopAndWaitForFuture(@NotNull Future<? extends T> promise,
@@ -708,16 +754,7 @@ public final class Utils {
     return defValue;
   }
 
-  @ApiStatus.Internal
-  public static boolean tryInReadAction(@NotNull BooleanSupplier supplier) {
-    boolean[] result = {false};
-    ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
-      result[0] = supplier.getAsBoolean();
-    });
-    return result[0];
-  }
-
-  private static <T> T computeWithRetries(@NotNull Supplier<T> computable, @Nullable BooleanSupplier expire, @Nullable Runnable onProcessed) {
+  private static <T> T computeWithRetries(@NotNull Supplier<? extends T> computable, @Nullable BooleanSupplier expire, @Nullable Runnable onProcessed) {
     ProcessCanceledWithReasonException lastCancellation = null;
     int retries = Math.max(1, Registry.intValue("actionSystem.update.actions.max.retries", 20));
     for (int i = 0; i < retries; i++) {

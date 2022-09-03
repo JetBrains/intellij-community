@@ -21,6 +21,7 @@ import java.util.function.Supplier;
 
 public class HeadlessDataManager extends DataManagerImpl {
 
+  // Extending `CustomizedDataContext` would turn async update in all tests. We are not ready.
   private static final class HeadlessContext implements DataContext, UserDataHolder {
     private final DataProvider myProvider;
     private final DataContext myParent;
@@ -32,16 +33,16 @@ public class HeadlessDataManager extends DataManagerImpl {
     }
 
     @Override
-    @Nullable
-    public Object getData(@NotNull String dataId) {
-      return ((DataManagerImpl)DataManager.getInstance()).getDataSimple(dataId, this::getDataFromSelfOrParent);
+    public @Nullable Object getData(@NotNull String dataId) {
+      return DataManager.getInstance().getCustomizedData(dataId, getParent(), this::getCustomData);
     }
 
-    @Nullable
-    private Object getDataFromSelfOrParent(@NotNull String dataId) {
-      Object result = myProvider == null ? null : myProvider.getData(dataId);
-      return result != null ? result :
-             myParent != null ? myParent.getData(dataId) : null;
+    @NotNull DataContext getParent() {
+      return myParent == null ? EMPTY_CONTEXT : myParent;
+    }
+
+    @Nullable Object getCustomData(@NotNull String dataId) {
+      return myProvider == null ? null : myProvider.getData(dataId);
     }
 
     @Override

@@ -289,7 +289,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     return toRun;
   }
 
-  private static void visitTask(@NotNull ProjectTask projectTask, Consumer<Collection<? extends ProjectTask>> taskClassifier) {
+  private static void visitTask(@NotNull ProjectTask projectTask, Consumer<? super Collection<? extends ProjectTask>> taskClassifier) {
     visitTasks(projectTask instanceof ProjectTaskList ? (ProjectTaskList)projectTask : Collections.singleton(projectTask), taskClassifier);
   }
 

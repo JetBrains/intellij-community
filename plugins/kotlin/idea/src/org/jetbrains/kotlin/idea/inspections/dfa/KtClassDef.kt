@@ -81,7 +81,7 @@ class KtClassDef(val cls: ClassDescriptor, val context: KtElement) : TypeConstra
         JavaPsiFacade.getElementFactory(project).createTypeByFQClassName(qualifiedName, context.resolveScope)
 
     override fun equals(other: Any?): Boolean {
-        return other is KtClassDef && other.cls == cls
+        return other is KtClassDef && other.cls.typeConstructor == cls.typeConstructor
     }
 
     override fun hashCode(): Int = Objects.hashCode(cls.name.hashCode())

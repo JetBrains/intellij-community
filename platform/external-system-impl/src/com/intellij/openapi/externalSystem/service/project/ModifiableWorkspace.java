@@ -56,11 +56,11 @@ public final class ModifiableWorkspace {
   private final ExternalProjectsWorkspaceImpl.State myState;
   private final MultiMap<String/* module owner */, String /* substitution modules */> mySubstitutions = MultiMap.createSet();
   private final Map<String /* module name */, String /* library name */> myNamesMap = new HashMap<>();
-  private final Supplier<List<Module>> myModulesSupplier;
+  private final Supplier<? extends List<Module>> myModulesSupplier;
 
 
   public ModifiableWorkspace(ExternalProjectsWorkspaceImpl.State state,
-                             Supplier<List<Module>> modulesSupplier) {
+                             Supplier<? extends List<Module>> modulesSupplier) {
     myModulesSupplier = modulesSupplier;
     Set<String> existingModules = new HashSet<>();
     for (Module module : modulesSupplier.get()) {

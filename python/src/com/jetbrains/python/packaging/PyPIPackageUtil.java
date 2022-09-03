@@ -188,7 +188,7 @@ public class PyPIPackageUtil {
     return getCachedValueOrRethrowIO(myPackageToDetails, packageName);
   }
 
-  public void usePackageReleases(@NotNull String packageName, @NotNull CatchingConsumer<List<String>, Exception> callback) {
+  public void usePackageReleases(@NotNull String packageName, @NotNull CatchingConsumer<? super List<String>, ? super Exception> callback) {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         final List<String> releasesFromSimpleIndex = getPackageVersionsFromAdditionalRepositories(packageName);

@@ -79,9 +79,9 @@ object GeneratedCodeCompatibilityChecker {
 
 // Something more stable?
 private fun Class<WorkspaceEntity>.toBuilderClass(): Class<*> {
-  return Class.forName("$name\$Builder")
+  return loadClassByName("$name\$Builder", classLoader)
 }
 
 private fun Class<WorkspaceEntity>.toImplClass(): Class<*> {
-  return Class.forName(name + "Impl")
+  return loadClassByName(name + "Impl", classLoader)
 }

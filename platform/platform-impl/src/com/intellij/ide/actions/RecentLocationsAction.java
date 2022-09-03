@@ -85,8 +85,8 @@ public final class RecentLocationsAction extends DumbAwareAction implements Ligh
                                @NotNull @NlsContexts.PopupTitle String title1,
                                @NotNull @NlsContexts.PopupTitle String title2,
                                @NotNull @NlsContexts.StatusText String emptyText,
-                               @Nullable Function<Boolean, List<IdeDocumentHistoryImpl.PlaceInfo>> supplier,
-                               @Nullable Consumer<List<IdeDocumentHistoryImpl.PlaceInfo>> remover) {
+                               @Nullable Function<? super Boolean, ? extends List<IdeDocumentHistoryImpl.PlaceInfo>> supplier,
+                               @Nullable Consumer<? super List<IdeDocumentHistoryImpl.PlaceInfo>> remover) {
     RecentLocationsDataModel model = new RecentLocationsDataModel(project, supplier, remover);
     JBList<RecentLocationItem> list = new JBList<>(JBList.createDefaultListModel(model.getPlaces(showChanged)));
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(list,

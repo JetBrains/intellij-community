@@ -49,7 +49,7 @@ public final class Animation {
     };
   }
 
-  public <T> Animation(@NotNull DoubleFunction<? extends T> function, @NotNull Consumer<T> consumer) {
+  public <T> Animation(@NotNull DoubleFunction<? extends T> function, @NotNull Consumer<? super T> consumer) {
     myConsumer = value -> consumer.accept(function.apply(value));
   }
 

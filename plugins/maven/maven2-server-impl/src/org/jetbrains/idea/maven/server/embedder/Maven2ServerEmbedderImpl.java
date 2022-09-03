@@ -2,7 +2,6 @@
 package org.jetbrains.idea.maven.server.embedder;
 
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
@@ -60,7 +59,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 
 public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements MavenServerEmbedder {
   private final MavenEmbedder myImpl;
@@ -726,19 +729,13 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
   @Override
   public void clearCaches(MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
-    withProjectCachesDo(map -> {
-      map.clear();
-      return null;
-    });
+    withProjectCachesDo(map -> map.clear());
   }
 
   @Override
   public void clearCachesFor(final MavenId projectId, MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
-    withProjectCachesDo(map -> {
-      map.remove(projectId.getKey());
-      return null;
-    });
+    withProjectCachesDo(map -> map.remove(projectId.getKey()));
   }
 
   @Override
@@ -747,17 +744,17 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
     return null;
   }
 
-  private void withProjectCachesDo(Function<Map, ?> func) throws RemoteException {
+  private void withProjectCachesDo(Consumer<? super Map> func) throws RemoteException {
     MavenProjectBuilder builder = myImpl.getComponent(MavenProjectBuilder.class);
     Field field;
     try {
       field = builder.getClass().getDeclaredField("rawProjectCache");
       field.setAccessible(true);
-      func.fun(((Map)field.get(builder)));
+      func.accept(((Map)field.get(builder)));
 
       field = builder.getClass().getDeclaredField("processedProjectCache");
       field.setAccessible(true);
-      func.fun(((Map)field.get(builder)));
+      func.accept(((Map)field.get(builder)));
     }
     catch (NoSuchFieldException | IllegalAccessException e) {
       Maven2ServerGlobals.getLogger().info(e);

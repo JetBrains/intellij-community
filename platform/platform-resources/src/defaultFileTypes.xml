@@ -125,29 +125,6 @@
       </highlighting>
     </filetype>
 
-    <filetype binary="false" default_extension="erl" extensions="erl" description="Erlang" name="Erlang">
-      <highlighting>
-        <options>
-          <option name="LINE_COMMENT" value="%"/>
-          <option name="COMMENT_START" value=""/>
-          <option name="COMMENT_END" value=""/>
-          <option name="HEX_PREFIX" value=""/>
-          <option name="NUM_POSTFIXES" value=""/>
-          <option name="HAS_BRACKETS" value="true"/>
-          <option name="HAS_BRACES" value="true"/>
-          <option name="HAS_PARENS" value="true"/>
-          <option name="HAS_STRING_ESCAPES" value="false"/>
-        </options>
-        <keywords keywords="after;begin;case;catch;cond;end;fun;if;let;of;query;receive;when" ignore_case="false"/>
-        <keywords2 keyword="and;andalso;not;or;orelse"/>
-        <keywords3 keywords="export;import;include;include_lib;module;record"/>
-        <keywords4/>
-      </highlighting>
-      <extensionMap>
-        <mapping ext="erl"/>
-      </extensionMap>
-    </filetype>
-
     <filetype binary="false" default_extension="hs" extensions="hs" description="Haskell" name="Haskell">
       <highlighting>
         <options>

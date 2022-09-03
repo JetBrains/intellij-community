@@ -87,6 +87,7 @@ public final class BaseRevisionTextPatchEP implements PatchEP {
     Map<String, String> map = commitContext.getUserData(ourStoredTexts);
     if (map != null) {
       String content = map.get(ProjectKt.getStateStore(project).getProjectBasePath().resolve(path).toString());
+      if (content == null) return null;
       return StringUtil.convertLineSeparators(content);
     }
     return null;

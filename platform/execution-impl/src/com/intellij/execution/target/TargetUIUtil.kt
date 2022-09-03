@@ -16,7 +16,7 @@ import javax.swing.JPanel
 
 fun textFieldWithBrowseTargetButton(row: Row,
                                     targetType: BrowsableTargetEnvironmentType,
-                                    targetSupplier: Supplier<TargetEnvironmentConfiguration>,
+                                    targetSupplier: Supplier<out TargetEnvironmentConfiguration>,
                                     project: Project,
                                     @NlsContexts.DialogTitle title: String,
                                     property: PropertyBinding<String>): CellBuilder<TextFieldWithBrowseButton> {

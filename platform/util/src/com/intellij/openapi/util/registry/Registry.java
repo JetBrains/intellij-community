@@ -298,7 +298,7 @@ public final class Registry  {
   }
 
   @ApiStatus.Internal
-  public static synchronized void mutateContributedKeys(@NotNull Function<Map<String, RegistryKeyDescriptor>, Map<String, RegistryKeyDescriptor>> mutator) {
+  public static synchronized void mutateContributedKeys(@NotNull Function<? super Map<String, RegistryKeyDescriptor>, ? extends Map<String, RegistryKeyDescriptor>> mutator) {
     // getInstance must be not used here - phase COMPONENT_REGISTERED is not yet completed
     ourInstance.myContributedKeys = mutator.apply(ourInstance.myContributedKeys);
   }

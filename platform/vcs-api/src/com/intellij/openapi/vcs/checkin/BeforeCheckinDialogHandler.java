@@ -24,8 +24,8 @@ public abstract class BeforeCheckinDialogHandler {
    * @return {@code true} if commit conditions are valid and Commit Dialog should be shown. {@code false} otherwise.
    */
   public boolean beforeCommitDialogShown(@NotNull Project project,
-                                         @NotNull List<Change> changes,
-                                         @NotNull Iterable<CommitExecutor> executors,
+                                         @NotNull List<? extends Change> changes,
+                                         @NotNull Iterable<? extends CommitExecutor> executors,
                                          boolean showVcsCommit) {
     throw new AbstractMethodError();
   }

@@ -171,7 +171,7 @@ internal class WindowsDistributionBuilder(
       classPath += "\nSET \"CLASS_PATH=%CLASS_PATH%;%IDE_HOME%\\lib\\${classPathJars.get(i)}\""
     }
 
-    var additionalJvmArguments = context.getAdditionalJvmArguments()
+    var additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.WINDOWS)
     if (!context.xBootClassPathJarNames.isEmpty()) {
       additionalJvmArguments = additionalJvmArguments.toMutableList()
       val bootCp = context.xBootClassPathJarNames.joinToString(separator = ";") { "%IDE_HOME%\\lib\\${it}" }
@@ -250,7 +250,7 @@ internal class WindowsDistributionBuilder(
       val launcherPropertiesPath = context.paths.tempDir.resolve("launcher.properties")
       val upperCaseProductName = context.applicationInfo.upperCaseProductName
       @Suppress("SpellCheckingInspection")
-      val vmOptions = context.getAdditionalJvmArguments() + listOf("-Dide.native.launcher=true")
+      val vmOptions = context.getAdditionalJvmArguments(OsFamily.WINDOWS) + listOf("-Dide.native.launcher=true")
       val productName = context.applicationInfo.shortProductName
       val classPath = context.bootClassPathJarNames.joinToString(separator = ";")
       val bootClassPath = context.xBootClassPathJarNames.joinToString(separator = ";")

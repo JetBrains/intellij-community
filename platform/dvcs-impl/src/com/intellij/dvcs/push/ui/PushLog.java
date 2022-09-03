@@ -783,9 +783,9 @@ public final class PushLog extends JPanel implements Disposable, DataProvider {
 
   private static class MyShowDetailsAction extends ToggleActionButton implements DumbAware {
     @NotNull private final PushSettings mySettings;
-    @NotNull private final Consumer<Boolean> myOnUpdate;
+    private final @NotNull Consumer<? super Boolean> myOnUpdate;
 
-    MyShowDetailsAction(@NotNull Project project, @NotNull Consumer<Boolean> onUpdate) {
+    MyShowDetailsAction(@NotNull Project project, @NotNull Consumer<? super Boolean> onUpdate) {
       super(DvcsBundle.message("push.show.details"), AllIcons.Actions.PreviewDetailsVertically);
       mySettings = project.getService(PushSettings.class);
       myOnUpdate = onUpdate;

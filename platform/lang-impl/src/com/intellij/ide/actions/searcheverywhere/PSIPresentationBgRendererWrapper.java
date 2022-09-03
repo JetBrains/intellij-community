@@ -75,7 +75,7 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
   }
 
   private static FoundItemDescriptor<Object> element2presentation(FoundItemDescriptor<Object> elementDescriptor,
-                                                                  Function<PsiElement, TargetPresentation> presentationCalculator) {
+                                                                  Function<? super PsiElement, ? extends TargetPresentation> presentationCalculator) {
     if (elementDescriptor.getItem() instanceof PsiElement) {
       PsiElement psi = (PsiElement)elementDescriptor.getItem();
       TargetPresentation presentation = presentationCalculator.apply(psi);

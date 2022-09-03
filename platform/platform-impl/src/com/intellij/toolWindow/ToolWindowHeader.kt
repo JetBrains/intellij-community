@@ -19,10 +19,7 @@ import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.impl.DockToolWindowAction
 import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
-import com.intellij.ui.ClientProperty
-import com.intellij.ui.DoubleClickListener
-import com.intellij.ui.MouseDragHelper
-import com.intellij.ui.UIBundle
+import com.intellij.ui.*
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.layout.migLayout.*
 import com.intellij.ui.layout.migLayout.patched.*
@@ -258,7 +255,7 @@ abstract class ToolWindowHeader internal constructor(
   fun setAdditionalTitleActions(actions: List<AnAction>) {
     actionGroup.removeAll()
     actionGroup.addAll(actions)
-    if (actions.isNotEmpty()) {
+    if (actions.isNotEmpty() && !ExperimentalUI.isNewUI()) {
       actionGroup.addSeparator()
     }
     toolbar.updateActionsImmediately()

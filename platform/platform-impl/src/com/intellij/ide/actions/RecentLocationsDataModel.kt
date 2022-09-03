@@ -26,8 +26,8 @@ import kotlin.math.min
 
 @ApiStatus.Internal
 internal class RecentLocationsDataModel(val project: Project,
-                                        private val placesSupplier: Function<Boolean, List<IdeDocumentHistoryImpl.PlaceInfo>>?,
-                                        private val placesRemover: Consumer<List<IdeDocumentHistoryImpl.PlaceInfo>>?) {
+                                        private val placesSupplier: Function<in Boolean, out List<IdeDocumentHistoryImpl.PlaceInfo>>?,
+                                        private val placesRemover: Consumer<in List<IdeDocumentHistoryImpl.PlaceInfo>>?) {
 
   private val navigationPlaces: SynchronizedClearableLazy<List<RecentLocationItem>> = calculateItems(project, false)
 

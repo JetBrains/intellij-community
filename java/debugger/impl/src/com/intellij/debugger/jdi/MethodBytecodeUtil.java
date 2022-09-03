@@ -157,7 +157,7 @@ public final class MethodBytecodeUtil {
     });
   }
 
-  private static Attribute createAttribute(String name, ThrowableConsumer<DataOutputStream, IOException> generator) {
+  private static Attribute createAttribute(String name, ThrowableConsumer<? super DataOutputStream, ? extends IOException> generator) {
     BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
     int start, end;
 

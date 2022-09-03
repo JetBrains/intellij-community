@@ -307,8 +307,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     else if (myManager.myToolWindow != null) {
       Disposer.register(myManager.myToolWindow.getContentManager(), this);
     }
-    myEditorPane.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, HELP_DATA_PROVIDER);
-    myScrollPane.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, HELP_DATA_PROVIDER);
+    DataManager.registerDataProvider(myEditorPane, HELP_DATA_PROVIDER);
+    DataManager.registerDataProvider(myScrollPane, HELP_DATA_PROVIDER);
 
     updateControlState();
   }

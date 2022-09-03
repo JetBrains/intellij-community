@@ -237,18 +237,18 @@ public abstract class Decompressor {
     }
   }
 
-  private @Nullable Predicate<Entry> myFilter = null;
+  private @Nullable Predicate<? super Entry> myFilter = null;
   private @Nullable List<String> myPathPrefix = null;
   private boolean myOverwrite = true;
   private boolean myAllowEscapingSymlinks = true;
-  private @Nullable BiConsumer<Entry, ? super Path> myPostProcessor;
+  private BiConsumer<? super Entry, ? super Path> myPostProcessor;
 
   public Decompressor filter(@Nullable Predicate<? super String> filter) {
     myFilter = filter != null ? e -> filter.test(e.type == Entry.Type.DIR ? e.name + '/' : e.name) : null;
     return this;
   }
 
-  public Decompressor entryFilter(@Nullable Predicate<Entry> filter) {
+  public Decompressor entryFilter(@Nullable Predicate<? super Entry> filter) {
     myFilter = filter;
     return this;
   }
@@ -268,7 +268,7 @@ public abstract class Decompressor {
     return this;
   }
 
-  public Decompressor postProcessor(@Nullable BiConsumer<Entry, ? super Path> consumer) {
+  public Decompressor postProcessor(@Nullable BiConsumer<? super Entry, ? super Path> consumer) {
     myPostProcessor = consumer;
     return this;
   }

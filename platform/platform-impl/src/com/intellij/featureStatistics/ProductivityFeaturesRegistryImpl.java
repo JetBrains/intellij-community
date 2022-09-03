@@ -168,7 +168,7 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
     }
   }
 
-  private @Nullable <T extends FeatureUsageEvent> FeatureDescriptor findFeatureByEvent(List<T> events, Function<T, Boolean> eventChecker) {
+  private @Nullable <T extends FeatureUsageEvent> FeatureDescriptor findFeatureByEvent(List<? extends T> events, Function<? super T, Boolean> eventChecker) {
     lazyLoadFromPluginsFeaturesProviders();
     return events
       .stream()

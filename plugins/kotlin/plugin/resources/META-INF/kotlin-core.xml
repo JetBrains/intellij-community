@@ -336,6 +336,11 @@
             key="configuration.kotlin.code.style.group.name"
     />
     <notificationGroup
+            id="Kotlin Maven project import"
+            displayType="STICKY_BALLOON"
+            key="configuration.maven.group.name"
+    />
+    <notificationGroup
             id="Kotlin dist downloading failed"
             displayType="STICKY_BALLOON"
             key="kotlin.dist.downloading.failed.group.name"

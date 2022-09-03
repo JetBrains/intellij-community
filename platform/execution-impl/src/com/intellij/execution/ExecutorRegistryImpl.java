@@ -774,7 +774,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
                                      @Nullable RunnerAndConfigurationSettings settings,
                                      @NotNull DataContext dataContext,
                                      @NotNull Executor executor,
-                                     @Nullable Consumer<ExecutionEnvironment> environmentCustomization) {
+                                     @Nullable Consumer<? super ExecutionEnvironment> environmentCustomization) {
 
       if (configuration instanceof CompoundRunConfiguration) {
         RunManager runManager = RunManager.getInstance(project);

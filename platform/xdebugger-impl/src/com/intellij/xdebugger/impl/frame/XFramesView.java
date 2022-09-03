@@ -638,7 +638,7 @@ public final class XFramesView extends XDebugView {
 
   private static class MyAdPanel extends BorderLayoutPanel {
 
-    MyAdPanel(@NotNull @NlsContexts.Label String message, @NotNull Consumer<MyAdPanel> closeListener) {
+    MyAdPanel(@NotNull @NlsContexts.Label String message, @NotNull Consumer<? super MyAdPanel> closeListener) {
       var label = new JBLabel(message, UIUtil.ComponentStyle.SMALL);
       label.setForeground(UIUtil.getContextHelpForeground());
       label.setToolTipText(message);

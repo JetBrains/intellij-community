@@ -663,7 +663,9 @@ public interface TypeConstraint {
 
     @Override
     public @NotNull TypeConstraint arrayOf() {
-      return instanceOfTypes().<TypeConstraint>map(Exact::arrayOf).reduce(TypeConstraint::meet).orElse(TypeConstraints.BOTTOM);
+      TypeConstraint constraint =
+        instanceOfTypes().<TypeConstraint>map(Exact::arrayOf).reduce(TypeConstraint::meet).orElse(TypeConstraints.EXACTLY_OBJECT.arrayOf());
+      return constraint instanceof Exact ? ((Exact)constraint).instanceOf() : constraint;
     }
 
     @Override

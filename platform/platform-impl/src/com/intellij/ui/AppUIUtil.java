@@ -274,7 +274,7 @@ public final class AppUIUtil {
     return null;
   }
 
-  public static boolean showConsentsAgreementIfNeeded(@NotNull Logger log, @NotNull Predicate<Consent> filter) {
+  public static boolean showConsentsAgreementIfNeeded(@NotNull Logger log, @NotNull Predicate<? super Consent> filter) {
     Pair<List<Consent>, Boolean> consentsToShow = ConsentOptions.getInstance().getConsents(filter);
     if (!consentsToShow.getSecond()) {
       return false;

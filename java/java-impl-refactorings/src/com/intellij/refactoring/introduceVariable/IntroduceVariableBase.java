@@ -533,7 +533,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
                                 @Nullable PsiElement targetContainer,
                                 @NotNull ExpressionOccurrenceManager occurrenceManager,
                                 @NotNull PsiType originalType,
-                                @NotNull Consumer<JavaReplaceChoice> dialogIntroduce) {
+                                @NotNull Consumer<? super JavaReplaceChoice> dialogIntroduce) {
     boolean inFinalContext = occurrenceManager.isInFinalContext();
     PsiExpression expr = occurrenceManager.getMainOccurence();
     PsiExpression[] selectedOccurrences = choice.filter(occurrenceManager);

@@ -34,8 +34,10 @@ public abstract class ExperimentalUI {
   private final IconPathPatcher iconPathPatcher = createPathPatcher();
   private static final String KEY = "ide.experimental.ui";
 
+  public static boolean previewPluginInstalled = false;
+
   public static boolean isNewUI() {
-    return EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY);
+    return EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY) || previewPluginInstalled;
   }
 
   public static boolean isNewNavbar() {

@@ -30,7 +30,7 @@ public final class ActionUpdateEdtExecutor {
   }
 
   static <T> T computeOnEdt(@NotNull Supplier<? extends T> supplier,
-                            @Nullable Consumer<Runnable> laterInvocator) {
+                            @Nullable Consumer<? super Runnable> laterInvocator) {
     Application application = ApplicationManager.getApplication();
     if (application.isDispatchThread()) {
       return supplier.get();

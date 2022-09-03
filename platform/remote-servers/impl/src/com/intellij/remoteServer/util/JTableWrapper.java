@@ -37,7 +37,7 @@ public class JTableWrapper<T, C extends Column<T>> {
 
   private final JBTable myTable;
 
-  private List<T> myInputRows;
+  private List<? extends T> myInputRows;
 
   public JTableWrapper(JBTable table, C[] columns) {
     myTable = table;
@@ -105,7 +105,7 @@ public class JTableWrapper<T, C extends Column<T>> {
     return myTableModel;
   }
 
-  private void setInput(Iterable<Collection<Object>> input) {
+  private void setInput(Iterable<? extends Collection<Object>> input) {
     getTableModel().setRowCount(0);
     for (Collection<Object> row : input) {
       getTableModel().addRow(row.toArray());
@@ -113,7 +113,7 @@ public class JTableWrapper<T, C extends Column<T>> {
     packColumns();
   }
 
-  public void setInputRows(List<T> rows) {
+  public void setInputRows(List<? extends T> rows) {
     myInputRows = rows;
     ArrayList<Collection<Object>> input = new ArrayList<>();
     for (T row : rows) {
