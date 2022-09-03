@@ -3,7 +3,6 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -24,7 +23,6 @@ public final class NextOccurenceToolbarAction extends NextOccurenceAction {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
-    ActionUpdateThread thread = myNavigator.getActionUpdateThread();
-    return thread != null ? thread : super.getActionUpdateThread();
+    return myNavigator.getActionUpdateThread();
   }
 }
