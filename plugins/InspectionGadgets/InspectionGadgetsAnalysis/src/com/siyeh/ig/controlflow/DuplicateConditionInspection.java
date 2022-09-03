@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,8 @@ public class DuplicateConditionInspection extends BaseInspection {
   // This is a dirty fix of 'squared' algorithm performance issue.
   private static final int LIMIT_DEPTH = 20;
 
+  private static final List<IElementType> BOOLEAN_OR_BITWISE_OPERATORS = Collections.unmodifiableList(Arrays.asList(JavaTokenType.AND, JavaTokenType.OR));
+
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
@@ -83,7 +85,10 @@ public class DuplicateConditionInspection extends BaseInspection {
       super.visitPolyadicExpression(expression);
 
       final IElementType tokenType = expression.getOperationTokenType();
-      if (!tokenType.equals(JavaTokenType.ANDAND) && !tokenType.equals(JavaTokenType.OROR)) return;
+      if (!JavaTokenType.ANDAND.equals(tokenType)
+          && !JavaTokenType.OROR.equals(tokenType)
+          && !JavaTokenType.AND.equals(tokenType)
+          && !JavaTokenType.OR.equals(tokenType)) return;
 
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
       if (parent instanceof PsiIfStatement) return;
@@ -101,7 +106,7 @@ public class DuplicateConditionInspection extends BaseInspection {
     private void collectConditionsForIfStatement(PsiIfStatement statement, Set<? super PsiExpression> conditions, int depth) {
       if (depth > LIMIT_DEPTH || !myAnalyzedStatements.add(statement)) return;
       final PsiExpression condition = statement.getCondition();
-      collectConditionsForExpression(condition, conditions, JavaTokenType.OROR);
+      collectConditionsForExpression(condition, conditions, JavaTokenType.OROR, JavaTokenType.OR);
       final PsiStatement branch = ControlFlowUtils.stripBraces(statement.getElseBranch());
       if (branch instanceof PsiIfStatement) {
         collectConditionsForIfStatement((PsiIfStatement)branch, conditions, depth + 1);
@@ -116,15 +121,16 @@ public class DuplicateConditionInspection extends BaseInspection {
       }
     }
 
-    private void collectConditionsForExpression(PsiExpression condition, Set<? super PsiExpression> conditions, IElementType wantedTokenType) {
+    private void collectConditionsForExpression(PsiExpression condition, Set<? super PsiExpression> conditions, IElementType... wantedTokenTypes) {
       condition = PsiUtil.skipParenthesizedExprDown(condition);
       if (condition == null) return;
       if (condition instanceof PsiPolyadicExpression polyadicExpression) {
         final IElementType tokenType = polyadicExpression.getOperationTokenType();
-        if (wantedTokenType.equals(tokenType)) {
+        if (Arrays.asList(wantedTokenTypes).contains(tokenType)
+            && isBooleanOperator(polyadicExpression, tokenType)) {
           final PsiExpression[] operands = polyadicExpression.getOperands();
           for (PsiExpression operand : operands) {
-            collectConditionsForExpression(operand, conditions, wantedTokenType);
+            collectConditionsForExpression(operand, conditions, wantedTokenTypes);
           }
           return;
         }
@@ -135,6 +141,21 @@ public class DuplicateConditionInspection extends BaseInspection {
         condition = negated;
       }
       conditions.add(condition);
+    }
+
+    private boolean isBooleanOperator(PsiPolyadicExpression expression, IElementType tokenType) {
+      if (!BOOLEAN_OR_BITWISE_OPERATORS.contains(tokenType)) {
+        return true;
+      }
+      if (expression.getType() != null && (PsiType.BOOLEAN.equals(expression.getType()) || expression.getType().equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN))) {
+        return true;
+      }
+      for (PsiExpression operand : expression.getOperands()) {
+        if (operand.getType() != null && (PsiType.BOOLEAN.equals(operand.getType()) || operand.getType().equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN))) {
+          return true;
+        }
+      }
+      return false;
     }
 
     private void findDuplicatesAccordingToSideEffects(Set<PsiExpression> conditions) {
