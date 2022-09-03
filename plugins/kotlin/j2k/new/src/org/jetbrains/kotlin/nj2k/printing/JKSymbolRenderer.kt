@@ -8,7 +8,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.nj2k.JKImportStorage
-import org.jetbrains.kotlin.nj2k.conversions.TOP_LEVEL_FUNCTIONS_THAT_MAY_BE_SHADOWED_BY_EXISTING_METHODS
 import org.jetbrains.kotlin.nj2k.escaped
 import org.jetbrains.kotlin.nj2k.symbols.*
 import org.jetbrains.kotlin.nj2k.tree.JKClassAccessExpression
@@ -21,8 +20,16 @@ internal class JKSymbolRenderer(private val importStorage: JKImportStorage, proj
 
     private fun JKSymbol.isFqNameExpected(owner: JKTreeElement?): Boolean {
         if (owner?.isSelectorOfQualifiedExpression() == true) return false
-        return fqName in TOP_LEVEL_FUNCTIONS_THAT_MAY_BE_SHADOWED_BY_EXISTING_METHODS ||
-                this is JKClassSymbol || isStaticMember || isEnumConstant
+        if (fqName == "kotlin.run") {
+            // Unfortunately, there are two overloads with FQN `kotlin.run`: with and without a receiver.
+            // So, if we generate a fully qualified call to `kotlin.run`, the reference shortener in a post-processing
+            // won't shorten the call to `run`, because it would change the resolution from one function to the other.
+            // In principle, it shouldn't matter, because we are generating the `run` calls to introduce a new scope,
+            // not to use a receiver. Both `run` and `kotlin.run` calls should work from the J2K point of view, but `run` is cleaner.
+            return false
+        }
+        if (this.safeAs<JKMultiverseFunctionSymbol>()?.isTopLevelBuiltInKotlinFunction == true) return true
+        return this is JKClassSymbol || isStaticMember || isEnumConstant
     }
 
     private fun JKSymbol.isFromJavaLangPackage() =
