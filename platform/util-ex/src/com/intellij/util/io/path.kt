@@ -220,7 +220,7 @@ inline fun <R> Path.directoryStreamIfExists(noinline filter: ((path: Path) -> Bo
 }
 
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-private val illegalChars = HashSet(java.util.List.of('/', '\\', '?', '<', '>', ':', '*', '|', '"', ':'))
+private val illegalChars = java.util.Set.of('/', '\\', '?', '<', '>', ':', '*', '|', '"')
 
 // https://github.com/parshap/node-sanitize-filename/blob/master/index.js
 fun sanitizeFileName(name: String, replacement: String? = "_", truncateIfNeeded: Boolean = true, extraIllegalChars: Predicate<Char>? = null): String {
