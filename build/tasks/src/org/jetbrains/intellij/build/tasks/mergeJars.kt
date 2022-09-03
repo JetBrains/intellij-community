@@ -15,10 +15,13 @@ import java.nio.file.PathMatcher
 import java.util.function.IntConsumer
 import java.util.zip.Deflater
 
-private const val DO_NOT_EXPORT_TO_CONSOLE = "_CES_"
+const val DO_NOT_EXPORT_TO_CONSOLE = "_CES_"
 
 sealed interface Source {
   val sizeConsumer: IntConsumer?
+
+  val filter: ((String) -> Boolean)?
+    get() = null
 }
 
 private val USER_HOME = Path.of(System.getProperty("user.home"))
@@ -26,6 +29,7 @@ private val MAVEN_REPO = USER_HOME.resolve(".m2/repository")
 
 data class ZipSource(val file: Path,
                      val excludes: List<Regex> = emptyList(),
+                     override val filter: ((String) -> Boolean)? = null,
                      override val sizeConsumer: IntConsumer? = null) : Source, Comparable<ZipSource> {
   override fun compareTo(other: ZipSource) = file.compareTo(other.file)
 
@@ -88,7 +92,7 @@ data class BuildJarDescriptor(@JvmField val file: Path,
                               @JvmField val sources: List<Source>,
                               @JvmField val relativePath: String = "")
 
-suspend fun buildJars(descriptors: List<BuildJarDescriptor>, dryRun: Boolean) {
+suspend fun buildJars(descriptors: List<BuildJarDescriptor>, dryRun: Boolean, nativeFiles: MutableMap<ZipSource, MutableList<String>>? = null) {
   val uniqueFiles = HashMap<Path, List<Source>>()
   for (descriptor in descriptors) {
     val existing = uniqueFiles.putIfAbsent(descriptor.file, descriptor.sources)
@@ -103,13 +107,12 @@ suspend fun buildJars(descriptors: List<BuildJarDescriptor>, dryRun: Boolean) {
     for (item in descriptors) {
       launch {
         val file = item.file
-        val forbidNativeFiles = file.fileName.toString() == "app.jar"
         tracer.spanBuilder("build jar")
           .setAttribute(DO_NOT_EXPORT_TO_CONSOLE, true)
           .setAttribute("jar", file.toString())
           .setAttribute(AttributeKey.stringArrayKey("sources"), item.sources.map(Source::toString))
           .use {
-            buildJar(targetFile = file, sources = item.sources, dryRun = dryRun, forbidNativeFiles = forbidNativeFiles)
+            buildJar(targetFile = file, sources = item.sources, dryRun = dryRun, nativeFiles = nativeFiles)
           }
 
         // app.jar is combined later with other JARs and then re-ordered
@@ -126,7 +129,7 @@ fun buildJar(targetFile: Path,
              sources: List<Source>,
              compress: Boolean = false,
              dryRun: Boolean = false,
-             forbidNativeFiles: Boolean = false) {
+             nativeFiles: MutableMap<ZipSource, MutableList<String>>? = null) {
   if (dryRun) {
     for (source in sources) {
       source.sizeConsumer?.accept(0)
@@ -173,14 +176,26 @@ fun buildJar(targetFile: Path,
             val sourceFile = source.file
             val requiresMavenFiles = targetFile.fileName.toString().startsWith("junixsocket-")
             readZipFile(sourceFile) { name, entry ->
-              if (forbidNativeFiles && (name.endsWith(".jnilib") || name.endsWith(".dylib") || name.endsWith(".so"))) {
-                throw IllegalStateException("Library with native files must be packed separately " +
-                                            "(sourceFile=$sourceFile, targetFile=$targetFile, fileName=${name})")
+              if (nativeFiles != null && (name.endsWith(".jnilib") || name.endsWith(".dylib") || name.endsWith(".so"))) {
+                nativeFiles.computeIfAbsent(source) { mutableListOf() }.add(name)
               }
+              else {
+                val filter = source.filter
+                val isIncluded = if (filter == null) {
+                  checkName(name = name,
+                            uniqueNames = uniqueNames,
+                            excludes = source.excludes,
+                            includeManifest = sources.size == 1,
+                            requiresMavenFiles = requiresMavenFiles)
+                }
+                else {
+                  filter(name)
+                }
 
-              if (checkName(name, uniqueNames, source.excludes, includeManifest = sources.size == 1, requiresMavenFiles = requiresMavenFiles)) {
-                packageIndexBuilder?.addFile(name)
-                zipCreator.uncompressedData(name, entry.getByteBuffer())
+                if (isIncluded) {
+                  packageIndexBuilder?.addFile(name)
+                  zipCreator.uncompressedData(name, entry.getByteBuffer())
+                }
               }
             }
           }

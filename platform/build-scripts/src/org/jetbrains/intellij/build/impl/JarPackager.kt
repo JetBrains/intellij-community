@@ -9,6 +9,8 @@ import com.intellij.util.io.URLUtil
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.impl.BaseLayout.Companion.APP_JAR
@@ -49,6 +51,7 @@ private val libsThatUsedInJps = java.util.Set.of(
   "slf4j-jdk14",
   // see getBuildProcessApplicationClasspath - used in JPS
   "lz4-java",
+  "jna",
   "maven-resolver-provider",
   "OroMatcher",
   "jgoodies-forms",
@@ -66,7 +69,7 @@ private val libsThatUsedInJps = java.util.Set.of(
 
 class JarPackager private constructor(private val context: BuildContext) {
   private val jarDescriptors = LinkedHashMap<Path, JarDescriptor>()
-  private val projectStructureMapping = ConcurrentLinkedQueue<LibraryFileEntry>()
+  private val libraryEntries = ConcurrentLinkedQueue<LibraryFileEntry>()
   private val libToMetadata = HashMap<JpsLibrary, ProjectLibraryData>()
 
   companion object {
@@ -200,9 +203,37 @@ class JarPackager private constructor(private val context: BuildContext) {
         entries.add(BuildJarDescriptor(file = descriptor.jarFile, sources = descriptor.sources, relativePath = pathInClassLog))
       }
 
-      buildJars(entries, dryRun)
+      val nativeFiles = if (layout is PluginLayout) null else TreeMap<ZipSource, MutableList<String>>()
+      buildJars(descriptors = entries, dryRun = dryRun, nativeFiles = nativeFiles)
 
       val list = mutableListOf<DistributionFileEntry>()
+
+      if (!nativeFiles.isNullOrEmpty()) {
+        withContext(Dispatchers.IO) {
+          val targetFile = outputDir.resolve("3rd-party-native.jar")
+          val sources = mutableListOf<Source>()
+          for ((source, paths) in nativeFiles) {
+            val sourceFile = source.file
+            sources.add(ZipSource(file = sourceFile, filter = paths::contains) { size ->
+              val originalEntry = packager.libraryEntries.first { it.libraryFile === sourceFile }
+              if (originalEntry is ProjectLibraryEntry) {
+                list.add(ProjectLibraryEntry(path = targetFile,
+                                             data = originalEntry.data,
+                                             libraryFile = sourceFile,
+                                             size = size))
+              }
+              else {
+                list.add(ModuleLibraryFileEntry(path = targetFile,
+                                                moduleName = (originalEntry as ModuleLibraryFileEntry).moduleName,
+                                                libraryFile = originalEntry.libraryFile,
+                                                size = size))
+              }
+            })
+          }
+          buildJar(targetFile = targetFile, sources = sources, dryRun = dryRun, nativeFiles = null)
+        }
+      }
+
       for (item in packager.jarDescriptors.values) {
         for (moduleName in (item.includedModules ?: emptyList())) {
           val size = moduleNameToSize.get(moduleName)
@@ -210,9 +241,10 @@ class JarPackager private constructor(private val context: BuildContext) {
           list.add(ModuleOutputEntry(path = item.jarFile, moduleName = moduleName, size = size))
         }
       }
+
       // sort because projectStructureMapping is a concurrent collection
       return list +
-             packager.projectStructureMapping.sortedWith { a, b -> compareValuesBy(a, b, { it.path }, { it.type }, { it.libraryFile }) }
+             packager.libraryEntries.sortedWith { a, b -> compareValuesBy(a, b, { it.path }, { it.type }, { it.libraryFile }) }
     }
   }
 
@@ -275,7 +307,7 @@ class JarPackager private constructor(private val context: BuildContext) {
                                                outPath = null,
                                                packMode = LibraryPackMode.MERGED,
                                                reason = "explicitUnpack")
-          projectStructureMapping.add(ProjectLibraryEntry(path = jarFile, data = libraryData, libraryFile = file, size = size))
+          libraryEntries.add(ProjectLibraryEntry(path = jarFile, data = libraryData, libraryFile = file, size = size))
         })
       }
     }
@@ -402,7 +434,7 @@ class JarPackager private constructor(private val context: BuildContext) {
       val sources = extraLibSources.computeIfAbsent(targetFilename) { mutableListOf() }
       for (file in files) {
         sources.add(ZipSource(file) { size ->
-          projectStructureMapping.add(ModuleLibraryFileEntry(targetFile, moduleName, file, size))
+          libraryEntries.add(ModuleLibraryFileEntry(targetFile, moduleName, file, size))
         })
       }
     }
@@ -426,7 +458,7 @@ class JarPackager private constructor(private val context: BuildContext) {
           size = size,
         )
 
-        projectStructureMapping.add(libraryEntry)
+        libraryEntries.add(libraryEntry)
       })
     }
   }
@@ -491,7 +523,6 @@ private val excludedFromMergeLibs = java.util.Set.of(
   "sqlite", "async-profiler",
   "dexlib2", // android-only lib
   "intellij-test-discovery", // used as an agent
-  "winp", "junixsocket-core", "pty4j", "grpc-netty-shaded", // these contain a native library
   "protobuf", // https://youtrack.jetbrains.com/issue/IDEA-268753
 )
 

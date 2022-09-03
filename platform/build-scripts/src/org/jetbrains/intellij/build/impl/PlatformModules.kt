@@ -3,6 +3,8 @@
 
 package org.jetbrains.intellij.build.impl
 
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ProductModulesLayout
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -14,7 +16,7 @@ import javax.xml.parsers.DocumentBuilderFactory
 private const val UTIL_JAR = "util.jar"
 private const val UTIL_RT_JAR = "util_rt.jar"
 
-private val PLATFORM_API_MODULES: List<String> = java.util.List.of(
+private val PLATFORM_API_MODULES = persistentListOf(
   "intellij.platform.analysis",
   "intellij.platform.builtInServer",
   "intellij.platform.core",
@@ -54,7 +56,7 @@ private val PLATFORM_API_MODULES: List<String> = java.util.List.of(
 /**
  * List of modules which are included into lib/app.jar in all IntelliJ based IDEs.
  */
-private val PLATFORM_IMPLEMENTATION_MODULES: List<String> = java.util.List.of(
+private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
   "intellij.platform.analysis.impl",
   "intellij.platform.builtInServer.impl",
   "intellij.platform.core.impl",
@@ -113,21 +115,17 @@ private val PLATFORM_IMPLEMENTATION_MODULES: List<String> = java.util.List.of(
 object PlatformModules {
   const val PRODUCT_JAR = "product.jar"
 
-  val CUSTOM_PACK_MODE: Map<String, LibraryPackMode> = linkedMapOf(
-    // jna uses native lib
-    "jna" to LibraryPackMode.STANDALONE_MERGED,
-    "lz4-java" to LibraryPackMode.STANDALONE_MERGED,
+  internal val CUSTOM_PACK_MODE: Map<String, LibraryPackMode> = persistentMapOf(
     "jetbrains-annotations-java5" to LibraryPackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
     "intellij-coverage" to LibraryPackMode.STANDALONE_SEPARATE,
-    "github.jnr.ffi" to LibraryPackMode.STANDALONE_SEPARATE,
   )
 
-  fun collectPlatformModules(to: MutableCollection<String>) {
+  internal fun collectPlatformModules(to: MutableCollection<String>) {
     to.addAll(PLATFORM_API_MODULES)
     to.addAll(PLATFORM_IMPLEMENTATION_MODULES)
   }
 
-  fun hasPlatformCoverage(productLayout: ProductModulesLayout, enabledPluginModules: Set<String>, context: BuildContext): Boolean {
+  internal fun hasPlatformCoverage(productLayout: ProductModulesLayout, enabledPluginModules: Set<String>, context: BuildContext): Boolean {
     val modules = LinkedHashSet<String>()
     modules.addAll(productLayout.getIncludedPluginModules(enabledPluginModules))
     modules.addAll(PLATFORM_API_MODULES)
@@ -159,7 +157,7 @@ object PlatformModules {
     return false
   }
 
-  fun jar(relativeJarPath: String, moduleNames: Collection<String>, productLayout: ProductModulesLayout, layout: PlatformLayout) {
+  private fun jar(relativeJarPath: String, moduleNames: Collection<String>, productLayout: ProductModulesLayout, layout: PlatformLayout) {
     for (moduleName in moduleNames) {
       if (!productLayout.excludedModuleNames.contains(moduleName)) {
         layout.withModule(moduleName, relativeJarPath)
@@ -179,11 +177,10 @@ object PlatformModules {
     }
   }
 
-  @JvmStatic
-  fun createPlatformLayout(productLayout: ProductModulesLayout,
-                           hasPlatformCoverage: Boolean,
-                           additionalProjectLevelLibraries: SortedSet<ProjectLibraryData>,
-                           context: BuildContext): PlatformLayout {
+  internal fun createPlatformLayout(productLayout: ProductModulesLayout,
+                                    hasPlatformCoverage: Boolean,
+                                    additionalProjectLevelLibraries: SortedSet<ProjectLibraryData>,
+                                    context: BuildContext): PlatformLayout {
     val layout = PlatformLayout()
     // used only in modules that packed into Java
     layout.withoutProjectLibrary("jps-javac-extension")
