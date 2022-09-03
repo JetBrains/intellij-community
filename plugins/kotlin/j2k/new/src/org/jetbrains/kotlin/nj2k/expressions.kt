@@ -243,7 +243,7 @@ fun runExpression(body: JKStatement, symbolProvider: JKSymbolProvider): JKExpres
     )
     return JKCallExpressionImpl(
         symbolProvider.provideMethodSymbol("kotlin.run"),
-        listOf(lambda).toArgumentList()
+        JKArgumentList(lambda)
     )
 }
 
