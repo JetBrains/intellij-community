@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.idea.util.hasComments
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -14,23 +15,27 @@ import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsExpression
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class ControlFlowWithEmptyBodyInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : KtVisitorVoid() {
         override fun visitIfExpression(expression: KtIfExpression) {
-            val then = expression.then
-            val elseKeyword = expression.elseKeyword
+            val thenBranch = expression.then
+            val elseBranch = expression.`else`
 
-            val thenEmpty = then?.isEmptyBody()
-            val elseEmpty = expression.`else`?.isEmptyBody()
+            val thenEmpty = thenBranch.isEmptyBodyOrNull()
+            val elseEmpty = elseBranch.isEmptyBodyOrNull()
 
-            expression.ifKeyword.takeIf { thenEmpty != false && (elseEmpty != false || then?.hasComments() != true) }?.let {
-                holder.registerProblem(expression, it)
-            }
+            val isUsedAsExpression by lazy { expression.isUsedAsExpression(expression.analyze(BodyResolveMode.PARTIAL_WITH_CFA)) }
 
-            elseKeyword?.takeIf { elseEmpty != false && (thenEmpty != false || expression.`else`?.hasComments() != true) }?.let {
-                holder.registerProblem(expression, it)
-            }
+            expression.ifKeyword
+                .takeIf { thenEmpty && (elseEmpty || thenBranch.hasNoComments()) && !isUsedAsExpression }
+                ?.let { holder.registerProblem(expression, it) }
+
+            expression.elseKeyword
+                ?.takeIf { elseEmpty && (thenEmpty || elseBranch.hasNoComments()) && !isUsedAsExpression }
+                ?.let { holder.registerProblem(expression, it) }
         }
 
         override fun visitWhenExpression(expression: KtWhenExpression) {
@@ -75,7 +80,10 @@ class ControlFlowWithEmptyBodyInspection : AbstractKotlinInspection() {
     }
 
     private fun KtExpression?.isEmptyBodyOrNull(): Boolean = this?.isEmptyBody() ?: true
+
     private fun KtExpression.isEmptyBody(): Boolean = this is KtBlockExpression && statements.isEmpty()
+
+    private fun KtExpression?.hasNoComments(): Boolean = this?.hasComments() != true
 
     private fun ProblemsHolder.registerProblem(expression: KtExpression, keyword: PsiElement) {
         val keywordText = if (expression is KtDoWhileExpression) "do while" else keyword.text

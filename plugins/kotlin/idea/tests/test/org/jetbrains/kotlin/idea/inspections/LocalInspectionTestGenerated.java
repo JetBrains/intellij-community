@@ -3313,6 +3313,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             public void testSingleHasStatement() throws Exception {
                 runTest("testData/inspectionsLocal/controlFlowWithEmptyBody/ifElse/singleHasStatement.kt");
             }
+
+            @TestMetadata("usedAsExpression.kt")
+            public void testUsedAsExpression() throws Exception {
+                runTest("testData/inspectionsLocal/controlFlowWithEmptyBody/ifElse/usedAsExpression.kt");
+            }
+
+            @TestMetadata("usedAsExpression2.kt")
+            public void testUsedAsExpression2() throws Exception {
+                runTest("testData/inspectionsLocal/controlFlowWithEmptyBody/ifElse/usedAsExpression2.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
