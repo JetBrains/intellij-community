@@ -567,11 +567,11 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                 )
             } withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
 
-            NewExpression("java.lang.String") convertTo Method("kotlin.text.String"),
-            NewExpression("kotlin.String") convertTo Method("kotlin.text.String"),
-
             // Top-level functions
 
+            NewExpression("java.lang.String")
+                    convertTo Method("kotlin.text.String", isTopLevel = true)
+                    withByArgumentsFilter { it.isNotEmpty() },
             Method("java.util.Collections.singletonList")
                     convertTo Method("kotlin.collections.listOf", isTopLevel = true)
                     withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
