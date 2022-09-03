@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
-import com.intellij.openapi.diagnostic.logger
+//import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -40,7 +40,7 @@ private val checksumGen = { CRC32() }
 @Volatile
 var debugWalRecords = false
 
-private val log = logger<WalRecord>()
+//private val log = logger<WalRecord>()
 
 private class CorruptionException(val reason: String): IOException(reason)
 
